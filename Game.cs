@@ -1,4 +1,5 @@
-﻿using Silk.NET.Input;
+﻿using System.Drawing;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
@@ -34,6 +35,7 @@ namespace BlockGame {
             }
 
             GL = GL.GetApi(window);
+            GL.ClearColor(Color.Aqua);
         }
 
 
