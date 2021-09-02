@@ -1,7 +1,9 @@
 ﻿using System.Drawing;
+using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 
 namespace BlockGame {
@@ -9,6 +11,8 @@ namespace BlockGame {
         private IWindow window;
 
         private IInputContext input;
+
+        private ImGuiController imgui;
 
         private GL GL;
         public Game() {
@@ -21,6 +25,8 @@ namespace BlockGame {
             window.Render += onRender;
             window.Update += onUpdate;
             window.Load += onLoad;
+            window.FramebufferResize += onResize;
+            window.Closing += onClose;
             window.Run();
         }
 
@@ -33,12 +39,17 @@ namespace BlockGame {
                 keyboard.KeyDown += onKeyDown;
                 keyboard.KeyUp += onKeyUp;
             }
-
             GL = GL.GetApi(window);
             GL.ClearColor(Color.Aqua);
+            
+            imgui = new ImGuiController(GL, window, input);
+            
         }
 
-
+        private void onResize(Vector2D<int> size) {
+            GL.Viewport(size);
+        }
+        
         private void onUpdate(double dt) {
             
         }
@@ -46,6 +57,9 @@ namespace BlockGame {
         private void onRender(double dt) {
             //Clear the color channel.
             GL.Clear((uint) ClearBufferMask.ColorBufferBit);
+            imgui.Update((float)dt);
+            ImGui.ShowDemoWindow();
+            imgui.Render();
         }
         
         private void onKeyUp(IKeyboard keyboard, Key key, int code) {
@@ -53,6 +67,10 @@ namespace BlockGame {
         }
 
         private void onKeyDown(IKeyboard keyboard, Key key, int code) {
+            
+        }
+        
+        private void onClose() {
             
         }
     }
