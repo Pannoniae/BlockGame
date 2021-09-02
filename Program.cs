@@ -1,9 +1,9 @@
-﻿using System;
+﻿namespace BlockGame {
+    static class Program {
+        private static Game game;
 
-namespace BlockGame {
-    class Program {
         static void Main(string[] args) {
-            Console.WriteLine("Hello World!");
+            game = new Game();
         }
     }
 }

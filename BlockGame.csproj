@@ -5,4 +5,9 @@
         <TargetFramework>net5.0</TargetFramework>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Silk.NET" Version="2.7.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.7.0" />
+    </ItemGroup>
+
 </Project>
