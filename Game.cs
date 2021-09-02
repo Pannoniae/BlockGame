@@ -58,12 +58,13 @@ namespace BlockGame {
             //Clear the color channel.
             GL.Clear((uint) ClearBufferMask.ColorBufferBit);
             imgui.Update((float)dt);
-            ImGui.ShowDemoWindow();
             imgui.Render();
         }
         
         private void onKeyUp(IKeyboard keyboard, Key key, int code) {
-            throw new System.NotImplementedException();
+            if (key == Key.Escape) {
+                window.Close();
+            }
         }
 
         private void onKeyDown(IKeyboard keyboard, Key key, int code) {
