@@ -14,10 +14,10 @@ namespace BlockGame {
 
         private float zoom = 45f;
 
-        public Camera(Vector3 pos, Vector3 forward, Vector3 up, float aspectRatio) {
-            pos = pos;
+        public Camera(Vector3 position, Vector3 forward, Vector3 up, float aspectRatio) {
+            this.position = position;
             this.aspectRatio = aspectRatio;
-            forward = forward;
+            this.forward = forward;
             this.up = up;
         }
 

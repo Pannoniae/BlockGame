@@ -195,7 +195,7 @@ namespace BlockGame {
             shader.setUniform("uView", camera.getViewMatrix());
             shader.setUniform("uProjection", camera.getProjectionMatrix());
             GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
-            
+
             // UI
             imgui.Update((float)dt);
             ImGui.ShowDemoWindow();
