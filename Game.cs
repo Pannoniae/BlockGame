@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -33,7 +36,8 @@ namespace BlockGame {
         private void onLoad() {
             input = window.CreateInput();
             foreach (var mouse in input.Mice) {
-                // bind events
+                mouse.Click += onClick;
+                mouse.MouseMove += onMove;
             }
             foreach (var keyboard in input.Keyboards) {
                 keyboard.KeyDown += onKeyDown;
@@ -41,8 +45,18 @@ namespace BlockGame {
             }
             GL = GL.GetApi(window);
             GL.ClearColor(Color.Aqua);
-            
+            GL.Enable(EnableCap.DebugOutput);
+            GL.DebugMessageCallback((source, type, id, severity, length, message, param) => Marshal.PtrToStringUTF8(message, length), 0);
+
             imgui = new ImGuiController(GL, window, input);
+            
+        }
+
+        private void onClick(IMouse mouse, MouseButton button, Vector2 pos) {
+            
+        }
+        
+        private void onMove(IMouse mouse, Vector2 delta) {
             
         }
 
@@ -58,6 +72,7 @@ namespace BlockGame {
             //Clear the color channel.
             GL.Clear((uint) ClearBufferMask.ColorBufferBit);
             imgui.Update((float)dt);
+            ImGui.ShowDemoWindow();
             imgui.Render();
         }
         

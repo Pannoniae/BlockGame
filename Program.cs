@@ -1,8 +1,9 @@
 ﻿namespace BlockGame {
-    static class Program {
+    public static class Program {
+        
         private static Game game;
-
-        static void Main(string[] args) {
+        
+        public static void Main() {
             game = new Game();
         }
     }
