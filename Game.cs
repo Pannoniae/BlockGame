@@ -25,9 +25,11 @@ namespace BlockGame {
         private GL GL;
 
         private static Camera camera;
-        
+
         //Used to track change in mouse movement to allow for moving of the Camera
         private static Vector2 lastMousePos;
+
+        private DateTime now;
 
         private List<IKeyboard> keyboards = new();
 
@@ -91,6 +93,9 @@ namespace BlockGame {
             windowOptions.VSync = false;
             windowOptions.Title = "BlockGame";
             windowOptions.Size = new Vector2D<int>(width, height);
+            var api = GraphicsAPI.Default;
+            api.Flags = ContextFlags.Debug;
+            windowOptions.API = api;
             window = Window.Create(windowOptions);
 
             window.Render += onRender;
@@ -122,19 +127,18 @@ namespace BlockGame {
             GL.Enable(EnableCap.DebugOutput);
             GL.DebugMessageCallback(
                 (source, type, id, severity, length, message, param) =>
-                    Console.WriteLine(Marshal.PtrToStringUTF8(message, length)), 0);
+                    Console.WriteLine(Marshal.PtrToStringAnsi(message, length)), 0);
 
             ebo = new BufferObject<uint>(GL, indices, BufferTargetARB.ElementArrayBuffer);
             vbo = new BufferObject<float>(GL, vertices, BufferTargetARB.ArrayBuffer);
             theCube = new VertexArrayObject<float, uint>(GL, vbo, ebo);
-
             theCube.vertexAttributePointer(0, 3, VertexAttribPointerType.Float, 3, 0);
-
             shader = new Shader(GL, "shader.vert", "shader.frag");
-
             camera = new Camera(Vector3.UnitZ * 6, Vector3.UnitZ * -1, Vector3.UnitY, width / height);
 
             imgui = new ImGuiController(GL, window, input);
+
+            now = DateTime.Now;
         }
 
         private void onClick(IMouse mouse, MouseButton button, Vector2 pos) {
@@ -142,9 +146,10 @@ namespace BlockGame {
 
         private void onMove(IMouse mouse, Vector2 position) {
             const float lookSensitivity = 0.1f;
-            if (lastMousePos == default) { lastMousePos = position; }
-            else
-            {
+            if (lastMousePos == default) {
+                lastMousePos = position;
+            }
+            else {
                 var xOffset = (position.X - lastMousePos.X) * lookSensitivity;
                 var yOffset = (position.Y - lastMousePos.Y) * lookSensitivity;
                 lastMousePos = position;
@@ -162,6 +167,16 @@ namespace BlockGame {
         }
 
         private void onUpdate(double dt) {
+
+
+            if ((DateTime.Now - now).TotalMilliseconds > 1000) {
+                var gcinfo = GC.GetGCMemoryInfo();
+                var current = GC.GetTotalMemory(true);
+                var max2 = gcinfo.TotalCommittedBytes;
+                Console.Out.WriteLine($"{Utils.formatMB(current)} / {Utils.formatMB(max2)} ");
+                now = DateTime.Now;
+            }
+            
             var moveSpeed = 2.5f * (float)dt;
 
             if (keyboards.Any(kb => kb.IsKeyPressed(Key.W))) {
@@ -186,7 +201,6 @@ namespace BlockGame {
         }
 
         private void onRender(double dt) {
-            GL.Enable(EnableCap.DepthTest);
             //Clear the color channel.
             GL.Clear((uint)ClearBufferMask.ColorBufferBit);
             theCube.bind();
@@ -196,6 +210,9 @@ namespace BlockGame {
             shader.setUniform("uProjection", camera.getProjectionMatrix());
             GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
 
+            //const string str = "HELLO!!!!!";
+            //GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeError, 0,
+            //    DebugSeverity.DebugSeverityHigh, (uint)str.Length, str);
             // UI
             imgui.Update((float)dt);
             ImGui.ShowDemoWindow();
