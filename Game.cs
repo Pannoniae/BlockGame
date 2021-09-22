@@ -13,6 +13,9 @@ using Silk.NET.Windowing;
 
 namespace BlockGame {
     public class Game {
+
+        public static Game instance { get; private set; }
+
         private IWindow window;
 
         private const int width = 800;
@@ -22,9 +25,11 @@ namespace BlockGame {
 
         private ImGuiController imgui;
 
-        private GL GL;
+        public GL GL;
 
-        private static Camera camera;
+        public Camera camera;
+
+        private World world;
 
         //Used to track change in mouse movement to allow for moving of the Camera
         private static Vector2 lastMousePos;
@@ -33,10 +38,10 @@ namespace BlockGame {
 
         private List<IKeyboard> keyboards = new();
 
-        private static BufferObject<float> vbo;
-        private static BufferObject<uint> ebo;
-        private static VertexArrayObject<float, uint> theCube;
-        private static Shader shader;
+        private BufferObject<float> vbo;
+        private BufferObject<uint> ebo;
+        private VertexArrayObject<float, uint> theCube;
+        
 
         private static readonly float[] vertices = {
             //X    Y      Z     
@@ -89,6 +94,7 @@ namespace BlockGame {
         };
 
         public Game() {
+            instance = this;
             var windowOptions = WindowOptions.Default;
             windowOptions.VSync = false;
             windowOptions.Title = "BlockGame";
@@ -133,8 +139,8 @@ namespace BlockGame {
             vbo = new BufferObject<float>(GL, vertices, BufferTargetARB.ArrayBuffer);
             theCube = new VertexArrayObject<float, uint>(GL, vbo, ebo);
             theCube.vertexAttributePointer(0, 3, VertexAttribPointerType.Float, 3, 0);
-            shader = new Shader(GL, "shader.vert", "shader.frag");
             camera = new Camera(Vector3.UnitZ * 6, Vector3.UnitZ * -1, Vector3.UnitY, width / height);
+            world = new World();
 
             imgui = new ImGuiController(GL, window, input);
 
@@ -171,7 +177,7 @@ namespace BlockGame {
 
             if ((DateTime.Now - now).TotalMilliseconds > 1000) {
                 var gcinfo = GC.GetGCMemoryInfo();
-                var current = GC.GetTotalMemory(true);
+                var current = GC.GetTotalMemory(false);
                 var max2 = gcinfo.TotalCommittedBytes;
                 Console.Out.WriteLine($"{Utils.formatMB(current)} / {Utils.formatMB(max2)} ");
                 now = DateTime.Now;
@@ -203,12 +209,8 @@ namespace BlockGame {
         private void onRender(double dt) {
             //Clear the color channel.
             GL.Clear((uint)ClearBufferMask.ColorBufferBit);
-            theCube.bind();
-            shader.use();
-            shader.setUniform("uModel", Matrix4x4.Identity);
-            shader.setUniform("uView", camera.getViewMatrix());
-            shader.setUniform("uProjection", camera.getProjectionMatrix());
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+            world.meshTheWorld();
+            world.draw();
 
             //const string str = "HELLO!!!!!";
             //GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeError, 0,
