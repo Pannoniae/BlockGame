@@ -205,7 +205,7 @@ public class Game {
         GL.ClearColor(Color.DeepSkyBlue);
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
-        world.mesh();
+        //world.mesh();
         world.draw();
 
         imgui.Update((float)dt);

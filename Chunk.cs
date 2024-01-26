@@ -7,6 +7,10 @@ namespace BlockGame;
 public class Chunk {
     public int[,,] block;
 
+    public int chunkX;
+    public int chunkY;
+    public int chunkZ;
+
     public uint vao;
     public uint vbo;
     public uint ebo;
@@ -18,7 +22,10 @@ public class Chunk {
     private World world;
     public const int CHUNKSIZE = 16;
 
-    public Chunk(World world) {
+    public Chunk(World world, int xpos, int ypos, int zpos) {
+        chunkX = xpos;
+        chunkY = ypos;
+        chunkZ = zpos;
         this.world = world;
         GL = Game.instance.GL;
         shader = new Shader(GL, "shader.vert", "shader.frag");
@@ -33,7 +40,7 @@ public class Chunk {
         }
     }
 
-    public void meshWorld() {
+    public void meshChunk() {
         unsafe {
             vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
@@ -43,6 +50,11 @@ public class Chunk {
                 for (int y = 0; y < CHUNKSIZE; y++) {
                     for (int z = 0; z < CHUNKSIZE; z++) {
                         if (block[x, y, z] != 0) {
+                            var wpos = world.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
+                            int wx = wpos.X;
+                            int wy = wpos.Y;
+                            int wz = wpos.Z;
+
                             float xmin = x - 0.5f;
                             float ymin = y - 0.5f;
                             float zmin = z - 0.5f;
@@ -50,7 +62,7 @@ public class Chunk {
                             float ymax = y + 0.5f;
                             float zmax = z + 0.5f;
 
-                            if (!world.isBlock(x, y - 1, z)) {
+                            if (!world.isBlock(wx, wy - 1, wz)) {
                                 float[] verticesBottom = [
                                     // bottom
                                     xmin, ymin, zmin,
@@ -64,7 +76,7 @@ public class Chunk {
                                 chunkVertices.AddRange(verticesBottom);
                             }
 
-                            if (!world.isBlock(x, y + 1, z)) {
+                            if (!world.isBlock(wx, wy + 1, wz)) {
                                 float[] verticesTop = [
                                     // top
                                     xmin, ymax, zmin,
@@ -78,7 +90,7 @@ public class Chunk {
                                 chunkVertices.AddRange(verticesTop);
                             }
 
-                            if (!world.isBlock(x, y, z - 1)) {
+                            if (!world.isBlock(wx, wy, wz - 1)) {
                                 float[] verticesSouth = [
                                     // south
                                     xmax, ymin, zmin,
@@ -92,7 +104,7 @@ public class Chunk {
                                 chunkVertices.AddRange(verticesSouth);
                             }
 
-                            if (!world.isBlock(x, y, z + 1)) {
+                            if (!world.isBlock(wx, wy, wz + 1)) {
                                 float[] verticesNorth = [
                                     // north
                                     xmax, ymin, zmax,
@@ -106,7 +118,7 @@ public class Chunk {
                                 chunkVertices.AddRange(verticesNorth);
                             }
 
-                            if (!world.isBlock(x - 1, y, z)) {
+                            if (!world.isBlock(wx - 1, wy, wz)) {
                                 float[] verticesWest = [
                                     // west
                                     xmin, ymin, zmin,
@@ -120,7 +132,7 @@ public class Chunk {
                                 chunkVertices.AddRange(verticesWest);
                             }
 
-                            if (!world.isBlock(x + 1, y, z)) {
+                            if (!world.isBlock(wx + 1, wy, wz)) {
                                 float[] verticesEast = [
                                     // east
                                     xmax, ymin, zmin,
@@ -152,11 +164,11 @@ public class Chunk {
         }
     }
 
-    public void drawWorld() {
-         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
+    public void drawChunk() {
+        GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         GL.BindVertexArray(vao);
         shader.use();
-        shader.setUniform("uModel", Matrix4x4.Identity);
+        shader.setUniform("uModel", Matrix4x4.CreateWorld(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f), -Vector3.UnitZ, Vector3.UnitY));
         shader.setUniform("uView", Game.instance.camera.getViewMatrix());
         shader.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
         shader.setUniform("uColor", new Vector4(0.6f, 0.2f, 0.2f, 1));
