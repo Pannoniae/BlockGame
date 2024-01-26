@@ -34,6 +34,10 @@ public class Game {
     public IKeyboard keyboard;
 
     private Vector2 lastMousePos;
+    public Vector3D<int>? targetedPos;
+    public Vector3D<int>? previousPos;
+
+    private int fps;
 
     public Stopwatch stopwatch = new();
 
@@ -124,7 +128,18 @@ public class Game {
 
     private void onMouseDown(IMouse m, MouseButton button) {
         if (focused) {
-            unlockMouse();
+            if (button == MouseButton.Left) {
+                if (targetedPos.HasValue) {
+                    var pos = targetedPos.Value;
+                    world.setBlock(pos.X, pos.Y, pos.Z, 0);
+                }
+            }
+            else if (button == MouseButton.Right) {
+                if (previousPos.HasValue) {
+                    var pos = previousPos.Value;
+                    world.setBlock(pos.X, pos.Y, pos.Z, 1);
+                }
+            }
         }
         else {
             lockMouse();
@@ -171,14 +186,20 @@ public class Game {
         //Console.Out.WriteLine($"{camera.position}, {camera.forward}, {camera.zoom}");
 
         if (stopwatch.ElapsedMilliseconds > 1000) {
-            int fps = (int)(1 / dt);
-            window.Title = "BlockGame " + fps;
+            fps = (int)(1 / dt);
             stopwatch.Restart();
         }
+
+        targetedPos = world.getTargetedBlock(out previousPos);
 
 
         if (focused) {
             var moveSpeed = 4f * (float)dt;
+
+            if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                moveSpeed *= 5;
+            }
+
             if (keyboard.IsKeyPressed(Key.W)) {
                 //Move forwards
                 camera.position += moveSpeed * camera.forward;
@@ -207,9 +228,17 @@ public class Game {
 
         //world.mesh();
         world.draw();
+        if (targetedPos.HasValue) {
+            world.drawBlockOutline();
+        }
 
         imgui.Update((float)dt);
-        ImGui.ShowDemoWindow();
+        ImGui.Text($"{camera.position.X}, {camera.position.Y}, {camera.position.Z}");
+        ImGui.Text(targetedPos.HasValue
+            ? $"{targetedPos.Value.X}, {targetedPos.Value.Y}, {targetedPos.Value.Z} {previousPos.Value.X}, {previousPos.Value.Y}, {previousPos.Value.Z}"
+            : "No target");
+        ImGui.Text("FPS: " + fps);
+
         imgui.Render();
     }
 

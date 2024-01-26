@@ -15,6 +15,11 @@ public class Chunk {
     public uint vbo;
     public uint ebo;
 
+    public int uModel;
+    public int uView;
+    public int uProjection;
+    public int uColor;
+
     public Shader shader;
     public readonly GL GL;
 
@@ -38,6 +43,11 @@ public class Chunk {
                 }
             }
         }
+
+        uModel = shader.getUniformLocation("uModel");
+        uView = shader.getUniformLocation("uView");
+        uProjection = shader.getUniformLocation("uProjection");
+        uColor = shader.getUniformLocation("uColor");
     }
 
     public void meshChunk() {
@@ -155,7 +165,7 @@ public class Chunk {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             fixed (float* data = finalVertices) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(finalVertices.Length * sizeof(float)), data,
-                    BufferUsageARB.StreamDraw);
+                    BufferUsageARB.DynamicDraw);
             }
 
             count = (uint)finalVertices.Length;
@@ -168,12 +178,12 @@ public class Chunk {
         GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         GL.BindVertexArray(vao);
         shader.use();
-        shader.setUniform("uModel", Matrix4x4.CreateWorld(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f), -Vector3.UnitZ, Vector3.UnitY));
-        shader.setUniform("uView", Game.instance.camera.getViewMatrix());
-        shader.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
-        shader.setUniform("uColor", new Vector4(0.6f, 0.2f, 0.2f, 1));
+        shader.setUniform(uModel, Matrix4x4.CreateWorld(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f), -Vector3.UnitZ, Vector3.UnitY));
+        shader.setUniform(uView, Game.instance.camera.getViewMatrix());
+        shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
+        shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
         GL.DrawArrays(PrimitiveType.Triangles, 0, count);
-        shader.setUniform("uColor", new Vector4(1f, 0.2f, 0.2f, 1));
+        shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
         //GL.DrawArrays(PrimitiveType.Lines, 0, count);
     }
 
@@ -257,12 +267,12 @@ public class Chunk {
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
             GL.BindVertexArray(vao);
             shader.use();
-            shader.setUniform("uModel", Matrix4x4.Identity);
-            shader.setUniform("uView", Game.instance.camera.getViewMatrix());
-            shader.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
-            shader.setUniform("uColor", new Vector4(0.6f, 0.2f, 0.2f, 1));
+            shader.setUniform(uModel, Matrix4x4.Identity);
+            shader.setUniform(uView, Game.instance.camera.getViewMatrix());
+            shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
+            shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
             GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (void*)0);
-            shader.setUniform("uColor", new Vector4(1f, 0.2f, 0.2f, 1));
+            shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
             //GL.DrawElements(PrimitiveType.Lines, count, DrawElementsType.UnsignedInt, (void*)0);
         }
     }
@@ -275,7 +285,7 @@ public class Chunk {
 /// West = -X
 /// East = +X
 /// </summary>
-enum Direction {
+public enum Direction {
     NORTH,
     SOUTH,
     WEST,

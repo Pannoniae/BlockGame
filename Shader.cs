@@ -39,11 +39,10 @@ namespace BlockGame {
             GL.AttachShader(programHandle, frag);
             GL.LinkProgram(programHandle);
             GL.GetProgram(programHandle, GLEnum.LinkStatus, out var status);
-            if (status == 0)
-            {
+            if (status == 0) {
                 throw new Exception($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
             }
-            
+
             // yeah this one is from a tutorial, don't judge me
             GL.DetachShader(programHandle, vert);
             GL.DetachShader(programHandle, frag);
@@ -54,56 +53,72 @@ namespace BlockGame {
         public void use() {
             GL.UseProgram(programHandle);
         }
-        
+
         // uniforms
-        public void setUniform(string name, int value)
-        {
+
+        public int getUniformLocation(string name) {
             int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1)
-            {
+            if (location == -1) {
                 throw new Exception($"{name} uniform not found on shader.");
             }
-            GL.Uniform1(location, value);
+
+            return location;
         }
 
-        public unsafe void setUniform(string name, Matrix4x4 value)
-        {
+        public void setUniform(int loc, int value) {
+            GL.Uniform1(loc, value);
+        }
+
+        public unsafe void setUniform(int loc, Matrix4x4 value) {
+            GL.UniformMatrix4(loc, 1, false, (float*)&value);
+        }
+
+        public void setUniform(int loc, float value) {
+            GL.Uniform1(loc, value);
+        }
+
+        public void setUniform(int loc, Vector3 value) {
+            GL.Uniform3(loc, value.X, value.Y, value.Z);
+        }
+
+        public void setUniform(int loc, Vector4 value) {
+            GL.Uniform4(loc, value.X, value.Y, value.Z, value.W);
+        }
+
+        public unsafe void setUniform(string name, Matrix4x4 value) {
             //A new overload has been created for setting a uniform so we can use the transform in our shader.
             int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1)
-            {
+            if (location == -1) {
                 throw new Exception($"{name} uniform not found on shader.");
             }
-            GL.UniformMatrix4(location, 1, false, (float*) &value);
+
+            GL.UniformMatrix4(location, 1, false, (float*)&value);
         }
 
-        public void setUniform(string name, float value)
-        {
+        public void setUniform(string name, float value) {
             int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1)
-            {
+            if (location == -1) {
                 throw new Exception($"{name} uniform not found on shader.");
             }
+
             GL.Uniform1(location, value);
         }
 
-        public void setUniform(string name, Vector3 value)
-        {
+        public void setUniform(string name, Vector3 value) {
             int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1)
-            {
+            if (location == -1) {
                 throw new Exception($"{name} uniform not found on shader.");
             }
+
             GL.Uniform3(location, value.X, value.Y, value.Z);
         }
 
-        public void setUniform(string name, Vector4 value)
-        {
+        public void setUniform(string name, Vector4 value) {
             int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1)
-            {
+            if (location == -1) {
                 throw new Exception($"{name} uniform not found on shader.");
             }
+
             GL.Uniform4(location, value.X, value.Y, value.Z, value.W);
         }
     }
