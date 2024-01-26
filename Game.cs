@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -7,19 +8,25 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
+using MouseButton = Silk.NET.Input.MouseButton;
 
 namespace BlockGame;
 
 public class Game {
     public static Game instance { get; private set; }
 
-    public const int width = 1200;
-    public const int height = 800;
+    public const int initialWidth = 1200;
+    public const int initialHeight = 800;
+
+    public int width;
+    public int height;
 
     public IWindow window;
     public GL GL = null!;
     public IInputContext input = null!;
     public ImGuiController imgui = null!;
+
+    public Vector2D<float> centre => new(window.Size.X / 2f, window.Size.Y / 2f);
 
     public Camera camera;
 
@@ -28,17 +35,19 @@ public class Game {
 
     private Vector2 lastMousePos;
 
+    public Stopwatch stopwatch = new();
+
     public bool focused;
     public bool firstFrame;
 
-    public Chunk chunk;
+    public World world;
 
     public Game() {
         instance = this;
         var windowOptions = WindowOptions.Default;
-        windowOptions.VSync = true;
+        windowOptions.VSync = false;
         windowOptions.Title = "BlockGame";
-        windowOptions.Size = new Vector2D<int>(width, height);
+        windowOptions.Size = new Vector2D<int>(initialWidth, initialHeight);
         var api = GraphicsAPI.Default;
 #if DEBUG
         api.Flags = ContextFlags.Debug;
@@ -71,22 +80,30 @@ public class Game {
             keyboard.KeyDown += onKeyDown;
             keyboard.KeyUp += onKeyUp;
         }
+
         keyboard = input.Keyboards[0];
         focused = true;
 
-        camera = new Camera(Vector3.UnitZ * 6, Vector3.UnitZ * -1, Vector3.UnitY, width / height);
-        chunk = new Chunk();
+        stopwatch.Start();
+
+        camera = new Camera(Vector3.UnitY * 17, Vector3.UnitZ * -1, Vector3.UnitY, (float)initialWidth / initialHeight);
+        world = new World();
         GL.DebugMessageCallback(GLDebug, 0);
     }
 
-    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message, IntPtr userparam) {
+    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message,
+        IntPtr userparam) {
         string msg = Marshal.PtrToStringAuto(message, length)!;
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
     }
 
     private void onMouseMove(IMouse m, Vector2 position) {
-        if (firstFrame) {
+        if (!focused) {
+            return;
+        }
 
+        if (firstFrame) {
+            lastMousePos = position;
         }
         else {
             const float lookSensitivity = 0.1f;
@@ -115,7 +132,8 @@ public class Game {
     }
 
     private void lockMouse() {
-        mouse.Cursor.CursorMode = CursorMode.Raw;
+        mouse.Cursor.CursorMode = CursorMode.Disabled;
+        //mouse.Position = new Vector2(centre.X, centre.Y);
         focused = true;
         firstFrame = true;
     }
@@ -126,7 +144,6 @@ public class Game {
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
-
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -136,11 +153,13 @@ public class Game {
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
-
     }
 
     private void resize(Vector2D<int> size) {
         GL.Viewport(size);
+        width = size.X;
+        height = size.Y;
+        camera.aspectRatio = (float)width / height;
     }
 
     private void update(double dt) {
@@ -151,26 +170,34 @@ public class Game {
 
         //Console.Out.WriteLine($"{camera.position}, {camera.forward}, {camera.zoom}");
 
-        var moveSpeed = 4f * (float)dt;
-
-        if (keyboard.IsKeyPressed(Key.W)) {
-            //Move forwards
-            camera.position += moveSpeed * camera.forward;
+        if (stopwatch.ElapsedMilliseconds > 1000) {
+            int fps = (int)(1 / dt);
+            window.Title = "BlockGame " + fps;
+            stopwatch.Restart();
         }
 
-        if (keyboard.IsKeyPressed(Key.S)) {
-            //Move backwards
-            camera.position -= moveSpeed * camera.forward;
-        }
 
-        if (keyboard.IsKeyPressed(Key.A)) {
-            //Move left
-            camera.position -= Vector3.Normalize(Vector3.Cross(camera.forward, camera.up)) * moveSpeed;
-        }
+        if (focused) {
+            var moveSpeed = 4f * (float)dt;
+            if (keyboard.IsKeyPressed(Key.W)) {
+                //Move forwards
+                camera.position += moveSpeed * camera.forward;
+            }
 
-        if (keyboard.IsKeyPressed(Key.D)) {
-            //Move right
-            camera.position += Vector3.Normalize(Vector3.Cross(camera.forward, camera.up)) * moveSpeed;
+            if (keyboard.IsKeyPressed(Key.S)) {
+                //Move backwards
+                camera.position -= moveSpeed * camera.forward;
+            }
+
+            if (keyboard.IsKeyPressed(Key.A)) {
+                //Move left
+                camera.position -= Vector3.Normalize(Vector3.Cross(camera.forward, camera.up)) * moveSpeed;
+            }
+
+            if (keyboard.IsKeyPressed(Key.D)) {
+                //Move right
+                camera.position += Vector3.Normalize(Vector3.Cross(camera.forward, camera.up)) * moveSpeed;
+            }
         }
     }
 
@@ -178,8 +205,8 @@ public class Game {
         GL.ClearColor(Color.DeepSkyBlue);
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
-        chunk.meshBlock();
-        chunk.drawBlock();
+        world.mesh();
+        world.draw();
 
         imgui.Update((float)dt);
         ImGui.ShowDemoWindow();

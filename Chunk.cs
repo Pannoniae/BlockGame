@@ -1,11 +1,11 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
 public class Chunk {
-    // later an array
-    public int block;
+    public int[,,] block;
 
     public uint vao;
     public uint vbo;
@@ -15,10 +15,154 @@ public class Chunk {
     public readonly GL GL;
 
     private uint count;
+    private World world;
+    public const int CHUNKSIZE = 16;
 
-    public Chunk() {
+    public Chunk(World world) {
+        this.world = world;
         GL = Game.instance.GL;
         shader = new Shader(GL, "shader.vert", "shader.frag");
+
+        block = new int[CHUNKSIZE, CHUNKSIZE, CHUNKSIZE];
+        for (int x = 0; x < CHUNKSIZE; x++) {
+            for (int y = 0; y < CHUNKSIZE; y++) {
+                for (int z = 0; z < CHUNKSIZE; z++) {
+                    block[x, y, z] = 1;
+                }
+            }
+        }
+    }
+
+    public void meshWorld() {
+        unsafe {
+            vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+
+            List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 12);
+            for (int x = 0; x < CHUNKSIZE; x++) {
+                for (int y = 0; y < CHUNKSIZE; y++) {
+                    for (int z = 0; z < CHUNKSIZE; z++) {
+                        if (block[x, y, z] != 0) {
+                            float xmin = x - 0.5f;
+                            float ymin = y - 0.5f;
+                            float zmin = z - 0.5f;
+                            float xmax = x + 0.5f;
+                            float ymax = y + 0.5f;
+                            float zmax = z + 0.5f;
+
+                            if (!world.isBlock(x, y - 1, z)) {
+                                float[] verticesBottom = [
+                                    // bottom
+                                    xmin, ymin, zmin,
+                                    xmin, ymin, zmax,
+                                    xmax, ymin, zmin,
+
+                                    xmax, ymin, zmax,
+                                    xmax, ymin, zmin,
+                                    xmin, ymin, zmax
+                                ];
+                                chunkVertices.AddRange(verticesBottom);
+                            }
+
+                            if (!world.isBlock(x, y + 1, z)) {
+                                float[] verticesTop = [
+                                    // top
+                                    xmin, ymax, zmin,
+                                    xmin, ymax, zmax,
+                                    xmax, ymax, zmin,
+
+                                    xmax, ymax, zmax,
+                                    xmax, ymax, zmin,
+                                    xmin, ymax, zmax,
+                                ];
+                                chunkVertices.AddRange(verticesTop);
+                            }
+
+                            if (!world.isBlock(x, y, z - 1)) {
+                                float[] verticesSouth = [
+                                    // south
+                                    xmax, ymin, zmin,
+                                    xmax, ymax, zmin,
+                                    xmin, ymin, zmin,
+
+                                    xmin, ymax, zmin,
+                                    xmin, ymin, zmin,
+                                    xmax, ymax, zmin,
+                                ];
+                                chunkVertices.AddRange(verticesSouth);
+                            }
+
+                            if (!world.isBlock(x, y, z + 1)) {
+                                float[] verticesNorth = [
+                                    // north
+                                    xmax, ymin, zmax,
+                                    xmax, ymax, zmax,
+                                    xmin, ymin, zmax,
+
+                                    xmin, ymax, zmax,
+                                    xmin, ymin, zmax,
+                                    xmax, ymax, zmax,
+                                ];
+                                chunkVertices.AddRange(verticesNorth);
+                            }
+
+                            if (!world.isBlock(x - 1, y, z)) {
+                                float[] verticesWest = [
+                                    // west
+                                    xmin, ymin, zmin,
+                                    xmin, ymax, zmin,
+                                    xmin, ymin, zmax,
+
+                                    xmin, ymax, zmax,
+                                    xmin, ymin, zmax,
+                                    xmin, ymax, zmin,
+                                ];
+                                chunkVertices.AddRange(verticesWest);
+                            }
+
+                            if (!world.isBlock(x + 1, y, z)) {
+                                float[] verticesEast = [
+                                    // east
+                                    xmax, ymin, zmin,
+                                    xmax, ymax, zmin,
+                                    xmax, ymin, zmax,
+
+                                    xmax, ymax, zmax,
+                                    xmax, ymin, zmax,
+                                    xmax, ymax, zmin,
+                                ];
+                                chunkVertices.AddRange(verticesEast);
+                            }
+                        }
+                    }
+                }
+            }
+
+            var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            fixed (float* data = finalVertices) {
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(finalVertices.Length * sizeof(float)), data,
+                    BufferUsageARB.StreamDraw);
+            }
+
+            count = (uint)finalVertices.Length;
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
+            GL.EnableVertexAttribArray(0);
+        }
+    }
+
+    public void drawWorld() {
+         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
+        GL.BindVertexArray(vao);
+        shader.use();
+        shader.setUniform("uModel", Matrix4x4.Identity);
+        shader.setUniform("uView", Game.instance.camera.getViewMatrix());
+        shader.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
+        shader.setUniform("uColor", new Vector4(0.6f, 0.2f, 0.2f, 1));
+        GL.DrawArrays(PrimitiveType.Triangles, 0, count);
+        shader.setUniform("uColor", new Vector4(1f, 0.2f, 0.2f, 1));
+        //GL.DrawArrays(PrimitiveType.Lines, 0, count);
     }
 
     public void meshBlock() {
@@ -60,7 +204,8 @@ public class Chunk {
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             fixed (float* data = vertices) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Length * sizeof(float)), data, BufferUsageARB.StreamDraw);
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Length * sizeof(float)), data,
+                    BufferUsageARB.StreamDraw);
             }
 
             uint[] indices = [
@@ -85,8 +230,10 @@ public class Chunk {
             ebo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ebo);
             fixed (uint* data2 = indices) {
-                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(uint)), data2, BufferUsageARB.StreamDraw);
+                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(uint)), data2,
+                    BufferUsageARB.StreamDraw);
             }
+
             count = (uint)indices.Length;
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
@@ -107,4 +254,20 @@ public class Chunk {
             //GL.DrawElements(PrimitiveType.Lines, count, DrawElementsType.UnsignedInt, (void*)0);
         }
     }
+}
+
+
+/// <summary>
+/// North = +Z
+/// South = -Z
+/// West = -X
+/// East = +X
+/// </summary>
+enum Direction {
+    NORTH,
+    SOUTH,
+    WEST,
+    EAST,
+    UP,
+    DOWN
 }
