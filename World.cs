@@ -22,6 +22,7 @@ public class World {
                 for (int z = 0; z < WORLDSIZE; z++) {
                     chunks[x, y, z] = new Chunk(this, x, y, z);
                 }
+
             }
         }
 
@@ -41,13 +42,8 @@ public class World {
         }
 
         var blockPos = getBlockPos(x, y, z);
-        var chunkPos = getChunkPos(x, y, z);
-        if (false && x == 0 && y == 47 && z == 0) {
-            Console.Out.WriteLine(blockPos);
-            Console.Out.WriteLine(chunkPos);
-            Console.Out.WriteLine(getChunk(chunkPos.X, chunkPos.Y, chunkPos.Z)!.block[blockPos.X, blockPos.Y, blockPos.Z]);
-        }
-        return getChunk(chunkPos.X, chunkPos.Y, chunkPos.Z)!.block[blockPos.X, blockPos.Y, blockPos.Z] != 0;
+        var chunk = getChunk(x, y, z);
+        return chunk.block[blockPos.X, blockPos.Y, blockPos.Z] != 0;
     }
 
     public int getBlock(int x, int y, int z) {
@@ -65,13 +61,9 @@ public class World {
             return;
         }
 
-        Console.Out.WriteLine($"{x}, {y}, {z}");
-
         var blockPos = getBlockPos(x, y, z);
         var chunk = getChunk(x, y, z);
-        Console.Out.WriteLine(blockPos);
         chunk.block[blockPos.X, blockPos.Y, blockPos.Z] = block;
-        Console.Out.WriteLine($"ch: {chunk.chunkX}, {chunk.chunkY}, {chunk.chunkZ}");
 
         if (remesh) {
             chunk.meshChunk();
@@ -152,6 +144,7 @@ public class World {
             currentPos += cameraForward * RAYCASTSTEP;
             blockPos = toBlockPos(currentPos);
             if (isBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
+                Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
                 return blockPos;
             }
             previous = blockPos;
