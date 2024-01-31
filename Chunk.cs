@@ -11,16 +11,15 @@ public class Chunk {
     public int chunkY;
     public int chunkZ;
 
-    public uint vao;
-    public uint vbo;
-    public uint ebo;
+    public FloatVAO vao;
+
+    public Shader shader;
 
     public int uModel;
     public int uView;
     public int uProjection;
     public int uColor;
 
-    public Shader shader;
     public readonly GL GL;
 
     private uint count;
@@ -52,8 +51,7 @@ public class Chunk {
 
     public void meshChunk() {
         unsafe {
-            vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
+            vao = new FloatVAO(shader);
 
             List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 12);
             for (int x = 0; x < CHUNKSIZE; x++) {
@@ -161,33 +159,22 @@ public class Chunk {
             }
 
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            fixed (float* data = finalVertices) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(finalVertices.Length * sizeof(float)), data,
-                    BufferUsageARB.DynamicDraw);
-            }
-
-            count = (uint)finalVertices.Length;
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
-            GL.EnableVertexAttribArray(0);
+            vao.upload(finalVertices);
         }
     }
 
     public void drawChunk() {
+        vao.bind();
         GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-        GL.BindVertexArray(vao);
-        shader.use();
-        shader.setUniform(uModel, Matrix4x4.CreateWorld(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f), -Vector3.UnitZ, Vector3.UnitY));
-        shader.setUniform(uView, Game.instance.camera.getViewMatrix());
-        shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
-        shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
-        GL.DrawArrays(PrimitiveType.Triangles, 0, count);
-        shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
-        //GL.DrawArrays(PrimitiveType.Lines, 0, count);
+        vao.shader.setUniform(uModel, Matrix4x4.CreateWorld(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f), -Vector3.UnitZ, Vector3.UnitY));
+        vao.shader.setUniform(uView, Game.instance.camera.getViewMatrix());
+        vao.shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
+        vao.shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
+        //shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
+        vao.render();
     }
 
-    public void meshBlock() {
+    /*public void meshBlock() {
         unsafe {
             vao = GL.GenVertexArray();
             GL.BindVertexArray(vao);
@@ -275,7 +262,7 @@ public class Chunk {
             shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
             //GL.DrawElements(PrimitiveType.Lines, count, DrawElementsType.UnsignedInt, (void*)0);
         }
-    }
+    }*/
 }
 
 
