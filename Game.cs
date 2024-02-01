@@ -27,8 +27,8 @@ public class Game {
     public IInputContext input = null!;
     public ImGuiController imgui = null!;
 
-    public float centreX => window.Size.X / 2f;
-    public float centreY => window.Size.Y / 2f;
+    public float centreX => width / 2f;
+    public float centreY => height / 2f;
 
     public Camera camera;
 
@@ -91,6 +91,9 @@ public class Game {
 
         keyboard = input.Keyboards[0];
         focused = true;
+
+        width = window.FramebufferSize.X;
+        height = window.FramebufferSize.Y;
 
         stopwatch.Start();
 
@@ -246,6 +249,8 @@ public class Game {
             ? $"{targetedPos.Value.X}, {targetedPos.Value.Y}, {targetedPos.Value.Z} {previousPos.Value.X}, {previousPos.Value.Y}, {previousPos.Value.Z}"
             : "No target");
         ImGui.Text("FPS: " + fps);
+        ImGui.Text($"W:{width} H:{height}");
+        ImGui.Text($"CX:{centreX} CY:{centreY}");
 
         imgui.Render();
     }
