@@ -234,6 +234,10 @@ public class Game {
     private void render(double dt) {
         GL.ClearColor(Color.DeepSkyBlue);
         GL.Clear(ClearBufferMask.ColorBufferBit);
+        GL.Enable(EnableCap.Blend);
+        // invert RGB, add alpha
+        //GL.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);
+        //GL.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.Zero);
 
         //world.mesh();
         world.draw();

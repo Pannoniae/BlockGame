@@ -138,11 +138,14 @@ public class World {
         var cameraPos = Game.instance.camera.position;
         var cameraForward = Game.instance.camera.forward;
         var currentPos = new Vector3(cameraPos.X, cameraPos.Y, cameraPos.Z);
-        var blockPos = toBlockPos(currentPos);
-        previous = blockPos;
+
+        // don't round!!
+        //var blockPos = toBlockPos(currentPos);
+
+        previous = toBlockPos(currentPos);
         for (int i = 0; i < 200; i++) {
             currentPos += cameraForward * RAYCASTSTEP;
-            blockPos = toBlockPos(currentPos);
+            var blockPos = toBlockPos(currentPos);
             if (isBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
                 //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
                 return blockPos;
@@ -154,7 +157,7 @@ public class World {
     }
 
     private Vector3D<int> toBlockPos(Vector3 currentPos) {
-        return new Vector3D<int>((int)currentPos.X, (int)currentPos.Y, (int)currentPos.Z);
+        return new Vector3D<int>((int)MathF.Round(currentPos.X), (int)MathF.Round(currentPos.Y), (int)MathF.Round(currentPos.Z));
     }
 
     public void drawBlockOutline() {
