@@ -165,11 +165,12 @@ public class Chunk {
 
     public void drawChunk() {
         vao.bind();
+        shader.use();
         GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-        vao.shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
-        vao.shader.setUniform(uView, Game.instance.camera.getViewMatrix());
-        vao.shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
-        vao.shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
+        shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
+        shader.setUniform(uView, Game.instance.camera.getViewMatrix());
+        shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
+        shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
         //shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
         vao.render();
     }

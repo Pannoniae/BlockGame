@@ -3,8 +3,6 @@ using Silk.NET.OpenGL;
 namespace BlockGame;
 
 public class FloatVAO {
-    public Shader shader;
-
     public uint handle;
 
     public uint vbo;
@@ -14,12 +12,9 @@ public class FloatVAO {
     public GL GL;
 
     public FloatVAO(Shader shader) {
-        unsafe {
-            GL = Game.instance.GL;
-            this.shader = shader;
-            handle = GL.GenVertexArray();
-            GL.BindVertexArray(handle);
-        }
+        GL = Game.instance.GL;
+        handle = GL.GenVertexArray();
+        GL.BindVertexArray(handle);
     }
 
     public void upload(float[] data) {
@@ -59,7 +54,6 @@ public class FloatVAO {
 
     public void bind() {
         GL.BindVertexArray(handle);
-        shader.use();
     }
 
     public void render() {

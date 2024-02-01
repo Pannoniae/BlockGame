@@ -144,7 +144,7 @@ public class World {
             currentPos += cameraForward * RAYCASTSTEP;
             blockPos = toBlockPos(currentPos);
             if (isBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
-                Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
+                //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
                 return blockPos;
             }
             previous = blockPos;
