@@ -21,14 +21,18 @@ public class Game {
     public int width;
     public int height;
 
+
     public IWindow window;
     public GL GL = null!;
     public IInputContext input = null!;
     public ImGuiController imgui = null!;
 
-    public Vector2D<float> centre => new(window.Size.X / 2f, window.Size.Y / 2f);
+    public float centreX => window.Size.X / 2f;
+    public float centreY => window.Size.Y / 2f;
 
     public Camera camera;
+
+    public GUI gui;
 
     public IMouse mouse;
     public IKeyboard keyboard;
@@ -92,6 +96,7 @@ public class Game {
 
         camera = new Camera(Vector3.UnitY * 17, Vector3.UnitZ * -1, Vector3.UnitY, (float)initialWidth / initialHeight);
         world = new World();
+        gui = new GUI();
         GL.DebugMessageCallback(GLDebug, 0);
     }
 
@@ -175,6 +180,7 @@ public class Game {
         width = size.X;
         height = size.Y;
         camera.aspectRatio = (float)width / height;
+        gui.resize(size);
     }
 
     private void update(double dt) {
@@ -231,6 +237,8 @@ public class Game {
         if (targetedPos.HasValue) {
             world.drawBlockOutline();
         }
+
+        gui.draw();
 
         imgui.Update((float)dt);
         ImGui.Text($"{camera.position.X}, {camera.position.Y}, {camera.position.Z}");

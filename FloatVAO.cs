@@ -11,7 +11,7 @@ public class FloatVAO {
 
     public GL GL;
 
-    public FloatVAO(Shader shader) {
+    public FloatVAO() {
         GL = Game.instance.GL;
         handle = GL.GenVertexArray();
         GL.BindVertexArray(handle);

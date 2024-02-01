@@ -50,117 +50,115 @@ public class Chunk {
     }
 
     public void meshChunk() {
-        unsafe {
-            vao = new FloatVAO(shader);
+        vao = new FloatVAO();
 
-            List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 12);
-            for (int x = 0; x < CHUNKSIZE; x++) {
-                for (int y = 0; y < CHUNKSIZE; y++) {
-                    for (int z = 0; z < CHUNKSIZE; z++) {
-                        if (block[x, y, z] != 0) {
-                            var wpos = world.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
-                            int wx = wpos.X;
-                            int wy = wpos.Y;
-                            int wz = wpos.Z;
+        List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 12);
+        for (int x = 0; x < CHUNKSIZE; x++) {
+            for (int y = 0; y < CHUNKSIZE; y++) {
+                for (int z = 0; z < CHUNKSIZE; z++) {
+                    if (block[x, y, z] != 0) {
+                        var wpos = world.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
+                        int wx = wpos.X;
+                        int wy = wpos.Y;
+                        int wz = wpos.Z;
 
-                            float xmin = x - 0.5f;
-                            float ymin = y - 0.5f;
-                            float zmin = z - 0.5f;
-                            float xmax = x + 0.5f;
-                            float ymax = y + 0.5f;
-                            float zmax = z + 0.5f;
+                        float xmin = x - 0.5f;
+                        float ymin = y - 0.5f;
+                        float zmin = z - 0.5f;
+                        float xmax = x + 0.5f;
+                        float ymax = y + 0.5f;
+                        float zmax = z + 0.5f;
 
-                            if (!world.isBlock(wx, wy - 1, wz)) {
-                                float[] verticesBottom = [
-                                    // bottom
-                                    xmin, ymin, zmin,
-                                    xmin, ymin, zmax,
-                                    xmax, ymin, zmin,
+                        if (!world.isBlock(wx, wy - 1, wz)) {
+                            float[] verticesBottom = [
+                                // bottom
+                                xmin, ymin, zmin,
+                                xmin, ymin, zmax,
+                                xmax, ymin, zmin,
 
-                                    xmax, ymin, zmax,
-                                    xmax, ymin, zmin,
-                                    xmin, ymin, zmax
-                                ];
-                                chunkVertices.AddRange(verticesBottom);
-                            }
+                                xmax, ymin, zmax,
+                                xmax, ymin, zmin,
+                                xmin, ymin, zmax
+                            ];
+                            chunkVertices.AddRange(verticesBottom);
+                        }
 
-                            if (!world.isBlock(wx, wy + 1, wz)) {
-                                float[] verticesTop = [
-                                    // top
-                                    xmin, ymax, zmin,
-                                    xmin, ymax, zmax,
-                                    xmax, ymax, zmin,
+                        if (!world.isBlock(wx, wy + 1, wz)) {
+                            float[] verticesTop = [
+                                // top
+                                xmin, ymax, zmin,
+                                xmin, ymax, zmax,
+                                xmax, ymax, zmin,
 
-                                    xmax, ymax, zmax,
-                                    xmax, ymax, zmin,
-                                    xmin, ymax, zmax,
-                                ];
-                                chunkVertices.AddRange(verticesTop);
-                            }
+                                xmax, ymax, zmax,
+                                xmax, ymax, zmin,
+                                xmin, ymax, zmax,
+                            ];
+                            chunkVertices.AddRange(verticesTop);
+                        }
 
-                            if (!world.isBlock(wx, wy, wz - 1)) {
-                                float[] verticesSouth = [
-                                    // south
-                                    xmax, ymin, zmin,
-                                    xmax, ymax, zmin,
-                                    xmin, ymin, zmin,
+                        if (!world.isBlock(wx, wy, wz - 1)) {
+                            float[] verticesSouth = [
+                                // south
+                                xmax, ymin, zmin,
+                                xmax, ymax, zmin,
+                                xmin, ymin, zmin,
 
-                                    xmin, ymax, zmin,
-                                    xmin, ymin, zmin,
-                                    xmax, ymax, zmin,
-                                ];
-                                chunkVertices.AddRange(verticesSouth);
-                            }
+                                xmin, ymax, zmin,
+                                xmin, ymin, zmin,
+                                xmax, ymax, zmin,
+                            ];
+                            chunkVertices.AddRange(verticesSouth);
+                        }
 
-                            if (!world.isBlock(wx, wy, wz + 1)) {
-                                float[] verticesNorth = [
-                                    // north
-                                    xmax, ymin, zmax,
-                                    xmax, ymax, zmax,
-                                    xmin, ymin, zmax,
+                        if (!world.isBlock(wx, wy, wz + 1)) {
+                            float[] verticesNorth = [
+                                // north
+                                xmax, ymin, zmax,
+                                xmax, ymax, zmax,
+                                xmin, ymin, zmax,
 
-                                    xmin, ymax, zmax,
-                                    xmin, ymin, zmax,
-                                    xmax, ymax, zmax,
-                                ];
-                                chunkVertices.AddRange(verticesNorth);
-                            }
+                                xmin, ymax, zmax,
+                                xmin, ymin, zmax,
+                                xmax, ymax, zmax,
+                            ];
+                            chunkVertices.AddRange(verticesNorth);
+                        }
 
-                            if (!world.isBlock(wx - 1, wy, wz)) {
-                                float[] verticesWest = [
-                                    // west
-                                    xmin, ymin, zmin,
-                                    xmin, ymax, zmin,
-                                    xmin, ymin, zmax,
+                        if (!world.isBlock(wx - 1, wy, wz)) {
+                            float[] verticesWest = [
+                                // west
+                                xmin, ymin, zmin,
+                                xmin, ymax, zmin,
+                                xmin, ymin, zmax,
 
-                                    xmin, ymax, zmax,
-                                    xmin, ymin, zmax,
-                                    xmin, ymax, zmin,
-                                ];
-                                chunkVertices.AddRange(verticesWest);
-                            }
+                                xmin, ymax, zmax,
+                                xmin, ymin, zmax,
+                                xmin, ymax, zmin,
+                            ];
+                            chunkVertices.AddRange(verticesWest);
+                        }
 
-                            if (!world.isBlock(wx + 1, wy, wz)) {
-                                float[] verticesEast = [
-                                    // east
-                                    xmax, ymin, zmin,
-                                    xmax, ymax, zmin,
-                                    xmax, ymin, zmax,
+                        if (!world.isBlock(wx + 1, wy, wz)) {
+                            float[] verticesEast = [
+                                // east
+                                xmax, ymin, zmin,
+                                xmax, ymax, zmin,
+                                xmax, ymin, zmax,
 
-                                    xmax, ymax, zmax,
-                                    xmax, ymin, zmax,
-                                    xmax, ymax, zmin,
-                                ];
-                                chunkVertices.AddRange(verticesEast);
-                            }
+                                xmax, ymax, zmax,
+                                xmax, ymin, zmax,
+                                xmax, ymax, zmin,
+                            ];
+                            chunkVertices.AddRange(verticesEast);
                         }
                     }
                 }
             }
-
-            var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-            vao.upload(finalVertices);
         }
+
+        var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+        vao.upload(finalVertices);
     }
 
     public void drawChunk() {
@@ -173,6 +171,7 @@ public class Chunk {
         shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
         //shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
         vao.render();
+        GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
 
     /*public void meshBlock() {
