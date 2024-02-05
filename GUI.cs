@@ -71,6 +71,11 @@ public class GUI {
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 60), Color4b.Red);
+        if (!Game.instance.focused) {
+            var pauseText = "-PAUSED-";
+            Vector2 offset = guiFont.Measure(pauseText);
+            tb.DrawString(guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY), Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
+        }
         tb.Draw(guiTexture, new Vector2(0, Game.instance.height - 256));
         tb.End();
     }
@@ -105,7 +110,7 @@ public class GUI {
         Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, 0f, 1f);
-        //drawCrosshair();
+        drawCrosshair();
     }
 
     public void imGuiDraw() {

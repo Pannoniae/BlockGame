@@ -54,9 +54,6 @@
       <None Update="gui.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="unifont-15.1.04.otf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
       <None Update="unifont-15.1.04.ttf">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
