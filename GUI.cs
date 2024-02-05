@@ -2,8 +2,11 @@ using System.Numerics;
 using ImGuiNET;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using TrippyGL;
+using TrippyGL.Fonts.Building;
+using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
 
@@ -26,6 +29,7 @@ public class GUI {
 
     public TextureBatcher tb;
     public Texture2D guiTexture;
+    private TextureFont guiFont;
 
     public const int crosshairSize = 10;
     public const int crosshairThickness = 2;
@@ -37,6 +41,12 @@ public class GUI {
         projection = guiShader.getUniformLocation("projection");
         uColor = guiShader.getUniformLocation("uColor");
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "gui.png");
+
+        var collection = new FontCollection();
+        var family = collection.Add("unifont-15.1.04.ttf");
+        var font = family.CreateFont(12, FontStyle.Regular);
+        var ff = FontBuilderExtensions.CreateFontFile(font);
+        guiFont = ff.CreateFont(Game.instance.GD);
 
         tb = new TextureBatcher(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
@@ -57,8 +67,11 @@ public class GUI {
         Game.instance.GD.ResetBlendStates();
         Game.instance.GD.ShaderProgram = shader;
         tb.Begin(BatcherBeginMode.Immediate);
-        tb.Draw(guiTexture, new Vector2(Game.instance.centreX, Game.instance.centreY), Color4b.Red);
-        tb.Draw(guiTexture, new Vector2(0, 0), Color4b.Red);
+        tb.DrawString(guiFont, "BlockGame", Vector2.Zero, Color4b.White);
+        tb.DrawString(guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
+        tb.DrawString(guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
+        tb.DrawString(guiFont, "BlockGame", new Vector2(0, 60), Color4b.Red);
+        tb.Draw(guiTexture, new Vector2(0, Game.instance.height - 256));
         tb.End();
     }
 

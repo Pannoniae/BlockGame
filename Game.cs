@@ -79,8 +79,8 @@ public class Game {
         GL = window.CreateOpenGL();
         imgui = new ImGuiController(GL, window, input);
         GD = new GraphicsDevice(GL);
-        GD.DepthTestingEnabled = false;
-        GD.FaceCullingEnabled = false;
+        GD.BlendingEnabled = true;
+        GD.BlendState = BlendState.NonPremultiplied;
         foreach (var mouse in input.Mice) {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
