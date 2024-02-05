@@ -8,7 +8,9 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
+using TrippyGL;
 using MouseButton = Silk.NET.Input.MouseButton;
+using VertexArray = TrippyGL.VertexArray;
 
 namespace BlockGame;
 
@@ -24,6 +26,7 @@ public class Game {
 
     public IWindow window;
     public GL GL = null!;
+    public GraphicsDevice GD = null!;
     public IInputContext input = null!;
     public ImGuiController imgui = null!;
 
@@ -41,7 +44,7 @@ public class Game {
     public Vector3D<int>? targetedPos;
     public Vector3D<int>? previousPos;
 
-    private int fps;
+    public int fps;
 
     public Stopwatch stopwatch = new();
 
@@ -66,7 +69,7 @@ public class Game {
         window.Load += init;
         window.Update += update;
         window.Render += render;
-        window.Resize += resize;
+        window.FramebufferResize += resize;
         window.Closing += close;
         window.Run();
     }
@@ -75,6 +78,9 @@ public class Game {
         input = window.CreateInput();
         GL = window.CreateOpenGL();
         imgui = new ImGuiController(GL, window, input);
+        GD = new GraphicsDevice(GL);
+        GD.DepthTestingEnabled = false;
+        GD.FaceCullingEnabled = false;
         foreach (var mouse in input.Mice) {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
@@ -199,7 +205,7 @@ public class Game {
             stopwatch.Restart();
         }
 
-        targetedPos = world.getTargetedBlock(out previousPos);
+        targetedPos = world.naiveRaycastBlock(out previousPos);
 
 
         if (focused) {
@@ -232,29 +238,18 @@ public class Game {
     }
 
     private void render(double dt) {
-        GL.ClearColor(Color.DeepSkyBlue);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
-        GL.Enable(EnableCap.Blend);
-        // invert RGB, add alpha
-        //GL.BlendEquationSeparate(BlendEquationModeEXT.FuncAdd, BlendEquationModeEXT.FuncAdd);
-        //GL.BlendFuncSeparate(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha, BlendingFactor.One, BlendingFactor.Zero);
+        GD.ClearColor = Color4b.DeepSkyBlue;
+        GD.Clear(ClearBuffers.Color);
 
         //world.mesh();
         world.draw();
         if (targetedPos.HasValue) {
             world.drawBlockOutline();
         }
-
         gui.draw();
 
         imgui.Update((float)dt);
-        ImGui.Text($"{camera.position.X}, {camera.position.Y}, {camera.position.Z}");
-        ImGui.Text(targetedPos.HasValue
-            ? $"{targetedPos.Value.X}, {targetedPos.Value.Y}, {targetedPos.Value.Z} {previousPos.Value.X}, {previousPos.Value.Y}, {previousPos.Value.Z}"
-            : "No target");
-        ImGui.Text("FPS: " + fps);
-        ImGui.Text($"W:{width} H:{height}");
-        ImGui.Text($"CX:{centreX} CY:{centreY}");
+        gui.imGuiDraw();
 
         imgui.Render();
     }

@@ -20,6 +20,16 @@
       <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.20.0" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.20.0" />
       <PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
+      <PackageReference Include="SixLabors.Fonts" Version="2.0.1" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
+      <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.1" />
+      <PackageReference Include="System.Buffers" Version="4.5.1" />
+      <PackageReference Include="System.Memory" Version="4.5.5" />
+      <PackageReference Include="TrippyGL" Version="1.2.0" />
+      <PackageReference Include="TrippyGL.Fonts" Version="1.2.0" />
+      <PackageReference Include="TrippyGL.Fonts.Building" Version="1.2.0" />
+      <PackageReference Include="TrippyGL.Fonts.Extensions" Version="1.2.0" />
+      <PackageReference Include="TrippyGL.ImageSharp" Version="1.2.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -39,6 +49,9 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="gui.frag">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="gui.png">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

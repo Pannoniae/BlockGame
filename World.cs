@@ -8,7 +8,8 @@ public class World {
     private const int WORLDSIZE = 6;
     private const int WORLDHEIGHT = 3;
 
-    private const float RAYCASTSTEP = 0.2f;
+    private const float RAYCASTSTEP = 1 / 32f;
+    private const float RAYCASTDIST = 20f;
 
     public Chunk[,,] chunks;
 
@@ -133,7 +134,7 @@ public class World {
             chunkZ * Chunk.CHUNKSIZE + z);
     }
 
-    public Vector3D<int>? getTargetedBlock(out Vector3D<int>? previous) {
+    public Vector3D<int>? naiveRaycastBlock(out Vector3D<int>? previous) {
         // raycast
         var cameraPos = Game.instance.camera.position;
         var cameraForward = Game.instance.camera.forward;
@@ -143,7 +144,7 @@ public class World {
         //var blockPos = toBlockPos(currentPos);
 
         previous = toBlockPos(currentPos);
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 1 / RAYCASTSTEP * RAYCASTDIST; i++) {
             currentPos += cameraForward * RAYCASTSTEP;
             var blockPos = toBlockPos(currentPos);
             if (isBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
