@@ -81,6 +81,7 @@ public class Game {
         GD = new GraphicsDevice(GL);
         GD.BlendingEnabled = true;
         GD.BlendState = BlendState.NonPremultiplied;
+        GD.FaceCullingEnabled = false;
         foreach (var mouse in input.Mice) {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
@@ -246,10 +247,10 @@ public class Game {
         if (targetedPos.HasValue) {
             world.drawBlockOutline();
         }
-        gui.draw();
+        //gui.draw();
 
         imgui.Update((float)dt);
-        gui.imGuiDraw();
+        //gui.imGuiDraw();
 
         imgui.Render();
     }

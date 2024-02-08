@@ -3,12 +3,11 @@ using ImGuiNET;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using SixLabors.Fonts;
-using SixLabors.ImageSharp;
 using TrippyGL;
 using TrippyGL.Fonts.Building;
 using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
-using Rectangle = SixLabors.ImageSharp.Rectangle;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
@@ -27,9 +26,13 @@ public class GUI {
 
     public bool debugScreen;
 
+    public int guiScale = 4;
+
     public TextureBatcher tb;
     public Texture2D guiTexture;
     private TextureFont guiFont;
+
+    public Rectangle buttonRect = new Rectangle(0, 0, 64, 16);
 
     public const int crosshairSize = 10;
     public const int crosshairThickness = 2;
@@ -60,11 +63,7 @@ public class GUI {
         guiShader.setUniform(projection, ortho);
         guiShader.setUniform(uColor, new Vector4(0.1f, 0.1f, 0.1f, 0.1f));
         crosshair.render();
-        Game.instance.GD.ResetVertexArrayStates();
-        Game.instance.GD.ResetShaderProgramStates();
-        Game.instance.GD.ResetTextureStates();
-        Game.instance.GD.ResetBufferStates();
-        Game.instance.GD.ResetBlendStates();
+        Game.instance.GD.ResetStates();
         Game.instance.GD.ShaderProgram = shader;
         tb.Begin(BatcherBeginMode.Immediate);
         tb.DrawString(guiFont, "BlockGame", Vector2.Zero, Color4b.White);
@@ -76,7 +75,7 @@ public class GUI {
             Vector2 offset = guiFont.Measure(pauseText);
             tb.DrawString(guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY), Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
         }
-        tb.Draw(guiTexture, new Vector2(0, Game.instance.height - 256));
+        draw(tb, guiTexture, new Vector2(0, 300), buttonRect);
         tb.End();
     }
 
@@ -109,7 +108,7 @@ public class GUI {
     public void resize(Vector2D<int> size) {
         Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
-        shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, 0f, 1f);
+        shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         drawCrosshair();
     }
 
@@ -122,5 +121,15 @@ public class GUI {
         ImGui.Text("FPS: " + i.fps);
         ImGui.Text($"W:{i.width} H:{i.height}");
         ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
+    }
+
+
+    public void draw(TextureBatcher tb, Texture2D texture, Vector2 position, Rectangle? source = null, Color4b color = default, Vector2 origin = default, float depth = 0f) {
+        if (color == default) {
+            tb.Draw(texture, position, source, Color4b.White, guiScale, 0f, origin, depth);
+        }
+        else {
+            tb.Draw(texture, position, source, color, guiScale, 0f, origin, depth);
+        }
     }
 }
