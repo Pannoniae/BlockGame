@@ -9,8 +9,8 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 using TrippyGL;
+using DepthFunction = TrippyGL.DepthFunction;
 using MouseButton = Silk.NET.Input.MouseButton;
-using VertexArray = TrippyGL.VertexArray;
 
 namespace BlockGame;
 
@@ -45,6 +45,7 @@ public class Game {
     public Vector3D<int>? previousPos;
 
     public int fps;
+    public double frametime;
 
     public Stopwatch stopwatch = new();
 
@@ -59,6 +60,7 @@ public class Game {
         windowOptions.VSync = false;
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(initialWidth, initialHeight);
+        windowOptions.PreferredDepthBufferBits = 32;
         var api = GraphicsAPI.Default;
 #if DEBUG
         api.Flags = ContextFlags.Debug;
@@ -81,7 +83,12 @@ public class Game {
         GD = new GraphicsDevice(GL);
         GD.BlendingEnabled = true;
         GD.BlendState = BlendState.NonPremultiplied;
-        GD.FaceCullingEnabled = false;
+        GD.DepthTestingEnabled = true;
+        GD.DepthState = DepthState.Default;
+        GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
+        GD.FaceCullingEnabled = true;
+        GD.PolygonFrontFace = PolygonFace.CounterClockwise;
+        GD.CullFaceMode = CullingMode.CullBack;
         foreach (var mouse in input.Mice) {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
@@ -104,7 +111,7 @@ public class Game {
 
         stopwatch.Start();
 
-        camera = new Camera(Vector3.UnitY * 17, Vector3.UnitZ * -1, Vector3.UnitY, (float)initialWidth / initialHeight);
+        camera = new Camera(Vector3.UnitY * 17, Vector3.UnitZ * 1, Vector3.UnitY, (float)initialWidth / initialHeight);
         world = new World();
         gui = new GUI();
         GL.DebugMessageCallback(GLDebug, 0);
@@ -202,7 +209,8 @@ public class Game {
         //Console.Out.WriteLine($"{camera.position}, {camera.forward}, {camera.zoom}");
 
         if (stopwatch.ElapsedMilliseconds > 1000) {
-            fps = (int)(1 / dt);
+            frametime = dt;
+            fps = (int)(1 / frametime);
             stopwatch.Restart();
         }
 
@@ -228,29 +236,35 @@ public class Game {
 
             if (keyboard.IsKeyPressed(Key.A)) {
                 //Move left
-                camera.position -= Vector3.Normalize(Vector3.Cross(camera.forward, camera.up)) * moveSpeed;
+                camera.position -= Vector3.Normalize(Vector3.Cross(camera.up, camera.forward)) * moveSpeed;
             }
 
             if (keyboard.IsKeyPressed(Key.D)) {
                 //Move right
-                camera.position += Vector3.Normalize(Vector3.Cross(camera.forward, camera.up)) * moveSpeed;
+                camera.position += Vector3.Normalize(Vector3.Cross(camera.up, camera.forward)) * moveSpeed;
             }
         }
     }
 
     private void render(double dt) {
+        GD.ResetStates();
         GD.ClearColor = Color4b.DeepSkyBlue;
-        GD.Clear(ClearBuffers.Color);
+        GD.ClearDepth = 1f;
+        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+        GD.DepthTestingEnabled = true;
 
         //world.mesh();
         world.draw();
         if (targetedPos.HasValue) {
             world.drawBlockOutline();
         }
-        //gui.draw();
+
+        // for GUI, no depth test
+        GD.DepthTestingEnabled = false;
+        gui.draw();
 
         imgui.Update((float)dt);
-        //gui.imGuiDraw();
+        gui.imGuiDraw();
 
         imgui.Render();
     }

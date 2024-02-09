@@ -9,7 +9,7 @@ public class Camera {
     public Vector3 up { get; private set; }
     public float aspectRatio { get; set; }
 
-    public float yaw { get; set; } = -90f;
+    public float yaw { get; set; } = 90f;
     public float pitch { get; set; }
 
     public float zoom = 45f;
@@ -27,7 +27,7 @@ public class Camera {
     }
 
     public void ModifyDirection(float xOffset, float yOffset) {
-        yaw += xOffset;
+        yaw -= xOffset;
         pitch -= yOffset;
 
         //We don't want to be able to look behind us by going over our head or under our feet so make sure it stays within these bounds
@@ -44,11 +44,11 @@ public class Camera {
     }
 
     public Matrix4x4 getViewMatrix() {
-        return Matrix4x4.CreateLookAt(position, position + forward, up);
+        return Matrix4x4.CreateLookAtLeftHanded(position, position + forward, up);
     }
 
     public Matrix4x4 getProjectionMatrix() {
-        return Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(zoom), aspectRatio, 0.1f, 400.0f);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(DegreesToRadians(zoom), aspectRatio, 0.5f, 400.0f);
     }
 
     public static float DegreesToRadians(float degrees) {

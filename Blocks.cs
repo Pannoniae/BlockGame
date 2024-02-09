@@ -22,11 +22,11 @@ public class Block {
     public UVPair[] uvs = new UVPair[6];
 
     public static Vector2 texCoords(int x, int y) {
-        return new Vector2((float)x * 16 / atlasSize, (float)y * 16 / atlasSize);
+        return new Vector2(x * 16f / atlasSize, y * 16f / atlasSize);
     }
 
     public static Vector2 texCoords(UVPair uv) {
-        return new Vector2((float)uv.u * 16 / atlasSize, (float)uv.v * 16 / atlasSize);
+        return new Vector2(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
     }
 
     public static UVPair[] cubeUVs(int x, int y) {

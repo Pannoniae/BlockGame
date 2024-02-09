@@ -14,6 +14,8 @@ public class World {
     public Chunk[,,] chunks;
 
     public Shader outline;
+    private uint outlineVao;
+    private uint outlineCount;
 
     public World() {
         chunks = new Chunk[WORLDSIZE, WORLDHEIGHT, WORLDSIZE];
@@ -23,15 +25,29 @@ public class World {
                 for (int z = 0; z < WORLDSIZE; z++) {
                     chunks[x, y, z] = new Chunk(this, x, y, z);
                 }
-
             }
         }
+
+        // create terrain
+        genTerrain();
 
         // separate loop so all data is there
         for (int x = 0; x < WORLDSIZE; x++) {
             for (int y = 0; y < WORLDHEIGHT; y++) {
                 for (int z = 0; z < WORLDSIZE; z++) {
                     chunks[x, y, z].meshChunk();
+                }
+            }
+        }
+
+        meshBlockOutline();
+    }
+
+    private void genTerrain() {
+        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
+                for (int y = 0; y < 1; y++) {
+                    setBlock(x, y, z, 1, false);
                 }
             }
         }
@@ -91,7 +107,7 @@ public class World {
             (int)MathF.Floor(y / (float)Chunk.CHUNKSIZE),
             (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
     }
-    
+
     private Vector3D<int> getBlockPos(int x, int y, int z) {
         return new Vector3D<int>(
             x % Chunk.CHUNKSIZE,
@@ -151,6 +167,7 @@ public class World {
                 //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
                 return blockPos;
             }
+
             previous = blockPos;
         }
 
@@ -158,23 +175,23 @@ public class World {
     }
 
     private Vector3D<int> toBlockPos(Vector3 currentPos) {
-        return new Vector3D<int>((int)MathF.Round(currentPos.X), (int)MathF.Round(currentPos.Y), (int)MathF.Round(currentPos.Z));
+        return new Vector3D<int>((int)MathF.Round(currentPos.X), (int)MathF.Round(currentPos.Y),
+            (int)MathF.Round(currentPos.Z));
     }
 
-    public void drawBlockOutline() {
+    public void meshBlockOutline() {
         unsafe {
             var GL = Game.instance.GL;
-            const float OFFSET = 0.001f;
-            var block = Game.instance.targetedPos!.Value;
-            var minX = block.X - 0.5f - OFFSET;
-            var minY = block.Y - 0.5f - OFFSET;
-            var minZ = block.Z - 0.5f - OFFSET;
-            var maxX = block.X + 0.5f + OFFSET;
-            var maxY = block.Y + 0.5f + OFFSET;
-            var maxZ = block.Z + 0.5f + OFFSET;
+            const float OFFSET = 0.005f;
+            var minX = 0 - 0.5f - OFFSET;
+            var minY = 0 - 0.5f - OFFSET;
+            var minZ = 0 - 0.5f - OFFSET;
+            var maxX = 0 + 0.5f + OFFSET;
+            var maxY = 0 + 0.5f + OFFSET;
+            var maxZ = 0 + 0.5f + OFFSET;
 
-            var vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
+            outlineVao = GL.GenVertexArray();
+            GL.BindVertexArray(outlineVao);
 
 
             float[] vertices = [
@@ -206,8 +223,7 @@ public class World {
                 minX, minY, maxZ,
                 minX, maxY, maxZ,
                 maxX, minY, maxZ,
-                maxX, maxY, maxZ,
-
+                maxX, maxY, maxZ
             ];
             var vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
@@ -215,14 +231,21 @@ public class World {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Length * sizeof(float)), data,
                     BufferUsageARB.StreamDraw);
             }
-            var count = (uint)vertices.Length;
+
+            outlineCount = (uint)vertices.Length / 3;
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
-            outline.use();
-            outline.setUniform("uModel", Matrix4x4.Identity);
-            outline.setUniform("uView", Game.instance.camera.getViewMatrix());
-            outline.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
-            GL.DrawArrays(PrimitiveType.Lines, 0, count);
         }
+    }
+
+    public void drawBlockOutline() {
+        var GL = Game.instance.GL;
+        var block = Game.instance.targetedPos!.Value;
+        GL.BindVertexArray(outlineVao);
+        outline.use();
+        outline.setUniform("uModel", Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
+        outline.setUniform("uView", Game.instance.camera.getViewMatrix());
+        outline.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
+        GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 }
