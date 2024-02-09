@@ -1,8 +1,6 @@
 using System.Diagnostics;
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -15,6 +13,7 @@ using MouseButton = Silk.NET.Input.MouseButton;
 namespace BlockGame;
 
 public class Game {
+
     public static Game instance { get; private set; }
 
     public const int initialWidth = 1200;
@@ -29,6 +28,8 @@ public class Game {
     public GraphicsDevice GD = null!;
     public IInputContext input = null!;
     public ImGuiController imgui = null!;
+
+    public Process proc;
 
     public float centreX => width / 2f;
     public float centreY => height / 2f;
@@ -80,6 +81,7 @@ public class Game {
         input = window.CreateInput();
         GL = window.CreateOpenGL();
         imgui = new ImGuiController(GL, window, input);
+        proc = Process.GetCurrentProcess();
         GD = new GraphicsDevice(GL);
         GD.BlendingEnabled = true;
         GD.BlendState = BlendState.NonPremultiplied;
@@ -114,6 +116,7 @@ public class Game {
         camera = new Camera(Vector3.UnitY * 17, Vector3.UnitZ * 1, Vector3.UnitY, (float)initialWidth / initialHeight);
         world = new World();
         gui = new GUI();
+        GC.Collect(2, GCCollectionMode.Aggressive, true, true);
         GL.DebugMessageCallback(GLDebug, 0);
     }
 
@@ -186,6 +189,10 @@ public class Game {
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {
             unlockMouse();
+        }
+
+        if (key == Key.F3) {
+            gui.debugScreen = !gui.debugScreen;
         }
     }
 
@@ -262,11 +269,11 @@ public class Game {
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
         gui.draw();
-
-        imgui.Update((float)dt);
-        gui.imGuiDraw();
-
-        imgui.Render();
+        if (gui.debugScreen) {
+            imgui.Update((float)dt);
+            gui.imGuiDraw();
+            imgui.Render();
+        }
     }
 
     private void close() {

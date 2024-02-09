@@ -1,19 +1,19 @@
 using System.Numerics;
 using ImGuiNET;
-using Silk.NET.GLFW;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using SixLabors.Fonts;
 using TrippyGL;
+using TrippyGL.Fonts;
 using TrippyGL.Fonts.Building;
 using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
 using Rectangle = System.Drawing.Rectangle;
+using VertexArray = TrippyGL.VertexArray;
 
 namespace BlockGame;
 
 public class GUI {
-
     public Matrix4x4 ortho;
 
     public GL GL;
@@ -25,11 +25,11 @@ public class GUI {
     public int projection;
     public int uColor;
 
-    public bool debugScreen;
+    public bool debugScreen = true;
 
     public int guiScale = 4;
 
-    public TextureBatcher tb;
+    public TextureBatch tb;
     public Texture2D guiTexture;
     private TextureFont guiFont;
 
@@ -38,25 +38,35 @@ public class GUI {
     public const int crosshairSize = 10;
     public const int crosshairThickness = 2;
 
+    public const string fontFile = "guifont.fnt";
+
+    private const long MEGABYTES = 1 * 1024 * 1024;
+
     public GUI() {
         GL = Game.instance.GL;
         crosshair = new FloatVAO();
-        guiShader = new Shader(Game.instance.GL,"gui.vert", "gui.frag");
+        guiShader = new Shader(Game.instance.GL, "gui.vert", "gui.frag");
         projection = guiShader.getUniformLocation("projection");
         uColor = guiShader.getUniformLocation("uColor");
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "gui.png");
 
-        var collection = new FontCollection();
-        var family = collection.Add("unifont-15.1.04.ttf");
-        var font = family.CreateFont(12, FontStyle.Regular);
-        var ff = FontBuilderExtensions.CreateFontFile(font);
-        guiFont = ff.CreateFont(Game.instance.GD);
+        if (!File.Exists(fontFile)) {
+            var collection = new FontCollection();
+            var family = collection.Add("unifont-15.1.04.ttf");
+            var font = family.CreateFont(12, FontStyle.Regular);
+            using var ff = FontBuilderExtensions.CreateFontFile(font);
+            guiFont = ff.CreateFont(Game.instance.GD);
+            ff.WriteToFile(fontFile);
+        }
+        else {
+            using var ff = TrippyFontFile.FromFile(fontFile);
+            guiFont = ff.CreateFont(Game.instance.GD);
+        }
 
-        tb = new TextureBatcher(Game.instance.GD);
+        tb = new TextureBatch(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
         tb.SetShaderProgram(shader);
         resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
-
     }
 
     public void draw() {
@@ -67,7 +77,7 @@ public class GUI {
         crosshair.render();
         Game.instance.GD.ResetStates();
         Game.instance.GD.ShaderProgram = shader;
-        tb.Begin(BatcherBeginMode.Immediate);
+        tb.Begin(0);
         tb.DrawString(guiFont, "BlockGame", Vector2.Zero, Color4b.White);
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
@@ -75,8 +85,10 @@ public class GUI {
         if (!Game.instance.focused) {
             var pauseText = "-PAUSED-";
             Vector2 offset = guiFont.Measure(pauseText);
-            tb.DrawString(guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY), Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
+            tb.DrawString(guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY),
+                Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
         }
+
         draw(tb, guiTexture, new Vector2(0, 300), buttonRect);
         tb.End();
     }
@@ -112,6 +124,7 @@ public class GUI {
         ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         drawCrosshair();
+
     }
 
     public void imGuiDraw() {
@@ -123,10 +136,13 @@ public class GUI {
         ImGui.Text($"FPS: {i.fps} (ft:{i.frametime * 1000:0.##}ms)");
         ImGui.Text($"W:{i.width} H:{i.height}");
         ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
+        ImGui.Text(
+            $"M:{Game.instance.proc.PrivateMemorySize64 / MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / MEGABYTES:0.###})");
     }
 
 
-    public void draw(TextureBatcher tb, Texture2D texture, Vector2 position, Rectangle? source = null, Color4b color = default, Vector2 origin = default, float depth = 0f) {
+    public void draw(TextureBatch tb, Texture2D texture, Vector2 position, Rectangle? source = null,
+        Color4b color = default, Vector2 origin = default, float depth = 0f) {
         if (color == default) {
             tb.Draw(texture, position, source, Color4b.White, guiScale, 0f, origin, depth);
         }

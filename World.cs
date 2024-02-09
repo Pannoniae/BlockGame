@@ -16,6 +16,9 @@ public class World {
     public Shader outline;
     private uint outlineVao;
     private uint outlineCount;
+    private int outline_uModel;
+    private int outline_uView;
+    private int outline_uProjection;
 
     public World() {
         chunks = new Chunk[WORLDSIZE, WORLDHEIGHT, WORLDSIZE];
@@ -46,7 +49,7 @@ public class World {
     private void genTerrain() {
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
-                for (int y = 0; y < 1; y++) {
+                for (int y = 0; y < 3; y++) {
                     setBlock(x, y, z, 1, false);
                 }
             }
@@ -235,6 +238,10 @@ public class World {
             outlineCount = (uint)vertices.Length / 3;
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
+
+            outline_uModel = outline.getUniformLocation("uModel");
+            outline_uView = outline.getUniformLocation("uView");
+            outline_uProjection = outline.getUniformLocation("uProjection");
         }
     }
 
@@ -243,9 +250,9 @@ public class World {
         var block = Game.instance.targetedPos!.Value;
         GL.BindVertexArray(outlineVao);
         outline.use();
-        outline.setUniform("uModel", Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
-        outline.setUniform("uView", Game.instance.camera.getViewMatrix());
-        outline.setUniform("uProjection", Game.instance.camera.getProjectionMatrix());
+        outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
+        outline.setUniform(outline_uView, Game.instance.camera.getViewMatrix());
+        outline.setUniform(outline_uProjection, Game.instance.camera.getProjectionMatrix());
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 }
