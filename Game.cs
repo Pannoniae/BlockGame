@@ -218,6 +218,7 @@ public class Game {
         if (stopwatch.ElapsedMilliseconds > 1000) {
             frametime = dt;
             fps = (int)(1 / frametime);
+            window.Title = "BlockGame " + fps;
             stopwatch.Restart();
         }
 
