@@ -40,8 +40,8 @@ public class Player {
         forward = new Vector3D<double>(camera.forward.X, 0, camera.forward.Z);
     }
 
-    private void collision(Vector3D<double> newPos) {
-
+    private Vector3D<double> collision(Vector3D<double> newPos) {
+        return newPos;
     }
 
     public void updateInput(double dt) {
@@ -88,8 +88,8 @@ public class Player {
 
             Vector3D<double> moveVector = strafeVector.Y * forward +
                                  strafeVector.X * Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward));
-            Console.Out.WriteLine(moveVector);
 
+            //moveVector.Z = 0;
             velocity += moveVector;
         }
 

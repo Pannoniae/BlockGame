@@ -25,4 +25,13 @@ public class AABB {
         maxY = min.Y + size.Y;
         maxZ = min.Z + size.Z;
     }
+
+    public static bool isCollision(AABB box1, AABB box2) {
+        return box1.maxX > box2.minX &&
+               box1.minX < box2.maxX &&
+               box1.maxY > box2.minY &&
+               box1.minY < box2.maxY &&
+               box1.maxZ > box2.minZ &&
+               box1.minZ < box2.maxZ;
+    }
 }

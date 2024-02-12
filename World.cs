@@ -23,7 +23,7 @@ public class World {
     private int outline_uProjection;
 
     public World() {
-        player = new Player(0, 4, 0);
+        player = new Player(0, 5, 0);
 
         chunks = new Chunk[WORLDSIZE, WORLDHEIGHT, WORLDSIZE];
         outline = new Shader(Game.instance.GL, "outline.vert", "outline.frag");
@@ -59,8 +59,14 @@ public class World {
             }
         }
 
-
-        setBlock(0, 3, 0, 2, false);
+        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
+                for (int y = 3; y < 4; y++) {
+                    setBlock(x, y, z, 2);
+                }
+            }
+        }
+        //setBlock(0, 3, 0, 2, false);
     }
 
     public bool isBlock(int x, int y, int z) {
@@ -94,6 +100,44 @@ public class World {
 
         if (remesh) {
             chunk.meshChunk();
+
+            var chunkPos = getChunkPos(x, y, z);
+            if (blockPos.X == 0) {
+                var newChunkPos = new Vector3D<int>(chunkPos.X - 1, chunkPos.Y, chunkPos.Z);
+                if (isChunkInWorld(newChunkPos.X, newChunkPos.Y, newChunkPos.Z)) {
+                    getChunk(newChunkPos).meshChunk();
+                }
+            }
+            if (blockPos.X == 15) {
+                var newChunkPos = new Vector3D<int>(chunkPos.X + 1, chunkPos.Y, chunkPos.Z);
+                if (isChunkInWorld(newChunkPos.X, newChunkPos.Y, newChunkPos.Z)) {
+                    getChunk(newChunkPos).meshChunk();
+                }
+            }
+            if (blockPos.Y == 0) {
+                var newChunkPos = new Vector3D<int>(chunkPos.X, chunkPos.Y - 1, chunkPos.Z);
+                if (isChunkInWorld(newChunkPos.X, newChunkPos.Y, newChunkPos.Z)) {
+                    getChunk(newChunkPos).meshChunk();
+                }
+            }
+            if (blockPos.Y == 15) {
+                var newChunkPos = new Vector3D<int>(chunkPos.X, chunkPos.Y + 1, chunkPos.Z);
+                if (isChunkInWorld(newChunkPos.X, newChunkPos.Y, newChunkPos.Z)) {
+                    getChunk(newChunkPos).meshChunk();
+                }
+            }
+            if (blockPos.Z == 0) {
+                var newChunkPos = new Vector3D<int>(chunkPos.X, chunkPos.Y, chunkPos.Z - 1);
+                if (isChunkInWorld(newChunkPos.X, newChunkPos.Y, newChunkPos.Z)) {
+                    getChunk(newChunkPos).meshChunk();
+                }
+            }
+            if (blockPos.Z == 15) {
+                var newChunkPos = new Vector3D<int>(chunkPos.X, chunkPos.Y, chunkPos.Z + 1);
+                if (isChunkInWorld(newChunkPos.X, newChunkPos.Y, newChunkPos.Z)) {
+                    getChunk(newChunkPos).meshChunk();
+                }
+            }
         }
     }
 
@@ -130,6 +174,10 @@ public class World {
             pos.X % Chunk.CHUNKSIZE,
             pos.Y % Chunk.CHUNKSIZE,
             pos.Z % Chunk.CHUNKSIZE);
+    }
+
+    private bool isChunkInWorld(int x, int y, int z) {
+        return x >= 0 && x < WORLDSIZE && y >= 0 && y < WORLDHEIGHT && z >= 0 && z < WORLDSIZE;
     }
 
     private Chunk getChunk(int x, int y, int z) {
