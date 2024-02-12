@@ -318,18 +318,3 @@ public class Chunk {
         }
     }*/
 }
-
-/// <summary>
-/// North = +Z
-/// South = -Z
-/// West = -X
-/// East = +X
-/// </summary>
-public enum Direction {
-    WEST,
-    EAST,
-    SOUTH,
-    NORTH,
-    DOWN,
-    UP,
-}

@@ -31,7 +31,7 @@ public class Camera {
         pitch -= yOffset;
 
         //We don't want to be able to look behind us by going over our head or under our feet so make sure it stays within these bounds
-        pitch = Math.Clamp(pitch, -89f, 89f);
+        pitch = Math.Clamp(pitch, -88f, 88f);
 
         var cameraDirection = Vector3.Zero;
         cameraDirection.X = MathF.Cos(DegreesToRadians(yaw)) *
@@ -41,6 +41,19 @@ public class Camera {
                             MathF.Cos(DegreesToRadians(pitch));
 
         forward = Vector3.Normalize(cameraDirection);
+    }
+
+    public Vector3 CalculateForwardVector() {
+        var p = 0;
+
+        var cameraDirection = Vector3.Zero;
+        cameraDirection.X = MathF.Cos(DegreesToRadians(yaw)) *
+                            MathF.Cos(DegreesToRadians(p));
+        cameraDirection.Y = MathF.Sin(DegreesToRadians(p));
+        cameraDirection.Z = MathF.Sin(DegreesToRadians(yaw)) *
+                            MathF.Cos(DegreesToRadians(p));
+
+        return Vector3.Normalize(cameraDirection);
     }
 
     public Matrix4x4 getViewMatrix() {

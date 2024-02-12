@@ -37,7 +37,8 @@ public class Player {
         //position += velocity;
 
         camera.position = new Vector3((float)position.X, (float)position.Y, (float)position.Z);
-        forward = new Vector3D<double>(camera.forward.X, 0, camera.forward.Z);
+        var f = camera.CalculateForwardVector();
+        forward = new Vector3D<double>(f.X, f.Y, f.Z);
     }
 
     private Vector3D<double> collision(Vector3D<double> newPos) {

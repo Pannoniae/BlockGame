@@ -129,7 +129,7 @@ public class GUI {
 
     public void imGuiDraw() {
         var i = Game.instance;
-        ImGui.Text($"{i.world.player.position.X}, {i.world.player.position.Y}, {i.world.player.position.Z}");
+        ImGui.Text($"{i.world.player.position.X:0.###}, {i.world.player.position.Y:0.###}, {i.world.player.position.Z:0.###}");
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
             : "No target");
@@ -137,7 +137,7 @@ public class GUI {
         ImGui.Text($"W:{i.width} H:{i.height}");
         ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
         ImGui.Text(
-            $"M:{Game.instance.proc.PrivateMemorySize64 / MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / MEGABYTES:0.###})");
+            $"M:{Game.instance.proc.PrivateMemorySize64  / MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / MEGABYTES:0.###})");
     }
 
 

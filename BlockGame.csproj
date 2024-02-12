@@ -16,9 +16,18 @@
       <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.20.0" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.20.0" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Extensions.INTEL" Version="2.20.0" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.KHR" Version="2.20.0" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.20.0" />
       <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.INTEL" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.20.0" />
+      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.20.0" />
       <PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
       <PackageReference Include="SixLabors.Fonts" Version="2.0.1" />
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
