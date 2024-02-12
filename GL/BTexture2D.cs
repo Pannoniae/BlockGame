@@ -22,6 +22,7 @@ public class BTexture2D : IDisposable {
             GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)image.Width, (uint)image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
             Memory<Rgba32> memory;
             if (image.DangerousTryGetSinglePixelMemory(out memory)) {
+                Console.Out.WriteLine("Loading textures the proper way!");
                 fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {
                     GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
                         PixelFormat.Rgba, PixelType.UnsignedByte, (void*)pixels);

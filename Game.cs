@@ -34,8 +34,6 @@ public class Game {
     public float centreX => width / 2f;
     public float centreY => height / 2f;
 
-    public Camera camera;
-
     public GUI gui;
 
     public IMouse mouse;
@@ -54,6 +52,8 @@ public class Game {
     public bool firstFrame;
 
     public World world;
+
+    public BTexture2D blockTexture;
 
     public Game() {
         instance = this;
@@ -113,7 +113,8 @@ public class Game {
 
         stopwatch.Start();
 
-        camera = new Camera(Vector3.UnitY * 17, Vector3.UnitZ * 1, Vector3.UnitY, (float)initialWidth / initialHeight);
+        blockTexture = new BTexture2D("blocks.png");
+
         world = new World();
         gui = new GUI();
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
@@ -144,7 +145,7 @@ public class Game {
                 var yOffset = (position.Y - lastMousePos.Y) * lookSensitivity;
                 lastMousePos = position;
 
-                camera.ModifyDirection(xOffset, yOffset);
+                world.player.camera.ModifyDirection(xOffset, yOffset);
             }
         }
 
@@ -203,7 +204,7 @@ public class Game {
         GL.Viewport(size);
         width = size.X;
         height = size.Y;
-        camera.aspectRatio = (float)width / height;
+        world.player.camera.aspectRatio = (float)width / height;
         gui.resize(size);
     }
 
@@ -226,32 +227,10 @@ public class Game {
 
 
         if (focused) {
-            var moveSpeed = 4f * (float)dt;
-
-            if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
-                moveSpeed *= 5;
-            }
-
-            if (keyboard.IsKeyPressed(Key.W)) {
-                //Move forwards
-                camera.position += moveSpeed * camera.forward;
-            }
-
-            if (keyboard.IsKeyPressed(Key.S)) {
-                //Move backwards
-                camera.position -= moveSpeed * camera.forward;
-            }
-
-            if (keyboard.IsKeyPressed(Key.A)) {
-                //Move left
-                camera.position -= Vector3.Normalize(Vector3.Cross(camera.up, camera.forward)) * moveSpeed;
-            }
-
-            if (keyboard.IsKeyPressed(Key.D)) {
-                //Move right
-                camera.position += Vector3.Normalize(Vector3.Cross(camera.up, camera.forward)) * moveSpeed;
-            }
+            world.player.updateInput(dt);
         }
+
+        world.player.update();
     }
 
     private void render(double dt) {

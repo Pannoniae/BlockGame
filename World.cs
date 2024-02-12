@@ -13,6 +13,8 @@ public class World {
 
     public Chunk[,,] chunks;
 
+    public Player player;
+
     public Shader outline;
     private uint outlineVao;
     private uint outlineCount;
@@ -21,6 +23,8 @@ public class World {
     private int outline_uProjection;
 
     public World() {
+        player = new Player(0, 4, 0);
+
         chunks = new Chunk[WORLDSIZE, WORLDHEIGHT, WORLDSIZE];
         outline = new Shader(Game.instance.GL, "outline.vert", "outline.frag");
         for (int x = 0; x < WORLDSIZE; x++) {
@@ -54,6 +58,9 @@ public class World {
                 }
             }
         }
+
+
+        setBlock(0, 3, 0, 2, false);
     }
 
     public bool isBlock(int x, int y, int z) {
@@ -155,8 +162,8 @@ public class World {
 
     public Vector3D<int>? naiveRaycastBlock(out Vector3D<int>? previous) {
         // raycast
-        var cameraPos = Game.instance.camera.position;
-        var cameraForward = Game.instance.camera.forward;
+        var cameraPos = player.camera.position;
+        var cameraForward = player.camera.forward;
         var currentPos = new Vector3(cameraPos.X, cameraPos.Y, cameraPos.Z);
 
         // don't round!!
@@ -251,8 +258,8 @@ public class World {
         GL.BindVertexArray(outlineVao);
         outline.use();
         outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
-        outline.setUniform(outline_uView, Game.instance.camera.getViewMatrix());
-        outline.setUniform(outline_uProjection, Game.instance.camera.getProjectionMatrix());
+        outline.setUniform(outline_uView, player.camera.getViewMatrix());
+        outline.setUniform(outline_uProjection, player.camera.getProjectionMatrix());
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 }

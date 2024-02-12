@@ -14,6 +14,7 @@ public class Blocks {
     }
 
     public static Block GRASS = register(1, new Block(Block.grassUVs(0, 0, 1, 0, 2, 0)));
+    public static Block HEAD = register(2, new Block(Block.cubeUVs(3, 0)));
 }
 
 public class Block {

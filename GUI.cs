@@ -129,7 +129,7 @@ public class GUI {
 
     public void imGuiDraw() {
         var i = Game.instance;
-        ImGui.Text($"{i.camera.position.X}, {i.camera.position.Y}, {i.camera.position.Z}");
+        ImGui.Text($"{i.world.player.position.X}, {i.world.player.position.Y}, {i.world.player.position.Z}");
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
             : "No target");

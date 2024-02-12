@@ -54,7 +54,7 @@ public class Chunk {
     public void meshChunk() {
         vao = new BlockVAO();
 
-        List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6 * 5);
+        List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int y = 0; y < CHUNKSIZE; y++) {
                 for (int z = 0; z < CHUNKSIZE; z++) {
@@ -63,6 +63,7 @@ public class Chunk {
                         int wx = wpos.X;
                         int wy = wpos.Y;
                         int wz = wpos.Z;
+
 
                         Block b = Blocks.get(world.getBlock(wx, wy, wz));
 
@@ -220,8 +221,8 @@ public class Chunk {
         shader.use();
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
-        shader.setUniform(uView, Game.instance.camera.getViewMatrix());
-        shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
+        shader.setUniform(uView, world.player.camera.getViewMatrix());
+        shader.setUniform(uProjection, world.player.camera.getProjectionMatrix());
         shader.setUniform(blockTexture, 0);
         vao.render();
         GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);

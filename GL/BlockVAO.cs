@@ -17,7 +17,7 @@ public class BlockVAO {
         GL = Game.instance.GL;
         handle = GL.GenVertexArray();
         GL.BindVertexArray(handle);
-        blockTexture = new BTexture2D("blocks.png");
+        blockTexture = Game.instance.blockTexture;
     }
 
     public void upload(float[] data) {
