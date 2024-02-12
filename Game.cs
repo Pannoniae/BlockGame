@@ -163,7 +163,7 @@ public class Game {
             else if (button == MouseButton.Right) {
                 if (previousPos.HasValue) {
                     var pos = previousPos.Value;
-                    world.setBlock(pos.X, pos.Y, pos.Z, 1);
+                    world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
                 }
             }
         }
@@ -195,6 +195,8 @@ public class Game {
         if (key == Key.F3) {
             gui.debugScreen = !gui.debugScreen;
         }
+
+        world.player.updatePickBlock(keyboard, key, scancode);
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {

@@ -5,6 +5,11 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public class Player {
+
+    public const double maxSpeed = 4;
+    public const double friction = 0.05;
+    public const double epsilon = 0.001;
+
     public Camera camera;
 
     public AABB aabb;
@@ -15,9 +20,7 @@ public class Player {
 
     public Vector3D<double> forward;
 
-    public const double maxSpeed = 4;
-    public const double friction = 0.05;
-    public const double epsilon = 0.001;
+    public int pickBlock;
 
 
     public Player(int x, int y, int z) {
@@ -28,6 +31,8 @@ public class Player {
         var sizehalf = 0.25;
         var height = 1.75;
         aabb = new AABB(new Vector3D<double>(x - sizehalf, y, z - sizehalf), new Vector3D<double>(size, height, size));
+
+        pickBlock = 1;
     }
 
 
@@ -45,7 +50,14 @@ public class Player {
         return newPos;
     }
 
+    public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
+        if (key >= Key.Number0 && key <= Key.Number9) {
+            pickBlock = key - Key.Number0;
+        }
+    }
+
     public void updateInput(double dt) {
+
         var pressedMovementKey = false;
 
         var keyboard = Game.instance.keyboard;
