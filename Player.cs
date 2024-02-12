@@ -39,7 +39,6 @@ public class Player {
     public void update() {
 
         position = collision(position + velocity);
-        //position += velocity;
 
         camera.position = new Vector3((float)position.X, (float)position.Y, (float)position.Z);
         var f = camera.CalculateForwardVector();
