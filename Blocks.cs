@@ -1,4 +1,5 @@
 using System.Numerics;
+using Silk.NET.Maths;
 
 namespace BlockGame;
 
@@ -22,6 +23,7 @@ public class Block {
     public static readonly int atlasSize = 256;
 
     public UVPair[] uvs = new UVPair[6];
+    public AABB aabb;
 
     public static Vector2 texCoords(int x, int y) {
         return new Vector2(x * 16f / atlasSize, y * 16f / atlasSize);
@@ -42,10 +44,16 @@ public class Block {
         ];
     }
 
-    public Block(UVPair[] uvs) {
+    public static AABB fullBlock() {
+        return new AABB(new Vector3D<double>(-0.5, -0.5, -0.5), new Vector3D<double>(0.5, 0.5, 0.5));
+    }
+
+    public Block(UVPair[] uvs, AABB? aabb = null) {
         for (int i = 0; i < 6; i++) {
             this.uvs[i] = uvs[i];
         }
+
+        this.aabb = aabb ?? fullBlock();
     }
 }
 

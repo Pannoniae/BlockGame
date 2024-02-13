@@ -16,14 +16,8 @@ public class AABB {
         maxZ = max.Z;
     }
 
-    public AABB(Vector3D<int> min, Vector3D<double> size) {
-        minX = min.X;
-        minY = min.Y;
-        minZ = min.Z;
-
-        maxX = min.X + size.X;
-        maxY = min.Y + size.Y;
-        maxZ = min.Z + size.Z;
+    public static AABB fromSize(Vector3D<double> min, Vector3D<double> size) {
+        return new AABB(min, min + size);
     }
 
     public static bool isCollision(AABB box1, AABB box2) {
@@ -33,5 +27,9 @@ public class AABB {
                box1.minY < box2.maxY &&
                box1.maxZ > box2.minZ &&
                box1.minZ < box2.maxZ;
+    }
+
+    public override string ToString() {
+        return $"{minX}, {minY}, {minZ}, {maxX}, {maxY}, {maxZ}";
     }
 }

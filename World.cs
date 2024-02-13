@@ -23,7 +23,7 @@ public class World {
     private int outline_uProjection;
 
     public World() {
-        player = new Player(0, 6, 0);
+        player = new Player(this, 0, 4, 0);
 
         chunks = new Chunk[WORLDSIZE, WORLDHEIGHT, WORLDSIZE];
         outline = new Shader(Game.instance.GL, "outline.vert", "outline.frag");
@@ -94,6 +94,20 @@ public class World {
         var blockPos = getBlockPos(x, y, z);
         var chunk = getChunk(x, y, z);
         return chunk.block[blockPos.X, blockPos.Y, blockPos.Z];
+    }
+
+    public int getBlock(Vector3D<int> pos) {
+        return getBlock(pos.X, pos.Y, pos.Z);
+    }
+
+    public AABB? getAABB(int x, int y, int z, int id) {
+        if (id == 0) {
+            return null;
+        }
+        var block = Blocks.get(id);
+        var aabb = block.aabb;
+        return new AABB(new Vector3D<double>(x + aabb.minX, y + aabb.minY, z + aabb.minZ),
+            new Vector3D<double>(x + aabb.maxX, y + aabb.maxY, z + aabb.maxZ));
     }
 
     public void setBlock(int x, int y, int z, int block, bool remesh = true) {
@@ -197,8 +211,9 @@ public class World {
     public Vector3D<int>? naiveRaycastBlock(out Vector3D<int>? previous) {
         // raycast
         var cameraPos = player.camera.position;
-        var cameraForward = player.camera.forward;
-        var currentPos = new Vector3(cameraPos.X, cameraPos.Y, cameraPos.Z);
+        var forward = player.camera.forward;
+        var cameraForward = new Vector3D<double>(forward.X, forward.Y, forward.Z);
+        var currentPos = new Vector3D<double>(cameraPos.X, cameraPos.Y, cameraPos.Z);
 
         // don't round!!
         //var blockPos = toBlockPos(currentPos);
@@ -218,9 +233,9 @@ public class World {
         return null;
     }
 
-    private Vector3D<int> toBlockPos(Vector3 currentPos) {
-        return new Vector3D<int>((int)MathF.Round(currentPos.X), (int)MathF.Round(currentPos.Y),
-            (int)MathF.Round(currentPos.Z));
+    public Vector3D<int> toBlockPos(Vector3D<double> currentPos) {
+        return new Vector3D<int>((int)Math.Round(currentPos.X), (int)Math.Round(currentPos.Y),
+            (int)Math.Round(currentPos.Z));
     }
 
     public void meshBlockOutline() {
