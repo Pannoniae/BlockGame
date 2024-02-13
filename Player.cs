@@ -9,6 +9,7 @@ public class Player {
     public const double maxSpeed = 4;
     public const double friction = 0.05;
     public const double epsilon = 0.001;
+    public const double playerHeight = 1.75;
 
     public Camera camera;
 
@@ -21,18 +22,18 @@ public class Player {
     public Vector3D<double> forward;
 
     public int pickBlock;
+    public World world;
 
 
-    public Player(int x, int y, int z) {
+    // positions are feet positions
+    public Player(World world, int x, int y, int z) {
         position = new Vector3D<double>(x, y, z);
-        camera = new Camera(new Vector3(x, y, z), Vector3.UnitZ * 1, Vector3.UnitY,
+        camera = new Camera(new Vector3(x, (float)(y + playerHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
             (float)Game.initialWidth / Game.initialHeight);
-        var size = 0.5;
-        var sizehalf = 0.25;
-        var height = 1.75;
-        aabb = new AABB(new Vector3D<double>(x - sizehalf, y, z - sizehalf), new Vector3D<double>(size, height, size));
 
+        this.world = world;
         pickBlock = 1;
+        calcAABB();
     }
 
 
@@ -40,12 +41,37 @@ public class Player {
 
         position = collision(position + velocity);
 
-        camera.position = new Vector3((float)position.X, (float)position.Y, (float)position.Z);
+        camera.position = new Vector3((float)position.X, (float)(position.Y + playerHeight), (float)position.Z);
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
+        calcAABB();
+    }
+
+    private void calcAABB() {
+        var size = 0.5;
+        var sizehalf = 0.25;
+        var height = 1.75;
+        aabb = AABB.fromSize(new Vector3D<double>(position.X - sizehalf, position.Y, position.Z - sizehalf), new Vector3D<double>(size, height, size));
     }
 
     private Vector3D<double> collision(Vector3D<double> newPos) {
+        var blockPos = world.toBlockPos(newPos);
+        // get neighbours
+        foreach (Vector3D<int> target in (Vector3D<int>[])[blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)]) {
+            foreach (var direction in Direction.directions) {
+                var neighbour = target + direction;
+                var block = world.getBlock(neighbour);
+                var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
+                if (blockAABB == null) {
+                    continue;
+                }
+
+
+                var collide = AABB.isCollision(aabb, blockAABB);
+                //Console.Out.WriteLine(collide);
+            }
+        }
+
         return newPos;
     }
 
