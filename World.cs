@@ -333,4 +333,17 @@ public class World {
         outline.setUniform(outline_uProjection, player.camera.getProjectionMatrix());
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
+
+    public List<Vector3D<int>> getBlocksInBox(Vector3D<int> min, Vector3D<int> max) {
+        var l = new List<Vector3D<int>>();
+        for (int x = min.X; x <= max.X; x++) {
+            for (int y = min.Y; y <= max.Y; y++) {
+                for (int z = min.Z; z <= max.Z; z++) {
+                    l.Add(new Vector3D<int>(x, y, z));
+                }
+            }
+        }
+
+        return l;
+    }
 }
