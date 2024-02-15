@@ -66,8 +66,16 @@ public class World {
     private void genTerrain() {
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
-                for (int y = 0; y < 3; y++) {
+                for (int y = 0; y < 2; y++) {
                     setBlock(x, y, z, 1, false);
+                }
+            }
+        }
+        
+        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
+                for (int y = 2; y < 3; y++) {
+                    setBlock(x, y, z, 3, false);
                 }
             }
         }
