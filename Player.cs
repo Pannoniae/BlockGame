@@ -11,7 +11,7 @@ public class Player {
     public const double maxhSpeed = 2.5;
     public const double maxhAirSpeed = 2.5;
     public const double jumpSpeed = 6;
-    public const double maxVSpeed = 200;
+    public const double maxVSpeed = 0.2;
     public const double friction = 0.55;
     public const double airFriction = 0.98;
     public const double epsilon = 0.0001;

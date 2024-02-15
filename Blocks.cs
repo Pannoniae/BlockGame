@@ -15,10 +15,11 @@ public class Blocks {
     }
 
     public static Block GRASS = register(1, new Block(Block.grassUVs(0, 0, 1, 0, 2, 0)));
-    public static Block GRAVEL = register(2, new Block(Block.cubeUVs(3, 0)));
-    public static Block BASALT = register(3, new Block(Block.cubeUVs(4, 0)));
-    public static Block STONE = register(4, new Block(Block.cubeUVs(5, 0)));
-    public static Block GOLD = register(5, new Block(Block.cubeUVs(6, 0)));
+    public static Block DIRT = register(2, new Block(Block.cubeUVs(2, 0)));
+    public static Block GRAVEL = register(3, new Block(Block.cubeUVs(3, 0)));
+    public static Block BASALT = register(4, new Block(Block.cubeUVs(4, 0)));
+    public static Block STONE = register(5, new Block(Block.cubeUVs(5, 0)));
+    public static Block GOLD = register(6, new Block(Block.cubeUVs(6, 0)));
 }
 
 public class Block {
