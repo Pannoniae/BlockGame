@@ -45,7 +45,7 @@ public class Block {
     }
 
     public static AABB fullBlock() {
-        return new AABB(new Vector3D<double>(-0.5, -0.5, -0.5), new Vector3D<double>(0.5, 0.5, 0.5));
+        return new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1));
     }
 
     public Block(UVPair[] uvs, AABB? aabb = null) {

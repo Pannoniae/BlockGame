@@ -3,6 +3,7 @@ using System.Numerics;
 namespace BlockGame;
 
 public class Camera {
+    public Vector3 prevPosition { get; set; }
     public Vector3 position { get; set; }
     public Vector3 forward { get; set; }
 
@@ -15,6 +16,7 @@ public class Camera {
     public float zoom = 45f;
 
     public Camera(Vector3 position, Vector3 forward, Vector3 up, float aspectRatio) {
+        prevPosition = position;
         this.position = position;
         this.aspectRatio = aspectRatio;
         this.forward = forward;
@@ -56,8 +58,9 @@ public class Camera {
         return Vector3.Normalize(cameraDirection);
     }
 
-    public Matrix4x4 getViewMatrix() {
-        return Matrix4x4.CreateLookAtLeftHanded(position, position + forward, up);
+    public Matrix4x4 getViewMatrix(double interp) {
+        var interpPos = Vector3.Lerp(prevPosition, position, (float)interp);
+        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward, up);
     }
 
     public Matrix4x4 getProjectionMatrix() {

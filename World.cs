@@ -12,6 +12,13 @@ public class World {
     private const float RAYCASTDIST = 20f;
 
     public Chunk[,,] chunks;
+    public Shader shader;
+    public int uView;
+    public int uProjection;
+    public int uColor;
+    public int blockTexture;
+
+    public GL GL;
 
     public Player player;
 
@@ -23,14 +30,20 @@ public class World {
     private int outline_uProjection;
 
     public World() {
-        player = new Player(this, 0, 4, 0);
+        GL = Game.instance.GL;
+        player = new Player(this, 0, 5, 0);
+        shader = new Shader(GL, "shader.vert", "shader.frag");
+        uView = shader.getUniformLocation("uView");
+        uProjection = shader.getUniformLocation("uProjection");
+        //uColor = shader.getUniformLocation("uColor");
+        blockTexture = shader.getUniformLocation("blockTexture");
 
         chunks = new Chunk[WORLDSIZE, WORLDHEIGHT, WORLDSIZE];
         outline = new Shader(Game.instance.GL, "outline.vert", "outline.frag");
         for (int x = 0; x < WORLDSIZE; x++) {
             for (int y = 0; y < WORLDHEIGHT; y++) {
                 for (int z = 0; z < WORLDSIZE; z++) {
-                    chunks[x, y, z] = new Chunk(this, x, y, z);
+                    chunks[x, y, z] = new Chunk(this, shader, x, y, z);
                 }
             }
         }
@@ -66,6 +79,7 @@ public class World {
                 }
             }
         }
+
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 for (int y = 4; y < 5; y++) {
@@ -104,6 +118,7 @@ public class World {
         if (id == 0) {
             return null;
         }
+
         var block = Blocks.get(id);
         var aabb = block.aabb;
         return new AABB(new Vector3D<double>(x + aabb.minX, y + aabb.minY, z + aabb.minZ),
@@ -196,7 +211,14 @@ public class World {
         }
     }
 
-    public void draw() {
+    public void draw(double interp) {
+        var tex = Game.instance.blockTexture;
+        //var fChunk = chunks[0, 0, 0];
+        tex.bind();
+        shader.use();
+        shader.setUniform(uView, player.camera.getViewMatrix(interp));
+        shader.setUniform(uProjection, player.camera.getProjectionMatrix());
+        shader.setUniform(blockTexture, 0);
         foreach (var chunk in chunks) {
             chunk.drawChunk();
         }
@@ -234,20 +256,20 @@ public class World {
     }
 
     public Vector3D<int> toBlockPos(Vector3D<double> currentPos) {
-        return new Vector3D<int>((int)Math.Round(currentPos.X), (int)Math.Round(currentPos.Y),
-            (int)Math.Round(currentPos.Z));
+        return new Vector3D<int>((int)currentPos.X, (int)currentPos.Y,
+            (int)currentPos.Z);
     }
 
     public void meshBlockOutline() {
         unsafe {
             var GL = Game.instance.GL;
             const float OFFSET = 0.005f;
-            var minX = 0 - 0.5f - OFFSET;
-            var minY = 0 - 0.5f - OFFSET;
-            var minZ = 0 - 0.5f - OFFSET;
-            var maxX = 0 + 0.5f + OFFSET;
-            var maxY = 0 + 0.5f + OFFSET;
-            var maxZ = 0 + 0.5f + OFFSET;
+            var minX = 0f - OFFSET;
+            var minY = 0f - OFFSET;
+            var minZ = 0f - OFFSET;
+            var maxX = 1f + OFFSET;
+            var maxY = 1f + OFFSET;
+            var maxZ = 1f + OFFSET;
 
             outlineVao = GL.GenVertexArray();
             GL.BindVertexArray(outlineVao);
@@ -301,13 +323,13 @@ public class World {
         }
     }
 
-    public void drawBlockOutline() {
+    public void drawBlockOutline(double interp) {
         var GL = Game.instance.GL;
         var block = Game.instance.targetedPos!.Value;
         GL.BindVertexArray(outlineVao);
         outline.use();
         outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
-        outline.setUniform(outline_uView, player.camera.getViewMatrix());
+        outline.setUniform(outline_uView, player.camera.getViewMatrix(interp));
         outline.setUniform(outline_uProjection, player.camera.getProjectionMatrix());
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
