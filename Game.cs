@@ -169,7 +169,11 @@ public class Game {
             else if (button == MouseButton.Right) {
                 if (previousPos.HasValue) {
                     var pos = previousPos.Value;
-                    world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+                    // don't intersect the player
+                    var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+                    if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
+                        world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+                    }
                 }
             }
         }
@@ -223,14 +227,13 @@ public class Game {
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
 
-        targetedPos = world.naiveRaycastBlock(out previousPos);
-
-
+        world.player.pressedMovementKey = false;
         if (focused) {
             world.player.updateInput(dt);
         }
-
         world.player.update(dt);
+
+        targetedPos = world.naiveRaycastBlock(out previousPos);
     }
 
     /// <summary>

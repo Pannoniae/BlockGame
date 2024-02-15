@@ -129,7 +129,11 @@ public class GUI {
 
     public void imGuiDraw() {
         var i = Game.instance;
-        ImGui.Text($"{i.world.player.position.X:0.###}, {i.world.player.position.Y:0.###}, {i.world.player.position.Z:0.###}");
+        var p = i.world.player;
+        ImGui.Text($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
+        ImGui.Text($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
+        ImGui.Text($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
+        ImGui.Text($"g:{p.onGround} j:{p.jumping}");
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
             : "No target");
