@@ -9,7 +9,6 @@ using TrippyGL.Fonts.Building;
 using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
 using Rectangle = System.Drawing.Rectangle;
-using VertexArray = TrippyGL.VertexArray;
 
 namespace BlockGame;
 
@@ -130,9 +129,12 @@ public class GUI {
     public void imGuiDraw() {
         var i = Game.instance;
         var p = i.world.player;
+        var c = p.camera;
         ImGui.Text($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
         ImGui.Text($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
         ImGui.Text($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
+        ImGui.Text($"pf:{c.forward.X:0.000}, pf:{c.forward.Y:0.000}, pf:{c.forward.Z:0.000}");
+        ImGui.Text($"pu:{c.up.X:0.000}, pu:{c.up.Y:0.000}, pu:{c.up.Z:0.000}");
         ImGui.Text($"g:{p.onGround} j:{p.jumping}");
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
