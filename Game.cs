@@ -44,9 +44,13 @@ public class Game {
     public Vector3D<int>? previousPos;
 
     public int fps;
-    public double frametime;
+    public double ft;
 
     public Stopwatch stopwatch = new();
+    public double accumTime;
+    public double fixeddt = 1 / 30d;
+    public double maxTimestep = 1 / 5f;
+    public double t;
 
     public bool focused;
     public bool firstFrame;
@@ -58,6 +62,8 @@ public class Game {
     public Game() {
         instance = this;
         var windowOptions = WindowOptions.Default;
+        //windowOptions.FramesPerSecond = 6000;
+        //windowOptions.UpdatesPerSecond = 6000;
         windowOptions.VSync = false;
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(initialWidth, initialHeight);
@@ -70,7 +76,7 @@ public class Game {
         Window.PrioritizeGlfw();
         window = Window.Create(windowOptions);
         window.Load += init;
-        window.Update += update;
+        //window.Update += update;
         window.Render += render;
         window.FramebufferResize += resize;
         window.Closing += close;
@@ -211,19 +217,11 @@ public class Game {
     }
 
     private void update(double dt) {
+        //dt = Math.Min(dt, 0.2);
         /*var vec = new Vector2D<int>(0, 0);
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
-
-        //Console.Out.WriteLine($"{camera.position}, {camera.forward}, {camera.zoom}");
-
-        if (stopwatch.ElapsedMilliseconds > 1000) {
-            frametime = dt;
-            fps = (int)(1 / frametime);
-            window.Title = "BlockGame " + fps;
-            stopwatch.Restart();
-        }
 
         targetedPos = world.naiveRaycastBlock(out previousPos);
 
@@ -232,10 +230,38 @@ public class Game {
             world.player.updateInput(dt);
         }
 
-        world.player.update();
+        world.player.update(dt);
     }
 
+    /// <summary>
+    /// Now the main loop which calls <see cref="update"/> too.
+    /// </summary>
+    /// <param name="dt">dt as fractions of a second. 1 = 1s</param>
     private void render(double dt) {
+        dt = Math.Min(dt, maxTimestep);
+        accumTime += dt;
+        while (accumTime >= fixeddt) {
+            update(fixeddt);
+            t += fixeddt;
+            accumTime -= fixeddt;
+        }
+        // get remaining time between 0 and 1
+        var interp = accumTime / fixeddt;
+        actualRender(dt, interp);
+
+
+
+    }
+
+    private void actualRender(double dt, double interp) {
+
+        if (stopwatch.ElapsedMilliseconds > 1000) {
+            ft = dt;
+            fps = (int)(1 / ft);
+            window.Title = "BlockGame " + fps;
+            stopwatch.Restart();
+        }
+
         GD.ResetStates();
         GD.ClearColor = Color4b.DeepSkyBlue;
         GD.ClearDepth = 1f;
@@ -243,9 +269,9 @@ public class Game {
         GD.DepthTestingEnabled = true;
 
         //world.mesh();
-        world.draw();
+        world.draw(interp);
         if (targetedPos.HasValue) {
-            world.drawBlockOutline();
+            world.drawBlockOutline(interp);
         }
 
         // for GUI, no depth test

@@ -11,6 +11,7 @@ public static class Utils {
 /// South = -Z
 /// West = -X
 /// East = +X
+/// Doubles as a normal too
 /// </summary>
 public readonly record struct Direction {
     public static readonly Vector3D<int> WEST = new(-1, 0, 0);

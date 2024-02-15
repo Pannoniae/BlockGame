@@ -16,10 +16,7 @@ public class Chunk {
     public Shader shader;
 
     public int uModel;
-    public int uView;
-    public int uProjection;
-    public int uColor;
-    public int blockTexture;
+
 
     public readonly GL GL;
 
@@ -27,28 +24,18 @@ public class Chunk {
     private World world;
     public const int CHUNKSIZE = 16;
 
-    public Chunk(World world, int xpos, int ypos, int zpos) {
+    public Chunk(World world, Shader shader, int xpos, int ypos, int zpos) {
         chunkX = xpos;
         chunkY = ypos;
         chunkZ = zpos;
         this.world = world;
+        this.shader = shader;
         GL = Game.instance.GL;
-        shader = new Shader(GL, "shader.vert", "shader.frag");
 
         block = new int[CHUNKSIZE, CHUNKSIZE, CHUNKSIZE];
-        /*for (int x = 0; x < CHUNKSIZE; x++) {
-            for (int y = 0; y < CHUNKSIZE; y++) {
-                for (int z = 0; z < CHUNKSIZE; z++) {
-                    block[x, y, z] = 1;
-                }
-            }
-        }*/
 
         uModel = shader.getUniformLocation("uModel");
-        uView = shader.getUniformLocation("uView");
-        uProjection = shader.getUniformLocation("uProjection");
-        //uColor = shader.getUniformLocation("uColor");
-        blockTexture = shader.getUniformLocation("blockTexture");
+
     }
 
     public void meshChunk() {
@@ -117,12 +104,12 @@ public class Chunk {
                         var topMaxV = topMax.Y;
 
 
-                        float xmin = x - 0.5f;
-                        float ymin = y - 0.5f;
-                        float zmin = z - 0.5f;
-                        float xmax = x + 0.5f;
-                        float ymax = y + 0.5f;
-                        float zmax = z + 0.5f;
+                        float xmin = x;
+                        float ymin = y;
+                        float zmin = z;
+                        float xmax = x + 1f;
+                        float ymax = y + 1f;
+                        float zmax = z + 1f;
 
                         if (!world.isBlock(wx - 1, wy, wz)) {
                             float[] verticesWest = [
@@ -218,14 +205,12 @@ public class Chunk {
 
     public void drawChunk() {
         vao.bind();
-        shader.use();
+
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
-        shader.setUniform(uView, world.player.camera.getViewMatrix());
-        shader.setUniform(uProjection, world.player.camera.getProjectionMatrix());
-        shader.setUniform(blockTexture, 0);
+
         vao.render();
-        GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
+        //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
 
     /*public void meshBlock() {

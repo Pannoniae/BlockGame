@@ -133,7 +133,7 @@ public class GUI {
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
             : "No target");
-        ImGui.Text($"FPS: {i.fps} (ft:{i.frametime * 1000:0.##}ms)");
+        ImGui.Text($"FPS: {i.fps} (ft:{i.ft * 1000:0.##}ms)");
         ImGui.Text($"W:{i.width} H:{i.height}");
         ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
         ImGui.Text(

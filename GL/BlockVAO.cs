@@ -58,7 +58,6 @@ public class BlockVAO {
     }
 
     public void bind() {
-        blockTexture.bind();
         GL.BindVertexArray(handle);
     }
 

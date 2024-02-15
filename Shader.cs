@@ -17,7 +17,7 @@ namespace BlockGame {
 
             var vert = load(this.vertexShader, ShaderType.VertexShader);
             var frag = load(this.fragmentShader, ShaderType.FragmentShader);
-
+            //Console.Out.WriteLine("Shader created!");
             link(vert, frag);
         }
 
@@ -83,43 +83,6 @@ namespace BlockGame {
 
         public void setUniform(int loc, Vector4 value) {
             GL.Uniform4(loc, value.X, value.Y, value.Z, value.W);
-        }
-
-        public unsafe void setUniform(string name, Matrix4x4 value) {
-            //A new overload has been created for setting a uniform so we can use the transform in our shader.
-            int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1) {
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-
-            GL.UniformMatrix4(location, 1, false, (float*)&value);
-        }
-
-        public void setUniform(string name, float value) {
-            int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1) {
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-
-            GL.Uniform1(location, value);
-        }
-
-        public void setUniform(string name, Vector3 value) {
-            int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1) {
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-
-            GL.Uniform3(location, value.X, value.Y, value.Z);
-        }
-
-        public void setUniform(string name, Vector4 value) {
-            int location = GL.GetUniformLocation(programHandle, name);
-            if (location == -1) {
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-
-            GL.Uniform4(location, value.X, value.Y, value.Z, value.W);
         }
     }
 }
