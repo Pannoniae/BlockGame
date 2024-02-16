@@ -5,8 +5,8 @@ using Silk.NET.OpenGL;
 namespace BlockGame;
 
 public class World {
-    public const int WORLDSIZE = 6;
-    public const int WORLDHEIGHT = 3;
+    public const int WORLDSIZE = 16;
+    public const int WORLDHEIGHT = 8;
 
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 20f;
@@ -59,6 +59,8 @@ public class World {
                 }
             }
         }
+
+        Console.Out.WriteLine(chunks.Length);
 
         meshBlockOutline();
     }
@@ -281,8 +283,8 @@ public class World {
     }
 
     public Vector3D<int> toBlockPos(Vector3D<double> currentPos) {
-        return new Vector3D<int>((int)currentPos.X, (int)currentPos.Y,
-            (int)currentPos.Z);
+        return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
+            (int)Math.Floor(currentPos.Z));
     }
 
     public void meshBlockOutline() {
