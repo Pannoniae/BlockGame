@@ -8,8 +8,8 @@ namespace BlockGame;
 public class Player {
     public const double gravity = 20;
     public const double maxAccel = 50;
-    public const double maxhSpeed = 2.5;
-    public const double maxhAirSpeed = 2.5;
+    public const double maxhSpeed = 4;
+    public const double maxhAirSpeed = 4;
     public const double jumpSpeed = 6.5;
     public const double maxVSpeed = 200;
     public const double friction = 0.55;
@@ -19,8 +19,8 @@ public class Player {
     public const double playerHeight = 1.8;
     public const double eyeHeight = 1.6;
 
-    public static double moveSpeed = 3;
-    public const double groundMoveSpeed = 3;
+    public static double moveSpeed = 1.5;
+    public const double groundMoveSpeed = 1.5;
     public const double airMoveSpeed = 0.5;
 
     // is player walking on (colling with) ground
