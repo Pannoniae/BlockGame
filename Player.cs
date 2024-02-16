@@ -30,6 +30,7 @@ public class Player {
     public bool jumping;
 
     // jump cooldown to prevent player jumping immediately again
+    // which we don't have
     public double jumpCD;
 
     public Camera camera;

@@ -35,13 +35,12 @@ public class Chunk {
         block = new int[CHUNKSIZE, CHUNKSIZE, CHUNKSIZE];
 
         uModel = shader.getUniformLocation("uModel");
-
     }
 
     public void meshChunk() {
         vao = new BlockVAO();
 
-        List<float> chunkVertices = new List<float>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
+        List<BlockVertex> chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int y = 0; y < CHUNKSIZE; y++) {
                 for (int z = 0; z < CHUNKSIZE; z++) {
@@ -112,85 +111,90 @@ public class Chunk {
                         float zmax = z + 1f;
 
                         if (!world.isBlock(wx - 1, wy, wz)) {
-                            float[] verticesWest = [
+                            var data = packData((byte)RawDirection.WEST);
+                            BlockVertex[] verticesWest = [
                                 // west
-                                xmin, ymax, zmax, westU, westV,
-                                xmin, ymin, zmax, westU, westMaxV,
-                                xmin, ymin, zmin, westMaxU, westMaxV,
+                                new BlockVertex(xmin, ymax, zmax, westU, westV, data),
+                                new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data),
+                                new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
 
-                                xmin, ymax, zmax, westU, westV,
-                                xmin, ymin, zmin, westMaxU, westMaxV,
-                                xmin, ymax, zmin, westMaxU, westV,
+                                new BlockVertex(xmin, ymax, zmax, westU, westV, data),
+                                new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
+                                new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data),
                             ];
                             chunkVertices.AddRange(verticesWest);
                         }
 
                         if (!world.isBlock(wx + 1, wy, wz)) {
-                            float[] verticesEast = [
+                            var data = packData((byte)RawDirection.EAST);
+                            BlockVertex[] verticesEast = [
                                 // east
-                                xmax, ymax, zmin, eastU, eastV,
-                                xmax, ymin, zmin, eastU, eastMaxV,
-                                xmax, ymin, zmax, eastMaxU, eastMaxV,
-
-                                xmax, ymax, zmin, eastU, eastV,
-                                xmax, ymin, zmax, eastMaxU, eastMaxV,
-                                xmax, ymax, zmax, eastMaxU, eastV,
+                                new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
+                                new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data),
+                                new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
+                                new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
+                                new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
+                                new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data),
                             ];
                             chunkVertices.AddRange(verticesEast);
                         }
 
                         if (!world.isBlock(wx, wy, wz - 1)) {
-                            float[] verticesSouth = [
+                            var data = packData((byte)RawDirection.SOUTH);
+                            BlockVertex[] verticesSouth = [
                                 // south
-                                xmin, ymax, zmin, southU, southV,
-                                xmin, ymin, zmin, southU, southMaxV,
-                                xmax, ymin, zmin, southMaxU, southMaxV,
+                                new BlockVertex(xmin, ymax, zmin, southU, southV, data),
+                                new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data),
+                                new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
 
-                                xmin, ymax, zmin, southU, southV,
-                                xmax, ymin, zmin, southMaxU, southMaxV,
-                                xmax, ymax, zmin, southMaxU, southV,
+                                new BlockVertex(xmin, ymax, zmin, southU, southV, data),
+                                new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
+                                new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data),
                             ];
                             chunkVertices.AddRange(verticesSouth);
                         }
 
                         if (!world.isBlock(wx, wy, wz + 1)) {
-                            float[] verticesNorth = [
+                            var data = packData((byte)RawDirection.NORTH);
+                            BlockVertex[] verticesNorth = [
                                 // north
-                                xmax, ymax, zmax, northU, northV,
-                                xmax, ymin, zmax, northU, northMaxV,
-                                xmin, ymin, zmax, northMaxU, northMaxV,
+                                new BlockVertex(xmax, ymax, zmax, northU, northV, data),
+                                new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data),
+                                new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
 
-                                xmax, ymax, zmax, northU, northV,
-                                xmin, ymin, zmax, northMaxU, northMaxV,
-                                xmin, ymax, zmax, northMaxU, northV,
+                                new BlockVertex(xmax, ymax, zmax, northU, northV, data),
+                                new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
+                                new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data),
                             ];
                             chunkVertices.AddRange(verticesNorth);
                         }
 
                         if (!world.isBlock(wx, wy - 1, wz)) {
-                            float[] verticesBottom = [
+                            var data = packData((byte)RawDirection.DOWN);
+                            BlockVertex[] verticesBottom = [
                                 // bottom
-                                xmin, ymin, zmin, bottomU, bottomV,
-                                xmin, ymin, zmax, bottomU, bottomMaxV,
-                                xmax, ymin, zmax, bottomMaxU, bottomMaxV,
+                                new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
+                                new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data),
+                                new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
 
-                                xmin, ymin, zmin, bottomU, bottomV,
-                                xmax, ymin, zmax, bottomMaxU, bottomMaxV,
-                                xmax, ymin, zmin, bottomMaxU, bottomV,
+                                new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
+                                new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
+                                new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data),
                             ];
                             chunkVertices.AddRange(verticesBottom);
                         }
 
                         if (!world.isBlock(wx, wy + 1, wz)) {
-                            float[] verticesTop = [
+                            var data = packData((byte)RawDirection.UP);
+                            BlockVertex[] verticesTop = [
                                 // top
-                                xmin, ymax, zmax, topU, topV,
-                                xmin, ymax, zmin, topU, topMaxV,
-                                xmax, ymax, zmin, topMaxU, topMaxV,
+                                new BlockVertex(xmin, ymax, zmax, topU, topV, data),
+                                new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data),
+                                new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
 
-                                xmin, ymax, zmax, topU, topV,
-                                xmax, ymax, zmin, topMaxU, topMaxV,
-                                xmax, ymax, zmax, topMaxU, topV,
+                                new BlockVertex(xmin, ymax, zmax, topU, topV, data),
+                                new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
+                                new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data),
                             ];
                             chunkVertices.AddRange(verticesTop);
                         }
@@ -201,6 +205,11 @@ public class Chunk {
 
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
         vao.upload(finalVertices);
+    }
+
+    // this will pack the data into the uint
+    public uint packData(byte direction) {
+        return direction;
     }
 
     public void drawChunk() {

@@ -38,3 +38,13 @@ public readonly record struct Direction {
     public static Vector3D<int>[] directionsSelf => [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
 
 }
+
+
+public enum RawDirection : byte {
+    WEST = 0,
+    EAST = 1,
+    SOUTH = 2,
+    NORTH = 3,
+    DOWN = 4,
+    UP = 5
+}
