@@ -8,6 +8,7 @@ namespace BlockGame;
 public class BlockVAO {
     public uint handle;
     public uint vbo;
+    public uint ibo;
     public uint count;
 
     public BTexture2D blockTexture;
@@ -49,13 +50,20 @@ public class BlockVAO {
         format();
     }
 
-    public void upload(Span<BlockVertex> data) {
+    public void upload(Span<BlockVertex> data, Span<ushort> indices) {
         unsafe {
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            count = (uint)data.Length;
+            count = (uint)indices.Length;
             fixed (BlockVertex* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+                    BufferUsageARB.DynamicDraw);
+            }
+
+            ibo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            fixed (ushort* d = indices) {
+                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
                     BufferUsageARB.DynamicDraw);
             }
         }
@@ -65,7 +73,7 @@ public class BlockVAO {
 
     public void format() {
         unsafe {
-            // 6 floats in total, 3 for pos, 2 for uv, 1 uint for data
+            // 24 bytes in total, 3*4 for pos, 2*4 for uv, 4 bytes for data
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), (void*)(0 + 3 * sizeof(float)));
@@ -80,7 +88,9 @@ public class BlockVAO {
     }
 
     public void render() {
-        GL.DrawArrays(PrimitiveType.Triangles, 0, count);
+        unsafe {
+            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort,(void*)0);
+        }
     }
 }
 

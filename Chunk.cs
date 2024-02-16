@@ -40,7 +40,9 @@ public class Chunk {
     public void meshChunk() {
         vao = new BlockVAO();
 
-        List<BlockVertex> chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
+        List<BlockVertex> chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 4);
+        List<ushort> chunkIndices = new List<ushort>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
+        ushort i = 0;
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int y = 0; y < CHUNKSIZE; y++) {
                 for (int z = 0; z < CHUNKSIZE; z++) {
@@ -118,11 +120,22 @@ public class Chunk {
                                 new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data),
                                 new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
 
-                                new BlockVertex(xmin, ymax, zmax, westU, westV, data),
-                                new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
+                                //new BlockVertex(xmin, ymax, zmax, westU, westV, data),
+                                //new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
                                 new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data),
                             ];
                             chunkVertices.AddRange(verticesWest);
+                            ushort[] indices = [
+                                i,
+                                (ushort)(i + 1),
+                                (ushort)(i + 2),
+                                (ushort)(i + 0),
+                                (ushort)(i + 2),
+                                (ushort)(i + 3)
+                            ];
+                            chunkIndices.AddRange(indices);
+                            i += 4;
+
                         }
 
                         if (!world.isBlock(wx + 1, wy, wz)) {
@@ -132,11 +145,22 @@ public class Chunk {
                                 new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
                                 new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data),
                                 new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
-                                new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
-                                new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
+
+                                //new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
+                                //new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
                                 new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data),
                             ];
                             chunkVertices.AddRange(verticesEast);
+                            ushort[] indices = [
+                                i,
+                                (ushort)(i + 1),
+                                (ushort)(i + 2),
+                                (ushort)(i + 0),
+                                (ushort)(i + 2),
+                                (ushort)(i + 3)
+                            ];
+                            chunkIndices.AddRange(indices);
+                            i += 4;
                         }
 
                         if (!world.isBlock(wx, wy, wz - 1)) {
@@ -147,11 +171,21 @@ public class Chunk {
                                 new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data),
                                 new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
 
-                                new BlockVertex(xmin, ymax, zmin, southU, southV, data),
-                                new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
+                                //new BlockVertex(xmin, ymax, zmin, southU, southV, data),
+                                //new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
                                 new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data),
                             ];
                             chunkVertices.AddRange(verticesSouth);
+                            ushort[] indices = [
+                                i,
+                                (ushort)(i + 1),
+                                (ushort)(i + 2),
+                                (ushort)(i + 0),
+                                (ushort)(i + 2),
+                                (ushort)(i + 3)
+                            ];
+                            chunkIndices.AddRange(indices);
+                            i += 4;
                         }
 
                         if (!world.isBlock(wx, wy, wz + 1)) {
@@ -162,11 +196,21 @@ public class Chunk {
                                 new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data),
                                 new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
 
-                                new BlockVertex(xmax, ymax, zmax, northU, northV, data),
-                                new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
+                                //new BlockVertex(xmax, ymax, zmax, northU, northV, data),
+                                //new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
                                 new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data),
                             ];
                             chunkVertices.AddRange(verticesNorth);
+                            ushort[] indices = [
+                                i,
+                                (ushort)(i + 1),
+                                (ushort)(i + 2),
+                                (ushort)(i + 0),
+                                (ushort)(i + 2),
+                                (ushort)(i + 3)
+                            ];
+                            chunkIndices.AddRange(indices);
+                            i += 4;
                         }
 
                         if (!world.isBlock(wx, wy - 1, wz)) {
@@ -177,11 +221,21 @@ public class Chunk {
                                 new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data),
                                 new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
 
-                                new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
-                                new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
+                                //new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
+                                //new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
                                 new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data),
                             ];
                             chunkVertices.AddRange(verticesBottom);
+                            ushort[] indices = [
+                                i,
+                                (ushort)(i + 1),
+                                (ushort)(i + 2),
+                                (ushort)(i + 0),
+                                (ushort)(i + 2),
+                                (ushort)(i + 3)
+                            ];
+                            chunkIndices.AddRange(indices);
+                            i += 4;
                         }
 
                         if (!world.isBlock(wx, wy + 1, wz)) {
@@ -192,11 +246,21 @@ public class Chunk {
                                 new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data),
                                 new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
 
-                                new BlockVertex(xmin, ymax, zmax, topU, topV, data),
-                                new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
+                                //new BlockVertex(xmin, ymax, zmax, topU, topV, data),
+                                //new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
                                 new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data),
                             ];
                             chunkVertices.AddRange(verticesTop);
+                            ushort[] indices = [
+                                i,
+                                (ushort)(i + 1),
+                                (ushort)(i + 2),
+                                (ushort)(i + 0),
+                                (ushort)(i + 2),
+                                (ushort)(i + 3)
+                            ];
+                            chunkIndices.AddRange(indices);
+                            i += 4;
                         }
                     }
                 }
@@ -204,7 +268,8 @@ public class Chunk {
         }
 
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-        vao.upload(finalVertices);
+        var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+        vao.upload(finalVertices, finalIndices);
     }
 
     // this will pack the data into the uint
