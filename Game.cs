@@ -56,8 +56,8 @@ public class Game {
     public bool firstFrame;
 
     public World world;
-
     public BTexture2D blockTexture;
+    public Metrics metrics;
 
     public Game() {
         instance = this;
@@ -117,6 +117,7 @@ public class Game {
         width = window.FramebufferSize.X;
         height = window.FramebufferSize.Y;
 
+        metrics = new Metrics();
         stopwatch.Start();
 
         blockTexture = new BTexture2D("blocks.png");
@@ -270,6 +271,7 @@ public class Game {
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
         GD.DepthTestingEnabled = true;
+        metrics.clear();
 
         //world.mesh();
         world.draw(interp);

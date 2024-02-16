@@ -3,7 +3,6 @@ using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
-
 // 3 floats for position, 2 floats for texcoords
 public class BlockVAO {
     public uint handle;
@@ -87,9 +86,10 @@ public class BlockVAO {
         GL.BindVertexArray(handle);
     }
 
-    public void render() {
+    public uint render() {
         unsafe {
-            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort,(void*)0);
+            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
+            return count;
         }
     }
 }

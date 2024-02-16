@@ -283,7 +283,9 @@ public class Chunk {
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
 
-        vao.render();
+        uint renderedVerts = vao.render();
+        Game.instance.metrics.renderedVerts += (int)renderedVerts;
+        Game.instance.metrics.renderedChunks += 1;
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
 
