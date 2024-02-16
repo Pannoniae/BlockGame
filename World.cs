@@ -5,11 +5,11 @@ using Silk.NET.OpenGL;
 namespace BlockGame;
 
 public class World {
-    private const int WORLDSIZE = 6;
-    private const int WORLDHEIGHT = 3;
+    public const int WORLDSIZE = 6;
+    public const int WORLDHEIGHT = 3;
 
-    private const float RAYCASTSTEP = 1 / 32f;
-    private const float RAYCASTDIST = 20f;
+    public const float RAYCASTSTEP = 1 / 32f;
+    public const float RAYCASTDIST = 20f;
 
     public Chunk[,,] chunks;
     public Shader shader;
@@ -31,7 +31,7 @@ public class World {
 
     public World() {
         GL = Game.instance.GL;
-        player = new Player(this, 0, 5, 0);
+        player = new Player(this, 0, 20, 0);
         shader = new Shader(GL, "shader.vert", "shader.frag");
         uView = shader.getUniformLocation("uView");
         uProjection = shader.getUniformLocation("uProjection");
@@ -83,19 +83,24 @@ public class World {
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 for (int y = 3; y < 4; y++) {
-                    setBlock(x, y, z, 3, false);
+                    setBlock(x, y, z, 4, false);
                 }
             }
         }
 
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
-                for (int y = 4; y < 5; y++) {
-                    setBlock(x, y, z, 3, false);
+                for (int y = 15; y < 19; y++) {
+                    setBlock(x, y, z, 2, false);
                 }
             }
         }
         //setBlock(0, 3, 0, 2, false);
+    }
+
+    public Vector3D<int> getWorldSize() {
+        var c = Chunk.CHUNKSIZE;
+        return new Vector3D<int>(c * WORLDSIZE, c * WORLDHEIGHT, c * WORLDSIZE);
     }
 
     public bool isBlock(int x, int y, int z) {
@@ -238,6 +243,11 @@ public class World {
             chunkZ * Chunk.CHUNKSIZE + z);
     }
 
+    /// <summary>
+    /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
+    /// </summary>
+    /// <param name="previous">The previous block (used for placing)</param>
+    /// <returns></returns>
     public Vector3D<int>? naiveRaycastBlock(out Vector3D<int>? previous) {
         // raycast
         var cameraPos = player.camera.position;

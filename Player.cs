@@ -6,12 +6,12 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public class Player {
-    public const double gravity = 15;
+    public const double gravity = 20;
     public const double maxAccel = 50;
     public const double maxhSpeed = 2.5;
     public const double maxhAirSpeed = 2.5;
-    public const double jumpSpeed = 6;
-    public const double maxVSpeed = 0.2;
+    public const double jumpSpeed = 6.5;
+    public const double maxVSpeed = 200;
     public const double friction = 0.55;
     public const double airFriction = 0.98;
     public const double epsilon = 0.0001;
@@ -129,6 +129,12 @@ public class Player {
         if (Math.Abs(velocity.Z) < epsilon) {
             velocity.Z = 0;
         }
+
+        // world bounds check
+        var s = world.getWorldSize();
+        position.X = Math.Clamp(position.X, 0, s.X);
+        position.Y = Math.Clamp(position.Y, 0, s.Y);
+        position.Z = Math.Clamp(position.Z, 0, s.Z);
     }
 
     private void applyFriction() {
