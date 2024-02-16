@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 
 namespace BlockGame;
@@ -48,12 +49,29 @@ public class BlockVAO {
         format();
     }
 
+    public void upload(Span<BlockVertex> data) {
+        unsafe {
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            count = (uint)data.Length;
+            fixed (BlockVertex* d = data) {
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+                    BufferUsageARB.DynamicDraw);
+            }
+        }
+
+        format();
+    }
+
     public void format() {
         unsafe {
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), (void*)0);
+            // 6 floats in total, 3 for pos, 2 for uv, 1 uint for data
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), (void*)(0 + 3 * sizeof(float)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), (void*)(0 + 3 * sizeof(float)));
             GL.EnableVertexAttribArray(1);
+            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedInt, 6 * sizeof(float), (void*)(0 + 5 * sizeof(float)));
+            GL.EnableVertexAttribArray(2);
         }
     }
 
@@ -62,6 +80,30 @@ public class BlockVAO {
     }
 
     public void render() {
-        GL.DrawArrays(PrimitiveType.Triangles, 0, count / 5);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, count);
+    }
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct BlockVertex {
+    public float x;
+    public float y;
+    public float z;
+    public float u;
+    public float v;
+
+    /// <summary>
+    /// from least significant:
+    /// first 3 bits are side (see Direction enum)
+    /// </summary>
+    public uint d;
+
+    public BlockVertex(float x, float y, float z, float u, float v, uint d) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = u;
+        this.v = v;
+        this.d = d;
     }
 }

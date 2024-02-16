@@ -71,7 +71,7 @@ public class World {
                 }
             }
         }
-        
+
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 for (int y = 2; y < 3; y++) {
@@ -95,7 +95,14 @@ public class World {
                 }
             }
         }
-        //setBlock(0, 3, 0, 2, false);
+
+        /*var h = 19;
+        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
+                h = 19 + x + z;
+                setBlock(x, h, z, 4, false);
+            }
+        }*/
     }
 
     public Vector3D<int> getWorldSize() {
@@ -266,10 +273,10 @@ public class World {
                 //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
                 return blockPos;
             }
-
             previous = blockPos;
         }
 
+        previous = null;
         return null;
     }
 
