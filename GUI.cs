@@ -130,6 +130,7 @@ public class GUI {
         var i = Game.instance;
         var p = i.world.player;
         var c = p.camera;
+        var m = Game.instance.metrics;
         ImGui.Text($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
         ImGui.Text($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
         ImGui.Text($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
@@ -139,6 +140,8 @@ public class GUI {
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
             : "No target");
+        ImGui.Text($"rC: {m.renderedChunks} rV:{m.renderedVerts}");
+
         ImGui.Text($"FPS: {i.fps} (ft:{i.ft * 1000:0.##}ms)");
         ImGui.Text($"W:{i.width} H:{i.height}");
         ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
