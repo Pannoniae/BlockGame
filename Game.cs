@@ -46,6 +46,8 @@ public class Game {
     public int fps;
     public double ft;
 
+    public BlendState initialBlendState = BlendState.NonPremultiplied;
+
     public Stopwatch stopwatch = new();
     public double accumTime;
     public double fixeddt = 1 / 30d;
@@ -90,7 +92,7 @@ public class Game {
         proc = Process.GetCurrentProcess();
         GD = new GraphicsDevice(GL);
         GD.BlendingEnabled = true;
-        GD.BlendState = BlendState.NonPremultiplied;
+        GD.BlendState = initialBlendState;
         GD.DepthTestingEnabled = true;
         GD.DepthState = DepthState.Default;
         GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;

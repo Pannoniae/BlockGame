@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Numerics;
 using ImGuiNET;
 using Silk.NET.Maths;
@@ -8,6 +9,7 @@ using TrippyGL.Fonts;
 using TrippyGL.Fonts.Building;
 using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
+using BlendingFactor = TrippyGL.BlendingFactor;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
@@ -16,10 +18,10 @@ public class GUI {
     public Matrix4x4 ortho;
 
     public GL GL;
+    public GraphicsDevice GD;
 
     public FloatVAO crosshair;
 
-    public Shader guiShader;
     private SimpleShaderProgram shader;
     public int projection;
     public int uColor;
@@ -30,12 +32,14 @@ public class GUI {
 
     public TextureBatch tb;
     public Texture2D guiTexture;
+    public Texture2D colourTexture;
     private TextureFont guiFont;
 
     public Rectangle buttonRect = new Rectangle(0, 0, 64, 16);
 
     public const int crosshairSize = 10;
     public const int crosshairThickness = 2;
+    public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
 
     public const string fontFile = "guifont.fnt";
 
@@ -43,11 +47,10 @@ public class GUI {
 
     public GUI() {
         GL = Game.instance.GL;
+        GD = Game.instance.GD;
         crosshair = new FloatVAO();
-        guiShader = new Shader(Game.instance.GL, "gui.vert", "gui.frag");
-        projection = guiShader.getUniformLocation("projection");
-        uColor = guiShader.getUniformLocation("uColor");
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "gui.png");
+        colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "debug.png");
 
         if (!File.Exists(fontFile)) {
             var collection = new FontCollection();
@@ -69,14 +72,27 @@ public class GUI {
     }
 
     public void draw() {
-        crosshair.bind();
-        guiShader.use();
-        guiShader.setUniform(projection, ortho);
-        guiShader.setUniform(uColor, new Vector4(0.1f, 0.1f, 0.1f, 0.1f));
-        crosshair.render();
-        Game.instance.GD.ResetStates();
-        Game.instance.GD.ShaderProgram = shader;
-        tb.Begin(0);
+        GD.ResetStates();
+        GD.ShaderProgram = shader;
+        var centreX = Game.instance.centreX;
+        var centreY = Game.instance.centreY;
+        // setup blending
+        GD.BlendingEnabled = true;
+        GD.BlendState = bs;
+
+        tb.Begin();
+        tb.Draw(colourTexture, new RectangleF(new PointF(centreX - crosshairThickness, centreY - crosshairSize), new SizeF(crosshairThickness * 2, crosshairSize * 2)),
+            new Color4b(240, 240, 240));
+
+        tb.Draw(colourTexture, new RectangleF(new PointF(centreX - crosshairSize, centreY - crosshairThickness), new SizeF(crosshairSize - crosshairThickness, crosshairThickness * 2)),
+            new Color4b(240, 240, 240));
+        tb.Draw(colourTexture, new RectangleF(new PointF(centreX + crosshairThickness, centreY - crosshairThickness), new SizeF(crosshairSize - crosshairThickness, crosshairThickness * 2)),
+            new Color4b(240, 240, 240));
+        tb.End();
+        // reset blending this is messed up
+        GD.BlendState = Game.instance.initialBlendState;
+
+        tb.Begin();
         tb.DrawString(guiFont, "BlockGame", Vector2.Zero, Color4b.White);
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
         tb.DrawString(guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
@@ -92,37 +108,10 @@ public class GUI {
         tb.End();
     }
 
-    public void drawCrosshair() {
-        var centreX = Game.instance.centreX;
-        var centreY = Game.instance.centreY;
-
-        float[] verts = [
-            // vertical
-            centreX - crosshairThickness, centreY - crosshairSize, 0f,
-            centreX - crosshairThickness, centreY + crosshairSize, 0f,
-            centreX + crosshairThickness, centreY + crosshairSize, 0f,
-            centreX + crosshairThickness, centreY + crosshairSize, 0f,
-            centreX + crosshairThickness, centreY - crosshairSize, 0f,
-            centreX - crosshairThickness, centreY - crosshairSize, 0f,
-
-            // horizontal
-            centreX - crosshairSize, centreY - crosshairThickness, 0f,
-            centreX - crosshairSize, centreY + crosshairThickness, 0f,
-            centreX + crosshairSize, centreY + crosshairThickness, 0f,
-            centreX + crosshairSize, centreY + crosshairThickness, 0f,
-            centreX + crosshairSize, centreY - crosshairThickness, 0f,
-            centreX - crosshairSize, centreY - crosshairThickness, 0f,
-        ];
-        crosshair.bind();
-        crosshair.upload(verts);
-        crosshair.format();
-    }
-
     public void resize(Vector2D<int> size) {
         Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
-        drawCrosshair();
 
     }
 
