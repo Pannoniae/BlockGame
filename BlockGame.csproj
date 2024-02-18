@@ -9,69 +9,57 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="ImGui.NET" Version="1.89.9.4" />
-      <PackageReference Include="Silk.NET.Input" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.INTEL" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.KHR" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.INTEL" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.20.0" />
-      <PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
-      <PackageReference Include="SixLabors.Fonts" Version="2.0.2" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2" />
-      <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.1" />
-      <PackageReference Include="System.Buffers" Version="4.5.1" />
-      <PackageReference Include="System.Memory" Version="4.5.5" />
-      <PackageReference Include="TrippyGL" Version="1.2.0" />
-      <PackageReference Include="TrippyGL.Fonts" Version="1.2.0" />
-      <PackageReference Include="TrippyGL.Fonts.Building" Version="1.2.0" />
-      <PackageReference Include="TrippyGL.Fonts.Extensions" Version="1.2.0" />
-      <PackageReference Include="TrippyGL.ImageSharp" Version="1.2.0" />
+        <PackageReference Include="ImGui.NET" Version="1.89.9.4"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0"/>
+        <PackageReference Include="SharpNBT" Version="1.3.1"/>
+        <PackageReference Include="Silk.NET.Input" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.INTEL" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.KHR" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.INTEL" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.20.0"/>
+        <PackageReference Include="Silk.NET.Windowing" Version="2.20.0"/>
+        <PackageReference Include="SixLabors.Fonts" Version="2.0.2"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.2"/>
+        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.1"/>
+        <PackageReference Include="System.Buffers" Version="4.5.1"/>
+        <PackageReference Include="System.Memory" Version="4.5.5"/>
+        <PackageReference Include="TrippyGL" Version="1.2.0"/>
+        <PackageReference Include="TrippyGL.Fonts" Version="1.2.0"/>
+        <PackageReference Include="TrippyGL.Fonts.Building" Version="1.2.0"/>
+        <PackageReference Include="TrippyGL.Fonts.Extensions" Version="1.2.0"/>
+        <PackageReference Include="TrippyGL.ImageSharp" Version="1.2.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="shader.frag">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="shader.vert">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="outline.frag">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="outline.vert">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="gui.vert">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="gui.frag">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="gui.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="unifont-15.1.04.ttf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="blocks.png">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="debug.png">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <None Include="world/**/*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="shaders/**/*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="textures/**/*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Include="fonts/**/*.*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="world\" />
     </ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@ using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
-// 3 floats for position, 2 floats for texcoords
+
 public class BlockVAO {
     public uint handle;
     public uint vbo;
