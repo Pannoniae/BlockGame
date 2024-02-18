@@ -32,10 +32,10 @@ public class World {
 
     public double worldTime;
 
-    public World() {
+    public World(bool loaded = false) {
         GL = Game.instance.GL;
         player = new Player(this, 0, 20, 0);
-        shader = new Shader(GL, "shader.vert", "shader.frag");
+        shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         uView = shader.getUniformLocation("uView");
         uProjection = shader.getUniformLocation("uProjection");
         //uColor = shader.getUniformLocation("uColor");
@@ -43,15 +43,17 @@ public class World {
         worldTime = 0;
 
         chunks = new Chunk[WORLDSIZE, WORLDSIZE];
-        outline = new Shader(Game.instance.GL, "outline.vert", "outline.frag");
+        outline = new Shader(Game.instance.GL, "shaders/outline.vert", "shaders/outline.frag");
         for (int x = 0; x < WORLDSIZE; x++) {
             for (int z = 0; z < WORLDSIZE; z++) {
                 chunks[x, z] = new Chunk(this, shader, x, z);
             }
         }
 
-        // create terrain
-        genTerrain();
+        if (!loaded) {
+            // create terrain
+            genTerrain();
+        }
 
         // separate loop so all data is there
         meshChunks();
@@ -126,17 +128,18 @@ public class World {
         NbtFile.Write($"world/{filename}.nbt", fileTag, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
     }
 
-    public void load(string filename) {
+    public static World load(string filename) {
         CompoundTag tag = NbtFile.Read($"world/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
-        player.position.X = tag.Get<DoubleTag>("posX");
-        player.position.Y = tag.Get<DoubleTag>("posY");
-        player.position.Z = tag.Get<DoubleTag>("posZ");
+        var world = new World(true);
+        world.player.position.X = tag.Get<DoubleTag>("posX");
+        world.player.position.Y = tag.Get<DoubleTag>("posY");
+        world.player.position.Z = tag.Get<DoubleTag>("posZ");
         var chunkTags = tag.Get<ListTag>("chunks");
         foreach (var chunkTag in chunkTags) {
             var chunk = (CompoundTag)chunkTag;
             var chunkX = chunk.Get<IntTag>("posX").Value;
             var chunkZ = chunk.Get<IntTag>("posZ").Value;
-            chunks[chunkX, chunkZ] = new Chunk(this, shader, chunkX, chunkZ);
+            world.chunks[chunkX, chunkZ] = new Chunk(world, world.shader, chunkX, chunkZ);
             var blocks = chunk.Get<ListTag>("blocks");
             foreach (var block in blocks) {
                 var fields = (ListTag)block;
@@ -144,11 +147,12 @@ public class World {
                 var y = ((IntTag)fields[1]).Value;
                 var z = ((IntTag)fields[2]).Value;
                 var id = ((IntTag)fields[3]).Value;
-                chunks[chunkX, chunkZ].block[x, y, z] = id;
+                world.chunks[chunkX, chunkZ].block[x, y, z] = id;
             }
         }
 
-        meshChunks();
+        world.meshChunks();
+        return world;
     }
 
     public void update(double dt) {

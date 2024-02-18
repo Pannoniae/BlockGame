@@ -24,7 +24,7 @@ public static class Constants {
     public const double groundMoveSpeed = 1.5;
     public const double airMoveSpeed = 0.5;
     public const float RAYCASTSTEP = 1 / 32f;
-    public const float RAYCASTDIST = 20f;
+    public const float RAYCASTDIST = 6f;
     public const double breakDelay = 0.6;
     public const double placeDelay = 0.6;
 }
