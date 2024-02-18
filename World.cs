@@ -30,6 +30,8 @@ public class World {
     private int outline_uView;
     private int outline_uProjection;
 
+    public double worldTime;
+
     public World() {
         GL = Game.instance.GL;
         player = new Player(this, 0, 20, 0);
@@ -38,6 +40,7 @@ public class World {
         uProjection = shader.getUniformLocation("uProjection");
         //uColor = shader.getUniformLocation("uColor");
         blockTexture = shader.getUniformLocation("blockTexture");
+        worldTime = 0;
 
         chunks = new Chunk[WORLDSIZE, WORLDSIZE];
         outline = new Shader(Game.instance.GL, "outline.vert", "outline.frag");
@@ -168,6 +171,10 @@ public class World {
         }
 
         meshChunks();
+    }
+
+    public void update(double dt) {
+        worldTime += dt;
     }
 
     public Vector3D<int> getWorldSize() {

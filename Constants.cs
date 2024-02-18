@@ -13,7 +13,8 @@ public static class Constants {
     public const double maxhSpeed = 4;
     public const double maxhSpeedSneak = 1.5;
     public const double maxhAirSpeed = 4;
-    public const double jumpSpeed = 6.5;
+    public const double maxhAirSpeedSneak = 1.5;
+    public const double jumpSpeed = 7;
     public const double maxVSpeed = 200;
     public const double friction = 0.55;
     public const double airFriction = 0.98;
@@ -24,4 +25,6 @@ public static class Constants {
     public const double airMoveSpeed = 0.5;
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 20f;
+    public const double breakDelay = 0.6;
+    public const double placeDelay = 0.6;
 }

@@ -161,20 +161,10 @@ public class Game {
     private void onMouseDown(IMouse m, MouseButton button) {
         if (focused) {
             if (button == MouseButton.Left) {
-                if (targetedPos.HasValue) {
-                    var pos = targetedPos.Value;
-                    world.setBlock(pos.X, pos.Y, pos.Z, 0);
-                }
+                world.player.breakBlock();
             }
             else if (button == MouseButton.Right) {
-                if (previousPos.HasValue) {
-                    var pos = previousPos.Value;
-                    // don't intersect the player
-                    var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.pickBlock);
-                    if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
-                        world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
-                    }
-                }
+                world.player.placeBlock();
             }
         }
         else {
@@ -239,6 +229,7 @@ public class Game {
         if (focused) {
             world.player.updateInput(dt);
         }
+        world.update(dt);
         world.player.update(dt);
 
         targetedPos = world.naiveRaycastBlock(out previousPos);
