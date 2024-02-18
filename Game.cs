@@ -20,7 +20,6 @@ public class Game {
     public int width;
     public int height;
 
-
     public IWindow window;
     public GL GL = null!;
     public GraphicsDevice GD = null!;
@@ -125,7 +124,7 @@ public class Game {
         metrics = new Metrics();
         stopwatch.Start();
 
-        blockTexture = new BTexture2D("blocks.png");
+        blockTexture = new BTexture2D("textures/blocks.png");
 
         world = new World();
         gui = new GUI();
@@ -212,7 +211,8 @@ public class Game {
         }
 
         if (key == Key.G) {
-            world.load("world");
+            world = World.load("world");
+            resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
         }
 
         world.player.updatePickBlock(keyboard, key, scancode);
@@ -295,7 +295,7 @@ public class Game {
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
-        gui.draw();
+        gui.drawScreen();
         if (gui.debugScreen) {
             imgui.Update((float)dt);
             gui.imGuiDraw();
