@@ -72,43 +72,21 @@ public class World {
     private void genTerrain() {
         for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
-                for (int y = 0; y < 2; y++) {
-                    setBlock(x, y, z, 1, false);
-                }
-            }
-        }
-
-        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
-                for (int y = 2; y < 3; y++) {
-                    setBlock(x, y, z, 3, false);
-                }
-            }
-        }
-
-        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
-                for (int y = 3; y < 4; y++) {
-                    setBlock(x, y, z, 4, false);
-                }
-            }
-        }
-
-        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
-                for (int y = 15; y < 19; y++) {
+                for (int y = 0; y < 3; y++) {
                     setBlock(x, y, z, 2, false);
                 }
             }
         }
 
-        /*var h = 19;
+        var sinMin = 2;
         for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
-                h = 19 + x + z;
-                setBlock(x, h, z, 4, false);
+                var sin = Math.Sin(x / 3f) * 2 + sinMin + 1 + Math.Cos(z / 3f) * 2 + sinMin + 1;
+                for (int y = sinMin; y < sin; y++) {
+                    setBlock(x, y, z, 5, false);
+                }
             }
-        }*/
+        }
     }
 
     public void save(string filename) {

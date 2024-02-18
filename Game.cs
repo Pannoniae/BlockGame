@@ -277,7 +277,7 @@ public class Game {
         // handle imgui input
         var IO = ImGui.GetIO();
         if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
-            focused = false;
+            //focused = false;
         }
 
         GD.ResetStates();
