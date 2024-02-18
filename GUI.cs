@@ -15,16 +15,11 @@ using Rectangle = System.Drawing.Rectangle;
 namespace BlockGame;
 
 public class GUI {
-    public Matrix4x4 ortho;
 
     public GL GL;
     public GraphicsDevice GD;
 
-    public FloatVAO crosshair;
-
     private SimpleShaderProgram shader;
-    public int projection;
-    public int uColor;
 
     public bool debugScreen = true;
 
@@ -35,33 +30,26 @@ public class GUI {
     public Texture2D colourTexture;
     private TextureFont guiFont;
 
-    public Rectangle buttonRect = new Rectangle(0, 0, 64, 16);
+    public Rectangle buttonRect = new(0, 0, 64, 16);
 
-    public const int crosshairSize = 10;
-    public const int crosshairThickness = 2;
     public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
-
-    public const string fontFile = "guifont.fnt";
-
-    private const long MEGABYTES = 1 * 1024 * 1024;
 
     public GUI() {
         GL = Game.instance.GL;
         GD = Game.instance.GD;
-        crosshair = new FloatVAO();
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "debug.png");
 
-        if (!File.Exists(fontFile)) {
+        if (!File.Exists(Constants.fontFile)) {
             var collection = new FontCollection();
             var family = collection.Add("unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
             using var ff = FontBuilderExtensions.CreateFontFile(font);
             guiFont = ff.CreateFont(Game.instance.GD);
-            ff.WriteToFile(fontFile);
+            ff.WriteToFile(Constants.fontFile);
         }
         else {
-            using var ff = TrippyFontFile.FromFile(fontFile);
+            using var ff = TrippyFontFile.FromFile(Constants.fontFile);
             guiFont = ff.CreateFont(Game.instance.GD);
         }
 
@@ -81,12 +69,12 @@ public class GUI {
         GD.BlendState = bs;
 
         tb.Begin();
-        tb.Draw(colourTexture, new RectangleF(new PointF(centreX - crosshairThickness, centreY - crosshairSize), new SizeF(crosshairThickness * 2, crosshairSize * 2)),
+        tb.Draw(colourTexture, new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize), new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
             new Color4b(240, 240, 240));
 
-        tb.Draw(colourTexture, new RectangleF(new PointF(centreX - crosshairSize, centreY - crosshairThickness), new SizeF(crosshairSize - crosshairThickness, crosshairThickness * 2)),
+        tb.Draw(colourTexture, new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness), new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
-        tb.Draw(colourTexture, new RectangleF(new PointF(centreX + crosshairThickness, centreY - crosshairThickness), new SizeF(crosshairSize - crosshairThickness, crosshairThickness * 2)),
+        tb.Draw(colourTexture, new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness), new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
         tb.End();
         // reset blending this is messed up
@@ -110,9 +98,7 @@ public class GUI {
 
     public void resize(Vector2D<int> size) {
         Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
-        ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
-
     }
 
     public void imGuiDraw() {
@@ -123,8 +109,7 @@ public class GUI {
         ImGui.Text($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
         ImGui.Text($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
         ImGui.Text($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
-        ImGui.Text($"pf:{c.forward.X:0.000}, pf:{c.forward.Y:0.000}, pf:{c.forward.Z:0.000}");
-        ImGui.Text($"pu:{c.up.X:0.000}, pu:{c.up.Y:0.000}, pu:{c.up.Z:0.000}");
+        ImGui.Text($"cf:{c.forward.X:0.000}, {c.forward.Y:0.000}, {c.forward.Z:0.000}");
         ImGui.Text($"g:{p.onGround} j:{p.jumping}");
         ImGui.Text(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
@@ -135,17 +120,13 @@ public class GUI {
         ImGui.Text($"W:{i.width} H:{i.height}");
         ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
         ImGui.Text(
-            $"M:{Game.instance.proc.PrivateMemorySize64  / MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / MEGABYTES:0.###})");
+            $"M:{Game.instance.proc.PrivateMemorySize64  / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
+
     }
 
 
     public void draw(TextureBatch tb, Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
-        if (color == default) {
-            tb.Draw(texture, position, source, Color4b.White, guiScale, 0f, origin, depth);
-        }
-        else {
-            tb.Draw(texture, position, source, color, guiScale, 0f, origin, depth);
-        }
+        tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 }
