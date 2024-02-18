@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -53,6 +54,11 @@ public class Game {
 
     public bool focused;
     public bool firstFrame;
+
+    /// <summary>
+    /// True while clicking back into the game. Used to prevent the player instantly breaking a block when clicking on the screen to get back into the game world.
+    /// </summary>
+    public bool lockingMouse;
 
     public World world;
     public BTexture2D blockTexture;
@@ -177,6 +183,7 @@ public class Game {
         //mouse.Position = new Vector2(centre.X, centre.Y);
         focused = true;
         firstFrame = true;
+        lockingMouse = true;
     }
 
     private void unlockMouse() {
@@ -185,6 +192,10 @@ public class Game {
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
+        // if no longer holding, the player isn't clicking into the window anymore
+        if (focused && lockingMouse) {
+            lockingMouse = false;
+        }
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -226,7 +237,7 @@ public class Game {
         Console.Out.WriteLine(window.PointToScreen(vec));*/
 
         world.player.pressedMovementKey = false;
-        if (focused) {
+        if (focused && !lockingMouse) {
             world.player.updateInput(dt);
         }
         world.update(dt);
@@ -262,6 +273,11 @@ public class Game {
             fps = (int)(1 / ft);
             window.Title = "BlockGame " + fps;
             stopwatch.Restart();
+        }
+        // handle imgui input
+        var IO = ImGui.GetIO();
+        if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
+            focused = false;
         }
 
         GD.ResetStates();
