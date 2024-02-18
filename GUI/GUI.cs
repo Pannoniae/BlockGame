@@ -7,7 +7,6 @@ using TrippyGL.Fonts;
 using TrippyGL.Fonts.Building;
 using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
-using BlendingFactor = TrippyGL.BlendingFactor;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
@@ -31,12 +30,14 @@ public class GUI {
     public TextureFont guiFont;
 
     public Rectangle buttonRect = new(0, 0, 64, 16);
-
-    public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
+    public int centreX;
+    public int centreY;
 
     public GUI() {
         GL = Game.instance.GL;
         GD = Game.instance.GD;
+        centreX = Game.instance.centreX;
+        centreY = Game.instance.centreY;
         tb = new TextureBatch(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
         tb.SetShaderProgram(shader);
@@ -57,8 +58,7 @@ public class GUI {
             guiFont = ff.CreateFont(Game.instance.GD);
         }
 
-        screen = Screens.GAME_SCREEN;
-        resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
+        screen = Screens.MAIN_MENU;
     }
 
 
@@ -66,10 +66,15 @@ public class GUI {
     public void resize(Vector2D<int> size) {
         Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
+        centreX = Game.instance.centreX;
+        centreY = Game.instance.centreY;
+        screen.resize();
     }
 
     public void drawScreen() {
+        //tb.Begin();
         screen.draw();
+        //tb.End();
     }
 
     public void imGuiDraw() {
