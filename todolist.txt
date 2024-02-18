@@ -1,4 +1,8 @@
 ﻿ - add ores
- 
  - add reflections to shiny / metallic blocks
  - running functionality for the character
+
+ immediate todolist:
+  - make a stack of Screens
+  - handle resizing somehow (modify UI elements? or UI elements should have dynamically calculated bounds?
+  probably more expensive to recalculate everything each frame but is the most reliable)
