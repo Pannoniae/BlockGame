@@ -16,9 +16,6 @@ public class Game {
 
     public static Game instance { get; private set; }
 
-    public const int initialWidth = 1200;
-    public const int initialHeight = 800;
-
     public int width;
     public int height;
 
@@ -50,8 +47,8 @@ public class Game {
 
     public Stopwatch stopwatch = new();
     public double accumTime;
-    public double fixeddt = 1 / 30d;
-    public double maxTimestep = 1 / 5f;
+    public static readonly double fixeddt = 1 / 30d;
+    public static readonly double maxTimestep = 1 / 5f;
     public double t;
 
     public bool focused;
@@ -68,7 +65,7 @@ public class Game {
         //windowOptions.UpdatesPerSecond = 6000;
         windowOptions.VSync = false;
         windowOptions.Title = "BlockGame";
-        windowOptions.Size = new Vector2D<int>(initialWidth, initialHeight);
+        windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
         var api = GraphicsAPI.Default;
 #if DEBUG
@@ -207,6 +204,14 @@ public class Game {
 
         if (key == Key.F3) {
             gui.debugScreen = !gui.debugScreen;
+        }
+
+        if (key == Key.F) {
+            world.save("world");
+        }
+
+        if (key == Key.G) {
+            world.load("world");
         }
 
         world.player.updatePickBlock(keyboard, key, scancode);
