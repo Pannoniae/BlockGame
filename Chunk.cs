@@ -13,6 +13,7 @@ public class Chunk {
         this.world = world;
         chunks = new ChunkSection[CHUNKHEIGHT];
         this.x = x;
+        this.z = z;
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i] = new ChunkSection(world, this, shader, x, i, z);

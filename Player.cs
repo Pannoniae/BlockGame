@@ -38,6 +38,9 @@ public class Player {
     private Vector2D<double> strafeVector = new(0, 0);
     public bool pressedMovementKey;
 
+    public double lastPlace;
+    public double lastBreak;
+
 
     // positions are feet positions
     public Player(World world, int x, int y, int z) {
@@ -93,8 +96,12 @@ public class Player {
             }
         }
         else {
-            if (hVel.Length > Constants.maxhAirSpeed) {
-                var cappedVel = Vector3D.Normalize(hVel) * Constants.maxhAirSpeed;
+            var maxSpeed = Constants.maxhAirSpeed;
+            if (sneaking) {
+                maxSpeed = Constants.maxhAirSpeedSneak;
+            }
+            if (hVel.Length > maxSpeed) {
+                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
                 velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
             }
         }
@@ -134,8 +141,13 @@ public class Player {
         // ground friction
         if (!pressedMovementKey) {
             if (onGround) {
-                var f = Constants.friction;
-                velocity *= f;
+                if (sneaking) {
+                    velocity = Vector3D<double>.Zero;
+                }
+                else {
+                    var f = Constants.friction;
+                    velocity *= f;
+                }
             }
             else {
                 var f = Constants.airFriction;
@@ -306,6 +318,7 @@ public class Player {
     public void updateInput(double dt) {
         pressedMovementKey = false;
         var keyboard = Game.instance.keyboard;
+        var mouse = Game.instance.mouse;
 
         sneaking = keyboard.IsKeyPressed(Key.ShiftLeft);
 
@@ -338,6 +351,34 @@ public class Player {
         if (keyboard.IsKeyPressed(Key.Space) && onGround) {
             jumping = true;
             pressedMovementKey = true;
+        }
+
+        if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTime - lastBreak > Constants.breakDelay) {
+            breakBlock();
+        }
+        
+        if (mouse.IsButtonPressed(MouseButton.Right) && world.worldTime - lastPlace > Constants.placeDelay) {
+            placeBlock();
+        }
+    }
+
+    public void placeBlock() {
+        if (Game.instance.previousPos.HasValue) {
+            var pos = Game.instance.previousPos.Value;
+            // don't intersect the player
+            var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+            if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
+                world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+                world.player.lastPlace = world.worldTime;
+            }
+        }
+    }
+
+    public void breakBlock() {
+        if (Game.instance.targetedPos.HasValue) {
+            var pos = Game.instance.targetedPos.Value;
+            world.setBlock(pos.X, pos.Y, pos.Z, 0);
+            world.player.lastBreak = world.worldTime;
         }
     }
 }
