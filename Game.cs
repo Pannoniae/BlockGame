@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -16,12 +17,8 @@ public class Game {
 
     public static Game instance { get; private set; }
 
-    public const int initialWidth = 1200;
-    public const int initialHeight = 800;
-
     public int width;
     public int height;
-
 
     public IWindow window;
     public GL GL = null!;
@@ -31,15 +28,15 @@ public class Game {
 
     public Process proc;
 
-    public float centreX => width / 2f;
-    public float centreY => height / 2f;
+    public int centreX => width / 2;
+    public int centreY => height / 2;
 
     public GUI gui;
 
     public IMouse mouse;
     public IKeyboard keyboard;
 
-    private Vector2 lastMousePos;
+    public Vector2 lastMousePos;
     public Vector3D<int>? targetedPos;
     public Vector3D<int>? previousPos;
 
@@ -50,12 +47,17 @@ public class Game {
 
     public Stopwatch stopwatch = new();
     public double accumTime;
-    public double fixeddt = 1 / 30d;
-    public double maxTimestep = 1 / 5f;
+    public static readonly double fixeddt = 1 / 30d;
+    public static readonly double maxTimestep = 1 / 5f;
     public double t;
 
     public bool focused;
     public bool firstFrame;
+
+    /// <summary>
+    /// True while clicking back into the game. Used to prevent the player instantly breaking a block when clicking on the screen to get back into the game world.
+    /// </summary>
+    public bool lockingMouse;
 
     public World world;
     public BTexture2D blockTexture;
@@ -66,9 +68,9 @@ public class Game {
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
         //windowOptions.UpdatesPerSecond = 6000;
-        windowOptions.VSync = false;
+        windowOptions.VSync = true;
         windowOptions.Title = "BlockGame";
-        windowOptions.Size = new Vector2D<int>(initialWidth, initialHeight);
+        windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
         var api = GraphicsAPI.Default;
 #if DEBUG
@@ -103,7 +105,7 @@ public class Game {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
             mouse.MouseUp += onMouseUp;
-            mouse.Cursor.CursorMode = CursorMode.Disabled;
+            mouse.Cursor.CursorMode = CursorMode.Normal;
         }
 
         mouse = input.Mice[0];
@@ -122,10 +124,10 @@ public class Game {
         metrics = new Metrics();
         stopwatch.Start();
 
-        blockTexture = new BTexture2D("blocks.png");
-
-        world = new World();
+        blockTexture = new BTexture2D("textures/blocks.png");
+        //world = new World();
         gui = new GUI();
+        resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
         GL.DebugMessageCallback(GLDebug, 0);
     }
@@ -137,89 +139,41 @@ public class Game {
     }
 
     private void onMouseMove(IMouse m, Vector2 position) {
-        if (!focused) {
-            return;
-        }
-
-        if (firstFrame) {
-            lastMousePos = position;
-        }
-        else {
-            const float lookSensitivity = 0.1f;
-            if (lastMousePos == default) {
-                lastMousePos = position;
-            }
-            else {
-                var xOffset = (position.X - lastMousePos.X) * lookSensitivity;
-                var yOffset = (position.Y - lastMousePos.Y) * lookSensitivity;
-                lastMousePos = position;
-
-                world.player.camera.ModifyDirection(xOffset, yOffset);
-            }
-        }
-
-        firstFrame = false;
+        gui.screen.onMouseMove(m, position);
     }
 
     private void onMouseDown(IMouse m, MouseButton button) {
-        if (focused) {
-            if (button == MouseButton.Left) {
-                if (targetedPos.HasValue) {
-                    var pos = targetedPos.Value;
-                    world.setBlock(pos.X, pos.Y, pos.Z, 0);
-                }
-            }
-            else if (button == MouseButton.Right) {
-                if (previousPos.HasValue) {
-                    var pos = previousPos.Value;
-                    // don't intersect the player
-                    var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.pickBlock);
-                    if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
-                        world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
-                    }
-                }
-            }
-        }
-        else {
-            lockMouse();
-        }
+        gui.screen.onMouseDown(m, button);
     }
 
-    private void lockMouse() {
+    public void lockMouse() {
         mouse.Cursor.CursorMode = CursorMode.Disabled;
         //mouse.Position = new Vector2(centre.X, centre.Y);
         focused = true;
         firstFrame = true;
+        lockingMouse = true;
     }
 
-    private void unlockMouse() {
+    public void unlockMouse() {
         mouse.Cursor.CursorMode = CursorMode.Normal;
         focused = false;
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
+        gui.screen.click(m.Position);
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-        if (key == Key.Escape) {
-            unlockMouse();
-        }
-
-        if (key == Key.F3) {
-            gui.debugScreen = !gui.debugScreen;
-        }
-
-        world.player.updatePickBlock(keyboard, key, scancode);
+        gui.screen.onKeyDown(keyboard, key, scancode);
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
     }
 
-    private void resize(Vector2D<int> size) {
+    public void resize(Vector2D<int> size) {
         GL.Viewport(size);
         width = size.X;
         height = size.Y;
-        world.player.camera.aspectRatio = (float)width / height;
         gui.resize(size);
     }
 
@@ -229,14 +183,8 @@ public class Game {
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
+        gui.screen.update(dt);
 
-        world.player.pressedMovementKey = false;
-        if (focused) {
-            world.player.updateInput(dt);
-        }
-        world.player.update(dt);
-
-        targetedPos = world.naiveRaycastBlock(out previousPos);
     }
 
     /// <summary>
@@ -267,23 +215,20 @@ public class Game {
             window.Title = "BlockGame " + fps;
             stopwatch.Restart();
         }
-
+        // handle imgui input
+        var IO = ImGui.GetIO();
+        if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
+            //focused = false;
+        }
         GD.ResetStates();
         GD.ClearColor = Color4b.DeepSkyBlue;
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
-        GD.DepthTestingEnabled = true;
-        metrics.clear();
-
-        //world.mesh();
-        world.draw(interp);
-        if (targetedPos.HasValue) {
-            world.drawBlockOutline(interp);
-        }
+        gui.screen.render(dt, interp);
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
-        gui.draw();
+        gui.drawScreen();
         if (gui.debugScreen) {
             imgui.Update((float)dt);
             gui.imGuiDraw();

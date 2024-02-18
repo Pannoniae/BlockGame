@@ -6,22 +6,8 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public class Player {
-    public const double gravity = 20;
-    public const double maxAccel = 50;
-    public const double maxhSpeed = 4;
-    public const double maxhAirSpeed = 4;
-    public const double jumpSpeed = 6.5;
-    public const double maxVSpeed = 200;
-    public const double friction = 0.55;
-    public const double airFriction = 0.98;
-    public const double epsilon = 0.0001;
-    public const double epsilonGroundCheck = 0.01;
     public const double playerHeight = 1.8;
     public const double eyeHeight = 1.6;
-
-    public static double moveSpeed = 1.5;
-    public const double groundMoveSpeed = 1.5;
-    public const double airMoveSpeed = 0.5;
 
     // is player walking on (colling with) ground
     public bool onGround;
@@ -32,6 +18,8 @@ public class Player {
     // jump cooldown to prevent player jumping immediately again
     // which we don't have
     public double jumpCD;
+
+    public bool sneaking;
 
     public Camera camera;
 
@@ -50,13 +38,16 @@ public class Player {
     private Vector2D<double> strafeVector = new(0, 0);
     public bool pressedMovementKey;
 
+    public double lastPlace;
+    public double lastBreak;
+
 
     // positions are feet positions
     public Player(World world, int x, int y, int z) {
         position = new Vector3D<double>(x, y, z);
         prevPosition = position;
         camera = new Camera(new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
-            (float)Game.initialWidth / Game.initialHeight);
+            (float)Constants.initialWidth / Constants.initialHeight);
 
         this.world = world;
         pickBlock = 1;
@@ -95,46 +86,54 @@ public class Player {
         // clamp max speed
         var hVel = new Vector3D<double>(velocity.X, 0, velocity.Z);
         if (onGround) {
-            if (hVel.Length > maxhSpeed) {
-                var cappedVel = Vector3D.Normalize(hVel) * maxhSpeed;
+            var maxSpeed = Constants.maxhSpeed;
+            if (sneaking) {
+                maxSpeed = Constants.maxhSpeedSneak;
+            }
+            if (hVel.Length > maxSpeed) {
+                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
                 velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
             }
         }
         else {
-            if (hVel.Length > maxhAirSpeed) {
-                var cappedVel = Vector3D.Normalize(hVel) * maxhAirSpeed;
+            var maxSpeed = Constants.maxhAirSpeed;
+            if (sneaking) {
+                maxSpeed = Constants.maxhAirSpeedSneak;
+            }
+            if (hVel.Length > maxSpeed) {
+                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
                 velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
             }
         }
 
         // clamp fallspeed
-        if (Math.Abs(velocity.Y) > maxVSpeed) {
-            var cappedVel = maxVSpeed;
+        if (Math.Abs(velocity.Y) > Constants.maxVSpeed) {
+            var cappedVel = Constants.maxVSpeed;
             velocity.Y = cappedVel * Math.Sign(velocity.Y);
         }
 
         // clamp accel (only Y for now, other axes aren't used)
-        if (Math.Abs(accel.Y) > maxAccel) {
-            accel.Y = maxAccel * Math.Sign(accel.Y);
+        if (Math.Abs(accel.Y) > Constants.maxAccel) {
+            accel.Y = Constants.maxAccel * Math.Sign(accel.Y);
         }
 
         // clamp
-        if (Math.Abs(velocity.X) < epsilon) {
+        if (Math.Abs(velocity.X) < Constants.epsilon) {
             velocity.X = 0;
         }
 
-        if (Math.Abs(velocity.Y) < epsilon) {
+        if (Math.Abs(velocity.Y) < Constants.epsilon) {
             velocity.Y = 0;
         }
 
-        if (Math.Abs(velocity.Z) < epsilon) {
+        if (Math.Abs(velocity.Z) < Constants.epsilon) {
             velocity.Z = 0;
         }
 
         // world bounds check
         var s = world.getWorldSize();
         position.X = Math.Clamp(position.X, 0, s.X);
-        position.Y = Math.Clamp(position.Y, 0, s.Y);
+        //position.Y = Math.Clamp(position.Y, 0, s.Y);
         position.Z = Math.Clamp(position.Z, 0, s.Z);
     }
 
@@ -142,11 +141,16 @@ public class Player {
         // ground friction
         if (!pressedMovementKey) {
             if (onGround) {
-                var f = friction;
-                velocity *= f;
+                if (sneaking) {
+                    velocity = Vector3D<double>.Zero;
+                }
+                else {
+                    var f = Constants.friction;
+                    velocity *= f;
+                }
             }
             else {
-                var f = airFriction;
+                var f = Constants.airFriction;
                 velocity *= f;
             }
         }
@@ -154,7 +158,7 @@ public class Player {
 
     private void updateGravity(double dt) {
         if (!onGround) {
-            accel.Y = -gravity;
+            accel.Y = -Constants.gravity;
         }
         else {
             accel.Y = 0;
@@ -169,10 +173,10 @@ public class Player {
 
         if (strafeVector.X != 0 || strafeVector.Y != 0) {
             // if air, lessen control
-            moveSpeed = onGround ? groundMoveSpeed : airMoveSpeed;
+            Constants.moveSpeed = onGround ? Constants.groundMoveSpeed : Constants.airMoveSpeed;
 
             // first, normalise (v / v.length) then multiply with movespeed
-            strafeVector = Vector2D.Normalize(strafeVector) * moveSpeed;
+            strafeVector = Vector2D.Normalize(strafeVector) * Constants.moveSpeed;
 
             Vector3D<double> moveVector = strafeVector.Y * forward +
                                           strafeVector.X *
@@ -189,7 +193,7 @@ public class Player {
         }
 
         if (jumping && onGround) {
-            velocity.Y = jumpSpeed;
+            velocity.Y = Constants.jumpSpeed;
             onGround = false;
             jumping = false;
         }
@@ -294,7 +298,7 @@ public class Player {
         }
 
         // is player on ground? check slightly below
-        var groundCheck = calcAABB(new Vector3D<double>(position.X, position.Y - epsilonGroundCheck, position.Z));
+        var groundCheck = calcAABB(new Vector3D<double>(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
         onGround = false;
         foreach (var blockAABB in collisionTargets) {
             if (AABB.isCollision(blockAABB, groundCheck)) {
@@ -314,10 +318,9 @@ public class Player {
     public void updateInput(double dt) {
         pressedMovementKey = false;
         var keyboard = Game.instance.keyboard;
+        var mouse = Game.instance.mouse;
 
-        if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
-            moveSpeed *= 5;
-        }
+        sneaking = keyboard.IsKeyPressed(Key.ShiftLeft);
 
         strafeVector = new Vector2D<double>(0, 0);
 
@@ -348,6 +351,34 @@ public class Player {
         if (keyboard.IsKeyPressed(Key.Space) && onGround) {
             jumping = true;
             pressedMovementKey = true;
+        }
+
+        if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTime - lastBreak > Constants.breakDelay) {
+            breakBlock();
+        }
+        
+        if (mouse.IsButtonPressed(MouseButton.Right) && world.worldTime - lastPlace > Constants.placeDelay) {
+            placeBlock();
+        }
+    }
+
+    public void placeBlock() {
+        if (Game.instance.previousPos.HasValue) {
+            var pos = Game.instance.previousPos.Value;
+            // don't intersect the player
+            var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+            if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
+                world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+                world.player.lastPlace = world.worldTime;
+            }
+        }
+    }
+
+    public void breakBlock() {
+        if (Game.instance.targetedPos.HasValue) {
+            var pos = Game.instance.targetedPos.Value;
+            world.setBlock(pos.X, pos.Y, pos.Z, 0);
+            world.player.lastBreak = world.worldTime;
         }
     }
 }
