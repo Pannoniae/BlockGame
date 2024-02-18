@@ -1,4 +1,4 @@
 ﻿ - add ores
  
  - add reflections to shiny / metallic blocks
- - running functionality for the character
+ - "run" functionality for the character
