@@ -53,10 +53,9 @@ public class World {
         if (!loaded) {
             // create terrain
             genTerrain();
+            // separate loop so all data is there
+            meshChunks();
         }
-
-        // separate loop so all data is there
-        meshChunks();
 
         Console.Out.WriteLine(chunks.Length);
 
@@ -92,7 +91,6 @@ public class World {
     }
 
     public void save(string filename) {
-
         if (!Directory.Exists("world")) {
             Directory.CreateDirectory("world");
         }
@@ -107,22 +105,22 @@ public class World {
             tag.AddInt("posX", chunk.x);
             tag.AddInt("posZ", chunk.z);
             // blocks
-            tag.BeginList(TagType.List, "blocks");
-            for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
-                for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                    for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-                        tag.BeginList(TagType.Int);
-                        tag.AddInt(x);
-                        tag.AddInt(y);
-                        tag.AddInt(z);
-                        tag.AddInt(chunk.block[x, y, z]);
-                        tag.EndList();
+            tag.BeginList(TagType.Compound, "blocks");
+            // using YXZ order
+            for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+                for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
+                    for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
+                        tag.BeginCompound();
+                        tag.AddInt("id", chunk.block[x, y, z]);
+                        tag.EndCompound();
                     }
                 }
             }
+
             tag.EndList();
             tag.EndCompound();
         }
+
         tag.EndList();
         var fileTag = tag.Create();
         NbtFile.Write($"world/{filename}.nbt", fileTag, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
@@ -141,13 +139,18 @@ public class World {
             var chunkZ = chunk.Get<IntTag>("posZ").Value;
             world.chunks[chunkX, chunkZ] = new Chunk(world, world.shader, chunkX, chunkZ);
             var blocks = chunk.Get<ListTag>("blocks");
-            foreach (var block in blocks) {
-                var fields = (ListTag)block;
-                var x = ((IntTag)fields[0]).Value;
-                var y = ((IntTag)fields[1]).Value;
-                var z = ((IntTag)fields[2]).Value;
-                var id = ((IntTag)fields[3]).Value;
-                world.chunks[chunkX, chunkZ].block[x, y, z] = id;
+            var index = 0;
+            for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+                for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
+                    for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
+                        var block = blocks[index];
+                        var fields = (CompoundTag)block;
+                        var id = ((IntTag)fields["id"]).Value;
+                        world.chunks[chunkX, chunkZ].block[x, y, z] = id;
+
+                        index++;
+                    }
+                }
             }
         }
 
