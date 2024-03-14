@@ -105,14 +105,12 @@ public class World {
             tag.AddInt("posX", chunk.x);
             tag.AddInt("posZ", chunk.z);
             // blocks
-            tag.BeginList(TagType.Compound, "blocks");
+            tag.BeginList(TagType.Int, "blocks");
             // using YXZ order
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
                     for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        tag.BeginCompound();
                         tag.AddInt("id", chunk.block[x, y, z]);
-                        tag.EndCompound();
                     }
                 }
             }
@@ -143,9 +141,7 @@ public class World {
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
                     for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        var block = blocks[index];
-                        var fields = (CompoundTag)block;
-                        var id = ((IntTag)fields["id"]).Value;
+                        var id = ((IntTag)blocks[index]).Value;
                         world.chunks[chunkX, chunkZ].block[x, y, z] = id;
 
                         index++;
