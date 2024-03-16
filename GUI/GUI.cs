@@ -11,12 +11,14 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
+/// <summary>
+/// GUI class which can draw onto the screen.
+/// Supports scaling with guiScale.
+/// </summary>
 public class GUI {
 
     public GL GL;
     public GraphicsDevice GD;
-
-    public Screen screen;
 
     public SimpleShaderProgram shader;
 
@@ -30,18 +32,14 @@ public class GUI {
     public TextureFont guiFont;
 
     public Rectangle buttonRect = new(0, 0, 64, 16);
-    public int centreX;
-    public int centreY;
 
     public GUI() {
         GL = Game.instance.GL;
         GD = Game.instance.GD;
-        centreX = Game.instance.centreX;
-        centreY = Game.instance.centreY;
         tb = new TextureBatch(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
         tb.SetShaderProgram(shader);
-        Screens.initScreens(this);
+        Screen.initScreens(this);
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/debug.png");
 
@@ -57,8 +55,6 @@ public class GUI {
             using var ff = TrippyFontFile.FromFile(Constants.fontFile);
             guiFont = ff.CreateFont(Game.instance.GD);
         }
-
-        screen = Screens.MAIN_MENU;
     }
 
 
@@ -66,19 +62,6 @@ public class GUI {
     public void resize(Vector2D<int> size) {
         Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
-        centreX = Game.instance.centreX;
-        centreY = Game.instance.centreY;
-        screen.resize();
-    }
-
-    public void drawScreen() {
-        //tb.Begin();
-        screen.draw();
-        //tb.End();
-    }
-
-    public void imGuiDraw() {
-        screen.imGuiDraw();
     }
 
 
