@@ -31,6 +31,10 @@ public class Game {
     public int centreX => width / 2;
     public int centreY => height / 2;
 
+    /// <summary>
+    /// The current game screen which is shown.
+    /// </summary>
+    public Screen screen;
     public GUI gui;
 
     public IMouse mouse;
@@ -126,7 +130,8 @@ public class Game {
 
         blockTexture = new BTexture2D("textures/blocks.png");
         //world = new World();
-        gui = new GUI();
+        var gui = new GUI();
+        screen = new MainMenuScreen(gui, GD, gui.tb);
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
         GL.DebugMessageCallback(GLDebug, 0);
@@ -139,11 +144,11 @@ public class Game {
     }
 
     private void onMouseMove(IMouse m, Vector2 position) {
-        gui.screen.onMouseMove(m, position);
+        screen.onMouseMove(m, position);
     }
 
     private void onMouseDown(IMouse m, MouseButton button) {
-        gui.screen.onMouseDown(m, button);
+        screen.onMouseDown(m, button);
     }
 
     public void lockMouse() {
@@ -160,11 +165,11 @@ public class Game {
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
-        gui.screen.click(m.Position);
+        screen.click(m.Position);
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-        gui.screen.onKeyDown(keyboard, key, scancode);
+        screen.onKeyDown(keyboard, key, scancode);
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
@@ -174,7 +179,7 @@ public class Game {
         GL.Viewport(size);
         width = size.X;
         height = size.Y;
-        gui.resize(size);
+        screen.resize(size);
     }
 
     private void update(double dt) {
@@ -183,7 +188,7 @@ public class Game {
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
-        gui.screen.update(dt);
+        screen.update(dt);
 
     }
 
@@ -224,14 +229,14 @@ public class Game {
         GD.ClearColor = Color4b.DeepSkyBlue;
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
-        gui.screen.render(dt, interp);
+        screen.render(dt, interp);
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
-        gui.drawScreen();
-        if (gui.debugScreen) {
+        screen.draw();
+        if (screen.gui.debugScreen) {
             imgui.Update((float)dt);
-            gui.imGuiDraw();
+            screen.imGuiDraw();
             imgui.Render();
         }
     }

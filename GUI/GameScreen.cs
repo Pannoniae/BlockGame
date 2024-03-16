@@ -110,8 +110,8 @@ public class GameScreen : Screen {
         }
     }
 
-    public override void resize() {
-        Game.instance.world.player.camera.aspectRatio = (float)Game.instance.width / Game.instance.height;
+    public override void resize(Vector2D<int> size) {
+        Game.instance.world.player.camera.aspectRatio = (float)size.X / size.Y;
     }
 
     public override void draw() {

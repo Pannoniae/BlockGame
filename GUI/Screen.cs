@@ -1,16 +1,28 @@
-using System.Drawing;
 using System.Numerics;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 using TrippyGL;
 
 namespace BlockGame;
 
 public class Screen {
+
     public GUI gui;
     public GraphicsDevice GD;
     public TextureBatch tb;
 
+    public Vector2D<int> size;
+    public Vector2D<int> centre;
+
     public List<GUIElement> elements = new();
+
+    public static Screen MAIN_MENU = null!;
+    public static Screen GAME_SCREEN = null!;
+
+    public static void initScreens(GUI gui) {
+        MAIN_MENU = new MainMenuScreen(gui, gui.GD, gui.tb);
+        GAME_SCREEN = new GameScreen(gui, gui.GD, gui.tb);
+    }
 
     public Screen(GUI gui, GraphicsDevice GD, TextureBatch tb) {
         this.gui = gui;
@@ -64,17 +76,8 @@ public class Screen {
 
     }
 
-    public virtual void resize() {
-        
-    }
-}
-
-public static class Screens {
-    public static Screen MAIN_MENU = null!;
-    public static Screen GAME_SCREEN = null!;
-
-    public static void initScreens(GUI gui) {
-        MAIN_MENU = new MainMenuScreen(gui, gui.GD, gui.tb);
-        GAME_SCREEN = new GameScreen(gui, gui.GD, gui.tb);
+    public virtual void resize(Vector2D<int> newSize) {
+        size = newSize;
+        centre = size / 2;
     }
 }
