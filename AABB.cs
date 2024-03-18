@@ -1,19 +1,25 @@
 using Silk.NET.Maths;
+using Plane = System.Numerics.Plane;
 
 namespace BlockGame;
 
 public class AABB {
-    public double minX, minY, minZ;
-    public double maxX, maxY, maxZ;
+    public double minX => min.X;
+    public double minY => min.Y;
+    public double minZ => min.Z;
+    public double maxX => max.X;
+    public double maxY => max.Y;
+    public double maxZ => max.Z;
+
+    public Vector3D<double> min;
+    public Vector3D<double> max;
+
+    public Vector3D<double> centre => (max + min) * 0.5f; // Compute AABB center
+    public Vector3D<double> extents => max - centre; // Compute positive extents
 
     public AABB(Vector3D<double> min, Vector3D<double> max) {
-        minX = min.X;
-        minY = min.Y;
-        minZ = min.Z;
-
-        maxX = max.X;
-        maxY = max.Y;
-        maxZ = max.Z;
+        this.min = min;
+        this.max = max;
     }
 
     public static AABB fromSize(Vector3D<double> min, Vector3D<double> size) {
@@ -59,5 +65,17 @@ public class AABB {
 
     public override string ToString() {
         return $"{minX}, {minY}, {minZ}, {maxX}, {maxY}, {maxZ}";
+    }
+
+    public bool intersects(Plane<double> plane) {
+
+        // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
+        double r = extents.X * Math.Abs(plane.Normal.X) + extents.Y * Math.Abs(plane.Normal.Y) + extents.Z * Math.Abs(plane.Normal.Z);
+
+        // Compute distance of box center from plane
+        double s = Vector3D.Dot(plane.Normal, centre) - plane.Distance;
+
+        // Intersection occurs when distance s falls within [-r,+r] interval
+        return Math.Abs(s) <= r;
     }
 }

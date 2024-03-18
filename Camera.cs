@@ -15,12 +15,21 @@ public class Camera {
 
     public float zoom = 50f;
 
+    public Frustum frustum;
+
     public Camera(Vector3 position, Vector3 forward, Vector3 up, float aspectRatio) {
         prevPosition = position;
         this.position = position;
         this.aspectRatio = aspectRatio;
         this.forward = forward;
         this.up = up;
+        calculateFrustum();
+    }
+
+    private void calculateFrustum() {
+        var view = getViewMatrix(1);
+        var proj = getProjectionMatrix();
+        frustum = new Frustum(view * proj);
     }
 
     public void ModifyZoom(float zoomAmount) {
@@ -43,6 +52,7 @@ public class Camera {
                             MathF.Cos(DegreesToRadians(pitch));
 
         forward = Vector3.Normalize(cameraDirection);
+        calculateFrustum();
     }
 
     public Vector3 CalculateForwardVector() {

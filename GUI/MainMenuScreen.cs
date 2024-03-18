@@ -1,5 +1,6 @@
-using System.Drawing;
+using Silk.NET.Maths;
 using TrippyGL;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
@@ -10,6 +11,7 @@ public class MainMenuScreen : Screen {
             Console.Out.WriteLine("CLICKED");
             Game.instance.screen = GAME_SCREEN;
             Game.instance.world = new World();
+            Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
             Console.Out.WriteLine(Game.instance.screen);
         };
         elements.Add(button);

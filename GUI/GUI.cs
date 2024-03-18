@@ -39,7 +39,6 @@ public class GUI {
         tb = new TextureBatch(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
         tb.SetShaderProgram(shader);
-        Screen.initScreens(this);
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/debug.png");
 
@@ -60,7 +59,6 @@ public class GUI {
 
 
     public void resize(Vector2D<int> size) {
-        Game.instance.GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
     }
 
