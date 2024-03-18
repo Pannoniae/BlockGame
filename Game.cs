@@ -130,8 +130,9 @@ public class Game {
 
         blockTexture = new BTexture2D("textures/blocks.png");
         //world = new World();
-        var gui = new GUI();
-        screen = new MainMenuScreen(gui, GD, gui.tb);
+        gui = new GUI();
+        Screen.initScreens(gui);
+        screen = Screen.MAIN_MENU;
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
         GL.DebugMessageCallback(GLDebug, 0);
@@ -176,10 +177,11 @@ public class Game {
     }
 
     public void resize(Vector2D<int> size) {
-        GL.Viewport(size);
+        GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         width = size.X;
         height = size.Y;
         screen.resize(size);
+        gui.resize(size);
     }
 
     private void update(double dt) {
