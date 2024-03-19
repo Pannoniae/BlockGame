@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using ImGuiNET;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -63,7 +64,6 @@ public class Game {
     /// </summary>
     public bool lockingMouse;
 
-    public World world;
     public BTexture2D blockTexture;
     public Metrics metrics;
 
@@ -72,7 +72,7 @@ public class Game {
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
         //windowOptions.UpdatesPerSecond = 6000;
-        windowOptions.VSync = true;
+        windowOptions.VSync = false;
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;

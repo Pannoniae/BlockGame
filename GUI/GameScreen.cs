@@ -9,6 +9,8 @@ namespace BlockGame;
 
 public class GameScreen : Screen {
 
+    public static World world;
+
     public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
 
     public GameScreen(GUI gui, GraphicsDevice GD, TextureBatch tb) : base(gui, GD, tb) {
@@ -17,7 +19,6 @@ public class GameScreen : Screen {
 
 
     public override void update(double dt) {
-        var world = Game.instance.world;
         //gui.screen.update(dt);
         world.player.pressedMovementKey = false;
         if (Game.instance.focused && !Game.instance.lockingMouse) {
@@ -30,7 +31,6 @@ public class GameScreen : Screen {
     }
 
     public override void render(double dt, double interp) {
-        var world = Game.instance.world;
         GD.DepthTestingEnabled = true;
         Game.instance.metrics.clear();
 
@@ -42,7 +42,6 @@ public class GameScreen : Screen {
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
-        var world = Game.instance.world;
         if (Game.instance.focused) {
             if (button == MouseButton.Left) {
                 world.player.breakBlock();
@@ -74,7 +73,7 @@ public class GameScreen : Screen {
                 var yOffset = (position.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
                 Game.instance.lastMousePos = position;
 
-                Game.instance.world.player.camera.ModifyDirection(xOffset, yOffset);
+                world.player.camera.ModifyDirection(xOffset, yOffset);
             }
         }
 
@@ -91,15 +90,15 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.F) {
-            Game.instance.world.save("world");
+            world.save("world");
         }
 
         if (key == Key.G) {
-            Game.instance.world = World.load("world");
+            world = World.load("world");
             Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
         }
 
-        Game.instance.world.player.updatePickBlock(keyboard, key, scancode);
+        world.player.updatePickBlock(keyboard, key, scancode);
     }
 
     public override void click(Vector2 pos) {
@@ -111,7 +110,7 @@ public class GameScreen : Screen {
     }
 
     public override void resize(Vector2D<int> size) {
-        Game.instance.world.player.camera.aspectRatio = (float)size.X / size.Y;
+        world.player.camera.aspectRatio = (float)size.X / size.Y;
     }
 
     public override void draw() {
@@ -149,12 +148,17 @@ public class GameScreen : Screen {
         }
 
         gui.draw(tb, gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
+
+        var i = Game.instance;
+        var p = world.player;
+        //gui.switchToWorldSpace();
+        //gui.drawLineWorld(tb, gui.guiTexture, p.camera.position, p.camera.position + p.camera.forward);
         tb.End();
     }
 
     public override void imGuiDraw() {
         var i = Game.instance;
-        var p = i.world.player;
+        var p = world.player;
         var c = p.camera;
         var m = Game.instance.metrics;
         ImGui.Text($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");

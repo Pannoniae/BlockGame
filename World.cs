@@ -105,17 +105,22 @@ public class World {
             tag.AddInt("posX", chunk.x);
             tag.AddInt("posZ", chunk.z);
             // blocks
-            tag.BeginList(TagType.Int, "blocks");
+            var my = ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT;
+            var mx = ChunkSection.CHUNKSIZE;
+            var mz = ChunkSection.CHUNKSIZE;
+            var blocks = new int[mx * my * mz];
+            int index = 0;
             // using YXZ order
-            for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-                for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
-                    for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        tag.AddInt("id", chunk.block[x, y, z]);
+            for (int y = 0; y < my; y++) {
+                for (int x = 0; x < mx; x++) {
+                    for (int z = 0; z < mz; z++) {
+                        blocks[index] = chunk.block[x, y, z];
+                        index++;
                     }
                 }
             }
+            tag.AddIntArray("blocks", blocks);
 
-            tag.EndList();
             tag.EndCompound();
         }
 
@@ -133,17 +138,15 @@ public class World {
         var chunkTags = tag.Get<ListTag>("chunks");
         foreach (var chunkTag in chunkTags) {
             var chunk = (CompoundTag)chunkTag;
-            var chunkX = chunk.Get<IntTag>("posX").Value;
-            var chunkZ = chunk.Get<IntTag>("posZ").Value;
+            int chunkX = chunk.Get<IntTag>("posX").Value;
+            int chunkZ = chunk.Get<IntTag>("posZ").Value;
             world.chunks[chunkX, chunkZ] = new Chunk(world, world.shader, chunkX, chunkZ);
-            var blocks = chunk.Get<ListTag>("blocks");
-            var index = 0;
+            var blocks = chunk.Get<IntArrayTag>("blocks");
+            int index = 0;
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
                     for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        var id = ((IntTag)blocks[index]).Value;
-                        world.chunks[chunkX, chunkZ].block[x, y, z] = id;
-
+                        world.chunks[chunkX, chunkZ].block[x, y, z] = blocks[index];
                         index++;
                     }
                 }

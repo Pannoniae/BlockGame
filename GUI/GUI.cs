@@ -7,6 +7,7 @@ using TrippyGL.Fonts;
 using TrippyGL.Fonts.Building;
 using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
+using PrimitiveType = TrippyGL.PrimitiveType;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
@@ -21,6 +22,7 @@ public class GUI {
     public GraphicsDevice GD;
 
     public SimpleShaderProgram shader;
+    public SimpleShaderProgram worldShader;
 
     public bool debugScreen = true;
 
@@ -38,6 +40,7 @@ public class GUI {
         GD = Game.instance.GD;
         tb = new TextureBatch(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
+        worldShader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
         tb.SetShaderProgram(shader);
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/debug.png");
@@ -60,11 +63,27 @@ public class GUI {
 
     public void resize(Vector2D<int> size) {
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
+        //worldShader.Projection = Game.instance.world.player.camera.getProjectionMatrix();
+        //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
+        //worldShader.World = Game.instance.world.player.camera.getProjectionMatrix();
     }
 
 
     public void draw(TextureBatch tb, Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
+    }
+
+    public void switchToWorldSpace() {
+        tb.SetShaderProgram(worldShader);
+    }
+
+    public void switchToUISpace() {
+        tb.SetShaderProgram(worldShader);
+    }
+
+    public void drawLineWorld(TextureBatch tb, Texture2D texture, Vector3 start, Vector3 end, Color4b color = default) {
+        // TODO
+        GD.DrawArrays(PrimitiveType.Lines, 0, 2);
     }
 }
