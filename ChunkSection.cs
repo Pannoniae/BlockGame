@@ -13,6 +13,9 @@ public class ChunkSection {
     public int chunkZ;
 
     public BlockVAO vao;
+    public BlockVAO watervao;
+
+    public bool hasTransparentBlocks;
 
     public Shader shader;
 
@@ -33,20 +36,41 @@ public class ChunkSection {
         this.shader = shader;
         GL = Game.instance.GL;
 
-
         uModel = shader.getUniformLocation("uModel");
     }
 
     public void meshChunk() {
         vao = new BlockVAO();
+        watervao = new BlockVAO();
 
-        List<BlockVertex> chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 4);
-        List<ushort> chunkIndices = new List<ushort>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
+        constructVertices(Blocks.isSolid, out var chunkVertices, out var chunkIndices);
+        constructVertices(Blocks.isTransparent, out var tChunkVertices, out var tChunkIndices);
+        vao.bind();
+        var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+        var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+        vao.upload(finalVertices, finalIndices);
+
+        if (tChunkIndices.Count > 0) {
+            watervao.bind();
+            var tFinalVertices = CollectionsMarshal.AsSpan(tChunkVertices);
+            var tFinalIndices = CollectionsMarshal.AsSpan(tChunkIndices);
+            watervao.upload(tFinalVertices, tFinalIndices);
+            hasTransparentBlocks = true;
+        }
+        else {
+            hasTransparentBlocks = false;
+        }
+    }
+
+    private void constructVertices(Func<int, bool> whichBlocks, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices) {
+
+        chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 4);
+        chunkIndices = new List<ushort>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
         ushort i = 0;
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int y = 0; y < CHUNKSIZE; y++) {
                 for (int z = 0; z < CHUNKSIZE; z++) {
-                    if (chunk.block[x, y + chunkY * CHUNKSIZE, z] != 0) {
+                    if (whichBlocks(chunk.block[x, y + chunkY * CHUNKSIZE, z])) {
                         var wpos = world.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
                         int wx = wpos.X;
                         int wy = wpos.Y;
@@ -247,10 +271,6 @@ public class ChunkSection {
                 }
             }
         }
-
-        var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-        var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-        vao.upload(finalVertices, finalIndices);
     }
 
     // this will pack the data into the uint
@@ -260,12 +280,17 @@ public class ChunkSection {
 
     public void drawChunk() {
         vao.bind();
-
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
         shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
 
         uint renderedVerts = vao.render();
         Game.instance.metrics.renderedVerts += (int)renderedVerts;
+        if (hasTransparentBlocks) {
+            watervao.bind();
+            shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
+            uint renderedTransparentVerts = watervao.render();
+            Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
+        }
         Game.instance.metrics.renderedChunks += 1;
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }

@@ -12,7 +12,7 @@ public class MainMenuScreen : Screen {
             Game.instance.screen = GAME_SCREEN;
             GameScreen.world = new World();
             Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
-            Console.Out.WriteLine(Game.instance.screen);
+            Game.instance.lockMouse();
         };
         elements.Add(button);
     }
