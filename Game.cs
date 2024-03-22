@@ -9,6 +9,9 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 using TrippyGL;
+using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
+using DebugSource = Silk.NET.OpenGL.DebugSource;
+using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
 using MouseButton = Silk.NET.Input.MouseButton;
 
@@ -91,9 +94,21 @@ public class Game {
         window.Run();
     }
 
+    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message, IntPtr userparam) {
+        string msg = Marshal.PtrToStringAuto(message, length)!;
+        Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
+    }
+
     private void init() {
         input = window.CreateInput();
         GL = window.CreateOpenGL();
+#if DEBUG
+        // initialise debug print
+        GL.Enable(EnableCap.DebugOutput);
+        GL.Enable(EnableCap.DebugOutputSynchronous);
+        GL.DebugMessageCallback(GLDebug, 0);
+        GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
+#endif
         imgui = new ImGuiController(GL, window, input);
         proc = Process.GetCurrentProcess();
         GD = new GraphicsDevice(GL);
@@ -135,13 +150,6 @@ public class Game {
         screen = Screen.MAIN_MENU;
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
-        GL.DebugMessageCallback(GLDebug, 0);
-    }
-
-    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message,
-        IntPtr userparam) {
-        string msg = Marshal.PtrToStringAuto(message, length)!;
-        Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
     }
 
     private void onMouseMove(IMouse m, Vector2 position) {
