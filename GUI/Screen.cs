@@ -9,7 +9,7 @@ public class Screen {
 
     public GUI gui;
     public GraphicsDevice GD;
-    public TextureBatch tb;
+    public TextureBatcher tb;
 
     public Vector2D<int> size;
     public Vector2D<int> centre;
@@ -24,7 +24,7 @@ public class Screen {
         GAME_SCREEN = new GameScreen(gui, gui.GD, gui.tb);
     }
 
-    public Screen(GUI gui, GraphicsDevice GD, TextureBatch tb) {
+    public Screen(GUI gui, GraphicsDevice GD, TextureBatcher tb) {
         this.gui = gui;
         this.GD = GD;
         this.tb = tb;
