@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using System.Text;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -11,10 +12,12 @@ public class GameScreen : Screen {
 
     public static World world;
 
+    public StringBuilder debugStr;
+
     public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
 
-    public GameScreen(GUI gui, GraphicsDevice GD, TextureBatch tb) : base(gui, GD, tb) {
-
+    public GameScreen(GUI gui, GraphicsDevice GD, TextureBatcher tb) : base(gui, GD, tb) {
+        debugStr = new StringBuilder(500);
     }
 
 
@@ -124,12 +127,18 @@ public class GameScreen : Screen {
         GD.BlendState = bs;
 
         tb.Begin();
-        tb.Draw(gui.colourTexture, new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize), new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
+        tb.Draw(gui.colourTexture,
+            new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
+                new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
             new Color4b(240, 240, 240));
 
-        tb.Draw(gui.colourTexture, new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness), new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
+        tb.Draw(gui.colourTexture,
+            new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness),
+                new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
-        tb.Draw(gui.colourTexture, new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness), new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
+        tb.Draw(gui.colourTexture,
+            new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
+                new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
         tb.End();
         // reset blending this is messed up
@@ -161,20 +170,24 @@ public class GameScreen : Screen {
         var p = world.player;
         var c = p.camera;
         var m = Game.instance.metrics;
-        ImGui.Text($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
-        ImGui.Text($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
-        ImGui.Text($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
-        ImGui.Text($"cf:{c.forward.X:0.000}, {c.forward.Y:0.000}, {c.forward.Z:0.000}");
-        ImGui.Text($"g:{p.onGround} j:{p.jumping}");
-        ImGui.Text(i.targetedPos.HasValue
+        debugStr.Clear();
+        debugStr.AppendLine($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
+        debugStr.AppendLine($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
+        debugStr.AppendLine($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
+        debugStr.AppendLine($"cf:{c.forward.X:0.000}, {c.forward.Y:0.000}, {c.forward.Z:0.000}");
+        debugStr.AppendLine($"g:{p.onGround} j:{p.jumping}");
+        debugStr.AppendLine(i.targetedPos.HasValue
             ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
             : "No target");
-        ImGui.Text($"rC: {m.renderedChunks} rV:{m.renderedVerts}");
+        debugStr.AppendLine($"rC: {m.renderedChunks} rV:{m.renderedVerts}");
 
-        ImGui.Text($"FPS: {i.fps} (ft:{i.ft * 1000:0.##}ms)");
-        ImGui.Text($"W:{i.width} H:{i.height}");
-        ImGui.Text($"CX:{i.centreX} CY:{i.centreY}");
-        ImGui.Text(
-            $"M:{Game.instance.proc.PrivateMemorySize64  / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
+        debugStr.AppendLine($"FPS: {i.fps} (ft:{i.ft * 1000:0.##}ms)");
+        debugStr.AppendLine($"W:{i.width} H:{i.height}");
+        debugStr.AppendLine($"CX:{i.centreX} CY:{i.centreY}");
+        debugStr.AppendLine(
+            $"M:{Game.instance.proc.PrivateMemorySize64 / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
+        tb.Begin();
+        tb.DrawString(gui.guiFont, debugStr.ToString(), new Vector2(5, 5), Color4b.White);
+        tb.End();
     }
 }
