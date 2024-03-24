@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Geometry" Version="1.0.0.1" />
         <PackageReference Include="ImGui.NET" Version="1.89.9.4"/>
         <PackageReference Include="JetBrains.Annotations" Version="2023.3.0"/>
         <PackageReference Include="SharpNBT" Version="1.3.1"/>

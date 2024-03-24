@@ -24,7 +24,7 @@ public class GUI {
     public SimpleShaderProgram shader;
     public SimpleShaderProgram worldShader;
 
-    public bool debugScreen = true;
+    public bool debugScreen = false;
 
     public int guiScale = 4;
 

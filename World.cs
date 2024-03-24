@@ -305,7 +305,7 @@ public class World {
         shader.setUniform(uProjection, player.camera.getProjectionMatrix());
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in chunks) {
-            chunk.drawChunk();
+            chunk.drawChunk(player.camera);
         }
     }
 

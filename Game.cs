@@ -243,7 +243,9 @@ public class Game {
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
+        screen.tb.Begin();
         screen.draw();
+        screen.tb.End();
         if (screen.gui.debugScreen) {
             imgui.Update((float)dt);
             screen.imGuiDraw();

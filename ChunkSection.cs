@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 namespace BlockGame;
@@ -21,6 +22,8 @@ public class ChunkSection {
 
     public int uModel;
 
+    public AABB box;
+
 
     public readonly GL GL;
 
@@ -35,16 +38,21 @@ public class ChunkSection {
         this.world = world;
         this.shader = shader;
         GL = Game.instance.GL;
+        box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
 
         uModel = shader.getUniformLocation("uModel");
+    }
+
+    public bool isVisible(BoundingFrustum frustum) {
+        return frustum.Contains(new BoundingBox(box.min.toVec3(), box.max.toVec3())) != ContainmentType.Disjoint;
     }
 
     public void meshChunk() {
         vao = new BlockVAO();
         watervao = new BlockVAO();
 
-        constructVertices(Blocks.isSolid, out var chunkVertices, out var chunkIndices);
-        constructVertices(Blocks.isTransparent, out var tChunkVertices, out var tChunkIndices);
+        constructVertices(Blocks.isSolid, out var chunkVertices, out var chunkIndices, true);
+        constructVertices(Blocks.isTransparent, out var tChunkVertices, out var tChunkIndices, false);
         vao.bind();
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
         var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
@@ -62,10 +70,17 @@ public class ChunkSection {
         }
     }
 
-    private void constructVertices(Func<int, bool> whichBlocks, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices) {
-
-        chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 4);
-        chunkIndices = new List<ushort>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
+    private void constructVertices(Func<int, bool> whichBlocks, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices, bool full) {
+        // at most, we need chunksize^3 blocks times 8 vertices
+        if (full) {
+            chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 4);
+            chunkIndices = new List<ushort>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 6);
+        }
+        // small array, we don't need that much pre-allocation
+        else {
+            chunkVertices = new List<BlockVertex>(16);
+            chunkIndices = new List<ushort>(16);
+        }
         ushort i = 0;
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int y = 0; y < CHUNKSIZE; y++) {
@@ -294,94 +309,4 @@ public class ChunkSection {
         Game.instance.metrics.renderedChunks += 1;
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
-
-    /*public void meshBlock() {
-        unsafe {
-            vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
-            float[] vertices = [
-                0, 0, 0,
-                0, 0, 1,
-                1, 0, 0,
-                1, 0, 1,
-
-                0, 0, 0,
-                0, 0, 1,
-                0, 1, 0,
-                0, 1, 1,
-
-                0, 0, 0,
-                1, 0, 0,
-                0, 1, 0,
-                1, 1, 0,
-
-                0, 1, 0,
-                0, 1, 1,
-                1, 1, 0,
-                1, 1, 1,
-
-                1, 0, 1,
-                1, 0, 0,
-                1, 1, 1,
-                1, 1, 0,
-
-                1, 0, 1,
-                0, 0, 1,
-                1, 1, 1,
-                0, 1, 1,
-            ];
-
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            fixed (float* data = vertices) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Length * sizeof(float)), data,
-                    BufferUsageARB.StreamDraw);
-            }
-
-            uint[] indices = [
-                0, 1, 3,
-                0, 2, 3,
-
-                4, 5, 7,
-                4, 6, 7,
-
-                8, 9, 11,
-                8, 10, 11,
-
-                12, 13, 15,
-                12, 14, 15,
-
-                16, 17, 19,
-                16, 18, 19,
-
-                20, 21, 23,
-                20, 22, 23,
-            ];
-            ebo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ebo);
-            fixed (uint* data2 = indices) {
-                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(uint)), data2,
-                    BufferUsageARB.StreamDraw);
-            }
-
-            count = (uint)indices.Length;
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
-            GL.EnableVertexAttribArray(0);
-        }
-    }
-
-    public void drawBlock() {
-        unsafe {
-            //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            GL.BindVertexArray(vao);
-            shader.use();
-            shader.setUniform(uModel, Matrix4x4.Identity);
-            shader.setUniform(uView, Game.instance.camera.getViewMatrix());
-            shader.setUniform(uProjection, Game.instance.camera.getProjectionMatrix());
-            shader.setUniform(uColor, new Vector4(0.6f, 0.2f, 0.2f, 1));
-            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (void*)0);
-            shader.setUniform(uColor, new Vector4(1f, 0.2f, 0.2f, 1));
-            //GL.DrawElements(PrimitiveType.Lines, count, DrawElementsType.UnsignedInt, (void*)0);
-        }
-    }*/
 }
