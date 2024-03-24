@@ -33,6 +33,8 @@ public class Player {
 
     public Vector3D<double> forward;
 
+    public Vector3D<double> inputVector;
+
     public int pickBlock;
     public World world;
     private Vector2D<double> strafeVector = new(0, 0);
@@ -57,12 +59,13 @@ public class Player {
 
     public void update(double dt) {
         updateInputVelocity(dt);
-        clamp(dt);
         velocity += accel * dt;
         //position += velocity * dt;
+        clamp(dt);
 
 
         collision(dt);
+        applyInputMovement(dt);
         updateGravity(dt);
         applyFriction();
         clamp(dt);
@@ -76,6 +79,10 @@ public class Player {
 
         // after everything is done
         prevPosition = position;
+    }
+
+    private void applyInputMovement(double dt) {
+        velocity += inputVector;
     }
 
     private void resetFrameVars() {
@@ -182,13 +189,7 @@ public class Player {
                                           strafeVector.X *
                                           Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward));
             moveVector.Y = 0;
-            // specialcase for stopping
-            //if (velocity.Length == 0) {
-                velocity += new Vector3D<double>(moveVector.X, 0, moveVector.Z);
-            //}
-            //else {
-            //    velocity += moveVector;
-            //}
+            inputVector = new Vector3D<double>(moveVector.X, 0, moveVector.Z);
 
         }
 
@@ -247,6 +248,7 @@ public class Player {
                 }
             }
         }
+
 
         // X axis resolution
         position.X += velocity.X * dt;
@@ -323,6 +325,7 @@ public class Player {
         sneaking = keyboard.IsKeyPressed(Key.ShiftLeft);
 
         strafeVector = new Vector2D<double>(0, 0);
+        inputVector = new Vector3D<double>(0, 0, 0);
 
         if (keyboard.IsKeyPressed(Key.W)) {
             // Move forwards
@@ -356,7 +359,7 @@ public class Player {
         if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTime - lastBreak > Constants.breakDelay) {
             breakBlock();
         }
-        
+
         if (mouse.IsButtonPressed(MouseButton.Right) && world.worldTime - lastPlace > Constants.placeDelay) {
             placeBlock();
         }
