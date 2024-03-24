@@ -8,13 +8,13 @@ public static class Constants {
     public const float maxPitch = 89;
     public const int initialWidth = 1200;
     public const int initialHeight = 800;
-    public const double gravity = 20;
+    public const double gravity = 16;
     public const double maxAccel = 50;
     public const double maxhSpeed = 4;
     public const double maxhSpeedSneak = 1.5;
     public const double maxhAirSpeed = 4;
     public const double maxhAirSpeedSneak = 1.5;
-    public const double jumpSpeed = 7;
+    public const double jumpSpeed = 6.5;
     public const double maxVSpeed = 200;
     public const double friction = 0.55;
     public const double airFriction = 0.98;

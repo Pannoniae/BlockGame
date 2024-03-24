@@ -28,9 +28,11 @@ public class Chunk {
 
     public const int CHUNKHEIGHT = 8;
 
-    public void drawChunk() {
+    public void drawChunk(Camera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawChunk();
+            if (chunks[i].isVisible(camera.frustum)) {
+                chunks[i].drawChunk();
+            }
         }
     }
 }

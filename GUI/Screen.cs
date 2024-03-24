@@ -35,11 +35,9 @@ public class Screen {
     }
 
     public virtual void draw() {
-        tb.Begin();
         foreach (var element in elements) {
             element.draw();
         }
-        tb.End();
     }
 
     public virtual void imGuiDraw() {
