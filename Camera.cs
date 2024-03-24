@@ -23,6 +23,10 @@ public class Camera {
         this.aspectRatio = aspectRatio;
         this.forward = forward;
         this.up = up;
+        var view = getViewMatrix(1);
+        var proj = getProjectionMatrix();
+        var mat = view * proj;
+        frustum = new BoundingFrustum(mat);
         calculateFrustum();
     }
 
@@ -30,7 +34,7 @@ public class Camera {
         var view = getViewMatrix(1);
         var proj = getProjectionMatrix();
         var mat = view * proj;
-        frustum = new BoundingFrustum(mat);
+        frustum.Matrix = mat;
     }
 
     public void ModifyZoom(float zoomAmount) {
