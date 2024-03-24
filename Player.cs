@@ -188,6 +188,8 @@ public class Player {
             Vector3D<double> moveVector = strafeVector.Y * forward +
                                           strafeVector.X *
                                           Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward));
+
+
             moveVector.Y = 0;
             inputVector = new Vector3D<double>(moveVector.X, 0, moveVector.Z);
 
@@ -262,6 +264,7 @@ public class Player {
                     if (diff < velocity.X) {
                         position.X += diff;
                         velocity.X = 0;
+                        velocity.Z = inputVector.Z;
                     }
                 }
 
@@ -270,6 +273,7 @@ public class Player {
                     if (diff > velocity.X) {
                         position.X += diff;
                         velocity.X = 0;
+                        velocity.Z = inputVector.Z;
                     }
                 }
             }
@@ -286,6 +290,7 @@ public class Player {
                     if (diff < velocity.Z) {
                         position.Z += diff;
                         velocity.Z = 0;
+                        velocity.X = inputVector.X;
                     }
                 }
 
@@ -294,6 +299,7 @@ public class Player {
                     if (diff > velocity.Z) {
                         position.Z += diff;
                         velocity.Z = 0;
+                        velocity.X = inputVector.X;
                     }
                 }
             }
