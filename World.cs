@@ -7,7 +7,7 @@ using Silk.NET.OpenGL;
 namespace BlockGame;
 
 public class World {
-    public const int WORLDSIZE = 6;
+    public const int WORLDSIZE = 12;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * ChunkSection.CHUNKSIZE;
 
     public Chunk[,] chunks;
