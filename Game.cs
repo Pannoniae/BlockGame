@@ -231,10 +231,10 @@ public class Game {
             stopwatch.Restart();
         }
         // handle imgui input
-        var IO = ImGui.GetIO();
+        /*var IO = ImGui.GetIO();
         if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
-            //focused = false;
-        }
+            focused = false;
+        }*/
         GD.ResetStates();
         GD.ClearColor = Color4b.DeepSkyBlue;
         GD.ClearDepth = 1f;
@@ -243,6 +243,7 @@ public class Game {
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
+        GD.FaceCullingEnabled = false;
         screen.tb.Begin();
         screen.draw();
         screen.tb.End();

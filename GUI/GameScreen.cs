@@ -44,6 +44,7 @@ public class GameScreen : Screen {
         if (Game.instance.targetedPos.HasValue) {
             world.drawBlockOutline(interp);
         }
+        gui.D.update(interp);
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
@@ -181,6 +182,12 @@ public class GameScreen : Screen {
             debugStr.AppendLine(
                 $"M:{Game.instance.proc.PrivateMemorySize64 / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
             tb.DrawString(gui.guiFont, debugStr.ToString(), new Vector2(5, 5), Color4b.White);
+
+
+            gui.D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
+            gui.D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
+            gui.D.flushLines();
+
         }
     }
 
