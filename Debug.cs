@@ -30,7 +30,7 @@ public class Debug {
 
     public void flushLines() {
         var GD = Game.instance.GD;
-        lineVertexBuffer.DataSubset.SetData(lineVertices);
+        lineVertexBuffer.DataSubset.SetData(lineVertices.AsSpan(0, currentLine));
         GD.VertexArray = lineVertexBuffer;
         GD.ShaderProgram = debugShader;
         GD.DrawArrays(PrimitiveType.Lines, 0, (uint)currentLine);
