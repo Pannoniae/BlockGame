@@ -21,6 +21,8 @@ public class GUI {
     public GL GL;
     public GraphicsDevice GD;
 
+    public Debug D;
+
     public SimpleShaderProgram shader;
     public SimpleShaderProgram worldShader;
 
@@ -38,6 +40,7 @@ public class GUI {
     public GUI() {
         GL = Game.instance.GL;
         GD = Game.instance.GD;
+        D = new Debug();
         tb = new TextureBatcher(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
         worldShader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
@@ -65,7 +68,6 @@ public class GUI {
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         //worldShader.Projection = Game.instance.world.player.camera.getProjectionMatrix();
         //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
-        //worldShader.World = Game.instance.world.player.camera.getProjectionMatrix();
     }
 
 
