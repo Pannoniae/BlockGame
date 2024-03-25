@@ -243,7 +243,6 @@ public class Game {
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
-        GD.FaceCullingEnabled = false;
         screen.tb.Begin();
         screen.draw();
         screen.tb.End();
