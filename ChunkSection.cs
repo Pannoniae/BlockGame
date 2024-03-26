@@ -57,8 +57,8 @@ public class ChunkSection {
         vao = new BlockVAO();
         watervao = new BlockVAO();
 
-        constructVertices(Blocks.isSolid, i => !Blocks.isSolid(i), out var chunkVertices, out var chunkIndices, true);
-        constructVertices(Blocks.isTransparent, i => !Blocks.isTransparent(i), out var tChunkVertices, out var tChunkIndices, false);
+        constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i) || !Blocks.isTransparent(i), out var chunkVertices, out var chunkIndices, true);
+        constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i), out var tChunkVertices, out var tChunkIndices, false);
         vao.bind();
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
         var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
@@ -83,6 +83,10 @@ public class ChunkSection {
         else {
             isEmpty = false;
         }
+    }
+
+    public ushort toVertex(float f) {
+        return (ushort)(f / 16f * ushort.MaxValue);
     }
 
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
@@ -160,12 +164,12 @@ public class ChunkSection {
                         var topMaxV = topMax.Y;
 
 
-                        float xmin = x;
-                        float ymin = y;
-                        float zmin = z;
-                        float xmax = x + 1f;
-                        float ymax = y + 1f;
-                        float zmax = z + 1f;
+                        ushort xmin = toVertex(x);
+                        ushort ymin = toVertex(y);
+                        ushort zmin = toVertex(z);
+                        ushort xmax = toVertex(x + 1f);
+                        ushort ymax = toVertex(y + 1f);
+                        ushort zmax = toVertex(z + 1f);
 
                         if (neighbourTest(world.getBlock(wx - 1, wy, wz))) {
                             var data = packData((byte)RawDirection.WEST);
