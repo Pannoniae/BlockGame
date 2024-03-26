@@ -247,9 +247,9 @@ public class Game {
         screen.draw();
         screen.tb.End();
         if (screen.gui.debugScreen) {
-            imgui.Update((float)dt);
+            /*mgui.Update((float)dt);
             screen.imGuiDraw();
-            imgui.Render();
+            imgui.Render();*/
         }
     }
 

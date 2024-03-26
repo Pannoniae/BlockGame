@@ -72,11 +72,11 @@ public class BlockVAO {
     public void format() {
         unsafe {
             // 24 bytes in total, 3*4 for pos, 2*4 for uv, 4 bytes for data
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), (void*)0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), (void*)(0 + 3 * sizeof(float)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 5 * sizeof(float), (void*)(0 + 3 * sizeof(float)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedInt, 6 * sizeof(float), (void*)(0 + 5 * sizeof(float)));
+            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedInt, 5 * sizeof(float), (void*)(0 + 4 * sizeof(float)));
             GL.EnableVertexAttribArray(2);
         }
     }
@@ -98,8 +98,8 @@ public struct BlockVertex {
     public float x;
     public float y;
     public float z;
-    public float u;
-    public float v;
+    public Half u;
+    public Half v;
 
     /// <summary>
     /// from least significant:
@@ -107,7 +107,7 @@ public struct BlockVertex {
     /// </summary>
     public uint d;
 
-    public BlockVertex(float x, float y, float z, float u, float v, uint d) {
+    public BlockVertex(float x, float y, float z, Half u, Half v, uint d) {
         this.x = x;
         this.y = y;
         this.z = z;
