@@ -30,9 +30,19 @@ public class Chunk {
 
     public void drawChunk(Camera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            if (!chunks[i].isEmpty && chunks[i].isVisible(camera.frustum)) {
-                chunks[i].drawChunk();
-            }
+            chunks[i].drawChunk(camera);
+        }
+    }
+
+    public void drawOpaque(Camera camera) {
+        for (int i = 0; i < CHUNKHEIGHT; i++) {
+            chunks[i].drawOpaque(camera);
+        }
+    }
+
+    public void drawTransparent(Camera camera) {
+        for (int i = 0; i < CHUNKHEIGHT; i++) {
+            chunks[i].drawTransparent(camera);
         }
     }
 }

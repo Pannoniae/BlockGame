@@ -227,7 +227,7 @@ public class Game {
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);
-            window.Title = "BlockGame " + fps;
+            window.Title = $"BlockGame {fps} ({ft * 1000:0.##}ms)";
             stopwatch.Restart();
         }
         // handle imgui input

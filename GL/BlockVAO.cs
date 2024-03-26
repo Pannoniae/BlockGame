@@ -72,11 +72,11 @@ public class BlockVAO {
     public void format() {
         unsafe {
             // 24 bytes in total, 3*4 for pos, 2*4 for uv, 4 bytes for data
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), (void*)0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 5 * sizeof(float), (void*)(0 + 3 * sizeof(float)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.UnsignedShort, true, 9 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedInt, 5 * sizeof(float), (void*)(0 + 4 * sizeof(float)));
+            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 9 * sizeof(ushort), (void*)(0 + 8 * sizeof(ushort)));
             GL.EnableVertexAttribArray(2);
         }
     }
@@ -93,21 +93,21 @@ public class BlockVAO {
     }
 }
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential, Size = 18)]
 public struct BlockVertex {
     public float x;
     public float y;
     public float z;
-    public Half u;
-    public Half v;
+    public ushort u;
+    public ushort v;
 
     /// <summary>
     /// from least significant:
     /// first 3 bits are side (see Direction enum)
     /// </summary>
-    public uint d;
+    public ushort d;
 
-    public BlockVertex(float x, float y, float z, Half u, Half v, uint d) {
+    public BlockVertex(float x, float y, float z, ushort u, ushort v, ushort d) {
         this.x = x;
         this.y = y;
         this.z = z;

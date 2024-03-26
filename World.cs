@@ -11,6 +11,7 @@ public class World {
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * ChunkSection.CHUNKSIZE;
 
     public Chunk[,] chunks;
+    public List<ChunkSection> sortedTransparentChunks = [];
     public Shader shader;
     public int uView;
 
@@ -34,7 +35,7 @@ public class World {
 
     public World(bool loaded = false) {
         GL = Game.instance.GL;
-        player = new Player(this, 0, 20, 0);
+        player = new Player(this, 6 * ChunkSection.CHUNKSIZE, 20, 6 * ChunkSection.CHUNKSIZE);
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         uView = shader.getUniformLocation("uView");
         uProjection = shader.getUniformLocation("uProjection");
@@ -85,6 +86,11 @@ public class World {
                 var sin = Math.Sin(x / 3f) * 2 + sinMin + 1 + Math.Cos(z / 3f) * 2 + sinMin + 1;
                 for (int y = sinMin; y < sin; y++) {
                     setBlock(x, y, z, 5, false);
+                }
+                if (sin < 6) {
+                    for (int y = 5; y < 6; y++) {
+                        setBlock(x, y, z, 7, false);
+                    }
                 }
             }
         }
@@ -159,6 +165,10 @@ public class World {
 
     public void update(double dt) {
         worldTime += dt;
+        /*if (Vector3D.DistanceSquared(player.position, player.lastSort) > 64) {
+            sortedTransparentChunks.Sort(new ChunkComparer(player.camera));
+            player.lastSort = player.position;
+        }*/
     }
 
     public Vector3D<int> getWorldSize() {
@@ -197,6 +207,9 @@ public class World {
 
         var block = Blocks.get(id);
         var aabb = block.aabb;
+        if (aabb == null) {
+            return null;
+        }
         return new AABB(new Vector3D<double>(x + aabb.minX, y + aabb.minY, z + aabb.minZ),
             new Vector3D<double>(x + aabb.maxX, y + aabb.maxY, z + aabb.maxZ));
     }
@@ -305,8 +318,21 @@ public class World {
         shader.setUniform(uProjection, player.camera.getProjectionMatrix());
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in chunks) {
-            chunk.drawChunk(player.camera);
+            chunk.drawOpaque(player.camera);
         }
+        GL.ColorMask(false, false, false, false);
+        foreach (var chunk in chunks) {
+            chunk.drawTransparent(player.camera);
+        }
+        GL.ColorMask(true, true, true, true);
+        GL.DepthMask(false);
+        GL.DepthFunc(DepthFunction.Lequal);
+        foreach (var chunk in chunks) {
+            chunk.drawTransparent(player.camera);
+        }
+        GL.DepthMask(true);
+        GL.DepthFunc(DepthFunction.Less);
+
     }
 
     public Vector3D<int> toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
@@ -334,7 +360,7 @@ public class World {
         for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
             currentPos += cameraForward * Constants.RAYCASTSTEP;
             var blockPos = toBlockPos(currentPos);
-            if (isBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
+            if (isBlock(blockPos.X, blockPos.Y, blockPos.Z) && Blocks.get(getBlock(blockPos)).selection) {
                 //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
                 return blockPos;
             }

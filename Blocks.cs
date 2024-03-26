@@ -21,15 +21,22 @@ public class Blocks {
     public static Block GRAVEL = register(3, new Block(Block.cubeUVs(3, 0)));
     public static Block BASALT = register(4, new Block(Block.cubeUVs(4, 0)));
     public static Block STONE = register(5, new Block(Block.cubeUVs(5, 0)));
-    public static Block GOLD = register(6, new Block(Block.cubeUVs(6, 0)));
-    public static Block WATER = register(7, new Block(Block.cubeUVs(7, 0)));
+
+    public static Block WATER = register(7, new Block(Block.cubeUVs(6, 0))
+        .transparency()
+        .noCollision()
+        .noSelection());
 
     public static bool isSolid(int block) {
-        return !transparentBlocks.Contains(block) && block != 0;
+        return block != 0 && !get(block).transparent;
     }
 
     public static bool isTransparent(int block) {
-        return transparentBlocks.Contains(block) && block != 0;
+        return block != 0 && get(block).transparent;
+    }
+
+    public static bool hasCollision(int block) {
+        return block != 0 && get(block).collision;
     }
 }
 
@@ -37,14 +44,20 @@ public class Block {
     public static readonly int atlasSize = 256;
 
     public UVPair[] uvs = new UVPair[6];
-    public AABB aabb;
+    public AABB? aabb;
+    public bool transparent = false;
+    public bool collision = true;
+    public bool selection = true;
 
-    public static Vector2D<Half> texCoords(int x, int y) {
-        return new Vector2D<Half>((Half)(x * 16f / atlasSize), (Half)(y * 16f / atlasSize));
+    /// <summary>
+    /// 0 = 0, 65535 = 1
+    /// </summary>
+    public static Vector2D<ushort> texCoords(int x, int y) {
+        return new Vector2D<ushort>((ushort)(x * 16f / atlasSize * ushort.MaxValue), (ushort)(y * 16f / atlasSize * ushort.MaxValue));
     }
 
-    public static Vector2D<Half> texCoords(UVPair uv) {
-        return new Vector2D<Half>((Half)(uv.u * 16f / atlasSize), (Half)(uv.v * 16f / atlasSize));
+    public static Vector2D<ushort> texCoords(UVPair uv) {
+        return new Vector2D<ushort>((ushort)(uv.u * 16f / atlasSize * ushort.MaxValue), (ushort)(uv.v * 16f / atlasSize * ushort.MaxValue));
     }
 
     public static UVPair[] cubeUVs(int x, int y) {
@@ -68,6 +81,22 @@ public class Block {
         }
 
         this.aabb = aabb ?? fullBlock();
+    }
+
+    public Block transparency() {
+        transparent = true;
+        return this;
+    }
+
+    public Block noCollision() {
+        collision = false;
+        aabb = null;
+        return this;
+    }
+
+    public Block noSelection() {
+        selection = false;
+        return this;
     }
 }
 
