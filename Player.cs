@@ -35,7 +35,7 @@ public class Player {
 
     public Vector3D<double> inputVector;
 
-    public int pickBlock;
+    public ushort pickBlock;
     public World world;
     public Vector2D<double> strafeVector = new(0, 0);
     public bool pressedMovementKey;
@@ -319,7 +319,7 @@ public class Player {
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
-            pickBlock = key - Key.Number0;
+            pickBlock = (ushort)(key - Key.Number0);
         }
     }
 
