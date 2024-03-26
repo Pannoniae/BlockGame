@@ -87,9 +87,9 @@ public class World {
                 for (int y = sinMin; y < sin; y++) {
                     setBlock(x, y, z, 5, false);
                 }
-                if (sin < 6) {
-                    for (int y = 5; y < 6; y++) {
-                        setBlock(x, y, z, 7, false);
+                if (sin < 4) {
+                    for (int y = 3; y < 4; y++) {
+                        setBlock(x, y, z, 1, false);
                     }
                 }
             }

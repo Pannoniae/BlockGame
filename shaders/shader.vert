@@ -12,7 +12,8 @@ out vec2 texCoords;
 out uint data;
 
 void main() {
-    gl_Position = uProjection * uView * uModel * vec4(vPos, 1.0);
+    vec3 v2Pos = vPos * 16;
+    gl_Position = uProjection * uView * uModel * vec4(v2Pos, 1.0);
     texCoords = texCoord;
     data = iData;
 }

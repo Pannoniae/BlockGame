@@ -22,17 +22,25 @@ public class Blocks {
     public static Block BASALT = register(4, new Block(Block.cubeUVs(4, 0)));
     public static Block STONE = register(5, new Block(Block.cubeUVs(5, 0)));
 
-    public static Block WATER = register(7, new Block(Block.cubeUVs(6, 0))
+    public static Block GLASS = register(6, new Block(Block.cubeUVs(7, 0))
         .transparency()
+        );
+
+    public static Block WATER = register(7, new Block(Block.cubeUVs(6, 0))
+        .translucency()
         .noCollision()
         .noSelection());
 
     public static bool isSolid(int block) {
-        return block != 0 && !get(block).transparent;
+        return block != 0 && !get(block).transparent && !get(block).translucent;
     }
 
     public static bool isTransparent(int block) {
         return block != 0 && get(block).transparent;
+    }
+
+    public static bool isTranslucent(int block) {
+        return block != 0 && get(block).translucent;
     }
 
     public static bool hasCollision(int block) {
@@ -45,7 +53,14 @@ public class Block {
 
     public UVPair[] uvs = new UVPair[6];
     public AABB? aabb;
+    /// <summary>
+    /// Is fully transparent? (glass, leaves, etc.)
+    /// </summary>
     public bool transparent = false;
+    /// <summary>
+    /// Is translucent? (partially transparent blocks like water)
+    /// </summary>
+    public bool translucent = false;
     public bool collision = true;
     public bool selection = true;
 
@@ -85,6 +100,11 @@ public class Block {
 
     public Block transparency() {
         transparent = true;
+        return this;
+    }
+
+    public Block translucency() {
+        translucent = true;
         return this;
     }
 
