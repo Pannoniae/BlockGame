@@ -37,7 +37,7 @@ public class Player {
 
     public int pickBlock;
     public World world;
-    private Vector2D<double> strafeVector = new(0, 0);
+    public Vector2D<double> strafeVector = new(0, 0);
     public bool pressedMovementKey;
 
     public double lastPlace;
@@ -329,9 +329,6 @@ public class Player {
         var mouse = Game.instance.mouse;
 
         sneaking = keyboard.IsKeyPressed(Key.ShiftLeft);
-
-        strafeVector = new Vector2D<double>(0, 0);
-        inputVector = new Vector3D<double>(0, 0, 0);
 
         if (keyboard.IsKeyPressed(Key.W)) {
             // Move forwards

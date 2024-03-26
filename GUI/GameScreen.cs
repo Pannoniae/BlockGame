@@ -24,6 +24,8 @@ public class GameScreen : Screen {
     public override void update(double dt) {
         //gui.screen.update(dt);
         world.player.pressedMovementKey = false;
+        world.player.strafeVector = new Vector2D<double>(0, 0);
+        world.player.inputVector = new Vector3D<double>(0, 0, 0);
         if (Game.instance.focused && !Game.instance.lockingMouse) {
             world.player.updateInput(dt);
         }

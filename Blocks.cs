@@ -39,12 +39,12 @@ public class Block {
     public UVPair[] uvs = new UVPair[6];
     public AABB aabb;
 
-    public static Vector2 texCoords(int x, int y) {
-        return new Vector2(x * 16f / atlasSize, y * 16f / atlasSize);
+    public static Vector2D<Half> texCoords(int x, int y) {
+        return new Vector2D<Half>((Half)(x * 16f / atlasSize), (Half)(y * 16f / atlasSize));
     }
 
-    public static Vector2 texCoords(UVPair uv) {
-        return new Vector2(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
+    public static Vector2D<Half> texCoords(UVPair uv) {
+        return new Vector2D<Half>((Half)(uv.u * 16f / atlasSize), (Half)(uv.v * 16f / atlasSize));
     }
 
     public static UVPair[] cubeUVs(int x, int y) {

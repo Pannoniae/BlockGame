@@ -13,15 +13,15 @@ public class ChunkSection {
     public int chunkY;
     public int chunkZ;
 
+    public bool isEmpty = false;
+
     public BlockVAO vao;
     public BlockVAO watervao;
 
     public bool hasTransparentBlocks;
 
     public Shader shader;
-
     public int uModel;
-
     public AABB box;
 
 
@@ -67,6 +67,13 @@ public class ChunkSection {
         }
         else {
             hasTransparentBlocks = false;
+        }
+
+        if (chunkIndices.Count == 0 && tChunkIndices.Count == 0) {
+            isEmpty = true;
+        }
+        else {
+            isEmpty = false;
         }
     }
 
