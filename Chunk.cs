@@ -1,7 +1,7 @@
 namespace BlockGame;
 
 public class Chunk {
-    public int[,,] block;
+    public ushort[,,] block;
     public int x;
     public int z;
     public ChunkSection[] chunks;
@@ -9,7 +9,7 @@ public class Chunk {
 
 
     public Chunk(World world, Shader shader, int x, int z) {
-        block = new int[ChunkSection.CHUNKSIZE, ChunkSection.CHUNKSIZE * CHUNKHEIGHT, ChunkSection.CHUNKSIZE];
+        block = new ushort[ChunkSection.CHUNKSIZE, ChunkSection.CHUNKSIZE * CHUNKHEIGHT, ChunkSection.CHUNKSIZE];
         this.world = world;
         chunks = new ChunkSection[CHUNKHEIGHT];
         this.x = x;

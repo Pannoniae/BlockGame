@@ -146,7 +146,7 @@ public class World {
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
                     for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        world.chunks[chunkX, chunkZ].block[x, y, z] = blocks[index];
+                        world.chunks[chunkX, chunkZ].block[x, y, z] = (ushort)blocks[index];
                         index++;
                     }
                 }
@@ -201,7 +201,7 @@ public class World {
             new Vector3D<double>(x + aabb.maxX, y + aabb.maxY, z + aabb.maxZ));
     }
 
-    public void setBlock(int x, int y, int z, int block, bool remesh = true) {
+    public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
         if (!inWorld(x, y, z)) {
             return;
         }
