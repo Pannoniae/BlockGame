@@ -56,9 +56,10 @@ public class ChunkSection {
     public void meshChunk() {
         vao = new BlockVAO();
         watervao = new BlockVAO();
-
+        // first we render everything which is NOT translucent
         constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i) || !Blocks.isTransparent(i), out var chunkVertices, out var chunkIndices, true);
-        constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i), out var tChunkVertices, out var tChunkIndices, false);
+        // then we render everything which is translucent (water for now)
+        constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i), out var tChunkVertices, out var tChunkIndices, false);
         vao.bind();
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
         var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
