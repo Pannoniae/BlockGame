@@ -59,18 +59,27 @@ public class Player {
 
         this.world = world;
         pickBlock = 1;
+        var f = camera.CalculateForwardVector();
+        forward = new Vector3D<double>(f.X, f.Y, f.Z);
         aabb = calcAABB(position);
     }
 
 
     public void update(double dt) {
         updateInputVelocity(dt);
+        Console.Out.WriteLine("d: " + dt);
         velocity += accel * dt;
         //position += velocity * dt;
         clamp(dt);
 
 
         collision(dt);
+        Console.Out.WriteLine(position);
+        Console.Out.WriteLine(velocity);
+        Console.Out.WriteLine(accel);
+        //position.X += velocity.X * dt;
+        //position.Y += velocity.Y * dt;
+        //position.Z += velocity.Z * dt;
         applyInputMovement(dt);
         updateGravity(dt);
         applyFriction();
@@ -96,26 +105,42 @@ public class Player {
     }
 
     private void clamp(double dt) {
-        // clamp max speed
-        var hVel = new Vector3D<double>(velocity.X, 0, velocity.Z);
-        if (onGround) {
-            var maxSpeed = Constants.maxhSpeed;
-            if (sneaking) {
-                maxSpeed = Constants.maxhSpeedSneak;
-            }
-            if (hVel.Length > maxSpeed) {
-                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
-                velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
-            }
+        // clamp
+        if (Math.Abs(velocity.X) < Constants.epsilon) {
+            velocity.X = 0;
         }
-        else {
-            var maxSpeed = Constants.maxhAirSpeed;
-            if (sneaking) {
-                maxSpeed = Constants.maxhAirSpeedSneak;
+
+        if (Math.Abs(velocity.Y) < Constants.epsilon) {
+            velocity.Y = 0;
+        }
+
+        if (Math.Abs(velocity.Z) < Constants.epsilon) {
+            velocity.Z = 0;
+        }
+
+        if (velocity != Vector3D<double>.Zero) {
+            // clamp max speed
+            // If speed velocity is 0, we are fucked so check for that
+            var hVel = new Vector3D<double>(velocity.X, 0, velocity.Z);
+            if (onGround) {
+                var maxSpeed = Constants.maxhSpeed;
+                if (sneaking) {
+                    maxSpeed = Constants.maxhSpeedSneak;
+                }
+                if (hVel.Length > maxSpeed) {
+                    var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
+                    velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
+                }
             }
-            if (hVel.Length > maxSpeed) {
-                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
-                velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
+            else {
+                var maxSpeed = Constants.maxhAirSpeed;
+                if (sneaking) {
+                    maxSpeed = Constants.maxhAirSpeedSneak;
+                }
+                if (hVel.Length > maxSpeed) {
+                    var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
+                    velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
+                }
             }
         }
 
@@ -128,19 +153,6 @@ public class Player {
         // clamp accel (only Y for now, other axes aren't used)
         if (Math.Abs(accel.Y) > Constants.maxAccel) {
             accel.Y = Constants.maxAccel * Math.Sign(accel.Y);
-        }
-
-        // clamp
-        if (Math.Abs(velocity.X) < Constants.epsilon) {
-            velocity.X = 0;
-        }
-
-        if (Math.Abs(velocity.Y) < Constants.epsilon) {
-            velocity.Y = 0;
-        }
-
-        if (Math.Abs(velocity.Z) < Constants.epsilon) {
-            velocity.Z = 0;
         }
 
         // world bounds check
@@ -262,7 +274,6 @@ public class Player {
         position.X += velocity.X * dt;
         foreach (var blockAABB in collisionTargets) {
             var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-
             if (AABB.isCollision(aabbX, blockAABB)) {
                 // left side
                 if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
@@ -288,7 +299,6 @@ public class Player {
         position.Z += velocity.Z * dt;
         foreach (var blockAABB in collisionTargets) {
             var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-
             if (AABB.isCollision(aabbZ, blockAABB)) {
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
                     var diff = blockAABB.minZ - aabbZ.maxZ;

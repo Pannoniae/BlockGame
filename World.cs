@@ -58,8 +58,6 @@ public class World {
             meshChunks();
         }
 
-        Console.Out.WriteLine(chunks.Length);
-
         meshBlockOutline();
     }
 
@@ -89,7 +87,7 @@ public class World {
                 }
                 if (sin < 4) {
                     for (int y = 3; y < 4; y++) {
-                        setBlock(x, y, z, 1, false);
+                        setBlock(x, y, z, 7, false);
                     }
                 }
             }
@@ -138,9 +136,6 @@ public class World {
     public static World load(string filename) {
         CompoundTag tag = NbtFile.Read($"world/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
         var world = new World(true);
-        world.player.position.X = tag.Get<DoubleTag>("posX");
-        world.player.position.Y = tag.Get<DoubleTag>("posY");
-        world.player.position.Z = tag.Get<DoubleTag>("posZ");
         var chunkTags = tag.Get<ListTag>("chunks");
         foreach (var chunkTag in chunkTags) {
             var chunk = (CompoundTag)chunkTag;
@@ -158,6 +153,11 @@ public class World {
                 }
             }
         }
+
+        world.player.position.X = tag.Get<DoubleTag>("posX");
+        world.player.position.Y = tag.Get<DoubleTag>("posY");
+        world.player.position.Z = tag.Get<DoubleTag>("posZ");
+        world.player.prevPosition = world.player.position;
 
         world.meshChunks();
         return world;
@@ -326,12 +326,14 @@ public class World {
         }
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
+        GL.Disable(EnableCap.CullFace);
         GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunks) {
             chunk.drawTransparent(player.camera);
         }
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
+        GL.Enable(EnableCap.CullFace);
 
     }
 
