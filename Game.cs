@@ -8,6 +8,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
+using SoLoud;
 using TrippyGL;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
@@ -218,12 +219,9 @@ public class Game {
         var interp = accumTime / fixeddt;
         actualRender(dt, interp);
 
-
-
     }
 
     private void actualRender(double dt, double interp) {
-
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);

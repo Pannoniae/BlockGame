@@ -67,19 +67,12 @@ public class Player {
 
     public void update(double dt) {
         updateInputVelocity(dt);
-        Console.Out.WriteLine("d: " + dt);
         velocity += accel * dt;
         //position += velocity * dt;
         clamp(dt);
 
 
         collision(dt);
-        Console.Out.WriteLine(position);
-        Console.Out.WriteLine(velocity);
-        Console.Out.WriteLine(accel);
-        //position.X += velocity.X * dt;
-        //position.Y += velocity.Y * dt;
-        //position.Z += velocity.Z * dt;
         applyInputMovement(dt);
         updateGravity(dt);
         applyFriction();
