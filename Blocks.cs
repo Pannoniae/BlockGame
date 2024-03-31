@@ -14,8 +14,6 @@ public class Blocks {
         return blocks[id];
     }
 
-    public static int[] transparentBlocks = [7];
-
     public static Block GRASS = register(1, new Block(Block.grassUVs(0, 0, 1, 0, 2, 0)));
     public static Block DIRT = register(2, new Block(Block.cubeUVs(2, 0)));
     public static Block GRAVEL = register(3, new Block(Block.cubeUVs(3, 0)));
