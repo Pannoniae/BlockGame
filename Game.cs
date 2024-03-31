@@ -233,7 +233,7 @@ public class Game {
         if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
             focused = false;
         }*/
-        GD.ResetStates();
+        //GD.ResetStates();
         GD.ClearColor = Color4b.DeepSkyBlue;
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);

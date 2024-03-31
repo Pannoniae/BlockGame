@@ -57,7 +57,7 @@ public class ChunkSection {
         vao = new BlockVAO();
         watervao = new BlockVAO();
         // first we render everything which is NOT translucent
-        constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i) || !Blocks.isTransparent(i), out var chunkVertices, out var chunkIndices, true);
+        constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i), out var chunkVertices, out var chunkIndices, true);
         // then we render everything which is translucent (water for now)
         constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i), out var tChunkVertices, out var tChunkIndices, false);
         vao.bind();
@@ -71,11 +71,11 @@ public class ChunkSection {
             var tFinalIndices = CollectionsMarshal.AsSpan(tChunkIndices);
             watervao.upload(tFinalVertices, tFinalIndices);
             hasTransparentBlocks = true;
-            world.sortedTransparentChunks.Add(this);
+            //world.sortedTransparentChunks.Add(this);
         }
         else {
             hasTransparentBlocks = false;
-            world.sortedTransparentChunks.Remove(this);
+            //world.sortedTransparentChunks.Remove(this);
         }
 
         if (chunkIndices.Count == 0 && tChunkIndices.Count == 0) {
