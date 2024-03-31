@@ -1,6 +1,7 @@
 ﻿ - add ores
  - add reflections to shiny / metallic blocks
  - running functionality for the character
+- gombok
 
  immediate todolist:
   - make a stack of Screens

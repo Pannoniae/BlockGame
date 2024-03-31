@@ -52,7 +52,7 @@ public class GUI {
             var collection = new FontCollection();
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
-            using var ff = FontBuilderExtensions.CreateFontFile(font, '\0', (char)255);
+            using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x200);
             guiFont = ff.CreateFont(Game.instance.GD);
             ff.WriteToFile(Constants.fontFile);
         }
