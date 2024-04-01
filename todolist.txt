@@ -1,9 +1,17 @@
 ﻿ - add ores
  - add reflections to shiny / metallic blocks
  - running functionality for the character
-- gombok
+ - gombok
 
  immediate todolist:
   - make a stack of Screens
   - handle resizing somehow (modify UI elements? or UI elements should have dynamically calculated bounds?
   probably more expensive to recalculate everything each frame but is the most reliable)
+  
+  ötletek:
+  -legyenek missziók
+  -minden ore-nak legyen haszna
+  -menüpontok elérési ótvonala megyen rövid (old world-szeruen, sok opció legyen elérhető egyidejűleg a képernyőn)
+  -mobok támadjanak gyakrabban és éjjel-nappla, legyen kihivás az életben maradás (a játék elején főleg)
+  
+  
