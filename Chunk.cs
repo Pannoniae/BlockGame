@@ -28,19 +28,19 @@ public class Chunk {
 
     public const int CHUNKHEIGHT = 8;
 
-    public void drawChunk(Camera camera) {
+    public void drawChunk(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i].drawChunk(camera);
         }
     }
 
-    public void drawOpaque(Camera camera) {
+    public void drawOpaque(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i].drawOpaque(camera);
         }
     }
 
-    public void drawTransparent(Camera camera) {
+    public void drawTransparent(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i].drawTransparent(camera);
         }
