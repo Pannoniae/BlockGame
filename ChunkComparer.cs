@@ -3,9 +3,9 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public class ChunkComparer : IComparer<ChunkSection> {
-    public Camera camera;
+    public PlayerCamera camera;
 
-    public ChunkComparer(Camera camera) {
+    public ChunkComparer(PlayerCamera camera) {
         this.camera = camera;
     }
     public int Compare(ChunkSection x, ChunkSection y) {

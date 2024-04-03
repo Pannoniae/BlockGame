@@ -2,25 +2,29 @@ using System.Numerics;
 
 namespace BlockGame;
 
-public class Camera {
-    public Vector3 prevPosition { get; set; }
-    public Vector3 position { get; set; }
-    public Vector3 forward { get; set; }
+public class PlayerCamera {
+    public Vector3 prevPosition;
+    public Vector3 position;
+    public Vector3 forward;
 
     public Vector3 up { get; private set; }
-    public float aspectRatio { get; set; }
+    public float viewportWidth;
+    public float viewportHeight;
 
     public float yaw { get; set; } = 90f;
     public float pitch { get; set; }
 
-    public float zoom = 50f;
+    public float hfov = 70;
+    private float aspectRatio;
 
     public BoundingFrustum frustum;
 
-    public Camera(Vector3 position, Vector3 forward, Vector3 up, float aspectRatio) {
+    public PlayerCamera(Vector3 position, Vector3 forward, Vector3 up, float viewportWidth, float viewportHeight) {
         prevPosition = position;
         this.position = position;
-        this.aspectRatio = aspectRatio;
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
+        aspectRatio = this.viewportWidth / this.viewportHeight;
         this.forward = forward;
         this.up = up;
         var view = getViewMatrix(1);
@@ -30,6 +34,12 @@ public class Camera {
         calculateFrustum();
     }
 
+    public void setViewport(float width, float height) {
+        viewportWidth = width;
+        viewportHeight = height;
+        aspectRatio = viewportWidth / viewportHeight;
+    }
+
     public void calculateFrustum() {
         var view = getViewMatrix(1);
         var proj = getProjectionMatrix();
@@ -37,9 +47,9 @@ public class Camera {
         frustum.Matrix = mat;
     }
 
-    public void ModifyZoom(float zoomAmount) {
+    public void modifyFOV(float fov) {
         //We don't want to be able to zoom in too close or too far away so clamp to these values
-        zoom = Math.Clamp(zoom - zoomAmount, 1.0f, 60f);
+        hfov = Math.Clamp(hfov - fov, 30f, 150f);
     }
 
     public void ModifyDirection(float xOffset, float yOffset) {
@@ -76,10 +86,14 @@ public class Camera {
     }
 
     public Matrix4x4 getProjectionMatrix() {
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(DegreesToRadians(zoom), aspectRatio, 0.1f, 400.0f);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, 400.0f);
     }
 
     public static float DegreesToRadians(float degrees) {
         return MathF.PI / 180f * degrees;
+    }
+
+    public float hfov2vfov(float hfov) {
+        return 1.0f / MathF.Tan(hfov * 0.017453292519943295f / 2.0f);
     }
 }

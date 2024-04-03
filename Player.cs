@@ -21,7 +21,7 @@ public class Player {
 
     public bool sneaking;
 
-    public Camera camera;
+    public PlayerCamera camera;
 
     public AABB aabb;
 
@@ -54,8 +54,8 @@ public class Player {
     public Player(World world, int x, int y, int z) {
         position = new Vector3D<double>(x, y, z);
         prevPosition = position;
-        camera = new Camera(new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
-            (float)Constants.initialWidth / Constants.initialHeight);
+        camera = new PlayerCamera(new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
+            Constants.initialWidth, Constants.initialHeight);
 
         this.world = world;
         pickBlock = 1;
