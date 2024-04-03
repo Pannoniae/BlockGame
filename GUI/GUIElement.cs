@@ -8,6 +8,9 @@ public class GUIElement {
     public HorizontalAnchor horizontalAnchor = HorizontalAnchor.CENTRED;
     public VerticalAnchor verticalAnchor = VerticalAnchor.CENTRED;
 
+    public bool hovered = false;
+    public bool pressed = false;
+
     /// <summary>
     /// Calculate the absolute bounds of a GUIElement.
     /// </summary>
