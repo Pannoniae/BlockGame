@@ -248,7 +248,6 @@ public class Player {
                     var diff = blockAABB.minY - aabbY.maxY;
                     if (diff < velocity.Y) {
                         position.Y += diff;
-                        velocity.Y = 0;
                     }
                 }
 
@@ -256,7 +255,6 @@ public class Player {
                     var diff = blockAABB.maxY - aabbY.minY;
                     if (diff > velocity.Y) {
                         position.Y += diff;
-                        velocity.Y = 0;
                     }
                 }
             }
@@ -273,8 +271,6 @@ public class Player {
                     var diff = blockAABB.minX - aabbX.maxX;
                     if (diff < velocity.X) {
                         position.X += diff;
-                        velocity.X = 0;
-                        velocity.Z = inputVector.Z;
                     }
                 }
 
@@ -282,8 +278,6 @@ public class Player {
                     var diff = blockAABB.maxX - aabbX.minX;
                     if (diff > velocity.X) {
                         position.X += diff;
-                        velocity.X = 0;
-                        velocity.Z = inputVector.Z;
                     }
                 }
             }
@@ -295,11 +289,8 @@ public class Player {
             if (AABB.isCollision(aabbZ, blockAABB)) {
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
                     var diff = blockAABB.minZ - aabbZ.maxZ;
-                    //Console.Out.WriteLine("d: " + diff);
                     if (diff < velocity.Z) {
                         position.Z += diff;
-                        velocity.Z = 0;
-                        velocity.X = inputVector.X;
                     }
                 }
 
@@ -307,8 +298,6 @@ public class Player {
                     var diff = blockAABB.maxZ - aabbZ.minZ;
                     if (diff > velocity.Z) {
                         position.Z += diff;
-                        velocity.Z = 0;
-                        velocity.X = inputVector.X;
                     }
                 }
             }
@@ -329,6 +318,9 @@ public class Player {
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
             pickBlock = (ushort)(key - Key.Number0);
+            if (!Blocks.tryGet(pickBlock, out _)) {
+                pickBlock = 1;
+            }
         }
     }
 
