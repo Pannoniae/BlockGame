@@ -7,6 +7,9 @@
   - make a stack of Screens
   - handle resizing somehow (modify UI elements? or UI elements should have dynamically calculated bounds?
   probably more expensive to recalculate everything each frame but is the most reliable)
+  - glViewport can be used for inventory block rendering
+  - maybe a more flexible Camera framework would be needed?
+  - "inspiration" can be taken from libgdx
   
   ötletek:
   -legyenek missziók

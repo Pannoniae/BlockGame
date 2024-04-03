@@ -98,11 +98,11 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.F) {
-            world.save("world");
+            WorldIO.save(world, "world");
         }
 
         if (key == Key.G) {
-            world = World.load("world");
+            world = WorldIO.load("world");
             Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
         }
 
