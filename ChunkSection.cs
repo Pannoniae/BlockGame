@@ -314,14 +314,14 @@ public class ChunkSection {
         return direction;
     }
 
-    public void drawChunk(Camera camera) {
+    public void drawChunk(PlayerCamera camera) {
         drawOpaque(camera);
         drawTransparent(camera);
         //Game.instance.metrics.renderedChunks += 1;
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
 
-    public void drawOpaque(Camera camera) {
+    public void drawOpaque(PlayerCamera camera) {
         if (!isEmpty && isVisible(camera.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
@@ -333,7 +333,7 @@ public class ChunkSection {
         }
     }
 
-    public void drawTransparent(Camera camera) {
+    public void drawTransparent(PlayerCamera camera) {
         if (hasTransparentBlocks && !isEmpty && isVisible(camera.frustum)) {
             watervao.bind();
             shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
