@@ -188,7 +188,7 @@ public class World {
             (int)MathF.Floor(pos.Y / (float)ChunkSection.CHUNKSIZE));
     }
 
-    private Vector2D<int> getChunkPos(int x, int z) {
+    private Vector2D<int> getChunkPos(int x, int z) { 
         return new Vector2D<int>(
             (int)MathF.Floor(x / (float)ChunkSection.CHUNKSIZE),
             (int)MathF.Floor(z / (float)ChunkSection.CHUNKSIZE));
