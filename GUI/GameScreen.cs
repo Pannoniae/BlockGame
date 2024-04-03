@@ -118,7 +118,7 @@ public class GameScreen : Screen {
     }
 
     public override void resize(Vector2D<int> size) {
-        world.player.camera.aspectRatio = (float)size.X / size.Y;
+        world.player.camera.setViewport(size.X, size.Y);
     }
 
     public override void draw() {
@@ -176,9 +176,10 @@ public class GameScreen : Screen {
             debugStr.AppendLine(i.targetedPos.HasValue
                 ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
                 : "No target");
-            debugStr.AppendLine($"rC: {m.renderedChunks} rV:{m.renderedVerts}");
+            debugStr.AppendLine($"rC:{m.renderedChunks} rV:{m.renderedVerts}");
+            debugStr.AppendLine($"FOV:{p.camera.hfov}");
 
-            debugStr.AppendLine($"FPS: {i.fps} (ft:{i.ft * 1000:0.##}ms)");
+            debugStr.AppendLine($"FPS:{i.fps} (ft:{i.ft * 1000:0.##}ms)");
             debugStr.AppendLine($"W:{i.width} H:{i.height}");
             debugStr.AppendLine($"CX:{i.centreX} CY:{i.centreY}");
             debugStr.AppendLine(
