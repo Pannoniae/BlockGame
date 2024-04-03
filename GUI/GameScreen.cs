@@ -160,8 +160,12 @@ public class GameScreen : Screen {
 
         gui.draw(tb, gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
 
-        //gui.switchToWorldSpace();
-        //gui.drawLineWorld(tb, gui.guiTexture, p.camera.position, p.camera.position + p.camera.forward);
+        // Draw block display
+        var blockStr = Blocks.get(world.player.pickBlock).name;
+        Vector2 blockOffset = gui.guiFont.Measure(blockStr);
+        tb.DrawString(gui.guiFont, blockStr, new Vector2(Game.instance.centreX, Game.instance.height - 120),
+            Color4b.White, Vector2.One, 0f, blockOffset / 2);
+
         var i = Game.instance;
         var p = world.player;
         var c = p.camera;
@@ -190,7 +194,6 @@ public class GameScreen : Screen {
             gui.D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
             gui.D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
             gui.D.flushLines();
-
         }
     }
 

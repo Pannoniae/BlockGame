@@ -14,17 +14,23 @@ public class Blocks {
         return blocks[id];
     }
 
-    public static Block GRASS = register(1, new Block(Block.grassUVs(0, 0, 1, 0, 2, 0)));
-    public static Block DIRT = register(2, new Block(Block.cubeUVs(2, 0)));
-    public static Block GRAVEL = register(3, new Block(Block.cubeUVs(3, 0)));
-    public static Block BASALT = register(4, new Block(Block.cubeUVs(4, 0)));
-    public static Block STONE = register(5, new Block(Block.cubeUVs(5, 0)));
+    public static bool tryGet(int id, out Block block) {
+        var cond = blocks.TryGetValue(id, out var i);
+        block = cond ? i : blocks[1];
+        return cond;
+    }
 
-    public static Block GLASS = register(6, new Block(Block.cubeUVs(7, 0))
+    public static Block GRASS = register(1, new Block("Grass", Block.grassUVs(0, 0, 1, 0, 2, 0)));
+    public static Block DIRT = register(2, new Block("Dirt", Block.cubeUVs(2, 0)));
+    public static Block GRAVEL = register(3, new Block("Gravel", Block.cubeUVs(3, 0)));
+    public static Block BASALT = register(4, new Block("Basalt", Block.cubeUVs(4, 0)));
+    public static Block STONE = register(5, new Block("Stone", Block.cubeUVs(5, 0)));
+
+    public static Block GLASS = register(6, new Block("Glass", Block.cubeUVs(6, 0))
         .transparency()
-        );
+    );
 
-    public static Block WATER = register(7, new Block(Block.cubeUVs(6, 0))
+    public static Block WATER = register(7, new Block("Water", Block.cubeUVs(7, 0))
         .translucency()
         .noCollision()
         .noSelection());
@@ -47,20 +53,28 @@ public class Blocks {
 }
 
 public class Block {
-    public static readonly int atlasSize = 256;
+    /// <summary>
+    /// Display name
+    /// </summary>
+    public string name = "";
 
-    public UVPair[] uvs = new UVPair[6];
-    public AABB? aabb;
     /// <summary>
     /// Is fully transparent? (glass, leaves, etc.)
     /// </summary>
     public bool transparent = false;
+
     /// <summary>
     /// Is translucent? (partially transparent blocks like water)
     /// </summary>
     public bool translucent = false;
+
     public bool collision = true;
     public bool selection = true;
+
+    public static readonly int atlasSize = 256;
+
+    public UVPair[] uvs = new UVPair[6];
+    public AABB? aabb;
 
     /// <summary>
     /// 0 = 0, 65535 = 1
@@ -88,7 +102,8 @@ public class Block {
         return new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1));
     }
 
-    public Block(UVPair[] uvs, AABB? aabb = null) {
+    public Block(string name, UVPair[] uvs, AABB? aabb = null) {
+        this.name = name;
         for (int i = 0; i < 6; i++) {
             this.uvs[i] = uvs[i];
         }
