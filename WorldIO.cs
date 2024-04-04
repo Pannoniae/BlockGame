@@ -28,18 +28,21 @@ public class WorldIO {
             var my = ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT;
             var mx = ChunkSection.CHUNKSIZE;
             var mz = ChunkSection.CHUNKSIZE;
-            var blocks = new int[mx * my * mz];
+            //var blocks = new int[mx * my * mz];
             int index = 0;
+            tag.BeginList(TagType.Short, "blocks");
             // using YXZ order
             for (int y = 0; y < my; y++) {
                 for (int x = 0; x < mx; x++) {
                     for (int z = 0; z < mz; z++) {
-                        blocks[index] = chunk.block[x, y, z];
+                        //blocks[index] = chunk.block[x, y, z];
+                        tag.AddShort(chunk.block[x, y, z]);
                         index++;
                     }
                 }
             }
-            tag.AddIntArray("blocks", blocks);
+            tag.EndList();
+            //tag.AddIntArray("blocks", blocks);
             tag.EndCompound();
         }
 
@@ -57,12 +60,12 @@ public class WorldIO {
             int chunkX = chunk.Get<IntTag>("posX").Value;
             int chunkZ = chunk.Get<IntTag>("posZ").Value;
             world.chunks[chunkX, chunkZ] = new Chunk(world, world.shader, chunkX, chunkZ);
-            var blocks = chunk.Get<IntArrayTag>("blocks");
+            var blocks = chunk.Get<ListTag>("blocks");
             int index = 0;
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
                     for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        world.chunks[chunkX, chunkZ].block[x, y, z] = (ushort)blocks[index];
+                        world.chunks[chunkX, chunkZ].block[x, y, z] = (ShortTag)blocks[index];
                         index++;
                     }
                 }
