@@ -53,6 +53,9 @@ public class ChunkSection {
         return frustum.Contains(new BoundingBox(box.min.toVec3(), box.max.toVec3())) != ContainmentType.Disjoint;
     }
 
+    /// <summary>
+    /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
+    /// </summary>
     public void meshChunk() {
         vao = new BlockVAO();
         watervao = new BlockVAO();

@@ -106,7 +106,16 @@ public class GameScreen : Screen {
             Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
         }
 
-        world.player.updatePickBlock(keyboard, key, scancode);
+
+        // guiscale test
+        if (keyboard.IsKeyPressed(Key.ControlLeft)) {
+            if (key >= Key.Number0 && key <= Key.Number9) {
+                gui.guiScale = (ushort)(key - Key.Number0);
+            }
+        }
+        else {
+            world.player.updatePickBlock(keyboard, key, scancode);
+        }
     }
 
     public override void click(Vector2 pos) {
@@ -158,13 +167,12 @@ public class GameScreen : Screen {
                 Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
         }
 
-        gui.draw(tb, gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
+        gui.draw(gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
 
         // Draw block display
         var blockStr = Blocks.get(world.player.pickBlock).name;
-        Vector2 blockOffset = gui.guiFont.Measure(blockStr);
-        tb.DrawString(gui.guiFont, blockStr, new Vector2(Game.instance.centreX, Game.instance.height - 120),
-            Color4b.White, Vector2.One, 0f, blockOffset / 2);
+        gui.drawStringCentred(blockStr, new Vector2(Game.instance.centreX, Game.instance.height - 120),
+            Color4b.White);
 
         var i = Game.instance;
         var p = world.player;

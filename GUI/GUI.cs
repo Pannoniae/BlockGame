@@ -52,7 +52,7 @@ public class GUI {
             var collection = new FontCollection();
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
-            using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x200);
+            using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
             guiFont = ff.CreateFont(Game.instance.GD);
             ff.WriteToFile(Constants.fontFile);
         }
@@ -71,9 +71,18 @@ public class GUI {
     }
 
 
-    public void draw(TextureBatcher tb, Texture2D texture, Vector2 position, Rectangle? source = null,
+    public void draw(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
+    }
+
+    public void drawString(string text, Vector2 position, Color4b color = default) {
+        tb.DrawString(guiFont, text, position, color == default ? Color4b.White : color);
+    }
+
+    public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
+        var offsetX = guiFont.Measure(text).X / 2;
+        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y), color == default ? Color4b.White : color);
     }
 
     public void switchToWorldSpace() {

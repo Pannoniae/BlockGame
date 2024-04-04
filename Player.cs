@@ -248,6 +248,7 @@ public class Player {
                     var diff = blockAABB.minY - aabbY.maxY;
                     if (diff < velocity.Y) {
                         position.Y += diff;
+                        velocity.Y = 0;
                     }
                 }
 
@@ -255,6 +256,7 @@ public class Player {
                     var diff = blockAABB.maxY - aabbY.minY;
                     if (diff > velocity.Y) {
                         position.Y += diff;
+                        velocity.Y = 0;
                     }
                 }
             }
