@@ -9,6 +9,6 @@ public class Button : GUIElement {
     }
 
     public override void draw() {
-        screen.gui.draw(screen.tb, screen.gui.guiTexture, new Vector2(bounds.X, bounds.Y), screen.gui.buttonRect);
+        screen.gui.draw(screen.gui.guiTexture, new Vector2(bounds.X, bounds.Y), screen.gui.buttonRect);
     }
 }
