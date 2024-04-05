@@ -85,7 +85,7 @@ public class Player {
         clamp(dt);
 
         // don't increment if flying
-        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
+        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 1.5f : 0;
         Console.Out.WriteLine(totalTraveled);
         camera.position = new Vector3((float)position.X, (float)(position.Y + eyeHeight), (float)position.Z);
         camera.prevPosition = new Vector3((float)prevPosition.X, (float)(prevPosition.Y + eyeHeight),

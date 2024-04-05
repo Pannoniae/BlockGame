@@ -92,10 +92,11 @@ public class PlayerCamera {
         var interpPos = Vector3.Lerp(prevPosition, position, (float)interp);
         var iBob = float.DegreesToRadians(float.Lerp(prevBob, bob, (float)interp));
         var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
-        var factor = 0.6f;
+        var factor = 0.4f;
         return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward, up)
-               * Matrix4x4.CreateRotationY(MathF.Cos(tt) * iBob * factor)
-               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Sin(tt)) * iBob * factor);
+               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
+               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor);
+
     }
 
     public Matrix4x4 getProjectionMatrix() {
