@@ -318,14 +318,14 @@ public class ChunkSection {
         return direction;
     }
 
-    public void drawChunk(PlayerCamera camera, Matrix4x4 viewProj) {
-        drawOpaque(camera, viewProj);
-        drawTransparent(camera, viewProj);
+    public void drawChunk(PlayerCamera camera) {
+        drawOpaque(camera);
+        drawTransparent(camera);
         //Game.instance.metrics.renderedChunks += 1;
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
 
-    public void drawOpaque(PlayerCamera camera, Matrix4x4 viewProj) {
+    public void drawOpaque(PlayerCamera camera) {
         if (!isEmpty && isVisible(camera.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
@@ -336,7 +336,7 @@ public class ChunkSection {
         }
     }
 
-    public void drawTransparent(PlayerCamera camera, Matrix4x4 viewProj) {
+    public void drawTransparent(PlayerCamera camera) {
         if (hasTransparentBlocks && !isEmpty && isVisible(camera.frustum)) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();

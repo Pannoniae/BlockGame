@@ -30,21 +30,21 @@ public class Chunk {
 
     public const int CHUNKHEIGHT = 8;
 
-    public void drawChunk(PlayerCamera camera, Matrix4x4 viewProj) {
+    public void drawChunk(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawChunk(camera, viewProj);
+            chunks[i].drawChunk(camera);
         }
     }
 
-    public void drawOpaque(PlayerCamera camera, Matrix4x4 viewProj) {
+    public void drawOpaque(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawOpaque(camera, viewProj);
+            chunks[i].drawOpaque(camera);
         }
     }
 
-    public void drawTransparent(PlayerCamera camera, Matrix4x4 viewProj) {
+    public void drawTransparent(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawTransparent(camera, viewProj);
+            chunks[i].drawTransparent(camera);
         }
     }
 }

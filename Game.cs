@@ -80,7 +80,7 @@ public class Game {
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
-        var api = GraphicsAPI.Default;
+        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 4));;
 #if DEBUG
         api.Flags = ContextFlags.Debug;
 #endif
