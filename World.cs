@@ -24,6 +24,7 @@ public class World {
     public Player player;
 
     public FastNoiseLite noise;
+    public FastNoiseLite treenoise;
 
     public Shader outline;
     private uint outlineVao;
@@ -50,6 +51,7 @@ public class World {
         uMVP = shader.getUniformLocation("uMVP");
         random = new Random();
         noise = new FastNoiseLite(Environment.TickCount);
+        treenoise = new FastNoiseLite(random.Next(Environment.TickCount));
         worldTime = 0;
 
         chunks = new Chunk[WORLDSIZE, WORLDSIZE];
@@ -109,6 +111,7 @@ public class World {
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalLacunarity(2f);
         noise.SetFractalGain(0.5f);
+        treenoise.SetFrequency(1f);
         for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
                 // -1 to 1
@@ -118,6 +121,42 @@ public class World {
                     setBlock(x, y, z, Blocks.DIRT.id, false);
                 }
                 setBlock(x, (int)(height + 1), z, Blocks.GRASS.id, false);
+
+                // TREES
+                if (MathF.Abs(treenoise.GetNoise(x, z) - 1) < 0.01f) {
+                    placeTree(x, (int)(height + 1), z);
+                }
+            }
+        }
+    }
+
+    private void placeTree(int x, int y, int z) {
+        // tree
+        for (int i = 0; i < 7; i++) {
+            setBlock(x, y + i, z, Blocks.LOG.id, false);
+        }
+        // leaves, thick
+        for (int x1 = -2; x1 <= 2; x1++) {
+            for (int z1 = -2; z1 <= 2; z1++) {
+                // don't overwrite the trunk
+                if (x1 == 0 && z1 == 0) {
+                    continue;
+                }
+                for (int y1 = 4; y1 < 6; y1++) {
+                    setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id, false);
+                }
+            }
+        }
+        // leaves, thin on top
+        for (int x2 = -1; x2 <= 1; x2++) {
+            for (int z2 = -1; z2 <= 1; z2++) {
+                for (int y2 = 6; y2 <= 7; y2++) {
+                    // don't overwrite the trunk
+                    if (x2 == 0 && z2 == 0 && y == 6) {
+                        continue;
+                    }
+                    setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id, false);
+                }
             }
         }
     }

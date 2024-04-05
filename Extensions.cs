@@ -33,4 +33,8 @@ public static class VectorExtensions {
     public static Vector3D<float> toVec3F(this Vector3 vec) {
         return new Vector3D<float>(vec.X, vec.Y, vec.Z);
     }
+
+    public static Vector3D<T> withoutY<T>(this Vector3D<T> vec) where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T> {
+        return new Vector3D<T>(vec.X, default, vec.Z);
+    }
 }

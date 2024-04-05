@@ -3,6 +3,8 @@ using System.Numerics;
 namespace BlockGame;
 
 public class PlayerCamera {
+    private Player player;
+
     public Vector3 prevPosition;
     public Vector3 position;
     public Vector3 forward;
@@ -15,11 +17,17 @@ public class PlayerCamera {
     public float pitch { get; set; }
 
     public float hfov = 70;
+
+
+    // in degrees
+    public float bob;
+    public float prevBob;
     private float aspectRatio;
 
     public BoundingFrustum frustum;
 
-    public PlayerCamera(Vector3 position, Vector3 forward, Vector3 up, float viewportWidth, float viewportHeight) {
+    public PlayerCamera(Player player, Vector3 position, Vector3 forward, Vector3 up, float viewportWidth, float viewportHeight) {
+        this.player = player;
         prevPosition = position;
         this.position = position;
         this.viewportWidth = viewportWidth;
@@ -82,7 +90,10 @@ public class PlayerCamera {
 
     public Matrix4x4 getViewMatrix(double interp) {
         var interpPos = Vector3.Lerp(prevPosition, position, (float)interp);
+        var iBob = float.DegreesToRadians(float.Lerp(prevBob, bob, (float)interp));
         return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward, up);
+        //* Matrix4x4.CreateRotationZ(MathF.Sin(iBob * 5))
+        //* Matrix4x4.CreateRotationX(MathF.Cos(iBob * 5));
     }
 
     public Matrix4x4 getProjectionMatrix() {
