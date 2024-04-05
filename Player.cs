@@ -31,6 +31,11 @@ public class Player {
     public Vector3D<double> velocity;
     public Vector3D<double> accel;
 
+    /// <summary>
+    /// This number is lying to you.
+    /// </summary>
+    public double totalTraveled;
+
     public Vector3D<double> forward;
 
     public Vector3D<double> inputVector;
@@ -54,7 +59,7 @@ public class Player {
     public Player(World world, int x, int y, int z) {
         position = new Vector3D<double>(x, y, z);
         prevPosition = position;
-        camera = new PlayerCamera(new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
+        camera = new PlayerCamera(this, new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
             Constants.initialWidth, Constants.initialHeight);
 
         this.world = world;
@@ -84,9 +89,17 @@ public class Player {
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
         aabb = calcAABB(position);
-
+        if (Math.Abs(velocity.withoutY().Length) > 0.0001) {
+            camera.bob = (float)totalTraveled;
+        }
+        else {
+            totalTraveled = 0;
+        }
         // after everything is done
+        // calculate total traveled
+        totalTraveled += Math.Min((position.withoutY() - prevPosition.withoutY()).Length * 0.15f, 0.2);
         prevPosition = position;
+        camera.prevBob = camera.bob;
     }
 
     private void applyInputMovement(double dt) {
