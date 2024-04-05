@@ -24,7 +24,7 @@ public class ChunkSection {
     public BlockVAO vao;
     public BlockVAO watervao;
 
-    public bool hasTransparentBlocks;
+    public bool hasTranslucentBlocks;
 
     public Shader shader;
     public int uMVP;
@@ -73,11 +73,11 @@ public class ChunkSection {
             var tFinalVertices = CollectionsMarshal.AsSpan(tChunkVertices);
             var tFinalIndices = CollectionsMarshal.AsSpan(tChunkIndices);
             watervao.upload(tFinalVertices, tFinalIndices);
-            hasTransparentBlocks = true;
+            hasTranslucentBlocks = true;
             //world.sortedTransparentChunks.Add(this);
         }
         else {
-            hasTransparentBlocks = false;
+            hasTranslucentBlocks = false;
             //world.sortedTransparentChunks.Remove(this);
         }
 
@@ -341,7 +341,7 @@ public class ChunkSection {
     }
 
     public void drawTransparent(PlayerCamera camera) {
-        if (hasTransparentBlocks && !isEmpty && isVisible(camera.frustum)) {
+        if (hasTranslucentBlocks && !isEmpty && isVisible(camera.frustum)) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
@@ -353,6 +353,7 @@ public class ChunkSection {
         if (block == Blocks.DIRT.id) {
             if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) == 0) {
                 chunk.block[x, y + chunkY * CHUNKSIZE, z] = Blocks.GRASS.id;
+                meshChunk();
             }
         }
     }
