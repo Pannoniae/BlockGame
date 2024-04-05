@@ -1,24 +1,23 @@
-using System.IO.Compression;
 using System.Numerics;
-using SharpNBT;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
 public class World {
-    public const int WORLDSIZE = 12;
+    public const int WORLDSIZE = 6;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * ChunkSection.CHUNKSIZE;
 
     public Chunk[,] chunks;
     public List<ChunkSection> sortedTransparentChunks = [];
     public Shader shader;
-    public int uView;
+    public Shader dummyShader;
 
     public int uProjection;
 
     //public int uColor;
     public int blockTexture;
+    public int uMVP;
 
     public GL GL;
 
@@ -37,10 +36,9 @@ public class World {
         GL = Game.instance.GL;
         player = new Player(this, 6 * ChunkSection.CHUNKSIZE, 20, 6 * ChunkSection.CHUNKSIZE);
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
-        uView = shader.getUniformLocation("uView");
-        uProjection = shader.getUniformLocation("uProjection");
-        //uColor = shader.getUniformLocation("uColor");
+        dummyShader = new Shader(GL, "shaders/dummyShader.vert");
         blockTexture = shader.getUniformLocation("blockTexture");
+        uMVP = shader.getUniformLocation("uMVP");
         worldTime = 0;
 
         chunks = new Chunk[WORLDSIZE, WORLDSIZE];
@@ -85,9 +83,10 @@ public class World {
                 for (int y = sinMin; y < sin; y++) {
                     setBlock(x, y, z, 5, false);
                 }
+
                 if (sin < 4) {
                     for (int y = 3; y < 4; y++) {
-                        setBlock(x, y, z, 7, false);
+                        setBlock(x, y, z, Blocks.WATER.id, false);
                     }
                 }
             }
@@ -120,6 +119,19 @@ public class World {
     public int getBlock(int x, int y, int z) {
         if (!inWorld(x, y, z)) {
             return 0;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        return chunk.block[blockPos.X, y, blockPos.Z];
+    }
+
+    /// <summary>
+    /// getBlock but returns -1 if OOB
+    /// </summary>
+    public int getBlockUnsafe(int x, int y, int z) {
+        if (!inWorld(x, y, z)) {
+            return -1;
         }
 
         var blockPos = getPosInChunk(x, y, z);
@@ -245,22 +257,24 @@ public class World {
         //var fChunk = chunks[0, 0, 0];
         tex.bind();
         shader.use();
-        shader.setUniform(uView, player.camera.getViewMatrix(interp));
-        shader.setUniform(uProjection, player.camera.getProjectionMatrix());
+        var viewProj = player.camera.getViewMatrix(interp) * player.camera.getProjectionMatrix();
+        shader.setUniform(uMVP, viewProj);
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in chunks) {
-            chunk.drawOpaque(player.camera);
+            chunk.drawOpaque(player.camera, viewProj);
         }
+        dummyShader.use();
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunks) {
-            chunk.drawTransparent(player.camera);
+            chunk.drawTransparent(player.camera, viewProj);
         }
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.Disable(EnableCap.CullFace);
         GL.DepthFunc(DepthFunction.Lequal);
+        shader.use();
         foreach (var chunk in chunks) {
-            chunk.drawTransparent(player.camera);
+            chunk.drawTransparent(player.camera, viewProj);
         }
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);

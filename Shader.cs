@@ -17,8 +17,17 @@ namespace BlockGame {
 
             var vert = load(this.vertexShader, ShaderType.VertexShader);
             var frag = load(this.fragmentShader, ShaderType.FragmentShader);
-            //Console.Out.WriteLine("Shader created!");
             link(vert, frag);
+        }
+
+        /// <summary>
+        /// Used for depth pass shaders.
+        /// </summary>
+        public Shader(GL GL, string vertexShader) {
+            this.GL = GL;
+            this.vertexShader = File.ReadAllText(vertexShader);
+            var vert = load(this.vertexShader, ShaderType.VertexShader);
+            link(vert);
         }
 
         public uint load(string shader, ShaderType type) {
@@ -48,6 +57,20 @@ namespace BlockGame {
             GL.DetachShader(programHandle, frag);
             GL.DeleteShader(vert);
             GL.DeleteShader(frag);
+        }
+
+        private void link(uint vert) {
+            programHandle = GL.CreateProgram();
+            GL.AttachShader(programHandle, vert);
+            GL.LinkProgram(programHandle);
+            GL.GetProgram(programHandle, GLEnum.LinkStatus, out var status);
+            if (status == 0) {
+                throw new Exception($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
+            }
+
+            // yeah this one is from a tutorial, don't judge me
+            GL.DetachShader(programHandle, vert);
+            GL.DeleteShader(vert);
         }
 
         public void use() {

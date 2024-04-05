@@ -24,7 +24,6 @@ public class GUI {
     public Debug D;
 
     public SimpleShaderProgram shader;
-    public SimpleShaderProgram worldShader;
 
     public bool debugScreen = false;
 
@@ -34,6 +33,7 @@ public class GUI {
     public Texture2D guiTexture;
     public Texture2D colourTexture;
     public TextureFont guiFont;
+    public TextureFont guiFontUnicode;
 
     public Rectangle buttonRect = new(0, 0, 64, 16);
 
@@ -42,23 +42,27 @@ public class GUI {
         GD = Game.instance.GD;
         D = new Debug();
         tb = new TextureBatcher(Game.instance.GD);
-        shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
-        worldShader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD);
+        shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD, excludeWorldMatrix: true);
         tb.SetShaderProgram(shader);
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/debug.png");
 
-        if (!File.Exists(Constants.fontFile)) {
+        if (!File.Exists(Constants.fontFile) || !File.Exists(Constants.fontFileUnicode)) {
             var collection = new FontCollection();
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
-            using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
+            using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)127);
+            using var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
             guiFont = ff.CreateFont(Game.instance.GD);
+            guiFontUnicode = ff.CreateFont(Game.instance.GD);
             ff.WriteToFile(Constants.fontFile);
+            ffu.WriteToFile(Constants.fontFileUnicode);
         }
         else {
             using var ff = TrippyFontFile.FromFile(Constants.fontFile);
+            using var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
             guiFont = ff.CreateFont(Game.instance.GD);
+            guiFontUnicode = ffu.CreateFont(Game.instance.GD);
         }
     }
 
@@ -83,14 +87,6 @@ public class GUI {
     public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.Measure(text).X / 2;
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y), color == default ? Color4b.White : color);
-    }
-
-    public void switchToWorldSpace() {
-        tb.SetShaderProgram(worldShader);
-    }
-
-    public void switchToUISpace() {
-        tb.SetShaderProgram(worldShader);
     }
 
     public void drawLineWorld(TextureBatcher tb, Texture2D texture, Vector3 start, Vector3 end, Color4b color = default) {

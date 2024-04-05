@@ -6,8 +6,8 @@ namespace BlockGame;
 public class Blocks {
     public static Dictionary<int, Block> blocks = new();
 
-    public static Block register(int id, Block block) {
-        return blocks[id] = block;
+    public static Block register(Block block) {
+        return blocks[block.id] = block;
     }
 
     public static Block get(int id) {
@@ -20,17 +20,17 @@ public class Blocks {
         return cond;
     }
 
-    public static Block GRASS = register(1, new Block("Grass", Block.grassUVs(0, 0, 1, 0, 2, 0)));
-    public static Block DIRT = register(2, new Block("Dirt", Block.cubeUVs(2, 0)));
-    public static Block GRAVEL = register(3, new Block("Gravel", Block.cubeUVs(3, 0)));
-    public static Block BASALT = register(4, new Block("Basalt", Block.cubeUVs(4, 0)));
-    public static Block STONE = register(5, new Block("Stone", Block.cubeUVs(5, 0)));
+    public static Block GRASS = register(new Block(1, "Grass", Block.grassUVs(0, 0, 1, 0, 2, 0)));
+    public static Block DIRT = register(new Block(2, "Dirt", Block.cubeUVs(2, 0)));
+    public static Block GRAVEL = register(new Block(3, "Gravel", Block.cubeUVs(3, 0)));
+    public static Block BASALT = register(new Block(4, "Basalt", Block.cubeUVs(4, 0)));
+    public static Block STONE = register(new Block(5, "Stone", Block.cubeUVs(5, 0)));
 
-    public static Block GLASS = register(6, new Block("Glass", Block.cubeUVs(6, 0))
+    public static Block GLASS = register(new Block(6, "Glass", Block.cubeUVs(6, 0))
         .transparency()
     );
 
-    public static Block WATER = register(7, new Block("Water", Block.cubeUVs(7, 0))
+    public static Block WATER = register(new Block(7, "Water", Block.cubeUVs(7, 0))
         .translucency()
         .noCollision()
         .noSelection());
@@ -53,6 +53,11 @@ public class Blocks {
 }
 
 public class Block {
+    /// <summary>
+    /// Block ID
+    /// </summary>
+    public ushort id;
+
     /// <summary>
     /// Display name
     /// </summary>
@@ -102,7 +107,8 @@ public class Block {
         return new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1));
     }
 
-    public Block(string name, UVPair[] uvs, AABB? aabb = null) {
+    public Block(ushort id, string name, UVPair[] uvs, AABB? aabb = null) {
+        this.id = id;
         this.name = name;
         for (int i = 0; i < 6; i++) {
             this.uvs[i] = uvs[i];

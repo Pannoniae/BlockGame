@@ -25,7 +25,7 @@ public class BTexture2D : IDisposable {
                 Console.Out.WriteLine("Loading textures the proper way!");
                 fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {
                     GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
-                        PixelFormat.Rgba, PixelType.UnsignedByte, (void*)pixels);
+                        PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
                 }
             }
             else {
@@ -33,8 +33,7 @@ public class BTexture2D : IDisposable {
                     for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
                         fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {
                             GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, rowIndex, (uint)accessor.Width, 1U,
-                                PixelFormat.Rgba, PixelType.UnsignedByte,
-                                (void*)pixels);
+                                PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
                         }
                     }
                 });
