@@ -47,21 +47,31 @@ public class GUI {
     }
 
     public void loadFonts() {
-        if (!File.Exists(Constants.fontFile) || !File.Exists(Constants.fontFileUnicode)) {
+        if (!File.Exists(Constants.fontFile)) {
             var collection = new FontCollection();
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
             using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)127);
-            using var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
             guiFont = ff.CreateFont(Game.instance.GD);
-            guiFontUnicode = ff.CreateFont(Game.instance.GD);
             ff.WriteToFile(Constants.fontFile);
-            ffu.WriteToFile(Constants.fontFileUnicode);
         }
         else {
             using var ff = TrippyFontFile.FromFile(Constants.fontFile);
-            using var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
             guiFont = ff.CreateFont(Game.instance.GD);
+        }
+    }
+
+    public void loadUnicodeFont() {
+        if (!File.Exists(Constants.fontFileUnicode)) {
+            var collection = new FontCollection();
+            var family = collection.Add("fonts/unifont-15.1.04.ttf");
+            var font = family.CreateFont(12, FontStyle.Regular);
+            using var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
+            guiFontUnicode = ffu.CreateFont(Game.instance.GD);
+            ffu.WriteToFile(Constants.fontFileUnicode);
+        }
+        else {
+            using var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
             guiFontUnicode = ffu.CreateFont(Game.instance.GD);
         }
     }

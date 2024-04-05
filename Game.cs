@@ -40,6 +40,7 @@ public class Game {
     /// The current game screen which is shown.
     /// </summary>
     public Screen screen;
+
     public static GUI gui;
 
     public IMouse mouse;
@@ -80,7 +81,8 @@ public class Game {
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
-        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 4));;
+        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 4));
+        ;
 #if DEBUG
         api.Flags = ContextFlags.Debug;
 #endif
@@ -150,7 +152,10 @@ public class Game {
         //world = new World();
         gui = new GUI();
         gui.loadFonts();
-        Task.Run(() => Screen.LOADING.sleep()).ContinueWith(_ => Screen.switchTo(Screen.MAIN_MENU));
+        Task.Run(() => {
+            gui.loadUnicodeFont();
+            Screen.LOADING.sleep();
+        }).ContinueWith(_ => Screen.switchTo(Screen.MAIN_MENU));
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
     }
@@ -247,9 +252,9 @@ public class Game {
         screen.draw();
         gui.tb.End();
         //if (gui.debugScreen) {
-            /*mgui.Update((float)dt);
-            screen.imGuiDraw();
-            imgui.Render();*/
+        /*mgui.Update((float)dt);
+        screen.imGuiDraw();
+        imgui.Render();*/
         //}
     }
 
