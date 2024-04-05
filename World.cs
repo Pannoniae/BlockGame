@@ -293,7 +293,7 @@ public class World {
         }
     }
 
-    public void draw(double interp) {
+    public void render(double interp) {
         var tex = Game.instance.blockTexture;
         tex.bind();
         var viewProj = player.camera.getViewMatrix(interp) * player.camera.getProjectionMatrix();
