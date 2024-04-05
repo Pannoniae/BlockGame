@@ -40,7 +40,7 @@ public class Game {
     /// The current game screen which is shown.
     /// </summary>
     public Screen screen;
-    public GUI gui;
+    public static GUI gui;
 
     public IMouse mouse;
     public IKeyboard keyboard;
@@ -145,10 +145,12 @@ public class Game {
         stopwatch.Start();
 
         blockTexture = new BTexture2D("textures/blocks.png");
+        //Screen.initScreens(gui);
+        Screen.switchTo(Screen.LOADING);
         //world = new World();
         gui = new GUI();
-        Screen.initScreens(gui);
-        screen = Screen.MAIN_MENU;
+        gui.loadFonts();
+        Task.Run(() => Screen.LOADING.sleep()).ContinueWith(_ => Screen.switchTo(Screen.MAIN_MENU));
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
     }
@@ -241,14 +243,14 @@ public class Game {
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
-        screen.tb.Begin();
+        gui.tb.Begin();
         screen.draw();
-        screen.tb.End();
-        if (screen.gui.debugScreen) {
+        gui.tb.End();
+        //if (gui.debugScreen) {
             /*mgui.Update((float)dt);
             screen.imGuiDraw();
             imgui.Render();*/
-        }
+        //}
     }
 
     private void close() {

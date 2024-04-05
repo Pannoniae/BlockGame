@@ -21,11 +21,7 @@ public class GUI {
     public GL GL;
     public GraphicsDevice GD;
 
-    public Debug D;
-
     public SimpleShaderProgram shader;
-
-    public bool debugScreen = false;
 
     public int guiScale = 4;
 
@@ -37,16 +33,20 @@ public class GUI {
 
     public Rectangle buttonRect = new(0, 0, 64, 16);
 
+    public static GUI instance;
+
     public GUI() {
         GL = Game.instance.GL;
         GD = Game.instance.GD;
-        D = new Debug();
         tb = new TextureBatcher(Game.instance.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD, excludeWorldMatrix: true);
         tb.SetShaderProgram(shader);
         guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/debug.png");
+        instance = this;
+    }
 
+    public void loadFonts() {
         if (!File.Exists(Constants.fontFile) || !File.Exists(Constants.fontFileUnicode)) {
             var collection = new FontCollection();
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
