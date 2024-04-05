@@ -254,27 +254,30 @@ public class World {
 
     public void draw(double interp) {
         var tex = Game.instance.blockTexture;
-        //var fChunk = chunks[0, 0, 0];
         tex.bind();
-        shader.use();
         var viewProj = player.camera.getViewMatrix(interp) * player.camera.getProjectionMatrix();
+        // OPAQUE PASS
+        shader.use();
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in chunks) {
-            chunk.drawOpaque(player.camera, viewProj);
+            chunk.drawOpaque(player.camera);
         }
+        // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
+        dummyShader.setUniform(uMVP, viewProj);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunks) {
-            chunk.drawTransparent(player.camera, viewProj);
+            chunk.drawTransparent(player.camera);
         }
+        // TRANSLUCENT PASS
+        shader.use();
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.Disable(EnableCap.CullFace);
         GL.DepthFunc(DepthFunction.Lequal);
-        shader.use();
         foreach (var chunk in chunks) {
-            chunk.drawTransparent(player.camera, viewProj);
+            chunk.drawTransparent(player.camera);
         }
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Less);
