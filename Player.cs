@@ -35,6 +35,7 @@ public class Player {
     /// This number is lying to you.
     /// </summary>
     public double totalTraveled;
+    public double prevTotalTraveled;
 
     public Vector3D<double> forward;
 
@@ -83,23 +84,27 @@ public class Player {
         applyFriction();
         clamp(dt);
 
+        // don't increment if flying
+        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
+        Console.Out.WriteLine(totalTraveled);
         camera.position = new Vector3((float)position.X, (float)(position.Y + eyeHeight), (float)position.Z);
         camera.prevPosition = new Vector3((float)prevPosition.X, (float)(prevPosition.Y + eyeHeight),
             (float)prevPosition.Z);
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
         aabb = calcAABB(position);
-        if (Math.Abs(velocity.withoutY().Length) > 0.0001) {
-            camera.bob = (float)totalTraveled;
+        if (Math.Abs(velocity.withoutY().Length) > 0.0001 && onGround) {
+            camera.bob = (float)(velocity.Length / Constants.maxhSpeed);
         }
         else {
-            totalTraveled = 0;
+            //camera.bob = 0;
+            // just don't
         }
         // after everything is done
         // calculate total traveled
-        totalTraveled += Math.Min((position.withoutY() - prevPosition.withoutY()).Length * 0.15f, 0.2);
         prevPosition = position;
         camera.prevBob = camera.bob;
+        prevTotalTraveled = totalTraveled;
     }
 
     private void applyInputMovement(double dt) {
