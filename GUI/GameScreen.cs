@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Numerics;
 using System.Text;
-using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using TrippyGL;
@@ -11,13 +10,19 @@ namespace BlockGame;
 public class GameScreen : Screen {
 
     public static World world;
+    public GraphicsDevice GD;
 
     public StringBuilder debugStr;
+    public Debug D;
+
+    public bool debugScreen = false;
 
     public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
 
-    public GameScreen(GUI gui, GraphicsDevice GD, TextureBatcher tb) : base(gui, GD, tb) {
+    public GameScreen() {
         debugStr = new StringBuilder(500);
+        GD = Game.instance.GD;
+        D = new Debug();
     }
 
 
@@ -46,7 +51,7 @@ public class GameScreen : Screen {
         if (Game.instance.targetedPos.HasValue) {
             world.drawBlockOutline(interp);
         }
-        gui.D.update(interp);
+        D.update(interp);
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
@@ -94,7 +99,7 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.F3) {
-            gui.debugScreen = !gui.debugScreen;
+            debugScreen = !debugScreen;
         }
 
         if (key == Key.F) {
@@ -110,7 +115,7 @@ public class GameScreen : Screen {
         // guiscale test
         if (keyboard.IsKeyPressed(Key.ControlLeft)) {
             if (key >= Key.Number0 && key <= Key.Number9) {
-                gui.guiScale = (ushort)(key - Key.Number0);
+                Game.gui.guiScale = (ushort)(key - Key.Number0);
             }
         }
         else {
@@ -135,23 +140,24 @@ public class GameScreen : Screen {
         GD.ResetBufferStates();
         GD.ResetVertexArrayStates();
         //GD.ResetShaderProgramStates();
-        GD.ShaderProgram = gui.shader;
+        GD.ShaderProgram = GUI.instance.shader;
         var centreX = Game.instance.centreX;
         var centreY = Game.instance.centreY;
         // setup blending
         GD.BlendingEnabled = true;
         GD.BlendState = bs;
+        var gui = Game.gui;
 
-        tb.Draw(gui.colourTexture,
+        gui.tb.Draw(gui.colourTexture,
             new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
                 new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
             new Color4b(240, 240, 240));
 
-        tb.Draw(gui.colourTexture,
+        gui.tb.Draw(gui.colourTexture,
             new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness),
                 new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
-        tb.Draw(gui.colourTexture,
+        gui.tb.Draw(gui.colourTexture,
             new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
                 new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
@@ -165,7 +171,7 @@ public class GameScreen : Screen {
         if (!Game.instance.focused) {
             var pauseText = "-PAUSED-";
             Vector2 offset = gui.guiFont.Measure(pauseText);
-            tb.DrawString(gui.guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY),
+            gui.tb.DrawString(gui.guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY),
                 Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
         }
 
@@ -180,7 +186,7 @@ public class GameScreen : Screen {
         var p = world.player;
         var c = p.camera;
         var m = Game.instance.metrics;
-        if (gui.debugScreen) {
+        if (debugScreen) {
             debugStr.Clear();
             debugStr.AppendLine($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
             debugStr.AppendLine($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
@@ -198,12 +204,12 @@ public class GameScreen : Screen {
             debugStr.AppendLine($"CX:{i.centreX} CY:{i.centreY}");
             debugStr.AppendLine(
                 $"M:{Game.instance.proc.PrivateMemorySize64 / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
-            tb.DrawString(gui.guiFont, debugStr.ToString(), new Vector2(5, 5), Color4b.White);
+            gui.tb.DrawString(gui.guiFont, debugStr.ToString(), new Vector2(5, 5), Color4b.White);
 
 
-            gui.D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
-            gui.D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
-            gui.D.flushLines();
+            D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
+            D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
+            D.flushLines();
         }
     }
 

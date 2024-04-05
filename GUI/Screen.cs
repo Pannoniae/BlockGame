@@ -7,27 +7,21 @@ namespace BlockGame;
 
 public class Screen {
 
-    public GUI gui;
-    public GraphicsDevice GD;
-    public TextureBatcher tb;
-
     public Vector2D<int> size;
     public Vector2D<int> centre;
 
     public List<GUIElement> elements = new();
 
-    public static Screen MAIN_MENU = null!;
-    public static Screen GAME_SCREEN = null!;
+    public static LoadingScreen LOADING = new();
+    public static MainMenuScreen MAIN_MENU = new();
+    public static GameScreen GAME_SCREEN = new();
 
-    public static void initScreens(GUI gui) {
-        MAIN_MENU = new MainMenuScreen(gui, gui.GD, gui.tb);
-        GAME_SCREEN = new GameScreen(gui, gui.GD, gui.tb);
+    public Screen() {
     }
 
-    public Screen(GUI gui, GraphicsDevice GD, TextureBatcher tb) {
-        this.gui = gui;
-        this.GD = GD;
-        this.tb = tb;
+    public static void switchTo(Screen screen) {
+        Game.instance.screen = screen;
+        screen.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
     }
 
     public void addElement(GUIElement element) {
