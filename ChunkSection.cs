@@ -109,7 +109,7 @@ public class ChunkSection {
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int y = 0; y < CHUNKSIZE; y++) {
                 for (int z = 0; z < CHUNKSIZE; z++) {
-                    if (whichBlocks(chunk.block[x, y + chunkY * CHUNKSIZE, z])) {
+                    if (whichBlocks(getBlockInChunk(x, y, z))) {
                         var wpos = world.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
                         int wx = wpos.X;
                         int wy = wpos.Y;
@@ -313,6 +313,10 @@ public class ChunkSection {
         }
     }
 
+    private int getBlockInChunk(int x, int y, int z) {
+        return chunk.block[x, y + chunkY * CHUNKSIZE, z];
+    }
+
     // this will pack the data into the uint
     public ushort packData(byte direction) {
         return direction;
@@ -341,6 +345,15 @@ public class ChunkSection {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
+        }
+    }
+
+    public void tick(int x, int y, int z) {
+        var block = getBlockInChunk(x, y, z);
+        if (block == Blocks.DIRT.id) {
+            if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) == 0) {
+                chunk.block[x, y + chunkY * CHUNKSIZE, z] = Blocks.GRASS.id;
+            }
         }
     }
 }

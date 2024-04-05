@@ -23,6 +23,8 @@ public class World {
 
     public Player player;
 
+    public FastNoiseLite noise;
+
     public Shader outline;
     private uint outlineVao;
     private uint outlineCount;
@@ -32,6 +34,13 @@ public class World {
 
     public double worldTime;
 
+    public Random random;
+
+    /// <summary>
+    /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
+    /// </summary>
+    public const int numTicks = 50;
+
     public World(bool loaded = false) {
         GL = Game.instance.GL;
         player = new Player(this, 6 * ChunkSection.CHUNKSIZE, 20, 6 * ChunkSection.CHUNKSIZE);
@@ -39,6 +48,8 @@ public class World {
         dummyShader = new Shader(GL, "shaders/dummyShader.vert");
         blockTexture = shader.getUniformLocation("blockTexture");
         uMVP = shader.getUniformLocation("uMVP");
+        random = new Random();
+        noise = new FastNoiseLite(Environment.TickCount);
         worldTime = 0;
 
         chunks = new Chunk[WORLDSIZE, WORLDSIZE];
@@ -51,7 +62,7 @@ public class World {
 
         if (!loaded) {
             // create terrain
-            genTerrain();
+            genTerrainNoise();
             // separate loop so all data is there
             meshChunks();
         }
@@ -67,7 +78,7 @@ public class World {
         }
     }
 
-    private void genTerrain() {
+    private void genTerrainSine() {
         for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
                 for (int y = 0; y < 3; y++) {
@@ -93,12 +104,42 @@ public class World {
         }
     }
 
+    private void genTerrainNoise() {
+        noise.SetFrequency(0.03f);
+        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        noise.SetFractalLacunarity(2f);
+        noise.SetFractalGain(0.5f);
+        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
+                // -1 to 1
+                // transform to the range 5 - 10
+                var height = noise.GetNoise(x, z) * 2.5 + 7.5;
+                for (int y = 0; y < height; y++) {
+                    setBlock(x, y, z, Blocks.DIRT.id, false);
+                }
+                setBlock(x, (int)(height + 1), z, Blocks.GRASS.id, false);
+            }
+        }
+    }
+
     public void update(double dt) {
         worldTime += dt;
         /*if (Vector3D.DistanceSquared(player.position, player.lastSort) > 64) {
             sortedTransparentChunks.Sort(new ChunkComparer(player.camera));
             player.lastSort = player.position;
         }*/
+
+        // random block updates!
+        foreach (var chunk in chunks) {
+            foreach (var chunksection in chunk.chunks) {
+                for (int i = 0; i < numTicks; i++) {
+                    var x = random.Next(16);
+                    var y = random.Next(16);
+                    var z = random.Next(16);
+                    chunksection.tick(x, y, z);
+                }
+            }
+        }
     }
 
     public Vector3D<int> getWorldSize() {
@@ -180,7 +221,7 @@ public class World {
         }
     }
 
-    private bool inWorld(int x, int y, int z) {
+    public bool inWorld(int x, int y, int z) {
         var chunkpos = getChunkPos(x, z);
         return chunkpos.X is >= 0 and < WORLDSIZE &&
                y is >= 0 and < WORLDHEIGHT &&
@@ -200,7 +241,7 @@ public class World {
             (int)MathF.Floor(pos.Y / (float)ChunkSection.CHUNKSIZE));
     }
 
-    private Vector2D<int> getChunkPos(int x, int z) { 
+    private Vector2D<int> getChunkPos(int x, int z) {
         return new Vector2D<int>(
             (int)MathF.Floor(x / (float)ChunkSection.CHUNKSIZE),
             (int)MathF.Floor(z / (float)ChunkSection.CHUNKSIZE));

@@ -7,7 +7,7 @@ public class Chunk {
     public int x;
     public int z;
     public ChunkSection[] chunks;
-    private World world;
+    public World world;
 
 
     public Chunk(World world, Shader shader, int x, int z) {

@@ -19,9 +19,19 @@ public class Screen {
     public Screen() {
     }
 
+    public virtual void activate() {
+
+    }
+
+    public virtual void deactivate() {
+
+    }
+
     public static void switchTo(Screen screen) {
+        Game.instance.screen?.deactivate();
         Game.instance.screen = screen;
         screen.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
+        screen.activate();
     }
 
     public void addElement(GUIElement element) {
