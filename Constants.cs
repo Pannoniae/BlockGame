@@ -4,6 +4,7 @@ public static class Constants {
     public const int crosshairSize = 10;
     public const int crosshairThickness = 2;
     public const string fontFile = "guifont.fnt";
+    public const string fontFileUnicode = "guifontU.fnt";
     public const long MEGABYTES = 1 * 1024 * 1024;
     public const float maxPitch = 89;
     public const int initialWidth = 1200;

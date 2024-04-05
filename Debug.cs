@@ -14,7 +14,7 @@ public class Debug {
     private VertexBuffer<VertexColor> pointVertexBuffer = new(Game.instance.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
     private int currentPoint = 0;
 
-    private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.instance.GD);
+    private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.instance.GD, excludeWorldMatrix: true);
 
     public void update(double interp) {
         debugShader.Projection = GameScreen.world.player.camera.getProjectionMatrix();

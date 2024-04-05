@@ -132,7 +132,9 @@ public class GameScreen : Screen {
 
     public override void draw() {
         base.draw();
-        GD.ResetStates();
+        GD.ResetBufferStates();
+        GD.ResetVertexArrayStates();
+        //GD.ResetShaderProgramStates();
         GD.ShaderProgram = gui.shader;
         var centreX = Game.instance.centreX;
         var centreY = Game.instance.centreY;

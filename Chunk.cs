@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace BlockGame;
 
 public class Chunk {
@@ -28,21 +30,21 @@ public class Chunk {
 
     public const int CHUNKHEIGHT = 8;
 
-    public void drawChunk(PlayerCamera camera) {
+    public void drawChunk(PlayerCamera camera, Matrix4x4 viewProj) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawChunk(camera);
+            chunks[i].drawChunk(camera, viewProj);
         }
     }
 
-    public void drawOpaque(PlayerCamera camera) {
+    public void drawOpaque(PlayerCamera camera, Matrix4x4 viewProj) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawOpaque(camera);
+            chunks[i].drawOpaque(camera, viewProj);
         }
     }
 
-    public void drawTransparent(PlayerCamera camera) {
+    public void drawTransparent(PlayerCamera camera, Matrix4x4 viewProj) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawTransparent(camera);
+            chunks[i].drawTransparent(camera, viewProj);
         }
     }
 }

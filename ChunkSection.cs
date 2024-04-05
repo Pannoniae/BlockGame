@@ -27,7 +27,7 @@ public class ChunkSection {
     public bool hasTransparentBlocks;
 
     public Shader shader;
-    public int uModel;
+    public int uMVP;
     public AABB box;
 
 
@@ -46,7 +46,7 @@ public class ChunkSection {
         GL = Game.instance.GL;
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
 
-        uModel = shader.getUniformLocation("uModel");
+        uMVP = shader.getUniformLocation("uMVP");
     }
 
     public bool isVisible(BoundingFrustum frustum) {
@@ -168,14 +168,15 @@ public class ChunkSection {
                         var topMaxV = topMax.Y;
 
 
-                        ushort xmin = toVertex(x);
-                        ushort ymin = toVertex(y);
-                        ushort zmin = toVertex(z);
-                        ushort xmax = toVertex(x + 1f);
-                        ushort ymax = toVertex(y + 1f);
-                        ushort zmax = toVertex(z + 1f);
+                        float xmin = wx;
+                        float ymin = wy;
+                        float zmin = wz;
+                        float xmax = wx + 1f;
+                        float ymax = wy + 1f;
+                        float zmax = wz + 1f;
 
-                        if (neighbourTest(world.getBlock(wx - 1, wy, wz))) {
+                        var nb = world.getBlockUnsafe(wx - 1, wy, wz);
+                        if (nb != -1 && neighbourTest(nb)) {
                             var data = packData((byte)RawDirection.WEST);
                             BlockVertex[] verticesWest = [
                                 // west
@@ -196,8 +197,8 @@ public class ChunkSection {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-
-                        if (neighbourTest(world.getBlock(wx + 1, wy, wz))) {
+                        nb = world.getBlockUnsafe(wx + 1, wy, wz);
+                        if (nb != -1 && neighbourTest(nb)) {
                             var data = packData((byte)RawDirection.EAST);
                             BlockVertex[] verticesEast = [
                                 // east
@@ -218,8 +219,8 @@ public class ChunkSection {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-
-                        if (neighbourTest(world.getBlock(wx, wy, wz - 1))) {
+                        nb = world.getBlockUnsafe(wx, wy, wz - 1);
+                        if (nb != -1 && neighbourTest(nb)) {
                             var data = packData((byte)RawDirection.SOUTH);
                             BlockVertex[] verticesSouth = [
                                 // south
@@ -240,8 +241,8 @@ public class ChunkSection {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-
-                        if (neighbourTest(world.getBlock(wx, wy, wz + 1))) {
+                        nb = world.getBlockUnsafe(wx, wy, wz + 1);
+                        if (nb != -1 && neighbourTest(nb)) {
                             var data = packData((byte)RawDirection.NORTH);
                             BlockVertex[] verticesNorth = [
                                 // north
@@ -262,8 +263,8 @@ public class ChunkSection {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-
-                        if (neighbourTest(world.getBlock(wx, wy - 1, wz))) {
+                        nb = world.getBlockUnsafe(wx, wy - 1, wz);
+                        if (nb != -1 && neighbourTest(nb)) {
                             var data = packData((byte)RawDirection.DOWN);
                             BlockVertex[] verticesBottom = [
                                 // bottom
@@ -284,8 +285,8 @@ public class ChunkSection {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-
-                        if (neighbourTest(world.getBlock(wx, wy + 1, wz))) {
+                        nb = world.getBlockUnsafe(wx, wy + 1, wz);
+                        if (nb != -1 && neighbourTest(nb)) {
                             var data = packData((byte)RawDirection.UP);
                             BlockVertex[] verticesTop = [
                                 // top
@@ -317,18 +318,17 @@ public class ChunkSection {
         return direction;
     }
 
-    public void drawChunk(PlayerCamera camera) {
-        drawOpaque(camera);
-        drawTransparent(camera);
+    public void drawChunk(PlayerCamera camera, Matrix4x4 viewProj) {
+        drawOpaque(camera, viewProj);
+        drawTransparent(camera, viewProj);
         //Game.instance.metrics.renderedChunks += 1;
         //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
     }
 
-    public void drawOpaque(PlayerCamera camera) {
+    public void drawOpaque(PlayerCamera camera, Matrix4x4 viewProj) {
         if (!isEmpty && isVisible(camera.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
 
             uint renderedVerts = vao.render();
             Game.instance.metrics.renderedVerts += (int)renderedVerts;
@@ -336,10 +336,9 @@ public class ChunkSection {
         }
     }
 
-    public void drawTransparent(PlayerCamera camera) {
+    public void drawTransparent(PlayerCamera camera, Matrix4x4 viewProj) {
         if (hasTransparentBlocks && !isEmpty && isVisible(camera.frustum)) {
             watervao.bind();
-            shader.setUniform(uModel, Matrix4x4.CreateTranslation(new Vector3(chunkX * 16f, chunkY * 16f, chunkZ * 16f)));
             uint renderedTransparentVerts = watervao.render();
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
