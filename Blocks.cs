@@ -1,4 +1,3 @@
-using System.Numerics;
 using Silk.NET.Maths;
 
 namespace BlockGame;
