@@ -59,7 +59,7 @@ public class WorldIO {
             var chunk = (CompoundTag)chunkTag;
             int chunkX = chunk.Get<IntTag>("posX").Value;
             int chunkZ = chunk.Get<IntTag>("posZ").Value;
-            world.chunks[chunkX, chunkZ] = new Chunk(world, world.shader, chunkX, chunkZ);
+            world.chunks[chunkX, chunkZ] = new Chunk(world, chunkX, chunkZ);
             var blocks = chunk.Get<ListTag>("blocks");
             int index = 0;
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
@@ -77,7 +77,7 @@ public class WorldIO {
         world.player.position.Z = tag.Get<DoubleTag>("posZ");
         world.player.prevPosition = world.player.position;
 
-        world.meshChunks();
+        world.renderer.meshChunks();
         return world;
     }
 

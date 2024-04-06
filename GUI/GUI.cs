@@ -34,6 +34,7 @@ public class GUI {
     public Rectangle buttonRect = new(0, 0, 64, 16);
 
     public static GUI instance;
+    private TrippyFontFile ff;
 
     public GUI() {
         GL = Game.instance.GL;
@@ -67,12 +68,22 @@ public class GUI {
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
             using var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
-            guiFontUnicode = ffu.CreateFont(Game.instance.GD);
-            ffu.WriteToFile(Constants.fontFileUnicode);
+            ff = ffu;
         }
         else {
             using var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
-            guiFontUnicode = ffu.CreateFont(Game.instance.GD);
+            ff = ffu;
+        }
+    }
+
+    // this is needed so it loads on the main thread (memory corruption otherwise)
+    public void loadUnicodeFont2() {
+        if (!File.Exists(Constants.fontFileUnicode)) {
+            guiFontUnicode = ff.CreateFont(Game.instance.GD);
+            ff.WriteToFile(Constants.fontFileUnicode);
+        }
+        else {
+            guiFontUnicode = ff.CreateFont(Game.instance.GD);
         }
     }
 
