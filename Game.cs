@@ -153,7 +153,7 @@ public class Game {
         gui = new GUI();
         gui.loadFonts();
         Task.Run(() => {
-            gui.loadUnicodeFont();
+            //gui.loadUnicodeFont();
         }).ContinueWith(_ => Screen.switchTo(Screen.MAIN_MENU));
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);

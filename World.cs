@@ -46,7 +46,7 @@ public class World {
         GL = Game.instance.GL;
         player = new Player(this, 6 * ChunkSection.CHUNKSIZE, 20, 6 * ChunkSection.CHUNKSIZE);
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
-        dummyShader = new Shader(GL, "shaders/dummyShader.vert");
+        dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
         blockTexture = shader.getUniformLocation("blockTexture");
         uMVP = shader.getUniformLocation("uMVP");
         random = new Random();
@@ -353,14 +353,15 @@ public class World {
         }
         // TRANSLUCENT PASS
         shader.use();
+        shader.setUniform(uMVP, viewProj);
         GL.ColorMask(true, true, true, true);
-        GL.DepthMask(false);
+        //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunks) {
             chunk.drawTransparent(player.camera);
         }
         GL.DepthMask(true);
-        GL.DepthFunc(DepthFunction.Less);
+        GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.CullFace);
 
     }
