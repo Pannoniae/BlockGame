@@ -40,7 +40,7 @@ public class World {
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
     /// </summary>
-    public const int numTicks = 50;
+    public const int numTicks = 3;
 
     public World(bool loaded = false) {
         GL = Game.instance.GL;
@@ -346,6 +346,7 @@ public class World {
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
         dummyShader.setUniform(uMVP, viewProj);
+        GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunks) {
             chunk.drawTransparent(player.camera);
@@ -354,7 +355,6 @@ public class World {
         shader.use();
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
-        GL.Disable(EnableCap.CullFace);
         GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunks) {
             chunk.drawTransparent(player.camera);
