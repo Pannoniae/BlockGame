@@ -34,8 +34,14 @@ public class Blocks {
         .noCollision()
         .noSelection());
 
-    public static Block LOG = register(new Block(8, "Wooden Log", Block.grassUVs(10, 0, 9, 0, 11, 0)));
-    public static Block LEAVES = register(new Block(9, "Leaves", Block.cubeUVs(12, 0)).transparency());
+    public static Block ICE = register(new Block(8, "Ice", Block.cubeUVs(8, 0))
+        .translucency()
+        .noCollision()
+        .noSelection());
+
+
+    public static Block LOG = register(new Block(9, "Wooden Log", Block.grassUVs(10, 0, 9, 0, 11, 0)));
+    public static Block LEAVES = register(new Block(10, "Leaves", Block.cubeUVs(12, 0)).transparency());
 
     public static bool isSolid(int block) {
         return block != 0 && !get(block).transparent && !get(block).translucent;
