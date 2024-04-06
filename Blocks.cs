@@ -93,11 +93,11 @@ public class Block {
     /// 0 = 0, 65535 = 1
     /// </summary>
     public static Vector2D<float> texCoords(int x, int y) {
-        return new Vector2D<float>((x * 16f / atlasSize), (y * 16f / atlasSize));
+        return new Vector2D<float>(x * 16f / atlasSize, y * 16f / atlasSize);
     }
 
     public static Vector2D<float> texCoords(UVPair uv) {
-        return new Vector2D<float>((uv.u * 16f / atlasSize ), (uv.v * 16f / atlasSize));
+        return new Vector2D<float>(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
     }
 
     public static UVPair[] cubeUVs(int x, int y) {
