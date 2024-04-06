@@ -62,21 +62,27 @@ public class GUI {
         }
     }
 
+    /// <summary>
+    /// Runs on background thread. Don't do OpenGL shit in there or try to assemble the font
+    /// </summary>
     public void loadUnicodeFont() {
         if (!File.Exists(Constants.fontFileUnicode)) {
             var collection = new FontCollection();
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
-            using var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
+            // DON'T CALL using, it would destroy the class variable
+            var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
             ff = ffu;
         }
         else {
-            using var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
+            var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
             ff = ffu;
         }
     }
 
-    // this is needed so it loads on the main thread (memory corruption otherwise)
+    /// <summary>
+    /// This is needed so it loads on the main thread (memory corruption otherwise)
+    /// </summary>
     public void loadUnicodeFont2() {
         if (!File.Exists(Constants.fontFileUnicode)) {
             guiFontUnicode = ff.CreateFont(Game.instance.GD);

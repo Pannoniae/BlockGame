@@ -48,5 +48,12 @@ public class ChunkSection {
                 renderer.meshChunk();
             }
         }
+
+        if (block == Blocks.GRASS.id) {
+            if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) != 0) {
+                chunk.block[x, y + chunkY * CHUNKSIZE, z] = Blocks.DIRT.id;
+                renderer.meshChunk();
+            }
+        }
     }
 }

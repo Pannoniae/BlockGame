@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -70,6 +71,8 @@ public class Game {
 
     public BTexture2D blockTexture;
     public Metrics metrics;
+
+    public BlockingCollection<Action> mainThreadQueue = new();
 
     public Game() {
         instance = this;
@@ -152,10 +155,16 @@ public class Game {
         gui = new GUI();
         gui.loadFonts();
         Task.Run(() => {
+            Console.Out.WriteLine("asd");
             gui.loadUnicodeFont();
+            Console.Out.WriteLine("asd");
         }).ContinueWith(_ => {
-            gui.loadUnicodeFont2();
-            Screen.switchTo(Screen.MAIN_MENU);
+            executeOnMainThread(() => {
+                Console.Out.WriteLine("asd");
+                gui.loadUnicodeFont2();
+                Console.Out.WriteLine("asd");
+                Screen.switchTo(Screen.MAIN_MENU);
+            });
         });
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
@@ -201,6 +210,10 @@ public class Game {
         gui.resize(size);
     }
 
+    public void executeOnMainThread(Action action) {
+        mainThreadQueue.Add(action);
+    }
+
     private void update(double dt) {
         //dt = Math.Min(dt, 0.2);
         /*var vec = new Vector2D<int>(0, 0);
@@ -230,6 +243,11 @@ public class Game {
     }
 
     private void actualRender(double dt, double interp) {
+        // consume main thread actions
+        while (mainThreadQueue.TryTake(out var action)) {
+            action();
+        }
+
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);
