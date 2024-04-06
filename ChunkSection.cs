@@ -60,9 +60,11 @@ public class ChunkSection {
         vao = new BlockVAO();
         watervao = new BlockVAO();
         // first we render everything which is NOT translucent
-        constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i), out var chunkVertices, out var chunkIndices, true);
+        constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i), out var chunkVertices, 
+            out var chunkIndices, true, false, null);
         // then we render everything which is translucent (water for now)
-        constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i) && !Blocks.isTransparent(i), out var tChunkVertices, out var tChunkIndices, false);
+        constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i), out var tChunkVertices, out var tChunkIndices, 
+            false, true, Blocks.isTransparent);
         vao.bind();
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
         var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
@@ -94,7 +96,8 @@ public class ChunkSection {
     }
 
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
-    private void constructVertices(Func<int, bool> whichBlocks, Func<int, bool> neighbourTest, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices, bool full) {
+    private void constructVertices(Func<int, bool> whichBlocks, Func<int, bool> neighbourTest, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices,
+        bool full, bool shrinkABit, Func<int, bool>? shrinkTest) {
         // at most, we need chunksize^3 blocks times 8 vertices
         if (full) {
             chunkVertices = new List<BlockVertex>(CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * 4);
@@ -167,6 +170,7 @@ public class ChunkSection {
                         var topMaxU = topMax.X;
                         var topMaxV = topMax.Y;
 
+                        float offset = shrinkABit ? 0.0004f : 0;
 
                         float xmin = wx;
                         float ymin = wy;
@@ -177,6 +181,14 @@ public class ChunkSection {
 
                         var nb = world.getBlockUnsafe(wx - 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
+                            if (shrinkABit && shrinkTest!(nb)) { 
+                                xmin = wx + offset;
+                                ymin = wy + offset;
+                                zmin = wz + offset;
+                                xmax = wx + 1f - offset;
+                                ymax = wy + 1f - offset;
+                                zmax = wz + 1f - offset;
+                            }
                             var data = packData((byte)RawDirection.WEST);
                             BlockVertex[] verticesWest = [
                                 // west
@@ -199,6 +211,14 @@ public class ChunkSection {
                         }
                         nb = world.getBlockUnsafe(wx + 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
+                            if (shrinkABit && shrinkTest!(nb)) { 
+                                xmin = wx + offset;
+                                ymin = wy + offset;
+                                zmin = wz + offset;
+                                xmax = wx + 1f - offset;
+                                ymax = wy + 1f - offset;
+                                zmax = wz + 1f - offset;
+                            }
                             var data = packData((byte)RawDirection.EAST);
                             BlockVertex[] verticesEast = [
                                 // east
@@ -221,6 +241,14 @@ public class ChunkSection {
                         }
                         nb = world.getBlockUnsafe(wx, wy, wz - 1);
                         if (nb != -1 && neighbourTest(nb)) {
+                            if (shrinkABit && shrinkTest!(nb)) {
+                                xmin = wx + offset;
+                                ymin = wy + offset;
+                                zmin = wz + offset;
+                                xmax = wx + 1f - offset;
+                                ymax = wy + 1f - offset;
+                                zmax = wz + 1f - offset;
+                            }
                             var data = packData((byte)RawDirection.SOUTH);
                             BlockVertex[] verticesSouth = [
                                 // south
@@ -243,6 +271,14 @@ public class ChunkSection {
                         }
                         nb = world.getBlockUnsafe(wx, wy, wz + 1);
                         if (nb != -1 && neighbourTest(nb)) {
+                            if (shrinkABit && shrinkTest!(nb)) {
+                                xmin = wx + offset;
+                                ymin = wy + offset;
+                                zmin = wz + offset;
+                                xmax = wx + 1f - offset;
+                                ymax = wy + 1f - offset;
+                                zmax = wz + 1f - offset;
+                            }
                             var data = packData((byte)RawDirection.NORTH);
                             BlockVertex[] verticesNorth = [
                                 // north
@@ -265,6 +301,14 @@ public class ChunkSection {
                         }
                         nb = world.getBlockUnsafe(wx, wy - 1, wz);
                         if (nb != -1 && neighbourTest(nb)) {
+                            if (shrinkABit && shrinkTest!(nb)) {
+                                xmin = wx + offset;
+                                ymin = wy + offset;
+                                zmin = wz + offset;
+                                xmax = wx + 1f - offset;
+                                ymax = wy + 1f - offset;
+                                zmax = wz + 1f - offset;
+                            }
                             var data = packData((byte)RawDirection.DOWN);
                             BlockVertex[] verticesBottom = [
                                 // bottom
@@ -287,6 +331,14 @@ public class ChunkSection {
                         }
                         nb = world.getBlockUnsafe(wx, wy + 1, wz);
                         if (nb != -1 && neighbourTest(nb)) {
+                            if (shrinkABit && shrinkTest!(nb)) {
+                                xmin = wx + offset;
+                                ymin = wy + offset;
+                                zmin = wz + offset;
+                                xmax = wx + 1f - offset;
+                                ymax = wy + 1f - offset;
+                                zmax = wz + 1f - offset;
+                            }
                             var data = packData((byte)RawDirection.UP);
                             BlockVertex[] verticesTop = [
                                 // top
