@@ -155,14 +155,10 @@ public class Game {
         gui = new GUI();
         gui.loadFonts();
         Task.Run(() => {
-            Console.Out.WriteLine("asd");
             gui.loadUnicodeFont();
-            Console.Out.WriteLine("asd");
         }).ContinueWith(_ => {
             executeOnMainThread(() => {
-                Console.Out.WriteLine("asd");
                 gui.loadUnicodeFont2();
-                Console.Out.WriteLine("asd");
                 Screen.switchTo(Screen.MAIN_MENU);
             });
         });
