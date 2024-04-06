@@ -72,12 +72,12 @@ public class BlockVAO {
     public void format() {
         unsafe {
             // It will be 16 bytes on the GPU anyway so we can waste a bit
-            // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(ushort), (void*)0);
+            // 24 bytes in total, 3*4 for pos, 2*4 for uv, 2 bytes for data
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.UnsignedShort, true, 9 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 12 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 9 * sizeof(ushort), (void*)(0 + 8 * sizeof(ushort)));
+            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedInt, 12 * sizeof(ushort), (void*)(0 + 10 * sizeof(ushort)));
             GL.EnableVertexAttribArray(2);
         }
     }
@@ -99,16 +99,16 @@ public struct BlockVertex {
     public float x;
     public float y;
     public float z;
-    public ushort u;
-    public ushort v;
+    public float u;
+    public float v;
 
     /// <summary>
     /// from least significant:
     /// first 3 bits are side (see Direction enum)
     /// </summary>
-    public ushort d;
+    public uint d;
 
-    public BlockVertex(float x, float y, float z, ushort u, ushort v, ushort d) {
+    public BlockVertex(float x, float y, float z, float u, float v, uint d) {
         // we receive a float from 0 to 16.
         // we convert it to a normalised float from 0 to 1 converted to an ushort
         //this.x = (ushort)(x / 16f * ushort.MaxValue);
