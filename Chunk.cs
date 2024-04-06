@@ -10,7 +10,7 @@ public class Chunk {
     public World world;
 
 
-    public Chunk(World world, Shader shader, int x, int z) {
+    public Chunk(World world, int x, int z) {
         block = new ushort[ChunkSection.CHUNKSIZE, ChunkSection.CHUNKSIZE * CHUNKHEIGHT, ChunkSection.CHUNKSIZE];
         this.world = world;
         chunks = new ChunkSection[CHUNKHEIGHT];
@@ -18,13 +18,13 @@ public class Chunk {
         this.z = z;
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i] = new ChunkSection(world, this, shader, x, i, z);
+            chunks[i] = new ChunkSection(world, this, x, i, z);
         }
     }
 
     public void meshChunk() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].meshChunk();
+            chunks[i].renderer.meshChunk();
         }
     }
 
@@ -32,19 +32,19 @@ public class Chunk {
 
     public void drawChunk(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawChunk(camera);
+            chunks[i].renderer.drawChunk(camera);
         }
     }
 
     public void drawOpaque(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawOpaque(camera);
+            chunks[i].renderer.drawOpaque(camera);
         }
     }
 
     public void drawTransparent(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].drawTransparent(camera);
+            chunks[i].renderer.drawTransparent(camera);
         }
     }
 }

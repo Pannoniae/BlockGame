@@ -47,9 +47,9 @@ public class GameScreen : Screen {
         //world.mesh();
         world.player.camera.calculateFrustum();
         //Console.Out.WriteLine(world.player.camera.frustum);
-        world.render(interp);
+        world.renderer.render(interp);
         if (Game.instance.targetedPos.HasValue) {
-            world.drawBlockOutline(interp);
+            world.renderer.drawBlockOutline(interp);
         }
         D.update(interp);
     }

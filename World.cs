@@ -10,28 +10,13 @@ public class World {
 
     public Chunk[,] chunks;
     public List<ChunkSection> sortedTransparentChunks = [];
-    public Shader shader;
-    public Shader dummyShader;
 
-    public int uProjection;
-
-    //public int uColor;
-    public int blockTexture;
-    public int uMVP;
-
-    public GL GL;
+    public WorldRenderer renderer;
 
     public Player player;
 
     public FastNoiseLite noise;
     public FastNoiseLite treenoise;
-
-    public Shader outline;
-    private uint outlineVao;
-    private uint outlineCount;
-    private int outline_uModel;
-    private int outline_uView;
-    private int outline_uProjection;
 
     public double worldTime;
 
@@ -43,22 +28,18 @@ public class World {
     public const int numTicks = 3;
 
     public World(bool loaded = false) {
-        GL = Game.instance.GL;
+        renderer = new WorldRenderer(this);
         player = new Player(this, 6 * ChunkSection.CHUNKSIZE, 20, 6 * ChunkSection.CHUNKSIZE);
-        shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
-        dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
-        blockTexture = shader.getUniformLocation("blockTexture");
-        uMVP = shader.getUniformLocation("uMVP");
+
         random = new Random();
         noise = new FastNoiseLite(Environment.TickCount);
         treenoise = new FastNoiseLite(random.Next(Environment.TickCount));
         worldTime = 0;
 
         chunks = new Chunk[WORLDSIZE, WORLDSIZE];
-        outline = new Shader(Game.instance.GL, "shaders/outline.vert", "shaders/outline.frag");
         for (int x = 0; x < WORLDSIZE; x++) {
             for (int z = 0; z < WORLDSIZE; z++) {
-                chunks[x, z] = new Chunk(this, shader, x, z);
+                chunks[x, z] = new Chunk(this, x, z);
             }
         }
 
@@ -66,18 +47,10 @@ public class World {
             // create terrain
             genTerrainNoise();
             // separate loop so all data is there
-            meshChunks();
+            renderer.meshChunks();
         }
 
-        meshBlockOutline();
-    }
-
-    public void meshChunks() {
-        for (int x = 0; x < WORLDSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE; z++) {
-                chunks[x, z].meshChunk();
-            }
-        }
+        renderer.meshBlockOutline();
     }
 
     private void genTerrainSine() {
@@ -254,7 +227,7 @@ public class World {
             foreach (var dir in Direction.directions) {
                 var neighbourSection = getChunkSectionPos(new Vector3D<int>(x, y, z) + dir);
                 if (isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                    getChunkByChunkPos(new Vector2D<int>(neighbourSection.X, neighbourSection.Z)).chunks[neighbourSection.Y].meshChunk();
+                    getChunkByChunkPos(new Vector2D<int>(neighbourSection.X, neighbourSection.Z)).chunks[neighbourSection.Y].renderer.meshChunk();
                 }
             }
         }
@@ -332,40 +305,6 @@ public class World {
         }
     }
 
-    public void render(double interp) {
-        var tex = Game.instance.blockTexture;
-        tex.bind();
-        var viewProj = player.camera.getViewMatrix(interp) * player.camera.getProjectionMatrix();
-        // OPAQUE PASS
-        shader.use();
-        shader.setUniform(uMVP, viewProj);
-        shader.setUniform(blockTexture, 0);
-        foreach (var chunk in chunks) {
-            chunk.drawOpaque(player.camera);
-        }
-        // TRANSLUCENT DEPTH PRE-PASS
-        dummyShader.use();
-        dummyShader.setUniform(uMVP, viewProj);
-        GL.Disable(EnableCap.CullFace);
-        GL.ColorMask(false, false, false, false);
-        foreach (var chunk in chunks) {
-            chunk.drawTransparent(player.camera);
-        }
-        // TRANSLUCENT PASS
-        shader.use();
-        shader.setUniform(uMVP, viewProj);
-        GL.ColorMask(true, true, true, true);
-        //GL.DepthMask(false);
-        GL.DepthFunc(DepthFunction.Lequal);
-        foreach (var chunk in chunks) {
-            chunk.drawTransparent(player.camera);
-        }
-        GL.DepthMask(true);
-        GL.DepthFunc(DepthFunction.Lequal);
-        GL.Enable(EnableCap.CullFace);
-
-    }
-
     public Vector3D<int> toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
         return new Vector3D<int>(chunkX * ChunkSection.CHUNKSIZE + x,
             chunkY * ChunkSection.CHUNKSIZE + y,
@@ -406,80 +345,6 @@ public class World {
     public Vector3D<int> toBlockPos(Vector3D<double> currentPos) {
         return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
             (int)Math.Floor(currentPos.Z));
-    }
-
-    public void meshBlockOutline() {
-        unsafe {
-            var GL = Game.instance.GL;
-            const float OFFSET = 0.005f;
-            var minX = 0f - OFFSET;
-            var minY = 0f - OFFSET;
-            var minZ = 0f - OFFSET;
-            var maxX = 1f + OFFSET;
-            var maxY = 1f + OFFSET;
-            var maxZ = 1f + OFFSET;
-
-            outlineVao = GL.GenVertexArray();
-            GL.BindVertexArray(outlineVao);
-
-
-            float[] vertices = [
-                // bottom
-                minX, minY, minZ,
-                minX, minY, maxZ,
-                minX, minY, maxZ,
-                maxX, minY, maxZ,
-                maxX, minY, maxZ,
-                maxX, minY, minZ,
-                maxX, minY, minZ,
-                minX, minY, minZ,
-
-                // top
-                minX, maxY, minZ,
-                minX, maxY, maxZ,
-                minX, maxY, maxZ,
-                maxX, maxY, maxZ,
-                maxX, maxY, maxZ,
-                maxX, maxY, minZ,
-                maxX, maxY, minZ,
-                minX, maxY, minZ,
-
-                // sides
-                minX, minY, minZ,
-                minX, maxY, minZ,
-                maxX, minY, minZ,
-                maxX, maxY, minZ,
-                minX, minY, maxZ,
-                minX, maxY, maxZ,
-                maxX, minY, maxZ,
-                maxX, maxY, maxZ
-            ];
-            var vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            fixed (float* data = vertices) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Length * sizeof(float)), data,
-                    BufferUsageARB.StreamDraw);
-            }
-
-            outlineCount = (uint)vertices.Length / 3;
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
-            GL.EnableVertexAttribArray(0);
-
-            outline_uModel = outline.getUniformLocation("uModel");
-            outline_uView = outline.getUniformLocation("uView");
-            outline_uProjection = outline.getUniformLocation("uProjection");
-        }
-    }
-
-    public void drawBlockOutline(double interp) {
-        var GL = Game.instance.GL;
-        var block = Game.instance.targetedPos!.Value;
-        GL.BindVertexArray(outlineVao);
-        outline.use();
-        outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
-        outline.setUniform(outline_uView, player.camera.getViewMatrix(interp));
-        outline.setUniform(outline_uProjection, player.camera.getProjectionMatrix());
-        GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
     public List<Vector3D<int>> getBlocksInBox(Vector3D<int> min, Vector3D<int> max) {
