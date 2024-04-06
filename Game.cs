@@ -8,7 +8,6 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
-using SoLoud;
 using TrippyGL;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
@@ -153,8 +152,11 @@ public class Game {
         gui = new GUI();
         gui.loadFonts();
         Task.Run(() => {
-            //gui.loadUnicodeFont();
-        }).ContinueWith(_ => Screen.switchTo(Screen.MAIN_MENU));
+            gui.loadUnicodeFont();
+        }).ContinueWith(_ => {
+            gui.loadUnicodeFont2();
+            Screen.switchTo(Screen.MAIN_MENU);
+        });
         resize(new Vector2D<int>(width, height));
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
     }
