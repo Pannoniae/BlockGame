@@ -6,6 +6,9 @@ layout (location = 2) in uint iData;
 
 uniform mat4 uMVP;
 
+out vec2 texCoords;
+
 void main() {
     gl_Position = uMVP * vec4(vPos, 1.0);
+    texCoords = texCoord;
 }

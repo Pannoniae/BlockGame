@@ -189,6 +189,14 @@ public class ChunkSection {
                                 ymax = wy + 1f - offset;
                                 zmax = wz + 1f - offset;
                             }
+                            else {
+                                xmin = wx;
+                                ymin = wy;
+                                zmin = wz;
+                                xmax = wx + 1f;
+                                ymax = wy + 1f;
+                                zmax = wz + 1f;
+                            }
                             var data = packData((byte)RawDirection.WEST);
                             BlockVertex[] verticesWest = [
                                 // west
@@ -218,6 +226,14 @@ public class ChunkSection {
                                 xmax = wx + 1f - offset;
                                 ymax = wy + 1f - offset;
                                 zmax = wz + 1f - offset;
+                            }
+                            else {
+                                xmin = wx;
+                                ymin = wy;
+                                zmin = wz;
+                                xmax = wx + 1f;
+                                ymax = wy + 1f;
+                                zmax = wz + 1f;
                             }
                             var data = packData((byte)RawDirection.EAST);
                             BlockVertex[] verticesEast = [
@@ -249,6 +265,14 @@ public class ChunkSection {
                                 ymax = wy + 1f - offset;
                                 zmax = wz + 1f - offset;
                             }
+                            else {
+                                xmin = wx;
+                                ymin = wy;
+                                zmin = wz;
+                                xmax = wx + 1f;
+                                ymax = wy + 1f;
+                                zmax = wz + 1f;
+                            }
                             var data = packData((byte)RawDirection.SOUTH);
                             BlockVertex[] verticesSouth = [
                                 // south
@@ -278,6 +302,14 @@ public class ChunkSection {
                                 xmax = wx + 1f - offset;
                                 ymax = wy + 1f - offset;
                                 zmax = wz + 1f - offset;
+                            }
+                            else {
+                                xmin = wx;
+                                ymin = wy;
+                                zmin = wz;
+                                xmax = wx + 1f;
+                                ymax = wy + 1f;
+                                zmax = wz + 1f;
                             }
                             var data = packData((byte)RawDirection.NORTH);
                             BlockVertex[] verticesNorth = [
@@ -309,6 +341,14 @@ public class ChunkSection {
                                 ymax = wy + 1f - offset;
                                 zmax = wz + 1f - offset;
                             }
+                            else {
+                                xmin = wx;
+                                ymin = wy;
+                                zmin = wz;
+                                xmax = wx + 1f;
+                                ymax = wy + 1f;
+                                zmax = wz + 1f;
+                            }
                             var data = packData((byte)RawDirection.DOWN);
                             BlockVertex[] verticesBottom = [
                                 // bottom
@@ -338,6 +378,14 @@ public class ChunkSection {
                                 xmax = wx + 1f - offset;
                                 ymax = wy + 1f - offset;
                                 zmax = wz + 1f - offset;
+                            }
+                            else {
+                                xmin = wx;
+                                ymin = wy;
+                                zmin = wz;
+                                xmax = wx + 1f;
+                                ymax = wy + 1f;
+                                zmax = wz + 1f;
                             }
                             var data = packData((byte)RawDirection.UP);
                             BlockVertex[] verticesTop = [
