@@ -15,7 +15,7 @@ public class BlockVAO {
     public GL GL;
 
     public BlockVAO() {
-        GL = Game.instance.GL;
+        GL = Game.GL;
         handle = GL.GenVertexArray();
         blockTexture = Game.instance.blockTexture;
     }

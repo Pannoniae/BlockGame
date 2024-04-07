@@ -24,7 +24,7 @@ public class GUI {
 
     public SimpleShaderProgram shader;
 
-    public int guiScale = 4;
+    public static int guiScale = 4;
 
     public TextureBatcher tb;
     public Texture2D guiTexture;
@@ -32,19 +32,20 @@ public class GUI {
     public TextureFont guiFont;
     public TextureFont guiFontUnicode;
 
-    public Rectangle buttonRect = new(0, 0, 64, 16);
+    public Rectangle buttonRect = new(0, 0, 96, 16);
+    public Rectangle grayButtonRect = new(96, 0, 96, 16);
 
     public static GUI instance;
     private TrippyFontFile ff;
 
     public GUI() {
-        GL = Game.instance.GL;
-        GD = Game.instance.GD;
-        tb = new TextureBatcher(Game.instance.GD);
-        shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.instance.GD, excludeWorldMatrix: true);
+        GL = Game.GL;
+        GD = Game.GD;
+        tb = new TextureBatcher(Game.GD);
+        shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.GD, excludeWorldMatrix: true);
         tb.SetShaderProgram(shader);
-        guiTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/gui.png");
-        colourTexture = Texture2DExtensions.FromFile(Game.instance.GD, "textures/debug.png");
+        guiTexture = Texture2DExtensions.FromFile(Game.GD, "textures/gui.png");
+        colourTexture = Texture2DExtensions.FromFile(Game.GD, "textures/debug.png");
         instance = this;
     }
 
@@ -54,12 +55,12 @@ public class GUI {
             var family = collection.Add("fonts/unifont-15.1.04.ttf");
             var font = family.CreateFont(12, FontStyle.Regular);
             using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)127);
-            guiFont = ff.CreateFont(Game.instance.GD);
+            guiFont = ff.CreateFont(Game.GD);
             ff.WriteToFile(Constants.fontFile);
         }
         else {
             using var ff = TrippyFontFile.FromFile(Constants.fontFile);
-            guiFont = ff.CreateFont(Game.instance.GD);
+            guiFont = ff.CreateFont(Game.GD);
         }
     }
 
@@ -86,11 +87,11 @@ public class GUI {
     /// </summary>
     public void loadUnicodeFont2() {
         if (!File.Exists(Constants.fontFileUnicode)) {
-            guiFontUnicode = ff.CreateFont(Game.instance.GD);
+            guiFontUnicode = ff.CreateFont(Game.GD);
             ff.WriteToFile(Constants.fontFileUnicode);
         }
         else {
-            guiFontUnicode = ff.CreateFont(Game.instance.GD);
+            guiFontUnicode = ff.CreateFont(Game.GD);
         }
     }
 
@@ -114,7 +115,8 @@ public class GUI {
 
     public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.Measure(text).X / 2;
-        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y), color == default ? Color4b.White : color);
+        var offsetY = guiFont.Measure(text).Y / 2;
+        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
     }
 
     // some day we'll have a better API, but not this day
@@ -125,8 +127,9 @@ public class GUI {
 
     public void drawStringCentredShadowed(string text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.Measure(text).X / 2;
-        tb.DrawString(guiFont, text, position with { X = position.X - offsetX } + new Vector2(1, 1), Color4b.DimGray);
-        tb.DrawString(guiFont, text, position with { X = position.X - offsetX }, color == default ? Color4b.White : color);
+        var offsetY = guiFont.Measure(text).Y / 2;
+        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color4b.DimGray);
+        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
     }
 
     public void drawLineWorld(TextureBatcher tb, Texture2D texture, Vector3 start, Vector3 end, Color4b color = default) {

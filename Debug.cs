@@ -8,13 +8,13 @@ public class Debug {
     private const int MAX_POINT_VERTICES = 512;
 
     private VertexColor[] lineVertices = new VertexColor[MAX_LINE_VERTICES];
-    private VertexBuffer<VertexColor> lineVertexBuffer = new(Game.instance.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
+    private VertexBuffer<VertexColor> lineVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
     private int currentLine = 0;
     private VertexColor[] pointVertices = new VertexColor[MAX_POINT_VERTICES];
-    private VertexBuffer<VertexColor> pointVertexBuffer = new(Game.instance.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
+    private VertexBuffer<VertexColor> pointVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
     private int currentPoint = 0;
 
-    private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.instance.GD, excludeWorldMatrix: true);
+    private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.GD, excludeWorldMatrix: true);
 
     public void update(double interp) {
         debugShader.Projection = GameScreen.world.player.camera.getProjectionMatrix();
@@ -66,7 +66,7 @@ public class Debug {
     }
 
     public void flushLines() {
-        var GD = Game.instance.GD;
+        var GD = Game.GD;
         lineVertexBuffer.DataSubset.SetData(lineVertices.AsSpan(0, currentLine));
         GD.VertexArray = lineVertexBuffer;
         GD.ShaderProgram = debugShader;

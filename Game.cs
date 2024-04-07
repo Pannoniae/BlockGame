@@ -16,6 +16,7 @@ using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
 using MouseButton = Silk.NET.Input.MouseButton;
 using Sound = SFML.Audio.Sound;
+using Timer = System.Timers.Timer;
 
 namespace BlockGame;
 
@@ -23,19 +24,19 @@ public class Game {
 
     public static Game instance { get; private set; }
 
-    public int width;
-    public int height;
+    public static int width;
+    public static int height;
 
-    public IWindow window;
-    public GL GL = null!;
-    public GraphicsDevice GD = null!;
-    public IInputContext input = null!;
+    public static IWindow window;
+    public static GL GL = null!;
+    public static GraphicsDevice GD = null!;
+    public static IInputContext input = null!;
     public ImGuiController imgui = null!;
 
-    public Process proc;
+    public static Process proc;
 
-    public int centreX => width / 2;
-    public int centreY => height / 2;
+    public static int centreX => width / 2;
+    public static int centreY => height / 2;
 
     /// <summary>
     /// The current game screen which is shown.
@@ -44,8 +45,8 @@ public class Game {
 
     public static GUI gui;
 
-    public IMouse mouse;
-    public IKeyboard keyboard;
+    public static IMouse mouse;
+    public static IKeyboard keyboard;
 
     public Vector2 lastMousePos;
     public Vector3D<int>? targetedPos;
@@ -54,28 +55,42 @@ public class Game {
     public int fps;
     public double ft;
 
-    public BlendState initialBlendState = BlendState.NonPremultiplied;
+    public static BlendState initialBlendState = BlendState.NonPremultiplied;
 
-    public Stopwatch stopwatch = new();
+    public static Stopwatch stopwatch = new();
+
+    /// <summary>
+    /// Stopwatch but keeps running
+    /// </summary>
+    public static Stopwatch permanentStopwatch = new();
+
     public double accumTime;
     public static readonly double fixeddt = 1 / 30d;
     public static readonly double maxTimestep = 1 / 5f;
     public double t;
 
-    public bool focused;
-    public bool firstFrame;
+    /// <summary>
+    /// List of things to do later.
+    /// </summary>
+    public static List<TimerAction> timerQueue = new();
+
+    public static bool focused;
+    public static bool firstFrame;
 
     /// <summary>
     /// True while clicking back into the game. Used to prevent the player instantly breaking a block when clicking on the screen to get back into the game world.
     /// </summary>
-    public bool lockingMouse;
+    public static bool lockingMouse;
 
     public BTexture2D blockTexture;
     public Metrics metrics;
 
     public BlockingCollection<Action> mainThreadQueue = new();
+
     private SoundBuffer buffer;
     private Sound music;
+
+
     public Game() {
         instance = this;
         var windowOptions = WindowOptions.Default;
@@ -149,6 +164,7 @@ public class Game {
 
         metrics = new Metrics();
         stopwatch.Start();
+        permanentStopwatch.Start();
 
         blockTexture = new BTexture2D("textures/blocks.png");
         //Screen.initScreens(gui);
@@ -166,9 +182,7 @@ public class Game {
 
         gui = new GUI();
         gui.loadFonts();
-        Task.Run(() => {
-            gui.loadUnicodeFont();
-        }).ContinueWith(_ => {
+        Task.Run(() => { gui.loadUnicodeFont(); }).ContinueWith(_ => {
             executeOnMainThread(() => {
                 gui.loadUnicodeFont2();
                 Screen.switchTo(Screen.MAIN_MENU);
@@ -256,6 +270,8 @@ public class Game {
             action();
         }
 
+        handleTimers();
+
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);
@@ -268,9 +284,7 @@ public class Game {
             focused = false;
         }*/
         //GD.ResetStates();
-        GD.ClearColor = Color4b.DeepSkyBlue;
-        GD.ClearDepth = 1f;
-        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+        screen.clear(GD, dt, interp);
         screen.render(dt, interp);
 
         // for GUI, no depth test
@@ -283,6 +297,39 @@ public class Game {
         screen.imGuiDraw();
         imgui.Render();*/
         //}
+    }
+
+    public TimerAction setInterval(long interval, Action action) {
+        var now = permanentStopwatch.ElapsedMilliseconds;
+        var ta = new TimerAction(action, now, true, interval);
+        timerQueue.Add(ta);
+        return ta;
+    }
+
+    public TimerAction setTimeout(long timeout, Action action) {
+        var now = permanentStopwatch.ElapsedMilliseconds;
+        var ta = new TimerAction(action, now, false, timeout);
+        timerQueue.Add(ta);
+        return ta;
+    }
+
+    private void handleTimers() {
+        foreach (var timerAction in timerQueue) {
+            var now = permanentStopwatch.ElapsedMilliseconds;
+            if (timerAction.enabled && now - timerAction.lastCalled > timerAction.interval) {
+                timerAction.action();
+                if (!timerAction.repeating) {
+                    // mark for removal
+                    timerAction.enabled = false;
+                }
+                // schedule it again
+                else {
+                    timerAction.lastCalled = now;
+                }
+            }
+        }
+        // remove inactive timers
+        timerQueue.RemoveAll(ta => !ta.enabled);
     }
 
     private void close() {

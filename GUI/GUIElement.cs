@@ -4,7 +4,7 @@ namespace BlockGame;
 
 public class GUIElement {
     public Screen screen;
-    public RectangleF position;
+    public RectangleF guiPosition;
     public HorizontalAnchor horizontalAnchor = HorizontalAnchor.LEFT;
     public VerticalAnchor verticalAnchor = VerticalAnchor.TOP;
 
@@ -21,14 +21,14 @@ public class GUIElement {
     /// </summary>
     public RectangleF bounds {
         get {
-            var absolutePos = position;
+            var absolutePos = guiPosition;
             // handle guiscale
-            absolutePos.X *= Game.gui.guiScale;
-            absolutePos.Y *= Game.gui.guiScale;
+            absolutePos.X *= GUI.guiScale;
+            absolutePos.Y *= GUI.guiScale;
             // handle guiscale
             if (!unscaledSize) {
-                absolutePos.Width *= Game.gui.guiScale;
-                absolutePos.Height *= Game.gui.guiScale;
+                absolutePos.Width *= GUI.guiScale;
+                absolutePos.Height *= GUI.guiScale;
             }
             switch (horizontalAnchor) {
                 case HorizontalAnchor.LEFT:
@@ -69,13 +69,13 @@ public class GUIElement {
 
     public event Action? clicked;
 
-    protected GUIElement(Screen screen, RectangleF position) {
+    protected GUIElement(Screen screen, RectangleF guiPosition) {
         this.screen = screen;
-        this.position = position;
+        this.guiPosition = guiPosition;
     }
 
     public void setPosition(RectangleF pos) {
-        position = pos;
+        guiPosition = pos;
     }
 
     public void centre() {

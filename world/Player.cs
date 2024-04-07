@@ -92,7 +92,7 @@ public class Player {
         clamp(dt);
 
         // don't increment if flying
-        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 1.5f : 0;
+        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
 
         var trueEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
         camera.position = new Vector3((float)position.X, (float)(position.Y + trueEyeHeight), (float)position.Z);
@@ -206,7 +206,7 @@ public class Player {
     }
 
     private void updateInputVelocity(double dt) {
-        if (!Game.instance.focused) {
+        if (!Game.focused) {
             return;
         }
         // convert strafe vector into actual movement
@@ -237,8 +237,8 @@ public class Player {
 
     [Pure]
     private AABB calcAABB(Vector3D<double> pos) {
-        var size = 0.5;
-        var sizehalf = 0.25;
+        var size = 0.75;
+        var sizehalf = 0.75 / 2;
         var height = 1.75;
         return AABB.fromSize(new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
             new Vector3D<double>(size, height, size));
@@ -369,8 +369,8 @@ public class Player {
 
     public void updateInput(double dt) {
         pressedMovementKey = false;
-        var keyboard = Game.instance.keyboard;
-        var mouse = Game.instance.mouse;
+        var keyboard = Game.keyboard;
+        var mouse = Game.mouse;
 
         sneaking = keyboard.IsKeyPressed(Key.ShiftLeft);
 
