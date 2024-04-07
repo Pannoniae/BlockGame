@@ -178,7 +178,7 @@ public class GameScreen : Screen {
         gui.draw(gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
 
         // Draw block display
-        var blockStr = Blocks.get(world.player.pickBlock).name;
+        var blockStr = Blocks.get(world.player.hotbar.getSelected()).name;
         gui.drawStringCentred(blockStr, new Vector2(Game.instance.centreX, Game.instance.height - 120),
             Color4b.White);
 
