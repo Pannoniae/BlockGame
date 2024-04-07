@@ -1,4 +1,4 @@
-using Rectangle = System.Drawing.Rectangle;
+using System.Drawing;
 
 namespace BlockGame;
 
@@ -12,12 +12,10 @@ public class LoadingScreen : Screen {
 
     private Text text;
 
-    public LoadingScreen() {
-        text = new Text(this, new Rectangle(0, 0, 160, 40), "Loading fonts...");
-        elements.Add(text);
-    }
-
     public override void activate() {
+        text = new Text(this, new RectangleF(0, 0, 160, 40), "Loading fonts...");
+        elements.Add(text);
+
         counter = 0;
     }
 

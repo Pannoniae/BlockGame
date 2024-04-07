@@ -19,10 +19,16 @@ public class GameScreen : Screen {
 
     public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
 
-    public GameScreen() {
+    public override void activate() {
         debugStr = new StringBuilder(500);
         GD = Game.instance.GD;
         D = new Debug();
+
+        var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.1");
+        version.shadowed = true;
+        elements.Add(version);
+
+        world = new World();
     }
 
 
@@ -133,6 +139,7 @@ public class GameScreen : Screen {
     }
 
     public override void resize(Vector2D<int> size) {
+        base.resize(size);
         world.player.camera.setViewport(size.X, size.Y);
     }
 
@@ -205,7 +212,9 @@ public class GameScreen : Screen {
             debugStr.AppendLine($"CX:{i.centreX} CY:{i.centreY}");
             debugStr.AppendLine(
                 $"M:{Game.instance.proc.PrivateMemorySize64 / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
-            gui.tb.DrawString(gui.guiFont, debugStr.ToString(), new Vector2(5, 5), Color4b.White);
+            gui.tb.DrawString(gui.guiFont, debugStr.ToString(),
+                new Vector2(elements[0].bounds.Left, elements[0].bounds.Bottom), Color4b.White);
+            Console.Out.WriteLine(elements[0].bounds);
 
 
             D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);

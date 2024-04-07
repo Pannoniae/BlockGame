@@ -24,14 +24,14 @@ public class Screen {
     }
 
     public virtual void deactivate() {
-
+        elements.Clear();
     }
 
     public static void switchTo(Screen screen) {
         Game.instance.screen?.deactivate();
         Game.instance.screen = screen;
-        screen.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
         screen.activate();
+        screen.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
     }
 
     public void addElement(GUIElement element) {
