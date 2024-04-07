@@ -189,7 +189,7 @@ public class GameScreen : Screen {
         var m = Game.instance.metrics;
         if (debugScreen) {
             debugStr.Clear();
-            debugStr.AppendLine($"{p.position.X:0.###}, {p.position.Y:0.###}, {p.position.Z:0.###}");
+            debugStr.AppendLine($"{p.position.X:0.000}, {p.position.Y:0.000}, {p.position.Z:0.000}");
             debugStr.AppendLine($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
             debugStr.AppendLine($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
             debugStr.AppendLine($"cf:{c.forward.X:0.000}, {c.forward.Y:0.000}, {c.forward.Z:0.000}");
