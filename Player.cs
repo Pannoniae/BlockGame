@@ -47,7 +47,8 @@ public class Player {
     /// </summary>
     public Vector3D<double> lastSort = new(double.MinValue, double.MinValue, double.MinValue);
 
-    public ushort pickBlock;
+
+    public Inventory hotbar;
     public World world;
     public Vector2D<double> strafeVector = new(0, 0);
     public bool pressedMovementKey;
@@ -60,11 +61,11 @@ public class Player {
     public Player(World world, int x, int y, int z) {
         position = new Vector3D<double>(x, y, z);
         prevPosition = position;
+        hotbar = new Inventory();
         camera = new PlayerCamera(this, new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
             Constants.initialWidth, Constants.initialHeight);
 
         this.world = world;
-        pickBlock = 1;
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
         aabb = calcAABB(position);
@@ -337,9 +338,9 @@ public class Player {
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
-            pickBlock = (ushort)(key - Key.Number0);
-            if (!Blocks.tryGet(pickBlock, out _)) {
-                pickBlock = 1;
+            hotbar.selected = (ushort)(key - Key.Number0 - 1);
+            if (!Blocks.tryGet(hotbar.getSelected(), out _)) {
+                hotbar.selected = 1;
             }
         }
     }
@@ -393,9 +394,9 @@ public class Player {
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
             // don't intersect the player
-            var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+            var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
             if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
-                world.setBlock(pos.X, pos.Y, pos.Z, world.player.pickBlock);
+                world.setBlock(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
                 world.player.lastPlace = world.worldTime;
             }
         }

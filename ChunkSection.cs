@@ -1,7 +1,4 @@
-using System.Numerics;
-using System.Runtime.InteropServices;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
 
 namespace BlockGame;
 

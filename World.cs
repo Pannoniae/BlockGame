@@ -169,7 +169,7 @@ public class World {
         return chunk.block[blockPos.X, y, blockPos.Z] != 0;
     }
 
-    public int getBlock(int x, int y, int z) {
+    public ushort getBlock(int x, int y, int z) {
         if (!inWorld(x, y, z)) {
             return 0;
         }
@@ -192,11 +192,11 @@ public class World {
         return chunk.block[blockPos.X, y, blockPos.Z];
     }
 
-    public int getBlock(Vector3D<int> pos) {
+    public ushort getBlock(Vector3D<int> pos) {
         return getBlock(pos.X, pos.Y, pos.Z);
     }
 
-    public AABB? getAABB(int x, int y, int z, int id) {
+    public AABB? getAABB(int x, int y, int z, ushort id) {
         if (id == 0) {
             return null;
         }
