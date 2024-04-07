@@ -48,6 +48,7 @@ public class GameScreen : Screen {
         world.player.camera.calculateFrustum();
         //Console.Out.WriteLine(world.player.camera.frustum);
         world.renderer.render(interp);
+        world.player.render(dt, interp);
         if (Game.instance.targetedPos.HasValue) {
             world.renderer.drawBlockOutline(interp);
         }
@@ -209,6 +210,7 @@ public class GameScreen : Screen {
 
             D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
             D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
+            //D.drawAABB(p.aabb);
             D.flushLines();
         }
     }

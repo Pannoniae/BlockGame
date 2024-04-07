@@ -8,6 +8,7 @@ namespace BlockGame;
 public class Player {
     public const double playerHeight = 1.8;
     public const double eyeHeight = 1.6;
+    public const double sneakingEyeHeight = 1.45;
 
     // is player walking on (colling with) ground
     public bool onGround;
@@ -71,6 +72,11 @@ public class Player {
         aabb = calcAABB(position);
     }
 
+    public void render(double dt, double interp) {
+
+
+    }
+
 
     public void update(double dt) {
         updateInputVelocity(dt);
@@ -79,7 +85,7 @@ public class Player {
         clamp(dt);
 
 
-        collision(dt);
+        collisionAndSneaking(dt);
         applyInputMovement(dt);
         updateGravity(dt);
         applyFriction();
@@ -87,19 +93,16 @@ public class Player {
 
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 1.5f : 0;
-        //Console.Out.WriteLine(totalTraveled);
-        camera.position = new Vector3((float)position.X, (float)(position.Y + eyeHeight), (float)position.Z);
-        camera.prevPosition = new Vector3((float)prevPosition.X, (float)(prevPosition.Y + eyeHeight),
+
+        var trueEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
+        camera.position = new Vector3((float)position.X, (float)(position.Y + trueEyeHeight), (float)position.Z);
+        camera.prevPosition = new Vector3((float)prevPosition.X, (float)(prevPosition.Y + trueEyeHeight),
             (float)prevPosition.Z);
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
         aabb = calcAABB(position);
         if (Math.Abs(velocity.withoutY().Length) > 0.0001 && onGround) {
             camera.bob = (float)(velocity.Length / Constants.maxhSpeed);
-        }
-        else {
-            //camera.bob = 0;
-            // just don't
         }
         // after everything is done
         // calculate total traveled
@@ -241,7 +244,8 @@ public class Player {
             new Vector3D<double>(size, height, size));
     }
 
-    private void collision(double dt) {
+    private void collisionAndSneaking(double dt) {
+        var oldPos = position;
         var blockPos = world.toBlockPos(position);
         // collect potential collision targets
         List<AABB> collisionTargets = new List<AABB>();
@@ -284,8 +288,10 @@ public class Player {
 
         // X axis resolution
         position.X += velocity.X * dt;
+        var hasAtLeastOneCollision = false;
         foreach (var blockAABB in collisionTargets) {
             var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var sneakaabbX = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbX, blockAABB)) {
                 // left side
                 if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
@@ -302,11 +308,21 @@ public class Player {
                     }
                 }
             }
+            if (AABB.isCollision(sneakaabbX, blockAABB)) {
+                hasAtLeastOneCollision = true;
+            }
+        }
+        // don't fall off while sneaking
+        if (sneaking && onGround && !hasAtLeastOneCollision) {
+            // revert movement
+            position.X = oldPos.X;
         }
 
         position.Z += velocity.Z * dt;
+        hasAtLeastOneCollision = false;
         foreach (var blockAABB in collisionTargets) {
             var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var sneakaabbZ = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbZ, blockAABB)) {
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
                     var diff = blockAABB.minZ - aabbZ.maxZ;
@@ -322,6 +338,14 @@ public class Player {
                     }
                 }
             }
+            if (AABB.isCollision(sneakaabbZ, blockAABB)) {
+                hasAtLeastOneCollision = true;
+            }
+        }
+        // don't fall off while sneaking
+        if (sneaking && onGround && !hasAtLeastOneCollision) {
+            // revert movement
+            position.Z = oldPos.Z;
         }
 
         // is player on ground? check slightly below
@@ -332,8 +356,6 @@ public class Player {
                 onGround = true;
             }
         }
-
-
     }
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
