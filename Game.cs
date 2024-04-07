@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using ImGuiNET;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -152,6 +151,8 @@ public class Game {
         //Screen.initScreens(gui);
         Screen.switchTo(Screen.LOADING);
         //world = new World();
+
+
         gui = new GUI();
         gui.loadFonts();
         Task.Run(() => {
