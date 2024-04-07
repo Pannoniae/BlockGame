@@ -1,18 +1,23 @@
+using System.Drawing;
 using Silk.NET.Maths;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
 public class MainMenuScreen : Screen {
-    public MainMenuScreen() {
-        var button = new Button(this, new Rectangle(0, 0, 160, 40));
+    public override void activate() {
+        base.activate();
+        var button = new Button(this, new RectangleF(0, 0, 64, 16));
+        button.centreContents();
         button.clicked += () => {
-            Console.Out.WriteLine("CLICKED");
-            Game.instance.screen = GAME_SCREEN;
-            GameScreen.world = new World();
-            Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
-            Game.instance.lockMouse();
+            // we are *already* on the main thread; this is just needed so it executes a frame later
+            // so we don't destroy the screen which we are clicking right now.
+            Game.instance.executeOnMainThread(() => {
+                Console.Out.WriteLine("CLICKED");
+                switchTo(GAME_SCREEN);
+                Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
+                Game.instance.lockMouse();
+            });
         };
         elements.Add(button);
     }
-};
+}
