@@ -4,9 +4,14 @@ namespace BlockGame;
 
 public class GUIElement {
     public Screen screen;
-    public Rectangle position;
-    public HorizontalAnchor horizontalAnchor = HorizontalAnchor.CENTRED;
-    public VerticalAnchor verticalAnchor = VerticalAnchor.CENTRED;
+    public RectangleF position;
+    public HorizontalAnchor horizontalAnchor = HorizontalAnchor.LEFT;
+    public VerticalAnchor verticalAnchor = VerticalAnchor.TOP;
+
+    /// <summary>
+    /// If true, guiScale does not adjust the size of this element (e.g. text)
+    /// </summary>
+    public bool unscaledSize = false;
 
     public bool hovered = false;
     public bool pressed = false;
@@ -14,9 +19,17 @@ public class GUIElement {
     /// <summary>
     /// Calculate the absolute bounds of a GUIElement.
     /// </summary>
-    public Rectangle bounds {
+    public RectangleF bounds {
         get {
             var absolutePos = position;
+            // handle guiscale
+            absolutePos.X *= Game.gui.guiScale;
+            absolutePos.Y *= Game.gui.guiScale;
+            // handle guiscale
+            if (!unscaledSize) {
+                absolutePos.Width *= Game.gui.guiScale;
+                absolutePos.Height *= Game.gui.guiScale;
+            }
             switch (horizontalAnchor) {
                 case HorizontalAnchor.LEFT:
                     //absolutePos.X -= screen.width / 2;
@@ -24,6 +37,9 @@ public class GUIElement {
                 case HorizontalAnchor.RIGHT:
                     //absolutePos.X += screen.width / 2;
                     absolutePos.X += screen.size.X;
+                    break;
+                case HorizontalAnchor.CENTREDCONTENTS:
+                    absolutePos.X += screen.size.X / 2 - absolutePos.Width / 2;
                     break;
                 case HorizontalAnchor.CENTRED:
                 default:
@@ -34,10 +50,13 @@ public class GUIElement {
             switch (verticalAnchor) {
                 case VerticalAnchor.BOTTOM:
                     //absolutePos.Y -= screen.height / 2;
+                    absolutePos.Y += screen.size.Y;
                     break;
                 case VerticalAnchor.TOP:
                     //absolutePos.Y += screen.height / 2;
-                    absolutePos.Y += screen.size.Y;
+                    break;
+                case VerticalAnchor.CENTREDCONTENTS:
+                    absolutePos.Y += screen.size.Y / 2 - absolutePos.Height / 2;
                     break;
                 case VerticalAnchor.CENTRED:
                 default:
@@ -50,13 +69,23 @@ public class GUIElement {
 
     public event Action? clicked;
 
-    protected GUIElement(Screen screen, Rectangle position) {
+    protected GUIElement(Screen screen, RectangleF position) {
         this.screen = screen;
         this.position = position;
     }
 
-    public void setPosition(Rectangle pos) {
+    public void setPosition(RectangleF pos) {
         position = pos;
+    }
+
+    public void centre() {
+        horizontalAnchor = HorizontalAnchor.CENTRED;
+        verticalAnchor = VerticalAnchor.CENTRED;
+    }
+
+    public void centreContents() {
+        horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;
+        verticalAnchor = VerticalAnchor.CENTREDCONTENTS;
     }
 
     public virtual void draw() {
@@ -70,12 +99,14 @@ public class GUIElement {
 
 public enum HorizontalAnchor : byte {
     CENTRED,
+    CENTREDCONTENTS,
     LEFT,
     RIGHT
 }
 
 public enum VerticalAnchor : byte {
     CENTRED,
+    CENTREDCONTENTS,
     BOTTOM,
     TOP
 }

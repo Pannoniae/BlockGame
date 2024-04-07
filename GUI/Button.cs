@@ -4,7 +4,7 @@ using System.Numerics;
 namespace BlockGame;
 
 public class Button : GUIElement {
-    public Button(Screen screen, Rectangle bounds) : base(screen, bounds) {
+    public Button(Screen screen, RectangleF bounds) : base(screen, bounds) {
 
     }
 

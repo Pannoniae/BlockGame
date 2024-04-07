@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Numerics;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -114,6 +115,18 @@ public class GUI {
     public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.Measure(text).X / 2;
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y), color == default ? Color4b.White : color);
+    }
+
+    // some day we'll have a better API, but not this day
+    public void drawStringShadowed(string text, Vector2 position, Color4b color = default) {
+        tb.DrawString(guiFont, text, position + new Vector2(1, 1), Color4b.DimGray);
+        tb.DrawString(guiFont, text, position, color == default ? Color4b.White : color);
+    }
+
+    public void drawStringCentredShadowed(string text, Vector2 position, Color4b color = default) {
+        var offsetX = guiFont.Measure(text).X / 2;
+        tb.DrawString(guiFont, text, position with { X = position.X - offsetX } + new Vector2(1, 1), Color4b.DimGray);
+        tb.DrawString(guiFont, text, position with { X = position.X - offsetX }, color == default ? Color4b.White : color);
     }
 
     public void drawLineWorld(TextureBatcher tb, Texture2D texture, Vector3 start, Vector3 end, Color4b color = default) {
