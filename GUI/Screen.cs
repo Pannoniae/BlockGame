@@ -30,8 +30,10 @@ public class Screen {
     public static void switchTo(Screen screen) {
         Game.instance.screen?.deactivate();
         Game.instance.screen = screen;
+        screen.size = new Vector2D<int>(Game.width, Game.height);
+        screen.centre = screen.size / 2;
         screen.activate();
-        screen.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
+        screen.resize(new Vector2D<int>(Game.width, Game.height));
     }
 
     public void addElement(GUIElement element) {
@@ -49,9 +51,9 @@ public class Screen {
 
     public virtual void click(Vector2 pos) {
         foreach (var element in elements) {
-            Console.Out.WriteLine(element);
-            Console.Out.WriteLine(element.bounds);
-            Console.Out.WriteLine(pos);
+            //Console.Out.WriteLine(element);
+            //Console.Out.WriteLine(element.bounds);
+            //Console.Out.WriteLine(pos);
             if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
                 element.click();
             }
@@ -60,6 +62,12 @@ public class Screen {
 
     public virtual void update(double dt) {
 
+    }
+
+    public virtual void clear(GraphicsDevice GD, double dt, double interp) {
+        GD.ClearColor = Color4b.DeepSkyBlue;
+        GD.ClearDepth = 1f;
+        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
     }
 
     public virtual void render(double dt, double interp) {

@@ -18,10 +18,17 @@ public class GameScreen : Screen {
     public bool debugScreen = false;
 
     public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
+    private TimerAction updateMemory;
+
+    // values for f3
+    private long privateMemory;
+    private long workingSet;
+    private long GCMemory;
 
     public override void activate() {
+        base.activate();
         debugStr = new StringBuilder(500);
-        GD = Game.instance.GD;
+        GD = Game.GD;
         D = new Debug();
 
         var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.1");
@@ -29,6 +36,18 @@ public class GameScreen : Screen {
         elements.Add(version);
 
         world = new World();
+        updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
+    }
+
+    public override void deactivate() {
+        base.deactivate();
+        updateMemory.enabled = false;
+    }
+
+    private void updateMemoryMethod() {
+        privateMemory = Game.proc.PrivateMemorySize64;
+        workingSet = Game.proc.WorkingSet64;
+        GCMemory = GC.GetTotalMemory(false);
     }
 
 
@@ -37,7 +56,7 @@ public class GameScreen : Screen {
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector2D<double>(0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
-        if (Game.instance.focused && !Game.instance.lockingMouse) {
+        if (Game.focused && !Game.lockingMouse) {
             world.player.updateInput(dt);
         }
         world.update(dt);
@@ -62,7 +81,7 @@ public class GameScreen : Screen {
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
-        if (Game.instance.focused) {
+        if (Game.focused) {
             if (button == MouseButton.Left) {
                 world.player.breakBlock();
             }
@@ -76,11 +95,11 @@ public class GameScreen : Screen {
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 position) {
-        if (!Game.instance.focused) {
+        if (!Game.focused) {
             return;
         }
 
-        if (Game.instance.firstFrame) {
+        if (Game.firstFrame) {
             Game.instance.lastMousePos = position;
         }
         else {
@@ -97,7 +116,7 @@ public class GameScreen : Screen {
             }
         }
 
-        Game.instance.firstFrame = false;
+        Game.firstFrame = false;
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -115,14 +134,14 @@ public class GameScreen : Screen {
 
         if (key == Key.G) {
             world = WorldIO.load("world");
-            Game.instance.resize(new Vector2D<int>(Game.instance.width, Game.instance.height));
+            Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }
 
 
         // guiscale test
         if (keyboard.IsKeyPressed(Key.ControlLeft)) {
             if (key >= Key.Number0 && key <= Key.Number9) {
-                Game.gui.guiScale = (ushort)(key - Key.Number0);
+                GUI.guiScale = (ushort)(key - Key.Number0);
             }
         }
         else {
@@ -133,8 +152,8 @@ public class GameScreen : Screen {
     public override void click(Vector2 pos) {
         base.click(pos);
         // if no longer holding, the player isn't clicking into the window anymore
-        if (Game.instance.focused && Game.instance.lockingMouse) {
-            Game.instance.lockingMouse = false;
+        if (Game.focused && Game.lockingMouse) {
+            Game.lockingMouse = false;
         }
     }
 
@@ -149,8 +168,8 @@ public class GameScreen : Screen {
         GD.ResetVertexArrayStates();
         //GD.ResetShaderProgramStates();
         GD.ShaderProgram = GUI.instance.shader;
-        var centreX = Game.instance.centreX;
-        var centreY = Game.instance.centreY;
+        var centreX = Game.centreX;
+        var centreY = Game.centreY;
         // setup blending
         GD.BlendingEnabled = true;
         GD.BlendState = bs;
@@ -170,16 +189,16 @@ public class GameScreen : Screen {
                 new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
         // reset blending this is messed up
-        GD.BlendState = Game.instance.initialBlendState;
+        GD.BlendState = Game.initialBlendState;
 
         //tb.DrawString(gui.guiFont, "BlockGame", Vector2.Zero, Color4b.White);
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 60), Color4b.Red);
-        if (!Game.instance.focused) {
+        if (!Game.focused) {
             var pauseText = "-PAUSED-";
             Vector2 offset = gui.guiFont.Measure(pauseText);
-            gui.tb.DrawString(gui.guiFont, pauseText, new Vector2(Game.instance.centreX, Game.instance.centreY),
+            gui.tb.DrawString(gui.guiFont, pauseText, new Vector2(Game.centreX, Game.centreY),
                 Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
         }
 
@@ -187,7 +206,7 @@ public class GameScreen : Screen {
 
         // Draw block display
         var blockStr = Blocks.get(world.player.hotbar.getSelected()).name;
-        gui.drawStringCentred(blockStr, new Vector2(Game.instance.centreX, Game.instance.height - 120),
+        gui.drawStringCentred(blockStr, new Vector2(Game.centreX, Game.height - 120),
             Color4b.White);
 
         var i = Game.instance;
@@ -208,13 +227,12 @@ public class GameScreen : Screen {
             debugStr.AppendLine($"FOV:{p.camera.hfov}");
 
             debugStr.AppendLine($"FPS:{i.fps} (ft:{i.ft * 1000:0.##}ms)");
-            debugStr.AppendLine($"W:{i.width} H:{i.height}");
-            debugStr.AppendLine($"CX:{i.centreX} CY:{i.centreY}");
+            debugStr.AppendLine($"W:{Game.width} H:{Game.height}");
+            debugStr.AppendLine($"CX:{Game.centreX} CY:{Game.centreY}");
             debugStr.AppendLine(
-                $"M:{Game.instance.proc.PrivateMemorySize64 / Constants.MEGABYTES:0.###}:{Game.instance.proc.WorkingSet64 / Constants.MEGABYTES:0.###} (h:{GC.GetTotalMemory(false) / Constants.MEGABYTES:0.###})");
+                $"M:{privateMemory / Constants.MEGABYTES:0.###}:{workingSet / Constants.MEGABYTES:0.###} (h:{GCMemory / Constants.MEGABYTES:0.###})");
             gui.tb.DrawString(gui.guiFont, debugStr.ToString(),
                 new Vector2(elements[0].bounds.Left, elements[0].bounds.Bottom), Color4b.White);
-            Console.Out.WriteLine(elements[0].bounds);
 
 
             D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);

@@ -10,7 +10,7 @@ public class BTexture2D : IDisposable {
     public GL GL;
 
     public unsafe BTexture2D(string path) {
-        GL = Game.instance.GL;
+        GL = Game.GL;
 
         handle = GL.GenTexture();
         bind();

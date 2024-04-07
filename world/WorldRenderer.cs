@@ -27,13 +27,13 @@ public class WorldRenderer {
 
     public WorldRenderer(World world) {
         this.world = world;
-        GL = Game.instance.GL;
+        GL = Game.GL;
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
         blockTexture = shader.getUniformLocation("blockTexture");
         uMVP = shader.getUniformLocation("uMVP");
-        outline = new Shader(Game.instance.GL, "shaders/outline.vert", "shaders/outline.frag");
+        outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
     }
 
     public void meshChunks() {
@@ -80,7 +80,7 @@ public class WorldRenderer {
 
     public void meshBlockOutline() {
         unsafe {
-            var GL = Game.instance.GL;
+            var GL = Game.GL;
             const float OFFSET = 0.005f;
             var minX = 0f - OFFSET;
             var minY = 0f - OFFSET;
@@ -142,7 +142,7 @@ public class WorldRenderer {
     }
 
     public void drawBlockOutline(double interp) {
-        var GL = Game.instance.GL;
+        var GL = Game.GL;
         var block = Game.instance.targetedPos!.Value;
         GL.BindVertexArray(outlineVao);
         outline.use();

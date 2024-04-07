@@ -12,7 +12,7 @@ public class FloatVAO {
     public GL GL;
 
     public FloatVAO() {
-        GL = Game.instance.GL;
+        GL = Game.GL;
         handle = GL.GenVertexArray();
         GL.BindVertexArray(handle);
     }
