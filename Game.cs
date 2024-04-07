@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using SFML.Audio;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -14,6 +15,7 @@ using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
 using MouseButton = Silk.NET.Input.MouseButton;
+using Sound = SFML.Audio.Sound;
 
 namespace BlockGame;
 
@@ -72,7 +74,8 @@ public class Game {
     public Metrics metrics;
 
     public BlockingCollection<Action> mainThreadQueue = new();
-
+    private SoundBuffer buffer;
+    private Sound music;
     public Game() {
         instance = this;
         var windowOptions = WindowOptions.Default;
@@ -152,6 +155,14 @@ public class Game {
         Screen.switchTo(Screen.LOADING);
         //world = new World();
 
+        // SFML
+        // don't use local variables, they go out of scope so nothing plays..... hold them statically
+        var file = File.ReadAllBytes("snd/tests.flac");
+        buffer = new SoundBuffer(file);
+        music = new Sound(buffer);
+        music.Loop = true;
+        music.Play();
+        Console.Out.WriteLine("played?");
 
         gui = new GUI();
         gui.loadFonts();
