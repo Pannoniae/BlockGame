@@ -87,6 +87,10 @@ public class Screen {
 
     }
 
+    public virtual void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
+
+    }
+
     public virtual void resize(Vector2D<int> newSize) {
         size = newSize;
         centre = size / 2;
