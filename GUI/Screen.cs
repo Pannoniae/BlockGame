@@ -15,6 +15,7 @@ public class Screen {
     public static LoadingScreen LOADING = new();
     public static MainMenuScreen MAIN_MENU = new();
     public static GameScreen GAME_SCREEN = new();
+    public static SettingsScreen SETTINGS_SCREEN = new();
 
     public Screen() {
     }

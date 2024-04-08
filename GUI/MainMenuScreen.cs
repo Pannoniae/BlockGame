@@ -1,5 +1,4 @@
 using System.Drawing;
-using Silk.NET.Maths;
 using TrippyGL;
 
 namespace BlockGame;
@@ -15,21 +14,26 @@ public class MainMenuScreen : Screen {
             Game.instance.executeOnMainThread(() => {
                 Console.Out.WriteLine("CLICKED");
                 switchTo(GAME_SCREEN);
-                Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
                 Game.instance.lockMouse();
             });
         };
         Console.Out.WriteLine("sp:" + sp.bounds);
         var button2 = new Button(this, new RectangleF(0, -32, 96, 16), "Multiplayer (soon)");
         button2.centreContents();
-        var button3 = new Button(this, new RectangleF(0, 0, 96, 16), "Settings (soon)");
-        button3.centreContents();
+        var settings = new Button(this, new RectangleF(0, 0, 96, 16), "Settings (soon)");
+        settings.centreContents();
+        settings.clicked += () => {
+                Game.instance.executeOnMainThread(() => {
+                    switchTo(SETTINGS_SCREEN);
+                });
+            }
+            ;
         var button4 = new Button(this, new RectangleF(0, 32, 96, 16), "Quit");
         button4.centreContents();
         button4.clicked += () => Environment.Exit(0);
         elements.Add(sp);
         elements.Add(button2);
-        elements.Add(button3);
+        elements.Add(settings);
         elements.Add(button4);
     }
 

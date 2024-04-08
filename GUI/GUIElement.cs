@@ -88,6 +88,11 @@ public class GUIElement {
         verticalAnchor = VerticalAnchor.CENTREDCONTENTS;
     }
 
+    public void topCentre() {
+        horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;
+        verticalAnchor = VerticalAnchor.TOP;
+    }
+
     public virtual void draw() {
 
     }
