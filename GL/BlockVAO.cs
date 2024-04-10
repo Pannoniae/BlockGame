@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
+using TrippyGL;
+using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;
 
@@ -10,7 +12,7 @@ public class BlockVAO {
     public uint ibo;
     public uint count;
 
-    public BTexture2D blockTexture;
+    public Texture2D blockTexture;
 
     public GL GL;
 

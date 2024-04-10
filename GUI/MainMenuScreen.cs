@@ -43,7 +43,8 @@ public class MainMenuScreen : Screen {
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
     }
 
-    public override void render(double dt, double interp) {
-
+    public override void draw() {
+        Game.gui.drawBG(Blocks.BASALT, 16);
+        base.draw();
     }
 }
