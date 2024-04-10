@@ -32,8 +32,8 @@ public class GUI {
     public TextureFont guiFont;
     public TextureFont guiFontUnicode;
 
-    public Rectangle buttonRect = new(0, 0, 96, 16);
-    public Rectangle grayButtonRect = new(96, 0, 96, 16);
+    public Rectangle buttonRect = new(96, 0, 96, 16);
+    public Rectangle grayButtonRect = new(0, 16*2, 96, 16);
 
     public static GUI instance;
     private TrippyFontFile ff;
@@ -101,6 +101,35 @@ public class GUI {
         shader.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         //worldShader.Projection = Game.instance.world.player.camera.getProjectionMatrix();
         //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
+    }
+
+    /// <summary>
+    /// Draw a full-screen background with a block texture and the specified block size in pixels.
+    /// </summary>
+    public void drawBG(Block block, float size) {
+        var texCoords = Block.texCoords(block.uvs[0]);
+        var texCoordsMax = Block.texCoords(block.uvs[0].u + 1, block.uvs[0].v + 1);
+
+        // handle guiscale
+        size *= guiScale;
+
+        // if one block is a given size, how many blocks can we fit on the screen?
+        var xCount = (int)Math.Ceiling(Game.width / size);
+        var yCount = (int)Math.Ceiling(Game.height / size);
+
+        for (int x = 0; x < xCount; x++) {
+            for (int y = 0; y < yCount; y++) {
+                var left = x * size;
+                var right = x * size + size;
+                var top = y * size;
+                var bottom = y * size + size;
+                tb.DrawRaw(Game.instance.blockTexture,
+                    new VertexColorTexture(new Vector3(left, top, 0), Color4b.Gray, new Vector2(texCoords.X, texCoords.Y)),
+                    new VertexColorTexture(new Vector3(right, top, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoords.Y)),
+                    new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoordsMax.Y)),
+                    new VertexColorTexture(new Vector3(left, bottom, 0), Color4b.Gray, new Vector2(texCoords.X, texCoordsMax.Y)));
+            }
+        }
     }
 
 

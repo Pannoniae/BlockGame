@@ -29,7 +29,10 @@ public class SettingsScreen : Screen {
         };
         elements.Add(guiScale);
         var back = new Button(this, new RectangleF(0, -16, 96, 16), "Back");
+        back.horizontalAnchor = HorizontalAnchor.LEFT;
+        back.verticalAnchor = VerticalAnchor.BOTTOM;
         back.clicked += returnToMainMenu;
+        elements.Add(back);
     }
 
     public override void deactivate() {
@@ -51,5 +54,10 @@ public class SettingsScreen : Screen {
 
     private void returnToMainMenu() {
         Game.instance.executeOnMainThread(() => switchTo(MAIN_MENU));
+    }
+
+    public override void draw() {
+        Game.gui.drawBG(Blocks.DIRT, 16);
+        base.draw();
     }
 }

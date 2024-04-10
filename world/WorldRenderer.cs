@@ -46,7 +46,8 @@ public class WorldRenderer {
 
     public void render(double interp) {
         var tex = Game.instance.blockTexture;
-        tex.bind();
+        Game.GD.SetActiveTexture(0);
+        GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         // OPAQUE PASS
         shader.use();

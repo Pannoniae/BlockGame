@@ -10,6 +10,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 using TrippyGL;
+using TrippyGL.ImageSharp;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
@@ -82,7 +83,7 @@ public class Game {
     /// </summary>
     public static bool lockingMouse;
 
-    public BTexture2D blockTexture;
+    public Texture2D blockTexture;
     public Metrics metrics;
 
     public BlockingCollection<Action> mainThreadQueue = new();
@@ -166,7 +167,7 @@ public class Game {
         stopwatch.Start();
         permanentStopwatch.Start();
 
-        blockTexture = new BTexture2D("textures/blocks.png");
+        blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
         //Screen.initScreens(gui);
         Screen.switchTo(Screen.LOADING);
         //world = new World();
@@ -177,7 +178,7 @@ public class Game {
         buffer = new SoundBuffer(file);
         music = new Sound(buffer);
         music.Loop = true;
-        music.Play();
+        //music.Play();
         Console.Out.WriteLine("played?");
 
         gui = new GUI();
