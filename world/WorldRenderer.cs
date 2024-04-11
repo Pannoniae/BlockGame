@@ -39,7 +39,7 @@ public class WorldRenderer {
     public void meshChunks() {
         for (int x = 0; x < World.WORLDSIZE; x++) {
             for (int z = 0; z < World.WORLDSIZE; z++) {
-                world.chunks[x, z].meshChunk();
+                world.chunks[new ChunkCoord(x, z)].meshChunk();
             }
         }
     }
@@ -54,7 +54,7 @@ public class WorldRenderer {
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in world.chunks) {
-            chunk.drawOpaque(world.player.camera);
+            chunk.Value.drawOpaque(world.player.camera);
         }
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
@@ -62,7 +62,7 @@ public class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in world.chunks) {
-            chunk.drawTransparent(world.player.camera);
+            chunk.Value.drawTransparent(world.player.camera);
         }
         // TRANSLUCENT PASS
         shader.use();
@@ -71,7 +71,7 @@ public class WorldRenderer {
         //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in world.chunks) {
-            chunk.drawTransparent(world.player.camera);
+            chunk.Value.drawTransparent(world.player.camera);
         }
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Lequal);

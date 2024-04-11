@@ -48,3 +48,7 @@ public class Chunk {
         }
     }
 }
+
+public record struct ChunkCoord(int x, int z);
+
+public record struct ChunkSectionCoord(int x, int y, int z);
