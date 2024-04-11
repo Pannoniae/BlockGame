@@ -112,8 +112,8 @@ public class Block {
     }
 
     // this will pack the data into the uint
-    public static uint packData(byte direction) {
-        return direction;
+    public static uint packData(byte direction, byte ao) {
+        return (uint)(ao << 3) | direction;
     }
 
     public static AABB fullBlock() {
