@@ -3,6 +3,8 @@ using System.Numerics;
 namespace BlockGame;
 
 public class Chunk {
+    public ChunkStatus status;
+
     public ushort[,,] block;
     public int x;
     public int z;
@@ -52,3 +54,22 @@ public class Chunk {
 public record struct ChunkCoord(int x, int z);
 
 public record struct ChunkSectionCoord(int x, int y, int z);
+
+public enum ChunkStatus : byte {
+    /// <summary>
+    /// No data
+    /// </summary>
+    EMPTY,
+    /// <summary>
+    /// Terrain is generated
+    /// </summary>
+    GENERATED,
+    /// <summary>
+    /// Trees, ores, features etc. are added in the chunk
+    /// </summary>
+    POPULATED,
+    /// <summary>
+    /// Chunk has been meshed
+    /// </summary>
+    MESHED
+}
