@@ -90,14 +90,14 @@ public class World {
                 // -1 to 1
                 // transform to the range 5 - 10
                 var height = noise.GetNoise(x, z) * 2.5 + 7.5;
-                for (int y = 0; y < height; y++) {
+                for (int y = 0; y < height - 1; y++) {
                     setBlock(x, y, z, Blocks.DIRT.id, false);
                 }
-                setBlock(x, (int)(height + 1), z, Blocks.GRASS.id, false);
+                setBlock(x, (int)height, z, Blocks.GRASS.id, false);
 
                 // water if low
                 if (height < 8) {
-                    for (int y2 = (int)height; y2 < 9; y2++) {
+                    for (int y2 = (int)height; y2 <= 8; y2++) {
                         setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
