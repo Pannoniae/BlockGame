@@ -474,10 +474,13 @@ public class ChunkSectionRenderer {
     }
 
     private byte calculateAO(Func<int, bool> test, int side1, int side2, int corner) {
+        if (Settings.instance.AO) {
+            return 0;
+        }
         if (test(side1) && test(side2)) {
             return 3;
         }
-        return (byte)((test(side1) ? 1 : 0) + (test(side2) ? 1 : 0) + (test(corner) ? 1 : 0));
+        return (byte)((byte)(test(side1) ? 1 : 0) + (test(side2) ? 1 : 0) + (test(corner) ? 1 : 0));
     }
 
     /*private Vector3D<int>[] getNeighbours(RawDirection side) {
