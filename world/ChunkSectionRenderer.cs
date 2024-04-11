@@ -474,7 +474,7 @@ public class ChunkSectionRenderer {
     }
 
     private byte calculateAO(Func<int, bool> test, int side1, int side2, int corner) {
-        if (Settings.instance.AO) {
+        if (!Settings.instance.AO) {
             return 0;
         }
         if (test(side1) && test(side2)) {

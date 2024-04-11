@@ -95,6 +95,13 @@ public class World {
                 }
                 setBlock(x, (int)(height + 1), z, Blocks.GRASS.id, false);
 
+                // water if low
+                if (height < 8) {
+                    for (int y2 = (int)height; y2 < 9; y2++) {
+                        setBlock(x, y2, z, Blocks.WATER.id, false);
+                    }
+                }
+
                 // TREES
                 if (MathF.Abs(treenoise.GetNoise(x, z) - 1) < 0.01f) {
                     placeTree(x, (int)(height + 1), z);

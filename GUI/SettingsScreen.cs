@@ -10,7 +10,7 @@ public class SettingsScreen : Screen {
         base.activate();
         // load settings (later)
         var settings = Settings.instance;
-        var vsync = new ToggleButton(this, new RectangleF(0, 16, 96, 16),
+        var vsync = new ToggleButton(this, new RectangleF(0, 16, 96, 16), settings.vSync ? 1 : 0,
             "VSync: OFF", "VSync: ON");
         vsync.topCentre();
         vsync.clicked += () => {
@@ -19,16 +19,16 @@ public class SettingsScreen : Screen {
         };
         elements.Add(vsync);
 
-        var guiScale = new ToggleButton(this, new RectangleF(0, 40, 96, 16),
-            "GUI Scale: Large", "GUI Scale: Small");
+        var guiScale = new ToggleButton(this, new RectangleF(0, 40, 96, 16), settings.guiScale == 4 ? 1 : 0,
+            "GUI Scale: Small", "GUI Scale: Large");
         guiScale.topCentre();
         guiScale.clicked += () => {
-            settings.guiScale = guiScale.getIndex() == 1 ? 2 : 4;
+            settings.guiScale = guiScale.getIndex() == 1 ? 4 : 2;
             GUI.guiScale = settings.guiScale;
         };
         elements.Add(guiScale);
 
-        var AO = new ToggleButton(this, new RectangleF(0, 64, 96, 16),
+        var AO = new ToggleButton(this, new RectangleF(0, 64, 96, 16), settings.AO ? 1 : 0,
             "Ambient Occlusion: Disabled", "Ambient Occlusion: Enabled");
         AO.topCentre();
         AO.clicked += () => {
@@ -36,7 +36,7 @@ public class SettingsScreen : Screen {
         };
         elements.Add(AO);
 
-        var back = new Button(this, new RectangleF(0, -16, 96, 16), "Back") {
+        var back = new Button(this, new RectangleF(2, -18, 96, 16), "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
