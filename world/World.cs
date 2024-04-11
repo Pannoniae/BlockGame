@@ -8,7 +8,7 @@ public class World {
     public const int WORLDSIZE = 12;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * ChunkSection.CHUNKSIZE;
 
-    public Chunk[,] chunks;
+    public Dictionary<ChunkCoord, Chunk> chunks;
     public List<ChunkSection> sortedTransparentChunks = [];
 
     public WorldRenderer renderer;
@@ -36,10 +36,10 @@ public class World {
         treenoise = new FastNoiseLite(random.Next(Environment.TickCount));
         worldTime = 0;
 
-        chunks = new Chunk[WORLDSIZE, WORLDSIZE];
+        chunks = new Dictionary<ChunkCoord, Chunk>();
         for (int x = 0; x < WORLDSIZE; x++) {
             for (int z = 0; z < WORLDSIZE; z++) {
-                chunks[x, z] = new Chunk(this, x, z);
+                chunks[new ChunkCoord(x, z)] = new Chunk(this, x, z);
             }
         }
 
@@ -150,7 +150,7 @@ public class World {
 
         // random block updates!
         foreach (var chunk in chunks) {
-            foreach (var chunksection in chunk.chunks) {
+            foreach (var chunksection in chunk.Value.chunks) {
                 for (int i = 0; i < numTicks; i++) {
                     var x = random.Next(16);
                     var y = random.Next(16);
@@ -234,7 +234,7 @@ public class World {
             foreach (var dir in Direction.directions) {
                 var neighbourSection = getChunkSectionPos(new Vector3D<int>(x, y, z) + dir);
                 if (isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                    getChunkByChunkPos(new Vector2D<int>(neighbourSection.X, neighbourSection.Z)).chunks[neighbourSection.Y].renderer.meshChunk();
+                    getChunkByChunkPos(new ChunkCoord(neighbourSection.x, neighbourSection.z)).chunks[neighbourSection.y].renderer.meshChunk();
                 }
             }
         }
@@ -242,26 +242,26 @@ public class World {
 
     public bool inWorld(int x, int y, int z) {
         var chunkpos = getChunkPos(x, z);
-        return chunkpos.X is >= 0 and < WORLDSIZE &&
+        return chunkpos.x is >= 0 and < WORLDSIZE &&
                y is >= 0 and < WORLDHEIGHT &&
-               chunkpos.Y is >= 0 and < WORLDSIZE;
+               chunkpos.z is >= 0 and < WORLDSIZE;
     }
 
-    private Vector3D<int> getChunkSectionPos(Vector3D<int> pos) {
-        return new Vector3D<int>(
+    private ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
+        return new ChunkSectionCoord(
             (int)MathF.Floor(pos.X / (float)ChunkSection.CHUNKSIZE),
             (int)MathF.Floor(pos.Y / (float)ChunkSection.CHUNKSIZE),
             (int)MathF.Floor(pos.Z / (float)ChunkSection.CHUNKSIZE));
     }
 
-    private Vector2D<int> getChunkPos(Vector2D<int> pos) {
-        return new Vector2D<int>(
+    private ChunkCoord getChunkPos(Vector2D<int> pos) {
+        return new ChunkCoord(
             (int)MathF.Floor(pos.X / (float)ChunkSection.CHUNKSIZE),
             (int)MathF.Floor(pos.Y / (float)ChunkSection.CHUNKSIZE));
     }
 
-    private Vector2D<int> getChunkPos(int x, int z) {
-        return new Vector2D<int>(
+    private ChunkCoord getChunkPos(int x, int z) {
+        return new ChunkCoord(
             (int)MathF.Floor(x / (float)ChunkSection.CHUNKSIZE),
             (int)MathF.Floor(z / (float)ChunkSection.CHUNKSIZE));
     }
@@ -288,27 +288,27 @@ public class World {
         return pos.X >= 0 && pos.X < WORLDSIZE && pos.Y >= 0 && pos.Y < WORLDSIZE;
     }
 
-    private bool isChunkSectionInWorld(Vector3D<int> pos) {
-        return pos.X >= 0 && pos.X < WORLDSIZE && pos.Y >= 0 && pos.Y < Chunk.CHUNKHEIGHT && pos.Z >= 0 && pos.Z < WORLDSIZE;
+    private bool isChunkSectionInWorld(ChunkSectionCoord pos) {
+        return pos.x >= 0 && pos.x < WORLDSIZE && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT && pos.z >= 0 && pos.z < WORLDSIZE;
     }
 
     private Chunk getChunk(int x, int z) {
         var pos = getChunkPos(x, z);
-        return chunks[pos.X, pos.Y];
+        return chunks[pos];
     }
 
     private Chunk getChunk(Vector2D<int> position) {
         var pos = getChunkPos(position);
-        return chunks[pos.X, pos.Y];
+        return chunks[pos];
     }
 
-    private Chunk getChunkByChunkPos(Vector2D<int> position) {
-        return chunks[position.X, position.Y];
+    private Chunk getChunkByChunkPos(ChunkCoord position) {
+        return chunks[position];
     }
 
     public void mesh() {
         foreach (var chunk in chunks) {
-            chunk.meshChunk();
+            chunk.Value.meshChunk();
         }
     }
 

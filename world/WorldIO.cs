@@ -20,7 +20,7 @@ public class WorldIO {
         tag.AddDouble("posY", world.player.position.Y);
         tag.AddDouble("posZ", world.player.position.Z);
         tag.BeginList(TagType.Compound, "chunks");
-        foreach (var chunk in world.chunks) {
+        foreach (var chunk in world.chunks.Values) {
             tag.BeginCompound("chunk");
             tag.AddInt("posX", chunk.x);
             tag.AddInt("posZ", chunk.z);
@@ -59,13 +59,13 @@ public class WorldIO {
             var chunk = (CompoundTag)chunkTag;
             int chunkX = chunk.Get<IntTag>("posX").Value;
             int chunkZ = chunk.Get<IntTag>("posZ").Value;
-            world.chunks[chunkX, chunkZ] = new Chunk(world, chunkX, chunkZ);
+            world.chunks[new ChunkCoord(chunkX, chunkZ)] = new Chunk(world, chunkX, chunkZ);
             var blocks = chunk.Get<ListTag>("blocks");
             int index = 0;
             for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
                     for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        world.chunks[chunkX, chunkZ].block[x, y, z] = (ShortTag)blocks[index];
+                        world.chunks[new ChunkCoord(chunkX, chunkZ)].block[x, y, z] = (ShortTag)blocks[index];
                         index++;
                     }
                 }
