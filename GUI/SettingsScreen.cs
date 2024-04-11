@@ -6,12 +6,10 @@ namespace BlockGame;
 
 public class SettingsScreen : Screen {
 
-    public static Settings settings;
-
     public override void activate() {
         base.activate();
         // load settings (later)
-        settings = new Settings();
+        var settings = Settings.instance;
         var vsync = new ToggleButton(this, new RectangleF(0, 16, 96, 16),
             "VSync: OFF", "VSync: ON");
         vsync.topCentre();
@@ -20,6 +18,7 @@ public class SettingsScreen : Screen {
             Game.window.VSync = settings.vSync;
         };
         elements.Add(vsync);
+
         var guiScale = new ToggleButton(this, new RectangleF(0, 40, 96, 16),
             "GUI Scale: Large", "GUI Scale: Small");
         guiScale.topCentre();
@@ -28,9 +27,19 @@ public class SettingsScreen : Screen {
             GUI.guiScale = settings.guiScale;
         };
         elements.Add(guiScale);
-        var back = new Button(this, new RectangleF(0, -16, 96, 16), "Back");
-        back.horizontalAnchor = HorizontalAnchor.LEFT;
-        back.verticalAnchor = VerticalAnchor.BOTTOM;
+
+        var AO = new ToggleButton(this, new RectangleF(0, 64, 96, 16),
+            "Ambient Occlusion: Disabled", "Ambient Occlusion: Enabled");
+        AO.topCentre();
+        AO.clicked += () => {
+            settings.AO = AO.getIndex() == 1;
+        };
+        elements.Add(AO);
+
+        var back = new Button(this, new RectangleF(0, -16, 96, 16), "Back") {
+            horizontalAnchor = HorizontalAnchor.LEFT,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
         back.clicked += returnToMainMenu;
         elements.Add(back);
     }
