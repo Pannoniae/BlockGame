@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -229,93 +230,109 @@ public class ChunkSectionRenderer {
                         float ymax = wy + 1f;
                         float zmax = wz + 1f;
 
-
                         Func<int, bool> test = bl => bl != -1 && Blocks.isSolid(bl);
                         // calculate AO for all 8 vertices
                         // this is garbage but we'll deal with it later
                         // bottom
-                        var aoXminZminYmin = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz - 1));
-                        var aoXmaxZminYmin = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz - 1));
-                        var aoXminZmaxYmin = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz + 1));
-                        var aoXmaxZmaxYmin = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz + 1));
+
+                        // cache blocks
+                        var neighbours = new Dictionary<Vector3D<int>, int>();
+                        for (int cx = wx - 1; cx <= wx + 1; cx++) {
+                            for (int cy = wy - 1; cy <= wy + 1; cy++) {
+                                for (int cz = wz - 1; cz <= wz + 1; cz++) {
+                                    neighbours[new Vector3D<int>(cx, cy, cz)] = section.world.getBlockUnsafe(cx, cy, cz);
+                                }
+                            }
+                        }
+
+                        // helper function to get blocks from cache
+                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                        int getBlockFromCache(int x, int y, int z) {
+                            return neighbours[new Vector3D<int>(x, y, z)];
+                        }
+
+                        var aoXminZminYmin = calculateAO(test, getBlockFromCache(wx - 1, wy - 1, wz),
+                            getBlockFromCache(wx, wy - 1, wz - 1),
+                            getBlockFromCache(wx - 1, wy - 1, wz - 1));
+                        var aoXmaxZminYmin = calculateAO(test, getBlockFromCache(wx + 1, wy - 1, wz),
+                            getBlockFromCache(wx, wy - 1, wz - 1),
+                            getBlockFromCache(wx + 1, wy - 1, wz - 1));
+                        var aoXminZmaxYmin = calculateAO(test, getBlockFromCache(wx - 1, wy - 1, wz),
+                            getBlockFromCache(wx, wy - 1, wz + 1),
+                            getBlockFromCache(wx - 1, wy - 1, wz + 1));
+                        var aoXmaxZmaxYmin = calculateAO(test, getBlockFromCache(wx + 1, wy - 1, wz),
+                            getBlockFromCache(wx, wy - 1, wz + 1),
+                            getBlockFromCache(wx + 1, wy - 1, wz + 1));
 
                         // top
-                        var aoXminZminYmax = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz - 1));
-                        var aoXmaxZminYmax = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz - 1));
-                        var aoXminZmaxYmax = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz + 1));
-                        var aoXmaxZmaxYmax = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz + 1));
+                        var aoXminZminYmax = calculateAO(test, getBlockFromCache(wx - 1, wy + 1, wz),
+                            getBlockFromCache(wx, wy + 1, wz - 1),
+                            getBlockFromCache(wx - 1, wy + 1, wz - 1));
+                        var aoXmaxZminYmax = calculateAO(test, getBlockFromCache(wx + 1, wy + 1, wz),
+                            getBlockFromCache(wx, wy + 1, wz - 1),
+                            getBlockFromCache(wx + 1, wy + 1, wz - 1));
+                        var aoXminZmaxYmax = calculateAO(test, getBlockFromCache(wx - 1, wy + 1, wz),
+                            getBlockFromCache(wx, wy + 1, wz + 1),
+                            getBlockFromCache(wx - 1, wy + 1, wz + 1));
+                        var aoXmaxZmaxYmax = calculateAO(test, getBlockFromCache(wx + 1, wy + 1, wz),
+                            getBlockFromCache(wx, wy + 1, wz + 1),
+                            getBlockFromCache(wx + 1, wy + 1, wz + 1));
 
                         // west
-                        var west1 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz + 1));
-                        var west2 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz + 1));
-                        var west3 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz - 1));
-                        var west4 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz - 1));
+                        var west1 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz + 1),
+                            getBlockFromCache(wx - 1, wy + 1, wz),
+                            getBlockFromCache(wx - 1, wy + 1, wz + 1));
+                        var west2 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz + 1),
+                            getBlockFromCache(wx - 1, wy - 1, wz),
+                            getBlockFromCache(wx - 1, wy - 1, wz + 1));
+                        var west3 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz - 1),
+                            getBlockFromCache(wx - 1, wy - 1, wz),
+                            getBlockFromCache(wx - 1, wy - 1, wz - 1));
+                        var west4 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz - 1),
+                            getBlockFromCache(wx - 1, wy + 1, wz),
+                            getBlockFromCache(wx - 1, wy + 1, wz - 1));
 
                         // east
-                        var east1 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz - 1));
-                        var east2 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz - 1));
-                        var east3 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz + 1));
-                        var east4 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz + 1));
+                        var east1 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz - 1),
+                            getBlockFromCache(wx + 1, wy + 1, wz),
+                            getBlockFromCache(wx + 1, wy + 1, wz - 1));
+                        var east2 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz - 1),
+                            getBlockFromCache(wx + 1, wy - 1, wz),
+                            getBlockFromCache(wx + 1, wy - 1, wz - 1));
+                        var east3 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz + 1),
+                            getBlockFromCache(wx + 1, wy - 1, wz),
+                            getBlockFromCache(wx + 1, wy - 1, wz + 1));
+                        var east4 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz + 1),
+                            getBlockFromCache(wx + 1, wy + 1, wz),
+                            getBlockFromCache(wx + 1, wy + 1, wz + 1));
 
                         // south
-                        var south1 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz - 1));
-                        var south2 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz - 1));
-                        var south3 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz - 1));
-                        var south4 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz - 1));
+                        var south1 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz - 1),
+                            getBlockFromCache(wx, wy + 1, wz - 1),
+                            getBlockFromCache(wx - 1, wy + 1, wz - 1));
+                        var south2 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz - 1),
+                            getBlockFromCache(wx, wy - 1, wz - 1),
+                            getBlockFromCache(wx - 1, wy - 1, wz - 1));
+                        var south3 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz - 1),
+                            getBlockFromCache(wx, wy - 1, wz - 1),
+                            getBlockFromCache(wx + 1, wy - 1, wz - 1));
+                        var south4 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz - 1),
+                            getBlockFromCache(wx, wy + 1, wz - 1),
+                            getBlockFromCache(wx + 1, wy + 1, wz - 1));
 
                         // north
-                        var north1 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
-                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz + 1));
-                        var north2 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
-                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz + 1));
-                        var north3 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
-                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz + 1));
-                        var north4 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
-                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
-                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz + 1));
+                        var north1 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz + 1),
+                            getBlockFromCache(wx, wy + 1, wz + 1),
+                            getBlockFromCache(wx + 1, wy + 1, wz + 1));
+                        var north2 = calculateAO(test, getBlockFromCache(wx + 1, wy, wz + 1),
+                            getBlockFromCache(wx, wy - 1, wz + 1),
+                            getBlockFromCache(wx + 1, wy - 1, wz + 1));
+                        var north3 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz + 1),
+                            getBlockFromCache(wx, wy - 1, wz + 1),
+                            getBlockFromCache(wx - 1, wy - 1, wz + 1));
+                        var north4 = calculateAO(test, getBlockFromCache(wx - 1, wy, wz + 1),
+                            getBlockFromCache(wx, wy + 1, wz + 1),
+                            getBlockFromCache(wx - 1, wy + 1, wz + 1));
 
                         var nb = section.world.getBlockUnsafe(wx - 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
