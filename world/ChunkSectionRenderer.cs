@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 namespace BlockGame;
@@ -19,6 +20,51 @@ public class ChunkSectionRenderer {
 
     public readonly GL GL;
 
+    Vector3D<int>[][] offsetTable = {
+                            // west
+                            [
+                                new(-1, 0, -1), new(-1, 1, 0), new(-1, 1, -1),
+                                new(-1, 0, 1), new(-1, 1, 0), new(-1, 1, 1),
+                                new(-1, 0, -1), new(-1, -1, 0), new(-1, -1, -1),
+                                new(-1, 0, 1), new(-1, -1, 0), new(-1, -1, 1)
+                            ],
+                            // east
+                            [
+                                new(1, 0, 1), new(1, 1, 0), new(1, 1, 1),
+                                new(1, 0, -1), new(1, 1, 0), new(1, 1, -1),
+                                new(1, 0, 1), new(1, -1, 0), new(1, -1, 1),
+                                new(1, 0, -1), new(1, -1, 0), new(1, -1, -1),
+                            ],
+                            // south
+                            [
+                                new(1, 0, -1), new(0, 1, -1), new(1, 1, -1),
+                                new(-1, 0, -1), new(0, 1, -1), new(-1, 1, -1),
+                                new(1, 0, -1), new(0, -1, -1), new(1, -1, -1),
+                                new(-1, 0, -1), new(0, -1, -1), new(-1, -1, -1)
+                            ],
+                            // north
+                            [
+                                new(-1, 0, 1), new(0, 1, 1), new(-1, 1, 1),
+                                new(1, 0, 1), new(0, 1, 1), new(1, 1, 1),
+                                new(-1, 0, 1), new(0, -1, 1), new(-1, -1, 1),
+                                new(1, 0, 1), new(0, -1, 1), new(1, -1, 1),
+                            ],
+                            // down
+                            [
+                                new(0, -1, 1), new(-1, -1, 0), new(-1, -1, 1),
+                                new(0, -1, 1), new(1, -1, 0), new(1, -1, 1),
+                                new(0, -1, -1), new(-1, -1, 0), new(-1, -1, -1),
+                                new(0, -1, -1), new(1, -1, 0), new(1, -1, -1),
+                            ],
+                            // up
+                            [
+                                new(0, 1, -1), new(-1, 1, 0), new(-1, 1, -1),
+                                new(0, 1, -1), new(1, 1, 0), new(1, 1, -1),
+                                new(0, 1, 1), new(-1, 1, 0), new(-1, 1, 1),
+                                new(0, 1, 1), new(1, 1, 0), new(1, 1, 1),
+                            ],
+                        };
+
     public ChunkSectionRenderer(ChunkSection section) {
         this.section = section;
         shader = section.chunk.world.renderer.shader;
@@ -33,10 +79,10 @@ public class ChunkSectionRenderer {
         watervao = new BlockVAO();
         // first we render everything which is NOT translucent
         constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i), out var chunkVertices,
-            out var chunkIndices, true, false, null);
+            out var chunkIndices, true);
         // then we render everything which is translucent (water for now)
         constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i), out var tChunkVertices, out var tChunkIndices,
-            false, true, Blocks.isTransparent);
+            false);
         vao.bind();
         var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
         var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
@@ -101,7 +147,7 @@ public class ChunkSectionRenderer {
 
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
     private void constructVertices(Func<int, bool> whichBlocks, Func<int, bool> neighbourTest, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices,
-        bool full, bool shrinkABit, Func<int, bool>? shrinkTest) {
+        bool full) {
         // at most, we need chunksize^3 blocks times 8 vertices
         if (full) {
             chunkVertices = new List<BlockVertex>(ChunkSection.CHUNKSIZE * ChunkSection.CHUNKSIZE * ChunkSection.CHUNKSIZE * 4);
@@ -174,7 +220,7 @@ public class ChunkSectionRenderer {
                         var topMaxU = topMax.X;
                         var topMaxV = topMax.Y;
 
-                        float offset = shrinkABit ? 0.0004f : 0;
+                        float offset = 0.0004f;
 
                         float xmin = wx;
                         float ymin = wy;
@@ -183,31 +229,106 @@ public class ChunkSectionRenderer {
                         float ymax = wy + 1f;
                         float zmax = wz + 1f;
 
+
+                        Func<int, bool> test = bl => bl != -1 && Blocks.isSolid(bl);
+                        // calculate AO for all 8 vertices
+                        // this is garbage but we'll deal with it later
+                        // bottom
+                        var aoXminZminYmin = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz - 1));
+                        var aoXmaxZminYmin = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz - 1));
+                        var aoXminZmaxYmin = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz + 1));
+                        var aoXmaxZmaxYmin = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz + 1));
+
+                        // top
+                        var aoXminZminYmax = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz - 1));
+                        var aoXmaxZminYmax = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz - 1));
+                        var aoXminZmaxYmax = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz + 1));
+                        var aoXmaxZmaxYmax = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz + 1));
+
+                        // west
+                        var west1 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz + 1));
+                        var west2 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz + 1));
+                        var west3 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz - 1));
+                        var west4 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz - 1));
+
+                        // east
+                        var east1 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz - 1));
+                        var east2 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz - 1));
+                        var east3 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz + 1));
+                        var east4 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz + 1));
+
+                        // south
+                        var south1 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz - 1));
+                        var south2 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz - 1));
+                        var south3 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz - 1),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz - 1));
+                        var south4 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz - 1),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz - 1),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz - 1));
+
+                        // north
+                        var north1 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
+                            section.world.getBlockUnsafe(wx + 1, wy + 1, wz + 1));
+                        var north2 = calculateAO(test, section.world.getBlockUnsafe(wx + 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
+                            section.world.getBlockUnsafe(wx + 1, wy - 1, wz + 1));
+                        var north3 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx, wy - 1, wz + 1),
+                            section.world.getBlockUnsafe(wx - 1, wy - 1, wz + 1));
+                        var north4 = calculateAO(test, section.world.getBlockUnsafe(wx - 1, wy, wz + 1),
+                            section.world.getBlockUnsafe(wx, wy + 1, wz + 1),
+                            section.world.getBlockUnsafe(wx - 1, wy + 1, wz + 1));
+
                         var nb = section.world.getBlockUnsafe(wx - 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
-                            if (shrinkABit && shrinkTest!(nb)) {
-                                xmin = wx + offset;
-                                ymin = wy + offset;
-                                zmin = wz + offset;
-                                xmax = wx + 1f - offset;
-                                ymax = wy + 1f - offset;
-                                zmax = wz + 1f - offset;
-                            }
-                            else {
-                                xmin = wx;
-                                ymin = wy;
-                                zmin = wz;
-                                xmax = wx + 1f;
-                                ymax = wy + 1f;
-                                zmax = wz + 1f;
-                            }
-                            var data = Block.packData((byte)RawDirection.WEST);
+                            var data1 = Block.packData((byte)RawDirection.WEST, west1);
+                            var data2 = Block.packData((byte)RawDirection.WEST, west2);
+                            var data3 = Block.packData((byte)RawDirection.WEST, west3);
+                            var data4 = Block.packData((byte)RawDirection.WEST, west4);
                             BlockVertex[] verticesWest = [
                                 // west
-                                new BlockVertex(xmin, ymax, zmax, westU, westV, data),
-                                new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data),
-                                new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
-                                new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data),
+                                new BlockVertex(xmin, ymax, zmax, westU, westV, data1),
+                                new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data2),
+                                new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data3),
+                                new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data4),
                             ];
                             chunkVertices.AddRange(verticesWest);
                             ushort[] indices = [
@@ -223,29 +344,16 @@ public class ChunkSectionRenderer {
                         }
                         nb = section.world.getBlockUnsafe(wx + 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
-                            if (shrinkABit && shrinkTest!(nb)) {
-                                xmin = wx + offset;
-                                ymin = wy + offset;
-                                zmin = wz + offset;
-                                xmax = wx + 1f - offset;
-                                ymax = wy + 1f - offset;
-                                zmax = wz + 1f - offset;
-                            }
-                            else {
-                                xmin = wx;
-                                ymin = wy;
-                                zmin = wz;
-                                xmax = wx + 1f;
-                                ymax = wy + 1f;
-                                zmax = wz + 1f;
-                            }
-                            var data = Block.packData((byte)RawDirection.EAST);
+                            var data1 = Block.packData((byte)RawDirection.EAST, east1);
+                            var data2 = Block.packData((byte)RawDirection.EAST, east2);
+                            var data3 = Block.packData((byte)RawDirection.EAST, east3);
+                            var data4 = Block.packData((byte)RawDirection.EAST, east4);
                             BlockVertex[] verticesEast = [
                                 // east
-                                new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
-                                new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data),
-                                new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
-                                new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data),
+                                new BlockVertex(xmax, ymax, zmin, eastU, eastV, data1),
+                                new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data2),
+                                new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data3),
+                                new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data4),
                             ];
                             chunkVertices.AddRange(verticesEast);
                             ushort[] indices = [
@@ -261,29 +369,16 @@ public class ChunkSectionRenderer {
                         }
                         nb = section.world.getBlockUnsafe(wx, wy, wz - 1);
                         if (nb != -1 && neighbourTest(nb)) {
-                            if (shrinkABit && shrinkTest!(nb)) {
-                                xmin = wx + offset;
-                                ymin = wy + offset;
-                                zmin = wz + offset;
-                                xmax = wx + 1f - offset;
-                                ymax = wy + 1f - offset;
-                                zmax = wz + 1f - offset;
-                            }
-                            else {
-                                xmin = wx;
-                                ymin = wy;
-                                zmin = wz;
-                                xmax = wx + 1f;
-                                ymax = wy + 1f;
-                                zmax = wz + 1f;
-                            }
-                            var data = Block.packData((byte)RawDirection.SOUTH);
+                            var data1 = Block.packData((byte)RawDirection.SOUTH, south1);
+                            var data2 = Block.packData((byte)RawDirection.SOUTH, south2);
+                            var data3 = Block.packData((byte)RawDirection.SOUTH, south3);
+                            var data4 = Block.packData((byte)RawDirection.SOUTH, south4);
                             BlockVertex[] verticesSouth = [
                                 // south
-                                new BlockVertex(xmin, ymax, zmin, southU, southV, data),
-                                new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data),
-                                new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
-                                new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data),
+                                new BlockVertex(xmin, ymax, zmin, southU, southV, data1),
+                                new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data2),
+                                new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data3),
+                                new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data4),
                             ];
                             chunkVertices.AddRange(verticesSouth);
                             ushort[] indices = [
@@ -299,29 +394,16 @@ public class ChunkSectionRenderer {
                         }
                         nb = section.world.getBlockUnsafe(wx, wy, wz + 1);
                         if (nb != -1 && neighbourTest(nb)) {
-                            if (shrinkABit && shrinkTest!(nb)) {
-                                xmin = wx + offset;
-                                ymin = wy + offset;
-                                zmin = wz + offset;
-                                xmax = wx + 1f - offset;
-                                ymax = wy + 1f - offset;
-                                zmax = wz + 1f - offset;
-                            }
-                            else {
-                                xmin = wx;
-                                ymin = wy;
-                                zmin = wz;
-                                xmax = wx + 1f;
-                                ymax = wy + 1f;
-                                zmax = wz + 1f;
-                            }
-                            var data = Block.packData((byte)RawDirection.NORTH);
+                            var data1 = Block.packData((byte)RawDirection.NORTH, north1);
+                            var data2 = Block.packData((byte)RawDirection.NORTH, north2);
+                            var data3 = Block.packData((byte)RawDirection.NORTH, north3);
+                            var data4 = Block.packData((byte)RawDirection.NORTH, north4);
                             BlockVertex[] verticesNorth = [
                                 // north
-                                new BlockVertex(xmax, ymax, zmax, northU, northV, data),
-                                new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data),
-                                new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
-                                new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data),
+                                new BlockVertex(xmax, ymax, zmax, northU, northV, data1),
+                                new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data2),
+                                new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data3),
+                                new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data4),
                             ];
                             chunkVertices.AddRange(verticesNorth);
                             ushort[] indices = [
@@ -337,29 +419,16 @@ public class ChunkSectionRenderer {
                         }
                         nb = section.world.getBlockUnsafe(wx, wy - 1, wz);
                         if (nb != -1 && neighbourTest(nb)) {
-                            if (shrinkABit && shrinkTest!(nb)) {
-                                xmin = wx + offset;
-                                ymin = wy + offset;
-                                zmin = wz + offset;
-                                xmax = wx + 1f - offset;
-                                ymax = wy + 1f - offset;
-                                zmax = wz + 1f - offset;
-                            }
-                            else {
-                                xmin = wx;
-                                ymin = wy;
-                                zmin = wz;
-                                xmax = wx + 1f;
-                                ymax = wy + 1f;
-                                zmax = wz + 1f;
-                            }
-                            var data = Block.packData((byte)RawDirection.DOWN);
+                            var data1 = Block.packData((byte)RawDirection.DOWN, aoXminZminYmin);
+                            var data2 = Block.packData((byte)RawDirection.DOWN, aoXminZmaxYmin);
+                            var data3 = Block.packData((byte)RawDirection.DOWN, aoXmaxZmaxYmin);
+                            var data4 = Block.packData((byte)RawDirection.DOWN, aoXmaxZminYmin);
                             BlockVertex[] verticesBottom = [
                                 // bottom
-                                new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
-                                new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data),
-                                new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
-                                new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data),
+                                new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data1),
+                                new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data2),
+                                new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data3),
+                                new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data4),
                             ];
                             chunkVertices.AddRange(verticesBottom);
                             ushort[] indices = [
@@ -375,29 +444,16 @@ public class ChunkSectionRenderer {
                         }
                         nb = section.world.getBlockUnsafe(wx, wy + 1, wz);
                         if (nb != -1 && neighbourTest(nb)) {
-                            if (shrinkABit && shrinkTest!(nb)) {
-                                xmin = wx + offset;
-                                ymin = wy + offset;
-                                zmin = wz + offset;
-                                xmax = wx + 1f - offset;
-                                ymax = wy + 1f - offset;
-                                zmax = wz + 1f - offset;
-                            }
-                            else {
-                                xmin = wx;
-                                ymin = wy;
-                                zmin = wz;
-                                xmax = wx + 1f;
-                                ymax = wy + 1f;
-                                zmax = wz + 1f;
-                            }
-                            var data = Block.packData((byte)RawDirection.UP);
+                            var data1 = Block.packData((byte)RawDirection.UP, aoXminZmaxYmax);
+                            var data2 = Block.packData((byte)RawDirection.UP, aoXminZminYmax);
+                            var data3 = Block.packData((byte)RawDirection.UP, aoXmaxZminYmax);
+                            var data4 = Block.packData((byte)RawDirection.UP, aoXmaxZmaxYmax);
                             BlockVertex[] verticesTop = [
                                 // top
-                                new BlockVertex(xmin, ymax, zmax, topU, topV, data),
-                                new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data),
-                                new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
-                                new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data),
+                                new BlockVertex(xmin, ymax, zmax, topU, topV, data1),
+                                new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data2),
+                                new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data3),
+                                new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data4),
                             ];
                             chunkVertices.AddRange(verticesTop);
                             ushort[] indices = [
@@ -417,4 +473,14 @@ public class ChunkSectionRenderer {
         }
     }
 
+    private byte calculateAO(Func<int, bool> test, int side1, int side2, int corner) {
+        if (test(side1) && test(side2)) {
+            return 3;
+        }
+        return (byte)((test(side1) ? 1 : 0) + (test(side2) ? 1 : 0) + (test(corner) ? 1 : 0));
+    }
+
+    /*private Vector3D<int>[] getNeighbours(RawDirection side) {
+        return offsetTable[(int)side];
+    }*/
 }

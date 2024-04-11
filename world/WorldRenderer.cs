@@ -220,7 +220,7 @@ public class WorldRenderer {
         float ymax = wy + 1f;
         float zmax = wz + 1f;
 
-        var data = Block.packData((byte)RawDirection.WEST);
+        var data = Block.packData((byte)RawDirection.WEST, 0);
         BlockVertex[] verticesWest = [
             // west
             new BlockVertex(xmin, ymax, zmax, westU, westV, data),
@@ -239,7 +239,7 @@ public class WorldRenderer {
         ];
         chunkIndices.AddRange(indices);
         i += 4;
-        data = Block.packData((byte)RawDirection.EAST);
+        data = Block.packData((byte)RawDirection.EAST, 0);
 
         BlockVertex[] verticesEast = [
             // east
@@ -261,7 +261,7 @@ public class WorldRenderer {
 
         chunkIndices.AddRange(indices);
         i += 4;
-        data = Block.packData((byte)RawDirection.SOUTH);
+        data = Block.packData((byte)RawDirection.SOUTH, 0);
 
         BlockVertex[] verticesSouth = [
             // south
@@ -283,7 +283,7 @@ public class WorldRenderer {
         chunkIndices.AddRange(indices);
         i += 4;
 
-        data = Block.packData((byte)RawDirection.NORTH);
+        data = Block.packData((byte)RawDirection.NORTH, 0);
         BlockVertex[] verticesNorth = [
             // north
             new BlockVertex(xmax, ymax, zmax, northU, northV, data),
@@ -303,7 +303,7 @@ public class WorldRenderer {
         chunkIndices.AddRange(indices);
         i += 4;
 
-        data = Block.packData((byte)RawDirection.DOWN);
+        data = Block.packData((byte)RawDirection.DOWN, 0);
         BlockVertex[] verticesBottom = [
             // bottom
             new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
@@ -322,7 +322,7 @@ public class WorldRenderer {
         ];
         chunkIndices.AddRange(indices);
         i += 4;
-        data = Block.packData((byte)RawDirection.UP);
+        data = Block.packData((byte)RawDirection.UP, 0);
 
         BlockVertex[] verticesTop = [
             // top

@@ -107,6 +107,7 @@ public struct BlockVertex {
     /// <summary>
     /// from least significant:
     /// first 3 bits are side (see Direction enum)
+    /// next 2 bits are AO
     /// </summary>
     public uint d;
 
