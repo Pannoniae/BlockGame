@@ -74,7 +74,6 @@ public class Player {
 
     public void render(double dt, double interp) {
 
-
     }
 
 

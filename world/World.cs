@@ -96,8 +96,8 @@ public class World {
                 setBlock(x, (int)height, z, Blocks.GRASS.id, false);
 
                 // water if low
-                if (height < 8) {
-                    for (int y2 = (int)height; y2 <= 8; y2++) {
+                if (height < 7) {
+                    for (int y2 = (int)height; y2 <= 7; y2++) {
                         setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
