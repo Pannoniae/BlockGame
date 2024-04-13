@@ -9,6 +9,8 @@ public class PlayerCamera {
     public Vector3 position;
     public Vector3 forward;
 
+    public Vector3 renderPosition(double interp) => Vector3.Lerp(prevPosition, position, (float)interp);
+
     public Vector3 up { get; private set; }
     public float viewportWidth;
     public float viewportHeight;

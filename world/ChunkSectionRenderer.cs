@@ -22,49 +22,49 @@ public class ChunkSectionRenderer {
     public readonly GL GL;
 
     Vector3D<int>[][] offsetTable = {
-                            // west
-                            [
-                                new(-1, 0, -1), new(-1, 1, 0), new(-1, 1, -1),
-                                new(-1, 0, 1), new(-1, 1, 0), new(-1, 1, 1),
-                                new(-1, 0, -1), new(-1, -1, 0), new(-1, -1, -1),
-                                new(-1, 0, 1), new(-1, -1, 0), new(-1, -1, 1)
-                            ],
-                            // east
-                            [
-                                new(1, 0, 1), new(1, 1, 0), new(1, 1, 1),
-                                new(1, 0, -1), new(1, 1, 0), new(1, 1, -1),
-                                new(1, 0, 1), new(1, -1, 0), new(1, -1, 1),
-                                new(1, 0, -1), new(1, -1, 0), new(1, -1, -1),
-                            ],
-                            // south
-                            [
-                                new(1, 0, -1), new(0, 1, -1), new(1, 1, -1),
-                                new(-1, 0, -1), new(0, 1, -1), new(-1, 1, -1),
-                                new(1, 0, -1), new(0, -1, -1), new(1, -1, -1),
-                                new(-1, 0, -1), new(0, -1, -1), new(-1, -1, -1)
-                            ],
-                            // north
-                            [
-                                new(-1, 0, 1), new(0, 1, 1), new(-1, 1, 1),
-                                new(1, 0, 1), new(0, 1, 1), new(1, 1, 1),
-                                new(-1, 0, 1), new(0, -1, 1), new(-1, -1, 1),
-                                new(1, 0, 1), new(0, -1, 1), new(1, -1, 1),
-                            ],
-                            // down
-                            [
-                                new(0, -1, 1), new(-1, -1, 0), new(-1, -1, 1),
-                                new(0, -1, 1), new(1, -1, 0), new(1, -1, 1),
-                                new(0, -1, -1), new(-1, -1, 0), new(-1, -1, -1),
-                                new(0, -1, -1), new(1, -1, 0), new(1, -1, -1),
-                            ],
-                            // up
-                            [
-                                new(0, 1, -1), new(-1, 1, 0), new(-1, 1, -1),
-                                new(0, 1, -1), new(1, 1, 0), new(1, 1, -1),
-                                new(0, 1, 1), new(-1, 1, 0), new(-1, 1, 1),
-                                new(0, 1, 1), new(1, 1, 0), new(1, 1, 1),
-                            ],
-                        };
+        // west
+        [
+            new(-1, 0, -1), new(-1, 1, 0), new(-1, 1, -1),
+            new(-1, 0, 1), new(-1, 1, 0), new(-1, 1, 1),
+            new(-1, 0, -1), new(-1, -1, 0), new(-1, -1, -1),
+            new(-1, 0, 1), new(-1, -1, 0), new(-1, -1, 1)
+        ],
+        // east
+        [
+            new(1, 0, 1), new(1, 1, 0), new(1, 1, 1),
+            new(1, 0, -1), new(1, 1, 0), new(1, 1, -1),
+            new(1, 0, 1), new(1, -1, 0), new(1, -1, 1),
+            new(1, 0, -1), new(1, -1, 0), new(1, -1, -1),
+        ],
+        // south
+        [
+            new(1, 0, -1), new(0, 1, -1), new(1, 1, -1),
+            new(-1, 0, -1), new(0, 1, -1), new(-1, 1, -1),
+            new(1, 0, -1), new(0, -1, -1), new(1, -1, -1),
+            new(-1, 0, -1), new(0, -1, -1), new(-1, -1, -1)
+        ],
+        // north
+        [
+            new(-1, 0, 1), new(0, 1, 1), new(-1, 1, 1),
+            new(1, 0, 1), new(0, 1, 1), new(1, 1, 1),
+            new(-1, 0, 1), new(0, -1, 1), new(-1, -1, 1),
+            new(1, 0, 1), new(0, -1, 1), new(1, -1, 1),
+        ],
+        // down
+        [
+            new(0, -1, 1), new(-1, -1, 0), new(-1, -1, 1),
+            new(0, -1, 1), new(1, -1, 0), new(1, -1, 1),
+            new(0, -1, -1), new(-1, -1, 0), new(-1, -1, -1),
+            new(0, -1, -1), new(1, -1, 0), new(1, -1, -1),
+        ],
+        // up
+        [
+            new(0, 1, -1), new(-1, 1, 0), new(-1, 1, -1),
+            new(0, 1, -1), new(1, 1, 0), new(1, 1, -1),
+            new(0, 1, 1), new(-1, 1, 0), new(-1, 1, 1),
+            new(0, 1, 1), new(1, 1, 0), new(1, 1, 1),
+        ],
+    };
 
     public ChunkSectionRenderer(ChunkSection section) {
         this.section = section;
@@ -234,13 +234,13 @@ public class ChunkSectionRenderer {
                         // calculate AO for all 8 vertices
                         // this is garbage but we'll deal with it later
                         // bottom
-
+                        var w = section.world;
                         // cache blocks
-                        var neighbours = new Dictionary<Vector3D<int>, int>();
+                        var neighbours = new Dictionary<Vector3D<int>, int>(27);
                         for (int cx = wx - 1; cx <= wx + 1; cx++) {
                             for (int cy = wy - 1; cy <= wy + 1; cy++) {
                                 for (int cz = wz - 1; cz <= wz + 1; cz++) {
-                                    neighbours[new Vector3D<int>(cx, cy, cz)] = section.world.getBlockUnsafe(cx, cy, cz);
+                                    neighbours[new Vector3D<int>(cx, cy, cz)] = w.getBlockUnsafe(cx, cy, cz);
                                 }
                             }
                         }
