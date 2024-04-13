@@ -66,7 +66,7 @@ public class Screen {
     }
 
     public virtual void clear(GraphicsDevice GD, double dt, double interp) {
-        GD.ClearColor = Color4b.DeepSkyBlue;
+        GD.ClearColor = WorldRenderer.defaultClearColour;
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
     }

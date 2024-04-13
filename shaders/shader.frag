@@ -15,7 +15,7 @@ uniform int drawDistance;
 uniform sampler2D blockTexture;
 
 const float a[6] = float[6](0.8, 0.8, 0.6, 0.6, 0.6, 1);
-const vec4 fogColour = vec4(1.0, 1.0, 1.0, 1.0);
+uniform vec4 fogColour;
 
 float getFog(float d) {
     float fogMax = drawDistance - 32.0;

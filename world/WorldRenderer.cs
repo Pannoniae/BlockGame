@@ -1,5 +1,8 @@
 using System.Numerics;
 using Silk.NET.OpenGL;
+using TrippyGL;
+using DepthFunction = Silk.NET.OpenGL.DepthFunction;
+using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;
 
@@ -18,6 +21,7 @@ public class WorldRenderer {
     public int uMVP;
     public int uCameraPos;
     public int drawDistance;
+    public int fogColour;
 
 
     public Shader outline;
@@ -26,6 +30,8 @@ public class WorldRenderer {
     private int outline_uModel;
     private int outline_uView;
     private int outline_uProjection;
+
+    public static Color4b defaultClearColour = Color4b.DeepSkyBlue;
 
     public WorldRenderer(World world) {
         this.world = world;
@@ -37,6 +43,7 @@ public class WorldRenderer {
         uMVP = shader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
         drawDistance = shader.getUniformLocation(nameof(drawDistance));
+        fogColour = shader.getUniformLocation(nameof(fogColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
     }
 
@@ -58,6 +65,7 @@ public class WorldRenderer {
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
         shader.setUniform(drawDistance, ChunkSection.CHUNKSIZE * 6);
+        shader.setUniform(fogColour, defaultClearColour);
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in world.chunks) {
             chunk.Value.drawOpaque(world.player.camera);
@@ -75,6 +83,7 @@ public class WorldRenderer {
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
         shader.setUniform(drawDistance, ChunkSection.CHUNKSIZE * 6);
+        shader.setUniform(fogColour, defaultClearColour);
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
