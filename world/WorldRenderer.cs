@@ -80,10 +80,6 @@ public class WorldRenderer {
         }
         // TRANSLUCENT PASS
         shader.use();
-        shader.setUniform(uMVP, viewProj);
-        shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
-        shader.setUniform(drawDistance, ChunkSection.CHUNKSIZE * 6);
-        shader.setUniform(fogColour, defaultClearColour);
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
