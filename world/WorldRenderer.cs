@@ -16,6 +16,8 @@ public class WorldRenderer {
     //public int uColor;
     public int blockTexture;
     public int uMVP;
+    public int uCameraPos;
+    public int drawDistance;
 
 
     public Shader outline;
@@ -32,7 +34,9 @@ public class WorldRenderer {
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
         blockTexture = shader.getUniformLocation("blockTexture");
-        uMVP = shader.getUniformLocation("uMVP");
+        uMVP = shader.getUniformLocation(nameof(uMVP));
+        uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
+        drawDistance = shader.getUniformLocation(nameof(drawDistance));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
     }
 
@@ -52,6 +56,8 @@ public class WorldRenderer {
         // OPAQUE PASS
         shader.use();
         shader.setUniform(uMVP, viewProj);
+        shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
+        shader.setUniform(drawDistance, ChunkSection.CHUNKSIZE * 6);
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in world.chunks) {
             chunk.Value.drawOpaque(world.player.camera);
@@ -67,6 +73,8 @@ public class WorldRenderer {
         // TRANSLUCENT PASS
         shader.use();
         shader.setUniform(uMVP, viewProj);
+        shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
+        shader.setUniform(drawDistance, ChunkSection.CHUNKSIZE * 6);
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
