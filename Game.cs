@@ -178,7 +178,7 @@ public class Game {
         buffer = new SoundBuffer(file);
         music = new Sound(buffer);
         music.Loop = true;
-        //music.Play();
+        music.Play();
         Console.Out.WriteLine("played?");
 
         gui = new GUI();
@@ -196,6 +196,7 @@ public class Game {
             });
         });
         resize(new Vector2D<int>(width, height));
+        // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
     }
 
