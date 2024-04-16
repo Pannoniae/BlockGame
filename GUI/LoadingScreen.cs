@@ -14,6 +14,7 @@ public class LoadingScreen : Screen {
 
     public override void activate() {
         text = new Text(this, new RectangleF(0, 0, 160, 40), "Loading fonts...");
+        text.centreContents();
         elements.Add(text);
 
         counter = 0;
