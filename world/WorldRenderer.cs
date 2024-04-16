@@ -67,24 +67,24 @@ public class WorldRenderer {
         shader.setUniform(drawDistance, ChunkSection.CHUNKSIZE * 6);
         shader.setUniform(fogColour, defaultClearColour);
         shader.setUniform(blockTexture, 0);
-        foreach (var chunk in world.chunks) {
-            chunk.Value.drawOpaque(world.player.camera);
+        foreach (var chunk in world.chunks.Values) {
+            chunk.drawOpaque(world.player.camera);
         }
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
         dummyShader.setUniform(uMVP, viewProj);
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
-        foreach (var chunk in world.chunks) {
-            chunk.Value.drawTransparent(world.player.camera);
+        foreach (var chunk in world.chunks.Values) {
+            chunk.drawTransparent(world.player.camera);
         }
         // TRANSLUCENT PASS
         shader.use();
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
-        foreach (var chunk in world.chunks) {
-            chunk.Value.drawTransparent(world.player.camera);
+        foreach (var chunk in world.chunks.Values) {
+            chunk.drawTransparent(world.player.camera);
         }
         GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Lequal);
