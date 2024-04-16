@@ -183,9 +183,15 @@ public class Game {
 
         gui = new GUI();
         gui.loadFonts();
-        Task.Run(() => { gui.loadUnicodeFont(); }).ContinueWith(_ => {
+        Console.Out.WriteLine("Loaded ASCII font.");
+        Task.Run(() => {
+            Console.Out.WriteLine("Loading unicode font...");
+            gui.loadUnicodeFont();
+        }).ContinueWith(_ => {
+            Console.Out.WriteLine("Stitching unicode font...");
             executeOnMainThread(() => {
                 gui.loadUnicodeFont2();
+                Console.Out.WriteLine("Finished stitching unicode font.");
                 Screen.switchTo(Screen.MAIN_MENU);
             });
         });
