@@ -1,12 +1,10 @@
-using System.Numerics;
-using Silk.NET.Maths;
-
 namespace BlockGame;
 
 public class Chunk {
     public ChunkStatus status;
 
     public ushort[,,] blocks;
+    public LightMap lightMap;
     public int chunkX;
     public int chunkZ;
     public ChunkSection[] chunks;
@@ -20,8 +18,9 @@ public class Chunk {
 
     public Chunk(World world, int chunkX, int chunkZ) {
         status = ChunkStatus.EMPTY;
-        blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         this.world = world;
+
+        blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         chunks = new ChunkSection[CHUNKHEIGHT];
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
@@ -30,6 +29,8 @@ public class Chunk {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);
         }
+
+        lightMap = new LightMap(this);
     }
 
     /// <summary>

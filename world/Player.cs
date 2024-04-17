@@ -117,14 +117,22 @@ public class Player {
         prevTotalTraveled = totalTraveled;
     }
 
-    private Chunk getChunk(Vector3D<double> position) {
-        var x = (int)position.X;
-        var z = (int)position.Z;
-        return world.getChunk(new Vector2D<int>(x, z));
+    public ChunkCoord getChunk(Vector3D<double> position) {
+        return world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+    }
+
+    public ChunkCoord getChunk() {
+        return world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+    }
+
+    public void loadChunksAroundThePlayer(int renderDistance) {
+        var chunk = world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+        world.loadChunksAroundChunk(chunk, renderDistance);
     }
 
     public void onChunkChanged() {
         Console.Out.WriteLine("chunk changed");
+        loadChunksAroundThePlayer(6);
     }
 
     private void applyInputMovement(double dt) {
@@ -187,10 +195,10 @@ public class Player {
         }
 
         // world bounds check
-        var s = world.getWorldSize();
-        position.X = Math.Clamp(position.X, 0, s.X);
+        //var s = world.getWorldSize();
+        //position.X = Math.Clamp(position.X, 0, s.X);
         //position.Y = Math.Clamp(position.Y, 0, s.Y);
-        position.Z = Math.Clamp(position.Z, 0, s.Z);
+        //position.Z = Math.Clamp(position.Z, 0, s.Z);
     }
 
     private void applyFriction() {

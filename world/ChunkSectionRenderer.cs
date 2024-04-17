@@ -21,7 +21,16 @@ public class ChunkSectionRenderer {
 
     public readonly GL GL;
 
-    Vector3D<int>[][] offsetTable = {
+    // we cheated GC! there is only one list preallocated
+    // we need 16x16x16 blocks, each block has max. 24 vertices
+    // for indices we need the full 36
+    public static readonly List<BlockVertex> chunkVertices = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 24);
+    public static readonly List<ushort> chunkIndices = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 36);
+    public static readonly Dictionary<int, int> neighbours = new(27);
+
+    static object meshingLock = new();
+
+    static Vector3D<int>[][] offsetTable = [
         // west
         [
             new(-1, 0, -1), new(-1, 1, 0), new(-1, 1, -1),
@@ -63,8 +72,8 @@ public class ChunkSectionRenderer {
             new(0, 1, -1), new(1, 1, 0), new(1, 1, -1),
             new(0, 1, 1), new(-1, 1, 0), new(-1, 1, 1),
             new(0, 1, 1), new(1, 1, 0), new(1, 1, 1),
-        ],
-    };
+        ]
+    ];
 
     public ChunkSectionRenderer(ChunkSection section) {
         this.section = section;
@@ -79,30 +88,36 @@ public class ChunkSectionRenderer {
         vao = new BlockVAO();
         watervao = new BlockVAO();
         // first we render everything which is NOT translucent
-        constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i), out var chunkVertices,
-            out var chunkIndices, true);
-        // then we render everything which is translucent (water for now)
-        constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i), out var tChunkVertices, out var tChunkIndices,
-            false);
-        vao.bind();
-        var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-        var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-        vao.upload(finalVertices, finalIndices);
-
-        if (tChunkIndices.Count > 0) {
-            watervao.bind();
-            var tFinalVertices = CollectionsMarshal.AsSpan(tChunkVertices);
-            var tFinalIndices = CollectionsMarshal.AsSpan(tChunkIndices);
-            watervao.upload(tFinalVertices, tFinalIndices);
-            hasTranslucentBlocks = true;
-            //world.sortedTransparentChunks.Add(this);
-        }
-        else {
-            hasTranslucentBlocks = false;
-            //world.sortedTransparentChunks.Remove(this);
+        int opaqueCount;
+        int translucentCount;
+        lock (meshingLock) {
+            constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i));
+            vao.bind();
+            var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+            var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+            vao.upload(finalVertices, finalIndices);
+            opaqueCount = chunkIndices.Count;
         }
 
-        if (chunkIndices.Count == 0 && tChunkIndices.Count == 0) {
+        lock (meshingLock) {
+            // then we render everything which is translucent (water for now)
+            constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i));
+            if (chunkIndices.Count > 0) {
+                watervao.bind();
+                var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                watervao.upload(tFinalVertices, tFinalIndices);
+                hasTranslucentBlocks = true;
+                //world.sortedTransparentChunks.Add(this);
+            }
+            else {
+                hasTranslucentBlocks = false;
+                //world.sortedTransparentChunks.Remove(this);
+            }
+            translucentCount = chunkIndices.Count;
+        }
+
+        if (opaqueCount == 0 && translucentCount == 0) {
             isEmpty = true;
         }
         else {
@@ -147,18 +162,12 @@ public class ChunkSectionRenderer {
     }
 
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
-    private void constructVertices(Func<int, bool> whichBlocks, Func<int, bool> neighbourTest, out List<BlockVertex> chunkVertices, out List<ushort> chunkIndices,
-        bool full) {
-        // at most, we need chunksize^3 blocks times 8 vertices
-        if (full) {
-            chunkVertices = new List<BlockVertex>(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 4);
-            chunkIndices = new List<ushort>(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 6);
-        }
-        // small array, we don't need that much pre-allocation
-        else {
-            chunkVertices = new List<BlockVertex>(16);
-            chunkIndices = new List<ushort>(16);
-        }
+    private void constructVertices(Func<int, bool> whichBlocks, Func<int, bool> neighbourTest) {
+        // clear arrays before starting
+        chunkVertices.Clear();
+        chunkIndices.Clear();
+        neighbours.Clear();
+
         ushort i = 0;
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
@@ -168,7 +177,8 @@ public class ChunkSectionRenderer {
                         int wx = wpos.X;
                         int wy = wpos.Y;
                         int wz = wpos.Z;
-
+                        //Console.Out.WriteLine(section.getBlockInChunk(x, y, z));
+                        //Console.Out.WriteLine(section.world.getBlock(wx, wy, wz));
 
                         Block b = Blocks.get(section.world.getBlock(wx, wy, wz));
 
@@ -236,11 +246,10 @@ public class ChunkSectionRenderer {
                         // bottom
                         var w = section.world;
                         // cache blocks
-                        var neighbours = new Dictionary<Vector3D<int>, int>(27);
                         for (int cx = wx - 1; cx <= wx + 1; cx++) {
                             for (int cy = wy - 1; cy <= wy + 1; cy++) {
                                 for (int cz = wz - 1; cz <= wz + 1; cz++) {
-                                    neighbours[new Vector3D<int>(cx, cy, cz)] = w.getBlockUnsafe(cx, cy, cz);
+                                    neighbours[new Vector3D<int>(cx, cy, cz).GetHashCode()] = w.getBlockUnsafe(cx, cy, cz);
                                 }
                             }
                         }
@@ -248,7 +257,7 @@ public class ChunkSectionRenderer {
                         // helper function to get blocks from cache
                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                         int getBlockFromCache(int x, int y, int z) {
-                            return neighbours[new Vector3D<int>(x, y, z)];
+                            return neighbours[new Vector3D<int>(x, y, z).GetHashCode()];
                         }
 
                         var aoXminZminYmin = calculateAO(test, getBlockFromCache(wx - 1, wy - 1, wz),

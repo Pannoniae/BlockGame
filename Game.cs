@@ -17,7 +17,6 @@ using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
 using MouseButton = Silk.NET.Input.MouseButton;
 using Sound = SFML.Audio.Sound;
-using Timer = System.Timers.Timer;
 
 namespace BlockGame;
 
@@ -183,6 +182,7 @@ public class Game {
 
         gui = new GUI();
         gui.loadFonts();
+
         Console.Out.WriteLine("Loaded ASCII font.");
         Task.Run(() => {
             Console.Out.WriteLine("Loading unicode font...");
@@ -198,6 +198,10 @@ public class Game {
         resize(new Vector2D<int>(width, height));
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+    }
+
+    public void updateThreadLoop() {
+        //Thread.Sleep();
     }
 
     private void onMouseMove(IMouse m, Vector2 position) {
@@ -245,12 +249,15 @@ public class Game {
     }
 
     private void update(double dt) {
+        //var before = permanentStopwatch.ElapsedMilliseconds;
         //dt = Math.Min(dt, 0.2);
         /*var vec = new Vector2D<int>(0, 0);
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
         screen.update(dt);
+        //var after = permanentStopwatch.ElapsedMilliseconds;
+        //Console.Out.WriteLine(after - before);
 
     }
 
@@ -273,6 +280,9 @@ public class Game {
     }
 
     private void actualRender(double dt, double interp) {
+        if (dt > 0.016) {
+            Console.Out.WriteLine("Missed a frame!  ");
+        }
         // consume main thread actions
         while (mainThreadQueue.TryTake(out var action)) {
             action();

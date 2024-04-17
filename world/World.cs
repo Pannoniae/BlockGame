@@ -9,7 +9,10 @@ public class World {
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     public Dictionary<ChunkCoord, Chunk> chunks;
-    public List<ChunkSection> sortedTransparentChunks = [];
+    //public List<ChunkSection> sortedTransparentChunks = [];
+
+    // chunk load queue
+    public Queue<ChunkLoadTicket> chunkLoadQueue = new();
 
     public WorldRenderer renderer;
 
@@ -22,40 +25,45 @@ public class World {
 
     public Random random;
 
+    // max. 2 msec in each frame for chunkload
+    private const long MAX_CHUNKLOAD_FRAMETIME = 2;
+    private const int SPAWNCHUNKS_SIZE = 2;
+
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
     /// </summary>
     public const int numTicks = 3;
 
-    public World() {
+    public World(int seed) {
         renderer = new WorldRenderer(this);
-        player = new Player(this, 6 * Chunk.CHUNKSIZE, 20, 6 * Chunk.CHUNKSIZE);
+        player = new Player(this, 6, 20, 6);
 
-        random = new Random();
-        noise = new FastNoiseLite(Environment.TickCount);
-        treenoise = new FastNoiseLite(random.Next(Environment.TickCount));
-        worldTime = 0;
-
-        chunks = new Dictionary<ChunkCoord, Chunk>();
-        for (int x = 0; x < WORLDSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE; z++) {
-                chunks[new ChunkCoord(x, z)] = new Chunk(this, x, z);
-            }
-        }
-
-        renderer.meshBlockOutline();
-    }
-
-    public void generate() {
+        random = new Random(seed);
+        noise = new FastNoiseLite(seed);
+        treenoise = new FastNoiseLite(random.Next(seed));
         noise.SetFrequency(0.03f);
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalLacunarity(2f);
         noise.SetFractalGain(0.5f);
         treenoise.SetFrequency(1f);
+        worldTime = 0;
+
+        chunks = new Dictionary<ChunkCoord, Chunk>();
+        // load a minimal amount of chunks so the world can get started
+        loadSpawnChunks();
+
+        renderer.meshBlockOutline();
+    }
+
+    private void loadSpawnChunks() {
+        loadChunksAroundChunkImmediately(new ChunkCoord(0, 0), 2);
+    }
+
+    public void generate() {
         // create terrain
-        genTerrainNoise();
+        //genTerrainNoise();
         // separate loop so all data is there
-        renderer.meshChunks();
+        player.loadChunksAroundThePlayer(6);
     }
 
     private void genTerrainSine() {
@@ -99,6 +107,18 @@ public class World {
             player.lastSort = player.position;
         }*/
 
+        var start = Game.permanentStopwatch.ElapsedMilliseconds;
+        //var ctr = 0;
+        // consume the chunk queue
+        while (Game.permanentStopwatch.ElapsedMilliseconds - start < MAX_CHUNKLOAD_FRAMETIME) {
+            if (chunkLoadQueue.TryDequeue(out var ticket)) {
+                loadChunk(ticket.chunkCoord, ticket.level);
+                //ctr++;
+            }
+        }
+        //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
+        //Console.Out.WriteLine(ctr);
+
         // random block updates!
         foreach (var chunk in chunks) {
             foreach (var chunksection in chunk.Value.chunks) {
@@ -110,6 +130,109 @@ public class World {
                 }
             }
         }
+    }
+
+    private void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
+        chunkLoadQueue.Enqueue(new ChunkLoadTicket(chunkCoord, level));
+    }
+
+    /// <summary>
+    /// Chunks are generated up to renderDistance + 1.
+    /// Chunks are populated (tree placement, etc.) until renderDistance and meshed until renderDistance.
+    /// TODO unload chunks which are renderDistance + 2 away (this is bigger to prevent chunk flicker)
+    /// </summary>
+    public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance) {
+        // load +1 chunks around renderdistance
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
+                addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.GENERATED);
+            }
+        }
+        // populate around renderDistance
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.POPULATED);
+            }
+        }
+        // finally, mesh around renderDistance
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.MESHED);
+            }
+        }
+
+        // unload chunks which are far away
+        foreach (var chunk in chunks.Values) {
+            var playerChunk = player.getChunk();
+            var coord = new ChunkCoord(chunk.chunkX, chunk.chunkZ);
+            // if distance is greater than renderDistance + 2, unload
+            if (Math.Abs(playerChunk.x - coord.x) > renderDistance + 2 &&
+                Math.Abs(playerChunk.z - coord.z) > renderDistance + 2) {
+                unloadChunk(coord);
+            }
+        }
+    }
+
+    public void loadChunksAroundChunkImmediately(ChunkCoord chunkCoord, int renderDistance) {
+        // load +1 chunks around renderdistance
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
+                loadChunk(new ChunkCoord(x, z), ChunkStatus.GENERATED);
+            }
+        }
+        // populate around renderDistance
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                loadChunk(new ChunkCoord(x, z), ChunkStatus.POPULATED);
+            }
+        }
+        // finally, mesh around renderDistance
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                loadChunk(new ChunkCoord(x, z), ChunkStatus.MESHED);
+            }
+        }
+
+        // unload chunks which are far away
+        foreach (var chunk in chunks.Values) {
+            var playerChunk = player.getChunk();
+            var coord = new ChunkCoord(chunk.chunkX, chunk.chunkZ);
+            // if distance is greater than renderDistance + 2, unload
+            if (Math.Abs(playerChunk.x - coord.x) > renderDistance + 2 &&
+                Math.Abs(playerChunk.z - coord.z) > renderDistance + 2) {
+                unloadChunk(coord);
+            }
+        }
+    }
+
+    public void unloadChunk(ChunkCoord coord) {
+        chunks.Remove(coord);
+    }
+
+    /// <summary>
+    /// Load this chunk either from disk (if exists) or generate it with the given level.
+    /// </summary>
+    public Chunk loadChunk(ChunkCoord chunkCoord, ChunkStatus status) {
+        // if it already exists and has the proper level, just return it
+        if (chunks.TryGetValue(chunkCoord, out var chunk) && chunk.status >= status) {
+            return chunk;
+        }
+        // does the chunk exist?
+        bool hasChunk = chunk != default;
+
+        // right now we only generate, not load
+        // if it's already generated, don't do it again
+        if (status >= ChunkStatus.GENERATED && !(hasChunk && chunk!.status > ChunkStatus.GENERATED)) {
+            chunks[chunkCoord] = new Chunk(this, chunkCoord.x, chunkCoord.z);
+            chunks[chunkCoord].generator.generate();
+        }
+        if (status >= ChunkStatus.POPULATED && !(hasChunk && chunk!.status > ChunkStatus.POPULATED)) {
+            chunks[chunkCoord].generator.populate();
+        }
+        if (status >= ChunkStatus.MESHED && !(hasChunk && chunk!.status > ChunkStatus.MESHED)) {
+            chunks[chunkCoord].meshChunk();
+        }
+        return chunks[chunkCoord];
     }
 
     public Vector3D<int> getWorldSize() {
@@ -178,11 +301,15 @@ public class World {
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block, remesh);
     }
 
+    /// <summary>
+    /// This checks whether it's at least generated.
+    /// </summary>
     public bool inWorld(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return false;
+        }
         var chunkpos = getChunkPos(x, z);
-        return chunkpos.x is >= 0 and < WORLDSIZE &&
-               y is >= 0 and < WORLDHEIGHT &&
-               chunkpos.z is >= 0 and < WORLDSIZE;
+        return chunks.ContainsKey(chunkpos) && chunks[chunkpos].status >= ChunkStatus.GENERATED;
     }
 
     public ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
@@ -206,28 +333,20 @@ public class World {
 
     public Vector3D<int> getPosInChunk(int x, int y, int z) {
         return new Vector3D<int>(
-            x % Chunk.CHUNKSIZE,
+            Utils.mod(x, Chunk.CHUNKSIZE),
             y,
-            z % Chunk.CHUNKSIZE);
+            Utils.mod(z, Chunk.CHUNKSIZE));
     }
 
     public Vector3D<int> getPosInChunk(Vector3D<int> pos) {
         return new Vector3D<int>(
-            pos.X % Chunk.CHUNKSIZE,
+            Utils.mod(pos.X, Chunk.CHUNKSIZE),
             pos.Y,
-            pos.Z % Chunk.CHUNKSIZE);
-    }
-
-    public bool isChunkInWorld(int x, int z) {
-        return x >= 0 && x < WORLDSIZE && z >= 0 && z < WORLDSIZE;
-    }
-
-    public bool isChunkInWorld(Vector2D<int> pos) {
-        return pos.X >= 0 && pos.X < WORLDSIZE && pos.Y >= 0 && pos.Y < WORLDSIZE;
+            Utils.mod(pos.Z, Chunk.CHUNKSIZE));
     }
 
     public bool isChunkSectionInWorld(ChunkSectionCoord pos) {
-        return pos.x >= 0 && pos.x < WORLDSIZE && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT && pos.z >= 0 && pos.z < WORLDSIZE;
+        return chunks.ContainsKey(new ChunkCoord(pos.x, pos.z));
     }
 
     public Chunk getChunk(int x, int z) {

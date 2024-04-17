@@ -53,7 +53,8 @@ public class WorldIO {
 
     public static World load(string filename) {
         CompoundTag tag = NbtFile.Read($"world/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
-        var world = new World();
+        var seed = tag.Get<IntTag>("seed");
+        var world = new World(seed);
         var chunkTags = tag.Get<ListTag>("chunks");
         foreach (var chunkTag in chunkTags) {
             var chunk = (CompoundTag)chunkTag;

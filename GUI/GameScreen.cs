@@ -34,8 +34,8 @@ public class GameScreen : Screen {
         var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.1");
         version.shadowed = true;
         elements.Add(version);
-
-        world = new World();
+        var seed = Random.Shared.Next(int.MaxValue);
+        world = new World(seed);
         world.generate();
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
     }

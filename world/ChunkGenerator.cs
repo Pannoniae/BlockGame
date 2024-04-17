@@ -28,11 +28,9 @@ public class ChunkGenerator {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
-                chunk.status = ChunkStatus.GENERATED;
-
-
             }
         }
+        chunk.status = ChunkStatus.GENERATED;
     }
 
     public void populate() {
