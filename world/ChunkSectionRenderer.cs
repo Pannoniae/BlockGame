@@ -151,8 +151,8 @@ public class ChunkSectionRenderer {
         bool full) {
         // at most, we need chunksize^3 blocks times 8 vertices
         if (full) {
-            chunkVertices = new List<BlockVertex>(ChunkSection.CHUNKSIZE * ChunkSection.CHUNKSIZE * ChunkSection.CHUNKSIZE * 4);
-            chunkIndices = new List<ushort>(ChunkSection.CHUNKSIZE * ChunkSection.CHUNKSIZE * ChunkSection.CHUNKSIZE * 6);
+            chunkVertices = new List<BlockVertex>(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 4);
+            chunkIndices = new List<ushort>(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 6);
         }
         // small array, we don't need that much pre-allocation
         else {
@@ -160,9 +160,9 @@ public class ChunkSectionRenderer {
             chunkIndices = new List<ushort>(16);
         }
         ushort i = 0;
-        for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
-            for (int y = 0; y < ChunkSection.CHUNKSIZE; y++) {
-                for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
+        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+            for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
+                for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                     if (whichBlocks(section.getBlockInChunk(x, y, z))) {
                         var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
                         int wx = wpos.X;

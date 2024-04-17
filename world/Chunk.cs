@@ -1,26 +1,55 @@
 using System.Numerics;
+using Silk.NET.Maths;
 
 namespace BlockGame;
 
 public class Chunk {
     public ChunkStatus status;
 
-    public ushort[,,] block;
-    public int x;
-    public int z;
+    public ushort[,,] blocks;
+    public int chunkX;
+    public int chunkZ;
     public ChunkSection[] chunks;
     public World world;
 
+    public ChunkGenerator generator;
 
-    public Chunk(World world, int x, int z) {
-        block = new ushort[ChunkSection.CHUNKSIZE, ChunkSection.CHUNKSIZE * CHUNKHEIGHT, ChunkSection.CHUNKSIZE];
+    public const int CHUNKHEIGHT = 8;
+    public const int CHUNKSIZE = 16;
+
+
+    public Chunk(World world, int chunkX, int chunkZ) {
+        blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         this.world = world;
         chunks = new ChunkSection[CHUNKHEIGHT];
-        this.x = x;
-        this.z = z;
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        generator = new ChunkGenerator(this);
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i] = new ChunkSection(world, this, x, i, z);
+            chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);
+        }
+    }
+
+    /// <summary>
+    /// Uses chunk coordinates
+    /// </summary>
+    public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
+        blocks[x, y, z] = block;
+
+        if (remesh) {
+            meshChunk();
+            
+            // get global coords
+            var worldPos = world.toWorldPos(chunkX, 0, chunkZ, x, y, z);
+            var chunkPos = world.getChunkSectionPos(worldPos);
+
+            foreach (var dir in Direction.directions) {
+                var neighbourSection = world.getChunkSectionPos(worldPos + dir);
+                if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
+                    world.getChunkByChunkPos(new ChunkCoord(neighbourSection.x, neighbourSection.z)).chunks[neighbourSection.y].renderer.meshChunk();
+                }
+            }
         }
     }
 
@@ -29,8 +58,6 @@ public class Chunk {
             chunks[i].renderer.meshChunk();
         }
     }
-
-    public const int CHUNKHEIGHT = 8;
 
     public void drawChunk(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {

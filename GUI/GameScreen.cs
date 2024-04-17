@@ -36,6 +36,7 @@ public class GameScreen : Screen {
         elements.Add(version);
 
         world = new World();
+        world.generate();
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
     }
 

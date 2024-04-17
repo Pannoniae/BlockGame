@@ -6,7 +6,7 @@ namespace BlockGame;
 
 public class World {
     public const int WORLDSIZE = 12;
-    public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * ChunkSection.CHUNKSIZE;
+    public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     public Dictionary<ChunkCoord, Chunk> chunks;
     public List<ChunkSection> sortedTransparentChunks = [];
@@ -27,9 +27,9 @@ public class World {
     /// </summary>
     public const int numTicks = 3;
 
-    public World(bool loaded = false) {
+    public World() {
         renderer = new WorldRenderer(this);
-        player = new Player(this, 6 * ChunkSection.CHUNKSIZE, 20, 6 * ChunkSection.CHUNKSIZE);
+        player = new Player(this, 6 * Chunk.CHUNKSIZE, 20, 6 * Chunk.CHUNKSIZE);
 
         random = new Random();
         noise = new FastNoiseLite(Environment.TickCount);
@@ -43,19 +43,24 @@ public class World {
             }
         }
 
-        if (!loaded) {
-            // create terrain
-            genTerrainNoise();
-            // separate loop so all data is there
-            renderer.meshChunks();
-        }
-
         renderer.meshBlockOutline();
     }
 
+    public void generate() {
+        noise.SetFrequency(0.03f);
+        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        noise.SetFractalLacunarity(2f);
+        noise.SetFractalGain(0.5f);
+        treenoise.SetFrequency(1f);
+        // create terrain
+        genTerrainNoise();
+        // separate loop so all data is there
+        renderer.meshChunks();
+    }
+
     private void genTerrainSine() {
-        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
+        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 for (int y = 0; y < 3; y++) {
                     setBlock(x, y, z, 2, false);
                 }
@@ -63,8 +68,8 @@ public class World {
         }
 
         var sinMin = 2;
-        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
+        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 var sin = Math.Sin(x / 3f) * 2 + sinMin + 1 + Math.Cos(z / 3f) * 2 + sinMin + 1;
                 for (int y = sinMin; y < sin; y++) {
                     setBlock(x, y, z, 5, false);
@@ -80,64 +85,9 @@ public class World {
     }
 
     private void genTerrainNoise() {
-        noise.SetFrequency(0.03f);
-        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-        noise.SetFractalLacunarity(2f);
-        noise.SetFractalGain(0.5f);
-        treenoise.SetFrequency(1f);
-        for (int x = 0; x < WORLDSIZE * ChunkSection.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * ChunkSection.CHUNKSIZE; z++) {
-                // -1 to 1
-                // transform to the range 5 - 10
-                var height = noise.GetNoise(x, z) * 2.5 + 7.5;
-                for (int y = 0; y < height - 1; y++) {
-                    setBlock(x, y, z, Blocks.DIRT.id, false);
-                }
-                setBlock(x, (int)height, z, Blocks.GRASS.id, false);
-
-                // water if low
-                if (height < 7) {
-                    for (int y2 = (int)height; y2 <= 7; y2++) {
-                        setBlock(x, y2, z, Blocks.WATER.id, false);
-                    }
-                }
-
-                // TREES
-                if (MathF.Abs(treenoise.GetNoise(x, z) - 1) < 0.01f) {
-                    placeTree(x, (int)(height + 1), z);
-                }
-            }
-        }
-    }
-
-    private void placeTree(int x, int y, int z) {
-        // tree
-        for (int i = 0; i < 7; i++) {
-            setBlock(x, y + i, z, Blocks.LOG.id, false);
-        }
-        // leaves, thick
-        for (int x1 = -2; x1 <= 2; x1++) {
-            for (int z1 = -2; z1 <= 2; z1++) {
-                // don't overwrite the trunk
-                if (x1 == 0 && z1 == 0) {
-                    continue;
-                }
-                for (int y1 = 4; y1 < 6; y1++) {
-                    setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id, false);
-                }
-            }
-        }
-        // leaves, thin on top
-        for (int x2 = -1; x2 <= 1; x2++) {
-            for (int z2 = -1; z2 <= 1; z2++) {
-                for (int y2 = 6; y2 <= 7; y2++) {
-                    // don't overwrite the trunk
-                    if (x2 == 0 && z2 == 0 && y == 6) {
-                        continue;
-                    }
-                    setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id, false);
-                }
-            }
+        // generate terrain for all loaded chunks
+        foreach (var chunk in chunks.Values) {
+            chunk.generator.generate();
         }
     }
 
@@ -162,7 +112,7 @@ public class World {
     }
 
     public Vector3D<int> getWorldSize() {
-        var c = ChunkSection.CHUNKSIZE;
+        var c = Chunk.CHUNKSIZE;
         return new Vector3D<int>(c * WORLDSIZE, c * WORLDHEIGHT, c * WORLDSIZE);
     }
 
@@ -173,7 +123,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return chunk.block[blockPos.X, y, blockPos.Z] != 0;
+        return chunk.blocks[blockPos.X, y, blockPos.Z] != 0;
     }
 
     public ushort getBlock(int x, int y, int z) {
@@ -183,7 +133,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return chunk.block[blockPos.X, y, blockPos.Z];
+        return chunk.blocks[blockPos.X, y, blockPos.Z];
     }
 
     /// <summary>
@@ -196,7 +146,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return chunk.block[blockPos.X, y, blockPos.Z];
+        return chunk.blocks[blockPos.X, y, blockPos.Z];
     }
 
     public ushort getBlock(Vector3D<int> pos) {
@@ -224,20 +174,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        chunk.block[blockPos.X, blockPos.Y, blockPos.Z] = block;
-
-        if (remesh) {
-            chunk.meshChunk();
-
-            var chunkPos = getChunkSectionPos(new Vector3D<int>(x, y, z));
-
-            foreach (var dir in Direction.directions) {
-                var neighbourSection = getChunkSectionPos(new Vector3D<int>(x, y, z) + dir);
-                if (isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                    getChunkByChunkPos(new ChunkCoord(neighbourSection.x, neighbourSection.z)).chunks[neighbourSection.y].renderer.meshChunk();
-                }
-            }
-        }
+        chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block, remesh);
     }
 
     public bool inWorld(int x, int y, int z) {
@@ -247,62 +184,62 @@ public class World {
                chunkpos.z is >= 0 and < WORLDSIZE;
     }
 
-    private ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
+    public ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
         return new ChunkSectionCoord(
-            (int)MathF.Floor(pos.X / (float)ChunkSection.CHUNKSIZE),
-            (int)MathF.Floor(pos.Y / (float)ChunkSection.CHUNKSIZE),
-            (int)MathF.Floor(pos.Z / (float)ChunkSection.CHUNKSIZE));
+            (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
+            (int)MathF.Floor(pos.Y / (float)Chunk.CHUNKSIZE),
+            (int)MathF.Floor(pos.Z / (float)Chunk.CHUNKSIZE));
     }
 
-    private ChunkCoord getChunkPos(Vector2D<int> pos) {
+    public ChunkCoord getChunkPos(Vector2D<int> pos) {
         return new ChunkCoord(
-            (int)MathF.Floor(pos.X / (float)ChunkSection.CHUNKSIZE),
-            (int)MathF.Floor(pos.Y / (float)ChunkSection.CHUNKSIZE));
+            (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
+            (int)MathF.Floor(pos.Y / (float)Chunk.CHUNKSIZE));
     }
 
-    private ChunkCoord getChunkPos(int x, int z) {
+    public ChunkCoord getChunkPos(int x, int z) {
         return new ChunkCoord(
-            (int)MathF.Floor(x / (float)ChunkSection.CHUNKSIZE),
-            (int)MathF.Floor(z / (float)ChunkSection.CHUNKSIZE));
+            (int)MathF.Floor(x / (float)Chunk.CHUNKSIZE),
+            (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
     }
 
-    private Vector3D<int> getPosInChunk(int x, int y, int z) {
+    public Vector3D<int> getPosInChunk(int x, int y, int z) {
         return new Vector3D<int>(
-            x % ChunkSection.CHUNKSIZE,
+            x % Chunk.CHUNKSIZE,
             y,
-            z % ChunkSection.CHUNKSIZE);
+            z % Chunk.CHUNKSIZE);
     }
 
-    private Vector3D<int> getPosInChunk(Vector3D<int> pos) {
+    public Vector3D<int> getPosInChunk(Vector3D<int> pos) {
         return new Vector3D<int>(
-            pos.X % ChunkSection.CHUNKSIZE,
+            pos.X % Chunk.CHUNKSIZE,
             pos.Y,
-            pos.Z % ChunkSection.CHUNKSIZE);
+            pos.Z % Chunk.CHUNKSIZE);
     }
 
-    private bool isChunkInWorld(int x, int z) {
+    public bool isChunkInWorld(int x, int z) {
         return x >= 0 && x < WORLDSIZE && z >= 0 && z < WORLDSIZE;
     }
 
-    private bool isChunkInWorld(Vector2D<int> pos) {
+    public bool isChunkInWorld(Vector2D<int> pos) {
         return pos.X >= 0 && pos.X < WORLDSIZE && pos.Y >= 0 && pos.Y < WORLDSIZE;
     }
 
-    private bool isChunkSectionInWorld(ChunkSectionCoord pos) {
+    public bool isChunkSectionInWorld(ChunkSectionCoord pos) {
         return pos.x >= 0 && pos.x < WORLDSIZE && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT && pos.z >= 0 && pos.z < WORLDSIZE;
     }
 
-    private Chunk getChunk(int x, int z) {
+    public Chunk getChunk(int x, int z) {
         var pos = getChunkPos(x, z);
         return chunks[pos];
     }
 
-    private Chunk getChunk(Vector2D<int> position) {
+    public Chunk getChunk(Vector2D<int> position) {
         var pos = getChunkPos(position);
         return chunks[pos];
     }
 
-    private Chunk getChunkByChunkPos(ChunkCoord position) {
+    public Chunk getChunkByChunkPos(ChunkCoord position) {
         return chunks[position];
     }
 
@@ -312,10 +249,22 @@ public class World {
         }
     }
 
+    /// <summary>
+    /// For sections
+    /// </summary>
     public Vector3D<int> toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
-        return new Vector3D<int>(chunkX * ChunkSection.CHUNKSIZE + x,
-            chunkY * ChunkSection.CHUNKSIZE + y,
-            chunkZ * ChunkSection.CHUNKSIZE + z);
+        return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
+            chunkY * Chunk.CHUNKSIZE + y,
+            chunkZ * Chunk.CHUNKSIZE + z);
+    }
+
+    /// <summary>
+    /// For chunks
+    /// </summary>
+    public Vector3D<int> toWorldPos(int chunkX, int chunkZ, int x, int y, int z) {
+        return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
+            y,
+            chunkZ * Chunk.CHUNKSIZE + z);
     }
 
     /// <summary>
