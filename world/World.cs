@@ -88,6 +88,7 @@ public class World {
         // generate terrain for all loaded chunks
         foreach (var chunk in chunks.Values) {
             chunk.generator.generate();
+            chunk.generator.populate();
         }
     }
 
