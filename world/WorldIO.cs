@@ -22,12 +22,12 @@ public class WorldIO {
         tag.BeginList(TagType.Compound, "chunks");
         foreach (var chunk in world.chunks.Values) {
             tag.BeginCompound("chunk");
-            tag.AddInt("posX", chunk.x);
-            tag.AddInt("posZ", chunk.z);
+            tag.AddInt("posX", chunk.chunkX);
+            tag.AddInt("posZ", chunk.chunkZ);
             // blocks
-            var my = ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT;
-            var mx = ChunkSection.CHUNKSIZE;
-            var mz = ChunkSection.CHUNKSIZE;
+            var my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
+            var mx = Chunk.CHUNKSIZE;
+            var mz = Chunk.CHUNKSIZE;
             //var blocks = new int[mx * my * mz];
             int index = 0;
             tag.BeginList(TagType.Short, "blocks");
@@ -35,8 +35,8 @@ public class WorldIO {
             for (int y = 0; y < my; y++) {
                 for (int x = 0; x < mx; x++) {
                     for (int z = 0; z < mz; z++) {
-                        //blocks[index] = chunk.block[x, y, z];
-                        tag.AddShort(chunk.block[x, y, z]);
+                        //blocks[index] = chunk.blocks[x, y, z];
+                        tag.AddShort(chunk.blocks[x, y, z]);
                         index++;
                     }
                 }
@@ -53,7 +53,7 @@ public class WorldIO {
 
     public static World load(string filename) {
         CompoundTag tag = NbtFile.Read($"world/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
-        var world = new World(true);
+        var world = new World();
         var chunkTags = tag.Get<ListTag>("chunks");
         foreach (var chunkTag in chunkTags) {
             var chunk = (CompoundTag)chunkTag;
@@ -62,10 +62,10 @@ public class WorldIO {
             world.chunks[new ChunkCoord(chunkX, chunkZ)] = new Chunk(world, chunkX, chunkZ);
             var blocks = chunk.Get<ListTag>("blocks");
             int index = 0;
-            for (int y = 0; y < ChunkSection.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-                for (int x = 0; x < ChunkSection.CHUNKSIZE; x++) {
-                    for (int z = 0; z < ChunkSection.CHUNKSIZE; z++) {
-                        world.chunks[new ChunkCoord(chunkX, chunkZ)].block[x, y, z] = (ShortTag)blocks[index];
+            for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+                    for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                        world.chunks[new ChunkCoord(chunkX, chunkZ)].blocks[x, y, z] = (ShortTag)blocks[index];
                         index++;
                     }
                 }

@@ -11,16 +11,15 @@ public class ChunkSection {
     public int chunkY;
     public int chunkZ;
 
-    public int worldX => chunkX * CHUNKSIZE;
-    public int worldY => chunkY * CHUNKSIZE;
-    public int worldZ => chunkZ * CHUNKSIZE;
+    public int worldX => chunkX * Chunk.CHUNKSIZE;
+    public int worldY => chunkY * Chunk.CHUNKSIZE;
+    public int worldZ => chunkZ * Chunk.CHUNKSIZE;
     public Vector3D<int> worldPos => new(worldX, worldY, worldZ);
     public Vector3D<int> centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
 
     public AABB box;
 
     public World world;
-    public const int CHUNKSIZE = 16;
 
     public ChunkSection(World world, Chunk chunk, int xpos, int ypos, int zpos) {
         this.chunk = chunk;
@@ -34,21 +33,21 @@ public class ChunkSection {
     }
 
     public int getBlockInChunk(int x, int y, int z) {
-        return chunk.block[x, y + chunkY * CHUNKSIZE, z];
+        return chunk.blocks[x, y + chunkY * Chunk.CHUNKSIZE, z];
     }
 
     public void tick(int x, int y, int z) {
         var block = getBlockInChunk(x, y, z);
         if (block == Blocks.DIRT.id) {
             if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) == 0) {
-                chunk.block[x, y + chunkY * CHUNKSIZE, z] = Blocks.GRASS.id;
+                chunk.blocks[x, y + chunkY * Chunk.CHUNKSIZE, z] = Blocks.GRASS.id;
                 renderer.meshChunk();
             }
         }
 
         if (block == Blocks.GRASS.id) {
             if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) != 0) {
-                chunk.block[x, y + chunkY * CHUNKSIZE, z] = Blocks.DIRT.id;
+                chunk.blocks[x, y + chunkY * Chunk.CHUNKSIZE, z] = Blocks.DIRT.id;
                 renderer.meshChunk();
             }
         }
