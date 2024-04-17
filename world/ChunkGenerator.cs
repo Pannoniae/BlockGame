@@ -28,7 +28,18 @@ public class ChunkGenerator {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
+                chunk.status = ChunkStatus.GENERATED;
 
+
+            }
+        }
+    }
+
+    public void populate() {
+        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var worldPos = world.toWorldPos(chunk.chunkX, chunk.chunkZ, x, 0, z);
+                var height = world.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 7.5;
                 // TREES
                 if (MathF.Abs(world.treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
                     worldPos = world.toWorldPos(chunk.chunkX, chunk.chunkZ, x, (int)(height + 1), z);
@@ -36,6 +47,7 @@ public class ChunkGenerator {
                 }
             }
         }
+        chunk.status = ChunkStatus.POPULATED;
     }
 
     // Can place in neighbouring chunks, so they must be loaded first

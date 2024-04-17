@@ -19,6 +19,7 @@ public class Chunk {
 
 
     public Chunk(World world, int chunkX, int chunkZ) {
+        status = ChunkStatus.EMPTY;
         blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         this.world = world;
         chunks = new ChunkSection[CHUNKHEIGHT];
@@ -39,7 +40,7 @@ public class Chunk {
 
         if (remesh) {
             meshChunk();
-            
+
             // get global coords
             var worldPos = world.toWorldPos(chunkX, 0, chunkZ, x, y, z);
             var chunkPos = world.getChunkSectionPos(worldPos);
@@ -57,6 +58,7 @@ public class Chunk {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i].renderer.meshChunk();
         }
+        status = ChunkStatus.MESHED;
     }
 
     public void drawChunk(PlayerCamera camera) {
