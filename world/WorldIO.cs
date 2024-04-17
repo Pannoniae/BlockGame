@@ -22,8 +22,8 @@ public class WorldIO {
         tag.BeginList(TagType.Compound, "chunks");
         foreach (var chunk in world.chunks.Values) {
             tag.BeginCompound("chunk");
-            tag.AddInt("posX", chunk.chunkX);
-            tag.AddInt("posZ", chunk.chunkZ);
+            tag.AddInt("posX", chunk.coord.x);
+            tag.AddInt("posZ", chunk.coord.z);
             // blocks
             var my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
             var mx = Chunk.CHUNKSIZE;

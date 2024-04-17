@@ -1,11 +1,10 @@
-using System.Numerics;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
 public class World {
     public const int WORLDSIZE = 12;
+    public const int REGIONSIZE = 8;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     public Dictionary<ChunkCoord, Chunk> chunks;
@@ -13,6 +12,7 @@ public class World {
 
     // chunk load queue
     public Queue<ChunkLoadTicket> chunkLoadQueue = new();
+    public Queue<BlockUpdate> blockUpdateQueue = new();
 
     public WorldRenderer renderer;
 
@@ -22,11 +22,12 @@ public class World {
     public FastNoiseLite treenoise;
 
     public double worldTime;
+    public int worldTick;
 
     public Random random;
 
-    // max. 2 msec in each frame for chunkload
-    private const long MAX_CHUNKLOAD_FRAMETIME = 2;
+    // max. 5 msec in each frame for chunkload
+    private const long MAX_CHUNKLOAD_FRAMETIME = 5;
     private const int SPAWNCHUNKS_SIZE = 2;
 
     /// <summary>
@@ -47,6 +48,7 @@ public class World {
         noise.SetFractalGain(0.5f);
         treenoise.SetFrequency(1f);
         worldTime = 0;
+        worldTick = 0;
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
         // load a minimal amount of chunks so the world can get started
@@ -102,6 +104,7 @@ public class World {
 
     public void update(double dt) {
         worldTime += dt;
+        worldTick++;
         /*if (Vector3D.DistanceSquared(player.position, player.lastSort) > 64) {
             sortedTransparentChunks.Sort(new ChunkComparer(player.camera));
             player.lastSort = player.position;
@@ -164,7 +167,7 @@ public class World {
         // unload chunks which are far away
         foreach (var chunk in chunks.Values) {
             var playerChunk = player.getChunk();
-            var coord = new ChunkCoord(chunk.chunkX, chunk.chunkZ);
+            var coord = chunk.coord;
             // if distance is greater than renderDistance + 2, unload
             if (Math.Abs(playerChunk.x - coord.x) > renderDistance + 2 &&
                 Math.Abs(playerChunk.z - coord.z) > renderDistance + 2) {
@@ -196,7 +199,7 @@ public class World {
         // unload chunks which are far away
         foreach (var chunk in chunks.Values) {
             var playerChunk = player.getChunk();
-            var coord = new ChunkCoord(chunk.chunkX, chunk.chunkZ);
+            var coord = chunk.coord;
             // if distance is greater than renderDistance + 2, unload
             if (Math.Abs(playerChunk.x - coord.x) > renderDistance + 2 &&
                 Math.Abs(playerChunk.z - coord.z) > renderDistance + 2) {
@@ -329,6 +332,12 @@ public class World {
         return new ChunkCoord(
             (int)MathF.Floor(x / (float)Chunk.CHUNKSIZE),
             (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
+    }
+
+    public RegionCoord getRegionPos(ChunkCoord pos) {
+        return new RegionCoord(
+            (int)MathF.Floor(pos.x / (float)World.REGIONSIZE),
+                (int)MathF.Floor(pos.z / (float)World.REGIONSIZE));
     }
 
     public Vector3D<int> getPosInChunk(int x, int y, int z) {

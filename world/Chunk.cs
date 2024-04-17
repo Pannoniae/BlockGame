@@ -5,8 +5,7 @@ public class Chunk {
 
     public ushort[,,] blocks;
     public LightMap lightMap;
-    public int chunkX;
-    public int chunkZ;
+    public ChunkCoord coord;
     public ChunkSection[] chunks;
     public World world;
 
@@ -22,8 +21,7 @@ public class Chunk {
 
         blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         chunks = new ChunkSection[CHUNKHEIGHT];
-        this.chunkX = chunkX;
-        this.chunkZ = chunkZ;
+        coord = new ChunkCoord(chunkX, chunkZ);
         generator = new ChunkGenerator(this);
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
@@ -43,7 +41,7 @@ public class Chunk {
             meshChunk();
 
             // get global coords
-            var worldPos = world.toWorldPos(chunkX, 0, chunkZ, x, y, z);
+            var worldPos = world.toWorldPos(coord.x, 0, coord.z, x, y, z);
             var chunkPos = world.getChunkSectionPos(worldPos);
 
             foreach (var dir in Direction.directions) {
@@ -81,9 +79,9 @@ public class Chunk {
     }
 }
 
-public record struct ChunkCoord(int x, int z);
-
-public record struct ChunkSectionCoord(int x, int y, int z);
+public readonly record struct ChunkCoord(int x, int z);
+public readonly record struct ChunkSectionCoord(int x, int y, int z);
+public readonly record struct RegionCoord(int x, int z);
 
 public enum ChunkStatus : byte {
     /// <summary>

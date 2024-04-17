@@ -13,7 +13,7 @@ public class ChunkGenerator {
     public void generate() {
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var worldPos = world.toWorldPos(chunk.chunkX, chunk.chunkZ, x, 0, z);
+                var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 // -1 to 1
                 // transform to the range 5 - 10
                 var height = world.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 7.5;
@@ -36,11 +36,11 @@ public class ChunkGenerator {
     public void populate() {
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var worldPos = world.toWorldPos(chunk.chunkX, chunk.chunkZ, x, 0, z);
+                var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 var height = world.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 7.5;
                 // TREES
                 if (MathF.Abs(world.treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
-                    worldPos = world.toWorldPos(chunk.chunkX, chunk.chunkZ, x, (int)(height + 1), z);
+                    worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
                     placeTree(worldPos.X, worldPos.Y, worldPos.Z);
                 }
             }

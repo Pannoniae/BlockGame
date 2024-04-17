@@ -280,9 +280,9 @@ public class Game {
     }
 
     private void actualRender(double dt, double interp) {
-        if (dt > 0.016) {
-            Console.Out.WriteLine("Missed a frame!  ");
-        }
+        /*if (dt > 0.016) {
+            Console.Out.WriteLine("Missed a frame!");
+        }*/
         // consume main thread actions
         while (mainThreadQueue.TryTake(out var action)) {
             action();
