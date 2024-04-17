@@ -40,7 +40,6 @@ public class ChunkGenerator {
 
     // Can place in neighbouring chunks, so they must be loaded first
     private void placeTree(int x, int y, int z) {
-        Console.Out.WriteLine("placed tree");
         // tree
         for (int i = 0; i < 7; i++) {
             world.setBlock(x, y + i, z, Blocks.LOG.id, false);

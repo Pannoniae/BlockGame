@@ -90,6 +90,13 @@ public class Player {
         applyFriction();
         clamp(dt);
 
+        // after movement applied, check the chunk the player is in
+        var prevChunk = getChunk(prevPosition);
+        var thisChunk = getChunk(position);
+        if (prevChunk != thisChunk) {
+            onChunkChanged();
+        }
+
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
 
@@ -108,6 +115,16 @@ public class Player {
         prevPosition = position;
         camera.prevBob = camera.bob;
         prevTotalTraveled = totalTraveled;
+    }
+
+    private Chunk getChunk(Vector3D<double> position) {
+        var x = (int)position.X;
+        var z = (int)position.Z;
+        return world.getChunk(new Vector2D<int>(x, z));
+    }
+
+    public void onChunkChanged() {
+        Console.Out.WriteLine("chunk changed");
     }
 
     private void applyInputMovement(double dt) {
