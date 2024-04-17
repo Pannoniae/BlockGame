@@ -15,6 +15,14 @@ public static class Utils {
     public static Vector3D<int> copy(Vector3D<int> input) {
         return new Vector3D<int>(input.X, input.Y, input.Z);
     }
+
+    /// <summary>
+    /// Correct mod which works with negative numbers. i.e. -1 mod 3 is 2 and -3 mod 3 is 0.
+    /// </summary>
+    public static int mod(int x, int m) {
+        int r = x % m;
+        return r < 0 ? r + m : r;
+    }
 }
 
 /// <summary>
@@ -39,7 +47,6 @@ public readonly record struct Direction {
     public static Vector3D<int>[] directionsSelf => [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
 
 }
-
 
 public enum RawDirection : byte {
     WEST = 0,

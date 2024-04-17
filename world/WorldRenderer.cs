@@ -14,6 +14,8 @@ public class WorldRenderer {
     public Shader shader;
     public Shader dummyShader;
 
+    public List<Chunk> chunksToRender = [];
+
     public int uProjection;
 
     //public int uColor;
@@ -60,6 +62,15 @@ public class WorldRenderer {
         Game.GD.SetActiveTexture(0);
         GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
+        // gather chunks to render
+        chunksToRender.Clear();
+        foreach (var chunk in world.chunks.Values) {
+            if (chunk.status >= ChunkStatus.MESHED) {
+                chunksToRender.Add(chunk);
+            }
+        }
+        //Console.Out.WriteLine(chunksToRender.Count);
+
         // OPAQUE PASS
         shader.use();
         shader.setUniform(uMVP, viewProj);
@@ -67,7 +78,7 @@ public class WorldRenderer {
         shader.setUniform(drawDistance, Chunk.CHUNKSIZE * 6);
         shader.setUniform(fogColour, defaultClearColour);
         shader.setUniform(blockTexture, 0);
-        foreach (var chunk in world.chunks.Values) {
+        foreach (var chunk in chunksToRender) {
             chunk.drawOpaque(world.player.camera);
         }
         // TRANSLUCENT DEPTH PRE-PASS
@@ -75,7 +86,7 @@ public class WorldRenderer {
         dummyShader.setUniform(uMVP, viewProj);
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
-        foreach (var chunk in world.chunks.Values) {
+        foreach (var chunk in chunksToRender) {
             chunk.drawTransparent(world.player.camera);
         }
         // TRANSLUCENT PASS
@@ -83,7 +94,7 @@ public class WorldRenderer {
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
-        foreach (var chunk in world.chunks.Values) {
+        foreach (var chunk in chunksToRender) {
             chunk.drawTransparent(world.player.camera);
         }
         GL.DepthMask(true);

@@ -37,6 +37,7 @@ public class ChunkSection {
     }
 
     public void tick(int x, int y, int z) {
+        return;
         var block = getBlockInChunk(x, y, z);
         // todo implement proper grass spread
         if (block == Blocks.DIRT.id) {
