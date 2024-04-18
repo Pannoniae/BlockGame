@@ -304,6 +304,14 @@ public class World {
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block, remesh);
     }
 
+    public void blockUpdate(Vector3D<int> pos) {
+        Blocks.get(getBlock(pos)).update(this, pos);
+        foreach (var dir in Direction.directions) {
+            var neighbourBlock = pos + dir;
+            Blocks.get(getBlock(neighbourBlock)).update(this, neighbourBlock);
+        }
+    }
+
     /// <summary>
     /// This checks whether it's at least generated.
     /// </summary>

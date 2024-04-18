@@ -452,13 +452,8 @@ public class Player {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
             world.setBlock(pos.X, pos.Y, pos.Z, 0);
+            world.blockUpdate(pos);
             // place water if adjacent
-            foreach (var dir in Direction.directionsWaterSpread) {
-                var neighbourBlock = pos + dir;
-                if (world.getBlock(neighbourBlock) == Blocks.WATER.id) {
-                    world.setBlock(pos.X, pos.Y, pos.Z, Blocks.WATER.id);
-                }
-            }
             world.player.lastBreak = world.worldTime;
         }
     }
