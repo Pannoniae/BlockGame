@@ -19,6 +19,7 @@ public class Blocks {
         return cond;
     }
 
+    public static Block AIR = register(new Block(0, "Air", Block.cubeUVs(0, 0)));
     public static Block GRASS = register(new Block(1, "Grass", Block.grassUVs(0, 0, 1, 0, 2, 0)));
     public static Block DIRT = register(new Block(2, "Dirt", Block.cubeUVs(2, 0)));
     public static Block GRAVEL = register(new Block(3, "Gravel", Block.cubeUVs(3, 0)));
@@ -29,7 +30,7 @@ public class Blocks {
         .transparency()
     );
 
-    public static Block WATER = register(new Block(7, "Water", Block.cubeUVs(7, 0))
+    public static Block WATER = register(new Water(7, "Water", Block.cubeUVs(7, 0))
         .translucency()
         .noCollision()
         .noSelection());
@@ -149,6 +150,24 @@ public class Block {
     public Block noSelection() {
         selection = false;
         return this;
+    }
+
+
+    public virtual void update(World world, Vector3D<int> pos) {
+
+    }
+}
+
+public class Water(ushort id, string name, UVPair[] uvs, AABB? aabb = null) : Block(id, name, uvs, aabb) {
+
+    public override void update(World world, Vector3D<int> pos) {
+        foreach (var dir in Direction.directionsWaterSpread) {
+            var neighbourBlock = pos + dir;
+            if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
+                world.setBlock(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id);
+                world.blockUpdate(neighbourBlock);
+            }
+        }
     }
 }
 
