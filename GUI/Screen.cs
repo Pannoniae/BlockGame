@@ -10,6 +10,17 @@ public class Screen {
     public Vector2D<int> size;
     public Vector2D<int> centre;
 
+
+    /// <summary>
+    /// If true, the screen lets screens under it update.
+    /// </summary>
+    public bool transparentUpdate = false;
+
+    /// <summary>
+    /// If true, the screen lets screens under it render. (e.g. the pause menu)
+    /// </summary>
+    public bool transparentRender = false;
+
     public List<GUIElement> elements = new();
 
     public static LoadingScreen LOADING = new();
@@ -28,13 +39,30 @@ public class Screen {
         elements.Clear();
     }
 
+    /// <summary>
+    /// Clears the entire screenstack and pushes the screen.
+    /// </summary>
     public static void switchTo(Screen screen) {
-        Game.instance.screen?.deactivate();
-        Game.instance.screen = screen;
+        foreach (var sc in Game.instance.screenStack) {
+            sc.deactivate();
+        }
+        Game.instance.screenStack.push(screen);
         screen.size = new Vector2D<int>(Game.width, Game.height);
         screen.centre = screen.size / 2;
         screen.activate();
         screen.resize(new Vector2D<int>(Game.width, Game.height));
+    }
+
+    /// <summary>
+    /// It's like switchTo but the screens already on the stack don't get deactivated.
+    /// </summary>
+    public static void addToStack(Screen screen) {
+        Game.instance.screenStack.push(screen);
+        screen.size = new Vector2D<int>(Game.width, Game.height);
+        screen.centre = screen.size / 2;
+        screen.activate();
+        screen.resize(new Vector2D<int>(Game.width, Game.height));
+
     }
 
     public void addElement(GUIElement element) {
