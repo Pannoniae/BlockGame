@@ -78,7 +78,7 @@ public class WorldIO {
         world.player.position.Z = tag.Get<DoubleTag>("posZ");
         world.player.prevPosition = world.player.position;
 
-        world.renderer.meshChunks();
+        //world.renderer.meshChunks();
         return world;
     }
 

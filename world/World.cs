@@ -14,6 +14,11 @@ public class World {
     public Queue<ChunkLoadTicket> chunkLoadQueue = new();
     public Queue<BlockUpdate> blockUpdateQueue = new();
 
+    /// <summary>
+    /// What needs to be meshed at the end of the frame
+    /// </summary>
+    public Queue<ChunkSectionCoord> meshingQueue = new();
+
     public WorldRenderer renderer;
 
     public Player player;
@@ -133,6 +138,12 @@ public class World {
                 }
             }
         }
+
+        // empty the meshing queue
+        while (meshingQueue.TryDequeue(out var sectionCoord)) {
+            var section = getChunkSection(sectionCoord);
+            section.renderer.meshChunk();
+        }
     }
 
     private void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
@@ -236,6 +247,10 @@ public class World {
             chunks[chunkCoord].meshChunk();
         }
         return chunks[chunkCoord];
+    }
+
+    public void mesh(ChunkSectionCoord coord) {
+        meshingQueue.Enqueue(coord);
     }
 
     public Vector3D<int> getWorldSize() {
@@ -371,12 +386,26 @@ public class World {
         return chunks[pos];
     }
 
+    public ChunkSection getChunkSection(int x, int y, int z) {
+        var pos = getChunkSectionPos(new Vector3D<int>(x, y, z));
+        return chunks[new ChunkCoord(pos.x, pos.z)].chunks[pos.y];
+    }
+
+    public ChunkSection getChunkSection(Vector3D<int> coord) {
+        var pos = getChunkSectionPos(coord);
+        return chunks[new ChunkCoord(pos.x, pos.z)].chunks[pos.y];
+    }
+    
+    public ChunkSection getChunkSection(ChunkSectionCoord sectionCoord) {
+        return chunks[new ChunkCoord(sectionCoord.x, sectionCoord.z)].chunks[sectionCoord.y];
+    }
+
     public Chunk getChunk(Vector2D<int> position) {
         var pos = getChunkPos(position);
         return chunks[pos];
     }
 
-    public Chunk getChunkByChunkPos(ChunkCoord position) {
+    public Chunk getChunk(ChunkCoord position) {
         return chunks[position];
     }
 

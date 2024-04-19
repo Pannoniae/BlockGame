@@ -41,7 +41,7 @@ public class Game {
     /// <summary>
     /// The current game screen which is shown.
     /// </summary>
-    public Screen screen;
+    public FIFOStack<Screen> screenStack;
 
     public static GUI gui;
 
@@ -167,6 +167,7 @@ public class Game {
         permanentStopwatch.Start();
 
         blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
+        screenStack = [];
         //Screen.initScreens(gui);
         Screen.switchTo(Screen.LOADING);
         //world = new World();
@@ -200,16 +201,12 @@ public class Game {
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
     }
 
-    public void updateThreadLoop() {
-        //Thread.Sleep();
-    }
-
     private void onMouseMove(IMouse m, Vector2 position) {
-        screen.onMouseMove(m, position);
+        screenStack.peek().onMouseMove(m, position);
     }
 
     private void onMouseDown(IMouse m, MouseButton button) {
-        screen.onMouseDown(m, button);
+        screenStack.peek().onMouseDown(m, button);
     }
 
     public void lockMouse() {
@@ -226,11 +223,11 @@ public class Game {
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
-        screen.click(m.Position);
+        screenStack.peek().click(m.Position);
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-        screen.onKeyDown(keyboard, key, scancode);
+        screenStack.peek().onKeyDown(keyboard, key, scancode);
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
@@ -240,7 +237,7 @@ public class Game {
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         width = size.X;
         height = size.Y;
-        screen.resize(size);
+        screenStack.peek().resize(size);
         gui.resize(size);
     }
 
@@ -255,7 +252,7 @@ public class Game {
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
-        screen.update(dt);
+        screenStack.peek().update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
         //Console.Out.WriteLine(after - before);
 
@@ -302,13 +299,13 @@ public class Game {
             focused = false;
         }*/
         //GD.ResetStates();
-        screen.clear(GD, dt, interp);
-        screen.render(dt, interp);
+        screenStack.peek().clear(GD, dt, interp);
+        screenStack.peek().render(dt, interp);
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
         gui.tb.Begin();
-        screen.draw();
+        screenStack.peek().draw();
         gui.tb.End();
         //if (gui.debugScreen) {
         /*mgui.Update((float)dt);

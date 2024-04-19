@@ -1,3 +1,5 @@
+using Silk.NET.Maths;
+
 namespace BlockGame;
 
 public class Chunk {
@@ -38,16 +40,19 @@ public class Chunk {
         blocks[x, y, z] = block;
 
         if (remesh) {
-            meshChunk();
+            // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
+            var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
+            world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
+            //meshChunk();
 
             // get global coords
-            var worldPos = world.toWorldPos(coord.x, 0, coord.z, x, y, z);
+            var worldPos = world.toWorldPos(coord.x, coord.z, x, y, z);
             var chunkPos = world.getChunkSectionPos(worldPos);
 
             foreach (var dir in Direction.directions) {
                 var neighbourSection = world.getChunkSectionPos(worldPos + dir);
                 if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                    world.getChunkByChunkPos(new ChunkCoord(neighbourSection.x, neighbourSection.z)).chunks[neighbourSection.y].renderer.meshChunk();
+                    world.mesh(neighbourSection);
                 }
             }
         }
