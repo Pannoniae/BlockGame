@@ -107,8 +107,8 @@ public class GUI {
     /// Draw a full-screen background with a block texture and the specified block size in pixels.
     /// </summary>
     public void drawBG(Block block, float size) {
-        var texCoords = Block.texCoords(block.uvs[0]);
-        var texCoordsMax = Block.texCoords(block.uvs[0].u + 1, block.uvs[0].v + 1);
+        var texCoords = Block.texCoords(block.uvs[0]).As<float>();
+        var texCoordsMax = Block.texCoords(block.uvs[0].u + 1, block.uvs[0].v + 1).As<float>();
 
         // handle guiscale
         size *= guiScale;

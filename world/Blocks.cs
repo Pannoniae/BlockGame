@@ -93,12 +93,12 @@ public class Block {
     /// <summary>
     /// 0 = 0, 65535 = 1
     /// </summary>
-    public static Vector2D<float> texCoords(int x, int y) {
-        return new Vector2D<float>(x * 16f / atlasSize, y * 16f / atlasSize);
+    public static Vector2D<Half> texCoords(int x, int y) {
+        return new Vector2D<Half>((Half)(x * 16f / atlasSize), (Half)(y * 16f / atlasSize));
     }
 
-    public static Vector2D<float> texCoords(UVPair uv) {
-        return new Vector2D<float>(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
+    public static Vector2D<Half> texCoords(UVPair uv) {
+        return new Vector2D<Half>((Half)(uv.u * 16f / atlasSize), (Half)(uv.v * 16f / atlasSize));
     }
 
     public static UVPair[] cubeUVs(int x, int y) {
@@ -113,8 +113,8 @@ public class Block {
     }
 
     // this will pack the data into the uint
-    public static uint packData(byte direction, byte ao) {
-        return (uint)(ao << 3) | direction;
+    public static ushort packData(byte direction, byte ao) {
+        return (ushort)(ao << 3 | direction);
     }
 
     public static AABB fullBlock() {
