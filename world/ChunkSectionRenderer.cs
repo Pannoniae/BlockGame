@@ -86,8 +86,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        var sw = new Stopwatch();
-        sw.Start();
+        //var sw = new Stopwatch();
+        //sw.Start();
         vao = new BlockVAO();
         watervao = new BlockVAO();
         // first we render everything which is NOT translucent
@@ -126,8 +126,8 @@ public class ChunkSectionRenderer {
         else {
             isEmpty = false;
         }
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        sw.Stop();
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        //sw.Stop();
     }
 
     public ushort toVertex(float f) {
