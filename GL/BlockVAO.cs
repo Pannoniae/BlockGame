@@ -74,12 +74,12 @@ public class BlockVAO {
     public void format() {
         unsafe {
             // It will be 16 bytes on the GPU anyway so we can waste a bit
-            // 24 bytes in total, 3*4 for pos, 2*4 for uv, 2 bytes for data
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12 * sizeof(ushort), (void*)0);
+            // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 12 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 9 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedInt, 12 * sizeof(ushort), (void*)(0 + 10 * sizeof(ushort)));
+            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 9 * sizeof(ushort), (void*)(0 + 8 * sizeof(ushort)));
             GL.EnableVertexAttribArray(2);
         }
     }
@@ -101,17 +101,17 @@ public struct BlockVertex {
     public float x;
     public float y;
     public float z;
-    public float u;
-    public float v;
+    public Half u;
+    public Half v;
 
     /// <summary>
     /// from least significant:
     /// first 3 bits are side (see Direction enum)
     /// next 2 bits are AO
     /// </summary>
-    public uint d;
+    public ushort d;
 
-    public BlockVertex(float x, float y, float z, float u, float v, uint d) {
+    public BlockVertex(float x, float y, float z, Half u, Half v, ushort d) {
         // we receive a float from 0 to 16.
         // we convert it to a normalised float from 0 to 1 converted to an ushort
         //this.x = (ushort)(x / 16f * ushort.MaxValue);
@@ -125,7 +125,7 @@ public struct BlockVertex {
         this.d = d;
     }
 
-    public BlockVertex(ushort x, ushort y, ushort z, ushort u, ushort v, ushort d) {
+    public BlockVertex(ushort x, ushort y, ushort z, Half u, Half v, ushort d) {
         this.x = x;
         this.y = y;
         this.z = z;
