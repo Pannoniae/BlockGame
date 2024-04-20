@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -85,6 +86,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
+        var sw = new Stopwatch();
+        sw.Start();
         vao = new BlockVAO();
         watervao = new BlockVAO();
         // first we render everything which is NOT translucent
@@ -123,6 +126,8 @@ public class ChunkSectionRenderer {
         else {
             isEmpty = false;
         }
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -343,7 +348,7 @@ public class ChunkSectionRenderer {
                             getBlockFromCache(wx, wy + 1, wz + 1),
                             getBlockFromCache(wx - 1, wy + 1, wz + 1));
 
-                        var nb = section.world.getBlockUnsafe(wx - 1, wy, wz);
+                        var nb = getBlockFromCache(wx - 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.WEST, west1);
                             var data2 = Block.packData((byte)RawDirection.WEST, west2);
@@ -368,7 +373,7 @@ public class ChunkSectionRenderer {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-                        nb = section.world.getBlockUnsafe(wx + 1, wy, wz);
+                        nb = getBlockFromCache(wx + 1, wy, wz);
                         if (nb != -1 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.EAST, east1);
                             var data2 = Block.packData((byte)RawDirection.EAST, east2);
@@ -393,7 +398,7 @@ public class ChunkSectionRenderer {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-                        nb = section.world.getBlockUnsafe(wx, wy, wz - 1);
+                        nb = getBlockFromCache(wx, wy, wz - 1);
                         if (nb != -1 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.SOUTH, south1);
                             var data2 = Block.packData((byte)RawDirection.SOUTH, south2);
@@ -418,7 +423,7 @@ public class ChunkSectionRenderer {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-                        nb = section.world.getBlockUnsafe(wx, wy, wz + 1);
+                        nb = getBlockFromCache(wx, wy, wz + 1);
                         if (nb != -1 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.NORTH, north1);
                             var data2 = Block.packData((byte)RawDirection.NORTH, north2);
@@ -443,7 +448,7 @@ public class ChunkSectionRenderer {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-                        nb = section.world.getBlockUnsafe(wx, wy - 1, wz);
+                        nb = getBlockFromCache(wx, wy - 1, wz);
                         if (nb != -1 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.DOWN, aoXminZminYmin);
                             var data2 = Block.packData((byte)RawDirection.DOWN, aoXminZmaxYmin);
@@ -468,7 +473,7 @@ public class ChunkSectionRenderer {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
-                        nb = section.world.getBlockUnsafe(wx, wy + 1, wz);
+                        nb = getBlockFromCache(wx, wy + 1, wz);
                         if (nb != -1 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.UP, aoXminZmaxYmax);
                             var data2 = Block.packData((byte)RawDirection.UP, aoXminZminYmax);
