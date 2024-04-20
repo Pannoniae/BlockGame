@@ -172,8 +172,8 @@ public class GameScreen : Screen {
         var centreX = Game.centreX;
         var centreY = Game.centreY;
         // setup blending
-        GD.BlendingEnabled = true;
-        GD.BlendState = bs;
+        //GD.BlendingEnabled = true;
+        //GD.BlendState = bs;
         var gui = Game.gui;
 
         gui.tb.Draw(gui.colourTexture,
@@ -190,7 +190,7 @@ public class GameScreen : Screen {
                 new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
             new Color4b(240, 240, 240));
         // reset blending this is messed up
-        GD.BlendState = Game.initialBlendState;
+        //GD.BlendState = Game.initialBlendState;
 
         //tb.DrawString(gui.guiFont, "BlockGame", Vector2.Zero, Color4b.White);
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
