@@ -73,7 +73,6 @@ public class BlockVAO {
 
     public void format() {
         unsafe {
-            // It will be 16 bytes on the GPU anyway so we can waste a bit
             // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);

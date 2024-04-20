@@ -443,6 +443,7 @@ public class Player {
             var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
             if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
                 world.setBlock(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
+                world.blockUpdate(pos);
                 world.player.lastPlace = world.worldTime;
             }
         }

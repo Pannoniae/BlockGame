@@ -24,7 +24,7 @@ public class ChunkGenerator {
 
                 // water if low
                 if (height < 7) {
-                    for (int y2 = (int)height; y2 <= 7; y2++) {
+                    for (int y2 = (int)Math.Round(height); y2 <= 7; y2++) {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
