@@ -18,11 +18,12 @@ const float a[6] = float[6](0.8, 0.8, 0.6, 0.6, 0.6, 1);
 uniform vec4 fogColour;
 
 float getFog(float d) {
-    float fogMax = drawDistance - 32.0;
-    float fogMin = drawDistance - 48.0;
-    if (d >= fogMax) return 1.0;
-    if (d <= fogMin) return 0.0;
-    return 1.0 - (fogMax - d) / (fogMax - fogMin);
+    float fogMax = drawDistance - 16.0;
+    float fogMin = drawDistance - 32.0;
+    /*if (d >= fogMax) return 1.0;
+    if (d <= fogMin) return 0.0;*/
+    // replace with clamp
+    return clamp(1.0 - (fogMax - d) / (fogMax - fogMin), 0.0, 1.0);
 }
 
 void main() {
@@ -33,7 +34,7 @@ void main() {
     // mix fog
     color = vec4(blockColour.rgb * lColor * ao, blockColour.a);
     color = mix(color, fogColour, ratio);
-    if (color.a < 0.005) {
+    if (color.a <= 0) {
         discard;
     }
 }

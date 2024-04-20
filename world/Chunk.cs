@@ -84,7 +84,14 @@ public class Chunk {
     }
 }
 
-public readonly record struct ChunkCoord(int x, int z);
+public readonly record struct ChunkCoord(int x, int z) {
+    public double distance(ChunkCoord chunkCoord) {
+        int dx = x - chunkCoord.x;
+        int dz = z - chunkCoord.z;
+        return Math.Sqrt(dx * dx + dz * dz);
+    }
+}
+
 public readonly record struct ChunkSectionCoord(int x, int y, int z);
 public readonly record struct RegionCoord(int x, int z);
 
