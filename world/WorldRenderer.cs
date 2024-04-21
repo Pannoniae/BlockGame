@@ -75,7 +75,7 @@ public class WorldRenderer {
         shader.use();
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
-        shader.setUniform(drawDistance, Chunk.CHUNKSIZE * 6);
+        shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
         shader.setUniform(fogColour, defaultClearColour);
         shader.setUniform(blockTexture, 0);
         foreach (var chunk in chunksToRender) {

@@ -11,6 +11,10 @@ public class Chunk {
     public ChunkSection[] chunks;
     public World world;
 
+    public int worldX => coord.x * CHUNKSIZE;
+    public int worldZ => coord.z * CHUNKSIZE;
+    public Vector2D<int> worldPos => new(worldX, worldZ);
+
     public ChunkGenerator generator;
 
     public const int CHUNKHEIGHT = 8;
@@ -24,7 +28,7 @@ public class Chunk {
         blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         chunks = new ChunkSection[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
-        generator = new ChunkGenerator(this);
+        generator = new TechDemoChunkGenerator(this);
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);

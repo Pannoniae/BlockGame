@@ -11,7 +11,7 @@ public class World {
     //public List<ChunkSection> sortedTransparentChunks = [];
 
     // chunk load queue
-    public Queue<ChunkLoadTicket> chunkLoadQueue = new();
+    public List<ChunkLoadTicket> chunkLoadQueue = new();
     public Queue<BlockUpdate> blockUpdateQueue = new();
 
     /// <summary>
@@ -35,6 +35,8 @@ public class World {
     private const long MAX_CHUNKLOAD_FRAMETIME = 5;
     private const int SPAWNCHUNKS_SIZE = 2;
 
+    public const int RENDERDISTANCE = 32;
+
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
     /// </summary>
@@ -47,10 +49,10 @@ public class World {
         random = new Random(seed);
         noise = new FastNoiseLite(seed);
         treenoise = new FastNoiseLite(random.Next(seed));
-        noise.SetFrequency(0.03f);
-        noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-        noise.SetFractalLacunarity(2f);
-        noise.SetFractalGain(0.5f);
+        noise.SetFrequency(0.003f);
+        //noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+        //noise.SetFractalLacunarity(2f);
+        //noise.SetFractalGain(0.5f);
         treenoise.SetFrequency(1f);
         worldTime = 0;
         worldTick = 0;
@@ -70,7 +72,7 @@ public class World {
         // create terrain
         //genTerrainNoise();
         // separate loop so all data is there
-        player.loadChunksAroundThePlayer(6);
+        player.loadChunksAroundThePlayer(RENDERDISTANCE);
     }
 
     private void genTerrainSine() {
@@ -119,7 +121,9 @@ public class World {
         //var ctr = 0;
         // consume the chunk queue
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < MAX_CHUNKLOAD_FRAMETIME) {
-            if (chunkLoadQueue.TryDequeue(out var ticket)) {
+            if (chunkLoadQueue.Count > 0) {
+                var ticket = chunkLoadQueue[0];
+                chunkLoadQueue.RemoveAt(0);
                 loadChunk(ticket.chunkCoord, ticket.level);
                 //ctr++;
             }
@@ -147,7 +151,7 @@ public class World {
     }
 
     private void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
-        chunkLoadQueue.Enqueue(new ChunkLoadTicket(chunkCoord, level));
+        chunkLoadQueue.Insert(0, new ChunkLoadTicket(chunkCoord, level));
     }
 
     /// <summary>
