@@ -2,14 +2,14 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class ChunkComparer : IComparer<ChunkSection> {
-    public PlayerCamera camera;
+public class ChunkComparer : IComparer<Chunk> {
+    public Player player;
 
-    public ChunkComparer(PlayerCamera camera) {
-        this.camera = camera;
+    public ChunkComparer(Player player) {
+        this.player = player;
     }
-    public int Compare(ChunkSection x, ChunkSection y) {
-        return (int)(Vector3D.Distance(x.worldPos.As<float>(), camera.position.toVec3F()) -
-               Vector3D.Distance(y.worldPos.As<float>(), camera.position.toVec3F()));
+    public int Compare(Chunk x, Chunk y) {
+        return Vector2D.Distance(x.worldPos, new Vector2D<int>((int)player.position.X, (int)player.position.Z)) -
+               Vector2D.Distance(y.worldPos, new Vector2D<int>((int)player.position.X, (int)player.position.Z));
     }
 }

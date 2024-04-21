@@ -128,11 +128,14 @@ public class Player {
     public void loadChunksAroundThePlayer(int renderDistance) {
         var chunk = world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
         world.loadChunksAroundChunk(chunk, renderDistance);
+        // sort queue based on position
+        world.chunkLoadQueue.Sort((ticket1, ticket2)
+            => new ChunkCoordComparer(this).Compare(ticket1.chunkCoord, ticket2.chunkCoord));
     }
 
     public void onChunkChanged() {
         Console.Out.WriteLine("chunk changed");
-        loadChunksAroundThePlayer(6);
+        loadChunksAroundThePlayer(World.RENDERDISTANCE);
     }
 
     private void applyInputMovement(double dt) {
