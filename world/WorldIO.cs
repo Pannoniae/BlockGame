@@ -33,8 +33,8 @@ public class WorldIO {
             tag.BeginList(TagType.Short, "blocks");
             // using YXZ order
             for (int y = 0; y < my; y++) {
-                for (int x = 0; x < mx; x++) {
-                    for (int z = 0; z < mz; z++) {
+                for (int z = 0; z < mz; z++) {
+                    for (int x = 0; x < mx; x++) {
                         //blocks[index] = chunk.blocks[x, y, z];
                         tag.AddShort(chunk.getBlock(x, y, z));
                         index++;
@@ -64,8 +64,8 @@ public class WorldIO {
             var blocks = chunk.Get<ListTag>("blocks");
             int index = 0;
             for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                    for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                         world.chunks[new ChunkCoord(chunkX, chunkZ)].setBlock(x, y, z, (ShortTag)blocks[index], false);
                         index++;
                     }

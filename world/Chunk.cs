@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
 namespace BlockGame;
@@ -18,6 +19,9 @@ public class Chunk {
 
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
+    public const int CHUNKSIZESQ = 16 * 16;
+    public const int CHUNKSIZEEX = 18;
+    public const int CHUNKSIZEEXSQ = 18 * 18;
 
 
     public Chunk(World world, int chunkX, int chunkZ) {
@@ -73,6 +77,7 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getBlock(int x, int y, int z) {
         var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
         var yRem = y - sectionY * CHUNKSIZE;
@@ -105,7 +110,12 @@ public class Chunk {
     }
 }
 
+// we are declaring the fields manually because the language designers thought that generating *properties* is a good idea,
+// especially when I care about access performance.
 public readonly record struct ChunkCoord(int x, int z) {
+    public readonly int x = x;
+    public readonly int z = z;
+
     public double distance(ChunkCoord chunkCoord) {
         int dx = x - chunkCoord.x;
         int dz = z - chunkCoord.z;
@@ -119,8 +129,16 @@ public readonly record struct ChunkCoord(int x, int z) {
     }
 }
 
-public readonly record struct ChunkSectionCoord(int x, int y, int z);
-public readonly record struct RegionCoord(int x, int z);
+public readonly record struct ChunkSectionCoord(int x, int y, int z) {
+    public readonly int x = x;
+    public readonly int y = z;
+    public readonly int z = z;
+}
+
+public readonly record struct RegionCoord(int x, int z) {
+    public readonly int x = x;
+    public readonly int z = z;
+}
 
 public enum ChunkStatus : byte {
     /// <summary>

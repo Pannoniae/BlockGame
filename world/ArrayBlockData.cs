@@ -1,13 +1,19 @@
+using System.Runtime.CompilerServices;
+
 namespace BlockGame;
 
 public class ArrayBlockData : BlockData {
-    public ushort[,,] blocks;
+    public ushort[] blocks = new ushort[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
 
-    public ArrayBlockData() {
-        blocks = new ushort[Chunk.CHUNKSIZE, Chunk.CHUNKSIZE, Chunk.CHUNKSIZE];
-    }
+    // YZX because the internet said so
     public ushort this[int x, int y, int z] {
-        get => blocks[x, y, z];
-        set => blocks[x, y, z] = value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => blocks[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
+                      x * Chunk.CHUNKSIZE +
+                      z];
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => blocks[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
+                      x * Chunk.CHUNKSIZE +
+                      z] = value;
     }
 }

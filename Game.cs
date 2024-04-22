@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SFML.Audio;
 using Silk.NET.GLFW;
@@ -184,6 +186,9 @@ public class Game {
         gui = new GUI();
         gui.loadFonts();
 
+        RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("meshChunk").MethodHandle);
+        RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance).MethodHandle);
+
         Console.Out.WriteLine("Loaded ASCII font.");
         Task.Run(() => {
             Console.Out.WriteLine("Loading unicode font...");
@@ -265,11 +270,14 @@ public class Game {
     private void render(double dt) {
         dt = Math.Min(dt, maxTimestep);
         accumTime += dt;
+        //var i = 0;
         while (accumTime >= fixeddt) {
             update(fixeddt);
             t += fixeddt;
             accumTime -= fixeddt;
+            //i++;
         }
+        //Console.Out.WriteLine($"{i} updates called");
         // get remaining time between 0 and 1
         var interp = accumTime / fixeddt;
         actualRender(dt, interp);

@@ -102,7 +102,7 @@ public class PlayerCamera {
     }
 
     public Matrix4x4 getProjectionMatrix() {
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, 400.0f);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
     }
 
     public static float DegreesToRadians(float degrees) {

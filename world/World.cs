@@ -30,6 +30,7 @@ public class World {
     public int worldTick;
 
     public Random random;
+    public static bool glob;
 
     // max. 5 msec in each frame for chunkload
     private const long MAX_CHUNKLOAD_FRAMETIME = 5;
@@ -61,7 +62,13 @@ public class World {
         // load a minimal amount of chunks so the world can get started
         loadSpawnChunks();
 
+        // teleport player to top block
+        while (getBlock(player.position.As<int>()) != 0) {
+            player.position.Y += 1;
+        }
+
         renderer.meshBlockOutline();
+        glob = true;
     }
 
     private void loadSpawnChunks() {
@@ -118,18 +125,18 @@ public class World {
         }*/
 
         var start = Game.permanentStopwatch.ElapsedMilliseconds;
-        //var ctr = 0;
-        // consume the chunk queue
+        var ctr = 0;
+        // consume the chunk queue#
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < MAX_CHUNKLOAD_FRAMETIME) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[0];
                 chunkLoadQueue.RemoveAt(0);
                 loadChunk(ticket.chunkCoord, ticket.level);
-                //ctr++;
+                ctr++;
             }
         }
         //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
-        //Console.Out.WriteLine(ctr);
+        //Console.Out.WriteLine($"{ctr} chunks loaded");
 
         // random block updates!
         foreach (var chunk in chunks) {
@@ -290,26 +297,24 @@ public class World {
     }
 
     public ushort getBlock(int x, int y, int z) {
-        if (!inWorld(x, y, z)) {
+        if (y is < 0 or >= WORLDHEIGHT) {
             return 0;
         }
-
         var blockPos = getPosInChunk(x, y, z);
-        var chunk = getChunk(x, z);
-        return chunk.getBlock(blockPos.X, y, blockPos.Z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : (ushort)0;
     }
 
     /// <summary>
     /// getBlock but returns -1 if OOB
     /// </summary>
     public int getBlockUnsafe(int x, int y, int z) {
-        if (!inWorld(x, y, z)) {
+        if (y is < 0 or >= WORLDHEIGHT) {
             return -1;
         }
-
         var blockPos = getPosInChunk(x, y, z);
-        var chunk = getChunk(x, z);
-        return chunk.getBlock(blockPos.X, y, blockPos.Z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : -1;
     }
 
     public ushort getBlock(Vector3D<int> pos) {
@@ -359,6 +364,10 @@ public class World {
         return chunks.ContainsKey(chunkpos) && chunks[chunkpos].status >= ChunkStatus.GENERATED;
     }
 
+    public bool inWorldY(int x, int y, int z) {
+        return y is >= 0 and < WORLDHEIGHT;
+    }
+
     public ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
         return new ChunkSectionCoord(
             (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
@@ -405,6 +414,12 @@ public class World {
     public Chunk getChunk(int x, int z) {
         var pos = getChunkPos(x, z);
         return chunks[pos];
+    }
+
+    public bool getChunkMaybe(int x, int z, out Chunk? chunk) {
+        var pos = getChunkPos(x, z);
+        var c = chunks.TryGetValue(pos, out chunk);
+        return c;
     }
 
     public ChunkSection getChunkSection(int x, int y, int z) {
