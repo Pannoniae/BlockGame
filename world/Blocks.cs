@@ -45,7 +45,8 @@ public class Blocks {
     public static Block LEAVES = register(new Block(10, "Leaves", Block.cubeUVs(12, 0)).transparency());
 
     public static bool isSolid(int block) {
-        return block != 0 && !get(block).transparent && !get(block).translucent;
+        var bl = get(block);
+        return block != 0 && !bl.transparent && !bl.translucent;
     }
 
     public static bool isTransparent(int block) {
