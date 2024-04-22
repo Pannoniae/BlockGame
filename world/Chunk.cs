@@ -131,7 +131,7 @@ public readonly record struct ChunkCoord(int x, int z) {
 
 public readonly record struct ChunkSectionCoord(int x, int y, int z) {
     public readonly int x = x;
-    public readonly int y = z;
+    public readonly int y = y;
     public readonly int z = z;
 }
 
