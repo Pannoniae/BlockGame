@@ -5,7 +5,6 @@ namespace BlockGame;
 public class Chunk {
     public ChunkStatus status;
 
-    public ushort[,,] blocks;
     public LightMap lightMap;
     public ChunkCoord coord;
     public ChunkSection[] chunks;
@@ -25,7 +24,6 @@ public class Chunk {
         status = ChunkStatus.EMPTY;
         this.world = world;
 
-        blocks = new ushort[CHUNKSIZE, CHUNKSIZE * CHUNKHEIGHT, CHUNKSIZE];
         chunks = new ChunkSection[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
         generator = new TechDemoChunkGenerator(this);
@@ -41,11 +39,20 @@ public class Chunk {
     /// Uses chunk coordinates
     /// </summary>
     public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
-        blocks[x, y, z] = block;
+        var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
+        var yRem = y - sectionY * CHUNKSIZE;
+
+        // handle empty chunksections
+        var section = chunks[sectionY];
+        if (section.isEmpty && block != 0) {
+            section.blocks = new ArrayBlockData();
+            section.isEmpty = false;
+        }
+        section.blocks[x, yRem, z] = block;
 
         if (remesh) {
             // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
-            var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
+
             world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
             //meshChunk();
 
@@ -60,6 +67,16 @@ public class Chunk {
                 }
             }
         }
+    }
+
+
+    /// <summary>
+    /// Uses chunk coordinates
+    /// </summary>
+    public ushort getBlock(int x, int y, int z) {
+        var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
+        var yRem = y - sectionY * CHUNKSIZE;
+        return chunks[sectionY].blocks[x, yRem, z];
     }
 
     public void meshChunk() {
