@@ -139,7 +139,7 @@ public class Player {
     }
 
     public void onChunkChanged() {
-        Console.Out.WriteLine("chunk changed");
+        //Console.Out.WriteLine("chunk changed");
         loadChunksAroundThePlayer(World.RENDERDISTANCE);
     }
 
