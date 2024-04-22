@@ -33,7 +33,7 @@ public class World {
     public static bool glob;
 
     // max. 5 msec in each frame for chunkload
-    private const long MAX_CHUNKLOAD_FRAMETIME = 5;
+    private const long MAX_CHUNKLOAD_FRAMETIME = 10;
     private const int SPAWNCHUNKS_SIZE = 2;
 
     public const int RENDERDISTANCE = 32;
@@ -72,7 +72,7 @@ public class World {
     }
 
     private void loadSpawnChunks() {
-        loadChunksAroundChunkImmediately(new ChunkCoord(0, 0), 2);
+        loadChunksAroundChunkImmediately(new ChunkCoord(0, 0), SPAWNCHUNKS_SIZE);
     }
 
     public void generate() {

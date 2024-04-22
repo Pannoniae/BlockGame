@@ -8,12 +8,12 @@ public class ArrayBlockData : BlockData {
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => blocks[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                      x * Chunk.CHUNKSIZE +
-                      z];
+        get => blocks[y * Chunk.CHUNKSIZESQ +
+                      z * Chunk.CHUNKSIZE +
+                      x];
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => blocks[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                      x * Chunk.CHUNKSIZE +
-                      z] = value;
+        set => blocks[y * Chunk.CHUNKSIZESQ +
+                      z * Chunk.CHUNKSIZE +
+                      x] = value;
     }
 }
