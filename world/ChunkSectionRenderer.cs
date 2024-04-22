@@ -229,25 +229,26 @@ public class ChunkSectionRenderer {
 
             // helper function to get blocks from cache
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static int getBlockFromCache(int x, int y, int z) {
+            static ushort getBlockFromCache(int x, int y, int z) {
                 return neighbours[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)];
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            unsafe static int getBlockFromCacheUnsafe(ushort* arrayBase, int x, int y, int z) {
+            unsafe static ushort getBlockFromCacheUnsafe(ushort* arrayBase, int x, int y, int z) {
                 return arrayBase[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)];
             }
 
             for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
                 for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                     for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                        if (whichBlocks(getBlockFromCache(x, y, z))) {
+                        var bl = getBlockFromCache(x, y, z);
+                        if (whichBlocks(bl)) {
                             var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
                             int wx = wpos.X;
                             int wy = wpos.Y;
                             int wz = wpos.Z;
 
-                            Block b = Blocks.get(getBlockFromCache(x, y, z));
+                            Block b = Blocks.get(bl);
 
                             // calculate texcoords
                             var westCoords = b.uvs[0];
