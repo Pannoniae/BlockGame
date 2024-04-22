@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
 namespace BlockGame;
@@ -42,7 +43,8 @@ public class ChunkSection {
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
     }
 
-    public int getBlockInChunk(int x, int y, int z) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort getBlockInChunk(int x, int y, int z) {
         return blocks[x, y, z];
     }
 

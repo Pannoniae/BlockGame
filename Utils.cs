@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
 namespace BlockGame;
@@ -19,6 +20,7 @@ public static class Utils {
     /// <summary>
     /// Correct mod which works with negative numbers. i.e. -1 mod 3 is 2 and -3 mod 3 is 0.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int mod(int x, int m) {
         int r = x % m;
         return r < 0 ? r + m : r;

@@ -1,21 +1,26 @@
+using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
 namespace BlockGame;
 
 public class Blocks {
-    public static Dictionary<int, Block> blocks = new();
+
+    private const int MAXBLOCKS = 128;
+    public static Block[] blocks = new Block[MAXBLOCKS];
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Block get(int id) {
         return blocks[id];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool tryGet(int id, out Block block) {
-        var cond = blocks.TryGetValue(id, out var i);
-        block = cond ? i : blocks[1];
+        var cond = id is >= 0 and < MAXBLOCKS;
+        block = cond ? blocks[id] : blocks[1];
         return cond;
     }
 
@@ -45,8 +50,11 @@ public class Blocks {
     public static Block LEAVES = register(new Block(10, "Leaves", Block.cubeUVs(12, 0)).transparency());
 
     public static bool isSolid(int block) {
+        if (block == 0) {
+            return false;
+        }
         var bl = get(block);
-        return block != 0 && !bl.transparent && !bl.translucent;
+        return !bl.transparent && !bl.translucent;
     }
 
     public static bool isTransparent(int block) {
@@ -94,10 +102,12 @@ public class Block {
     /// <summary>
     /// 0 = 0, 65535 = 1
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoords(int x, int y) {
         return new Vector2D<Half>((Half)(x * 16f / atlasSize), (Half)(y * 16f / atlasSize));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoords(UVPair uv) {
         return new Vector2D<Half>((Half)(uv.u * 16f / atlasSize), (Half)(uv.v * 16f / atlasSize));
     }
@@ -114,6 +124,7 @@ public class Block {
     }
 
     // this will pack the data into the uint
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ushort packData(byte direction, byte ao) {
         return (ushort)(ao << 3 | direction);
     }
