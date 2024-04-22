@@ -214,6 +214,7 @@ public class GameScreen : Screen {
         var p = world.player;
         var c = p.camera;
         var m = Game.instance.metrics;
+        var loadedChunks = world.chunks.Count;
         if (debugScreen) {
             debugStr.Clear();
             debugStr.AppendLine($"{p.position.X:0.000}, {p.position.Y:0.000}, {p.position.Z:0.000}");
@@ -225,6 +226,7 @@ public class GameScreen : Screen {
                 ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
                 : "No target");
             debugStr.AppendLine($"rC:{m.renderedChunks} rV:{m.renderedVerts}");
+            debugStr.AppendLine($"lC:{loadedChunks} lCs:{loadedChunks * Chunk.CHUNKHEIGHT}");
             debugStr.AppendLine($"FOV:{p.camera.hfov}");
 
             debugStr.AppendLine($"FPS:{i.fps} (ft:{i.ft * 1000:0.##}ms)");
