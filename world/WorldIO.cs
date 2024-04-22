@@ -36,7 +36,7 @@ public class WorldIO {
                 for (int x = 0; x < mx; x++) {
                     for (int z = 0; z < mz; z++) {
                         //blocks[index] = chunk.blocks[x, y, z];
-                        tag.AddShort(chunk.blocks[x, y, z]);
+                        tag.AddShort(chunk.getBlock(x, y, z));
                         index++;
                     }
                 }
@@ -66,7 +66,7 @@ public class WorldIO {
             for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                        world.chunks[new ChunkCoord(chunkX, chunkZ)].blocks[x, y, z] = (ShortTag)blocks[index];
+                        world.chunks[new ChunkCoord(chunkX, chunkZ)].setBlock(x, y, z, (ShortTag)blocks[index], false);
                         index++;
                     }
                 }

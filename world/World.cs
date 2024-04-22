@@ -286,7 +286,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return chunk.blocks[blockPos.X, y, blockPos.Z] != 0;
+        return chunk.getBlock(blockPos.X, y, blockPos.Z) != 0;
     }
 
     public ushort getBlock(int x, int y, int z) {
@@ -296,7 +296,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return chunk.blocks[blockPos.X, y, blockPos.Z];
+        return chunk.getBlock(blockPos.X, y, blockPos.Z);
     }
 
     /// <summary>
@@ -309,7 +309,7 @@ public class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return chunk.blocks[blockPos.X, y, blockPos.Z];
+        return chunk.getBlock(blockPos.X, y, blockPos.Z);
     }
 
     public ushort getBlock(Vector3D<int> pos) {

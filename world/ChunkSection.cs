@@ -7,9 +7,18 @@ public class ChunkSection {
     public Chunk chunk;
     public ChunkSectionRenderer renderer;
 
+    public BlockData blocks;
+
     public int chunkX;
     public int chunkY;
     public int chunkZ;
+
+
+    /// <summary>
+    /// Sections start empty. If you place a block in them, they stop being empty and get array data.
+    /// They won't revert to being empty if you break the blocks. (maybe a low-priority background task later? I'm not gonna bother with it atm)
+    /// </summary>
+    public bool isEmpty = true;
 
     public int worldX => chunkX * Chunk.CHUNKSIZE;
     public int worldY => chunkY * Chunk.CHUNKSIZE;
@@ -21,6 +30,7 @@ public class ChunkSection {
 
     public World world;
 
+
     public ChunkSection(World world, Chunk chunk, int xpos, int ypos, int zpos) {
         this.chunk = chunk;
         renderer = new ChunkSectionRenderer(this);
@@ -28,12 +38,12 @@ public class ChunkSection {
         chunkY = ypos;
         chunkZ = zpos;
         this.world = world;
+        blocks = new EmptyBlockData();
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
-
     }
 
     public int getBlockInChunk(int x, int y, int z) {
-        return chunk.blocks[x, y + chunkY * Chunk.CHUNKSIZE, z];
+        return blocks[x, y, z];
     }
 
     public void tick(int x, int y, int z) {
@@ -42,14 +52,14 @@ public class ChunkSection {
         // todo implement proper grass spread
         if (block == Blocks.DIRT.id) {
             if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) == 0) {
-                chunk.blocks[x, y + chunkY * Chunk.CHUNKSIZE, z] = Blocks.GRASS.id;
+                blocks[x, y, z] = Blocks.GRASS.id;
                 renderer.meshChunk();
             }
         }
 
         if (block == Blocks.GRASS.id) {
             if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) != 0) {
-                chunk.blocks[x, y + chunkY * Chunk.CHUNKSIZE, z] = Blocks.DIRT.id;
+                blocks[x, y, z] = Blocks.DIRT.id;
                 renderer.meshChunk();
             }
         }
