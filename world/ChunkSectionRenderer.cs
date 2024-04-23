@@ -19,8 +19,6 @@ public class ChunkSectionRenderer {
     public Shader shader;
     public int uMVP;
 
-    public bool isEmpty = false;
-
     public readonly GL GL;
 
     public static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
@@ -90,15 +88,18 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
+        // if the section is empty, nothing to do
+        if (section.isEmpty) {
+            return;
+        }
         //var sw = new Stopwatch();
         //sw.Start();
         vao = new SharedBlockVAO();
         watervao = new SharedBlockVAO();
+
+        //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
         // first we render everything which is NOT translucent
-        int opaqueCount;
-        int translucentCount;
         lock (meshingLock) {
-            //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
             /*if (World.glob) {
                 MeasureProfiler.StartCollectingData();
             }*/
@@ -111,7 +112,6 @@ public class ChunkSectionRenderer {
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
             var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
             vao.upload(finalVertices, finalIndices);
-            opaqueCount = chunkIndices.Count;
         }
 
         lock (meshingLock) {
@@ -129,14 +129,6 @@ public class ChunkSectionRenderer {
                 hasTranslucentBlocks = false;
                 //world.sortedTransparentChunks.Remove(this);
             }
-            translucentCount = chunkIndices.Count;
-        }
-
-        if (opaqueCount == 0 && translucentCount == 0) {
-            isEmpty = true;
-        }
-        else {
-            isEmpty = false;
         }
         //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
         //sw.Stop();
@@ -160,7 +152,7 @@ public class ChunkSectionRenderer {
     }
 
     public void drawOpaque(PlayerCamera camera) {
-        if (!isEmpty && isVisible(camera.frustum)) {
+        if (!section.isEmpty && isVisible(camera.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
 
@@ -171,7 +163,7 @@ public class ChunkSectionRenderer {
     }
 
     public void drawTransparent(PlayerCamera camera) {
-        if (hasTranslucentBlocks && !isEmpty && isVisible(camera.frustum)) {
+        if (hasTranslucentBlocks && !section.isEmpty && isVisible(camera.frustum)) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
@@ -186,21 +178,14 @@ public class ChunkSectionRenderer {
         chunkIndices.Clear();
 
         ushort i = 0;
-        bool isChunkEmpty = true;
         // cache blocks
         // we need a 18x18 area
         // we load the 16x16 from the section itself then get the world for the rest
         // if the chunk section is an EmptyBlockData, don't bother
-        if (section.blocks is EmptyBlockData) {
-            return;
-        }
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = section.getBlockInChunk(x, y, z);
-                    if (bl != 0) {
-                        isChunkEmpty = false;
-                    }
                     neighbours[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)] = bl;
                 }
             }
@@ -208,9 +193,8 @@ public class ChunkSectionRenderer {
 
         // if chunk is empty, nothing to do, don't need to check neighbours
         // btw this shouldn't fucking happen because we checked it but we check it anyway so our program doesn't crash if the chunk representation is changed
-        if (isChunkEmpty) {
-            return;
-        }
+
+
         for (int y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
             for (int z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
                 for (int x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
