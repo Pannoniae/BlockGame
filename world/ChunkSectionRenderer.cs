@@ -88,14 +88,15 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        // if the section is empty, nothing to do
-        if (section.isEmpty) {
-            return;
-        }
         //var sw = new Stopwatch();
         //sw.Start();
         vao = new SharedBlockVAO();
         watervao = new SharedBlockVAO();
+
+        // if the section is empty, nothing to do
+        if (section.isEmpty) {
+            return;
+        }
 
         //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
         // first we render everything which is NOT translucent
@@ -532,8 +533,10 @@ public class ChunkSectionRenderer {
                             chunkIndices.AddRange(indices);
                             i += 4;
                         }
+                        // if below world, don't include in mesh
+                        // this prevents meshing exactly nothing under the world
                         nb = getBlockFromCache(x, y - 1, z);
-                        if (neighbourTest(nb)) {
+                        if (wy - 1 >= 0 && neighbourTest(nb)) {
                             var data1 = Block.packData((byte)RawDirection.DOWN, aoXminZminYmin);
                             var data2 = Block.packData((byte)RawDirection.DOWN, aoXminZmaxYmin);
                             var data3 = Block.packData((byte)RawDirection.DOWN, aoXmaxZmaxYmin);
