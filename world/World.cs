@@ -20,23 +20,21 @@ public class World {
     public Queue<ChunkSectionCoord> meshingQueue = new();
 
     public WorldRenderer renderer;
+    public WorldGenerator generator;
 
     public Player player;
 
-    public FastNoiseLite noise;
-    public FastNoiseLite treenoise;
 
     public double worldTime;
     public int worldTick;
 
     public Random random;
-    public static bool glob;
 
     // max. 5 msec in each frame for chunkload
     private const long MAX_CHUNKLOAD_FRAMETIME = 10;
     private const int SPAWNCHUNKS_SIZE = 2;
 
-    public const int RENDERDISTANCE = 32;
+    public const int RENDERDISTANCE = 16;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -45,18 +43,14 @@ public class World {
 
     public World(int seed) {
         renderer = new WorldRenderer(this);
+        generator = new TechDemoWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
 
         random = new Random(seed);
-        noise = new FastNoiseLite(seed);
-        treenoise = new FastNoiseLite(random.Next(seed));
-        noise.SetFrequency(0.003f);
-        //noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-        //noise.SetFractalLacunarity(2f);
-        //noise.SetFractalGain(0.5f);
-        treenoise.SetFrequency(1f);
         worldTime = 0;
         worldTick = 0;
+
+        generator.setup(seed);
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
         // load a minimal amount of chunks so the world can get started
@@ -68,7 +62,6 @@ public class World {
         }
 
         renderer.meshBlockOutline();
-        glob = true;
     }
 
     private void loadSpawnChunks() {
