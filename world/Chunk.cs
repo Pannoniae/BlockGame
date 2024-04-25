@@ -30,7 +30,8 @@ public class Chunk {
 
         chunks = new ChunkSection[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
-        generator = new TechDemoChunkGenerator(this);
+        // TODO FIX THIS SHIT
+        generator = new TechDemoChunkGenerator(this.world.generator as TechDemoWorldGenerator, this);
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);
