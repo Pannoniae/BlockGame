@@ -78,13 +78,13 @@ public class GameScreen : Screen {
         var gui = Game.gui;
 
         // assemble the matrix
-        var mat = Matrix4x4.CreateLookTo(new Vector3(0, 0, -5), new Vector3(0, 0, 1), new Vector3(0, 1, 0)) *
-                  Matrix4x4.CreateOrthographicOffCenterLeftHanded(Game.centreX, Game.centreX + 32, Game.centreY, Game.centreY + 32, 0.01f, 30f);
+        var mat = Matrix4x4.CreateLookToLeftHanded(new Vector3(-2, 2, -2), new Vector3(4, -1, 4), new Vector3(0, 1, 0)) *
+                  Matrix4x4.CreateOrthographicLeftHanded(10,10, -1, 5);
         world.renderer.shader.use();
         world.renderer.shader.setUniform(world.renderer.uMVP, mat);
-        world.renderer.shader.setUniform(world.renderer.uCameraPos, new Vector3(0, 0, -5));
-        world.renderer.shader.setUniform(world.renderer.drawDistance, 5);
-        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY);
+        world.renderer.shader.setUniform(world.renderer.uCameraPos, new Vector3(-2, 0, -2));
+        world.renderer.shader.setUniform(world.renderer.drawDistance, 50);
+        GUI.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY);
         if (Game.instance.targetedPos.HasValue) {
             world.renderer.drawBlockOutline(interp);
         }
