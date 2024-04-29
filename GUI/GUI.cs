@@ -1,5 +1,5 @@
-using System.Drawing;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using SixLabors.Fonts;
@@ -161,8 +161,15 @@ public class GUI {
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
     }
 
-    public void drawLineWorld(TextureBatcher tb, Texture2D texture, Vector3 start, Vector3 end, Color4b color = default) {
-        // TODO
-        GD.DrawArrays(PrimitiveType.Lines, 0, 2);
+    public void drawBlock(World world, Block block, int x, int y) {
+        var vao = new SharedBlockVAO();
+        WorldRenderer.meshBlock(block, out var vertices, out var indices);
+        vao.bind();
+        var finalVertices = CollectionsMarshal.AsSpan(vertices);
+        var finalIndices = CollectionsMarshal.AsSpan(indices);
+        vao.upload(finalVertices, finalIndices);
+        vao.bind();
+        vao.render();
+
     }
 }
