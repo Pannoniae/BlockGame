@@ -75,6 +75,16 @@ public class GameScreen : Screen {
         //Console.Out.WriteLine(world.player.camera.frustum);
         world.renderer.render(interp);
         world.player.render(dt, interp);
+        var gui = Game.gui;
+
+        // assemble the matrix
+        var mat = Matrix4x4.CreateLookTo(new Vector3(0, 0, -5), new Vector3(0, 0, 1), new Vector3(0, 1, 0)) *
+                  Matrix4x4.CreateOrthographicOffCenterLeftHanded(Game.centreX, Game.centreX + 32, Game.centreY, Game.centreY + 32, 0.01f, 30f);
+        world.renderer.shader.use();
+        world.renderer.shader.setUniform(world.renderer.uMVP, mat);
+        world.renderer.shader.setUniform(world.renderer.uCameraPos, new Vector3(0, 0, -5));
+        world.renderer.shader.setUniform(world.renderer.drawDistance, 5);
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY);
         if (Game.instance.targetedPos.HasValue) {
             world.renderer.drawBlockOutline(interp);
         }
@@ -175,6 +185,14 @@ public class GameScreen : Screen {
         //GD.BlendingEnabled = true;
         //GD.BlendState = bs;
         var gui = Game.gui;
+        /*
+         * shader.use();
+           shader.setUniform(uMVP, viewProj);
+           shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
+           shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
+           shader.setUniform(fogColour, defaultClearColour);
+           shader.setUniform(blockTexture, 0);
+         */
 
         gui.tb.Draw(gui.colourTexture,
             new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
