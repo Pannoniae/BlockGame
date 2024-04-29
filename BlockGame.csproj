@@ -11,7 +11,7 @@
 
     <ItemGroup>
         <PackageReference Include="Geometry" Version="1.0.0.1" />
-        <PackageReference Include="ImGui.NET" Version="1.89.9.4"/>
+        <PackageReference Include="ImGui.NET" Version="1.89.9.4" />
         <PackageReference Include="JetBrains.Annotations" Version="2023.3.0"/>
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.3" />
         <PackageReference Include="SFML.Audio" Version="2.5.1" />

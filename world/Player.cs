@@ -132,7 +132,7 @@ public class Player {
         // don't reorder across statuses though
         world.chunkLoadQueue.Sort((ticket1, ticket2)
             => {
-            var comparison = new ChunkCoordComparer(this).Compare(ticket1.chunkCoord, ticket2.chunkCoord);
+            var comparison = new ChunkCoordComparer(position).Compare(ticket1.chunkCoord, ticket2.chunkCoord);
             var statusDiff = ticket1.level - ticket2.level;
             return comparison + statusDiff * 1000;
         });

@@ -6,9 +6,9 @@ namespace BlockGame;
 
 
 /// <summary>
-/// BlockVAO but we only use one VAO / vertex format then just rebind the vertex/index buffer
+/// BlockVAO but we use separated vertex attribute format/bindings
 /// </summary>
-public class SharedBlockVAO {
+public class SharedBlockVAO : VAO {
     public uint VAOHandle;
     public uint vbo;
     public uint ibo;
@@ -95,11 +95,6 @@ public class SharedBlockVAO {
 
     public void bind() {
         GL.BindVertexArray(VAOHandle);
-    }
-
-    public void bindBuffer() {
-        GL.BindVertexBuffer(0, vbo, 0, 9 * sizeof(ushort));
-        //GL.BindBuffer(GLEnum.ElementArrayBuffer, ibo);
     }
 
     public uint render() {
