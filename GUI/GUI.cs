@@ -161,7 +161,7 @@ public class GUI {
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
     }
 
-    public void drawBlock(World world, Block block, int x, int y) {
+    public static void drawBlock(World world, Block block, int x, int y) {
         var vao = new SharedBlockVAO();
         WorldRenderer.meshBlock(block, out var vertices, out var indices);
         vao.bind();
