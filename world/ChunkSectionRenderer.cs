@@ -11,8 +11,8 @@ namespace BlockGame;
 public class ChunkSectionRenderer {
     public ChunkSection section;
 
-    public SharedBlockVAO vao;
-    public SharedBlockVAO watervao;
+    public VAO vao;
+    public VAO watervao;
 
     public bool hasTranslucentBlocks;
 
@@ -90,8 +90,14 @@ public class ChunkSectionRenderer {
     public void meshChunk() {
         //var sw = new Stopwatch();
         //sw.Start();
-        vao = new SharedBlockVAO();
-        watervao = new SharedBlockVAO();
+        if (section.world.renderer.fastChunkSwitch) {
+            vao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
+            watervao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
+        }
+        else {
+            vao = new SharedBlockVAO();
+            watervao = new SharedBlockVAO();
+        }
 
         // if the section is empty, nothing to do
         if (section.isEmpty) {
@@ -109,7 +115,12 @@ public class ChunkSectionRenderer {
                 MeasureProfiler.SaveData();
             }*/
             //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
-            vao.bind();
+            if (section.world.renderer.fastChunkSwitch) {
+                (vao as VerySharedBlockVAO).bindVAO();
+            }
+            else {
+                vao.bind();
+            }
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
             var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
             vao.upload(finalVertices, finalIndices);
@@ -119,7 +130,12 @@ public class ChunkSectionRenderer {
             // then we render everything which is translucent (water for now)
             constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i));
             if (chunkIndices.Count > 0) {
-                watervao.bind();
+                if (section.world.renderer.fastChunkSwitch) {
+                    (watervao as VerySharedBlockVAO).bindVAO();
+                }
+                else {
+                    watervao.bind();
+                }
                 var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
                 var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
                 watervao.upload(tFinalVertices, tFinalIndices);

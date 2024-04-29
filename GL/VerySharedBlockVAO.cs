@@ -1,13 +1,14 @@
-using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;
 
-
-public class BlockVAO : VAO {
-    public uint handle;
+/// <summary>
+/// SharedBlockVAO but we only use one VAO / vertex format then just rebind the vertex/index buffer
+/// </summary>
+public class VerySharedBlockVAO : VAO {
+    public uint VAOHandle;
     public uint vbo;
     public uint ibo;
     public uint count;
@@ -16,9 +17,9 @@ public class BlockVAO : VAO {
 
     public GL GL;
 
-    public BlockVAO() {
+    public VerySharedBlockVAO(uint VAOHandle) {
+        this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        handle = GL.GenVertexArray();
         blockTexture = Game.instance.blockTexture;
     }
 
@@ -74,17 +75,30 @@ public class BlockVAO : VAO {
     public void format() {
         unsafe {
             // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 9 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 9 * sizeof(ushort), (void*)(0 + 8 * sizeof(ushort)));
             GL.EnableVertexAttribArray(2);
+
+            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
+            GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 8 * sizeof(ushort));
+
+            GL.VertexAttribBinding(0, 0);
+            GL.VertexAttribBinding(1, 0);
+            GL.VertexAttribBinding(2, 0);
+
+            GL.BindVertexBuffer(0, vbo, 0, 9 * sizeof(ushort));
+
         }
     }
 
+    public void bindVAO() {
+        GL.BindVertexArray(VAOHandle);
+    }
+
     public void bind() {
-        GL.BindVertexArray(handle);
+        GL.BindVertexBuffer(0, vbo, 0, 9 * sizeof(ushort));
+        GL.BindBuffer(GLEnum.ElementArrayBuffer, ibo);
     }
 
     public uint render() {
@@ -92,44 +106,5 @@ public class BlockVAO : VAO {
             GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
             return count;
         }
-    }
-}
-
-[StructLayout(LayoutKind.Sequential, Size = 18)]
-public struct BlockVertex {
-    public float x;
-    public float y;
-    public float z;
-    public Half u;
-    public Half v;
-
-    /// <summary>
-    /// from least significant:
-    /// first 3 bits are side (see Direction enum)
-    /// next 2 bits are AO
-    /// </summary>
-    public ushort d;
-
-    public BlockVertex(float x, float y, float z, Half u, Half v, ushort d) {
-        // we receive a float from 0 to 16.
-        // we convert it to a normalised float from 0 to 1 converted to an ushort
-        //this.x = (ushort)(x / 16f * ushort.MaxValue);
-        //this.y = (ushort)(y / 16f * ushort.MaxValue);
-        //this.z = (ushort)(z / 16f * ushort.MaxValue);
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.u = u;
-        this.v = v;
-        this.d = d;
-    }
-
-    public BlockVertex(ushort x, ushort y, ushort z, Half u, Half v, ushort d) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.u = u;
-        this.v = v;
-        this.d = d;
     }
 }

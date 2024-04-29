@@ -186,8 +186,7 @@ public class Game {
         gui = new GUI();
         gui.loadFonts();
 
-        RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("meshChunk").MethodHandle);
-        RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance).MethodHandle);
+        RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
 
         Console.Out.WriteLine("Loaded ASCII font.");
         Task.Run(() => {

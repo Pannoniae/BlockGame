@@ -35,9 +35,13 @@ public class WorldRenderer {
 
     public static Color4b defaultClearColour = Color4b.DeepSkyBlue;
 
+    public bool fastChunkSwitch = true;
+    public uint chunkVAO;
+
     public WorldRenderer(World world) {
         this.world = world;
         GL = Game.GL;
+        chunkVAO = GL.GenVertexArray();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
@@ -49,18 +53,21 @@ public class WorldRenderer {
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
     }
 
-    public void meshChunks() {
-        for (int x = 0; x < World.WORLDSIZE; x++) {
-            for (int z = 0; z < World.WORLDSIZE; z++) {
-                world.chunks[new ChunkCoord(x, z)].meshChunk();
-            }
-        }
-    }
 
+    /// TODO add a path where there's only one VAO for all chunks
+    /// and only the VBO is swapped (with glBindVertexBuffer) + the IBO.
+    /// Obviously changing the setting in-game would trigger a complete remesh since a different BlockVAO class would be needed
+    /// (one which doesn't use a separate VAO but a shared one, and only stores the VBO handle
+    /// maybe this will cut down on the VAO switching time??
     public void render(double interp) {
         var tex = Game.instance.blockTexture;
         Game.GD.SetActiveTexture(0);
         GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
+
+        if (fastChunkSwitch) {
+            GL.BindVertexArray(chunkVAO);
+        }
+
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         // gather chunks to render
         chunksToRender.Clear();
