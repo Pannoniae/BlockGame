@@ -15,7 +15,8 @@ const float a[6] = float[6](0.8, 0.8, 0.6, 0.6, 0.6, 1);
 void main() {
     // per-face lighting
     float lColor = a[direction];
-    vec4 blockColour = texture(blockTexture, texCoords);
+    color = texture(blockTexture, texCoords);
+    color = vec4(color.rgb * lColor, color.a);
     if (color.a <= 0) {
         discard;
     }
