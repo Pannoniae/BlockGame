@@ -31,10 +31,10 @@ public class World {
     public Random random;
 
     // max. 5 msec in each frame for chunkload
-    private const long MAX_CHUNKLOAD_FRAMETIME = 5;
+    private const long MAX_CHUNKLOAD_FRAMETIME = 10;
     private const int SPAWNCHUNKS_SIZE = 2;
 
-    public const int RENDERDISTANCE = 16;
+    public const int RENDERDISTANCE = 32;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50

@@ -63,6 +63,8 @@ public class GameScreen : Screen {
         world.update(dt);
         world.player.update(dt);
 
+        // turn on for stress testing:)
+        //Utils.wasteMemory(dt, 200);
         Game.instance.targetedPos = world.naiveRaycastBlock(out Game.instance.previousPos);
     }
 
@@ -75,6 +77,7 @@ public class GameScreen : Screen {
         //Console.Out.WriteLine(world.player.camera.frustum);
         world.renderer.render(interp);
         world.player.render(dt, interp);
+
         if (Game.instance.targetedPos.HasValue) {
             world.renderer.drawBlockOutline(interp);
         }
