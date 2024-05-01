@@ -57,7 +57,7 @@ public class GUI {
         instance = this;
         guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
             GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
-        Console.Out.WriteLine(guiBlockShader.Uniforms.Count);
+        buffer = new VertexBuffer<BlockVertex>(GD, 24, 36, ElementType.UnsignedShort, BufferUsage.StreamDraw);
     }
 
     public void loadFonts() {
@@ -184,15 +184,14 @@ public class GUI {
                         Matrix4x4.CreateScale(size * guiScale) *
                         Matrix4x4.CreateLookToLeftHanded(new Vector3(0, 2, 2), new Vector3(4, -1, -4), new Vector3(0, 1, 0)) *
                         Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -10, 50);*/
-        var camPos = new Vector3(1,-0.5f,-1);
+        var camPos = new Vector3(1, -0.5f, -1);
         var mat =
-                  Matrix4x4.CreateScale(size * guiScale) *
-                  Matrix4x4.CreateTranslation(-x/15f, -y/15f, 0) *
-                  Matrix4x4.CreateLookAt(camPos, camPos + new Vector3(1, -1, 1), new Vector3(0, 1, 0)) *
-                  Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -10, 50);
+            Matrix4x4.CreateScale(size * guiScale) *
+            Matrix4x4.CreateTranslation(-x / 15f, -y / 15f, 0) *
+            Matrix4x4.CreateLookAt(camPos, camPos + new Vector3(1, -1, 1), new Vector3(0, 1, 0)) *
+            Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -10, 50);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
-        buffer = new VertexBuffer<BlockVertex>(GD, (uint)vertices.Length, (uint)indices.Length, ElementType.UnsignedShort, BufferUsage.StreamDraw);
         buffer.DataSubset.SetData(vertices);
         buffer.IndexSubset!.SetData(indices);
         GD.VertexArray = buffer;

@@ -125,26 +125,25 @@ public class ChunkSectionRenderer {
             var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
             vao.upload(finalVertices, finalIndices);
         }
-
         lock (meshingLock) {
-            // then we render everything which is translucent (water for now)
-            constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i));
-            if (chunkIndices.Count > 0) {
-                if (section.world.renderer.fastChunkSwitch) {
-                    (watervao as VerySharedBlockVAO).bindVAO();
+            if (hasTranslucentBlocks) {
+                // then we render everything which is translucent (water for now)
+                constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i));
+                if (chunkIndices.Count > 0) {
+                    if (section.world.renderer.fastChunkSwitch) {
+                        (watervao as VerySharedBlockVAO).bindVAO();
+                    }
+                    else {
+                        watervao.bind();
+                    }
+                    var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                    var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                    watervao.upload(tFinalVertices, tFinalIndices);
+                    //world.sortedTransparentChunks.Add(this);
                 }
                 else {
-                    watervao.bind();
+                    //world.sortedTransparentChunks.Remove(this);
                 }
-                var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-                watervao.upload(tFinalVertices, tFinalIndices);
-                hasTranslucentBlocks = true;
-                //world.sortedTransparentChunks.Add(this);
-            }
-            else {
-                hasTranslucentBlocks = false;
-                //world.sortedTransparentChunks.Remove(this);
             }
         }
         //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
@@ -194,6 +193,8 @@ public class ChunkSectionRenderer {
         chunkVertices.Clear();
         chunkIndices.Clear();
 
+        hasTranslucentBlocks = false;
+
         ushort i = 0;
         // cache blocks
         // we need a 18x18 area
@@ -203,6 +204,9 @@ public class ChunkSectionRenderer {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = section.getBlockInChunk(x, y, z);
+                    if (Blocks.isTranslucent(bl)) {
+                        hasTranslucentBlocks = true;
+                    }
                     neighbours[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)] = bl;
                 }
             }

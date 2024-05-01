@@ -4,6 +4,7 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public static class Utils {
+    public static volatile byte[] waste;
 
     public static Vector3D<double> copy(Vector3D<double> input) {
         return new Vector3D<double>(input.X, input.Y, input.Z);
@@ -24,6 +25,13 @@ public static class Utils {
     public static int mod(int x, int m) {
         int r = x % m;
         return r < 0 ? r + m : r;
+    }
+
+    /// <summary>
+    /// Test GC, scaled by dt so it's per sec
+    /// </summary>
+    public static void wasteMemory(double dt, float megs) {
+        waste = new byte[(int)(megs * 1024 * 1024 * dt)];
     }
 }
 

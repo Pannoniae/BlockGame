@@ -21,6 +21,11 @@ public class ChunkSection {
     /// </summary>
     public bool isEmpty = true;
 
+    /// <summary>
+    /// isEmpty but for transparent blocks
+    /// </summary>
+    public bool isEmptyTransparent = true;
+
     public int worldX => chunkX * Chunk.CHUNKSIZE;
     public int worldY => chunkY * Chunk.CHUNKSIZE;
     public int worldZ => chunkZ * Chunk.CHUNKSIZE;
