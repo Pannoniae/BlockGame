@@ -174,11 +174,11 @@ public class GameScreen : Screen {
         GD.ResetVertexArrayStates();
         GD.ResetShaderProgramStates();
 
-        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY);
-
         GD.ShaderProgram = GUI.instance.shader;
         var centreX = Game.centreX;
         var centreY = Game.centreY;
+
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY, 16);
         // setup blending
         //GD.BlendingEnabled = true;
         //GD.BlendState = bs;

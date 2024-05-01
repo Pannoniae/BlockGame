@@ -184,13 +184,16 @@ public class WorldRenderer {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, out List<BlockVertex> vertices, out List<ushort> indices) {
-        vertices = new List<BlockVertex>(16);
-        indices = new List<ushort>(16);
+    public static void meshBlock(Block block, ref BlockVertex[]? vertices, ref ushort[]? indices) {
+        vertices ??= new BlockVertex[24];
+        indices ??= new ushort[36];
         ushort i = 0;
         int wx = 0;
         int wy = 0;
         int wz = 0;
+
+        int c = 0;
+        int ci = 0;
 
 
         Block b = block;
@@ -259,7 +262,8 @@ public class WorldRenderer {
             new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
             new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data),
         ];
-        vertices.AddRange(verticesWest);
+        vertices.AddRange(c, verticesWest);
+        c += 4;
         ushort[] id = [
             i,
             (ushort)(i + 1),
@@ -268,8 +272,9 @@ public class WorldRenderer {
             (ushort)(i + 2),
             (ushort)(i + 3)
         ];
-        indices.AddRange(id);
+        indices.AddRange(ci, id);
         i += 4;
+        ci += 6;
         data = Block.packData((byte)RawDirection.EAST, 0);
 
         BlockVertex[] verticesEast = [
@@ -279,8 +284,8 @@ public class WorldRenderer {
             new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
             new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data),
         ];
-        vertices.AddRange(verticesEast);
-
+        vertices.AddRange(c, verticesEast);
+        c += 4;
         id = [
             i,
             (ushort)(i + 1),
@@ -290,8 +295,9 @@ public class WorldRenderer {
             (ushort)(i + 3)
         ];
 
-        indices.AddRange(id);
+        indices.AddRange(ci, id);
         i += 4;
+        ci += 6;
         data = Block.packData((byte)RawDirection.SOUTH, 0);
 
         BlockVertex[] verticesSouth = [
@@ -301,7 +307,8 @@ public class WorldRenderer {
             new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
             new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data),
         ];
-        vertices.AddRange(verticesSouth);
+        vertices.AddRange(i, verticesSouth);
+        c += 4;
         id = [
             i,
             (ushort)(i + 1),
@@ -311,9 +318,9 @@ public class WorldRenderer {
             (ushort)(i + 3)
         ];
 
-        indices.AddRange(id);
+        indices.AddRange(ci, id);
         i += 4;
-
+        ci += 6;
         data = Block.packData((byte)RawDirection.NORTH, 0);
         BlockVertex[] verticesNorth = [
             // north
@@ -322,7 +329,8 @@ public class WorldRenderer {
             new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
             new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data),
         ];
-        vertices.AddRange(verticesNorth);
+        vertices.AddRange(i, verticesNorth);
+        c += 4;
         id = [
             i,
             (ushort)(i + 1),
@@ -331,9 +339,9 @@ public class WorldRenderer {
             (ushort)(i + 2),
             (ushort)(i + 3)
         ];
-        indices.AddRange(id);
+        indices.AddRange(ci, id);
         i += 4;
-
+        ci += 6;
         data = Block.packData((byte)RawDirection.DOWN, 0);
         BlockVertex[] verticesBottom = [
             // bottom
@@ -342,7 +350,8 @@ public class WorldRenderer {
             new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
             new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data),
         ];
-        vertices.AddRange(verticesBottom);
+        vertices.AddRange(i, verticesBottom);
+        c += 4;
         id = [
             i,
             (ushort)(i + 1),
@@ -351,8 +360,9 @@ public class WorldRenderer {
             (ushort)(i + 2),
             (ushort)(i + 3)
         ];
-        indices.AddRange(id);
+        indices.AddRange(ci, id);
         i += 4;
+        ci += 6;
         data = Block.packData((byte)RawDirection.UP, 0);
 
         BlockVertex[] verticesTop = [
@@ -363,8 +373,8 @@ public class WorldRenderer {
             new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data),
         ];
 
-        vertices.AddRange(verticesTop);
-
+        vertices.AddRange(i, verticesTop);
+        c += 4;
         id = [
             i,
             (ushort)(i + 1),
@@ -374,7 +384,16 @@ public class WorldRenderer {
             (ushort)(i + 3)
         ];
 
-        indices.AddRange(id);
+        indices.AddRange(ci, id);
         i += 4;
+        ci += 6;
+    }
+}
+
+public static class ArrayExtensions {
+    public static void AddRange<T>(this T[] arr, int index, T[] elements) {
+        for (int i = index; i < index + elements.Length; i++) {
+            arr[i] = elements[i - index];
+        }
     }
 }
