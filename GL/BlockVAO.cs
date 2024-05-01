@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 using TrippyGL;
+using AttributeType = TrippyGL.AttributeType;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;
@@ -96,7 +97,7 @@ public class BlockVAO : VAO {
 }
 
 [StructLayout(LayoutKind.Sequential, Size = 18)]
-public struct BlockVertex {
+public struct BlockVertex : IVertex {
     public float x;
     public float y;
     public float z;
@@ -132,4 +133,12 @@ public struct BlockVertex {
         this.v = v;
         this.d = d;
     }
+
+    public void WriteAttribDescriptions(Span<VertexAttribDescription> descriptions) {
+        descriptions[0] = new VertexAttribDescription(AttributeType.FloatVec3, false, AttributeBaseType.Float);
+        descriptions[1] = new VertexAttribDescription(AttributeType.FloatVec2, false, AttributeBaseType.HalfFloat);
+        descriptions[2] = new VertexAttribDescription(AttributeType.UnsignedInt, false, AttributeBaseType.UnsignedShort);
+    }
+
+    public int AttribDescriptionCount => 3;
 }

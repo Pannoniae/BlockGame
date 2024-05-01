@@ -75,16 +75,6 @@ public class GameScreen : Screen {
         //Console.Out.WriteLine(world.player.camera.frustum);
         world.renderer.render(interp);
         world.player.render(dt, interp);
-        var gui = Game.gui;
-
-        // assemble the matrix
-        var mat = Matrix4x4.CreateLookToLeftHanded(new Vector3(0, 2, 2), new Vector3(4, -1, -4), new Vector3(0, 1, 0)) *
-                  Matrix4x4.CreateOrthographicLeftHanded(10,10, -1, 5);
-        world.renderer.shader.use();
-        world.renderer.shader.setUniform(world.renderer.uMVP, mat);
-        world.renderer.shader.setUniform(world.renderer.uCameraPos, new Vector3(0, 0, 2));
-        world.renderer.shader.setUniform(world.renderer.drawDistance, 50);
-        GUI.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY);
         if (Game.instance.targetedPos.HasValue) {
             world.renderer.drawBlockOutline(interp);
         }
@@ -175,16 +165,23 @@ public class GameScreen : Screen {
 
     public override void draw() {
         base.draw();
+
+        var gui = Game.gui;
+        //GD.FaceCullingEnabled = false;
+        //GD.BlendState = BlendState.Opaque;
+        //GD.DepthTestingEnabled = false;
         GD.ResetBufferStates();
         GD.ResetVertexArrayStates();
-        //GD.ResetShaderProgramStates();
+        GD.ResetShaderProgramStates();
+
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY);
+
         GD.ShaderProgram = GUI.instance.shader;
         var centreX = Game.centreX;
         var centreY = Game.centreY;
         // setup blending
         //GD.BlendingEnabled = true;
         //GD.BlendState = bs;
-        var gui = Game.gui;
         /*
          * shader.use();
            shader.setUniform(uMVP, viewProj);
@@ -193,6 +190,7 @@ public class GameScreen : Screen {
            shader.setUniform(fogColour, defaultClearColour);
            shader.setUniform(blockTexture, 0);
          */
+
 
         gui.tb.Draw(gui.colourTexture,
             new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),

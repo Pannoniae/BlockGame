@@ -10,6 +10,7 @@ using TrippyGL.Fonts.Extensions;
 using TrippyGL.ImageSharp;
 using PrimitiveType = TrippyGL.PrimitiveType;
 using Rectangle = System.Drawing.Rectangle;
+using VertexArray = TrippyGL.VertexArray;
 
 namespace BlockGame;
 
@@ -32,11 +33,17 @@ public class GUI {
     public TextureFont guiFont;
     public TextureFont guiFontUnicode;
 
+    /// <summary>
+    /// Like the normal shader but it's simple (doesn't need fog/lighting/anything)
+    /// </summary>
+    public ShaderProgram guiBlockShader;
+
     public Rectangle buttonRect = new(96, 0, 96, 16);
-    public Rectangle grayButtonRect = new(0, 16*2, 96, 16);
+    public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
 
     public static GUI instance;
     private TrippyFontFile ff;
+    private VertexBuffer<BlockVertex> buffer;
 
     public GUI() {
         GL = Game.GL;
@@ -47,6 +54,9 @@ public class GUI {
         guiTexture = Texture2DExtensions.FromFile(Game.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.GD, "textures/debug.png");
         instance = this;
+        guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
+            GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
+        Console.Out.WriteLine(guiBlockShader.Uniforms.Count);
     }
 
     public void loadFonts() {
@@ -161,15 +171,19 @@ public class GUI {
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
     }
 
-    public static void drawBlock(World world, Block block, int x, int y) {
-        var vao = new SharedBlockVAO();
+    public void drawBlock(World world, Block block, int x, int y) {
+        //GD.Clear(ClearBuffers.Color);
         WorldRenderer.meshBlock(block, out var vertices, out var indices);
-        vao.bind();
-        var finalVertices = CollectionsMarshal.AsSpan(vertices);
-        var finalIndices = CollectionsMarshal.AsSpan(indices);
-        vao.upload(finalVertices, finalIndices);
-        vao.bind();
-        vao.render();
-
+        GD.ShaderProgram = guiBlockShader;
+        // assemble the matrix
+        var mat = Matrix4x4.CreateLookToLeftHanded(new Vector3(0, 2, 2), new Vector3(4, -1, -4), new Vector3(0, 1, 0)) *
+                  Matrix4x4.CreateOrthographicLeftHanded(10, 10, -1, 5);
+        guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
+        //guiBlockShader.Uniforms["blockTexture"].SetValueInt(0);
+        buffer = new VertexBuffer<BlockVertex>(GD, (uint)vertices.Count, (uint)indices.Count, ElementType.UnsignedShort, BufferUsage.StreamDraw);
+        buffer.DataSubset.SetData(CollectionsMarshal.AsSpan(vertices));
+        buffer.IndexSubset!.SetData(CollectionsMarshal.AsSpan(indices));
+        GD.VertexArray = buffer;
+        GD.DrawElements(PrimitiveType.Triangles, 0, (uint)indices.Count);
     }
 }
