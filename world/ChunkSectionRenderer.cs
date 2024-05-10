@@ -1,8 +1,6 @@
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using JetBrains.Profiler.Api;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
@@ -84,6 +82,18 @@ public class ChunkSectionRenderer {
         uMVP = shader.getUniformLocation("uMVP");
     }
 
+    private static bool opaqueBlocks(int b) {
+        return b != 0 && !Blocks.isTranslucent(b);
+    }
+
+    private static bool notSolid(int b) {
+        return !Blocks.isSolid(b);
+    }
+
+    private static bool notTranslucent(int b) {
+        return !Blocks.isTranslucent(b) && !Blocks.isSolid(b);
+    }
+
     /// <summary>
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
@@ -104,45 +114,47 @@ public class ChunkSectionRenderer {
             return;
         }
 
-        //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
-        // first we render everything which is NOT translucent
-        lock (meshingLock) {
-            /*if (World.glob) {
-                MeasureProfiler.StartCollectingData();
-            }*/
-            constructVertices(i => i != 0 && !Blocks.isTranslucent(i), i => !Blocks.isSolid(i));
-            /*if (World.glob) {
-                MeasureProfiler.SaveData();
-            }*/
-            //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
-            if (section.world.renderer.fastChunkSwitch) {
-                (vao as VerySharedBlockVAO).bindVAO();
-            }
-            else {
-                vao.bind();
-            }
-            var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-            var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-            vao.upload(finalVertices, finalIndices);
-        }
-        lock (meshingLock) {
-            if (hasTranslucentBlocks) {
-                // then we render everything which is translucent (water for now)
-                constructVertices(Blocks.isTranslucent, i => !Blocks.isTranslucent(i) && !Blocks.isSolid(i));
-                if (chunkIndices.Count > 0) {
-                    if (section.world.renderer.fastChunkSwitch) {
-                        (watervao as VerySharedBlockVAO).bindVAO();
-                    }
-                    else {
-                        watervao.bind();
-                    }
-                    var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                    var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-                    watervao.upload(tFinalVertices, tFinalIndices);
-                    //world.sortedTransparentChunks.Add(this);
+        unsafe {
+            //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
+            // first we render everything which is NOT translucent
+            lock (meshingLock) {
+                /*if (World.glob) {
+                    MeasureProfiler.StartCollectingData();
+                }*/
+                constructVertices(&opaqueBlocks, &notSolid);
+                /*if (World.glob) {
+                    MeasureProfiler.SaveData();
+                }*/
+                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
+                if (section.world.renderer.fastChunkSwitch) {
+                    (vao as VerySharedBlockVAO).bindVAO();
                 }
                 else {
-                    //world.sortedTransparentChunks.Remove(this);
+                    vao.bind();
+                }
+                var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                vao.upload(finalVertices, finalIndices);
+            }
+            lock (meshingLock) {
+                if (hasTranslucentBlocks) {
+                    // then we render everything which is translucent (water for now)
+                    constructVertices(&Blocks.isTranslucent, &notTranslucent);
+                    if (chunkIndices.Count > 0) {
+                        if (section.world.renderer.fastChunkSwitch) {
+                            (watervao as VerySharedBlockVAO).bindVAO();
+                        }
+                        else {
+                            watervao.bind();
+                        }
+                        var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                        var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                        watervao.upload(tFinalVertices, tFinalIndices);
+                        //world.sortedTransparentChunks.Add(this);
+                    }
+                    else {
+                        //world.sortedTransparentChunks.Remove(this);
+                    }
                 }
             }
         }
@@ -187,7 +199,7 @@ public class ChunkSectionRenderer {
     }
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void constructVertices(Func<int, bool> whichBlocks, Func<int, bool> neighbourTest) {
+    unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
 
         // clear arrays before starting
         chunkVertices.Clear();
@@ -207,7 +219,7 @@ public class ChunkSectionRenderer {
                     if (Blocks.isTranslucent(bl)) {
                         hasTranslucentBlocks = true;
                     }
-                    neighbours[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)] = bl;
+                    access(neighbours, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
                 }
             }
         }
@@ -227,7 +239,7 @@ public class ChunkSectionRenderer {
                     }
 
                     var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
-                    neighbours[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)] = section.world.getBlock(wpos.X, wpos.Y, wpos.Z);
+                    access(neighbours, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), section.world.getBlock(wpos.X, wpos.Y, wpos.Z));
                 }
             }
         }
@@ -235,7 +247,7 @@ public class ChunkSectionRenderer {
         // helper function to get blocks from cache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ushort getBlockFromCache(int x, int y, int z) {
-            return neighbours[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)];
+            return access(neighbours, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -612,7 +624,7 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static private byte calculateAO(int side1, int side2, int corner) {
+    private static byte calculateAO(int side1, int side2, int corner) {
         if (!Settings.instance.AO) {
             return 0;
         }
@@ -623,7 +635,7 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static private byte calculateAOFixed(int side1, int side2, int corner) {
+    private static byte calculateAOFixed(int side1, int side2, int corner) {
         var test1 = Blocks.isSolid(side1);
         var test2 = Blocks.isSolid(side2);
         var testCorner = Blocks.isSolid(corner);
@@ -634,8 +646,28 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    unsafe static private int toInt(bool b) {
+    unsafe private static int toInt(bool b) {
         return *(byte*)&b;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static T access<T>(T[] arr, int index) {
+        ref T tableRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        return Unsafe.Add(ref tableRef, index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void access<T>(T[] arr, int index, T value) {
+        ref T tableRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        Unsafe.Add(ref tableRef, index) = value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void setRange<T>(T[] arr, int index, T[] values) {
+        ref T tableRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        for (int i = 0; i < values.Length; i++) {
+            Unsafe.Add(ref tableRef, index + i) = values[i];
+        }
     }
 
     /*private Vector3D<int>[] getNeighbours(RawDirection side) {
