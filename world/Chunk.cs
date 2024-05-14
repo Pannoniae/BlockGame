@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
@@ -14,6 +15,8 @@ public class Chunk {
     public int worldX => coord.x * CHUNKSIZE;
     public int worldZ => coord.z * CHUNKSIZE;
     public Vector2D<int> worldPos => new(worldX, worldZ);
+
+    public AABB box;
 
     public ChunkGenerator generator;
 
@@ -38,6 +41,12 @@ public class Chunk {
         }
 
         lightMap = new LightMap(this);
+
+        box = new AABB(new Vector3D<double>(chunkX * CHUNKSIZE, 0, chunkZ * CHUNKSIZE), new Vector3D<double>(chunkX * CHUNKSIZE + CHUNKSIZE, CHUNKHEIGHT * CHUNKSIZE, chunkZ * CHUNKSIZE + CHUNKSIZE));
+    }
+
+    public bool isVisible(BoundingFrustum frustum) {
+        return frustum.Contains(new BoundingBox(box.min.toVec3(), box.max.toVec3())) != ContainmentType.Disjoint;
     }
 
     /// <summary>
