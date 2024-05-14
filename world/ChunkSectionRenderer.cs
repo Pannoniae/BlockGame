@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -98,8 +99,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //var sw = new Stopwatch();
-        //sw.Start();
+        var sw = new Stopwatch();
+        sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -125,7 +126,7 @@ public class ChunkSectionRenderer {
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
+                Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
                 if (section.world.renderer.fastChunkSwitch) {
                     (vao as VerySharedBlockVAO).bindVAO();
                 }
@@ -158,8 +159,8 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        //sw.Stop();
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -251,9 +252,12 @@ public class ChunkSectionRenderer {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        unsafe static ushort getBlockFromCacheUnsafe(ushort* arrayBase, int x, int y, int z) {
+        static ushort getBlockFromCacheUnsafe(ushort* arrayBase, int x, int y, int z) {
             return arrayBase[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)];
         }
+
+        Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
+        Span<ushort> tempIndices = stackalloc ushort[6];
 
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
@@ -471,23 +475,20 @@ public class ChunkSectionRenderer {
                             var data2 = Block.packData((byte)RawDirection.WEST, west2);
                             var data3 = Block.packData((byte)RawDirection.WEST, west3);
                             var data4 = Block.packData((byte)RawDirection.WEST, west4);
-                            BlockVertex[] verticesWest = [
-                                // west
-                                new BlockVertex(xmin, ymax, zmax, westU, westV, data1),
-                                new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data2),
-                                new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data3),
-                                new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data4),
-                            ];
-                            chunkVertices.AddRange(verticesWest);
-                            ushort[] indices = [
-                                i,
-                                (ushort)(i + 1),
-                                (ushort)(i + 2),
-                                (ushort)(i + 0),
-                                (ushort)(i + 2),
-                                (ushort)(i + 3)
-                            ];
-                            chunkIndices.AddRange(indices);
+                            // west
+                            tempVertices[0] = new BlockVertex(xmin, ymax, zmax, westU, westV, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data2);
+                            tempVertices[2] = new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data3);
+                            tempVertices[3] = new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data4);
+                            chunkVertices.AddRange(tempVertices);
+
+                            tempIndices[0] = i;
+                            tempIndices[1] = (ushort)(i + 1);
+                            tempIndices[2] = (ushort)(i + 2);
+                            tempIndices[3] = (ushort)(i + 0);
+                            tempIndices[4] = (ushort)(i + 2);
+                            tempIndices[5] = (ushort)(i + 3);
+                            chunkIndices.AddRange(tempIndices);
                             i += 4;
                         }
                         nb = getBlockFromCache(x + 1, y, z);
@@ -496,23 +497,20 @@ public class ChunkSectionRenderer {
                             var data2 = Block.packData((byte)RawDirection.EAST, east2);
                             var data3 = Block.packData((byte)RawDirection.EAST, east3);
                             var data4 = Block.packData((byte)RawDirection.EAST, east4);
-                            BlockVertex[] verticesEast = [
-                                // east
-                                new BlockVertex(xmax, ymax, zmin, eastU, eastV, data1),
-                                new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data2),
-                                new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data3),
-                                new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data4),
-                            ];
-                            chunkVertices.AddRange(verticesEast);
-                            ushort[] indices = [
-                                i,
-                                (ushort)(i + 1),
-                                (ushort)(i + 2),
-                                (ushort)(i + 0),
-                                (ushort)(i + 2),
-                                (ushort)(i + 3)
-                            ];
-                            chunkIndices.AddRange(indices);
+                            // east
+                            tempVertices[0] = new BlockVertex(xmax, ymax, zmin, eastU, eastV, data1);
+                            tempVertices[1] = new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data4);
+                            chunkVertices.AddRange(tempVertices);
+
+                            tempIndices[0] = i;
+                            tempIndices[1] = (ushort)(i + 1);
+                            tempIndices[2] = (ushort)(i + 2);
+                            tempIndices[3] = (ushort)(i + 0);
+                            tempIndices[4] = (ushort)(i + 2);
+                            tempIndices[5] = (ushort)(i + 3);
+                            chunkIndices.AddRange(tempIndices);
                             i += 4;
                         }
                         nb = getBlockFromCache(x, y, z - 1);
@@ -521,23 +519,20 @@ public class ChunkSectionRenderer {
                             var data2 = Block.packData((byte)RawDirection.SOUTH, south2);
                             var data3 = Block.packData((byte)RawDirection.SOUTH, south3);
                             var data4 = Block.packData((byte)RawDirection.SOUTH, south4);
-                            BlockVertex[] verticesSouth = [
-                                // south
-                                new BlockVertex(xmin, ymax, zmin, southU, southV, data1),
-                                new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data2),
-                                new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data3),
-                                new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data4),
-                            ];
-                            chunkVertices.AddRange(verticesSouth);
-                            ushort[] indices = [
-                                i,
-                                (ushort)(i + 1),
-                                (ushort)(i + 2),
-                                (ushort)(i + 0),
-                                (ushort)(i + 2),
-                                (ushort)(i + 3)
-                            ];
-                            chunkIndices.AddRange(indices);
+                            // south
+                            tempVertices[0] = new BlockVertex(xmin, ymax, zmin, southU, southV, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data4);
+                            chunkVertices.AddRange(tempVertices);
+
+                            tempIndices[0] = i;
+                            tempIndices[1] = (ushort)(i + 1);
+                            tempIndices[2] = (ushort)(i + 2);
+                            tempIndices[3] = (ushort)(i + 0);
+                            tempIndices[4] = (ushort)(i + 2);
+                            tempIndices[5] = (ushort)(i + 3);
+                            chunkIndices.AddRange(tempIndices);
                             i += 4;
                         }
                         nb = getBlockFromCache(x, y, z + 1);
@@ -546,23 +541,20 @@ public class ChunkSectionRenderer {
                             var data2 = Block.packData((byte)RawDirection.NORTH, north2);
                             var data3 = Block.packData((byte)RawDirection.NORTH, north3);
                             var data4 = Block.packData((byte)RawDirection.NORTH, north4);
-                            BlockVertex[] verticesNorth = [
-                                // north
-                                new BlockVertex(xmax, ymax, zmax, northU, northV, data1),
-                                new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data2),
-                                new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data3),
-                                new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data4),
-                            ];
-                            chunkVertices.AddRange(verticesNorth);
-                            ushort[] indices = [
-                                i,
-                                (ushort)(i + 1),
-                                (ushort)(i + 2),
-                                (ushort)(i + 0),
-                                (ushort)(i + 2),
-                                (ushort)(i + 3)
-                            ];
-                            chunkIndices.AddRange(indices);
+                            // north
+                            tempVertices[0] = new BlockVertex(xmax, ymax, zmax, northU, northV, data1);
+                            tempVertices[1] = new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data2);
+                            tempVertices[2] = new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data3);
+                            tempVertices[3] = new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data4);
+                            chunkVertices.AddRange(tempVertices);
+
+                            tempIndices[0] = i;
+                            tempIndices[1] = (ushort)(i + 1);
+                            tempIndices[2] = (ushort)(i + 2);
+                            tempIndices[3] = (ushort)(i + 0);
+                            tempIndices[4] = (ushort)(i + 2);
+                            tempIndices[5] = (ushort)(i + 3);
+                            chunkIndices.AddRange(tempIndices);
                             i += 4;
                         }
                         // if below world, don't include in mesh
@@ -573,23 +565,20 @@ public class ChunkSectionRenderer {
                             var data2 = Block.packData((byte)RawDirection.DOWN, aoXminZmaxYmin);
                             var data3 = Block.packData((byte)RawDirection.DOWN, aoXmaxZmaxYmin);
                             var data4 = Block.packData((byte)RawDirection.DOWN, aoXmaxZminYmin);
-                            BlockVertex[] verticesBottom = [
-                                // bottom
-                                new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data1),
-                                new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data2),
-                                new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data3),
-                                new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data4),
-                            ];
-                            chunkVertices.AddRange(verticesBottom);
-                            ushort[] indices = [
-                                i,
-                                (ushort)(i + 1),
-                                (ushort)(i + 2),
-                                (ushort)(i + 0),
-                                (ushort)(i + 2),
-                                (ushort)(i + 3)
-                            ];
-                            chunkIndices.AddRange(indices);
+                            // bottom
+                            tempVertices[0] = new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data4);
+                            chunkVertices.AddRange(tempVertices);
+
+                            tempIndices[0] = i;
+                            tempIndices[1] = (ushort)(i + 1);
+                            tempIndices[2] = (ushort)(i + 2);
+                            tempIndices[3] = (ushort)(i + 0);
+                            tempIndices[4] = (ushort)(i + 2);
+                            tempIndices[5] = (ushort)(i + 3);
+                            chunkIndices.AddRange(tempIndices);
                             i += 4;
                         }
                         nb = getBlockFromCache(x, y + 1, z);
@@ -598,23 +587,20 @@ public class ChunkSectionRenderer {
                             var data2 = Block.packData((byte)RawDirection.UP, aoXminZminYmax);
                             var data3 = Block.packData((byte)RawDirection.UP, aoXmaxZminYmax);
                             var data4 = Block.packData((byte)RawDirection.UP, aoXmaxZmaxYmax);
-                            BlockVertex[] verticesTop = [
-                                // top
-                                new BlockVertex(xmin, ymax, zmax, topU, topV, data1),
-                                new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data2),
-                                new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data3),
-                                new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data4),
-                            ];
-                            chunkVertices.AddRange(verticesTop);
-                            ushort[] indices = [
-                                i,
-                                (ushort)(i + 1),
-                                (ushort)(i + 2),
-                                (ushort)(i + 0),
-                                (ushort)(i + 2),
-                                (ushort)(i + 3)
-                            ];
-                            chunkIndices.AddRange(indices);
+                            // top
+                            tempVertices[0] = new BlockVertex(xmin, ymax, zmax, topU, topV, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data4);
+                            chunkVertices.AddRange(tempVertices);
+
+                            tempIndices[0] = i;
+                            tempIndices[1] = (ushort)(i + 1);
+                            tempIndices[2] = (ushort)(i + 2);
+                            tempIndices[3] = (ushort)(i + 0);
+                            tempIndices[4] = (ushort)(i + 2);
+                            tempIndices[5] = (ushort)(i + 3);
+                            chunkIndices.AddRange(tempIndices);
                             i += 4;
                         }
                     }

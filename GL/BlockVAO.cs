@@ -97,19 +97,19 @@ public class BlockVAO : VAO {
 }
 
 [StructLayout(LayoutKind.Sequential, Size = 18)]
-public struct BlockVertex : IVertex {
-    public float x;
-    public float y;
-    public float z;
-    public Half u;
-    public Half v;
+public readonly struct BlockVertex : IVertex {
+    public readonly float x;
+    public readonly float y;
+    public readonly float z;
+    public readonly Half u;
+    public readonly Half v;
 
     /// <summary>
     /// from least significant:
     /// first 3 bits are side (see Direction enum)
     /// next 2 bits are AO
     /// </summary>
-    public ushort d;
+    public readonly ushort d;
 
     public BlockVertex(float x, float y, float z, Half u, Half v, ushort d) {
         // we receive a float from 0 to 16.
