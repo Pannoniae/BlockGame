@@ -29,8 +29,8 @@ public class VerySharedBlockVAO : VAO {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
-                    BufferUsageARB.DynamicDraw);
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
+                    BufferStorageMask.None);
             }
         }
 
@@ -43,8 +43,8 @@ public class VerySharedBlockVAO : VAO {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
-                    BufferUsageARB.DynamicDraw);
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
+                    BufferStorageMask.None);
             }
         }
 
@@ -57,15 +57,15 @@ public class VerySharedBlockVAO : VAO {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
             fixed (BlockVertex* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
-                    BufferUsageARB.DynamicDraw);
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+                    BufferStorageMask.None);
             }
 
             ibo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
             fixed (ushort* d = indices) {
-                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
-                    BufferUsageARB.DynamicDraw);
+                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
+                    BufferStorageMask.None);
             }
         }
 
@@ -86,8 +86,6 @@ public class VerySharedBlockVAO : VAO {
             GL.VertexAttribBinding(0, 0);
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
-
-            GL.BindVertexBuffer(0, vbo, 0, 9 * sizeof(ushort));
 
         }
     }

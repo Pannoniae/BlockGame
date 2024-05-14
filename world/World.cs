@@ -31,10 +31,10 @@ public class World {
     public Random random;
 
     // max. 5 msec in each frame for chunkload
-    private const long MAX_CHUNKLOAD_FRAMETIME = 10;
+    private const long MAX_CHUNKLOAD_FRAMETIME = 5;
     private const int SPAWNCHUNKS_SIZE = 2;
 
-    public const int RENDERDISTANCE = 16;
+    public const int RENDERDISTANCE = 8;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -119,13 +119,20 @@ public class World {
 
         var start = Game.permanentStopwatch.ElapsedMilliseconds;
         var ctr = 0;
-        // consume the chunk queue#
+        // consume the chunk queue
+        // ONLY IF THERE ARE CHUNKS
+        // otherwise don't wait for nothing
+        // yes I was an idiot
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < MAX_CHUNKLOAD_FRAMETIME) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[0];
                 chunkLoadQueue.RemoveAt(0);
                 loadChunk(ticket.chunkCoord, ticket.level);
                 ctr++;
+            }
+            else {
+                // chunk queue empty, don't loop more
+                break;
             }
         }
         //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
