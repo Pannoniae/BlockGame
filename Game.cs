@@ -141,7 +141,7 @@ public class Game {
         GD.BlendState = initialBlendState;
         GD.DepthTestingEnabled = true;
         GD.DepthState = DepthState.Default;
-        GD.DepthState.DepthComparison = DepthFunction.Less;
+        GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
         GD.FaceCullingEnabled = true;
         GD.PolygonFrontFace = PolygonFace.CounterClockwise;
         GD.CullFaceMode = CullingMode.CullBack;

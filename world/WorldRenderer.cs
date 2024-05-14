@@ -72,7 +72,7 @@ public class WorldRenderer {
         // gather chunks to render
         chunksToRender.Clear();
         foreach (var chunk in world.chunks.Values) {
-            if (chunk.status >= ChunkStatus.MESHED) {
+            if (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(world.player.camera.frustum)) {
                 chunksToRender.Add(chunk);
             }
         }
@@ -100,11 +100,11 @@ public class WorldRenderer {
         shader.use();
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
-        GL.DepthFunc(DepthFunction.Lequal);
+        //GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunksToRender) {
             chunk.drawTransparent(world.player.camera);
         }
-        GL.DepthMask(true);
+        //GL.DepthMask(true);
         GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.CullFace);
 
