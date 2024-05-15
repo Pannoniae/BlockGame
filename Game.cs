@@ -120,7 +120,7 @@ public class Game {
     }
 
     private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message, IntPtr userparam) {
-        string msg = Marshal.PtrToStringUni(message, length)!;
+        string msg = Marshal.PtrToStringAnsi(message, length)!;
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
     }
 

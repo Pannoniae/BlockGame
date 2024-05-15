@@ -184,9 +184,7 @@ public class WorldRenderer {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, ref BlockVertex[]? vertices, ref ushort[]? indices) {
-        vertices ??= new BlockVertex[24];
-        indices ??= new ushort[36];
+    public static void meshBlock(Block block, ref BlockVertex[] vertices, ref ushort[] indices) {
         ushort i = 0;
         int wx = 0;
         int wy = 0;
@@ -254,137 +252,119 @@ public class WorldRenderer {
         float ymax = wy + 1f;
         float zmax = wz + 1f;
 
+        Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
+        Span<ushort> tempIndices = stackalloc ushort[6];
+
         var data = Block.packData((byte)RawDirection.WEST, 0);
-        BlockVertex[] verticesWest = [
-            // west
-            new BlockVertex(xmin, ymax, zmax, westU, westV, data),
-            new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data),
-            new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data),
-            new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data),
-        ];
-        vertices.AddRange(c, verticesWest);
+        // west
+        tempVertices[0] = new BlockVertex(xmin, ymax, zmax, westU, westV, data);
+        tempVertices[1] = new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data);
+        tempVertices[2] = new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data);
+        tempVertices[3] = new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data);
+        vertices.AddRange(c, tempVertices);
+
         c += 4;
-        ushort[] id = [
-            i,
-            (ushort)(i + 1),
-            (ushort)(i + 2),
-            (ushort)(i + 0),
-            (ushort)(i + 2),
-            (ushort)(i + 3)
-        ];
-        indices.AddRange(ci, id);
+        tempIndices[0] = i;
+        tempIndices[1] = (ushort)(i + 1);
+        tempIndices[2] = (ushort)(i + 2);
+        tempIndices[3] = (ushort)(i + 0);
+        tempIndices[4] = (ushort)(i + 2);
+        tempIndices[5] = (ushort)(i + 3);
+        indices.AddRange(ci, tempIndices);
         i += 4;
         ci += 6;
         data = Block.packData((byte)RawDirection.EAST, 0);
 
-        BlockVertex[] verticesEast = [
-            // east
-            new BlockVertex(xmax, ymax, zmin, eastU, eastV, data),
-            new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data),
-            new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data),
-            new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data),
-        ];
-        vertices.AddRange(c, verticesEast);
-        c += 4;
-        id = [
-            i,
-            (ushort)(i + 1),
-            (ushort)(i + 2),
-            (ushort)(i + 0),
-            (ushort)(i + 2),
-            (ushort)(i + 3)
-        ];
+        // east
+        tempVertices[0] = new BlockVertex(xmax, ymax, zmin, eastU, eastV, data);
+        tempVertices[1] = new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data);
+        tempVertices[2] = new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data);
+        tempVertices[3] = new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data);
+        vertices.AddRange(c, tempVertices);
 
-        indices.AddRange(ci, id);
+        c += 4;
+        tempIndices[0] = i;
+        tempIndices[1] = (ushort)(i + 1);
+        tempIndices[2] = (ushort)(i + 2);
+        tempIndices[3] = (ushort)(i + 0);
+        tempIndices[4] = (ushort)(i + 2);
+        tempIndices[5] = (ushort)(i + 3);
+        indices.AddRange(ci, tempIndices);
         i += 4;
         ci += 6;
         data = Block.packData((byte)RawDirection.SOUTH, 0);
 
-        BlockVertex[] verticesSouth = [
-            // south
-            new BlockVertex(xmin, ymax, zmin, southU, southV, data),
-            new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data),
-            new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data),
-            new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data),
-        ];
-        vertices.AddRange(i, verticesSouth);
-        c += 4;
-        id = [
-            i,
-            (ushort)(i + 1),
-            (ushort)(i + 2),
-            (ushort)(i + 0),
-            (ushort)(i + 2),
-            (ushort)(i + 3)
-        ];
+        // south
+        tempVertices[0] = new BlockVertex(xmin, ymax, zmin, southU, southV, data);
+        tempVertices[1] = new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data);
+        tempVertices[2] = new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data);
+        tempVertices[3] = new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data);
 
-        indices.AddRange(ci, id);
+        vertices.AddRange(c, tempVertices);
+
+        c += 4;
+        tempIndices[0] = i;
+        tempIndices[1] = (ushort)(i + 1);
+        tempIndices[2] = (ushort)(i + 2);
+        tempIndices[3] = (ushort)(i + 0);
+        tempIndices[4] = (ushort)(i + 2);
+        tempIndices[5] = (ushort)(i + 3);
+        indices.AddRange(ci, tempIndices);
         i += 4;
         ci += 6;
         data = Block.packData((byte)RawDirection.NORTH, 0);
-        BlockVertex[] verticesNorth = [
-            // north
-            new BlockVertex(xmax, ymax, zmax, northU, northV, data),
-            new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data),
-            new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data),
-            new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data),
-        ];
-        vertices.AddRange(i, verticesNorth);
+        // north
+        tempVertices[0] = new BlockVertex(xmax, ymax, zmax, northU, northV, data);
+        tempVertices[1] = new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data);
+        tempVertices[2] = new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data);
+        tempVertices[3] = new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data);
+        vertices.AddRange(c, tempVertices);
+
         c += 4;
-        id = [
-            i,
-            (ushort)(i + 1),
-            (ushort)(i + 2),
-            (ushort)(i + 0),
-            (ushort)(i + 2),
-            (ushort)(i + 3)
-        ];
-        indices.AddRange(ci, id);
+        tempIndices[0] = i;
+        tempIndices[1] = (ushort)(i + 1);
+        tempIndices[2] = (ushort)(i + 2);
+        tempIndices[3] = (ushort)(i + 0);
+        tempIndices[4] = (ushort)(i + 2);
+        tempIndices[5] = (ushort)(i + 3);
+        indices.AddRange(ci, tempIndices);
         i += 4;
         ci += 6;
         data = Block.packData((byte)RawDirection.DOWN, 0);
-        BlockVertex[] verticesBottom = [
-            // bottom
-            new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data),
-            new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data),
-            new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data),
-            new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data),
-        ];
-        vertices.AddRange(i, verticesBottom);
+        // bottom
+        tempVertices[0] = new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data);
+        tempVertices[1] = new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data);
+        tempVertices[2] = new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data);
+        tempVertices[3] = new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data);
+        vertices.AddRange(c, tempVertices);
+
         c += 4;
-        id = [
-            i,
-            (ushort)(i + 1),
-            (ushort)(i + 2),
-            (ushort)(i + 0),
-            (ushort)(i + 2),
-            (ushort)(i + 3)
-        ];
-        indices.AddRange(ci, id);
+        tempIndices[0] = i;
+        tempIndices[1] = (ushort)(i + 1);
+        tempIndices[2] = (ushort)(i + 2);
+        tempIndices[3] = (ushort)(i + 0);
+        tempIndices[4] = (ushort)(i + 2);
+        tempIndices[5] = (ushort)(i + 3);
+        indices.AddRange(ci, tempIndices);
         i += 4;
         ci += 6;
         data = Block.packData((byte)RawDirection.UP, 0);
 
-        BlockVertex[] verticesTop = [
-            // top
-            new BlockVertex(xmin, ymax, zmax, topU, topV, data),
-            new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data),
-            new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data),
-            new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data),
-        ];
+        // top
+        tempVertices[0] = new BlockVertex(xmin, ymax, zmax, topU, topV, data);
+        tempVertices[1] = new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data);
+        tempVertices[2] = new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data);
+        tempVertices[3] = new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data);
+        vertices.AddRange(c, tempVertices);
 
-        vertices.AddRange(i, verticesTop);
         c += 4;
-        id = [
-            i,
-            (ushort)(i + 1),
-            (ushort)(i + 2),
-            (ushort)(i + 0),
-            (ushort)(i + 2),
-            (ushort)(i + 3)
-        ];
-
-        indices.AddRange(ci, id);
+        tempIndices[0] = i;
+        tempIndices[1] = (ushort)(i + 1);
+        tempIndices[2] = (ushort)(i + 2);
+        tempIndices[3] = (ushort)(i + 0);
+        tempIndices[4] = (ushort)(i + 2);
+        tempIndices[5] = (ushort)(i + 3);
+        indices.AddRange(ci, tempIndices);
         i += 4;
         ci += 6;
     }
@@ -392,6 +372,18 @@ public class WorldRenderer {
 
 public static class ArrayExtensions {
     public static void AddRange<T>(this T[] arr, int index, T[] elements) {
+        for (int i = index; i < index + elements.Length; i++) {
+            arr[i] = elements[i - index];
+        }
+    }
+
+    public static void AddRange<T>(this Span<T> arr, int index, Span<T> elements) {
+        for (int i = index; i < index + elements.Length; i++) {
+            arr[i] = elements[i - index];
+        }
+    }
+
+    public static void AddRange<T>(this T[] arr, int index, Span<T> elements) {
         for (int i = index; i < index + elements.Length; i++) {
             arr[i] = elements[i - index];
         }
