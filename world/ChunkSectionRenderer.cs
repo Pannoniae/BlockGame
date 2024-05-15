@@ -99,8 +99,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        var sw = new Stopwatch();
-        sw.Start();
+        //var sw = new Stopwatch();
+        //sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -119,6 +119,7 @@ public class ChunkSectionRenderer {
             //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
             // first we render everything which is NOT translucent
             lock (meshingLock) {
+                setupNeighbours();
                 /*if (World.glob) {
                     MeasureProfiler.StartCollectingData();
                 }*/
@@ -126,7 +127,7 @@ public class ChunkSectionRenderer {
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
+                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
                 if (section.world.renderer.fastChunkSwitch) {
                     (vao as VerySharedBlockVAO).bindVAO();
                 }
@@ -159,8 +160,8 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        sw.Stop();
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        //sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -198,20 +199,12 @@ public class ChunkSectionRenderer {
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
-    // if neighbourTest returns true for adjacent block, render, if it returns false, don't
-    //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
-        var sw = new Stopwatch();
-        sw.Start();
 
-        // clear arrays before starting
-        chunkVertices.Clear();
-        chunkIndices.Clear();
+    private void setupNeighbours() {
 
         hasTranslucentBlocks = false;
-        Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
+        //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
-        ushort i = 0;
         // cache blocks
         // we need a 18x18 area
         // we load the 16x16 from the section itself then get the world for the rest
@@ -227,7 +220,7 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
+        //Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
 
         // if chunk is empty, nothing to do, don't need to check neighbours
         // btw this shouldn't fucking happen because we checked it but we check it anyway so our program doesn't crash if the chunk representation is changed
@@ -247,7 +240,20 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
+    }
+
+    // if neighbourTest returns true for adjacent block, render, if it returns false, don't
+    //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
+        //var sw = new Stopwatch();
+        //sw.Start();
+        //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
+
+        // clear arrays before starting
+        chunkVertices.Clear();
+        chunkIndices.Clear();
+
+        ushort i = 0;
 
         // helper function to get blocks from cache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -627,7 +633,7 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
+        //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
