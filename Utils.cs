@@ -43,6 +43,10 @@ public static class Utils {
 /// Doubles as a normal too
 /// </summary>
 public readonly record struct Direction {
+
+    public static int min = 0;
+    public static int max = 6;
+
     public static readonly Vector3D<int> WEST = new(-1, 0, 0);
     public static readonly Vector3D<int> EAST = new(1, 0, 0);
     public static readonly Vector3D<int> SOUTH = new(0, 0, -1);
@@ -56,6 +60,18 @@ public readonly record struct Direction {
     public static Vector3D<int>[] directionsHorizontal => [WEST, EAST, SOUTH, NORTH];
     public static Vector3D<int>[] directionsDiag => [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
     public static Vector3D<int>[] directionsSelf => [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
+
+    public static Vector3D<int> getDirection(RawDirection dir) {
+        return dir switch {
+            RawDirection.WEST => WEST,
+            RawDirection.EAST => EAST,
+            RawDirection.SOUTH => SOUTH,
+            RawDirection.NORTH => NORTH,
+            RawDirection.DOWN => DOWN,
+            RawDirection.UP => UP,
+            _ => throw new ArgumentOutOfRangeException(nameof(dir), dir, null)
+        };
+    }
 
 }
 
