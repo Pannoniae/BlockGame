@@ -46,6 +46,9 @@ public class GUI {
     private VertexBuffer<BlockVertex> buffer;
     private Matrix4x4 ortho;
 
+    private BlockVertex[] guiBlock;
+    private ushort[] guiBlockI;
+
     public GUI() {
         GL = Game.GL;
         GD = Game.GD;
@@ -58,6 +61,8 @@ public class GUI {
         guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
             GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
         buffer = new VertexBuffer<BlockVertex>(GD, 24, 36, ElementType.UnsignedShort, BufferUsage.StreamDraw);
+        guiBlock = new BlockVertex[24];
+        guiBlockI = new ushort[36];
     }
 
     public void loadFonts() {
@@ -177,7 +182,7 @@ public class GUI {
         //GD.Clear(ClearBuffers.Color);
         BlockVertex[] vertices = null!;
         ushort[] indices = null!;
-        WorldRenderer.meshBlock(block, ref vertices!, ref indices!);
+        WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         GD.ShaderProgram = guiBlockShader;
         // assemble the matrix
         /*var mat = Matrix4x4.CreateTranslation(x, y, 0) *

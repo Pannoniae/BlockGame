@@ -199,14 +199,17 @@ public class ChunkSectionRenderer {
         }
     }
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
     unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
+        var sw = new Stopwatch();
+        sw.Start();
 
         // clear arrays before starting
         chunkVertices.Clear();
         chunkIndices.Clear();
 
         hasTranslucentBlocks = false;
+        Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         ushort i = 0;
         // cache blocks
@@ -224,10 +227,10 @@ public class ChunkSectionRenderer {
                 }
             }
         }
+        Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
 
         // if chunk is empty, nothing to do, don't need to check neighbours
         // btw this shouldn't fucking happen because we checked it but we check it anyway so our program doesn't crash if the chunk representation is changed
-
 
         for (int y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
             for (int z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
@@ -244,6 +247,7 @@ public class ChunkSectionRenderer {
                 }
             }
         }
+        Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
 
         // helper function to get blocks from cache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -272,53 +276,14 @@ public class ChunkSectionRenderer {
                         Block b = Blocks.get(bl);
 
                         // calculate texcoords
-                        var westCoords = b.uvs[0];
-                        var west = Block.texCoords(westCoords);
-                        var westMax = Block.texCoords(westCoords.u + 1, westCoords.v + 1);
-                        var westU = west.X;
-                        var westV = west.Y;
-                        var westMaxU = westMax.X;
-                        var westMaxV = westMax.Y;
 
-                        var eastCoords = b.uvs[1];
-                        var east = Block.texCoords(eastCoords);
-                        var eastMax = Block.texCoords(eastCoords.u + 1, eastCoords.v + 1);
-                        var eastU = east.X;
-                        var eastV = east.Y;
-                        var eastMaxU = eastMax.X;
-                        var eastMaxV = eastMax.Y;
-
-                        var southCoords = b.uvs[2];
-                        var south = Block.texCoords(southCoords);
-                        var southMax = Block.texCoords(southCoords.u + 1, southCoords.v + 1);
-                        var southU = south.X;
-                        var southV = south.Y;
-                        var southMaxU = southMax.X;
-                        var southMaxV = southMax.Y;
-
-                        var northCoords = b.uvs[3];
-                        var north = Block.texCoords(northCoords);
-                        var northMax = Block.texCoords(northCoords.u + 1, northCoords.v + 1);
-                        var northU = north.X;
-                        var northV = north.Y;
-                        var northMaxU = northMax.X;
-                        var northMaxV = northMax.Y;
-
-                        var bottomCoords = b.uvs[4];
-                        var bottom = Block.texCoords(bottomCoords);
-                        var bottomMax = Block.texCoords(bottomCoords.u + 1, bottomCoords.v + 1);
-                        var bottomU = bottom.X;
-                        var bottomV = bottom.Y;
-                        var bottomMaxU = bottomMax.X;
-                        var bottomMaxV = bottomMax.Y;
-
-                        var topCoords = b.uvs[5];
-                        var top = Block.texCoords(topCoords);
-                        var topMax = Block.texCoords(topCoords.u + 1, topCoords.v + 1);
-                        var topU = top.X;
-                        var topV = top.Y;
-                        var topMaxU = topMax.X;
-                        var topMaxV = topMax.Y;
+                        UVPair texCoords;
+                        Vector2D<Half> tex;
+                        Vector2D<Half> texMax;
+                        Half u;
+                        Half v;
+                        Half maxU;
+                        Half maxV;
 
                         float offset = 0.0004f;
 
@@ -334,152 +299,58 @@ public class ChunkSectionRenderer {
                         // this is garbage but we'll deal with it later
                         // bottom
 
-                        byte aoXminZminYmin;
-                        byte aoXmaxZminYmin;
-                        byte aoXminZmaxYmin;
-                        byte aoXmaxZmaxYmin;
-                        byte aoXminZminYmax;
-                        byte aoXmaxZminYmax;
-                        byte aoXminZmaxYmax;
-                        byte aoXmaxZmaxYmax;
-                        byte west1;
-                        byte west2;
-                        byte west3;
-                        byte west4;
-                        byte east1;
-                        byte east2;
-                        byte east3;
-                        byte east4;
-                        byte south1;
-                        byte south2;
-                        byte south3;
-                        byte south4;
-                        byte north1;
-                        byte north2;
-                        byte north3;
-                        byte north4;
-                        if (Settings.instance.AO) {
-                            aoXminZminYmin = calculateAOFixed(getBlockFromCache(x - 1, y - 1, z),
-                                getBlockFromCache(x, y - 1, z - 1),
-                                getBlockFromCache(x - 1, y - 1, z - 1));
-                            aoXmaxZminYmin = calculateAOFixed(getBlockFromCache(x + 1, y - 1, z),
-                                getBlockFromCache(x, y - 1, z - 1),
-                                getBlockFromCache(x + 1, y - 1, z - 1));
-                            aoXminZmaxYmin = calculateAOFixed(getBlockFromCache(x - 1, y - 1, z),
-                                getBlockFromCache(x, y - 1, z + 1),
-                                getBlockFromCache(x - 1, y - 1, z + 1));
-                            aoXmaxZmaxYmin = calculateAOFixed(getBlockFromCache(x + 1, y - 1, z),
-                                getBlockFromCache(x, y - 1, z + 1),
-                                getBlockFromCache(x + 1, y - 1, z + 1));
+                        byte ao1;
+                        byte ao2;
+                        byte ao3;
+                        byte ao4;
 
-                            // top
-                            aoXminZminYmax = calculateAOFixed(getBlockFromCache(x - 1, y + 1, z),
-                                getBlockFromCache(x, y + 1, z - 1),
-                                getBlockFromCache(x - 1, y + 1, z - 1));
-                            aoXmaxZminYmax = calculateAOFixed(getBlockFromCache(x + 1, y + 1, z),
-                                getBlockFromCache(x, y + 1, z - 1),
-                                getBlockFromCache(x + 1, y + 1, z - 1));
-                            aoXminZmaxYmax = calculateAOFixed(getBlockFromCache(x - 1, y + 1, z),
-                                getBlockFromCache(x, y + 1, z + 1),
-                                getBlockFromCache(x - 1, y + 1, z + 1));
-                            aoXmaxZmaxYmax = calculateAOFixed(getBlockFromCache(x + 1, y + 1, z),
-                                getBlockFromCache(x, y + 1, z + 1),
-                                getBlockFromCache(x + 1, y + 1, z + 1));
+                        ushort data1;
+                        ushort data2;
+                        ushort data3;
+                        ushort data4;
 
-                            // west
-                            west1 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                getBlockFromCache(x - 1, y + 1, z),
-                                getBlockFromCache(x - 1, y + 1, z + 1));
-                            west2 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                getBlockFromCache(x - 1, y - 1, z),
-                                getBlockFromCache(x - 1, y - 1, z + 1));
-                            west3 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                getBlockFromCache(x - 1, y - 1, z),
-                                getBlockFromCache(x - 1, y - 1, z - 1));
-                            west4 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                getBlockFromCache(x - 1, y + 1, z),
-                                getBlockFromCache(x - 1, y + 1, z - 1));
-
-                            // east
-                            east1 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                getBlockFromCache(x + 1, y + 1, z),
-                                getBlockFromCache(x + 1, y + 1, z - 1));
-                            east2 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                getBlockFromCache(x + 1, y - 1, z),
-                                getBlockFromCache(x + 1, y - 1, z - 1));
-                            east3 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                getBlockFromCache(x + 1, y - 1, z),
-                                getBlockFromCache(x + 1, y - 1, z + 1));
-                            east4 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                getBlockFromCache(x + 1, y + 1, z),
-                                getBlockFromCache(x + 1, y + 1, z + 1));
-
-                            // south
-                            south1 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                getBlockFromCache(x, y + 1, z - 1),
-                                getBlockFromCache(x - 1, y + 1, z - 1));
-                            south2 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                getBlockFromCache(x, y - 1, z - 1),
-                                getBlockFromCache(x - 1, y - 1, z - 1));
-                            south3 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                getBlockFromCache(x, y - 1, z - 1),
-                                getBlockFromCache(x + 1, y - 1, z - 1));
-                            south4 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                getBlockFromCache(x, y + 1, z - 1),
-                                getBlockFromCache(x + 1, y + 1, z - 1));
-
-                            // north
-                            north1 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                getBlockFromCache(x, y + 1, z + 1),
-                                getBlockFromCache(x + 1, y + 1, z + 1));
-                            north2 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                getBlockFromCache(x, y - 1, z + 1),
-                                getBlockFromCache(x + 1, y - 1, z + 1));
-                            north3 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                getBlockFromCache(x, y - 1, z + 1),
-                                getBlockFromCache(x - 1, y - 1, z + 1));
-                            north4 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                getBlockFromCache(x, y + 1, z + 1),
-                                getBlockFromCache(x - 1, y + 1, z + 1));
-                        }
-                        else {
-                            aoXminZminYmin = 0;
-                            aoXmaxZminYmin = 0;
-                            aoXminZmaxYmin = 0;
-                            aoXmaxZmaxYmin = 0;
-                            aoXminZminYmax = 0;
-                            aoXmaxZminYmax = 0;
-                            aoXminZmaxYmax = 0;
-                            aoXmaxZmaxYmax = 0;
-                            west1 = 0;
-                            west2 = 0;
-                            west3 = 0;
-                            west4 = 0;
-                            east1 = 0;
-                            east2 = 0;
-                            east3 = 0;
-                            east4 = 0;
-                            south1 = 0;
-                            south2 = 0;
-                            south3 = 0;
-                            south4 = 0;
-                            north1 = 0;
-                            north2 = 0;
-                            north3 = 0;
-                            north4 = 0;
-                        }
-
-                        var nb = getBlockFromCache(x - 1, y, z);
+                        ushort nb;
+                        nb = getBlockFromCache(x - 1, y, z);
                         if (neighbourTest(nb)) {
-                            var data1 = Block.packData((byte)RawDirection.WEST, west1);
-                            var data2 = Block.packData((byte)RawDirection.WEST, west2);
-                            var data3 = Block.packData((byte)RawDirection.WEST, west3);
-                            var data4 = Block.packData((byte)RawDirection.WEST, west4);
+                            if (Settings.instance.AO) {
+                                // west
+                                ao1 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
+                                    getBlockFromCache(x - 1, y + 1, z),
+                                    getBlockFromCache(x - 1, y + 1, z + 1));
+                                ao2 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
+                                    getBlockFromCache(x - 1, y - 1, z),
+                                    getBlockFromCache(x - 1, y - 1, z + 1));
+                                ao3 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
+                                    getBlockFromCache(x - 1, y - 1, z),
+                                    getBlockFromCache(x - 1, y - 1, z - 1));
+                                ao4 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
+                                    getBlockFromCache(x - 1, y + 1, z),
+                                    getBlockFromCache(x - 1, y + 1, z - 1));
+                            }
+                            else {
+                                ao1 = 0;
+                                ao2 = 0;
+                                ao3 = 0;
+                                ao4 = 0;
+                            }
+
+                            texCoords = b.uvs[0];
+                            tex = Block.texCoords(texCoords);
+                            texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                            u = tex.X;
+                            v = tex.Y;
+                            maxU = texMax.X;
+                            maxV = texMax.Y;
+
+                            data1 = Block.packData((byte)RawDirection.WEST, ao1);
+                            data2 = Block.packData((byte)RawDirection.WEST, ao2);
+                            data3 = Block.packData((byte)RawDirection.WEST, ao3);
+                            data4 = Block.packData((byte)RawDirection.WEST, ao4);
                             // west
-                            tempVertices[0] = new BlockVertex(xmin, ymax, zmax, westU, westV, data1);
-                            tempVertices[1] = new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data2);
-                            tempVertices[2] = new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data3);
-                            tempVertices[3] = new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data4);
+                            tempVertices[0] = new BlockVertex(xmin, ymax, zmax, u, v, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymin, zmax, u, maxV, data2);
+                            tempVertices[2] = new BlockVertex(xmin, ymin, zmin, maxU, maxV, data3);
+                            tempVertices[3] = new BlockVertex(xmin, ymax, zmin, maxU, v, data4);
                             chunkVertices.AddRange(tempVertices);
 
                             tempIndices[0] = i;
@@ -493,15 +364,45 @@ public class ChunkSectionRenderer {
                         }
                         nb = getBlockFromCache(x + 1, y, z);
                         if (neighbourTest(nb)) {
-                            var data1 = Block.packData((byte)RawDirection.EAST, east1);
-                            var data2 = Block.packData((byte)RawDirection.EAST, east2);
-                            var data3 = Block.packData((byte)RawDirection.EAST, east3);
-                            var data4 = Block.packData((byte)RawDirection.EAST, east4);
+                            if (Settings.instance.AO) {
+                                // east
+                                ao1 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
+                                    getBlockFromCache(x + 1, y + 1, z),
+                                    getBlockFromCache(x + 1, y + 1, z - 1));
+                                ao2 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
+                                    getBlockFromCache(x + 1, y - 1, z),
+                                    getBlockFromCache(x + 1, y - 1, z - 1));
+                                ao3 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
+                                    getBlockFromCache(x + 1, y - 1, z),
+                                    getBlockFromCache(x + 1, y - 1, z + 1));
+                                ao4 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
+                                    getBlockFromCache(x + 1, y + 1, z),
+                                    getBlockFromCache(x + 1, y + 1, z + 1));
+                            }
+                            else {
+                                ao1 = 0;
+                                ao2 = 0;
+                                ao3 = 0;
+                                ao4 = 0;
+                            }
+
+                            texCoords = b.uvs[1];
+                            tex = Block.texCoords(texCoords);
+                            texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                            u = tex.X;
+                            v = tex.Y;
+                            maxU = texMax.X;
+                            maxV = texMax.Y;
+
+                            data1 = Block.packData((byte)RawDirection.EAST, ao1);
+                            data2 = Block.packData((byte)RawDirection.EAST, ao2);
+                            data3 = Block.packData((byte)RawDirection.EAST, ao3);
+                            data4 = Block.packData((byte)RawDirection.EAST, ao4);
                             // east
-                            tempVertices[0] = new BlockVertex(xmax, ymax, zmin, eastU, eastV, data1);
-                            tempVertices[1] = new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data2);
-                            tempVertices[2] = new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data3);
-                            tempVertices[3] = new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data4);
+                            tempVertices[0] = new BlockVertex(xmax, ymax, zmin, u, v, data1);
+                            tempVertices[1] = new BlockVertex(xmax, ymin, zmin, u, maxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymin, zmax, maxU, maxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymax, zmax, maxU, v, data4);
                             chunkVertices.AddRange(tempVertices);
 
                             tempIndices[0] = i;
@@ -515,15 +416,45 @@ public class ChunkSectionRenderer {
                         }
                         nb = getBlockFromCache(x, y, z - 1);
                         if (neighbourTest(nb)) {
-                            var data1 = Block.packData((byte)RawDirection.SOUTH, south1);
-                            var data2 = Block.packData((byte)RawDirection.SOUTH, south2);
-                            var data3 = Block.packData((byte)RawDirection.SOUTH, south3);
-                            var data4 = Block.packData((byte)RawDirection.SOUTH, south4);
+                            if (Settings.instance.AO) {
+                                // south
+                                ao1 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
+                                    getBlockFromCache(x, y + 1, z - 1),
+                                    getBlockFromCache(x - 1, y + 1, z - 1));
+                                ao2 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
+                                    getBlockFromCache(x, y - 1, z - 1),
+                                    getBlockFromCache(x - 1, y - 1, z - 1));
+                                ao3 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
+                                    getBlockFromCache(x, y - 1, z - 1),
+                                    getBlockFromCache(x + 1, y - 1, z - 1));
+                                ao4 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
+                                    getBlockFromCache(x, y + 1, z - 1),
+                                    getBlockFromCache(x + 1, y + 1, z - 1));
+                            }
+                            else {
+                                ao1 = 0;
+                                ao2 = 0;
+                                ao3 = 0;
+                                ao4 = 0;
+                            }
+
+                            texCoords = b.uvs[2];
+                            tex = Block.texCoords(texCoords);
+                            texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                            u = tex.X;
+                            v = tex.Y;
+                            maxU = texMax.X;
+                            maxV = texMax.Y;
+
+                            data1 = Block.packData((byte)RawDirection.SOUTH, ao1);
+                            data2 = Block.packData((byte)RawDirection.SOUTH, ao2);
+                            data3 = Block.packData((byte)RawDirection.SOUTH, ao3);
+                            data4 = Block.packData((byte)RawDirection.SOUTH, ao4);
                             // south
-                            tempVertices[0] = new BlockVertex(xmin, ymax, zmin, southU, southV, data1);
-                            tempVertices[1] = new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data2);
-                            tempVertices[2] = new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data3);
-                            tempVertices[3] = new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data4);
+                            tempVertices[0] = new BlockVertex(xmin, ymax, zmin, u, v, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymin, zmin, u, maxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymin, zmin, maxU, maxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymax, zmin, maxU, v, data4);
                             chunkVertices.AddRange(tempVertices);
 
                             tempIndices[0] = i;
@@ -537,15 +468,45 @@ public class ChunkSectionRenderer {
                         }
                         nb = getBlockFromCache(x, y, z + 1);
                         if (neighbourTest(nb)) {
-                            var data1 = Block.packData((byte)RawDirection.NORTH, north1);
-                            var data2 = Block.packData((byte)RawDirection.NORTH, north2);
-                            var data3 = Block.packData((byte)RawDirection.NORTH, north3);
-                            var data4 = Block.packData((byte)RawDirection.NORTH, north4);
+                            if (Settings.instance.AO) {
+                                // north
+                                ao1 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
+                                    getBlockFromCache(x, y + 1, z + 1),
+                                    getBlockFromCache(x + 1, y + 1, z + 1));
+                                ao2 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
+                                    getBlockFromCache(x, y - 1, z + 1),
+                                    getBlockFromCache(x + 1, y - 1, z + 1));
+                                ao3 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
+                                    getBlockFromCache(x, y - 1, z + 1),
+                                    getBlockFromCache(x - 1, y - 1, z + 1));
+                                ao4 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
+                                    getBlockFromCache(x, y + 1, z + 1),
+                                    getBlockFromCache(x - 1, y + 1, z + 1));
+                            }
+                            else {
+                                ao1 = 0;
+                                ao2 = 0;
+                                ao3 = 0;
+                                ao4 = 0;
+                            }
+
+                            texCoords = b.uvs[3];
+                            tex = Block.texCoords(texCoords);
+                            texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                            u = tex.X;
+                            v = tex.Y;
+                            maxU = texMax.X;
+                            maxV = texMax.Y;
+
+                            data1 = Block.packData((byte)RawDirection.NORTH, ao1);
+                            data2 = Block.packData((byte)RawDirection.NORTH, ao2);
+                            data3 = Block.packData((byte)RawDirection.NORTH, ao3);
+                            data4 = Block.packData((byte)RawDirection.NORTH, ao4);
                             // north
-                            tempVertices[0] = new BlockVertex(xmax, ymax, zmax, northU, northV, data1);
-                            tempVertices[1] = new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data2);
-                            tempVertices[2] = new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data3);
-                            tempVertices[3] = new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data4);
+                            tempVertices[0] = new BlockVertex(xmax, ymax, zmax, u, v, data1);
+                            tempVertices[1] = new BlockVertex(xmax, ymin, zmax, u, maxV, data2);
+                            tempVertices[2] = new BlockVertex(xmin, ymin, zmax, maxU, maxV, data3);
+                            tempVertices[3] = new BlockVertex(xmin, ymax, zmax, maxU, v, data4);
                             chunkVertices.AddRange(tempVertices);
 
                             tempIndices[0] = i;
@@ -561,15 +522,44 @@ public class ChunkSectionRenderer {
                         // this prevents meshing exactly nothing under the world
                         nb = getBlockFromCache(x, y - 1, z);
                         if (wy - 1 >= 0 && neighbourTest(nb)) {
-                            var data1 = Block.packData((byte)RawDirection.DOWN, aoXminZminYmin);
-                            var data2 = Block.packData((byte)RawDirection.DOWN, aoXminZmaxYmin);
-                            var data3 = Block.packData((byte)RawDirection.DOWN, aoXmaxZmaxYmin);
-                            var data4 = Block.packData((byte)RawDirection.DOWN, aoXmaxZminYmin);
+                            if (Settings.instance.AO) {
+                                ao1 = calculateAOFixed(getBlockFromCache(x - 1, y - 1, z),
+                                    getBlockFromCache(x, y - 1, z - 1),
+                                    getBlockFromCache(x - 1, y - 1, z - 1));
+                                ao2 = calculateAOFixed(getBlockFromCache(x + 1, y - 1, z),
+                                    getBlockFromCache(x, y - 1, z - 1),
+                                    getBlockFromCache(x + 1, y - 1, z - 1));
+                                ao3 = calculateAOFixed(getBlockFromCache(x - 1, y - 1, z),
+                                    getBlockFromCache(x, y - 1, z + 1),
+                                    getBlockFromCache(x - 1, y - 1, z + 1));
+                                ao4 = calculateAOFixed(getBlockFromCache(x + 1, y - 1, z),
+                                    getBlockFromCache(x, y - 1, z + 1),
+                                    getBlockFromCache(x + 1, y - 1, z + 1));
+                            }
+                            else {
+                                ao1 = 0;
+                                ao2 = 0;
+                                ao3 = 0;
+                                ao4 = 0;
+                            }
+
+                            texCoords = b.uvs[4];
+                            tex = Block.texCoords(texCoords);
+                            texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                            u = tex.X;
+                            v = tex.Y;
+                            maxU = texMax.X;
+                            maxV = texMax.Y;
+
+                            data1 = Block.packData((byte)RawDirection.DOWN, ao1);
+                            data2 = Block.packData((byte)RawDirection.DOWN, ao3);
+                            data3 = Block.packData((byte)RawDirection.DOWN, ao4);
+                            data4 = Block.packData((byte)RawDirection.DOWN, ao2);
                             // bottom
-                            tempVertices[0] = new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data1);
-                            tempVertices[1] = new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data2);
-                            tempVertices[2] = new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data3);
-                            tempVertices[3] = new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data4);
+                            tempVertices[0] = new BlockVertex(xmin, ymin, zmin, u, v, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymin, zmax, u, maxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymin, zmax, maxU, maxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymin, zmin, maxU, v, data4);
                             chunkVertices.AddRange(tempVertices);
 
                             tempIndices[0] = i;
@@ -583,15 +573,45 @@ public class ChunkSectionRenderer {
                         }
                         nb = getBlockFromCache(x, y + 1, z);
                         if (neighbourTest(nb)) {
-                            var data1 = Block.packData((byte)RawDirection.UP, aoXminZmaxYmax);
-                            var data2 = Block.packData((byte)RawDirection.UP, aoXminZminYmax);
-                            var data3 = Block.packData((byte)RawDirection.UP, aoXmaxZminYmax);
-                            var data4 = Block.packData((byte)RawDirection.UP, aoXmaxZmaxYmax);
+                            if (Settings.instance.AO) {
+                                // top
+                                ao1 = calculateAOFixed(getBlockFromCache(x - 1, y + 1, z),
+                                    getBlockFromCache(x, y + 1, z - 1),
+                                    getBlockFromCache(x - 1, y + 1, z - 1));
+                                ao2 = calculateAOFixed(getBlockFromCache(x + 1, y + 1, z),
+                                    getBlockFromCache(x, y + 1, z - 1),
+                                    getBlockFromCache(x + 1, y + 1, z - 1));
+                                ao3 = calculateAOFixed(getBlockFromCache(x - 1, y + 1, z),
+                                    getBlockFromCache(x, y + 1, z + 1),
+                                    getBlockFromCache(x - 1, y + 1, z + 1));
+                                ao4 = calculateAOFixed(getBlockFromCache(x + 1, y + 1, z),
+                                    getBlockFromCache(x, y + 1, z + 1),
+                                    getBlockFromCache(x + 1, y + 1, z + 1));
+                            }
+                            else {
+                                ao1 = 0;
+                                ao2 = 0;
+                                ao3 = 0;
+                                ao4 = 0;
+                            }
+
+                            texCoords = b.uvs[5];
+                            tex = Block.texCoords(texCoords);
+                            texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                            u = tex.X;
+                            v = tex.Y;
+                            maxU = texMax.X;
+                            maxV = texMax.Y;
+
+                            data1 = Block.packData((byte)RawDirection.UP, ao3);
+                            data2 = Block.packData((byte)RawDirection.UP, ao1);
+                            data3 = Block.packData((byte)RawDirection.UP, ao2);
+                            data4 = Block.packData((byte)RawDirection.UP, ao4);
                             // top
-                            tempVertices[0] = new BlockVertex(xmin, ymax, zmax, topU, topV, data1);
-                            tempVertices[1] = new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data2);
-                            tempVertices[2] = new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data3);
-                            tempVertices[3] = new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data4);
+                            tempVertices[0] = new BlockVertex(xmin, ymax, zmax, u, v, data1);
+                            tempVertices[1] = new BlockVertex(xmin, ymax, zmin, u, maxV, data2);
+                            tempVertices[2] = new BlockVertex(xmax, ymax, zmin, maxU, maxV, data3);
+                            tempVertices[3] = new BlockVertex(xmax, ymax, zmax, maxU, v, data4);
                             chunkVertices.AddRange(tempVertices);
 
                             tempIndices[0] = i;
@@ -607,6 +627,7 @@ public class ChunkSectionRenderer {
                 }
             }
         }
+        Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -656,7 +677,7 @@ public class ChunkSectionRenderer {
         }
     }
 
-    /*private Vector3D<int>[] getNeighbours(RawDirection side) {
-        return offsetTable[(int)side];
-    }*/
+/*private Vector3D<int>[] getNeighbours(RawDirection side) {
+    return offsetTable[(int)side];
+}*/
 }
