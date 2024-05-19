@@ -16,7 +16,10 @@
   ötletek:
   -legyenek missziók
   -minden ore-nak legyen haszna
-  -menüpontok elérési ótvonala megyen rövid (old world-szeruen, sok opció legyen elérhető egyidejűleg a képernyőn)
-  -mobok támadjanak gyakrabban és éjjel-nappla, legyen kihivás az életben maradás (a játék elején főleg)
+  -menüpontok elérési útvonala legyen rövid (old world-szeruen, sok opció legyen elérhető egyidejűleg a képernyőn)
+  -mobok támadjanak gyakrabban és éjjel-nappal, legyen kihivás az életben maradás (a játék elején főleg)
+  -NPC-ktol lehessen vasarolni, de ne tul sok mindent
+  -accessories slot-t csinalni
+  -nem kellenek nagy bosszok, hanem "apró" ellenségek helyettük: verem, szúrós virágok, harapós fák, véletlenszerűen megvaduló háziállatok, amik sebeznek
   
   
