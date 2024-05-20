@@ -46,9 +46,11 @@ public class Blocks {
         .noCollision()
         .noSelection());
 
+    public static Block CURSED_GRASS = register(new Block(9, "Cursed Grass", BlockModel.makeGrass(Block.crossUVs(0, 0)))
+        .transparency());
 
-    public static Block LOG = register(new Block(9, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
-    public static Block LEAVES = register(new Block(10, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
+    public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
+    public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
 
     public static bool isSolid(int block) {
         if (block == 0) {
@@ -133,9 +135,15 @@ public class Block {
         ];
     }
 
+    public static UVPair[] crossUVs(int x, int y) {
+        return [new(x, y), new(x, y)];
+    }
+
     // this will pack the data into the uint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ushort packData(byte direction, byte ao) {
+        // if none, treat it as an up
+        direction = (byte)(direction == 12 ? 5 : direction);
         return (ushort)(ao << 3 | direction);
     }
 
@@ -197,6 +205,9 @@ public class Water(ushort id, string name, BlockModel uvs, AABB? aabb = null) : 
 /// </summary>
 public readonly record struct UVPair(float u, float v) {
 
+    public readonly float u = u;
+    public readonly float v = v;
+
     public static UVPair operator +(UVPair uv, float q) {
         return new UVPair(uv.u + q, uv.v + q);
     }
@@ -215,7 +226,26 @@ public readonly record struct Face(
     float x2, float y2, float z2,
     float x3, float y3, float z3,
     float x4, float y4, float z4,
-    UVPair min, UVPair max, RawDirection direction, bool noAO = false, bool nonFullFace = false);
+    UVPair min, UVPair max, RawDirection direction, bool noAO = false, bool nonFullFace = false) {
+
+    public readonly float x1 = x1;
+    public readonly float y1 = y1;
+    public readonly float z1 = z1;
+    public readonly float x2 = x2;
+    public readonly float y2 = y2;
+    public readonly float z2 = z2;
+    public readonly float x3 = x3;
+    public readonly float y3 = y3;
+    public readonly float z3 = z3;
+    public readonly float x4 = x4;
+    public readonly float y4 = y4;
+    public readonly float z4 = z4;
+    public readonly UVPair min = min;
+    public readonly UVPair max = max;
+    public readonly RawDirection direction = direction;
+    public readonly bool noAO = noAO;
+    public readonly bool nonFullFace = nonFullFace;
+}
 
 public class BlockModel {
     public Face[] faces;
@@ -260,6 +290,29 @@ public class BlockModel {
         model.faces[4] = new Face(1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
         // up
         model.faces[5] = new Face(0, height, 1, 0, height, 0, 1, height, 0, 1, height, 1, uvs[5], uvs[5] + 1, RawDirection.UP, true, true);
+        return model;
+    }
+
+    // make a nice X
+    public static BlockModel makeGrass(UVPair[] uvs) {
+        var model = new BlockModel();
+        model.faces = new Face[4];
+
+        // offset from edge
+        var offset = 1 / (8 * MathF.Sqrt(2));
+
+        // x1
+        model.faces[0] = new Face(0 + offset, 1, 1 - offset, 0 + offset, 0, 1 - offset, 1 - offset, 0, 0 + offset, 1 - offset, 1, 0 + offset,
+            uvs[0], uvs[0] + 1, RawDirection.WEST, true, true);
+        // x2
+        model.faces[1] = new Face(0 + offset, 1, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1, 1 - offset,
+            uvs[1], uvs[1] + 1, RawDirection.SOUTH, true, true);
+        // x1 rear
+        model.faces[2] = new Face(1 - offset, 1, 0 + offset,1 - offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, 0 + offset, 1, 1 - offset,
+            uvs[0], uvs[0] + 1, RawDirection.EAST, true, true);
+        // x2 rear
+        model.faces[3] = new Face(1 - offset, 1, 1 - offset,1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
+            uvs[1], uvs[1] + 1, RawDirection.NORTH, true, true);
         return model;
     }
 }

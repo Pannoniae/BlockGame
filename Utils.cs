@@ -84,5 +84,6 @@ public enum RawDirection : byte {
     SOUTH = 2,
     NORTH = 3,
     DOWN = 4,
-    UP = 5
+    UP = 5,
+    NONE = 12
 }
