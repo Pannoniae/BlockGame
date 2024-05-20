@@ -33,9 +33,9 @@ public class World {
 
     // max. 5 msec in each frame for chunkload
     private const long MAX_CHUNKLOAD_FRAMETIME = 10;
-    private const int SPAWNCHUNKS_SIZE = 2;
+    private const int SPAWNCHUNKS_SIZE = 1;
 
-    public const int RENDERDISTANCE = 8;
+    public const int RENDERDISTANCE = 32;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -224,7 +224,7 @@ public class World {
         for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
             for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
                     loadChunk(new ChunkCoord(x, z), ChunkStatus.GENERATED);
                 }
             }
