@@ -1,6 +1,6 @@
 namespace BlockGame;
 
 public interface ChunkGenerator {
-    public void generate();
-    public void populate();
+    public void generate(ChunkCoord coord);
+    public void populate(ChunkCoord coord);
 }

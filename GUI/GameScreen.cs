@@ -182,7 +182,7 @@ public class GameScreen : Screen {
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 
-        //gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY, 16);
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY, 16);
         // setup blending
         //GD.BlendingEnabled = true;
         //GD.BlendState = bs;

@@ -5,9 +5,12 @@ public class TechDemoWorldGenerator : WorldGenerator {
     public FastNoiseLite noise;
     public World world;
 
+    public TechDemoChunkGenerator chunkGenerator;
+
 
     public TechDemoWorldGenerator(World world) {
         this.world = world;
+        chunkGenerator = new TechDemoChunkGenerator(this);
     }
 
     public void setup(int seed) {
@@ -16,12 +19,10 @@ public class TechDemoWorldGenerator : WorldGenerator {
     }
 
     public void generate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        chunk.generator.generate();
+        chunkGenerator.generate(coord);
     }
 
     public void populate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        chunk.generator.populate();
+        chunkGenerator.populate(coord);
     }
 }

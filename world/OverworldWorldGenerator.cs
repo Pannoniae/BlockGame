@@ -4,6 +4,8 @@ public class OverworldWorldGenerator : WorldGenerator {
 
     public World world;
 
+    public OverworldChunkGenerator chunkGenerator;
+
     public FastNoiseLite noise;
     public FastNoiseLite treenoise;
 
@@ -14,6 +16,7 @@ public class OverworldWorldGenerator : WorldGenerator {
     }
 
     public void setup(int seed) {
+        chunkGenerator = new OverworldChunkGenerator(this);
         random = new Random(seed);
         noise = new FastNoiseLite(seed);
         treenoise = new FastNoiseLite(random.Next(seed));
@@ -25,13 +28,11 @@ public class OverworldWorldGenerator : WorldGenerator {
     }
 
     public void generate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        chunk.generator.generate();
+        chunkGenerator.generate(coord);
     }
 
     public void populate(ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        chunk.generator.populate();
+        chunkGenerator.populate(coord);
     }
 
 

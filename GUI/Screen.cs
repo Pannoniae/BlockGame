@@ -90,7 +90,11 @@ public class Screen {
     }
 
     public virtual void update(double dt) {
-
+        // update hover status
+        foreach (var element in elements) {
+            element.hovered = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y);
+            element.pressed = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y) && Game.mouse.IsButtonPressed(MouseButton.Left);
+        }
     }
 
     public virtual void clear(GraphicsDevice GD, double dt, double interp) {

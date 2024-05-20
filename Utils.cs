@@ -33,6 +33,9 @@ public static class Utils {
     public static void wasteMemory(double dt, float megs) {
         waste = new byte[(int)(megs * 1024 * 1024 * dt)];
     }
+    public static float deg2rad(float degrees) {
+        return MathF.PI / 180f * degrees;
+    }
 }
 
 /// <summary>

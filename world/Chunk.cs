@@ -18,8 +18,6 @@ public class Chunk {
 
     public AABB box;
 
-    public ChunkGenerator generator;
-
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
     public const int CHUNKSIZESQ = 16 * 16;
@@ -34,7 +32,6 @@ public class Chunk {
         chunks = new ChunkSection[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
         // TODO FIX THIS SHIT
-        generator = new OverworldChunkGenerator(this.world.generator as OverworldWorldGenerator, this);
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);

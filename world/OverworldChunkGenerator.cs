@@ -2,17 +2,15 @@ namespace BlockGame;
 
 public class OverworldChunkGenerator : ChunkGenerator {
 
-    public Chunk chunk;
-    public World world;
     public OverworldWorldGenerator generator;
 
-    public OverworldChunkGenerator(OverworldWorldGenerator generator, Chunk chunk) {
+    public OverworldChunkGenerator(OverworldWorldGenerator generator) {
         this.generator = generator;
-        this.chunk = chunk;
-        this.world = chunk.world;
     }
 
-    public void generate() {
+    public void generate(ChunkCoord coord) {
+        var world = generator.world;
+        var chunk = world.getChunk(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
@@ -35,7 +33,9 @@ public class OverworldChunkGenerator : ChunkGenerator {
         chunk.status = ChunkStatus.GENERATED;
     }
 
-    public void populate() {
+    public void populate(ChunkCoord coord) {
+        var world = generator.world;
+        var chunk = world.getChunk(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
@@ -52,6 +52,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
 
     // Can place in neighbouring chunks, so they must be loaded first
     private void placeTree(int x, int y, int z) {
+        var world = generator.world;
         // tree
         for (int i = 0; i < 7; i++) {
             world.setBlock(x, y + i, z, Blocks.LOG.id, false);

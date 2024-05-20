@@ -44,7 +44,7 @@ public class MainMenuScreen : Screen {
     }
 
     public override void draw() {
-        Game.gui.drawBG(Blocks.BASALT, 16);
+        Game.gui.drawBG(Blocks.GRAVEL, 16);
         base.draw();
     }
 }
