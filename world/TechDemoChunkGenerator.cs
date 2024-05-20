@@ -2,17 +2,15 @@ namespace BlockGame;
 
 public class TechDemoChunkGenerator : ChunkGenerator {
 
-    public Chunk chunk;
-    public World world;
     public TechDemoWorldGenerator generator;
 
-    public TechDemoChunkGenerator(TechDemoWorldGenerator generator, Chunk chunk) {
+    public TechDemoChunkGenerator(TechDemoWorldGenerator generator) {
         this.generator = generator;
-        this.chunk = chunk;
-        this.world = chunk.world;
     }
 
-    public void generate() {
+    public void generate(ChunkCoord coord) {
+        var world = generator.world;
+        var chunk = world.getChunk(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
@@ -28,6 +26,7 @@ public class TechDemoChunkGenerator : ChunkGenerator {
         chunk.status = ChunkStatus.GENERATED;
     }
 
-    public void populate() {
+    public void populate(ChunkCoord coord) {
+        var chunk = generator.world.getChunk(coord);
         chunk.status = ChunkStatus.POPULATED;
     }}

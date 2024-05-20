@@ -180,8 +180,6 @@ public class GUI {
 
     public void drawBlock(World world, Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
-        BlockVertex[] vertices = null!;
-        ushort[] indices = null!;
         WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         GD.ShaderProgram = guiBlockShader;
         // assemble the matrix
@@ -189,16 +187,26 @@ public class GUI {
                         Matrix4x4.CreateScale(size * guiScale) *
                         Matrix4x4.CreateLookToLeftHanded(new Vector3(0, 2, 2), new Vector3(4, -1, -4), new Vector3(0, 1, 0)) *
                         Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -10, 50);*/
-        var camPos = new Vector3(1, -0.5f, -1);
-        var mat =
+        var camPos = new Vector3(3, 3, 3);
+
+
+        /*var mat =
+            // first we translate to the coords
             Matrix4x4.CreateScale(size * guiScale) *
-            Matrix4x4.CreateTranslation(-x / 15f, -y / 15f, 0) *
-            Matrix4x4.CreateLookAt(camPos, camPos + new Vector3(1, -1, 1), new Vector3(0, 1, 0)) *
-            Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -10, 50);
+            Matrix4x4.CreateTranslation(x, y, 0) *
+            Matrix4x4.CreateRotationY(Utils.deg2rad(45), new Vector3(x, y, 0)) *
+            Matrix4x4.CreateRotationX(Utils.deg2rad(30), new Vector3(x, y, 0)) *
+            //Matrix4x4.CreateTranslation(-x / 15f, y / 15f, 0) *
+            //Matrix4x4.CreateLookAt(camPos, camPos + new Vector3(1, -1, 1), new Vector3(0, 1, 0)) *
+            Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -50, 100);*/
+        var mat =
+            // first we translate to the coords
+            Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0)) *
+            Matrix4x4.CreatePerspectiveOffCenterLeftHanded(-2, 2, -2, 2, 0.01f, 100);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
-        buffer.DataSubset.SetData(vertices);
-        buffer.IndexSubset!.SetData(indices);
+        buffer.DataSubset.SetData(guiBlock);
+        buffer.IndexSubset!.SetData(guiBlockI);
         GD.VertexArray = buffer;
         GD.DrawElements(PrimitiveType.Triangles, 0, buffer.IndexStorageLength);
     }

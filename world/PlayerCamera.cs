@@ -70,11 +70,11 @@ public class PlayerCamera {
         pitch = Math.Clamp(pitch, -Constants.maxPitch, Constants.maxPitch);
 
         var cameraDirection = Vector3.Zero;
-        cameraDirection.X = MathF.Cos(DegreesToRadians(yaw)) *
-                            MathF.Cos(DegreesToRadians(pitch));
-        cameraDirection.Y = MathF.Sin(DegreesToRadians(pitch));
-        cameraDirection.Z = MathF.Sin(DegreesToRadians(yaw)) *
-                            MathF.Cos(DegreesToRadians(pitch));
+        cameraDirection.X = MathF.Cos(Utils.deg2rad(yaw)) *
+                            MathF.Cos(Utils.deg2rad(pitch));
+        cameraDirection.Y = MathF.Sin(Utils.deg2rad(pitch));
+        cameraDirection.Z = MathF.Sin(Utils.deg2rad(yaw)) *
+                            MathF.Cos(Utils.deg2rad(pitch));
 
         forward = Vector3.Normalize(cameraDirection);
     }
@@ -83,9 +83,9 @@ public class PlayerCamera {
         var p = 0;
 
         var cameraDirection = Vector3.Zero;
-        cameraDirection.X = MathF.Cos(DegreesToRadians(yaw));
+        cameraDirection.X = MathF.Cos(Utils.deg2rad(yaw));
         cameraDirection.Y = 0;
-        cameraDirection.Z = MathF.Sin(DegreesToRadians(yaw));
+        cameraDirection.Z = MathF.Sin(Utils.deg2rad(yaw));
 
         return Vector3.Normalize(cameraDirection);
     }
@@ -103,10 +103,6 @@ public class PlayerCamera {
 
     public Matrix4x4 getProjectionMatrix() {
         return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
-    }
-
-    public static float DegreesToRadians(float degrees) {
-        return MathF.PI / 180f * degrees;
     }
 
     public float hfov2vfov(float hfov) {

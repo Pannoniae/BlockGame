@@ -12,7 +12,8 @@ public class World {
 
     // chunk load queue
     public List<ChunkLoadTicket> chunkLoadQueue = new();
-    public Queue<BlockUpdate> blockUpdateQueue = new();
+    public List<BlockUpdate> blockUpdateQueue = new();
+    public List<TickAction> actionQueue = new();
 
     /// <summary>
     /// What needs to be meshed at the end of the frame
@@ -101,14 +102,6 @@ public class World {
         }
     }
 
-    private void genTerrainNoise() {
-        // generate terrain for all loaded chunks
-        foreach (var chunk in chunks.Values) {
-            chunk.generator.generate();
-            chunk.generator.populate();
-        }
-    }
-
     public void update(double dt) {
         worldTime += dt;
         worldTick++;
@@ -137,14 +130,33 @@ public class World {
         }
         //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
         //Console.Out.WriteLine($"{ctr} chunks loaded");
+        // execute block updates
+        for (int i = 0; i < blockUpdateQueue.Count; i++) {
+            var update = blockUpdateQueue[i];
+            if (update.tick <= worldTick) {
+                blockUpdate(update.position);
+                blockUpdateQueue.Remove(update);
+            }
+        }
+
+        // execute tick actions
+        for (int i = 0; i < actionQueue.Count; i++) {
+            var action = actionQueue[i];
+            if (action.tick <= worldTick) {
+                action.action();
+                actionQueue.Remove(action);
+            }
+        }
 
         // random block updates!
         foreach (var chunk in chunks) {
             foreach (var chunksection in chunk.Value.chunks) {
                 for (int i = 0; i < numTicks; i++) {
-                    var x = random.Next(16);
-                    var y = random.Next(16);
-                    var z = random.Next(16);
+                    // I pray this is random
+                    var coord = random.Next(16 * 16 * 16);
+                    var x = coord / (16 * 16) % 16;
+                    var y = coord / (16) % 16;
+                    var z = coord % 16;
                     chunksection.tick(x, y, z);
                 }
             }
@@ -266,10 +278,10 @@ public class World {
         // if it's already generated, don't do it again
         if (status >= ChunkStatus.GENERATED && !(hasChunk && chunk!.status > ChunkStatus.GENERATED)) {
             chunks[chunkCoord] = new Chunk(this, chunkCoord.x, chunkCoord.z);
-            chunks[chunkCoord].generator.generate();
+            generator.generate(chunkCoord);
         }
         if (status >= ChunkStatus.POPULATED && !(hasChunk && chunk!.status > ChunkStatus.POPULATED)) {
-            chunks[chunkCoord].generator.populate();
+            generator.populate(chunkCoord);
         }
         if (status >= ChunkStatus.MESHED && !(hasChunk && chunk!.status > ChunkStatus.MESHED)) {
             chunks[chunkCoord].meshChunk();
@@ -345,12 +357,21 @@ public class World {
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block, remesh);
     }
 
+    public void runLater(Action action, int tick) {
+        actionQueue.Add(new TickAction(action, tick));
+    }
+
     public void blockUpdate(Vector3D<int> pos) {
         Blocks.get(getBlock(pos)).update(this, pos);
         foreach (var dir in Direction.directions) {
             var neighbourBlock = pos + dir;
             Blocks.get(getBlock(neighbourBlock)).update(this, neighbourBlock);
         }
+    }
+
+    public void blockUpdate(Vector3D<int> pos, int tick) {
+        var blockUpdate = new BlockUpdate(pos, worldTick + tick);
+        blockUpdateQueue.Add(blockUpdate);
     }
 
     /// <summary>
