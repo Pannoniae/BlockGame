@@ -358,7 +358,7 @@ public class World {
     }
 
     public void runLater(Action action, int tick) {
-        actionQueue.Add(new TickAction(action, tick));
+        actionQueue.Add(new TickAction(action, worldTick + tick));
     }
 
     public void blockUpdate(Vector3D<int> pos) {
@@ -370,8 +370,7 @@ public class World {
     }
 
     public void blockUpdate(Vector3D<int> pos, int tick) {
-        var blockUpdate = new BlockUpdate(pos, worldTick + tick);
-        blockUpdateQueue.Add(blockUpdate);
+        blockUpdateQueue.Add(new BlockUpdate(pos, worldTick + tick));
     }
 
     /// <summary>
