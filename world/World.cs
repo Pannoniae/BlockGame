@@ -63,7 +63,7 @@ public class World {
             player.position.Y += 1;
         }
 
-        renderer.meshBlockOutline();
+        renderer.initBlockOutline();
     }
 
     private void loadSpawnChunks() {
@@ -337,13 +337,36 @@ public class World {
         return getBlock(pos.X, pos.Y, pos.Z);
     }
 
+    public AABB? getAABB(int x, int y, int z, Block block) {
+        var aabb = block.aabb;
+        if (aabb == null) {
+            return null;
+        }
+        return new AABB(new Vector3D<double>(x + aabb.minX, y + aabb.minY, z + aabb.minZ),
+            new Vector3D<double>(x + aabb.maxX, y + aabb.maxY, z + aabb.maxZ));
+    }
+
     public AABB? getAABB(int x, int y, int z, ushort id) {
         if (id == 0) {
             return null;
         }
 
         var block = Blocks.get(id);
-        var aabb = block.aabb;
+        return getAABB(x, y, z, block);
+    }
+
+    public AABB? getSelectionAABB(int x, int y, int z, ushort id) {
+        if (id == 0) {
+            return null;
+        }
+
+        var block = Blocks.get(id);
+        return getSelectionAABB(x, y, z, block);
+    }
+
+    public AABB? getSelectionAABB(int x, int y, int z, Block block) {
+
+        var aabb = block.selectionAABB;
         if (aabb == null) {
             return null;
         }
@@ -512,9 +535,13 @@ public class World {
         for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
             currentPos += cameraForward * Constants.RAYCASTSTEP;
             var blockPos = toBlockPos(currentPos);
-            if (isBlock(blockPos.X, blockPos.Y, blockPos.Z) && Blocks.get(getBlock(blockPos)).selection) {
-                //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
-                return blockPos;
+            var block = Blocks.get(getBlock(blockPos));
+            if (isBlock(blockPos.X, blockPos.Y, blockPos.Z) && block.selection) {
+                // we also need to check if it's inside the selection of the block
+                if (AABB.isCollision(getSelectionAABB(blockPos.X, blockPos.Y, blockPos.Z, block) ?? AABB.empty, currentPos)) {
+                    //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
+                    return blockPos;
+                }
             }
 
             previous = blockPos;

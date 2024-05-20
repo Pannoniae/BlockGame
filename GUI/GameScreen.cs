@@ -65,7 +65,12 @@ public class GameScreen : Screen {
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
-        Game.instance.targetedPos = world.naiveRaycastBlock(out Game.instance.previousPos);
+        var newPos = world.naiveRaycastBlock(out Game.instance.previousPos);
+        bool meshOutline = Game.instance.targetedPos != newPos && newPos != default;
+        Game.instance.targetedPos = newPos;
+        if (meshOutline) {
+            world.renderer.meshBlockOutline();
+        }
     }
 
     public override void render(double dt, double interp) {

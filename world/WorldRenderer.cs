@@ -28,8 +28,9 @@ public class WorldRenderer {
 
     public Shader outline;
     private uint outlineVao;
+    private uint outlineVbo;
     private uint outlineCount;
-    private int outline_uModel;
+    //private int outline_uModel;
     private int outline_uView;
     private int outline_uProjection;
 
@@ -110,18 +111,43 @@ public class WorldRenderer {
 
     }
 
+    public void initBlockOutline() {
+        unsafe {
+            var GL = Game.GL;
+
+            outlineVao = GL.GenVertexArray();
+            GL.BindVertexArray(outlineVao);
+
+            // 24 verts of 3 floats
+            outlineVbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
+            GL.BufferData(BufferTargetARB.ArrayBuffer, 24 * 3 * sizeof(float), 0,
+                BufferUsageARB.StreamDraw);
+
+            outlineCount = 24;
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
+            GL.EnableVertexAttribArray(0);
+
+            //outline_uModel = outline.getUniformLocation("uModel");
+            outline_uView = outline.getUniformLocation("uView");
+            outline_uProjection = outline.getUniformLocation("uProjection");
+        }
+    }
+
     public void meshBlockOutline() {
         unsafe {
             var GL = Game.GL;
+            var pos = Game.instance.targetedPos!.Value;
+            var block = world.getBlock(pos);
+            var sel = world.getSelectionAABB(pos.X, pos.Y, pos.Z, block)!;
             const float OFFSET = 0.005f;
-            var minX = 0f - OFFSET;
-            var minY = 0f - OFFSET;
-            var minZ = 0f - OFFSET;
-            var maxX = 1f + OFFSET;
-            var maxY = 1f + OFFSET;
-            var maxZ = 1f + OFFSET;
+            var minX = (float)sel.min.X - OFFSET;
+            var minY = (float)sel.min.Y - OFFSET;
+            var minZ = (float)sel.min.Z - OFFSET;
+            var maxX = (float)sel.max.X + OFFSET;
+            var maxY = (float)sel.max.Y + OFFSET;
+            var maxZ = (float)sel.max.Z + OFFSET;
 
-            outlineVao = GL.GenVertexArray();
             GL.BindVertexArray(outlineVao);
 
 
@@ -156,20 +182,10 @@ public class WorldRenderer {
                 maxX, minY, maxZ,
                 maxX, maxY, maxZ
             ];
-            var vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
             fixed (float* data = vertices) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Length * sizeof(float)), data,
-                    BufferUsageARB.StreamDraw);
+                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(vertices.Length * sizeof(float)), data);
             }
-
-            outlineCount = (uint)vertices.Length / 3;
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
-            GL.EnableVertexAttribArray(0);
-
-            outline_uModel = outline.getUniformLocation("uModel");
-            outline_uView = outline.getUniformLocation("uView");
-            outline_uProjection = outline.getUniformLocation("uProjection");
         }
     }
 
@@ -178,7 +194,7 @@ public class WorldRenderer {
         var block = Game.instance.targetedPos!.Value;
         GL.BindVertexArray(outlineVao);
         outline.use();
-        outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
+        //outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
         outline.setUniform(outline_uView, world.player.camera.getViewMatrix(interp));
         outline.setUniform(outline_uProjection, world.player.camera.getProjectionMatrix());
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
