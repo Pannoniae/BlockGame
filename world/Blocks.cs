@@ -46,8 +46,10 @@ public class Blocks {
         .noCollision()
         .noSelection());
 
-    public static Block CURSED_GRASS = register(new Block(9, "Cursed Grass", BlockModel.makeGrass(Block.crossUVs(0, 0)))
-        .transparency());
+    public static Block CURSED_GRASS = register(new Block(9, "Cursed Grass", BlockModel.makeGrass(Block.crossUVs(13, 0)))
+        .transparency()
+        .noCollision()
+        .flowerAABB());
 
     public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
     public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
@@ -95,11 +97,13 @@ public class Block {
     public bool translucent = false;
 
     public bool collision = true;
+    public AABB? aabb;
+
     public bool selection = true;
+    public AABB? selectionAABB;
 
     public static readonly int atlasSize = 256;
-    public BlockModel model;
-    public AABB? aabb;
+        public BlockModel model;
 
     /// <summary>
     /// 0 = 0, 65535 = 1
@@ -151,12 +155,19 @@ public class Block {
         return new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1));
     }
 
-    public Block(ushort id, string name, BlockModel model, AABB? aabb = null) {
+    public Block flowerAABB() {
+        var offset = 3 / 8f;
+        selectionAABB = new AABB(new Vector3D<double>(0 + offset, 0, 0 + offset), new Vector3D<double>(1 - offset, 0.5, 1 - offset));
+        return this;
+    }
+
+    public Block(ushort id, string name, BlockModel model) {
         this.id = id;
         this.name = name;
         this.model = model;
 
-        this.aabb = aabb ?? fullBlock();
+        aabb = fullBlock();
+        selectionAABB = fullBlock();
     }
 
     public Block transparency() {
@@ -177,6 +188,7 @@ public class Block {
 
     public Block noSelection() {
         selection = false;
+        selectionAABB = null;
         return this;
     }
 
@@ -186,7 +198,7 @@ public class Block {
     }
 }
 
-public class Water(ushort id, string name, BlockModel uvs, AABB? aabb = null) : Block(id, name, uvs, aabb) {
+public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
 
     public override void update(World world, Vector3D<int> pos) {
         foreach (var dir in Direction.directionsWaterSpread) {

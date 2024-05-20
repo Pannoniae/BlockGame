@@ -13,6 +13,7 @@ public class AABB {
 
     public Vector3D<double> min;
     public Vector3D<double> max;
+    public static readonly AABB empty = new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(0, 0, 0));
 
     public Vector3D<double> centre => (max + min) * 0.5f; // Compute AABB center
     public Vector3D<double> extents => max - centre; // Compute positive extents
