@@ -91,6 +91,14 @@ public class ChunkSectionRenderer {
         return !Blocks.isSolid(b);
     }
 
+    private static bool isSolid(int b) {
+        return Blocks.isSolid(b);
+    }
+
+    private static bool notAir(int b) {
+        return b != 0;
+    }
+
     private static bool notTranslucent(int b) {
         return !Blocks.isTranslucent(b) && !Blocks.isSolid(b);
     }
@@ -281,25 +289,34 @@ public class ChunkSectionRenderer {
                         int wz = wpos.Z;
 
                         Block b = Blocks.get(bl);
+                        var faces = b.model.faces;
+                        Face face;
 
                         // calculate texcoords
 
                         UVPair texCoords;
-                        Vector2D<Half> tex;
-                        Vector2D<Half> texMax;
-                        Half u;
-                        Half v;
-                        Half maxU;
-                        Half maxV;
+                        UVPair texCoordsMax;
+                        Vector2D<float> tex;
+                        Vector2D<float> texMax;
+                        float u;
+                        float v;
+                        float maxU;
+                        float maxV;
 
                         float offset = 0.0004f;
 
-                        float xmin = wx;
-                        float ymin = wy;
-                        float zmin = wz;
-                        float xmax = wx + 1f;
-                        float ymax = wy + 1f;
-                        float zmax = wz + 1f;
+                        float x1;
+                        float y1;
+                        float z1;
+                        float x2;
+                        float y2;
+                        float z2;
+                        float x3;
+                        float y3;
+                        float z3;
+                        float x4;
+                        float y4;
+                        float z4;
 
 
                         // calculate AO for all 8 vertices
@@ -318,12 +335,14 @@ public class ChunkSectionRenderer {
 
                         ushort nb;
 
-                        for (int d = Direction.min; d < Direction.max; d++) {
-                            var dir = (RawDirection)d;
+                        for (int d = 0; d < faces.Length; d++) {
+                            face = faces[d];
+                            var dir = face.direction;
                             var nbPos = pos + Direction.getDirection(dir);
                             nb = getBlockFromCache(nbPos.X, nbPos.Y, nbPos.Z);
-                            if (neighbourTest(nb)) {
-                                if (!Settings.instance.AO) {
+                            // either neighbour test passes, or neighbour is not air + face is not full
+                            if (neighbourTest(nb) || (face.nonFullFace && isSolid(nb))) {
+                                if (!Settings.instance.AO || face.noAO) {
                                     ao1 = 0;
                                     ao2 = 0;
                                     ao3 = 0;
@@ -425,66 +444,40 @@ public class ChunkSectionRenderer {
                                             throw new ArgumentOutOfRangeException();
                                     }
                                 }
-                                texCoords = b.uvs[d];
+                                texCoords = faces[d].min;
+                                texCoordsMax = faces[d].max;
                                 tex = Block.texCoords(texCoords);
-                                texMax = Block.texCoords(texCoords.u + 1, texCoords.v + 1);
+                                texMax = Block.texCoords(texCoordsMax);
                                 u = tex.X;
                                 v = tex.Y;
                                 maxU = texMax.X;
                                 maxV = texMax.Y;
 
+                                x1 = wx + faces[d].x1;
+                                y1 = wy + faces[d].y1;
+                                z1 = wz + faces[d].z1;
+                                x2 = wx + faces[d].x2;
+                                y2 = wy + faces[d].y2;
+                                z2 = wz + faces[d].z2;
+                                x3 = wx + faces[d].x3;
+                                y3 = wy + faces[d].y3;
+                                z3 = wz + faces[d].z3;
+                                x4 = wx + faces[d].x4;
+                                y4 = wy + faces[d].y4;
+                                z4 = wz + faces[d].z4;
+
                                 data1 = Block.packData((byte)dir, ao1);
                                 data2 = Block.packData((byte)dir, ao2);
                                 data3 = Block.packData((byte)dir, ao3);
                                 data4 = Block.packData((byte)dir, ao4);
+
+
                                 // add vertices
 
-                                switch (dir) {
-                                    case RawDirection.WEST:
-                                        // west
-                                        tempVertices[0] = new BlockVertex(xmin, ymax, zmax, u, v, data1);
-                                        tempVertices[1] = new BlockVertex(xmin, ymin, zmax, u, maxV, data2);
-                                        tempVertices[2] = new BlockVertex(xmin, ymin, zmin, maxU, maxV, data3);
-                                        tempVertices[3] = new BlockVertex(xmin, ymax, zmin, maxU, v, data4);
-                                        break;
-                                    case RawDirection.EAST:
-                                        // east
-                                        tempVertices[0] = new BlockVertex(xmax, ymax, zmin, u, v, data1);
-                                        tempVertices[1] = new BlockVertex(xmax, ymin, zmin, u, maxV, data2);
-                                        tempVertices[2] = new BlockVertex(xmax, ymin, zmax, maxU, maxV, data3);
-                                        tempVertices[3] = new BlockVertex(xmax, ymax, zmax, maxU, v, data4);
-                                        break;
-                                    case RawDirection.SOUTH:
-                                        // south
-                                        tempVertices[0] = new BlockVertex(xmin, ymax, zmin, u, v, data1);
-                                        tempVertices[1] = new BlockVertex(xmin, ymin, zmin, u, maxV, data2);
-                                        tempVertices[2] = new BlockVertex(xmax, ymin, zmin, maxU, maxV, data3);
-                                        tempVertices[3] = new BlockVertex(xmax, ymax, zmin, maxU, v, data4);
-                                        break;
-                                    case RawDirection.NORTH:
-                                        // north
-                                        tempVertices[0] = new BlockVertex(xmax, ymax, zmax, u, v, data1);
-                                        tempVertices[1] = new BlockVertex(xmax, ymin, zmax, u, maxV, data2);
-                                        tempVertices[2] = new BlockVertex(xmin, ymin, zmax, maxU, maxV, data3);
-                                        tempVertices[3] = new BlockVertex(xmin, ymax, zmax, maxU, v, data4);
-                                        break;
-                                    case RawDirection.DOWN:
-                                        // bottom
-                                        tempVertices[0] = new BlockVertex(xmin, ymin, zmin, u, v, data1);
-                                        tempVertices[1] = new BlockVertex(xmin, ymin, zmax, u, maxV, data2);
-                                        tempVertices[2] = new BlockVertex(xmax, ymin, zmax, maxU, maxV, data3);
-                                        tempVertices[3] = new BlockVertex(xmax, ymin, zmin, maxU, v, data4);
-                                        break;
-                                    case RawDirection.UP:
-                                        // top
-                                        tempVertices[0] = new BlockVertex(xmin, ymax, zmax, u, v, data1);
-                                        tempVertices[1] = new BlockVertex(xmin, ymax, zmin, u, maxV, data2);
-                                        tempVertices[2] = new BlockVertex(xmax, ymax, zmin, maxU, maxV, data3);
-                                        tempVertices[3] = new BlockVertex(xmax, ymax, zmax, maxU, v, data4);
-                                        break;
-                                    default:
-                                        throw new ArgumentOutOfRangeException();
-                                }
+                                tempVertices[0] = new BlockVertex(x1, y1, z1, u, v, data1);
+                                tempVertices[1] = new BlockVertex(x2, y2, z2, u, maxV, data2);
+                                tempVertices[2] = new BlockVertex(x3, y3, z3, maxU, maxV, data3);
+                                tempVertices[3] = new BlockVertex(x4, y4, z4, maxU, v, data4);
                                 chunkVertices.AddRange(tempVertices);
 
                                 tempIndices[0] = i;

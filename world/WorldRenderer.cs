@@ -197,7 +197,8 @@ public class WorldRenderer {
         Block b = block;
 
         // calculate texcoords
-        var westCoords = b.uvs[0];
+        var faces = b.model.faces;
+        var westCoords = faces[0].min;
         var west = Block.texCoords(westCoords);
         var westMax = Block.texCoords(westCoords.u + 1, westCoords.v + 1);
         var westU = west.X;
@@ -205,7 +206,7 @@ public class WorldRenderer {
         var westMaxU = westMax.X;
         var westMaxV = westMax.Y;
 
-        var eastCoords = b.uvs[1];
+        var eastCoords = faces[1].min;
         var east = Block.texCoords(eastCoords);
         var eastMax = Block.texCoords(eastCoords.u + 1, eastCoords.v + 1);
         var eastU = east.X;
@@ -213,7 +214,7 @@ public class WorldRenderer {
         var eastMaxU = eastMax.X;
         var eastMaxV = eastMax.Y;
 
-        var southCoords = b.uvs[2];
+        var southCoords = faces[2].min;
         var south = Block.texCoords(southCoords);
         var southMax = Block.texCoords(southCoords.u + 1, southCoords.v + 1);
         var southU = south.X;
@@ -221,7 +222,7 @@ public class WorldRenderer {
         var southMaxU = southMax.X;
         var southMaxV = southMax.Y;
 
-        var northCoords = b.uvs[3];
+        var northCoords = faces[3].min;
         var north = Block.texCoords(northCoords);
         var northMax = Block.texCoords(northCoords.u + 1, northCoords.v + 1);
         var northU = north.X;
@@ -229,7 +230,7 @@ public class WorldRenderer {
         var northMaxU = northMax.X;
         var northMaxV = northMax.Y;
 
-        var bottomCoords = b.uvs[4];
+        var bottomCoords = faces[4].min;
         var bottom = Block.texCoords(bottomCoords);
         var bottomMax = Block.texCoords(bottomCoords.u + 1, bottomCoords.v + 1);
         var bottomU = bottom.X;
@@ -237,7 +238,7 @@ public class WorldRenderer {
         var bottomMaxU = bottomMax.X;
         var bottomMaxV = bottomMax.Y;
 
-        var topCoords = b.uvs[5];
+        var topCoords = faces[5].min;
         var top = Block.texCoords(topCoords);
         var topMax = Block.texCoords(topCoords.u + 1, topCoords.v + 1);
         var topU = top.X;
