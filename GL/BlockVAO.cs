@@ -125,12 +125,17 @@ public readonly struct BlockVertex : IVertex {
         this.d = d;
     }
 
-    public BlockVertex(ushort x, ushort y, ushort z, Half u, Half v, ushort d) {
+    public BlockVertex(float x, float y, float z, float u, float v, ushort d) {
+        // we receive a float from 0 to 16.
+        // we convert it to a normalised float from 0 to 1 converted to an ushort
+        //this.x = (ushort)(x / 16f * ushort.MaxValue);
+        //this.y = (ushort)(y / 16f * ushort.MaxValue);
+        //this.z = (ushort)(z / 16f * ushort.MaxValue);
         this.x = x;
         this.y = y;
         this.z = z;
-        this.u = u;
-        this.v = v;
+        this.u = (Half)u;
+        this.v = (Half)v;
         this.d = d;
     }
 
