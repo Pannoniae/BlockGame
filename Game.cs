@@ -113,7 +113,7 @@ public class Game {
         window = Window.Create(windowOptions);
         window.Load += init;
         //window.Update += update;
-        window.Render += render;
+        window.Render += mainLoop;
         window.FramebufferResize += resize;
         window.Closing += close;
         window.Run();
@@ -267,7 +267,7 @@ public class Game {
     /// Now the main loop which calls <see cref="update"/> too.
     /// </summary>
     /// <param name="dt">dt as fractions of a second. 1 = 1s</param>
-    private void render(double dt) {
+    private void mainLoop(double dt) {
         dt = Math.Min(dt, maxTimestep);
         accumTime += dt;
         //var i = 0;

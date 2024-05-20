@@ -15,6 +15,7 @@ public class Chunk {
     public int worldX => coord.x * CHUNKSIZE;
     public int worldZ => coord.z * CHUNKSIZE;
     public Vector2D<int> worldPos => new(worldX, worldZ);
+    public Vector2D<int> centrePos => new(worldX + 8, worldZ + 8);
 
     public AABB box;
 

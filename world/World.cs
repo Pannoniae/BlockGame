@@ -34,8 +34,9 @@ public class World {
     // max. 5 msec in each frame for chunkload
     private const long MAX_CHUNKLOAD_FRAMETIME = 10;
     private const int SPAWNCHUNKS_SIZE = 1;
+    private const int MAX_TICKING_DISTANCE = 128;
 
-    public const int RENDERDISTANCE = 32;
+    public const int RENDERDISTANCE = 8;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -150,14 +151,17 @@ public class World {
 
         // random block updates!
         foreach (var chunk in chunks) {
-            foreach (var chunksection in chunk.Value.chunks) {
-                for (int i = 0; i < numTicks; i++) {
-                    // I pray this is random
-                    var coord = random.Next(16 * 16 * 16);
-                    var x = coord / (16 * 16) % 16;
-                    var y = coord / (16) % 16;
-                    var z = coord % 16;
-                    chunksection.tick(x, y, z);
+            // distance check
+            if (Vector2D.DistanceSquared(chunk.Value.centrePos, new Vector2D<int>((int)player.position.X, (int)player.position.Z)) < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
+                foreach (var chunksection in chunk.Value.chunks) {
+                    for (int i = 0; i < numTicks; i++) {
+                        // I pray this is random
+                        var coord = random.Next(16 * 16 * 16);
+                        var x = coord / (16 * 16) % 16;
+                        var y = coord / (16) % 16;
+                        var z = coord % 16;
+                        chunksection.tick(x, y, z);
+                    }
                 }
             }
         }
@@ -184,7 +188,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 // restrict it to a circle
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
                     addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.GENERATED);
                 }
             }

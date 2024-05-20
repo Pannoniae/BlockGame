@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
@@ -33,6 +34,7 @@ public class ChunkSection {
     public Vector3D<int> centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
 
     public AABB box;
+    public BoundingBox bbbox;
 
     public World world;
 
@@ -46,6 +48,7 @@ public class ChunkSection {
         this.world = world;
         blocks = new EmptyBlockData();
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
+        bbbox = new BoundingBox(box.min.toVec3(), box.max.toVec3());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

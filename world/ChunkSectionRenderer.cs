@@ -179,7 +179,7 @@ public class ChunkSectionRenderer {
 
 
     public bool isVisible(BoundingFrustum frustum) {
-        return frustum.Contains(new BoundingBox(section.box.min.toVec3(), section.box.max.toVec3())) != ContainmentType.Disjoint;
+        return frustum.Contains(section.bbbox) != ContainmentType.Disjoint;
     }
 
     public void drawChunk(PlayerCamera camera) {
@@ -338,10 +338,18 @@ public class ChunkSectionRenderer {
                         for (int d = 0; d < faces.Length; d++) {
                             face = faces[d];
                             var dir = face.direction;
-                            var nbPos = pos + Direction.getDirection(dir);
-                            nb = getBlockFromCache(nbPos.X, nbPos.Y, nbPos.Z);
+                            bool test;
+                            if (dir == RawDirection.NONE) {
+                                // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
+                                test = true;
+                            }
+                            else {
+                                var nbPos = pos + Direction.getDirection(dir);
+                                nb = getBlockFromCache(nbPos.X, nbPos.Y, nbPos.Z);
+                                test = neighbourTest(nb) || (face.nonFullFace && isSolid(nb));
+                            }
                             // either neighbour test passes, or neighbour is not air + face is not full
-                            if (neighbourTest(nb) || (face.nonFullFace && isSolid(nb))) {
+                            if (test) {
                                 if (!Settings.instance.AO || face.noAO) {
                                     ao1 = 0;
                                     ao2 = 0;
@@ -350,6 +358,12 @@ public class ChunkSectionRenderer {
                                 }
                                 else {
                                     switch (dir) {
+                                        case RawDirection.NONE:
+                                            ao1 = 0;
+                                            ao2 = 0;
+                                            ao3 = 0;
+                                            ao4 = 0;
+                                            break;
                                         case RawDirection.WEST:
                                             // west
                                             ao1 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
