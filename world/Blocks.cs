@@ -46,7 +46,7 @@ public class Blocks {
         .noCollision()
         .noSelection());
 
-    public static Block CURSED_GRASS = register(new Block(9, "Cursed Grass", BlockModel.makeGrass(Block.crossUVs(13, 0)))
+    public static Block CURSED_GRASS = register(new Flower(9, "Cursed Grass", BlockModel.makeGrass(Block.crossUVs(13, 0)))
         .transparency()
         .noCollision()
         .flowerAABB());
@@ -103,7 +103,7 @@ public class Block {
     public AABB? selectionAABB;
 
     public static readonly int atlasSize = 256;
-        public BlockModel model;
+    public BlockModel model;
 
     /// <summary>
     /// 0 = 0, 65535 = 1
@@ -195,6 +195,15 @@ public class Block {
 
     public virtual void update(World world, Vector3D<int> pos) {
 
+    }
+}
+
+public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
+
+    public override void update(World world, Vector3D<int> pos) {
+        if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
+            world.setBlock(pos.X, pos.Y, pos.Z, Blocks.AIR.id);
+        }
     }
 }
 
@@ -320,10 +329,10 @@ public class BlockModel {
         model.faces[1] = new Face(0 + offset, 1, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1, 1 - offset,
             uvs[1], uvs[1] + 1, RawDirection.SOUTH, true, true);
         // x1 rear
-        model.faces[2] = new Face(1 - offset, 1, 0 + offset,1 - offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, 0 + offset, 1, 1 - offset,
+        model.faces[2] = new Face(1 - offset, 1, 0 + offset, 1 - offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, 0 + offset, 1, 1 - offset,
             uvs[0], uvs[0] + 1, RawDirection.EAST, true, true);
         // x2 rear
-        model.faces[3] = new Face(1 - offset, 1, 1 - offset,1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
+        model.faces[3] = new Face(1 - offset, 1, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
             uvs[1], uvs[1] + 1, RawDirection.NORTH, true, true);
         return model;
     }
