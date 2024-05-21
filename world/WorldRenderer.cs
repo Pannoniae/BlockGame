@@ -1,4 +1,5 @@
 using System.Numerics;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
@@ -200,7 +201,7 @@ public class WorldRenderer {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, ref BlockVertex[] vertices, ref ushort[] indices) {
+    public static void meshBlock(Block block, ref Span<BlockVertex> vertices, ref Span<ushort> indices) {
         ushort i = 0;
         int wx = 0;
         int wy = 0;
@@ -209,181 +210,97 @@ public class WorldRenderer {
         int c = 0;
         int ci = 0;
 
+        vertices.Clear();
+        indices.Clear();
+
 
         Block b = block;
+        Face face;
 
-        // calculate texcoords
-        var faces = b.model.faces;
-        var westCoords = faces[0].min;
-        var west = Block.texCoords(westCoords);
-        var westMax = Block.texCoords(westCoords.u + 1, westCoords.v + 1);
-        var westU = west.X;
-        var westV = west.Y;
-        var westMaxU = westMax.X;
-        var westMaxV = westMax.Y;
+        UVPair texCoords;
+        UVPair texCoordsMax;
+        Vector2D<float> tex;
+        Vector2D<float> texMax;
+        float u;
+        float v;
+        float maxU;
+        float maxV;
 
-        var eastCoords = faces[1].min;
-        var east = Block.texCoords(eastCoords);
-        var eastMax = Block.texCoords(eastCoords.u + 1, eastCoords.v + 1);
-        var eastU = east.X;
-        var eastV = east.Y;
-        var eastMaxU = eastMax.X;
-        var eastMaxV = eastMax.Y;
+        ushort data1;
+        ushort data2;
+        ushort data3;
+        ushort data4;
 
-        var southCoords = faces[2].min;
-        var south = Block.texCoords(southCoords);
-        var southMax = Block.texCoords(southCoords.u + 1, southCoords.v + 1);
-        var southU = south.X;
-        var southV = south.Y;
-        var southMaxU = southMax.X;
-        var southMaxV = southMax.Y;
+        float offset = 0.0004f;
 
-        var northCoords = faces[3].min;
-        var north = Block.texCoords(northCoords);
-        var northMax = Block.texCoords(northCoords.u + 1, northCoords.v + 1);
-        var northU = north.X;
-        var northV = north.Y;
-        var northMaxU = northMax.X;
-        var northMaxV = northMax.Y;
-
-        var bottomCoords = faces[4].min;
-        var bottom = Block.texCoords(bottomCoords);
-        var bottomMax = Block.texCoords(bottomCoords.u + 1, bottomCoords.v + 1);
-        var bottomU = bottom.X;
-        var bottomV = bottom.Y;
-        var bottomMaxU = bottomMax.X;
-        var bottomMaxV = bottomMax.Y;
-
-        var topCoords = faces[5].min;
-        var top = Block.texCoords(topCoords);
-        var topMax = Block.texCoords(topCoords.u + 1, topCoords.v + 1);
-        var topU = top.X;
-        var topV = top.Y;
-        var topMaxU = topMax.X;
-        var topMaxV = topMax.Y;
-
-        float xmin = wx;
-        float ymin = wy;
-        float zmin = wz;
-        float xmax = wx + 1f;
-        float ymax = wy + 1f;
-        float zmax = wz + 1f;
+        float x1;
+        float y1;
+        float z1;
+        float x2;
+        float y2;
+        float z2;
+        float x3;
+        float y3;
+        float z3;
+        float x4;
+        float y4;
+        float z4;
 
         Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
 
-        var data = Block.packData((byte)RawDirection.WEST, 0);
-        // west
-        tempVertices[0] = new BlockVertex(xmin, ymax, zmax, westU, westV, data);
-        tempVertices[1] = new BlockVertex(xmin, ymin, zmax, westU, westMaxV, data);
-        tempVertices[2] = new BlockVertex(xmin, ymin, zmin, westMaxU, westMaxV, data);
-        tempVertices[3] = new BlockVertex(xmin, ymax, zmin, westMaxU, westV, data);
-        vertices.AddRange(c, tempVertices);
+        var faces = b.model.faces;
 
-        c += 4;
-        tempIndices[0] = i;
-        tempIndices[1] = (ushort)(i + 1);
-        tempIndices[2] = (ushort)(i + 2);
-        tempIndices[3] = (ushort)(i + 0);
-        tempIndices[4] = (ushort)(i + 2);
-        tempIndices[5] = (ushort)(i + 3);
-        indices.AddRange(ci, tempIndices);
-        i += 4;
-        ci += 6;
-        data = Block.packData((byte)RawDirection.EAST, 0);
+        for (int d = 0; d < faces.Length; d++) {
+            face = faces[d];
+            var dir = face.direction;
 
-        // east
-        tempVertices[0] = new BlockVertex(xmax, ymax, zmin, eastU, eastV, data);
-        tempVertices[1] = new BlockVertex(xmax, ymin, zmin, eastU, eastMaxV, data);
-        tempVertices[2] = new BlockVertex(xmax, ymin, zmax, eastMaxU, eastMaxV, data);
-        tempVertices[3] = new BlockVertex(xmax, ymax, zmax, eastMaxU, eastV, data);
-        vertices.AddRange(c, tempVertices);
+            texCoords = faces[d].min;
+            texCoordsMax = faces[d].max;
+            tex = Block.texCoords(texCoords);
+            texMax = Block.texCoords(texCoordsMax);
+            u = tex.X;
+            v = tex.Y;
+            maxU = texMax.X;
+            maxV = texMax.Y;
 
-        c += 4;
-        tempIndices[0] = i;
-        tempIndices[1] = (ushort)(i + 1);
-        tempIndices[2] = (ushort)(i + 2);
-        tempIndices[3] = (ushort)(i + 0);
-        tempIndices[4] = (ushort)(i + 2);
-        tempIndices[5] = (ushort)(i + 3);
-        indices.AddRange(ci, tempIndices);
-        i += 4;
-        ci += 6;
-        data = Block.packData((byte)RawDirection.SOUTH, 0);
+            x1 = wx + faces[d].x1;
+            y1 = wy + faces[d].y1;
+            z1 = wz + faces[d].z1;
+            x2 = wx + faces[d].x2;
+            y2 = wy + faces[d].y2;
+            z2 = wz + faces[d].z2;
+            x3 = wx + faces[d].x3;
+            y3 = wy + faces[d].y3;
+            z3 = wz + faces[d].z3;
+            x4 = wx + faces[d].x4;
+            y4 = wy + faces[d].y4;
+            z4 = wz + faces[d].z4;
 
-        // south
-        tempVertices[0] = new BlockVertex(xmin, ymax, zmin, southU, southV, data);
-        tempVertices[1] = new BlockVertex(xmin, ymin, zmin, southU, southMaxV, data);
-        tempVertices[2] = new BlockVertex(xmax, ymin, zmin, southMaxU, southMaxV, data);
-        tempVertices[3] = new BlockVertex(xmax, ymax, zmin, southMaxU, southV, data);
+            data1 = Block.packData((byte)dir, 0);
+            data2 = Block.packData((byte)dir, 0);
+            data3 = Block.packData((byte)dir, 0);
+            data4 = Block.packData((byte)dir, 0);
 
-        vertices.AddRange(c, tempVertices);
 
-        c += 4;
-        tempIndices[0] = i;
-        tempIndices[1] = (ushort)(i + 1);
-        tempIndices[2] = (ushort)(i + 2);
-        tempIndices[3] = (ushort)(i + 0);
-        tempIndices[4] = (ushort)(i + 2);
-        tempIndices[5] = (ushort)(i + 3);
-        indices.AddRange(ci, tempIndices);
-        i += 4;
-        ci += 6;
-        data = Block.packData((byte)RawDirection.NORTH, 0);
-        // north
-        tempVertices[0] = new BlockVertex(xmax, ymax, zmax, northU, northV, data);
-        tempVertices[1] = new BlockVertex(xmax, ymin, zmax, northU, northMaxV, data);
-        tempVertices[2] = new BlockVertex(xmin, ymin, zmax, northMaxU, northMaxV, data);
-        tempVertices[3] = new BlockVertex(xmin, ymax, zmax, northMaxU, northV, data);
-        vertices.AddRange(c, tempVertices);
+            // add vertices
 
-        c += 4;
-        tempIndices[0] = i;
-        tempIndices[1] = (ushort)(i + 1);
-        tempIndices[2] = (ushort)(i + 2);
-        tempIndices[3] = (ushort)(i + 0);
-        tempIndices[4] = (ushort)(i + 2);
-        tempIndices[5] = (ushort)(i + 3);
-        indices.AddRange(ci, tempIndices);
-        i += 4;
-        ci += 6;
-        data = Block.packData((byte)RawDirection.DOWN, 0);
-        // bottom
-        tempVertices[0] = new BlockVertex(xmin, ymin, zmin, bottomU, bottomV, data);
-        tempVertices[1] = new BlockVertex(xmin, ymin, zmax, bottomU, bottomMaxV, data);
-        tempVertices[2] = new BlockVertex(xmax, ymin, zmax, bottomMaxU, bottomMaxV, data);
-        tempVertices[3] = new BlockVertex(xmax, ymin, zmin, bottomMaxU, bottomV, data);
-        vertices.AddRange(c, tempVertices);
-
-        c += 4;
-        tempIndices[0] = i;
-        tempIndices[1] = (ushort)(i + 1);
-        tempIndices[2] = (ushort)(i + 2);
-        tempIndices[3] = (ushort)(i + 0);
-        tempIndices[4] = (ushort)(i + 2);
-        tempIndices[5] = (ushort)(i + 3);
-        indices.AddRange(ci, tempIndices);
-        i += 4;
-        ci += 6;
-        data = Block.packData((byte)RawDirection.UP, 0);
-
-        // top
-        tempVertices[0] = new BlockVertex(xmin, ymax, zmax, topU, topV, data);
-        tempVertices[1] = new BlockVertex(xmin, ymax, zmin, topU, topMaxV, data);
-        tempVertices[2] = new BlockVertex(xmax, ymax, zmin, topMaxU, topMaxV, data);
-        tempVertices[3] = new BlockVertex(xmax, ymax, zmax, topMaxU, topV, data);
-        vertices.AddRange(c, tempVertices);
-
-        c += 4;
-        tempIndices[0] = i;
-        tempIndices[1] = (ushort)(i + 1);
-        tempIndices[2] = (ushort)(i + 2);
-        tempIndices[3] = (ushort)(i + 0);
-        tempIndices[4] = (ushort)(i + 2);
-        tempIndices[5] = (ushort)(i + 3);
-        indices.AddRange(ci, tempIndices);
-        i += 4;
-        ci += 6;
+            tempVertices[0] = new BlockVertex(x1, y1, z1, u, v, data1);
+            tempVertices[1] = new BlockVertex(x2, y2, z2, u, maxV, data2);
+            tempVertices[2] = new BlockVertex(x3, y3, z3, maxU, maxV, data3);
+            tempVertices[3] = new BlockVertex(x4, y4, z4, maxU, v, data4);
+            vertices.AddRange(c, tempVertices);
+            c += 4;
+            tempIndices[0] = i;
+            tempIndices[1] = (ushort)(i + 1);
+            tempIndices[2] = (ushort)(i + 2);
+            tempIndices[3] = (ushort)(i + 0);
+            tempIndices[4] = (ushort)(i + 2);
+            tempIndices[5] = (ushort)(i + 3);
+            indices.AddRange(ci, tempIndices);
+            i += 4;
+            ci += 6;
+        }
     }
 }
 

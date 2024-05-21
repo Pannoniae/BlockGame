@@ -75,6 +75,9 @@ public class Screen {
         }
     }
 
+    public virtual void postDraw() {
+    }
+
     public virtual void imGuiDraw() {
     }
 

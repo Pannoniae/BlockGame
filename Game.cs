@@ -315,6 +315,7 @@ public class Game {
         gui.tb.Begin();
         screenStack.peek().draw();
         gui.tb.End();
+        screenStack.peek().postDraw();
         //if (gui.debugScreen) {
         /*mgui.Update((float)dt);
         screen.imGuiDraw();
