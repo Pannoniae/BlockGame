@@ -186,6 +186,8 @@ public class GUI {
         WorldRenderer.meshBlock(block, ref guiBlockSp, ref guiBlockISp);
         GD.ShaderProgram = guiBlockShader;
         // assemble the matrix
+        // this is something like 33.7 degrees if the inverse tangent is calculated....
+        // still zero idea why this works but 30 deg is garbage, 45 is weirdly elongated and 60 is squished
         var camPos = new Vector3(1, 2 / 3f, 1);
 
         // how I got these numbers? I don't fucking know anymore, and this is probably not the right way to do it
