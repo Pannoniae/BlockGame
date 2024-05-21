@@ -194,7 +194,7 @@ public class GameScreen : Screen {
                 new SizeF(16 * GUI.guiScale, 16 * GUI.guiScale)),
             new Color4b(240, 240, 240));
         gui.tb.End();
-        gui.drawBlock(world, Blocks.DIRT, Game.centreX + (world.worldTick % Game.centreX), Game.centreY, 16);
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX + (world.worldTick % Game.centreX * 0), Game.centreY, 16);
         gui.tb.Begin();
         // setup blending
         //GD.BlendingEnabled = true;
