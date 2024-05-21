@@ -187,7 +187,15 @@ public class GameScreen : Screen {
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 
-        gui.drawBlock(world, Blocks.DIRT, Game.centreX, Game.centreY, 16);
+
+        // draw box
+        gui.tb.Draw(gui.colourTexture,
+            new RectangleF(new PointF(Game.centreX, Game.centreY),
+                new SizeF(16 * GUI.guiScale, 16 * GUI.guiScale)),
+            new Color4b(240, 240, 240));
+        gui.tb.End();
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX + (world.worldTick % Game.centreX), Game.centreY, 16);
+        gui.tb.Begin();
         // setup blending
         //GD.BlendingEnabled = true;
         //GD.BlendState = bs;
