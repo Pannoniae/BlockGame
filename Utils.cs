@@ -36,6 +36,9 @@ public static class Utils {
     public static float deg2rad(float degrees) {
         return MathF.PI / 180f * degrees;
     }
+    public static float rad2deg(float radians) {
+        return 180f / MathF.PI * radians;
+    }
 }
 
 /// <summary>
