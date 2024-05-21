@@ -16,15 +16,15 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 // -1 to 1
                 // transform to the range 5 - 10
-                var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 7.5;
+                var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 75;
                 for (int y = 0; y < height - 1; y++) {
                     chunk.setBlock(x, y, z, Blocks.DIRT.id, false);
                 }
                 chunk.setBlock(x, (int)height, z, Blocks.GRASS.id, false);
 
                 // water if low
-                if (height < 7) {
-                    for (int y2 = (int)Math.Round(height); y2 <= 7; y2++) {
+                if (height < 75) {
+                    for (int y2 = (int)Math.Round(height); y2 <= 75; y2++) {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
@@ -39,7 +39,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
-                var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 7.5;
+                var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 75;
                 // TREES
                 if (MathF.Abs(generator.treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
                     worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);

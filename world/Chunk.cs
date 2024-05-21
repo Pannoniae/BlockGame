@@ -87,7 +87,7 @@ public class Chunk {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getBlock(int x, int y, int z) {
-        var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
+        var sectionY = y / CHUNKSIZE;
         var yRem = y - sectionY * CHUNKSIZE;
         return chunks[sectionY].blocks[x, yRem, z];
     }

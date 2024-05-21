@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using Microsoft.VisualBasic.CompilerServices;
 using Silk.NET.Maths;
 
 namespace BlockGame;
@@ -275,17 +274,17 @@ public class BlockModel {
         var model = new BlockModel();
         model.faces = new Face[6];
         // west
-        model.faces[0] = new Face(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, uvs[0], uvs[0] + 1, RawDirection.WEST);
+        model.faces[0] = new(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, uvs[0], uvs[0] + 1, RawDirection.WEST);
         // east
-        model.faces[1] = new Face(1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.EAST);
+        model.faces[1] = new(1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.EAST);
         // south
-        model.faces[2] = new Face(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, uvs[2], uvs[2] + 1, RawDirection.SOUTH);
+        model.faces[2] = new(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, uvs[2], uvs[2] + 1, RawDirection.SOUTH);
         // north
-        model.faces[3] = new Face(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH);
+        model.faces[3] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH);
         // down
-        model.faces[4] = new Face(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[4], uvs[4] + 1, RawDirection.DOWN);
+        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[4], uvs[4] + 1, RawDirection.DOWN);
         // up
-        model.faces[5] = new Face(0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, uvs[5], uvs[5] + 1, RawDirection.UP);
+        model.faces[5] = new(0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, uvs[5], uvs[5] + 1, RawDirection.UP);
         return model;
     }
 
@@ -300,17 +299,17 @@ public class BlockModel {
         var height = 15 / 16f;
 
         // west
-        model.faces[0] = new Face(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, uvs[0], uvs[0] + 1, RawDirection.WEST, true);
+        model.faces[0] = new(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, uvs[0], uvs[0] + 1, RawDirection.WEST, true);
         // east
-        model.faces[1] = new Face(1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.EAST, true);
+        model.faces[1] = new(1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.EAST, true);
         // south
-        model.faces[2] = new Face(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, uvs[2], uvs[2] + 1, RawDirection.SOUTH, true);
+        model.faces[2] = new(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, uvs[2], uvs[2] + 1, RawDirection.SOUTH, true);
         // north
-        model.faces[3] = new Face(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH, true);
+        model.faces[3] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH, true);
         // down
-        model.faces[4] = new Face(1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
+        model.faces[4] = new(1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
         // up
-        model.faces[5] = new Face(0, height, 1, 0, height, 0, 1, height, 0, 1, height, 1, uvs[5], uvs[5] + 1, RawDirection.UP, true, true);
+        model.faces[5] = new(0, height, 1, 0, height, 0, 1, height, 0, 1, height, 1, uvs[5], uvs[5] + 1, RawDirection.UP, true, true);
         return model;
     }
 
@@ -323,16 +322,16 @@ public class BlockModel {
         var offset = 1 / (8 * MathF.Sqrt(2));
 
         // x1
-        model.faces[0] = new Face(0 + offset, 1, 1 - offset, 0 + offset, 0, 1 - offset, 1 - offset, 0, 0 + offset, 1 - offset, 1, 0 + offset,
+        model.faces[0] = new(0 + offset, 1, 1 - offset, 0 + offset, 0, 1 - offset, 1 - offset, 0, 0 + offset, 1 - offset, 1, 0 + offset,
             uvs[0], uvs[0] + 1, RawDirection.WEST, true, true);
         // x2
-        model.faces[1] = new Face(0 + offset, 1, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1, 1 - offset,
+        model.faces[1] = new(0 + offset, 1, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1, 1 - offset,
             uvs[1], uvs[1] + 1, RawDirection.SOUTH, true, true);
         // x1 rear
-        model.faces[2] = new Face(1 - offset, 1, 0 + offset, 1 - offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, 0 + offset, 1, 1 - offset,
+        model.faces[2] = new(1 - offset, 1, 0 + offset, 1 - offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, 0 + offset, 1, 1 - offset,
             uvs[0], uvs[0] + 1, RawDirection.EAST, true, true);
         // x2 rear
-        model.faces[3] = new Face(1 - offset, 1, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
+        model.faces[3] = new(1 - offset, 1, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
             uvs[1], uvs[1] + 1, RawDirection.NORTH, true, true);
         return model;
     }

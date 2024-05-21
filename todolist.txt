@@ -1,4 +1,6 @@
-﻿ - add ores
+﻿- make a hotbar background texture / selection
+
+ - add ores
  - add reflections to shiny / metallic blocks
  - running functionality for the character
  - gombok

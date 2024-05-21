@@ -32,49 +32,49 @@ public class ChunkSectionRenderer {
 
     static object meshingLock = new();
 
-    static Vector3D<int>[][] offsetTable = [
+    private static readonly int[] offsetTable = [
         // west
-        [
-            new(-1, 0, -1), new(-1, 1, 0), new(-1, 1, -1),
-            new(-1, 0, 1), new(-1, 1, 0), new(-1, 1, 1),
-            new(-1, 0, -1), new(-1, -1, 0), new(-1, -1, -1),
-            new(-1, 0, 1), new(-1, -1, 0), new(-1, -1, 1)
-        ],
+
+        -1, 0, 1, -1, 1, 0, -1, 1, 1,
+        -1, 0, 1, -1, -1, 0, -1, -1, 1,
+        -1, 0, -1, -1, -1, 0, -1, -1, -1,
+        -1, 0, -1, -1, 1, 0, -1, 1, -1,
+
         // east
-        [
-            new(1, 0, 1), new(1, 1, 0), new(1, 1, 1),
-            new(1, 0, -1), new(1, 1, 0), new(1, 1, -1),
-            new(1, 0, 1), new(1, -1, 0), new(1, -1, 1),
-            new(1, 0, -1), new(1, -1, 0), new(1, -1, -1),
-        ],
+
+        1, 0, -1, 1, 1, 0, 1, 1, -1,
+        1, 0, -1, 1, -1, 0, 1, -1, -1,
+        1, 0, 1, 1, -1, 0, 1, -1, 1,
+        1, 0, 1, 1, 1, 0, 1, 1, 1,
+
         // south
-        [
-            new(1, 0, -1), new(0, 1, -1), new(1, 1, -1),
-            new(-1, 0, -1), new(0, 1, -1), new(-1, 1, -1),
-            new(1, 0, -1), new(0, -1, -1), new(1, -1, -1),
-            new(-1, 0, -1), new(0, -1, -1), new(-1, -1, -1)
-        ],
+
+        -1, 0, -1, 0, 1, -1, -1, 1, -1,
+        -1, 0, -1, 0, -1, -1, -1, -1, -1,
+        1, 0, -1, 0, -1, -1, 1, -1, -1,
+        1, 0, -1, 0, 1, -1, 1, 1, -1,
+
         // north
-        [
-            new(-1, 0, 1), new(0, 1, 1), new(-1, 1, 1),
-            new(1, 0, 1), new(0, 1, 1), new(1, 1, 1),
-            new(-1, 0, 1), new(0, -1, 1), new(-1, -1, 1),
-            new(1, 0, 1), new(0, -1, 1), new(1, -1, 1),
-        ],
+
+        1, 0, 1, 0, 1, 1, 1, 1, 1,
+        1, 0, 1, 0, -1, 1, 1, -1, 1,
+        -1, 0, 1, 0, -1, 1, -1, -1, 1,
+        -1, 0, 1, 0, 1, 1, -1, 1, 1,
+
+
         // down
-        [
-            new(0, -1, 1), new(-1, -1, 0), new(-1, -1, 1),
-            new(0, -1, 1), new(1, -1, 0), new(1, -1, 1),
-            new(0, -1, -1), new(-1, -1, 0), new(-1, -1, -1),
-            new(0, -1, -1), new(1, -1, 0), new(1, -1, -1),
-        ],
+
+        0, -1, -1, 1, -1, 0, 1, -1, -1,
+        0, -1, 1, 1, -1, 0, 1, -1, 1,
+        0, -1, 1, -1, -1, 0, -1, -1, 1,
+        0, -1, -1, -1, -1, 0, -1, -1, -1,
+
+
         // up
-        [
-            new(0, 1, -1), new(-1, 1, 0), new(-1, 1, -1),
-            new(0, 1, -1), new(1, 1, 0), new(1, 1, -1),
-            new(0, 1, 1), new(-1, 1, 0), new(-1, 1, 1),
-            new(0, 1, 1), new(1, 1, 0), new(1, 1, 1),
-        ]
+        0, 1, 1, -1, 1, 0, -1, 1, 1,
+        0, 1, -1, -1, 1, 0, -1, 1, -1,
+        0, 1, -1, 1, 1, 0, 1, 1, -1,
+        0, 1, 1, 1, 1, 0, 1, 1, 1,
     ];
 
     public ChunkSectionRenderer(ChunkSection section) {
@@ -107,8 +107,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //var sw = new Stopwatch();
-        //sw.Start();
+        var sw = new Stopwatch();
+        sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -124,27 +124,30 @@ public class ChunkSectionRenderer {
         }
 
         unsafe {
-            //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
+            Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
             // first we render everything which is NOT translucent
             lock (meshingLock) {
                 setupNeighbours();
                 /*if (World.glob) {
                     MeasureProfiler.StartCollectingData();
                 }*/
+                Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
                 constructVertices(&opaqueBlocks, &notSolid);
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
-                if (section.world.renderer.fastChunkSwitch) {
-                    (vao as VerySharedBlockVAO).bindVAO();
+                Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
+                if (chunkIndices.Count > 0) {
+                    if (section.world.renderer.fastChunkSwitch) {
+                        (vao as VerySharedBlockVAO).bindVAO();
+                    }
+                    else {
+                        vao.bind();
+                    }
+                    var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                    var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                    vao.upload(finalVertices, finalIndices);
                 }
-                else {
-                    vao.bind();
-                }
-                var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-                vao.upload(finalVertices, finalIndices);
             }
             lock (meshingLock) {
                 if (hasTranslucentBlocks) {
@@ -168,8 +171,8 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        //sw.Stop();
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -217,14 +220,19 @@ public class ChunkSectionRenderer {
         // we need a 18x18 area
         // we load the 16x16 from the section itself then get the world for the rest
         // if the chunk section is an EmptyBlockData, don't bother
+        // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
+        var blockData = (ArrayBlockData)section.blocks;
+        ref var blockArray = ref MemoryMarshal.GetArrayDataReference(blockData.blocks);
+        ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
+        var world = section.world;
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    var bl = section.getBlockInChunk(x, y, z);
+                    var bl = accessRef(ref blockArray, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
                     if (Blocks.isTranslucent(bl)) {
                         hasTranslucentBlocks = true;
                     }
-                    access(neighbours, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
+                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
                 }
             }
         }
@@ -243,8 +251,8 @@ public class ChunkSectionRenderer {
                         continue;
                     }
 
-                    var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
-                    access(neighbours, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), section.world.getBlock(wpos.X, wpos.Y, wpos.Z));
+                    var wpos = world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
+                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), world.getBlock(wpos.X, wpos.Y, wpos.Z));
                 }
             }
         }
@@ -270,19 +278,27 @@ public class ChunkSectionRenderer {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ushort getBlockFromCacheUnsafe(ushort* arrayBase, int x, int y, int z) {
-            return arrayBase[(y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1)];
+        static ushort getBlockFromCacheUnsafeVec(ref ushort arrayBase, Vector3D<int> vec) {
+            return accessRef(ref arrayBase, (vec.Y + 1) * Chunk.CHUNKSIZEEXSQ + (vec.Z + 1) * Chunk.CHUNKSIZEEX + (vec.X + 1));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static ushort getBlockFromCacheUnsafe(ref ushort arrayBase, int x, int y, int z) {
+            return accessRef(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
         Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
+        Span<byte> ao = stackalloc byte[4];
+
+        ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
+        ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
 
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    var bl = getBlockFromCache(x, y, z);
+                    var bl = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z);
                     if (whichBlocks(bl)) {
-                        var pos = new Vector3D<int>(x, y, z);
                         var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
                         int wx = wpos.X;
                         int wy = wpos.Y;
@@ -303,7 +319,7 @@ public class ChunkSectionRenderer {
                         float maxU;
                         float maxV;
 
-                        float offset = 0.0004f;
+                        //float offset = 0.0004f;
 
                         float x1;
                         float y1;
@@ -323,11 +339,6 @@ public class ChunkSectionRenderer {
                         // this is garbage but we'll deal with it later
                         // bottom
 
-                        byte ao1;
-                        byte ao2;
-                        byte ao3;
-                        byte ao4;
-
                         ushort data1;
                         ushort data2;
                         ushort data3;
@@ -338,124 +349,54 @@ public class ChunkSectionRenderer {
                         for (int d = 0; d < faces.Length; d++) {
                             face = faces[d];
                             var dir = face.direction;
+                            var dirIdx = (int)dir;
                             bool test;
                             if (dir == RawDirection.NONE) {
                                 // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
                                 test = true;
                             }
                             else {
-                                var nbPos = pos + Direction.getDirection(dir);
-                                nb = getBlockFromCache(nbPos.X, nbPos.Y, nbPos.Z);
+                                var dirV = Direction.getDirection(dir);
+                                var nbPosX = x + dirV.X;
+                                var nbPosY = y + dirV.Y;
+                                var nbPosZ = z + dirV.Z;
+                                nb = getBlockFromCacheUnsafe(ref neighboursArray, nbPosX, nbPosY, nbPosZ);
                                 test = neighbourTest(nb) || (face.nonFullFace && isSolid(nb));
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
                                 if (!Settings.instance.AO || face.noAO) {
-                                    ao1 = 0;
-                                    ao2 = 0;
-                                    ao3 = 0;
-                                    ao4 = 0;
+                                    ao.Fill(0);
                                 }
                                 else {
-                                    switch (dir) {
-                                        case RawDirection.NONE:
-                                            ao1 = 0;
-                                            ao2 = 0;
-                                            ao3 = 0;
-                                            ao4 = 0;
-                                            break;
-                                        case RawDirection.WEST:
-                                            // west
-                                            ao1 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                                getBlockFromCache(x - 1, y + 1, z),
-                                                getBlockFromCache(x - 1, y + 1, z + 1));
-                                            ao2 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                                getBlockFromCache(x - 1, y - 1, z),
-                                                getBlockFromCache(x - 1, y - 1, z + 1));
-                                            ao3 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                                getBlockFromCache(x - 1, y - 1, z),
-                                                getBlockFromCache(x - 1, y - 1, z - 1));
-                                            ao4 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                                getBlockFromCache(x - 1, y + 1, z),
-                                                getBlockFromCache(x - 1, y + 1, z - 1));
-                                            break;
-                                        case RawDirection.EAST:
-                                            // east
-                                            ao1 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                                getBlockFromCache(x + 1, y + 1, z),
-                                                getBlockFromCache(x + 1, y + 1, z - 1));
-                                            ao2 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                                getBlockFromCache(x + 1, y - 1, z),
-                                                getBlockFromCache(x + 1, y - 1, z - 1));
-                                            ao3 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                                getBlockFromCache(x + 1, y - 1, z),
-                                                getBlockFromCache(x + 1, y - 1, z + 1));
-                                            ao4 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                                getBlockFromCache(x + 1, y + 1, z),
-                                                getBlockFromCache(x + 1, y + 1, z + 1));
-                                            break;
-                                        case RawDirection.SOUTH:
-                                            // south
-                                            ao1 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                                getBlockFromCache(x, y + 1, z - 1),
-                                                getBlockFromCache(x - 1, y + 1, z - 1));
-                                            ao2 = calculateAOFixed(getBlockFromCache(x - 1, y, z - 1),
-                                                getBlockFromCache(x, y - 1, z - 1),
-                                                getBlockFromCache(x - 1, y - 1, z - 1));
-                                            ao3 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                                getBlockFromCache(x, y - 1, z - 1),
-                                                getBlockFromCache(x + 1, y - 1, z - 1));
-                                            ao4 = calculateAOFixed(getBlockFromCache(x + 1, y, z - 1),
-                                                getBlockFromCache(x, y + 1, z - 1),
-                                                getBlockFromCache(x + 1, y + 1, z - 1));
-                                            break;
-                                        case RawDirection.NORTH:
-                                            // north
-                                            ao1 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                                getBlockFromCache(x, y + 1, z + 1),
-                                                getBlockFromCache(x + 1, y + 1, z + 1));
-                                            ao2 = calculateAOFixed(getBlockFromCache(x + 1, y, z + 1),
-                                                getBlockFromCache(x, y - 1, z + 1),
-                                                getBlockFromCache(x + 1, y - 1, z + 1));
-                                            ao3 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                                getBlockFromCache(x, y - 1, z + 1),
-                                                getBlockFromCache(x - 1, y - 1, z + 1));
-                                            ao4 = calculateAOFixed(getBlockFromCache(x - 1, y, z + 1),
-                                                getBlockFromCache(x, y + 1, z + 1),
-                                                getBlockFromCache(x - 1, y + 1, z + 1));
-                                            break;
-                                        case RawDirection.DOWN:
-                                            // bottom
-                                            ao1 = calculateAOFixed(getBlockFromCache(x - 1, y - 1, z),
-                                                getBlockFromCache(x, y - 1, z - 1),
-                                                getBlockFromCache(x - 1, y - 1, z - 1));
-                                            ao2 = calculateAOFixed(getBlockFromCache(x + 1, y - 1, z),
-                                                getBlockFromCache(x, y - 1, z + 1),
-                                                getBlockFromCache(x + 1, y - 1, z + 1));
-                                            ao3 = calculateAOFixed(getBlockFromCache(x + 1, y - 1, z),
-                                                getBlockFromCache(x, y - 1, z - 1),
-                                                getBlockFromCache(x + 1, y - 1, z - 1));
-                                            ao4 = calculateAOFixed(getBlockFromCache(x - 1, y - 1, z),
-                                                getBlockFromCache(x, y - 1, z + 1),
-                                                getBlockFromCache(x - 1, y - 1, z + 1));
-                                            break;
-                                        case RawDirection.UP:
-                                            // top
-                                            ao1 = calculateAOFixed(getBlockFromCache(x - 1, y + 1, z),
-                                                getBlockFromCache(x, y + 1, z + 1),
-                                                getBlockFromCache(x - 1, y + 1, z + 1));
-                                            ao2 = calculateAOFixed(getBlockFromCache(x - 1, y + 1, z),
-                                                getBlockFromCache(x, y + 1, z - 1),
-                                                getBlockFromCache(x - 1, y + 1, z - 1));
-                                            ao3 = calculateAOFixed(getBlockFromCache(x + 1, y + 1, z),
-                                                getBlockFromCache(x, y + 1, z - 1),
-                                                getBlockFromCache(x + 1, y + 1, z - 1));
-                                            ao4 = calculateAOFixed(getBlockFromCache(x + 1, y + 1, z),
-                                                getBlockFromCache(x, y + 1, z + 1),
-                                                getBlockFromCache(x + 1, y + 1, z + 1));
-                                            break;
-                                        default:
-                                            throw new ArgumentOutOfRangeException();
+                                    if (dir == RawDirection.NONE) {
+                                        ao.Fill(0);
+                                    }
+                                    else {
+                                        Vector3D<int> offset;
+                                        ushort ox;
+                                        ushort oy;
+                                        ushort oz;
+
+                                        Vector3D<int> side1;
+                                        Vector3D<int> side2;
+                                        Vector3D<int> corner;
+
+                                        for (int j = 0; j < 4; j++) {
+                                            offset = getOffset(ref offsetArray, dirIdx, j, 0);
+                                            side1 = addAO(x, y, z, offset.X, offset.Y, offset.Z);
+                                            ox = getBlockFromCacheUnsafe(ref neighboursArray, side1.X, side1.Y, side1.Z);
+
+                                            offset = getOffset(ref offsetArray, dirIdx, j, 1);
+                                            side2 = addAO(x, y, z, offset.X, offset.Y, offset.Z);
+                                            oy = getBlockFromCacheUnsafe(ref neighboursArray, side2.X, side2.Y, side2.Z);
+
+                                            offset = getOffset(ref offsetArray, dirIdx, j, 2);
+                                            corner = addAO(x, y, z, offset.X, offset.Y, offset.Z);
+                                            oz = getBlockFromCacheUnsafe(ref neighboursArray, corner.X, corner.Y, corner.Z);
+
+                                            ao[j] = calculateAOFixed(ox, oy, oz);
+                                        }
                                     }
                                 }
                                 texCoords = faces[d].min;
@@ -480,10 +421,10 @@ public class ChunkSectionRenderer {
                                 y4 = wy + faces[d].y4;
                                 z4 = wz + faces[d].z4;
 
-                                data1 = Block.packData((byte)dir, ao1);
-                                data2 = Block.packData((byte)dir, ao2);
-                                data3 = Block.packData((byte)dir, ao3);
-                                data4 = Block.packData((byte)dir, ao4);
+                                data1 = Block.packData((byte)dir, ao[0]);
+                                data2 = Block.packData((byte)dir, ao[1]);
+                                data3 = Block.packData((byte)dir, ao[2]);
+                                data4 = Block.packData((byte)dir, ao[3]);
 
 
                                 // add vertices
@@ -509,6 +450,30 @@ public class ChunkSectionRenderer {
             }
         }
         //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void addAO(int x, int y, int z, int x1, int y1, int z1, out int x2, out int y2, out int z2) {
+        x2 = x + x1;
+        y2 = y + y1;
+        z2 = z + z1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Vector3D<int> addAO(int x, int y, int z, int x1, int y1, int z1) {
+        return new(x + x1, y + y1, z + z1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Vector3D<int> getOffset(ref int arr, int dir, int idx, int vert) {
+        // array has 6 directions, 4 indices which each contain 3 AOs of 3 ints each
+        // 36 = 3 * 3 * 4
+        // 9 = 3 * 3
+        var index = (dir * 36) + idx * (9) + vert * 3;
+        var x = Unsafe.Add(ref arr, index);
+        var y = Unsafe.Add(ref arr, index + 1);
+        var z = Unsafe.Add(ref arr, index + 2);
+        return new(x, y, z);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -546,15 +511,25 @@ public class ChunkSectionRenderer {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void access<T>(T[] arr, int index, T value) {
-        ref T tableRef = ref MemoryMarshal.GetArrayDataReference(arr);
-        Unsafe.Add(ref tableRef, index) = value;
+        ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        Unsafe.Add(ref arrayRef, index) = value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static T accessRef<T>(ref T arr, int index) {
+        return Unsafe.Add(ref arr, index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void accessRef<T>(ref T arr, int index, T value) {
+        Unsafe.Add(ref arr, index) = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void setRange<T>(T[] arr, int index, T[] values) {
-        ref T tableRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
         for (int i = 0; i < values.Length; i++) {
-            Unsafe.Add(ref tableRef, index + i) = values[i];
+            Unsafe.Add(ref arrayRef, index + i) = values[i];
         }
     }
 
