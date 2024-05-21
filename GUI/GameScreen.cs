@@ -194,7 +194,7 @@ public class GameScreen : Screen {
                 new SizeF(16 * GUI.guiScale, 16 * GUI.guiScale)),
             new Color4b(240, 240, 240));
         gui.tb.End();
-        gui.drawBlock(world, Blocks.DIRT, Game.centreX + (world.worldTick % Game.centreX * 0), Game.centreY, 16);
+        gui.drawBlock(world, Blocks.DIRT, Game.centreX + (world.worldTick % Game.centreX), Game.centreY, 16);
         gui.tb.Begin();
         // setup blending
         //GD.BlendingEnabled = true;
@@ -276,6 +276,25 @@ public class GameScreen : Screen {
             //D.drawAABB(p.aabb);
             D.flushLines();
         }
+    }
+
+    public override void postDraw() {
+        base.postDraw();
+
+        // draw hotbar
+        var slots = world.player.hotbar.slots;
+        var gui = Game.gui;
+        gui.tb.Begin(BatcherBeginMode.Immediate);
+        for (int i = 0; i < slots.Length; i++) {
+            var block = slots[i];
+            var selected = world.player.hotbar.selected == i;
+            gui.tb.Draw(gui.colourTexture,
+                new RectangleF(new PointF(Game.centreX + (int)(i - 9 / 2) * (16 + 2) * GUI.guiScale, Game.height - (16 + 2) * GUI.guiScale),
+                    new SizeF(16 * GUI.guiScale, 16 * GUI.guiScale)),
+                selected ? new Color4b(200, 200, 200) : new Color4b(160, 160, 160, 160));
+            Game.gui.drawBlock(world, Blocks.get(block), Game.centreX + (i - 9 / 2) * (16 + 2) * GUI.guiScale, Game.height - (16 + 2) * GUI.guiScale, 16);
+        }
+        gui.tb.End();
     }
 
     public override void imGuiDraw() {

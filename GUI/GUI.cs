@@ -181,7 +181,9 @@ public class GUI {
     public void drawBlock(World world, Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
-        WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
+        var guiBlockSp = guiBlock.AsSpan();
+        var guiBlockISp = guiBlockI.AsSpan();
+        WorldRenderer.meshBlock(block, ref guiBlockSp, ref guiBlockISp);
         GD.ShaderProgram = guiBlockShader;
         // assemble the matrix
         var camPos = new Vector3(1, 2 / 3f, 1);
@@ -202,7 +204,7 @@ public class GUI {
         buffer.IndexSubset!.SetData(guiBlockI);
         GD.VertexArray = buffer;
         var sSize = size * guiScale;
-        GD.Viewport = new Viewport(x, y - sSize, (uint)sSize, (uint)sSize);
+        GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
         GD.DrawElements(PrimitiveType.Triangles, 0, buffer.IndexStorageLength);
         GD.Viewport = viewport;
     }
