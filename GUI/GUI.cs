@@ -180,6 +180,7 @@ public class GUI {
 
     public void drawBlock(World world, Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
+        var viewport = GD.Viewport;
         WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         GD.ShaderProgram = guiBlockShader;
         // assemble the matrix
@@ -187,27 +188,31 @@ public class GUI {
                         Matrix4x4.CreateScale(size * guiScale) *
                         Matrix4x4.CreateLookToLeftHanded(new Vector3(0, 2, 2), new Vector3(4, -1, -4), new Vector3(0, 1, 0)) *
                         Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -10, 50);*/
-        var camPos = new Vector3(3, 3, 3);
+        var camPos = new Vector3(1, 1, 1);
 
 
-        /*var mat =
-            // first we translate to the coords
-            Matrix4x4.CreateScale(size * guiScale) *
-            Matrix4x4.CreateTranslation(x, y, 0) *
-            Matrix4x4.CreateRotationY(Utils.deg2rad(45), new Vector3(x, y, 0)) *
-            Matrix4x4.CreateRotationX(Utils.deg2rad(30), new Vector3(x, y, 0)) *
-            //Matrix4x4.CreateTranslation(-x / 15f, y / 15f, 0) *
-            //Matrix4x4.CreateLookAt(camPos, camPos + new Vector3(1, -1, 1), new Vector3(0, 1, 0)) *
-            Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, Game.width, Game.height, 0, -50, 100);*/
         var mat =
             // first we translate to the coords
+            // model
+            Matrix4x4.CreateScale(1, -1, 1) *
+            Matrix4x4.CreateTranslation(0, 1, 0) *
             Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0)) *
-            Matrix4x4.CreatePerspectiveOffCenterLeftHanded(-2, 2, -2, 2, 0.01f, 100);
+            // projection
+            Matrix4x4.CreateOrthographicOffCenterLeftHanded(-1, 1, 1, -1, -10, 10);
+            //Matrix4x4.CreateTranslation(0, 0, 0);
+        /*var mat =
+            // first we translate to the coords
+            Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0)) *
+            Matrix4x4.CreatePerspectiveOffCenterLeftHanded(-2, 2, -2, 2, 0.01f, 100);*/
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
         buffer.DataSubset.SetData(guiBlock);
         buffer.IndexSubset!.SetData(guiBlockI);
         GD.VertexArray = buffer;
+        Console.Out.WriteLine(y);
+        var sSize = size * guiScale;
+        GD.Viewport = new Viewport(x, y - sSize, (uint)sSize, (uint)sSize);
         GD.DrawElements(PrimitiveType.Triangles, 0, buffer.IndexStorageLength);
+        GD.Viewport = viewport;
     }
 }
