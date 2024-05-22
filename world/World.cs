@@ -36,7 +36,7 @@ public class World {
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
-    public const int RENDERDISTANCE = 16;
+    public const int RENDERDISTANCE = 8;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -287,6 +287,9 @@ public class World {
         if (status >= ChunkStatus.POPULATED && !(hasChunk && chunk!.status > ChunkStatus.POPULATED)) {
             generator.populate(chunkCoord);
         }
+        if (status >= ChunkStatus.LIGHTED && !(hasChunk && chunk!.status > ChunkStatus.LIGHTED)) {
+            chunks[chunkCoord].lightChunk();
+        }
         if (status >= ChunkStatus.MESHED && !(hasChunk && chunk!.status > ChunkStatus.MESHED)) {
             chunks[chunkCoord].meshChunk();
         }
@@ -295,11 +298,6 @@ public class World {
 
     public void mesh(ChunkSectionCoord coord) {
         meshingQueue.Enqueue(coord);
-    }
-
-    public Vector3D<int> getWorldSize() {
-        var c = Chunk.CHUNKSIZE;
-        return new Vector3D<int>(c * WORLDSIZE, c * WORLDHEIGHT, c * WORLDSIZE);
     }
 
     public bool isBlock(int x, int y, int z) {
@@ -319,6 +317,15 @@ public class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : (ushort)0;
+    }
+
+    public byte getLight(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return 0;
+        }
+        var blockPos = getPosInChunkSection(x, y, z);
+        var success = getChunkSectionMaybe(x, y, z, out var chunk);
+        return success ? chunk!.blocks.getLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
     }
 
     /// <summary>
