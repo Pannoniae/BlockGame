@@ -51,8 +51,8 @@ public class Chunk {
     /// Uses chunk coordinates
     /// </summary>
     public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
-        var sectionY = (int)MathF.Floor(y / (float)CHUNKSIZE);
-        var yRem = y - sectionY * CHUNKSIZE;
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
         var section = chunks[sectionY];
@@ -88,7 +88,7 @@ public class Chunk {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getBlock(int x, int y, int z) {
         var sectionY = y / CHUNKSIZE;
-        var yRem = y - sectionY * CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
         return chunks[sectionY].blocks[x, yRem, z];
     }
 
@@ -97,12 +97,6 @@ public class Chunk {
             chunks[i].renderer.meshChunk();
         }
         status = ChunkStatus.MESHED;
-    }
-
-    public void drawChunk(PlayerCamera camera) {
-        for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.drawChunk(camera);
-        }
     }
 
     public void drawOpaque(PlayerCamera camera) {

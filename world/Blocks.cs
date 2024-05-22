@@ -61,6 +61,14 @@ public class Blocks {
         return !bl.transparent && !bl.translucent;
     }
 
+    public static bool notSolid(int block) {
+        if (block == 0) {
+            return true;
+        }
+        var bl = get(block);
+        return bl.transparent | bl.translucent;
+    }
+
     public static bool isTransparent(int block) {
         return block != 0 && get(block).transparent;
     }

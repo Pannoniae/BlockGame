@@ -10,10 +10,15 @@ namespace BlockGame;
 public class ChunkSectionRenderer {
     public ChunkSection section;
 
+
+    // we need it here because completely full chunks are also empty of any rendering
+    public bool isEmpty;
+
     public VAO vao;
     public VAO watervao;
 
     public bool hasTranslucentBlocks;
+    public bool hasOnlySolid;
 
     public Shader shader;
     public int uMVP;
@@ -28,14 +33,15 @@ public class ChunkSectionRenderer {
 
     // actually we don't need a list, regular arrays will do because it's only a few megs of space and it's shared
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of them and it will still be in the ballpark of 10MB
-    public static readonly BlockVertex[] chunkVertices = new BlockVertex[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 24];
-    public static readonly ushort[] chunkIndices = new ushort[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * 36];
+    public static List<BlockVertex> chunkVertices = new(1024);
+    public static List<ushort> chunkIndices = new(1024);
     // YZX again
-    public static readonly ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    public static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    public static BlockData[] neighbourSections = new BlockData[27];
 
     static object meshingLock = new();
 
-    private static readonly int[] offsetTable = [
+    private static int[] offsetTable = [
         // west
 
         -1, 0, 1, -1, 1, 0, -1, 1, 1,
@@ -91,7 +97,7 @@ public class ChunkSectionRenderer {
     }
 
     private static bool notSolid(int b) {
-        return !Blocks.isSolid(b);
+        return Blocks.notSolid(b);
     }
 
     private static bool isSolid(int b) {
@@ -110,8 +116,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        var sw = new Stopwatch();
-        sw.Start();
+        //var sw = new Stopwatch();
+        //sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -131,47 +137,62 @@ public class ChunkSectionRenderer {
             // first we render everything which is NOT translucent
             lock (meshingLock) {
                 setupNeighbours();
+
+                // if chunk is full, don't mesh either
+                if (hasOnlySolid) {
+                    isEmpty = true;
+                    return;
+                }
+
                 /*if (World.glob) {
                     MeasureProfiler.StartCollectingData();
                 }*/
-                Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
-                constructVertices(&opaqueBlocks, &notSolid);
+                //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
+                constructVertices(&opaqueBlocks, &Blocks.notSolid);
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us");
-                if (chunkIndices.Length > 0) {
+                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+                if (chunkIndices.Count > 0) {
                     if (section.world.renderer.fastChunkSwitch) {
                         (vao as VerySharedBlockVAO).bindVAO();
                     }
                     else {
                         vao.bind();
                     }
-                    vao.upload(chunkVertices, chunkIndices);
+                    var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                    var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                    vao.upload(finalVertices, finalIndices);
+                }
+                else {
+                    isEmpty = true;
                 }
             }
             lock (meshingLock) {
                 if (hasTranslucentBlocks) {
                     // then we render everything which is translucent (water for now)
                     constructVertices(&Blocks.isTranslucent, &notTranslucent);
-                    if (chunkIndices.Length > 0) {
+                    if (chunkIndices.Count > 0) {
                         if (section.world.renderer.fastChunkSwitch) {
                             (watervao as VerySharedBlockVAO).bindVAO();
                         }
                         else {
                             watervao.bind();
                         }
-                        watervao.upload(chunkVertices, chunkIndices);
+                        var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                        var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                        watervao.upload(tFinalVertices, tFinalIndices);
                         //world.sortedTransparentChunks.Add(this);
                     }
                     else {
                         //world.sortedTransparentChunks.Remove(this);
+                        isEmpty = true;
                     }
                 }
             }
         }
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        sw.Stop();
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        //sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -184,15 +205,8 @@ public class ChunkSectionRenderer {
         return frustum.Contains(section.bbbox) != ContainmentType.Disjoint;
     }
 
-    public void drawChunk(PlayerCamera camera) {
-        drawOpaque(camera);
-        drawTransparent(camera);
-        //Game.instance.metrics.renderedChunks += 1;
-        //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Fill);
-    }
-
     public void drawOpaque(PlayerCamera camera) {
-        if (!section.isEmpty && isVisible(camera.frustum)) {
+        if (!isEmpty && isVisible(camera.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
 
@@ -203,18 +217,20 @@ public class ChunkSectionRenderer {
     }
 
     public void drawTransparent(PlayerCamera camera) {
-        if (hasTranslucentBlocks && !section.isEmpty && isVisible(camera.frustum)) {
+        if (hasTranslucentBlocks && !isEmpty && isVisible(camera.frustum)) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
+    [SkipLocalsInit]
     private void setupNeighbours() {
         //var sw = new Stopwatch();
         //sw.Start();
 
         hasTranslucentBlocks = false;
+        hasOnlySolid = true;
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -233,43 +249,55 @@ public class ChunkSectionRenderer {
                     if (Blocks.isTranslucent(bl)) {
                         hasTranslucentBlocks = true;
                     }
+                    if (Blocks.notSolid(bl)) {
+                        hasOnlySolid = false;
+                    }
                     accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
                 }
             }
         }
-
-        // setup neighbouring chunks
 
         //Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
 
         // if chunk is empty, nothing to do, don't need to check neighbours
         // btw this shouldn't fucking happen because we checked it but we check it anyway so our program doesn't crash if the chunk representation is changed
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static ushort getBlockFromSection(ChunkSection section, int x, int y, int z) {
+            if (y is < 0 or >= World.WORLDHEIGHT) {
+                return 0;
+            }
+            var world = section.world;
+            var blockPos = world.getPosInChunkSection(x, y, z);
+            var sectionPos = world.getChunkSectionPos(x, y, z);
+            return access(neighbourSections, (sectionPos.y - section.chunkY + 1) * 9 + (sectionPos.z - section.chunkZ + 1) * 3 + (sectionPos.x - section.chunkX + 1))[blockPos.X, blockPos.Y, blockPos.Z];
+        }
+
+        // setup neighbouring sections
+        var coord = section.chunkCoord;
+        ref var neighbourSectionsArray = ref MemoryMarshal.GetArrayDataReference(neighbourSections);
+        for (int y = -1; y <= 1; y++) {
+            for (int z = -1; z <= 1; z++) {
+                for (int x = -1; x <= 1; x++) {
+                    world.getChunkSectionMaybe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z), out var sec);
+                    accessRef(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1, sec != null ? sec.blocks : new EmptyBlockData());
+                }
+            }
+        }
+
         for (int y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
             for (int z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
                 for (int x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
                     // if inside the chunk, skip
-                    /*if (x is >= 0 and < Chunk.CHUNKSIZE &&
-                        y is >= 0 and < Chunk.CHUNKSIZE &&
-                        z is >= 0 and < Chunk.CHUNKSIZE) {
-                        continue;
-                    }*/
-                    // skip-ahead
-                    if (x is >= 0 and < Chunk.CHUNKSIZE) {
+                    if (x is >= 0 and < Chunk.CHUNKSIZE &&
+                        z is >= 0 and < Chunk.CHUNKSIZE &&
+                        y is >= 0 and < Chunk.CHUNKSIZE) {
+                        // skip this entire loop
                         x = Chunk.CHUNKSIZE - 1;
                         continue;
                     }
-                    if (y is >= 0 and < Chunk.CHUNKSIZE) {
-                        y = Chunk.CHUNKSIZE - 1;
-                        continue;
-                    }
-                    if (z is >= 0 and < Chunk.CHUNKSIZE) {
-                        z = Chunk.CHUNKSIZE - 1;
-                        continue;
-                    }
-
                     var wpos = world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
-                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), world.getBlock(wpos.X, wpos.Y, wpos.Z));
+                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), getBlockFromSection(section, wpos.X, wpos.Y, wpos.Z));
                 }
             }
         }
@@ -278,18 +306,19 @@ public class ChunkSectionRenderer {
 
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    [SkipLocalsInit]
     unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
         //var sw = new Stopwatch();
         //sw.Start();
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
 
         // clear arrays before starting
-        Array.Clear(chunkVertices);
-        Array.Clear(chunkIndices);
+        chunkVertices.Clear();
+        chunkIndices.Clear();
 
         ushort i = 0;
-        ushort cv = 0;
-        ushort ci = 0;
+        //ushort cv = 0;
+        //ushort ci = 0;
 
         // helper function to get blocks from cache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -309,6 +338,7 @@ public class ChunkSectionRenderer {
 
         Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
+        Span<ushort> directions = stackalloc ushort[6];
 
         ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
@@ -318,6 +348,7 @@ public class ChunkSectionRenderer {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z);
                     if (whichBlocks(bl)) {
+                        var pos = new Vector3D<int>(x, y, z);
                         var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
                         int wx = wpos.X;
                         int wy = wpos.Y;
@@ -333,10 +364,6 @@ public class ChunkSectionRenderer {
                         UVPair texCoordsMax;
                         Vector2D<float> tex;
                         Vector2D<float> texMax;
-                        float u;
-                        float v;
-                        float maxU;
-                        float maxV;
 
                         //float offset = 0.0004f;
 
@@ -358,51 +385,47 @@ public class ChunkSectionRenderer {
                         // this is garbage but we'll deal with it later
                         // bottom
 
-                        byte ao1;
-                        byte ao2;
-                        byte ao3;
-                        byte ao4;
+                        byte ao1 = 0;
+                        byte ao2 = 0;
+                        byte ao3 = 0;
+                        byte ao4 = 0;
 
                         ushort data1;
                         ushort data2;
                         ushort data3;
                         ushort data4;
 
+                        int dirIdx = 0;
+
+                        // setup neighbour data
+                        directions[0] = getBlockFromCacheUnsafe(ref neighboursArray, x - 1, y, z);
+                        directions[1] = getBlockFromCacheUnsafe(ref neighboursArray, x + 1, y, z);
+                        directions[2] = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z - 1);
+                        directions[3] = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z + 1);
+                        directions[4] = getBlockFromCacheUnsafe(ref neighboursArray, x, y - 1, z);
+                        directions[5] = getBlockFromCacheUnsafe(ref neighboursArray, x, y + 1, z);
+
                         ushort nb;
+
+                        // if full block, don't even bother going through the faces
 
                         for (int d = 0; d < faces.Length; d++) {
                             face = faces[d];
                             var dir = face.direction;
-                            var dirIdx = (int)dir;
                             bool test;
                             if (dir == RawDirection.NONE) {
                                 // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
                                 test = true;
                             }
                             else {
-                                var dirV = Direction.getDirection(dir);
-                                var nbPosX = x + dirV.X;
-                                var nbPosY = y + dirV.Y;
-                                var nbPosZ = z + dirV.Z;
-                                nb = getBlockFromCacheUnsafe(ref neighboursArray, nbPosX, nbPosY, nbPosZ);
+                                dirIdx = (int)dir;
+                                nb = directions[dirIdx];
                                 test = neighbourTest(nb) || (face.nonFullFace && isSolid(nb));
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
-                                if (true || !Settings.instance.AO || face.noAO) {
-                                    ao1 = 0;
-                                    ao2 = 0;
-                                    ao3 = 0;
-                                    ao4 = 0;
-                                }
-                                else {
-                                    if (dir == RawDirection.NONE) {
-                                        ao1 = 0;
-                                        ao2 = 0;
-                                        ao3 = 0;
-                                        ao4 = 0;
-                                    }
-                                    else {
+                                if (Settings.instance.AO && !face.noAO) {
+                                    if (dir != RawDirection.NONE) {
                                         Vector3D<int> offset;
                                         int ox;
                                         int oy;
@@ -444,10 +467,6 @@ public class ChunkSectionRenderer {
                                 texCoordsMax = faces[d].max;
                                 tex = Block.texCoords(texCoords);
                                 texMax = Block.texCoords(texCoordsMax);
-                                u = tex.X;
-                                v = tex.Y;
-                                maxU = texMax.X;
-                                maxV = texMax.Y;
 
                                 x1 = wx + faces[d].x1;
                                 y1 = wy + faces[d].y1;
@@ -470,12 +489,12 @@ public class ChunkSectionRenderer {
 
                                 // add vertices
 
-                                tempVertices[0] = new BlockVertex(x1, y1, z1, u, v, data1);
-                                tempVertices[1] = new BlockVertex(x2, y2, z2, u, maxV, data2);
-                                tempVertices[2] = new BlockVertex(x3, y3, z3, maxU, maxV, data3);
-                                tempVertices[3] = new BlockVertex(x4, y4, z4, maxU, v, data4);
-                                chunkVertices.AddRange(cv, tempVertices);
-                                cv += 4;
+                                tempVertices[0] = new BlockVertex(x1, y1, z1, tex.X, tex.Y, data1);
+                                tempVertices[1] = new BlockVertex(x2, y2, z2, tex.X, texMax.Y, data2);
+                                tempVertices[2] = new BlockVertex(x3, y3, z3, texMax.X, texMax.Y, data3);
+                                tempVertices[3] = new BlockVertex(x4, y4, z4, texMax.X, tex.Y, data4);
+                                chunkVertices.AddRange(tempVertices);
+                                //cv += 4;
 
                                 tempIndices[0] = i;
                                 tempIndices[1] = (ushort)(i + 1);
@@ -483,9 +502,9 @@ public class ChunkSectionRenderer {
                                 tempIndices[3] = (ushort)(i + 0);
                                 tempIndices[4] = (ushort)(i + 2);
                                 tempIndices[5] = (ushort)(i + 3);
-                                chunkIndices.AddRange(ci, tempIndices);
+                                chunkIndices.AddRange(tempIndices);
                                 i += 4;
-                                ci += 6;
+                                //ci += 6;
                             }
                         }
                     }
@@ -548,8 +567,8 @@ public class ChunkSectionRenderer {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static T access<T>(T[] arr, int index) {
-        ref T tableRef = ref MemoryMarshal.GetArrayDataReference(arr);
-        return Unsafe.Add(ref tableRef, index);
+        ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        return Unsafe.Add(ref arrayRef, index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

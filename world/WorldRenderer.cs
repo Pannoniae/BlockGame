@@ -1,4 +1,3 @@
-using System.Numerics;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using TrippyGL;
