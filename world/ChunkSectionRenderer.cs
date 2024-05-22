@@ -317,6 +317,8 @@ public class ChunkSectionRenderer {
         chunkIndices.Clear();
 
         ushort i = 0;
+
+        var AOenabled = Settings.instance.AO;
         //ushort cv = 0;
         //ushort ci = 0;
 
@@ -347,37 +349,23 @@ public class ChunkSectionRenderer {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z);
                     if (whichBlocks(bl)) {
-                        var pos = new Vector3D<int>(x, y, z);
-                        var wpos = section.world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
-                        int wx = wpos.X;
-                        int wy = wpos.Y;
-                        int wz = wpos.Z;
+                        //var pos = new Vector3D<int>(x, y, z);
+
+                        // unrolled world.toWorldPos
+                        float wx = section.chunkX * Chunk.CHUNKSIZE + x;
+                        float wy = section.chunkY * Chunk.CHUNKSIZE + y;
+                        float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
                         Block b = Blocks.get(bl);
                         var faces = b.model.faces;
+                        ref var facesRef = ref MemoryMarshal.GetArrayDataReference(faces);
                         Face face;
 
                         // calculate texcoords
-
-                        UVPair texCoords;
-                        UVPair texCoordsMax;
                         Vector2D<float> tex;
                         Vector2D<float> texMax;
 
                         //float offset = 0.0004f;
-
-                        float x1;
-                        float y1;
-                        float z1;
-                        float x2;
-                        float y2;
-                        float z2;
-                        float x3;
-                        float y3;
-                        float z3;
-                        float x4;
-                        float y4;
-                        float z4;
 
                         ushort d0;
                         ushort d1;
@@ -416,7 +404,7 @@ public class ChunkSectionRenderer {
                         // if full block, don't even bother going through the faces
 
                         for (int d = 0; d < faces.Length; d++) {
-                            face = faces[d];
+                            face = accessRef(ref facesRef, d);
                             var dir = face.direction;
                             bool test;
                             if (dir == RawDirection.NONE) {
@@ -450,11 +438,11 @@ public class ChunkSectionRenderer {
                                     default:
                                         throw new ArgumentOutOfRangeException();
                                 }
-                                test = neighbourTest(nb) || (face.nonFullFace && notTranslucent(nb));
+                                test = neighbourTest(nb) || face.nonFullFace && !Blocks.isTranslucent(nb);
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
-                                if (Settings.instance.AO && !face.noAO) {
+                                if (AOenabled && !face.noAO) {
                                     if (dir != RawDirection.NONE) {
                                         int ox;
                                         int oy;
@@ -470,16 +458,19 @@ public class ChunkSectionRenderer {
                                             yb = y + yb;
                                             zb = z + zb;
                                             ox = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+
                                             getOffset(ref offsetArray, dirIdx, j, 1, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             oy = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+
                                             getOffset(ref offsetArray, dirIdx, j, 2, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             oz = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+
                                             switch (j) {
                                                 case 0:
                                                     ao1 = calculateAOFixed(ox, oy, oz);
@@ -498,23 +489,8 @@ public class ChunkSectionRenderer {
                                         }
                                     }
                                 }
-                                texCoords = faces[d].min;
-                                texCoordsMax = faces[d].max;
-                                tex = Block.texCoords(texCoords);
-                                texMax = Block.texCoords(texCoordsMax);
-
-                                x1 = wx + faces[d].x1;
-                                y1 = wy + faces[d].y1;
-                                z1 = wz + faces[d].z1;
-                                x2 = wx + faces[d].x2;
-                                y2 = wy + faces[d].y2;
-                                z2 = wz + faces[d].z2;
-                                x3 = wx + faces[d].x3;
-                                y3 = wy + faces[d].y3;
-                                z3 = wz + faces[d].z3;
-                                x4 = wx + faces[d].x4;
-                                y4 = wy + faces[d].y4;
-                                z4 = wz + faces[d].z4;
+                                tex = Block.texCoords(faces[d].min);
+                                texMax = Block.texCoords(faces[d].max);
 
                                 data1 = Block.packData((byte)dir, ao1);
                                 data2 = Block.packData((byte)dir, ao2);
@@ -524,17 +500,17 @@ public class ChunkSectionRenderer {
 
                                 // add vertices
 
-                                tempVertices[0] = new BlockVertex(x1, y1, z1, tex.X, tex.Y, data1);
-                                tempVertices[1] = new BlockVertex(x2, y2, z2, tex.X, texMax.Y, data2);
-                                tempVertices[2] = new BlockVertex(x3, y3, z3, texMax.X, texMax.Y, data3);
-                                tempVertices[3] = new BlockVertex(x4, y4, z4, texMax.X, tex.Y, data4);
+                                tempVertices[0] = new BlockVertex(wx + accessRef(ref facesRef, d).x1, wy + accessRef(ref facesRef, d).y1, wz + accessRef(ref facesRef, d).z1, tex.X, tex.Y, data1);
+                                tempVertices[1] = new BlockVertex(wx + accessRef(ref facesRef, d).x2, wy + accessRef(ref facesRef, d).y2, wz + accessRef(ref facesRef, d).z2, tex.X, texMax.Y, data2);
+                                tempVertices[2] = new BlockVertex(wx + accessRef(ref facesRef, d).x3, wy + accessRef(ref facesRef, d).y3, wz + accessRef(ref facesRef, d).z3, texMax.X, texMax.Y, data3);
+                                tempVertices[3] = new BlockVertex(wx + accessRef(ref facesRef, d).x4, wy + accessRef(ref facesRef, d).y4, wz + accessRef(ref facesRef, d).z4, texMax.X, tex.Y, data4);
                                 chunkVertices.AddRange(tempVertices);
                                 //cv += 4;
 
                                 tempIndices[0] = i;
                                 tempIndices[1] = (ushort)(i + 1);
                                 tempIndices[2] = (ushort)(i + 2);
-                                tempIndices[3] = (ushort)(i + 0);
+                                tempIndices[3] = i;
                                 tempIndices[4] = (ushort)(i + 2);
                                 tempIndices[5] = (ushort)(i + 3);
                                 chunkIndices.AddRange(tempIndices);
@@ -550,19 +526,19 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void addAO(int x, int y, int z, int x1, int y1, int z1, out int x2, out int y2, out int z2) {
+    private static void addAO(int x, int y, int z, int x1, int y1, int z1, out int x2, out int y2, out int z2) {
         x2 = x + x1;
         y2 = y + y1;
         z2 = z + z1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3D<int> addAO(int x, int y, int z, int x1, int y1, int z1) {
+    private static Vector3D<int> addAO(int x, int y, int z, int x1, int y1, int z1) {
         return new(x + x1, y + y1, z + z1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void getOffset(ref int arr, int dir, int idx, int vert, out int x, out int y, out int z) {
+    private static void getOffset(ref int arr, int dir, int idx, int vert, out int x, out int y, out int z) {
         // array has 6 directions, 4 indices which each contain 3 AOs of 3 ints each
         // 36 = 3 * 3 * 4
         // 9 = 3 * 3
@@ -595,34 +571,34 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    unsafe private static int toInt(bool b) {
+    unsafe public static int toInt(bool b) {
         return *(byte*)&b;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static T access<T>(T[] arr, int index) {
+    public static T access<T>(T[] arr, int index) {
         ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
         return Unsafe.Add(ref arrayRef, index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void access<T>(T[] arr, int index, T value) {
+    public static void access<T>(T[] arr, int index, T value) {
         ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
         Unsafe.Add(ref arrayRef, index) = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static T accessRef<T>(ref T arr, int index) {
+    public static T accessRef<T>(ref T arr, int index) {
         return Unsafe.Add(ref arr, index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void accessRef<T>(ref T arr, int index, T value) {
+    public static void accessRef<T>(ref T arr, int index, T value) {
         Unsafe.Add(ref arr, index) = value;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void setRange<T>(T[] arr, int index, T[] values) {
+    public static void setRange<T>(T[] arr, int index, T[] values) {
         ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
         for (int i = 0; i < values.Length; i++) {
             Unsafe.Add(ref arrayRef, index + i) = values[i];

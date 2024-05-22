@@ -14,7 +14,7 @@ public class Blocks {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Block get(int id) {
-        return blocks[id];
+        return ChunkSectionRenderer.access(blocks, id);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
