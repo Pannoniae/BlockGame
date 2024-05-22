@@ -42,6 +42,7 @@ public class GameScreen : Screen {
 
     public override void deactivate() {
         base.deactivate();
+        world = null;
         updateMemory.enabled = false;
     }
 
@@ -128,8 +129,21 @@ public class GameScreen : Screen {
         Game.firstFrame = false;
     }
 
+    public override void scroll(IMouse mouse, ScrollWheel scroll) {
+        int y = (int)Math.Clamp(-scroll.Y, -1, 1);
+        var newSelection = world.player.hotbar.selected + y;
+        newSelection = Math.Clamp(newSelection, 0, 8);
+        world.player.hotbar.selected = newSelection;
+
+    }
+
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {
+            // hack for back to main menu
+            if (!Game.focused) {
+                backToMainMenu();
+            }
+
             Game.instance.unlockMouse();
         }
 
@@ -156,6 +170,13 @@ public class GameScreen : Screen {
         else {
             world.player.updatePickBlock(keyboard, key, scancode);
         }
+    }
+
+    private void backToMainMenu() {
+        Game.instance.executeOnMainThread(() => {
+            Console.Out.WriteLine("back");
+            switchTo(MAIN_MENU);
+        });
     }
 
     public override void click(Vector2 pos) {

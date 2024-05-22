@@ -420,7 +420,7 @@ public class ChunkSectionRenderer {
                             else {
                                 dirIdx = (int)dir;
                                 nb = directions[dirIdx];
-                                test = neighbourTest(nb) || (face.nonFullFace && isSolid(nb));
+                                test = neighbourTest(nb) || (face.nonFullFace && notTranslucent(nb));
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
