@@ -126,8 +126,14 @@ public class Screen {
 
     }
 
+    public virtual void scroll(IMouse mouse, ScrollWheel scrollWheel) {
+
+    }
+
     public virtual void resize(Vector2D<int> newSize) {
         size = newSize;
         centre = size / 2;
     }
+
+
 }

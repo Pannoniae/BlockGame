@@ -149,6 +149,7 @@ public class Game {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
             mouse.MouseUp += onMouseUp;
+            mouse.Scroll += onMouseScroll;
             mouse.Cursor.CursorMode = CursorMode.Normal;
         }
 
@@ -229,6 +230,10 @@ public class Game {
 
     private void onMouseUp(IMouse m, MouseButton button) {
         screenStack.peek().click(m.Position);
+    }
+
+    private void onMouseScroll(IMouse m, ScrollWheel scroll) {
+        screenStack.peek().scroll(m, scroll);
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
