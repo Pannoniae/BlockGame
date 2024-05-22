@@ -97,6 +97,10 @@ public class GUIElement {
 
     }
 
+    public virtual void postDraw() {
+
+    }
+
     public virtual void click() {
         clicked?.Invoke();
     }

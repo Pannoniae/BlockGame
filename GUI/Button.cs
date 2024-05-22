@@ -7,9 +7,9 @@ public class Button : GUIElement {
     public string? text { get; set; }
 
     // todo refactor these to automatically calculate coords
-    public Rectangle button = new(96, 0, 96, 16);
-    public Rectangle hoveredButton = new(0, 16, 96, 16);
-    public Rectangle pressedButton = new(0, 16 * 2, 96, 16);
+    public static Rectangle button = new(96, 0, 96, 16);
+    public static Rectangle hoveredButton = new(0, 16, 96, 16);
+    public static Rectangle pressedButton = new(0, 16 * 2, 96, 16);
 
     public bool shadowed = false;
 

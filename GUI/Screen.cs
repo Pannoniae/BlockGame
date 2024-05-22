@@ -76,6 +76,9 @@ public class Screen {
     }
 
     public virtual void postDraw() {
+        foreach (var element in elements) {
+            element.postDraw();
+        }
     }
 
     public virtual void imGuiDraw() {
