@@ -338,7 +338,6 @@ public class ChunkSectionRenderer {
 
         Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
-        Span<ushort> directions = stackalloc ushort[6];
 
         ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
@@ -380,6 +379,13 @@ public class ChunkSectionRenderer {
                         float y4;
                         float z4;
 
+                        ushort d0;
+                        ushort d1;
+                        ushort d2;
+                        ushort d3;
+                        ushort d4;
+                        ushort d5;
+
 
                         // calculate AO for all 8 vertices
                         // this is garbage but we'll deal with it later
@@ -398,12 +404,12 @@ public class ChunkSectionRenderer {
                         int dirIdx = 0;
 
                         // setup neighbour data
-                        directions[0] = getBlockFromCacheUnsafe(ref neighboursArray, x - 1, y, z);
-                        directions[1] = getBlockFromCacheUnsafe(ref neighboursArray, x + 1, y, z);
-                        directions[2] = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z - 1);
-                        directions[3] = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z + 1);
-                        directions[4] = getBlockFromCacheUnsafe(ref neighboursArray, x, y - 1, z);
-                        directions[5] = getBlockFromCacheUnsafe(ref neighboursArray, x, y + 1, z);
+                        d0 = getBlockFromCacheUnsafe(ref neighboursArray, x - 1, y, z);
+                        d1 = getBlockFromCacheUnsafe(ref neighboursArray, x + 1, y, z);
+                        d2 = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z - 1);
+                        d3 = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z + 1);
+                        d4 = getBlockFromCacheUnsafe(ref neighboursArray, x, y - 1, z);
+                        d5 = getBlockFromCacheUnsafe(ref neighboursArray, x, y + 1, z);
 
                         ushort nb;
 
@@ -419,32 +425,61 @@ public class ChunkSectionRenderer {
                             }
                             else {
                                 dirIdx = (int)dir;
-                                nb = directions[dirIdx];
+                                // THE SWITCH
+                                switch (dir) {
+
+                                    case RawDirection.WEST:
+                                        nb = d0;
+                                        break;
+                                    case RawDirection.EAST:
+                                        nb = d1;
+                                        break;
+                                    case RawDirection.SOUTH:
+                                        nb = d2;
+                                        break;
+                                    case RawDirection.NORTH:
+                                        nb = d3;
+                                        break;
+                                    case RawDirection.DOWN:
+                                        nb = d4;
+                                        break;
+                                    case RawDirection.UP:
+                                        nb = d5;
+                                        break;
+                                    case RawDirection.NONE:
+                                    default:
+                                        throw new ArgumentOutOfRangeException();
+                                }
                                 test = neighbourTest(nb) || (face.nonFullFace && notTranslucent(nb));
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
                                 if (Settings.instance.AO && !face.noAO) {
                                     if (dir != RawDirection.NONE) {
-                                        Vector3D<int> offset;
                                         int ox;
                                         int oy;
                                         int oz;
 
-                                        Vector3D<int> side;
+                                        int xb;
+                                        int yb;
+                                        int zb;
 
                                         for (int j = 0; j < 4; j++) {
-                                            offset = getOffset(ref offsetArray, dirIdx, j, 0);
-                                            side = addAO(x, y, z, offset.X, offset.Y, offset.Z);
-                                            ox = getBlockFromCacheUnsafe(ref neighboursArray, side.X, side.Y, side.Z);
-
-                                            offset = getOffset(ref offsetArray, dirIdx, j, 1);
-                                            side = addAO(x, y, z, offset.X, offset.Y, offset.Z);
-                                            oy = getBlockFromCacheUnsafe(ref neighboursArray, side.X, side.Y, side.Z);
-
-                                            offset = getOffset(ref offsetArray, dirIdx, j, 2);
-                                            side = addAO(x, y, z, offset.X, offset.Y, offset.Z);
-                                            oz = getBlockFromCacheUnsafe(ref neighboursArray, side.X, side.Y, side.Z);
+                                            getOffset(ref offsetArray, dirIdx, j, 0, out xb, out yb, out zb);
+                                            xb = x + xb;
+                                            yb = y + yb;
+                                            zb = z + zb;
+                                            ox = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+                                            getOffset(ref offsetArray, dirIdx, j, 1, out xb, out yb, out zb);
+                                            xb = x + xb;
+                                            yb = y + yb;
+                                            zb = z + zb;
+                                            oy = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+                                            getOffset(ref offsetArray, dirIdx, j, 2, out xb, out yb, out zb);
+                                            xb = x + xb;
+                                            yb = y + yb;
+                                            zb = z + zb;
+                                            oz = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
                                             switch (j) {
                                                 case 0:
                                                     ao1 = calculateAOFixed(ox, oy, oz);
@@ -515,27 +550,26 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void addAO(int x, int y, int z, int x1, int y1, int z1, out int x2, out int y2, out int z2) {
+    public static void addAO(int x, int y, int z, int x1, int y1, int z1, out int x2, out int y2, out int z2) {
         x2 = x + x1;
         y2 = y + y1;
         z2 = z + z1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Vector3D<int> addAO(int x, int y, int z, int x1, int y1, int z1) {
+    public static Vector3D<int> addAO(int x, int y, int z, int x1, int y1, int z1) {
         return new(x + x1, y + y1, z + z1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Vector3D<int> getOffset(ref int arr, int dir, int idx, int vert) {
+    public static void getOffset(ref int arr, int dir, int idx, int vert, out int x, out int y, out int z) {
         // array has 6 directions, 4 indices which each contain 3 AOs of 3 ints each
         // 36 = 3 * 3 * 4
         // 9 = 3 * 3
         var index = (dir * 36) + idx * (9) + vert * 3;
-        var x = Unsafe.Add(ref arr, index);
-        var y = Unsafe.Add(ref arr, index + 1);
-        var z = Unsafe.Add(ref arr, index + 2);
-        return new(x, y, z);
+        x = Unsafe.Add(ref arr, index);
+        y = Unsafe.Add(ref arr, index + 1);
+        z = Unsafe.Add(ref arr, index + 2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
