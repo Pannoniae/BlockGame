@@ -36,7 +36,7 @@ public class World {
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
-    public const int RENDERDISTANCE = 8;
+    public const int RENDERDISTANCE = 32;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -422,6 +422,13 @@ public class World {
             (int)MathF.Floor(pos.Z / (float)Chunk.CHUNKSIZE));
     }
 
+    public ChunkSectionCoord getChunkSectionPos(int x, int y, int z) {
+        return new ChunkSectionCoord(
+            (int)MathF.Floor(x / (float)Chunk.CHUNKSIZE),
+            (int)MathF.Floor(y / (float)Chunk.CHUNKSIZE),
+            (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
+    }
+
     public ChunkCoord getChunkPos(Vector2D<int> pos) {
         return new ChunkCoord(
             (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
@@ -454,6 +461,20 @@ public class World {
             Utils.mod(pos.Z, Chunk.CHUNKSIZE));
     }
 
+    public Vector3D<int> getPosInChunkSection(int x, int y, int z) {
+        return new Vector3D<int>(
+            Utils.mod(x, Chunk.CHUNKSIZE),
+            Utils.mod(y, Chunk.CHUNKSIZE),
+            Utils.mod(z, Chunk.CHUNKSIZE));
+    }
+
+    public Vector3D<int> getPosInChunkSection(Vector3D<int> pos) {
+        return new Vector3D<int>(
+            Utils.mod(pos.X, Chunk.CHUNKSIZE),
+            Utils.mod(pos.Y, Chunk.CHUNKSIZE),
+            Utils.mod(pos.Z, Chunk.CHUNKSIZE));
+    }
+
     public bool isChunkSectionInWorld(ChunkSectionCoord pos) {
         return chunks.ContainsKey(new ChunkCoord(pos.x, pos.z)) && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT;
     }
@@ -474,6 +495,17 @@ public class World {
         return chunks[new ChunkCoord(pos.x, pos.z)].chunks[pos.y];
     }
 
+    public bool getChunkSectionMaybe(int x, int y, int z, out ChunkSection? section) {
+        var pos = getChunkSectionPos(x, y, z);
+        var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
+        if (!c || y is < 0 or >= WORLDHEIGHT) {
+            section = null;
+            return false;
+        }
+        section = chunk!.chunks[pos.y];
+        return true;
+    }
+
     public ChunkSection getChunkSection(Vector3D<int> coord) {
         var pos = getChunkSectionPos(coord);
         return chunks[new ChunkCoord(pos.x, pos.z)].chunks[pos.y];
@@ -481,6 +513,16 @@ public class World {
 
     public ChunkSection getChunkSection(ChunkSectionCoord sectionCoord) {
         return chunks[new ChunkCoord(sectionCoord.x, sectionCoord.z)].chunks[sectionCoord.y];
+    }
+
+    public bool getChunkSectionMaybe(ChunkSectionCoord pos, out ChunkSection? section) {
+        var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
+        if (!c || pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
+            section = null;
+            return false;
+        }
+        section = chunk!.chunks[pos.y];
+        return true;
     }
 
     public Chunk getChunk(Vector2D<int> position) {

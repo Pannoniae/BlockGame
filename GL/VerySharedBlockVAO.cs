@@ -51,6 +51,27 @@ public class VerySharedBlockVAO : VAO {
         format();
     }
 
+    public void upload(BlockVertex[] data, ushort[] indices) {
+        unsafe {
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            count = (uint)indices.Length;
+            fixed (BlockVertex* d = data) {
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+                    BufferStorageMask.None);
+            }
+
+            ibo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            fixed (ushort* d = indices) {
+                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
+                    BufferStorageMask.None);
+            }
+        }
+
+        format();
+    }
+
     public void upload(Span<BlockVertex> data, Span<ushort> indices) {
         unsafe {
             vbo = GL.GenBuffer();

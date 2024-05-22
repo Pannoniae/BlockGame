@@ -51,6 +51,27 @@ public class BlockVAO : VAO {
         format();
     }
 
+    public void upload(BlockVertex[] data, ushort[] indices) {
+        unsafe {
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            count = (uint)indices.Length;
+            fixed (BlockVertex* d = data) {
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+                    BufferUsageARB.DynamicDraw);
+            }
+
+            ibo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            fixed (ushort* d = indices) {
+                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
+                    BufferUsageARB.DynamicDraw);
+            }
+        }
+
+        format();
+    }
+
     public void upload(Span<BlockVertex> data, Span<ushort> indices) {
         unsafe {
             vbo = GL.GenBuffer();

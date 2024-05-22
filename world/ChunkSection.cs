@@ -37,6 +37,7 @@ public class ChunkSection {
     public BoundingBox bbbox;
 
     public World world;
+    public ChunkSectionCoord chunkCoord => new(chunkX, chunkY, chunkZ);
 
 
     public ChunkSection(World world, Chunk chunk, int xpos, int ypos, int zpos) {

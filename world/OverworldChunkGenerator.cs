@@ -23,8 +23,8 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 chunk.setBlock(x, (int)height, z, Blocks.GRASS.id, false);
 
                 // water if low
-                if (height < 75) {
-                    for (int y2 = (int)Math.Round(height); y2 <= 75; y2++) {
+                if (height < 74) {
+                    for (int y2 = (int)Math.Round(height); y2 <= 73; y2++) {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id, false);
                     }
                 }
