@@ -48,6 +48,7 @@ public class ChunkSection {
         chunkZ = zpos;
         this.world = world;
         blocks = new EmptyBlockData();
+
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
         bbbox = new BoundingBox(box.min.toVec3(), box.max.toVec3());
     }

@@ -277,12 +277,20 @@ public class GameScreen : Screen {
         var c = p.camera;
         var m = Game.instance.metrics;
         var loadedChunks = world.chunks.Count;
+        var pos = p.position.As<int>();
+        // current block
+        var cb = world.getBlock(pos);
+        var ld = world.getLight(pos.X, pos.Y, pos.Z);
+        var sl = ArrayBlockData.extractSkylight(ld);
+        var bl = ArrayBlockData.extractBlocklight(ld);
+
         if (debugScreen) {
             debugStr.Clear();
             debugStr.AppendLine($"{p.position.X:0.000}, {p.position.Y:0.000}, {p.position.Z:0.000}");
             debugStr.AppendLine($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
             debugStr.AppendLine($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
             debugStr.AppendLine($"cf:{c.forward.X:0.000}, {c.forward.Y:0.000}, {c.forward.Z:0.000}");
+            debugStr.AppendLine($"sl:{sl}, bl:{bl}");
             debugStr.AppendLine($"g:{p.onGround} j:{p.jumping}");
             debugStr.AppendLine(i.targetedPos.HasValue
                 ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"

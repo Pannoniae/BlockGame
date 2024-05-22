@@ -7,7 +7,7 @@ namespace BlockGame;
 public class Chunk {
     public ChunkStatus status;
 
-    public LightMap lightMap;
+    public HeightMap height;
     public ChunkCoord coord;
     public ChunkSection[] chunks;
     public World world;
@@ -38,13 +38,30 @@ public class Chunk {
             chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);
         }
 
-        lightMap = new LightMap(this);
+        height = new HeightMap(this);
 
         box = new AABB(new Vector3D<double>(chunkX * CHUNKSIZE, 0, chunkZ * CHUNKSIZE), new Vector3D<double>(chunkX * CHUNKSIZE + CHUNKSIZE, CHUNKHEIGHT * CHUNKSIZE, chunkZ * CHUNKSIZE + CHUNKSIZE));
     }
 
     public bool isVisible(BoundingFrustum frustum) {
         return frustum.Contains(new BoundingBox(box.min.toVec3(), box.max.toVec3())) != ContainmentType.Disjoint;
+    }
+
+    public void lightChunk() {
+        // move down
+        for (int y = CHUNKSIZE * CHUNKHEIGHT - 1; y >= 0; y--) {
+            for (int z = 0; z < CHUNKSIZE; z++) {
+                for (int x = 0; x < CHUNKSIZE; x++) {
+                    var b = getBlock(x, y, z);
+                    var bl = Blocks.get(b);
+                    var sectionCoord = getSectionCoord(x, y, z);
+                    // if solid, set to 0
+                    if (Blocks.isSolid(b)) {
+                        //chunks[]
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -57,7 +74,7 @@ public class Chunk {
         // handle empty chunksections
         var section = chunks[sectionY];
         if (section.isEmpty && block != 0) {
-            section.blocks = new ArrayBlockData();
+            section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
         }
         section.blocks[x, yRem, z] = block;
@@ -90,6 +107,18 @@ public class Chunk {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
         return chunks[sectionY].blocks[x, yRem, z];
+    }
+
+    public byte getLight(int x, int y, int z) {
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
+        return chunks[sectionY].blocks.getLight(x, yRem, z);
+    }
+
+    public Vector3D<int> getSectionCoord(int x, int y, int z) {
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
+        return new Vector3D<int>(x, yRem, z);
     }
 
     public void meshChunk() {
@@ -155,6 +184,10 @@ public enum ChunkStatus : byte {
     /// Trees, ores, features etc. are added in the chunk
     /// </summary>
     POPULATED,
+    /// <summary>
+    /// Lightmap has been initialised (skylight + blocklist)
+    /// </summary>
+    LIGHTED,
     /// <summary>
     /// Chunk has been meshed
     /// </summary>

@@ -9,4 +9,23 @@ public class EmptyBlockData : BlockData {
         get => 0;
         set { }
     }
+
+    public byte getLight(int x, int y, int z) {
+        // only skylight, zero blocklight
+        return 15;
+    }
+
+    public byte skylight(int x, int y, int z) {
+        return 15;
+    }
+
+    public byte blocklight(int x, int y, int z) {
+        return 15;
+    }
+
+    public void setSkylight(int x, int y, int z, byte val) {
+    }
+
+    public void setBlocklight(int x, int y, int z, byte val) {
+    }
 }
