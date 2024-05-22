@@ -31,13 +31,21 @@ public class GameScreen : Screen {
         GD = Game.GD;
         D = new Debug();
 
-        var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.1");
-        version.shadowed = true;
-        elements.Add(version);
+        // create the world first
         var seed = Random.Shared.Next(int.MaxValue);
         world = new World(seed);
         world.generate();
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
+
+        // then add the GUI
+        var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.1");
+        version.shadowed = true;
+        elements.Add(version);
+        var hotbar = new Hotbar(this, new RectangleF(0, -20, Hotbar.hotbarTexture.Width, Hotbar.hotbarTexture.Height)) {
+            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
+        elements.Add(hotbar);
     }
 
     public override void deactivate() {
@@ -301,21 +309,7 @@ public class GameScreen : Screen {
 
     public override void postDraw() {
         base.postDraw();
-
         // draw hotbar
-        var slots = world.player.hotbar.slots;
-        var gui = Game.gui;
-        gui.tb.Begin(BatcherBeginMode.Immediate);
-        for (int i = 0; i < slots.Length; i++) {
-            var block = slots[i];
-            var selected = world.player.hotbar.selected == i;
-            gui.tb.Draw(gui.colourTexture,
-                new RectangleF(new PointF(Game.centreX + (int)(i - 9 / 2) * (16 + 2) * GUI.guiScale, Game.height - (16 + 2) * GUI.guiScale),
-                    new SizeF(16 * GUI.guiScale, 16 * GUI.guiScale)),
-                selected ? new Color4b(200, 200, 200) : new Color4b(160, 160, 160, 160));
-            Game.gui.drawBlock(world, Blocks.get(block), Game.centreX + (i - 9 / 2) * (16 + 2) * GUI.guiScale, Game.height - (16 + 2) * GUI.guiScale, 16);
-        }
-        gui.tb.End();
     }
 
     public override void imGuiDraw() {
