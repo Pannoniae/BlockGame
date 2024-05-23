@@ -32,6 +32,10 @@ public class Player {
     public Vector3D<double> velocity;
     public Vector3D<double> accel;
 
+    public ushort blockAtFeet;
+    public bool inLiquid;
+    public bool wasInLiquid;
+
     /// <summary>
     /// This number is lying to you.
     /// </summary>
@@ -83,6 +87,9 @@ public class Player {
         //position += velocity * dt;
         clamp(dt);
 
+        blockAtFeet = world.getBlock(position.As<int>());
+        inLiquid = Blocks.get(blockAtFeet).liquid;
+
 
         collisionAndSneaking(dt);
         applyInputMovement(dt);
@@ -115,6 +122,7 @@ public class Player {
         prevPosition = position;
         camera.prevBob = camera.bob;
         prevTotalTraveled = totalTraveled;
+        wasInLiquid = inLiquid;
     }
 
     public ChunkCoord getChunk(Vector3D<double> position) {
@@ -169,25 +177,30 @@ public class Player {
             // clamp max speed
             // If speed velocity is 0, we are fucked so check for that
             var hVel = new Vector3D<double>(velocity.X, 0, velocity.Z);
-            if (onGround) {
-                var maxSpeed = Constants.maxhSpeed;
+            double maxSpeed;
+            if (inLiquid) {
+                maxSpeed = Constants.maxhLiquidSpeed;
                 if (sneaking) {
-                    maxSpeed = Constants.maxhSpeedSneak;
-                }
-                if (hVel.Length > maxSpeed) {
-                    var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
-                    velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
+                    maxSpeed = Constants.maxhLiquidSpeedSneak;
                 }
             }
             else {
-                var maxSpeed = Constants.maxhAirSpeed;
-                if (sneaking) {
-                    maxSpeed = Constants.maxhAirSpeedSneak;
+                if (onGround) {
+                    maxSpeed = Constants.maxhSpeed;
+                    if (sneaking) {
+                        maxSpeed = Constants.maxhSpeedSneak;
+                    }
                 }
-                if (hVel.Length > maxSpeed) {
-                    var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
-                    velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
+                else {
+                    maxSpeed = Constants.maxhAirSpeed;
+                    if (sneaking) {
+                        maxSpeed = Constants.maxhAirSpeedSneak;
+                    }
                 }
+            }
+            if (hVel.Length > maxSpeed) {
+                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
+                velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
             }
         }
 
@@ -211,7 +224,7 @@ public class Player {
 
     private void applyFriction() {
         // ground friction
-        if (!pressedMovementKey) {
+        if (!pressedMovementKey && !inLiquid) {
             if (onGround) {
                 if (sneaking) {
                     velocity = Vector3D<double>.Zero;
@@ -225,6 +238,22 @@ public class Player {
                 var f = Constants.airFriction;
                 velocity *= f;
             }
+        }
+
+        // liquid friction
+        if (inLiquid) {
+            velocity *= Constants.liquidFriction;
+        }
+
+        if (jumping && (onGround || inLiquid)) {
+            velocity.Y = inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
+            onGround = false;
+            jumping = false;
+        }
+
+        // if just exiting the water, give a slight boost
+        if (!inLiquid && wasInLiquid) {
+            velocity.Y += Constants.liquidSurfaceBoost;
         }
     }
 
@@ -246,6 +275,9 @@ public class Player {
         if (strafeVector.X != 0 || strafeVector.Y != 0) {
             // if air, lessen control
             Constants.moveSpeed = onGround ? Constants.groundMoveSpeed : Constants.airMoveSpeed;
+            if (inLiquid) {
+                Constants.moveSpeed = Constants.liquidMoveSpeed;
+            }
 
             // first, normalise (v / v.length) then multiply with movespeed
             strafeVector = Vector2D.Normalize(strafeVector) * Constants.moveSpeed;
@@ -258,12 +290,6 @@ public class Player {
             moveVector.Y = 0;
             inputVector = new Vector3D<double>(moveVector.X, 0, moveVector.Z);
 
-        }
-
-        if (jumping && onGround) {
-            velocity.Y = Constants.jumpSpeed;
-            onGround = false;
-            jumping = false;
         }
     }
 
@@ -430,7 +456,7 @@ public class Player {
             pressedMovementKey = true;
         }
 
-        if (keyboard.IsKeyPressed(Key.Space) && onGround) {
+        if (keyboard.IsKeyPressed(Key.Space) && (onGround || inLiquid)) {
             jumping = true;
             pressedMovementKey = true;
         }

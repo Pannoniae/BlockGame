@@ -36,9 +36,7 @@ public class Blocks {
     );
 
     public static Block WATER = register(new Water(7, "Water", BlockModel.makeLiquid(Block.cubeUVs(7, 0)))
-        .translucency()
-        .noCollision()
-        .noSelection());
+        .makeLiquid());
 
     public static Block ICE = register(new Block(8, "Ice", BlockModel.makeCube(Block.cubeUVs(8, 0)))
         .translucency()
@@ -108,6 +106,11 @@ public class Block {
 
     public bool selection = true;
     public AABB? selectionAABB;
+
+    /// <summary>
+    /// Is this block a liquid?
+    /// </summary>
+    public bool liquid = false;
 
     public static readonly int atlasSize = 256;
     public BlockModel model;
@@ -196,6 +199,14 @@ public class Block {
     public Block noSelection() {
         selection = false;
         selectionAABB = null;
+        return this;
+    }
+    
+    public Block makeLiquid() {
+        translucency();
+        noCollision();
+        noSelection();
+        liquid = true;
         return this;
     }
 
