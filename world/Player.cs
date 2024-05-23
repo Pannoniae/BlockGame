@@ -9,6 +9,7 @@ public class Player {
     public const double playerHeight = 1.8;
     public const double eyeHeight = 1.6;
     public const double sneakingEyeHeight = 1.45;
+    public const double feetCheckHeight = 0.15;
 
     // is player walking on (colling with) ground
     public bool onGround;
@@ -31,6 +32,12 @@ public class Player {
     public Vector3D<double> position;
     public Vector3D<double> velocity;
     public Vector3D<double> accel;
+
+    // slightly above so it doesn't think it's under the player
+    public Vector3D<double> feetPosition;
+
+    // TODO implement some MovementState system so movement constants don't have to be duplicated...
+    // it would store a set of values for acceleration, drag, friction, maxspeed, etc...
 
     public ushort blockAtFeet;
     public bool inLiquid;
@@ -87,7 +94,7 @@ public class Player {
         //position += velocity * dt;
         clamp(dt);
 
-        blockAtFeet = world.getBlock(position.As<int>());
+        blockAtFeet = world.getBlock(feetPosition.As<int>());
         inLiquid = Blocks.get(blockAtFeet).liquid;
 
 
@@ -106,6 +113,8 @@ public class Player {
 
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
+
+        feetPosition = new Vector3D<double>(position.X, position.Y + feetCheckHeight, position.Z);
 
         var trueEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
         camera.position = new Vector3((float)position.X, (float)(position.Y + trueEyeHeight), (float)position.Z);
