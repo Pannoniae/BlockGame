@@ -148,7 +148,7 @@ public class ChunkSectionRenderer {
                     MeasureProfiler.StartCollectingData();
                 }*/
                 //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
-                constructVertices(&opaqueBlocks, &Blocks.notSolid);
+                constructVertices(VertexConstructionMode.OPAQUE);
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
@@ -171,7 +171,7 @@ public class ChunkSectionRenderer {
             lock (meshingLock) {
                 if (hasTranslucentBlocks) {
                     // then we render everything which is translucent (water for now)
-                    constructVertices(&Blocks.isTranslucent, &notTranslucent);
+                    constructVertices(VertexConstructionMode.TRANSLUCENT);
                     if (chunkIndices.Count > 0) {
                         if (section.world.renderer.fastChunkSwitch) {
                             (watervao as VerySharedBlockVAO).bindVAO();
@@ -262,7 +262,6 @@ public class ChunkSectionRenderer {
         // if chunk is empty, nothing to do, don't need to check neighbours
         // btw this shouldn't fucking happen because we checked it but we check it anyway so our program doesn't crash if the chunk representation is changed
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ushort getBlockFromSection(ChunkSection section, int x, int y, int z) {
             if (y is < 0 or >= World.WORLDHEIGHT) {
                 return 0;
@@ -306,8 +305,12 @@ public class ChunkSectionRenderer {
 
     // if neighbourTest returns true for adjacent block, render, if it returns false, don't
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+
+    // sorry for this mess, even fucking calli has big overhead
+
     [SkipLocalsInit]
-    unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
+    //unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
+    unsafe private void constructVertices(VertexConstructionMode mode) {
         //var sw = new Stopwatch();
         //sw.Start();
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
@@ -340,15 +343,26 @@ public class ChunkSectionRenderer {
 
         Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
+        //Span<Face> faces = stackalloc Face[Face.MAX_FACES];
 
         ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
+
+        bool test = false;
 
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z);
-                    if (whichBlocks(bl)) {
+                    switch (mode) {
+                        case VertexConstructionMode.OPAQUE:
+                            test = opaqueBlocks(bl);
+                            break;
+                        case VertexConstructionMode.TRANSLUCENT:
+                            test = Blocks.isTranslucent(bl);
+                            break;
+                    }
+                    if (test) {
                         //var pos = new Vector3D<int>(x, y, z);
 
                         // unrolled world.toWorldPos
@@ -399,14 +413,13 @@ public class ChunkSectionRenderer {
                         d4 = getBlockFromCacheUnsafe(ref neighboursArray, x, y - 1, z);
                         d5 = getBlockFromCacheUnsafe(ref neighboursArray, x, y + 1, z);
 
-                        ushort nb;
+                        ushort nb = 0;
 
                         // if full block, don't even bother going through the faces
 
                         for (int d = 0; d < faces.Length; d++) {
                             face = accessRef(ref facesRef, d);
                             var dir = face.direction;
-                            bool test;
                             if (dir == RawDirection.NONE) {
                                 // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
                                 test = true;
@@ -434,11 +447,17 @@ public class ChunkSectionRenderer {
                                     case RawDirection.UP:
                                         nb = d5;
                                         break;
-                                    case RawDirection.NONE:
-                                    default:
-                                        throw new ArgumentOutOfRangeException();
                                 }
-                                test = neighbourTest(nb) || face.nonFullFace && !Blocks.isTranslucent(nb);
+                                switch (mode) {
+
+                                    case VertexConstructionMode.OPAQUE:
+                                        test = Blocks.notSolid(nb);
+                                        break;
+                                    case VertexConstructionMode.TRANSLUCENT:
+                                        test = notTranslucent(nb);
+                                        break;
+                                }
+                                test =  test || face.nonFullFace && !Blocks.isTranslucent(nb);
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
@@ -489,8 +508,8 @@ public class ChunkSectionRenderer {
                                         }
                                     }
                                 }
-                                tex = Block.texCoords(faces[d].min);
-                                texMax = Block.texCoords(faces[d].max);
+                                tex = Block.texCoords(accessRef(ref facesRef, d).min);
+                                texMax = Block.texCoords(accessRef(ref facesRef, d).max);
 
                                 data1 = Block.packData((byte)dir, ao1);
                                 data2 = Block.packData((byte)dir, ao2);
@@ -588,8 +607,8 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T accessRef<T>(ref T arr, int index) {
-        return Unsafe.Add(ref arr, index);
+    public static ref T accessRef<T>(ref T arr, int index) {
+        return ref Unsafe.Add(ref arr, index);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -608,4 +627,9 @@ public class ChunkSectionRenderer {
 /*private Vector3D<int>[] getNeighbours(RawDirection side) {
     return offsetTable[(int)side];
 }*/
+}
+
+public enum VertexConstructionMode {
+    OPAQUE,
+    TRANSLUCENT
 }

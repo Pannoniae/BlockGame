@@ -1,9 +1,7 @@
 ﻿- make a hotbar background texture / selection
 
  - add ores
- - add reflections to shiny / metallic blocks
  - running functionality for the character
- - gombok
 
  immediate todolist:
   - make a stack of Screens
@@ -23,3 +21,15 @@
   -nem kellenek nagy bosszok, hanem "apró" ellenségek helyettük: verem, szúrós virágok, harapós fák, véletlenszerűen megvaduló háziállatok, amik sebeznek
   
   
+Minimal Viable Prototype list:
+    1. Movement (water)
+    2. Character model
+    3. Multiplayer
+    4. World generation (more blocks, more variety, cliffs or something, flowers)
+    5. Reintroduce world saving/loading
+    6. Lighting (sky/blocklight, skylight propagation, lighting updates when blocks change)
+
+Follow-up:
+    1. Chat/commands
+    2. More blocks
+    3. Character customisation (change colours, hairstyle, etc.) by using a drawer block

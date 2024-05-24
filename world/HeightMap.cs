@@ -14,10 +14,7 @@ public class HeightMap {
     }
 
     public byte get(int x, int z) {
-        var value = height[
-                          x * Chunk.CHUNKSIZE +
-                          z];
-        return (byte)(value);
+        return height[x * Chunk.CHUNKSIZE + z];
     }
 
     public void set(int x, int z, byte val) {

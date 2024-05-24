@@ -17,7 +17,6 @@ public class Blocks {
         return ChunkSectionRenderer.access(blocks, id);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool tryGet(int id, out Block block) {
         var cond = id is >= 0 and < MAXBLOCKS;
         block = cond ? blocks[id] : blocks[1];
@@ -64,7 +63,7 @@ public class Blocks {
             return true;
         }
         var bl = get(block);
-        return bl.transparent | bl.translucent;
+        return bl.transparent || bl.translucent;
     }
 
     public static bool isTransparent(int block) {
@@ -130,12 +129,12 @@ public class Block {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<float> texCoords(float x, float y) {
-        return new Vector2D<float>((x * 16f / atlasSize), (y * 16f / atlasSize));
+        return new Vector2D<float>(x * 16f / atlasSize, y * 16f / atlasSize);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<float> texCoords(UVPair uv) {
-        return new Vector2D<float>((uv.u * 16f / atlasSize), (uv.v * 16f / atlasSize));
+        return new Vector2D<float>(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
     }
 
     public static UVPair[] cubeUVs(int x, int y) {
@@ -266,6 +265,8 @@ public readonly record struct Face(
     float x3, float y3, float z3,
     float x4, float y4, float z4,
     UVPair min, UVPair max, RawDirection direction, bool noAO = false, bool nonFullFace = false) {
+
+    public const int MAX_FACES = 6;
 
     public readonly float x1 = x1;
     public readonly float y1 = y1;
