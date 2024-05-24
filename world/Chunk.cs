@@ -48,20 +48,8 @@ public class Chunk {
     }
 
     public void lightChunk() {
-        // move down
-        for (int y = CHUNKSIZE * CHUNKHEIGHT - 1; y >= 0; y--) {
-            for (int z = 0; z < CHUNKSIZE; z++) {
-                for (int x = 0; x < CHUNKSIZE; x++) {
-                    var b = getBlock(x, y, z);
-                    var bl = Blocks.get(b);
-                    var sectionCoord = getSectionCoord(x, y, z);
-                    // if solid, set to 0
-                    if (Blocks.isSolid(b)) {
-                        //chunks[]
-                    }
-                }
-            }
-        }
+        // set the top of the chunk to 15 if not solid
+        // then propagate down
     }
 
     /// <summary>
@@ -102,7 +90,6 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getBlock(int x, int y, int z) {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;

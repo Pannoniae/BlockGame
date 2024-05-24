@@ -6,7 +6,8 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public class Player {
-    public const double playerHeight = 1.8;
+    public const double height = 1.75;
+    public const double width = 0.625;
     public const double eyeHeight = 1.6;
     public const double sneakingEyeHeight = 1.45;
     public const double feetCheckHeight = 0.15;
@@ -304,11 +305,9 @@ public class Player {
 
     [Pure]
     private AABB calcAABB(Vector3D<double> pos) {
-        var size = 0.75;
-        var sizehalf = 0.75 / 2;
-        var height = 1.75;
+        var sizehalf = width / 2;
         return AABB.fromSize(new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
-            new Vector3D<double>(size, height, size));
+            new Vector3D<double>(width, height, width));
     }
 
     private void collisionAndSneaking(double dt) {
