@@ -371,9 +371,6 @@ public class ChunkSectionRenderer {
                         float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
                         Block b = Blocks.get(bl);
-                        var faces = b.model.faces;
-                        ref var facesRef = ref MemoryMarshal.GetArrayDataReference(faces);
-                        Face face;
 
                         // calculate texcoords
                         Vector2D<float> tex;
@@ -412,6 +409,19 @@ public class ChunkSectionRenderer {
                         d3 = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z + 1);
                         d4 = getBlockFromCacheUnsafe(ref neighboursArray, x, y - 1, z);
                         d5 = getBlockFromCacheUnsafe(ref neighboursArray, x, y + 1, z);
+
+                        if (Blocks.isSolid(d0) &&
+                            Blocks.isSolid(d1) &&
+                            Blocks.isSolid(d2) &&
+                            Blocks.isSolid(d3) &&
+                            Blocks.isSolid(d4) &&
+                            Blocks.isSolid(d5)) {
+                            continue;
+                        }
+
+                        var faces = b.model.faces;
+                        ref var facesRef = ref MemoryMarshal.GetArrayDataReference(faces);
+                        Face face;
 
                         ushort nb = 0;
 
@@ -457,7 +467,7 @@ public class ChunkSectionRenderer {
                                         test = notTranslucent(nb);
                                         break;
                                 }
-                                test =  test || face.nonFullFace && !Blocks.isTranslucent(nb);
+                                test = test || face.nonFullFace && !Blocks.isTranslucent(nb);
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test) {
