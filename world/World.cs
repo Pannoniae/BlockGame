@@ -10,10 +10,15 @@ public class World {
     public Dictionary<ChunkCoord, Chunk> chunks;
     //public List<ChunkSection> sortedTransparentChunks = [];
 
-    // chunk load queue
+    // Queues
     public List<ChunkLoadTicket> chunkLoadQueue = new();
     public List<BlockUpdate> blockUpdateQueue = new();
     public List<TickAction> actionQueue = new();
+
+    public List<Vector3D<int>> skyLightQueue = new();
+    public List<Vector3D<int>> skyLightRemovalQueue = new();
+    public List<Vector3D<int>> blockLightQueue = new();
+    public List<Vector3D<int>> blockLightRemovalQueue = new();
 
     /// <summary>
     /// What needs to be meshed at the end of the frame
@@ -136,7 +141,7 @@ public class World {
             var update = blockUpdateQueue[i];
             if (update.tick <= worldTick) {
                 blockUpdate(update.position);
-                blockUpdateQueue.Remove(update);
+                blockUpdateQueue.RemoveAt(i);
             }
         }
 
@@ -145,9 +150,13 @@ public class World {
             var action = actionQueue[i];
             if (action.tick <= worldTick) {
                 action.action();
-                actionQueue.Remove(action);
+                actionQueue.RemoveAt(i);
             }
         }
+
+        // execute lighting updates
+        processSkyLightQueue();
+        processBlockLightQueue();
 
         // random block updates!
         foreach (var chunk in chunks) {
@@ -171,6 +180,40 @@ public class World {
             var section = getChunkSection(sectionCoord);
             section.renderer.meshChunk();
         }
+    }
+
+    private void processSkyLightQueue() {
+        return;
+        while (skyLightQueue.Count > 0) {
+            var blockPos = skyLightQueue[0];
+            //Console.Out.WriteLine(blockPos);
+            var level = getLight(blockPos.X, blockPos.Y, blockPos.Z);
+            skyLightQueue.RemoveAt(0);
+            //Console.Out.WriteLine(blockPos);
+            foreach (var dir in Direction.directions) {
+                var neighbour = blockPos + dir;
+                // if not in world, forget it
+                if (!inWorld(neighbour.X, neighbour.Y, neighbour.Z)) {
+                    continue;
+                }
+                var neighbourBlock = getBlock(neighbour);
+                var isDown = dir == Direction.DOWN;
+                //Console.Out.WriteLine(getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2);
+                if (Blocks.isSolid(neighbourBlock) == false &&
+                    getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2 <= level) {
+
+                    byte newLevel = (byte)(isDown ? level : level - 1);
+                    //setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                    //Console.Out.WriteLine(neighbour);
+                    //skyLightQueue.Add(neighbour);
+                }
+            }
+        }
+
+    }
+
+    private void processBlockLightQueue() {
+
     }
 
     private void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
@@ -323,9 +366,51 @@ public class World {
         if (y is < 0 or >= WORLDHEIGHT) {
             return 0;
         }
-        var blockPos = getPosInChunkSection(x, y, z);
-        var success = getChunkSectionMaybe(x, y, z, out var chunk);
-        return success ? chunk!.blocks.getLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
+    }
+
+    public byte getSkyLight(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return 0;
+        }
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
+    }
+
+    public byte getBlockLight(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return 0;
+        }
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
+    }
+
+    public void setSkyLight(int x, int y, int z, byte level) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        if (success) {
+            chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+        }
+    }
+
+    public void setBlockLight(int x, int y, int z, byte level) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        if (success) {
+            chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+        }
     }
 
     /// <summary>

@@ -20,7 +20,7 @@ public class EmptyBlockData : BlockData {
     }
 
     public byte blocklight(int x, int y, int z) {
-        return 15;
+        return 0;
     }
 
     public void setSkylight(int x, int y, int z, byte val) {

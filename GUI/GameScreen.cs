@@ -279,10 +279,9 @@ public class GameScreen : Screen {
         var loadedChunks = world.chunks.Count;
         var pos = p.position.As<int>();
         // current block
-        var cb = world.getBlock(pos);
-        var ld = world.getLight(pos.X, pos.Y, pos.Z);
-        var sl = ArrayBlockData.extractSkylight(ld);
-        var bl = ArrayBlockData.extractBlocklight(ld);
+        //var cb = world.getBlock(pos);
+        var sl = world.getSkyLight(pos.X, pos.Y, pos.Z);
+        var bl = world.getBlockLight(pos.X, pos.Y, pos.Z);
 
         if (debugScreen) {
             debugStr.Clear();
