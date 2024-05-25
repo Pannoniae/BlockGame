@@ -1,3 +1,3 @@
 namespace BlockGame;
 
-public record TickAction(Action action, int tick);
+public readonly record struct TickAction(Action action, int tick);
