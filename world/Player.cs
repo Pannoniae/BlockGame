@@ -95,7 +95,7 @@ public class Player {
         //position += velocity * dt;
         clamp(dt);
 
-        blockAtFeet = world.getBlock(feetPosition.As<int>());
+        blockAtFeet = world.getBlock(feetPosition.toBlockPos());
         inLiquid = Blocks.get(blockAtFeet).liquid;
 
 
@@ -312,7 +312,7 @@ public class Player {
 
     private void collisionAndSneaking(double dt) {
         var oldPos = position;
-        var blockPos = world.toBlockPos(position);
+        var blockPos = position.toBlockPos();
         // collect potential collision targets
         List<AABB> collisionTargets = new List<AABB>();
         foreach (Vector3D<int> target in (Vector3D<int>[]) [blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)]) {
@@ -497,8 +497,12 @@ public class Player {
             var pos = Game.instance.targetedPos.Value;
             world.setBlock(pos.X, pos.Y, pos.Z, 0);
 
-            // we don't set it to anything, we just propagate from above
+            // we don't set it to anything, we just propagate from neighbours
             world.skyLightQueue.Add(new LightNode(pos.X, pos.Y + 1, pos.Z, world.getChunk(pos.X, pos.Z)));
+            world.skyLightQueue.Add(new LightNode(pos.X - 1, pos.Y, pos.Z, world.getChunk(pos.X, pos.Z)));
+            world.skyLightQueue.Add(new LightNode(pos.X + 1, pos.Y, pos.Z, world.getChunk(pos.X, pos.Z)));
+            world.skyLightQueue.Add(new LightNode(pos.X, pos.Y, pos.Z - 1, world.getChunk(pos.X, pos.Z)));
+            world.skyLightQueue.Add(new LightNode(pos.X, pos.Y, pos.Z + 1, world.getChunk(pos.X, pos.Z)));
             world.processSkyLightQueue();
             world.blockUpdate(pos);
             // place water if adjacent
