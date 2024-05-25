@@ -47,7 +47,6 @@ public class Chunk {
     }
 
     public void lightChunk() {
-        return;
         // set the top of the chunk to 15 if not solid
         // then propagate down
         for (int x = 0; x < CHUNKSIZE; x++) {
@@ -58,7 +57,7 @@ public class Chunk {
                     //Console.Out.WriteLine("yes?");
                     setSkyLight(x, y, z, 15);
                     // add world coords!
-                    world.skyLightQueue.Add(new Vector3D<int>(worldX + x, y, worldZ + z));
+                    world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
                 }
             }
         }

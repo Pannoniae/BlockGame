@@ -154,6 +154,7 @@ public class ChunkSectionRenderer {
                 }*/
                 //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 if (chunkIndices.Count > 0) {
+                    isEmpty = false;
                     if (section.world.renderer.fastChunkSwitch) {
                         (vao as VerySharedBlockVAO).bindVAO();
                     }
@@ -173,6 +174,7 @@ public class ChunkSectionRenderer {
                     // then we render everything which is translucent (water for now)
                     constructVertices(VertexConstructionMode.TRANSLUCENT);
                     if (chunkIndices.Count > 0) {
+                        isEmpty = false;
                         if (section.world.renderer.fastChunkSwitch) {
                             (watervao as VerySharedBlockVAO).bindVAO();
                         }
@@ -462,7 +464,7 @@ public class ChunkSectionRenderer {
                                 switch (mode) {
 
                                     case VertexConstructionMode.OPAQUE:
-                                        test2 = notSolid(nb);
+                                        test2 = Blocks.notSolid(nb);
                                         break;
                                     case VertexConstructionMode.TRANSLUCENT:
                                         test2 = notTranslucent(nb);

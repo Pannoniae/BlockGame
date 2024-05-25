@@ -15,10 +15,10 @@ public class World {
     public List<BlockUpdate> blockUpdateQueue = new();
     public List<TickAction> actionQueue = new();
 
-    public List<Vector3D<int>> skyLightQueue = new();
-    public List<Vector3D<int>> skyLightRemovalQueue = new();
-    public List<Vector3D<int>> blockLightQueue = new();
-    public List<Vector3D<int>> blockLightRemovalQueue = new();
+    public List<LightNode> skyLightQueue = new();
+    public List<LightNode> skyLightRemovalQueue = new();
+    public List<LightNode> blockLightQueue = new();
+    public List<LightNode> blockLightRemovalQueue = new();
 
     /// <summary>
     /// What needs to be meshed at the end of the frame
@@ -183,17 +183,18 @@ public class World {
     }
 
     private void processSkyLightQueue() {
-        return;
-        while (skyLightQueue.Count > 0) {
-            var blockPos = skyLightQueue[0];
+        var cnt = skyLightQueue.Count - 1;
+        while (cnt > 0) {
+            cnt = skyLightQueue.Count - 1;
+            var node = skyLightQueue[cnt];
+            var blockPos = new Vector3D<int>(node.x, node.y, node.z);
+            var level = getLight(node.x, node.y, node.z);
+            skyLightQueue.RemoveAt(cnt);
             //Console.Out.WriteLine(blockPos);
-            var level = getLight(blockPos.X, blockPos.Y, blockPos.Z);
-            skyLightQueue.RemoveAt(0);
-            //Console.Out.WriteLine(blockPos);
-            foreach (var dir in Direction.directions) {
+            foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
                 // if not in world, forget it
-                if (!inWorld(neighbour.X, neighbour.Y, neighbour.Z)) {
+                if (!inWorldY(neighbour.X, neighbour.Y, neighbour.Z)) {
                     continue;
                 }
                 var neighbourBlock = getBlock(neighbour);
@@ -203,13 +204,12 @@ public class World {
                     getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2 <= level) {
 
                     byte newLevel = (byte)(isDown ? level : level - 1);
-                    //setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                    setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
                     //Console.Out.WriteLine(neighbour);
-                    //skyLightQueue.Add(neighbour);
+                    skyLightQueue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
                 }
             }
         }
-
     }
 
     private void processBlockLightQueue() {
@@ -341,6 +341,26 @@ public class World {
 
     public void mesh(ChunkSectionCoord coord) {
         meshingQueue.Enqueue(coord);
+    }
+
+    public bool isMisalignedBlock(Vector3D<int> position) {
+        return position.X < 0 || position.X > 15 || position.Z < 0 || position.Z > 15;
+    }
+
+    // get a block of a chunk position where the position is *outside* the chunk
+    public ushort getMisalignedBlock(Vector3D<int> position, Chunk chunk, out Chunk actualChunk) {
+        var pos = toWorldPos(chunk.worldX, chunk.worldZ, position.X, position.Y, position.Z);
+        var blockPos = getPosInChunk(pos);
+        var success = getChunkMaybe(pos.X, pos.Z, out actualChunk);
+        return success ? actualChunk!.getBlock(blockPos.X, pos.Y, blockPos.Z) : (ushort)0;
+    }
+
+    // normalise a block position into the proper chunk and return the chunk it actually belongs to
+    public Vector3D<int> alignBlock(Vector3D<int> position, Chunk chunk, out Chunk actualChunk) {
+        var pos = toWorldPos(chunk.worldX, chunk.worldZ, position.X, position.Y, position.Z);
+        var blockPos = getPosInChunk(pos);
+        var success = getChunkMaybe(pos.X, pos.Z, out actualChunk);
+        return blockPos;
     }
 
     public bool isBlock(int x, int y, int z) {

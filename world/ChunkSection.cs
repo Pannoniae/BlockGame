@@ -20,12 +20,12 @@ public class ChunkSection {
     /// Sections start empty. If you place a block in them, they stop being empty and get array data.
     /// They won't revert to being empty if you break the blocks. (maybe a low-priority background task later? I'm not gonna bother with it atm)
     /// </summary>
-    public bool isEmpty = true;
+    public bool isEmpty = false;
 
     /// <summary>
     /// isEmpty but for transparent blocks
     /// </summary>
-    public bool isEmptyTransparent = true;
+    public bool isEmptyTransparent = false;
 
     public int worldX => chunkX * Chunk.CHUNKSIZE;
     public int worldY => chunkY * Chunk.CHUNKSIZE;
