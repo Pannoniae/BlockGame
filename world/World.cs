@@ -208,7 +208,7 @@ public class World {
                     setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
 
                     // if meshable, mesh
-                    var sectionPos = getChunkSectionPos(neighbour.X, neighbour.Y, neighbour.Z);
+                    //var sectionPos = getChunkSectionPos(neighbour.X, neighbour.Y, neighbour.Z);
                     /*if (getChunk(sectionPos.x, sectionPos.z).status >= ChunkStatus.MESHED) {
                         mesh(sectionPos);
                     }*/
