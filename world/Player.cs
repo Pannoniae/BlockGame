@@ -136,24 +136,17 @@ public class Player {
     }
 
     public ChunkCoord getChunk(Vector3D<double> position) {
-        return world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+        return World.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
     }
 
     public ChunkCoord getChunk() {
-        return world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+        return World.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
     }
 
     public void loadChunksAroundThePlayer(int renderDistance) {
-        var chunk = world.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+        var chunk = World.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
         world.loadChunksAroundChunk(chunk, renderDistance);
-        // sort queue based on position
-        // don't reorder across statuses though
-        world.chunkLoadQueue.Sort((ticket1, ticket2) => {
-            var comparison = new ChunkCoordComparer(position).Compare(ticket1.chunkCoord, ticket2.chunkCoord);
-            var statusDiff = ticket1.level - ticket2.level;
-            // if statusDiff > 0, chunk2 is bigger
-            return comparison + statusDiff * 1000;
-        });
+        world.sortChunks();
     }
 
     public void onChunkChanged() {

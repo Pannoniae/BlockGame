@@ -20,6 +20,7 @@ public class WorldRenderer {
 
     //public int uColor;
     public int blockTexture;
+    public int lightTexture;
     public int uMVP;
     public int uCameraPos;
     public int drawDistance;
@@ -47,6 +48,7 @@ public class WorldRenderer {
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
         blockTexture = shader.getUniformLocation("blockTexture");
+        lightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
         drawDistance = shader.getUniformLocation(nameof(drawDistance));
@@ -61,9 +63,11 @@ public class WorldRenderer {
     /// (one which doesn't use a separate VAO but a shared one, and only stores the VBO handle
     /// maybe this will cut down on the VAO switching time??
     public void render(double interp) {
+        //Game.GD.ResetStates();
         var tex = Game.instance.blockTexture;
-        Game.GD.SetActiveTexture(0);
-        GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
+        var lightTex = Game.instance.lightTexture;
+        var t = Game.GD.BindTextureSetActive(tex);
+        var t2 = Game.GD.BindTextureSetActive(lightTex);
 
         if (fastChunkSwitch) {
             GL.BindVertexArray(chunkVAO);
@@ -85,7 +89,8 @@ public class WorldRenderer {
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
         shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
         shader.setUniform(fogColour, defaultClearColour);
-        shader.setUniform(blockTexture, 0);
+        shader.setUniform(blockTexture, t);
+        shader.setUniform(lightTexture, t2);
         foreach (var chunk in chunksToRender) {
             chunk.drawOpaque(world.player.camera);
         }
@@ -202,9 +207,9 @@ public class WorldRenderer {
 
     public static void meshBlock(Block block, ref Span<BlockVertex> vertices, ref Span<ushort> indices) {
         ushort i = 0;
-        int wx = 0;
-        int wy = 0;
-        int wz = 0;
+        const int wx = 0;
+        const int wy = 0;
+        const int wz = 0;
 
         int c = 0;
         int ci = 0;

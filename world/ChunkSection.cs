@@ -9,7 +9,7 @@ public class ChunkSection {
     public Chunk chunk;
     public ChunkSectionRenderer renderer;
 
-    public BlockData blocks;
+    public ArrayBlockData blocks;
 
     public int chunkX;
     public int chunkY;

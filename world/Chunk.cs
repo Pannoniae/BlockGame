@@ -51,14 +51,14 @@ public class Chunk {
         // then propagate down
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
-                var y = (CHUNKSIZE * CHUNKHEIGHT) - 1;
+                var y = CHUNKSIZE * CHUNKHEIGHT - 1;
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
                 while (!Blocks.isSolid(bl)) {
-                    setSkyLight(x, y, z, 15);
+                    setSkyLight(x, y, z, 15, false);
                     y--;
                     bl = getBlock(x, y, z);
-                };
+                }
 
                 // add the last item for propagation
                 world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
@@ -77,35 +77,41 @@ public class Chunk {
 
         // handle empty chunksections
         var section = chunks[sectionY];
-        var worldPos = world.toWorldPos(coord.x, coord.z, x, y, z);
         /*if (section.isEmpty && block != 0) {
             section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
         }*/
-        if (block != 0 && remesh) {
-            world.removeSkyLightAndPropagate(worldPos.X, worldPos.Y, worldPos.Z);
+        section.blocks[x, yRem, z] = block;
+        if (!remesh) {
+            return;
+        }
+
+        var wx = coord.x * CHUNKSIZE + x;
+        var wz = coord.z * CHUNKSIZE + z;
+
+        // From there on, ONLY REMESHING STUFF
+
+        if (block != 0) {
+            world.removeSkyLightAndPropagate(wx, y, wz);
         }
         // if block broken, add sunlight from above
-        else if (block == 0 && remesh) {
-            world.skyLightQueue.Add(new LightNode(worldPos.X, worldPos.Y, worldPos.Z, this));
-            world.skyLightQueue.Add(new LightNode(worldPos.X, worldPos.Y + 1, worldPos.Z, this));
+        else {
+            world.skyLightQueue.Add(new LightNode(wx, y, wz, this));
+            world.skyLightQueue.Add(new LightNode(wx, y + 1, wz, this));
         }
-        section.blocks[x, yRem, z] = block;
 
-        if (remesh) {
-            // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
+        // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
 
-            world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
-            //meshChunk();
+        // mesh this section
+        world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
 
-            // get global coords
-            var chunkPos = world.getChunkSectionPos(worldPos);
+        // get global coords
+        var chunkPos = World.getChunkSectionPos(wx, y, wz);
 
-            foreach (var dir in Direction.directions) {
-                var neighbourSection = world.getChunkSectionPos(worldPos + dir);
-                if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                    world.mesh(neighbourSection);
-                }
+        foreach (var dir in Direction.directions) {
+            var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
+            if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
+                world.mesh(neighbourSection);
             }
         }
     }
@@ -113,13 +119,19 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setSkyLight(int x, int y, int z, byte value) {
+    public void setSkyLight(int x, int y, int z, byte value, bool remesh = true) {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
         var section = chunks[sectionY];
         section.blocks.setSkylight(x, yRem, z, value);
+        if (remesh) {
+            var sectionCoord = new ChunkSectionCoord(coord.x, sectionY, coord.z);
+            if (sectionY >= 0 && sectionY < 8) {
+                world.mesh(sectionCoord);
+            }
+        }
     }
 
     /// <summary>
@@ -162,8 +174,7 @@ public class Chunk {
         return chunks[sectionY].blocks.blocklight(x, yRem, z);
     }
 
-    public Vector3D<int> getSectionCoord(int x, int y, int z) {
-        var sectionY = y / CHUNKSIZE;
+    public Vector3D<int> getCoordInSection(int x, int y, int z) {
         var yRem = y % CHUNKSIZE;
         return new Vector3D<int>(x, yRem, z);
     }

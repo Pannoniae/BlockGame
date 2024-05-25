@@ -10,9 +10,11 @@ uniform mat4 uMVP;
 out vec2 texCoords;
 out float ao;
 out uint direction;
-out float light;
+out vec4 light;
 
 out vec3 vertexPos;
+
+uniform sampler2D lightTexture;
 
 const float aoArray[4] = float[](1.0, 0.75, 0.5, 0.25);
 
@@ -24,8 +26,9 @@ void main() {
     texCoords = texCoord;
     ao = aoArray[aoValue];
     direction = directionValue;
-    light = min(
-        (lightValue & 0xFu) / 16.0 + 0.125,
-        1.0);
+    uint skylight = lightValue & 0xFu;
+    uint blocklight = (lightValue >> 4) & 0xFu;
+    ivec2 lightCoords = ivec2(skylight, blocklight);
+    light = texelFetch(lightTexture, lightCoords, 0);
     vertexPos = vPos;
 }
