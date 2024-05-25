@@ -296,6 +296,15 @@ public class ChunkSectionRenderer {
                 for (int x = -1; x <= 1; x++) {
                     world.getChunkSectionMaybe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z), out var sec);
                     accessRef(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1, sec != null ? sec.blocks : new EmptyBlockData());
+                    if (sec == null && coord.y + y > 0 && coord.y + y < 8) {
+                        Console.Out.WriteLine(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z));
+                        Console.Out.WriteLine(world.getChunkMaybe(new ChunkCoord(coord.x + x, coord.z + z), out var chunk2));
+                        Console.Out.WriteLine(world.getChunkSectionMaybe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z), out var chunk3));
+                        Console.Out.WriteLine(chunk2);
+                        Console.Out.WriteLine(chunk3);
+                        Console.Out.WriteLine(chunk3 == null);
+                        Console.Out.WriteLine(sec == null);
+                    }
                 }
             }
         }

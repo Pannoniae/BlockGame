@@ -65,6 +65,7 @@ public class Chunk {
             }
         }
         world.processSkyLightQueue();
+        status = ChunkStatus.LIGHTED;
     }
 
     /// <summary>
