@@ -201,7 +201,7 @@ public class World {
                 var neighbourBlock = getBlock(neighbour);
                 var isDown = dir == Direction.DOWN;
                 //Console.Out.WriteLine(getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2);
-                if (Blocks.isSolid(neighbourBlock) == false &&
+                if (neighbourBlock == 0 &&
                     getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2 <= level) {
 
                     byte newLevel = (byte)(isDown ? level : level - 1);
