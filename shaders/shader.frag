@@ -7,7 +7,7 @@ layout(location = 0) out vec4 color;
 in vec2 texCoords;
 flat in uint direction;
 in float ao;
-in float light;
+in vec4 light;
 
 in vec3 vertexPos;
 
@@ -15,6 +15,7 @@ uniform vec3 uCameraPos;
 uniform int drawDistance;
 
 uniform sampler2D blockTexture;
+uniform sampler2D lightTexture;
 
 const float a[6] = float[6](0.8, 0.8, 0.6, 0.6, 0.6, 1);
 uniform vec4 fogColour;
@@ -35,7 +36,7 @@ void main() {
     float ratio = getFog(distance(uCameraPos, vertexPos));
     // extract skylight, 0 to 15
 
-    color = vec4(blockColour.rgb * lColor * ao * light, blockColour.a);
+    color = vec4(blockColour.rgb * lColor * ao * light.rgb, blockColour.a);
     // mix fog
     color = mix(color, fogColour, ratio);
     if (color.a <= 0) {

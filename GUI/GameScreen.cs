@@ -211,6 +211,7 @@ public class GameScreen : Screen {
         GD.ResetVertexArrayStates();
         GD.ResetShaderProgramStates();
         //GD.ResetTextureStates();
+        //GD.ResetStates();
 
         GD.ShaderProgram = GUI.instance.shader;
         var centreX = Game.centreX;

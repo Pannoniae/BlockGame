@@ -42,7 +42,7 @@ public class World {
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
-    public const int RENDERDISTANCE = 8;
+    public const int RENDERDISTANCE = 16;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -74,6 +74,20 @@ public class World {
 
     private void loadSpawnChunks() {
         loadChunksAroundChunkImmediately(new ChunkCoord(0, 0), SPAWNCHUNKS_SIZE);
+        //sortChunks();
+    }
+
+    public void sortChunks() {
+        // sort queue based on position
+        // don't reorder across statuses though
+        chunkLoadQueue.Sort((ticket1, ticket2) => {
+            var comparison = new ChunkCoordComparer(player.position).Compare(ticket1.chunkCoord, ticket2.chunkCoord);
+            int statusDiff;
+            statusDiff = (int)ticket1.level - (int)ticket2.level;
+            // if statusDiff > 0, chunk2 is bigger
+            //Console.Out.WriteLine($"{comparison} {statusDiff * 1000}");
+            return comparison + statusDiff * 1000;
+        });
     }
 
     public void generate() {
@@ -123,6 +137,14 @@ public class World {
         // ONLY IF THERE ARE CHUNKS
         // otherwise don't wait for nothing
         // yes I was an idiot
+
+        // debug
+        /*Console.Out.WriteLine("---BEGIN---");
+        foreach (var chunk in chunkLoadQueue) {
+            Console.Out.WriteLine(chunk.level);
+        }
+        Console.Out.WriteLine("---END---");*/
+
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < MAX_CHUNKLOAD_FRAMETIME) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[0];
@@ -273,7 +295,7 @@ public class World {
                 // restrict it to a circle
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
-                    addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.GENERATED);
+                    addToChunkLoadQueue(coord, ChunkStatus.GENERATED);
                 }
             }
         }
@@ -282,7 +304,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.POPULATED);
+                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
                 }
             }
         }
@@ -291,7 +313,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.LIGHTED);
+                    addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
                 }
             }
         }
@@ -300,7 +322,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance + 1; z <= chunkCoord.z + renderDistance - 1; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= (renderDistance - 1) * (renderDistance - 1)) {
-                    addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.MESHED);
+                    addToChunkLoadQueue(coord, ChunkStatus.MESHED);
                 }
             }
         }
@@ -322,7 +344,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
-                    loadChunk(new ChunkCoord(x, z), ChunkStatus.GENERATED);
+                    loadChunk(coord, ChunkStatus.GENERATED);
                 }
             }
         }
@@ -331,7 +353,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    loadChunk(new ChunkCoord(x, z), ChunkStatus.POPULATED);
+                    loadChunk(coord, ChunkStatus.POPULATED);
                 }
             }
         }
@@ -340,7 +362,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    loadChunk(new ChunkCoord(x, z), ChunkStatus.LIGHTED);
+                    loadChunk(coord, ChunkStatus.LIGHTED);
                 }
             }
         }
@@ -349,7 +371,7 @@ public class World {
             for (int z = chunkCoord.z - renderDistance + 1; z <= chunkCoord.z + renderDistance - 1; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= (renderDistance - 1) * (renderDistance - 1)) {
-                    addToChunkLoadQueue(new ChunkCoord(x, z), ChunkStatus.MESHED);
+                    loadChunk(coord, ChunkStatus.MESHED);
                 }
             }
         }
@@ -476,13 +498,9 @@ public class World {
         }
 
         var blockPos = getPosInChunk(x, y, z);
-        var chunkSection = getChunkSectionPos(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
-            if (remesh) {
-                mesh(chunkSection);
-            }
         }
     }
 
@@ -620,60 +638,60 @@ public class World {
         return y is >= 0 and < WORLDHEIGHT;
     }
 
-    public ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
+    public static ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
         return new ChunkSectionCoord(
-            (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
-            (int)MathF.Floor(pos.Y / (float)Chunk.CHUNKSIZE),
-            (int)MathF.Floor(pos.Z / (float)Chunk.CHUNKSIZE));
+            (int)MathF.Floor((float)pos.X / Chunk.CHUNKSIZE),
+            (int)MathF.Floor((float)pos.Y / Chunk.CHUNKSIZE),
+            (int)MathF.Floor((float)pos.Z / Chunk.CHUNKSIZE));
     }
 
-    public ChunkSectionCoord getChunkSectionPos(int x, int y, int z) {
+    public static ChunkSectionCoord getChunkSectionPos(int x, int y, int z) {
         return new ChunkSectionCoord(
-            (int)MathF.Floor(x / (float)Chunk.CHUNKSIZE),
-            (int)MathF.Floor(y / (float)Chunk.CHUNKSIZE),
-            (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
+            (int)MathF.Floor((float)x / Chunk.CHUNKSIZE),
+            (int)MathF.Floor((float)y / Chunk.CHUNKSIZE),
+            (int)MathF.Floor((float)z / Chunk.CHUNKSIZE));
     }
 
-    public ChunkCoord getChunkPos(Vector2D<int> pos) {
+    public static ChunkCoord getChunkPos(Vector2D<int> pos) {
         return new ChunkCoord(
             (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
             (int)MathF.Floor(pos.Y / (float)Chunk.CHUNKSIZE));
     }
 
-    public ChunkCoord getChunkPos(int x, int z) {
+    public static ChunkCoord getChunkPos(int x, int z) {
         return new ChunkCoord(
             (int)MathF.Floor(x / (float)Chunk.CHUNKSIZE),
             (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
     }
 
-    public RegionCoord getRegionPos(ChunkCoord pos) {
+    public static RegionCoord getRegionPos(ChunkCoord pos) {
         return new RegionCoord(
             (int)MathF.Floor(pos.x / (float)World.REGIONSIZE),
             (int)MathF.Floor(pos.z / (float)World.REGIONSIZE));
     }
 
-    public Vector3D<int> getPosInChunk(int x, int y, int z) {
+    public static Vector3D<int> getPosInChunk(int x, int y, int z) {
         return new Vector3D<int>(
             Utils.mod(x, Chunk.CHUNKSIZE),
             y,
             Utils.mod(z, Chunk.CHUNKSIZE));
     }
 
-    public Vector3D<int> getPosInChunk(Vector3D<int> pos) {
+    public static Vector3D<int> getPosInChunk(Vector3D<int> pos) {
         return new Vector3D<int>(
             Utils.mod(pos.X, Chunk.CHUNKSIZE),
             pos.Y,
             Utils.mod(pos.Z, Chunk.CHUNKSIZE));
     }
 
-    public Vector3D<int> getPosInChunkSection(int x, int y, int z) {
+    public static Vector3D<int> getPosInChunkSection(int x, int y, int z) {
         return new Vector3D<int>(
             Utils.mod(x, Chunk.CHUNKSIZE),
             Utils.mod(y, Chunk.CHUNKSIZE),
             Utils.mod(z, Chunk.CHUNKSIZE));
     }
 
-    public Vector3D<int> getPosInChunkSection(Vector3D<int> pos) {
+    public static Vector3D<int> getPosInChunkSection(Vector3D<int> pos) {
         return new Vector3D<int>(
             Utils.mod(pos.X, Chunk.CHUNKSIZE),
             Utils.mod(pos.Y, Chunk.CHUNKSIZE),
@@ -753,7 +771,7 @@ public class World {
     /// <summary>
     /// For sections
     /// </summary>
-    public Vector3D<int> toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
+    public static Vector3D<int> toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
         return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
             chunkY * Chunk.CHUNKSIZE + y,
             chunkZ * Chunk.CHUNKSIZE + z);
@@ -762,7 +780,7 @@ public class World {
     /// <summary>
     /// For chunks
     /// </summary>
-    public Vector3D<int> toWorldPos(int chunkX, int chunkZ, int x, int y, int z) {
+    public static Vector3D<int> toWorldPos(int chunkX, int chunkZ, int x, int y, int z) {
         return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
             y,
             chunkZ * Chunk.CHUNKSIZE + z);

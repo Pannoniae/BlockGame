@@ -199,7 +199,8 @@ public class GUI {
             Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0)) *
             // projection
             Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
-            //Matrix4x4.CreateTranslation(0, 0, 0);
+        //Matrix4x4.CreateTranslation(0, 0, 0);
+        var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
         buffer.DataSubset.SetData(guiBlock);

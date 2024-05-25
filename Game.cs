@@ -86,6 +86,7 @@ public class Game {
     public static bool lockingMouse;
 
     public Texture2D blockTexture;
+    public Texture2D lightTexture;
     public Metrics metrics;
 
     public BlockingCollection<Action> mainThreadQueue = new();
@@ -172,6 +173,7 @@ public class Game {
         permanentStopwatch.Start();
 
         blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
+        lightTexture = Texture2DExtensions.FromFile(GD, "textures/lightmap.png");
         screenStack = [];
         //Screen.initScreens(gui);
         Screen.switchTo(Screen.LOADING);

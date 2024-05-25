@@ -13,7 +13,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
         var chunk = world.getChunk(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
+                var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 // -1 to 1
                 // transform to the range 5 - 10
                 var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 75;
@@ -38,11 +38,11 @@ public class OverworldChunkGenerator : ChunkGenerator {
         var chunk = world.getChunk(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
+                var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 75;
                 // TREES
                 if (MathF.Abs(generator.treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
-                    worldPos = world.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
+                    worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
                     placeTree(worldPos.X, worldPos.Y, worldPos.Z);
                 }
             }

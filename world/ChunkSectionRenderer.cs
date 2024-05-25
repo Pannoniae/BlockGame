@@ -38,7 +38,7 @@ public class ChunkSectionRenderer {
     // YZX again
     public static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
     public static byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    public static BlockData[] neighbourSections = new BlockData[27];
+    public static ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
     static object meshingLock = new();
 
@@ -141,6 +141,9 @@ public class ChunkSectionRenderer {
                 // if chunk is full, don't mesh either
                 if (hasOnlySolid) {
                     isEmpty = true;
+                }
+
+                if (isEmpty) {
                     return;
                 }
 
@@ -233,6 +236,7 @@ public class ChunkSectionRenderer {
 
         hasTranslucentBlocks = false;
         hasOnlySolid = true;
+        isEmpty = true;
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -240,7 +244,7 @@ public class ChunkSectionRenderer {
         // we load the 16x16 from the section itself then get the world for the rest
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
-        var blockData = (ArrayBlockData)section.blocks;
+        var blockData = section.blocks;
         ref var blockArray = ref MemoryMarshal.GetArrayDataReference(blockData.blocks);
         ref var sourceLightArray = ref MemoryMarshal.GetArrayDataReference(blockData.light);
         ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
@@ -251,6 +255,9 @@ public class ChunkSectionRenderer {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = accessRef(ref blockArray, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
                     var light = accessRef(ref sourceLightArray, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+                    if (bl != 0) {
+                        isEmpty = false;
+                    }
                     if (Blocks.isTranslucent(bl)) {
                         hasTranslucentBlocks = true;
                     }
@@ -268,24 +275,17 @@ public class ChunkSectionRenderer {
         // if chunk is empty, nothing to do, don't need to check neighbours
         // btw this shouldn't fucking happen because we checked it but we check it anyway so our program doesn't crash if the chunk representation is changed
 
-        static ushort getBlockFromSection(ChunkSection section, int x, int y, int z) {
-            if (y is < 0 or >= World.WORLDHEIGHT) {
-                return 0;
-            }
-            var world = section.world;
-            var blockPos = world.getPosInChunkSection(x, y, z);
-            var sectionPos = world.getChunkSectionPos(x, y, z);
-            return access(neighbourSections, (sectionPos.y - section.chunkY + 1) * 9 + (sectionPos.z - section.chunkZ + 1) * 3 + (sectionPos.x - section.chunkX + 1))[blockPos.X, blockPos.Y, blockPos.Z];
+        static ushort getBlockFromSection(BlockData data, int x, int y, int z) {
+            return data[x, y, z];
         }
 
-        static byte getLightFromSection(ChunkSection section, int x, int y, int z) {
-            if (y is < 0 or >= World.WORLDHEIGHT) {
-                return 0;
-            }
-            var world = section.world;
-            var blockPos = world.getPosInChunkSection(x, y, z);
-            var sectionPos = world.getChunkSectionPos(x, y, z);
-            return access(neighbourSections, (sectionPos.y - section.chunkY + 1) * 9 + (sectionPos.z - section.chunkZ + 1) * 3 + (sectionPos.x - section.chunkX + 1)).getLight(blockPos.X, blockPos.Y, blockPos.Z);
+        static byte getLightFromSection(BlockData data, int x, int y, int z) {
+            return data.getLight(x, y, z);
+        }
+
+        static BlockData? gets(ChunkSection section, int x, int y, int z) {
+            var sectionPos = World.getChunkSectionPos(x, y, z);
+            return access(neighbourSections, (sectionPos.y - section.chunkY + 1) * 9 + (sectionPos.z - section.chunkZ + 1) * 3 + (sectionPos.x - section.chunkX) + 1);
         }
 
         // setup neighbouring sections
@@ -295,16 +295,7 @@ public class ChunkSectionRenderer {
             for (int z = -1; z <= 1; z++) {
                 for (int x = -1; x <= 1; x++) {
                     world.getChunkSectionMaybe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z), out var sec);
-                    accessRef(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1, sec != null ? sec.blocks : new EmptyBlockData());
-                    if (sec == null && coord.y + y > 0 && coord.y + y < 8) {
-                        Console.Out.WriteLine(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z));
-                        Console.Out.WriteLine(world.getChunkMaybe(new ChunkCoord(coord.x + x, coord.z + z), out var chunk2));
-                        Console.Out.WriteLine(world.getChunkSectionMaybe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z), out var chunk3));
-                        Console.Out.WriteLine(chunk2);
-                        Console.Out.WriteLine(chunk3);
-                        Console.Out.WriteLine(chunk3 == null);
-                        Console.Out.WriteLine(sec == null);
-                    }
+                    accessRef(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1, sec?.blocks!);
                 }
             }
         }
@@ -320,9 +311,30 @@ public class ChunkSectionRenderer {
                         x = Chunk.CHUNKSIZE - 1;
                         continue;
                     }
-                    var wpos = world.toWorldPos(section.chunkX, section.chunkY, section.chunkZ, x, y, z);
-                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), getBlockFromSection(section, wpos.X, wpos.Y, wpos.Z));
-                    accessRef(ref lightArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), getLightFromSection(section, wpos.X, wpos.Y, wpos.Z));
+                    int sx;
+                    int sy;
+                    int sz;
+
+                    int cx;
+                    int cy;
+                    int cz;
+                    cx = x;
+                    cy = y;
+                    cz = z;
+                    alignBlock(ref cx, ref cy, ref cz);
+
+                    sx = section.chunkX * Chunk.CHUNKSIZE + x;
+                    sy = section.chunkY * Chunk.CHUNKSIZE + y;
+                    sz = section.chunkZ * Chunk.CHUNKSIZE + z;
+                    sx = (int)MathF.Floor((float)sx / Chunk.CHUNKSIZE);
+                    sy = (int)MathF.Floor((float)sy / Chunk.CHUNKSIZE);
+                    sz = (int)MathF.Floor((float)sz / Chunk.CHUNKSIZE);
+                    var neighbourSection =
+                        access(neighbourSections, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);
+                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
+                        neighbourSection != null ? neighbourSection[cx, cy, cz] : (ushort)0);
+                    accessRef(ref lightArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
+                        neighbourSection?.getLight(cx, cy, cz) ?? 0);
                 }
             }
         }
@@ -692,6 +704,27 @@ public class ChunkSectionRenderer {
         x = Unsafe.Add(ref arr, index);
         y = Unsafe.Add(ref arr, index + 1);
         z = Unsafe.Add(ref arr, index + 2);
+    }
+
+    public static void alignBlock(ref int x, ref int y, ref int z) {
+        if (x < 0) {
+            x += Chunk.CHUNKSIZE;
+        }
+        if (x > Chunk.CHUNKSIZE - 1) {
+            x -= Chunk.CHUNKSIZE;
+        }
+        if (y < 0) {
+            y += Chunk.CHUNKSIZE;
+        }
+        if (y > Chunk.CHUNKSIZE - 1) {
+            y -= Chunk.CHUNKSIZE;
+        }
+        if (z < 0) {
+            z += Chunk.CHUNKSIZE;
+        }
+        if (z > Chunk.CHUNKSIZE - 1) {
+            z -= Chunk.CHUNKSIZE;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
