@@ -97,7 +97,7 @@ public class ChunkSectionRenderer {
     }
 
     private static bool notSolid(int b) {
-        return Blocks.notSolid(b);
+        return !Blocks.isSolid(b);
     }
 
     private static bool isSolid(int b) {
@@ -349,6 +349,7 @@ public class ChunkSectionRenderer {
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
 
         bool test = false;
+        bool test2 = false;
 
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
@@ -461,16 +462,16 @@ public class ChunkSectionRenderer {
                                 switch (mode) {
 
                                     case VertexConstructionMode.OPAQUE:
-                                        test = Blocks.notSolid(nb);
+                                        test2 = notSolid(nb);
                                         break;
                                     case VertexConstructionMode.TRANSLUCENT:
-                                        test = notTranslucent(nb);
+                                        test2 = notTranslucent(nb);
                                         break;
                                 }
-                                test = test || face.nonFullFace && !Blocks.isTranslucent(nb);
+                                test2 = test2 || face.nonFullFace && !Blocks.isTranslucent(nb);
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
-                            if (test) {
+                            if (test2) {
                                 if (AOenabled && !face.noAO) {
                                     if (dir != RawDirection.NONE) {
                                         int ox;

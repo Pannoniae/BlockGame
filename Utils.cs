@@ -61,11 +61,11 @@ public readonly record struct Direction {
     public static readonly Vector3D<int> UP = new(0, 1, 0);
     public static readonly Vector3D<int> SELF = new(0, 0, 0);
 
-    public static Vector3D<int>[] directions => [WEST, EAST, SOUTH, NORTH, DOWN, UP];
-    public static Vector3D<int>[] directionsWaterSpread => [WEST, EAST, SOUTH, NORTH, DOWN];
-    public static Vector3D<int>[] directionsHorizontal => [WEST, EAST, SOUTH, NORTH];
-    public static Vector3D<int>[] directionsDiag => [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
-    public static Vector3D<int>[] directionsSelf => [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
+    public static Vector3D<int>[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
+    public static Vector3D<int>[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
+    public static Vector3D<int>[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
+    public static Vector3D<int>[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
+    public static Vector3D<int>[] directionsSelf = [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
 
     public static Vector3D<int> getDirection(RawDirection dir) {
         return dir switch {

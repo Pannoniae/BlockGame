@@ -1,5 +1,4 @@
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using Silk.NET.Maths;
 
 namespace BlockGame;
@@ -48,8 +47,21 @@ public class Chunk {
     }
 
     public void lightChunk() {
+        return;
         // set the top of the chunk to 15 if not solid
         // then propagate down
+        for (int x = 0; x < CHUNKSIZE; x++) {
+            for (int z = 0; z < CHUNKSIZE; z++) {
+                var y = (CHUNKSIZE * CHUNKHEIGHT) - 1;
+                var bl = getBlock(x, y, z);
+                if (!Blocks.isSolid(bl)) {
+                    //Console.Out.WriteLine("yes?");
+                    setSkyLight(x, y, z, 15);
+                    // add world coords!
+                    world.skyLightQueue.Add(new Vector3D<int>(worldX + x, y, worldZ + z));
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -61,10 +73,10 @@ public class Chunk {
 
         // handle empty chunksections
         var section = chunks[sectionY];
-        if (section.isEmpty && block != 0) {
+        /*if (section.isEmpty && block != 0) {
             section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
-        }
+        }*/
         section.blocks[x, yRem, z] = block;
 
         if (remesh) {
@@ -86,6 +98,30 @@ public class Chunk {
         }
     }
 
+    /// <summary>
+    /// Uses chunk coordinates
+    /// </summary>
+    public void setSkyLight(int x, int y, int z, byte value) {
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
+
+        // handle empty chunksections
+        var section = chunks[sectionY];
+        section.blocks.setSkylight(x, yRem, z, value);
+    }
+
+    /// <summary>
+    /// Uses chunk coordinates
+    /// </summary>
+    public void setBlockLight(int x, int y, int z, byte value) {
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
+
+        // handle empty chunksections
+        var section = chunks[sectionY];
+        section.blocks.setBlocklight(x, yRem, z, value);
+    }
+
 
     /// <summary>
     /// Uses chunk coordinates
@@ -100,6 +136,18 @@ public class Chunk {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
         return chunks[sectionY].blocks.getLight(x, yRem, z);
+    }
+
+    public byte getSkyLight(int x, int y, int z) {
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
+        return chunks[sectionY].blocks.skylight(x, yRem, z);
+    }
+
+    public byte getBlockLight(int x, int y, int z) {
+        var sectionY = y / CHUNKSIZE;
+        var yRem = y % CHUNKSIZE;
+        return chunks[sectionY].blocks.blocklight(x, yRem, z);
     }
 
     public Vector3D<int> getSectionCoord(int x, int y, int z) {
