@@ -30,28 +30,28 @@ public class ArrayBlockData : BlockData {
     }
 
     public byte getLight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
+        var value = light[y * Chunk.CHUNKSIZESQ +
                           z * Chunk.CHUNKSIZE +
                           x];
         return value;
     }
 
     public byte skylight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = light[y * Chunk.CHUNKSIZESQ +
+                           z * Chunk.CHUNKSIZE +
+                           x];
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
+        var value = light[y * Chunk.CHUNKSIZESQ +
                           z * Chunk.CHUNKSIZE +
                           x];
         return (byte)((value & 0xF0) >> 4);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
-        var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
+        var value = light[y * Chunk.CHUNKSIZESQ +
                           z * Chunk.CHUNKSIZE +
                           x];
         var blocklight = (byte)((value & 0xF0) >> 4);
@@ -62,7 +62,7 @@ public class ArrayBlockData : BlockData {
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
-        var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
+        var value = light[y * Chunk.CHUNKSIZESQ +
                           z * Chunk.CHUNKSIZE +
                           x];
         var skylight = (byte)(value & 0xF);

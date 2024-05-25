@@ -485,6 +485,7 @@ public class Player {
             var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
             if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
                 world.setBlock(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
+                world.removeSkyLightAndPropagate(pos.X, pos.Y, pos.Z);
                 world.blockUpdate(pos);
                 world.player.lastPlace = world.worldTime;
             }
@@ -495,6 +496,10 @@ public class Player {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
             world.setBlock(pos.X, pos.Y, pos.Z, 0);
+
+            // we don't set it to anything, we just propagate from above
+            world.skyLightQueue.Add(new LightNode(pos.X, pos.Y + 1, pos.Z, world.getChunk(pos.X, pos.Z)));
+            world.processSkyLightQueue();
             world.blockUpdate(pos);
             // place water if adjacent
             world.player.lastBreak = world.worldTime;
