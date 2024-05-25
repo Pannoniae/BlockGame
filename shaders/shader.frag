@@ -7,6 +7,8 @@ layout(location = 0) out vec4 color;
 in vec2 texCoords;
 flat in uint direction;
 in float ao;
+flat in uint light;
+
 in vec3 vertexPos;
 
 uniform vec3 uCameraPos;
@@ -31,8 +33,12 @@ void main() {
     float lColor = a[direction];
     vec4 blockColour = texture(blockTexture, texCoords);
     float ratio = getFog(distance(uCameraPos, vertexPos));
+    // extract skylight, 0 to 15
+    float lightValue = min(
+        (light & 0xFu) / 16.0 + 0.125,
+        1.0);
+    color = vec4(blockColour.rgb * lColor * ao * lightValue, blockColour.a);
     // mix fog
-    color = vec4(blockColour.rgb * lColor * ao, blockColour.a);
     color = mix(color, fogColour, ratio);
     if (color.a <= 0) {
         discard;

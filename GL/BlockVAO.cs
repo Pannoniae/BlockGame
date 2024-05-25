@@ -127,6 +127,7 @@ public readonly struct BlockVertex : IVertex {
 
     /// <summary>
     /// from least significant:
+    /// second byte (8-16) is lighting
     /// first 3 bits are side (see Direction enum)
     /// next 2 bits are AO
     /// </summary>

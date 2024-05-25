@@ -154,10 +154,10 @@ public class Block {
 
     // this will pack the data into the uint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort packData(byte direction, byte ao) {
+    public static ushort packData(byte direction, byte ao, byte light) {
         // if none, treat it as an up
         direction = (byte)(direction == 12 ? 5 : direction);
-        return (ushort)(ao << 3 | direction);
+        return (ushort)(light << 8 | ao << 3 | direction);
     }
 
     public static AABB fullBlock() {
