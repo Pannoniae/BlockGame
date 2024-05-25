@@ -31,45 +31,45 @@ public class ArrayBlockData : BlockData {
 
     public byte getLight(int x, int y, int z) {
         var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                          x * Chunk.CHUNKSIZE +
-                          z];
+                          z * Chunk.CHUNKSIZE +
+                          x];
         return value;
     }
 
     public byte skylight(int x, int y, int z) {
         var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                          x * Chunk.CHUNKSIZE +
-                          z];
+                          z * Chunk.CHUNKSIZE +
+                          x];
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
         var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                          x * Chunk.CHUNKSIZE +
-                          z];
+                          z * Chunk.CHUNKSIZE +
+                          x];
         return (byte)((value & 0xF0) >> 4);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
         var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                          x * Chunk.CHUNKSIZE +
-                          z];
+                          z * Chunk.CHUNKSIZE +
+                          x];
         var blocklight = (byte)((value & 0xF0) >> 4);
         // pack it back inside
         light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-              x * Chunk.CHUNKSIZE +
-              z] = (byte)((blocklight << 4) | val & 0xF);
+              z * Chunk.CHUNKSIZE +
+              x] = (byte)(blocklight << 4 | val & 0xF);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
         var value = light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-                          x * Chunk.CHUNKSIZE +
-                          z];
+                          z * Chunk.CHUNKSIZE +
+                          x];
         var skylight = (byte)(value & 0xF);
         // pack it back inside
         light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
-              x * Chunk.CHUNKSIZE +
-              z] = (byte)(val << 4 | skylight & 0xF);
+              z * Chunk.CHUNKSIZE +
+              x] = (byte)(val << 4 | skylight & 0xF);
     }
 
     public static byte extractSkylight(byte value) {

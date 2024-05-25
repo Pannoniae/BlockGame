@@ -53,12 +53,12 @@ public class Chunk {
             for (int z = 0; z < CHUNKSIZE; z++) {
                 var y = (CHUNKSIZE * CHUNKHEIGHT) - 1;
                 // loop down until block is solid
-                ushort bl;
-                do {
-                    bl = getBlock(x, y, z);
+                ushort bl = getBlock(x, y, z);
+                while (!Blocks.isSolid(bl)) {
                     setSkyLight(x, y, z, 15);
                     y--;
-                } while (!Blocks.isSolid(bl));
+                    bl = getBlock(x, y, z);
+                };
 
                 // add the last item for propagation
                 world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
