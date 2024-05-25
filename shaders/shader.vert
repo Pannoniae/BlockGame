@@ -10,7 +10,7 @@ uniform mat4 uMVP;
 out vec2 texCoords;
 out float ao;
 out uint direction;
-out uint light;
+out float light;
 
 out vec3 vertexPos;
 
@@ -24,6 +24,8 @@ void main() {
     texCoords = texCoord;
     ao = aoArray[aoValue];
     direction = directionValue;
-    light = lightValue;
+    light = min(
+        (lightValue & 0xFu) / 16.0 + 0.125,
+        1.0);
     vertexPos = vPos;
 }

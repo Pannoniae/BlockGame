@@ -339,6 +339,7 @@ public class ChunkSectionRenderer {
         ushort i = 0;
 
         var AOenabled = Settings.instance.AO;
+        var smoothLightingEnabled = Settings.instance.smoothLighting;
         //ushort cv = 0;
         //ushort ci = 0;
 
@@ -402,12 +403,9 @@ public class ChunkSectionRenderer {
 
                         //float offset = 0.0004f;
 
-                        ushort d0;
-                        ushort d1;
-                        ushort d2;
-                        ushort d3;
-                        ushort d4;
-                        ushort d5;
+                        int nbx = 0;
+                        int nby = 0;
+                        int nbz = 0;
 
 
                         // calculate AO for all 8 vertices
@@ -424,34 +422,31 @@ public class ChunkSectionRenderer {
                         ushort data3;
                         ushort data4;
 
-                        byte light = 0;
+                        byte light1 = 0;
+                        byte light2 = 0;
+                        byte light3 = 0;
+                        byte light4 = 0;
 
                         int dirIdx = 0;
 
                         // setup neighbour data
-                        d0 = getBlockFromCacheUnsafe(ref neighboursArray, x - 1, y, z);
-                        d1 = getBlockFromCacheUnsafe(ref neighboursArray, x + 1, y, z);
-                        d2 = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z - 1);
-                        d3 = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z + 1);
-                        d4 = getBlockFromCacheUnsafe(ref neighboursArray, x, y - 1, z);
-                        d5 = getBlockFromCacheUnsafe(ref neighboursArray, x, y + 1, z);
 
-                        if (Blocks.isSolid(d0) &&
+                        // will reimplement this face-skipping optimisation later
+                        // if all 6 neighbours are solid, we don't even need to bother iterating the faces
+                        /*if (Blocks.isSolid(d0) &&
                             Blocks.isSolid(d1) &&
                             Blocks.isSolid(d2) &&
                             Blocks.isSolid(d3) &&
                             Blocks.isSolid(d4) &&
                             Blocks.isSolid(d5)) {
                             continue;
-                        }
+                        }*/
 
                         var faces = b.model.faces;
                         ref var facesRef = ref MemoryMarshal.GetArrayDataReference(faces);
                         Face face;
 
-                        ushort nb = 0;
-
-                        // if full block, don't even bother going through the faces
+                        ushort nb;
 
                         for (int d = 0; d < faces.Length; d++) {
                             face = accessRef(ref facesRef, d);
@@ -465,30 +460,37 @@ public class ChunkSectionRenderer {
                                 // THE SWITCH
                                 switch (dir) {
                                     case RawDirection.WEST:
-                                        nb = d0;
-                                        light = getLightFromCacheUnsafe(ref lightArray, x - 1, y, z);
+                                        nbx = x - 1;
+                                        nby = y;
+                                        nbz = z;
                                         break;
                                     case RawDirection.EAST:
-                                        nb = d1;
-                                        light = getLightFromCacheUnsafe(ref lightArray, x + 1, y, z);
+                                        nbx = x + 1;
+                                        nby = y;
+                                        nbz = z;
                                         break;
                                     case RawDirection.SOUTH:
-                                        nb = d2;
-                                        light = getLightFromCacheUnsafe(ref lightArray, x, y, z - 1);
+                                        nbx = x;
+                                        nby = y;
+                                        nbz = z - 1;
                                         break;
                                     case RawDirection.NORTH:
-                                        nb = d3;
-                                        light = getLightFromCacheUnsafe(ref lightArray, x, y, z + 1);
+                                        nbx = x;
+                                        nby = y;
+                                        nbz = z + 1;
                                         break;
                                     case RawDirection.DOWN:
-                                        nb = d4;
-                                        light = getLightFromCacheUnsafe(ref lightArray, x, y - 1, z);
+                                        nbx = x;
+                                        nby = y - 1;
+                                        nbz = z;
                                         break;
                                     case RawDirection.UP:
-                                        nb = d5;
-                                        light = getLightFromCacheUnsafe(ref lightArray, x, y + 1, z);
+                                        nbx = x;
+                                        nby = y + 1;
+                                        nbz = z;
                                         break;
                                 }
+                                nb = getBlockFromCacheUnsafe(ref neighboursArray, nbx, nby, nbz);
                                 switch (mode) {
 
                                     case VertexConstructionMode.OPAQUE:
@@ -502,15 +504,42 @@ public class ChunkSectionRenderer {
                             }
                             // either neighbour test passes, or neighbour is not air + face is not full
                             if (test2) {
-                                if (AOenabled && !face.noAO) {
+                                if (!smoothLightingEnabled) {
+                                    switch (dir) {
+                                        case RawDirection.WEST:
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x - 1, y, z);
+                                            break;
+                                        case RawDirection.EAST:
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x + 1, y, z);
+                                            break;
+                                        case RawDirection.SOUTH:
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y, z - 1);
+                                            break;
+                                        case RawDirection.NORTH:
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y, z + 1);
+                                            break;
+                                        case RawDirection.DOWN:
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y - 1, z);
+                                            break;
+                                        case RawDirection.UP:
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y + 1, z);
+                                            break;
+                                    }
+                                }
+                                // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
+                                if (smoothLightingEnabled || AOenabled) {
                                     if (dir != RawDirection.NONE) {
-                                        int ox;
-                                        int oy;
-                                        int oz;
+                                        ushort ox;
+                                        ushort oy;
+                                        ushort oz;
 
                                         int xb;
                                         int yb;
                                         int zb;
+
+                                        byte lx;
+                                        byte ly;
+                                        byte lz;
 
                                         for (int j = 0; j < 4; j++) {
                                             getOffset(ref offsetArray, dirIdx, j, 0, out xb, out yb, out zb);
@@ -518,33 +547,81 @@ public class ChunkSectionRenderer {
                                             yb = y + yb;
                                             zb = z + zb;
                                             ox = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+                                            lx = getLightFromCacheUnsafe(ref lightArray, xb, yb, zb);
 
                                             getOffset(ref offsetArray, dirIdx, j, 1, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             oy = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+                                            ly = getLightFromCacheUnsafe(ref lightArray, xb, yb, zb);
 
                                             getOffset(ref offsetArray, dirIdx, j, 2, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             oz = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
+                                            lz = getLightFromCacheUnsafe(ref lightArray, xb, yb, zb);
 
-                                            switch (j) {
-                                                case 0:
-                                                    ao1 = calculateAOFixed(ox, oy, oz);
-                                                    break;
-                                                case 1:
-                                                    ao2 = calculateAOFixed(ox, oy, oz);
-                                                    break;
-                                                case 2:
-                                                    ao3 = calculateAOFixed(ox, oy, oz);
-                                                    break;
-                                                case 3:
-                                                    ao4 = calculateAOFixed(ox, oy, oz);
-                                                    break;
+                                            // only apply AO if enabled
+                                            if (AOenabled && !face.noAO) {
+                                                switch (j) {
+                                                    case 0:
+                                                        ao1 = calculateAOFixed(ox, oy, oz);
+                                                        break;
+                                                    case 1:
+                                                        ao2 = calculateAOFixed(ox, oy, oz);
+                                                        break;
+                                                    case 2:
+                                                        ao3 = calculateAOFixed(ox, oy, oz);
+                                                        break;
+                                                    case 3:
+                                                        ao4 = calculateAOFixed(ox, oy, oz);
+                                                        break;
+                                                }
+                                            }
+                                            // if smooth lighting enabled, average light from neighbour face + the 3 other ones
+                                            // calculate average
+                                            var lo = getLightFromCacheUnsafe(ref lightArray, nbx, nby, nbz);
 
+
+                                            // this averages the four light values. If the block is opaque, it ignores the light value.
+                                            byte average(byte lx, byte ly, byte lz, byte lo, ushort ox, ushort oy, ushort oz) {
+                                                int ctr = 1;
+                                                int islx = 0;
+                                                int isly = 0;
+                                                int islz = 0;
+                                                // check ox
+                                                if (ox == 0) {
+                                                    ctr++;
+                                                    islx = 1;
+                                                }
+                                                if (oy == 0) {
+                                                    ctr++;
+                                                    isly = 1;
+                                                }
+                                                if (oz == 0) {
+                                                    ctr++;
+                                                    islz = 1;
+                                                }
+                                                return (byte)((lx * islx + ly * isly + lz * islz + lo) / (float)(ctr));
+                                            }
+
+                                            if (smoothLightingEnabled) {
+                                                switch (j) {
+                                                    case 0:
+                                                        light1 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        break;
+                                                    case 1:
+                                                        light2 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        break;
+                                                    case 2:
+                                                        light3 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        break;
+                                                    case 3:
+                                                        light4 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        break;
+                                                }
                                             }
                                         }
                                     }
@@ -552,10 +629,10 @@ public class ChunkSectionRenderer {
                                 tex = Block.texCoords(accessRef(ref facesRef, d).min);
                                 texMax = Block.texCoords(accessRef(ref facesRef, d).max);
 
-                                data1 = Block.packData((byte)dir, ao1, light);
-                                data2 = Block.packData((byte)dir, ao2, light);
-                                data3 = Block.packData((byte)dir, ao3, light);
-                                data4 = Block.packData((byte)dir, ao4, light);
+                                data1 = Block.packData((byte)dir, ao1, light1);
+                                data2 = Block.packData((byte)dir, ao2, light2);
+                                data3 = Block.packData((byte)dir, ao3, light3);
+                                data4 = Block.packData((byte)dir, ao4, light4);
 
 
                                 // add vertices
