@@ -52,13 +52,16 @@ public class Chunk {
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
                 var y = (CHUNKSIZE * CHUNKHEIGHT) - 1;
-                var bl = getBlock(x, y, z);
-                if (!Blocks.isSolid(bl)) {
-                    //Console.Out.WriteLine("yes?");
+                // loop down until block is solid
+                ushort bl;
+                do {
+                    bl = getBlock(x, y, z);
                     setSkyLight(x, y, z, 15);
-                    // add world coords!
-                    world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
-                }
+                    y--;
+                } while (!Blocks.isSolid(bl));
+
+                // add the last item for propagation
+                world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
             }
         }
         world.processSkyLightQueue();
