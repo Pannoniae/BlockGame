@@ -38,6 +38,7 @@ public class World {
 
     // max. 5 msec in each frame for chunkload
     private const long MAX_CHUNKLOAD_FRAMETIME = 10;
+    private const long MAX_LIGHT_FRAMETIME = 10;
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
@@ -182,7 +183,7 @@ public class World {
         }
     }
 
-    private void processSkyLightQueue() {
+    public void processSkyLightQueue() {
         var cnt = skyLightQueue.Count - 1;
         while (cnt > 0) {
             cnt = skyLightQueue.Count - 1;
@@ -205,6 +206,12 @@ public class World {
 
                     byte newLevel = (byte)(isDown ? level : level - 1);
                     setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+
+                    // if meshable, mesh
+                    var sectionPos = getChunkSectionPos(neighbour.X, neighbour.Y, neighbour.Z);
+                    /*if (getChunk(sectionPos.x, sectionPos.z).status >= ChunkStatus.MESHED) {
+                        mesh(sectionPos);
+                    }*/
                     //Console.Out.WriteLine(neighbour);
                     skyLightQueue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
                 }
@@ -212,11 +219,11 @@ public class World {
         }
     }
 
-    private void processBlockLightQueue() {
+    public void processBlockLightQueue() {
 
     }
 
-    private void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
+    public void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
         chunkLoadQueue.Insert(0, new ChunkLoadTicket(chunkCoord, level));
     }
 
@@ -340,7 +347,9 @@ public class World {
     }
 
     public void mesh(ChunkSectionCoord coord) {
+        //if (!meshingQueue.Contains(coord)) {
         meshingQueue.Enqueue(coord);
+        //}
     }
 
     public bool isMisalignedBlock(Vector3D<int> position) {

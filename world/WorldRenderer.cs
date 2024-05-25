@@ -276,10 +276,10 @@ public class WorldRenderer {
             y4 = wy + faces[d].y4;
             z4 = wz + faces[d].z4;
 
-            data1 = Block.packData((byte)dir, 0);
-            data2 = Block.packData((byte)dir, 0);
-            data3 = Block.packData((byte)dir, 0);
-            data4 = Block.packData((byte)dir, 0);
+            data1 = Block.packData((byte)dir, 0, 15);
+            data2 = Block.packData((byte)dir, 0, 15);
+            data3 = Block.packData((byte)dir, 0, 15);
+            data4 = Block.packData((byte)dir, 0, 15);
 
 
             // add vertices

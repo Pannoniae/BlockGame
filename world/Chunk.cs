@@ -61,6 +61,7 @@ public class Chunk {
                 }
             }
         }
+        world.processSkyLightQueue();
     }
 
     /// <summary>
