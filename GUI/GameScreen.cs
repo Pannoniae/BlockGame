@@ -38,7 +38,7 @@ public class GameScreen : Screen {
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
 
         // then add the GUI
-        var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.1");
+        var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.2");
         version.shadowed = true;
         elements.Add(version);
         var hotbar = new Hotbar(this, new RectangleF(0, -20, Hotbar.hotbarTexture.Width, Hotbar.hotbarTexture.Height)) {
@@ -216,15 +216,6 @@ public class GameScreen : Screen {
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 
-
-        // draw box
-        gui.tb.Draw(gui.colourTexture,
-            new RectangleF(new PointF(Game.centreX, Game.centreY),
-                new SizeF(16 * GUI.guiScale, 16 * GUI.guiScale)),
-            new Color4b(240, 240, 240));
-        gui.tb.End();
-        gui.drawBlock(world, Blocks.DIRT, Game.centreX + (world.worldTick % Game.centreX), Game.centreY, 16);
-        gui.tb.Begin();
         // setup blending
         //GD.BlendingEnabled = true;
         //GD.BlendState = bs;

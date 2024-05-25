@@ -36,6 +36,14 @@ public class SettingsScreen : Screen {
         };
         elements.Add(AO);
 
+        var smoothLighting = new ToggleButton(this, new RectangleF(0, 88, 96, 16), settings.smoothLighting ? 1 : 0,
+            "Smooth Lighting: Disabled", "Smooth Lighting: Enabled");
+        smoothLighting.topCentre();
+        smoothLighting.clicked += () => {
+            settings.smoothLighting = smoothLighting.getIndex() == 1;
+        };
+        elements.Add(smoothLighting);
+
         var back = new Button(this, new RectangleF(2, -18, 96, 16), "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
