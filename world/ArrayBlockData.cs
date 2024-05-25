@@ -17,12 +17,12 @@ public class ArrayBlockData : BlockData {
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => ChunkSectionRenderer.access(blocks, y * Chunk.CHUNKSIZESQ +
-                      z * Chunk.CHUNKSIZE +
-                      x);
+                                                   z * Chunk.CHUNKSIZE +
+                                                   x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set => ChunkSectionRenderer.access(blocks, y * Chunk.CHUNKSIZESQ +
-                                             z * Chunk.CHUNKSIZE +
-                                             x, value);
+                                                   z * Chunk.CHUNKSIZE +
+                                                   x, value);
     }
 
     public ArrayBlockData(Chunk chunk) {
@@ -31,29 +31,29 @@ public class ArrayBlockData : BlockData {
 
     public byte getLight(int x, int y, int z) {
         var value = ChunkSectionRenderer.access(light, y * Chunk.CHUNKSIZESQ +
-                                                 z * Chunk.CHUNKSIZE +
-                                                 x);
+                                                       z * Chunk.CHUNKSIZE +
+                                                       x);
         return value;
     }
 
     public byte skylight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                           z * Chunk.CHUNKSIZE +
-                           x];
+        var value = ChunkSectionRenderer.access(light, y * Chunk.CHUNKSIZESQ +
+                                                       z * Chunk.CHUNKSIZE +
+                                                       x);
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = ChunkSectionRenderer.access(light, y * Chunk.CHUNKSIZESQ +
+                                                       z * Chunk.CHUNKSIZE +
+                                                       x);
         return (byte)((value & 0xF0) >> 4);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = ChunkSectionRenderer.access(light, y * Chunk.CHUNKSIZESQ +
+                                                       z * Chunk.CHUNKSIZE +
+                                                       x);
         var blocklight = (byte)((value & 0xF0) >> 4);
         // pack it back inside
         light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +
@@ -62,9 +62,9 @@ public class ArrayBlockData : BlockData {
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = ChunkSectionRenderer.access(light, y * Chunk.CHUNKSIZESQ +
+                                                       z * Chunk.CHUNKSIZE +
+                                                       x);
         var skylight = (byte)(value & 0xF);
         // pack it back inside
         light[y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE +

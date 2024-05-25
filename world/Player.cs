@@ -148,10 +148,10 @@ public class Player {
         world.loadChunksAroundChunk(chunk, renderDistance);
         // sort queue based on position
         // don't reorder across statuses though
-        world.chunkLoadQueue.Sort((ticket1, ticket2)
-            => {
+        world.chunkLoadQueue.Sort((ticket1, ticket2) => {
             var comparison = new ChunkCoordComparer(position).Compare(ticket1.chunkCoord, ticket2.chunkCoord);
             var statusDiff = ticket1.level - ticket2.level;
+            // if statusDiff > 0, chunk2 is bigger
             return comparison + statusDiff * 1000;
         });
     }
