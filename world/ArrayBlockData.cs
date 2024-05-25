@@ -30,9 +30,9 @@ public class ArrayBlockData : BlockData {
     }
 
     public byte getLight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = ChunkSectionRenderer.access(light, y * Chunk.CHUNKSIZESQ +
+                                                 z * Chunk.CHUNKSIZE +
+                                                 x);
         return value;
     }
 

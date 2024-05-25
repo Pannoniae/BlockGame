@@ -58,10 +58,6 @@ public class ChunkSection {
         return blocks[x, y, z];
     }
 
-    public byte getLight(int x, int y, int z) {
-        return blocks.getLight(x, y, z);
-    }
-
     public void tick(int x, int y, int z) {
         return;
         var block = getBlockInChunk(x, y, z);

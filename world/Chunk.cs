@@ -76,10 +76,19 @@ public class Chunk {
 
         // handle empty chunksections
         var section = chunks[sectionY];
+        var worldPos = world.toWorldPos(coord.x, coord.z, x, y, z);
         /*if (section.isEmpty && block != 0) {
             section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
         }*/
+        if (block != 0 && remesh) {
+            world.removeSkyLightAndPropagate(worldPos.X, worldPos.Y, worldPos.Z);
+        }
+        // if block broken, add sunlight from above
+        else if (block == 0 && remesh) {
+            world.skyLightQueue.Add(new LightNode(worldPos.X, worldPos.Y, worldPos.Z, this));
+            world.skyLightQueue.Add(new LightNode(worldPos.X, worldPos.Y + 1, worldPos.Z, this));
+        }
         section.blocks[x, yRem, z] = block;
 
         if (remesh) {
@@ -89,7 +98,6 @@ public class Chunk {
             //meshChunk();
 
             // get global coords
-            var worldPos = world.toWorldPos(coord.x, coord.z, x, y, z);
             var chunkPos = world.getChunkSectionPos(worldPos);
 
             foreach (var dir in Direction.directions) {
