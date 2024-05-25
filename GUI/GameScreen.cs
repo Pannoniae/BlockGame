@@ -277,7 +277,7 @@ public class GameScreen : Screen {
         var c = p.camera;
         var m = Game.instance.metrics;
         var loadedChunks = world.chunks.Count;
-        var pos = p.position.As<int>();
+        var pos = p.position.toBlockPos();
         // current block
         //var cb = world.getBlock(pos);
         var sl = world.getSkyLight(pos.X, pos.Y, pos.Z);

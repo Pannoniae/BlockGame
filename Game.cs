@@ -116,6 +116,7 @@ public class Game {
         window.Render += mainLoop;
         window.FramebufferResize += resize;
         window.Closing += close;
+
         window.Run();
     }
 

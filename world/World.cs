@@ -65,7 +65,7 @@ public class World {
         loadSpawnChunks();
 
         // teleport player to top block
-        while (getBlock(player.position.As<int>()) != 0) {
+        while (getBlock(player.position.toBlockPos()) != 0) {
             player.position.Y += 1;
         }
 
@@ -203,7 +203,7 @@ public class World {
                 var neighbourBlock = getBlock(neighbour);
                 var isDown = dir == Direction.DOWN;
                 if (neighbourBlock == 0 &&
-                    getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2 <= level) {
+                    (getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) + 2 <= level || isDown)) {
 
                     byte newLevel = (byte)(isDown ? level : level - 1);
                     setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
@@ -221,7 +221,7 @@ public class World {
             skyLightRemovalQueue.RemoveAt(cnt);
 
             var blockPos = new Vector3D<int>(node.x, node.y, node.z);
-            var level = getLight(node.x, node.y, node.z);
+            var level = node.value;
 
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
@@ -230,8 +230,8 @@ public class World {
                     continue;
                 }
                 byte neighbourLevel = getSkyLight(neighbour.X, neighbour.Y, neighbour.Z);
-                var isDownLight = level == 15 && dir == Direction.DOWN;
-                if ((neighbourLevel != 0 && neighbourLevel < level) || isDownLight) {
+                var isDownLight = dir == Direction.DOWN;
+                if (neighbourLevel != 0 && (neighbourLevel < level || isDownLight)) {
                     setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
 
                     // Emplace new node to queue. (could use push as well)
@@ -752,10 +752,10 @@ public class World {
         // don't round!!
         //var blockPos = toBlockPos(currentPos);
 
-        previous = toBlockPos(currentPos);
+        previous = currentPos.toBlockPos();
         for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
             currentPos += cameraForward * Constants.RAYCASTSTEP;
-            var blockPos = toBlockPos(currentPos);
+            var blockPos = currentPos.toBlockPos();
             var block = Blocks.get(getBlock(blockPos));
             if (isBlock(blockPos.X, blockPos.Y, blockPos.Z) && block.selection) {
                 // we also need to check if it's inside the selection of the block
@@ -770,11 +770,6 @@ public class World {
 
         previous = null;
         return null;
-    }
-
-    public Vector3D<int> toBlockPos(Vector3D<double> currentPos) {
-        return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
-            (int)Math.Floor(currentPos.Z));
     }
 
     public List<Vector3D<int>> getBlocksInBox(Vector3D<int> min, Vector3D<int> max) {

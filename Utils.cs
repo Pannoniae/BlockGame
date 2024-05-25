@@ -39,6 +39,11 @@ public static class Utils {
     public static float rad2deg(float radians) {
         return 180f / MathF.PI * radians;
     }
+
+    public static Vector3D<int> toBlockPos(this Vector3D<double> currentPos) {
+        return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
+            (int)Math.Floor(currentPos.Z));
+    }
 }
 
 /// <summary>
