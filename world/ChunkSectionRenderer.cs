@@ -621,26 +621,34 @@ public class ChunkSectionRenderer {
                                                     ctr++;
                                                     isly = 1;
                                                 }
-                                                if (oz == 0) {
+                                                // if both sides are blocked, don't check the corner, won't be visible anyway
+                                                if (oz == 0 && ctr != 1) {
                                                     ctr++;
                                                     islz = 1;
                                                 }
-                                                return (byte)((lx * islx + ly * isly + lz * islz + lo) / (float)(ctr));
+                                                return (byte)((lx * islx + ly * isly + lz * islz + lo) / (float)ctr);
                                             }
+
+                                            // split light and reassemble it again
+
+                                            byte avgSl = average((byte)(lx & 0xF), (byte)(ly & 0xF), (byte)(lz & 0xF), (byte)(lo & 0xF), ox, oy, oz);
+                                            byte avgBl = average((byte)(lx >> 4), (byte)(ly >> 4), (byte)(lz >> 4), (byte)(lo >> 4), ox, oy, oz);
+
+                                            byte l = (byte)(avgBl << 4 | avgSl);
 
                                             if (smoothLightingEnabled) {
                                                 switch (j) {
                                                     case 0:
-                                                        light1 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        light1 = l;
                                                         break;
                                                     case 1:
-                                                        light2 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        light2 = l;
                                                         break;
                                                     case 2:
-                                                        light3 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        light3 = l;
                                                         break;
                                                     case 3:
-                                                        light4 = average(lx, ly, lz, lo, ox, oy, oz);
+                                                        light4 = l;
                                                         break;
                                                 }
                                             }

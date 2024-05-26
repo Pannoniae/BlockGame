@@ -28,7 +28,7 @@ void main() {
     direction = directionValue;
     uint skylight = lightValue & 0xFu;
     uint blocklight = (lightValue >> 4) & 0xFu;
-    ivec2 lightCoords = ivec2(skylight, blocklight);
+    ivec2 lightCoords = ivec2(blocklight, skylight);
     light = texelFetch(lightTexture, lightCoords, 0);
     vertexPos = vPos;
 }
