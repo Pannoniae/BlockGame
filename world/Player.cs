@@ -474,12 +474,13 @@ public class Player {
     public void placeBlock() {
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
+            var bl = hotbar.getSelected();
             // don't intersect the player
-            var aabb = world.getAABB(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
-            if (aabb == null || !AABB.isCollision(world.player.aabb, aabb)) {
-                world.setBlock(pos.X, pos.Y, pos.Z, world.player.hotbar.getSelected());
+            var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
+            if (blockAABB == null || !AABB.isCollision(aabb, blockAABB)) {
+                world.setBlock(pos.X, pos.Y, pos.Z, bl);
                 world.blockUpdate(pos);
-                world.player.lastPlace = world.worldTime;
+                lastPlace = world.worldTime;
             }
         }
     }
@@ -492,7 +493,7 @@ public class Player {
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdate(pos);
             // place water if adjacent
-            world.player.lastBreak = world.worldTime;
+            lastBreak = world.worldTime;
         }
     }
 }

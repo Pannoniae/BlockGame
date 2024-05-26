@@ -27,7 +27,7 @@ public class Blocks {
     public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))));
     public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(Block.cubeUVs(2, 0))));
     public static Block GRAVEL = register(new Block(3, "Gravel", BlockModel.makeCube(Block.cubeUVs(3, 0))));
-    public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
+    public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))).light(14));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
 
     public static Block GLASS = register(new Block(6, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0)))
@@ -110,6 +110,11 @@ public class Block {
     /// Is this block a liquid?
     /// </summary>
     public bool liquid = false;
+
+    /// <summary>
+    /// How much light does this block emit? (0 for none.)
+    /// </summary>
+    public byte lightLevel = 0;
 
     public static readonly int atlasSize = 256;
     public BlockModel model;
@@ -206,6 +211,11 @@ public class Block {
         noCollision();
         noSelection();
         liquid = true;
+        return this;
+    }
+
+    public Block light(byte amount) {
+        lightLevel = amount;
         return this;
     }
 

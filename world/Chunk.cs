@@ -81,6 +81,7 @@ public class Chunk {
             section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
         }*/
+        var oldBlock = section.blocks[x, yRem, z];
         section.blocks[x, yRem, z] = block;
         if (!remesh) {
             return;
@@ -91,13 +92,26 @@ public class Chunk {
 
         // From there on, ONLY REMESHING STUFF
 
-        if (block != 0) {
-            world.removeSkyLightAndPropagate(wx, y, wz);
-        }
         // if block broken, add sunlight from above
-        else {
+        if (block == 0) {
             world.skyLightQueue.Add(new LightNode(wx, y, wz, this));
             world.skyLightQueue.Add(new LightNode(wx, y + 1, wz, this));
+        }
+        else {
+            world.removeSkyLightAndPropagate(wx, y, wz);
+        }
+
+        // if the new block has light, add the light
+        if (Blocks.get(block).lightLevel > 0) {
+            // add lightsource
+            setBlockLight(x, y, z, Blocks.get(block).lightLevel);
+            Console.Out.WriteLine(Blocks.get(block).lightLevel);
+            world.blockLightQueue.Add(new LightNode(wx, y, wz, this));
+        }
+        // if the old block had light, remove the light
+        if (block == 0 && Blocks.get(oldBlock).lightLevel > 0) {
+            // remove lightsource
+            world.removeBlockLightAndPropagate(wx, y, wz);
         }
 
         // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
@@ -108,6 +122,7 @@ public class Chunk {
         // get global coords
         var chunkPos = World.getChunkSectionPos(wx, y, wz);
 
+        // TODO only remesh neighbours if on the edge of the chunk
         foreach (var dir in Direction.directions) {
             var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
             if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
@@ -126,10 +141,21 @@ public class Chunk {
         // handle empty chunksections
         var section = chunks[sectionY];
         section.blocks.setSkylight(x, yRem, z, value);
-        if (remesh) {
-            var sectionCoord = new ChunkSectionCoord(coord.x, sectionY, coord.z);
-            if (sectionY >= 0 && sectionY < 8) {
-                world.mesh(sectionCoord);
+        if (!remesh) {
+            return;
+        }
+
+        var wx = coord.x * CHUNKSIZE + x;
+        var wz = coord.z * CHUNKSIZE + z;
+
+        world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
+        var chunkPos = World.getChunkSectionPos(wx, y, wz);
+
+        // TODO only remesh neighbours if on the edge of the chunk
+        foreach (var dir in Direction.directions) {
+            var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
+            if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
+                world.mesh(neighbourSection);
             }
         }
     }
