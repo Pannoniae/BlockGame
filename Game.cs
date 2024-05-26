@@ -224,8 +224,8 @@ public class Game {
         }
     }
 
-    private void onMouseMove(IMouse m, Vector2 position) {
-        screenStack.peek().onMouseMove(m, position);
+    private void onMouseMove(IMouse m, Vector2 pos) {
+        screenStack.peek().onMouseMove(m, pos);
     }
 
     private void onMouseDown(IMouse m, MouseButton button) {

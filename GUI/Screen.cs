@@ -23,6 +23,8 @@ public class Screen {
 
     public List<GUIElement> elements = new();
 
+    public GUIElement? activeElement;
+
     public static LoadingScreen LOADING = new();
     public static MainMenuScreen MAIN_MENU = new();
     public static GameScreen GAME_SCREEN = new();
@@ -73,7 +75,14 @@ public class Screen {
         foreach (var element in elements) {
             element.draw();
         }
+        // draw tooltip for active element
+        var tooltip = activeElement?.tooltip;
+        var mousePos = Game.mouse.Position;
+        if (!string.IsNullOrEmpty(tooltip)) {
+            Game.gui.drawString(tooltip, mousePos + new Vector2(MOUSEPOSPADDING));
+        }
     }
+    public static int MOUSEPOSPADDING => 4 * GUI.guiScale;
 
     public virtual void postDraw() {
         foreach (var element in elements) {
@@ -117,8 +126,20 @@ public class Screen {
 
     }
 
-    public virtual void onMouseMove(IMouse mouse, Vector2 position) {
-
+    public virtual void onMouseMove(IMouse mouse, Vector2 pos) {
+        bool found = false;
+        foreach (var element in elements) {
+            //Console.Out.WriteLine(element);
+            //Console.Out.WriteLine(element.bounds);
+            //Console.Out.WriteLine(pos);
+            if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
+                activeElement = element;
+                found = true;
+            }
+        }
+        if (!found) {
+            activeElement = null;
+        }
     }
 
     public virtual void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
