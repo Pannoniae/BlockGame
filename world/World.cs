@@ -180,6 +180,7 @@ public class World {
         // execute lighting updates
         processSkyLightRemovalQueue();
         processSkyLightQueue();
+        processBlockLightRemovalQueue();
         processBlockLightQueue();
 
         // random block updates!
@@ -207,14 +208,30 @@ public class World {
     }
 
     public void processSkyLightQueue() {
-        while (skyLightQueue.Count > 0) {
-            var cnt = skyLightQueue.Count;
+        processLightQueue(skyLightQueue, true);
+    }
+
+    public void processSkyLightRemovalQueue() {
+        processLightRemovalQueue(skyLightRemovalQueue, skyLightQueue, true);
+    }
+
+    public void processBlockLightQueue() {
+        processLightQueue(blockLightQueue, false);
+    }
+
+    public void processBlockLightRemovalQueue() {
+        processLightRemovalQueue(blockLightRemovalQueue, blockLightQueue, false);
+    }
+
+    public void processLightQueue(List<LightNode> queue, bool isSkylight) {
+        while (queue.Count > 0) {
+            var cnt = queue.Count;
             //Console.Out.WriteLine(cnt);
-            var node = skyLightQueue[cnt - 1];
-            skyLightQueue.RemoveAt(cnt - 1);
+            var node = queue[cnt - 1];
+            queue.RemoveAt(cnt - 1);
 
             var blockPos = new Vector3D<int>(node.x, node.y, node.z);
-            var level = getLight(node.x, node.y, node.z);
+            byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
 
             // if this is opaque, don't bother
             if (Blocks.isSolid(getBlock(node.x, node.y, node.z))) {
@@ -225,27 +242,32 @@ public class World {
 
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
-                var neighbourLight = getSkyLight(neighbour.X, neighbour.Y, neighbour.Z);
+                byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
                 // if not in world, forget it
                 if (!inWorldY(neighbour.X, neighbour.Y, neighbour.Z)) {
                     continue;
                 }
                 //var neighbourBlock = getBlock(neighbour);
-                var isDown = level == 15 && neighbourLight != 15 && dir == Direction.DOWN;
-                if (neighbourLight + 2 <= level || isDown) {
+                var isDown = isSkylight && level == 15 && neighbourLevel != 15 && dir == Direction.DOWN;
+                if (neighbourLevel + 2 <= level || isDown) {
                     byte newLevel = (byte)(isDown ? level : level - 1);
-                    setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
-                    skyLightQueue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
+                    if (isSkylight) {
+                        setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                    }
+                    else {
+                        setBlockLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                    }
+                    queue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
                 }
             }
         }
     }
 
-    public void processSkyLightRemovalQueue() {
-        while (skyLightRemovalQueue.Count > 0) {
-            var cnt = skyLightRemovalQueue.Count;
-            var node = skyLightRemovalQueue[cnt - 1];
-            skyLightRemovalQueue.RemoveAt(cnt - 1);
+    public void processLightRemovalQueue(List<LightRemovalNode> queue, List<LightNode> addQueue, bool isSkylight) {
+        while (queue.Count > 0) {
+            var cnt = queue.Count;
+            var node = queue[cnt - 1];
+            queue.RemoveAt(cnt - 1);
 
             var blockPos = new Vector3D<int>(node.x, node.y, node.z);
             var level = node.value;
@@ -256,27 +278,28 @@ public class World {
                 if (!inWorldY(neighbour.X, neighbour.Y, neighbour.Z)) {
                     continue;
                 }
-                byte neighbourLevel = getSkyLight(neighbour.X, neighbour.Y, neighbour.Z);
-                var isDownLight = dir == Direction.DOWN && level == 15;
+                byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
+                var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
                 if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
-                    setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                    if (isSkylight) {
+                        setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                    }
+                    else {
+                        setBlockLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                    }
 
                     // Emplace new node to queue. (could use push as well)
-                    skyLightRemovalQueue.Add(new LightRemovalNode(neighbour.X, neighbour.Y, neighbour.Z, neighbourLevel, node.chunk));
+                    queue.Add(new LightRemovalNode(neighbour.X, neighbour.Y, neighbour.Z, neighbourLevel, node.chunk));
                 }
                 else if (neighbourLevel >= level) {
                     // Add it to the update queue, so it can propagate to fill in the gaps
                     // left behind by this removal. We should update the lightBfsQueue after
                     // the lightRemovalBfsQueue is empty.
-                    skyLightQueue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
+                    addQueue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
 
                 }
             }
         }
-    }
-
-    public void processBlockLightQueue() {
-
     }
 
     public void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
@@ -527,7 +550,7 @@ public class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getSkyLight(x, y, z);
-            skyLightRemovalQueue.Add(new LightRemovalNode(x, y, z, value, chunk));
+            skyLightRemovalQueue.Add(new LightRemovalNode(x, y, z, value, chunk!));
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
@@ -541,6 +564,20 @@ public class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+        }
+    }
+
+    public void removeBlockLightAndPropagate(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        if (success) {
+            var value = getBlockLight(x, y, z);
+            blockLightRemovalQueue.Add(new LightRemovalNode(x, y, z, value, chunk!));
+            chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
 
