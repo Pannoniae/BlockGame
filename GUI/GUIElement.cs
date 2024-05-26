@@ -8,6 +8,8 @@ public class GUIElement {
     public HorizontalAnchor horizontalAnchor = HorizontalAnchor.LEFT;
     public VerticalAnchor verticalAnchor = VerticalAnchor.TOP;
 
+    public string tooltip = "";
+
     /// <summary>
     /// If true, guiScale does not adjust the size of this element (e.g. text)
     /// </summary>

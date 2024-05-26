@@ -17,6 +17,7 @@ public class SettingsScreen : Screen {
             settings.vSync = vsync.getIndex() == 1;
             Game.window.VSync = settings.vSync;
         };
+        vsync.tooltip = "Turns on vertical synchronisation.";
         elements.Add(vsync);
 
         var guiScale = new ToggleButton(this, new RectangleF(0, 40, 96, 16), settings.guiScale == 4 ? 1 : 0,
@@ -34,6 +35,7 @@ public class SettingsScreen : Screen {
         AO.clicked += () => {
             settings.AO = AO.getIndex() == 1;
         };
+        AO.tooltip = "Ambient Occlusion makes block corners darker to simulate shadows.";
         elements.Add(AO);
 
         var smoothLighting = new ToggleButton(this, new RectangleF(0, 88, 96, 16), settings.smoothLighting ? 1 : 0,
@@ -42,6 +44,7 @@ public class SettingsScreen : Screen {
         smoothLighting.clicked += () => {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
         };
+        smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
         elements.Add(smoothLighting);
 
         var back = new Button(this, new RectangleF(2, -18, 96, 16), "Back") {

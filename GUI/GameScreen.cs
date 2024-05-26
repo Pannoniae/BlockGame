@@ -99,6 +99,7 @@ public class GameScreen : Screen {
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
+        base.onMouseDown(mouse, button);
         if (Game.focused) {
             if (button == MouseButton.Left) {
                 world.player.breakBlock();
@@ -112,23 +113,24 @@ public class GameScreen : Screen {
         }
     }
 
-    public override void onMouseMove(IMouse mouse, Vector2 position) {
+    public override void onMouseMove(IMouse mouse, Vector2 pos) {
+        base.onMouseMove(mouse, pos);
         if (!Game.focused) {
             return;
         }
 
         if (Game.firstFrame) {
-            Game.instance.lastMousePos = position;
+            Game.instance.lastMousePos = pos;
         }
         else {
             const float lookSensitivity = 0.1f;
             if (Game.instance.lastMousePos == default) {
-                Game.instance.lastMousePos = position;
+                Game.instance.lastMousePos = pos;
             }
             else {
-                var xOffset = (position.X - Game.instance.lastMousePos.X) * lookSensitivity;
-                var yOffset = (position.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
-                Game.instance.lastMousePos = position;
+                var xOffset = (pos.X - Game.instance.lastMousePos.X) * lookSensitivity;
+                var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
+                Game.instance.lastMousePos = pos;
 
                 world.player.camera.ModifyDirection(xOffset, yOffset);
             }
@@ -146,6 +148,7 @@ public class GameScreen : Screen {
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyDown(keyboard, key, scancode);
         if (key == Key.Escape) {
             // hack for back to main menu
             if (!Game.focused) {
