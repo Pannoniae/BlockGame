@@ -136,6 +136,8 @@ public class Game {
         GL.DebugMessageCallback(GLDebug, 0);
         GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
 #endif
+
+
         imgui = new ImGuiController(GL, window, input);
         proc = Process.GetCurrentProcess();
         GD = new GraphicsDevice(GL);
@@ -208,6 +210,18 @@ public class Game {
         resize(new Vector2D<int>(width, height));
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+    }
+
+    public static void initDedicatedGraphics() {
+
+        // fuck integrated GPUs, we want the dedicated card
+        try {
+            NativeLibrary.Load(Environment.Is64BitProcess ? "nvapi64.dll" : "nvapi.dll");
+        }
+        catch {
+            // nothing!
+            Console.Out.WriteLine("Well, apparently there is no nVidia");
+        }
     }
 
     private void onMouseMove(IMouse m, Vector2 position) {
