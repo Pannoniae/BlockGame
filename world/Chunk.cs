@@ -92,9 +92,14 @@ public class Chunk {
 
         // From there on, ONLY REMESHING STUFF
 
-        // if block broken, add sunlight from above
+        // if block broken, add sunlight from neighbours
         if (block == 0) {
-            world.skyLightQueue.Add(new LightNode(wx, y, wz, this));
+            //world.skyLightQueue.Add(new LightNode(wx, y, wz, this));
+            world.skyLightQueue.Add(new LightNode(wx - 1, y, wz, this));
+            world.skyLightQueue.Add(new LightNode(wx + 1, y, wz, this));
+            world.skyLightQueue.Add(new LightNode(wx, y, wz - 1, this));
+            world.skyLightQueue.Add(new LightNode(wx, y, wz + 1, this));
+            world.skyLightQueue.Add(new LightNode(wx, y - 1, wz, this));
             world.skyLightQueue.Add(new LightNode(wx, y + 1, wz, this));
         }
         else {
@@ -163,13 +168,31 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setBlockLight(int x, int y, int z, byte value) {
+    public void setBlockLight(int x, int y, int z, byte value, bool remesh = true) {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
         var section = chunks[sectionY];
         section.blocks.setBlocklight(x, yRem, z, value);
+
+        if (!remesh) {
+            return;
+        }
+
+        var wx = coord.x * CHUNKSIZE + x;
+        var wz = coord.z * CHUNKSIZE + z;
+
+        world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
+        var chunkPos = World.getChunkSectionPos(wx, y, wz);
+
+        // TODO only remesh neighbours if on the edge of the chunk
+        foreach (var dir in Direction.directions) {
+            var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
+            if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
+                world.mesh(neighbourSection);
+            }
+        }
     }
 
 

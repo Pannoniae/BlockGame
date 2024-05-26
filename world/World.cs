@@ -192,7 +192,7 @@ public class World {
                         // I pray this is random
                         var coord = random.Next(16 * 16 * 16);
                         var x = coord / (16 * 16) % 16;
-                        var y = coord / (16) % 16;
+                        var y = coord / 16 % 16;
                         var z = coord % 16;
                         chunksection.tick(x, y, z);
                     }
@@ -233,8 +233,8 @@ public class World {
             var blockPos = new Vector3D<int>(node.x, node.y, node.z);
             byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
 
-            // if this is opaque, don't bother
-            if (Blocks.isSolid(getBlock(node.x, node.y, node.z))) {
+            // if this is opaque (for skylight), don't bother
+            if (isSkylight && Blocks.isSolid(getBlock(node.x, node.y, node.z))) {
                 continue;
             }
 
@@ -242,6 +242,10 @@ public class World {
 
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
+                // if neighbour is opaque, don't bother either
+                if (Blocks.isSolid(getBlock(neighbour))) {
+                    continue;
+                }
                 byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
                 // if not in world, forget it
                 if (!inWorldY(neighbour.X, neighbour.Y, neighbour.Z)) {

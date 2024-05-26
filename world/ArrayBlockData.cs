@@ -51,7 +51,7 @@ public class ArrayBlockData : BlockData {
                           x];
         var blocklight = (byte)((value & 0xF0) >> 4);
         // pack it back inside
-        value = (byte)(blocklight << 4 | val & 0xF);
+        value = (byte)(blocklight << 4 | val);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
@@ -60,7 +60,7 @@ public class ArrayBlockData : BlockData {
                           x];
         var skylight = (byte)(value & 0xF);
         // pack it back inside
-        value = (byte)(val << 4 | skylight & 0xF);
+        value = (byte)(val << 4 | skylight);
     }
 
     public static byte extractSkylight(byte value) {
