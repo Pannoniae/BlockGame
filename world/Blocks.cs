@@ -229,7 +229,7 @@ public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uv
 
     public override void update(World world, Vector3D<int> pos) {
         if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
-            world.setBlock(pos.X, pos.Y, pos.Z, Blocks.AIR.id);
+            world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR.id);
         }
     }
 }
@@ -241,7 +241,7 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
             // queue block updates
             var neighbourBlock = pos + dir;
             if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
-                world.runLater(() => world.setBlock(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id), 10);
+                world.runLater(() => world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id), 10);
                 world.blockUpdate(neighbourBlock, 10);
             }
         }

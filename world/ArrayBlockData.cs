@@ -8,8 +8,8 @@ public class ArrayBlockData : BlockData {
     /// Skylight is on the lower 4 bits, blocklight is on the upper 4 bits.
     /// Stored in YZX order.
     /// </summary>
-    public byte[] light = new byte[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
-    public ushort[] blocks = new ushort[Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE];
+    public ArrayBlockDataB light;
+    public ArrayBlockDataU blocks;
 
     public Chunk chunk;
 
@@ -70,4 +70,21 @@ public class ArrayBlockData : BlockData {
     public static byte extractBlocklight(byte value) {
         return (byte)((value & 0xF0) >> 4);
     }
+}
+[InlineArray(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE)]
+public struct ArrayBlockDataB {
+    private byte b;
+}
+[InlineArray(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE)]
+public struct ArrayBlockDataU {
+    private ushort u;
+}
+
+[InlineArray(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX)]
+public struct NeighbourBlockDataB {
+    private byte b;
+}
+[InlineArray(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX)]
+public struct NeighbourBlockDataU {
+    private ushort u;
 }

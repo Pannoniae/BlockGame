@@ -55,7 +55,7 @@ public class Chunk {
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
                 while (!Blocks.isSolid(bl)) {
-                    setSkyLight(x, y, z, 15, false);
+                    setSkyLight(x, y, z, 15);
                     y--;
                     bl = getBlock(x, y, z);
                 }
@@ -71,7 +71,11 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
+    public void setBlock(int x, int y, int z, ushort block) {
+        chunks[y / CHUNKSIZE].blocks[x, y % CHUNKSIZE, z] = block;
+    }
+
+    public void setBlockRemesh(int x, int y, int z, ushort block) {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
 
@@ -83,10 +87,6 @@ public class Chunk {
         }*/
         var oldBlock = section.blocks[x, yRem, z];
         section.blocks[x, yRem, z] = block;
-        if (!remesh) {
-            return;
-        }
-
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
@@ -139,17 +139,18 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setSkyLight(int x, int y, int z, byte value, bool remesh = true) {
+    public void setSkyLight(int x, int y, int z, byte value) {
+        chunks[y / CHUNKSIZE].blocks.setSkylight(x, y % CHUNKSIZE, z, value);
+    }
+
+    public void setSkyLightRemesh(int x, int y, int z, byte value) {
+
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
         var section = chunks[sectionY];
         section.blocks.setSkylight(x, yRem, z, value);
-        if (!remesh) {
-            return;
-        }
-
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
@@ -168,17 +169,19 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setBlockLight(int x, int y, int z, byte value, bool remesh = true) {
+    public void setBlockLight(int x, int y, int z, byte value) {
+        // handle empty chunksections
+        chunks[y / CHUNKSIZE].blocks.setBlocklight(x, y % CHUNKSIZE, z, value);
+
+    }
+
+    public void setBlockLightRemesh(int x, int y, int z, byte value) {
         var sectionY = y / CHUNKSIZE;
         var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
         var section = chunks[sectionY];
         section.blocks.setBlocklight(x, yRem, z, value);
-
-        if (!remesh) {
-            return;
-        }
 
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
@@ -200,27 +203,19 @@ public class Chunk {
     /// Uses chunk coordinates
     /// </summary>
     public ushort getBlock(int x, int y, int z) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
-        return chunks[sectionY].blocks[x, yRem, z];
+        return chunks[y / CHUNKSIZE].blocks[x, y % CHUNKSIZE, z];
     }
 
     public byte getLight(int x, int y, int z) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
-        return chunks[sectionY].blocks.getLight(x, yRem, z);
+        return chunks[y / CHUNKSIZE].blocks.getLight(x, y % CHUNKSIZE, z);
     }
 
     public byte getSkyLight(int x, int y, int z) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
-        return chunks[sectionY].blocks.skylight(x, yRem, z);
+        return chunks[y / CHUNKSIZE].blocks.skylight(x, y % CHUNKSIZE, z);
     }
 
     public byte getBlockLight(int x, int y, int z) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
-        return chunks[sectionY].blocks.blocklight(x, yRem, z);
+        return chunks[y / CHUNKSIZE].blocks.blocklight(x, y % CHUNKSIZE, z);
     }
 
     public Vector3D<int> getCoordInSection(int x, int y, int z) {

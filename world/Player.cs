@@ -135,16 +135,19 @@ public class Player {
         wasInLiquid = inLiquid;
     }
 
-    public ChunkCoord getChunk(Vector3D<double> position) {
-        return World.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+    public ChunkCoord getChunk(Vector3D<double> pos) {
+        var blockPos = pos.toBlockPos();
+        return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
     }
 
     public ChunkCoord getChunk() {
-        return World.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+        var blockPos = position.toBlockPos();
+        return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
     }
 
     public void loadChunksAroundThePlayer(int renderDistance) {
-        var chunk = World.getChunkPos(new Vector2D<int>((int)position.X, (int)position.Z));
+        var blockPos = position.toBlockPos();
+        var chunk = World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
         world.loadChunksAroundChunk(chunk, renderDistance);
         world.sortChunks();
     }
@@ -484,7 +487,7 @@ public class Player {
             // don't intersect the player
             var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
             if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {
-                world.setBlock(pos.X, pos.Y, pos.Z, bl);
+                world.setBlockRemesh(pos.X, pos.Y, pos.Z, bl);
                 world.blockUpdate(pos);
                 lastPlace = world.worldTime;
             }
@@ -494,7 +497,7 @@ public class Player {
     public void breakBlock() {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
-            world.setBlock(pos.X, pos.Y, pos.Z, 0);
+            world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
 
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdate(pos);

@@ -18,9 +18,9 @@ public class TechDemoChunkGenerator : ChunkGenerator {
                 // transform to the range 10 - 30
                 var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 20 + 20;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlock(x, y, z, Blocks.DIRT.id, false);
+                    chunk.setBlock(x, y, z, Blocks.DIRT.id);
                 }
-                chunk.setBlock(x, (int)height, z, Blocks.GRASS.id, false);
+                chunk.setBlock(x, (int)height, z, Blocks.GRASS.id);
             }
         }
         chunk.status = ChunkStatus.GENERATED;

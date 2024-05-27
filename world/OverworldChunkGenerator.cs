@@ -18,14 +18,14 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 // transform to the range 5 - 10
                 var height = generator.noise.GetNoise(worldPos.X, worldPos.Z) * 2.5 + 75;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlock(x, y, z, Blocks.DIRT.id, false);
+                    chunk.setBlock(x, y, z, Blocks.DIRT.id);
                 }
-                chunk.setBlock(x, (int)height, z, Blocks.GRASS.id, false);
+                chunk.setBlock(x, (int)height, z, Blocks.GRASS.id);
 
                 // water if low
                 if (height < 74) {
                     for (int y2 = (int)Math.Round(height); y2 <= 74; y2++) {
-                        chunk.setBlock(x, y2, z, Blocks.WATER.id, false);
+                        chunk.setBlock(x, y2, z, Blocks.WATER.id);
                     }
                 }
             }
@@ -55,7 +55,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
         var world = generator.world;
         // tree
         for (int i = 0; i < 7; i++) {
-            world.setBlock(x, y + i, z, Blocks.LOG.id, false);
+            world.setBlock(x, y + i, z, Blocks.LOG.id);
         }
         // leaves, thick
         for (int x1 = -2; x1 <= 2; x1++) {
@@ -65,7 +65,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                     continue;
                 }
                 for (int y1 = 4; y1 < 6; y1++) {
-                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id, false);
+                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
                 }
             }
         }
@@ -77,7 +77,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                     if (x2 == 0 && z2 == 0 && y == 6) {
                         continue;
                     }
-                    world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id, false);
+                    world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id);
                 }
             }
         }
