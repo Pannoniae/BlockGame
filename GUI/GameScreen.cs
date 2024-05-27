@@ -1,6 +1,6 @@
 using System.Drawing;
 using System.Numerics;
-using System.Text;
+using Cysharp.Text;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using TrippyGL;
@@ -12,7 +12,7 @@ public class GameScreen : Screen {
     public static World world;
     public GraphicsDevice GD;
 
-    public StringBuilder debugStr;
+    public Utf16ValueStringBuilder debugStr;
     public Debug D;
 
     public bool debugScreen = false;
@@ -27,7 +27,7 @@ public class GameScreen : Screen {
 
     public override void activate() {
         base.activate();
-        debugStr = new StringBuilder(500);
+        debugStr = ZString.CreateStringBuilder();
         GD = Game.GD;
         D = new Debug();
 
@@ -280,25 +280,25 @@ public class GameScreen : Screen {
 
         if (debugScreen) {
             debugStr.Clear();
-            debugStr.AppendLine($"{p.position.X:0.000}, {p.position.Y:0.000}, {p.position.Z:0.000}");
-            debugStr.AppendLine($"vx:{p.velocity.X:0.000}, vy:{p.velocity.Y:0.000}, vz:{p.velocity.Z:0.000}, vl:{p.velocity.Length:0.000}");
-            debugStr.AppendLine($"ax:{p.accel.X:0.000}, ay:{p.accel.Y:0.000}, az:{p.accel.Z:0.000}");
-            debugStr.AppendLine($"cf:{c.forward.X:0.000}, {c.forward.Y:0.000}, {c.forward.Z:0.000}");
-            debugStr.AppendLine($"sl:{sl}, bl:{bl}");
-            debugStr.AppendLine($"g:{p.onGround} j:{p.jumping}");
-            debugStr.AppendLine(i.targetedPos.HasValue
-                ? $"{i.targetedPos.Value.X}, {i.targetedPos.Value.Y}, {i.targetedPos.Value.Z} {i.previousPos.Value.X}, {i.previousPos.Value.Y}, {i.previousPos.Value.Z}"
-                : "No target");
-            debugStr.AppendLine($"rC:{m.renderedChunks} rV:{m.renderedVerts}");
-            debugStr.AppendLine($"lC:{loadedChunks} lCs:{loadedChunks * Chunk.CHUNKHEIGHT}");
-            debugStr.AppendLine($"FOV:{p.camera.hfov}");
+            debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
+            debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length);
+            debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
+            debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
+            debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
+            debugStr.AppendFormat("g:{0} j:{1}\n", p.onGround, p.jumping);
+            if (i.targetedPos.HasValue)
+                debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
+            else
+                debugStr.AppendLine("No target\n");
+            debugStr.AppendFormat("rC:{0} rV:{1}\n", m.renderedChunks, m.renderedVerts);
+            debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
+            debugStr.AppendFormat("FOV:{0}\n", p.camera.hfov);
 
-            debugStr.AppendLine($"FPS:{i.fps} (ft:{i.ft * 1000:0.##}ms)");
-            debugStr.AppendLine($"W:{Game.width} H:{Game.height}");
-            debugStr.AppendLine($"CX:{Game.centreX} CY:{Game.centreY}");
-            debugStr.AppendLine(
-                $"M:{privateMemory / Constants.MEGABYTES:0.###}:{workingSet / Constants.MEGABYTES:0.###} (h:{GCMemory / Constants.MEGABYTES:0.###})");
-            gui.tb.DrawString(gui.guiFont, debugStr.ToString(),
+            debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
+            debugStr.AppendFormat("W:{0} H:{1}\n", Game.width, Game.height);
+            debugStr.AppendFormat("CX:{0} CY:{1}\n", Game.centreX, Game.centreY);
+            debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
+            gui.tb.DrawString(gui.guiFont, debugStr.AsSpan(),
                 new Vector2(elements[0].bounds.Left, elements[0].bounds.Bottom), Color4b.White);
 
 

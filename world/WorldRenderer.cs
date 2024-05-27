@@ -144,7 +144,7 @@ public class WorldRenderer {
             var GL = Game.GL;
             var pos = Game.instance.targetedPos!.Value;
             var block = world.getBlock(pos);
-            var sel = world.getSelectionAABB(pos.X, pos.Y, pos.Z, block)!;
+            var sel = world.getSelectionAABB(pos.X, pos.Y, pos.Z, block).Value;
             const float OFFSET = 0.005f;
             var minX = (float)sel.min.X - OFFSET;
             var minY = (float)sel.min.Y - OFFSET;

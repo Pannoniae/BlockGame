@@ -81,7 +81,7 @@ public class Player {
         this.world = world;
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
-        aabb = calcAABB(position);
+        calcAABB(ref aabb, position);
     }
 
     public void render(double dt, double interp) {
@@ -123,7 +123,7 @@ public class Player {
             (float)prevPosition.Z);
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
-        aabb = calcAABB(position);
+        calcAABB(ref aabb, position);
         if (Math.Abs(velocity.withoutY().Length) > 0.0001 && onGround) {
             camera.bob = (float)(velocity.Length / Constants.maxhSpeed);
         }
@@ -296,6 +296,12 @@ public class Player {
         }
     }
 
+    private static void calcAABB(ref AABB aabb, Vector3D<double> pos) {
+        const double sizehalf = width / 2;
+        AABB.update(ref aabb, new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
+            new Vector3D<double>(width, height, width));
+    }
+
     [Pure]
     private AABB calcAABB(Vector3D<double> pos) {
         var sizehalf = width / 2;
@@ -316,7 +322,7 @@ public class Player {
                     continue;
                 }
 
-                collisionTargets.Add(blockAABB);
+                collisionTargets.Add(blockAABB.Value);
             }
         }
 
@@ -477,7 +483,7 @@ public class Player {
             var bl = hotbar.getSelected();
             // don't intersect the player
             var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
-            if (blockAABB == null || !AABB.isCollision(aabb, blockAABB)) {
+            if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {
                 world.setBlock(pos.X, pos.Y, pos.Z, bl);
                 world.blockUpdate(pos);
                 lastPlace = world.worldTime;

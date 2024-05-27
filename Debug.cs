@@ -7,8 +7,8 @@ public class Debug {
     private const int MAX_LINE_VERTICES = 512;
     private const int MAX_POINT_VERTICES = 512;
 
-    private VertexColor[] lineVertices = new VertexColor[MAX_LINE_VERTICES];
-    private VertexBuffer<VertexColor> lineVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
+    private readonly VertexColor[] lineVertices = new VertexColor[MAX_LINE_VERTICES];
+    private readonly VertexBuffer<VertexColor> lineVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
     private int currentLine = 0;
     private VertexColor[] pointVertices = new VertexColor[MAX_POINT_VERTICES];
     private VertexBuffer<VertexColor> pointVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
@@ -17,6 +17,10 @@ public class Debug {
     private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.GD, excludeWorldMatrix: true);
 
     public void update(double interp) {
+        // nothing to do, so why set the shader?
+        if (currentLine == 0) {
+            return;
+        }
         // don't forget to use the program before setting uniforms.
         Game.GD.ResetShaderProgramStates();
         debugShader.Projection = GameScreen.world.player.camera.getProjectionMatrix();
@@ -68,6 +72,10 @@ public class Debug {
     }
 
     public void flushLines() {
+        // nothing to do
+        if (currentLine == 0) {
+            return;
+        }
         var GD = Game.GD;
         lineVertexBuffer.DataSubset.SetData(lineVertices.AsSpan(0, currentLine));
         GD.VertexArray = lineVertexBuffer;

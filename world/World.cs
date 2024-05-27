@@ -80,14 +80,7 @@ public class World {
     public void sortChunks() {
         // sort queue based on position
         // don't reorder across statuses though
-        chunkLoadQueue.Sort((ticket1, ticket2) => {
-            var comparison = new ChunkCoordComparer(player.position).Compare(ticket1.chunkCoord, ticket2.chunkCoord);
-            int statusDiff;
-            statusDiff = (int)ticket1.level - (int)ticket2.level;
-            // if statusDiff > 0, chunk2 is bigger
-            //Console.Out.WriteLine($"{comparison} {statusDiff * 1000}");
-            return comparison + statusDiff * 1000;
-        });
+        chunkLoadQueue.Sort(new ChunkTicketComparer(player.position.toBlockPos()));
     }
 
     public void generate() {
@@ -606,8 +599,8 @@ public class World {
         if (aabb == null) {
             return null;
         }
-        return new AABB(new Vector3D<double>(x + aabb.minX, y + aabb.minY, z + aabb.minZ),
-            new Vector3D<double>(x + aabb.maxX, y + aabb.maxY, z + aabb.maxZ));
+        return new AABB(new Vector3D<double>(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
+            new Vector3D<double>(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
     }
 
     public AABB? getAABB(int x, int y, int z, ushort id) {
@@ -634,8 +627,8 @@ public class World {
         if (aabb == null) {
             return null;
         }
-        return new AABB(new Vector3D<double>(x + aabb.minX, y + aabb.minY, z + aabb.minZ),
-            new Vector3D<double>(x + aabb.maxX, y + aabb.maxY, z + aabb.maxZ));
+        return new AABB(new Vector3D<double>(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
+            new Vector3D<double>(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
     }
 
     public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
