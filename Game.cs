@@ -237,7 +237,6 @@ public class Game {
         //mouse.Position = new Vector2(centre.X, centre.Y);
         focused = true;
         firstFrame = true;
-        lockingMouse = true;
     }
 
     public void unlockMouse() {

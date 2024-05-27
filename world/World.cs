@@ -28,6 +28,8 @@ public class World {
     public WorldRenderer renderer;
     public WorldGenerator generator;
 
+    public bool isLoading;
+
     public Player player;
 
 
@@ -63,6 +65,9 @@ public class World {
         chunks = new Dictionary<ChunkCoord, Chunk>();
         // load a minimal amount of chunks so the world can get started
         loadSpawnChunks();
+
+        // after loading spawn chunks, load everything else immediately
+        isLoading = true;
 
         // teleport player to top block
         while (getBlock(player.position.toBlockPos()) != 0) {
@@ -138,7 +143,9 @@ public class World {
         }
         Console.Out.WriteLine("---END---");*/
 
-        while (Game.permanentStopwatch.ElapsedMilliseconds - start < MAX_CHUNKLOAD_FRAMETIME) {
+        // if is loading, don't throttle
+        var limit = isLoading ? 50 : MAX_CHUNKLOAD_FRAMETIME;
+        while (Game.permanentStopwatch.ElapsedMilliseconds - start < limit) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[0];
                 chunkLoadQueue.RemoveAt(0);
@@ -147,6 +154,7 @@ public class World {
             }
             else {
                 // chunk queue empty, don't loop more
+                isLoading = false;
                 break;
             }
         }
