@@ -110,6 +110,7 @@ public class GameScreen : Screen {
         }
         else {
             Game.instance.lockMouse();
+            Game.lockingMouse = true;
         }
     }
 
