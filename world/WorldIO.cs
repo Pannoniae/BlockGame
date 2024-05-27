@@ -66,7 +66,7 @@ public class WorldIO {
             for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                     for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                        world.chunks[new ChunkCoord(chunkX, chunkZ)].setBlock(x, y, z, (ShortTag)blocks[index], false);
+                        world.chunks[new ChunkCoord(chunkX, chunkZ)].setBlock(x, y, z, (ShortTag)blocks[index]);
                         index++;
                     }
                 }

@@ -20,9 +20,6 @@ public class ChunkSectionRenderer {
     public bool hasTranslucentBlocks;
     public bool hasOnlySolid;
 
-    public Shader shader;
-    public int uMVP;
-
     public readonly GL GL;
 
     public static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
@@ -36,13 +33,13 @@ public class ChunkSectionRenderer {
     public static List<BlockVertex> chunkVertices = new(1024);
     public static List<ushort> chunkIndices = new(1024);
     // YZX again
-    public static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    public static byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    public static NeighbourBlockDataU neighbours;
+    public static NeighbourBlockDataB neighbourLights;
     public static ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
-    static object meshingLock = new();
+    static readonly object meshingLock = new();
 
-    private static int[] offsetTable = [
+    private static readonly int[] offsetTable = [
         // west
 
         -1, 0, 1, -1, 1, 0, -1, 1, 1,
@@ -88,8 +85,6 @@ public class ChunkSectionRenderer {
 
     public ChunkSectionRenderer(ChunkSection section) {
         this.section = section;
-        shader = section.chunk.world.renderer.shader;
-        uMVP = shader.getUniformLocation("uMVP");
     }
 
     private static bool opaqueBlocks(int b) {
@@ -205,7 +200,6 @@ public class ChunkSectionRenderer {
     }
 
 
-
     public bool isVisible(BoundingFrustum frustum) {
         return frustum.Contains(section.bbbox) != ContainmentType.Disjoint;
     }
@@ -245,16 +239,20 @@ public class ChunkSectionRenderer {
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
         var blockData = section.blocks;
-        ref var blockArray = ref MemoryMarshal.GetArrayDataReference(blockData.blocks);
-        ref var sourceLightArray = ref MemoryMarshal.GetArrayDataReference(blockData.light);
-        ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
-        ref var lightArray = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
+        ReadOnlySpan<ushort> blockArray = blockData.blocks;
+        ref ushort blockArrayRef = ref MemoryMarshal.GetReference(blockArray);
+        ReadOnlySpan<byte> sourceLightArray = blockData.light;
+        ref byte sourceLightArrayRef = ref MemoryMarshal.GetReference(sourceLightArray);
+        ReadOnlySpan<ushort> neighboursArray = neighbours;
+        ref ushort neighboursArrayRef = ref MemoryMarshal.GetReference(neighboursArray);
+        ReadOnlySpan<byte> lightArray = neighbourLights;
+        ref byte lightArrayRef = ref MemoryMarshal.GetReference(lightArray);
         var world = section.world;
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    var bl = accessRef(ref blockArray, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-                    var light = accessRef(ref sourceLightArray, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+                    var bl = accessRef(ref blockArrayRef, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+                    var light = accessRef(ref sourceLightArrayRef, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
                     if (bl != 0) {
                         isEmpty = false;
                     }
@@ -264,8 +262,8 @@ public class ChunkSectionRenderer {
                     if (Blocks.notSolid(bl)) {
                         hasOnlySolid = false;
                     }
-                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
-                    accessRef(ref lightArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), light);
+                    accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
+                    accessRef(ref lightArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), light);
                 }
             }
         }
@@ -331,9 +329,9 @@ public class ChunkSectionRenderer {
                     sz = (int)MathF.Floor((float)sz / Chunk.CHUNKSIZE);
                     var neighbourSection =
                         access(neighbourSections, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);
-                    accessRef(ref neighboursArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
+                    accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
                         neighbourSection != null ? neighbourSection[cx, cy, cz] : (ushort)0);
-                    accessRef(ref lightArray, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
+                    accessRef(ref lightArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
                         neighbourSection?.getLight(cx, cy, cz) ?? 0);
                 }
             }
@@ -366,11 +364,6 @@ public class ChunkSectionRenderer {
 
         // helper function to get blocks from cache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ushort getBlockFromCache(int x, int y, int z) {
-            return access(neighbours, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ushort getBlockFromCacheUnsafeVec(ref ushort arrayBase, Vector3D<int> vec) {
             return accessRef(ref arrayBase, (vec.Y + 1) * Chunk.CHUNKSIZEEXSQ + (vec.Z + 1) * Chunk.CHUNKSIZEEX + (vec.X + 1));
         }
@@ -389,8 +382,10 @@ public class ChunkSectionRenderer {
         Span<ushort> tempIndices = stackalloc ushort[6];
         //Span<Face> faces = stackalloc Face[Face.MAX_FACES];
 
-        ref var neighboursArray = ref MemoryMarshal.GetArrayDataReference(neighbours);
-        ref var lightArray = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
+        ReadOnlySpan<ushort> neighboursArray = neighbours;
+        ref ushort neighbourRef = ref MemoryMarshal.GetReference(neighboursArray);
+        ReadOnlySpan<byte> lightArray = neighbourLights;
+        ref byte lightRef = ref MemoryMarshal.GetReference(lightArray);
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
 
         bool test = false;
@@ -399,7 +394,7 @@ public class ChunkSectionRenderer {
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    var bl = getBlockFromCacheUnsafe(ref neighboursArray, x, y, z);
+                    var bl = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z);
                     switch (mode) {
                         case VertexConstructionMode.OPAQUE:
                             test = opaqueBlocks(bl);
@@ -511,7 +506,7 @@ public class ChunkSectionRenderer {
                                         nbz = z;
                                         break;
                                 }
-                                nb = getBlockFromCacheUnsafe(ref neighboursArray, nbx, nby, nbz);
+                                nb = getBlockFromCacheUnsafe(ref neighbourRef, nbx, nby, nbz);
                                 switch (mode) {
 
                                     case VertexConstructionMode.OPAQUE:
@@ -528,22 +523,22 @@ public class ChunkSectionRenderer {
                                 if (!smoothLightingEnabled) {
                                     switch (dir) {
                                         case RawDirection.WEST:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x - 1, y, z);
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x - 1, y, z);
                                             break;
                                         case RawDirection.EAST:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x + 1, y, z);
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x + 1, y, z);
                                             break;
                                         case RawDirection.SOUTH:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y, z - 1);
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y, z - 1);
                                             break;
                                         case RawDirection.NORTH:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y, z + 1);
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y, z + 1);
                                             break;
                                         case RawDirection.DOWN:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y - 1, z);
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y - 1, z);
                                             break;
                                         case RawDirection.UP:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightArray, x, y + 1, z);
+                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y + 1, z);
                                             break;
                                     }
                                 }
@@ -567,22 +562,22 @@ public class ChunkSectionRenderer {
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
-                                            ox = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
-                                            lx = getLightFromCacheUnsafe(ref lightArray, xb, yb, zb);
+                                            ox = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
+                                            lx = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
 
                                             getOffset(ref offsetArray, dirIdx, j, 1, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
-                                            oy = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
-                                            ly = getLightFromCacheUnsafe(ref lightArray, xb, yb, zb);
+                                            oy = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
+                                            ly = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
 
                                             getOffset(ref offsetArray, dirIdx, j, 2, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
-                                            oz = getBlockFromCacheUnsafe(ref neighboursArray, xb, yb, zb);
-                                            lz = getLightFromCacheUnsafe(ref lightArray, xb, yb, zb);
+                                            oz = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
+                                            lz = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
 
                                             // only apply AO if enabled
                                             if (AOenabled && !face.noAO) {
@@ -603,7 +598,7 @@ public class ChunkSectionRenderer {
                                             }
                                             // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                             // calculate average
-                                            var lo = getLightFromCacheUnsafe(ref lightArray, nbx, nby, nbz);
+                                            var lo = getLightFromCacheUnsafe(ref lightRef, nbx, nby, nbz);
 
 
                                             // this averages the four light values. If the block is opaque, it ignores the light value.
@@ -771,6 +766,30 @@ public class ChunkSectionRenderer {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void access<T>(T[] arr, int index, T value) {
         ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
+        Unsafe.Add(ref arrayRef, index) = value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T access<T>(Span<T> arr, int index) {
+        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
+        return Unsafe.Add(ref arrayRef, index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void access<T>(Span<T> arr, int index, T value) {
+        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
+        Unsafe.Add(ref arrayRef, index) = value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T access<T>(ReadOnlySpan<T> arr, int index) {
+        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
+        return Unsafe.Add(ref arrayRef, index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void access<T>(ReadOnlySpan<T> arr, int index, T value) {
+        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
         Unsafe.Add(ref arrayRef, index) = value;
     }
 

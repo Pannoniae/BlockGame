@@ -94,7 +94,7 @@ public class World {
         for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 for (int y = 0; y < 3; y++) {
-                    setBlock(x, y, z, 2, false);
+                    setBlock(x, y, z, 2);
                 }
             }
         }
@@ -104,12 +104,12 @@ public class World {
             for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
                 var sin = Math.Sin(x / 3f) * 2 + sinMin + 1 + Math.Cos(z / 3f) * 2 + sinMin + 1;
                 for (int y = sinMin; y < sin; y++) {
-                    setBlock(x, y, z, 5, false);
+                    setBlock(x, y, z, 5);
                 }
 
                 if (sin < 4) {
                     for (int y = 3; y < 4; y++) {
-                        setBlock(x, y, z, Blocks.WATER.id, false);
+                        setBlock(x, y, z, Blocks.WATER.id);
                     }
                 }
             }
@@ -320,19 +320,12 @@ public class World {
             }
         }
         // populate around renderDistance
-        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
-            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
-                }
-            }
-        }
         // light around renderDistance
         for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
                     addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
                 }
             }
@@ -369,19 +362,12 @@ public class World {
             }
         }
         // populate around renderDistance
-        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
-            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    loadChunk(coord, ChunkStatus.POPULATED);
-                }
-            }
-        }
         // light around renderDistance
         for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                    loadChunk(coord, ChunkStatus.POPULATED);
                     loadChunk(coord, ChunkStatus.LIGHTED);
                 }
             }
@@ -631,14 +617,24 @@ public class World {
             new Vector3D<double>(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
     }
 
-    public void setBlock(int x, int y, int z, ushort block, bool remesh = true) {
+    public void setBlock(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
             return;
         }
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block, remesh);
+        chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
+    }
+
+    public void setBlockRemesh(int x, int y, int z, ushort block) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
 
     public void runLater(Action action, int tick) {
