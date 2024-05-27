@@ -3,7 +3,8 @@ using Plane = System.Numerics.Plane;
 
 namespace BlockGame;
 
-public class AABB {
+// mutable
+public struct AABB {
     public double minX => min.X;
     public double minY => min.Y;
     public double minZ => min.Z;
@@ -27,8 +28,9 @@ public class AABB {
         return new AABB(min, min + size);
     }
 
-
-    public void move(int x, int y, int z) {
+    public static void update(ref AABB aabb, Vector3D<double> min, Vector3D<double> size) {
+        aabb.min = min;
+        aabb.max = min + size;
     }
 
     public static bool isCollision(AABB box1, AABB box2) {

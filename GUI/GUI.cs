@@ -17,6 +17,7 @@ namespace BlockGame;
 /// <summary>
 /// GUI class which can draw onto the screen.
 /// Supports scaling with guiScale.
+/// Drawing methods ending with "UI" draw on the virtual GUI coordinate system, so they are positioned in the right place when the GUI scale is changed.
 /// </summary>
 public class GUI {
 
@@ -155,8 +156,19 @@ public class GUI {
         tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 
+    public void drawUI(Texture2D texture, Vector2 position, Rectangle? source = null,
+        Color4b color = default, Vector2 origin = default, float depth = 0f) {
+        tb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
+    }
+
+    // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
+
     public void drawString(string text, Vector2 position, Color4b color = default) {
         tb.DrawString(guiFont, text, position, color == default ? Color4b.White : color);
+    }
+
+    public void drawStringUI(string text, Vector2 position, Color4b color = default) {
+        tb.DrawString(guiFont, text, position * guiScale, color == default ? Color4b.White : color);
     }
 
     public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
@@ -165,10 +177,21 @@ public class GUI {
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
     }
 
+    public void drawStringCentredUI(string text, Vector2 position, Color4b color = default) {
+        var offsetX = guiFont.Measure(text).X / 2;
+        var offsetY = guiFont.Measure(text).Y / 2;
+        tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color);
+    }
+
     // some day we'll have a better API, but not this day
     public void drawStringShadowed(string text, Vector2 position, Color4b color = default) {
         tb.DrawString(guiFont, text, position + new Vector2(1, 1), Color4b.DimGray);
         tb.DrawString(guiFont, text, position, color == default ? Color4b.White : color);
+    }
+
+    public void drawStringShadowedUI(string text, Vector2 position, Color4b color = default) {
+        tb.DrawString(guiFont, text, position * guiScale + new Vector2(1, 1), Color4b.DimGray);
+        tb.DrawString(guiFont, text, position * guiScale, color == default ? Color4b.White : color);
     }
 
     public void drawStringCentredShadowed(string text, Vector2 position, Color4b color = default) {
@@ -176,6 +199,13 @@ public class GUI {
         var offsetY = guiFont.Measure(text).Y / 2;
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color4b.DimGray);
         tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
+    }
+
+    public void drawStringCentredShadowedUI(string text, Vector2 position, Color4b color = default) {
+        var offsetX = guiFont.Measure(text).X / 2;
+        var offsetY = guiFont.Measure(text).Y / 2;
+        tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY) + new Vector2(1, 1), Color4b.DimGray);
+        tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color);
     }
 
     public void drawBlock(World world, Block block, int x, int y, int size) {
