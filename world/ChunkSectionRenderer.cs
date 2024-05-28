@@ -605,22 +605,24 @@ public class ChunkSectionRenderer {
                                                 // this averages the four light values. If the block is opaque, it ignores the light value.
                                                 byte average(byte lx, byte ly, byte lz, byte lo, ushort ox, ushort oy, ushort oz) {
                                                     int ctr = 1;
-                                                    byte flags = 0;
+                                                    int islx = 0;
+                                                    int isly = 0;
+                                                    int islz = 0;
                                                     // check ox
                                                     if (ox == 0) {
                                                         ctr++;
-                                                        flags |= 1;
+                                                        islx = 1;
                                                     }
                                                     if (oy == 0) {
                                                         ctr++;
-                                                        flags |= 2;
+                                                        isly = 1;
                                                     }
                                                     // if both sides are blocked, don't check the corner, won't be visible anyway
                                                     if (oz == 0 && ctr != 1) {
                                                         ctr++;
-                                                        flags |= 4;
+                                                        islz = 1;
                                                     }
-                                                    return (byte)((lx * (flags & 0x1) + ly * (flags & 0x2) + lz * (flags & 0x4) + lo) / (float)ctr);
+                                                    return (byte)((lx * islx + ly * isly + lz * islz + lo) / (float)ctr);
                                                 }
 
                                                 // split light and reassemble it again
