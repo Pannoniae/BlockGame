@@ -459,19 +459,22 @@ public class World {
         // does the chunk exist?
         bool hasChunk = chunk != default;
 
+        //Console.Out.WriteLine($"chunkload0 {chunkCoord} {status}");
+
         // right now we only generate, not load
         // if it's already generated, don't do it again
-        if (status >= ChunkStatus.GENERATED && !(hasChunk && chunk!.status > ChunkStatus.GENERATED)) {
+        if (status >= ChunkStatus.GENERATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
             chunks[chunkCoord] = new Chunk(this, chunkCoord.x, chunkCoord.z);
             generator.generate(chunkCoord);
         }
-        if (status >= ChunkStatus.POPULATED && !(hasChunk && chunk!.status > ChunkStatus.POPULATED)) {
+        if (status >= ChunkStatus.POPULATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
+            //Console.Out.WriteLine($"chunkload {chunk.GetHashCode()}");
             generator.populate(chunkCoord);
         }
-        if (status >= ChunkStatus.LIGHTED && !(hasChunk && chunk!.status > ChunkStatus.LIGHTED)) {
+        if (status >= ChunkStatus.LIGHTED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
             chunks[chunkCoord].lightChunk();
         }
-        if (status >= ChunkStatus.MESHED && !(hasChunk && chunk!.status > ChunkStatus.MESHED)) {
+        if (status >= ChunkStatus.MESHED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
             chunks[chunkCoord].meshChunk();
         }
         return chunks[chunkCoord];
@@ -670,7 +673,7 @@ public class World {
 
     public void setBlock(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
-            //Console.Out.WriteLine($"was? {x} {y} {z}");
+            //Console.Out.WriteLine($"was? {x} {y} {z} {getChunkPos(x, z)} {chunks[getChunkPos(x, z)]}");
             return;
         }
 
@@ -716,7 +719,7 @@ public class World {
         return chunks.ContainsKey(chunkpos);
     }
 
-    public bool inWorldY(int x, int y, int z) {
+    public static bool inWorldY(int x, int y, int z) {
         return y is >= 0 and < WORLDHEIGHT;
     }
 
@@ -736,20 +739,20 @@ public class World {
 
     public static ChunkCoord getChunkPos(Vector2D<int> pos) {
         return new ChunkCoord(
-            (int)MathF.Floor(pos.X / (float)Chunk.CHUNKSIZE),
-            (int)MathF.Floor(pos.Y / (float)Chunk.CHUNKSIZE));
+            (int)MathF.Floor((float)pos.X / Chunk.CHUNKSIZE),
+            (int)MathF.Floor((float)pos.Y / Chunk.CHUNKSIZE));
     }
 
     public static ChunkCoord getChunkPos(int x, int z) {
         return new ChunkCoord(
-            (int)MathF.Floor(x / (float)Chunk.CHUNKSIZE),
-            (int)MathF.Floor(z / (float)Chunk.CHUNKSIZE));
+            (int)MathF.Floor((float)x / Chunk.CHUNKSIZE),
+            (int)MathF.Floor((float)z / Chunk.CHUNKSIZE));
     }
 
     public static RegionCoord getRegionPos(ChunkCoord pos) {
         return new RegionCoord(
-            (int)MathF.Floor(pos.x / (float)REGIONSIZE),
-            (int)MathF.Floor(pos.z / (float)REGIONSIZE));
+            (int)MathF.Floor((float)pos.x / REGIONSIZE),
+            (int)MathF.Floor((float)pos.z / REGIONSIZE));
     }
 
     public static Vector3D<int> getPosInChunk(int x, int y, int z) {

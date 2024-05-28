@@ -110,7 +110,7 @@ public class Chunk {
         if (Blocks.get(block).lightLevel > 0) {
             // add lightsource
             setBlockLight(x, y, z, Blocks.get(block).lightLevel);
-            Console.Out.WriteLine(Blocks.get(block).lightLevel);
+            //Console.Out.WriteLine(Blocks.get(block).lightLevel);
             world.blockLightQueue.Add(new LightNode(wx, y, wz, this));
         }
         // if the old block had light, remove the light

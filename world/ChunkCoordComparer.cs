@@ -23,8 +23,7 @@ public class ChunkTicketComparer : IComparer<ChunkLoadTicket> {
     public int Compare(ChunkLoadTicket x, ChunkLoadTicket y) {
         var comparison =  Vector2D.Distance(new Vector2D<int>(x.chunkCoord.x * Chunk.CHUNKSIZE, x.chunkCoord.z * Chunk.CHUNKSIZE), new Vector2D<int>(position.X, position.Z)) -
                           Vector2D.Distance(new Vector2D<int>(y.chunkCoord.x * Chunk.CHUNKSIZE, y.chunkCoord.z * Chunk.CHUNKSIZE), new Vector2D<int>(position.X, position.Z));
-        int statusDiff;
-        statusDiff = (int)x.level - (int)y.level;
+        int statusDiff = (int)x.level - (int)y.level;
         // if statusDiff > 0, chunk2 is bigger
         //Console.Out.WriteLine($"{comparison} {statusDiff * 1000}");
         return comparison + statusDiff * 1000;
