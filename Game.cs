@@ -23,7 +23,7 @@ using Sound = SFML.Audio.Sound;
 
 namespace BlockGame;
 
-public class Game {
+public partial class Game {
 
     public static Game instance { get; private set; }
 
@@ -212,11 +212,35 @@ public class Game {
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
     }
 
+    public partial class NV1 {
+        [LibraryImport("nvapi.dll")]
+        internal static partial int NvAPI_Initialize();
+
+        [LibraryImport("nvapi.dll")]
+        internal static partial int NvAPI_Initialize_32();
+    }
+
+    public static partial class NV2 {
+        [LibraryImport("nvapi64.dll")]
+        internal static partial int NvAPI_Initialize();
+
+        [LibraryImport("nvapi64.dll")]
+        internal static partial int NvAPI_Initialize_64();
+    }
     public static void initDedicatedGraphics() {
 
         // fuck integrated GPUs, we want the dedicated card
         try {
-            NativeLibrary.Load(Environment.Is64BitProcess ? "nvapi64.dll" : "nvapi.dll");
+            if (Environment.Is64BitProcess) {
+                NativeLibrary.Load("nvapi64.dll");
+                NV2.NvAPI_Initialize();
+                NV2.NvAPI_Initialize_64();
+            }
+            else {
+                NativeLibrary.Load("nvapi.dll");
+                NV1.NvAPI_Initialize();
+                NV1.NvAPI_Initialize_32();
+            }
         }
         catch {
             // nothing!

@@ -92,7 +92,7 @@ public class World {
         // create terrain
         //genTerrainNoise();
         // separate loop so all data is there
-        player.loadChunksAroundThePlayer(RENDERDISTANCE);
+        player.loadChunksAroundThePlayerLoading(RENDERDISTANCE);
     }
 
     private void genTerrainSine() {
@@ -144,7 +144,7 @@ public class World {
         Console.Out.WriteLine("---END---");*/
 
         // if is loading, don't throttle
-        var limit = isLoading ? 50 : MAX_CHUNKLOAD_FRAMETIME;
+        var limit = MAX_CHUNKLOAD_FRAMETIME;
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < limit) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[0];
@@ -335,6 +335,49 @@ public class World {
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
                     addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
                     addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
+                }
+            }
+        }
+        // finally, mesh around renderDistance
+        for (int x = chunkCoord.x - renderDistance + 1; x <= chunkCoord.x + renderDistance - 1; x++) {
+            for (int z = chunkCoord.z - renderDistance + 1; z <= chunkCoord.z + renderDistance - 1; z++) {
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= (renderDistance - 1) * (renderDistance - 1)) {
+                    addToChunkLoadQueue(coord, ChunkStatus.MESHED);
+                }
+            }
+        }
+
+        // unload chunks which are far away
+        foreach (var chunk in chunks.Values) {
+            var playerChunk = player.getChunk();
+            var coord = chunk.coord;
+            // if distance is greater than renderDistance + 2, unload
+            if (playerChunk.distance(coord) >= renderDistance + 2) {
+                unloadChunk(coord);
+            }
+        }
+    }
+
+    public void loadChunksAroundChunkLoading(ChunkCoord chunkCoord, int renderDistance) {
+        // load +1 chunks around renderdistance
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
+                // restrict it to a circle
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
+                    loadChunk(coord, ChunkStatus.GENERATED);
+                }
+            }
+        }
+        // populate around renderDistance
+        // light around renderDistance
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+                var coord = new ChunkCoord(x, z);
+                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                    loadChunk(coord, ChunkStatus.POPULATED);
+                    loadChunk(coord, ChunkStatus.LIGHTED);
                 }
             }
         }

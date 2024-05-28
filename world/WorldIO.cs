@@ -11,8 +11,8 @@ public class WorldIO {
     }
 
     public static void save(World world, string filename) {
-        if (!Directory.Exists("world")) {
-            Directory.CreateDirectory("world");
+        if (!Directory.Exists("level")) {
+            Directory.CreateDirectory("level");
         }
 
         var tag = new TagBuilder("world");
@@ -48,11 +48,11 @@ public class WorldIO {
 
         tag.EndList();
         var fileTag = tag.Create();
-        NbtFile.Write($"world/{filename}.nbt", fileTag, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
+        NbtFile.Write($"level/{filename}.nbt", fileTag, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
     }
 
     public static World load(string filename) {
-        CompoundTag tag = NbtFile.Read($"world/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
+        CompoundTag tag = NbtFile.Read($"level/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
         var seed = tag.Get<IntTag>("seed");
         var world = new World(seed);
         var chunkTags = tag.Get<ListTag>("chunks");

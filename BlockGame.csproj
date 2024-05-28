@@ -51,7 +51,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="world/**/*.*">
+        <None Include="level/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Include="shaders/**/*.*">

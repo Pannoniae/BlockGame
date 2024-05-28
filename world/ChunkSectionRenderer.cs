@@ -596,42 +596,41 @@ public class ChunkSectionRenderer {
                                                         break;
                                                 }
                                             }
-                                            // if smooth lighting enabled, average light from neighbour face + the 3 other ones
-                                            // calculate average
-                                            var lo = getLightFromCacheUnsafe(ref lightRef, nbx, nby, nbz);
-
-
-                                            // this averages the four light values. If the block is opaque, it ignores the light value.
-                                            byte average(byte lx, byte ly, byte lz, byte lo, ushort ox, ushort oy, ushort oz) {
-                                                int ctr = 1;
-                                                int islx = 0;
-                                                int isly = 0;
-                                                int islz = 0;
-                                                // check ox
-                                                if (ox == 0) {
-                                                    ctr++;
-                                                    islx = 1;
-                                                }
-                                                if (oy == 0) {
-                                                    ctr++;
-                                                    isly = 1;
-                                                }
-                                                // if both sides are blocked, don't check the corner, won't be visible anyway
-                                                if (oz == 0 && ctr != 1) {
-                                                    ctr++;
-                                                    islz = 1;
-                                                }
-                                                return (byte)((lx * islx + ly * isly + lz * islz + lo) / (float)ctr);
-                                            }
-
-                                            // split light and reassemble it again
-
-                                            byte avgSl = average((byte)(lx & 0xF), (byte)(ly & 0xF), (byte)(lz & 0xF), (byte)(lo & 0xF), ox, oy, oz);
-                                            byte avgBl = average((byte)(lx >> 4), (byte)(ly >> 4), (byte)(lz >> 4), (byte)(lo >> 4), ox, oy, oz);
-
-                                            byte l = (byte)(avgBl << 4 | avgSl);
-
                                             if (smoothLightingEnabled) {
+                                                // if smooth lighting enabled, average light from neighbour face + the 3 other ones
+                                                // calculate average
+                                                var lo = getLightFromCacheUnsafe(ref lightRef, nbx, nby, nbz);
+
+
+                                                // this averages the four light values. If the block is opaque, it ignores the light value.
+                                                byte average(byte lx, byte ly, byte lz, byte lo, ushort ox, ushort oy, ushort oz) {
+                                                    int ctr = 1;
+                                                    byte flags = 0;
+                                                    // check ox
+                                                    if (ox == 0) {
+                                                        ctr++;
+                                                        flags |= 1;
+                                                    }
+                                                    if (oy == 0) {
+                                                        ctr++;
+                                                        flags |= 2;
+                                                    }
+                                                    // if both sides are blocked, don't check the corner, won't be visible anyway
+                                                    if (oz == 0 && ctr != 1) {
+                                                        ctr++;
+                                                        flags |= 4;
+                                                    }
+                                                    return (byte)((lx * (flags & 0x1) + ly * (flags & 0x2) + lz * (flags & 0x4) + lo) / (float)ctr);
+                                                }
+
+                                                // split light and reassemble it again
+
+                                                byte avgSl = average((byte)(lx & 0xF), (byte)(ly & 0xF), (byte)(lz & 0xF), (byte)(lo & 0xF), ox, oy, oz);
+                                                byte avgBl = average((byte)(lx >> 4), (byte)(ly >> 4), (byte)(lz >> 4), (byte)(lo >> 4), ox, oy, oz);
+
+                                                byte l = (byte)(avgBl << 4 | avgSl);
+
+
                                                 switch (j) {
                                                     case 0:
                                                         light1 = l;
@@ -650,8 +649,8 @@ public class ChunkSectionRenderer {
                                         }
                                     }
                                 }
-                                tex = Block.texCoords(accessRef(ref facesRef, d).min);
-                                texMax = Block.texCoords(accessRef(ref facesRef, d).max);
+                                tex = Block.texCoords(face.min);
+                                texMax = Block.texCoords(face.max);
 
                                 data1 = Block.packData((byte)dir, ao1, light1);
                                 data2 = Block.packData((byte)dir, ao2, light2);
@@ -661,10 +660,10 @@ public class ChunkSectionRenderer {
 
                                 // add vertices
 
-                                tempVertices[0] = new BlockVertex(wx + accessRef(ref facesRef, d).x1, wy + accessRef(ref facesRef, d).y1, wz + accessRef(ref facesRef, d).z1, tex.X, tex.Y, data1);
-                                tempVertices[1] = new BlockVertex(wx + accessRef(ref facesRef, d).x2, wy + accessRef(ref facesRef, d).y2, wz + accessRef(ref facesRef, d).z2, tex.X, texMax.Y, data2);
-                                tempVertices[2] = new BlockVertex(wx + accessRef(ref facesRef, d).x3, wy + accessRef(ref facesRef, d).y3, wz + accessRef(ref facesRef, d).z3, texMax.X, texMax.Y, data3);
-                                tempVertices[3] = new BlockVertex(wx + accessRef(ref facesRef, d).x4, wy + accessRef(ref facesRef, d).y4, wz + accessRef(ref facesRef, d).z4, texMax.X, tex.Y, data4);
+                                tempVertices[0] = new BlockVertex(wx + face.x1, wy + face.y1, wz + face.z1, tex.X, tex.Y, data1);
+                                tempVertices[1] = new BlockVertex(wx + face.x2, wy + face.y2, wz + face.z2, tex.X, texMax.Y, data2);
+                                tempVertices[2] = new BlockVertex(wx + face.x3, wy + face.y3, wz + face.z3, texMax.X, texMax.Y, data3);
+                                tempVertices[3] = new BlockVertex(wx + face.x4, wy + face.y4, wz + face.z4, texMax.X, tex.Y, data4);
                                 chunkVertices.AddRange(tempVertices);
                                 //cv += 4;
 
