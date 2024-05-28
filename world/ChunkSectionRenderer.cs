@@ -13,6 +13,8 @@ public class ChunkSectionRenderer {
 
     // we need it here because completely full chunks are also empty of any rendering
     public bool isEmpty;
+    public bool isEmptyRenderOpaque;
+    public bool isEmptyRenderTranslucent;
 
     public VAO vao;
     public VAO watervao;
@@ -123,9 +125,9 @@ public class ChunkSectionRenderer {
         }
 
         // if the section is empty, nothing to do
-        if (section.isEmpty) {
-            return;
-        }
+        //if (section.isEmpty) {
+        //    return;
+        //}
 
         unsafe {
             //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
@@ -152,7 +154,7 @@ public class ChunkSectionRenderer {
                 }*/
                 //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 if (chunkIndices.Count > 0) {
-                    isEmpty = false;
+                    isEmptyRenderOpaque = false;
                     if (section.world.renderer.fastChunkSwitch) {
                         (vao as VerySharedBlockVAO).bindVAO();
                     }
@@ -164,7 +166,7 @@ public class ChunkSectionRenderer {
                     vao.upload(finalVertices, finalIndices);
                 }
                 else {
-                    isEmpty = true;
+                    isEmptyRenderOpaque = true;
                 }
             }
             lock (meshingLock) {
@@ -172,7 +174,7 @@ public class ChunkSectionRenderer {
                     // then we render everything which is translucent (water for now)
                     constructVertices(VertexConstructionMode.TRANSLUCENT);
                     if (chunkIndices.Count > 0) {
-                        isEmpty = false;
+                        isEmptyRenderTranslucent = false;
                         if (section.world.renderer.fastChunkSwitch) {
                             (watervao as VerySharedBlockVAO).bindVAO();
                         }
@@ -186,7 +188,7 @@ public class ChunkSectionRenderer {
                     }
                     else {
                         //world.sortedTransparentChunks.Remove(this);
-                        isEmpty = true;
+                        isEmptyRenderTranslucent = true;
                     }
                 }
             }
@@ -205,7 +207,7 @@ public class ChunkSectionRenderer {
     }
 
     public void drawOpaque(PlayerCamera camera) {
-        if (!isEmpty && isVisible(camera.frustum)) {
+        if (!isEmptyRenderOpaque && isVisible(camera.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
 
@@ -216,7 +218,7 @@ public class ChunkSectionRenderer {
     }
 
     public void drawTransparent(PlayerCamera camera) {
-        if (hasTranslucentBlocks && !isEmpty && isVisible(camera.frustum)) {
+        if (hasTranslucentBlocks && !isEmptyRenderTranslucent && isVisible(camera.frustum)) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
             Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
@@ -327,10 +329,18 @@ public class ChunkSectionRenderer {
                     sx = (int)MathF.Floor((float)sx / Chunk.CHUNKSIZE);
                     sy = (int)MathF.Floor((float)sy / Chunk.CHUNKSIZE);
                     sz = (int)MathF.Floor((float)sz / Chunk.CHUNKSIZE);
+                    // get neighbouring section
                     var neighbourSection =
                         access(neighbourSections, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);
+
+                    var bl = neighbourSection != null ? neighbourSection[cx, cy, cz] : (ushort)0;
                     accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
-                        neighbourSection != null ? neighbourSection[cx, cy, cz] : (ushort)0);
+                        bl);
+                    // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
+                    if (Blocks.notSolid(bl)) {
+                        hasOnlySolid = false;
+                    }
+
                     accessRef(ref lightArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
                         neighbourSection?.getLight(cx, cy, cz) ?? 0);
                 }
