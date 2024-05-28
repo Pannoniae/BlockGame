@@ -18,9 +18,9 @@ public class Debug {
 
     public void update(double interp) {
         // nothing to do, so why set the shader?
-        if (currentLine == 0) {
-            return;
-        }
+        //if (currentLine == 0) {
+        //    return;
+        //}
         // don't forget to use the program before setting uniforms.
         Game.GD.ResetShaderProgramStates();
         debugShader.Projection = GameScreen.world.player.camera.getProjectionMatrix();
