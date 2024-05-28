@@ -152,6 +152,13 @@ public class Player {
         world.sortChunks();
     }
 
+    public void loadChunksAroundThePlayerLoading(int renderDistance) {
+        var blockPos = position.toBlockPos();
+        var chunk = World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
+        world.loadChunksAroundChunkLoading(chunk, renderDistance);
+        world.sortChunks();
+    }
+
     public void onChunkChanged() {
         //Console.Out.WriteLine("chunk changed");
         loadChunksAroundThePlayer(World.RENDERDISTANCE);
