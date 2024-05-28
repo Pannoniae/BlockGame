@@ -255,13 +255,13 @@ public class ChunkSectionRenderer {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     var bl = accessRef(ref blockArrayRef, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
                     var light = accessRef(ref sourceLightArrayRef, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-                    if (bl != 0) {
+                    if (isEmpty && bl != 0) {
                         isEmpty = false;
                     }
-                    if (Blocks.isTranslucent(bl)) {
+                    if (!hasTranslucentBlocks && Blocks.isTranslucent(bl)) {
                         hasTranslucentBlocks = true;
                     }
-                    if (Blocks.notSolid(bl)) {
+                    if (hasOnlySolid && Blocks.notSolid(bl)) {
                         hasOnlySolid = false;
                     }
                     accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
@@ -337,7 +337,7 @@ public class ChunkSectionRenderer {
                     accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
                         bl);
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
-                    if (Blocks.notSolid(bl)) {
+                    if (hasOnlySolid && Blocks.notSolid(bl)) {
                         hasOnlySolid = false;
                     }
 
@@ -373,11 +373,6 @@ public class ChunkSectionRenderer {
         //ushort ci = 0;
 
         // helper function to get blocks from cache
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ushort getBlockFromCacheUnsafeVec(ref ushort arrayBase, Vector3D<int> vec) {
-            return accessRef(ref arrayBase, (vec.Y + 1) * Chunk.CHUNKSIZEEXSQ + (vec.Z + 1) * Chunk.CHUNKSIZEEX + (vec.X + 1));
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ushort getBlockFromCacheUnsafe(ref ushort arrayBase, int x, int y, int z) {
             return accessRef(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
@@ -470,12 +465,12 @@ public class ChunkSectionRenderer {
 
                         var faces = b.model.faces;
                         ref var facesRef = ref MemoryMarshal.GetArrayDataReference(faces);
-                        Face face;
+
 
                         ushort nb;
 
                         for (int d = 0; d < faces.Length; d++) {
-                            face = accessRef(ref facesRef, d);
+                            ref Face face = ref accessRef(ref facesRef, d);
                             var dir = face.direction;
                             if (dir == RawDirection.NONE) {
                                 // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
@@ -563,26 +558,31 @@ public class ChunkSectionRenderer {
                                         int yb;
                                         int zb;
 
+                                        int mult;
+
                                         byte lx;
                                         byte ly;
                                         byte lz;
 
                                         for (int j = 0; j < 4; j++) {
-                                            getOffset(ref offsetArray, dirIdx, j, 0, out xb, out yb, out zb);
+                                            mult = dirIdx * 36 + j * 9;
+
+                                            // premultiply cuz its faster that way
+                                            getOffset(ref offsetArray, mult, 0, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             ox = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
                                             lx = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
 
-                                            getOffset(ref offsetArray, dirIdx, j, 1, out xb, out yb, out zb);
+                                            getOffset(ref offsetArray, mult, 1, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             oy = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
                                             ly = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
 
-                                            getOffset(ref offsetArray, dirIdx, j, 2, out xb, out yb, out zb);
+                                            getOffset(ref offsetArray, mult, 2, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
@@ -613,26 +613,21 @@ public class ChunkSectionRenderer {
 
 
                                                 // this averages the four light values. If the block is opaque, it ignores the light value.
+                                                //[MethodImpl(MethodImplOptions.AggressiveInlining)]
                                                 byte average(byte lx, byte ly, byte lz, byte lo, ushort ox, ushort oy, ushort oz) {
-                                                    int ctr = 1;
-                                                    int islx = 0;
-                                                    int isly = 0;
-                                                    int islz = 0;
+                                                    byte flags = 0;
                                                     // check ox
                                                     if (ox == 0) {
-                                                        ctr++;
-                                                        islx = 1;
+                                                        flags = 1;
                                                     }
                                                     if (oy == 0) {
-                                                        ctr++;
-                                                        isly = 1;
+                                                        flags |= 2;
                                                     }
                                                     // if both sides are blocked, don't check the corner, won't be visible anyway
-                                                    if (oz == 0 && ctr != 1) {
-                                                        ctr++;
-                                                        islz = 1;
+                                                    if (oz == 0 && flags != 0) {
+                                                        flags |= 4;
                                                     }
-                                                    return (byte)((lx * islx + ly * isly + lz * islz + lo) / (float)ctr);
+                                                    return (byte)((lx * (flags & 1) + ly * ((flags & 2) >> 1) + lz * ((flags & 4) >> 2) + lo) / (BitOperations.PopCount(flags) + 1f));
                                                 }
 
                                                 // split light and reassemble it again
@@ -710,11 +705,11 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getOffset(ref int arr, int dir, int idx, int vert, out int x, out int y, out int z) {
+    private static void getOffset(ref int arr, int mult, int vert, out int x, out int y, out int z) {
         // array has 6 directions, 4 indices which each contain 3 AOs of 3 ints each
         // 36 = 3 * 3 * 4
         // 9 = 3 * 3
-        var index = (dir * 36) + idx * (9) + vert * 3;
+        var index = mult + vert * 3;
         x = Unsafe.Add(ref arr, index);
         y = Unsafe.Add(ref arr, index + 1);
         z = Unsafe.Add(ref arr, index + 2);

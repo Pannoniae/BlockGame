@@ -259,8 +259,8 @@ public class WorldRenderer {
             face = faces[d];
             var dir = face.direction;
 
-            texCoords = faces[d].min;
-            texCoordsMax = faces[d].max;
+            texCoords = face.min;
+            texCoordsMax = face.max;
             tex = Block.texCoords(texCoords);
             texMax = Block.texCoords(texCoordsMax);
             u = tex.X;
@@ -268,18 +268,18 @@ public class WorldRenderer {
             maxU = texMax.X;
             maxV = texMax.Y;
 
-            x1 = wx + faces[d].x1;
-            y1 = wy + faces[d].y1;
-            z1 = wz + faces[d].z1;
-            x2 = wx + faces[d].x2;
-            y2 = wy + faces[d].y2;
-            z2 = wz + faces[d].z2;
-            x3 = wx + faces[d].x3;
-            y3 = wy + faces[d].y3;
-            z3 = wz + faces[d].z3;
-            x4 = wx + faces[d].x4;
-            y4 = wy + faces[d].y4;
-            z4 = wz + faces[d].z4;
+            x1 = wx + face.x1;
+            y1 = wy + face.y1;
+            z1 = wz + face.z1;
+            x2 = wx + face.x2;
+            y2 = wy + face.y2;
+            z2 = wz + face.z2;
+            x3 = wx + face.x3;
+            y3 = wy + face.y3;
+            z3 = wz + face.z3;
+            x4 = wx + face.x4;
+            y4 = wy + face.y4;
+            z4 = wz + face.z4;
 
             data1 = Block.packData((byte)dir, 0, 15);
             data2 = Block.packData((byte)dir, 0, 15);

@@ -325,6 +325,12 @@ public class Player {
         // collect potential collision targets
         List<AABB> collisionTargets = new List<AABB>();
         foreach (Vector3D<int> target in (Vector3D<int>[]) [blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)]) {
+            // first, collide with the block the player is in
+            var blockPos2 = feetPosition.toBlockPos();
+            var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z, world.getBlock(feetPosition.toBlockPos()));
+            if (currentAABB != null) {
+                collisionTargets.Add(currentAABB.Value);
+            }
             foreach (var neighbour in world.getBlocksInBox(target + new Vector3D<int>(-1, -1, -1), target + new Vector3D<int>(1, 1, 1))) {
                 var block = world.getBlock(neighbour);
                 var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);

@@ -50,6 +50,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 // TREES
                 if (MathF.Abs(generator.treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
                     worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
+                    //Console.Out.WriteLine($"{worldPos} {chunk.coord.x} {chunk.coord.z} {x} {z} {chunk.GetHashCode()}");
                     placeTree(worldPos.X, worldPos.Y, worldPos.Z);
                 }
             }
@@ -59,7 +60,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
 
     // Can place in neighbouring chunks, so they must be loaded first
 
-    // todo the trees are cut off when they are placed in a neighbouring chunk... but only when the coords are less?
+    // todo the trees are cut off when they are placed in a neighbouring chunk... but only when the coords are more?
     // 63 to 64 is fine but 32 to 31 is not, it's cut off
     // probably something to do with the chunk position calculations?
     private void placeTree(int x, int y, int z) {
