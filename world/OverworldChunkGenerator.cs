@@ -58,6 +58,10 @@ public class OverworldChunkGenerator : ChunkGenerator {
     }
 
     // Can place in neighbouring chunks, so they must be loaded first
+
+    // todo the trees are cut off when they are placed in a neighbouring chunk... but only when the coords are less?
+    // 63 to 64 is fine but 32 to 31 is not, it's cut off
+    // probably something to do with the chunk position calculations?
     private void placeTree(int x, int y, int z) {
         var world = generator.world;
         // tree
@@ -81,7 +85,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
             for (int z2 = -1; z2 <= 1; z2++) {
                 for (int y2 = 6; y2 <= 7; y2++) {
                     // don't overwrite the trunk
-                    if (x2 == 0 && z2 == 0 && y == 6) {
+                    if (x2 == 0 && z2 == 0 && y2 == 6) {
                         continue;
                     }
                     world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id);

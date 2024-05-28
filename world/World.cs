@@ -670,6 +670,7 @@ public class World {
 
     public void setBlock(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
+            //Console.Out.WriteLine($"was? {x} {y} {z}");
             return;
         }
 
@@ -712,7 +713,7 @@ public class World {
             return false;
         }
         var chunkpos = getChunkPos(x, z);
-        return chunks.ContainsKey(chunkpos) && chunks[chunkpos].status >= ChunkStatus.GENERATED;
+        return chunks.ContainsKey(chunkpos);
     }
 
     public bool inWorldY(int x, int y, int z) {
@@ -747,8 +748,8 @@ public class World {
 
     public static RegionCoord getRegionPos(ChunkCoord pos) {
         return new RegionCoord(
-            (int)MathF.Floor(pos.x / (float)World.REGIONSIZE),
-            (int)MathF.Floor(pos.z / (float)World.REGIONSIZE));
+            (int)MathF.Floor(pos.x / (float)REGIONSIZE),
+            (int)MathF.Floor(pos.z / (float)REGIONSIZE));
     }
 
     public static Vector3D<int> getPosInChunk(int x, int y, int z) {
