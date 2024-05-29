@@ -6,6 +6,8 @@ namespace BlockGame;
 
 public class Hotbar : GUIElement {
 
+    public ItemSlot[] slots = new ItemSlot[9];
+
     public const int SIZE = 20;
     public const int BLOCKSIZE = 16;
     public const int PADDING = 2;
@@ -16,6 +18,10 @@ public class Hotbar : GUIElement {
 
     public Hotbar(Screen screen, string name, Vector2 pos, string? text = default) : base(screen, name) {
         setPosition(new RectangleF(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
+        for (int i = 0; i < 9; i++) {
+            slots[i] = new ItemSlot(Game.gui.uiCentreX + ((i - 9 / 2) * SIZE - SIZE / 2),
+                (i - 9 / 2) * SIZE - SIZE / 2);
+        }
     }
 
     public override void postDraw() {

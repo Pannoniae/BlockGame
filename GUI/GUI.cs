@@ -34,6 +34,12 @@ public class GUI {
     public TextureFont guiFont;
     public TextureFont guiFontUnicode;
 
+    public int uiWidth;
+    public int uiHeight;
+
+    public int uiCentreX;
+    public int uiCentreY;
+
     /// <summary>
     /// Like the normal shader but it's simple (doesn't need fog/lighting/anything)
     /// </summary>
@@ -117,6 +123,11 @@ public class GUI {
     public void resize(Vector2D<int> size) {
         ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         shader.Projection = ortho;
+        uiCentreX = size.X / 2 / guiScale;
+        uiCentreY = size.Y / 2 / guiScale;
+
+        uiWidth = size.X / guiScale;
+        uiHeight = size.Y / guiScale;
         //worldShader.Projection = Game.instance.world.player.camera.getProjectionMatrix();
         //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
     }

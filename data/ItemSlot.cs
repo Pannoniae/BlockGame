@@ -1,5 +1,5 @@
-using System.Drawing;
-using System.Numerics;
+using Silk.NET.Maths;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
@@ -15,11 +15,17 @@ public class ItemSlot {
 
     public ItemStack stack;
 
-    public RectangleF rect;
-    public Vector2 itemPos;
+    public Rectangle rect;
+    public Vector2D<int> itemPos;
 
     public ItemSlot(int x, int y) {
-        rect = new RectangleF(x, y, SLOTSIZE, SLOTSIZE);
-        itemPos = new Vector2(x + PADDING, y + PADDING);
+        rect = new Rectangle(x, y, SLOTSIZE, SLOTSIZE);
+        itemPos = new Vector2D<int>(x + PADDING, y + PADDING);
+    }
+
+
+    public void drawItem() {
+        var world = GameScreen.world;
+        //Game.gui.drawBlock(world, Blocks.get(stack.block), itemPos.X, itemPos.Y, ITEMSIZE);
     }
 }
