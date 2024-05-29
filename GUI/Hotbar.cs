@@ -6,18 +6,16 @@ namespace BlockGame;
 
 public class Hotbar : GUIElement {
 
-    public Inventory inv;
-
     public const int SIZE = 20;
     public const int BLOCKSIZE = 16;
     public const int PADDING = 2;
 
     // todo refactor these to automatically calculate coords
-    public static Rectangle hotbarTexture = new Rectangle(0, 48, SIZE * 9, SIZE);
-    public static Rectangle selectedTexture = new Rectangle(180, 48, SIZE, SIZE);
+    public Rectangle hotbarTexture = new Rectangle(0, 48, SIZE * 9, SIZE);
+    public Rectangle selectedTexture = new Rectangle(180, 48, SIZE, SIZE);
 
-    public Hotbar(Screen screen, string? text = default) : base(screen) {
-        inv = GameScreen.world.player.hotbar;
+    public Hotbar(Screen screen, string name, Vector2 pos, string? text = default) : base(screen, name) {
+        setPosition(new RectangleF(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
     }
 
     public override void postDraw() {

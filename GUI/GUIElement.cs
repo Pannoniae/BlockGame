@@ -4,6 +4,10 @@ namespace BlockGame;
 
 public class GUIElement {
     public Screen screen;
+
+    public string name;
+    public bool active = true;
+
     public RectangleF guiPosition;
     public HorizontalAnchor horizontalAnchor = HorizontalAnchor.LEFT;
     public VerticalAnchor verticalAnchor = VerticalAnchor.TOP;
@@ -71,8 +75,9 @@ public class GUIElement {
 
     public event Action? clicked;
 
-    protected GUIElement(Screen screen) {
+    protected GUIElement(Screen screen, string name) {
         this.screen = screen;
+        this.name = name;
     }
 
     public void setPosition(RectangleF pos) {

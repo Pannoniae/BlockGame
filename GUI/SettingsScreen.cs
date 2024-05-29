@@ -11,7 +11,7 @@ public class SettingsScreen : Screen {
         base.activate();
         // load settings (later)
         var settings = Settings.instance;
-        var vsync = new ToggleButton(this, new Vector2(0, 16), false, settings.vSync ? 1 : 0,
+        var vsync = new ToggleButton(this, "vsync", new Vector2(0, 16), false, settings.vSync ? 1 : 0,
             "VSync: OFF", "VSync: ON");
         vsync.topCentre();
         vsync.clicked += () => {
@@ -19,41 +19,41 @@ public class SettingsScreen : Screen {
             Game.window.VSync = settings.vSync;
         };
         vsync.tooltip = "Turns on vertical synchronisation.";
-        elements.Add(vsync);
+        addElement(vsync);
 
-        var guiScale = new ToggleButton(this, new Vector2(0, 40), false, settings.guiScale == 4 ? 1 : 0,
+        var guiScale = new ToggleButton(this, "guiScale", new Vector2(0, 40), false, settings.guiScale == 4 ? 1 : 0,
             "GUI Scale: Small", "GUI Scale: Large");
         guiScale.topCentre();
         guiScale.clicked += () => {
             settings.guiScale = guiScale.getIndex() == 1 ? 4 : 2;
             GUI.guiScale = settings.guiScale;
         };
-        elements.Add(guiScale);
+        addElement(guiScale);
 
-        var AO = new ToggleButton(this, new Vector2(0, 64), false, settings.AO ? 1 : 0,
+        var AO = new ToggleButton(this, "ao", new Vector2(0, 64), false, settings.AO ? 1 : 0,
             "Ambient Occlusion: Disabled", "Ambient Occlusion: Enabled");
         AO.topCentre();
         AO.clicked += () => {
             settings.AO = AO.getIndex() == 1;
         };
         AO.tooltip = "Ambient Occlusion makes block corners darker to simulate shadows.";
-        elements.Add(AO);
+        addElement(AO);
 
-        var smoothLighting = new ToggleButton(this, new Vector2(0, 88), false, settings.smoothLighting ? 1 : 0,
+        var smoothLighting = new ToggleButton(this, "smoothLighting", new Vector2(0, 88), false, settings.smoothLighting ? 1 : 0,
             "Smooth Lighting: Disabled", "Smooth Lighting: Enabled");
         smoothLighting.topCentre();
         smoothLighting.clicked += () => {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
         };
         smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
-        elements.Add(smoothLighting);
+        addElement(smoothLighting);
 
-        var back = new Button(this, new Vector2(2, -18), false, "Back") {
+        var back = new Button(this, "back", new Vector2(2, -18), false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         back.clicked += returnToMainMenu;
-        elements.Add(back);
+        addElement(back);
     }
 
     public override void deactivate() {
