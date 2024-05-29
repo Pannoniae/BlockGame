@@ -8,7 +8,7 @@ public class GUIElement {
     public string name;
     public bool active = true;
 
-    public RectangleF guiPosition;
+    public Rectangle guiPosition;
     public HorizontalAnchor horizontalAnchor = HorizontalAnchor.LEFT;
     public VerticalAnchor verticalAnchor = VerticalAnchor.TOP;
 
@@ -25,7 +25,7 @@ public class GUIElement {
     /// <summary>
     /// Calculate the absolute bounds of a GUIElement.
     /// </summary>
-    public RectangleF bounds {
+    public Rectangle bounds {
         get {
             var absolutePos = guiPosition;
             // handle guiscale
@@ -36,41 +36,57 @@ public class GUIElement {
                 absolutePos.Width *= GUI.guiScale;
                 absolutePos.Height *= GUI.guiScale;
             }
-            switch (horizontalAnchor) {
-                case HorizontalAnchor.LEFT:
-                    //absolutePos.X -= screen.width / 2;
-                    break;
-                case HorizontalAnchor.RIGHT:
-                    //absolutePos.X += screen.width / 2;
-                    absolutePos.X += screen.size.X;
-                    break;
-                case HorizontalAnchor.CENTREDCONTENTS:
-                    absolutePos.X += screen.size.X / 2 - absolutePos.Width / 2;
-                    break;
-                case HorizontalAnchor.CENTRED:
-                default:
-                    absolutePos.X += screen.size.X / 2;
-                    break;
-            }
-
-            switch (verticalAnchor) {
-                case VerticalAnchor.BOTTOM:
-                    //absolutePos.Y -= screen.height / 2;
-                    absolutePos.Y += screen.size.Y;
-                    break;
-                case VerticalAnchor.TOP:
-                    //absolutePos.Y += screen.height / 2;
-                    break;
-                case VerticalAnchor.CENTREDCONTENTS:
-                    absolutePos.Y += screen.size.Y / 2 - absolutePos.Height / 2;
-                    break;
-                case VerticalAnchor.CENTRED:
-                default:
-                    absolutePos.Y += screen.size.Y / 2;
-                    break;
-            }
-            return absolutePos;
+            return resolveAnchors(absolutePos, false);
         }
+    }
+
+    /// <summary>
+    /// Calculate the bounds of a GUIElement in GUI space.
+    /// </summary>
+    public Rectangle GUIbounds {
+        get {
+            var absolutePos = guiPosition;
+            return resolveAnchors(absolutePos, true);
+        }
+    }
+
+    public Rectangle resolveAnchors(Rectangle absolutePos, bool uiSpace = true) {
+        var sizeX = uiSpace ? Game.gui.uiWidth : screen.size.X;
+        var sizeY = uiSpace ? Game.gui.uiHeight : screen.size.Y;
+        switch (horizontalAnchor) {
+            case HorizontalAnchor.LEFT:
+                //absolutePos.X -= screen.width / 2;
+                break;
+            case HorizontalAnchor.RIGHT:
+                //absolutePos.X += screen.width / 2;
+                absolutePos.X += sizeX;
+                break;
+            case HorizontalAnchor.CENTREDCONTENTS:
+                absolutePos.X += sizeX / 2 - absolutePos.Width / 2;
+                break;
+            case HorizontalAnchor.CENTRED:
+            default:
+                absolutePos.X += sizeX / 2;
+                break;
+        }
+
+        switch (verticalAnchor) {
+            case VerticalAnchor.BOTTOM:
+                //absolutePos.Y -= screen.height / 2;
+                absolutePos.Y += sizeY;
+                break;
+            case VerticalAnchor.TOP:
+                //absolutePos.Y += screen.height / 2;
+                break;
+            case VerticalAnchor.CENTREDCONTENTS:
+                absolutePos.Y += sizeY / 2 - absolutePos.Height / 2;
+                break;
+            case VerticalAnchor.CENTRED:
+            default:
+                absolutePos.Y += sizeY / 2;
+                break;
+        }
+        return absolutePos;
     }
 
     public event Action? clicked;
@@ -80,7 +96,7 @@ public class GUIElement {
         this.name = name;
     }
 
-    public void setPosition(RectangleF pos) {
+    public void setPosition(Rectangle pos) {
         guiPosition = pos;
     }
 

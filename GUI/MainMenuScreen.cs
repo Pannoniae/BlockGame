@@ -1,4 +1,5 @@
 using System.Numerics;
+using Silk.NET.Maths;
 using TrippyGL;
 
 namespace BlockGame;
@@ -6,7 +7,7 @@ namespace BlockGame;
 public class MainMenuScreen : Screen {
     public override void activate() {
         base.activate();
-        var sp = new Button(this, "singleplayer", new Vector2(0, -64), true, "Singleplayer");
+        var sp = new Button(this, "singleplayer", new Vector2D<int>(0, -64), true, "Singleplayer");
         sp.centreContents();
         sp.clicked += () => {
             // we are *already* on the main thread; this is just needed so it executes a frame later
@@ -18,9 +19,9 @@ public class MainMenuScreen : Screen {
             });
         };
         Console.Out.WriteLine("sp:" + sp.bounds);
-        var button2 = new Button(this, "multiplayer", new Vector2(0, -32), true, "Multiplayer (soon)");
+        var button2 = new Button(this, "multiplayer", new Vector2D<int>(0, -32), true, "Multiplayer (soon)");
         button2.centreContents();
-        var settings = new Button(this, "settings", new Vector2(0, 0), true, "Settings (soon)");
+        var settings = new Button(this, "settings", new Vector2D<int>(0, 0), true, "Settings (soon)");
         settings.centreContents();
         settings.clicked += () => {
                 Game.instance.executeOnMainThread(() => {
@@ -28,7 +29,7 @@ public class MainMenuScreen : Screen {
                 });
             }
             ;
-        var button4 = new Button(this, "quit", new Vector2(0, 32), true, "Quit");
+        var button4 = new Button(this, "quit", new Vector2D<int>(0, 32), true, "Quit");
         button4.centreContents();
         button4.clicked += () => Environment.Exit(0);
         addElement(sp);

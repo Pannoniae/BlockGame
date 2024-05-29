@@ -38,20 +38,21 @@ public class GameScreen : Screen {
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
 
         // then add the GUI
-        var version = Text.createText(this, "version", new Vector2(2, 2), "BlockGame v0.0.2");
+        var version = Text.createText(this, "version", new Vector2D<int>(2, 2), "BlockGame v0.0.2");
         version.shadowed = true;
         addElement(version);
-        var hotbar = new Hotbar(this, "hotbar", new Vector2(0, -20)) {
+        var hotbar = new Hotbar(this, "hotbar", new Vector2D<int>(0, -20)) {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         addElement(hotbar);
 
-        var inventory = new InventoryGUI(this, "playerInventory", new Vector2(0, 32)) {
+        var inventory = new InventoryGUI(this, "playerInventory", new Vector2D<int>(0, 32)) {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
-            verticalAnchor = VerticalAnchor.TOP
+            verticalAnchor = VerticalAnchor.TOP,
+            active = false
         };
-        inventory.active = false;
+        inventory.setup();
         addElement(inventory);
     }
 
@@ -223,9 +224,9 @@ public class GameScreen : Screen {
         //GD.FaceCullingEnabled = false;
         //GD.BlendState = BlendState.Opaque;
         //GD.DepthTestingEnabled = false;
-        GD.ResetBufferStates();
-        GD.ResetVertexArrayStates();
-        GD.ResetShaderProgramStates();
+        //GD.ResetBufferStates();
+        //GD.ResetVertexArrayStates();
+        //GD.ResetShaderProgramStates();
         //GD.ResetTextureStates();
         //GD.ResetStates();
 

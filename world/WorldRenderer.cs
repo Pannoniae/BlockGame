@@ -205,7 +205,7 @@ public class WorldRenderer {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, ref Span<BlockVertex> vertices, ref Span<ushort> indices) {
+    public static void meshBlock(Block block, ref List<BlockVertex> vertices, ref List<ushort> indices) {
         ushort i = 0;
         const int wx = 0;
         const int wy = 0;
@@ -293,7 +293,7 @@ public class WorldRenderer {
             tempVertices[1] = new BlockVertex(x2, y2, z2, u, maxV, data2);
             tempVertices[2] = new BlockVertex(x3, y3, z3, maxU, maxV, data3);
             tempVertices[3] = new BlockVertex(x4, y4, z4, maxU, v, data4);
-            vertices.AddRange(c, tempVertices);
+            vertices.AddRange(tempVertices);
             c += 4;
             tempIndices[0] = i;
             tempIndices[1] = (ushort)(i + 1);
@@ -301,7 +301,7 @@ public class WorldRenderer {
             tempIndices[3] = (ushort)(i + 0);
             tempIndices[4] = (ushort)(i + 2);
             tempIndices[5] = (ushort)(i + 3);
-            indices.AddRange(ci, tempIndices);
+            indices.AddRange(tempIndices);
             i += 4;
             ci += 6;
         }
