@@ -18,12 +18,17 @@ public class InventoryGUI : GUIElement {
         setPosition(new RectangleF(pos.X, pos.Y, invTex.Width, invTex.Height));
         for (int x = 0; x < rows; x++) {
             for (int y = 0; y < cols; y++) {
-                slots[y * rows + x] = new ItemSlot(x, y);
+                slots[y * rows + x] = new ItemSlot(x, y) {
+                    stack = new ItemStack(3, 1)
+                };
             }
         }
     }
 
     public override void draw() {
         Game.gui.draw(invTex, new Vector2(bounds.X, bounds.Y));
+        foreach (var slot in slots) {
+            slot.drawItem();
+        }
     }
 }

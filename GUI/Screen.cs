@@ -166,6 +166,4 @@ public class Screen {
         size = newSize;
         centre = size / 2;
     }
-
-
 }
