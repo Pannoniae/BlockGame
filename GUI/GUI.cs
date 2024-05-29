@@ -129,7 +129,7 @@ public class GUI {
         var texCoordsMax = Block.texCoords(block.model.faces[0].max).As<float>();
 
         // handle guiscale
-        size *= guiScale;
+        size *= guiScale * 2;
 
         // if one block is a given size, how many blocks can we fit on the screen?
         var xCount = (int)Math.Ceiling(Game.width / size);

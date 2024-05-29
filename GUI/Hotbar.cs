@@ -16,7 +16,7 @@ public class Hotbar : GUIElement {
     public static Rectangle hotbarTexture = new Rectangle(0, 48, SIZE * 9, SIZE);
     public static Rectangle selectedTexture = new Rectangle(180, 48, SIZE, SIZE);
 
-    public Hotbar(Screen screen, RectangleF guiPosition, string? text = default) : base(screen, guiPosition) {
+    public Hotbar(Screen screen, string? text = default) : base(screen) {
         inv = GameScreen.world.player.hotbar;
     }
 
@@ -28,10 +28,10 @@ public class Hotbar : GUIElement {
         gui.tb.Begin(BatcherBeginMode.Immediate);
         Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), hotbarTexture);
         for (int i = 0; i < slots.Length; i++) {
-            var block = slots[i];
+            var stack = slots[i];
             var selected = world.player.hotbar.selected == i;
             // if we draw in the middle, then we'll start in the middle of the 5th slot.... need to offset by half a slot
-            Game.gui.drawBlock(world, Blocks.get(block), Game.centreX + ((i - 9 / 2) * SIZE - SIZE / 2 + PADDING) * GUI.guiScale
+            Game.gui.drawBlock(world, Blocks.get(stack.block), Game.centreX + ((i - 9 / 2) * SIZE - SIZE / 2 + PADDING) * GUI.guiScale
                 , Game.height - (BLOCKSIZE + 2) * GUI.guiScale, BLOCKSIZE);
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,

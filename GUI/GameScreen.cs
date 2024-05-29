@@ -41,10 +41,11 @@ public class GameScreen : Screen {
         var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.2");
         version.shadowed = true;
         elements.Add(version);
-        var hotbar = new Hotbar(this, new RectangleF(0, -20, Hotbar.hotbarTexture.Width, Hotbar.hotbarTexture.Height)) {
+        var hotbar = new Hotbar(this) {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
+        hotbar.setPosition(new RectangleF(0, -20, Hotbar.hotbarTexture.Width, Hotbar.hotbarTexture.Height));
         elements.Add(hotbar);
     }
 
@@ -143,7 +144,7 @@ public class GameScreen : Screen {
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         int y = (int)Math.Clamp(-scroll.Y, -1, 1);
         var newSelection = world.player.hotbar.selected + y;
-        newSelection = Math.Clamp(newSelection, 0, 8);
+        newSelection = Utils.mod(newSelection, 9);
         world.player.hotbar.selected = newSelection;
 
     }
@@ -264,7 +265,7 @@ public class GameScreen : Screen {
         gui.draw(gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
 
         // Draw block display
-        var blockStr = Blocks.get(world.player.hotbar.getSelected()).name;
+        var blockStr = Blocks.get(world.player.hotbar.getSelected().block).name;
         gui.drawStringCentred(blockStr, new Vector2(Game.centreX, Game.height - 120),
             Color4b.White);
 
