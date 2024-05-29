@@ -1,5 +1,6 @@
-using System.Drawing;
 using System.Numerics;
+using Silk.NET.Maths;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
@@ -21,9 +22,9 @@ public class Button : GUIElement {
 
     public bool shadowed = false;
 
-    public Button(Screen screen, string name, Vector2 position, bool wide, string? text = default) : base(screen, name) {
+    public Button(Screen screen, string name, Vector2D<int> pos, bool wide, string? text = default) : base(screen, name) {
         this.text = text;
-        setPosition(new RectangleF(position.X, position.Y, wide ? 192 : 128, 16));
+        setPosition(new Rectangle(pos.X, pos.Y, wide ? 192 : 128, 16));
         this.wide = wide;
     }
 

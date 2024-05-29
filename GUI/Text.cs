@@ -1,5 +1,6 @@
-using System.Drawing;
 using System.Numerics;
+using Silk.NET.Maths;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
@@ -13,10 +14,10 @@ public class Text : GUIElement {
         unscaledSize = true;
     }
 
-    public static Text createText(Screen screen, string name, Vector2 position, string text) {
+    public static Text createText(Screen screen, string name, Vector2D<int> pos, string text) {
         var bounds = Game.gui.guiFont.Measure(text);
         var guitext = new Text(screen, name, text);
-        guitext.setPosition(new RectangleF(position.X, position.Y, position.X + bounds.X, position.Y + bounds.Y));
+        guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(pos.X + bounds.X), (int)(pos.Y + bounds.Y)));
         return guitext;
     }
 

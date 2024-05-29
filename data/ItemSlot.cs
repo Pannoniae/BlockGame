@@ -10,7 +10,7 @@ namespace BlockGame;
 public class ItemSlot {
 
     public const int SLOTSIZE = 20;
-    public const int PADDING = 2;
+    public const int PADDING = 4;
     public const int ITEMSIZE = 16;
 
     public ItemStack stack;
@@ -25,7 +25,8 @@ public class ItemSlot {
 
 
     public void drawItem() {
-        var world = GameScreen.world;
-        //Game.gui.drawBlock(world, Blocks.get(stack.block), itemPos.X, itemPos.Y, ITEMSIZE);
+        Game.gui.tb.End();
+        Game.gui.drawBlockUI(Blocks.get(stack.block), itemPos.X, itemPos.Y, ITEMSIZE);
+        Game.gui.tb.Begin();
     }
 }

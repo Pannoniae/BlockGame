@@ -1,6 +1,7 @@
-using System.Drawing;
 using System.Numerics;
+using Silk.NET.Maths;
 using TrippyGL;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
@@ -16,8 +17,8 @@ public class Hotbar : GUIElement {
     public Rectangle hotbarTexture = new Rectangle(0, 48, SIZE * 9, SIZE);
     public Rectangle selectedTexture = new Rectangle(180, 48, SIZE, SIZE);
 
-    public Hotbar(Screen screen, string name, Vector2 pos, string? text = default) : base(screen, name) {
-        setPosition(new RectangleF(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
+    public Hotbar(Screen screen, string name, Vector2D<int> pos, string? text = default) : base(screen, name) {
+        setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 9; i++) {
             slots[i] = new ItemSlot(Game.gui.uiCentreX + ((i - 9 / 2) * SIZE - SIZE / 2),
                 (i - 9 / 2) * SIZE - SIZE / 2);
@@ -35,7 +36,7 @@ public class Hotbar : GUIElement {
             var stack = slots[i];
             var selected = world.player.hotbar.selected == i;
             // if we draw in the middle, then we'll start in the middle of the 5th slot.... need to offset by half a slot
-            Game.gui.drawBlock(world, Blocks.get(stack.block), Game.centreX + ((i - 9 / 2) * SIZE - SIZE / 2 + PADDING) * GUI.guiScale
+            Game.gui.drawBlock(Blocks.get(stack.block), Game.centreX + ((i - 9 / 2) * SIZE - SIZE / 2 + PADDING) * GUI.guiScale
                 , Game.height - (BLOCKSIZE + 2) * GUI.guiScale, BLOCKSIZE);
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,

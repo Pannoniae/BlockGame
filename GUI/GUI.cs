@@ -53,8 +53,8 @@ public class GUI {
     private VertexBuffer<BlockVertex> buffer;
     private Matrix4x4 ortho;
 
-    private BlockVertex[] guiBlock;
-    private ushort[] guiBlockI;
+    private List<BlockVertex> guiBlock;
+    private List<ushort> guiBlockI;
 
     public GUI() {
         GL = Game.GL;
@@ -68,8 +68,8 @@ public class GUI {
         guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
             GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
         buffer = new VertexBuffer<BlockVertex>(GD, 240, 360, ElementType.UnsignedShort, BufferUsage.StreamDraw);
-        guiBlock = new BlockVertex[240];
-        guiBlockI = new ushort[360];
+        guiBlock = new List<BlockVertex>();
+        guiBlockI = new List<ushort>();
     }
 
     public void loadFonts() {
@@ -219,12 +219,10 @@ public class GUI {
         tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color);
     }
 
-    public void drawBlock(World world, Block block, int x, int y, int size) {
+    public void drawBlock(Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
-        var guiBlockSp = guiBlock.AsSpan();
-        var guiBlockISp = guiBlockI.AsSpan();
-        WorldRenderer.meshBlock(block, ref guiBlockSp, ref guiBlockISp);
+        WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         GD.ShaderProgram = guiBlockShader;
         // assemble the matrix
         // this is something like 33.7 degrees if the inverse tangent is calculated....
@@ -244,12 +242,16 @@ public class GUI {
         var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
-        buffer.DataSubset.SetData(guiBlock);
-        buffer.IndexSubset!.SetData(guiBlockI);
+        buffer.DataSubset.SetData(CollectionsMarshal.AsSpan(guiBlock));
+        buffer.IndexSubset!.SetData(CollectionsMarshal.AsSpan(guiBlockI));
         GD.VertexArray = buffer;
         var sSize = size * guiScale;
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
-        GD.DrawElements(PrimitiveType.Triangles, 0, buffer.IndexStorageLength);
+        GD.DrawElements(PrimitiveType.Triangles, 0, (uint)guiBlockI.Count);
         GD.Viewport = viewport;
+    }
+
+    public void drawBlockUI(Block block, int x, int y, int size) {
+        drawBlock(block, x * guiScale, y * guiScale, size);
     }
 }

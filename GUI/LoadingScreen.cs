@@ -14,7 +14,7 @@ public class LoadingScreen : Screen {
 
     public override void activate() {
         text = new Text(this, "loadingText", "Loading fonts...");
-        text.setPosition(new RectangleF(0, 0, 160, 40));
+        text.setPosition(new Rectangle(0, 0, 160, 40));
         text.centreContents();
         addElement(text);
 
