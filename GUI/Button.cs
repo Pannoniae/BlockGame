@@ -21,7 +21,7 @@ public class Button : GUIElement {
 
     public bool shadowed = false;
 
-    public Button(Screen screen, Vector2 position, bool wide, string? text = default) : base(screen) {
+    public Button(Screen screen, string name, Vector2 position, bool wide, string? text = default) : base(screen, name) {
         this.text = text;
         setPosition(new RectangleF(position.X, position.Y, wide ? 192 : 128, 16));
         this.wide = wide;

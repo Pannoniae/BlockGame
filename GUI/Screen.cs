@@ -21,7 +21,7 @@ public class Screen {
     /// </summary>
     public bool transparentRender = false;
 
-    public List<GUIElement> elements = new();
+    public Dictionary<string, GUIElement> elements = new();
 
     public GUIElement? activeElement;
 
@@ -68,12 +68,18 @@ public class Screen {
     }
 
     public void addElement(GUIElement element) {
-        elements.Add(element);
+        elements.Add(element.name, element);
+    }
+
+    public GUIElement getElement(string name) {
+        return elements[name];
     }
 
     public virtual void draw() {
-        foreach (var element in elements) {
-            element.draw();
+        foreach (var element in elements.Values) {
+            if (element.active) {
+                element.draw();
+            }
         }
         // draw tooltip for active element
         var tooltip = activeElement?.tooltip;
@@ -85,8 +91,10 @@ public class Screen {
     public static int MOUSEPOSPADDING => 4 * GUI.guiScale;
 
     public virtual void postDraw() {
-        foreach (var element in elements) {
-            element.postDraw();
+        foreach (var element in elements.Values) {
+            if (element.active) {
+                element.postDraw();
+            }
         }
     }
 
@@ -94,11 +102,11 @@ public class Screen {
     }
 
     public virtual void click(Vector2 pos) {
-        foreach (var element in elements) {
+        foreach (var element in elements.Values) {
             //Console.Out.WriteLine(element);
             //Console.Out.WriteLine(element.bounds);
             //Console.Out.WriteLine(pos);
-            if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
+            if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
                 element.click();
             }
         }
@@ -106,7 +114,7 @@ public class Screen {
 
     public virtual void update(double dt) {
         // update hover status
-        foreach (var element in elements) {
+        foreach (var element in elements.Values) {
             element.hovered = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y);
             element.pressed = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y) && Game.mouse.IsButtonPressed(MouseButton.Left);
         }
@@ -128,7 +136,7 @@ public class Screen {
 
     public virtual void onMouseMove(IMouse mouse, Vector2 pos) {
         bool found = false;
-        foreach (var element in elements) {
+        foreach (var element in elements.Values) {
             //Console.Out.WriteLine(element);
             //Console.Out.WriteLine(element.bounds);
             //Console.Out.WriteLine(pos);

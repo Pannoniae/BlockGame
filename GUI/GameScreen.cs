@@ -38,15 +38,21 @@ public class GameScreen : Screen {
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
 
         // then add the GUI
-        var version = Text.createText(this, new Vector2(2, 2), "BlockGame v0.0.2");
+        var version = Text.createText(this, "version", new Vector2(2, 2), "BlockGame v0.0.2");
         version.shadowed = true;
-        elements.Add(version);
-        var hotbar = new Hotbar(this) {
+        addElement(version);
+        var hotbar = new Hotbar(this, "hotbar", new Vector2(0, -20)) {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
-        hotbar.setPosition(new RectangleF(0, -20, Hotbar.hotbarTexture.Width, Hotbar.hotbarTexture.Height));
-        elements.Add(hotbar);
+        addElement(hotbar);
+
+        var inventory = new InventoryGUI(this, "playerInventory", new Vector2(0, 32)) {
+            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
+            verticalAnchor = VerticalAnchor.TOP
+        };
+        inventory.active = false;
+        addElement(inventory);
     }
 
     public override void deactivate() {
@@ -173,6 +179,11 @@ public class GameScreen : Screen {
             Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }
 
+        if (key == Key.E) {
+            var inv = (InventoryGUI)getElement("playerInventory");
+            inv.active = !inv.active;
+        }
+
 
         // guiscale test
         if (keyboard.IsKeyPressed(Key.ControlLeft)) {
@@ -280,6 +291,8 @@ public class GameScreen : Screen {
         var sl = world.getSkyLight(pos.X, pos.Y, pos.Z);
         var bl = world.getBlockLight(pos.X, pos.Y, pos.Z);
 
+        var ver = getElement("version");
+
         if (debugScreen) {
             debugStr.Clear();
             debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
@@ -301,7 +314,7 @@ public class GameScreen : Screen {
             debugStr.AppendFormat("CX:{0} CY:{1}\n", Game.centreX, Game.centreY);
             debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
             gui.tb.DrawString(gui.guiFont, debugStr.AsSpan(),
-                new Vector2(elements[0].bounds.Left, elements[0].bounds.Bottom), Color4b.White);
+                new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
 
 
             D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
