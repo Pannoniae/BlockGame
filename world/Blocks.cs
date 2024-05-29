@@ -37,15 +37,9 @@ public class Blocks {
     public static Block WATER = register(new Water(7, "Water", BlockModel.makeLiquid(Block.cubeUVs(7, 0)))
         .makeLiquid());
 
-    public static Block ICE = register(new Block(8, "Ice", BlockModel.makeCube(Block.cubeUVs(8, 0)))
-        .translucency()
-        .noCollision()
-        .noSelection());
+    public static Block WOODEN_PLANKS = register(new Block(8, "Ice", BlockModel.makeCube(Block.cubeUVs(8, 0))));
 
-    public static Block CURSED_GRASS = register(new Flower(9, "Cursed Grass", BlockModel.makeGrass(Block.crossUVs(13, 0)))
-        .transparency()
-        .noCollision()
-        .flowerAABB());
+    public static Block WOODEN_STAIRS = register(new Block(9, "Wooden Stairs", BlockModel.makeStairs(Block.cubeUVs(8, 0))));
 
     public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
     public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
@@ -276,7 +270,7 @@ public readonly record struct Face(
     float x4, float y4, float z4,
     UVPair min, UVPair max, RawDirection direction, bool noAO = false, bool nonFullFace = false) {
 
-    public const int MAX_FACES = 6;
+    public const int MAX_FACES = 10;
 
     public readonly float x1 = x1;
     public readonly float y1 = y1;
@@ -337,7 +331,7 @@ public class BlockModel {
         // north
         model.faces[3] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH, true);
         // down
-        model.faces[4] = new(1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
+        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
         // up
         model.faces[5] = new(0, height, 1, 0, height, 0, 1, height, 0, 1, height, 1, uvs[5], uvs[5] + 1, RawDirection.UP, true, true);
         return model;
@@ -363,6 +357,34 @@ public class BlockModel {
         // x2 rear
         model.faces[3] = new(1 - offset, 1, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
             uvs[1], uvs[1] + 1, RawDirection.NORTH, true, true);
+        return model;
+    }
+
+    public static BlockModel makeStairs(UVPair[] uvs) {
+        var model = new BlockModel();
+        model.faces = new Face[10];
+
+        // bottom
+        model.faces[0] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[4], uvs[4] + 1, RawDirection.DOWN);
+        // top top
+        model.faces[1] = new(0, 1, 1, 0, 1, 0.5f, 1, 1, 0.5f, 1, 1, 1, uvs[5], uvs[5] + new UVPair(1, 0.5f), RawDirection.UP, true, true);
+        // top bottom
+        model.faces[2] = new(0, 0.5f, 0.5f, 0, 0.5f, 0, 1, 0.5f, 0, 1, 0.5f, 0.5f, uvs[5] + new UVPair(0.5f, 0), uvs[5] + new UVPair(1, 0.5f), RawDirection.UP, true, true);
+        // left bottom
+        model.faces[3] = new(0, 0.5f, 1, 0, 0, 1, 0, 0, 0, 0, 0.5f, 0, uvs[0] + new UVPair(0, 0.5f), uvs[0] + new UVPair(0.5f, 1), RawDirection.WEST, true, true);
+        // left top
+        model.faces[4] = new(0, 1, 1, 0, 0.5f, 1, 0, 0.5f, 0.5f, 0, 1, 0.5f, uvs[0], uvs[0] + new UVPair(0.5f, 0.5f), RawDirection.WEST, true, true);
+        // right bottom
+        model.faces[5] = new(1, 0.5f, 0, 1, 0, 0, 1, 0, 1, 1, 0.5f, 1, uvs[1] + new UVPair(0, 0.5f), uvs[0] + 1, RawDirection.EAST, true, true);
+        // right top
+        model.faces[6] = new(1, 1, 0.5f, 1, 0.5f, 0.5f, 1, 0.5f, 1, 1, 1, 1, uvs[1] + new UVPair(0.5f, 0), uvs[1] + new UVPair(1, 0.5f), RawDirection.EAST, true, true);
+        // back
+        model.faces[7] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH);
+        // front top
+        model.faces[8] = new(0, 1, 0.5f, 0, 0.5f, 0.5f, 1, 0.5f, 0.5f, 1, 1, 0.5f, uvs[2], uvs[2] + new UVPair(1, 0.5f), RawDirection.SOUTH, true, true);
+        // front bottom
+        model.faces[9] = new(0, 0.5f, 0, 0, 0, 0, 1, 0, 0, 1, 0.5f, 0, uvs[2] + new UVPair(0, 0.5f), uvs[2] + 1, RawDirection.SOUTH, true, true);
+
         return model;
     }
 }

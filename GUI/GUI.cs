@@ -61,9 +61,9 @@ public class GUI {
         instance = this;
         guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
             GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
-        buffer = new VertexBuffer<BlockVertex>(GD, 24, 36, ElementType.UnsignedShort, BufferUsage.StreamDraw);
-        guiBlock = new BlockVertex[24];
-        guiBlockI = new ushort[36];
+        buffer = new VertexBuffer<BlockVertex>(GD, 240, 360, ElementType.UnsignedShort, BufferUsage.StreamDraw);
+        guiBlock = new BlockVertex[240];
+        guiBlockI = new ushort[360];
     }
 
     public void loadFonts() {
