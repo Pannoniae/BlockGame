@@ -1,7 +1,7 @@
 namespace BlockGame;
 
 public class Inventory {
-    public ushort[] slots = new ushort[9];
+    public ItemStack[] slots = new ItemStack[9];
     /// <summary>
     /// Selected index
     /// </summary>
@@ -9,13 +9,13 @@ public class Inventory {
 
     public Inventory() {
         for (int i = 0; i < slots.Length; i++) {
-            slots[i] = (ushort)(i + 1);
+            slots[i] = new ItemStack((ushort)(i + 1), 1);
         }
         // replace water with something useful
-        slots[Blocks.WATER.id - 1] = Blocks.LEAVES.id;
+        slots[Blocks.WATER.id - 1] = new ItemStack(Blocks.LEAVES.id, 1);
     }
 
-    public ushort getSelected() {
+    public ItemStack getSelected() {
         return slots[selected];
     }
 }

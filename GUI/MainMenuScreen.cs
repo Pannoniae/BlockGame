@@ -1,4 +1,4 @@
-using System.Drawing;
+using System.Numerics;
 using TrippyGL;
 
 namespace BlockGame;
@@ -6,7 +6,7 @@ namespace BlockGame;
 public class MainMenuScreen : Screen {
     public override void activate() {
         base.activate();
-        var sp = new Button(this, new RectangleF(0, -64, 96, 16), "Singleplayer");
+        var sp = new Button(this, new Vector2(0, -64), true, "Singleplayer");
         sp.centreContents();
         sp.clicked += () => {
             // we are *already* on the main thread; this is just needed so it executes a frame later
@@ -18,9 +18,9 @@ public class MainMenuScreen : Screen {
             });
         };
         Console.Out.WriteLine("sp:" + sp.bounds);
-        var button2 = new Button(this, new RectangleF(0, -32, 96, 16), "Multiplayer (soon)");
+        var button2 = new Button(this, new Vector2(0, -32), true, "Multiplayer (soon)");
         button2.centreContents();
-        var settings = new Button(this, new RectangleF(0, 0, 96, 16), "Settings (soon)");
+        var settings = new Button(this, new Vector2(0, 0), true, "Settings (soon)");
         settings.centreContents();
         settings.clicked += () => {
                 Game.instance.executeOnMainThread(() => {
@@ -28,7 +28,7 @@ public class MainMenuScreen : Screen {
                 });
             }
             ;
-        var button4 = new Button(this, new RectangleF(0, 32, 96, 16), "Quit");
+        var button4 = new Button(this, new Vector2(0, 32), true, "Quit");
         button4.centreContents();
         button4.clicked += () => Environment.Exit(0);
         elements.Add(sp);
@@ -44,7 +44,7 @@ public class MainMenuScreen : Screen {
     }
 
     public override void draw() {
-        Game.gui.drawBG(Blocks.GRAVEL, 16);
+        Game.gui.drawBG(Blocks.DIRT, 16);
         base.draw();
     }
 }

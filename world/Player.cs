@@ -442,7 +442,7 @@ public class Player {
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
             hotbar.selected = (ushort)(key - Key.Number0 - 1);
-            if (!Blocks.tryGet(hotbar.getSelected(), out _)) {
+            if (!Blocks.tryGet(hotbar.getSelected().block, out _)) {
                 hotbar.selected = 1;
             }
         }
@@ -496,7 +496,7 @@ public class Player {
     public void placeBlock() {
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
-            var bl = hotbar.getSelected();
+            var bl = hotbar.getSelected().block;
             // don't intersect the player
             var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
             if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {

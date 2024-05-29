@@ -13,7 +13,8 @@ public class LoadingScreen : Screen {
     private Text text;
 
     public override void activate() {
-        text = new Text(this, new RectangleF(0, 0, 160, 40), "Loading fonts...");
+        text = new Text(this, "Loading fonts...");
+        text.setPosition(new RectangleF(0, 0, 160, 40));
         text.centreContents();
         elements.Add(text);
 

@@ -6,20 +6,37 @@ namespace BlockGame;
 public class Button : GUIElement {
     public string? text { get; set; }
 
+    public bool wide;
+
     // todo refactor these to automatically calculate coords
-    public static Rectangle button = new(96, 0, 96, 16);
-    public static Rectangle hoveredButton = new(0, 16, 96, 16);
-    public static Rectangle pressedButton = new(0, 16 * 2, 96, 16);
+    public static Rectangle button = new(0, WIDE_OFFSET + 0, 128, 16);
+    public static Rectangle hoveredButton = new(0, WIDE_OFFSET + 16, 128, 16);
+    public static Rectangle pressedButton = new(0, WIDE_OFFSET + 16 * 2, 128, 16);
+
+    public const int WIDE_OFFSET = 80;
+
+    public static Rectangle buttonWide = new(0, 0, 192, 16);
+    public static Rectangle hoveredButtonWide = new(0,  16, 192, 16);
+    public static Rectangle pressedButtonWide = new(0, 16 * 2, 192, 16);
 
     public bool shadowed = false;
 
-    public Button(Screen screen, RectangleF guiPosition, string? text = default) : base(screen, guiPosition) {
+    public Button(Screen screen, Vector2 position, bool wide, string? text = default) : base(screen) {
         this.text = text;
+        setPosition(new RectangleF(position.X, position.Y, wide ? 192 : 128, 16));
+        this.wide = wide;
     }
 
     public override void draw() {
-        var tex = hovered ? hoveredButton : button;
-        tex = pressed ? pressedButton : tex;
+        Rectangle tex;
+        if (wide) {
+            tex = hovered ? hoveredButtonWide : buttonWide;
+            tex = pressed ? pressedButtonWide : tex;
+        }
+        else {
+            tex = hovered ? hoveredButton : button;
+            tex = pressed ? pressedButton : tex;
+        }
         Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), tex);
         var centre = new Vector2(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
         if (text != null) {

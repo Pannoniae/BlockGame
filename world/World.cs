@@ -44,7 +44,7 @@ public class World {
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
-    public const int RENDERDISTANCE = 16;
+    public const int RENDERDISTANCE = 8;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50

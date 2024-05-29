@@ -8,14 +8,15 @@ public class Text : GUIElement {
 
     public bool shadowed = false;
 
-    public Text(Screen screen, RectangleF position, string text) : base(screen, position) {
+    public Text(Screen screen, string text) : base(screen) {
         this.text = text;
         unscaledSize = true;
     }
 
     public static Text createText(Screen screen, Vector2 position, string text) {
         var bounds = Game.gui.guiFont.Measure(text);
-        var guitext = new Text(screen, new RectangleF(position.X, position.Y, position.X + bounds.X, position.Y + bounds.Y), text);
+        var guitext = new Text(screen, text);
+        guitext.setPosition(new RectangleF(position.X, position.Y, position.X + bounds.X, position.Y + bounds.Y));
         return guitext;
     }
 

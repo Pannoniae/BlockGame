@@ -71,9 +71,8 @@ public class GUIElement {
 
     public event Action? clicked;
 
-    protected GUIElement(Screen screen, RectangleF guiPosition) {
+    protected GUIElement(Screen screen) {
         this.screen = screen;
-        this.guiPosition = guiPosition;
     }
 
     public void setPosition(RectangleF pos) {
