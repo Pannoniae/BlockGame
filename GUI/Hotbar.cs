@@ -20,7 +20,7 @@ public class Hotbar : GUIElement {
     public Hotbar(Screen screen, string name, Vector2D<int> pos, string? text = default) : base(screen, name) {
         setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 9; i++) {
-            slots[i] = new ItemSlot(Game.gui.uiCentreX + ((i - 9 / 2) * SIZE - SIZE / 2),
+            slots[i] = new ItemSlot(null!, Game.gui.uiCentreX + ((i - 9 / 2) * SIZE - SIZE / 2),
                 (i - 9 / 2) * SIZE - SIZE / 2);
         }
     }
