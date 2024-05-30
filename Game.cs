@@ -355,7 +355,8 @@ public partial class Game {
         screenStack.peek().clear(GD, dt, interp);
         screenStack.peek().render(dt, interp);
 
-        //GD.ResetStates();
+        // before this, only GL, after this, only GD
+        GD.ResetStates();
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
