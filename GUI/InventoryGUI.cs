@@ -12,7 +12,7 @@ public class InventoryGUI : GUIElement {
     public const int cols = 4;
 
     public const int invOffsetY = 22;
-    public const int invOffsetX = 4;
+    public const int invOffsetX = 5;
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 
@@ -35,7 +35,7 @@ public class InventoryGUI : GUIElement {
     }
 
     public override void draw() {
-        Game.gui.draw(invTex, new Vector2(bounds.X, bounds.Y));
+        Game.gui.drawUI(invTex, new Vector2(GUIbounds.X, GUIbounds.Y));
         foreach (var slot in slots) {
             slot.drawItem();
         }

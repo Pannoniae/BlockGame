@@ -351,9 +351,11 @@ public partial class Game {
         if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
             focused = false;
         }*/
-        //GD.ResetStates();
+
         screenStack.peek().clear(GD, dt, interp);
         screenStack.peek().render(dt, interp);
+
+        //GD.ResetStates();
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
