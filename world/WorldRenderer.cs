@@ -25,6 +25,9 @@ public class WorldRenderer {
     public int uCameraPos;
     public int drawDistance;
     public int fogColour;
+    
+    
+    public int dummyuMVP;
 
 
     public Shader outline;
@@ -50,6 +53,7 @@ public class WorldRenderer {
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
+        dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
         drawDistance = shader.getUniformLocation(nameof(drawDistance));
         fogColour = shader.getUniformLocation(nameof(fogColour));
@@ -98,7 +102,7 @@ public class WorldRenderer {
         }
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
-        dummyShader.setUniform(uMVP, viewProj);
+        dummyShader.setUniform(dummyuMVP, viewProj);
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunksToRender) {

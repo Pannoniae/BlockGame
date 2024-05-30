@@ -29,6 +29,7 @@ public class GUI {
     public static int guiScale = 4;
 
     public TextureBatcher tb;
+    public TextureBatcher immediatetb;
     public Texture2D guiTexture;
     public Texture2D colourTexture;
     public TextureFont guiFont;
@@ -60,8 +61,10 @@ public class GUI {
         GL = Game.GL;
         GD = Game.GD;
         tb = new TextureBatcher(Game.GD);
+        immediatetb = new TextureBatcher(Game.GD);
         shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.GD, excludeWorldMatrix: true);
         tb.SetShaderProgram(shader);
+        immediatetb.SetShaderProgram(shader);
         guiTexture = Texture2DExtensions.FromFile(Game.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.GD, "textures/debug.png");
         instance = this;
@@ -166,10 +169,20 @@ public class GUI {
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
+    
+    public void drawImmediate(Texture2D texture, Vector2 position, Rectangle? source = null,
+        Color4b color = default, Vector2 origin = default, float depth = 0f) {
+        immediatetb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
+    }
 
     public void drawUI(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         tb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
+    }
+    
+    public void drawUIImmediate(Texture2D texture, Vector2 position, Rectangle? source = null,
+        Color4b color = default, Vector2 origin = default, float depth = 0f) {
+        immediatetb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
@@ -223,6 +236,7 @@ public class GUI {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
         GD.VertexArray = buffer;
+        GL.UseProgram(guiBlockShader.Handle);
         GD.ShaderProgram = guiBlockShader;
         WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         // assemble the matrix
@@ -240,17 +254,19 @@ public class GUI {
             // projection
             Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
         //Matrix4x4.CreateTranslation(0, 0, 0);
-        var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
+        //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
-        //GD.ResetStates();
-        buffer.DataSubset.SetData(CollectionsMarshal.AsSpan(guiBlock));
-        buffer.IndexSubset!.SetData(CollectionsMarshal.AsSpan(guiBlockI));
+        var sp = CollectionsMarshal.AsSpan(guiBlock);
+        var spI = CollectionsMarshal.AsSpan(guiBlockI);
+        var a = buffer == null;
+        buffer.DataSubset.SetData(sp);
+        buffer.IndexSubset!.SetData(spI);
         var sSize = size * guiScale;
-        //GD.ResetStates();
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
-        GD.DrawElements(PrimitiveType.Triangles, 0, (uint)guiBlockI.Count);
-        //GD.ResetStates();
+        // DON'T REMOVE OR THIS FUCKING SEGFAULTS
+        GL.BindVertexArray(buffer.VertexArray.Handle);
+        GD.DrawElements(PrimitiveType.Triangles, 0, (uint)spI.Length);
         GD.Viewport = viewport;
     }
 

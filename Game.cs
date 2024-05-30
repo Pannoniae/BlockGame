@@ -124,7 +124,7 @@ public partial class Game {
     }
 
     private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message, IntPtr userparam) {
-        string msg = Marshal.PtrToStringAuto(message, length)!;
+        string msg = Marshal.PtrToStringAnsi(message, length)!;
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
     }
 
@@ -369,9 +369,12 @@ public partial class Game {
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
         gui.tb.Begin();
+        gui.immediatetb.Begin(BatcherBeginMode.Immediate);
         screenStack.peek().draw();
         gui.tb.End();
         screenStack.peek().postDraw();
+        gui.immediatetb.End();
+        GD.DepthTestingEnabled = true;
         //if (gui.debugScreen) {
         /*mgui.Update((float)dt);
         screen.imGuiDraw();
