@@ -19,6 +19,8 @@ public class GLStateTracker {
 
     public int currentShader;
 
+    public int VAO;
+
     public GLStateTracker(GL gl, GraphicsDevice gd) {
         GL = gl;
         GD = gd;
@@ -34,6 +36,9 @@ public class GLStateTracker {
 
         // save shader
         GL.GetInteger(GetPName.CurrentProgram, out currentShader);
+
+        // save VAO
+        GL.GetInteger(GetPName.VertexArrayBinding, out VAO);
     }
 
     public void load() {
@@ -47,6 +52,9 @@ public class GLStateTracker {
         // restore shader
         GL.UseProgram((uint)currentShader);
         GD.ResetBufferStates();
+
+        // restore VAO
+        GL.BindVertexArray((uint)VAO);
 
     }
 }
