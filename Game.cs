@@ -89,6 +89,8 @@ public partial class Game {
     public Texture2D lightTexture;
     public Metrics metrics;
 
+    public GLStateTracker GLTracker;
+
     public BlockingCollection<Action> mainThreadQueue = new();
 
     private SoundBuffer buffer;
@@ -149,6 +151,9 @@ public partial class Game {
         GD.FaceCullingEnabled = true;
         GD.PolygonFrontFace = PolygonFace.CounterClockwise;
         GD.CullFaceMode = CullingMode.CullBack;
+
+        GLTracker = new GLStateTracker(GL, GD);
+
         foreach (var mouse in input.Mice) {
             mouse.MouseMove += onMouseMove;
             mouse.MouseDown += onMouseDown;
@@ -352,11 +357,14 @@ public partial class Game {
             focused = false;
         }*/
 
+        GLTracker.save();
+
         screenStack.peek().clear(GD, dt, interp);
         screenStack.peek().render(dt, interp);
 
         // before this, only GL, after this, only GD
-        GD.ResetStates();
+        GLTracker.load();
+        //GD.ResetStates();
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
