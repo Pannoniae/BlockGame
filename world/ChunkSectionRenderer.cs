@@ -512,13 +512,13 @@ public class ChunkSectionRenderer {
                                         break;
                                 }
                                 nb = getBlockFromCacheUnsafe(ref neighbourRef, nbx, nby, nbz);
+                                var fb = Blocks.get(nb).isFullBlock;
                                 switch (mode) {
-
                                     case VertexConstructionMode.OPAQUE:
-                                        test2 = Blocks.notSolid(nb);
+                                        test2 = Blocks.notSolid(nb) || !fb;
                                         break;
                                     case VertexConstructionMode.TRANSLUCENT:
-                                        test2 = notTranslucent(nb);
+                                        test2 = notTranslucent(nb) || !fb;
                                         break;
                                 }
                                 test2 = test2 || face.nonFullFace && !Blocks.isTranslucent(nb);
