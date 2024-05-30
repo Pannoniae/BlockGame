@@ -222,6 +222,7 @@ public class GUI {
     public void drawBlock(Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
+        GD.VertexArray = buffer;
         GD.ShaderProgram = guiBlockShader;
         WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         // assemble the matrix
@@ -243,10 +244,8 @@ public class GUI {
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
         //GD.ResetStates();
-        GD.VertexArray = buffer;
         buffer.DataSubset.SetData(CollectionsMarshal.AsSpan(guiBlock));
         buffer.IndexSubset!.SetData(CollectionsMarshal.AsSpan(guiBlockI));
-        GD.VertexArray = buffer;
         var sSize = size * guiScale;
         //GD.ResetStates();
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
