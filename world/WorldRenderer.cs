@@ -66,8 +66,10 @@ public class WorldRenderer {
         //Game.GD.ResetStates();
         var tex = Game.instance.blockTexture;
         var lightTex = Game.instance.lightTexture;
-        var t = Game.GD.BindTextureSetActive(tex);
-        var t2 = Game.GD.BindTextureSetActive(lightTex);
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
+        GL.ActiveTexture(TextureUnit.Texture1);
+        GL.BindTexture(TextureTarget.Texture2D, lightTex.Handle);
 
         if (fastChunkSwitch) {
             GL.BindVertexArray(chunkVAO);
@@ -89,8 +91,8 @@ public class WorldRenderer {
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
         shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
         shader.setUniform(fogColour, defaultClearColour);
-        shader.setUniform(blockTexture, t);
-        shader.setUniform(lightTexture, t2);
+        shader.setUniform(blockTexture, 0);
+        shader.setUniform(lightTexture, 1);
         foreach (var chunk in chunksToRender) {
             chunk.drawOpaque(world.player.camera);
         }
@@ -105,13 +107,13 @@ public class WorldRenderer {
         // TRANSLUCENT PASS
         shader.use();
         GL.ColorMask(true, true, true, true);
-        //GL.DepthMask(false);
-        //GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(false);
+        GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunksToRender) {
             chunk.drawTransparent(world.player.camera);
         }
-        //GL.DepthMask(true);
-        GL.DepthFunc(DepthFunction.Lequal);
+        GL.DepthMask(true);
+        //GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.CullFace);
 
     }
