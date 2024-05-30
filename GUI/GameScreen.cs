@@ -74,11 +74,11 @@ public class GameScreen : Screen {
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector2D<double>(0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
-        if (Game.focused && !Game.lockingMouse) {
+        if (!world.paused && !Game.lockingMouse) {
             world.player.updateInput(dt);
+            world.update(dt);
+            world.player.update(dt);
         }
-        world.update(dt);
-        world.player.update(dt);
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
@@ -108,7 +108,16 @@ public class GameScreen : Screen {
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
         base.onMouseDown(mouse, button);
-        if (Game.focused) {
+        if (world.inMenu) {
+            return;
+        }
+
+        if (world.paused) {
+            Game.instance.lockMouse();
+            Game.lockingMouse = true;
+            world.paused = false;
+        }
+        else {
             if (button == MouseButton.Left) {
                 world.player.breakBlock();
             }
@@ -116,15 +125,11 @@ public class GameScreen : Screen {
                 world.player.placeBlock();
             }
         }
-        else {
-            Game.instance.lockMouse();
-            Game.lockingMouse = true;
-        }
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
         base.onMouseMove(mouse, pos);
-        if (!Game.focused) {
+        if (!Game.focused || world.inMenu) {
             return;
         }
 
@@ -165,6 +170,8 @@ public class GameScreen : Screen {
             }
 
             Game.instance.unlockMouse();
+            world.player.catchUpOnPrevVars();
+            world.paused = true;
         }
 
         if (key == Key.F3) {
@@ -182,7 +189,16 @@ public class GameScreen : Screen {
 
         if (key == Key.E) {
             var inv = (InventoryGUI)getElement("playerInventory");
-            inv.active = !inv.active;
+            if (world.inMenu) {
+                inv.active = false;
+                world.inMenu = false;
+                Game.instance.lockMouse();
+            }
+            else {
+                inv.active = true;
+                world.inMenu = true;
+                Game.instance.unlockMouse();
+            }
         }
 
 
@@ -267,7 +283,7 @@ public class GameScreen : Screen {
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 60), Color4b.Red);
-        if (!Game.focused) {
+        if (world.paused) {
             var pauseText = "-PAUSED-";
             Vector2 offset = gui.guiFont.Measure(pauseText);
             gui.tb.DrawString(gui.guiFont, pauseText, new Vector2(Game.centreX, Game.centreY),

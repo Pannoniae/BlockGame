@@ -222,8 +222,8 @@ public class GUI {
     public void drawBlock(Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
-        WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         GD.ShaderProgram = guiBlockShader;
+        WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         // assemble the matrix
         // this is something like 33.7 degrees if the inverse tangent is calculated....
         // still zero idea why this works but 30 deg is garbage, 45 is weirdly elongated and 60 is squished

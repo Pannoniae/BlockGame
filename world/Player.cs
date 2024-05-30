@@ -129,10 +129,19 @@ public class Player {
         }
         // after everything is done
         // calculate total traveled
+        setPrevVars();
+    }
+
+    public void setPrevVars() {
         prevPosition = position;
         camera.prevBob = camera.bob;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
+    }
+    // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
+    public void catchUpOnPrevVars() {
+        setPrevVars();
+        camera.prevPosition = camera.position;
     }
 
     public ChunkCoord getChunk(Vector3D<double> pos) {
@@ -280,7 +289,7 @@ public class Player {
     }
 
     private void updateInputVelocity(double dt) {
-        if (!Game.focused) {
+        if (world.paused || world.inMenu) {
             return;
         }
         // convert strafe vector into actual movement
@@ -449,6 +458,10 @@ public class Player {
     }
 
     public void updateInput(double dt) {
+        if (world.inMenu) {
+            return;
+        }
+
         pressedMovementKey = false;
         var keyboard = Game.keyboard;
         var mouse = Game.mouse;

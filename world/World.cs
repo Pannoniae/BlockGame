@@ -30,6 +30,9 @@ public class World {
 
     public bool isLoading;
 
+    public bool paused;
+    public bool inMenu;
+
     public Player player;
 
 
