@@ -91,7 +91,6 @@ public class GameScreen : Screen {
     }
 
     public override void render(double dt, double interp) {
-        GD.DepthTestingEnabled = true;
         Game.instance.metrics.clear();
 
         //world.mesh();

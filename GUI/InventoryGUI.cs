@@ -35,7 +35,7 @@ public class InventoryGUI : GUIElement {
     }
 
     public override void draw() {
-        Game.gui.drawUI(invTex, new Vector2(GUIbounds.X, GUIbounds.Y));
+        Game.gui.drawUIImmediate(invTex, new Vector2(GUIbounds.X, GUIbounds.Y));
         foreach (var slot in slots) {
             slot.drawItem();
         }

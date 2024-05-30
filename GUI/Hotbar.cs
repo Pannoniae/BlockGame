@@ -30,8 +30,7 @@ public class Hotbar : GUIElement {
         var world = GameScreen.world;
         var slots = world.player.hotbar.slots;
         var gui = Game.gui;
-        gui.tb.Begin(BatcherBeginMode.Immediate);
-        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), hotbarTexture);
+        Game.gui.drawImmediate(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), hotbarTexture);
         for (int i = 0; i < slots.Length; i++) {
             var stack = slots[i];
             var selected = world.player.hotbar.selected == i;
@@ -41,10 +40,9 @@ public class Hotbar : GUIElement {
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,
                 // not a mix of GUI/screen coords for UI positions and texture drawing like now.....
-                Game.gui.draw(Game.gui.guiTexture, new Vector2(Game.centreX + (int)((i - 9 / 2) * SIZE - SIZE / 2) * GUI.guiScale, bounds.Y),
+                Game.gui.drawImmediate(Game.gui.guiTexture, new Vector2(Game.centreX + (int)((i - 9 / 2) * SIZE - SIZE / 2) * GUI.guiScale, bounds.Y),
                     selectedTexture);
             }
         }
-        gui.tb.End();
     }
 }
