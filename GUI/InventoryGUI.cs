@@ -11,7 +11,8 @@ public class InventoryGUI : GUIElement {
     public const int rows = 9;
     public const int cols = 4;
 
-    public const int invOffset = 20;
+    public const int invOffsetY = 22;
+    public const int invOffsetX = 4;
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 
@@ -24,9 +25,9 @@ public class InventoryGUI : GUIElement {
     public void setup() {
         for (int x = 0; x < rows; x++) {
             for (int y = 0; y < cols; y++) {
-                int slotX = GUIbounds.X + x * ItemSlot.SLOTSIZE;
-                int slotY = GUIbounds.Y + invOffset + y * ItemSlot.SLOTSIZE;
-                slots[y * rows + x] = new ItemSlot(slotX, slotY) {
+                int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
+                int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
+                slots[y * rows + x] = new ItemSlot(this, slotX, slotY) {
                     stack = new ItemStack(3, 1)
                 };
             }

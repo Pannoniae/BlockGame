@@ -10,15 +10,18 @@ namespace BlockGame;
 public class ItemSlot {
 
     public const int SLOTSIZE = 20;
-    public const int PADDING = 4;
+    public const int PADDING = 2;
     public const int ITEMSIZE = 16;
 
     public ItemStack stack;
 
+    public InventoryGUI inventory;
+
     public Rectangle rect;
     public Vector2D<int> itemPos;
 
-    public ItemSlot(int x, int y) {
+    public ItemSlot(InventoryGUI inventory, int x, int y) {
+        this.inventory = inventory;
         rect = new Rectangle(x, y, SLOTSIZE, SLOTSIZE);
         itemPos = new Vector2D<int>(x + PADDING, y + PADDING);
     }
@@ -26,7 +29,9 @@ public class ItemSlot {
 
     public void drawItem() {
         Game.gui.tb.End();
-        Game.gui.drawBlockUI(Blocks.get(stack.block), itemPos.X, itemPos.Y, ITEMSIZE);
+        //Game.GD.ResetStates();
+        Game.gui.drawBlockUI(Blocks.get(stack.block), inventory.GUIbounds.X + itemPos.X, inventory.GUIbounds.Y + itemPos.Y, ITEMSIZE);
+        //Game.GD.ResetStates();
         Game.gui.tb.Begin();
     }
 }
