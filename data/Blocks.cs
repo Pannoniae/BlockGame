@@ -39,7 +39,7 @@ public class Blocks {
 
     public static Block WOODEN_PLANKS = register(new Block(8, "Ice", BlockModel.makeCube(Block.cubeUVs(8, 0))));
 
-    public static Block WOODEN_STAIRS = register(new Block(9, "Wooden Stairs", BlockModel.makeStairs(Block.cubeUVs(8, 0))));
+    public static Block WOODEN_STAIRS = register(new Block(9, "Wooden Stairs", BlockModel.makeStairs(Block.cubeUVs(8, 0))).partialBlock());
 
     public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
     public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
@@ -83,6 +83,8 @@ public class Block {
     /// Display name
     /// </summary>
     public string name = "";
+
+    public bool isFullBlock = true;
 
     /// <summary>
     /// Is fully transparent? (glass, leaves, etc.)
@@ -197,6 +199,11 @@ public class Block {
     public Block noSelection() {
         selection = false;
         selectionAABB = null;
+        return this;
+    }
+
+    public Block partialBlock() {
+        isFullBlock = false;
         return this;
     }
     
