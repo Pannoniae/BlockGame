@@ -236,7 +236,6 @@ public class GUI {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
         GD.VertexArray = buffer;
-        GL.UseProgram(guiBlockShader.Handle);
         GD.ShaderProgram = guiBlockShader;
         WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
         // assemble the matrix
@@ -259,13 +258,12 @@ public class GUI {
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         var spI = CollectionsMarshal.AsSpan(guiBlockI);
-        var a = buffer == null;
         buffer.DataSubset.SetData(sp);
         buffer.IndexSubset!.SetData(spI);
         var sSize = size * guiScale;
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
-        GL.BindVertexArray(buffer.VertexArray.Handle);
+        //GL.BindVertexArray(buffer.VertexArray.Handle);
         GD.DrawElements(PrimitiveType.Triangles, 0, (uint)spI.Length);
         GD.Viewport = viewport;
     }
