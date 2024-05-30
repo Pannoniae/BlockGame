@@ -12,7 +12,7 @@ public class InventoryGUI : GUIElement {
     public const int cols = 4;
 
     public const int invOffsetY = 22;
-    public const int invOffsetX = 5;
+    public const int invOffsetX = 4;
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 

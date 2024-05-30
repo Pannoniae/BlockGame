@@ -242,12 +242,16 @@ public class GUI {
         var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
+        //GD.ResetStates();
+        GD.VertexArray = buffer;
         buffer.DataSubset.SetData(CollectionsMarshal.AsSpan(guiBlock));
         buffer.IndexSubset!.SetData(CollectionsMarshal.AsSpan(guiBlockI));
         GD.VertexArray = buffer;
         var sSize = size * guiScale;
+        //GD.ResetStates();
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
         GD.DrawElements(PrimitiveType.Triangles, 0, (uint)guiBlockI.Count);
+        //GD.ResetStates();
         GD.Viewport = viewport;
     }
 

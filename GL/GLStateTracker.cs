@@ -46,6 +46,7 @@ public class GLStateTracker {
 
         // restore shader
         GL.UseProgram((uint)currentShader);
+        GD.ResetBufferStates();
 
     }
 }

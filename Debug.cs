@@ -23,6 +23,7 @@ public class Debug {
         //}
         // don't forget to use the program before setting uniforms.
         //Game.GD.ResetShaderProgramStates();
+        Game.GL.UseProgram(debugShader.Handle);
         debugShader.Projection = GameScreen.world.player.camera.getProjectionMatrix();
         debugShader.View = GameScreen.world.player.camera.getViewMatrix(interp);
     }
