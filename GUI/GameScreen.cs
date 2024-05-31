@@ -17,6 +17,8 @@ public class GameScreen : Screen {
 
     public bool debugScreen = false;
 
+    public Menu NULLMENU = new Menu();
+
     private TimerAction updateMemory;
 
     // values for f3
@@ -26,7 +28,7 @@ public class GameScreen : Screen {
 
     public override void activate() {
         base.activate();
-        currentMenu = new Menu();
+        currentMenu = NULLMENU;
         debugStr = ZString.CreateStringBuilder();
         GD = Game.GD;
         D = new Debug();
@@ -46,14 +48,6 @@ public class GameScreen : Screen {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         addElement(hotbar);
-
-        var inventory = new InventoryGUI(this, "playerInventory", new Vector2D<int>(0, 32)) {
-            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
-            verticalAnchor = VerticalAnchor.TOP,
-            active = false
-        };
-        inventory.setup();
-        addElement(inventory);
     }
 
     public override void deactivate() {
@@ -187,14 +181,14 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.E) {
-            var inv = (InventoryGUI)getElement("playerInventory");
             if (world.inMenu) {
-                inv.active = false;
+                currentMenu = NULLMENU;
                 world.inMenu = false;
                 Game.instance.lockMouse();
             }
             else {
-                inv.active = true;
+                currentMenu = new InventoryGUI(new Vector2D<int>(0, 32));
+                ((InventoryGUI)currentMenu).setup();
                 world.inMenu = true;
                 Game.instance.unlockMouse();
             }

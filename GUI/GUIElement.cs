@@ -3,7 +3,7 @@ using System.Drawing;
 namespace BlockGame;
 
 public class GUIElement {
-    public Menu Menu;
+    public Menu menu;
 
     public string name;
     public bool active = true;
@@ -36,7 +36,7 @@ public class GUIElement {
                 absolutePos.Width *= GUI.guiScale;
                 absolutePos.Height *= GUI.guiScale;
             }
-            return resolveAnchors(absolutePos, false);
+            return resolveAnchors(absolutePos, horizontalAnchor, verticalAnchor, menu, false);
         }
     }
 
@@ -46,13 +46,13 @@ public class GUIElement {
     public Rectangle GUIbounds {
         get {
             var absolutePos = guiPosition;
-            return resolveAnchors(absolutePos, true);
+            return resolveAnchors(absolutePos, horizontalAnchor, verticalAnchor, menu, true);
         }
     }
 
-    public Rectangle resolveAnchors(Rectangle absolutePos, bool uiSpace = true) {
-        var sizeX = uiSpace ? Game.gui.uiWidth : Menu.size.X;
-        var sizeY = uiSpace ? Game.gui.uiHeight : Menu.size.Y;
+    public static Rectangle resolveAnchors(Rectangle absolutePos, HorizontalAnchor horizontalAnchor, VerticalAnchor verticalAnchor, Menu menu, bool uiSpace = true) {
+        var sizeX = uiSpace ? Game.gui.uiWidth : menu.size.X;
+        var sizeY = uiSpace ? Game.gui.uiHeight : menu.size.Y;
         switch (horizontalAnchor) {
             case HorizontalAnchor.LEFT:
                 //absolutePos.X -= menu.width / 2;
@@ -92,7 +92,7 @@ public class GUIElement {
     public event Action? clicked;
 
     protected GUIElement(Menu menu, string name) {
-        this.Menu = menu;
+        this.menu = menu;
         this.name = name;
     }
 
