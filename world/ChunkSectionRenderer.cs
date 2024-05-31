@@ -113,8 +113,8 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        var sw = new Stopwatch();
-        sw.Start();
+        //var sw = new Stopwatch();
+        //sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -193,8 +193,8 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        sw.Stop();
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        //sw.Stop();
     }
 
     public ushort toVertex(float f) {
