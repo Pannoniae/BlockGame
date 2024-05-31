@@ -23,13 +23,16 @@ public class InventoryGUI : GUIElement {
     }
 
     public void setup() {
-        for (int x = 0; x < rows; x++) {
-            for (int y = 0; y < cols; y++) {
+        int i = 1;
+        for (int y = 0; y < cols; y++) {
+            for (int x = 0; x < rows; x++) {
+                var item = i > Blocks.blockCount - 1 ? 0 : i;
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
                 slots[y * rows + x] = new ItemSlot(this, slotX, slotY) {
-                    stack = new ItemStack(3, 1)
+                    stack = new ItemStack((ushort)item, 1)
                 };
+                i++;
             }
         }
     }

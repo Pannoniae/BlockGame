@@ -17,7 +17,6 @@ public class GameScreen : Screen {
 
     public bool debugScreen = false;
 
-    public readonly BlendState bs = new(false, BlendingMode.FuncAdd, BlendingFactor.OneMinusDstColor, BlendingFactor.Zero);
     private TimerAction updateMemory;
 
     // values for f3

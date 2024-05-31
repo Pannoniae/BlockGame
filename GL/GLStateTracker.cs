@@ -7,12 +7,7 @@ public class GLStateTracker {
     public GL GL;
     public GraphicsDevice GD;
 
-    // this is how many textures we track
-    public const int MAX_BINDINGS = 8;
-
     public int activeTex;
-
-    //public uint[] texBindings2D = new uint[8];
 
     public int boundTex0;
     public int boundTex1;
@@ -48,6 +43,8 @@ public class GLStateTracker {
         GL.BindTexture(TextureTarget.Texture2D, (uint)boundTex1);
 
         GL.ActiveTexture((TextureUnit)activeTex);
+
+        GD.ResetTextureStates();
 
         // restore shader
         GL.UseProgram((uint)currentShader);

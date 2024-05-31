@@ -8,6 +8,8 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
+    public static int blockCount = 11;
+
     public static Block register(Block block) {
         return blocks[block.id] = block;
     }
@@ -23,7 +25,7 @@ public class Blocks {
         return cond;
     }
 
-    public static Block AIR = register(new Block(0, "Air", BlockModel.makeCube(Block.cubeUVs(0, 0))));
+    public static Block AIR = register(new Block(0, "Air", BlockModel.emptyBlock()).air());
     public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))));
     public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(Block.cubeUVs(2, 0))));
     public static Block GRAVEL = register(new Block(3, "Gravel", BlockModel.makeCube(Block.cubeUVs(3, 0))));
@@ -224,6 +226,12 @@ public class Block {
     public virtual void update(World world, Vector3D<int> pos) {
 
     }
+
+    public Block air() {
+        noCollision();
+        noSelection();
+        return this;
+    }
 }
 
 public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
@@ -392,6 +400,12 @@ public class BlockModel {
         // front bottom
         model.faces[9] = new(0, 0.5f, 0, 0, 0, 0, 1, 0, 0, 1, 0.5f, 0, uvs[2] + new UVPair(0, 0.5f), uvs[2] + 1, RawDirection.SOUTH, true, true);
 
+        return model;
+    }
+
+    public static BlockModel emptyBlock() {
+        var model = new BlockModel();
+        model.faces = new Face[0];
         return model;
     }
 }
