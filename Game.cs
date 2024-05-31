@@ -192,7 +192,7 @@ public partial class Game {
         buffer = new SoundBuffer(file);
         music = new Sound(buffer);
         music.Loop = true;
-        music.Play();
+        //music.Play();
         Console.Out.WriteLine("played?");
 
         gui = new GUI();
