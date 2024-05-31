@@ -65,6 +65,26 @@ public class Blocks {
     public static bool hasCollision(int block) {
         return block != 0 && get(block).collision;
     }
+
+    public static bool isSolid(Block block) {
+        return block.id != 0 && block.type == BlockType.SOLID;
+    }
+
+    public static bool notSolid(Block block) {
+        return block.id == 0 || block.type != BlockType.SOLID;
+    }
+
+    public static bool isTransparent(Block block) {
+        return block.id != 0 && block.type == BlockType.TRANSPARENT;
+    }
+
+    public static bool isTranslucent(Block block) {
+        return block.id != 0 && block.type == BlockType.TRANSLUCENT;
+    }
+
+    public static bool hasCollision(Block block) {
+        return block.id != 0 && block.collision;
+    }
 }
 
 public class Block {
@@ -127,6 +147,17 @@ public class Block {
     public static Vector2D<float> texCoords(UVPair uv) {
         return new Vector2D<float>(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float texU(float u) {
+        return u * 16f / atlasSize;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float texV(float v) {
+        return v * 16f / atlasSize;
+    }
+
 
     public static UVPair[] cubeUVs(int x, int y) {
         return [new(x, y), new(x, y), new(x, y), new(x, y), new(x, y), new(x, y)];

@@ -5,165 +5,80 @@ using TrippyGL;
 
 namespace BlockGame;
 
-public class Screen {
+// It's like a menu but fullscreen!
+public class Screen : Menu {
 
-    public Vector2D<int> size;
-    public Vector2D<int> centre;
-
-
-    /// <summary>
-    /// If true, the screen lets screens under it update.
-    /// </summary>
-    public bool transparentUpdate = false;
-
-    /// <summary>
-    /// If true, the screen lets screens under it render. (e.g. the pause menu)
-    /// </summary>
-    public bool transparentRender = false;
-
-    public Dictionary<string, GUIElement> elements = new();
-
-    public GUIElement? activeElement;
-
-    public static LoadingScreen LOADING = new();
-    public static MainMenuScreen MAIN_MENU = new();
+    public static MainMenuScreen MAIN_MENU_SCREEN = new();
     public static GameScreen GAME_SCREEN = new();
-    public static SettingsScreen SETTINGS_SCREEN = new();
-
-    public Screen() {
-    }
-
-    public virtual void activate() {
-
-    }
-
-    public virtual void deactivate() {
-        elements.Clear();
-    }
 
     /// <summary>
-    /// Clears the entire screenstack and pushes the screen.
+    /// The current game menu which is shown.
     /// </summary>
-    public static void switchTo(Screen screen) {
-        foreach (var sc in Game.instance.screenStack) {
-            sc.deactivate();
-        }
-        Game.instance.screenStack.push(screen);
-        screen.size = new Vector2D<int>(Game.width, Game.height);
-        screen.centre = screen.size / 2;
-        screen.activate();
-        screen.resize(new Vector2D<int>(Game.width, Game.height));
+    public Menu currentMenu;
+
+    // passthrough methods
+    public override void draw() {
+        base.draw();
+        currentMenu.draw();
     }
 
-    /// <summary>
-    /// It's like switchTo but the screens already on the stack don't get deactivated.
-    /// </summary>
-    public static void addToStack(Screen screen) {
-        Game.instance.screenStack.push(screen);
-        screen.size = new Vector2D<int>(Game.width, Game.height);
-        screen.centre = screen.size / 2;
-        screen.activate();
-        screen.resize(new Vector2D<int>(Game.width, Game.height));
-
+    public override void postDraw() {
+        base.postDraw();
+        currentMenu.postDraw();
     }
 
-    public void addElement(GUIElement element) {
-        elements.Add(element.name, element);
+    public override void imGuiDraw() {
+        base.imGuiDraw();
+        currentMenu.imGuiDraw();
     }
 
-    public GUIElement getElement(string name) {
-        return elements[name];
+    public override void click(Vector2 pos) {
+        base.click(pos);
+        currentMenu.click(pos);
     }
 
-    public virtual void draw() {
-        foreach (var element in elements.Values) {
-            if (element.active) {
-                element.draw();
-            }
-        }
-        // draw tooltip for active element
-        var tooltip = activeElement?.tooltip;
-        var mousePos = Game.mouse.Position;
-        if (!string.IsNullOrEmpty(tooltip)) {
-            Game.gui.drawString(tooltip, mousePos + new Vector2(MOUSEPOSPADDING));
-        }
-    }
-    public static int MOUSEPOSPADDING => 4 * GUI.guiScale;
-
-    public virtual void postDraw() {
-        foreach (var element in elements.Values) {
-            if (element.active) {
-                element.postDraw();
-            }
-        }
+    public override void update(double dt) {
+        base.update(dt);
+        currentMenu.update(dt);
     }
 
-    public virtual void imGuiDraw() {
+    public override void clear(GraphicsDevice GD, double dt, double interp) {
+        base.clear(GD, dt, interp);
+        currentMenu.clear(GD, dt, interp);
     }
 
-    public virtual void click(Vector2 pos) {
-        foreach (var element in elements.Values) {
-            //Console.Out.WriteLine(element);
-            //Console.Out.WriteLine(element.bounds);
-            //Console.Out.WriteLine(pos);
-            if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
-                element.click();
-            }
-        }
+    public override void render(double dt, double interp) {
+        base.render(dt, interp);
+        currentMenu.render(dt, interp);
     }
 
-    public virtual void update(double dt) {
-        // update hover status
-        foreach (var element in elements.Values) {
-            element.hovered = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y);
-            element.pressed = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y) && Game.mouse.IsButtonPressed(MouseButton.Left);
-        }
+    public override void onMouseDown(IMouse mouse, MouseButton button) {
+        base.onMouseDown(mouse, button);
+        currentMenu.onMouseDown(mouse, button);
     }
 
-    public virtual void clear(GraphicsDevice GD, double dt, double interp) {
-        GD.ClearColor = WorldRenderer.defaultClearColour;
-        GD.ClearDepth = 1f;
-        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+    public override void onMouseMove(IMouse mouse, Vector2 pos) {
+        base.onMouseMove(mouse, pos);
+        currentMenu.onMouseMove(mouse, pos);
     }
 
-    public virtual void render(double dt, double interp) {
-
+    public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyDown(keyboard, key, scancode);
+        currentMenu.onKeyDown(keyboard, key, scancode);
     }
 
-    public virtual void onMouseDown(IMouse mouse, MouseButton button) {
-
+    public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyUp(keyboard, key, scancode);
+        currentMenu.onKeyUp(keyboard, key, scancode);
     }
 
-    public virtual void onMouseMove(IMouse mouse, Vector2 pos) {
-        bool found = false;
-        foreach (var element in elements.Values) {
-            //Console.Out.WriteLine(element);
-            //Console.Out.WriteLine(element.bounds);
-            //Console.Out.WriteLine(pos);
-            if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
-                activeElement = element;
-                found = true;
-            }
-        }
-        if (!found) {
-            activeElement = null;
-        }
+    public override void scroll(IMouse mouse, ScrollWheel scrollWheel) {
+        base.scroll(mouse, scrollWheel);
+        currentMenu.scroll(mouse, scrollWheel);
     }
 
-    public virtual void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-
-    }
-
-    public virtual void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
-
-    }
-
-    public virtual void scroll(IMouse mouse, ScrollWheel scrollWheel) {
-
-    }
-
-    public virtual void resize(Vector2D<int> newSize) {
-        size = newSize;
-        centre = size / 2;
+    public override void resize(Vector2D<int> newSize) {
+        base.resize(newSize);
+        currentMenu.resize(newSize);
     }
 }

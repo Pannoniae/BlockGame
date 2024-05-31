@@ -6,7 +6,7 @@ using TrippyGL;
 
 namespace BlockGame;
 
-public class SettingsScreen : Screen {
+public class SettingsMenu : Menu {
 
     public override void activate() {
         base.activate();
@@ -75,7 +75,7 @@ public class SettingsScreen : Screen {
     }
 
     private void returnToMainMenu() {
-        Game.instance.executeOnMainThread(() => switchTo(MAIN_MENU));
+        Game.instance.executeOnMainThread(() => Game.instance.switchTo(MAIN_MENU));
     }
 
     public override void draw() {

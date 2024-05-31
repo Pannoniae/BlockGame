@@ -26,6 +26,7 @@ public class GameScreen : Screen {
 
     public override void activate() {
         base.activate();
+        currentMenu = new Menu();
         debugStr = ZString.CreateStringBuilder();
         GD = Game.GD;
         D = new Debug();
@@ -69,7 +70,7 @@ public class GameScreen : Screen {
 
 
     public override void update(double dt) {
-        //gui.screen.update(dt);
+        base.update(dt);
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector2D<double>(0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
@@ -214,7 +215,7 @@ public class GameScreen : Screen {
     private void backToMainMenu() {
         Game.instance.executeOnMainThread(() => {
             Console.Out.WriteLine("back");
-            switchTo(MAIN_MENU);
+            Game.instance.switchToScreen(MAIN_MENU_SCREEN);
         });
     }
 
@@ -345,6 +346,16 @@ public class GameScreen : Screen {
     }
 
     public override void imGuiDraw() {
+
+    }
+
+    public override void clear(GraphicsDevice GD, double dt, double interp) {
+        GD.ClearColor = WorldRenderer.defaultClearColour;
+        GD.ClearDepth = 1f;
+        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+    }
+
+    public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
 
     }
 }

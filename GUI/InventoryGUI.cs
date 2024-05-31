@@ -18,7 +18,7 @@ public class InventoryGUI : GUIElement {
 
     public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/inventory.png");
 
-    public InventoryGUI(Screen screen, string name, Vector2D<int> pos) : base(screen, name) {
+    public InventoryGUI(Menu menu, string name, Vector2D<int> pos) : base(menu, name) {
         setPosition(new Rectangle(pos.X, pos.Y, (int)invTex.Width, (int)invTex.Height));
     }
 

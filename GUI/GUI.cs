@@ -15,7 +15,7 @@ using VertexArray = TrippyGL.VertexArray;
 namespace BlockGame;
 
 /// <summary>
-/// GUI class which can draw onto the screen.
+/// GUI class which can draw onto the menu.
 /// Supports scaling with guiScale.
 /// Drawing methods ending with "UI" draw on the virtual GUI coordinate system, so they are positioned in the right place when the GUI scale is changed.
 /// </summary>
