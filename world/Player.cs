@@ -44,6 +44,9 @@ public class Player {
     public bool inLiquid;
     public bool wasInLiquid;
 
+    public bool collisionXThisFrame;
+    public bool collisionZThisFrame;
+
     /// <summary>
     /// This number is lying to you.
     /// </summary>
@@ -90,6 +93,8 @@ public class Player {
 
 
     public void update(double dt) {
+        collisionXThisFrame = false;
+        collisionZThisFrame = false;
         updateInputVelocity(dt);
         velocity += accel * dt;
         //position += velocity * dt;
@@ -268,14 +273,18 @@ public class Player {
         }
 
         if (jumping && (onGround || inLiquid)) {
-            velocity.Y = inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
+            velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
             onGround = false;
             jumping = false;
         }
 
         // if just exiting the water, give a slight boost
         if (!inLiquid && wasInLiquid) {
-            velocity.Y += Constants.liquidSurfaceBoost;
+            velocity.Y -= 2;
+            // if on the edge of water, boost
+            if (collisionXThisFrame || collisionZThisFrame) {
+                velocity.Y += Constants.liquidSurfaceBoost;
+            }
         }
     }
 
@@ -383,6 +392,7 @@ public class Player {
             var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
             var sneakaabbX = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbX, blockAABB)) {
+                collisionXThisFrame = true;
                 // left side
                 if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
                     var diff = blockAABB.minX - aabbX.maxX;
@@ -414,6 +424,7 @@ public class Player {
             var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
             var sneakaabbZ = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbZ, blockAABB)) {
+                collisionZThisFrame = true;
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
                     var diff = blockAABB.minZ - aabbZ.maxZ;
                     if (diff < velocity.Z) {

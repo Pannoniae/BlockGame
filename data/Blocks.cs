@@ -8,7 +8,7 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
-    public static int blockCount = 11;
+    public static readonly int blockCount = 11;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -16,7 +16,7 @@ public class Blocks {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Block get(int id) {
-        return ChunkSectionRenderer.access(blocks, id);
+        return blocks[id];
     }
 
     public static bool tryGet(int id, out Block block) {
@@ -47,27 +47,19 @@ public class Blocks {
     public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
 
     public static bool isSolid(int block) {
-        if (block == 0) {
-            return false;
-        }
-        var bl = get(block);
-        return !bl.transparent && !bl.translucent;
+        return block != 0 && get(block).type == BlockType.SOLID;
     }
 
     public static bool notSolid(int block) {
-        if (block == 0) {
-            return true;
-        }
-        var bl = get(block);
-        return bl.transparent || bl.translucent;
+        return block == 0 || get(block).type != BlockType.SOLID;
     }
 
     public static bool isTransparent(int block) {
-        return block != 0 && get(block).transparent;
+        return block != 0 && get(block).type == BlockType.TRANSPARENT;
     }
 
     public static bool isTranslucent(int block) {
-        return block != 0 && get(block).translucent;
+        return block != 0 && get(block).type == BlockType.TRANSLUCENT;
     }
 
     public static bool hasCollision(int block) {
@@ -90,13 +82,9 @@ public class Block {
 
     /// <summary>
     /// Is fully transparent? (glass, leaves, etc.)
-    /// </summary>
-    public bool transparent = false;
-
-    /// <summary>
     /// Is translucent? (partially transparent blocks like water)
     /// </summary>
-    public bool translucent = false;
+    public BlockType type = BlockType.SOLID;
 
     public bool collision = true;
     public AABB? aabb;
@@ -183,12 +171,14 @@ public class Block {
     }
 
     public Block transparency() {
-        transparent = true;
+        type = BlockType.TRANSPARENT;
+        isFullBlock = false;
         return this;
     }
 
     public Block translucency() {
-        translucent = true;
+        type = BlockType.TRANSLUCENT;
+        isFullBlock = false;
         return this;
     }
 
@@ -214,6 +204,7 @@ public class Block {
         noCollision();
         noSelection();
         liquid = true;
+        isFullBlock = false;
         return this;
     }
 
@@ -230,6 +221,7 @@ public class Block {
     public Block air() {
         noCollision();
         noSelection();
+        isFullBlock = false;
         return this;
     }
 }
@@ -305,6 +297,16 @@ public readonly record struct Face(
     public readonly bool noAO = noAO;
     public readonly bool nonFullFace = nonFullFace;
 }
+
+/// <summary>
+/// Defines the render type / layer of a block.
+/// </summary>
+public enum BlockType : byte {
+    SOLID,
+    TRANSPARENT,
+    TRANSLUCENT
+}
+
 
 public class BlockModel {
     public Face[] faces;

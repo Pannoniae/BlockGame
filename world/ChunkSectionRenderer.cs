@@ -90,11 +90,11 @@ public class ChunkSectionRenderer {
     }
 
     private static bool opaqueBlocks(int b) {
-        return b != 0 && !Blocks.isTranslucent(b);
+        return b != 0 && Blocks.get(b).type != BlockType.TRANSLUCENT;
     }
 
     private static bool notSolid(int b) {
-        return !Blocks.isSolid(b);
+        return Blocks.notSolid(b);
     }
 
     private static bool isSolid(int b) {
@@ -106,15 +106,15 @@ public class ChunkSectionRenderer {
     }
 
     private static bool notTranslucent(int b) {
-        return !Blocks.isTranslucent(b) && !Blocks.isSolid(b);
+        return !Blocks.isTranslucent(b);
     }
 
     /// <summary>
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //var sw = new Stopwatch();
-        //sw.Start();
+        var sw = new Stopwatch();
+        sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -147,12 +147,12 @@ public class ChunkSectionRenderer {
                 /*if (World.glob) {
                     MeasureProfiler.StartCollectingData();
                 }*/
-                //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
+                Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
                 constructVertices(VertexConstructionMode.OPAQUE);
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+                Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 if (chunkIndices.Count > 0) {
                     isEmptyRenderOpaque = false;
                     if (section.world.renderer.fastChunkSwitch) {
@@ -164,6 +164,7 @@ public class ChunkSectionRenderer {
                     var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
                     var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
                     vao.upload(finalVertices, finalIndices);
+                    Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 }
                 else {
                     isEmptyRenderOpaque = true;
@@ -173,6 +174,7 @@ public class ChunkSectionRenderer {
                 if (hasTranslucentBlocks) {
                     // then we render everything which is translucent (water for now)
                     constructVertices(VertexConstructionMode.TRANSLUCENT);
+                    Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                     if (chunkIndices.Count > 0) {
                         isEmptyRenderTranslucent = false;
                         if (section.world.renderer.fastChunkSwitch) {
@@ -184,6 +186,7 @@ public class ChunkSectionRenderer {
                         var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
                         var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
                         watervao.upload(tFinalVertices, tFinalIndices);
+                        Console.Out.WriteLine($"PartMeshing1.7: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                         //world.sortedTransparentChunks.Add(this);
                     }
                     else {
@@ -193,8 +196,8 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        //sw.Stop();
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -253,8 +256,15 @@ public class ChunkSectionRenderer {
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    var bl = accessRef(ref blockArrayRef, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-                    var light = accessRef(ref sourceLightArrayRef, y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+                    // index for array accesses
+                    var secIndex = y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x;
+                    var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+
+                    var bl = Unsafe.Add(ref blockArrayRef, secIndex);
+                    var light = Unsafe.Add(ref sourceLightArrayRef, secIndex);
+
+
+
                     if (isEmpty && bl != 0) {
                         isEmpty = false;
                     }
@@ -264,8 +274,8 @@ public class ChunkSectionRenderer {
                     if (hasOnlySolid && Blocks.notSolid(bl)) {
                         hasOnlySolid = false;
                     }
-                    accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), bl);
-                    accessRef(ref lightArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1), light);
+                    Unsafe.Add(ref neighboursArrayRef, index) = bl;
+                    Unsafe.Add(ref lightArrayRef, index) = light;
                 }
             }
         }
@@ -295,7 +305,7 @@ public class ChunkSectionRenderer {
             for (int z = -1; z <= 1; z++) {
                 for (int x = -1; x <= 1; x++) {
                     world.getChunkSectionMaybe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z), out var sec);
-                    accessRef(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1, sec?.blocks!);
+                    Unsafe.Add(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1) = sec?.blocks!;
                 }
             }
         }
@@ -311,6 +321,10 @@ public class ChunkSectionRenderer {
                         x = Chunk.CHUNKSIZE - 1;
                         continue;
                     }
+
+                    // index for array accesses
+                    var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+
                     int sx;
                     int sy;
                     int sz;
@@ -323,26 +337,21 @@ public class ChunkSectionRenderer {
                     cz = z;
                     alignBlock(ref cx, ref cy, ref cz);
 
-                    sx = section.chunkX * Chunk.CHUNKSIZE + x;
-                    sy = section.chunkY * Chunk.CHUNKSIZE + y;
-                    sz = section.chunkZ * Chunk.CHUNKSIZE + z;
-                    sx = (int)MathF.Floor((float)sx / Chunk.CHUNKSIZE);
-                    sy = (int)MathF.Floor((float)sy / Chunk.CHUNKSIZE);
-                    sz = (int)MathF.Floor((float)sz / Chunk.CHUNKSIZE);
+                    sx = (int)MathF.Floor((float)(section.chunkX * Chunk.CHUNKSIZE + x) / Chunk.CHUNKSIZE);
+                    sy = (int)MathF.Floor((float)(section.chunkY * Chunk.CHUNKSIZE + y) / Chunk.CHUNKSIZE);
+                    sz = (int)MathF.Floor((float)(section.chunkZ * Chunk.CHUNKSIZE + z) / Chunk.CHUNKSIZE);
                     // get neighbouring section
                     var neighbourSection =
                         access(neighbourSections, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);
-
-                    var bl = neighbourSection != null ? neighbourSection[cx, cy, cz] : (ushort)0;
-                    accessRef(ref neighboursArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
-                        bl);
+                    var nn = neighbourSection != null;
+                    var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
+                    Unsafe.Add(ref neighboursArrayRef, index) = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
                     if (hasOnlySolid && Blocks.notSolid(bl)) {
                         hasOnlySolid = false;
                     }
 
-                    accessRef(ref lightArrayRef, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1),
-                        neighbourSection?.getLight(cx, cy, cz) ?? 0);
+                    Unsafe.Add(ref lightArrayRef, index) = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)0;
                 }
             }
         }
@@ -375,17 +384,18 @@ public class ChunkSectionRenderer {
         // helper function to get blocks from cache
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static ushort getBlockFromCacheUnsafe(ref ushort arrayBase, int x, int y, int z) {
-            return accessRef(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
+            return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static byte getLightFromCacheUnsafe(ref byte arrayBase, int x, int y, int z) {
-            return accessRef(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
+            return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
         Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
-        //Span<Face> faces = stackalloc Face[Face.MAX_FACES];
+        Span<ushort> nba = stackalloc ushort[6];
+        Span<byte> lba = stackalloc byte[6];
 
         ReadOnlySpan<ushort> neighboursArray = neighbours;
         ref ushort neighbourRef = ref MemoryMarshal.GetReference(neighboursArray);
@@ -424,10 +434,6 @@ public class ChunkSectionRenderer {
 
                         //float offset = 0.0004f;
 
-                        int nbx = 0;
-                        int nby = 0;
-                        int nbz = 0;
-
 
                         // calculate AO for all 8 vertices
                         // this is garbage but we'll deal with it later
@@ -451,26 +457,37 @@ public class ChunkSectionRenderer {
                         int dirIdx = 0;
 
                         // setup neighbour data
-
-                        // will reimplement this face-skipping optimisation later
+                        ushort nb;
                         // if all 6 neighbours are solid, we don't even need to bother iterating the faces
-                        /*if (Blocks.isSolid(d0) &&
-                            Blocks.isSolid(d1) &&
-                            Blocks.isSolid(d2) &&
-                            Blocks.isSolid(d3) &&
-                            Blocks.isSolid(d4) &&
-                            Blocks.isSolid(d5)) {
+                        nba[0] = getBlockFromCacheUnsafe(ref neighbourRef, x - 1, y, z);
+                        nba[1] = getBlockFromCacheUnsafe(ref neighbourRef, x + 1, y, z);
+                        nba[2] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z - 1);
+                        nba[3] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z + 1);
+                        nba[4] = getBlockFromCacheUnsafe(ref neighbourRef, x, y - 1, z);
+                        nba[5] = getBlockFromCacheUnsafe(ref neighbourRef, x, y + 1, z);
+                        if (nba[0] != 0 && Blocks.get(nba[0]).isFullBlock &&
+                            nba[1] != 0 && Blocks.get(nba[1]).isFullBlock &&
+                            nba[2] != 0 && Blocks.get(nba[2]).isFullBlock &&
+                            nba[3] != 0 && Blocks.get(nba[3]).isFullBlock &&
+                            nba[4] != 0 && Blocks.get(nba[4]).isFullBlock &&
+                            nba[5] != 0 && Blocks.get(nba[5]).isFullBlock) {
                             continue;
-                        }*/
+                        }
+
+                        // get light data too
+                        lba[0] = getLightFromCacheUnsafe(ref lightRef, x - 1, y, z);
+                        lba[1] = getLightFromCacheUnsafe(ref lightRef, x + 1, y, z);
+                        lba[2] = getLightFromCacheUnsafe(ref lightRef, x, y, z - 1);
+                        lba[3] = getLightFromCacheUnsafe(ref lightRef, x, y, z + 1);
+                        lba[4] = getLightFromCacheUnsafe(ref lightRef, x, y - 1, z);
+                        lba[5] = getLightFromCacheUnsafe(ref lightRef, x, y + 1, z);
+
 
                         var faces = b.model.faces;
                         ref var facesRef = ref MemoryMarshal.GetArrayDataReference(faces);
 
-
-                        ushort nb;
-
                         for (int d = 0; d < faces.Length; d++) {
-                            ref Face face = ref accessRef(ref facesRef, d);
+                            Face face = Unsafe.Add(ref facesRef, d);
                             var dir = face.direction;
                             if (dir == RawDirection.NONE) {
                                 // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
@@ -478,47 +495,14 @@ public class ChunkSectionRenderer {
                             }
                             else {
                                 dirIdx = (int)dir;
-                                // THE SWITCH
-                                switch (dir) {
-                                    case RawDirection.WEST:
-                                        nbx = x - 1;
-                                        nby = y;
-                                        nbz = z;
-                                        break;
-                                    case RawDirection.EAST:
-                                        nbx = x + 1;
-                                        nby = y;
-                                        nbz = z;
-                                        break;
-                                    case RawDirection.SOUTH:
-                                        nbx = x;
-                                        nby = y;
-                                        nbz = z - 1;
-                                        break;
-                                    case RawDirection.NORTH:
-                                        nbx = x;
-                                        nby = y;
-                                        nbz = z + 1;
-                                        break;
-                                    case RawDirection.DOWN:
-                                        nbx = x;
-                                        nby = y - 1;
-                                        nbz = z;
-                                        break;
-                                    case RawDirection.UP:
-                                        nbx = x;
-                                        nby = y + 1;
-                                        nbz = z;
-                                        break;
-                                }
-                                nb = getBlockFromCacheUnsafe(ref neighbourRef, nbx, nby, nbz);
+                                nb = nba[dirIdx];
                                 var fb = Blocks.get(nb).isFullBlock;
                                 switch (mode) {
                                     case VertexConstructionMode.OPAQUE:
                                         test2 = Blocks.notSolid(nb) || !fb;
                                         break;
                                     case VertexConstructionMode.TRANSLUCENT:
-                                        test2 = notTranslucent(nb) || !fb;
+                                        test2 = notTranslucent(nb) && (notSolid(nb) || !fb);
                                         break;
                                 }
                                 test2 = test2 || face.nonFullFace && !Blocks.isTranslucent(nb);
@@ -528,22 +512,22 @@ public class ChunkSectionRenderer {
                                 if (!smoothLightingEnabled) {
                                     switch (dir) {
                                         case RawDirection.WEST:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x - 1, y, z);
+                                            light1 = light2 = light3 = light4 = lba[0];
                                             break;
                                         case RawDirection.EAST:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x + 1, y, z);
+                                            light1 = light2 = light3 = light4 = lba[1];
                                             break;
                                         case RawDirection.SOUTH:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y, z - 1);
+                                            light1 = light2 = light3 = light4 = lba[2];
                                             break;
                                         case RawDirection.NORTH:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y, z + 1);
+                                            light1 = light2 = light3 = light4 = lba[3];
                                             break;
                                         case RawDirection.DOWN:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y - 1, z);
+                                            light1 = light2 = light3 = light4 = lba[4];
                                             break;
                                         case RawDirection.UP:
-                                            light1 = light2 = light3 = light4 = getLightFromCacheUnsafe(ref lightRef, x, y + 1, z);
+                                            light1 = light2 = light3 = light4 = lba[5];
                                             break;
                                     }
                                 }
@@ -565,24 +549,23 @@ public class ChunkSectionRenderer {
                                         byte lz;
 
                                         for (int j = 0; j < 4; j++) {
+                                            //mult = dirIdx * 36 + j * 9 + vert * 3;
                                             mult = dirIdx * 36 + j * 9;
-
                                             // premultiply cuz its faster that way
-                                            getOffset(ref offsetArray, mult, 0, out xb, out yb, out zb);
+                                            getOffset(ref offsetArray, mult, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             ox = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
                                             lx = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
 
-                                            getOffset(ref offsetArray, mult, 1, out xb, out yb, out zb);
+                                            getOffset(ref offsetArray, mult + 3, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
                                             oy = getBlockFromCacheUnsafe(ref neighbourRef, xb, yb, zb);
                                             ly = getLightFromCacheUnsafe(ref lightRef, xb, yb, zb);
-
-                                            getOffset(ref offsetArray, mult, 2, out xb, out yb, out zb);
+                                            getOffset(ref offsetArray, mult + 6, out xb, out yb, out zb);
                                             xb = x + xb;
                                             yb = y + yb;
                                             zb = z + zb;
@@ -609,7 +592,7 @@ public class ChunkSectionRenderer {
                                             if (smoothLightingEnabled) {
                                                 // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                                 // calculate average
-                                                var lo = getLightFromCacheUnsafe(ref lightRef, nbx, nby, nbz);
+                                                byte lo = lba[dirIdx];
 
 
                                                 // this averages the four light values. If the block is opaque, it ignores the light value.
@@ -685,6 +668,7 @@ public class ChunkSectionRenderer {
                                 //ci += 6;
                             }
                         }
+
                     }
                 }
             }
@@ -705,11 +689,10 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getOffset(ref int arr, int mult, int vert, out int x, out int y, out int z) {
+    private static void getOffset(ref int arr, int index, out int x, out int y, out int z) {
         // array has 6 directions, 4 indices which each contain 3 AOs of 3 ints each
         // 36 = 3 * 3 * 4
         // 9 = 3 * 3
-        var index = mult + vert * 3;
         x = Unsafe.Add(ref arr, index);
         y = Unsafe.Add(ref arr, index + 1);
         z = Unsafe.Add(ref arr, index + 2);
