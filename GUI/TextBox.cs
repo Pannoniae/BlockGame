@@ -9,7 +9,7 @@ public class TextBox : GUIElement {
 
     public static int padding => 2 * GUI.guiScale;
 
-    public TextBox(Screen screen, string name) : base(screen, name) {
+    public TextBox(Menu menu, string name) : base(menu, name) {
     }
 
 

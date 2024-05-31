@@ -2,7 +2,7 @@ using System.Drawing;
 
 namespace BlockGame;
 
-public class LoadingScreen : Screen {
+public class LoadingMenu : Menu {
 
     public double counter;
     /// <summary>

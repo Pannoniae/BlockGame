@@ -3,7 +3,7 @@ using System.Drawing;
 namespace BlockGame;
 
 public class GUIElement {
-    public Screen screen;
+    public Menu Menu;
 
     public string name;
     public bool active = true;
@@ -51,14 +51,14 @@ public class GUIElement {
     }
 
     public Rectangle resolveAnchors(Rectangle absolutePos, bool uiSpace = true) {
-        var sizeX = uiSpace ? Game.gui.uiWidth : screen.size.X;
-        var sizeY = uiSpace ? Game.gui.uiHeight : screen.size.Y;
+        var sizeX = uiSpace ? Game.gui.uiWidth : Menu.size.X;
+        var sizeY = uiSpace ? Game.gui.uiHeight : Menu.size.Y;
         switch (horizontalAnchor) {
             case HorizontalAnchor.LEFT:
-                //absolutePos.X -= screen.width / 2;
+                //absolutePos.X -= menu.width / 2;
                 break;
             case HorizontalAnchor.RIGHT:
-                //absolutePos.X += screen.width / 2;
+                //absolutePos.X += menu.width / 2;
                 absolutePos.X += sizeX;
                 break;
             case HorizontalAnchor.CENTREDCONTENTS:
@@ -72,11 +72,11 @@ public class GUIElement {
 
         switch (verticalAnchor) {
             case VerticalAnchor.BOTTOM:
-                //absolutePos.Y -= screen.height / 2;
+                //absolutePos.Y -= menu.height / 2;
                 absolutePos.Y += sizeY;
                 break;
             case VerticalAnchor.TOP:
-                //absolutePos.Y += screen.height / 2;
+                //absolutePos.Y += menu.height / 2;
                 break;
             case VerticalAnchor.CENTREDCONTENTS:
                 absolutePos.Y += sizeY / 2 - absolutePos.Height / 2;
@@ -91,8 +91,8 @@ public class GUIElement {
 
     public event Action? clicked;
 
-    protected GUIElement(Screen screen, string name) {
-        this.screen = screen;
+    protected GUIElement(Menu menu, string name) {
+        this.Menu = menu;
         this.name = name;
     }
 

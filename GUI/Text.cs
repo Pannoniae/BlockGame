@@ -9,14 +9,14 @@ public class Text : GUIElement {
 
     public bool shadowed = false;
 
-    public Text(Screen screen, string name, string text) : base(screen, name) {
+    public Text(Menu menu, string name, string text) : base(menu, name) {
         this.text = text;
         unscaledSize = true;
     }
 
-    public static Text createText(Screen screen, string name, Vector2D<int> pos, string text) {
+    public static Text createText(Menu menu, string name, Vector2D<int> pos, string text) {
         var bounds = Game.gui.guiFont.Measure(text);
-        var guitext = new Text(screen, name, text);
+        var guitext = new Text(menu, name, text);
         guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(pos.X + bounds.X), (int)(pos.Y + bounds.Y)));
         return guitext;
     }

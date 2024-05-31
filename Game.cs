@@ -44,7 +44,7 @@ public partial class Game {
     /// <summary>
     /// The current game screen which is shown.
     /// </summary>
-    public FIFOStack<Screen> screenStack;
+    public Screen currentScreen;
 
     public static GUI gui;
 
@@ -81,7 +81,7 @@ public partial class Game {
     public static bool firstFrame;
 
     /// <summary>
-    /// True while clicking back into the game. Used to prevent the player instantly breaking a block when clicking on the screen to get back into the game world.
+    /// True while clicking back into the game. Used to prevent the player instantly breaking a block when clicking on the menu to get back into the game world.
     /// </summary>
     public static bool lockingMouse;
 
@@ -181,9 +181,9 @@ public partial class Game {
 
         blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
         lightTexture = Texture2DExtensions.FromFile(GD, "textures/lightmap.png");
-        screenStack = [];
-        //Screen.initScreens(gui);
-        Screen.switchTo(Screen.LOADING);
+        //Menu.initScreens(gui);
+        currentScreen = new MainMenuScreen();
+        setMenu(Menu.LOADING);
         //world = new World();
 
         // SFML
@@ -209,12 +209,42 @@ public partial class Game {
             executeOnMainThread(() => {
                 gui.loadUnicodeFont2();
                 Console.Out.WriteLine("Finished stitching unicode font.");
-                Screen.switchTo(Screen.MAIN_MENU);
+                switchTo(Menu.MAIN_MENU);
             });
         });
         resize(new Vector2D<int>(width, height));
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+    }
+
+
+    // don't actually use unless you are an idiot
+    private void setMenu(Menu menu) {
+        currentScreen.currentMenu = menu;
+        menu.size = new Vector2D<int>(width, height);
+        menu.centre = menu.size / 2;
+        menu.activate();
+        menu.resize(new Vector2D<int>(width, height));
+    }
+
+    /// <summary>
+    /// Clears the entire screenstack and pushes the menu.
+    /// </summary>
+    public void switchTo(Menu menu) {
+        currentScreen.currentMenu.deactivate();
+        setMenu(menu);
+    }
+
+    /// <summary>
+    /// Clears the entire screenstack and pushes the menu.
+    /// </summary>
+    public void switchToScreen(Screen screen) {
+        currentScreen.deactivate();
+        currentScreen = screen;
+        screen.size = new Vector2D<int>(width, height);
+        screen.centre = screen.size / 2;
+        screen.activate();
+        screen.resize(new Vector2D<int>(width, height));
     }
 
     public partial class NV1 {
@@ -254,11 +284,11 @@ public partial class Game {
     }
 
     private void onMouseMove(IMouse m, Vector2 pos) {
-        screenStack.peek().onMouseMove(m, pos);
+        currentScreen.onMouseMove(m, pos);
     }
 
     private void onMouseDown(IMouse m, MouseButton button) {
-        screenStack.peek().onMouseDown(m, button);
+        currentScreen.onMouseDown(m, button);
     }
 
     public void lockMouse() {
@@ -274,15 +304,15 @@ public partial class Game {
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
-        screenStack.peek().click(m.Position);
+        currentScreen.click(m.Position);
     }
 
     private void onMouseScroll(IMouse m, ScrollWheel scroll) {
-        screenStack.peek().scroll(m, scroll);
+        currentScreen.scroll(m, scroll);
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-        screenStack.peek().onKeyDown(keyboard, key, scancode);
+        currentScreen.onKeyDown(keyboard, key, scancode);
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
@@ -292,7 +322,7 @@ public partial class Game {
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         width = size.X;
         height = size.Y;
-        screenStack.peek().resize(size);
+        currentScreen.resize(size);
         gui.resize(size);
     }
 
@@ -307,7 +337,7 @@ public partial class Game {
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
-        screenStack.peek().update(dt);
+        currentScreen.update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
         //Console.Out.WriteLine(after - before);
 
@@ -359,8 +389,8 @@ public partial class Game {
 
         GLTracker.save();
 
-        screenStack.peek().clear(GD, dt, interp);
-        screenStack.peek().render(dt, interp);
+        currentScreen.clear(GD, dt, interp);
+        currentScreen.render(dt, interp);
 
         // before this, only GL, after this, only GD
         GLTracker.load();
@@ -370,14 +400,14 @@ public partial class Game {
         GD.DepthTestingEnabled = false;
         gui.tb.Begin();
         gui.immediatetb.Begin(BatcherBeginMode.Immediate);
-        screenStack.peek().draw();
+        currentScreen.draw();
         gui.tb.End();
-        screenStack.peek().postDraw();
+        currentScreen.postDraw();
         gui.immediatetb.End();
         GD.DepthTestingEnabled = true;
         //if (gui.debugScreen) {
         /*mgui.Update((float)dt);
-        screen.imGuiDraw();
+        menu.imGuiDraw();
         imgui.Render();*/
         //}
     }

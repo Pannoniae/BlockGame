@@ -408,7 +408,7 @@ public class Player {
                     }
                 }
             }
-            if (AABB.isCollision(sneakaabbX, blockAABB)) {
+            if (sneaking && AABB.isCollision(sneakaabbX, blockAABB)) {
                 hasAtLeastOneCollision = true;
             }
         }
@@ -439,7 +439,7 @@ public class Player {
                     }
                 }
             }
-            if (AABB.isCollision(sneakaabbZ, blockAABB)) {
+            if (sneaking && AABB.isCollision(sneakaabbZ, blockAABB)) {
                 hasAtLeastOneCollision = true;
             }
         }
