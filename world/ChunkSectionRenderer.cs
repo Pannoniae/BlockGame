@@ -152,7 +152,7 @@ public class ChunkSectionRenderer {
                 /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 if (chunkIndices.Count > 0) {
                     isEmptyRenderOpaque = false;
                     if (section.world.renderer.fastChunkSwitch) {
@@ -164,7 +164,7 @@ public class ChunkSectionRenderer {
                     var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
                     var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
                     vao.upload(finalVertices, finalIndices);
-                    Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+                    //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 }
                 else {
                     isEmptyRenderOpaque = true;
@@ -269,7 +269,7 @@ public class ChunkSectionRenderer {
                     if (Blocks.isTranslucent(bl)) {
                         hasTranslucentBlocks = true;
                     }
-                    if (Blocks.notSolid(bl)) {
+                    if (bl == 0 || !Blocks.get(bl).isFullBlock) {
                         hasOnlySolid = false;
                     }
                     Unsafe.Add(ref neighboursArrayRef, index) = bl;
@@ -342,7 +342,7 @@ public class ChunkSectionRenderer {
                     var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
                     Unsafe.Add(ref neighboursArrayRef, index) = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
-                    if (Blocks.notSolid(bl)) {
+                    if (bl == 0 || !Blocks.get(bl).isFullBlock) {
                         hasOnlySolid = false;
                     }
 
