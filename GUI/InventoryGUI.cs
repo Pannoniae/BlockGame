@@ -6,7 +6,7 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame;
 
-public class InventoryGUI : GUIElement {
+public class InventoryGUI : Menu {
 
     public const int rows = 9;
     public const int cols = 4;
@@ -16,10 +16,13 @@ public class InventoryGUI : GUIElement {
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 
+    public Rectangle pos;
+
     public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/inventory.png");
 
-    public InventoryGUI(Menu menu, string name, Vector2D<int> pos) : base(menu, name) {
-        setPosition(new Rectangle(pos.X, pos.Y, (int)invTex.Width, (int)invTex.Height));
+    public InventoryGUI(Vector2D<int> pos) {
+        this.pos = GUIElement.resolveAnchors(new Rectangle(pos.X, pos.Y, (int)invTex.Width, (int)invTex.Height),
+            HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 
     public void setup() {
@@ -38,7 +41,7 @@ public class InventoryGUI : GUIElement {
     }
 
     public override void draw() {
-        Game.gui.drawUIImmediate(invTex, new Vector2(GUIbounds.X, GUIbounds.Y));
+        Game.gui.drawUIImmediate(invTex, new Vector2(pos.X, pos.Y));
         foreach (var slot in slots) {
             slot.drawItem();
         }
