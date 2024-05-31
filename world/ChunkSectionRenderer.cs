@@ -113,11 +113,11 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //var sw = new Stopwatch();
-        //sw.Start();
+        var sw = new Stopwatch();
+        sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
-            vao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
-            watervao = new VerySharedBlockVAO(section.world.renderer.chunkVAO);
+            vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
+            watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
         }
         else {
             vao = new SharedBlockVAO();
@@ -156,7 +156,7 @@ public class ChunkSectionRenderer {
                 if (chunkIndices.Count > 0) {
                     isEmptyRenderOpaque = false;
                     if (section.world.renderer.fastChunkSwitch) {
-                        (vao as VerySharedBlockVAO).bindVAO();
+                        (vao as ExtremelySharedBlockVAO).bindVAO();
                     }
                     else {
                         vao.bind();
@@ -176,7 +176,7 @@ public class ChunkSectionRenderer {
                     if (chunkIndices.Count > 0) {
                         isEmptyRenderTranslucent = false;
                         if (section.world.renderer.fastChunkSwitch) {
-                            (watervao as VerySharedBlockVAO).bindVAO();
+                            (watervao as ExtremelySharedBlockVAO).bindVAO();
                         }
                         else {
                             watervao.bind();
@@ -193,8 +193,8 @@ public class ChunkSectionRenderer {
                 }
             }
         }
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        //sw.Stop();
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        sw.Stop();
     }
 
     public ushort toVertex(float f) {
