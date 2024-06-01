@@ -18,8 +18,8 @@ public static class Constants {
     public const double maxhLiquidSpeed = 4;
     public const double maxhLiquidSpeedSneak = 1.5;
     public const double jumpSpeed = 7;
-    public const double liquidSwimUpSpeed = 1.2;
-    public const double liquidSurfaceBoost = 2;
+    public const double liquidSwimUpSpeed = 1.1;
+    public const double liquidSurfaceBoost = 0.3;
     public const double maxVSpeed = 200;
     public const double friction = 0.55;
     public const double airFriction = 0.98;
