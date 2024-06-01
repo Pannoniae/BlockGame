@@ -167,7 +167,7 @@ public class World {
         for (int i = 0; i < blockUpdateQueue.Count; i++) {
             var update = blockUpdateQueue[i];
             if (update.tick <= worldTick) {
-                blockUpdate(update.position);
+                blockUpdateWithNeighbours(update.position);
                 blockUpdateQueue.RemoveAt(i);
             }
         }
@@ -699,12 +699,16 @@ public class World {
         actionQueue.Add(new TickAction(action, worldTick + tick));
     }
 
-    public void blockUpdate(Vector3D<int> pos) {
+    public void blockUpdateWithNeighbours(Vector3D<int> pos) {
         Blocks.get(getBlock(pos)).update(this, pos);
         foreach (var dir in Direction.directions) {
             var neighbourBlock = pos + dir;
             Blocks.get(getBlock(neighbourBlock)).update(this, neighbourBlock);
         }
+    }
+
+    public void blockUpdate(Vector3D<int> pos) {
+        Blocks.get(getBlock(pos)).update(this, pos);
     }
 
     public void blockUpdate(Vector3D<int> pos, int tick) {
