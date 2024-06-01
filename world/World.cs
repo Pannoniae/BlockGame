@@ -238,7 +238,7 @@ public class World {
             byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
 
             // if this is opaque (for skylight), don't bother
-            if (isSkylight && Blocks.isSolid(getBlock(node.x, node.y, node.z))) {
+            if (isSkylight && Blocks.get(getBlock(node.x, node.y, node.z)).isFullBlock) {
                 continue;
             }
 
@@ -247,7 +247,7 @@ public class World {
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
                 // if neighbour is opaque, don't bother either
-                if (Blocks.isSolid(getBlock(neighbour))) {
+                if (Blocks.get(getBlock(neighbour)).isFullBlock) {
                     continue;
                 }
                 byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);

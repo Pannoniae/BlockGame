@@ -129,70 +129,68 @@ public class ChunkSectionRenderer {
         //    return;
         //}
 
-        unsafe {
-            //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
-            // first we render everything which is NOT translucent
-            lock (meshingLock) {
-                setupNeighbours();
+        //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
+        // first we render everything which is NOT translucent
+        lock (meshingLock) {
+            setupNeighbours();
 
-                // if chunk is full, don't mesh either
-                if (hasOnlySolid) {
-                    isEmpty = true;
-                }
+            // if chunk is full, don't mesh either
+            if (hasOnlySolid) {
+                isEmpty = true;
+            }
 
-                if (isEmpty) {
-                    return;
-                }
+            if (isEmpty) {
+                return;
+            }
 
-                /*if (World.glob) {
+            /*if (World.glob) {
                     MeasureProfiler.StartCollectingData();
                 }*/
-                Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
-                constructVertices(VertexConstructionMode.OPAQUE);
-                /*if (World.glob) {
+            Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
+            constructVertices(VertexConstructionMode.OPAQUE);
+            /*if (World.glob) {
                     MeasureProfiler.SaveData();
                 }*/
-                //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-                if (chunkIndices.Count > 0) {
-                    isEmptyRenderOpaque = false;
-                    if (section.world.renderer.fastChunkSwitch) {
-                        (vao as ExtremelySharedBlockVAO).bindVAO();
-                    }
-                    else {
-                        vao.bind();
-                    }
-                    var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                    var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-                    vao.upload(finalVertices, finalIndices);
-                    //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+            //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+            if (chunkIndices.Count > 0) {
+                isEmptyRenderOpaque = false;
+                if (section.world.renderer.fastChunkSwitch) {
+                    (vao as ExtremelySharedBlockVAO).bindVAO();
                 }
                 else {
-                    isEmptyRenderOpaque = true;
+                    vao.bind();
                 }
+                var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                vao.upload(finalVertices, finalIndices);
+                //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             }
-            lock (meshingLock) {
-                if (hasTranslucentBlocks) {
-                    // then we render everything which is translucent (water for now)
-                    constructVertices(VertexConstructionMode.TRANSLUCENT);
-                    Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-                    if (chunkIndices.Count > 0) {
-                        isEmptyRenderTranslucent = false;
-                        if (section.world.renderer.fastChunkSwitch) {
-                            (watervao as ExtremelySharedBlockVAO).bindVAO();
-                        }
-                        else {
-                            watervao.bind();
-                        }
-                        var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                        var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-                        watervao.upload(tFinalVertices, tFinalIndices);
-                        Console.Out.WriteLine($"PartMeshing1.7: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-                        //world.sortedTransparentChunks.Add(this);
+            else {
+                isEmptyRenderOpaque = true;
+            }
+        }
+        lock (meshingLock) {
+            if (hasTranslucentBlocks) {
+                // then we render everything which is translucent (water for now)
+                constructVertices(VertexConstructionMode.TRANSLUCENT);
+                Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+                if (chunkIndices.Count > 0) {
+                    isEmptyRenderTranslucent = false;
+                    if (section.world.renderer.fastChunkSwitch) {
+                        (watervao as ExtremelySharedBlockVAO).bindVAO();
                     }
                     else {
-                        //world.sortedTransparentChunks.Remove(this);
-                        isEmptyRenderTranslucent = true;
+                        watervao.bind();
                     }
+                    var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
+                    var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
+                    watervao.upload(tFinalVertices, tFinalIndices);
+                    Console.Out.WriteLine($"PartMeshing1.7: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+                    //world.sortedTransparentChunks.Add(this);
+                }
+                else {
+                    //world.sortedTransparentChunks.Remove(this);
+                    isEmptyRenderTranslucent = true;
                 }
             }
         }
@@ -244,14 +242,10 @@ public class ChunkSectionRenderer {
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
         var blockData = section.blocks;
-        ReadOnlySpan<ushort> blockArray = blockData.blocks;
-        ref ushort blockArrayRef = ref MemoryMarshal.GetReference(blockArray);
-        ReadOnlySpan<byte> sourceLightArray = blockData.light;
-        ref byte sourceLightArrayRef = ref MemoryMarshal.GetReference(sourceLightArray);
-        ReadOnlySpan<ushort> neighboursArray = neighbours;
-        ref ushort neighboursArrayRef = ref MemoryMarshal.GetReference(neighboursArray);
-        ReadOnlySpan<byte> lightArray = neighbourLights;
-        ref byte lightArrayRef = ref MemoryMarshal.GetReference(lightArray);
+        ref ushort blockArrayRef = ref MemoryMarshal.GetReference<ushort>(blockData.blocks);
+        ref byte sourceLightArrayRef = ref MemoryMarshal.GetReference<byte>(blockData.light);
+        ref ushort neighboursArrayRef = ref MemoryMarshal.GetReference<ushort>(neighbours);
+        ref byte lightArrayRef = ref MemoryMarshal.GetReference<byte>(neighbourLights);
         var world = section.world;
         for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
@@ -276,6 +270,11 @@ public class ChunkSectionRenderer {
                     Unsafe.Add(ref lightArrayRef, index) = light;
                 }
             }
+        }
+
+        // if is empty, just return, don't need to get neighbours
+        if (isEmpty) {
+            return;
         }
 
         //Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
@@ -437,17 +436,14 @@ public class ChunkSectionRenderer {
 
                     // one AO value fits on 2 bits so the whole thing fits in a byte
                     byte ao = 0;
-
                     FourShorts data;
-
                     FourBytes light;
+
                     Unsafe.SkipInit(out light.Whole);
                     Unsafe.SkipInit(out light.First);
                     Unsafe.SkipInit(out light.Second);
                     Unsafe.SkipInit(out light.Third);
                     Unsafe.SkipInit(out light.Fourth);
-
-                    int dirIdx = 0;
 
                     // setup neighbour data
                     Block nb;
@@ -487,8 +483,7 @@ public class ChunkSectionRenderer {
                             test = true;
                         }
                         else {
-                            dirIdx = (int)dir;
-                            nb = Blocks.get(nba[dirIdx]);
+                            nb = Blocks.get(nba[(byte)dir]);
                             var fb = nb.isFullBlock;
                             switch (mode) {
                                 case VertexConstructionMode.OPAQUE:
@@ -503,7 +498,7 @@ public class ChunkSectionRenderer {
                         // either neighbour test passes, or neighbour is not air + face is not full
                         if (test2) {
                             if (!smoothLightingEnabled) {
-                                light.First = light.Second = light.Third = light.Fourth = lba[dirIdx];
+                                light.First = light.Second = light.Third = light.Fourth = lba[(byte)dir];
                             }
                             // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                             if (smoothLightingEnabled || AOenabled) {
@@ -527,7 +522,7 @@ public class ChunkSectionRenderer {
 
                                     for (int j = 0; j < 4; j++) {
                                         //mult = dirIdx * 36 + j * 9 + vert * 3;
-                                        mult = dirIdx * 36 + j * 9;
+                                        mult = (byte)dir * 36 + j * 9;
                                         // premultiply cuz its faster that way
                                         xb = x + Unsafe.Add(ref offsetArray, mult);
                                         mult++;
@@ -564,11 +559,11 @@ public class ChunkSectionRenderer {
                                         if (smoothLightingEnabled) {
                                             // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                             // calculate average
-                                            byte lo = lba[dirIdx];
+                                            byte lo = lba[(byte)dir];
 
 
                                             // this averages the four light values. If the block is opaque, it ignores the light value.
-                                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                                            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
                                             byte average(byte lx, byte ly, byte lz, byte lo, ushort ox, ushort oy, ushort oz) {
                                                 byte flags = 0;
                                                 // check ox

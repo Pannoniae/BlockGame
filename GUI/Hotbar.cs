@@ -40,7 +40,7 @@ public class Hotbar : GUIElement {
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,
                 // not a mix of GUI/screen coords for UI positions and texture drawing like now.....
-                Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(Game.centreX + (int)((i - 9 / 2) * SIZE - SIZE / 2), GUIbounds.Y),
+                Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(gui.uiCentreX + (int)((i - 9 / 2) * SIZE - SIZE / 2), GUIbounds.Y),
                     selectedTexture);
             }
         }
