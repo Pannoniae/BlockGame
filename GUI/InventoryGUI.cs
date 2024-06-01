@@ -29,7 +29,7 @@ public class InventoryGUI : Menu {
         int i = 1;
         for (int y = 0; y < cols; y++) {
             for (int x = 0; x < rows; x++) {
-                var item = i > Blocks.blockCount - 1 ? 0 : i;
+                var item = i > Blocks.maxBlock ? 0 : i;
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
                 slots[y * rows + x] = new ItemSlot(this, slotX, slotY) {
@@ -44,6 +44,19 @@ public class InventoryGUI : Menu {
         Game.gui.drawUIImmediate(invTex, new Vector2(pos.X, pos.Y));
         foreach (var slot in slots) {
             slot.drawItem();
+        }
+    }
+
+    public override void click(Vector2 pos) {
+        var guiPos = GUI.s2u(pos);
+        foreach (var slot in slots) {
+            var absoluteRect = new Rectangle(this.pos.X + slot.rect.X, this.pos.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
+            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
+                Console.Out.WriteLine("clicked!");
+                // swap it to the hotbar for now
+                var player = GameScreen.world.player;
+                player.hotbar.slots[player.hotbar.selected] = slot.stack.copy();
+            }
         }
     }
 }
