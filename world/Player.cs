@@ -525,7 +525,7 @@ public class Player {
             var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
             if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {
                 world.setBlockRemesh(pos.X, pos.Y, pos.Z, bl);
-                world.blockUpdate(pos);
+                world.blockUpdateWithNeighbours(pos);
                 lastPlace = world.worldTime;
             }
         }
@@ -537,7 +537,7 @@ public class Player {
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
 
             // we don't set it to anything, we just propagate from neighbours
-            world.blockUpdate(pos);
+            world.blockUpdateWithNeighbours(pos);
             // place water if adjacent
             lastBreak = world.worldTime;
         }
