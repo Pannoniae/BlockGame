@@ -276,14 +276,14 @@ public class Player {
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
             onGround = false;
             jumping = false;
-        }
-
-        // if just exiting the water, give a slight boost
-        if (!inLiquid && wasInLiquid) {
-            velocity.Y -= 2;
             // if on the edge of water, boost
-            if (collisionXThisFrame || collisionZThisFrame) {
+            if (inLiquid && (collisionXThisFrame || collisionZThisFrame)) {
                 velocity.Y += Constants.liquidSurfaceBoost;
+            }
+            // if just exiting the water, give a slight boost
+            else if (!inLiquid && wasInLiquid) {
+                // else, push the player down slightly
+                velocity.Y = -1.2;
             }
         }
     }
