@@ -8,7 +8,7 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
-    public static readonly int blockCount = 11;
+    public static readonly int maxBlock = 11;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -229,7 +229,7 @@ public class Block {
         isFullBlock = false;
         return this;
     }
-    
+
     public Block makeLiquid() {
         translucency();
         noCollision();
@@ -338,7 +338,6 @@ public enum BlockType : byte {
     TRANSLUCENT
 }
 
-
 public class BlockModel {
     public Face[] faces;
 
@@ -364,24 +363,32 @@ public class BlockModel {
     /// Liquids are cubes but only the bottom 7/8th of the block is drawn
     /// </summary>
     public static BlockModel makeLiquid(UVPair[] uvs) {
+        // make it slightly smaller to avoid zfighting
         var model = new BlockModel();
         model.faces = new Face[6];
 
-        var topUV = new UVPair(0, 1 / 16f);
-        var height = 15 / 16f;
+        const float offset = 0.0005f;
+
+        const float height = 15 / 16f;
 
         // west
-        model.faces[0] = new(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, uvs[0], uvs[0] + 1, RawDirection.WEST, true);
+        model.faces[0] = new(0 + offset, 1 - offset, 1 - offset, 0 + offset, 0 + offset, 1 - offset, 0 + offset, 0 + offset, 0 + offset, 0 + offset, 1 - offset, 0 + offset,
+            uvs[0], uvs[0] + 1, RawDirection.WEST, true);
         // east
-        model.faces[1] = new(1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.EAST, true);
+        model.faces[1] = new(1 - offset, 1 - offset, 0 + offset, 1 - offset, 0 + offset, 0 + offset, 1 - offset, 0 + offset, 1 - offset, 1 - offset, 1 - offset, 1 - offset,
+            uvs[1], uvs[1] + 1, RawDirection.EAST, true);
         // south
-        model.faces[2] = new(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, uvs[2], uvs[2] + 1, RawDirection.SOUTH, true);
+        model.faces[2] = new(0 + offset, 1 - offset, 0 + offset, 0 + offset, 0 + offset, 0 + offset, 1 - offset, 0 + offset, 0 + offset, 1 - offset, 1 - offset, 0 + offset,
+            uvs[2], uvs[2] + 1, RawDirection.SOUTH, true);
         // north
-        model.faces[3] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[3], uvs[3] + 1, RawDirection.NORTH, true);
+        model.faces[3] = new(1 - offset, 1 - offset, 1 - offset, 1 - offset, 0 + offset, 1 - offset, 0 + offset, 0 + offset, 1 - offset, 0 + offset, 1 - offset, 1 - offset,
+            uvs[3], uvs[3] + 1, RawDirection.NORTH, true);
         // down
-        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
+        model.faces[4] = new(1 - offset, 0 + offset, 1 - offset, 1 - offset, 0 + offset, 0 + offset, 0 + offset, 0 + offset, 0 + offset, 0 + offset, 0 + offset, 1 - offset,
+            uvs[4], uvs[4] + 1, RawDirection.DOWN, true);
         // up
-        model.faces[5] = new(0, height, 1, 0, height, 0, 1, height, 0, 1, height, 1, uvs[5], uvs[5] + 1, RawDirection.UP, true, true);
+        model.faces[5] = new(0, height, 1, 0, height, 0, 1, height, 0, 1, height, 1,
+            uvs[5], uvs[5] + 1, RawDirection.UP, true, true);
         return model;
     }
 

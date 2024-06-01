@@ -8,4 +8,8 @@ public class ItemStack {
         this.block = block;
         this.quantity = quantity;
     }
+
+    public ItemStack copy() {
+        return new ItemStack(block, quantity);
+    }
 }

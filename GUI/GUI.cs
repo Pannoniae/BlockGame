@@ -135,6 +135,37 @@ public class GUI {
         //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
     }
 
+
+    // Conversion functions
+
+    /// <summary>
+    /// Convert a screen position to a UI position.
+    /// </summary>
+    public static int s2u(float pos) {
+        return (int)(pos / guiScale);
+    }
+
+    /// <summary>
+    /// Convert a screen position to a UI position.
+    /// </summary>
+    public static Vector2 s2u(Vector2 pos) {
+        return new Vector2(pos.X / guiScale, pos.Y / guiScale);
+    }
+
+    /// <summary>
+    /// Convert a screen position to a UI position.
+    /// </summary>
+    public static int u2s(int pos) {
+        return pos * guiScale;
+    }
+
+    /// <summary>
+    /// Convert a screen position to a UI position.
+    /// </summary>
+    public static Vector2 u2s(Vector2 pos) {
+        return new Vector2(pos.X * guiScale, pos.Y * guiScale);
+    }
+
     /// <summary>
     /// Draw a full-screen background with a block texture and the specified block size in pixels.
     /// </summary>
