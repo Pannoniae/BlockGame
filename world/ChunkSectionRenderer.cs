@@ -41,6 +41,8 @@ public class ChunkSectionRenderer {
 
     static readonly object meshingLock = new();
 
+    public Stopwatch sw = new Stopwatch();
+
     private static readonly sbyte[] offsetTable = [
         // west
 
@@ -113,7 +115,6 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        var sw = new Stopwatch();
         sw.Start();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -364,7 +365,6 @@ public class ChunkSectionRenderer {
     [SkipLocalsInit]
     //unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
     unsafe private void constructVertices(VertexConstructionMode mode) {
-        //var sw = new Stopwatch();
         //sw.Start();
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
 
@@ -402,7 +402,7 @@ public class ChunkSectionRenderer {
 
         ref ushort neighbourRef = ref MemoryMarshal.GetReference<ushort>(neighbours);
         ref byte lightRef = ref MemoryMarshal.GetReference<byte>(neighbourLights);
-        ref var offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
+        ref var offsetArray = ref MemoryMarshal.GetArrayDataReference<sbyte>(offsetTable);
 
         bool test2 = false;
 
@@ -429,8 +429,7 @@ public class ChunkSectionRenderer {
                     float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
                     // calculate texcoords
-                    TwoFloats tex;
-                    TwoFloats texMax;
+                    Vector4 tex = new Vector4();
 
                     //float offset = 0.0004f;
 
@@ -453,6 +452,7 @@ public class ChunkSectionRenderer {
                     // setup neighbour data
                     Block nb;
                     // if all 6 neighbours are solid, we don't even need to bother iterating the faces
+
                     nba[0] = getBlockFromCacheUnsafe(ref neighbourRef, x - 1, y, z);
                     nba[1] = getBlockFromCacheUnsafe(ref neighbourRef, x + 1, y, z);
                     nba[2] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z - 1);
@@ -590,10 +590,10 @@ public class ChunkSectionRenderer {
                                 }
                             }
 
-                            tex.First = Block.texU(face.min.u);
-                            tex.Second = Block.texV(face.min.v);
-                            texMax.First = Block.texU(face.max.u);
-                            texMax.Second = Block.texV(face.max.v);
+                            tex.X = Block.texU(face.min.u);
+                            tex.Y = Block.texV(face.min.v);
+                            tex.Z = Block.texU(face.max.u);
+                            tex.W = Block.texV(face.max.v);
 
                             data.First = Block.packData((byte)dir, (byte)(ao & 0x3), light.First);
                             data.Second = Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second);
@@ -603,10 +603,10 @@ public class ChunkSectionRenderer {
 
                             // add vertices
 
-                            tempVertices[0] = new BlockVertex(wx + face.x1, wy + face.y1, wz + face.z1, tex.First, tex.Second, data.First);
-                            tempVertices[1] = new BlockVertex(wx + face.x2, wy + face.y2, wz + face.z2, tex.First, texMax.Second, data.Second);
-                            tempVertices[2] = new BlockVertex(wx + face.x3, wy + face.y3, wz + face.z3, texMax.First, texMax.Second, data.Third);
-                            tempVertices[3] = new BlockVertex(wx + face.x4, wy + face.y4, wz + face.z4, texMax.First, tex.Second, data.Fourth);
+                            tempVertices[0] = new BlockVertex(wx + face.x1, wy + face.y1, wz + face.z1, tex.X, tex.Y, data.First);
+                            tempVertices[1] = new BlockVertex(wx + face.x2, wy + face.y2, wz + face.z2, tex.X, tex.W, data.Second);
+                            tempVertices[2] = new BlockVertex(wx + face.x3, wy + face.y3, wz + face.z3, tex.Z, tex.W, data.Third);
+                            tempVertices[3] = new BlockVertex(wx + face.x4, wy + face.y4, wz + face.z4, tex.Z, tex.Y, data.Fourth);
                             chunkVertices.AddRange(tempVertices);
                             //cv += 4;
 
@@ -783,6 +783,12 @@ public struct FourBytes {
     public byte Third;
     [FieldOffset(3)]
     public byte Fourth;
+    public FourBytes(byte b0, byte b1, byte b2, byte b3) {
+        First = b0;
+        Second = b1;
+        Third = b2;
+        Fourth = b3;
+    }
 }
 
 [StructLayout(LayoutKind.Explicit)]
