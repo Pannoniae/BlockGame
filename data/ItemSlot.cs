@@ -30,7 +30,7 @@ public class ItemSlot {
 
     public void drawItem() {
         //Game.gui.tb.End();
-        Game.gui.drawBlockUI(Blocks.get(stack.block), inventory.pos.X + itemPos.X, inventory.pos.Y + itemPos.Y, ITEMSIZE);
+        Game.gui.drawBlockUI(Blocks.get(stack.block), inventory.bounds.X + itemPos.X, inventory.bounds.Y + itemPos.Y, ITEMSIZE);
         //Game.gui.tb.Begin();
     }
 }

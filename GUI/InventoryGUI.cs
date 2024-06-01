@@ -16,13 +16,14 @@ public class InventoryGUI : Menu {
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 
-    public Rectangle pos;
+    public Vector2D<int> guiPos;
+    public Rectangle bounds;
 
     public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/inventory.png");
 
-    public InventoryGUI(Vector2D<int> pos) {
-        this.pos = GUIElement.resolveAnchors(new Rectangle(pos.X, pos.Y, (int)invTex.Width, (int)invTex.Height),
-            HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
+    public InventoryGUI(Vector2D<int> guiPos) {
+        this.guiPos = guiPos;
+        resize(guiPos);
     }
 
     public void setup() {
@@ -41,7 +42,7 @@ public class InventoryGUI : Menu {
     }
 
     public override void draw() {
-        Game.gui.drawUIImmediate(invTex, new Vector2(pos.X, pos.Y));
+        Game.gui.drawUIImmediate(invTex, new Vector2(bounds.X, bounds.Y));
         foreach (var slot in slots) {
             slot.drawItem();
         }
@@ -50,7 +51,7 @@ public class InventoryGUI : Menu {
     public override void click(Vector2 pos) {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(this.pos.X + slot.rect.X, this.pos.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
+            var absoluteRect = new Rectangle(bounds.X + slot.rect.X, bounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
             if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
                 Console.Out.WriteLine("clicked!");
                 // swap it to the hotbar for now
@@ -58,5 +59,11 @@ public class InventoryGUI : Menu {
                 player.hotbar.slots[player.hotbar.selected] = slot.stack.copy();
             }
         }
+    }
+
+    public sealed override void resize(Vector2D<int> newSize) {
+        base.resize(newSize);
+        bounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.Width, (int)invTex.Height),
+            HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 }
