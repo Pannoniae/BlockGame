@@ -24,11 +24,19 @@ public class ArrayBlockData : BlockData {
     public ArrayBlockData(Chunk chunk) {
         this.chunk = chunk;
     }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
         return light[y * Chunk.CHUNKSIZESQ +
                      z * Chunk.CHUNKSIZE +
                      x];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void setLight(int x, int y, int z, byte value) {
+        light[y * Chunk.CHUNKSIZESQ +
+              z * Chunk.CHUNKSIZE +
+              x] = value;
     }
 
     public byte skylight(int x, int y, int z) {
@@ -47,8 +55,8 @@ public class ArrayBlockData : BlockData {
 
     public void setSkylight(int x, int y, int z, byte val) {
         ref var value = ref light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+                                  z * Chunk.CHUNKSIZE +
+                                  x];
         var blocklight = (byte)((value & 0xF0) >> 4);
         // pack it back inside
         value = (byte)(blocklight << 4 | val);
@@ -56,8 +64,8 @@ public class ArrayBlockData : BlockData {
 
     public void setBlocklight(int x, int y, int z, byte val) {
         ref var value = ref light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+                                  z * Chunk.CHUNKSIZE +
+                                  x];
         var skylight = (byte)(value & 0xF);
         // pack it back inside
         value = (byte)(val << 4 | skylight);
@@ -71,10 +79,12 @@ public class ArrayBlockData : BlockData {
         return (byte)((value & 0xF0) >> 4);
     }
 }
+
 [InlineArray(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE)]
 public struct ArrayBlockDataB {
     private byte b;
 }
+
 [InlineArray(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE)]
 public struct ArrayBlockDataU {
     private ushort u;
@@ -84,6 +94,7 @@ public struct ArrayBlockDataU {
 public struct NeighbourBlockDataB {
     private byte b;
 }
+
 [InlineArray(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX)]
 public struct NeighbourBlockDataU {
     private ushort u;

@@ -4,7 +4,7 @@ namespace BlockGame;
 
 public class World {
     public const int WORLDSIZE = 12;
-    public const int REGIONSIZE = 8;
+    public const int REGIONSIZE = 32;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     public Dictionary<ChunkCoord, Chunk> chunks;
@@ -732,34 +732,34 @@ public class World {
 
     public static ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
         return new ChunkSectionCoord(
-            (int)MathF.Floor((float)pos.X / Chunk.CHUNKSIZE),
-            (int)MathF.Floor((float)pos.Y / Chunk.CHUNKSIZE),
-            (int)MathF.Floor((float)pos.Z / Chunk.CHUNKSIZE));
+            pos.X >> 4,
+            pos.Y >> 4,
+            pos.Z >> 4);
     }
 
     public static ChunkSectionCoord getChunkSectionPos(int x, int y, int z) {
         return new ChunkSectionCoord(
-            (int)MathF.Floor((float)x / Chunk.CHUNKSIZE),
-            (int)MathF.Floor((float)y / Chunk.CHUNKSIZE),
-            (int)MathF.Floor((float)z / Chunk.CHUNKSIZE));
+            x >> 4,
+            y >> 4,
+            z >> 4);
     }
 
     public static ChunkCoord getChunkPos(Vector2D<int> pos) {
         return new ChunkCoord(
-            (int)MathF.Floor((float)pos.X / Chunk.CHUNKSIZE),
-            (int)MathF.Floor((float)pos.Y / Chunk.CHUNKSIZE));
+            pos.X >> 4,
+            pos.Y >> 4);
     }
 
     public static ChunkCoord getChunkPos(int x, int z) {
         return new ChunkCoord(
-            (int)MathF.Floor((float)x / Chunk.CHUNKSIZE),
-            (int)MathF.Floor((float)z / Chunk.CHUNKSIZE));
+            x >> 4,
+            z >> 4);
     }
 
     public static RegionCoord getRegionPos(ChunkCoord pos) {
         return new RegionCoord(
-            (int)MathF.Floor((float)pos.x / REGIONSIZE),
-            (int)MathF.Floor((float)pos.z / REGIONSIZE));
+            pos.x >> 5,
+            pos.z >> 5);
     }
 
     public static Vector3D<int> getPosInChunk(int x, int y, int z) {
