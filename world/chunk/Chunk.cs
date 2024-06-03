@@ -139,6 +139,13 @@ public class Chunk {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
+    public void setLight(int x, int y, int z, byte value) {
+        chunks[y / CHUNKSIZE].blocks.setLight(x, y % CHUNKSIZE, z, value);
+    }
+
+    /// <summary>
+    /// Uses chunk coordinates
+    /// </summary>
     public void setSkyLight(int x, int y, int z, byte value) {
         chunks[y / CHUNKSIZE].blocks.setSkylight(x, y % CHUNKSIZE, z, value);
     }

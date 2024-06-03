@@ -171,6 +171,17 @@ public class GameScreen : Screen {
             debugScreen = !debugScreen;
         }
 
+        // reload chunks
+        if (key == Key.A && keyboard.IsKeyPressed(Key.F3)) {
+            foreach (var chunk in world.chunks.Values) {
+                // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
+                if (chunk.status >= ChunkStatus.MESHED) {
+                    chunk.status = ChunkStatus.MESHED - 1;
+                }
+            }
+            world.player.loadChunksAroundThePlayer(World.RENDERDISTANCE);
+        }
+
         if (key == Key.F) {
             WorldIO.save(world, "world");
         }
