@@ -122,6 +122,11 @@ public class Block {
     /// </summary>
     public byte lightLevel = 0;
 
+    /// <summary>
+    /// If true, this block has a custom render method. (Used for dynamic blocks....)
+    /// </summary>
+    public bool customRender = false;
+
     public static readonly int atlasSize = 256;
     public BlockModel model;
 
@@ -239,6 +244,11 @@ public class Block {
         return this;
     }
 
+    public Block setCustomRender() {
+        customRender = true;
+        return this;
+    }
+
     public Block light(byte amount) {
         lightLevel = amount;
         return this;
@@ -246,6 +256,10 @@ public class Block {
 
 
     public virtual void update(World world, Vector3D<int> pos) {
+
+    }
+
+    public virtual void render(World world, Vector3D<int> pos, List<BlockVertex> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
 
     }
 
