@@ -5,7 +5,27 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
+
+/// <summary>
+/// Render blocks manually!
+/// </summary>
 public class RenderBlock {
+
+    public static bool neighbourTest(World world, Vector3D<int> pos, RawDirection direction) {
+        var neighbour = Blocks.get(world.getBlock(pos + Direction.getDirection(direction)));
+        var isTranslucent = Blocks.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
+        var flag = false;
+        switch (isTranslucent) {
+            case false:
+                flag = Blocks.notSolid(neighbour) || !neighbour.isFullBlock;
+                break;
+            case true:
+                flag = !Blocks.isTranslucent(neighbour) && (Blocks.notSolid(neighbour) || !neighbour.isFullBlock);
+                break;
+        }
+        return flag;
+    }
+
     public static void addVertexWithAO(World world, Vector3D<int> pos, List<BlockVertex> vertexBuffer, List<ushort> indexBuffer,
         float x, float y, float z, UVPair uv, RawDirection direction, int currentIndex) {
 
