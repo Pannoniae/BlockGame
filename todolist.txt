@@ -1,15 +1,8 @@
-﻿- make a hotbar background texture / selection
-
- - add ores
+﻿ - add ores
  - running functionality for the character
 
  immediate todolist:
-  - make a stack of Screens
-  - handle resizing somehow (modify UI elements? or UI elements should have dynamically calculated bounds?
-  probably more expensive to recalculate everything each frame but is the most reliable)
-  - glViewport can be used for inventory block rendering
-  - maybe a more flexible Camera framework would be needed?
-  - "inspiration" can be taken from libgdx
+ - none for now! :P
   
   ötletek:
   -legyenek missziók
@@ -27,7 +20,6 @@ Minimal Viable Prototype list:
     3. Multiplayer
     4. World generation (more blocks, more variety, cliffs or something, flowers)
     5. Reintroduce world saving/loading
-    6. Lighting (sky/blocklight, skylight propagation, lighting updates when blocks change)
 
 Follow-up:
     1. Chat/commands

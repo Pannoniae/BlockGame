@@ -43,7 +43,7 @@ public class ChunkSectionRenderer {
 
     public Stopwatch sw = new Stopwatch();
 
-    private static readonly sbyte[] offsetTable = [
+    public static readonly sbyte[] offsetTable = [
         // west
 
         -1, 0, 1, -1, 1, 0, -1, 1, 1,
@@ -428,6 +428,11 @@ public class ChunkSectionRenderer {
                     float wy = section.chunkY * Chunk.CHUNKSIZE + y;
                     float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
+                    if (bl.customRender) {
+                        bl.render(section.world, new Vector3D<int>((int)wx, (int)wy, (int)wz), chunkVertices, chunkIndices, i);
+                        continue;
+                    }
+
                     // calculate texcoords
                     Vector4 tex = new Vector4();
 
@@ -688,7 +693,7 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte calculateAOFixed(int side1, int side2, int corner) {
+    public static byte calculateAOFixed(int side1, int side2, int corner) {
         var test1 = Blocks.isSolid(side1);
         var test2 = Blocks.isSolid(side2);
         if (test1 && test2) {
