@@ -327,8 +327,8 @@ public partial class Game {
         fontLoader.renderer.OnViewportChanged();
         width = size.X;
         height = size.Y;
-        currentScreen.resize(size);
         gui.resize(size);
+        currentScreen.resize(size);
     }
 
     public void executeOnMainThread(Action action) {

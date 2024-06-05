@@ -183,64 +183,64 @@ public class GUI {
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
 
-    public void drawString(string text, Vector2 position, Color4b color = default) {
+    public void drawString(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringUI(string text, Vector2 position, Color4b color = default) {
+    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
+    public void drawStringCentred(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringCentredUI(string text, Vector2 position, Color4b color = default) {
+    public void drawStringCentredUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     // some day we'll have a better API, but not this day
-    public void drawStringShadowed(string text, Vector2 position, Color4b color = default) {
+    public void drawStringShadowed(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         DrawString(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
         DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringShadowedUI(string text, Vector2 position, Color4b color = default) {
+    public void drawStringShadowedUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         DrawString(text, position * guiScale + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
         DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringCentredShadowed(string text, Vector2 position, Color4b color = default) {
+    public void drawStringCentredShadowed(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
         DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringCentredShadowedUI(string text, Vector2 position, Color4b color = default) {
+    public void drawStringCentredShadowedUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY) + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
         DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    protected void DrawString(string text, Vector2 position, Color4b colour) {
+    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS());
     }
 
-    protected void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
+    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
     }
 
-    protected void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, float rotation, Vector2 offset) {
+    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, float rotation, Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
     }
 
-    public Vector2 measureString(string text) {
+    public Vector2 measureString(ReadOnlySpan<char> text) {
         return guiFont.MeasureString(text, TEXTSCALEV);
     }
 

@@ -267,19 +267,21 @@ public class GameScreen : Screen {
          */
 
 
-        gui.tb.Draw(gui.colourTexture,
-            new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
-                new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
-            new Color4b(240, 240, 240));
+        if (!world.inMenu) {
+            gui.tb.Draw(gui.colourTexture,
+                new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
+                    new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
+                new Color4b(240, 240, 240));
 
-        gui.tb.Draw(gui.colourTexture,
-            new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness),
-                new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
-            new Color4b(240, 240, 240));
-        gui.tb.Draw(gui.colourTexture,
-            new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
-                new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
-            new Color4b(240, 240, 240));
+            gui.tb.Draw(gui.colourTexture,
+                new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness),
+                    new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
+                new Color4b(240, 240, 240));
+            gui.tb.Draw(gui.colourTexture,
+                new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
+                    new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
+                new Color4b(240, 240, 240));
+        }
         // reset blending this is messed up
         //GD.BlendState = Game.initialBlendState;
 
@@ -292,8 +294,6 @@ public class GameScreen : Screen {
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY),
                 Color4b.OrangeRed);
         }
-
-        gui.draw(gui.guiTexture, new Vector2(0, 300), gui.buttonRect);
 
         // Draw block display
         var blockStr = Blocks.get(world.player.hotbar.getSelected().block).name;
@@ -333,7 +333,7 @@ public class GameScreen : Screen {
             debugStr.AppendFormat("W:{0} H:{1}\n", Game.width, Game.height);
             debugStr.AppendFormat("CX:{0} CY:{1}\n", Game.centreX, Game.centreY);
             debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
-            gui.drawString(debugStr.ToString(),
+            gui.drawString(debugStr.AsSpan(),
                 new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
 
 

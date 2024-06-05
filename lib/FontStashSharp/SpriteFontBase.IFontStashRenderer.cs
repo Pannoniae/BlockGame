@@ -206,7 +206,7 @@ namespace FontStashSharp
 		/// <param name="layerDepth">A depth of the layer of this string</param>
 		/// <param name="characterSpacing">A character spacing</param>
 		/// <param name="lineSpacing">A line spacing</param>
-		public float DrawText(IFontStashRenderer renderer, StringSegment text, Vector2 position, Color color,
+		public float DrawText(IFontStashRenderer renderer, ReadOnlySpan<char> text, Vector2 position, Color color,
 			float rotation = 0, Vector2 origin = default(Vector2), Vector2? scale = null,
 			float layerDepth = 0.0f, float characterSpacing = 0.0f, float lineSpacing = 0.0f,
 			TextStyle textStyle = TextStyle.None, FontSystemEffect effect = FontSystemEffect.None, int effectAmount = 0) =>
@@ -226,7 +226,7 @@ namespace FontStashSharp
 		/// <param name="layerDepth">A depth of the layer of this string</param>
 		/// <param name="characterSpacing">A character spacing</param>
 		/// <param name="lineSpacing">A line spacing</param>
-		public float DrawText(IFontStashRenderer renderer, StringSegment text, Vector2 position, Color[] colors,
+		public float DrawText(IFontStashRenderer renderer, ReadOnlySpan<char> text, Vector2 position, Color[] colors,
 			float rotation = 0, Vector2 origin = default(Vector2), Vector2? scale = null,
 			float layerDepth = 0.0f, float characterSpacing = 0.0f, float lineSpacing = 0.0f,
 			TextStyle textStyle = TextStyle.None, FontSystemEffect effect = FontSystemEffect.None, int effectAmount = 0) =>
