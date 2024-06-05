@@ -1,10 +1,10 @@
-using System.IO.Compression;
+using K4os.Compression.LZ4.Streams;
 
-namespace BlockGame.NBT;
+namespace BlockGame.xNBT;
 
 public class NBT {
     public static NBTTagCompound readCompressed(Stream stream) {
-        using var decompress = new DeflateStream(stream, CompressionMode.Decompress);
+        using var decompress = LZ4Stream.Decode(stream);
         using var reader = new BinaryReader(decompress);
         var nbt = NBTTag.read(reader);
         if (nbt is NBTTagCompound compound) {
@@ -14,7 +14,7 @@ public class NBT {
     }
 
     public static void writeCompressed(NBTTagCompound nbt, Stream stream) {
-        using var compress = new DeflateStream(stream, CompressionLevel.Optimal);
+        using var compress = LZ4Stream.Encode(stream);
         using var writer = new BinaryWriter(compress);
         NBTTag.write(nbt, writer);
     }

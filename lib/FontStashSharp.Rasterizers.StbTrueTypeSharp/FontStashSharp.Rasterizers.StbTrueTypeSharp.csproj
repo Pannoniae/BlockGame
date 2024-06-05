@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="StbTrueTypeSharp" Version="1.26.12"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
+    </ItemGroup>
+</Project>

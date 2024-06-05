@@ -1,6 +1,5 @@
 using System.Buffers;
-using System.IO.Compression;
-using BlockGame.NBT;
+using BlockGame.xNBT;
 using SharpNBT;
 
 namespace BlockGame;
@@ -21,41 +20,17 @@ public class WorldIO {
             Directory.CreateDirectory("level");
         }
 
-        var tag = new TagBuilder("world");
-        tag.AddDouble("posX", world.player.position.X);
-        tag.AddDouble("posY", world.player.position.Y);
-        tag.AddDouble("posZ", world.player.position.Z);
-
-        var fileTag = tag.Create();
-        NbtFile.Write($"level/{filename}.nbt", fileTag, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
+        var tag = new NBTTagCompound("world");
+        tag.addDouble("posX", world.player.position.X);
+        tag.addDouble("posY", world.player.position.Y);
+        tag.addDouble("posZ", world.player.position.Z);
+        NBT.writeFile(tag, $"level/{filename}.nbt");
 
         // save regions
         foreach (var chunk in world.chunks.Values) {
-            // if region file does not exist, write
             var regionCoord = World.getRegionPos(chunk.coord);
-            if (false && !File.Exists($"level/r{regionCoord.x},{regionCoord.z}.nbt")) {
-                // create file
-                var regionTag = new TagBuilder("chunk");
-                regionTag.BeginList(TagType.Compound, "chunks");
-                regionTag.BeginCompound("test");
-                regionTag.AddByte("test", 5);
-                regionTag.EndCompound();
-                regionTag.EndList();
-                var regionToWrite = regionTag.Create();
-                regionCache[regionCoord] = regionToWrite;
-                NbtFile.Write($"level/r{regionCoord.x},{regionCoord.z}.nbt", regionToWrite, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
-            }
-            //Console.Out.WriteLine(regionCoord);
-            //Console.Out.WriteLine($"level/r{regionCoord.x},{regionCoord.z}.nbt");
-            //var region =
-                // open region file, get from cache if it exists
-            //    regionCache.TryGetValue(regionCoord, out var _region) ? _region : NbtFile.Read($"level/r{regionCoord.x},{regionCoord.z}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
-            // write the chunk into the region
             var nbt = serialiseChunkIntoNBT(chunk);
-            NBT.NBT.writeFile(nbt, $"level/r{chunk.coord.x},{chunk.coord.z}.nbt");
-            // save it back into the file
-            //regionCache[regionCoord] = region;
-            //NbtFile.Write($"level/r{regionCoord.x},{regionCoord.z}.nbt", region, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
+            NBT.writeFile(nbt, $"level/r{chunk.coord.x},{chunk.coord.z}.nbt");
         }
         regionCache.Clear();
     }
