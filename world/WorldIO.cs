@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using MemoryPack;
 using SharpNBT;
 
 namespace BlockGame;
@@ -122,17 +121,4 @@ public class WorldIO {
         //world.renderer.meshChunks();
         return world;
     }
-}
-
-[MemoryPackable()]
-public partial record struct SavedChunk {
-    public int posX;
-    public int posZ;
-    public ushort[] blocks;
-    public byte[] light;
-}
-
-[MemoryPackable]
-public partial struct SavedChunks {
-    public List<SavedChunk> chunks;
 }
