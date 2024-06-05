@@ -12,12 +12,13 @@ public class InventoryGUI : Menu {
     public const int cols = 4;
 
     public const int invOffsetY = 22;
+    public const int textOffsetY = 4;
     public const int invOffsetX = 4;
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 
     public Vector2D<int> guiPos;
-    public Rectangle bounds;
+    public Rectangle guiBounds;
 
     public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/inventory.png");
 
@@ -42,7 +43,9 @@ public class InventoryGUI : Menu {
     }
 
     public override void draw() {
-        Game.gui.drawUIImmediate(invTex, new Vector2(bounds.X, bounds.Y));
+        Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
+        // draw inventory text
+        Game.gui.drawStringUI("Inventory", new Vector2(guiBounds.X + invOffsetX, guiBounds.Y + textOffsetY), Color4b.White, new Vector2(2, 2));
         foreach (var slot in slots) {
             slot.drawItem();
         }
@@ -51,7 +54,7 @@ public class InventoryGUI : Menu {
     public override void click(Vector2 pos) {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(bounds.X + slot.rect.X, bounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
+            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
             if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
                 Console.Out.WriteLine("clicked!");
                 // swap it to the hotbar for now
@@ -63,7 +66,7 @@ public class InventoryGUI : Menu {
 
     public sealed override void resize(Vector2D<int> newSize) {
         base.resize(newSize);
-        bounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.Width, (int)invTex.Height),
+        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.Width, (int)invTex.Height),
             HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 }
