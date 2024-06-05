@@ -1,4 +1,4 @@
-namespace BlockGame.NBT;
+namespace BlockGame.xNBT;
 
 public abstract class NBTTag : IEquatable<NBTTag> {
     public readonly string name;

@@ -10,11 +10,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FontStashSharp" Version="1.3.7" />
         <PackageReference Include="Geometry" Version="1.0.0.1" />
         <PackageReference Include="ImGui.NET" Version="1.89.9.4" />
         <PackageReference Include="JetBrains.Annotations" Version="2024.2.0-eap1" />
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.3" />
+        <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8" />
         <PackageReference Include="SFML.Audio" Version="2.5.1" />
         <PackageReference Include="SFML.Net" Version="2.5.1" />
         <PackageReference Include="SharpNBT" Version="1.3.1"/>
@@ -79,6 +79,29 @@
         <None Update="shaders\guiBlock.vert">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Remove="lib\FontStashSharp\**" />
+        <None Remove="lib\FontStashSharp.Base\**" />
+        <None Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
+        <None Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="lib\FontStashSharp\**" />
+      <Compile Remove="lib\FontStashSharp.Base\**" />
+      <Compile Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
+      <Compile Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="lib\FontStashSharp\**" />
+      <EmbeddedResource Remove="lib\FontStashSharp.Base\**" />
+      <EmbeddedResource Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
+      <EmbeddedResource Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
+        <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
     </ItemGroup>
 
 </Project>

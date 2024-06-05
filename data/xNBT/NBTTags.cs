@@ -2,9 +2,8 @@ using System.Buffers.Binary;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
-using SharpNBT;
 
-namespace BlockGame.NBT;
+namespace BlockGame.xNBT;
 
 public class NBTTagEnd : NBTTag {
 
