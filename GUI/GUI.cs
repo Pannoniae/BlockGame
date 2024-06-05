@@ -178,8 +178,8 @@ public class GUI {
         immediatetb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 
-    private static int TEXTSCALE => guiScale / 2;
-    private static Vector2 TEXTSCALEV => new Vector2(TEXTSCALE, TEXTSCALE);
+    internal static int TEXTSCALE => guiScale / 2;
+    internal static Vector2 TEXTSCALEV => new Vector2(TEXTSCALE, TEXTSCALE);
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
 
@@ -228,16 +228,20 @@ public class GUI {
         DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void DrawString(string text, Vector2 position, Color4b colour) {
+    protected void DrawString(string text, Vector2 position, Color4b colour) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS());
     }
 
-    public void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
+    protected void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
     }
 
-    public void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, float rotation, Vector2 offset) {
+    protected void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, float rotation, Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
+    }
+
+    public Vector2 measureString(string text) {
+        return guiFont.MeasureString(text, TEXTSCALEV);
     }
 
     public void drawBlock(Block block, int x, int y, int size) {
