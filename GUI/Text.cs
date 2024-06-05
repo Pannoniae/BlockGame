@@ -15,7 +15,7 @@ public class Text : GUIElement {
     }
 
     public static Text createText(Menu menu, string name, Vector2D<int> pos, string text) {
-        var bounds = Game.gui.guiFont.Measure(text);
+        var bounds = Game.gui.guiFont.MeasureString(text);
         var guitext = new Text(menu, name, text);
         guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(pos.X + bounds.X), (int)(pos.Y + bounds.Y)));
         return guitext;

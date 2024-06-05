@@ -11,6 +11,7 @@ public class GLStateTracker {
 
     public int boundTex0;
     public int boundTex1;
+    //public int boundTex2;
 
     public int currentShader;
 
@@ -28,6 +29,8 @@ public class GLStateTracker {
         GL.GetInteger(GetPName.TextureBinding2D, out boundTex0);
         GL.ActiveTexture(TextureUnit.Texture0 + 1);
         GL.GetInteger(GetPName.TextureBinding2D, out boundTex1);
+        //GL.ActiveTexture(TextureUnit.Texture0 + 2);
+        //GL.GetInteger(GetPName.TextureBinding2D, out boundTex2);
 
         // save shader
         GL.GetInteger(GetPName.CurrentProgram, out currentShader);
@@ -41,14 +44,16 @@ public class GLStateTracker {
         GL.BindTexture(TextureTarget.Texture2D, (uint)boundTex0);
         GL.ActiveTexture(TextureUnit.Texture0 + 1);
         GL.BindTexture(TextureTarget.Texture2D, (uint)boundTex1);
+        //GL.ActiveTexture(TextureUnit.Texture0 + 2);
+        //GL.BindTexture(TextureTarget.Texture2D, (uint)boundTex2);
 
         GL.ActiveTexture((TextureUnit)activeTex);
 
-        GD.ResetTextureStates();
+        //GD.ResetTextureStates();
 
         // restore shader
         GL.UseProgram((uint)currentShader);
-        GD.ResetBufferStates();
+        //GD.ResetBufferStates();
 
         // restore VAO
         GL.BindVertexArray((uint)VAO);

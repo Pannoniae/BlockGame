@@ -214,8 +214,8 @@ public class ChunkSectionRenderer {
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
 
             uint renderedVerts = vao.render();
-            Game.instance.metrics.renderedVerts += (int)renderedVerts;
-            Game.instance.metrics.renderedChunks += 1;
+            Game.metrics.renderedVerts += (int)renderedVerts;
+            Game.metrics.renderedChunks += 1;
         }
     }
 
@@ -223,7 +223,7 @@ public class ChunkSectionRenderer {
         if (hasTranslucentBlocks && !isEmptyRenderTranslucent && isVisible(camera.frustum)) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
-            Game.instance.metrics.renderedVerts += (int)renderedTransparentVerts;
+            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 

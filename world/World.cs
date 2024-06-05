@@ -764,30 +764,30 @@ public class World {
 
     public static Vector3D<int> getPosInChunk(int x, int y, int z) {
         return new Vector3D<int>(
-            Utils.mod(x, Chunk.CHUNKSIZE),
+            x & 0xF,
             y,
-            Utils.mod(z, Chunk.CHUNKSIZE));
+            z & 0xF);
     }
 
     public static Vector3D<int> getPosInChunk(Vector3D<int> pos) {
         return new Vector3D<int>(
-            Utils.mod(pos.X, Chunk.CHUNKSIZE),
+            pos.X & 0xF,
             pos.Y,
-            Utils.mod(pos.Z, Chunk.CHUNKSIZE));
+            pos.Z & 0xF);
     }
 
     public static Vector3D<int> getPosInChunkSection(int x, int y, int z) {
         return new Vector3D<int>(
-            Utils.mod(x, Chunk.CHUNKSIZE),
-            Utils.mod(y, Chunk.CHUNKSIZE),
-            Utils.mod(z, Chunk.CHUNKSIZE));
+            x & 0xF,
+            y & 0xF,
+            z & 0xF);
     }
 
     public static Vector3D<int> getPosInChunkSection(Vector3D<int> pos) {
         return new Vector3D<int>(
-            Utils.mod(pos.X, Chunk.CHUNKSIZE),
-            Utils.mod(pos.Y, Chunk.CHUNKSIZE),
-            Utils.mod(pos.Z, Chunk.CHUNKSIZE));
+            pos.X & 0xF,
+            pos.Y & 0xF,
+            pos.Z & 0xF);
     }
 
     public bool isChunkSectionInWorld(ChunkSectionCoord pos) {
