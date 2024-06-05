@@ -71,8 +71,22 @@ public readonly record struct Direction {
     public static Vector3D<int>[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
     public static Vector3D<int>[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
     public static Vector3D<int>[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
+    public static Vector3D<int>[] directionsAll = new Vector3D<int>[27];
     public static Vector3D<int>[] directionsSelf = [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
 
+    static Direction() {
+        // construct 27-box of all directions
+        int i = 0;
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    directionsAll[i] = new Vector3D<int>(x, y, z);
+                    // don't forget to increment, you silly you!:P
+                    i++;
+                }
+            }
+        }
+    }
     public static Vector3D<int> getDirection(RawDirection dir) {
         return dir switch {
             RawDirection.WEST => WEST,
