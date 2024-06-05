@@ -260,10 +260,10 @@ public class World {
                 if (neighbourLevel + 2 <= level || isDown) {
                     byte newLevel = (byte)(isDown ? level : level - 1);
                     if (isSkylight) {
-                        setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
                     }
                     else {
-                        setBlockLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
                     }
                     queue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
                 }
@@ -290,10 +290,10 @@ public class World {
                 var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
                 if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                     if (isSkylight) {
-                        setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
                     }
                     else {
-                        setBlockLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
                     }
 
                     // Emplace new node to queue. (could use push as well)
@@ -555,7 +555,7 @@ public class World {
         return success ? chunk!.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
     }
 
-    public void setSkyLight(int x, int y, int z, byte level, bool remesh = true) {
+    public void setSkyLight(int x, int y, int z, byte level) {
         if (y is < 0 or >= WORLDHEIGHT) {
             return;
         }
@@ -564,6 +564,18 @@ public class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+        }
+    }
+
+    public void setSkyLightRemesh(int x, int y, int z, byte level) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        if (success) {
+            chunk!.setSkyLightRemesh(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
     }
 
@@ -604,6 +616,18 @@ public class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+        }
+    }
+
+    public void setBlockLightRemesh(int x, int y, int z, byte level) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        if (success) {
+            chunk!.setBlockLightRemesh(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
     }
 

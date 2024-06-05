@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.IO.Compression;
+using BlockGame.NBT;
 using SharpNBT;
 
 namespace BlockGame;
@@ -31,7 +33,7 @@ public class WorldIO {
         foreach (var chunk in world.chunks.Values) {
             // if region file does not exist, write
             var regionCoord = World.getRegionPos(chunk.coord);
-            if (!File.Exists($"level/r{regionCoord.x},{regionCoord.z}.nbt")) {
+            if (false && !File.Exists($"level/r{regionCoord.x},{regionCoord.z}.nbt")) {
                 // create file
                 var regionTag = new TagBuilder("chunk");
                 regionTag.BeginList(TagType.Compound, "chunks");
@@ -45,46 +47,47 @@ public class WorldIO {
             }
             //Console.Out.WriteLine(regionCoord);
             //Console.Out.WriteLine($"level/r{regionCoord.x},{regionCoord.z}.nbt");
-            var region =
+            //var region =
                 // open region file, get from cache if it exists
-                regionCache.TryGetValue(regionCoord, out var _region) ? _region : NbtFile.Read($"level/r{regionCoord.x},{regionCoord.z}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
-            var chunks = region.Get<ListTag>("chunks");
+            //    regionCache.TryGetValue(regionCoord, out var _region) ? _region : NbtFile.Read($"level/r{regionCoord.x},{regionCoord.z}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
             // write the chunk into the region
-            writeChunkIntoTag(chunks, chunk);
-
-            //Console.Out.WriteLine(region);
-            //Console.Out.WriteLine(region.Get<ListTag>("chunks"));
+            var nbt = serialiseChunkIntoNBT(chunk);
+            NBT.NBT.writeFile(nbt, $"level/r{chunk.coord.x},{chunk.coord.z}.nbt");
             // save it back into the file
-            regionCache[regionCoord] = region;
-            NbtFile.Write($"level/r{regionCoord.x},{regionCoord.z}.nbt", region, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
+            //regionCache[regionCoord] = region;
+            //NbtFile.Write($"level/r{regionCoord.x},{regionCoord.z}.nbt", region, FormatOptions.LittleEndian, CompressionType.ZLib, CompressionLevel.Optimal);
         }
         regionCache.Clear();
     }
 
-    private static void writeChunkIntoTag(ListTag chunks, Chunk chunk) {
-        var chunkTag = new TagBuilder("chunk");
-        chunkTag.AddInt("posX", chunk.coord.x);
-        chunkTag.AddInt("posZ", chunk.coord.z);
-        chunkTag.AddByte("status", (byte)chunk.status);
+    private static NBTTagCompound serialiseChunkIntoNBT(Chunk chunk) {
+        var chunkTag = new NBTTagCompound("chunk");
+        chunkTag.addInt("posX", chunk.coord.x);
+        chunkTag.addInt("posZ", chunk.coord.z);
+        chunkTag.addByte("status", (byte)chunk.status);
         // blocks
         var my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
         var mx = Chunk.CHUNKSIZE;
         var mz = Chunk.CHUNKSIZE;
-        var blocks = new int[mx * my * mz];
+        var blocks = ArrayPool<ushort>.Shared.Rent(mx * my * mz);
+        var light = ArrayPool<byte>.Shared.Rent(mx * my * mz);
         int index = 0;
         // using YXZ order
         for (int y = 0; y < my; y++) {
             for (int z = 0; z < mz; z++) {
                 for (int x = 0; x < mx; x++) {
-                    blocks[index] = chunk.getBlock(x, y, z) | chunk.getLight(x, y, z) << 16;
-                    //tag.AddShort(chunk.getBlock(x, y, z));
+                    blocks[index] = chunk.getBlock(x, y, z);
+                    light[index] = chunk.getLight(x, y, z);
                     index++;
                 }
             }
         }
-        chunkTag.AddIntArray("blocks", blocks);
-        chunkTag.EndCompound();
-        chunks.Add(chunkTag.Create());
+        chunkTag.addUShortArray("blocks", blocks);
+        chunkTag.addByteArray("light", light);
+
+        ArrayPool<ushort>.Shared.Return(blocks);
+        ArrayPool<byte>.Shared.Return(light);
+        return chunkTag;
     }
 
     public static World load(string filename) {

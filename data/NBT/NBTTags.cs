@@ -1,6 +1,8 @@
 using System.Buffers.Binary;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
+using SharpNBT;
 
 namespace BlockGame.NBT;
 
@@ -605,9 +607,12 @@ public class NBTTagShortArray : NBTTag {
 
     public override void writeContents(BinaryWriter stream) {
         stream.Write(data.Length);
-        foreach (short t in data) {
-            stream.Write(t);
+        var values = new Span<short>(data);
+        // if we aren't little endian, swap
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
         }
+        stream.Write(MemoryMarshal.AsBytes(values));
     }
 
     public override void readContents(BinaryReader stream) {
@@ -637,9 +642,12 @@ public class NBTTagUShortArray : NBTTag {
 
     public override void writeContents(BinaryWriter stream) {
         stream.Write(data.Length);
-        foreach (ushort t in data) {
-            stream.Write(t);
+        var values = new Span<ushort>(data);
+        // if we aren't little endian, swap
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
         }
+        stream.Write(MemoryMarshal.AsBytes(values));
     }
 
     public override void readContents(BinaryReader stream) {
@@ -669,9 +677,12 @@ public class NBTTagIntArray : NBTTag {
 
     public override void writeContents(BinaryWriter stream) {
         stream.Write(data.Length);
-        foreach (int t in data) {
-            stream.Write(t);
+        var values = new Span<int>(data);
+        // if we aren't little endian, swap
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
         }
+        stream.Write(MemoryMarshal.AsBytes(values));
     }
 
     public override void readContents(BinaryReader stream) {
@@ -701,9 +712,12 @@ public class NBTTagUIntArray : NBTTag {
 
     public override void writeContents(BinaryWriter stream) {
         stream.Write(data.Length);
-        foreach (uint t in data) {
-            stream.Write(t);
+        var values = new Span<uint>(data);
+        // if we aren't little endian, swap
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
         }
+        stream.Write(MemoryMarshal.AsBytes(values));
     }
 
     public override void readContents(BinaryReader stream) {
@@ -733,9 +747,12 @@ public class NBTTagLongArray : NBTTag {
 
     public override void writeContents(BinaryWriter stream) {
         stream.Write(data.Length);
-        foreach (long t in data) {
-            stream.Write(t);
+        var values = new Span<long>(data);
+        // if we aren't little endian, swap
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
         }
+        stream.Write(MemoryMarshal.AsBytes(values));
     }
 
     public override void readContents(BinaryReader stream) {
@@ -765,9 +782,12 @@ public class NBTTagULongArray : NBTTag {
 
     public override void writeContents(BinaryWriter stream) {
         stream.Write(data.Length);
-        foreach (ulong t in data) {
-            stream.Write(t);
+        var values = new Span<ulong>(data);
+        // if we aren't little endian, swap
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
         }
+        stream.Write(MemoryMarshal.AsBytes(values));
     }
 
     public override void readContents(BinaryReader stream) {
