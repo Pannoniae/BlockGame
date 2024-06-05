@@ -16,8 +16,6 @@ public class BDFSource : IFontSource {
         height = font.FontBoundingBox[1];
         // WTF?
         yOffset = -height - font.FontBoundingBox[3];
-        Console.Out.WriteLine(yOffset);
-
     }
 
 

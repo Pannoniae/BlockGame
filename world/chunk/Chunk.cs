@@ -128,7 +128,8 @@ public class Chunk {
         var chunkPos = World.getChunkSectionPos(wx, y, wz);
 
         // TODO only remesh neighbours if on the edge of the chunk
-        foreach (var dir in Direction.directions) {
+        // we need to mesh EVERYTHING in the 3x3x3 area because AO is a bitch / affects non-adjacent blocks too
+        foreach (var dir in Direction.directionsAll) {
             var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
             if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
                 world.mesh(neighbourSection);
