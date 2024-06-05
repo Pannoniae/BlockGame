@@ -11,7 +11,6 @@ using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Glfw;
 using TrippyGL;
@@ -36,7 +35,6 @@ public partial class Game {
     public static GL GL = null!;
     public static GraphicsDevice GD = null!;
     public static IInputContext input = null!;
-    public ImGuiController imgui = null!;
 
     public static Process proc;
 
@@ -144,7 +142,6 @@ public partial class Game {
 #endif
 
 
-            imgui = new ImGuiController(GL, window, input);
             proc = Process.GetCurrentProcess();
             GD = new GraphicsDevice(GL);
             GD.BlendingEnabled = true;
