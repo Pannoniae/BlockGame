@@ -1,10 +1,10 @@
 namespace BlockGame;
 
-public class OverworldChunkGenerator : ChunkGenerator {
+public class SimpleOverworldChunkGenerator : ChunkGenerator {
 
-    public OverworldWorldGenerator generator;
+    public SimpleOverworldWorldGenerator generator;
 
-    public OverworldChunkGenerator(OverworldWorldGenerator generator) {
+    public SimpleOverworldChunkGenerator(SimpleOverworldWorldGenerator generator) {
         this.generator = generator;
     }
 

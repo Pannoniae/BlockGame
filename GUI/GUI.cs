@@ -1,5 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using BlockGame.font;
+using FontStashSharp;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using SixLabors.Fonts;
@@ -32,8 +34,6 @@ public class GUI {
     public TextureBatcher immediatetb;
     public Texture2D guiTexture;
     public Texture2D colourTexture;
-    public TextureFont guiFont;
-    public TextureFont guiFontUnicode;
 
     public int uiWidth;
     public int uiHeight;
@@ -45,6 +45,8 @@ public class GUI {
     /// Like the normal shader but it's simple (doesn't need fog/lighting/anything)
     /// </summary>
     public ShaderProgram guiBlockShader;
+
+    public DynamicSpriteFont guiFont;
 
     public Rectangle buttonRect = new(96, 0, 96, 16);
     public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
@@ -73,52 +75,12 @@ public class GUI {
         buffer = new VertexBuffer<BlockVertex>(GD, 240, 360, ElementType.UnsignedShort, BufferUsage.StreamDraw);
         guiBlock = new List<BlockVertex>();
         guiBlockI = new List<ushort>();
+
+
     }
 
-    public void loadFonts() {
-        if (!File.Exists(Constants.fontFile)) {
-            var collection = new FontCollection();
-            var family = collection.Add("fonts/unifont-15.1.04.ttf");
-            var font = family.CreateFont(12, FontStyle.Regular);
-            using var ff = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)127);
-            guiFont = ff.CreateFont(Game.GD);
-            ff.WriteToFile(Constants.fontFile);
-        }
-        else {
-            using var ff = TrippyFontFile.FromFile(Constants.fontFile);
-            guiFont = ff.CreateFont(Game.GD);
-        }
-    }
-
-    /// <summary>
-    /// Runs on background thread. Don't do OpenGL shit in there or try to assemble the font
-    /// </summary>
-    public void loadUnicodeFont() {
-        if (!File.Exists(Constants.fontFileUnicode)) {
-            var collection = new FontCollection();
-            var family = collection.Add("fonts/unifont-15.1.04.ttf");
-            var font = family.CreateFont(12, FontStyle.Regular);
-            // DON'T CALL using, it would destroy the class variable
-            var ffu = FontBuilderExtensions.CreateFontFile(font, (char)0, (char)0x3000);
-            ff = ffu;
-        }
-        else {
-            var ffu = TrippyFontFile.FromFile(Constants.fontFileUnicode);
-            ff = ffu;
-        }
-    }
-
-    /// <summary>
-    /// This is needed so it loads on the main thread (memory corruption otherwise)
-    /// </summary>
-    public void loadUnicodeFont2() {
-        if (!File.Exists(Constants.fontFileUnicode)) {
-            guiFontUnicode = ff.CreateFont(Game.GD);
-            ff.WriteToFile(Constants.fontFileUnicode);
-        }
-        else {
-            guiFontUnicode = ff.CreateFont(Game.GD);
-        }
+    public void loadFont(int size) {
+        guiFont = Game.fontLoader.fontSystem.GetFont(size);
     }
 
 
@@ -200,7 +162,7 @@ public class GUI {
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
-    
+
     public void drawImmediate(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         immediatetb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
@@ -210,57 +172,72 @@ public class GUI {
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         tb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
-    
+
     public void drawUIImmediate(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         immediatetb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 
+    private static int TEXTSCALE => guiScale / 2;
+    private static Vector2 TEXTSCALEV => new Vector2(TEXTSCALE, TEXTSCALE);
+
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
 
     public void drawString(string text, Vector2 position, Color4b color = default) {
-        tb.DrawString(guiFont, text, position, color == default ? Color4b.White : color);
+        DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawStringUI(string text, Vector2 position, Color4b color = default) {
-        tb.DrawString(guiFont, text, position * guiScale, color == default ? Color4b.White : color);
+        DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawStringCentred(string text, Vector2 position, Color4b color = default) {
-        var offsetX = guiFont.Measure(text).X / 2;
-        var offsetY = guiFont.Measure(text).Y / 2;
-        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
+        var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
+        var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
+        DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawStringCentredUI(string text, Vector2 position, Color4b color = default) {
-        var offsetX = guiFont.Measure(text).X / 2;
-        var offsetY = guiFont.Measure(text).Y / 2;
-        tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color);
+        var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
+        var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
+        DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     // some day we'll have a better API, but not this day
     public void drawStringShadowed(string text, Vector2 position, Color4b color = default) {
-        tb.DrawString(guiFont, text, position + new Vector2(1, 1), Color4b.DimGray);
-        tb.DrawString(guiFont, text, position, color == default ? Color4b.White : color);
+        DrawString(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
+        DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawStringShadowedUI(string text, Vector2 position, Color4b color = default) {
-        tb.DrawString(guiFont, text, position * guiScale + new Vector2(1, 1), Color4b.DimGray);
-        tb.DrawString(guiFont, text, position * guiScale, color == default ? Color4b.White : color);
+        DrawString(text, position * guiScale + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
+        DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawStringCentredShadowed(string text, Vector2 position, Color4b color = default) {
-        var offsetX = guiFont.Measure(text).X / 2;
-        var offsetY = guiFont.Measure(text).Y / 2;
-        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color4b.DimGray);
-        tb.DrawString(guiFont, text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color);
+        var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
+        var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
+        DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
+        DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawStringCentredShadowedUI(string text, Vector2 position, Color4b color = default) {
-        var offsetX = guiFont.Measure(text).X / 2;
-        var offsetY = guiFont.Measure(text).Y / 2;
-        tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY) + new Vector2(1, 1), Color4b.DimGray);
-        tb.DrawString(guiFont, text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color);
+        var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
+        var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
+        DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY) + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
+        DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY), color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    }
+
+    public void DrawString(string text, Vector2 position, Color4b colour) {
+        guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS());
+    }
+
+    public void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
+        guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
+    }
+
+    public void DrawString(string text, Vector2 position, Color4b colour, Vector2 scale, float rotation, Vector2 offset) {
+        guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
     }
 
     public void drawBlock(Block block, int x, int y, int size) {

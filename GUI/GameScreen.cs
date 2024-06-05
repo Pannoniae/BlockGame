@@ -85,7 +85,7 @@ public class GameScreen : Screen {
     }
 
     public override void render(double dt, double interp) {
-        Game.instance.metrics.clear();
+        Game.metrics.clear();
 
         //world.mesh();
         world.player.camera.calculateFrustum();
@@ -289,8 +289,8 @@ public class GameScreen : Screen {
         //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 60), Color4b.Red);
         if (world.paused) {
             var pauseText = "-PAUSED-";
-            Vector2 offset = gui.guiFont.Measure(pauseText);
-            gui.tb.DrawString(gui.guiFont, pauseText, new Vector2(Game.centreX, Game.centreY),
+            Vector2 offset = gui.guiFont.MeasureString(pauseText);
+            gui.DrawString(pauseText, new Vector2(Game.centreX, Game.centreY),
                 Color4b.OrangeRed, Vector2.One, 0f, offset / 2);
         }
 
@@ -304,7 +304,7 @@ public class GameScreen : Screen {
         var i = Game.instance;
         var p = world.player;
         var c = p.camera;
-        var m = Game.instance.metrics;
+        var m = Game.metrics;
         var loadedChunks = world.chunks.Count;
         var pos = p.position.toBlockPos();
         // current block
@@ -334,7 +334,7 @@ public class GameScreen : Screen {
             debugStr.AppendFormat("W:{0} H:{1}\n", Game.width, Game.height);
             debugStr.AppendFormat("CX:{0} CY:{1}\n", Game.centreX, Game.centreY);
             debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
-            gui.tb.DrawString(gui.guiFont, debugStr.AsSpan(),
+            gui.DrawString(debugStr.ToString(),
                 new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
 
 

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.font;
 using SFML.Audio;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
@@ -12,6 +13,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
+using Silk.NET.Windowing.Glfw;
 using TrippyGL;
 using TrippyGL.ImageSharp;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
@@ -87,9 +89,10 @@ public partial class Game {
 
     public Texture2D blockTexture;
     public Texture2D lightTexture;
-    public Metrics metrics;
+    public static Metrics metrics;
 
-    public GLStateTracker GLTracker;
+    public static GLStateTracker GLTracker;
+    public static FontLoader fontLoader;
 
     public BlockingCollection<Action> mainThreadQueue = new();
 
@@ -129,8 +132,9 @@ public partial class Game {
     }
 
     private void init() {
-        input = window.CreateInput();
-        GL = window.CreateOpenGL();
+        unsafe {
+            input = window.CreateInput();
+            GL = window.CreateOpenGL();
 #if DEBUG
         // initialise debug print
         GL.Enable(EnableCap.DebugOutput);
@@ -140,81 +144,83 @@ public partial class Game {
 #endif
 
 
-        imgui = new ImGuiController(GL, window, input);
-        proc = Process.GetCurrentProcess();
-        GD = new GraphicsDevice(GL);
-        GD.BlendingEnabled = true;
-        GD.BlendState = initialBlendState;
-        GD.DepthTestingEnabled = true;
-        GD.DepthState = DepthState.Default;
-        GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
-        GD.FaceCullingEnabled = true;
-        GD.PolygonFrontFace = PolygonFace.CounterClockwise;
-        GD.CullFaceMode = CullingMode.CullBack;
+            imgui = new ImGuiController(GL, window, input);
+            proc = Process.GetCurrentProcess();
+            GD = new GraphicsDevice(GL);
+            GD.BlendingEnabled = true;
+            GD.BlendState = initialBlendState;
+            GD.DepthTestingEnabled = true;
+            GD.DepthState = DepthState.Default;
+            GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
+            GD.FaceCullingEnabled = true;
+            GD.PolygonFrontFace = PolygonFace.CounterClockwise;
+            GD.CullFaceMode = CullingMode.CullBack;
 
-        GLTracker = new GLStateTracker(GL, GD);
+            GLTracker = new GLStateTracker(GL, GD);
 
-        foreach (var mouse in input.Mice) {
-            mouse.MouseMove += onMouseMove;
-            mouse.MouseDown += onMouseDown;
-            mouse.MouseUp += onMouseUp;
-            mouse.Scroll += onMouseScroll;
-            mouse.Cursor.CursorMode = CursorMode.Normal;
-        }
+            foreach (var mouse in input.Mice) {
+                mouse.MouseMove += onMouseMove;
+                mouse.MouseDown += onMouseDown;
+                mouse.MouseUp += onMouseUp;
+                mouse.Scroll += onMouseScroll;
+                mouse.Cursor.CursorMode = CursorMode.Normal;
+            }
 
-        mouse = input.Mice[0];
+            mouse = input.Mice[0];
 
-        foreach (var keyboard in input.Keyboards) {
-            keyboard.KeyDown += onKeyDown;
-            keyboard.KeyUp += onKeyUp;
-        }
+            foreach (var keyboard in input.Keyboards) {
+                keyboard.KeyDown += onKeyDown;
+                keyboard.KeyUp += onKeyUp;
+            }
 
-        keyboard = input.Keyboards[0];
-        focused = true;
+            keyboard = input.Keyboards[0];
+            focused = true;
 
-        width = window.FramebufferSize.X;
-        height = window.FramebufferSize.Y;
+            width = window.FramebufferSize.X;
+            height = window.FramebufferSize.Y;
 
-        metrics = new Metrics();
-        stopwatch.Start();
-        permanentStopwatch.Start();
+            metrics = new Metrics();
+            stopwatch.Start();
+            permanentStopwatch.Start();
 
-        blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
-        lightTexture = Texture2DExtensions.FromFile(GD, "textures/lightmap.png");
-        //Menu.initScreens(gui);
-        currentScreen = new MainMenuScreen();
-        setMenu(Menu.LOADING);
-        //world = new World();
+            blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
+            lightTexture = Texture2DExtensions.FromFile(GD, "textures/lightmap.png");
+            //Menu.initScreens(gui);
+            currentScreen = new MainMenuScreen();
+            setMenu(Menu.LOADING);
+            //world = new World();
 
-        // SFML
-        // don't use local variables, they go out of scope so nothing plays..... hold them statically
-        var file = File.ReadAllBytes("snd/tests.flac");
-        buffer = new SoundBuffer(file);
-        music = new Sound(buffer);
-        music.Loop = true;
-        //music.Play();
-        Console.Out.WriteLine("played?");
+            // SFML
+            // don't use local variables, they go out of scope so nothing plays..... hold them statically
+            var file = File.ReadAllBytes("snd/tests.flac");
+            buffer = new SoundBuffer(file);
+            music = new Sound(buffer);
+            music.Loop = true;
+            //music.Play();
+            Console.Out.WriteLine("played?");
 
-        gui = new GUI();
-        gui.loadFonts();
+            gui = new GUI();
+            fontLoader = new FontLoader("fonts/6x13.bdf", gui.tb);
+            gui.loadFont(13);
 
-        //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
+            //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
 
-        Console.Out.WriteLine("Loaded ASCII font.");
-        Task.Run(() => {
-            Console.Out.WriteLine("Loading unicode font...");
-            gui.loadUnicodeFont();
-        }).ContinueWith(_ => {
-            Console.Out.WriteLine("Stitching unicode font...");
-            executeOnMainThread(() => {
-                gui.loadUnicodeFont2();
-                Console.Out.WriteLine("Finished stitching unicode font.");
-                switchTo(Menu.MAIN_MENU);
+            Console.Out.WriteLine("Loaded ASCII font.");
+            Task.Run(() => {
+                Console.Out.WriteLine("Loading unicode font...");
+                //gui.loadUnicodeFont();
+            }).ContinueWith(_ => {
+                Console.Out.WriteLine("Stitching unicode font...");
+                executeOnMainThread(() => {
+                    //gui.loadUnicodeFont2();
+                    Console.Out.WriteLine("Finished stitching unicode font.");
+                    switchTo(Menu.MAIN_MENU);
+                });
             });
-        });
-        resize(new Vector2D<int>(width, height));
-        // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
-        GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+            resize(new Vector2D<int>(width, height));
+            // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
+            GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+        }
     }
 
 
@@ -262,6 +268,7 @@ public partial class Game {
         [LibraryImport("nvapi64.dll")]
         internal static partial int NvAPI_Initialize_64();
     }
+
     public static void initDedicatedGraphics() {
 
         // fuck integrated GPUs, we want the dedicated card
@@ -320,6 +327,7 @@ public partial class Game {
 
     public void resize(Vector2D<int> size) {
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
+        fontLoader.renderer.OnViewportChanged();
         width = size.X;
         height = size.Y;
         currentScreen.resize(size);
