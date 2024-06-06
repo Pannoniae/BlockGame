@@ -199,7 +199,7 @@ public partial class Game {
             Console.Out.WriteLine("played?");
 
             gui = new GUI.GUI();
-            fontLoader = new FontLoader("fonts/6x13.bdf", gui.tb);
+            fontLoader = new FontLoader("fonts/8x13.bdf", gui.tb);
             gui.loadFont(13);
 
             //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);

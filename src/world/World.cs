@@ -451,6 +451,7 @@ public class World {
     }
 
     public void unloadChunk(ChunkCoord coord) {
+        chunks[coord].destroyChunk();
         chunks.Remove(coord);
         // remove from region too
         //regions[getRegionPos(coord)].chunks.Remove(coord);

@@ -117,7 +117,7 @@ public class ChunkSectionRenderer {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        sw.Start();
+        sw.Restart();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -254,29 +254,31 @@ public class ChunkSectionRenderer {
         int z;
         int x;
 
-        for (y = 0; y < Chunk.CHUNKSIZE; y++) {
-            for (z = 0; z < Chunk.CHUNKSIZE; z++) {
-                for (x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    // index for array accesses
-                    var secIndex = y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x;
-                    var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+        for (int i = 0; i < Chunk.MAXINDEX; i++) {
+            // index for array accesses
+            x = i & 0xF;
+            z = i >> 4 & 0xF;
+            y = i >> 8;
+            var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
-                    var bl = Unsafe.Add(ref blockArrayRef, secIndex);
-                    var light = Unsafe.Add(ref sourceLightArrayRef, secIndex);
+            var bl = blockArrayRef;
+            var light = sourceLightArrayRef;
 
-                    if (bl != 0) {
-                        isEmpty = false;
-                    }
-                    if (Blocks.isTranslucent(bl)) {
-                        hasTranslucentBlocks = true;
-                    }
-                    if (bl == 0 || !Blocks.get(bl).isFullBlock) {
-                        hasOnlySolid = false;
-                    }
-                    Unsafe.Add(ref neighboursArrayRef, index) = bl;
-                    Unsafe.Add(ref lightArrayRef, index) = light;
-                }
+            if (bl != 0) {
+                isEmpty = false;
             }
+            if (Blocks.isTranslucent(bl)) {
+                hasTranslucentBlocks = true;
+            }
+            if (bl == 0 || !Blocks.get(bl).isFullBlock) {
+                hasOnlySolid = false;
+            }
+            Unsafe.Add(ref neighboursArrayRef, index) = bl;
+            Unsafe.Add(ref lightArrayRef, index) = light;
+
+            // increment
+            blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
+            sourceLightArrayRef = ref Unsafe.Add(ref sourceLightArrayRef, 1);
         }
 
         // if is empty, just return, don't need to get neighbours
@@ -356,6 +358,7 @@ public class ChunkSectionRenderer {
                 }
             }
         }
+
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
     }
 
@@ -402,234 +405,235 @@ public class ChunkSectionRenderer {
             return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
+        ref ushort blockArrayRef = ref MemoryMarshal.GetReference<ushort>(section.blocks.blocks);
         ref ushort neighbourRef = ref MemoryMarshal.GetReference<ushort>(neighbours);
         ref byte lightRef = ref MemoryMarshal.GetReference<byte>(neighbourLights);
-        ref var offsetArray = ref MemoryMarshal.GetArrayDataReference<sbyte>(offsetTable);
+        ref sbyte offsetArray = ref MemoryMarshal.GetArrayDataReference<sbyte>(offsetTable);
 
         bool test2 = false;
 
-        for (int y = 0; y < Chunk.CHUNKSIZE; y++) {
-            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    Block bl = Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, x, y, z));
+        for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
+            // index for array accesses
+            int x = idx & 0xF;
+            int z = idx >> 4 & 0xF;
+            int y = idx >> 8;
+            Block bl = Blocks.get(blockArrayRef);
+            switch (mode) {
+                case VertexConstructionMode.OPAQUE:
+                    if (!opaqueBlocks(bl)) {
+                        goto increment;
+                    }
+                    break;
+                case VertexConstructionMode.TRANSLUCENT:
+                    if (!Blocks.isTranslucent(bl)) {
+                        goto increment;
+                    }
+                    break;
+            }
+
+            // unrolled world.toWorldPos
+            float wx = section.chunkX * Chunk.CHUNKSIZE + x;
+            float wy = section.chunkY * Chunk.CHUNKSIZE + y;
+            float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
+
+            if (bl.customRender) {
+                bl.render(section.world, new Vector3D<int>((int)wx, (int)wy, (int)wz), chunkVertices, chunkIndices, i);
+                goto increment;
+            }
+
+            // calculate texcoords
+            var tex = new Vector4();
+
+
+            // calculate AO for all 8 vertices
+            // this is garbage but we'll deal with it later
+
+            // one AO value fits on 2 bits so the whole thing fits in a byte
+            byte ao = 0;
+            FourShorts data;
+            FourBytes light;
+
+            Unsafe.SkipInit(out light.Whole);
+            Unsafe.SkipInit(out light.First);
+            Unsafe.SkipInit(out light.Second);
+            Unsafe.SkipInit(out light.Third);
+            Unsafe.SkipInit(out light.Fourth);
+
+            // setup neighbour data
+            Block nb;
+            // if all 6 neighbours are solid, we don't even need to bother iterating the faces
+
+            nba[0] = getBlockFromCacheUnsafe(ref neighbourRef, x - 1, y, z);
+            nba[1] = getBlockFromCacheUnsafe(ref neighbourRef, x + 1, y, z);
+            nba[2] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z - 1);
+            nba[3] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z + 1);
+            nba[4] = getBlockFromCacheUnsafe(ref neighbourRef, x, y - 1, z);
+            nba[5] = getBlockFromCacheUnsafe(ref neighbourRef, x, y + 1, z);
+            if (nba[0] != 0 && Blocks.get(nba[0]).isFullBlock &&
+                nba[1] != 0 && Blocks.get(nba[1]).isFullBlock &&
+                nba[2] != 0 && Blocks.get(nba[2]).isFullBlock &&
+                nba[3] != 0 && Blocks.get(nba[3]).isFullBlock &&
+                nba[4] != 0 && Blocks.get(nba[4]).isFullBlock &&
+                nba[5] != 0 && Blocks.get(nba[5]).isFullBlock) {
+                goto increment;
+            }
+
+            // get light data too
+            lba[0] = getLightFromCacheUnsafe(ref lightRef, x - 1, y, z);
+            lba[1] = getLightFromCacheUnsafe(ref lightRef, x + 1, y, z);
+            lba[2] = getLightFromCacheUnsafe(ref lightRef, x, y, z - 1);
+            lba[3] = getLightFromCacheUnsafe(ref lightRef, x, y, z + 1);
+            lba[4] = getLightFromCacheUnsafe(ref lightRef, x, y - 1, z);
+            lba[5] = getLightFromCacheUnsafe(ref lightRef, x, y + 1, z);
+
+
+            ref var facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
+
+            for (int d = 0; d < bl.model.faces.Length; d++) {
+                var dir = facesRef.direction;
+                if (dir == RawDirection.NONE) {
+                    // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
+                }
+                else {
+                    nb = Blocks.get(nba[(byte)dir]);
                     switch (mode) {
                         case VertexConstructionMode.OPAQUE:
-                            if (!opaqueBlocks(bl)) {
-                                continue;
-                            }
+                            test2 = Blocks.notSolid(nb) || !nb.isFullBlock;
                             break;
                         case VertexConstructionMode.TRANSLUCENT:
-                            if (!Blocks.isTranslucent(bl)) {
-                                continue;
-                            }
+                            test2 = notTranslucent(nb) && (notSolid(nb) || !nb.isFullBlock);
                             break;
                     }
-
-                    // unrolled world.toWorldPos
-                    float wx = section.chunkX * Chunk.CHUNKSIZE + x;
-                    float wy = section.chunkY * Chunk.CHUNKSIZE + y;
-                    float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
-
-                    if (bl.customRender) {
-                        bl.render(section.world, new Vector3D<int>((int)wx, (int)wy, (int)wz), chunkVertices, chunkIndices, i);
-                        continue;
+                    test2 = test2 || facesRef.nonFullFace && !Blocks.isTranslucent(nb);
+                }
+                // either neighbour test passes, or neighbour is not air + face is not full
+                if (test2) {
+                    if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
+                        light.First = light.Second = light.Third = light.Fourth = lba[(byte)dir];
                     }
+                    // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
+                    if ((settings & SETTING_SMOOTH_LIGHTING) == 1 || (settings & SETTING_AO) == 1) {
+                        if (dir != RawDirection.NONE) {
 
-                    // calculate texcoords
-                    Vector4 tex = new Vector4();
+                            // ox, oy, oz
+                            FourShorts o;
+                            Unsafe.SkipInit(out o);
+                            // bx, by, bz
+                            FourSBytes b;
+                            // lx, ly, lz, lo
+                            FourBytes l;
 
-                    //float offset = 0.0004f;
+                            ao = 0;
+                            light.Whole = 0;
+
+                            for (int j = 0; j < 4; j++) {
+                                //mult = dirIdx * 36 + j * 9 + vert * 3;
+                                // premultiply cuz its faster that way
+                                ref sbyte offset = ref Unsafe.Add(ref offsetArray,(int)dir * 36 + j * 9);
+
+                                b.First = (sbyte)(x + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                b.Second = (sbyte)(y + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                b.Third = (sbyte)(z + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                o.First = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
+                                l.First = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
+
+                                b.First = (sbyte)(x + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                b.Second = (sbyte)(y + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                b.Third = (sbyte)(z + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                o.Second = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
+                                l.Second = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
+
+                                b.First = (sbyte)(x + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                b.Second = (sbyte)(y + offset);
+                                offset = ref Unsafe.Add(ref offset, 1);
+                                b.Third = (sbyte)(z + offset);
+                                //mult++;
+                                o.Third = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
+                                l.Third = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
+
+                                // only apply AO if enabled
+                                if ((settings & SETTING_AO) == 1 && !facesRef.noAO) {
+                                    ao |= (byte)((calculateAOFixed(o.First, o.Second, o.Third) & 0x3) << j * 2);
+                                }
+                                if ((settings & SETTING_SMOOTH_LIGHTING) == 1) {
+                                    // if smooth lighting enabled, average light from neighbour face + the 3 other ones
+                                    // calculate average
+                                    l.Fourth = lba[(byte)dir];
 
 
-                    // calculate AO for all 8 vertices
-                    // this is garbage but we'll deal with it later
-                    // bottom
-
-                    // one AO value fits on 2 bits so the whole thing fits in a byte
-                    byte ao = 0;
-                    FourShorts data;
-                    FourBytes light;
-
-                    Unsafe.SkipInit(out light.Whole);
-                    Unsafe.SkipInit(out light.First);
-                    Unsafe.SkipInit(out light.Second);
-                    Unsafe.SkipInit(out light.Third);
-                    Unsafe.SkipInit(out light.Fourth);
-
-                    // setup neighbour data
-                    Block nb;
-                    // if all 6 neighbours are solid, we don't even need to bother iterating the faces
-
-                    nba[0] = getBlockFromCacheUnsafe(ref neighbourRef, x - 1, y, z);
-                    nba[1] = getBlockFromCacheUnsafe(ref neighbourRef, x + 1, y, z);
-                    nba[2] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z - 1);
-                    nba[3] = getBlockFromCacheUnsafe(ref neighbourRef, x, y, z + 1);
-                    nba[4] = getBlockFromCacheUnsafe(ref neighbourRef, x, y - 1, z);
-                    nba[5] = getBlockFromCacheUnsafe(ref neighbourRef, x, y + 1, z);
-                    if (nba[0] != 0 && Blocks.get(nba[0]).isFullBlock &&
-                        nba[1] != 0 && Blocks.get(nba[1]).isFullBlock &&
-                        nba[2] != 0 && Blocks.get(nba[2]).isFullBlock &&
-                        nba[3] != 0 && Blocks.get(nba[3]).isFullBlock &&
-                        nba[4] != 0 && Blocks.get(nba[4]).isFullBlock &&
-                        nba[5] != 0 && Blocks.get(nba[5]).isFullBlock) {
-                        continue;
-                    }
-
-                    // get light data too
-                    lba[0] = getLightFromCacheUnsafe(ref lightRef, x - 1, y, z);
-                    lba[1] = getLightFromCacheUnsafe(ref lightRef, x + 1, y, z);
-                    lba[2] = getLightFromCacheUnsafe(ref lightRef, x, y, z - 1);
-                    lba[3] = getLightFromCacheUnsafe(ref lightRef, x, y, z + 1);
-                    lba[4] = getLightFromCacheUnsafe(ref lightRef, x, y - 1, z);
-                    lba[5] = getLightFromCacheUnsafe(ref lightRef, x, y + 1, z);
-
-
-                    ref var facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
-
-                    for (int d = 0; d < bl.model.faces.Length; d++) {
-                        Face face = Unsafe.Add(ref facesRef, d);
-                        var dir = face.direction;
-                        if (dir == RawDirection.NONE) {
-                            // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
-                        }
-                        else {
-                            nb = Blocks.get(nba[(byte)dir]);
-                            switch (mode) {
-                                case VertexConstructionMode.OPAQUE:
-                                    test2 = Blocks.notSolid(nb) || !nb.isFullBlock;
-                                    break;
-                                case VertexConstructionMode.TRANSLUCENT:
-                                    test2 = notTranslucent(nb) && (notSolid(nb) || !nb.isFullBlock);
-                                    break;
-                            }
-                            test2 = test2 || face.nonFullFace && !Blocks.isTranslucent(nb);
-                        }
-                        // either neighbour test passes, or neighbour is not air + face is not full
-                        if (test2) {
-                            if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
-                                light.First = light.Second = light.Third = light.Fourth = lba[(byte)dir];
-                            }
-                            // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
-                            if ((settings & SETTING_SMOOTH_LIGHTING) == 1 || (settings & SETTING_AO) == 1) {
-                                if (dir != RawDirection.NONE) {
-
-                                    // ox, oy, oz, mult
-                                    FourShorts o;
-                                    Unsafe.SkipInit(out o);
-                                    // bx, by, bz
-                                    FourSBytes b;
-                                    // lx, ly, lz, lo
-                                    FourBytes l;
-
-                                    ao = 0;
-                                    light.Whole = 0;
-
-                                    for (int j = 0; j < 4; j++) {
-                                        //mult = dirIdx * 36 + j * 9 + vert * 3;
-                                        o.Fourth = (ushort)((int)dir * 36 + j * 9);
-                                        // premultiply cuz its faster that way
-                                        b.First = (sbyte)(x + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        b.Second = (sbyte)(y + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        b.Third = (sbyte)(z + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        o.First = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
-                                        l.First = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
-
-                                        b.First = (sbyte)(x + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        b.Second = (sbyte)(y + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        b.Third = (sbyte)(z + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        o.Second = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
-                                        l.Second = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
-
-                                        b.First = (sbyte)(x + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        b.Second = (sbyte)(y + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        o.Fourth++;
-                                        b.Third = (sbyte)(z + Unsafe.Add(ref offsetArray, o.Fourth));
-                                        //mult++;
-                                        o.Third = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
-                                        l.Third = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
-
-                                        // only apply AO if enabled
-                                        if ((settings & SETTING_AO) == 1 && !face.noAO) {
-                                            ao |= (byte)((calculateAOFixed(o.First, o.Second, o.Third) & 0x3) << j * 2);
-                                            //Console.Out.WriteLine(ao);
+                                    // this averages the four light values. If the block is opaque, it ignores the light value.
+                                    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+                                    byte average(byte lx, byte ly, byte lz, byte lo, FourShorts o) {
+                                        byte flags = 0;
+                                        // check ox
+                                        if (o.First == 0) {
+                                            flags = 1;
                                         }
-                                        if ((settings & SETTING_SMOOTH_LIGHTING) == 1) {
-                                            // if smooth lighting enabled, average light from neighbour face + the 3 other ones
-                                            // calculate average
-                                            l.Fourth = lba[(byte)dir];
-
-
-                                            // this averages the four light values. If the block is opaque, it ignores the light value.
-                                            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                            byte average(byte lx, byte ly, byte lz, byte lo, FourShorts o) {
-                                                byte flags = 0;
-                                                // check ox
-                                                if (o.First == 0) {
-                                                    flags = 1;
-                                                }
-                                                if (o.Second == 0) {
-                                                    flags |= 2;
-                                                }
-                                                // if both sides are blocked, don't check the corner, won't be visible anyway
-                                                if (o.Third == 0 && flags != 0) {
-                                                    flags |= 4;
-                                                }
-                                                return (byte)((lx * (flags & 1) + ly * ((flags & 2) >> 1) + lz * ((flags & 4) >> 2) + lo) / (BitOperations.PopCount(flags) + 1f));
-                                            }
-
-                                            // split light and reassemble it again
-                                            light.Whole |= (uint)((byte)(
-                                                average((byte)(l.First >> 4), (byte)(l.Second >> 4), (byte)(l.Third >> 4), (byte)(l.Fourth >> 4),
-                                                    o)
-                                                << 4 |
-                                                average((byte)(l.First & 0xF), (byte)(l.Second & 0xF), (byte)(l.Third & 0xF), (byte)(l.Fourth & 0xF),
-                                                    o)
-                                            ) << j * 8);
+                                        if (o.Second == 0) {
+                                            flags |= 2;
                                         }
+                                        // if both sides are blocked, don't check the corner, won't be visible anyway
+                                        if (o.Third == 0 && flags != 0) {
+                                            flags |= 4;
+                                        }
+                                        return (byte)((lx * (flags & 1) + ly * ((flags & 2) >> 1) + lz * ((flags & 4) >> 2) + lo) / (BitOperations.PopCount(flags) + 1f));
                                     }
+
+                                    // split light and reassemble it again
+                                    light.Whole |= (uint)((byte)(
+                                        average((byte)(l.First >> 4), (byte)(l.Second >> 4), (byte)(l.Third >> 4), (byte)(l.Fourth >> 4),
+                                            o)
+                                        << 4 |
+                                        average((byte)(l.First & 0xF), (byte)(l.Second & 0xF), (byte)(l.Third & 0xF), (byte)(l.Fourth & 0xF),
+                                            o)
+                                    ) << j * 8);
                                 }
                             }
-
-                            tex.X = Block.texU(face.min.u);
-                            tex.Y = Block.texV(face.min.v);
-                            tex.Z = Block.texU(face.max.u);
-                            tex.W = Block.texV(face.max.v);
-
-                            data.First = Block.packData((byte)dir, (byte)(ao & 0x3), light.First);
-                            data.Second = Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second);
-                            data.Third = Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third);
-                            data.Fourth = Block.packData((byte)dir, (byte)(ao >> 6 & 0x3), light.Fourth);
-
-
-                            // add vertices
-
-                            tempVertices[0] = new BlockVertex(wx + face.x1, wy + face.y1, wz + face.z1, tex.X, tex.Y, data.First);
-                            tempVertices[1] = new BlockVertex(wx + face.x2, wy + face.y2, wz + face.z2, tex.X, tex.W, data.Second);
-                            tempVertices[2] = new BlockVertex(wx + face.x3, wy + face.y3, wz + face.z3, tex.Z, tex.W, data.Third);
-                            tempVertices[3] = new BlockVertex(wx + face.x4, wy + face.y4, wz + face.z4, tex.Z, tex.Y, data.Fourth);
-                            chunkVertices.AddRange(tempVertices);
-                            //cv += 4;
-
-                            tempIndices[0] = i;
-                            tempIndices[1] = (ushort)(i + 1);
-                            tempIndices[2] = (ushort)(i + 2);
-                            tempIndices[3] = i;
-                            tempIndices[4] = (ushort)(i + 2);
-                            tempIndices[5] = (ushort)(i + 3);
-                            chunkIndices.AddRange(tempIndices);
-                            i += 4;
-                            //ci += 6;
                         }
                     }
+
+                    tex.X = Block.texU(facesRef.min.u);
+                    tex.Y = Block.texV(facesRef.min.v);
+                    tex.Z = Block.texU(facesRef.max.u);
+                    tex.W = Block.texV(facesRef.max.v);
+
+                    data.First = Block.packData((byte)dir, (byte)(ao & 0x3), light.First);
+                    data.Second = Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second);
+                    data.Third = Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third);
+                    data.Fourth = Block.packData((byte)dir, (byte)(ao >> 6 & 0x3), light.Fourth);
+
+
+                    // add vertices
+
+                    tempVertices[0] = new BlockVertex(wx + facesRef.x1, wy + facesRef.y1, wz + facesRef.z1, tex.X, tex.Y, data.First);
+                    tempVertices[1] = new BlockVertex(wx + facesRef.x2, wy + facesRef.y2, wz + facesRef.z2, tex.X, tex.W, data.Second);
+                    tempVertices[2] = new BlockVertex(wx + facesRef.x3, wy + facesRef.y3, wz + facesRef.z3, tex.Z, tex.W, data.Third);
+                    tempVertices[3] = new BlockVertex(wx + facesRef.x4, wy + facesRef.y4, wz + facesRef.z4, tex.Z, tex.Y, data.Fourth);
+                    chunkVertices.AddRange(tempVertices);
+                    //cv += 4;
+
+                    tempIndices[0] = i;
+                    tempIndices[1] = (ushort)(i + 1);
+                    tempIndices[2] = (ushort)(i + 2);
+                    tempIndices[3] = i;
+                    tempIndices[4] = (ushort)(i + 2);
+                    tempIndices[5] = (ushort)(i + 3);
+                    chunkIndices.AddRange(tempIndices);
+                    i += 4;
+                    //ci += 6;
                 }
+                facesRef = ref Unsafe.Add(ref facesRef, 1);
             }
+            // increment the array pointer
+            increment:
+            blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
         }
         //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
     }

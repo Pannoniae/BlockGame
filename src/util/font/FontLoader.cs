@@ -11,7 +11,9 @@ public class FontLoader {
     public FontLoader(string name, TextureBatcher tb) {
         var settings = new FontSystemSettings
         {
-            FontLoader = new BDFLoader()
+            FontLoader = new BDFLoader(),
+            TextureWidth = 256,
+            TextureHeight = 256
         };
         this.tb = tb;
         renderer = new Renderer(Game.GD, tb);
