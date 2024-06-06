@@ -20,7 +20,7 @@ public class InventoryGUI : Menu {
     public Vector2D<int> guiPos;
     public Rectangle guiBounds;
 
-    public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/inventory.png");
+    public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/creative_inventory.png");
 
     public InventoryGUI(Vector2D<int> guiPos) {
         this.guiPos = guiPos;

@@ -8,7 +8,7 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
-    public static readonly int maxBlock = 11;
+    public static readonly int maxBlock = 13;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -28,7 +28,7 @@ public class Blocks {
     public static Block AIR = register(new Block(0, "Air", BlockModel.emptyBlock()).air());
     public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))));
     public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(Block.cubeUVs(2, 0))));
-    public static Block GRAVEL = register(new FallingBlock(3, "Gravel", BlockModel.makeCube(Block.cubeUVs(3, 0))));
+    public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(Block.cubeUVs(3, 0))));
     public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))).light(14));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
 
@@ -39,12 +39,15 @@ public class Blocks {
     public static Block WATER = register(new Water(7, "Water", BlockModel.makeLiquid(Block.cubeUVs(7, 0)))
         .makeLiquid());
 
-    public static Block WOODEN_PLANKS = register(new Block(8, "Ice", BlockModel.makeCube(Block.cubeUVs(8, 0))));
+    public static Block WOODEN_PLANKS = register(new Block(8, "Wooden Planks", BlockModel.makeCube(Block.cubeUVs(8, 0))));
 
     public static Block WOODEN_STAIRS = register(new Block(9, "Wooden Stairs", BlockModel.makeStairs(Block.cubeUVs(8, 0))).partialBlock());
 
     public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
     public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
+
+    public static Block YELLOW_FLOWER = register(new Block(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
+    public static Block RED_FLOWER = register(new Block(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
 
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;

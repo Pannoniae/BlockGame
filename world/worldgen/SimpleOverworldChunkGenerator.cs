@@ -29,7 +29,7 @@ public class SimpleOverworldChunkGenerator : ChunkGenerator {
                     }
                     // put sand on the lake floors
                     if (generator.getNoise2(x, z) > 0) {
-                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Blocks.GRAVEL.id);
+                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Blocks.SAND.id);
                     }
                 }
                 else {
