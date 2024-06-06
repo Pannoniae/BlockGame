@@ -1,5 +1,5 @@
 using System.Buffers;
-using BlockGame.xNBT;
+using BlockGame.util.xNBT;
 using SharpNBT;
 
 namespace BlockGame;

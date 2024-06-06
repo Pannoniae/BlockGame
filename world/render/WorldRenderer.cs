@@ -1,8 +1,10 @@
+using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Shader = BlockGame.Shader;
 
 namespace BlockGame;
 
