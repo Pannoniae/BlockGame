@@ -4,12 +4,13 @@ namespace BlockGame;
 
 public class ArrayBlockData : BlockData {
 
+    public ushort[] blocks;
+
     /// <summary>
     /// Skylight is on the lower 4 bits, blocklight is on the upper 4 bits.
     /// Stored in YZX order.
     /// </summary>
-    public ArrayBlockDataB light;
-    public ArrayBlockDataU blocks;
+    public byte[] light;
 
     public Chunk chunk;
 

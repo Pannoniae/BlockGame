@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockGame", "BlockGame.csproj", "{2D6DEDE2-015E-4BD8-BBA7-63BB929DA1CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontStashSharp", "lib/FontStashSharp/FontStashSharp.csproj", "{1D9EF992-4846-4202-9649-809903851066}"
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontStashSharp.Rasterizers.FreeType", "lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj", "{115DB7EA-6959-4BE6-9778-A88EDA491F87}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontStashSharp.Rasterizers.StbTrueTypeSharp", "lib/FontStashSharp.Rasterizers.StbTrueTypeSharp/FontStashSharp.Rasterizers.StbTrueTypeSharp.csproj", "{0B5A42F8-E2F8-4E4A-B39B-194A1A70285C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontStashSharp.Rasterizers.SixLabors.Fonts", "lib\FontStashSharp.Rasterizers.SixLabors.Fonts\FontStashSharp.Rasterizers.SixLabors.Fonts.csproj", "{673B4E99-6B19-4009-85F1-84B52AE5D235}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,5 +39,9 @@ Global
 		{0B5A42F8-E2F8-4E4A-B39B-194A1A70285C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B5A42F8-E2F8-4E4A-B39B-194A1A70285C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B5A42F8-E2F8-4E4A-B39B-194A1A70285C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{673B4E99-6B19-4009-85F1-84B52AE5D235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{673B4E99-6B19-4009-85F1-84B52AE5D235}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{673B4E99-6B19-4009-85F1-84B52AE5D235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{673B4E99-6B19-4009-85F1-84B52AE5D235}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
