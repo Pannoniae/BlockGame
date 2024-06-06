@@ -11,7 +11,7 @@ public class InventoryGUI : Menu {
     public const int rows = 9;
     public const int cols = 4;
 
-    public const int invOffsetY = 22;
+    public const int invOffsetY = 20;
     public const int textOffsetY = 4;
     public const int invOffsetX = 4;
 
@@ -55,7 +55,7 @@ public class InventoryGUI : Menu {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
+            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && slot.stack.block != Blocks.AIR.id) {
                 Console.Out.WriteLine("clicked!");
                 // swap it to the hotbar for now
                 var player = GameScreen.world.player;
