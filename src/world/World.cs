@@ -36,6 +36,9 @@ public class World {
     public bool inMenu;
 
     public Player player;
+    public WorldIO worldIO;
+
+    public int seed;
 
 
     public double worldTime;
@@ -56,28 +59,33 @@ public class World {
     /// </summary>
     public const int numTicks = 3;
 
-    public World(int seed) {
-        renderer = new WorldRenderer(this);
+    public World(int seed, bool loadingSave = false) {
+        worldIO = new WorldIO(this);
         generator = new OverworldWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
+        renderer = new WorldRenderer(this);
 
         random = new Random(seed);
         worldTime = 0;
         worldTick = 0;
 
         generator.setup(seed);
+        this.seed = seed;
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
         regions = new Dictionary<RegionCoord, Region>();
         // load a minimal amount of chunks so the world can get started
-        loadSpawnChunks();
+        if (!loadingSave) {
+            loadSpawnChunks();
 
-        // after loading spawn chunks, load everything else immediately
-        isLoading = true;
 
-        // teleport player to top block
-        while (getBlock(player.position.toBlockPos()) != 0) {
-            player.position.Y += 1;
+            // after loading spawn chunks, load everything else immediately
+            isLoading = true;
+
+            // teleport player to top block
+            while (getBlock(player.position.toBlockPos()) != 0) {
+                player.position.Y += 1;
+            }
         }
 
         renderer.initBlockOutline();
@@ -94,7 +102,7 @@ public class World {
         chunkLoadQueue.Sort(new ChunkTicketComparer(player.position.toBlockPos()));
     }
 
-    public void generate() {
+    public void loadAroundPlayer() {
         // create terrain
         //genTerrainNoise();
         // separate loop so all data is there

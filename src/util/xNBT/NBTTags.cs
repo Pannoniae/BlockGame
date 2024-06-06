@@ -460,71 +460,71 @@ public class NBTTagCompound : NBTTag {
 
     // Get functions
 
-    public byte getByte(String name, byte value) {
+    public byte getByte(String name) {
         return ((NBTTagByte)dict[name]).data;
     }
 
-    public short getShort(String name, short value) {
+    public short getShort(String name) {
         return ((NBTTagShort)dict[name]).data;
     }
 
-    public ushort getUShort(String name, ushort value) {
+    public ushort getUShort(String name) {
         return ((NBTTagUShort)dict[name]).data;
     }
 
-    public int getInt(String name, int value) {
+    public int getInt(String name) {
         return ((NBTTagInt)dict[name]).data;
     }
 
-    public uint getUInt(String name, uint value) {
+    public uint getUInt(String name) {
         return ((NBTTagUInt)dict[name]).data;
     }
 
-    public long getLong(String name, long value) {
+    public long getLong(String name) {
         return ((NBTTagLong)dict[name]).data;
     }
 
-    public ulong getULong(String name, ulong value) {
+    public ulong getULong(String name) {
         return ((NBTTagULong)dict[name]).data;
     }
 
-    public float getFloat(String name, float value) {
+    public float getFloat(String name) {
         return ((NBTTagFloat)dict[name]).data;
     }
 
-    public double getDouble(String name, double value) {
+    public double getDouble(String name) {
         return ((NBTTagDouble)dict[name]).data;
     }
 
-    public string getString(String name, string value) {
+    public string getString(String name) {
         return ((NBTTagString)dict[name]).data;
     }
 
-    public byte[] getByteArray(String name, byte[] value) {
+    public byte[] getByteArray(String name) {
         return ((NBTTagByteArray)dict[name]).data;
     }
 
-    public short[] getShortArray(String name, short[] value) {
+    public short[] getShortArray(String name) {
         return ((NBTTagShortArray)dict[name]).data;
     }
 
-    public ushort[] getUShortArray(String name, ushort[] value) {
+    public ushort[] getUShortArray(String name) {
         return ((NBTTagUShortArray)dict[name]).data;
     }
 
-    public int[] getIntArray(String name, int[] value) {
+    public int[] getIntArray(String name) {
         return ((NBTTagIntArray)dict[name]).data;
     }
 
-    public uint[] getUIntArray(String name, uint[] value) {
+    public uint[] getUIntArray(String name) {
         return ((NBTTagUIntArray)dict[name]).data;
     }
 
-    public long[] getLongArray(String name, long[] value) {
+    public long[] getLongArray(String name) {
         return ((NBTTagLongArray)dict[name]).data;
     }
 
-    public ulong[] getULongArray(String name, ulong[] value) {
+    public ulong[] getULongArray(String name) {
         return ((NBTTagULongArray)dict[name]).data;
     }
 
