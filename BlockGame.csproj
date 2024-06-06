@@ -104,4 +104,8 @@
         <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="src\" />
+    </ItemGroup>
+
 </Project>

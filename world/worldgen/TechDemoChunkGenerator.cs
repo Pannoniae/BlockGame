@@ -1,3 +1,5 @@
+using BlockGame.util;
+
 namespace BlockGame;
 
 public class TechDemoChunkGenerator : ChunkGenerator {

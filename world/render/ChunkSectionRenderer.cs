@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.GUI;
+using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
