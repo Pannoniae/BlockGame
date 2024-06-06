@@ -22,6 +22,7 @@ public class Chunk {
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
     public const int CHUNKSIZESQ = 16 * 16;
+    public const int MAXINDEX = 16 * 16 * 16;
     public const int CHUNKSIZEEX = 18;
     public const int CHUNKSIZEEXSQ = 18 * 18;
 
@@ -248,6 +249,12 @@ public class Chunk {
     public void drawTransparent(PlayerCamera camera) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             chunks[i].renderer.drawTransparent(camera);
+        }
+    }
+
+    public void destroyChunk() {
+        foreach (var chunk in chunks) {
+            chunk.blocks.Dispose();
         }
     }
 }

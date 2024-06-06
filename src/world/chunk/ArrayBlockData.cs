@@ -1,8 +1,12 @@
 using System.Runtime.CompilerServices;
+using BlockGame.util;
 
 namespace BlockGame;
 
-public class ArrayBlockData : BlockData {
+public class ArrayBlockData : BlockData, IDisposable {
+
+    public static FixedArrayPool<ushort> blockPool = new FixedArrayPool<ushort>(16 * 16 * 16);
+    public static FixedArrayPool<byte> lightPool = new FixedArrayPool<byte>(16 * 16 * 16);
 
     public ushort[] blocks;
 
@@ -24,7 +28,19 @@ public class ArrayBlockData : BlockData {
 
     public ArrayBlockData(Chunk chunk) {
         this.chunk = chunk;
+        blocks = blockPool.grab();
+        light = lightPool.grab();
+        Array.Clear(blocks);
+        Array.Clear(light);
     }
+
+    // cleanup
+    public void Dispose() {
+        blockPool.putBack(blocks);
+        lightPool.putBack(light);
+        GC.SuppressFinalize(this);
+    }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
