@@ -7,7 +7,7 @@ namespace BlockGame;
 public class BTexture2D : IDisposable {
     public uint handle;
 
-    public Silk.NET.OpenGL.GL GL;
+    public GL GL;
 
     public unsafe BTexture2D(string path) {
         GL = Game.GL;

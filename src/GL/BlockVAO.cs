@@ -15,7 +15,7 @@ public class BlockVAO : VAO {
 
     public Texture2D blockTexture;
 
-    public Silk.NET.OpenGL.GL GL;
+    public GL GL;
 
     public BlockVAO() {
         GL = Game.GL;

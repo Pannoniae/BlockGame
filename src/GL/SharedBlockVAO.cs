@@ -16,7 +16,7 @@ public class SharedBlockVAO : VAO {
 
     public Texture2D blockTexture;
 
-    public Silk.NET.OpenGL.GL GL;
+    public GL GL;
 
     public SharedBlockVAO() {
         GL = Game.GL;
