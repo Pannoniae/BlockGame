@@ -6,10 +6,10 @@ namespace BlockGame {
         private string vertexShader;
         private string fragmentShader;
 
-        private Silk.NET.OpenGL.GL GL;
+        private GL GL;
         private uint programHandle;
 
-        public Shader(Silk.NET.OpenGL.GL GL, string vertexShader, string fragmentShader) {
+        public Shader(GL GL, string vertexShader, string fragmentShader) {
             this.GL = GL;
             this.vertexShader = File.ReadAllText(vertexShader);
             this.fragmentShader = File.ReadAllText(fragmentShader);
@@ -22,7 +22,7 @@ namespace BlockGame {
         /// <summary>
         /// Used for depth pass shaders.
         /// </summary>
-        public Shader(Silk.NET.OpenGL.GL GL, string vertexShader) {
+        public Shader(GL GL, string vertexShader) {
             this.GL = GL;
             this.vertexShader = File.ReadAllText(vertexShader);
             var vert = load(this.vertexShader, ShaderType.VertexShader);

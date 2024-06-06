@@ -9,7 +9,7 @@ public class FloatVAO {
 
     public uint count;
 
-    public Silk.NET.OpenGL.GL GL;
+    public GL GL;
 
     public FloatVAO() {
         GL = Game.GL;

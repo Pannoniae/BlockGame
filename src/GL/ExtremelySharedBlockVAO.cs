@@ -18,7 +18,7 @@ public class ExtremelySharedBlockVAO : VAO {
 
     public Texture2D blockTexture;
 
-    public Silk.NET.OpenGL.GL GL;
+    public GL GL;
 
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
