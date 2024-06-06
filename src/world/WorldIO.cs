@@ -14,28 +14,29 @@ public class WorldIO {
         this.world = world;
     }
 
-    public static void save(World world, string filename) {
+    public void save(World world, string filename) {
         // save metadata
         if (!Directory.Exists("level")) {
             Directory.CreateDirectory("level");
         }
 
         var tag = new NBTTagCompound("world");
+        tag.addInt("seed", world.seed);
         tag.addDouble("posX", world.player.position.X);
         tag.addDouble("posY", world.player.position.Y);
         tag.addDouble("posZ", world.player.position.Z);
         NBT.writeFile(tag, $"level/{filename}.nbt");
 
-        // save regions
+        // save chunks
         foreach (var chunk in world.chunks.Values) {
             var regionCoord = World.getRegionPos(chunk.coord);
             var nbt = serialiseChunkIntoNBT(chunk);
-            NBT.writeFile(nbt, $"level/r{chunk.coord.x},{chunk.coord.z}.nbt");
+            NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.nbt");
         }
         regionCache.Clear();
     }
 
-    private static NBTTagCompound serialiseChunkIntoNBT(Chunk chunk) {
+    private NBTTagCompound serialiseChunkIntoNBT(Chunk chunk) {
         var chunkTag = new NBTTagCompound("chunk");
         chunkTag.addInt("posX", chunk.coord.x);
         chunkTag.addInt("posZ", chunk.coord.z);
@@ -65,38 +66,60 @@ public class WorldIO {
         return chunkTag;
     }
 
-    public static World load(string filename) {
-        CompoundTag tag = NbtFile.Read($"level/{filename}.nbt", FormatOptions.LittleEndian, CompressionType.ZLib);
-        var seed = tag.Get<IntTag>("seed");
-        var world = new World(seed);
-        var chunkTags = tag.Get<ListTag>("chunks");
-        foreach (var chunkTag in chunkTags) {
-            var chunk = (CompoundTag)chunkTag;
-            int chunkX = chunk.Get<IntTag>("posX").Value;
-            int chunkZ = chunk.Get<IntTag>("posZ").Value;
-            var status = chunk.Get<ByteTag>("status").Value;
-            world.chunks[new ChunkCoord(chunkX, chunkZ)] = new Chunk(world, chunkX, chunkZ);
-            var blocks = chunk.Get<IntArrayTag>("blocks");
-            int index = 0;
-            for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-                for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                    for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                        var value = blocks[index];
-                        world.chunks[new ChunkCoord(chunkX, chunkZ)].setBlock(x, y, z, (ushort)(value & 0xFFFF));
-                        world.chunks[new ChunkCoord(chunkX, chunkZ)].setLight(x, y, z, (byte)((value >> 16) & 0xFF));
-                        index++;
-                    }
+    private Chunk loadChunkFromNBT(NBTTagCompound nbt) {
+
+        var posX = nbt.getInt("posX");
+        var posZ = nbt.getInt("posZ");
+        var status = nbt.getByte("status");
+        var chunk = new Chunk(world, posX, posZ) {
+            status = (ChunkStatus)status
+        };
+        // blocks
+        var my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
+        var mx = Chunk.CHUNKSIZE;
+        var mz = Chunk.CHUNKSIZE;
+        var blocks = nbt.getUShortArray("blocks");
+        var light = nbt.getByteArray("light");
+
+        int index = 0;
+        // using YXZ order
+        for (int y = 0; y < my; y++) {
+            for (int z = 0; z < mz; z++) {
+                for (int x = 0; x < mx; x++) {
+                    chunk.setBlock(x, y, z, blocks[index]);
+                    chunk.setLight(x, y, z, light[index]);
+                    index++;
                 }
             }
-            world.chunks[new ChunkCoord(chunkX, chunkZ)].status = (ChunkStatus)status;
         }
+        return chunk;
+    }
 
-        world.player.position.X = tag.Get<DoubleTag>("posX");
-        world.player.position.Y = tag.Get<DoubleTag>("posY");
-        world.player.position.Z = tag.Get<DoubleTag>("posZ");
+    public static World load(string filename) {
+        var tag = NBT.readFile($"level/{filename}.nbt");
+        var seed = tag.getInt("seed");
+        var world = new World(seed);
+        world.player.position.X = tag.getDouble("posX");
+        world.player.position.Y = tag.getDouble("posY");
+        world.player.position.Z = tag.getDouble("posZ");
+
+        // go over all chunks in the directory
+        foreach (var file in Directory.EnumerateFiles("level")) {
+            // it's a chunk file
+            var name = Path.GetFileName(file);
+            if (name.StartsWith('c')) {
+                var nbt = NBT.readFile(file);
+                var chunk = world.worldIO.loadChunkFromNBT(nbt);
+
+                // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
+                if (chunk.status >= ChunkStatus.MESHED) {
+                    chunk.status = ChunkStatus.LIGHTED;
+                }
+                world.chunks[chunk.coord] = chunk;
+            }
+        }
         world.player.prevPosition = world.player.position;
-
-        //world.renderer.meshChunks();
+        world.loadAroundPlayer();
         return world;
     }
 }

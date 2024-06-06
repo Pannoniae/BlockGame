@@ -4,7 +4,6 @@ using Silk.NET.OpenGL;
 using TrippyGL;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
-using Shader = BlockGame.Shader;
 
 namespace BlockGame;
 
@@ -83,6 +82,7 @@ public class WorldRenderer {
 
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         // gather chunks to render
+        //Console.Out.WriteLine(chunksToRender.Count);
         chunksToRender.Clear();
         foreach (var chunk in world.chunks.Values) {
             if (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(world.player.camera.frustum)) {

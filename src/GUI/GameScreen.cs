@@ -37,7 +37,7 @@ public class GameScreen : Screen {
         // create the world first
         var seed = Random.Shared.Next(int.MaxValue);
         world = new World(seed);
-        world.generate();
+        world.loadAroundPlayer();
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
 
         // then add the GUI
@@ -184,7 +184,7 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.F) {
-            WorldIO.save(world, "world");
+            world.worldIO.save(world, "world");
         }
 
         if (key == Key.G) {
