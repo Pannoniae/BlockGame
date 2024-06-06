@@ -28,7 +28,8 @@ public class BDFSource : IFontSource {
     }
 
     public int? GetGlyphId(int codepoint) {
-        return codepoint;
+        font.Characters.TryGetValue(codepoint, out var glyph);
+        return glyph != null ? codepoint : null;
     }
 
     public void GetGlyphMetrics(int glyphId, float fontSize, out int advance, out int x0, out int y0, out int x1, out int y1) {
@@ -40,7 +41,9 @@ public class BDFSource : IFontSource {
     }
 
     unsafe public void RasterizeGlyphBitmap(int glyphId, float fontSize, byte[] buffer, int startIndex, int outWidth, int outHeight, int outStride) {
-        var glyph = font.Characters[glyphId];
+        var hasGlyph = font.Characters.TryGetValue(glyphId, out var glyph);
+        // sub it with empty array if it doesn't exist
+        byte[,] array = hasGlyph ? glyph.Bitmap : new byte[height, width];
         fixed (byte* bptr = buffer) {
             for (var y = 0; y < outHeight; ++y) {
                 var pos = (y * outStride) + startIndex;
@@ -48,7 +51,7 @@ public class BDFSource : IFontSource {
                 byte* dst = bptr + pos;
                 //byte* src = (byte*)glyph.Bitmap[0, y];
                 for (var x = 0; x < outWidth; ++x) {
-                    *dst++ = (byte)(glyph.Bitmap[y, x] * 255);
+                    *dst++ = (byte)(array[y, x] * 255);
                 }
             }
         }
