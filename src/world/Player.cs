@@ -370,18 +370,18 @@ public class Player {
                 // left side
                 if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
                     var diff = blockAABB.minY - aabbY.maxY;
-                    if (diff < velocity.Y) {
+                    //if (diff < velocity.Y) {
                         position.Y += diff;
                         velocity.Y = 0;
-                    }
+                    //}
                 }
 
                 else if (velocity.Y < 0 && aabbY.minY <= blockAABB.maxY) {
                     var diff = blockAABB.maxY - aabbY.minY;
-                    if (diff > velocity.Y) {
+                    //if (diff > velocity.Y) {
                         position.Y += diff;
                         velocity.Y = 0;
-                    }
+                    //}
                 }
             }
         }
@@ -398,16 +398,16 @@ public class Player {
                 // left side
                 if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
                     var diff = blockAABB.minX - aabbX.maxX;
-                    if (diff < velocity.X) {
+                    //if (diff < velocity.X) {
                         position.X += diff;
-                    }
+                    //}
                 }
 
                 else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
                     var diff = blockAABB.maxX - aabbX.minX;
-                    if (diff > velocity.X) {
+                    //if (diff > velocity.X) {
                         position.X += diff;
-                    }
+                    //}
                 }
             }
             if (sneaking && AABB.isCollision(sneakaabbX, blockAABB)) {
@@ -429,16 +429,16 @@ public class Player {
                 collisionZThisFrame = true;
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
                     var diff = blockAABB.minZ - aabbZ.maxZ;
-                    if (diff < velocity.Z) {
+                    //if (diff < velocity.Z) {
                         position.Z += diff;
-                    }
+                    //}
                 }
 
                 else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
                     var diff = blockAABB.maxZ - aabbZ.minZ;
-                    if (diff > velocity.Z) {
+                    //if (diff > velocity.Z) {
                         position.Z += diff;
-                    }
+                    //}
                 }
             }
             if (sneaking && AABB.isCollision(sneakaabbZ, blockAABB)) {
