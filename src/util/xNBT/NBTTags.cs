@@ -554,14 +554,14 @@ public class NBTTagCompound : NBTTag {
 
     public override String ToString() {
         StringBuilder str = new StringBuilder();
-        str.Append(name + ":[");
+        str.Append(name + ":{");
 
         string var3;
         foreach (string key in dict.Keys) {
             str.Append(key + ":" + dict[key] + ",");
         }
 
-        return str + "]";
+        return str + "}";
     }
 }
 
