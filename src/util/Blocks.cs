@@ -8,7 +8,7 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
-    public static readonly int maxBlock = 13;
+    public static readonly int maxBlock = 14;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -48,6 +48,8 @@ public class Blocks {
 
     public static Block YELLOW_FLOWER = register(new Block(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
     public static Block RED_FLOWER = register(new Block(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
+    
+    public static Block LANTERN = register(new Block(14, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(14));
 
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;
