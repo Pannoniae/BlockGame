@@ -10,6 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="BinaryBuffers" Version="2.0.2" />
         <PackageReference Include="Geometry" Version="1.0.0.1" />
         <PackageReference Include="ImGui.NET" Version="1.89.9.4" />
         <PackageReference Include="JetBrains.Annotations" Version="2024.2.0-eap1" />

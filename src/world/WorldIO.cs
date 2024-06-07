@@ -1,4 +1,5 @@
 using System.Buffers;
+using BlockGame.util;
 using BlockGame.util.xNBT;
 using SharpNBT;
 
@@ -7,6 +8,12 @@ namespace BlockGame;
 public class WorldIO {
 
     public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
+
+    private const int my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
+    private const int mx = Chunk.CHUNKSIZE;
+    private const int mz = Chunk.CHUNKSIZE;
+    public static FixedArrayPool<ushort> saveBlockPool = new FixedArrayPool<ushort>(mx * my * mz);
+    public static FixedArrayPool<byte> saveLightPool = new FixedArrayPool<byte>(mx * my * mz);
 
     public World world;
 
@@ -30,10 +37,14 @@ public class WorldIO {
         // save chunks
         foreach (var chunk in world.chunks.Values) {
             var regionCoord = World.getRegionPos(chunk.coord);
-            var nbt = serialiseChunkIntoNBT(chunk);
-            NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.nbt");
+            saveChunk(chunk);
         }
         regionCache.Clear();
+    }
+
+    public void saveChunk(Chunk chunk) {
+        var nbt = serialiseChunkIntoNBT(chunk);
+        NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.nbt");
     }
 
     private NBTTagCompound serialiseChunkIntoNBT(Chunk chunk) {
@@ -42,11 +53,8 @@ public class WorldIO {
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
         // blocks
-        var my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
-        var mx = Chunk.CHUNKSIZE;
-        var mz = Chunk.CHUNKSIZE;
-        var blocks = ArrayPool<ushort>.Shared.Rent(mx * my * mz);
-        var light = ArrayPool<byte>.Shared.Rent(mx * my * mz);
+        var blocks = saveBlockPool.grab();
+        var light = saveLightPool.grab();
         int index = 0;
         // using YXZ order
         for (int y = 0; y < my; y++) {
@@ -61,8 +69,8 @@ public class WorldIO {
         chunkTag.addUShortArray("blocks", blocks);
         chunkTag.addByteArray("light", light);
 
-        ArrayPool<ushort>.Shared.Return(blocks);
-        ArrayPool<byte>.Shared.Return(light);
+        saveBlockPool.putBack(blocks);
+        saveLightPool.putBack(light);
         return chunkTag;
     }
 
@@ -108,18 +116,22 @@ public class WorldIO {
             // it's a chunk file
             var name = Path.GetFileName(file);
             if (name.StartsWith('c')) {
-                var nbt = NBT.readFile(file);
-                var chunk = world.worldIO.loadChunkFromNBT(nbt);
-
-                // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
-                if (chunk.status >= ChunkStatus.MESHED) {
-                    chunk.status = ChunkStatus.LIGHTED;
-                }
-                world.chunks[chunk.coord] = chunk;
+                loadChunkFromFile(world, file);
             }
         }
         world.player.prevPosition = world.player.position;
         world.loadAroundPlayer();
         return world;
+    }
+
+    private static void loadChunkFromFile(World world, string file) {
+        var nbt = NBT.readFile(file);
+        var chunk = world.worldIO.loadChunkFromNBT(nbt);
+
+        // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
+        if (chunk.status >= ChunkStatus.MESHED) {
+            chunk.status = ChunkStatus.LIGHTED;
+        }
+        world.chunks[chunk.coord] = chunk;
     }
 }
