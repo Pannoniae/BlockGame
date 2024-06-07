@@ -9,7 +9,6 @@ public class World {
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     public Dictionary<ChunkCoord, Chunk> chunks;
-    public Dictionary<RegionCoord, Region> regions;
     //public List<ChunkSection> sortedTransparentChunks = [];
 
     // Queues
@@ -73,7 +72,6 @@ public class World {
         this.seed = seed;
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
-        regions = new Dictionary<RegionCoord, Region>();
         // load a minimal amount of chunks so the world can get started
         if (!loadingSave) {
             loadSpawnChunks();
@@ -459,10 +457,10 @@ public class World {
     }
 
     public void unloadChunk(ChunkCoord coord) {
+        // save chunk first
+        worldIO.saveChunk(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);
-        // remove from region too
-        //regions[getRegionPos(coord)].chunks.Remove(coord);
     }
 
     /// <summary>
