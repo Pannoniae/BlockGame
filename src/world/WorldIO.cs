@@ -43,6 +43,9 @@ public class WorldIO {
     }
 
     public void saveChunk(Chunk chunk) {
+        if (!Directory.Exists("level")) {
+            Directory.CreateDirectory("level");
+        }
         var nbt = serialiseChunkIntoNBT(chunk);
         NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.nbt");
     }
