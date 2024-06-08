@@ -199,7 +199,7 @@ public partial class Game {
             Console.Out.WriteLine("played?");
 
             gui = new GUI.GUI();
-            fontLoader = new FontLoader("fonts/8x13.bdf", gui.tb);
+            fontLoader = new FontLoader(gui.tb, "fonts/8x13.bdf", "fonts/6x13.bdf");
             gui.loadFont(13);
 
             //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
@@ -218,7 +218,7 @@ public partial class Game {
             });
             resize(new Vector2D<int>(width, height));
             // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
-            GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+            MemoryUtils.cleanGC();
         }
     }
 

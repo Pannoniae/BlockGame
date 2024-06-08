@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using BlockGame.util;
 using BlockGame.util.font;
 using FontStashSharp;
+using FontStashSharp.RichText;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using TrippyGL;
@@ -44,6 +45,7 @@ public class GUI {
     public ShaderProgram guiBlockShader;
 
     public DynamicSpriteFont guiFont;
+    public DynamicSpriteFont guiFontThin;
 
     public Rectangle buttonRect = new(96, 0, 96, 16);
     public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
@@ -69,7 +71,7 @@ public class GUI {
         instance = this;
         guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
             GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
-        buffer = new VertexBuffer<BlockVertex>(GD, 240, 360, ElementType.UnsignedShort, BufferUsage.StreamDraw);
+        buffer = new VertexBuffer<BlockVertex>(GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw);
         guiBlock = new List<BlockVertex>();
         guiBlockI = new List<ushort>();
 
@@ -78,6 +80,7 @@ public class GUI {
 
     public void loadFont(int size) {
         guiFont = Game.fontLoader.fontSystem.GetFont(size);
+        guiFontThin = Game.fontLoader.fontSystemThin.GetFont(size);
     }
 
 
@@ -184,6 +187,14 @@ public class GUI {
         DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
+    public void drawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+        DrawStringThin(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    }
+
+    public void drawRString(RichTextLayout layout, Vector2 position, TextHorizontalAlignment alignment, Color4b color = default) {
+        DrawRString(layout, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), alignment);
+    }
+
     public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
@@ -239,6 +250,13 @@ public class GUI {
 
     protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, float rotation, Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
+    }
+    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
+        guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
+    }
+
+    protected void DrawRString(RichTextLayout layout, Vector2 position, Color4b colour, Vector2 scale, TextHorizontalAlignment alignment) {
+        layout.Draw(Game.fontLoader.renderer, position, colour.toFS(), 0, new Vector2(0), scale, 0f, alignment);
     }
 
     public Vector2 measureString(ReadOnlySpan<char> text) {

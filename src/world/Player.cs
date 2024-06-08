@@ -131,7 +131,7 @@ public class Player {
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
         calcAABB(ref aabb, position);
         if (Math.Abs(velocity.withoutY().Length) > 0.0001 && onGround) {
-            camera.bob = (float)(velocity.Length / Constants.maxhSpeed);
+            camera.bob = Math.Clamp((float)(velocity.Length / 4), 0, 1);
         }
         // after everything is done
         // calculate total traveled
@@ -204,6 +204,7 @@ public class Player {
         if (velocity != Vector3D<double>.Zero) {
             // clamp max speed
             // If speed velocity is 0, we are fucked so check for that
+            /*
             var hVel = new Vector3D<double>(velocity.X, 0, velocity.Z);
             double maxSpeed;
             if (inLiquid) {
@@ -230,6 +231,7 @@ public class Player {
                 var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
                 velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
             }
+            */
         }
 
         // clamp fallspeed
@@ -252,19 +254,24 @@ public class Player {
 
     private void applyFriction() {
         // ground friction
-        if (!pressedMovementKey && !inLiquid) {
+        if (!inLiquid) {
+            var f2 = Constants.verticalFriction;
             if (onGround) {
-                if (sneaking) {
-                    velocity = Vector3D<double>.Zero;
-                }
-                else {
+                //if (sneaking) {
+                //    velocity = Vector3D<double>.Zero;
+                //}
+                //else {
                     var f = Constants.friction;
-                    velocity *= f;
-                }
+                    velocity.X *= f;
+                    velocity.Z *= f;
+                    velocity.Y *= f2;
+                //}
             }
             else {
                 var f = Constants.airFriction;
-                velocity *= f;
+                velocity.X *= f;
+                velocity.Z *= f;
+                velocity.Y *= f2;
             }
         }
 
@@ -309,6 +316,10 @@ public class Player {
             Constants.moveSpeed = onGround ? Constants.groundMoveSpeed : Constants.airMoveSpeed;
             if (inLiquid) {
                 Constants.moveSpeed = Constants.liquidMoveSpeed;
+            }
+
+            if (sneaking) {
+                Constants.moveSpeed *= Constants.sneakFactor;
             }
 
             // first, normalise (v / v.length) then multiply with movespeed
