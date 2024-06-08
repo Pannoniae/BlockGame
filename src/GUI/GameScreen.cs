@@ -1,9 +1,13 @@
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BlockGame.util;
 using Cysharp.Text;
+using FontStashSharp.RichText;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using TrippyGL;
 
 namespace BlockGame.GUI;
@@ -14,6 +18,8 @@ public class GameScreen : Screen {
     public GraphicsDevice GD;
 
     public Utf16ValueStringBuilder debugStr;
+    // for top right corner debug shit
+    public Utf16ValueStringBuilder debugStrG;
     public Debug D;
 
     public bool debugScreen = false;
@@ -26,11 +32,13 @@ public class GameScreen : Screen {
     private long privateMemory;
     private long workingSet;
     private long GCMemory;
+    private RichTextLayout rendererText;
 
     public override void activate() {
         base.activate();
         currentMenu = NULLMENU;
         debugStr = ZString.CreateStringBuilder();
+        debugStrG = ZString.CreateStringBuilder();
         GD = Game.GD;
         D = new Debug();
 
@@ -39,6 +47,7 @@ public class GameScreen : Screen {
         world = new World(seed);
         world.loadAroundPlayer();
         updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
+        updateMemory = Game.instance.setInterval(50, updateDebugTextMethod);
 
         // then add the GUI
         var version = Text.createText(this, "version", new Vector2D<int>(2, 2), "BlockGame v0.0.2");
@@ -49,6 +58,53 @@ public class GameScreen : Screen {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         addElement(hotbar);
+    }
+
+    private void updateDebugTextMethod() {
+        if (debugScreen) {
+            var gui = Game.gui;
+            var i = Game.instance;
+            var p = world.player;
+            var c = p.camera;
+            var m = Game.metrics;
+            var loadedChunks = world.chunks.Count;
+            var pos = p.position.toBlockPos();
+            // current block
+            //var cb = world.getBlock(pos);
+            var sl = world.getSkyLight(pos.X, pos.Y, pos.Z);
+            var bl = world.getBlockLight(pos.X, pos.Y, pos.Z);
+
+
+            debugStr.Clear();
+            debugStrG.Clear();
+            debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
+            debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length);
+            debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
+            debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
+            debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
+            debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
+            if (i.targetedPos.HasValue)
+                debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
+            else
+                debugStr.Append("No target\n");
+            debugStr.AppendFormat("rC:{0} rV:{1}k\n", m.renderedChunks, m.renderedVerts / 1000);
+            debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
+
+            debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
+            debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
+
+
+
+            debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer), Game.GL.GetStringS(StringName.Vendor));
+            debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
+            // calculate textwidth
+            rendererText = new RichTextLayout {
+                Font = gui.guiFontThin,
+                Text = debugStrG.ToString(),
+                Width = 150 * GUI.guiScale
+            };
+
+        }
     }
 
     public override void deactivate() {
@@ -192,6 +248,10 @@ public class GameScreen : Screen {
             Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }
 
+        if (key == Key.F9) {
+            MemoryUtils.cleanGC();
+        }
+
         if (key == Key.E) {
             if (world.inMenu) {
                 currentMenu = NULLMENU;
@@ -242,30 +302,10 @@ public class GameScreen : Screen {
         base.draw();
 
         var gui = Game.gui;
-        //GD.FaceCullingEnabled = false;
-        //GD.BlendState = BlendState.Opaque;
-        //GD.DepthTestingEnabled = false;
-        //GD.ResetBufferStates();
-        //GD.ResetVertexArrayStates();
-        //GD.ResetShaderProgramStates();
-        //GD.ResetTextureStates();
-        //GD.ResetStates();
 
         GD.ShaderProgram = GUI.instance.shader;
         var centreX = Game.centreX;
         var centreY = Game.centreY;
-
-        // setup blending
-        //GD.BlendingEnabled = true;
-        //GD.BlendState = bs;
-        /*
-         * shader.use();
-           shader.setUniform(uMVP, viewProj);
-           shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
-           shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
-           shader.setUniform(fogColour, defaultClearColour);
-           shader.setUniform(blockTexture, 0);
-         */
 
 
         if (!world.inMenu) {
@@ -283,13 +323,6 @@ public class GameScreen : Screen {
                     new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
                 new Color4b(240, 240, 240));
         }
-        // reset blending this is messed up
-        //GD.BlendState = Game.initialBlendState;
-
-        //tb.DrawString(gui.guiFont, "BlockGame", Vector2.Zero, Color4b.White);
-        //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 20), Color4b.White);
-        //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 40), Color4b.White);
-        //tb.DrawString(gui.guiFont, "BlockGame", new Vector2(0, 60), Color4b.Red);
         if (world.paused) {
             var pauseText = "-PAUSED-";
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY),
@@ -301,66 +334,50 @@ public class GameScreen : Screen {
         gui.drawStringCentred(blockStr, new Vector2(Game.centreX, Game.height - 120),
             Color4b.White);
 
-        var i = Game.instance;
-        var p = world.player;
-        var c = p.camera;
-        var m = Game.metrics;
-        var loadedChunks = world.chunks.Count;
-        var pos = p.position.toBlockPos();
-        // current block
-        //var cb = world.getBlock(pos);
-        var sl = world.getSkyLight(pos.X, pos.Y, pos.Z);
-        var bl = world.getBlockLight(pos.X, pos.Y, pos.Z);
-
-        var ver = getElement("version");
-
         if (debugScreen) {
-            debugStr.Clear();
-            debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
-            debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length);
-            debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
-            debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
-            debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
-            debugStr.AppendFormat("g:{0} j:{1}\n", p.onGround, p.jumping);
-            if (i.targetedPos.HasValue)
-                debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
-            else
-                debugStr.AppendLine("No target\n");
-            debugStr.AppendFormat("rC:{0} rV:{1}\n", m.renderedChunks, m.renderedVerts);
-            debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
-            debugStr.AppendFormat("FOV:{0}\n", p.camera.hfov);
-
-            debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
-            debugStr.AppendFormat("W:{0} H:{1}\n", Game.width, Game.height);
-            debugStr.AppendFormat("CX:{0} CY:{1}\n", Game.centreX, Game.centreY);
-            debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
-            gui.drawString(debugStr.AsSpan(),
-                new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
-
 
             D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
             D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
             //D.drawAABB(p.aabb);
             D.flushLines();
+
+            var ver = getElement("version");
+            gui.drawStringThin(debugStr.AsSpan(),
+                new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
+            if (rendererText != null) {
+                gui.drawRString(rendererText,
+                    new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
+            }
         }
     }
 
+    /// <summary>
+    /// Split a string with newlines at spaces so that the maxLen is roughly respected. (Sorry!)
+    /// </summary>
+    private string splitString(Span<char> input, int maxLen) {
+        for (int i = maxLen - 3; i < input.Length; i++) {
+            // if space, replace with newline
+            if (input[i] == ' ') {
+                input[i] = '\n';
+                return new string(input);
+            }
+        }
+        return new string(input);
+    }
     public override void postDraw() {
         base.postDraw();
         // draw hotbar
     }
-
     public override void imGuiDraw() {
 
     }
-
     public override void clear(GraphicsDevice GD, double dt, double interp) {
         GD.ClearColor = WorldRenderer.defaultClearColour;
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
     }
-
     public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
 
     }
+
 }

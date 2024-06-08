@@ -100,21 +100,18 @@ public class ExtremelySharedBlockVAO : VAO {
     }
 
     public void format() {
-        unsafe {
-            // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.EnableVertexAttribArray(0);
-            GL.EnableVertexAttribArray(1);
-            GL.EnableVertexAttribArray(2);
+        // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
 
-            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
-            GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
-            GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 8 * sizeof(ushort));
+        GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+        GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 8 * sizeof(ushort));
 
-            GL.VertexAttribBinding(0, 0);
-            GL.VertexAttribBinding(1, 0);
-            GL.VertexAttribBinding(2, 0);
-
-        }
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
     }
 
     public void bindVAO() {
