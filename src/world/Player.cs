@@ -283,7 +283,6 @@ public class Player {
         }
 
         var level = getWaterLevel();
-        Console.Out.WriteLine(level);
 
         if (jumping && (onGround || inLiquid)) {
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
