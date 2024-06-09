@@ -293,7 +293,8 @@ public class Player {
                 velocity.Y += Constants.liquidSurfaceBoost;
             }
             else if (inLiquid && jumping && level < threshold) {
-                velocity.Y -= (1 - (level - threshold)) * 1;
+                velocity.Y -= (1 - (level - threshold)) * 0.7;
+                velocity.Y -= 0.4;
                 // stupid fix
                 if (level < 0.10) {
                     velocity.Y = Math.Min(velocity.Y, 0);
