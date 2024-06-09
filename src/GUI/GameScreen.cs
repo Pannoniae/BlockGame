@@ -1,7 +1,5 @@
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BlockGame.util;
 using Cysharp.Text;
 using FontStashSharp.RichText;
@@ -24,7 +22,7 @@ public class GameScreen : Screen {
 
     public bool debugScreen = false;
 
-    public Menu NULLMENU = new Menu();
+    public Menu PAUSE_MENU = new PauseMenu();
 
     private TimerAction updateMemory;
 
@@ -36,7 +34,7 @@ public class GameScreen : Screen {
 
     public override void activate() {
         base.activate();
-        currentMenu = NULLMENU;
+        exitMenu();
         debugStr = ZString.CreateStringBuilder();
         debugStrG = ZString.CreateStringBuilder();
         GD = Game.GD;
@@ -162,18 +160,13 @@ public class GameScreen : Screen {
             return;
         }
 
-        if (world.paused) {
-            Game.instance.lockMouse();
-            Game.lockingMouse = true;
-            world.paused = false;
-        }
-        else {
-            if (button == MouseButton.Left) {
+        switch (button) {
+            case MouseButton.Left:
                 world.player.breakBlock();
-            }
-            else if (button == MouseButton.Right) {
+                break;
+            case MouseButton.Right:
                 world.player.placeBlock();
-            }
+                break;
         }
     }
 
@@ -215,13 +208,16 @@ public class GameScreen : Screen {
         base.onKeyDown(keyboard, key, scancode);
         if (key == Key.Escape) {
             // hack for back to main menu
-            if (!Game.focused) {
-                backToMainMenu();
+            if (!world.inMenu) {
+                switchToMenu(PAUSE_MENU);
+                world.inMenu = true;
+                world.paused = true;
+                Game.instance.unlockMouse();
+                world.player.catchUpOnPrevVars();
             }
-
-            Game.instance.unlockMouse();
-            world.player.catchUpOnPrevVars();
-            world.paused = true;
+            else {
+                backToGame();
+            }
         }
 
         if (key == Key.F3) {
@@ -254,13 +250,11 @@ public class GameScreen : Screen {
 
         if (key == Key.E) {
             if (world.inMenu) {
-                currentMenu = NULLMENU;
-                world.inMenu = false;
-                Game.instance.lockMouse();
+                backToGame();
             }
             else {
-                currentMenu = new InventoryGUI(new Vector2D<int>(0, 32));
-                ((InventoryGUI)currentMenu).setup();
+                switchToMenu(new InventoryGUI(new Vector2D<int>(0, 32)));
+                ((InventoryGUI)currentMenu!).setup();
                 world.inMenu = true;
                 Game.instance.unlockMouse();
             }
@@ -276,6 +270,14 @@ public class GameScreen : Screen {
         else {
             world.player.updatePickBlock(keyboard, key, scancode);
         }
+    }
+
+    public void backToGame() {
+        exitMenu();
+        world.inMenu = false;
+        world.paused = false;
+        Game.instance.lockMouse();
+        //Game.lockingMouse = true;
     }
 
     private void backToMainMenu() {
@@ -379,5 +381,4 @@ public class GameScreen : Screen {
     public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
 
     }
-
 }
