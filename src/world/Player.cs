@@ -11,7 +11,7 @@ public class Player {
     public const double width = 0.625;
     public const double eyeHeight = 1.6;
     public const double sneakingEyeHeight = 1.45;
-    public const double feetCheckHeight = 0.15;
+    public const double feetCheckHeight = 0.05;
 
     // is player walking on (colling with) ground
     public bool onGround;
@@ -44,6 +44,8 @@ public class Player {
     public ushort blockAtFeet;
     public bool inLiquid;
     public bool wasInLiquid;
+
+    public int waterPushTicks = 0;
 
     public bool collisionXThisFrame;
     public bool collisionZThisFrame;
@@ -261,10 +263,10 @@ public class Player {
                 //    velocity = Vector3D<double>.Zero;
                 //}
                 //else {
-                    var f = Constants.friction;
-                    velocity.X *= f;
-                    velocity.Z *= f;
-                    velocity.Y *= f2;
+                var f = Constants.friction;
+                velocity.X *= f;
+                velocity.Z *= f;
+                velocity.Y *= f2;
                 //}
             }
             else {
@@ -280,20 +282,55 @@ public class Player {
             velocity *= Constants.liquidFriction;
         }
 
+        var level = getWaterLevel();
+        Console.Out.WriteLine(level);
+
         if (jumping && (onGround || inLiquid)) {
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
-            onGround = false;
-            jumping = false;
+            var threshold = 0.4;
             // if on the edge of water, boost
             if (inLiquid && (collisionXThisFrame || collisionZThisFrame)) {
                 velocity.Y += Constants.liquidSurfaceBoost;
             }
-            // if just exiting the water, give a slight boost
-            else if (!inLiquid && wasInLiquid) {
-                // else, push the player down slightly
-                velocity.Y = -1.2;
+            else if (inLiquid && jumping && level < threshold) {
+                velocity.Y -= (1 - (level - threshold)) * 1;
+                // stupid fix
+                if (level < 0.10) {
+                    velocity.Y = Math.Min(velocity.Y, 0);
+                }
             }
+            onGround = false;
+            jumping = false;
         }
+    }
+
+
+    /// <summary>
+    /// Get how deep the player is in water. 0 if not in water, 1 if submerged
+    /// </summary>
+    private double getWaterLevel() {
+        var feet = world.getBlock(feetPosition.toBlockPos());
+        var torsoBlockPos = new Vector3D<double>(feetPosition.X, feetPosition.Y + 1, feetPosition.Z).toBlockPos();
+        var torso = world.getBlock(torsoBlockPos);
+
+        var feetLiquid = Blocks.get(feet).liquid;
+        var torsoLiquid = Blocks.get(torso).liquid;
+
+        // if no liquid at feet, don't bother
+        if (!feetLiquid) {
+            return 0;
+        }
+        // if submerged entirely, 1
+        if (feetLiquid && torsoLiquid) {
+            return 1;
+        }
+        // if completely dry, 0
+        if (!feetLiquid && !torsoLiquid) {
+            return 0;
+        }
+        // if feet has liquid but torso does not
+        // get the difference between the torso block pos and the feet position
+        return torsoBlockPos.Y - feetPosition.Y;
     }
 
     private void updateGravity(double dt) {
@@ -382,16 +419,16 @@ public class Player {
                 if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
                     var diff = blockAABB.minY - aabbY.maxY;
                     //if (diff < velocity.Y) {
-                        position.Y += diff;
-                        velocity.Y = 0;
+                    position.Y += diff;
+                    velocity.Y = 0;
                     //}
                 }
 
                 else if (velocity.Y < 0 && aabbY.minY <= blockAABB.maxY) {
                     var diff = blockAABB.maxY - aabbY.minY;
                     //if (diff > velocity.Y) {
-                        position.Y += diff;
-                        velocity.Y = 0;
+                    position.Y += diff;
+                    velocity.Y = 0;
                     //}
                 }
             }
@@ -410,14 +447,14 @@ public class Player {
                 if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
                     var diff = blockAABB.minX - aabbX.maxX;
                     //if (diff < velocity.X) {
-                        position.X += diff;
+                    position.X += diff;
                     //}
                 }
 
                 else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
                     var diff = blockAABB.maxX - aabbX.minX;
                     //if (diff > velocity.X) {
-                        position.X += diff;
+                    position.X += diff;
                     //}
                 }
             }
@@ -441,14 +478,14 @@ public class Player {
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
                     var diff = blockAABB.minZ - aabbZ.maxZ;
                     //if (diff < velocity.Z) {
-                        position.Z += diff;
+                    position.Z += diff;
                     //}
                 }
 
                 else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
                     var diff = blockAABB.maxZ - aabbZ.minZ;
                     //if (diff > velocity.Z) {
-                        position.Z += diff;
+                    position.Z += diff;
                     //}
                 }
             }
