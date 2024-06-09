@@ -103,6 +103,14 @@ public class Chunk {
             world.skyLightQueue.Add(new LightNode(wx, y, wz + 1, this));
             world.skyLightQueue.Add(new LightNode(wx, y - 1, wz, this));
             world.skyLightQueue.Add(new LightNode(wx, y + 1, wz, this));
+
+            // and blocklight too
+            world.blockLightQueue.Add(new LightNode(wx - 1, y, wz, this));
+            world.blockLightQueue.Add(new LightNode(wx + 1, y, wz, this));
+            world.blockLightQueue.Add(new LightNode(wx, y, wz - 1, this));
+            world.blockLightQueue.Add(new LightNode(wx, y, wz + 1, this));
+            world.blockLightQueue.Add(new LightNode(wx, y - 1, wz, this));
+            world.blockLightQueue.Add(new LightNode(wx, y + 1, wz, this));
         }
         else {
             world.removeSkyLightAndPropagate(wx, y, wz);
