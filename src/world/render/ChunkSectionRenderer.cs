@@ -354,7 +354,7 @@ public class ChunkSectionRenderer {
                         hasOnlySolid = false;
                     }
 
-                    Unsafe.Add(ref lightArrayRef, index) = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)0;
+                    Unsafe.Add(ref lightArrayRef, index) = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)15;
                 }
             }
         }
