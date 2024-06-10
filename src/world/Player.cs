@@ -285,23 +285,17 @@ public class Player {
         }
 
         var level = getWaterLevel();
+
+        if (jumping && !wasInLiquid && inLiquid) {
+            velocity.Y -= 1.4;
+        }
         //Console.Out.WriteLine(level);
         if (jumping && (onGround || inLiquid)) {
-            var threshold = 0.8;
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
 
             // if on the edge of water, boost
             if (inLiquid && (collisionXThisFrame || collisionZThisFrame)) {
                 velocity.Y += Constants.liquidSurfaceBoost;
-            }
-            else if (inLiquid && jumping && level < threshold) {
-                //velocity.Y -= (1 - (level / threshold)) * 2.75;
-                //velocity.Y -= 0.2;
-                // stupid fix
-                if (level < 0.2) {
-                    //velocity.Y = Math.Min(velocity.Y, 0);
-                    velocity.Y = (-1.5 * (level / 0.2)) - 0.5;
-                }
             }
             onGround = false;
             jumping = false;
