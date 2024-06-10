@@ -74,7 +74,7 @@ public class SettingsMenu : Menu {
     }
 
     public static void returnToMainMenu() {
-        Game.instance.executeOnMainThread(() => Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN));
+        Game.instance.executeOnMainThread(() => Game.instance.switchTo(MAIN_MENU));
     }
 
     public override void draw() {

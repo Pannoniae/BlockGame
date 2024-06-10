@@ -327,7 +327,7 @@ public class GameScreen : Screen {
         }
         if (world.paused) {
             var pauseText = "-PAUSED-";
-            gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY),
+            gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
                 Color4b.OrangeRed);
         }
 
