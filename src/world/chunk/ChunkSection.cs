@@ -5,7 +5,7 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class ChunkSection {
+public class ChunkSection : IDisposable {
 
     public Chunk chunk;
     public ChunkSectionRenderer renderer;
@@ -76,5 +76,8 @@ public class ChunkSection {
                 renderer.meshChunk();
             }
         }
+    }
+    public void Dispose() {
+        renderer.Dispose();
     }
 }

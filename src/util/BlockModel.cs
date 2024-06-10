@@ -64,16 +64,16 @@ public class BlockModel {
 
         // x1
         model.faces[0] = new(0 + offset, 1, 1 - offset, 0 + offset, 0, 1 - offset, 1 - offset, 0, 0 + offset, 1 - offset, 1, 0 + offset,
-            uvs[0], uvs[0] + 1, RawDirection.WEST, true, true);
+            uvs[0], uvs[0] + 1, RawDirection.NONE, true, true);
         // x2
         model.faces[1] = new(0 + offset, 1, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1, 1 - offset,
-            uvs[1], uvs[1] + 1, RawDirection.SOUTH, true, true);
+            uvs[1], uvs[1] + 1, RawDirection.NONE, true, true);
         // x1 rear
         model.faces[2] = new(1 - offset, 1, 0 + offset, 1 - offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, 0 + offset, 1, 1 - offset,
-            uvs[0], uvs[0] + 1, RawDirection.EAST, true, true);
+            uvs[0], uvs[0] + 1, RawDirection.NONE, true, true);
         // x2 rear
         model.faces[3] = new(1 - offset, 1, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
-            uvs[1], uvs[1] + 1, RawDirection.NORTH, true, true);
+            uvs[1], uvs[1] + 1, RawDirection.NONE, true, true);
         return model;
     }
 

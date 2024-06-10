@@ -27,11 +27,12 @@ public class PlayerRenderer {
     }
 
     public void render(double dt, double interp) {
+        return;
         WorldRenderer.meshBlock(Blocks.get(player.hotbar.getSelected().block), ref vertices, ref indices);
         vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.instance.blockTexture.Handle);
-        var location = Matrix4x4.CreateTranslation(player.camera.position + player.camera.forward);
+        var location = Matrix4x4.CreateTranslation(player.camera.renderPosition(interp) + player.camera.forward);
         heldBlockShader.use();
         heldBlockShader.setUniform(uMVP, location * player.camera.getViewMatrix(interp) * player.camera.getProjectionMatrix());
         heldBlockShader.setUniform(blockTexture, 0);

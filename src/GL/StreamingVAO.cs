@@ -48,7 +48,7 @@ public class StreamingVAO {
 
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
             fixed (ushort* d = indices) {
-                GL.BufferSubData(BufferTargetARB.ElementArrayBuffer, 0, (uint)(indices.Length * sizeof(BlockVertex)), d);
+                GL.BufferSubData(BufferTargetARB.ElementArrayBuffer, 0, (uint)(indices.Length * sizeof(ushort)), d);
             }
         }
 

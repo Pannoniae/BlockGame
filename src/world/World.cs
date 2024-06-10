@@ -51,7 +51,7 @@ public class World {
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
-    public const int RENDERDISTANCE = 16;
+    public const int RENDERDISTANCE = 8;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -97,7 +97,9 @@ public class World {
     public void sortChunks() {
         // sort queue based on position
         // don't reorder across statuses though
-        chunkLoadQueue.Sort(new ChunkTicketComparer(player.position.toBlockPos()));
+
+        // note: removal is faster from the end so we sort by the reverse - closest entries are at the end of the list
+        chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
     }
 
     public void loadAroundPlayer() {
@@ -159,8 +161,8 @@ public class World {
         var limit = MAX_CHUNKLOAD_FRAMETIME;
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < limit) {
             if (chunkLoadQueue.Count > 0) {
-                var ticket = chunkLoadQueue[0];
-                chunkLoadQueue.RemoveAt(0);
+                var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
+                chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
                 loadChunk(ticket.chunkCoord, ticket.level);
                 ctr++;
             }
@@ -172,21 +174,22 @@ public class World {
         }
         //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
         //Console.Out.WriteLine($"{ctr} chunks loaded");
-        // execute block updates
-        for (int i = 0; i < blockUpdateQueue.Count; i++) {
-            var update = blockUpdateQueue[i];
-            if (update.tick <= worldTick) {
-                blockUpdateWithNeighbours(update.position);
-                blockUpdateQueue.RemoveAt(i);
-            }
-        }
 
         // execute tick actions
-        for (int i = 0; i < actionQueue.Count; i++) {
+        for (int i = actionQueue.Count - 1; i >= 0; i--) {
             var action = actionQueue[i];
             if (action.tick <= worldTick) {
                 action.action();
                 actionQueue.RemoveAt(i);
+            }
+        }
+
+        // execute block updates
+        for (int i = blockUpdateQueue.Count - 1; i >= 0; i--) {
+            var update = blockUpdateQueue[i];
+            if (update.tick <= worldTick) {
+                blockUpdate(update.position);
+                blockUpdateQueue.RemoveAt(i);
             }
         }
 
@@ -320,7 +323,7 @@ public class World {
     }
 
     public void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
-        chunkLoadQueue.Insert(0, new ChunkLoadTicket(chunkCoord, level));
+        chunkLoadQueue.Add(new ChunkLoadTicket(chunkCoord, level));
     }
 
     /// <summary>
@@ -731,8 +734,11 @@ public class World {
         chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
 
-    public void runLater(Action action, int tick) {
-        actionQueue.Add(new TickAction(action, worldTick + tick));
+    public void runLater(Vector3D<int> pos, Action action, int tick) {
+        var tickAction = new TickAction(pos, action, worldTick + tick);
+        if (!actionQueue.Contains(tickAction)) {
+            actionQueue.Add(tickAction);
+        }
     }
 
     public void blockUpdateWithNeighbours(Vector3D<int> pos) {
@@ -748,7 +754,10 @@ public class World {
     }
 
     public void blockUpdate(Vector3D<int> pos, int tick) {
-        blockUpdateQueue.Add(new BlockUpdate(pos, worldTick + tick));
+        var update = new BlockUpdate(pos, worldTick + tick);
+        if (!blockUpdateQueue.Contains(update)) {
+            blockUpdateQueue.Add(update);
+        }
     }
 
     /// <summary>

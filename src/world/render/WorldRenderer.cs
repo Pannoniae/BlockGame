@@ -59,6 +59,12 @@ public class WorldRenderer {
         drawDistance = shader.getUniformLocation(nameof(drawDistance));
         fogColour = shader.getUniformLocation(nameof(fogColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
+
+        shader.use();
+        shader.setUniform(blockTexture, 0);
+        shader.setUniform(lightTexture, 1);
+        shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
+        shader.setUniform(fogColour, defaultClearColour);
     }
 
 
@@ -82,25 +88,19 @@ public class WorldRenderer {
 
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         // gather chunks to render
-        //Console.Out.WriteLine(chunksToRender.Count);
         chunksToRender.Clear();
         foreach (var chunk in world.chunks.Values) {
             if (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(world.player.camera.frustum)) {
                 chunksToRender.Add(chunk);
             }
         }
-        //Console.Out.WriteLine(chunksToRender.Count);
 
         // OPAQUE PASS
         shader.use();
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
-        shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
-        shader.setUniform(fogColour, defaultClearColour);
-        shader.setUniform(blockTexture, 0);
-        shader.setUniform(lightTexture, 1);
         foreach (var chunk in chunksToRender) {
-            chunk.drawOpaque(world.player.camera);
+            chunk.drawOpaque();
         }
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
@@ -108,7 +108,7 @@ public class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunksToRender) {
-            chunk.drawTransparent(world.player.camera);
+            chunk.drawTransparent();
         }
         // TRANSLUCENT PASS
         shader.use();
@@ -116,7 +116,7 @@ public class WorldRenderer {
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunksToRender) {
-            chunk.drawTransparent(world.player.camera);
+            chunk.drawTransparent();
         }
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);
