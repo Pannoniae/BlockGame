@@ -8,7 +8,7 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
-    public static readonly int maxBlock = 14;
+    public static readonly int maxBlock = 20;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -29,7 +29,7 @@ public class Blocks {
     public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))));
     public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(Block.cubeUVs(2, 0))));
     public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(Block.cubeUVs(3, 0))));
-    public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))).light(14));
+    public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
 
     public static Block GLASS = register(new Block(6, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0)))
@@ -49,7 +49,15 @@ public class Blocks {
     public static Block YELLOW_FLOWER = register(new Block(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
     public static Block RED_FLOWER = register(new Block(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
     
-    public static Block LANTERN = register(new Block(14, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(14));
+    public static Block LANTERN = register(new Block(14, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15));
+    public static Block METAL_CUBE_BLUE = register(new Block(16, "Blue Metalish Block", BlockModel.makeCube(Block.cubeUVs(0, 1))));
+    public static Block CANDY_BLUE = register(new Block(15, "Blue Candy", BlockModel.makeCube(Block.cubeUVs(0, 2))));
+    public static Block CANDY_CYAN = register(new Block(17, "Cyan Candy", BlockModel.makeCube(Block.cubeUVs(1, 2))));
+    public static Block CANDY_DARK_GREEN = register(new Block(18, "Dark Green Candy", BlockModel.makeCube(Block.cubeUVs(2, 2))));
+    public static Block CANDY_MIDDLE_GREEN = register(new Block(19, "Middle Green Candy", BlockModel.makeCube(Block.cubeUVs(3, 2))));
+    public static Block CANDY_LIGHT_GREEN = register(new Block(20, "Light Green Candy", BlockModel.makeCube(Block.cubeUVs(4, 2))));
+    
+    //public static Block CANDY_BLUE = register(new Block(15, "Blue Candy", BlockModel.makeCube(Block.grassUVs(3,0,4,0,3,0))));
 
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;
