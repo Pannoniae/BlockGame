@@ -48,7 +48,7 @@ public class Blocks {
 
     public static Block YELLOW_FLOWER = register(new Flower(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
     public static Block RED_FLOWER = register(new Flower(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
-    
+
     public static Block LANTERN = register(new Block(14, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15));
     public static Block METAL_CUBE_BLUE = register(new Block(16, "Blue Metalish Block", BlockModel.makeCube(Block.cubeUVs(0, 1))));
     public static Block CANDY_LIGHT_BLUE = register(new Block(15, "Light Blue Candy", BlockModel.makeCube(Block.cubeUVs(0, 2))));
@@ -67,8 +67,8 @@ public class Blocks {
     public static Block CANDY_WHITE = register(new Block(29, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
     public static Block CANDY_GREY = register(new Block(30, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
     public static Block CANDY_BLACK = register(new Block(31, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
-    
-    
+
+
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;
     }
@@ -310,7 +310,11 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
             // queue block updates
             var neighbourBlock = pos + dir;
             if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
-                world.runLater(neighbourBlock, () => world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id), 10);
+                world.runLater(neighbourBlock, () => {
+                    if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
+                        world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id);
+                    }
+                }, 10);
                 world.blockUpdate(neighbourBlock, 10);
             }
         }
