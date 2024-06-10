@@ -279,24 +279,28 @@ public class Player {
 
         // liquid friction
         if (inLiquid) {
-            velocity *= Constants.liquidFriction;
+            velocity.X *= Constants.liquidFriction;
+            velocity.Z *= Constants.liquidFriction;
+            velocity.Y *= Constants.liquidFriction + 0.05;
         }
 
         var level = getWaterLevel();
-
+        //Console.Out.WriteLine(level);
         if (jumping && (onGround || inLiquid)) {
+            var threshold = 0.8;
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
-            var threshold = 0.4;
+
             // if on the edge of water, boost
             if (inLiquid && (collisionXThisFrame || collisionZThisFrame)) {
                 velocity.Y += Constants.liquidSurfaceBoost;
             }
             else if (inLiquid && jumping && level < threshold) {
-                velocity.Y -= (1 - (level - threshold)) * 0.7;
-                velocity.Y -= 0.4;
+                //velocity.Y -= (1 - (level / threshold)) * 2.75;
+                //velocity.Y -= 0.2;
                 // stupid fix
-                if (level < 0.10) {
-                    velocity.Y = Math.Min(velocity.Y, 0);
+                if (level < 0.2) {
+                    //velocity.Y = Math.Min(velocity.Y, 0);
+                    velocity.Y = (-1.5 * (level / 0.2)) - 0.5;
                 }
             }
             onGround = false;
