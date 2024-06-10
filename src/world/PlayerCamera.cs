@@ -11,6 +11,7 @@ public class PlayerCamera {
     public Vector3 forward;
 
     public Vector3 renderPosition(double interp) => Vector3.Lerp(prevPosition, position, (float)interp);
+    public float renderBob(double interp) => float.Lerp(prevBob, bob, (float)interp);
 
     public Vector3 up { get; private set; }
     public float viewportWidth;
@@ -92,8 +93,8 @@ public class PlayerCamera {
     }
 
     public Matrix4x4 getViewMatrix(double interp) {
-        var interpPos = Vector3.Lerp(prevPosition, position, (float)interp);
-        var iBob = float.DegreesToRadians(float.Lerp(prevBob, bob, (float)interp));
+        var interpPos = renderPosition(interp);
+        var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
         var factor = 0.4f;
         var factor2 = 0.15f;

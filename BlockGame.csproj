@@ -85,6 +85,12 @@
         <None Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
         <None Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
         <None Remove="lib\FontStashSharp.Rasterizers.SixLabors.Fonts\**" />
+        <None Update="shaders\simpleBlock.frag">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="shaders\simpleBlock.vert">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
