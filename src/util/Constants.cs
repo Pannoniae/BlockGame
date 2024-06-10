@@ -18,7 +18,7 @@ public static class Constants {
     //public const double maxhLiquidSpeed = 4;
     //public const double maxhLiquidSpeedSneak = 1.5;
     public const double jumpSpeed = 7;
-    public const double liquidSwimUpSpeed = 1;
+    public const double liquidSwimUpSpeed = 0.9;
     public const double liquidSurfaceBoost = 0.3;
     public const double maxVSpeed = 200;
     public const double friction = 0.57;
@@ -30,7 +30,7 @@ public static class Constants {
     public static double moveSpeed = 2.5;
     public const double groundMoveSpeed = 3;
     public const double airMoveSpeed = 2;
-    public const double liquidMoveSpeed = 1;
+    public const double liquidMoveSpeed = 0.9;
     public const double sneakFactor = 0.28;
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 6f;
