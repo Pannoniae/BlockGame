@@ -263,19 +263,13 @@ public partial class Game {
     }
 
     public partial class NV1 {
-        [LibraryImport("nvapi.dll")]
+        [LibraryImport("nvapi.dll", EntryPoint = "nvapi_QueryInterface")]
         internal static partial int NvAPI_Initialize();
-
-        [LibraryImport("nvapi.dll")]
-        internal static partial int NvAPI_Initialize_32();
     }
 
     public static partial class NV2 {
-        [LibraryImport("nvapi64.dll")]
+        [LibraryImport("nvapi64.dll", EntryPoint = "nvapi_QueryInterface")]
         internal static partial int NvAPI_Initialize();
-
-        [LibraryImport("nvapi64.dll")]
-        internal static partial int NvAPI_Initialize_64();
     }
 
     public static void initDedicatedGraphics() {
@@ -285,16 +279,15 @@ public partial class Game {
             if (Environment.Is64BitProcess) {
                 NativeLibrary.Load("nvapi64.dll");
                 NV2.NvAPI_Initialize();
-                NV2.NvAPI_Initialize_64();
             }
             else {
                 NativeLibrary.Load("nvapi.dll");
                 NV1.NvAPI_Initialize();
-                NV1.NvAPI_Initialize_32();
             }
         }
-        catch {
+        catch (Exception e) {
             // nothing!
+            Console.Out.WriteLine(e);
             Console.Out.WriteLine("Well, apparently there is no nVidia");
         }
     }
