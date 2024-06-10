@@ -287,7 +287,6 @@ public partial class Game {
         }
         catch (Exception e) {
             // nothing!
-            Console.Out.WriteLine(e);
             Console.Out.WriteLine("Well, apparently there is no nVidia");
         }
     }
