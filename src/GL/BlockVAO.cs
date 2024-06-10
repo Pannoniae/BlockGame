@@ -115,6 +115,12 @@ public class BlockVAO : VAO {
             return count;
         }
     }
+
+    public void Dispose() {
+        GL.DeleteBuffer(vbo);
+        GL.DeleteBuffer(ibo);
+        GL.DeleteVertexArray(handle);
+    }
 }
 
 [StructLayout(LayoutKind.Sequential, Size = 18)]

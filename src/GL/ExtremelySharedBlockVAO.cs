@@ -119,8 +119,8 @@ public class ExtremelySharedBlockVAO : VAO {
     }
 
     public void bind() {
-        GL.BindVertexBuffer(0, buffer, 0, 9 * sizeof(ushort));
-        GL.BindBuffer(GLEnum.ElementArrayBuffer, buffer);
+        GL.VertexArrayVertexBuffer(VAOHandle, 0, buffer, 0, 9 * sizeof(ushort));
+        GL.VertexArrayElementBuffer(VAOHandle, buffer);
     }
 
     public uint render() {
@@ -130,4 +130,7 @@ public class ExtremelySharedBlockVAO : VAO {
         }
     }
 
+    public void Dispose() {
+        GL.DeleteBuffer(buffer);
+    }
 }

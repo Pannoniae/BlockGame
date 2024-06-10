@@ -56,9 +56,8 @@ public class Menu {
         }
         // draw tooltip for active element
         var tooltip = activeElement?.tooltip;
-        var mousePos = Game.mouse.Position;
         if (!string.IsNullOrEmpty(tooltip)) {
-            Game.gui.drawString(tooltip, mousePos + new Vector2(MOUSEPOSPADDING));
+            Game.gui.drawString(tooltip, Game.mousePos + new Vector2(MOUSEPOSPADDING));
         }
     }
     public static int MOUSEPOSPADDING => 4 * GUI.guiScale;
@@ -88,8 +87,8 @@ public class Menu {
     public virtual void update(double dt) {
         // update hover status
         foreach (var element in elements.Values) {
-            element.hovered = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y);
-            element.pressed = element.bounds.Contains((int)Game.mouse.Position.X, (int)Game.mouse.Position.Y) && Game.mouse.IsButtonPressed(MouseButton.Left);
+            element.hovered = element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y);
+            element.pressed = element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.mouse.IsButtonPressed(MouseButton.Left);
         }
     }
 

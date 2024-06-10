@@ -30,7 +30,7 @@ public class GameScreen : Screen {
     private long privateMemory;
     private long workingSet;
     private long GCMemory;
-    private RichTextLayout rendererText;
+    private RichTextLayout? rendererText;
 
     public override void activate() {
         base.activate();
@@ -89,12 +89,12 @@ public class GameScreen : Screen {
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
-            debugStr.AppendFormat("M:{0:0.###}:{1:0.###} (h:{2:0.###})\n", privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES, GCMemory / Constants.MEGABYTES);
 
 
 
             debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer), Game.GL.GetStringS(StringName.Vendor));
             debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
+            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}/{2:0.###}MB)\n", GCMemory / Constants.MEGABYTES, privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES);
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,
@@ -143,7 +143,7 @@ public class GameScreen : Screen {
         Game.metrics.clear();
 
         //world.mesh();
-        world.player.camera.calculateFrustum();
+        world.player.camera.calculateFrustum(interp);
         //Console.Out.WriteLine(world.player.camera.frustum);
         world.renderer.render(interp);
         world.player.render(dt, interp);

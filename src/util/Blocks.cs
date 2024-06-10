@@ -46,8 +46,8 @@ public class Blocks {
     public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
     public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
 
-    public static Block YELLOW_FLOWER = register(new Block(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
-    public static Block RED_FLOWER = register(new Block(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
+    public static Block YELLOW_FLOWER = register(new Flower(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
+    public static Block RED_FLOWER = register(new Flower(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
     
     public static Block LANTERN = register(new Block(14, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15));
     public static Block METAL_CUBE_BLUE = register(new Block(16, "Blue Metalish Block", BlockModel.makeCube(Block.cubeUVs(0, 1))));
@@ -300,7 +300,7 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
             // queue block updates
             var neighbourBlock = pos + dir;
             if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
-                world.runLater(() => world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id), 10);
+                world.runLater(neighbourBlock, () => world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id), 10);
                 world.blockUpdate(neighbourBlock, 10);
             }
         }

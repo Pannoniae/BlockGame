@@ -124,4 +124,10 @@ public class SharedBlockVAO : VAO {
             return count;
         }
     }
+
+    public void Dispose() {
+        GL.DeleteBuffer(vbo);
+        GL.DeleteBuffer(ibo);
+        GL.DeleteVertexArray(VAOHandle);
+    }
 }

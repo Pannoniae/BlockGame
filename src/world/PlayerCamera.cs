@@ -43,7 +43,7 @@ public class PlayerCamera {
         var proj = getProjectionMatrix();
         var mat = view * proj;
         frustum = new BoundingFrustum(mat);
-        calculateFrustum();
+        calculateFrustum(1);
     }
 
     public void setViewport(float width, float height) {
@@ -52,8 +52,8 @@ public class PlayerCamera {
         aspectRatio = viewportWidth / viewportHeight;
     }
 
-    public void calculateFrustum() {
-        var view = getViewMatrix(1);
+    public void calculateFrustum(double interp) {
+        var view = getViewMatrix(interp);
         var proj = getProjectionMatrix();
         var mat = view * proj;
         frustum.Matrix = mat;
@@ -109,7 +109,7 @@ public class PlayerCamera {
         return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
     }
 
-    public float hfov2vfov(float hfov) {
+    public static float hfov2vfov(float hfov) {
         return 1.0f / MathF.Tan(hfov * 0.017453292519943295f / 2.0f);
     }
 }

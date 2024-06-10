@@ -9,7 +9,7 @@ using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
-public class ChunkSectionRenderer {
+public class ChunkSectionRenderer : IDisposable {
     public ChunkSection section;
 
 
@@ -18,8 +18,8 @@ public class ChunkSectionRenderer {
     public bool isEmptyRenderOpaque;
     public bool isEmptyRenderTranslucent;
 
-    public VAO vao;
-    public VAO watervao;
+    public VAO? vao;
+    public VAO? watervao;
 
     public bool hasTranslucentBlocks;
     public bool hasOnlySolid;
@@ -210,8 +210,8 @@ public class ChunkSectionRenderer {
         return frustum.Contains(section.bbbox) != ContainmentType.Disjoint;
     }
 
-    public void drawOpaque(PlayerCamera camera) {
-        if (!isEmptyRenderOpaque && isVisible(camera.frustum)) {
+    public void drawOpaque() {
+        if (!isEmptyRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
 
@@ -221,8 +221,8 @@ public class ChunkSectionRenderer {
         }
     }
 
-    public void drawTransparent(PlayerCamera camera) {
-        if (hasTranslucentBlocks && !isEmptyRenderTranslucent && isVisible(camera.frustum)) {
+    public void drawTransparent() {
+        if (hasTranslucentBlocks && !isEmptyRenderTranslucent) {
             watervao.bind();
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
@@ -493,6 +493,8 @@ public class ChunkSectionRenderer {
                 var dir = facesRef.direction;
                 if (dir == RawDirection.NONE) {
                     // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
+                    test2 = true;
+                    light.First = light.Second = light.Third = light.Fourth = getLightFromCacheUnsafe(ref lightRef, x, y, z);
                 }
                 else {
                     nb = Blocks.get(nba[(byte)dir]);
@@ -516,8 +518,9 @@ public class ChunkSectionRenderer {
                         if (dir != RawDirection.NONE) {
 
                             // ox, oy, oz
-                            FourShorts o;
+                            FourBytes o;
                             Unsafe.SkipInit(out o);
+                            o.Whole = 0;
                             // bx, by, bz
                             FourSBytes b;
                             // lx, ly, lz, lo
@@ -537,7 +540,7 @@ public class ChunkSectionRenderer {
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Third = (sbyte)(z + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
-                                o.First = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
+                                o.First = toByte(Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)).isFullBlock);
                                 l.First = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
 
                                 b.First = (sbyte)(x + offset);
@@ -546,7 +549,7 @@ public class ChunkSectionRenderer {
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Third = (sbyte)(z + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
-                                o.Second = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
+                                o.Second = toByte(Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)).isFullBlock);
                                 l.Second = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
 
                                 b.First = (sbyte)(x + offset);
@@ -555,13 +558,15 @@ public class ChunkSectionRenderer {
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Third = (sbyte)(z + offset);
                                 //mult++;
-                                o.Third = getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third);
+                                o.Third = toByte(Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)).isFullBlock);
                                 l.Third = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
 
                                 // only apply AO if enabled
                                 if ((settings & SETTING_AO) == 1 && !facesRef.noAO) {
                                     ao |= (byte)((calculateAOFixed(o.First, o.Second, o.Third) & 0x3) << j * 2);
                                 }
+
+                                // if face is noAO, don't average....
                                 if ((settings & SETTING_SMOOTH_LIGHTING) == 1) {
                                     // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                     // calculate average
@@ -570,7 +575,7 @@ public class ChunkSectionRenderer {
 
                                     // this averages the four light values. If the block is opaque, it ignores the light value.
                                     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                    byte average(byte lx, byte ly, byte lz, byte lo, FourShorts o) {
+                                    byte average(byte lx, byte ly, byte lz, byte lo, FourBytes o) {
                                         byte flags = 0;
                                         // check ox
                                         if (o.First == 0) {
@@ -714,6 +719,11 @@ public class ChunkSectionRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    unsafe public static byte toByte(bool b) {
+        return *(byte*)&b;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T access<T>(T[] arr, int index) {
         ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
         return Unsafe.Add(ref arrayRef, index);
@@ -765,6 +775,10 @@ public class ChunkSectionRenderer {
         for (int i = 0; i < values.Length; i++) {
             Unsafe.Add(ref arrayRef, index + i) = values[i];
         }
+    }
+    public void Dispose() {
+        vao?.Dispose();
+        watervao?.Dispose();
     }
 }
 

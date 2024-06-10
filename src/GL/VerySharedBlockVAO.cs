@@ -126,4 +126,9 @@ public class VerySharedBlockVAO : VAO {
             return count;
         }
     }
+
+    public void Dispose() {
+        GL.DeleteBuffer(vbo);
+        GL.DeleteBuffer(ibo);
+    }
 }

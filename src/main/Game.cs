@@ -51,6 +51,7 @@ public partial class Game {
     public static GUI.GUI gui;
 
     public static IMouse mouse;
+    public static Vector2 mousePos;
     public static IKeyboard keyboard;
 
     public Vector2 lastMousePos;
@@ -109,13 +110,20 @@ public partial class Game {
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
-        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 4));
+        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 6));
         ;
 #if DEBUG
         api.Flags = ContextFlags.Debug;
 #endif
         windowOptions.API = api;
         Window.PrioritizeGlfw();
+        // no errors if in release mode, fuck glGetError() ;)
+        // ALSO WHAT THE FUCK SILK.NET
+        // here, Glfw.GetApi() does not work, you have to use THIS so the context flags get picked up
+        // which moron thought it shouldn't work?
+#if !DEBUG
+        GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
+#endif
         window = Window.Create(windowOptions);
         window.Load += init;
         //window.Update += update;
@@ -136,13 +144,15 @@ public partial class Game {
             input = window.CreateInput();
             GL = window.CreateOpenGL();
 #if DEBUG
-        // initialise debug print
-        GL.Enable(EnableCap.DebugOutput);
-        GL.Enable(EnableCap.DebugOutputSynchronous);
-        GL.DebugMessageCallback(GLDebug, 0);
-        GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
+            // initialise debug print
+            GL.Enable(EnableCap.DebugOutput);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
+            GL.DebugMessageCallback(GLDebug, 0);
+            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
 #endif
 
+            GL.GetInteger(GetPName.ContextFlags, out int noErrors);
+            Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
             proc = Process.GetCurrentProcess();
             GD = new GraphicsDevice(GL);
@@ -199,7 +209,7 @@ public partial class Game {
             Console.Out.WriteLine("played?");
 
             gui = new GUI.GUI();
-            fontLoader = new FontLoader(gui.tb, "fonts/8x13.bdf", "fonts/6x13.bdf");
+            fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
             gui.loadFont(13);
 
             //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
@@ -326,7 +336,7 @@ public partial class Game {
 
     public void resize(Vector2D<int> size) {
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
-        fontLoader.renderer.OnViewportChanged();
+        fontLoader.renderer.OnViewportChanged(size);
         width = size.X;
         height = size.Y;
         gui.resize(size);
@@ -344,6 +354,7 @@ public partial class Game {
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
+        mousePos = mouse.Position;
         currentScreen.update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
         //Console.Out.WriteLine(after - before);
@@ -405,10 +416,12 @@ public partial class Game {
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
+        fontLoader.renderer.begin();
         gui.tb.Begin();
         gui.immediatetb.Begin(BatcherBeginMode.Immediate);
         currentScreen.draw();
         gui.tb.End();
+        fontLoader.renderer.end();
         currentScreen.postDraw();
         gui.immediatetb.End();
         GD.DepthTestingEnabled = true;

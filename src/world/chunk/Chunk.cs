@@ -4,7 +4,7 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class Chunk {
+public class Chunk : IDisposable {
     public ChunkStatus status;
 
     public HeightMap height;
@@ -248,21 +248,24 @@ public class Chunk {
         status = ChunkStatus.MESHED;
     }
 
-    public void drawOpaque(PlayerCamera camera) {
+    public void drawOpaque() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.drawOpaque(camera);
+            chunks[i].renderer.drawOpaque();
         }
     }
 
-    public void drawTransparent(PlayerCamera camera) {
+    public void drawTransparent() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.drawTransparent(camera);
+            chunks[i].renderer.drawTransparent();
         }
     }
 
     public void destroyChunk() {
+        Dispose();
+    }
+    public void Dispose() {
         foreach (var chunk in chunks) {
-            chunk.blocks.Dispose();
+            chunk.Dispose();
         }
     }
 }
