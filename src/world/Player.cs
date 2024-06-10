@@ -60,11 +60,7 @@ public class Player {
 
     public Vector3D<double> inputVector;
 
-
-    /// <summary>
-    /// Used for transparent chunk sorting
-    /// </summary>
-    public Vector3D<double> lastSort = new(double.MinValue, double.MinValue, double.MinValue);
+    public PlayerRenderer renderer;
 
 
     public Inventory hotbar;
@@ -83,6 +79,7 @@ public class Player {
         hotbar = new Inventory();
         camera = new PlayerCamera(this, new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
             Constants.initialWidth, Constants.initialHeight);
+        renderer = new PlayerRenderer(this);
 
         this.world = world;
         var f = camera.CalculateForwardVector();
@@ -91,7 +88,7 @@ public class Player {
     }
 
     public void render(double dt, double interp) {
-
+        renderer.render(dt, interp);
     }
 
 
