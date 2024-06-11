@@ -146,12 +146,18 @@ public class GameScreen : Screen {
         world.player.camera.calculateFrustum(interp);
         //Console.Out.WriteLine(world.player.camera.frustum);
         world.renderer.render(interp);
-        world.player.render(dt, interp);
 
         if (Game.instance.targetedPos.HasValue) {
             world.renderer.drawBlockOutline(interp);
         }
         D.update(interp);
+    }
+
+    public override void postRender(double dt, double interp) {
+        // render entities
+        GD.DepthTestingEnabled = false;
+        world.player.render(dt, interp);
+        //GD.DepthTestingEnabled = true;
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {

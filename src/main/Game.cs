@@ -401,6 +401,7 @@ public partial class Game {
 
         currentScreen.clear(GD, dt, interp);
         currentScreen.render(dt, interp);
+        currentScreen.postRender(dt, interp);
 
         // before this, only GL, after this, only GD
         GLTracker.load();

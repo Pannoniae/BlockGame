@@ -66,6 +66,11 @@ public class Screen : Menu {
         currentMenu?.render(dt, interp);
     }
 
+    public override void postRender(double dt, double interp) {
+        base.postRender(dt, interp);
+        currentMenu?.postRender(dt, interp);
+    }
+
     public override void onMouseDown(IMouse mouse, MouseButton button) {
         base.onMouseDown(mouse, button);
         currentMenu?.onMouseDown(mouse, button);

@@ -95,6 +95,11 @@ public class Player {
     public void update(double dt) {
         collisionXThisFrame = false;
         collisionZThisFrame = false;
+
+        // after everything is done
+        // calculate total traveled
+        setPrevVars();
+
         updateInputVelocity(dt);
         velocity += accel * dt;
         //position += velocity * dt;
@@ -132,9 +137,9 @@ public class Player {
         if (Math.Abs(velocity.withoutY().Length) > 0.0001 && onGround) {
             camera.bob = Math.Clamp((float)(velocity.Length / 4), 0, 1);
         }
-        // after everything is done
-        // calculate total traveled
-        setPrevVars();
+        else {
+            camera.bob *= 0.4f;
+        }
     }
 
     public void setPrevVars() {
