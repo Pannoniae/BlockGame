@@ -86,7 +86,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
         }
     }
 
-    public static String getTypeName(NBTTagType id) {
+    public static string getTypeName(NBTTagType id) {
         return id switch {
             NBTTagType.TAG_End => "TAG_End",
             NBTTagType.TAG_Byte => "TAG_Byte",

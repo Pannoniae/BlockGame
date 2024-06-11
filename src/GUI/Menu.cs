@@ -23,7 +23,8 @@ public class Menu {
 
     public Dictionary<string, GUIElement> elements = new();
 
-    public GUIElement? activeElement;
+    public GUIElement? hoveredElement;
+    public GUIElement? clickedElement;
 
     public static LoadingMenu LOADING = new();
     public static MainMenu MAIN_MENU = new();
@@ -55,7 +56,7 @@ public class Menu {
             }
         }
         // draw tooltip for active element
-        var tooltip = activeElement?.tooltip;
+        var tooltip = hoveredElement?.tooltip;
         if (!string.IsNullOrEmpty(tooltip)) {
             Game.gui.drawString(tooltip, Game.mousePos + new Vector2(MOUSEPOSPADDING));
         }
@@ -116,13 +117,14 @@ public class Menu {
             //Console.Out.WriteLine(element);
             //Console.Out.WriteLine(element.bounds);
             //Console.Out.WriteLine(pos);
+            element.onMouseMove();
             if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
-                activeElement = element;
+                hoveredElement = element;
                 found = true;
             }
         }
         if (!found) {
-            activeElement = null;
+            hoveredElement = null;
         }
     }
 

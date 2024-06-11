@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
@@ -86,14 +88,19 @@ public class ExtremelySharedBlockVAO : VAO {
             // index buffer comes after the vertex data
             indexOffset = vertexSize;
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-            fixed (BlockVertex* b = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize + indexSize, b,
-                    BufferStorageMask.DynamicStorageBit);
+            var c = ArrayPool<byte>.Shared.Rent(data.Length * sizeof(BlockVertex) + indices.Length * sizeof(ushort));
+            var cs = c.AsSpan();
+            var c2 = c.AsSpan(data.Length * sizeof(BlockVertex));
+            MemoryMarshal.AsBytes(data).CopyTo(cs);
+            MemoryMarshal.AsBytes(indices).CopyTo(c2);
+            fixed (byte* ptr = c) {
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize + indexSize, ptr,
+                    BufferStorageMask.None);
+
             }
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, buffer);
-            fixed (ushort* u = indices) {
-                GL.BufferSubData(BufferTargetARB.ElementArrayBuffer, (nint)indexOffset, indexSize, u);
-            }
+            ArrayPool<byte>.Shared.Return(c);
+
         }
 
         format();
