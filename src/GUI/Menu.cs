@@ -102,6 +102,10 @@ public class Menu {
 
     }
 
+    public virtual void postRender(double dt, double interp) {
+
+    }
+
     public virtual void onMouseDown(IMouse mouse, MouseButton button) {
 
     }
