@@ -28,34 +28,6 @@ public class ExtremelySharedBlockVAO : VAO {
         blockTexture = Game.instance.blockTexture;
     }
 
-    public void upload(float[] data) {
-        unsafe {
-            buffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-            count = (uint)data.Length;
-            fixed (float* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
-                    BufferStorageMask.None);
-            }
-        }
-
-        format();
-    }
-
-    public void upload(Span<float> data) {
-        unsafe {
-            buffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-            count = (uint)data.Length;
-            fixed (float* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
-                    BufferStorageMask.None);
-            }
-        }
-
-        format();
-    }
-
     public void upload(BlockVertex[] data, ushort[] indices) {
         unsafe {
             buffer = GL.GenBuffer();
