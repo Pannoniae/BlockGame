@@ -126,6 +126,9 @@ public class GUIElement {
     public virtual void click() {
         clicked?.Invoke();
     }
+
+    public virtual void onMouseMove() {
+    }
 }
 
 public enum HorizontalAnchor : byte {

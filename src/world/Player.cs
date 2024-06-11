@@ -138,7 +138,7 @@ public class Player {
             camera.bob = Math.Clamp((float)(velocity.Length / 4), 0, 1);
         }
         else {
-            camera.bob *= 0.4f;
+            camera.bob *= 0.9f;
         }
     }
 
