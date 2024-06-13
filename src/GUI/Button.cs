@@ -22,10 +22,20 @@ public class Button : GUIElement {
 
     public bool shadowed = false;
 
-    public Button(Menu menu, string name, Vector2D<int> pos, bool wide, string? text = default) : base(menu, name) {
+    public Vector2D<int> position {
+        get => new(GUIbounds.X, GUIbounds.Y);
+        set => setPosition(new Rectangle(value.X, value.Y, wide ? 192 : 128, 16));
+    }
+
+    public Button(Menu menu, string name, bool wide, string? text = default) : base(menu, name) {
         this.text = text;
-        setPosition(new Rectangle(pos.X, pos.Y, wide ? 192 : 128, 16));
         this.wide = wide;
+        guiPosition.Width = wide ? 192 : 128;
+        guiPosition.Height = 16;
+    }
+
+    public void setPosition(Vector2D<int> pos) {
+        setPosition(new Rectangle(pos.X, pos.Y, guiPosition.Width, guiPosition.Height));
     }
 
     public override void draw() {

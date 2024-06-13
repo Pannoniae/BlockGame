@@ -12,7 +12,10 @@ public class SettingsMenu : Menu {
         base.activate();
         // load settings (later)
         var settings = Settings.instance;
-        var vsync = new ToggleButton(this, "vsync", new Vector2D<int>(0, 16), false, settings.vSync ? 1 : 0,
+
+        var settingElements = new List<GUIElement>();
+
+        var vsync = new ToggleButton(this, "vsync",false, settings.vSync ? 1 : 0,
             "VSync: OFF", "VSync: ON");
         vsync.topCentre();
         vsync.clicked += () => {
@@ -20,33 +23,37 @@ public class SettingsMenu : Menu {
             Game.window.VSync = settings.vSync;
         };
         vsync.tooltip = "Turns on vertical synchronisation.";
+        settingElements.Add(vsync);
         addElement(vsync);
 
-        var guiScale = new ToggleButton(this, "guiScale", new Vector2D<int>(0, 40), false, settings.guiScale == 4 ? 1 : 0,
+        var guiScale = new ToggleButton(this, "guiScale",false, settings.guiScale == 4 ? 1 : 0,
             "GUI Scale: Small", "GUI Scale: Large");
         guiScale.topCentre();
         guiScale.clicked += () => {
             settings.guiScale = guiScale.getIndex() == 1 ? 4 : 2;
             GUI.guiScale = settings.guiScale;
         };
+        settingElements.Add(guiScale);
         addElement(guiScale);
 
-        var AO = new ToggleButton(this, "ao", new Vector2D<int>(0, 64), false, settings.AO ? 1 : 0,
+        var AO = new ToggleButton(this, "ao",false, settings.AO ? 1 : 0,
             "Ambient Occlusion: Disabled", "Ambient Occlusion: Enabled");
         AO.topCentre();
         AO.clicked += () => {
             settings.AO = AO.getIndex() == 1;
         };
         AO.tooltip = "Ambient Occlusion makes block corners darker to simulate shadows.";
+        settingElements.Add(AO);
         addElement(AO);
 
-        var smoothLighting = new ToggleButton(this, "smoothLighting", new Vector2D<int>(0, 88), false, settings.smoothLighting ? 1 : 0,
+        var smoothLighting = new ToggleButton(this, "smoothLighting", false, settings.smoothLighting ? 1 : 0,
             "Smooth Lighting: Disabled", "Smooth Lighting: Enabled");
         smoothLighting.topCentre();
         smoothLighting.clicked += () => {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
         };
         smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
+        settingElements.Add(smoothLighting);
         addElement(smoothLighting);
 
         var renderDistance = new Slider(this, "renderDistance", 2, 32, 1, settings.renderDistance);
@@ -56,14 +63,47 @@ public class SettingsMenu : Menu {
         renderDistance.applied += () => {
             settings.renderDistance = (int)renderDistance.value;
         };
+        renderDistance.getText = value => "Render Distance: " + value;
+        settingElements.Add(renderDistance);
         addElement(renderDistance);
 
-        var back = new Button(this, "back", new Vector2D<int>(2, -18), false, "Back") {
+        var FOV = new FOVSlider(this, "FOV", 60, 120, 1, (int)settings.FOV);
+        FOV.setPosition(new Rectangle(0, 112, 128, 16));
+        FOV.topCentre();
+        FOV.applied += () => {
+            settings.FOV = (int)FOV.value;
+        };
+        FOV.getText = value => {
+            if (value == 70)
+                return "Field of View: Normal";
+            if (value == 110)
+                return "Field of View: Quake Pro";
+            if (value == 60)
+                return "Field of View: Fish Eye";
+            if (value == 120)
+                return "Field of View: Tunnel Vision";
+            return "Field of View: " + value;
+        };
+        settingElements.Add(FOV);
+        addElement(FOV);
+
+        var back = new Button(this, "back",false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
+        back.setPosition(new Vector2D<int>(2, -18));
         back.clicked += returnToMainMenu;
         addElement(back);
+
+        layoutSettings(settingElements, new Vector2D<int>(0, 16));
+    }
+
+    public void layoutSettings(List<GUIElement> elements, Vector2D<int> startPos) {
+        var pos = startPos;
+        foreach (var element in elements) {
+            element.setPosition(new Rectangle(pos.X, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));
+            pos.Y += 18;
+        }
     }
 
     public override void deactivate() {

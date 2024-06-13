@@ -21,7 +21,7 @@ public class PlayerCamera {
     public float yaw { get; set; } = 90f;
     public float pitch { get; set; }
 
-    public float hfov = 70;
+    public float hfov => Settings.instance.FOV;
 
 
     // in degrees
@@ -58,11 +58,6 @@ public class PlayerCamera {
         var proj = getProjectionMatrix();
         var mat = view * proj;
         frustum.Matrix = mat;
-    }
-
-    public void modifyFOV(float fov) {
-        //We don't want to be able to zoom in too close or too far away so clamp to these values
-        hfov = Math.Clamp(hfov - fov, 30f, 150f);
     }
 
     public void ModifyDirection(float xOffset, float yOffset) {
@@ -121,7 +116,11 @@ public class PlayerCamera {
         return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
     }
 
-    public static float hfov2vfov(float hfov) {
-        return 1.0f / MathF.Tan(hfov * 0.017453292519943295f / 2.0f);
+
+    /// <summary>
+    /// Converts horizontal FOV to vertical FOV.
+    /// </summary>
+    public float hfov2vfov(float hfov) {
+        return 2 * MathF.Atan(MathF.Tan(Utils.deg2rad(hfov) * 0.5f) / aspectRatio);
     }
 }
