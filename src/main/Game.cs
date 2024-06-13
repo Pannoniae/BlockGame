@@ -25,6 +25,7 @@ using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
+using ErrorCode = Silk.NET.GLFW.ErrorCode;
 using MouseButton = Silk.NET.Input.MouseButton;
 using Sound = SFML.Audio.Sound;
 
@@ -323,7 +324,7 @@ public partial class Game {
                         default(ComPtr<IDXGIAdapter>),
                         D3DDriverType.Hardware,
                         Software: default,
-                        (uint)CreateDeviceFlag.Debug,
+                        (uint)CreateDeviceFlag.None,
                         null,
                         0,
                         D3D11.SdkVersion,
@@ -369,6 +370,10 @@ public partial class Game {
     }
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        if (key == Key.F7 && keyboard.IsKeyPressed(Key.F6)) {
+            Console.Out.WriteLine("Crashing game!");
+            throw new Exception("Manual crash!");
+        }
         currentScreen.onKeyDown(keyboard, key, scancode);
     }
 
