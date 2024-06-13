@@ -6,10 +6,12 @@ public class PauseMenu : Menu {
     public override void activate() {
         base.activate();
 
-        var backToGame = new Button(this, "backToGame", new Vector2D<int>(0, 0), false, "Back to the game");
+        var backToGame = new Button(this, "backToGame", false, "Back to the game");
+        backToGame.setPosition(new Vector2D<int>(0, 0));
         backToGame.centreContents();
         backToGame.clicked += () => { Screen.GAME_SCREEN.backToGame(); };
-        var mainMenu = new Button(this, "mainMenu", new Vector2D<int>(0, 32), false, "Quit to Main Menu");
+        var mainMenu = new Button(this, "mainMenu", false, "Quit to Main Menu");
+        mainMenu.setPosition(new Vector2D<int>(0, 32));
         mainMenu.centreContents();
         mainMenu.clicked += returnToMainMenu;
         addElement(backToGame);

@@ -7,7 +7,8 @@ namespace BlockGame.GUI;
 public class MainMenu : Menu {
     public override void activate() {
         base.activate();
-        var sp = new Button(this, "singleplayer", new Vector2D<int>(0, -64), true, "Singleplayer");
+        var sp = new Button(this, "singleplayer", true, "Singleplayer");
+        sp.setPosition(new Vector2D<int>(0, -64));
         sp.centreContents();
         sp.clicked += () => {
             // we are *already* on the main thread; this is just needed so it executes a frame later
@@ -19,9 +20,11 @@ public class MainMenu : Menu {
             });
         };
         Console.Out.WriteLine("sp:" + sp.bounds);
-        var button2 = new Button(this, "multiplayer", new Vector2D<int>(0, -32), true, "Multiplayer (soon)");
+        var button2 = new Button(this, "multiplayer", true, "Multiplayer (soon)");
+        button2.setPosition(new Vector2D<int>(0, -32));
         button2.centreContents();
-        var settings = new Button(this, "settings", new Vector2D<int>(0, 0), true, "Settings");
+        var settings = new Button(this, "settings", true, "Settings");
+        settings.setPosition(new Vector2D<int>(0, 0));
         settings.centreContents();
         settings.clicked += () => {
                 Game.instance.executeOnMainThread(() => {
@@ -29,7 +32,8 @@ public class MainMenu : Menu {
                 });
             }
             ;
-        var button4 = new Button(this, "quit", new Vector2D<int>(0, 32), true, "Quit");
+        var button4 = new Button(this, "quit", true, "Quit");
+        button4.setPosition(new Vector2D<int>(0, 32));
         button4.centreContents();
         button4.clicked += () => Environment.Exit(0);
         addElement(sp);

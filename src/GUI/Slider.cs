@@ -56,16 +56,20 @@ public class Slider : GUIElement {
         float knobY = GUIbounds.Y - 1f;
         Game.gui.drawUI(Game.gui.guiTexture, new Vector2(knobX, knobY), knob);
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
-        Game.gui.drawStringCentred(getText(), centre);
+        Game.gui.drawStringCentred(getText(value), centre);
     }
 
-    public string getText() {
-        return "Render Distance: " + value;
-    }
+    public Func<float, string> getText;
 
     public event Action? applied;
 
     protected virtual void apply() {
         applied?.Invoke();
+    }
+}
+
+public class FOVSlider : Slider {
+
+    public FOVSlider(Menu menu, string name, int min, int max, float step, int defaultValue) : base(menu, name, min, max, step, defaultValue) {
     }
 }
