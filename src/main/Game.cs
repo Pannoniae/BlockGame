@@ -9,6 +9,10 @@ using BlockGame.GUI;
 using BlockGame.util;
 using BlockGame.util.font;
 using SFML.Audio;
+using Silk.NET.Core.Native;
+using Silk.NET.Direct3D.Compilers;
+using Silk.NET.Direct3D11;
+using Silk.NET.DXGI;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -168,6 +172,10 @@ public partial class Game {
 
             GLTracker = new GLStateTracker(GL, GD);
 
+
+            // needed for stupid laptop GPUs
+            initDirectX();
+
             foreach (var mouse in input.Mice) {
                 mouse.MouseMove += onMouseMove;
                 mouse.MouseDown += onMouseDown;
@@ -289,6 +297,46 @@ public partial class Game {
         catch (Exception e) {
             // nothing!
             Console.Out.WriteLine("Well, apparently there is no nVidia");
+        }
+    }
+
+
+    public static void initDirectX() {
+        unsafe {
+            try {
+                const bool forceDxvk = false;
+
+                DXGI dxgi = null!;
+                D3D11 d3d11 = null!;
+
+                ComPtr<ID3D11Device> device = default;
+                ComPtr<ID3D11DeviceContext> deviceContext = default;
+
+                dxgi = DXGI.GetApi(window, forceDxvk);
+                d3d11 = D3D11.GetApi(window, forceDxvk);
+
+                // Create our D3D11 logical device.
+                SilkMarshal.ThrowHResult
+                (
+                    d3d11.CreateDevice
+                    (
+                        default(ComPtr<IDXGIAdapter>),
+                        D3DDriverType.Hardware,
+                        Software: default,
+                        (uint)CreateDeviceFlag.Debug,
+                        null,
+                        0,
+                        D3D11.SdkVersion,
+                        ref device,
+                        null,
+                        ref deviceContext
+                    )
+                );
+                Console.Out.WriteLine("Successfully setup DirectX!");
+            }
+            catch (Exception e) {
+                Console.Out.WriteLine("Couldn't setup DirectX!");
+            }
         }
     }
 
