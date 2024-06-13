@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.util;
@@ -115,14 +116,14 @@ public class GUI {
     }
 
     /// <summary>
-    /// Convert a screen position to a UI position.
+    /// Convert a UI position to a screen position.
     /// </summary>
     public static int u2s(int pos) {
         return pos * guiScale;
     }
 
     /// <summary>
-    /// Convert a screen position to a UI position.
+    /// Convert a UI position to a screen position.
     /// </summary>
     public static Vector2 u2s(Vector2 pos) {
         return new Vector2(pos.X * guiScale, pos.Y * guiScale);
@@ -163,6 +164,10 @@ public class GUI {
         tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 
+    public void draw(Texture2D texture, RectangleF dest, Rectangle? source = null, Color4b color = default) {
+        tb.Draw(texture, dest, source, color == default ? Color4b.White : color);
+    }
+
     public void drawImmediate(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         immediatetb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
@@ -179,12 +184,16 @@ public class GUI {
     }
 
     internal static int TEXTSCALE => guiScale / 2;
-    internal static Vector2 TEXTSCALEV => new Vector2(TEXTSCALE, TEXTSCALE);
+    internal static Vector2 TEXTSCALEV => new(TEXTSCALE, TEXTSCALE);
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
 
     public void drawString(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    }
+
+    public void drawStringSmall(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+        DrawStringThin(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE / 2f), default);
     }
 
     public void drawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
@@ -261,6 +270,14 @@ public class GUI {
 
     public Vector2 measureString(ReadOnlySpan<char> text) {
         return guiFont.MeasureString(text, TEXTSCALEV);
+    }
+
+    public Vector2 measureStringThin(ReadOnlySpan<char> text) {
+        return guiFontThin.MeasureString(text, TEXTSCALEV);
+    }
+
+    public Vector2 measureStringSmall(ReadOnlySpan<char> text) {
+        return guiFontThin.MeasureString(text, TEXTSCALEV / 2f);
     }
 
     public void drawBlock(Block block, int x, int y, int size) {

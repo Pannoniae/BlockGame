@@ -1,5 +1,6 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
+using BlockGame.GUI;
 using BlockGame.util;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -180,7 +181,7 @@ public class Player {
 
     public void onChunkChanged() {
         //Console.Out.WriteLine("chunk changed");
-        loadChunksAroundThePlayer(World.RENDERDISTANCE);
+        loadChunksAroundThePlayer(Settings.instance.renderDistance);
     }
 
     private void applyInputMovement(double dt) {

@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.GUI;
 using BlockGame.util;
 
 namespace BlockGame;
@@ -108,17 +109,16 @@ public class PlayerCamera {
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
-        var factor = 4f;
-        var factor2 = 1.5f;
+        var factor = 2f;
+        var factor2 = 0.75f;
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, up)
                * Matrix4x4.CreateRotationZ((float)(Math.Sin(tt) * iBob * factor))
-               * Matrix4x4.CreateRotationX((float)(Math.Abs(Math.Cos(tt)) * iBob * factor))
-               * Matrix4x4.CreateRotationY((float)(Math.Sin(tt) * iBob * factor2));
+               * Matrix4x4.CreateRotationX((float)(Math.Abs(Math.Cos(tt)) * iBob * factor));
 
     }
 
     public Matrix4x4 getProjectionMatrix() {
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
     }
 
     public static float hfov2vfov(float hfov) {

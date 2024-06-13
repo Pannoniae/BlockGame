@@ -288,19 +288,6 @@ public class ChunkSectionRenderer : IDisposable {
 
         //Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
 
-        static ushort getBlockFromSection(BlockData data, int x, int y, int z) {
-            return data[x, y, z];
-        }
-
-        static byte getLightFromSection(BlockData data, int x, int y, int z) {
-            return data.getLight(x, y, z);
-        }
-
-        static BlockData? gets(ChunkSection section, int x, int y, int z) {
-            var sectionPos = World.getChunkSectionPos(x, y, z);
-            return access(neighbourSections, (sectionPos.y - section.chunkY + 1) * 9 + (sectionPos.z - section.chunkZ + 1) * 3 + (sectionPos.x - section.chunkX) + 1);
-        }
-
         // setup neighbouring sections
         var coord = section.chunkCoord;
         ref var neighbourSectionsArray = ref MemoryMarshal.GetArrayDataReference(neighbourSections);
@@ -328,10 +315,6 @@ public class ChunkSectionRenderer : IDisposable {
                     // index for array accesses
                     var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
-                    int sx;
-                    int sy;
-                    int sz;
-
                     int cx;
                     int cy;
                     int cz;
@@ -340,9 +323,9 @@ public class ChunkSectionRenderer : IDisposable {
                     cz = z;
                     alignBlock(ref cx, ref cy, ref cz);
 
-                    sx = (int)MathF.Floor((float)(section.chunkX * Chunk.CHUNKSIZE + x) / Chunk.CHUNKSIZE);
-                    sy = (int)MathF.Floor((float)(section.chunkY * Chunk.CHUNKSIZE + y) / Chunk.CHUNKSIZE);
-                    sz = (int)MathF.Floor((float)(section.chunkZ * Chunk.CHUNKSIZE + z) / Chunk.CHUNKSIZE);
+                    int sx = (section.chunkX * Chunk.CHUNKSIZE + x) >> 4;
+                    int sy = (section.chunkY * Chunk.CHUNKSIZE + y) >> 4;
+                    int sz = (section.chunkZ * Chunk.CHUNKSIZE + z) >> 4;
                     // get neighbouring section
                     var neighbourSection =
                         Unsafe.Add(ref neighbourSectionsArray, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);

@@ -46,9 +46,9 @@ public class Screen : Menu {
         currentMenu?.imGuiDraw();
     }
 
-    public override void click(Vector2 pos) {
-        base.click(pos);
-        currentMenu?.click(pos);
+    public override void onMouseUp(Vector2 pos) {
+        base.onMouseUp(pos);
+        currentMenu?.onMouseUp(pos);
     }
 
     public override void update(double dt) {

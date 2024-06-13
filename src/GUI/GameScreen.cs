@@ -238,7 +238,7 @@ public class GameScreen : Screen {
                     chunk.status = ChunkStatus.MESHED - 1;
                 }
             }
-            world.player.loadChunksAroundThePlayer(World.RENDERDISTANCE);
+            world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
         }
 
         if (key == Key.F) {
@@ -293,8 +293,8 @@ public class GameScreen : Screen {
         });
     }
 
-    public override void click(Vector2 pos) {
-        base.click(pos);
+    public override void onMouseUp(Vector2 pos) {
+        base.onMouseUp(pos);
         // if no longer holding, the player isn't clicking into the window anymore
         if (Game.focused && Game.lockingMouse) {
             Game.lockingMouse = false;

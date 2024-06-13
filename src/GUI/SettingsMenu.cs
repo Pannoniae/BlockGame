@@ -2,6 +2,7 @@ using BlockGame.util;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using TrippyGL;
+using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.GUI;
 
@@ -47,6 +48,15 @@ public class SettingsMenu : Menu {
         };
         smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
         addElement(smoothLighting);
+
+        var renderDistance = new Slider(this, "renderDistance", 2, 32, 1, settings.renderDistance);
+        renderDistance.setPosition(new Rectangle(0, 112, 128, 16));
+        renderDistance.topCentre();
+        renderDistance.tooltip = "The maximum distance at which blocks are rendered.\nHigher values may reduce performance.";
+        renderDistance.applied += () => {
+            settings.renderDistance = (int)renderDistance.value;
+        };
+        addElement(renderDistance);
 
         var back = new Button(this, "back", new Vector2D<int>(2, -18), false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,

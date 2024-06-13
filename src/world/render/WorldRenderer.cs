@@ -1,3 +1,4 @@
+using BlockGame.GUI;
 using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -63,7 +64,7 @@ public class WorldRenderer {
         shader.use();
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
-        shader.setUniform(drawDistance, World.RENDERDISTANCE * Chunk.CHUNKSIZE);
+        shader.setUniform(drawDistance, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
         shader.setUniform(fogColour, defaultClearColour);
     }
 

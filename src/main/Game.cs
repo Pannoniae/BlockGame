@@ -106,6 +106,7 @@ public partial class Game {
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
         //windowOptions.UpdatesPerSecond = 6000;
+
         windowOptions.VSync = false;
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
@@ -312,7 +313,7 @@ public partial class Game {
     }
 
     private void onMouseUp(IMouse m, MouseButton button) {
-        currentScreen.click(m.Position);
+        currentScreen.onMouseUp(mousePos);
     }
 
     private void onMouseScroll(IMouse m, ScrollWheel scroll) {
@@ -413,9 +414,9 @@ public partial class Game {
         gui.tb.Begin();
         gui.immediatetb.Begin(BatcherBeginMode.Immediate);
         currentScreen.draw();
+        currentScreen.postDraw();
         gui.tb.End();
         fontLoader.renderer.end();
-        currentScreen.postDraw();
         gui.immediatetb.End();
         GD.DepthTestingEnabled = true;
         //if (gui.debugScreen) {

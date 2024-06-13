@@ -52,7 +52,7 @@ public class InventoryGUI : Menu {
         }
     }
 
-    public override void click(Vector2 pos) {
+    public override void onMouseUp(Vector2 pos) {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
