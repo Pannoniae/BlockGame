@@ -5,6 +5,7 @@ public class Settings {
     public int guiScale = 4;
     public bool AO = true;
     public bool smoothLighting = true;
+    public int renderDistance = 8;
 
     public static Settings instance = new();
 }

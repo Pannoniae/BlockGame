@@ -5,7 +5,6 @@ using Rectangle = System.Drawing.Rectangle;
 namespace BlockGame.GUI;
 
 public class Text : GUIElement {
-    public string text { get; set; }
 
     public bool shadowed = false;
 

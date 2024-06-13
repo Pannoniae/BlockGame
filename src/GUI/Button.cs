@@ -39,7 +39,7 @@ public class Button : GUIElement {
             tex = pressed ? pressedButton : tex;
         }
         Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), tex);
-        var centre = new Vector2(bounds.X + bounds.Width / 2, bounds.Y + bounds.Height / 2);
+        var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
         if (text != null) {
             if (shadowed) {
                 Game.gui.drawStringCentredShadowed(text, centre);

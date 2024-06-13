@@ -12,6 +12,8 @@ public class GUIElement {
     public HorizontalAnchor horizontalAnchor = HorizontalAnchor.LEFT;
     public VerticalAnchor verticalAnchor = VerticalAnchor.TOP;
 
+    public string? text = null;
+
     public string tooltip = "";
 
     /// <summary>
@@ -128,6 +130,9 @@ public class GUIElement {
     }
 
     public virtual void onMouseMove() {
+    }
+
+    public virtual void update() {
     }
 }
 

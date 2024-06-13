@@ -21,7 +21,7 @@ public class MainMenu : Menu {
         Console.Out.WriteLine("sp:" + sp.bounds);
         var button2 = new Button(this, "multiplayer", new Vector2D<int>(0, -32), true, "Multiplayer (soon)");
         button2.centreContents();
-        var settings = new Button(this, "settings", new Vector2D<int>(0, 0), true, "Settings (soon)");
+        var settings = new Button(this, "settings", new Vector2D<int>(0, 0), true, "Settings");
         settings.centreContents();
         settings.clicked += () => {
                 Game.instance.executeOnMainThread(() => {
