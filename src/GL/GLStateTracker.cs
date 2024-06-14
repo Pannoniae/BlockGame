@@ -15,6 +15,7 @@ public class GLStateTracker {
     public int boundTex3;
 
     public int arrayBuffer;
+    public int elementArrayBuffer;
 
     public int currentShader;
 
@@ -42,6 +43,7 @@ public class GLStateTracker {
 
         // save array buffer
         GL.GetInteger(GetPName.ArrayBufferBinding, out arrayBuffer);
+        GL.GetInteger(GetPName.ElementArrayBufferBinding, out elementArrayBuffer);
 
         // save VAO
         GL.GetInteger(GetPName.VertexArrayBinding, out VAO);
@@ -66,6 +68,7 @@ public class GLStateTracker {
 
         // reset bound array buffer
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, (uint)arrayBuffer);
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, (uint)elementArrayBuffer);
 
         // restore VAO
         GL.BindVertexArray((uint)VAO);

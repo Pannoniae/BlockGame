@@ -31,5 +31,20 @@ public class Program {
             Console.Out.WriteLine("OpenGL info:");
             Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
         }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            // call wglinfo
+            var process = new Process {
+                StartInfo = new ProcessStartInfo {
+                    FileName = "wglinfo64.exe",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            // read its output
+            process.Start();
+            Console.Out.WriteLine("OpenGL info:");
+            Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
+        }
     }
 }
