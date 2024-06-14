@@ -7,7 +7,6 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-
 /// <summary>
 /// Render blocks manually!
 /// </summary>
@@ -88,8 +87,13 @@ public class RenderBlock {
                     o.Fourth++;
                     b.Third = (sbyte)(z + Unsafe.Add(ref offsetArray, o.Fourth));
                     //mult++;
-                    o.Third = chunk.blocks[ b.First, b.Second, b.Third];
+                    o.Third = chunk.blocks[b.First, b.Second, b.Third];
                     l.Third = chunk.blocks.getLight(b.First, b.Second, b.Third);
+
+                    // construct flags
+                    var flags = (byte)(ChunkSectionRenderer.toByte(Blocks.isFullBlock(o.First)) |
+                                       ChunkSectionRenderer.toByte(Blocks.isFullBlock(o.Second)) << 1 |
+                                ChunkSectionRenderer.toByte(Blocks.isFullBlock(o.Third)) << 2);
 
                     // only apply AO if enabled
                     if (Settings.instance.AO) {
