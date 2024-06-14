@@ -97,7 +97,7 @@ public class RenderBlock {
 
                     // only apply AO if enabled
                     if (Settings.instance.AO) {
-                        ao |= (byte)((ChunkSectionRenderer.calculateAOFixed(o.First, o.Second, o.Third) & 0x3) << j * 2);
+                        ao |= (byte)((ChunkSectionRenderer.calculateAOFixed(flags) & 0x3) << j * 2);
                         //Console.Out.WriteLine(ao);
                     }
                     if (Settings.instance.smoothLighting) {

@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 using BlockGame.GUI;
 using BlockGame.util;
 using Silk.NET.Maths;
@@ -512,13 +511,11 @@ public class ChunkSectionRenderer : IDisposable {
                         light.First = light.Second = light.Third = light.Fourth = lba[(byte)dir];
                     }
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
-                    if ((settings & SETTING_SMOOTH_LIGHTING) == 1 || (settings & SETTING_AO) == 1) {
+                    if ((settings & SETTING_SMOOTH_LIGHTING) != 0 || (settings & SETTING_AO) != 0) {
                         if (dir != RawDirection.NONE) {
 
                             // ox, oy, oz
-                            FourBytes o;
-                            Unsafe.SkipInit(out o);
-                            o.Whole = 0;
+                            byte o;
                             // bx, by, bz
                             FourSBytes b;
                             // lx, ly, lz, lo
@@ -530,6 +527,8 @@ public class ChunkSectionRenderer : IDisposable {
                             for (int j = 0; j < 4; j++) {
                                 //mult = dirIdx * 36 + j * 9 + vert * 3;
                                 // premultiply cuz its faster that way
+                                o = 0;
+
                                 ref sbyte offset = ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9);
                                 b.First = (sbyte)(x + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
@@ -537,7 +536,7 @@ public class ChunkSectionRenderer : IDisposable {
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Third = (sbyte)(z + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
-                                o.First = toByte(Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)).isFullBlock);
+                                o = toByte(Blocks.isFullBlock(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)));
                                 l.First = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
 
                                 b.First = (sbyte)(x + offset);
@@ -546,7 +545,7 @@ public class ChunkSectionRenderer : IDisposable {
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Third = (sbyte)(z + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
-                                o.Second = toByte(Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)).isFullBlock);
+                                o |= (byte)(toByte(Blocks.isFullBlock(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third))) << 1);
                                 l.Second = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
 
                                 b.First = (sbyte)(x + offset);
@@ -555,33 +554,33 @@ public class ChunkSectionRenderer : IDisposable {
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Third = (sbyte)(z + offset);
                                 //mult++;
-                                o.Third = toByte(Blocks.get(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third)).isFullBlock);
+                                o |= (byte)(toByte(Blocks.isFullBlock(getBlockFromCacheUnsafe(ref neighbourRef, b.First, b.Second, b.Third))) << 2);
                                 l.Third = getLightFromCacheUnsafe(ref lightRef, b.First, b.Second, b.Third);
 
                                 // only apply AO if enabled
                                 if ((settings & SETTING_AO) == 1 && !facesRef.noAO) {
-                                    ao |= (byte)((calculateAOFixed(o.First, o.Second, o.Third) & 0x3) << j * 2);
+                                    ao |= (byte)((calculateAOFixed(o) & 0x3) << j * 2);
                                 }
 
                                 // if face is noAO, don't average....
-                                if ((settings & SETTING_SMOOTH_LIGHTING) == 1) {
+                                if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
                                     // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                     // calculate average
                                     l.Fourth = lba[(byte)dir];
 
                                     // this averages the four light values. If the block is opaque, it ignores the light value.
                                     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                    byte average(byte lx, byte ly, byte lz, byte lo, FourBytes o) {
+                                    byte average(byte lx, byte ly, byte lz, byte lo, byte o) {
                                         byte flags = 0;
                                         // check ox
-                                        if (o.First == 0) {
+                                        if ((o & 1) == 0) {
                                             flags = 1;
                                         }
-                                        if (o.Second == 0) {
+                                        if (((o >> 1) & 1) == 0) {
                                             flags |= 2;
                                         }
                                         // if both sides are blocked, don't check the corner, won't be visible anyway
-                                        if (o.Third == 0 && flags != 0) {
+                                        if (((o >> 2) & 1) == 0 && flags != 0) {
                                             flags |= 4;
                                         }
                                         return (byte)((lx * (flags & 1) + ly * ((flags & 2) >> 1) + lz * ((flags & 4) >> 2) + lo) / (BitOperations.PopCount(flags) + 1f));
@@ -679,11 +678,19 @@ public class ChunkSectionRenderer : IDisposable {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte calculateAOFixed(int side1, int side2, int corner) {
-        if (side1 != 0 && side2 != 0) {
+    public static byte calculateAOFixed(byte flags) {
+        // side1 = 1
+        // side2 = 2
+        // corner = 4
+
+        // if side1 and side2 are blocked, corner is blocked too
+        // if side1 && side2
+        if ((flags & 3) == 3) {
             return 3;
         }
-        return (byte)(side1 + side2 + corner);
+        // return side1 + side2 + corner
+        // which is conveniently already stored!
+        return byte.PopCount(flags);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
