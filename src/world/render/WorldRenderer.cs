@@ -142,6 +142,7 @@ public class WorldRenderer {
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
             GL.EnableVertexAttribArray(0);
 
+            outline.use();
             //outline_uModel = outline.getUniformLocation("uModel");
             outline_uView = outline.getUniformLocation("uView");
             outline_uProjection = outline.getUniformLocation("uProjection");
@@ -165,7 +166,7 @@ public class WorldRenderer {
             GL.BindVertexArray(outlineVao);
 
 
-            float[] vertices = [
+            Span<float> vertices = stackalloc float[24 * 3] {
                 // bottom
                 minX, minY, minZ,
                 minX, minY, maxZ,
@@ -195,7 +196,7 @@ public class WorldRenderer {
                 minX, maxY, maxZ,
                 maxX, minY, maxZ,
                 maxX, maxY, maxZ
-            ];
+            };
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
             fixed (float* data = vertices) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(vertices.Length * sizeof(float)), data);
@@ -205,7 +206,7 @@ public class WorldRenderer {
 
     public void drawBlockOutline(double interp) {
         var GL = Game.GL;
-        var block = Game.instance.targetedPos!.Value;
+        //var block = Game.instance.targetedPos!.Value;
         GL.BindVertexArray(outlineVao);
         outline.use();
         //outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));

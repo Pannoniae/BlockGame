@@ -21,7 +21,7 @@ public class PlayerCamera {
     public float yaw { get; set; } = 90f;
     public float pitch { get; set; }
 
-    public float hfov => Settings.instance.FOV;
+    public float vfov => Settings.instance.FOV;
 
 
     // in degrees
@@ -101,6 +101,19 @@ public class PlayerCamera {
 
     }
 
+    public Matrix4x4 getTestViewMatrix(double interp) {
+        var interpPos = new Vector3();
+        var iBob = float.DegreesToRadians(renderBob(interp));
+        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var factor = 0.4f;
+        var factor2 = 0.15f;
+        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward, up)
+               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
+               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
+               * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
+
+    }
+
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
@@ -113,7 +126,7 @@ public class PlayerCamera {
     }
 
     public Matrix4x4 getProjectionMatrix() {
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(hfov2vfov(hfov), aspectRatio, 0.1f, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(vfov), aspectRatio, 0.1f, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
     }
 
 

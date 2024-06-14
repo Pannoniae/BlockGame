@@ -308,12 +308,17 @@ public class ChunkSectionRenderer : IDisposable {
                         z is >= 0 and < Chunk.CHUNKSIZE &&
                         y is >= 0 and < Chunk.CHUNKSIZE) {
                         // skip this entire loop
+                        // also increment the references
+                        // we need to add 1 because we are incrementing too!
+                        var diff = (Chunk.CHUNKSIZE - 1) - x + 1;
+                        neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, diff);
+                        lightArrayRef = ref Unsafe.Add(ref lightArrayRef, diff);
                         x = Chunk.CHUNKSIZE - 1;
                         continue;
                     }
 
                     // index for array accesses
-                    var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+                    //var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
                     int cx;
                     int cy;
@@ -331,13 +336,17 @@ public class ChunkSectionRenderer : IDisposable {
                         Unsafe.Add(ref neighbourSectionsArray, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);
                     var nn = neighbourSection != null;
                     var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
-                    Unsafe.Add(ref neighboursArrayRef, index) = bl;
+                    neighboursArrayRef = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
                     if (bl == 0 || !Blocks.get(bl).isFullBlock) {
                         hasOnlySolid = false;
                     }
 
-                    Unsafe.Add(ref lightArrayRef, index) = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)15;
+                    lightArrayRef = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)15;
+
+                    // increment
+                    neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, 1);
+                    lightArrayRef = ref Unsafe.Add(ref lightArrayRef, 1);
                 }
             }
         }
@@ -508,6 +517,7 @@ public class ChunkSectionRenderer : IDisposable {
                             FourSBytes b;
                             // lx, ly, lz, lo
                             FourBytes l;
+                            Unsafe.SkipInit(out l);
 
                             ao = 0;
                             light.Whole = 0;
@@ -515,7 +525,7 @@ public class ChunkSectionRenderer : IDisposable {
                             for (int j = 0; j < 4; j++) {
                                 //mult = dirIdx * 36 + j * 9 + vert * 3;
                                 // premultiply cuz its faster that way
-                                ref sbyte offset = ref Unsafe.Add(ref offsetArray,(int)dir * 36 + j * 9);
+                                ref sbyte offset = ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9);
 
                                 b.First = (sbyte)(x + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
@@ -558,7 +568,7 @@ public class ChunkSectionRenderer : IDisposable {
 
                                     // this averages the four light values. If the block is opaque, it ignores the light value.
                                     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                    byte average(byte lx, byte ly, byte lz, byte lo, FourBytes o) {
+                                    byte average(FourBytes l, FourBytes o) {
                                         byte flags = 0;
                                         // check ox
                                         if (o.First == 0) {
@@ -571,15 +581,17 @@ public class ChunkSectionRenderer : IDisposable {
                                         if (o.Third == 0 && flags != 0) {
                                             flags |= 4;
                                         }
-                                        return (byte)((lx * (flags & 1) + ly * ((flags & 2) >> 1) + lz * ((flags & 4) >> 2) + lo) / (BitOperations.PopCount(flags) + 1f));
+                                        return (byte)((l.First * (flags & 1) + l.Second * ((flags & 2) >> 1) + l.Third * ((flags & 4) >> 2) + l.Fourth) / (BitOperations.PopCount(flags) + 1f));
                                     }
 
                                     // split light and reassemble it again
                                     light.Whole |= (uint)((byte)(
-                                        average((byte)(l.First >> 4), (byte)(l.Second >> 4), (byte)(l.Third >> 4), (byte)(l.Fourth >> 4),
+                                        // we shift it by 4 so we have the useful data in the correct place
+                                        average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
                                             o)
                                         << 4 |
-                                        average((byte)(l.First & 0xF), (byte)(l.Second & 0xF), (byte)(l.Third & 0xF), (byte)(l.Fourth & 0xF),
+                                        // mask it with 0xF to get the lower 4 bits
+                                        average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
                                             o)
                                     ) << j * 8);
                                 }
@@ -649,30 +661,9 @@ public class ChunkSectionRenderer : IDisposable {
     }
 
     public static void alignBlock(ref int x, ref int y, ref int z) {
-        switch (x) {
-            case < 0:
-                x += Chunk.CHUNKSIZE;
-                break;
-            case > Chunk.CHUNKSIZE - 1:
-                x -= Chunk.CHUNKSIZE;
-                break;
-        }
-        switch (y) {
-            case < 0:
-                y += Chunk.CHUNKSIZE;
-                break;
-            case > Chunk.CHUNKSIZE - 1:
-                y -= Chunk.CHUNKSIZE;
-                break;
-        }
-        switch (z) {
-            case < 0:
-                z += Chunk.CHUNKSIZE;
-                break;
-            case > Chunk.CHUNKSIZE - 1:
-                z -= Chunk.CHUNKSIZE;
-                break;
-        }
+        x = (x + 16) % 16;
+        y = (y + 16) % 16;
+        z = (z + 16) % 16;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -697,13 +688,13 @@ public class ChunkSectionRenderer : IDisposable {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    unsafe public static int toInt(bool b) {
-        return *(byte*)&b;
+    public static int toInt(bool b) {
+        return Unsafe.As<bool, int>(ref b);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    unsafe public static byte toByte(bool b) {
-        return *(byte*)&b;
+    public static byte toByte(bool b) {
+        return Unsafe.As<bool, byte>(ref b);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -796,6 +787,9 @@ public struct FourBytes {
         Second = b1;
         Third = b2;
         Fourth = b3;
+    }
+    public FourBytes(uint whole) {
+        Whole = whole;
     }
 }
 

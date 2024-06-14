@@ -95,7 +95,7 @@
         <None Update="shaders\simpleBlock.vert">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="dxvk.conf">
+        <None Update="wglinfo64.exe">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
