@@ -8,9 +8,15 @@ public class Blocks {
     private const int MAXBLOCKS = 128;
     public static Block[] blocks = new Block[MAXBLOCKS];
 
+    /// <summary>
+    /// Stores whether the block is a full block or not.
+    /// </summary>
+    public static bool[] fullBlockCache = new bool[MAXBLOCKS];
+
     public static readonly int maxBlock = 31;
 
     public static Block register(Block block) {
+        fullBlockCache[block.id] = block.isFullBlock;
         return blocks[block.id] = block;
     }
 
@@ -23,6 +29,11 @@ public class Blocks {
         var cond = id is >= 0 and < MAXBLOCKS;
         block = cond ? blocks[id] : blocks[1];
         return cond;
+    }
+
+
+    public static bool isFullBlock(int id) {
+        return fullBlockCache[id];
     }
 
     public static Block AIR = register(new Block(0, "Air", BlockModel.emptyBlock()).air());

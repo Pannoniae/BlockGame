@@ -25,6 +25,7 @@ public class Chunk : IDisposable {
     public const int MAXINDEX = 16 * 16 * 16;
     public const int CHUNKSIZEEX = 18;
     public const int CHUNKSIZEEXSQ = 18 * 18;
+    public const int MAXINDEXEX = 18 * 18 * 18;
 
 
     public Chunk(World world, int chunkX, int chunkZ) {

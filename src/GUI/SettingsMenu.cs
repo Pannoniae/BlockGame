@@ -74,7 +74,7 @@ public class SettingsMenu : Menu {
             settings.FOV = (int)FOV.value;
         };
         FOV.getText = value => {
-            if (value == 70)
+            if (value == 75)
                 return "Field of View: Normal";
             if (value == 110)
                 return "Field of View: Quake Pro";

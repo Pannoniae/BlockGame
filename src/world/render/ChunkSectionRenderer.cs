@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using BlockGame.GUI;
 using BlockGame.util;
 using Silk.NET.Maths;
@@ -300,56 +301,61 @@ public class ChunkSectionRenderer : IDisposable {
             }
         }
 
-        for (y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
-            for (z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
-                for (x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
-                    // if inside the chunk, skip
-                    if (x is >= 0 and < Chunk.CHUNKSIZE &&
-                        z is >= 0 and < Chunk.CHUNKSIZE &&
-                        y is >= 0 and < Chunk.CHUNKSIZE) {
-                        // skip this entire loop
-                        // also increment the references
-                        // we need to add 1 because we are incrementing too!
-                        var diff = (Chunk.CHUNKSIZE - 1) - x + 1;
-                        neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, diff);
-                        lightArrayRef = ref Unsafe.Add(ref lightArrayRef, diff);
-                        x = Chunk.CHUNKSIZE - 1;
-                        continue;
-                    }
+        for (int i = 0; i < Chunk.MAXINDEXEX; i++) {
+            // unpack index for array accesses, x / y / z are between 0 and 18
+            x = i % Chunk.CHUNKSIZEEX - 1;
+            z = i / Chunk.CHUNKSIZEEX % Chunk.CHUNKSIZEEX - 1;
+            y = i / Chunk.CHUNKSIZEEXSQ - 1;
+            //Console.Out.WriteLine($"{i} {x} {y} {z}");
 
-                    // index for array accesses
-                    //var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
-                    int cx;
-                    int cy;
-                    int cz;
-                    cx = x;
-                    cy = y;
-                    cz = z;
-                    alignBlock(ref cx, ref cy, ref cz);
-
-                    int sx = (section.chunkX * Chunk.CHUNKSIZE + x) >> 4;
-                    int sy = (section.chunkY * Chunk.CHUNKSIZE + y) >> 4;
-                    int sz = (section.chunkZ * Chunk.CHUNKSIZE + z) >> 4;
-                    // get neighbouring section
-                    var neighbourSection =
-                        Unsafe.Add(ref neighbourSectionsArray, (sy - section.chunkY + 1) * 9 + (sz - section.chunkZ + 1) * 3 + (sx - section.chunkX) + 1);
-                    var nn = neighbourSection != null;
-                    var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
-                    neighboursArrayRef = bl;
-                    // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
-                    if (bl == 0 || !Blocks.get(bl).isFullBlock) {
-                        hasOnlySolid = false;
-                    }
-
-                    lightArrayRef = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)15;
-
-                    // increment
-                    neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, 1);
-                    lightArrayRef = ref Unsafe.Add(ref lightArrayRef, 1);
-                }
+            // if inside the chunk, skip
+            if (x is >= 0 and < Chunk.CHUNKSIZE &&
+                z is >= 0 and < Chunk.CHUNKSIZE &&
+                y is >= 0 and < Chunk.CHUNKSIZE) {
+                // skip this entire loop
+                // also increment the references
+                // we need to add 1 because we are incrementing too!
+                var diff = (Chunk.CHUNKSIZE - 1) - x;
+                neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, diff + 1);
+                lightArrayRef = ref Unsafe.Add(ref lightArrayRef, diff + 1);
+                i += diff;
+                continue;
             }
+
+            // index for array accesses
+            //var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+
+            // aligned position (between 0 and 16)
+            int cx = (x + 16) % 16;
+            int cy = (y + 16) % 16;
+            int cz = (z + 16) % 16;
+
+            // section position (can be -1, 0, 1)
+            int sx = x >> 4;
+            int sy = y >> 4;
+            int sz = z >> 4;
+            // get neighbouring section
+            var neighbourSection =
+                Unsafe.Add(ref neighbourSectionsArray, (sy + 1) * 9 + (sz + 1) * 3 + sx + 1);
+            var nn = neighbourSection != null;
+            var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
+
+            // set neighbours array element  to block
+            neighboursArrayRef = bl;
+            // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
+            if (bl == 0 || !Blocks.get(bl).isFullBlock) {
+                hasOnlySolid = false;
+            }
+
+            // set light array element to light
+            lightArrayRef = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)15;
+
+            // increment
+            neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, 1);
+            lightArrayRef = ref Unsafe.Add(ref lightArrayRef, 1);
         }
+
 
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
     }
@@ -382,7 +388,7 @@ public class ChunkSectionRenderer : IDisposable {
         // 2 = smooth lighting
         byte settings = (byte)(toInt(Settings.instance.smoothLighting) << 1 | toInt(Settings.instance.AO));
         const int SETTING_AO = 1;
-        const int SETTING_SMOOTH_LIGHTING = 1;
+        const int SETTING_SMOOTH_LIGHTING = 2;
         //ushort cv = 0;
         //ushort ci = 0;
 
@@ -498,7 +504,7 @@ public class ChunkSectionRenderer : IDisposable {
                             test2 = notTranslucent(nb) && (notSolid(nb) || !nb.isFullBlock);
                             break;
                     }
-                    test2 = test2 || facesRef.nonFullFace && !Blocks.isTranslucent(nb);
+                    test2 = test2 || (facesRef.nonFullFace && !Blocks.isTranslucent(nb));
                 }
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
@@ -517,7 +523,6 @@ public class ChunkSectionRenderer : IDisposable {
                             FourSBytes b;
                             // lx, ly, lz, lo
                             FourBytes l;
-                            Unsafe.SkipInit(out l);
 
                             ao = 0;
                             light.Whole = 0;
@@ -526,7 +531,6 @@ public class ChunkSectionRenderer : IDisposable {
                                 //mult = dirIdx * 36 + j * 9 + vert * 3;
                                 // premultiply cuz its faster that way
                                 ref sbyte offset = ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9);
-
                                 b.First = (sbyte)(x + offset);
                                 offset = ref Unsafe.Add(ref offset, 1);
                                 b.Second = (sbyte)(y + offset);
@@ -565,10 +569,9 @@ public class ChunkSectionRenderer : IDisposable {
                                     // calculate average
                                     l.Fourth = lba[(byte)dir];
 
-
                                     // this averages the four light values. If the block is opaque, it ignores the light value.
                                     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                    byte average(FourBytes l, FourBytes o) {
+                                    byte average(byte lx, byte ly, byte lz, byte lo, FourBytes o) {
                                         byte flags = 0;
                                         // check ox
                                         if (o.First == 0) {
@@ -581,17 +584,15 @@ public class ChunkSectionRenderer : IDisposable {
                                         if (o.Third == 0 && flags != 0) {
                                             flags |= 4;
                                         }
-                                        return (byte)((l.First * (flags & 1) + l.Second * ((flags & 2) >> 1) + l.Third * ((flags & 4) >> 2) + l.Fourth) / (BitOperations.PopCount(flags) + 1f));
+                                        return (byte)((lx * (flags & 1) + ly * ((flags & 2) >> 1) + lz * ((flags & 4) >> 2) + lo) / (BitOperations.PopCount(flags) + 1f));
                                     }
 
                                     // split light and reassemble it again
                                     light.Whole |= (uint)((byte)(
-                                        // we shift it by 4 so we have the useful data in the correct place
-                                        average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
+                                        average((byte)(l.First >> 4), (byte)(l.Second >> 4), (byte)(l.Third >> 4), (byte)(l.Fourth >> 4),
                                             o)
                                         << 4 |
-                                        // mask it with 0xF to get the lower 4 bits
-                                        average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
+                                        average((byte)(l.First & 0xF), (byte)(l.Second & 0xF), (byte)(l.Third & 0xF), (byte)(l.Fourth & 0xF),
                                             o)
                                     ) << j * 8);
                                 }
@@ -679,12 +680,10 @@ public class ChunkSectionRenderer : IDisposable {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte calculateAOFixed(int side1, int side2, int corner) {
-        var test1 = Blocks.isSolid(side1);
-        var test2 = Blocks.isSolid(side2);
-        if (test1 && test2) {
+        if (side1 != 0 && side2 != 0) {
             return 3;
         }
-        return (byte)(toInt(Blocks.get(side1).isFullBlock) + toInt(Blocks.get(side2).isFullBlock) + toInt(Blocks.get(corner).isFullBlock));
+        return (byte)(side1 + side2 + corner);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
