@@ -409,8 +409,8 @@ public readonly record struct Face(
     public readonly RawDirection direction = direction;
     public readonly byte flags = (byte)(ChunkSectionRenderer.toByte(nonFullFace) | ChunkSectionRenderer.toByte(noAO) << 1);
 
-    public bool noAO => (flags & (byte)FaceFlags.NON_FULL_FACE) != 0;
-    public bool nonFullFace => (flags & (byte)FaceFlags.NO_AO) != 0;
+    public bool nonFullFace => (flags & (byte)FaceFlags.NON_FULL_FACE) != 0;
+    public bool noAO => (flags & (byte)FaceFlags.NO_AO) != 0;
 }
 
 [Flags]
