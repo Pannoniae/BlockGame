@@ -512,7 +512,7 @@ public class ChunkSectionRenderer : IDisposable {
                 }
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
-                    if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
+                    if ((settings & SETTING_SMOOTH_LIGHTING) == 0 && dir != RawDirection.NONE) {
                         light.First = lba[(byte)dir];
                         light.Second = lba[(byte)dir];
                         light.Third = lba[(byte)dir];
@@ -530,6 +530,10 @@ public class ChunkSectionRenderer : IDisposable {
                             Unsafe.SkipInit(out l);
 
                             ao = 0;
+
+                            if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
+                                light.Whole = 0;
+                            }
 
                             for (int j = 0; j < 4; j++) {
                                 //mult = dirIdx * 36 + j * 9 + vert * 3;
@@ -558,7 +562,7 @@ public class ChunkSectionRenderer : IDisposable {
 
                                 // if face is noAO, don't average....
                                 if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
-                                    light.Whole = 0;
+
 
                                     // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                     // calculate average
