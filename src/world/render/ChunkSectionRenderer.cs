@@ -118,7 +118,7 @@ public class ChunkSectionRenderer : IDisposable {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        sw.Restart();
+        //sw.Restart();
         if (section.world.renderer.fastChunkSwitch) {
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
             watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -150,12 +150,12 @@ public class ChunkSectionRenderer : IDisposable {
         /*if (World.glob) {
                 MeasureProfiler.StartCollectingData();
             }*/
-        Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
+        //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
         constructVertices(VertexConstructionMode.OPAQUE);
         /*if (World.glob) {
                 MeasureProfiler.SaveData();
             }*/
-        Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+        //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkIndices.Count > 0) {
             isEmptyRenderOpaque = false;
             if (section.world.renderer.fastChunkSwitch) {
@@ -198,8 +198,8 @@ public class ChunkSectionRenderer : IDisposable {
             }
         }
         //}
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        sw.Stop();
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        //sw.Stop();
     }
 
     public ushort toVertex(float f) {
@@ -513,7 +513,10 @@ public class ChunkSectionRenderer : IDisposable {
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
                     if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
-                        light.Whole = (uint)(lba[(byte)dir] | lba[(byte)dir] << 8 | lba[(byte)dir] << 16 | lba[(byte)dir] << 24);
+                        light.First = lba[(byte)dir];
+                        light.Second = lba[(byte)dir];
+                        light.Third = lba[(byte)dir];
+                        light.Fourth = lba[(byte)dir];
                     }
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                     if ((settings & SETTING_SMOOTH_LIGHTING) != 0 || (settings & SETTING_AO) != 0) {
@@ -527,7 +530,6 @@ public class ChunkSectionRenderer : IDisposable {
                             Unsafe.SkipInit(out l);
 
                             ao = 0;
-                            light.Whole = 0;
 
                             for (int j = 0; j < 4; j++) {
                                 //mult = dirIdx * 36 + j * 9 + vert * 3;
@@ -556,6 +558,8 @@ public class ChunkSectionRenderer : IDisposable {
 
                                 // if face is noAO, don't average....
                                 if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
+                                    light.Whole = 0;
+
                                     // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                                     // calculate average
                                     l.Fourth = lba[(byte)dir];
