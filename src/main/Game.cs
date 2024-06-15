@@ -236,6 +236,7 @@ public partial class Game {
                     switchTo(Menu.MAIN_MENU);
                 });
             });
+            Blocks.postLoad();
             resize(new Vector2D<int>(width, height));
             // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
             MemoryUtils.cleanGC();

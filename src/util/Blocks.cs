@@ -17,7 +17,6 @@ public class Blocks {
     public static readonly int maxBlock = 31;
 
     public static Block register(Block block) {
-        fullBlockCache[block.id] = block.isFullBlock;
         return blocks[block.id] = block;
     }
 
@@ -30,6 +29,12 @@ public class Blocks {
         var cond = id is >= 0 and < MAXBLOCKS;
         block = cond ? blocks[id] : blocks[1];
         return cond;
+    }
+
+    public static void postLoad() {
+        for (int i = 0; i < maxBlock; i++) {
+            fullBlockCache[blocks[i].id] = blocks[i].isFullBlock;
+        }
     }
 
 
