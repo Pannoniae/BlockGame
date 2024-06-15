@@ -406,7 +406,7 @@ public class ChunkSectionRenderer : IDisposable {
         Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
         Vector128<ushort> complement = Vector128.Create((ushort)4, 3, 2, 4, 2, 1, 0, 0);
 
-        bool test2 = false;
+        bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             // index for array accesses
             int x = idx & 0xF;
@@ -488,6 +488,8 @@ public class ChunkSectionRenderer : IDisposable {
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;
 
+                test2 = false;
+
                 // if bottom of the world, don't bother
                 if (y == 0 && dir == RawDirection.DOWN) {
                     goto increment2;
@@ -508,7 +510,7 @@ public class ChunkSectionRenderer : IDisposable {
                             test2 = notTranslucent(nb) && (notSolid(nb) || !Blocks.isFullBlock(nb));
                             break;
                     }
-                    test2 = test2 || facesRef.nonFullFace && !Blocks.isTranslucent(nb);
+                    test2 = test2 || (facesRef.nonFullFace && !Blocks.isTranslucent(nb));
                 }
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
