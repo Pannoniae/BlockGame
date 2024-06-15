@@ -249,7 +249,7 @@ public class World {
             byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
 
             // if this is opaque (for skylight), don't bother
-            if (isSkylight && Blocks.get(getBlock(node.x, node.y, node.z)).isFullBlock) {
+            if (isSkylight && Blocks.isFullBlock(getBlock(node.x, node.y, node.z))) {
                 continue;
             }
 
@@ -258,7 +258,7 @@ public class World {
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
                 // if neighbour is opaque, don't bother either
-                if (Blocks.get(getBlock(neighbour)).isFullBlock) {
+                if (Blocks.isFullBlock(getBlock(neighbour))) {
                     continue;
                 }
                 byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
@@ -887,6 +887,14 @@ public class World {
         }
         section = chunk!.chunks[pos.y];
         return true;
+    }
+
+    public ChunkSection? getChunkSectionUnsafe(ChunkSectionCoord pos) {
+        var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
+        if (!c || pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
+            return null;
+        }
+        return chunk!.chunks[pos.y];
     }
 
     public Chunk getChunk(Vector2D<int> position) {

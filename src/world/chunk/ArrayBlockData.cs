@@ -1,12 +1,13 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BlockGame.util;
 
 namespace BlockGame;
 
-public class ArrayBlockData : BlockData, IDisposable {
+public sealed class ArrayBlockData : BlockData, IDisposable {
 
-    public static FixedArrayPool<ushort> blockPool = new FixedArrayPool<ushort>(16 * 16 * 16);
-    public static FixedArrayPool<byte> lightPool = new FixedArrayPool<byte>(16 * 16 * 16);
+    private static FixedArrayPool<ushort> blockPool = new(16 * 16 * 16);
+    private static FixedArrayPool<byte> lightPool = new(16 * 16 * 16);
 
     public ushort[] blocks;
 
@@ -21,9 +22,9 @@ public class ArrayBlockData : BlockData, IDisposable {
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => blocks[y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x];
+        get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => blocks[y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x] = value;
+        set => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
     }
 
     public ArrayBlockData(Chunk chunk) {
@@ -38,51 +39,38 @@ public class ArrayBlockData : BlockData, IDisposable {
     public void Dispose() {
         blockPool.putBack(blocks);
         lightPool.putBack(light);
-        GC.SuppressFinalize(this);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
-        return light[y * Chunk.CHUNKSIZESQ +
-                     z * Chunk.CHUNKSIZE +
-                     x];
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void setLight(int x, int y, int z, byte value) {
-        light[y * Chunk.CHUNKSIZESQ +
-              z * Chunk.CHUNKSIZE +
-              x] = value;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
     }
 
     public byte skylight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
-        var value = light[y * Chunk.CHUNKSIZESQ +
-                          z * Chunk.CHUNKSIZE +
-                          x];
+        var value = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         return (byte)((value & 0xF0) >> 4);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
-        ref var value = ref light[y * Chunk.CHUNKSIZESQ +
-                                  z * Chunk.CHUNKSIZE +
-                                  x];
+        ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         var blocklight = (byte)((value & 0xF0) >> 4);
         // pack it back inside
         value = (byte)(blocklight << 4 | val);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
-        ref var value = ref light[y * Chunk.CHUNKSIZESQ +
-                                  z * Chunk.CHUNKSIZE +
-                                  x];
+        ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         var skylight = (byte)(value & 0xF);
         // pack it back inside
         value = (byte)(val << 4 | skylight);

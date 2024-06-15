@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 
 namespace BlockGame.util;
@@ -132,6 +133,7 @@ public class Block {
     /// </summary>
     public string name = "";
 
+    [Obsolete("Use Blocks.isFullBlock() instead.")]
     public bool isFullBlock = true;
 
     /// <summary>
@@ -375,6 +377,7 @@ public readonly record struct UVPair(float u, float v) {
 /// Represents a block face. If noAO, don't let AO cast on this face.
 /// If it's not a full face, it's always drawn to ensure it's drawn even when there's a solid block next to it.
 /// </summary>
+[StructLayout(LayoutKind.Auto)]
 public readonly record struct Face(
     float x1, float y1, float z1,
     float x2, float y2, float z2,
@@ -399,8 +402,16 @@ public readonly record struct Face(
     public readonly UVPair min = min;
     public readonly UVPair max = max;
     public readonly RawDirection direction = direction;
-    public readonly bool noAO = noAO;
-    public readonly bool nonFullFace = nonFullFace;
+    public readonly byte flags = (byte)(ChunkSectionRenderer.toByte(nonFullFace) | ChunkSectionRenderer.toByte(noAO) << 1);
+
+    public bool noAO => (flags & (byte)FaceFlags.NON_FULL_FACE) != 0;
+    public bool nonFullFace => (flags & (byte)FaceFlags.NO_AO) != 0;
+}
+
+[Flags]
+public enum FaceFlags : byte {
+    NON_FULL_FACE = 1,
+    NO_AO = 2
 }
 
 /// <summary>
