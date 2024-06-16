@@ -390,6 +390,10 @@ public partial class Game {
         currentScreen.resize(size);
     }
 
+    public void resize() {
+        resize(new Vector2D<int>(width, height));
+    }
+
     public void executeOnMainThread(Action action) {
         mainThreadQueue.Add(action);
     }

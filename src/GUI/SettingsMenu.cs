@@ -32,6 +32,7 @@ public class SettingsMenu : Menu {
         guiScale.clicked += () => {
             settings.guiScale = guiScale.getIndex() == 1 ? 4 : 2;
             GUI.guiScale = settings.guiScale;
+            Game.instance.resize();
         };
         settingElements.Add(guiScale);
         addElement(guiScale);
