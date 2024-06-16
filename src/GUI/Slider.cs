@@ -47,7 +47,7 @@ public class Slider : GUIElement {
 
     public override void draw() {
         var tex = pressed ? pressedSlider : slider;
-        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), tex);
+        Game.gui.drawUI(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), tex);
 
         // draw the thing on it
         float mouseX = GUI.s2u(Game.mousePos).X;
