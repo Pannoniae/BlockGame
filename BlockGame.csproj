@@ -10,47 +10,40 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BinaryBuffers" Version="3.0.1" />
-        <PackageReference Include="Geometry" Version="1.0.0.1" />
-        <PackageReference Include="ImGui.NET" Version="1.89.9.4" />
-        <PackageReference Include="JetBrains.Annotations" Version="2024.2.0-eap1" />
-        <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.4" />
-        <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8" />
-        <PackageReference Include="SFML.Audio" Version="2.6.0" />
-        <PackageReference Include="SFML.Net" Version="2.6.0" />
-        <PackageReference Include="SharpNBT" Version="1.3.1"/>
-        <PackageReference Include="Silk.NET.Direct3D.Compilers" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.Direct3D11" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.DXGI" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.DXVK.Native" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.Input" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.INTEL" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.KHR" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.INTEL" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.21.0" />
-        <PackageReference Include="Silk.NET.Windowing" Version="2.21.0" />
-        <PackageReference Include="SixLabors.Fonts" Version="2.0.3" />
+        <PackageReference Include="Geometry" Version="1.0.0.1"/>
+        <PackageReference Include="ImGui.NET" Version="1.89.9.4"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2024.2.0-eap1"/>
+        <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.6"/>
+        <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8"/>
+        <PackageReference Include="SFML.Audio" Version="2.6.0"/>
+        <PackageReference Include="SFML.Net" Version="2.6.0"/>
+        <PackageReference Include="Silk.NET.Direct3D.Compilers" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.Direct3D11" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.DXGI" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.DXVK.Native" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.Input" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.INTEL" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.KHR" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.INTEL" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.21.0"/>
+        <PackageReference Include="Silk.NET.Windowing" Version="2.21.0"/>
+        <PackageReference Include="SixLabors.Fonts" Version="2.0.3"/>
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4"/>
-        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.3" />
-        <PackageReference Include="System.Buffers" Version="4.5.1" />
-        <PackageReference Include="TrippyGL" Version="1.2.1" />
-        <PackageReference Include="TrippyGL.Fonts" Version="1.2.1" />
-        <PackageReference Include="TrippyGL.Fonts.Building" Version="1.2.1"/>
-        <PackageReference Include="TrippyGL.Fonts.Extensions" Version="1.2.1" />
-        <PackageReference Include="TrippyGL.ImageSharp" Version="1.2.1" />
-        <PackageReference Include="ZString" Version="2.6.0" />
+        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.3"/>
+        <PackageReference Include="System.Buffers" Version="4.5.1"/>
+        <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -67,62 +60,59 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="shaders\dummyShader.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="shaders\dummyShader.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="snd\tests.flac">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="guifontU.fnt">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="shaders\guiBlock.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="shaders\guiBlock.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Remove="lib\FontStashSharp\**" />
-        <None Remove="lib\FontStashSharp.Base\**" />
-        <None Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
-        <None Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
-        <None Remove="lib\FontStashSharp.Rasterizers.SixLabors.Fonts\**" />
+        <None Remove="lib\**"/>
         <None Update="shaders\simpleBlock.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="shaders\simpleBlock.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="wglinfo64.exe">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="lib\FontStashSharp\**" />
-      <Compile Remove="lib\FontStashSharp.Base\**" />
-      <Compile Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
-      <Compile Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
-      <Compile Remove="lib\FontStashSharp.Rasterizers.SixLabors.Fonts\**" />
+        <Compile Remove="lib\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Remove="lib\FontStashSharp\**" />
-      <EmbeddedResource Remove="lib\FontStashSharp.Base\**" />
-      <EmbeddedResource Remove="lib\FontStashSharp.Rasterizers.FreeType\**" />
-      <EmbeddedResource Remove="lib\FontStashSharp.Rasterizers.StbTrueTypeSharp\**" />
-      <EmbeddedResource Remove="lib\FontStashSharp.Rasterizers.SixLabors.Fonts\**" />
+        <EmbeddedResource Remove="lib\**"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="src\"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
         <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
+        <ProjectReference Include="lib\TrippyGL\TrippyGL.csproj"/>
+        <ProjectReference Include="lib\TrippyGL.Fonts\TrippyGL.Fonts.csproj"/>
+        <ProjectReference Include="lib\TrippyGL.Fonts.Building\TrippyGL.Fonts.Building.csproj"/>
+        <ProjectReference Include="lib\TrippyGL.Fonts.Extensions\TrippyGL.Fonts.Extensions.csproj"/>
+        <ProjectReference Include="lib\TrippyGL.ImageSharp\TrippyGL.ImageSharp.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="src\" />
+        <Compile Include="lib\FastNoiseLite.cs"/>
     </ItemGroup>
 
 </Project>

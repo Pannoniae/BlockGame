@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Version>1.2.1</Version>
+    <Authors>ThomasMiz</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/SilkCommunity/TrippyGL</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SilkCommunity/TrippyGL</PackageProjectUrl>
+    <PackageIcon>TrippyGL_logo.png</PackageIcon>
+    <Description>TrippyGL is a highly versatile, yet lightweight and simple to use OpenGL graphics library that runs on .NET Core.
+
+This package provides basic font creating/loading/saving functionality.</Description>
+    <PackageTags>OpenGL;graphics;gamedev;desktopgl;fonts;text</PackageTags>
+    <PackageReleaseNotes>Changelog from 1.2.0:
+- Upgraded all dependencies</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <Nullable>enable</Nullable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\TrippyGL_logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

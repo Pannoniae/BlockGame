@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Version>1.2.1</Version>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Authors>ThomasMiz</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/SilkCommunity/TrippyGL</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SilkCommunity/TrippyGL</RepositoryUrl>
+    <PackageIcon>TrippyGL_logo.png</PackageIcon>
+    <Description>TrippyGL is a highly versatile, yet lightweight and simple to use OpenGL graphics library that runs on .NET Core.
+
+This package provides integration with the ImageSharp library, allowing loading and saving textures from files or images.</Description>
+    <PackageTags>OpenGL;graphics;gamedev;desktopgl;images;ImageSharp;textures;</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <Nullable>enable</Nullable>
+    <PackageReleaseNotes>Changelog from 1.2.0:
+- Upgraded all dependencies</PackageReleaseNotes>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TrippyGL\TrippyGL.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\TrippyGL_logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

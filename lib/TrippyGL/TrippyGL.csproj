@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/SilkCommunity/TrippyGL</PackageProjectUrl>
+    <PackageIcon>TrippyGL_logo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/SilkCommunity/TrippyGL</RepositoryUrl>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Version>1.2.1</Version>
+    <Authors>ThomasMiz</Authors>
+    <Description>A highly versatile, yet lightweight and simple to use OpenGL graphics library that runs on .NET Core</Description>
+    <PackageTags>OpenGL;graphics;gamedev;desktopgl;</PackageTags>
+    <PackageReleaseNotes>Changelog from 1.2.0:
+- Upgraded all dependencies
+- Add new matrix-oriented TextureBatcher.Draw() methods (Thanks @vpenades for your contribution!)
+- Replace Enum.IsDefined with newer variant to avoid boxing allocation (Thanks @pannoniae for raising this issue!)</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <SignAssembly>False</SignAssembly>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.20.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\TrippyGL_logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
