@@ -203,7 +203,7 @@ namespace TrippyGL
         /// <param name="defaultChar">The char to replace unavailable chars with.</param>
         /// <param name="ignoreNewline">Whether to count the newline character as a valid character.</param>
         /// <returns>A newly created string, or the same string instance if no chars need replacing.</returns>
-        [return: NotNullIfNotNull(nameof(text))]
+        [return: NotNullIfNotNull("text")]
         public string? SanitizeString(string? text, char defaultChar = '?', bool ignoreNewline = true)
         {
             if (text == null)

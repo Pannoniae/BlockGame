@@ -1,13 +1,11 @@
-using System.Buffers;
 using BlockGame.util;
 using BlockGame.util.xNBT;
-using SharpNBT;
 
 namespace BlockGame;
 
 public class WorldIO {
 
-    public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
+    //public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
 
     private const int my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
     private const int mx = Chunk.CHUNKSIZE;
@@ -39,7 +37,7 @@ public class WorldIO {
             var regionCoord = World.getRegionPos(chunk.coord);
             saveChunk(chunk);
         }
-        regionCache.Clear();
+        //regionCache.Clear();
     }
 
     public void saveChunk(Chunk chunk) {
