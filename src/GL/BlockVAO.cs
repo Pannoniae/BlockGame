@@ -96,11 +96,11 @@ public class BlockVAO : VAO {
     public void format() {
         unsafe {
             // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(ushort), (void*)0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.HalfFloat, false, 6 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 9 * sizeof(ushort), (void*)(0 + 6 * sizeof(ushort)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 6 * sizeof(ushort), (void*)(0 + 3 * sizeof(ushort)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 9 * sizeof(ushort), (void*)(0 + 8 * sizeof(ushort)));
+            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 5 * sizeof(ushort)));
             GL.EnableVertexAttribArray(2);
         }
     }
@@ -123,11 +123,11 @@ public class BlockVAO : VAO {
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Size = 18)]
+[StructLayout(LayoutKind.Sequential, Size = 12)]
 public readonly struct BlockVertex : IVertex {
-    public readonly float x;
-    public readonly float y;
-    public readonly float z;
+    public readonly Half x;
+    public readonly Half y;
+    public readonly Half z;
     public readonly Half u;
     public readonly Half v;
 
@@ -139,7 +139,7 @@ public readonly struct BlockVertex : IVertex {
     /// </summary>
     public readonly ushort d;
 
-    public BlockVertex(float x, float y, float z, Half u, Half v, ushort d) {
+    public BlockVertex(Half x, Half y, Half z, Half u, Half v, ushort d) {
         // we receive a float from 0 to 16.
         // we convert it to a normalised float from 0 to 1 converted to an ushort
         //this.x = (ushort)(x / 16f * ushort.MaxValue);
@@ -159,16 +159,16 @@ public readonly struct BlockVertex : IVertex {
         //this.x = (ushort)(x / 16f * ushort.MaxValue);
         //this.y = (ushort)(y / 16f * ushort.MaxValue);
         //this.z = (ushort)(z / 16f * ushort.MaxValue);
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.x = (Half)x;
+        this.y = (Half)y;
+        this.z = (Half)z;
         this.u = (Half)u;
         this.v = (Half)v;
         this.d = d;
     }
 
     public void WriteAttribDescriptions(Span<VertexAttribDescription> descriptions) {
-        descriptions[0] = new VertexAttribDescription(AttributeType.FloatVec3, false, AttributeBaseType.Float);
+        descriptions[0] = new VertexAttribDescription(AttributeType.FloatVec3, false, AttributeBaseType.HalfFloat);
         descriptions[1] = new VertexAttribDescription(AttributeType.FloatVec2, false, AttributeBaseType.HalfFloat);
         descriptions[2] = new VertexAttribDescription(AttributeType.UnsignedInt, false, AttributeBaseType.UnsignedShort);
     }

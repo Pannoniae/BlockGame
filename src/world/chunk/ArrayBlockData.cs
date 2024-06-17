@@ -62,7 +62,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         blocks = blockPool.grab();
         light = lightPool.grab();
         Array.Clear(blocks);
-        Array.Clear(light);
+        // fill it with empty
+        Array.Fill(light, (byte)15);
         inited = true;
     }
 

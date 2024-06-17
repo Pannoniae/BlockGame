@@ -97,6 +97,9 @@ public partial class Game {
     public Texture2D lightTexture;
     public static Metrics metrics;
 
+    public static Shader worldShader;
+    public static Shader dummyShader;
+
     public static GLStateTracker GLTracker;
     public static FontLoader fontLoader;
 

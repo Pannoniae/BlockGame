@@ -26,6 +26,8 @@ public class ChunkSectionRenderer : IDisposable {
     public bool hasOnlySolid;
 
     public readonly GL GL;
+    
+    private int uChunkPos;
 
     public static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
 
@@ -92,6 +94,7 @@ public class ChunkSectionRenderer : IDisposable {
 
     public ChunkSectionRenderer(ChunkSection section) {
         this.section = section;
+        uChunkPos = Game.worldShader.getUniformLocation("uChunkPos");
     }
 
     private static bool opaqueBlocks(Block b) {
@@ -215,16 +218,18 @@ public class ChunkSectionRenderer : IDisposable {
         if (!isEmptyRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-
+            Game.worldShader.setUniform(uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedChunks += 1;
         }
     }
 
-    public void drawTransparent() {
+    public void drawTransparent(bool dummy) {
         if (hasTranslucentBlocks && !isEmptyRenderTranslucent) {
             watervao.bind();
+            var shader = dummy ? Game.dummyShader : Game.worldShader;
+            shader.setUniform(uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -430,12 +435,12 @@ public class ChunkSectionRenderer : IDisposable {
             }
 
             // unrolled world.toWorldPos
-            float wx = section.chunkX * Chunk.CHUNKSIZE + x;
-            float wy = section.chunkY * Chunk.CHUNKSIZE + y;
-            float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
+            //float wx = section.chunkX * Chunk.CHUNKSIZE + x;
+            //float wy = section.chunkY * Chunk.CHUNKSIZE + y;
+            //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
             if (bl.customRender) {
-                bl.render(section.world, new Vector3D<int>((int)wx, (int)wy, (int)wz), chunkVertices, chunkIndices, indices[0]);
+                bl.render(section.world, new Vector3D<int>(x, y, z), chunkVertices, chunkIndices, indices[0]);
                 goto increment;
             }
 
@@ -613,13 +618,13 @@ public class ChunkSectionRenderer : IDisposable {
 
                     // add vertices
 
-                    tempVertices[0] = new BlockVertex(wx + facesRef.x1, wy + facesRef.y1, wz + facesRef.z1, tex.X, tex.Y,
+                    tempVertices[0] = new BlockVertex(x + facesRef.x1, y + facesRef.y1, z + facesRef.z1, tex.X, tex.Y,
                         Block.packData((byte)dir, (byte)(ao & 0x3), light.First));
-                    tempVertices[1] = new BlockVertex(wx + facesRef.x2, wy + facesRef.y2, wz + facesRef.z2, tex.X, tex.W,
+                    tempVertices[1] = new BlockVertex(x + facesRef.x2, y + facesRef.y2, z + facesRef.z2, tex.X, tex.W,
                         Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second));
-                    tempVertices[2] = new BlockVertex(wx + facesRef.x3, wy + facesRef.y3, wz + facesRef.z3, tex.Z, tex.W,
+                    tempVertices[2] = new BlockVertex(x + facesRef.x3, y + facesRef.y3, z + facesRef.z3, tex.Z, tex.W,
                         Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third));
-                    tempVertices[3] = new BlockVertex(wx + facesRef.x4, wy + facesRef.y4, wz + facesRef.z4, tex.Z, tex.Y,
+                    tempVertices[3] = new BlockVertex(x + facesRef.x4, y + facesRef.y4, z + facesRef.z4, tex.Z, tex.Y,
                         Block.packData((byte)dir, (byte)(ao >> 6), light.Fourth));
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;

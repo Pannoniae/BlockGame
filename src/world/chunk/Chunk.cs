@@ -259,9 +259,9 @@ public class Chunk : IDisposable {
         }
     }
 
-    public void drawTransparent() {
+    public void drawTransparent(bool dummy = false) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.drawTransparent();
+            chunks[i].renderer.drawTransparent(dummy);
         }
     }
 

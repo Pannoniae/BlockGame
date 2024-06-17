@@ -5,6 +5,7 @@ layout (location = 1) in vec2 texCoord;
 layout (location = 2) in uint iData;
 
 uniform mat4 uMVP;
+uniform vec3 uChunkPos;
 
 
 out vec2 texCoords;
@@ -22,7 +23,7 @@ void main() {
     uint directionValue = iData & 0x7u;
     uint aoValue = (iData >> 3) & 0x3u;
     uint lightValue = (iData >> 8) & 0xFFu;
-    gl_Position = uMVP * vec4(vPos, 1.0);
+    gl_Position = uMVP * vec4(uChunkPos + vPos, 1.0);
     texCoords = texCoord;
     ao = aoArray[aoValue];
     direction = directionValue;
@@ -30,5 +31,5 @@ void main() {
     uint blocklight = (lightValue >> 4) & 0xFu;
     ivec2 lightCoords = ivec2(blocklight, skylight);
     light = texelFetch(lightTexture, lightCoords, 0);
-    vertexPos = vPos;
+    vertexPos = uChunkPos + vPos;
 }

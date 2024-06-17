@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 
@@ -70,22 +71,32 @@ namespace TrippyGL {
             renderbuffer = null;
             Array.Clear(clipDistancesEnabled);
 
+            viewport = new Viewport();
+            clearColor = new Vector4(-1, -1, -1, -1);
+            scissorRect = new Viewport();
+
 
             // these actually have to be set because the defaults make sense ->
             // they can have the wrong values
             // you can't just null them out
             // alternative would be using a bunch of glGet to get the state, if it doesn't match then set
             // but this is good enough because these are not expensive
-            blendState = BlendState.Opaque;
-            DepthState = new DepthState(false);
-            StencilState = new StencilState(false);
-            FaceCullingEnabled = false;
-            CullFaceMode = CullingMode.CullBack;
-            PolygonFrontFace = PolygonFace.CounterClockwise;
+            GL.PolygonMode(GLEnum.FrontAndBack, polygonMode);
 
-            cubemapSeamlessEnabled = true;
+            ResetBlendStates();
+            ResetDepthStates();
+            ResetStencilStates();
+            ResetFaceCullingStates();
 
-            rasterizerEnabled = true;
+            if (cubemapSeamlessEnabled)
+                GL.Enable(EnableCap.TextureCubeMapSeamless);
+            else
+                GL.Disable(EnableCap.TextureCubeMapSeamless);
+
+            if (rasterizerEnabled)
+                GL.Disable(EnableCap.RasterizerDiscard);
+            else
+                GL.Enable(EnableCap.RasterizerDiscard);
         }
 
         /// <summary>
