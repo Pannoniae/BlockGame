@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 
-namespace TrippyGL
-{
+namespace TrippyGL {
     public delegate void ShaderCompiledHandler(GraphicsDevice sender, in ShaderProgramBuilder programBuilder, bool success);
 
     /// <summary>
@@ -20,8 +19,7 @@ namespace TrippyGL
     /// <summary>
     /// Manages an OpenGL Context and it's <see cref="GraphicsResource"/>-s.
     /// </summary>
-    public sealed partial class GraphicsDevice : IDisposable
-    {
+    public sealed partial class GraphicsDevice : IDisposable {
         /// <summary>
         /// The <see cref="Silk.NET.OpenGL.GL"/> object that all <see cref="GraphicsResource"/>-s
         /// on this <see cref="GraphicsDevice"/> will use to call GL functions.
@@ -35,8 +33,7 @@ namespace TrippyGL
         /// Creates a <see cref="GraphicsDevice"/> to manage the given graphics context.
         /// </summary>
         /// <param name="gl">The <see cref="Silk.NET.OpenGL.GL"/> object this <see cref="GraphicsDevice"/> will use for GL calls.</param>
-        public GraphicsDevice(GL gl)
-        {
+        public GraphicsDevice(GL gl) {
             GL = gl ?? throw new ArgumentNullException(nameof(gl));
 
             GLMajorVersion = GL.GetInteger(GLEnum.MajorVersion);
@@ -57,11 +54,37 @@ namespace TrippyGL
         }
 
         /// <summary>
+        /// Resets all internal states of this library to the defaults.
+        /// You should only need to call this when interoperating with other libraries or using your own GL functions.
+        /// </summary>
+        public void ResetInternalStates() {
+            InitBufferObjectStates();
+
+            vertexArray = null;
+            shaderProgram = null;
+            InitTextureStates();
+            drawFramebuffer = null;
+            readFramebuffer = null;
+            renderbuffer = null;
+            clipDistancesEnabled = new bool[MaxClipDistances];
+
+            blendState = BlendState.Opaque;
+            depthState = new DepthState(false);
+            stencilState = new StencilState(false);
+            faceCullingEnabled = false;
+            cullFaceMode = CullingMode.CullBack;
+            polygonFrontFace = PolygonFace.CounterClockwise;
+
+            cubemapSeamlessEnabled = true;
+
+            rasterizerEnabled = true;
+        }
+
+        /// <summary>
         /// Resets all GL states to either zero or the last values this <see cref="GraphicsDevice"/> knows.
         /// You should only need to call this when interoperating with other libraries or using your own GL functions.
         /// </summary>
-        public void ResetStates()
-        {
+        public void ResetStates() {
             ResetBufferStates();
             ResetVertexArrayStates();
             ResetShaderProgramStates();
@@ -103,23 +126,20 @@ namespace TrippyGL
         public event GLDebugMessageReceivedHandler? DebugMessageReceived;
 
         /// <summary>Whether OpenGL message debugging is enabled (using the KHR_debug extension or v4.3).</summary>
-        public bool DebugMessagingEnabled
-        {
+        public bool DebugMessagingEnabled {
             get => debugMessagingEnabled;
-            set
-            {
-                if (value)
-                {
-                    if (!debugMessagingEnabled)
-                    {
+            set {
+                if (value) {
+                    if (!debugMessagingEnabled) {
                         GL.Enable(EnableCap.DebugOutput);
                         GL.Enable(EnableCap.DebugOutputSynchronous);
-                        unsafe { GL.DebugMessageCallback(OnDebugMessageRecieved, (void*)0); }
+                        unsafe {
+                            GL.DebugMessageCallback(OnDebugMessageRecieved, (void*)0);
+                        }
                         debugMessagingEnabled = true;
                     }
                 }
-                else if (debugMessagingEnabled)
-                {
+                else if (debugMessagingEnabled) {
                     GL.Disable(EnableCap.DebugOutput);
                     GL.Disable(EnableCap.DebugOutputSynchronous);
                     debugMessagingEnabled = false;
@@ -127,8 +147,7 @@ namespace TrippyGL
             }
         }
 
-        private void OnDebugMessageRecieved(GLEnum src, GLEnum type, int id, GLEnum sev, int length, IntPtr msg, IntPtr param)
-        {
+        private void OnDebugMessageRecieved(GLEnum src, GLEnum type, int id, GLEnum sev, int length, IntPtr msg, IntPtr param) {
             DebugMessageReceived?.Invoke((DebugSource)src, (DebugType)type, id, (DebugSeverity)sev, Marshal.PtrToStringAnsi(msg));
         }
 
@@ -136,8 +155,7 @@ namespace TrippyGL
 
         #region GLGet
 
-        private void InitGLGetVariables()
-        {
+        private void InitGLGetVariables() {
             UniformBufferOffsetAlignment = GL.GetInteger(GLEnum.UniformBufferOffsetAlignment);
             MaxUniformBufferBindings = GL.GetInteger(GLEnum.MaxUniformBufferBindings);
             MaxUniformBlockSize = GL.GetInteger(GLEnum.MaxUniformBlockSize);
@@ -231,8 +249,7 @@ namespace TrippyGL
 
         #region IsAvailable
 
-        private void InitIsAvailableVariables()
-        {
+        private void InitIsAvailableVariables() {
             IsDoublePrecisionVertexAttribsAvailable = IsGLVersionAtLeast(4, 1);
             IsVertexAttribDivisorAvailable = IsGLVersionAtLeast(3, 3);
             IsInstancedDrawingAvailable = IsGLVersionAtLeast(3, 1);
@@ -261,8 +278,7 @@ namespace TrippyGL
         /// Clears the current framebuffer to the specified color.
         /// </summary>
         /// <param name="mask">The masks indicating the values to clear, combined using bitwise OR.</param>
-        public void Clear(ClearBuffers mask)
-        {
+        public void Clear(ClearBuffers mask) {
             GL.Clear((uint)mask);
         }
 
@@ -272,8 +288,7 @@ namespace TrippyGL
         /// <param name="primitiveType">The type of primitive to render.</param>
         /// <param name="startIndex">The index of the first vertex to render.</param>
         /// <param name="count">The amount of vertices to render.</param>
-        public void DrawArrays(PrimitiveType primitiveType, int startIndex, uint count)
-        {
+        public void DrawArrays(PrimitiveType primitiveType, int startIndex, uint count) {
             if (shaderProgram == null)
                 throw new InvalidOperationException(nameof(GraphicsDevice) + "." + nameof(DrawArrays) + "() was called but no shader program is set");
 
@@ -290,8 +305,7 @@ namespace TrippyGL
         /// <param name="primitiveType">The type of primitive to render.</param>
         /// <param name="startIndex">The index of the first element to render.</param>
         /// <param name="count">The amount of elements to render.</param>
-        public unsafe void DrawElements(PrimitiveType primitiveType, int startIndex, uint count)
-        {
+        public unsafe void DrawElements(PrimitiveType primitiveType, int startIndex, uint count) {
             if (shaderProgram == null)
                 throw new InvalidOperationException(nameof(GraphicsDevice) + "." + nameof(DrawElements) + "() was called but no shader program is set");
 
@@ -313,8 +327,7 @@ namespace TrippyGL
         /// <param name="startIndex">The index of the first element to render.</param>
         /// <param name="count">The amount of elements to render.</param>
         /// <param name="instanceCount">The amount of instances to render.</param>
-        public void DrawArraysInstanced(PrimitiveType primitiveType, int startIndex, uint count, uint instanceCount)
-        {
+        public void DrawArraysInstanced(PrimitiveType primitiveType, int startIndex, uint count, uint instanceCount) {
             if (shaderProgram == null)
                 throw new InvalidOperationException(nameof(GraphicsDevice) + "." + nameof(DrawArraysInstanced) + "() was called but no shader program is set");
 
@@ -332,8 +345,7 @@ namespace TrippyGL
         /// <param name="startIndex">The index of the first element to render.</param>
         /// <param name="count">The amount of elements to render.</param>
         /// <param name="instanceCount">The amount of instances to render.</param>
-        public unsafe void DrawElementsInstanced(PrimitiveType primitiveType, int startIndex, uint count, uint instanceCount)
-        {
+        public unsafe void DrawElementsInstanced(PrimitiveType primitiveType, int startIndex, uint count, uint instanceCount) {
             if (shaderProgram == null)
                 throw new InvalidOperationException(nameof(GraphicsDevice) + "." + nameof(DrawElementsInstanced) + "() was called but no shader program is set");
 
@@ -361,8 +373,7 @@ namespace TrippyGL
         /// <param name="dstHeight">The height of the draw rectangle.</param>
         /// <param name="mask">What data to copy from the framebuffers.</param>
         /// <param name="filter">Whether to use nearest or linear filtering.</param>
-        public void BlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, ClearBuffers mask, BlitFramebufferFilter filter)
-        {
+        public void BlitFramebuffer(int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight, ClearBuffers mask, BlitFramebufferFilter filter) {
             // Blit rules:
             // General rectangle correctness rules (src and dst rectangles must be inside the framebuffers' size rectangles)
             // If mask contains Depth or Stencil, filter must be Nearest.
@@ -374,8 +385,8 @@ namespace TrippyGL
 
             if (srcX < 0 || srcY < 0 || dstX < 0 || dstY < 0
                 || (readFramebuffer != null && (srcX + srcWidth > readFramebuffer.Width || srcY + srcHeight > readFramebuffer.Height))
-                || (drawFramebuffer != null && (dstX + dstWidth > drawFramebuffer.Width || dstY + dstHeight > drawFramebuffer.Height)))
-            { //If the source of destination rectangles are outside of bounds (if a framebuffer is null, the values are just ignored.
+                || (drawFramebuffer != null && (dstX + dstWidth > drawFramebuffer.Width || dstY + dstHeight > drawFramebuffer.Height))) {
+                //If the source of destination rectangles are outside of bounds (if a framebuffer is null, the values are just ignored.
                 throw new ArgumentException("Both the source and destination rectangles must be inside their respective framebuffer's size rectangles");
             }
 
@@ -395,8 +406,7 @@ namespace TrippyGL
         /// <param name="dstRect">The destination rectangle to write to.</param>
         /// <param name="mask">What data to copy from the framebuffers.</param>
         /// <param name="filter">Whether to use nearest or linear filtering.</param>
-        public void BlitFramebuffer(Viewport srcRect, Viewport dstRect, ClearBuffers mask, BlitFramebufferFilter filter)
-        {
+        public void BlitFramebuffer(Viewport srcRect, Viewport dstRect, ClearBuffers mask, BlitFramebufferFilter filter) {
             BlitFramebuffer(srcRect.X, srcRect.Y, (int)srcRect.Width, (int)srcRect.Height, dstRect.X, dstRect.Y, (int)dstRect.Width, (int)dstRect.Height, mask, filter);
         }
 
@@ -417,8 +427,7 @@ namespace TrippyGL
         /// <summary>
         /// Raises the <see cref="ShaderCompiled"/> event.
         /// </summary>
-        internal void OnShaderCompiled(in ShaderProgramBuilder programBuilder, bool success)
-        {
+        internal void OnShaderCompiled(in ShaderProgramBuilder programBuilder, bool success) {
             ShaderCompiled?.Invoke(this, programBuilder, success);
         }
 
@@ -432,8 +441,7 @@ namespace TrippyGL
         /// This is called by all <see cref="GraphicsResource"/>-s on creation.
         /// </summary>
         /// <param name="createdResource">The newly created resource.</param>
-        internal void OnResourceAdded(GraphicsResource createdResource)
-        {
+        internal void OnResourceAdded(GraphicsResource createdResource) {
             EnsureNotDisposed();
             graphicsResources.Add(createdResource);
         }
@@ -442,8 +450,7 @@ namespace TrippyGL
         /// This is called by <see cref="GraphicsResource"/>-s on <see cref="GraphicsResource.Dispose"/>.
         /// </summary>
         /// <param name="disposedResource">The graphics resource that was just disposed.</param>
-        internal void OnResourceRemoved(GraphicsResource disposedResource)
-        {
+        internal void OnResourceRemoved(GraphicsResource disposedResource) {
             graphicsResources.Remove(disposedResource);
         }
 
@@ -451,8 +458,7 @@ namespace TrippyGL
         /// Disposes all the <see cref="GraphicsResource"/>-s owned by this <see cref="GraphicsDevice"/>. This does not dispose the
         /// <see cref="GraphicsDevice"/>, so it can still be used for new resources afterwards.
         /// </summary>
-        public void DisposeAllResources()
-        {
+        public void DisposeAllResources() {
             foreach (GraphicsResource resource in graphicsResources)
                 resource.DisposeByGraphicsDevice();
             graphicsResources.Clear();
@@ -464,16 +470,14 @@ namespace TrippyGL
         /// Ensures all OpenGL commands given before this function was called are
         /// not being queued up (doesn't wait for them to finish).
         /// </summary>
-        public void FlushCommands()
-        {
+        public void FlushCommands() {
             GL.Flush();
         }
 
         /// <summary>
         /// Waits for all current OpenGL commands to finish being executed.
         /// </summary>
-        public void FinishCommands()
-        {
+        public void FinishCommands() {
             GL.Finish();
         }
 
@@ -482,16 +486,14 @@ namespace TrippyGL
         /// </summary>
         /// <param name="major">The major version number.</param>
         /// <param name="minor">The minor version number.</param>
-        public bool IsGLVersionAtLeast(int major, int minor)
-        {
+        public bool IsGLVersionAtLeast(int major, int minor) {
             return GLMajorVersion > major || (major == GLMajorVersion && GLMinorVersion >= minor);
         }
 
         /// <summary>
         /// Checks whether this <see cref="GraphicsDevice"/> is already disposed and throws an exception if it is.
         /// </summary>
-        private void EnsureNotDisposed()
-        {
+        private void EnsureNotDisposed() {
             if (IsDisposed)
                 throw new ObjectDisposedException(nameof(GraphicsDevice));
         }
@@ -500,10 +502,8 @@ namespace TrippyGL
         /// Disposes this <see cref="GraphicsDevice"/> and it's <see cref="GraphicsResource"/>-s.
         /// The <see cref="GraphicsDevice"/> nor it's resources can be used once it's been disposed.
         /// </summary>
-        public void Dispose()
-        {
-            if (!IsDisposed)
-            {
+        public void Dispose() {
+            if (!IsDisposed) {
                 DisposeAllResources();
                 DebugMessagingEnabled = false; // this makes sure any GCHandle or unmanaged stuff gets released
                 IsDisposed = true;

@@ -131,7 +131,7 @@ namespace TrippyGL
         #region BlendState
 
         /// <summary>The currently applied <see cref="TrippyGL.BlendState"/> values.</summary>
-        private readonly BlendState blendState = BlendState.Opaque;
+        private BlendState blendState = BlendState.Opaque;
 
         /// <summary>Gets or sets the <see cref="TrippyGL.BlendState"/> used for drawing.</summary>
         /// <remarks>
@@ -223,7 +223,7 @@ namespace TrippyGL
         #region DepthState
 
         /// <summary>The current depth state.</summary>
-        private readonly DepthState depthState = new DepthState(false);
+        private DepthState depthState = new DepthState(false);
 
         /// <summary>Sets the <see cref="TrippyGL.DepthState"/> used for drawing.</summary>
         /// <remarks>
@@ -328,7 +328,7 @@ namespace TrippyGL
         #region StencilState
 
         /// <summary>The current stencil state.</summary>
-        private readonly StencilState stencilState = new StencilState(false);
+        private StencilState stencilState = new StencilState(false);
 
         /// <summary>Sets the <see cref="TrippyGL.StencilState"/> used for drawing.</summary>
         /// <remarks>
@@ -548,7 +548,7 @@ namespace TrippyGL
         #region ClipDistances
 
         /// <summary>An array containing whether each clip distance index is enabled.</summary>
-        private readonly bool[] clipDistancesEnabled;
+        private bool[] clipDistancesEnabled;
 
         /// <summary>
         /// Gets whether a gl_ClipDistance index is enabled.
