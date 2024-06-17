@@ -464,7 +464,6 @@ public partial class Game {
 
         // before this, only GL, after this, only GD
         GLTracker.load();
-        //GD.ResetStates();
 
         // for GUI, no depth test
         GD.DepthTestingEnabled = false;
