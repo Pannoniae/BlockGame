@@ -21,7 +21,7 @@ public class ChunkSection : IDisposable {
     /// Sections start empty. If you place a block in them, they stop being empty and get array data.
     /// They won't revert to being empty if you break the blocks. (maybe a low-priority background task later? I'm not gonna bother with it atm)
     /// </summary>
-    public bool isEmpty = false;
+    public bool isEmpty => blocks.isEmpty();
 
     /// <summary>
     /// isEmpty but for transparent blocks

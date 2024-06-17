@@ -17,6 +17,14 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     /// </summary>
     public byte[] light;
 
+    public int blockCount;
+    public int randomTickCount;
+
+    /// <summary>
+    /// Has the block storage been initialized?
+    /// </summary>
+    public bool inited;
+
     public Chunk chunk;
 
     // YZX because the internet said so
@@ -24,15 +32,47 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+        set {
+            var old = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+            if (value != 0 && old == 0) {
+                blockCount++;
+                if (Blocks.get(value).randomTick) {
+                    randomTickCount++;
+                }
+            }
+            else if (value == 0 && old != 0) {
+                blockCount--;
+                if (Blocks.get(old).randomTick) {
+                    randomTickCount--;
+                }
+            }
+            if (blockCount > 0 && !inited) {
+                init();
+            }
+        }
     }
 
     public ArrayBlockData(Chunk chunk) {
         this.chunk = chunk;
+        inited = false;
+        init();
+    }
+
+    public void init() {
         blocks = blockPool.grab();
         light = lightPool.grab();
         Array.Clear(blocks);
         Array.Clear(light);
+        inited = true;
+    }
+
+    public bool isEmpty() {
+        return blockCount == 0;
+    }
+
+    public bool hasRandomTickingBlocks() {
+        return randomTickCount != 0;
     }
 
     // cleanup
@@ -83,24 +123,4 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public static byte extractBlocklight(byte value) {
         return (byte)((value & 0xF0) >> 4);
     }
-}
-
-[InlineArray(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE)]
-public struct ArrayBlockDataB {
-    private byte b;
-}
-
-[InlineArray(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE)]
-public struct ArrayBlockDataU {
-    private ushort u;
-}
-
-[InlineArray(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX)]
-public struct NeighbourBlockDataB {
-    private byte b;
-}
-
-[InlineArray(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX)]
-public struct NeighbourBlockDataU {
-    private ushort u;
 }

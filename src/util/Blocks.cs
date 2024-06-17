@@ -168,6 +168,11 @@ public class Block {
     /// </summary>
     public bool customRender = false;
 
+    /// <summary>
+    /// If true, this block will tick randomly.
+    /// </summary>
+    public bool randomTick = false;
+
     public static readonly int atlasSize = 256;
     public BlockModel model;
 

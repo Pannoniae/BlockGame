@@ -331,32 +331,31 @@ public class World {
     /// TODO unload chunks which are renderDistance + 2 away (this is bigger to prevent chunk flicker)
     /// </summary>
     public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance) {
-        // load +1 chunks around renderdistance
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
-                // restrict it to a circle
+        // load +2 chunks around renderdistance
+        for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
+            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
                     addToChunkLoadQueue(coord, ChunkStatus.GENERATED);
                 }
             }
         }
-        // populate around renderDistance
-        // light around renderDistance
-        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
-            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+        // populate around renderDistance + 1
+        // light around renderDistance + 1
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
                     addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
                     addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
                 }
             }
         }
         // finally, mesh around renderDistance
-        for (int x = chunkCoord.x - renderDistance + 1; x <= chunkCoord.x + renderDistance - 1; x++) {
-            for (int z = chunkCoord.z - renderDistance + 1; z <= chunkCoord.z + renderDistance - 1; z++) {
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance - 1) * (renderDistance - 1)) {
+                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
                     addToChunkLoadQueue(coord, ChunkStatus.MESHED);
                 }
             }
@@ -366,40 +365,39 @@ public class World {
         foreach (var chunk in chunks.Values) {
             var playerChunk = player.getChunk();
             var coord = chunk.coord;
-            // if distance is greater than renderDistance + 2, unload
-            if (playerChunk.distance(coord) >= renderDistance + 2) {
+            // if distance is greater than renderDistance + 3, unload
+            if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
                 unloadChunk(coord);
             }
         }
     }
 
     public void loadChunksAroundChunkLoading(ChunkCoord chunkCoord, int renderDistance) {
-        // load +1 chunks around renderdistance
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
-                // restrict it to a circle
+        // load +2 chunks around renderdistance
+        for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
+            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
                     loadChunk(coord, ChunkStatus.GENERATED);
                 }
             }
         }
-        // populate around renderDistance
-        // light around renderDistance
-        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
-            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+        // populate around renderDistance + 1
+        // light around renderDistance + 1
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
                     loadChunk(coord, ChunkStatus.POPULATED);
                     loadChunk(coord, ChunkStatus.LIGHTED);
                 }
             }
         }
         // finally, mesh around renderDistance
-        for (int x = chunkCoord.x - renderDistance + 1; x <= chunkCoord.x + renderDistance - 1; x++) {
-            for (int z = chunkCoord.z - renderDistance + 1; z <= chunkCoord.z + renderDistance - 1; z++) {
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance - 1) * (renderDistance - 1)) {
+                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
                     addToChunkLoadQueue(coord, ChunkStatus.MESHED);
                 }
             }
@@ -409,39 +407,39 @@ public class World {
         foreach (var chunk in chunks.Values) {
             var playerChunk = player.getChunk();
             var coord = chunk.coord;
-            // if distance is greater than renderDistance + 2, unload
-            if (playerChunk.distance(coord) >= renderDistance + 2) {
+            // if distance is greater than renderDistance + 3, unload
+            if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
                 unloadChunk(coord);
             }
         }
     }
 
     public void loadChunksAroundChunkImmediately(ChunkCoord chunkCoord, int renderDistance) {
-        // load +1 chunks around renderdistance
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
+        // load +2 chunks around renderdistance
+        for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
+            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
                     loadChunk(coord, ChunkStatus.GENERATED);
                 }
             }
         }
-        // populate around renderDistance
-        // light around renderDistance
-        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
-            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
+        // populate around renderDistance + 1
+        // light around renderDistance + 1
+        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
+            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
+                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
                     loadChunk(coord, ChunkStatus.POPULATED);
                     loadChunk(coord, ChunkStatus.LIGHTED);
                 }
             }
         }
         // finally, mesh around renderDistance
-        for (int x = chunkCoord.x - renderDistance + 1; x <= chunkCoord.x + renderDistance - 1; x++) {
-            for (int z = chunkCoord.z - renderDistance + 1; z <= chunkCoord.z + renderDistance - 1; z++) {
+        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
+            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance - 1) * (renderDistance - 1)) {
+                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
                     loadChunk(coord, ChunkStatus.MESHED);
                 }
             }
@@ -451,8 +449,8 @@ public class World {
         foreach (var chunk in chunks.Values) {
             var playerChunk = player.getChunk();
             var coord = chunk.coord;
-            // if distance is greater than renderDistance + 2, unload
-            if (playerChunk.distanceSq(coord) >= (renderDistance + 2) * (renderDistance + 2)) {
+            // if distance is greater than renderDistance + 3, unload
+            if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
                 unloadChunk(coord);
             }
         }

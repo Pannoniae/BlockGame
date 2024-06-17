@@ -129,9 +129,9 @@ public class ChunkSectionRenderer : IDisposable {
         }
 
         // if the section is empty, nothing to do
-        //if (section.isEmpty) {
-        //    return;
-        //}
+        if (section.isEmpty) {
+            return;
+        }
 
         //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
         // first we render everything which is NOT translucent
