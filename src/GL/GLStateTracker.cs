@@ -73,5 +73,7 @@ public class GLStateTracker {
         // restore VAO
         GL.BindVertexArray((uint)VAO);
 
+        //GD.ResetInternalStates();
+
     }
 }

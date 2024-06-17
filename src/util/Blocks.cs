@@ -74,8 +74,8 @@ public class Blocks {
     public static Block CANDY_DARK_GREEN = register(new Block(19, "Dark Green Candy", BlockModel.makeCube(Block.cubeUVs(3, 2))));
     public static Block CANDY_LIGHT_GREEN = register(new Block(20, "Light Green Candy", BlockModel.makeCube(Block.cubeUVs(4, 2))));
     public static Block CANDY_ORANGE = register(new Block(21, "Orange Candy", BlockModel.makeCube(Block.cubeUVs(5, 2))));
-    public static Block CANDY_YELLOW = register(new Block(22, "YELLOW Candy", BlockModel.makeCube(Block.cubeUVs(6, 2))));
-    public static Block CANDY_LIGHT_RED = register(new Block(23, "Ligth Red Candy", BlockModel.makeCube(Block.cubeUVs(7, 2))));
+    public static Block CANDY_YELLOW = register(new Block(22, "Yellow Candy", BlockModel.makeCube(Block.cubeUVs(6, 2))));
+    public static Block CANDY_LIGHT_RED = register(new Block(23, "Light Red Candy", BlockModel.makeCube(Block.cubeUVs(7, 2))));
     public static Block CANDY_PINK = register(new Block(24, "Pink Candy", BlockModel.makeCube(Block.cubeUVs(8, 2))));
     public static Block CANDY_PURPLE = register(new Block(25, "Purple Candy", BlockModel.makeCube(Block.cubeUVs(9, 2))));
     public static Block VIOLET = register(new Block(26, "Violet Candy", BlockModel.makeCube(Block.cubeUVs(10, 2))));
