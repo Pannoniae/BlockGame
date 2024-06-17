@@ -83,7 +83,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
-        return !inited ? (byte)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        return !inited ? (byte)15 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

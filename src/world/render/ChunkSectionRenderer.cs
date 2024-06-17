@@ -491,7 +491,7 @@ public class ChunkSectionRenderer : IDisposable {
                 test2 = false;
 
                 // if bottom of the world, don't bother
-                if (y == 0 && dir == RawDirection.DOWN) {
+                if (section.chunkY == 0 && y == 0 && dir == RawDirection.DOWN) {
                     goto increment2;
                 }
 
