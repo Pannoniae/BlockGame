@@ -75,8 +75,7 @@ public class Menu {
             var pos = Game.mousePos + new Vector2(MOUSEPOSPADDING) - new Vector2(2);
             var posExt = Game.gui.measureStringThin(tooltip) + new Vector2(4);
             var textPos = Game.mousePos + new Vector2(MOUSEPOSPADDING);
-            var textExt = Game.gui.measureStringThin(tooltip);
-            Game.gui.draw(Game.gui.colourTexture, new RectangleF((int)pos.X, (int)pos.Y, (int)textExt.X, (int)textExt.Y), null, new Color4b(28, 28, 28, 255));
+            Game.gui.draw(Game.gui.colourTexture, new RectangleF((int)pos.X, (int)pos.Y, (int)posExt.X, (int)posExt.Y), null, new Color4b(28, 28, 28, 255));
             Game.gui.drawStringThin(tooltip, textPos);
         }
     }

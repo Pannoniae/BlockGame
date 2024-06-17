@@ -58,7 +58,9 @@ namespace TrippyGL {
         /// You should only need to call this when interoperating with other libraries or using your own GL functions.
         /// </summary>
         public void ResetInternalStates() {
-            InitBufferObjectStates();
+
+            Array.Clear(bufferBindings);
+            Array.Clear(bufferRangeBindings);
 
             vertexArray = null;
             shaderProgram = null;
@@ -66,14 +68,20 @@ namespace TrippyGL {
             drawFramebuffer = null;
             readFramebuffer = null;
             renderbuffer = null;
-            clipDistancesEnabled = new bool[MaxClipDistances];
+            Array.Clear(clipDistancesEnabled);
 
+
+            // these actually have to be set because the defaults make sense ->
+            // they can have the wrong values
+            // you can't just null them out
+            // alternative would be using a bunch of glGet to get the state, if it doesn't match then set
+            // but this is good enough because these are not expensive
             blendState = BlendState.Opaque;
-            depthState = new DepthState(false);
-            stencilState = new StencilState(false);
-            faceCullingEnabled = false;
-            cullFaceMode = CullingMode.CullBack;
-            polygonFrontFace = PolygonFace.CounterClockwise;
+            DepthState = new DepthState(false);
+            StencilState = new StencilState(false);
+            FaceCullingEnabled = false;
+            CullFaceMode = CullingMode.CullBack;
+            PolygonFrontFace = PolygonFace.CounterClockwise;
 
             cubemapSeamlessEnabled = true;
 
