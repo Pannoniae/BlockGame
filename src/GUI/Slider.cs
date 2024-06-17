@@ -14,6 +14,10 @@ public class Slider : GUIElement {
     public const int knobWidth = 7;
     public const int knobHeight = 18;
 
+    // padding so the knob doesn't hang off the edge
+    private const int leftPadding = 4;
+    private const int rightPadding = 4;
+
     public static Rectangle slider = new(0, 80, 128, 16);
     public static Rectangle pressedSlider = new(0, 80 + 32, 128, 16);
     public static Rectangle knob = new(192, 0, knobWidth, knobHeight);
@@ -30,7 +34,7 @@ public class Slider : GUIElement {
         if (menu.pressedElement == this) {
             // in UI coords
             float mouseX = GUI.s2u(Game.mousePos).X;
-            float ratio = (mouseX - GUIbounds.X) / GUIbounds.Width;
+            float ratio = (mouseX - GUIbounds.X - leftPadding) / (GUIbounds.Width - leftPadding - rightPadding);
             value = min + ratio * (max - min);
             value = Math.Clamp(value, min, max);
             value = roundTo(value, step);
@@ -50,9 +54,9 @@ public class Slider : GUIElement {
         Game.gui.drawUI(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), tex);
 
         // draw the thing on it
-        float mouseX = GUI.s2u(Game.mousePos).X;
+        //float mouseX = GUI.s2u(Game.mousePos).X;
         float ratio = (value - min) / (max - min);
-        float knobX = GUIbounds.X + ratio * GUIbounds.Width - knobWidth / 2f;
+        float knobX = GUIbounds.X + leftPadding + ratio * (GUIbounds.Width - leftPadding - rightPadding) - knobWidth / 2f;
         float knobY = GUIbounds.Y - 1f;
         Game.gui.drawUI(Game.gui.guiTexture, new Vector2(knobX, knobY), knob);
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);

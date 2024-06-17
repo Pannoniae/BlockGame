@@ -51,7 +51,9 @@ public class WorldRenderer {
         chunkVAO = GL.GenVertexArray();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
+        Game.worldShader = shader;
         dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
+        Game.dummyShader = shader;
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
@@ -109,7 +111,7 @@ public class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunksToRender) {
-            chunk.drawTransparent();
+            chunk.drawTransparent(true);
         }
         // TRANSLUCENT PASS
         shader.use();
