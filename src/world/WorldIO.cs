@@ -7,11 +7,11 @@ public class WorldIO {
 
     //public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
 
-    private const int my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
+    private const int my = Chunk.CHUNKSIZE;
     private const int mx = Chunk.CHUNKSIZE;
     private const int mz = Chunk.CHUNKSIZE;
-    public static FixedArrayPool<ushort> saveBlockPool = new FixedArrayPool<ushort>(mx * my * mz);
-    public static FixedArrayPool<byte> saveLightPool = new FixedArrayPool<byte>(mx * my * mz);
+    public static FixedArrayPool<ushort> saveBlockPool = new(mx * my * mz * Chunk.CHUNKHEIGHT);
+    public static FixedArrayPool<byte> saveLightPool = new(mx * my * mz * Chunk.CHUNKHEIGHT);
 
     public World world;
 
@@ -58,12 +58,22 @@ public class WorldIO {
         var light = saveLightPool.grab();
         int index = 0;
         // using YXZ order
-        for (int y = 0; y < my; y++) {
-            for (int z = 0; z < mz; z++) {
-                for (int x = 0; x < mx; x++) {
-                    blocks[index] = chunk.getBlock(x, y, z);
-                    light[index] = chunk.getLight(x, y, z);
-                    index++;
+        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            // if empty, just write zeros
+            if (!chunk.chunks[sectionY].blocks.inited) {
+                Array.Fill(blocks, (ushort)0, index, my * mz * mx);
+                Array.Fill(light, (byte)0, index, my * mz * mx);
+                index += mz * my * mx;
+            }
+            else {
+                for (int y = 0; y < my; y++) {
+                    for (int z = 0; z < mz; z++) {
+                        for (int x = 0; x < mx; x++) {
+                            blocks[index] = chunk.chunks[sectionY].blocks[x, y, z];
+                            light[index] = chunk.chunks[sectionY].blocks.getLight(x, y, z);
+                            index++;
+                        }
+                    }
                 }
             }
         }

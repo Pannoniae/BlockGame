@@ -30,9 +30,12 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        get => !inited ? (ushort)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
+            if (!inited && value != 0) {
+                init();
+            }
             var old = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
             Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
             if (value != 0 && old == 0) {
@@ -47,16 +50,12 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                     randomTickCount--;
                 }
             }
-            if (blockCount > 0 && !inited) {
-                init();
-            }
         }
     }
 
     public ArrayBlockData(Chunk chunk) {
         this.chunk = chunk;
         inited = false;
-        init();
     }
 
     public void init() {
@@ -84,7 +83,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
-        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        return !inited ? (byte)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -93,12 +92,12 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public byte skylight(int x, int y, int z) {
-        var value = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        var value = !inited ? (byte)15 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
-        var value = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        var value = !inited ? (byte)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         return (byte)((value & 0xF0) >> 4);
     }
 

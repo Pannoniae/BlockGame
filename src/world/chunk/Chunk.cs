@@ -56,9 +56,13 @@ public class Chunk : IDisposable {
             for (int z = 0; z < CHUNKSIZE; z++) {
                 var y = CHUNKSIZE * CHUNKHEIGHT - 1;
                 // loop down until block is solid
-                ushort bl = getBlock(x, y, z);
+                ushort bl = 0;
+                bl = getBlock(x, y, z);
                 while (!Blocks.isSolid(bl)) {
-                    setSkyLight(x, y, z, 15);
+                    // check if chunk is initialised first
+                    if (chunks[y >> 4].blocks.inited) {
+                        setSkyLight(x, y, z, 15);
+                    }
                     y--;
                     bl = getBlock(x, y, z);
                 }

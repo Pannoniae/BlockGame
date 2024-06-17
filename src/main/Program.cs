@@ -15,7 +15,6 @@ public class Program {
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
         Console.Out.WriteLine("Your game crashed! Here are some relevant details:");
-        Console.WriteLine(e.ToString());
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             // call glxinfo
             var process = new Process {
@@ -46,5 +45,6 @@ public class Program {
             Console.Out.WriteLine("OpenGL info:");
             Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
         }
+        Console.WriteLine(e.ToString());
     }
 }
