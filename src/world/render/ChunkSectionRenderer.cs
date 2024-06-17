@@ -332,7 +332,7 @@ public class ChunkSectionRenderer : IDisposable {
                     // get neighbouring section
                     var neighbourSection =
                         Unsafe.Add(ref neighbourSectionsArray, ((y >> 4) + 1) * 9 + ((z >> 4) + 1) * 3 + (x >> 4) + 1);
-                    var nn = neighbourSection != null;
+                    var nn = neighbourSection != null && !neighbourSection.isEmpty();
                     var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
 
                     // set neighbours array element  to block
