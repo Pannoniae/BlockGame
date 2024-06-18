@@ -23,11 +23,6 @@ public class ChunkSection : IDisposable {
     /// </summary>
     public bool isEmpty => blocks.isEmpty();
 
-    /// <summary>
-    /// isEmpty but for transparent blocks
-    /// </summary>
-    public bool isEmptyTransparent = false;
-
     public int worldX => chunkX * Chunk.CHUNKSIZE;
     public int worldY => chunkY * Chunk.CHUNKSIZE;
     public int worldZ => chunkZ * Chunk.CHUNKSIZE;

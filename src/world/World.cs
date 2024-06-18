@@ -888,11 +888,11 @@ public class World {
     }
 
     public ChunkSection? getChunkSectionUnsafe(ChunkSectionCoord pos) {
-        var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
-        if (!c || pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
+        if (pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             return null;
         }
-        return chunk!.chunks[pos.y];
+        bool c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
+        return !c ? null : chunk!.chunks[pos.y];
     }
 
     public Chunk getChunk(Vector2D<int> position) {
