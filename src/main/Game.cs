@@ -520,5 +520,7 @@ public partial class Game {
     }
 
     private void close() {
+        buffer.Dispose();
+        music.Dispose();
     }
 }
