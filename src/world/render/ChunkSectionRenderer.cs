@@ -490,7 +490,7 @@ public class ChunkSectionRenderer : IDisposable {
                 if (dir == RawDirection.NONE) {
                     // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
                     test2 = true;
-                    light.First = light.Second = light.Third = light.Fourth = Unsafe.Add(ref lightRef, index);
+                    light.First = light.Second = light.Third = light.Fourth = lightRef;
                 }
                 else {
                     ushort nb = nba[(byte)dir];

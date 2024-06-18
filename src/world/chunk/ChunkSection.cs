@@ -43,7 +43,7 @@ public class ChunkSection : IDisposable {
         chunkY = ypos;
         chunkZ = zpos;
         this.world = world;
-        blocks = new ArrayBlockData(chunk);
+        blocks = new ArrayBlockData(chunk, this);
 
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
         bbbox = new BoundingBox(box.min.toVec3(), box.max.toVec3());
