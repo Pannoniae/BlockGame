@@ -53,9 +53,10 @@ public class WorldRenderer {
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         Game.worldShader = shader;
         dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
-        Game.dummyShader = shader;
+        Game.dummyShader = dummyShader;
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
+        shader.use();
         uMVP = shader.getUniformLocation(nameof(uMVP));
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
@@ -63,7 +64,7 @@ public class WorldRenderer {
         fogColour = shader.getUniformLocation(nameof(fogColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
 
-        shader.use();
+        
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
         shader.setUniform(drawDistance, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
