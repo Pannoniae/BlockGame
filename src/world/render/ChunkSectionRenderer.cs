@@ -26,6 +26,7 @@ public class ChunkSectionRenderer : IDisposable {
     public readonly GL GL;
 
     private int uChunkPos;
+    private int dummyuChunkPos;
 
     public static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
 
@@ -93,6 +94,7 @@ public class ChunkSectionRenderer : IDisposable {
     public ChunkSectionRenderer(ChunkSection section) {
         this.section = section;
         uChunkPos = Game.worldShader.getUniformLocation("uChunkPos");
+        dummyuChunkPos = Game.dummyShader.getUniformLocation("uChunkPos");
     }
 
     private static bool opaqueBlocks(Block b) {
@@ -224,7 +226,7 @@ public class ChunkSectionRenderer : IDisposable {
         if (section.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
-            shader.setUniform(uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
+            shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
