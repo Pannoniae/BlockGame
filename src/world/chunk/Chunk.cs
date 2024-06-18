@@ -56,11 +56,35 @@ public class Chunk : IDisposable {
             for (int z = 0; z < CHUNKSIZE; z++) {
                 var y = CHUNKSIZE * CHUNKHEIGHT - 1;
                 // loop down until block is solid
-                ushort bl = 0;
-                bl = getBlock(x, y, z);
-                while (!Blocks.isSolid(bl)) {
+                ushort bl = getBlock(x, y, z);
+                while (!Blocks.isFullBlock(bl)) {
                     // check if chunk is initialised first
                     if (chunks[y >> 4].blocks.inited) {
+                        setSkyLight(x, y, z, 15);
+                    }
+                    y--;
+                    bl = getBlock(x, y, z);
+                }
+
+                // add the last item for propagation
+                world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+            }
+        }
+        world.processSkyLightQueue();
+        status = ChunkStatus.LIGHTED;
+    }
+
+    public void lightSection(ChunkSection section) {
+        // set the top of the chunk to 15 if not solid
+        // then propagate down
+        for (int x = 0; x < CHUNKSIZE; x++) {
+            for (int z = 0; z < CHUNKSIZE; z++) {
+                var y = CHUNKSIZE * section.chunkY + 15;
+                // loop down until block is solid
+                ushort bl = getBlock(x, y, z);
+                while (!Blocks.isFullBlock(bl) && y > 0) {
+                    // check if chunk is initialised first
+                    if (section.blocks.inited) {
                         setSkyLight(x, y, z, 15);
                     }
                     y--;

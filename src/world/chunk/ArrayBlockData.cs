@@ -28,6 +28,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public bool inited;
 
     public Chunk chunk;
+    public ChunkSection section;
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
@@ -68,8 +69,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
-    public ArrayBlockData(Chunk chunk) {
+    public ArrayBlockData(Chunk chunk, ChunkSection section) {
         this.chunk = chunk;
+        this.section = section;
         inited = false;
     }
 
@@ -78,8 +80,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         light = lightPool.grab();
         Array.Clear(blocks);
         // fill it with empty
-        Array.Fill(light, (byte)15);
+        Array.Clear(light);
         inited = true;
+        chunk.lightSection(section);
     }
 
     public bool isEmpty() {
