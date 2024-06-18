@@ -13,6 +13,7 @@ public class Blocks {
     /// Stores whether the block is a full block or not.
     /// </summary>
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
+    public static bool[] translucentCache = new bool[MAXBLOCKS];
 
     public static readonly int maxBlock = 31;
 
@@ -34,6 +35,7 @@ public class Blocks {
     public static void postLoad() {
         for (int i = 0; i < maxBlock; i++) {
             fullBlockCache[blocks[i].id] = blocks[i].isFullBlock;
+            translucentCache[blocks[i].id] = blocks[i].type == BlockType.TRANSLUCENT;
         }
     }
 
@@ -99,7 +101,7 @@ public class Blocks {
     }
 
     public static bool isTranslucent(int block) {
-        return block != 0 && get(block).type == BlockType.TRANSLUCENT;
+        return translucentCache[block];
     }
 
     public static bool hasCollision(int block) {
@@ -138,8 +140,9 @@ public class Block {
     /// </summary>
     public string name = "";
 
-    [Obsolete("Use Blocks.isFullBlock() instead.")]
-    public bool isFullBlock = true;
+    public AABB? aabb;
+
+    public AABB? selectionAABB;
 
     /// <summary>
     /// Is fully transparent? (glass, leaves, etc.)
@@ -147,21 +150,24 @@ public class Block {
     /// </summary>
     public BlockType type = BlockType.SOLID;
 
-    public bool collision = true;
-    public AABB? aabb;
+    public BlockModel model;
+
+    /// <summary>
+    /// How much light does this block emit? (0 for none.)
+    /// </summary>
+    public byte lightLevel = 0;
 
     public bool selection = true;
-    public AABB? selectionAABB;
+    public bool collision = true;
 
     /// <summary>
     /// Is this block a liquid?
     /// </summary>
     public bool liquid = false;
 
-    /// <summary>
-    /// How much light does this block emit? (0 for none.)
-    /// </summary>
-    public byte lightLevel = 0;
+    [Obsolete("Use Blocks.isFullBlock() instead.")]
+    public bool isFullBlock = true;
+
 
     /// <summary>
     /// If true, this block has a custom render method. (Used for dynamic blocks....)
@@ -174,7 +180,6 @@ public class Block {
     public bool randomTick = false;
 
     public static readonly int atlasSize = 256;
-    public BlockModel model;
 
     /// <summary>
     /// 0 = 0, 65535 = 1

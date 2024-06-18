@@ -15,18 +15,16 @@ public class ChunkSectionRenderer : IDisposable {
 
 
     // we need it here because completely full chunks are also empty of any rendering
-    public bool isEmpty;
     public bool isEmptyRenderOpaque;
     public bool isEmptyRenderTranslucent;
 
     public VAO? vao;
     public VAO? watervao;
 
-    public bool hasTranslucentBlocks;
     public bool hasOnlySolid;
 
     public readonly GL GL;
-    
+
     private int uChunkPos;
 
     public static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
@@ -132,6 +130,7 @@ public class ChunkSectionRenderer : IDisposable {
         }
 
         // if the section is empty, nothing to do
+        // if is empty, just return, don't need to get neighbours
         if (section.isEmpty) {
             return;
         }
@@ -143,10 +142,6 @@ public class ChunkSectionRenderer : IDisposable {
 
         // if chunk is full, don't mesh either
         if (hasOnlySolid) {
-            isEmpty = true;
-        }
-
-        if (isEmpty) {
             return;
         }
 
@@ -177,7 +172,7 @@ public class ChunkSectionRenderer : IDisposable {
         }
         //}
         //lock (meshingLock) {
-        if (hasTranslucentBlocks) {
+        if (section.blocks.hasTranslucentBlocks()) {
             // then we render everything which is translucent (water for now)
             constructVertices(VertexConstructionMode.TRANSLUCENT);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
@@ -226,7 +221,7 @@ public class ChunkSectionRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (hasTranslucentBlocks && !isEmptyRenderTranslucent) {
+        if (section.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
             shader.setUniform(uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
@@ -240,9 +235,7 @@ public class ChunkSectionRenderer : IDisposable {
         //var sw = new Stopwatch();
         //sw.Start();
 
-        hasTranslucentBlocks = false;
-        hasOnlySolid = true;
-        isEmpty = true;
+        hasOnlySolid = section.blocks.isFull();
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -261,34 +254,17 @@ public class ChunkSectionRenderer : IDisposable {
 
         for (int i = 0; i < Chunk.MAXINDEX; i++) {
             // index for array accesses
-            x = i & 0xF;
-            z = i >> 4 & 0xF;
             y = i >> 8;
+            z = i >> 4 & 0xF;
+            x = i & 0xF;
             var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
-            var bl = blockArrayRef;
-            var light = sourceLightArrayRef;
-
-            if (isEmpty && bl != 0) {
-                isEmpty = false;
-            }
-            if (!hasTranslucentBlocks && Blocks.isTranslucent(bl)) {
-                hasTranslucentBlocks = true;
-            }
-            if (hasOnlySolid && (bl == 0 || !Blocks.isFullBlock(bl))) {
-                hasOnlySolid = false;
-            }
-            Unsafe.Add(ref neighboursArrayRef, index) = bl;
-            Unsafe.Add(ref lightArrayRef, index) = light;
+            Unsafe.Add(ref neighboursArrayRef, index) = blockArrayRef;
+            Unsafe.Add(ref lightArrayRef, index) = sourceLightArrayRef;
 
             // increment
             blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
             sourceLightArrayRef = ref Unsafe.Add(ref sourceLightArrayRef, 1);
-        }
-
-        // if is empty, just return, don't need to get neighbours
-        if (isEmpty) {
-            return;
         }
 
         //Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
@@ -300,10 +276,14 @@ public class ChunkSectionRenderer : IDisposable {
             for (z = -1; z <= 1; z++) {
                 for (x = -1; x <= 1; x++) {
                     var sec = world.getChunkSectionUnsafe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z));
-                    Unsafe.Add(ref neighbourSectionsArray, (y + 1) * 9 + (z + 1) * 3 + x + 1) = sec?.blocks!;
+                    neighbourSectionsArray = sec?.blocks;
+                    neighbourSectionsArray = ref Unsafe.Add(ref neighbourSectionsArray, 1)!;
                 }
             }
         }
+
+        // reset counters
+        neighbourSectionsArray = ref MemoryMarshal.GetArrayDataReference(neighbourSections);
 
         for (y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
             for (z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
@@ -329,16 +309,19 @@ public class ChunkSectionRenderer : IDisposable {
                     //var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
                     // aligned position (between 0 and 16)
-                    int cx = (x + 16) % 16;
-                    int cy = (y + 16) % 16;
-                    int cz = (z + 16) % 16;
+                    int cx = (x + 16) & 0xF;
+                    int cy = (y + 16) & 0xF;
+                    int cz = (z + 16) & 0xF;
 
                     // section position (can be -1, 0, 1)
                     // get neighbouring section
                     var neighbourSection =
                         Unsafe.Add(ref neighbourSectionsArray, ((y >> 4) + 1) * 9 + ((z >> 4) + 1) * 3 + (x >> 4) + 1);
-                    var nn = neighbourSection != null && !neighbourSection.isEmpty();
-                    var bl = nn ? neighbourSection![cx, cy, cz] : (ushort)0;
+                    var nn = neighbourSection != null && neighbourSection.inited;
+                    var bl = nn
+                        ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.blocks),
+                            cy * Chunk.CHUNKSIZESQ + cz * Chunk.CHUNKSIZE + cx)
+                        : (ushort)0;
 
                     // set neighbours array element  to block
                     neighboursArrayRef = bl;
@@ -348,7 +331,8 @@ public class ChunkSectionRenderer : IDisposable {
                     }
 
                     // set light array element to light
-                    lightArrayRef = nn ? neighbourSection!.getLight(cx, cy, cz) : (byte)15;
+                    lightArrayRef = nn ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.light),
+                        cy * Chunk.CHUNKSIZESQ + cz * Chunk.CHUNKSIZE + cx) : (byte)15;
 
                     // increment
                     neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, 1);
@@ -419,6 +403,9 @@ public class ChunkSectionRenderer : IDisposable {
             int y = idx >> 8;
 
             var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+            // pre-add index
+            neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
+            lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
 
             Block bl = Blocks.get(blockArrayRef);
             switch (mode) {
@@ -445,7 +432,7 @@ public class ChunkSectionRenderer : IDisposable {
             }
 
             // calculate texcoords
-            var tex = new Vector4();
+            Vector128<float> tex;
 
 
             // calculate AO for all 8 vertices
@@ -456,12 +443,12 @@ public class ChunkSectionRenderer : IDisposable {
 
             // setup neighbour data
             // if all 6 neighbours are solid, we don't even need to bother iterating the faces
-            nba[0] = Unsafe.Add(ref neighbourRef, index - 1);
-            nba[1] = Unsafe.Add(ref neighbourRef, index + 1);
-            nba[2] = Unsafe.Add(ref neighbourRef, index - Chunk.CHUNKSIZEEX);
-            nba[3] = Unsafe.Add(ref neighbourRef, index + Chunk.CHUNKSIZEEX);
-            nba[4] = Unsafe.Add(ref neighbourRef, index - Chunk.CHUNKSIZEEXSQ);
-            nba[5] = Unsafe.Add(ref neighbourRef, index + Chunk.CHUNKSIZEEXSQ);
+            nba[0] = Unsafe.Add(ref neighbourRef, -1);
+            nba[1] = Unsafe.Add(ref neighbourRef, +1);
+            nba[2] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEX);
+            nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
+            nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
+            nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
             if (nba[0] != 0 && Blocks.isFullBlock(nba[0]) &&
                 nba[1] != 0 && Blocks.isFullBlock(nba[1]) &&
                 nba[2] != 0 && Blocks.isFullBlock(nba[2]) &&
@@ -480,12 +467,12 @@ public class ChunkSectionRenderer : IDisposable {
             Unsafe.SkipInit(out light.Fourth);
 
             // get light data too
-            lba[0] = Unsafe.Add(ref lightRef, index - 1);
-            lba[1] = Unsafe.Add(ref lightRef, index + 1);
-            lba[2] = Unsafe.Add(ref lightRef, index - Chunk.CHUNKSIZEEX);
-            lba[3] = Unsafe.Add(ref lightRef, index + Chunk.CHUNKSIZEEX);
-            lba[4] = Unsafe.Add(ref lightRef, index - Chunk.CHUNKSIZEEXSQ);
-            lba[5] = Unsafe.Add(ref lightRef, index + Chunk.CHUNKSIZEEXSQ);
+            lba[0] = Unsafe.Add(ref lightRef, -1);
+            lba[1] = Unsafe.Add(ref lightRef, +1);
+            lba[2] = Unsafe.Add(ref lightRef, -Chunk.CHUNKSIZEEX);
+            lba[3] = Unsafe.Add(ref lightRef, +Chunk.CHUNKSIZEEX);
+            lba[4] = Unsafe.Add(ref lightRef, -Chunk.CHUNKSIZEEXSQ);
+            lba[5] = Unsafe.Add(ref lightRef, +Chunk.CHUNKSIZEEXSQ);
 
 
             ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
@@ -550,17 +537,17 @@ public class ChunkSectionRenderer : IDisposable {
                                 vector = Vector128.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9));
 
                                 o = toByte(Blocks.isFullBlock(
-                                    Unsafe.Add(ref neighbourRef, index + vector[0] + vector[1] * Chunk.CHUNKSIZEEXSQ + vector[2] * Chunk.CHUNKSIZEEX)));
-                                l.First = Unsafe.Add(ref lightRef, index + vector[0] + vector[1] * Chunk.CHUNKSIZEEXSQ + vector[2] * Chunk.CHUNKSIZEEX);
+                                    Unsafe.Add(ref neighbourRef, vector[0] + vector[1] * Chunk.CHUNKSIZEEXSQ + vector[2] * Chunk.CHUNKSIZEEX)));
+                                l.First = Unsafe.Add(ref lightRef, vector[0] + vector[1] * Chunk.CHUNKSIZEEXSQ + vector[2] * Chunk.CHUNKSIZEEX);
 
                                 o |= (byte)(toByte(Blocks.isFullBlock(
-                                    Unsafe.Add(ref neighbourRef, index + vector[3] + vector[4] * Chunk.CHUNKSIZEEXSQ + vector[5] * Chunk.CHUNKSIZEEX))) << 1);
-                                l.Second = Unsafe.Add(ref lightRef, index + vector[3] + vector[4] * Chunk.CHUNKSIZEEXSQ + vector[5] * Chunk.CHUNKSIZEEX);
+                                    Unsafe.Add(ref neighbourRef, vector[3] + vector[4] * Chunk.CHUNKSIZEEXSQ + vector[5] * Chunk.CHUNKSIZEEX))) << 1);
+                                l.Second = Unsafe.Add(ref lightRef, vector[3] + vector[4] * Chunk.CHUNKSIZEEXSQ + vector[5] * Chunk.CHUNKSIZEEX);
 
                                 //mult++;
                                 o |= (byte)(toByte(Blocks.isFullBlock(
-                                    Unsafe.Add(ref neighbourRef, index + vector[6] + vector[7] * Chunk.CHUNKSIZEEXSQ + vector[8] * Chunk.CHUNKSIZEEX))) << 2);
-                                l.Third = Unsafe.Add(ref lightRef, index + vector[6] + vector[7] * Chunk.CHUNKSIZEEXSQ + vector[8] * Chunk.CHUNKSIZEEX);
+                                    Unsafe.Add(ref neighbourRef, vector[6] + vector[7] * Chunk.CHUNKSIZEEXSQ + vector[8] * Chunk.CHUNKSIZEEX))) << 2);
+                                l.Third = Unsafe.Add(ref lightRef, vector[6] + vector[7] * Chunk.CHUNKSIZEEXSQ + vector[8] * Chunk.CHUNKSIZEEX);
 
                                 // only apply AO if enabled
                                 if ((settings & SETTING_AO) == 1 && !facesRef.noAO) {
@@ -609,22 +596,26 @@ public class ChunkSectionRenderer : IDisposable {
                             }
                         }
                     }
-
-                    tex.X = facesRef.min.u * 16f / Block.atlasSize;
+                    /*tex.X = facesRef.min.u * 16f / Block.atlasSize;
                     tex.Y = facesRef.min.v * 16f / Block.atlasSize;
                     tex.Z = facesRef.max.u * 16f / Block.atlasSize;
-                    tex.W = facesRef.max.v * 16f / Block.atlasSize;
+                    tex.W = facesRef.max.v * 16f / Block.atlasSize;*/
+
+                    tex = Vector128.Create(facesRef.min.u, facesRef.min.v, facesRef.max.u, facesRef.max.v);
+                    tex = Vector128.Multiply(tex, 16);
+                    tex = Vector128.Divide(tex, Block.atlasSize);
+
 
 
                     // add vertices
 
-                    tempVertices[0] = new BlockVertex(x + facesRef.x1, y + facesRef.y1, z + facesRef.z1, tex.X, tex.Y,
+                    tempVertices[0] = new BlockVertex(x + facesRef.x1, y + facesRef.y1, z + facesRef.z1, tex[0], tex[1],
                         Block.packData((byte)dir, (byte)(ao & 0x3), light.First));
-                    tempVertices[1] = new BlockVertex(x + facesRef.x2, y + facesRef.y2, z + facesRef.z2, tex.X, tex.W,
+                    tempVertices[1] = new BlockVertex(x + facesRef.x2, y + facesRef.y2, z + facesRef.z2, tex[0], tex[3],
                         Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second));
-                    tempVertices[2] = new BlockVertex(x + facesRef.x3, y + facesRef.y3, z + facesRef.z3, tex.Z, tex.W,
+                    tempVertices[2] = new BlockVertex(x + facesRef.x3, y + facesRef.y3, z + facesRef.z3, tex[2], tex[3],
                         Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third));
-                    tempVertices[3] = new BlockVertex(x + facesRef.x4, y + facesRef.y4, z + facesRef.z4, tex.Z, tex.Y,
+                    tempVertices[3] = new BlockVertex(x + facesRef.x4, y + facesRef.y4, z + facesRef.z4, tex[2], tex[1],
                         Block.packData((byte)dir, (byte)(ao >> 6), light.Fourth));
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;

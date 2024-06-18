@@ -6,8 +6,8 @@ namespace BlockGame;
 
 public sealed class ArrayBlockData : BlockData, IDisposable {
 
-    private static FixedArrayPool<ushort> blockPool = new(16 * 16 * 16);
-    private static FixedArrayPool<byte> lightPool = new(16 * 16 * 16);
+    private static FixedArrayPool<ushort> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    private static FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     public ushort[] blocks;
 
@@ -18,6 +18,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public byte[] light;
 
     public int blockCount;
+    public int translucentCount;
+    public int fullBlockCount;
     public int randomTickCount;
 
     /// <summary>
@@ -31,23 +33,36 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => !inited ? (ushort)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             if (!inited && value != 0) {
                 init();
             }
-            var old = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-            Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+            ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+            var old = blockRef;
+            blockRef = value;
             if (value != 0 && old == 0) {
                 blockCount++;
                 if (Blocks.get(value).randomTick) {
                     randomTickCount++;
+                }
+                if (Blocks.isFullBlock(value)) {
+                    fullBlockCount++;
+                }
+                if (Blocks.isTranslucent(value)) {
+                    translucentCount++;
                 }
             }
             else if (value == 0 && old != 0) {
                 blockCount--;
                 if (Blocks.get(old).randomTick) {
                     randomTickCount--;
+                }
+                if (Blocks.isFullBlock(old)) {
+                    fullBlockCount--;
+                }
+                if (Blocks.isTranslucent(old)) {
+                    translucentCount--;
                 }
             }
         }
@@ -72,7 +87,15 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public bool hasRandomTickingBlocks() {
-        return randomTickCount != 0;
+        return randomTickCount > 0;
+    }
+
+    public bool isFull() {
+        return fullBlockCount == Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE;
+    }
+
+    public bool hasTranslucentBlocks() {
+        return translucentCount > 0;
     }
 
     // cleanup
