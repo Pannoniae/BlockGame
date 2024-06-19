@@ -93,8 +93,7 @@ public partial class Game {
     /// </summary>
     public static bool lockingMouse;
 
-    public Texture2D blockTexture;
-    public Texture2D lightTexture;
+    public static TextureManager textureManager;
     public static Metrics metrics;
 
     public static Shader worldShader;
@@ -123,7 +122,14 @@ public partial class Game {
         ;
 #if DEBUG
         api.Flags = ContextFlags.Debug;
+        // if we are in debug mode, force x11 because stupid wayland doesn't work with renderdoc for debugging
+        // GLFW_PLATFORM = 0x00050003
+        // #define GLFW_PLATFORM_WAYLAND   0x00060003
+        // #define GLFW_PLATFORM_X11   0x00060004
+        GlfwProvider.UninitializedGLFW.Value.InitHint((InitHint)0x00050003, 0x00060004);
 #endif
+
+
         windowOptions.API = api;
         Window.PrioritizeGlfw();
         // no errors if in release mode, fuck glGetError() ;)
@@ -176,6 +182,8 @@ public partial class Game {
 
             GLTracker = new GLStateTracker(GL, GD);
 
+            textureManager = new TextureManager(GL, GD);
+
 
             // needed for stupid laptop GPUs
             initDirectX();
@@ -205,8 +213,7 @@ public partial class Game {
             stopwatch.Start();
             permanentStopwatch.Start();
 
-            blockTexture = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
-            lightTexture = Texture2DExtensions.FromFile(GD, "textures/lightmap.png");
+
             //Menu.initScreens(gui);
             currentScreen = new MainMenuScreen();
             setMenu(Menu.LOADING);
@@ -376,7 +383,9 @@ public partial class Game {
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.F7 && keyboard.IsKeyPressed(Key.F6)) {
             Console.Out.WriteLine("Crashing game!");
-            throw new Exception("Manual crash!");
+            executeOnMainThread(() =>
+                throw new Exception("Manual crash!")
+            );
         }
         currentScreen.onKeyDown(keyboard, key, scancode);
     }

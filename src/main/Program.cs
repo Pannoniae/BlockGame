@@ -11,9 +11,18 @@ public class Program {
         Game.initDedicatedGraphics();
         _ = new Game();
     }
-
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
+        // call CrashReporter
+        var crashReporterProc = new Process {
+            StartInfo = new ProcessStartInfo {
+                FileName = "CrashReporter",
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            }
+        };
+        crashReporterProc.Start();
+
         Console.Out.WriteLine("Your game crashed! Here are some relevant details:");
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             // call glxinfo

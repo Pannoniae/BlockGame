@@ -25,6 +25,7 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <DocumentationFile></DocumentationFile>
+        <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -20,7 +20,7 @@ public class VerySharedBlockVAO : VAO {
     public VerySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        blockTexture = Game.instance.blockTexture;
+        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(float[] data) {
