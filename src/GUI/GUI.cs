@@ -149,7 +149,7 @@ public class GUI {
                 var right = x * size + size;
                 var top = y * size;
                 var bottom = y * size + size;
-                tb.DrawRaw(Game.instance.blockTexture,
+                tb.DrawRaw(Game.textureManager.blockTexture,
                     new VertexColorTexture(new Vector3(left, top, 0), Color4b.Gray, new Vector2(texCoords.X, texCoords.Y)),
                     new VertexColorTexture(new Vector3(right, top, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoords.Y)),
                     new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoordsMax.Y)),
@@ -303,7 +303,7 @@ public class GUI {
         //Matrix4x4.CreateTranslation(0, 0, 0);
         //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
-        guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.instance.blockTexture);
+        guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.textureManager.blockTexture);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         var spI = CollectionsMarshal.AsSpan(guiBlockI);
         buffer.DataSubset.SetData(sp);

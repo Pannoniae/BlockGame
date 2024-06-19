@@ -3,6 +3,9 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="StbTrueTypeSharp" Version="1.26.12"/>

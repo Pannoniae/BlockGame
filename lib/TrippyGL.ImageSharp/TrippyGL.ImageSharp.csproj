@@ -17,12 +17,12 @@ This package provides integration with the ImageSharp library, allowing loading 
     <Nullable>enable</Nullable>
     <PackageReleaseNotes>Changelog from 1.2.0:
 - Upgraded all dependencies</PackageReleaseNotes>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DocumentationFile></DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>

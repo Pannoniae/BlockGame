@@ -20,7 +20,7 @@ public class BlockVAO : VAO {
     public BlockVAO() {
         GL = Game.GL;
         handle = GL.GenVertexArray();
-        blockTexture = Game.instance.blockTexture;
+        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(float[] data) {

@@ -21,7 +21,7 @@ public class SharedBlockVAO : VAO {
     public SharedBlockVAO() {
         GL = Game.GL;
         VAOHandle = GL.GenVertexArray();
-        blockTexture = Game.instance.blockTexture;
+        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(float[] data) {

@@ -32,7 +32,7 @@ public class PlayerRenderer {
         vao.bind();
         vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));
         Game.GL.ActiveTexture(TextureUnit.Texture0);
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.instance.blockTexture.Handle);
+        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTexture.Handle);
         var mat = Matrix4x4.CreateTranslation(new Vector3(0.5f, -1.1f, 1.2f))
                   * Matrix4x4.CreateRotationY(Utils.deg2rad(40), new Vector3(0.5f, -1.1f, 1.2f))
                   * Matrix4x4.CreateScale(0.5f, new Vector3(0.5f, -1.1f, 1.2f));

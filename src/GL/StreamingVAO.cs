@@ -20,7 +20,7 @@ public class StreamingVAO {
     public StreamingVAO() {
         GL = Game.GL;
         VAOHandle = GL.GenVertexArray();
-        blockTexture = Game.instance.blockTexture;
+        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void setSize(int size) {

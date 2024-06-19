@@ -25,7 +25,7 @@ public class ExtremelySharedBlockVAO : VAO {
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        blockTexture = Game.instance.blockTexture;
+        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(BlockVertex[] data, ushort[] indices) {

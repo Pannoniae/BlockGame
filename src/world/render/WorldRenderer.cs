@@ -79,8 +79,8 @@ public class WorldRenderer {
     /// maybe this will cut down on the VAO switching time??
     public void render(double interp) {
         //Game.GD.ResetStates();
-        var tex = Game.instance.blockTexture;
-        var lightTex = Game.instance.lightTexture;
+        var tex = Game.textureManager.blockTexture;
+        var lightTex = Game.textureManager.lightTexture;
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
         GL.ActiveTexture(TextureUnit.Texture1);

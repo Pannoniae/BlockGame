@@ -10,6 +10,10 @@
         <AnalysisLevel>preview-recommended</AnalysisLevel>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="Geometry" Version="1.0.0.1"/>
         <PackageReference Include="ImGui.NET" Version="1.89.9.4"/>
