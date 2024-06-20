@@ -585,9 +585,7 @@ public class Player {
     public void breakBlock() {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
-            Console.Out.WriteLine("light: " + world.getSkyLight(pos.X, pos.Y, pos.Z));
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
-            Console.Out.WriteLine("light2: " + world.getSkyLight(pos.X, pos.Y, pos.Z));
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdateWithNeighbours(pos);
             // place water if adjacent
