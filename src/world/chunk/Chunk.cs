@@ -75,14 +75,17 @@ public class Chunk : IDisposable {
     }
 
     public void lightSection(ChunkSection section) {
+
         // set the top of the chunk to 15 if not solid
         // then propagate down
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
-                var y = CHUNKSIZE * section.chunkY + 15;
+                var y = section.worldY + 15;
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
+                var atLeastOnce = false;
                 while (!Blocks.isFullBlock(bl) && y > 0) {
+                    atLeastOnce = true;
                     // check if chunk is initialised first
                     if (section.blocks.inited) {
                         setSkyLight(x, y, z, 15);
@@ -90,13 +93,13 @@ public class Chunk : IDisposable {
                     y--;
                     bl = getBlock(x, y, z);
                 }
-
-                // add the last item for propagation
-                world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                if (atLeastOnce) {
+                    // add the last item for propagation
+                    world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                }
             }
         }
         world.processSkyLightQueue();
-        status = ChunkStatus.LIGHTED;
     }
 
     /// <summary>
@@ -250,19 +253,19 @@ public class Chunk : IDisposable {
     /// Uses chunk coordinates
     /// </summary>
     public ushort getBlock(int x, int y, int z) {
-        return chunks[y / CHUNKSIZE].blocks[x, y % CHUNKSIZE, z];
+        return chunks[y >> 4].blocks[x, y & 0xF, z];
     }
 
     public byte getLight(int x, int y, int z) {
-        return chunks[y / CHUNKSIZE].blocks.getLight(x, y % CHUNKSIZE, z);
+        return chunks[y >> 4].blocks.getLight(x, y & 0xF, z);
     }
 
     public byte getSkyLight(int x, int y, int z) {
-        return chunks[y / CHUNKSIZE].blocks.skylight(x, y % CHUNKSIZE, z);
+        return chunks[y >> 4].blocks.skylight(x, y & 0xF, z);
     }
 
     public byte getBlockLight(int x, int y, int z) {
-        return chunks[y / CHUNKSIZE].blocks.blocklight(x, y % CHUNKSIZE, z);
+        return chunks[y >> 4].blocks.blocklight(x, y & 0xF, z);
     }
 
     public Vector3D<int> getCoordInSection(int x, int y, int z) {

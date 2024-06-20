@@ -82,7 +82,11 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         // fill it with empty
         Array.Clear(light);
         inited = true;
-        chunk.lightSection(section);
+
+        // if we are already lighted, we can light the section (don't do it during worldgen - it will light the entire chunk full of ground
+        if (chunk.status >= ChunkStatus.LIGHTED) {
+            chunk.lightSection(section);
+        }
     }
 
     public bool isEmpty() {
