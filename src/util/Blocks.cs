@@ -15,7 +15,7 @@ public class Blocks {
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
     public static bool[] translucentCache = new bool[MAXBLOCKS];
 
-    public static readonly int maxBlock = 32;
+    public static readonly int maxBlock = 31;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
