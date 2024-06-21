@@ -392,7 +392,9 @@ public class Player {
         var blockPos = position.toBlockPos();
         // collect potential collision targets
         List<AABB> collisionTargets = [];
-        ReadOnlySpan<Vector3D<int>> targets = [blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)];
+        ReadOnlySpan<Vector3D<int>> targets = stackalloc Vector3D<int>[] {
+            blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)
+        };
         foreach (Vector3D<int> target in targets) {
             // first, collide with the block the player is in
             var blockPos2 = feetPosition.toBlockPos();

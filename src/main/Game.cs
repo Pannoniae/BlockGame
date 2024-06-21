@@ -203,6 +203,7 @@ public partial class Game {
             textureManager = new TextureManager(GL, GD);
 
             fxaaShader = new Shader(GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
+            fxaaShader.use();
             g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
             g_showEdgesLocation = fxaaShader.getUniformLocation("u_showEdges");
             g_fxaaOnLocation = fxaaShader.getUniformLocation( "u_fxaaOn");
@@ -211,6 +212,12 @@ public partial class Game {
             g_mulReduceLocation = fxaaShader.getUniformLocation("u_mulReduce");
             g_minReduceLocation = fxaaShader.getUniformLocation("u_minReduce");
             g_maxSpanLocation = fxaaShader.getUniformLocation("u_maxSpan");
+
+            fxaaShader.setUniform(g_showEdgesLocation, 0);
+            fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
+            fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
+            fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
+            fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
 
 
             // needed for stupid laptop GPUs
@@ -546,25 +553,17 @@ public partial class Game {
         currentScreen.clear(GD, dt, interp);
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        Matrix4x4 orthoMatrix = Matrix4x4.CreateOrthographicOffCenter(0, width, height, 0, -1, 1);
 
+
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         GL.BindTexture(TextureTarget.Texture2D, FBOtex);
 
         GD.DepthTestingEnabled = false;
 
         fxaaShader.use();
-
-        fxaaShader.setUniform(g_showEdgesLocation, 0);
         fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
 
-        fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
-        fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
-        fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
-        fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
-
         GL.BindVertexArray(throwawayVAO);
-
         GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
 
         // before this, only GL, after this, only GD
