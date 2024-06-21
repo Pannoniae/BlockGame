@@ -254,13 +254,6 @@ public class World {
             }
 
             //Console.Out.WriteLine(blockPos);
-            if (!isSkylight) {
-                Console.Out.WriteLine(queue.Count);
-                Console.Out.WriteLine("asd!");
-                for (int i = 0; i < queue.Count; i++) {
-                    //Console.Out.WriteLine(queue[i]);
-                }
-            }
 
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
