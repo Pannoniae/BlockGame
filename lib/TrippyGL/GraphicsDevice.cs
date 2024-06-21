@@ -65,7 +65,10 @@ namespace TrippyGL {
 
             vertexArray = null;
             shaderProgram = null;
-            InitTextureStates();
+            Array.Clear(textureBindings);
+            ActiveTextureUnit = 0;
+            GL.ActiveTexture(TextureUnit.Texture0);
+            nextBindUnit = 0;
             drawFramebuffer = null;
             readFramebuffer = null;
             renderbuffer = null;
