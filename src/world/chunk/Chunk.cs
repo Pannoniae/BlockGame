@@ -106,12 +106,12 @@ public class Chunk : IDisposable {
     /// Uses chunk coordinates
     /// </summary>
     public void setBlock(int x, int y, int z, ushort block) {
-        chunks[y / CHUNKSIZE].blocks[x, y % CHUNKSIZE, z] = block;
+        chunks[y >> 4].blocks[x, y & 0xF, z] = block;
     }
 
     public void setBlockRemesh(int x, int y, int z, ushort block) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
+        var sectionY = y >> 4;
+        var yRem = y & 0xF;
 
         // handle empty chunksections
         var section = chunks[sectionY];
@@ -183,14 +183,14 @@ public class Chunk : IDisposable {
     /// Uses chunk coordinates
     /// </summary>
     public void setLight(int x, int y, int z, byte value) {
-        chunks[y / CHUNKSIZE].blocks.setLight(x, y % CHUNKSIZE, z, value);
+        chunks[y >> 4].blocks.setLight(x, y & 0xF, z, value);
     }
 
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
     public void setSkyLight(int x, int y, int z, byte value) {
-        chunks[y / CHUNKSIZE].blocks.setSkylight(x, y % CHUNKSIZE, z, value);
+        chunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, value);
     }
 
     public void setSkyLightRemesh(int x, int y, int z, byte value) {
@@ -221,22 +221,19 @@ public class Chunk : IDisposable {
     /// </summary>
     public void setBlockLight(int x, int y, int z, byte value) {
         // handle empty chunksections
-        chunks[y / CHUNKSIZE].blocks.setBlocklight(x, y % CHUNKSIZE, z, value);
+        chunks[y >> 4].blocks.setBlocklight(x, y & 0xF, z, value);
 
     }
 
     public void setBlockLightRemesh(int x, int y, int z, byte value) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
-        var section = chunks[sectionY];
-        section.blocks.setBlocklight(x, yRem, z, value);
+        chunks[y >> 4].blocks.setBlocklight(x, y & 0xF, z, value);
 
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
-        world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
+        world.mesh(new ChunkSectionCoord(coord.x, y >> 4, coord.z));
         var chunkPos = World.getChunkSectionPos(wx, y, wz);
 
         // TODO only remesh neighbours if on the edge of the chunk

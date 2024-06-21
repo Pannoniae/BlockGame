@@ -13,14 +13,12 @@ public class VerySharedBlockVAO : VAO {
     public uint ibo;
     public uint count;
 
-    public Texture2D blockTexture;
-
     public GL GL;
 
     public VerySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        blockTexture = Game.textureManager.blockTexture;
+
     }
 
     public void upload(float[] data) {

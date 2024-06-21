@@ -118,6 +118,7 @@ public class Menu {
             //Console.Out.WriteLine(element);
             //Console.Out.WriteLine(element.bounds);
             //Console.Out.WriteLine(pos);
+            element.onMouseUp();
             if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
                 element.click();
             }

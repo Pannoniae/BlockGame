@@ -14,14 +14,11 @@ public class SharedBlockVAO : VAO {
     public uint ibo;
     public uint count;
 
-    public Texture2D blockTexture;
-
     public GL GL;
 
     public SharedBlockVAO() {
         GL = Game.GL;
         VAOHandle = GL.GenVertexArray();
-        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(float[] data) {

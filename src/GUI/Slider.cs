@@ -38,8 +38,11 @@ public class Slider : GUIElement {
             value = min + ratio * (max - min);
             value = Math.Clamp(value, min, max);
             value = roundTo(value, step);
-            apply();
         }
+    }
+
+    public override void onMouseUp() {
+        apply();
     }
 
     /// <summary>

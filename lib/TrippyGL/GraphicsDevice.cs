@@ -55,7 +55,7 @@ namespace TrippyGL {
         }
 
         /// <summary>
-        /// Resets all internal states of this library to the defaults.
+        /// Resets internal states of this library to the defaults.
         /// You should only need to call this when interoperating with other libraries or using your own GL functions.
         /// </summary>
         public void ResetInternalStates() {
@@ -70,10 +70,17 @@ namespace TrippyGL {
             readFramebuffer = null;
             renderbuffer = null;
             Array.Clear(clipDistancesEnabled);
+        }
 
-            viewport = new Viewport();
-            clearColor = new Vector4(-1, -1, -1, -1);
-            scissorRect = new Viewport();
+        /// <summary>
+        /// Applies the internal values of this library to the current OpenGL context.
+        /// You should only need to call this when interoperating with other libraries or using your own GL functions.
+        /// </summary>
+        public void ApplyInternalValues() {
+            // don't reset these because they are usually gotten by the user -> stupid values
+            //viewport = new Viewport(-1, -1, unchecked((uint)-1), unchecked((uint)-1));
+            //clearColor = new Vector4(-1, -1, -1, -1);
+            //scissorRect = new Viewport(-1, -1, unchecked((uint)-1), unchecked((uint)-1));
 
 
             // these actually have to be set because the defaults make sense ->

@@ -13,14 +13,11 @@ public class BlockVAO : VAO {
     public uint ibo;
     public uint count;
 
-    public Texture2D blockTexture;
-
     public GL GL;
 
     public BlockVAO() {
         GL = Game.GL;
         handle = GL.GenVertexArray();
-        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(float[] data) {
@@ -136,6 +133,7 @@ public readonly struct BlockVertex : IVertex {
     /// second byte (8-16) is lighting
     /// first 3 bits are side (see Direction enum)
     /// next 2 bits are AO
+    /// next 2 bits are texU == 1 and texV == 1
     /// </summary>
     public readonly ushort d;
 

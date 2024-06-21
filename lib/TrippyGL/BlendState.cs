@@ -154,7 +154,7 @@ namespace TrippyGL
         /// <summary>Gets a <see cref="BlendState"/> where fragments are mixed by adding them together.</summary>
         public static BlendState Additive => new BlendState(false, BlendingMode.FuncAdd, BlendingFactor.One, BlendingFactor.One);
 
-        /// <summary>Gets a <see cref="BlendState"/> where fragments are mixed by subscracting them together.</summary>
+        /// <summary>Gets a <see cref="BlendState"/> where fragments are mixed by subtracting them together.</summary>
         public static BlendState Substractive => new BlendState(false, BlendingMode.FuncSubtract, BlendingFactor.One, BlendingFactor.One);
 
         #endregion

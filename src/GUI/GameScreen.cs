@@ -376,9 +376,11 @@ public class GameScreen : Screen {
         base.postDraw();
         // draw hotbar
     }
+
     public override void imGuiDraw() {
 
     }
+
     public override void clear(GraphicsDevice GD, double dt, double interp) {
         GD.ClearColor = WorldRenderer.defaultClearColour;
         GD.ClearDepth = 1f;

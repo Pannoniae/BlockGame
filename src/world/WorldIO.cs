@@ -62,7 +62,7 @@ public class WorldIO {
             // if empty, just write zeros
             if (!chunk.chunks[sectionY].blocks.inited) {
                 Array.Fill(blocks, (ushort)0, index, my * mz * mx);
-                Array.Fill(light, (byte)0, index, my * mz * mx);
+                Array.Fill(light, (byte)15, index, my * mz * mx);
                 index += mz * my * mx;
             }
             else {
@@ -93,21 +93,25 @@ public class WorldIO {
         var chunk = new Chunk(world, posX, posZ) {
             status = (ChunkStatus)status
         };
+        // init all sections
+        foreach (var blockData in chunk.chunks.Select(c => c.blocks)) {
+            blockData.loadInit();
+        }
+
         // blocks
-        var my = Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT;
-        var mx = Chunk.CHUNKSIZE;
-        var mz = Chunk.CHUNKSIZE;
         var blocks = nbt.getUShortArray("blocks");
         var light = nbt.getByteArray("light");
 
         int index = 0;
         // using YXZ order
-        for (int y = 0; y < my; y++) {
-            for (int z = 0; z < mz; z++) {
-                for (int x = 0; x < mx; x++) {
-                    chunk.setBlock(x, y, z, blocks[index]);
-                    chunk.setLight(x, y, z, light[index]);
-                    index++;
+        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            for (int y = 0; y < my; y++) {
+                for (int z = 0; z < mz; z++) {
+                    for (int x = 0; x < mx; x++) {
+                        chunk.chunks[sectionY].blocks[x, y, z] = blocks[index];
+                        chunk.chunks[sectionY].blocks.setLight(x, y, z, light[index]);
+                        index++;
+                    }
                 }
             }
         }

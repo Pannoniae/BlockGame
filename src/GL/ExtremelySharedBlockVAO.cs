@@ -18,14 +18,12 @@ public class ExtremelySharedBlockVAO : VAO {
     /// in bytes
     public uint indexOffset;
 
-    public Texture2D blockTexture;
 
     public GL GL;
 
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void upload(BlockVertex[] data, ushort[] indices) {

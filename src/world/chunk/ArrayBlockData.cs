@@ -89,6 +89,15 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
+    public void loadInit() {
+        blocks = blockPool.grab();
+        light = lightPool.grab();
+        Array.Clear(blocks);
+        // fill it with empty
+        Array.Clear(light);
+        inited = true;
+    }
+
     public bool isEmpty() {
         return blockCount == 0;
     }
@@ -133,6 +142,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
+        if (!inited) {
+            init();
+        }
         ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         var blocklight = (byte)((value & 0xF0) >> 4);
         // pack it back inside
@@ -140,6 +152,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
+        if (!inited) {
+            init();
+        }
         ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
         var skylight = (byte)(value & 0xF);
         // pack it back inside
