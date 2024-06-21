@@ -5,6 +5,8 @@
 layout(location = 0) out vec4 color;
 
 in vec2 texCoords;
+in vec2 texOffset;
+
 flat in uint direction;
 in float ao;
 in vec4 light;
@@ -37,9 +39,10 @@ void main() {
     // extract skylight, 0 to 15
 
     color = vec4(blockColour.rgb * lColor * ao * light.rgb, blockColour.a);
-    // mix fog
-    color = mix(color, fogColour, ratio);
+
     if (color.a <= 0) {
         discard;
     }
+    // mix fog
+    color = mix(color, fogColour, ratio);
 }

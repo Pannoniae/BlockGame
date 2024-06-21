@@ -106,5 +106,9 @@ namespace BlockGame {
         public void setUniform(int loc, Vector4 value) {
             GL.Uniform4(loc, value.X, value.Y, value.Z, value.W);
         }
+
+        public void setUniform(int loc, bool value) {
+            GL.Uniform1(loc, value ? 1 : 0);
+        }
     }
 }

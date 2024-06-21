@@ -32,7 +32,7 @@ namespace TrippyGL
         public readonly TextureImageFormat ImageFormat;
 
         /// <summary>Gets whether this <see cref="Texture"/> is mipmapped.</summary>
-        public bool IsMipmapped { get; private set; }
+        public bool IsMipmapped { get; protected set; }
 
         /// <summary>False if this <see cref="Texture"/> can be mipmapped (depends on texture type).</summary>
         private readonly bool isNotMipmappable;

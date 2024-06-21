@@ -132,6 +132,9 @@ public class GUIElement {
     public virtual void onMouseMove() {
     }
 
+    public virtual void onMouseUp() {
+    }
+
     public virtual void update() {
     }
 }

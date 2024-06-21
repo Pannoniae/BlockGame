@@ -52,7 +52,7 @@ public class WorldRenderer {
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         Game.worldShader = shader;
-        dummyShader = new Shader(GL, "shaders/dummyShader.vert", "shaders/dummyShader.frag");
+        dummyShader = new Shader(GL, "shaders/dummyShader.vert");
         Game.dummyShader = dummyShader;
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
@@ -82,7 +82,7 @@ public class WorldRenderer {
         var tex = Game.textureManager.blockTexture;
         var lightTex = Game.textureManager.lightTexture;
         GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
+        GL.BindTexture(TextureTarget.Texture2D, tex.handle);
         GL.ActiveTexture(TextureUnit.Texture1);
         GL.BindTexture(TextureTarget.Texture2D, lightTex.Handle);
 
@@ -98,6 +98,7 @@ public class WorldRenderer {
                 chunksToRender.Add(chunk);
             }
         }
+        //chunksToRender.Sort(new ChunkComparer(world.player));
 
         // OPAQUE PASS
         shader.use();
@@ -114,6 +115,9 @@ public class WorldRenderer {
         foreach (var chunk in chunksToRender) {
             chunk.drawTransparent(true);
         }
+
+        Game.GD.BlendingEnabled = true;
+        Game.GD.BlendState = Game.initialBlendState;
         // TRANSLUCENT PASS
         shader.use();
         GL.ColorMask(true, true, true, true);
@@ -125,6 +129,7 @@ public class WorldRenderer {
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.CullFace);
+        Game.GD.BlendingEnabled = false;
 
     }
 

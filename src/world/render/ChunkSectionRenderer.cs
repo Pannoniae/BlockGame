@@ -604,7 +604,7 @@ public class ChunkSectionRenderer : IDisposable {
                     tex.W = facesRef.max.v * 16f / Block.atlasSize;*/
 
                     tex = Vector128.Create(facesRef.min.u, facesRef.min.v, facesRef.max.u, facesRef.max.v);
-                    tex = Vector128.Multiply(tex, 16);
+                    tex = Vector128.Multiply(tex, Block.textureSize);
                     tex = Vector128.Divide(tex, Block.atlasSize);
 
 

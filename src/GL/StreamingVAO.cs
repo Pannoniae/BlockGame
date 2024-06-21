@@ -13,14 +13,11 @@ public class StreamingVAO {
     public uint ibo;
     public uint count;
 
-    public Texture2D blockTexture;
-
     public GL GL;
 
     public StreamingVAO() {
         GL = Game.GL;
         VAOHandle = GL.GenVertexArray();
-        blockTexture = Game.textureManager.blockTexture;
     }
 
     public void setSize(int size) {
