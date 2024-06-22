@@ -10,8 +10,8 @@ public class WorldIO {
     private const int my = Chunk.CHUNKSIZE;
     private const int mx = Chunk.CHUNKSIZE;
     private const int mz = Chunk.CHUNKSIZE;
-    public static FixedArrayPool<ushort> saveBlockPool = new(mx * my * mz * Chunk.CHUNKHEIGHT);
-    public static FixedArrayPool<byte> saveLightPool = new(mx * my * mz * Chunk.CHUNKHEIGHT);
+    public static FixedArrayPool<ushort> saveBlockPool = new(mx * my * mz);
+    public static FixedArrayPool<byte> saveLightPool = new(mx * my * mz);
 
     public World world;
 
@@ -53,19 +53,19 @@ public class WorldIO {
         chunkTag.addInt("posX", chunk.coord.x);
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
-        // blocks
-        var blocks = saveBlockPool.grab();
-        var light = saveLightPool.grab();
-        int index = 0;
         // using YXZ order
+        var sectionsTag = new NBTTagList<NBTTagCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            var section = new NBTTagCompound();
             // if empty, just write zeros
-            if (!chunk.chunks[sectionY].blocks.inited) {
-                Array.Fill(blocks, (ushort)0, index, my * mz * mx);
-                Array.Fill(light, (byte)15, index, my * mz * mx);
-                index += mz * my * mx;
-            }
-            else {
+            if (chunk.chunks[sectionY].blocks.inited) {
+                section.addByte("inited", 1);
+
+                // grab some arrays
+                // blocks
+                int index = 0;
+                var blocks = saveBlockPool.grab();
+                var light = saveLightPool.grab();
                 for (int y = 0; y < my; y++) {
                     for (int z = 0; z < mz; z++) {
                         for (int x = 0; x < mx; x++) {
@@ -75,13 +75,18 @@ public class WorldIO {
                         }
                     }
                 }
+                // add the arrays
+                section.addUShortArray("blocks", blocks);
+                section.addByteArray("light", light);
+                saveBlockPool.putBack(blocks);
+                saveLightPool.putBack(light);
             }
+            else {
+                section.addByte("inited", 0);
+            }
+            sectionsTag.add(section);
         }
-        chunkTag.addUShortArray("blocks", blocks);
-        chunkTag.addByteArray("light", light);
-
-        saveBlockPool.putBack(blocks);
-        saveLightPool.putBack(light);
+        chunkTag.addListTag("sections", sectionsTag);
         return chunkTag;
     }
 
@@ -93,18 +98,24 @@ public class WorldIO {
         var chunk = new Chunk(world, posX, posZ) {
             status = (ChunkStatus)status
         };
-        // init all sections
-        foreach (var blockData in chunk.chunks.Select(c => c.blocks)) {
-            blockData.loadInit();
-        }
-
-        // blocks
-        var blocks = nbt.getUShortArray("blocks");
-        var light = nbt.getByteArray("light");
-
-        int index = 0;
-        // using YXZ order
+        var sections = nbt.getListTag<NBTTagCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            var section = sections.get(sectionY);
+            // if not initialised, leave it be
+            if (section.getByte("inited") == 0) {
+                chunk.chunks[sectionY].blocks.inited = false;
+                continue;
+            }
+
+            // blocks
+            var blocks = section.getUShortArray("blocks");
+            var light = section.getByteArray("light");
+
+            // init chunk section
+            chunk.chunks[sectionY].blocks.loadInit();
+
+            int index = 0;
+            // using YXZ order
             for (int y = 0; y < my; y++) {
                 for (int z = 0; z < mz; z++) {
                     for (int x = 0; x < mx; x++) {
@@ -141,7 +152,7 @@ public class WorldIO {
 
     private static void loadChunkFromFile(World world, string file) {
         var nbt = NBT.readFile(file);
-        var chunk = world.worldIO.loadChunkFromNBT(nbt);
+        var chunk = new Chunk(world, nbt.getInt("posX"), nbt.getInt("posZ"));
 
         // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
         if (chunk.status >= ChunkStatus.MESHED) {
