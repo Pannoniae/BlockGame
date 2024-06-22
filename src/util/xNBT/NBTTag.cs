@@ -15,6 +15,10 @@ public abstract class NBTTag : IEquatable<NBTTag> {
 
     public abstract NBTTagType id { get; }
 
+    protected NBTTag() {
+        name = "";
+    }
+
     protected NBTTag(string? name) {
         this.name = name ?? "";
     }

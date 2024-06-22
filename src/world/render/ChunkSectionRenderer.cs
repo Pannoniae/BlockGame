@@ -245,9 +245,9 @@ public class ChunkSectionRenderer : IDisposable {
         // we load the 16x16 from the section itself then get the world for the rest
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
-        ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.blocks);
+        ref ushort sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.blocks);
         ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.light);
-        ref ushort neighboursArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
+        ref ushort blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref byte lightArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
         var world = section.world;
         int y;
@@ -261,11 +261,11 @@ public class ChunkSectionRenderer : IDisposable {
             x = i & 0xF;
             var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
-            Unsafe.Add(ref neighboursArrayRef, index) = blockArrayRef;
+            Unsafe.Add(ref blocksArrayRef, index) = sourceBlockArrayRef;
             Unsafe.Add(ref lightArrayRef, index) = sourceLightArrayRef;
 
             // increment
-            blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
+            sourceBlockArrayRef = ref Unsafe.Add(ref sourceBlockArrayRef, 1);
             sourceLightArrayRef = ref Unsafe.Add(ref sourceLightArrayRef, 1);
         }
 
@@ -301,7 +301,7 @@ public class ChunkSectionRenderer : IDisposable {
                         // also increment the references
                         // we need to add 1 because we are incrementing too!
                         var diff = Chunk.CHUNKSIZE - x;
-                        neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, diff);
+                        blocksArrayRef = ref Unsafe.Add(ref blocksArrayRef, diff);
                         lightArrayRef = ref Unsafe.Add(ref lightArrayRef, diff);
                         x = Chunk.CHUNKSIZE - 1;
                         continue;
@@ -326,7 +326,7 @@ public class ChunkSectionRenderer : IDisposable {
                         : (ushort)0;
 
                     // set neighbours array element  to block
-                    neighboursArrayRef = bl;
+                    blocksArrayRef = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
                     if (hasOnlySolid && !Blocks.isFullBlock(bl)) {
                         hasOnlySolid = false;
@@ -337,7 +337,7 @@ public class ChunkSectionRenderer : IDisposable {
                         cy * Chunk.CHUNKSIZESQ + cz * Chunk.CHUNKSIZE + cx) : (byte)15;
 
                     // increment
-                    neighboursArrayRef = ref Unsafe.Add(ref neighboursArrayRef, 1);
+                    blocksArrayRef = ref Unsafe.Add(ref blocksArrayRef, 1);
                     lightArrayRef = ref Unsafe.Add(ref lightArrayRef, 1);
                 }
             }

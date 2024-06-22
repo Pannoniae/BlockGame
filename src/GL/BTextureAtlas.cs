@@ -13,16 +13,16 @@ public class BTextureAtlas : IDisposable {
 
     public GL GL;
 
-    unsafe public BTextureAtlas(string path, int atlasSize) {
+    public BTextureAtlas(string path, int atlasSize) {
         GL = Game.GL;
         this.atlasSize = atlasSize;
         this.path = path;
         reload();
 
-        var handle2 = GL.GenTexture();
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2DArray, handle2);
-        GL.TexImage3D(TextureTarget.Texture2DArray, 0, InternalFormat.Rgba8, 16, 16, 16384, 0, PixelFormat.Rgba, PixelType.Byte, null);
+        //var handle2 = GL.GenTexture();
+        //GL.ActiveTexture(TextureUnit.Texture0);
+        //GL.BindTexture(TextureTarget.Texture2DArray, handle2);
+        //GL.TexImage3D(TextureTarget.Texture2DArray, 0, InternalFormat.Rgba8, 16, 16, 2048, 0, PixelFormat.Rgba, PixelType.Byte, null);
 
     }
 
@@ -34,10 +34,10 @@ public class BTextureAtlas : IDisposable {
                 int x1 = xSrc + 1;
                 int y1 = ySrc + 1;
 
-                Rgba32 c00 = prevMipmap[ySrc * width * 2 + xSrc];
-                Rgba32 c01 = prevMipmap[y1 * width * 2 + x1];
-                Rgba32 c10 = prevMipmap[ySrc * width * 2 + xSrc];
-                Rgba32 c11 = prevMipmap[y1 * width * 2 + x1];
+                var c00 = prevMipmap[ySrc * width * 2 + xSrc];
+                var c01 = prevMipmap[y1 * width * 2 + x1];
+                var c10 = prevMipmap[ySrc * width * 2 + xSrc];
+                var c11 = prevMipmap[y1 * width * 2 + x1];
 
                 mipmap[y * width + x] = avgColour(avgColour(c00, c01), avgColour(c10, c11));
             }
@@ -69,23 +69,23 @@ public class BTextureAtlas : IDisposable {
 
         Console.Out.WriteLine("Loading textures the proper way!");
         // Load image
+        // Thanks ClassiCube for the idea!
         fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
             // Generate mipmaps
             // we check against 2 so we never generate a mipmap with less pixels than one per texture
             var prevMipmap = memory.Span;
-            Span<Rgba32> mipmap;
 
-            int lvls = maxLevel;
             int lvl;
-            int width = image.Width, height = image.Height;
+            int width = image.Width;
+            int height = image.Height;
 
-            for (lvl = 1; lvl <= lvls; lvl++) {
+            for (lvl = 1; lvl <= maxLevel; lvl++) {
                 if (width > 1) width /= 2;
                 if (height > 1) height /= 2;
 
-                mipmap = new Rgba32[width * height];
+                Span<Rgba32> mipmap = new Rgba32[width * height];
                 generateMipmaps(width, height, mipmap, prevMipmap);
                 fixed (Rgba32* mipmapPixels = mipmap) {
                     GL.TexImage2D(TextureTarget.Texture2D, lvl, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, mipmapPixels);

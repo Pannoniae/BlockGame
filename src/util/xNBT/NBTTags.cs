@@ -300,10 +300,14 @@ public class NBTTagList<T> : NBTTag where T : NBTTag {
         // read type and length
         listType = (NBTTagType)stream.ReadByte();
         var length = stream.ReadInt32();
+
+        // resize the list to be `length` long
+        list.Clear();
+
         for (int i = 0; i < length; ++i) {
             var tag = createTag(listType, null);
             tag.readContents(stream);
-            list[i] = (T)tag;
+            list.Add((T)tag);
         }
     }
 
@@ -338,6 +342,10 @@ public class NBTTagCompound : NBTTag {
     public override NBTTagType id => NBTTagType.TAG_Compound;
 
     public NBTTagCompound(string? name) : base(name) {
+        dict = new Dictionary<string, NBTTag>();
+    }
+
+    public NBTTagCompound() {
         dict = new Dictionary<string, NBTTag>();
     }
 
