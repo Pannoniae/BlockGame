@@ -86,7 +86,7 @@ public class Blocks {
     public static Block CANDY_WHITE = register(new Block(29, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
     public static Block CANDY_GREY = register(new Block(30, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
     public static Block CANDY_BLACK = register(new Block(31, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
-    public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.cubeUVs(0, 3))));
+    public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3,1, 3, 2, 3, 3, 3,4, 3, 5, 3))));
     
     //public static Block HEAD = register(new Block(32, "Head", BlockModel.makeCube(Block.grassUVs(0, 3, 0, 3, 0, 3))));
 
@@ -231,6 +231,12 @@ public class Block {
 
     public static UVPair[] crossUVs(int x, int y) {
         return [new(x, y), new(x, y)];
+    }
+
+    public static UVPair[] HeadUVs(int frontX, int frontY, int leftX, int leftY, int rightX, int rightY, int topX, int topY, int bottomX, int bottomY, int backX, int backY) {
+            return [
+                new(leftX, leftY), new(rightX, rightY), new(frontX, frontY), new(backX, backY), new(bottomX, bottomY), new(topX, topY)
+            ];
     }
 
     // this will pack the data into the uint
