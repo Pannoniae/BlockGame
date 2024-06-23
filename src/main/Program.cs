@@ -14,7 +14,7 @@ public class Program {
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
         // call CrashReporter
-        var crashReporterProc = new Process {
+        using var crashReporterProc = new Process {
             StartInfo = new ProcessStartInfo {
                 FileName = "CrashReporter",
                 RedirectStandardOutput = true,
@@ -26,7 +26,7 @@ public class Program {
         Console.Out.WriteLine("Your game crashed! Here are some relevant details:");
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             // call glxinfo
-            var process = new Process {
+            using var process = new Process {
                 StartInfo = new ProcessStartInfo {
                     FileName = "glxinfo",
                     RedirectStandardOutput = true,

@@ -110,6 +110,7 @@ public partial class Game {
     private uint fbo;
     private uint FBOtex;
     private uint throwawayVAO;
+    private uint depthBuffer;
 
     private int g_texelStepLocation;
     private int g_showEdgesLocation;
@@ -446,10 +447,12 @@ public partial class Game {
     }
 
     unsafe private void genFrameBuffer() {
+        GL.DeleteFramebuffer(fbo);
         fbo = GL.GenFramebuffer();
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
         GD.SetViewport(0, 0, (uint)width, (uint)height);
 
+        GL.DeleteTexture(FBOtex);
         FBOtex = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, FBOtex);
         GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
@@ -458,11 +461,10 @@ public partial class Game {
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
-        uint depthBuffer = GL.GenRenderbuffer();
+        GL.DeleteRenderbuffer(depthBuffer);
+        depthBuffer = GL.GenRenderbuffer();
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
         GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)width, (uint)height);
-
-        //GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
 
         // Attach the color buffer ...
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, FBOtex, 0);
@@ -479,9 +481,7 @@ public partial class Game {
 
         GL.Uniform2(g_texelStepLocation, 1.0f / width, 1.0f / width);
 
-        throwawayVAO = GL.GenVertexArray();
-        GL.BindVertexArray(throwawayVAO);
-        GL.BindVertexArray(0);
+        throwawayVAO = GL.CreateVertexArray();
 
     }
 

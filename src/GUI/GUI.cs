@@ -212,6 +212,10 @@ public class GUI {
         DrawString(text, position * guiScale, color == default ? Color4b.White : color, TEXTSCALE * scale, default);
     }
 
+    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+        DrawStringThin(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    }
+
     public void drawStringCentred(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;

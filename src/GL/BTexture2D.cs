@@ -47,7 +47,6 @@ public class BTexture2D : IDisposable {
     }
 
     public void Dispose() {
-        // TODO release managed resources here
         GL.DeleteTexture(handle);
     }
 }

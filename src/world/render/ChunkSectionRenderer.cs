@@ -15,20 +15,18 @@ public class ChunkSectionRenderer : IDisposable {
 
 
     // we need it here because completely full chunks are also empty of any rendering
-    public bool isEmptyRenderOpaque;
-    public bool isEmptyRenderTranslucent;
+    private bool isEmptyRenderOpaque;
+    private bool isEmptyRenderTranslucent;
 
-    public VAO? vao;
-    public VAO? watervao;
+    private VAO? vao;
+    private VAO? watervao;
 
-    public bool hasOnlySolid;
-
-    public readonly GL GL;
+    private bool hasOnlySolid;
 
     private int uChunkPos;
     private int dummyuChunkPos;
 
-    public static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
+    private static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
 
     // we cheated GC! there is only one list preallocated
     // we need 16x16x16 blocks, each block has max. 24 vertices
@@ -36,16 +34,14 @@ public class ChunkSectionRenderer : IDisposable {
 
     // actually we don't need a list, regular arrays will do because it's only a few megs of space and it's shared
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of them and it will still be in the ballpark of 10MB
-    public static List<BlockVertex> chunkVertices = new(2048);
-    public static List<ushort> chunkIndices = new(2048);
+    private static List<BlockVertex> chunkVertices = new(2048);
+    private static List<ushort> chunkIndices = new(2048);
     // YZX again
-    public static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    public static byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    public static ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
+    private static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    private static byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    private static ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
-    static readonly object meshingLock = new();
-
-    public Stopwatch sw = new Stopwatch();
+    private Stopwatch sw = new Stopwatch();
 
     public static readonly sbyte[] offsetTable = [
         // west
@@ -123,11 +119,15 @@ public class ChunkSectionRenderer : IDisposable {
     public void meshChunk() {
         //sw.Restart();
         if (section.world.renderer.fastChunkSwitch) {
+            vao?.Dispose();
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
+            watervao?.Dispose();
             watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
         }
         else {
+            vao?.Dispose();
             vao = new SharedBlockVAO();
+            watervao?.Dispose();
             watervao = new SharedBlockVAO();
         }
 
@@ -429,7 +429,9 @@ public class ChunkSectionRenderer : IDisposable {
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
             if (bl.customRender) {
-                bl.render(section.world, new Vector3D<int>(x, y, z), chunkVertices, chunkIndices, indices[0]);
+                var writtenIndices = bl.render(section.world, new Vector3D<int>(x, y, z), chunkVertices, chunkIndices, indices[0]);
+                // add the number of written indices to the indices vector
+                indices += Vector128.Create(writtenIndices);
                 goto increment;
             }
 
