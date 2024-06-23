@@ -15,7 +15,7 @@ public class Blocks {
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
     public static bool[] translucentCache = new bool[MAXBLOCKS];
 
-    public static readonly int maxBlock = 31;
+    public static readonly int maxBlock = 32;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -86,6 +86,8 @@ public class Blocks {
     public static Block CANDY_WHITE = register(new Block(29, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
     public static Block CANDY_GREY = register(new Block(30, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
     public static Block CANDY_BLACK = register(new Block(31, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
+    public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.cubeUVs(0, 3))));
+    
     //public static Block HEAD = register(new Block(32, "Head", BlockModel.makeCube(Block.grassUVs(0, 3, 0, 3, 0, 3))));
 
     public static bool isSolid(int block) {
