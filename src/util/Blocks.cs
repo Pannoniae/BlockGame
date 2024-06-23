@@ -315,8 +315,8 @@ public class Block {
 
     }
 
-    public virtual void render(World world, Vector3D<int> pos, List<BlockVertex> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
-
+    public virtual ushort render(World world, Vector3D<int> pos, List<BlockVertex> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
+        return 0;
     }
 
     public Block air() {

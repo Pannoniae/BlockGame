@@ -10,14 +10,14 @@ using TrippyGL;
 
 namespace BlockGame.GUI;
 
-public class GameScreen : Screen {
+public class GameScreen : Screen, IDisposable {
 
     public static World world;
     public GraphicsDevice GD;
 
-    public Utf16ValueStringBuilder debugStr;
+    private Utf16ValueStringBuilder debugStr;
     // for top right corner debug shit
-    public Utf16ValueStringBuilder debugStrG;
+    private Utf16ValueStringBuilder debugStrG;
     public Debug D;
 
     public bool debugScreen = false;
@@ -27,15 +27,17 @@ public class GameScreen : Screen {
     private TimerAction updateMemory;
 
     // values for f3
-    private long privateMemory;
     private long workingSet;
     private long GCMemory;
     private RichTextLayout? rendererText;
+    private bool disposed;
 
     public override void activate() {
         base.activate();
         exitMenu();
+        debugStr.Dispose();
         debugStr = ZString.CreateStringBuilder();
+        debugStrG.Dispose();
         debugStrG = ZString.CreateStringBuilder();
         GD = Game.GD;
         D = new Debug();
@@ -56,6 +58,11 @@ public class GameScreen : Screen {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         addElement(hotbar);
+    }
+
+    public virtual void Dispose() {
+        debugStr.Dispose();
+        debugStrG.Dispose();
     }
 
     private void updateDebugTextMethod() {
@@ -94,7 +101,7 @@ public class GameScreen : Screen {
 
             debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer), Game.GL.GetStringS(StringName.Vendor));
             debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
-            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}/{2:0.###}MB)\n", GCMemory / Constants.MEGABYTES, privateMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES);
+            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\n", GCMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES);
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,
@@ -112,7 +119,6 @@ public class GameScreen : Screen {
     }
 
     private void updateMemoryMethod() {
-        privateMemory = Game.proc.PrivateMemorySize64;
         workingSet = Game.proc.WorkingSet64;
         GCMemory = GC.GetTotalMemory(false);
     }

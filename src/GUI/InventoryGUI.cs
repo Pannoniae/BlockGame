@@ -36,7 +36,7 @@ public class InventoryGUI : Menu {
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
                 slots[y * rows + x] = new ItemSlot(this, slotX, slotY) {
-                    stack = new ItemStack((ushort)item, 1)
+                    stack = new ItemStack((ushort)item, 1),
                 };
                 i++;
             }

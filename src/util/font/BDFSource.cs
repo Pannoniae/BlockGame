@@ -2,7 +2,7 @@ using FontStashSharp.Interfaces;
 
 namespace BlockGame.util.font;
 
-public class BDFSource : IFontSource {
+public sealed class BDFSource : IFontSource {
 
     public BdfFont font;
     public int width;
