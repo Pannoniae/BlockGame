@@ -13,7 +13,7 @@ namespace BlockGame;
 /// </summary>
 public class RenderBlock {
 
-    public static bool neighbourTest(World world, Vector3D<int> pos, RawDirection direction) {
+    public static bool neighbourTest(World world, Vector3D<int> pos,  RawDirection direction) {
         var neighbour = Blocks.get(world.getBlock(pos + Direction.getDirection(direction)));
         var isTranslucent = Blocks.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
         var flag = false;
