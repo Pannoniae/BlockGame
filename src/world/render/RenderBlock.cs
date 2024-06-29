@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
 
@@ -14,15 +14,15 @@ namespace BlockGame;
 public class RenderBlock {
 
     public static bool neighbourTest(World world, Vector3D<int> pos, RawDirection direction) {
-        var neighbour = Blocks.get(world.getBlock(pos + Direction.getDirection(direction)));
+        var neighbour = world.getBlock(pos + Direction.getDirection(direction));
         var isTranslucent = Blocks.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
         var flag = false;
         switch (isTranslucent) {
             case false:
-                flag = Blocks.notSolid(neighbour) || !neighbour.isFullBlock;
+                flag = Blocks.notSolid(neighbour) || !Blocks.isFullBlock(neighbour);
                 break;
             case true:
-                flag = !Blocks.isTranslucent(neighbour) && (Blocks.notSolid(neighbour) || !neighbour.isFullBlock);
+                flag = !Blocks.isTranslucent(neighbour) && (Blocks.notSolid(neighbour) || !Blocks.isFullBlock(neighbour));
                 break;
         }
         return flag;
@@ -86,35 +86,12 @@ public class RenderBlock {
                         // calculate average
                         l.Fourth = world.getLight(neighbour.X, neighbour.Y, neighbour.Z);
 
-
-                        // this averages the four light values. If the block is opaque, it ignores the light value.
-                        // oFlags are opacity of side1, side2 and corner
-                        // (1 == opaque, 0 == transparent)
-                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                        byte average(FourBytes lightNibble, byte oFlags) {
-                            // if both sides are blocked, don't check the corner, won't be visible anyway
-                            // if corner == 0 && side1 and side2 aren't both true, then corner is visible
-                            //if ((oFlags & 4) == 0 && oFlags != 3) {
-                            if (oFlags < 3) {
-                                // set the 4 bit of oFlags to 0 because it is visible then
-                                oFlags &= 3;
-                            }
-
-                            // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
-                            // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
-                            return (byte)((lightNibble.First * (~oFlags & 1) +
-                                           lightNibble.Second * ((~oFlags & 2) >> 1) +
-                                           lightNibble.Third * ((~oFlags & 4) >> 2) +
-                                           lightNibble.Fourth)
-                                          / (BitOperations.PopCount((byte)(~oFlags & 0x7)) + 1));
-                        }
-
                         // split light and reassemble it again
                         light.Whole |= (uint)((byte)(
-                            average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
+                            ChunkSectionRenderer.average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
                                 o)
                             << 4 |
-                            average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
+                            ChunkSectionRenderer.average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
                                 o)
                         ) << j * 8);
                     }

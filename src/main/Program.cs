@@ -6,10 +6,11 @@ using BlockGame;
 
 public class Program {
     public static void Main(string[] args) {
+        var devMode = args.Length > 0 && args[0] == "--dev";
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
         Game.initDedicatedGraphics();
-        _ = new Game();
+        _ = new Game(devMode);
     }
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;

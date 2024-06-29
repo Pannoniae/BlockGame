@@ -3,10 +3,9 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
@@ -34,7 +33,7 @@ public class ChunkSectionRenderer : IDisposable {
 
     // actually we don't need a list, regular arrays will do because it's only a few megs of space and it's shared
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of them and it will still be in the ballpark of 10MB
-    private static List<BlockVertex> chunkVertices = new(2048);
+    private static List<BlockVertexPacked> chunkVertices = new(2048);
     private static List<ushort> chunkIndices = new(2048);
     // YZX again
     private static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
@@ -44,41 +43,36 @@ public class ChunkSectionRenderer : IDisposable {
     private Stopwatch sw = new Stopwatch();
 
     public static readonly sbyte[] offsetTable = [
-        // west
 
+        // west
         -1, 0, 1, -1, 1, 0, -1, 1, 1,
         -1, 0, 1, -1, -1, 0, -1, -1, 1,
         -1, 0, -1, -1, -1, 0, -1, -1, -1,
         -1, 0, -1, -1, 1, 0, -1, 1, -1,
 
         // east
-
         1, 0, -1, 1, 1, 0, 1, 1, -1,
         1, 0, -1, 1, -1, 0, 1, -1, -1,
         1, 0, 1, 1, -1, 0, 1, -1, 1,
         1, 0, 1, 1, 1, 0, 1, 1, 1,
 
         // south
-
         -1, 0, -1, 0, 1, -1, -1, 1, -1,
         -1, 0, -1, 0, -1, -1, -1, -1, -1,
         1, 0, -1, 0, -1, -1, 1, -1, -1,
         1, 0, -1, 0, 1, -1, 1, 1, -1,
 
         // north
-
         1, 0, 1, 0, 1, 1, 1, 1, 1,
         1, 0, 1, 0, -1, 1, 1, -1, 1,
         -1, 0, 1, 0, -1, 1, -1, -1, 1,
         -1, 0, 1, 0, 1, 1, -1, 1, 1,
-
 
         // down
         0, -1, 1, 1, -1, 0, 1, -1, 1,
         0, -1, -1, 1, -1, 0, 1, -1, -1,
         0, -1, -1, -1, -1, 0, -1, -1, -1,
         0, -1, 1, -1, -1, 0, -1, -1, 1,
-
 
         // up
         0, 1, 1, -1, 1, 0, -1, 1, 1,
@@ -93,8 +87,8 @@ public class ChunkSectionRenderer : IDisposable {
         dummyuChunkPos = Game.dummyShader.getUniformLocation("uChunkPos");
     }
 
-    private static bool opaqueBlocks(Block b) {
-        return b.id != 0 && b.type != BlockType.TRANSLUCENT;
+    private static bool opaqueBlocks(int b) {
+        return b != 0 && Blocks.get(b).type != BlockType.TRANSLUCENT;
     }
 
     private static bool notSolid(ushort b) {
@@ -117,7 +111,7 @@ public class ChunkSectionRenderer : IDisposable {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //sw.Restart();
+        sw.Restart();
         if (section.world.renderer.fastChunkSwitch) {
             vao?.Dispose();
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -150,12 +144,12 @@ public class ChunkSectionRenderer : IDisposable {
         /*if (World.glob) {
                 MeasureProfiler.StartCollectingData();
             }*/
-        //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
+        Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
         constructVertices(VertexConstructionMode.OPAQUE);
         /*if (World.glob) {
                 MeasureProfiler.SaveData();
             }*/
-        //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+        Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkIndices.Count > 0) {
             isEmptyRenderOpaque = false;
             if (section.world.renderer.fastChunkSwitch) {
@@ -198,12 +192,8 @@ public class ChunkSectionRenderer : IDisposable {
             }
         }
         //}
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        //sw.Stop();
-    }
-
-    public ushort toVertex(float f) {
-        return (ushort)(f / 16f * ushort.MaxValue);
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        sw.Stop();
     }
 
 
@@ -226,7 +216,7 @@ public class ChunkSectionRenderer : IDisposable {
         if (section.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
-            shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
+            shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(section.chunkX * 16, section.chunkY * 16, section.chunkZ * 16));
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -254,23 +244,6 @@ public class ChunkSectionRenderer : IDisposable {
         int z;
         int x;
 
-        for (int i = 0; i < Chunk.MAXINDEX; i++) {
-            // index for array accesses
-            y = i >> 8;
-            z = i >> 4 & 0xF;
-            x = i & 0xF;
-            var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
-
-            Unsafe.Add(ref blocksArrayRef, index) = sourceBlockArrayRef;
-            Unsafe.Add(ref lightArrayRef, index) = sourceLightArrayRef;
-
-            // increment
-            sourceBlockArrayRef = ref Unsafe.Add(ref sourceBlockArrayRef, 1);
-            sourceLightArrayRef = ref Unsafe.Add(ref sourceLightArrayRef, 1);
-        }
-
-        //Console.Out.WriteLine($"vert2: {sw.Elapsed.TotalMicroseconds}us");
-
         // setup neighbouring sections
         var coord = section.chunkCoord;
         ref var neighbourSectionsArray = ref MemoryMarshal.GetArrayDataReference(neighbourSections);
@@ -292,28 +265,29 @@ public class ChunkSectionRenderer : IDisposable {
                 for (x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
                     //Console.Out.WriteLine($"{i} {x} {y} {z}");
 
-
-                    // if inside the chunk, skip
+                    // if inside the chunk, load from section
                     if (x is >= 0 and < Chunk.CHUNKSIZE &&
                         z is >= 0 and < Chunk.CHUNKSIZE &&
                         y is >= 0 and < Chunk.CHUNKSIZE) {
-                        // skip this entire loop
-                        // also increment the references
-                        // we need to add 1 because we are incrementing too!
-                        var diff = Chunk.CHUNKSIZE - x;
-                        blocksArrayRef = ref Unsafe.Add(ref blocksArrayRef, diff);
-                        lightArrayRef = ref Unsafe.Add(ref lightArrayRef, diff);
-                        x = Chunk.CHUNKSIZE - 1;
-                        continue;
+
+                        blocksArrayRef = sourceBlockArrayRef;
+                        lightArrayRef = sourceLightArrayRef;
+
+                        // increment
+                        sourceBlockArrayRef = ref Unsafe.Add(ref sourceBlockArrayRef, 1);
+                        sourceLightArrayRef = ref Unsafe.Add(ref sourceLightArrayRef, 1);
+
+                        goto increment;
                     }
 
                     // index for array accesses
                     //var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
 
                     // aligned position (between 0 and 16)
-                    int cx = (x + 16) & 0xF;
-                    int cy = (y + 16) & 0xF;
-                    int cz = (z + 16) & 0xF;
+                    // yes this shouldn't work but it does
+                    // it makes EVERYTHING positive by cutting off the sign bit
+                    // so -1 becomes 15, -2 becomes 14, etc.
+                    int offset = (y & 0xF) * Chunk.CHUNKSIZESQ + (z & 0xF) * Chunk.CHUNKSIZE + (x & 0xF);
 
                     // section position (can be -1, 0, 1)
                     // get neighbouring section
@@ -322,8 +296,13 @@ public class ChunkSectionRenderer : IDisposable {
                     var nn = neighbourSection != null && neighbourSection.inited;
                     var bl = nn
                         ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.blocks),
-                            cy * Chunk.CHUNKSIZESQ + cz * Chunk.CHUNKSIZE + cx)
+                            offset)
                         : (ushort)0;
+
+                    // if below world, pretend it's dirt (so it won't get meshed)
+                    if (section.chunkCoord.y == 0 && y == -1) {
+                        bl = Blocks.DIRT.id;
+                    }
 
                     // set neighbours array element  to block
                     blocksArrayRef = bl;
@@ -333,10 +312,13 @@ public class ChunkSectionRenderer : IDisposable {
                     }
 
                     // set light array element to light
-                    lightArrayRef = nn ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.light),
-                        cy * Chunk.CHUNKSIZESQ + cz * Chunk.CHUNKSIZE + cx) : (byte)15;
+                    lightArrayRef = nn
+                        ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.light),
+                            offset)
+                        : (byte)15;
 
                     // increment
+                    increment:
                     blocksArrayRef = ref Unsafe.Add(ref blocksArrayRef, 1);
                     lightArrayRef = ref Unsafe.Add(ref lightArrayRef, 1);
                 }
@@ -346,12 +328,9 @@ public class ChunkSectionRenderer : IDisposable {
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
     }
 
-    // if neighbourTest returns true for adjacent block, render, if it returns false, don't
-    //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-
     // sorry for this mess, even fucking calli has big overhead
-
     [SkipLocalsInit]
+    //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
     //unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
     unsafe private void constructVertices(VertexConstructionMode mode) {
         //sw.Start();
@@ -361,7 +340,7 @@ public class ChunkSectionRenderer : IDisposable {
         chunkVertices.Clear();
         chunkIndices.Clear();
 
-        Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
+        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
         Span<ushort> tempIndices = stackalloc ushort[8].Slice(0, 6);
         Vector128<ushort> indices = Vector128<ushort>.Zero;
 
@@ -372,7 +351,7 @@ public class ChunkSectionRenderer : IDisposable {
         // BYTE OF SETTINGS
         // 1 = AO
         // 2 = smooth lighting
-        byte settings = (byte)(toInt(Settings.instance.smoothLighting) << 1 | toInt(Settings.instance.AO));
+        byte settings = (byte)(toByte(Settings.instance.smoothLighting) << 1 | toByte(Settings.instance.AO));
         const int SETTING_AO = 1;
         const int SETTING_SMOOTH_LIGHTING = 2;
         //ushort cv = 0;
@@ -390,12 +369,16 @@ public class ChunkSectionRenderer : IDisposable {
         }
 
         ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.blocks);
-        ref ushort neighbourRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
-        ref byte lightRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
         ref sbyte offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
 
         Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
         Vector128<ushort> complement = Vector128.Create((ushort)4, 3, 2, 4, 2, 1, 0, 0);
+
+        // for offset indices
+        Vector256<short> multiplyMask = Vector256.Create(1, Chunk.CHUNKSIZEEXSQ, Chunk.CHUNKSIZEEX,
+            1, Chunk.CHUNKSIZEEXSQ, Chunk.CHUNKSIZEEX,
+            1, Chunk.CHUNKSIZEEXSQ, Chunk.CHUNKSIZEEX,
+            0, 0, 0, 0, 0, 0, 0);
 
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
@@ -406,18 +389,18 @@ public class ChunkSectionRenderer : IDisposable {
 
             var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
             // pre-add index
-            neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
-            lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
+            ref ushort neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
+            ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
 
             Block bl = Blocks.get(blockArrayRef);
             switch (mode) {
                 case VertexConstructionMode.OPAQUE:
-                    if (!opaqueBlocks(bl)) {
+                    if (!opaqueBlocks(blockArrayRef)) {
                         goto increment;
                     }
                     break;
                 case VertexConstructionMode.TRANSLUCENT:
-                    if (!Blocks.isTranslucent(bl)) {
+                    if (!Blocks.isTranslucent(blockArrayRef)) {
                         goto increment;
                     }
                     break;
@@ -453,12 +436,12 @@ public class ChunkSectionRenderer : IDisposable {
             nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
             nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
             nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
-            if (nba[0] != 0 && Blocks.isFullBlock(nba[0]) &&
-                nba[1] != 0 && Blocks.isFullBlock(nba[1]) &&
-                nba[2] != 0 && Blocks.isFullBlock(nba[2]) &&
-                nba[3] != 0 && Blocks.isFullBlock(nba[3]) &&
-                nba[4] != 0 && Blocks.isFullBlock(nba[4]) &&
-                nba[5] != 0 && Blocks.isFullBlock(nba[5])) {
+            if (Blocks.isFullBlock(nba[0]) &&
+                Blocks.isFullBlock(nba[1]) &&
+                Blocks.isFullBlock(nba[2]) &&
+                Blocks.isFullBlock(nba[3]) &&
+                Blocks.isFullBlock(nba[4]) &&
+                Blocks.isFullBlock(nba[5])) {
                 goto increment;
             }
 
@@ -486,15 +469,13 @@ public class ChunkSectionRenderer : IDisposable {
 
                 test2 = false;
 
-                // if bottom of the world, don't bother
-                if (section.chunkY == 0 && y == 0 && dir == RawDirection.DOWN) {
-                    goto increment2;
-                }
-
                 if (dir == RawDirection.NONE) {
                     // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
                     test2 = true;
-                    light.First = light.Second = light.Third = light.Fourth = lightRef;
+                    light.First = lightRef;
+                    light.Second = lightRef;
+                    light.Third = lightRef;
+                    light.Fourth = lightRef;
                 }
                 else {
                     ushort nb = nba[(byte)dir];
@@ -509,8 +490,8 @@ public class ChunkSectionRenderer : IDisposable {
                     test2 = test2 || (facesRef.nonFullFace && !Blocks.isTranslucent(nb));
                 }
                 // either neighbour test passes, or neighbour is not air + face is not full
-                if (test2) {
-                    if ((settings & SETTING_SMOOTH_LIGHTING) == 0 && dir != RawDirection.NONE) {
+                if (test2 && dir != RawDirection.NONE) {
+                    if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
                         light.First = lba[(byte)dir];
                         light.Second = lba[(byte)dir];
                         light.Third = lba[(byte)dir];
@@ -518,85 +499,64 @@ public class ChunkSectionRenderer : IDisposable {
                     }
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                     if ((settings & SETTING_SMOOTH_LIGHTING) != 0 || (settings & SETTING_AO) != 0) {
-                        if (dir != RawDirection.NONE) {
-                            // ox, oy, oz
-                            byte o;
-                            // need to store 9 sbytes so it's a 16-element vector
-                            Vector128<sbyte> vector;
-                            // lx, ly, lz, lo
-                            FourBytes l;
-                            Unsafe.SkipInit(out l);
+                        // ox, oy, oz
+                        byte o;
+                        // need to store 9 sbytes so it's a 16-element vector
+                        Vector256<short> widenedVector;
+                        // lx, ly, lz, lo
+                        FourBytes l;
+                        Unsafe.SkipInit(out l);
 
-                            ao = 0;
+                        ao = 0;
 
-                            if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
-                                light.Whole = 0;
+                        if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
+                            light.Whole = 0;
+                        }
+
+                        for (int j = 0; j < 4; j++) {
+                            //mult = dirIdx * 36 + j * 9 + vert * 3;
+                            // premultiply cuz its faster that way
+
+                            // load the vector with the offsets
+                            widenedVector = Vector256.WidenLower(
+                                Vector128.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9))
+                                    .ToVector256Unsafe());
+                            widenedVector = Vector256.Multiply(widenedVector, multiplyMask);
+
+                            bool i = Blocks.isFullBlock(
+                                Unsafe.Add(ref neighbourRef, widenedVector[0] + widenedVector[1] + widenedVector[2]));
+                            o = Unsafe.As<bool, byte>(ref i);
+                            l.First = Unsafe.Add(ref lightRef, widenedVector[0] + widenedVector[1] + widenedVector[2]);
+
+                            i = Blocks.isFullBlock(
+                                Unsafe.Add(ref neighbourRef, widenedVector[3] + widenedVector[4] + widenedVector[5]));
+                            o |= (byte)(Unsafe.As<bool, byte>(ref i) << 1);
+                            l.Second = Unsafe.Add(ref lightRef, widenedVector[3] + widenedVector[4] + widenedVector[5]);
+
+                            i = Blocks.isFullBlock(
+                                Unsafe.Add(ref neighbourRef, widenedVector[6] + widenedVector[7] + widenedVector[8]));
+                            o |= (byte)(Unsafe.As<bool, byte>(ref i) << 2);
+                            l.Third = Unsafe.Add(ref lightRef, widenedVector[6] + widenedVector[7] + widenedVector[8]);
+
+                            // only apply AO if enabled
+                            if ((settings & SETTING_AO) != 0 && !facesRef.noAO) {
+                                ao |= (byte)(((o & 3) == 3 ? 3 : byte.PopCount(o)) << j * 2);
                             }
 
-                            for (int j = 0; j < 4; j++) {
-                                //mult = dirIdx * 36 + j * 9 + vert * 3;
-                                // premultiply cuz its faster that way
+                            // if face is noAO, don't average....
+                            if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
+                                // if smooth lighting enabled, average light from neighbour face + the 3 other ones
+                                // calculate average
+                                l.Fourth = lba[(byte)dir];
 
-                                // load the vector with the offsets
-                                vector = Vector128.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9));
-
-                                o = toByte(Blocks.isFullBlock(
-                                    Unsafe.Add(ref neighbourRef, vector[0] + vector[1] * Chunk.CHUNKSIZEEXSQ + vector[2] * Chunk.CHUNKSIZEEX)));
-                                l.First = Unsafe.Add(ref lightRef, vector[0] + vector[1] * Chunk.CHUNKSIZEEXSQ + vector[2] * Chunk.CHUNKSIZEEX);
-
-                                o |= (byte)(toByte(Blocks.isFullBlock(
-                                    Unsafe.Add(ref neighbourRef, vector[3] + vector[4] * Chunk.CHUNKSIZEEXSQ + vector[5] * Chunk.CHUNKSIZEEX))) << 1);
-                                l.Second = Unsafe.Add(ref lightRef, vector[3] + vector[4] * Chunk.CHUNKSIZEEXSQ + vector[5] * Chunk.CHUNKSIZEEX);
-
-                                //mult++;
-                                o |= (byte)(toByte(Blocks.isFullBlock(
-                                    Unsafe.Add(ref neighbourRef, vector[6] + vector[7] * Chunk.CHUNKSIZEEXSQ + vector[8] * Chunk.CHUNKSIZEEX))) << 2);
-                                l.Third = Unsafe.Add(ref lightRef, vector[6] + vector[7] * Chunk.CHUNKSIZEEXSQ + vector[8] * Chunk.CHUNKSIZEEX);
-
-                                // only apply AO if enabled
-                                if ((settings & SETTING_AO) == 1 && !facesRef.noAO) {
-                                    ao |= (byte)((calculateAOFixed(o) & 0x3) << j * 2);
-                                }
-
-                                // if face is noAO, don't average....
-                                if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
-
-
-                                    // if smooth lighting enabled, average light from neighbour face + the 3 other ones
-                                    // calculate average
-                                    l.Fourth = lba[(byte)dir];
-
-                                    // this averages the four light values. If the block is opaque, it ignores the light value.
-                                    // oFlags are opacity of side1, side2 and corner
-                                    // (1 == opaque, 0 == transparent)
-                                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                                    byte average(FourBytes lightNibble, byte oFlags) {
-                                        // if both sides are blocked, don't check the corner, won't be visible anyway
-                                        // if corner == 0 && side1 and side2 aren't both true, then corner is visible
-                                        //if ((oFlags & 4) == 0 && oFlags != 3) {
-                                        if (oFlags < 3) {
-                                            // set the 4 bit of oFlags to 0 because it is visible then
-                                            oFlags &= 3;
-                                        }
-
-                                        // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
-                                        // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
-                                        return (byte)((lightNibble.First * (~oFlags & 1) +
-                                                       lightNibble.Second * ((~oFlags & 2) >> 1) +
-                                                       lightNibble.Third * ((~oFlags & 4) >> 2) +
-                                                       lightNibble.Fourth)
-                                                      / (BitOperations.PopCount((byte)(~oFlags & 0x7)) + 1));
-                                    }
-
-                                    // split light and reassemble it again
-                                    light.Whole |= (uint)((byte)(
-                                        average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
-                                            o)
-                                        << 4 |
-                                        average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
-                                            o)
-                                    ) << j * 8);
-                                }
+                                // split light and reassemble it again
+                                light.Whole |= (uint)((byte)(
+                                    average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
+                                        o)
+                                    << 4 |
+                                    average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
+                                        o)
+                                ) << j * 8);
                             }
                         }
                     }
@@ -613,13 +573,13 @@ public class ChunkSectionRenderer : IDisposable {
 
                     // add vertices
 
-                    tempVertices[0] = new BlockVertex(x + facesRef.x1, y + facesRef.y1, z + facesRef.z1, tex[0], tex[1],
+                    tempVertices[0] = new BlockVertexPacked(x + facesRef.x1, y + facesRef.y1, z + facesRef.z1, tex[0], tex[1],
                         Block.packData((byte)dir, (byte)(ao & 0x3), light.First));
-                    tempVertices[1] = new BlockVertex(x + facesRef.x2, y + facesRef.y2, z + facesRef.z2, tex[0], tex[3],
+                    tempVertices[1] = new BlockVertexPacked(x + facesRef.x2, y + facesRef.y2, z + facesRef.z2, tex[0], tex[3],
                         Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second));
-                    tempVertices[2] = new BlockVertex(x + facesRef.x3, y + facesRef.y3, z + facesRef.z3, tex[2], tex[3],
+                    tempVertices[2] = new BlockVertexPacked(x + facesRef.x3, y + facesRef.y3, z + facesRef.z3, tex[2], tex[3],
                         Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third));
-                    tempVertices[3] = new BlockVertex(x + facesRef.x4, y + facesRef.y4, z + facesRef.z4, tex[2], tex[1],
+                    tempVertices[3] = new BlockVertexPacked(x + facesRef.x4, y + facesRef.y4, z + facesRef.z4, tex[2], tex[1],
                         Block.packData((byte)dir, (byte)(ao >> 6), light.Fourth));
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
@@ -646,6 +606,28 @@ public class ChunkSectionRenderer : IDisposable {
             blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
         }
         //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
+    }
+
+    // this averages the four light values. If the block is opaque, it ignores the light value.
+    // oFlags are opacity of side1, side2 and corner
+    // (1 == opaque, 0 == transparent)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte average(FourBytes lightNibble, byte oFlags) {
+        // if both sides are blocked, don't check the corner, won't be visible anyway
+        // if corner == 0 && side1 and side2 aren't both true, then corner is visible
+        //if ((oFlags & 4) == 0 && oFlags != 3) {
+        if (oFlags < 3) {
+            // set the 4 bit of oFlags to 0 because it is visible then
+            oFlags &= 3;
+        }
+
+        // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
+        // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
+        return (byte)((lightNibble.First * (~oFlags & 1) +
+                       lightNibble.Second * ((~oFlags & 2) >> 1) +
+                       lightNibble.Third * ((~oFlags & 4) >> 2) +
+                       lightNibble.Fourth)
+                      / (BitOperations.PopCount((byte)(~oFlags & 0x7)) + 1));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -692,15 +674,11 @@ public class ChunkSectionRenderer : IDisposable {
         // side1 = 1
         // side2 = 2
         // corner = 4
-
         // if side1 and side2 are blocked, corner is blocked too
         // if side1 && side2
-        if ((flags & 3) == 3) {
-            return 3;
-        }
         // return side1 + side2 + corner
         // which is conveniently already stored!
-        return byte.PopCount(flags);
+        return (flags & 3) == 3 ? (byte)3 : byte.PopCount(flags);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

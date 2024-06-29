@@ -8,7 +8,7 @@ namespace BlockGame;
 public class PlayerRenderer {
 
     public Player player;
-    public StreamingVAO vao;
+    public StreamingVAO<BlockVertex> vao;
     private List<BlockVertex> vertices = new();
     private List<ushort> indices = new();
 
@@ -19,7 +19,7 @@ public class PlayerRenderer {
 
     public PlayerRenderer(Player player) {
         this.player = player;
-        vao = new StreamingVAO();
+        vao = new StreamingVAO<BlockVertex>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
         heldBlockShader = new Shader(Game.GL, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");

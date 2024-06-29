@@ -2,7 +2,7 @@ using BlockGame.util;
 using Silk.NET.Maths;
 using TrippyGL;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class MainMenu : Menu {
     public override void activate() {

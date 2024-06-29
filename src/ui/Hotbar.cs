@@ -3,7 +3,7 @@ using BlockGame.util;
 using Silk.NET.Maths;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class Hotbar : GUIElement {
 

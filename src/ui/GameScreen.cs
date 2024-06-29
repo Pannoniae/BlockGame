@@ -8,7 +8,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using TrippyGL;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class GameScreen : Screen, IDisposable {
 
@@ -29,7 +29,7 @@ public class GameScreen : Screen, IDisposable {
     // values for f3
     private long workingSet;
     private long GCMemory;
-    private RichTextLayout? rendererText;
+    private RichTextLayout rendererText;
     private bool disposed;
 
     public override void activate() {
@@ -58,6 +58,11 @@ public class GameScreen : Screen, IDisposable {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         addElement(hotbar);
+        rendererText = new RichTextLayout {
+            Font = Game.gui.guiFontThin,
+            Text = "",
+            Width = 150 * GUI.guiScale
+        };
     }
 
     public virtual void Dispose() {
@@ -82,20 +87,27 @@ public class GameScreen : Screen, IDisposable {
 
             debugStr.Clear();
             debugStrG.Clear();
-            debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
-            debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length);
-            debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
-            debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
-            debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
-            debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
-            if (i.targetedPos.HasValue)
-                debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
-            else
-                debugStr.Append("No target\n");
+            if (Game.devMode) {
+                debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
+                debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length);
+                debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
+                debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
+                debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
+                debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
+                if (i.targetedPos.HasValue) {
+                    debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
+                }
+                else
+                    debugStr.Append("No target\n");
+            }
+
             debugStr.AppendFormat("rC:{0} rV:{1}k\n", m.renderedChunks, m.renderedVerts / 1000);
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
+            if (Game.devMode) {
+                debugStr.AppendFormat("Seed: {0}\n", world.seed);
+            }
 
 
 
@@ -358,17 +370,15 @@ public class GameScreen : Screen, IDisposable {
             var ver = getElement("version");
             gui.drawStringThin(debugStr.AsSpan(),
                 new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
-            if (rendererText != null) {
-                gui.drawRString(rendererText,
-                    new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
-            }
+            gui.drawRString(rendererText,
+                new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
         }
     }
 
     /// <summary>
     /// Split a string with newlines at spaces so that the maxLen is roughly respected. (Sorry!)
     /// </summary>
-    private string splitString(Span<char> input, int maxLen) {
+    private static string splitString(Span<char> input, int maxLen) {
         for (int i = maxLen - 3; i < input.Length; i++) {
             // if space, replace with newline
             if (input[i] == ' ') {

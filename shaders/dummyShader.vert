@@ -10,6 +10,6 @@ uniform vec3 uChunkPos;
 out vec2 texCoords;
 
 void main() {
-    gl_Position = uMVP * vec4(uChunkPos + vPos, 1.0);
+    gl_Position = uMVP * vec4(uChunkPos + vPos / 256. - 16, 1.0);
     texCoords = texCoord;
 }

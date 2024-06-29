@@ -1,4 +1,4 @@
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
 

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class TextBox : GUIElement {
 
