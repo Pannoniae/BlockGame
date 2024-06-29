@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
 using SFML.Audio;
@@ -51,7 +51,9 @@ public partial class Game {
     /// </summary>
     public Screen currentScreen;
 
-    public static GUI.GUI gui;
+    public static bool devMode;
+
+    public static GUI gui;
 
     public static IMouse mouse;
     public static Vector2 mousePos;
@@ -126,7 +128,8 @@ public partial class Game {
     private static float g_maxSpan = 8.0f;
 
 
-    public Game() {
+    public Game(bool devMode) {
+        Game.devMode = devMode;
         instance = this;
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
@@ -266,7 +269,7 @@ public partial class Game {
             //music.Play();
             Console.Out.WriteLine("played?");
 
-            gui = new GUI.GUI();
+            gui = new ui.GUI();
             fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
             gui.loadFont(13);
 

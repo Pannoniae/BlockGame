@@ -1,6 +1,6 @@
 using Silk.NET.Maths;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class ToggleButton : Button {
 

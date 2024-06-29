@@ -1,4 +1,4 @@
-using BlockGame.GUI;
+using BlockGame.ui;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -39,7 +39,7 @@ public class BTextureAtlas : IDisposable {
                 var c10 = prevMipmap[ySrc * width * 2 + xSrc];
                 var c11 = prevMipmap[y1 * width * 2 + x1];
 
-                mipmap[y * width + x] = avgColour(avgColour(c00, c01), avgColour(c10, c11));
+                mipmap[y * width + x] = avgColour(c00, c01, c10, c11);
             }
         }
     }
@@ -49,6 +49,13 @@ public class BTextureAtlas : IDisposable {
     /// </summary>
     private static Rgba32 avgColour(Rgba32 c0, Rgba32 c1) {
         return new Rgba32((byte)((c0.R + c1.R) / 2f), (byte)((c0.G + c1.G) / 2f), (byte)((c0.B + c1.B) / 2f), (byte)((c0.A + c1.A) / 2f));
+    }
+
+    private static Rgba32 avgColour(Rgba32 c0, Rgba32 c1, Rgba32 c2, Rgba32 c3) {
+        return new Rgba32((byte)((c0.R + c1.R + c2.R + c3.R) / 4f),
+            (byte)((c0.G + c1.G + c2.G + c3.G) / 4f),
+            (byte)((c0.B + c1.B + c2.B + c3.B) / 4f),
+            (byte)((c0.A + c1.A + c2.A + c3.A) / 4f));
     }
 
     unsafe public void reload() {

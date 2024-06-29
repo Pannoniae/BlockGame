@@ -1,6 +1,6 @@
 ﻿#version 440
 
-layout (location = 0) in vec3 vPos;
+layout (location = 0) in uvec3 vPos;
 layout (location = 1) in vec2 texCoord;
 layout (location = 2) in uint iData;
 
@@ -23,7 +23,7 @@ void main() {
     uint directionValue = iData & 0x7u;
     uint aoValue = (iData >> 3) & 0x3u;
     uint lightValue = (iData >> 8) & 0xFFu;
-    vec3 pos = uChunkPos + vPos;
+    vec3 pos = uChunkPos + vPos / 256. - 16;
     gl_Position = uMVP * vec4(pos, 1.0);
     texCoords = texCoord;
     ao = aoArray[aoValue];

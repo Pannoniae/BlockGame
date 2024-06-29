@@ -126,7 +126,7 @@ public class BlockModel {
 
     public static BlockModel emptyBlock() {
         var model = new BlockModel();
-        model.faces = new Face[0];
+        model.faces = [];
         return model;
     }
 }
