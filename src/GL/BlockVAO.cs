@@ -92,9 +92,9 @@ public class BlockVAO : VAO {
     public void format() {
         unsafe {
             // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+            GL.VertexAttribIPointer(0, 3, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, 6 * sizeof(ushort), (void*)(0 + 3 * sizeof(ushort)));
+            GL.VertexAttribIPointer(1, 2, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 3 * sizeof(ushort)));
             GL.EnableVertexAttribArray(1);
             GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 5 * sizeof(ushort)));
             GL.EnableVertexAttribArray(2);
@@ -164,12 +164,12 @@ public readonly struct BlockVertex : IVertex {
 }
 
 [StructLayout(LayoutKind.Sequential, Size = 12)]
-public readonly struct BlockVertexPacked : IVertex {
-    public readonly ushort x;
-    public readonly ushort y;
-    public readonly ushort z;
-    public readonly Half u;
-    public readonly Half v;
+public struct BlockVertexPacked : IVertex {
+    public ushort x;
+    public ushort y;
+    public ushort z;
+    public ushort u;
+    public ushort v;
 
     /// <summary>
     /// from least significant:
@@ -178,29 +178,29 @@ public readonly struct BlockVertexPacked : IVertex {
     /// next 2 bits are AO
     /// next 2 bits are texU == 1 and texV == 1
     /// </summary>
-    public readonly ushort d;
+    public ushort d;
 
     public BlockVertexPacked(float x, float y, float z, float u, float v, ushort d) {
         this.x = (ushort)((x + 16) * 256);
         this.y = (ushort)((y + 16) * 256);
         this.z = (ushort)((z + 16) * 256);
-        this.u = (Half)u;
-        this.v = (Half)v;
+        this.u = (ushort)(u * 32768);
+        this.v = (ushort)(v * 32768);
         this.d = d;
     }
 
-    public BlockVertexPacked(ushort x, ushort y, ushort z, float u, float v, ushort d) {
+    public BlockVertexPacked(ushort x, ushort y, ushort z, ushort u, ushort v, ushort d) {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.u = (Half)u;
-        this.v = (Half)v;
+        this.u = u;
+        this.v = v;
         this.d = d;
     }
 
     public void WriteAttribDescriptions(Span<VertexAttribDescription> descriptions) {
         descriptions[0] = new VertexAttribDescription(AttributeType.UnsignedIntVec3, false, AttributeBaseType.UnsignedShort);
-        descriptions[1] = new VertexAttribDescription(AttributeType.FloatVec2, false, AttributeBaseType.HalfFloat);
+        descriptions[1] = new VertexAttribDescription(AttributeType.UnsignedIntVec2, false, AttributeBaseType.UnsignedShort);
         descriptions[2] = new VertexAttribDescription(AttributeType.UnsignedInt, false, AttributeBaseType.UnsignedShort);
     }
 

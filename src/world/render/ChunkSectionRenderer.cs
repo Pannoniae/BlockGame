@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -79,6 +80,45 @@ public class ChunkSectionRenderer : IDisposable {
         0, 1, -1, -1, 1, 0, -1, 1, -1,
         0, 1, -1, 1, 1, 0, 1, 1, -1,
         0, 1, 1, 1, 1, 0, 1, 1, 1,
+    ];
+
+    public static readonly short[] offsetTableCompact = [
+
+        // west
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+
+        // east
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+
+        // south
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+
+        // north
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+
+        // down
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+
+        // up
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
 
     public ChunkSectionRenderer(ChunkSection section) {
@@ -369,7 +409,7 @@ public class ChunkSectionRenderer : IDisposable {
         }
 
         ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.blocks);
-        ref sbyte offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTable);
+        ref short offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTableCompact);
 
         Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
         Vector128<ushort> complement = Vector128.Create((ushort)4, 3, 2, 4, 2, 1, 0, 0);
@@ -490,7 +530,13 @@ public class ChunkSectionRenderer : IDisposable {
                     test2 = test2 || (facesRef.nonFullFace && !Blocks.isTranslucent(nb));
                 }
                 // either neighbour test passes, or neighbour is not air + face is not full
-                if (test2 && dir != RawDirection.NONE) {
+                if (test2) {
+                    // if face is none, skip the whole lighting business
+                    if (dir == RawDirection.NONE) {
+                        goto vertex;
+                    }
+
+                    // skip all the light business
                     if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
                         light.First = lba[(byte)dir];
                         light.Second = lba[(byte)dir];
@@ -498,89 +544,185 @@ public class ChunkSectionRenderer : IDisposable {
                         light.Fourth = lba[(byte)dir];
                     }
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
-                    if ((settings & SETTING_SMOOTH_LIGHTING) != 0 || (settings & SETTING_AO) != 0) {
+                    if ((settings & 3) != 0) {
                         // ox, oy, oz
-                        byte o;
+                        ushort o;
                         // need to store 9 sbytes so it's a 16-element vector
                         Vector256<short> widenedVector;
                         // lx, ly, lz, lo
-                        FourBytes l;
-                        Unsafe.SkipInit(out l);
+                        // we need 12 bytes
+                        Vector128<byte> l;
 
                         ao = 0;
-
                         if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
                             light.Whole = 0;
                         }
 
-                        for (int j = 0; j < 4; j++) {
-                            //mult = dirIdx * 36 + j * 9 + vert * 3;
-                            // premultiply cuz its faster that way
+                        //for (int j = 0; j < 4; j++) {
+                        //mult = dirIdx * 36 + j * 9 + vert * 3;
+                        // premultiply cuz its faster that way
 
-                            // load the vector with the offsets
-                            widenedVector = Vector256.WidenLower(
-                                Vector128.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 36 + j * 9))
-                                    .ToVector256Unsafe());
-                            widenedVector = Vector256.Multiply(widenedVector, multiplyMask);
+                        // load the vector with the offsets
+                        // we need 12 offsets
+                        var offsets = Vector256.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 12));
 
-                            bool i = Blocks.isFullBlock(
-                                Unsafe.Add(ref neighbourRef, widenedVector[0] + widenedVector[1] + widenedVector[2]));
-                            o = Unsafe.As<bool, byte>(ref i);
-                            l.First = Unsafe.Add(ref lightRef, widenedVector[0] + widenedVector[1] + widenedVector[2]);
+                        l = Vector128.Create(
+                            Unsafe.Add(ref lightRef, offsets[0]),
+                            Unsafe.Add(ref lightRef, offsets[1]),
+                            Unsafe.Add(ref lightRef, offsets[2]),
+                            0,
+                            Unsafe.Add(ref lightRef, offsets[3]),
+                            Unsafe.Add(ref lightRef, offsets[4]),
+                            Unsafe.Add(ref lightRef, offsets[5]),
+                            0,
+                            Unsafe.Add(ref lightRef, offsets[6]),
+                            Unsafe.Add(ref lightRef, offsets[7]),
+                            Unsafe.Add(ref lightRef, offsets[8]),
+                            0,
+                            Unsafe.Add(ref lightRef, offsets[9]),
+                            Unsafe.Add(ref lightRef, offsets[10]),
+                            Unsafe.Add(ref lightRef, offsets[11]),
+                            0);
 
-                            i = Blocks.isFullBlock(
-                                Unsafe.Add(ref neighbourRef, widenedVector[3] + widenedVector[4] + widenedVector[5]));
-                            o |= (byte)(Unsafe.As<bool, byte>(ref i) << 1);
-                            l.Second = Unsafe.Add(ref lightRef, widenedVector[3] + widenedVector[4] + widenedVector[5]);
+                        o = (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[0]))) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[1]))) << 1) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[2]))) << 2) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[3]))) << 3) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[4]))) << 4) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[5]))) << 5) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[6]))) << 6) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[7]))) << 7) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[8]))) << 8) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[9]))) << 9) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[10]))) << 10) |
+                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.Add(ref neighbourRef, offsets[11]))) << 11));
 
-                            i = Blocks.isFullBlock(
-                                Unsafe.Add(ref neighbourRef, widenedVector[6] + widenedVector[7] + widenedVector[8]));
-                            o |= (byte)(Unsafe.As<bool, byte>(ref i) << 2);
-                            l.Third = Unsafe.Add(ref lightRef, widenedVector[6] + widenedVector[7] + widenedVector[8]);
-
-                            // only apply AO if enabled
-                            if ((settings & SETTING_AO) != 0 && !facesRef.noAO) {
-                                ao |= (byte)(((o & 3) == 3 ? 3 : byte.PopCount(o)) << j * 2);
-                            }
-
-                            // if face is noAO, don't average....
-                            if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
-                                // if smooth lighting enabled, average light from neighbour face + the 3 other ones
-                                // calculate average
-                                l.Fourth = lba[(byte)dir];
-
-                                // split light and reassemble it again
-                                light.Whole |= (uint)((byte)(
-                                    average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
-                                        o)
-                                    << 4 |
-                                    average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
-                                        o)
-                                ) << j * 8);
-                            }
+                        // only apply AO if enabled
+                        if ((settings & SETTING_AO) != 0 && !facesRef.noAO) {
+                            ao |= (byte)((o & 3) == 3 ? 3 : byte.PopCount((byte)(o & 7)));
+                            ao |= (byte)((((o >> 3) & 3) == 3 ? 3 : byte.PopCount((byte)((o >> 3) & 7))) << 2);
+                            ao |= (byte)((((o >> 6) & 3) == 3 ? 3 : byte.PopCount((byte)((o >> 6) & 7))) << 4);
+                            ao |= (byte)((((o >> 9) & 3) == 3 ? 3 : byte.PopCount((byte)((o >> 9) & 7))) << 6);
                         }
+
+                        // if face is noAO, don't average....
+                        if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
+                            // if smooth lighting enabled, average light from neighbour face + the 3 other ones
+                            // calculate average
+                            l = Vector128.Add(l, Vector128.Create(
+                                0, 0, 0, lba[(byte)dir],
+                                0, 0, 0, lba[(byte)dir],
+                                0, 0, 0, lba[(byte)dir],
+                                0, 0, 0, lba[(byte)dir]));
+
+
+                            var n = l.AsUInt32();
+                            // split light and reassemble it again
+                            light.First = (byte)(
+                                average((n[0] >> 4) & 0x0F0F0F0F,
+                                    (byte)(o & 7))
+                                << 4 |
+                                average(n[0] & 0x0F0F0F0F,
+                                    (byte)(o & 7)));
+                            light.Second = (byte)(
+                                    average((n[1] >> 4) & 0x0F0F0F0F,
+                                        (byte)((o >> 3) & 7))
+                                    << 4 |
+                                    average(n[1] & 0x0F0F0F0F,
+                                        (byte)((o >> 3) & 7)));
+                            light.Third = (byte)(
+                                average((n[2] >> 4) & 0x0F0F0F0F,
+                                    (byte)((o >> 6) & 7))
+                                << 4 |
+                                average(n[2] & 0x0F0F0F0F,
+                                    (byte)((o >> 6) & 7)));
+                            light.Fourth = (byte)(
+                                    average((n[3] >> 4) & 0x0F0F0F0F,
+                                        (byte)((o >> 9) & 7))
+                                    << 4 |
+                                    average(n[3] & 0x0F0F0F0F,
+                                        (byte)((o >> 9) & 7)));
+                        }
+                        //}
                     }
+                    vertex:
                     /*tex.X = facesRef.min.u * 16f / Block.atlasSize;
                     tex.Y = facesRef.min.v * 16f / Block.atlasSize;
                     tex.Z = facesRef.max.u * 16f / Block.atlasSize;
                     tex.W = facesRef.max.v * 16f / Block.atlasSize;*/
 
                     tex = Vector128.Create(facesRef.min.u, facesRef.min.v, facesRef.max.u, facesRef.max.v);
-                    tex = Vector128.Multiply(tex, Block.textureSize);
-                    tex = Vector128.Divide(tex, Block.atlasSize);
 
+                    // divide by texture size / atlas size, multiply by scaling factor
+                    const float factor = Block.atlasRatio * 32768f;
+                    tex = Vector128.Multiply(tex, factor);
 
+                    Vector256<float> vec = Vector256.Create(
+                        x + facesRef.x1,
+                        y + facesRef.y1,
+                        z + facesRef.z1,
+                        x + facesRef.x2,
+                        y + facesRef.y2,
+                        z + facesRef.z2,
+                        x + facesRef.x3,
+                        y + facesRef.y3);
+
+                    vec = Vector256.Add(vec, Vector256.Create(16f));
+                    vec = Vector256.Multiply(vec, 256);
+
+                    Vector128<float> vec2 = Vector128.Create(
+                        z + facesRef.z3,
+                        x + facesRef.x4,
+                        y + facesRef.y4,
+                        z + facesRef.z4);
+
+                    vec2 = Vector128.Add(vec2, Vector128.Create(16f));
+                    vec2 = Vector128.Multiply(vec2, 256);
 
                     // add vertices
+                    ref var vertex = ref tempVertices[0];
+                    vertex.x = (ushort)vec[0];
+                    vertex.y = (ushort)vec[1];
+                    vertex.z = (ushort)vec[2];
+                    vertex.u = (ushort)tex[0];
+                    vertex.v = (ushort)tex[1];
+                    vertex.d = Block.packData((byte)dir, (byte)(ao & 0x3), light.First);
 
-                    tempVertices[0] = new BlockVertexPacked(x + facesRef.x1, y + facesRef.y1, z + facesRef.z1, tex[0], tex[1],
-                        Block.packData((byte)dir, (byte)(ao & 0x3), light.First));
-                    tempVertices[1] = new BlockVertexPacked(x + facesRef.x2, y + facesRef.y2, z + facesRef.z2, tex[0], tex[3],
-                        Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second));
-                    tempVertices[2] = new BlockVertexPacked(x + facesRef.x3, y + facesRef.y3, z + facesRef.z3, tex[2], tex[3],
-                        Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third));
-                    tempVertices[3] = new BlockVertexPacked(x + facesRef.x4, y + facesRef.y4, z + facesRef.z4, tex[2], tex[1],
-                        Block.packData((byte)dir, (byte)(ao >> 6), light.Fourth));
+                    vertex = ref tempVertices[1];
+                    vertex.x = (ushort)vec[3];
+                    vertex.y = (ushort)vec[4];
+                    vertex.z = (ushort)vec[5];
+                    vertex.u = (ushort)tex[0];
+                    vertex.v = (ushort)tex[3];
+                    vertex.d = Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second);
+
+                    vertex = ref tempVertices[2];
+                    vertex.x = (ushort)vec[6];
+                    vertex.y = (ushort)vec[7];
+                    vertex.z = (ushort)vec2[0];
+                    vertex.u = (ushort)tex[2];
+                    vertex.v = (ushort)tex[3];
+                    vertex.d = Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third);
+
+                    vertex = ref tempVertices[3];
+                    vertex.x = (ushort)vec2[1];
+                    vertex.y = (ushort)vec2[2];
+                    vertex.z = (ushort)vec2[3];
+                    vertex.u = (ushort)tex[2];
+                    vertex.v = (ushort)tex[1];
+                    vertex.d = Block.packData((byte)dir, (byte)(ao >> 6), light.Fourth);
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
 
@@ -623,11 +765,35 @@ public class ChunkSectionRenderer : IDisposable {
 
         // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
         // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
-        return (byte)((lightNibble.First * (~oFlags & 1) +
-                       lightNibble.Second * ((~oFlags & 2) >> 1) +
-                       lightNibble.Third * ((~oFlags & 4) >> 2) +
+        var inv = ~oFlags;
+        return (byte)((lightNibble.First * (inv & 1) +
+                       lightNibble.Second * ((inv & 2) >> 1) +
+                       lightNibble.Third * ((inv & 4) >> 2) +
                        lightNibble.Fourth)
-                      / (BitOperations.PopCount((byte)(~oFlags & 0x7)) + 1));
+                      / (BitOperations.PopCount((byte)(inv & 0x7)) + 1));
+    }
+
+    // this averages the four light values. If the block is opaque, it ignores the light value.
+    // oFlags are opacity of side1, side2 and corner
+    // (1 == opaque, 0 == transparent)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte average(uint lightNibble, byte oFlags) {
+        // if both sides are blocked, don't check the corner, won't be visible anyway
+        // if corner == 0 && side1 and side2 aren't both true, then corner is visible
+        //if ((oFlags & 4) == 0 && oFlags != 3) {
+        if (oFlags < 3) {
+            // set the 4 bit of oFlags to 0 because it is visible then
+            oFlags &= 3;
+        }
+
+        // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
+        // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
+        var inv = ~oFlags;
+        return (byte)(((lightNibble & 0xFF) * (inv & 1) +
+                          ((lightNibble >> 8) & 0xFF) * ((inv & 2) >> 1) +
+                          ((lightNibble >> 16) & 0xFF) * ((inv & 4) >> 2) +
+                          (lightNibble >> 24) & 0xFF)
+                      / (BitOperations.PopCount((byte)(inv & 0x7)) + 1));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

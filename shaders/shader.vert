@@ -1,7 +1,7 @@
 ﻿#version 440
 
 layout (location = 0) in uvec3 vPos;
-layout (location = 1) in vec2 texCoord;
+layout (location = 1) in uvec2 texCoord;
 layout (location = 2) in uint iData;
 
 uniform mat4 uMVP;
@@ -25,7 +25,7 @@ void main() {
     uint lightValue = (iData >> 8) & 0xFFu;
     vec3 pos = uChunkPos + vPos / 256. - 16;
     gl_Position = uMVP * vec4(pos, 1.0);
-    texCoords = texCoord;
+    texCoords = texCoord / 32768.;
     ao = aoArray[aoValue];
     direction = directionValue;
     ivec2 lightCoords = ivec2((lightValue >> 4) & 0xFu, lightValue & 0xFu);
