@@ -83,7 +83,7 @@ public class ExtremelySharedBlockVAO : VAO {
         GL.EnableVertexAttribArray(2);
 
         GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
-        GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 3 * sizeof(ushort));
+        GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
         GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 5 * sizeof(ushort));
 
         GL.VertexAttribBinding(0, 0);
