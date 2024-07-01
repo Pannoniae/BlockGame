@@ -12,6 +12,7 @@ public class PlayerCamera {
     public Vector3 forward;
 
     public Vector3 renderPosition(double interp) => Vector3.Lerp(prevPosition, position, (float)interp);
+
     public float renderBob(double interp) => float.Lerp(prevBob, bob, (float)interp);
 
     public Vector3 up { get; private set; }
@@ -118,10 +119,14 @@ public class PlayerCamera {
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
         var factor = 2f;
-        var factor2 = 0.75f;
+        //var axisZ = new Vector3(1f, 0, 1f);
+        //var axisX = new Vector3(1f, 0, -1f);
+        var axisZ = Vector3.Normalize(Vector3.Transform(new Vector3(0, 0, 1), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
+        var axisX = Vector3.Normalize(Vector3.Transform(new Vector3(1, 0, 0), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
+
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, up)
-               * Matrix4x4.CreateRotationZ((float)(Math.Sin(tt) * iBob * factor))
-               * Matrix4x4.CreateRotationX((float)(Math.Abs(Math.Cos(tt)) * iBob * factor));
+               * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor))
+               * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor));
 
     }
 

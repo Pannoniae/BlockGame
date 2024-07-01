@@ -49,7 +49,7 @@ public class StreamingVAO<T> where T : unmanaged {
             }
         }
 
-        format();
+        //format();
     }
 
     public void format() {

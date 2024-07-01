@@ -9,7 +9,7 @@ public static class MemoryUtils {
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");
         var sw = Stopwatch.StartNew();
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-        GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: true, compacting: true);
+        GC.Collect(generation: 2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             WindowsMemoryUtility.ReleaseUnusedProcessWorkingSetMemory();

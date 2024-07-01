@@ -151,7 +151,7 @@ public class ChunkSectionRenderer : IDisposable {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        sw.Restart();
+        //zsw.Restart();
         if (section.world.renderer.fastChunkSwitch) {
             vao?.Dispose();
             vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
@@ -184,12 +184,12 @@ public class ChunkSectionRenderer : IDisposable {
         /*if (World.glob) {
                 MeasureProfiler.StartCollectingData();
             }*/
-        Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
+        //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
         constructVertices(VertexConstructionMode.OPAQUE);
         /*if (World.glob) {
                 MeasureProfiler.SaveData();
             }*/
-        Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+        //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkIndices.Count > 0) {
             isEmptyRenderOpaque = false;
             if (section.world.renderer.fastChunkSwitch) {
@@ -232,8 +232,8 @@ public class ChunkSectionRenderer : IDisposable {
             }
         }
         //}
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        sw.Stop();
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
+        //sw.Stop();
     }
 
 
@@ -536,27 +536,26 @@ public class ChunkSectionRenderer : IDisposable {
                         goto vertex;
                     }
 
-                    // skip all the light business
                     if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
                         light.First = lba[(byte)dir];
                         light.Second = lba[(byte)dir];
                         light.Third = lba[(byte)dir];
                         light.Fourth = lba[(byte)dir];
                     }
+                    else {
+                        light.Whole = 0;
+                    }
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                     if ((settings & 3) != 0) {
                         // ox, oy, oz
                         ushort o;
                         // need to store 9 sbytes so it's a 16-element vector
-                        Vector256<short> widenedVector;
                         // lx, ly, lz, lo
                         // we need 12 bytes
                         Vector128<byte> l;
 
                         ao = 0;
-                        if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
-                            light.Whole = 0;
-                        }
+
 
                         //for (int j = 0; j < 4; j++) {
                         //mult = dirIdx * 36 + j * 9 + vert * 3;
@@ -637,11 +636,11 @@ public class ChunkSectionRenderer : IDisposable {
                                 average(n[0] & 0x0F0F0F0F,
                                     (byte)(o & 7)));
                             light.Second = (byte)(
-                                    average((n[1] >> 4) & 0x0F0F0F0F,
-                                        (byte)((o >> 3) & 7))
-                                    << 4 |
-                                    average(n[1] & 0x0F0F0F0F,
-                                        (byte)((o >> 3) & 7)));
+                                average((n[1] >> 4) & 0x0F0F0F0F,
+                                    (byte)((o >> 3) & 7))
+                                << 4 |
+                                average(n[1] & 0x0F0F0F0F,
+                                    (byte)((o >> 3) & 7)));
                             light.Third = (byte)(
                                 average((n[2] >> 4) & 0x0F0F0F0F,
                                     (byte)((o >> 6) & 7))
@@ -649,11 +648,11 @@ public class ChunkSectionRenderer : IDisposable {
                                 average(n[2] & 0x0F0F0F0F,
                                     (byte)((o >> 6) & 7)));
                             light.Fourth = (byte)(
-                                    average((n[3] >> 4) & 0x0F0F0F0F,
-                                        (byte)((o >> 9) & 7))
-                                    << 4 |
-                                    average(n[3] & 0x0F0F0F0F,
-                                        (byte)((o >> 9) & 7)));
+                                average((n[3] >> 4) & 0x0F0F0F0F,
+                                    (byte)((o >> 9) & 7))
+                                << 4 |
+                                average(n[3] & 0x0F0F0F0F,
+                                    (byte)((o >> 9) & 7)));
                         }
                         //}
                     }
