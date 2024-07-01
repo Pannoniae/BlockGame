@@ -15,7 +15,7 @@ public class Blocks {
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
     public static bool[] translucentCache = new bool[MAXBLOCKS];
 
-    public static readonly int maxBlock = 32;
+    public static readonly int maxBlock = 33;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -33,7 +33,7 @@ public class Blocks {
     }
 
     public static void postLoad() {
-        for (int i = 0; i < maxBlock; i++) {
+        for (int i = 0; i <= maxBlock; i++) {
             fullBlockCache[blocks[i].id] = blocks[i].isFullBlock;
             translucentCache[blocks[i].id] = blocks[i].type == BlockType.TRANSLUCENT;
         }
@@ -50,7 +50,8 @@ public class Blocks {
     public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(Block.cubeUVs(3, 0))));
     public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
-
+    public static Block GRAVEL = register(new Block(33, "Gravel", BlockModel.makeCube(Block.cubeUVs(15, 0))));
+    
     public static Block GLASS = register(new Block(6, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0)))
         .transparency()
     );
@@ -86,10 +87,8 @@ public class Blocks {
     public static Block CANDY_WHITE = register(new Block(29, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
     public static Block CANDY_GREY = register(new Block(30, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
     public static Block CANDY_BLACK = register(new Block(31, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
-    public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3,1, 3, 2, 3, 3, 3,4, 3, 5, 3))));
+    public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3,1, 3, 2, 3, 3, 3,4, 3, 5, 3))).partialBlock());
     
-    //public static Block HEAD = register(new Block(32, "Head", BlockModel.makeCube(Block.grassUVs(0, 3, 0, 3, 0, 3))));
-
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;
     }
