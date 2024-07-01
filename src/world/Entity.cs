@@ -39,7 +39,6 @@ public class Entity {
         if (airHitCD > 0) {
             airHitCD--;
         }
-        Console.Out.WriteLine(airHitCD);
     }
 
     public void setSwinging(bool hit) {
