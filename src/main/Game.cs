@@ -441,10 +441,20 @@ public partial class Game {
         fontLoader.renderer.OnViewportChanged(size);
         width = size.X;
         height = size.Y;
+
+        // don't allow the screen to be too small
+        recalcGUIScale();
         gui.resize(size);
         currentScreen.resize(size);
 
         genFrameBuffer();
+    }
+    private void recalcGUIScale() {
+        var guiScaleTarget = 2;
+        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 320 && height / ((double)guiScaleTarget + 1) >= 240) {
+            guiScaleTarget++;
+        }
+        GUI.guiScale = guiScaleTarget;
     }
 
     public void resize() {

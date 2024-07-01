@@ -9,7 +9,7 @@ namespace BlockGame.ui;
 
 public class InventoryGUI : Menu {
 
-    public const int rows = 9;
+    public const int rows = 10;
     public const int cols = 4;
 
     public const int invOffsetY = 20;
