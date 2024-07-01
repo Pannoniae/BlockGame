@@ -136,6 +136,7 @@ public partial class Game {
         windowOptions.Title = "BlockGame";
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
+        windowOptions.PreferredStencilBufferBits = 0;
         var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 6));
         ;
         #if DEBUG
@@ -451,7 +452,7 @@ public partial class Game {
     }
     private void recalcGUIScale() {
         var guiScaleTarget = 2;
-        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 320 && height / ((double)guiScaleTarget + 1) >= 240) {
+        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 300 && height / ((double)guiScaleTarget + 1) >= 200) {
             guiScaleTarget++;
         }
         GUI.guiScale = guiScaleTarget;
