@@ -3,7 +3,7 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using TrippyGL;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 // It's like a menu but fullscreen!
 public class Screen : Menu {

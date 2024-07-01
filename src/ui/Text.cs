@@ -2,7 +2,7 @@ using System.Numerics;
 using Silk.NET.Maths;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class Text : GUIElement {
 

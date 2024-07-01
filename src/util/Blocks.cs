@@ -180,8 +180,11 @@ public class Block {
     /// </summary>
     public bool randomTick = false;
 
-    public static readonly int atlasSize = 256;
-    public static readonly int textureSize = 16;
+    public const int atlasSize = 256;
+    public const int textureSize = 16;
+
+
+    public const float atlasRatio = textureSize / (float)atlasSize;
 
     /// <summary>
     /// 0 = 0, 65535 = 1
@@ -243,9 +246,8 @@ public class Block {
     public static ushort packData(byte direction, byte ao, byte light) {
         // idx[0] = texU == 1, idx[1] = texV == 1
 
-        // if none, treat it as an up
-        direction = (byte)(direction == 12 ? 5 : direction);
-        return (ushort)(light << 8 | ao << 3 | direction);
+        // if none, treat it as an up (strip 4th byte)
+        return (ushort)(light << 8 | ao << 3 | direction & 0b111);
     }
 
     public static AABB fullBlock() {
@@ -320,7 +322,7 @@ public class Block {
 
     }
 
-    public virtual ushort render(World world, Vector3D<int> pos, List<BlockVertex> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
+    public virtual ushort render(World world, Vector3D<int> pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
         return 0;
     }
 

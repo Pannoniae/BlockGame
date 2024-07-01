@@ -13,7 +13,7 @@ using TrippyGL.ImageSharp;
 using PrimitiveType = TrippyGL.PrimitiveType;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 /// <summary>
 /// GUI class which can draw onto the menu.
@@ -71,7 +71,7 @@ public class GUI {
         colourTexture = Texture2DExtensions.FromFile(Game.GD, "textures/debug.png");
         instance = this;
         guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
-            GD, "shaders/guiBlock.vert", "shaders/guiBlock.frag", "vPos", "texCoord", "iData");
+            GD, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag", "vPos", "texCoord", "iData");
         buffer = new VertexBuffer<BlockVertex>(GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw);
         guiBlock = new List<BlockVertex>();
         guiBlockI = new List<ushort>();

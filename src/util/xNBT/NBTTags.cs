@@ -5,12 +5,12 @@ using System.Text;
 
 namespace BlockGame.util.xNBT;
 
-public class NBTTagEnd : NBTTag {
+public class NBTEnd : NBTTag {
 
-    public NBTTagEnd() : base("") {
+    public NBTEnd() : base("") {
     }
 
-    public override NBTTagType id => NBTTagType.TAG_End;
+    public override NBTType id => NBTType.TAG_End;
 
     public override void readContents(BinaryReader stream) {
     }
@@ -19,15 +19,15 @@ public class NBTTagEnd : NBTTag {
     }
 }
 
-public class NBTTagByte : NBTTag {
+public class NBTByte : NBTTag {
     public byte data;
 
-    public override NBTTagType id => NBTTagType.TAG_Byte;
+    public override NBTType id => NBTType.TAG_Byte;
 
-    public NBTTagByte(string? name) : base(name) {
+    public NBTByte(string? name) : base(name) {
     }
 
-    public NBTTagByte(string? name, byte data) : base(name) {
+    public NBTByte(string? name, byte data) : base(name) {
         this.data = data;
     }
 
@@ -44,15 +44,15 @@ public class NBTTagByte : NBTTag {
     }
 }
 
-public class NBTTagShort : NBTTag {
+public class NBTShort : NBTTag {
     public short data;
 
-    public override NBTTagType id => NBTTagType.TAG_Short;
+    public override NBTType id => NBTType.TAG_Short;
 
-    public NBTTagShort(string? name) : base(name) {
+    public NBTShort(string? name) : base(name) {
     }
 
-    public NBTTagShort(string? name, short data) : base(name) {
+    public NBTShort(string? name, short data) : base(name) {
         this.data = data;
     }
 
@@ -69,15 +69,15 @@ public class NBTTagShort : NBTTag {
     }
 }
 
-public class NBTTagUShort : NBTTag {
+public class NBTUShort : NBTTag {
     public ushort data;
 
-    public override NBTTagType id => NBTTagType.TAG_UShort;
+    public override NBTType id => NBTType.TAG_UShort;
 
-    public NBTTagUShort(string? name) : base(name) {
+    public NBTUShort(string? name) : base(name) {
     }
 
-    public NBTTagUShort(string? name, ushort data) : base(name) {
+    public NBTUShort(string? name, ushort data) : base(name) {
         this.data = data;
     }
 
@@ -94,15 +94,15 @@ public class NBTTagUShort : NBTTag {
     }
 }
 
-public class NBTTagInt : NBTTag {
+public class NBTInt : NBTTag {
     public int data;
 
-    public override NBTTagType id => NBTTagType.TAG_Int;
+    public override NBTType id => NBTType.TAG_Int;
 
-    public NBTTagInt(string? name) : base(name) {
+    public NBTInt(string? name) : base(name) {
     }
 
-    public NBTTagInt(string? name, int data) : base(name) {
+    public NBTInt(string? name, int data) : base(name) {
         this.data = data;
     }
 
@@ -119,15 +119,15 @@ public class NBTTagInt : NBTTag {
     }
 }
 
-public class NBTTagUInt : NBTTag {
+public class NBTUInt : NBTTag {
     public uint data;
 
-    public override NBTTagType id => NBTTagType.TAG_UInt;
+    public override NBTType id => NBTType.TAG_UInt;
 
-    public NBTTagUInt(string? name) : base(name) {
+    public NBTUInt(string? name) : base(name) {
     }
 
-    public NBTTagUInt(string? name, uint data) : base(name) {
+    public NBTUInt(string? name, uint data) : base(name) {
         this.data = data;
     }
 
@@ -144,15 +144,15 @@ public class NBTTagUInt : NBTTag {
     }
 }
 
-public class NBTTagLong : NBTTag {
+public class NBTLong : NBTTag {
     public long data;
 
-    public override NBTTagType id => NBTTagType.TAG_Long;
+    public override NBTType id => NBTType.TAG_Long;
 
-    public NBTTagLong(string? name) : base(name) {
+    public NBTLong(string? name) : base(name) {
     }
 
-    public NBTTagLong(string? name, long data) : base(name) {
+    public NBTLong(string? name, long data) : base(name) {
         this.data = data;
     }
 
@@ -169,15 +169,15 @@ public class NBTTagLong : NBTTag {
     }
 }
 
-public class NBTTagULong : NBTTag {
+public class NBTULong : NBTTag {
     public ulong data;
 
-    public override NBTTagType id => NBTTagType.TAG_ULong;
+    public override NBTType id => NBTType.TAG_ULong;
 
-    public NBTTagULong(string? name) : base(name) {
+    public NBTULong(string? name) : base(name) {
     }
 
-    public NBTTagULong(string? name, ulong data) : base(name) {
+    public NBTULong(string? name, ulong data) : base(name) {
         this.data = data;
     }
 
@@ -194,15 +194,15 @@ public class NBTTagULong : NBTTag {
     }
 }
 
-public class NBTTagFloat : NBTTag {
+public class NBTFloat : NBTTag {
     public float data;
 
-    public override NBTTagType id => NBTTagType.TAG_Float;
+    public override NBTType id => NBTType.TAG_Float;
 
-    public NBTTagFloat(string? name) : base(name) {
+    public NBTFloat(string? name) : base(name) {
     }
 
-    public NBTTagFloat(string? name, float data) : base(name) {
+    public NBTFloat(string? name, float data) : base(name) {
         this.data = data;
     }
 
@@ -219,15 +219,15 @@ public class NBTTagFloat : NBTTag {
     }
 }
 
-public class NBTTagDouble : NBTTag {
+public class NBTDouble : NBTTag {
     public double data;
 
-    public override NBTTagType id => NBTTagType.TAG_Double;
+    public override NBTType id => NBTType.TAG_Double;
 
-    public NBTTagDouble(string? name) : base(name) {
+    public NBTDouble(string? name) : base(name) {
     }
 
-    public NBTTagDouble(string? name, double data) : base(name) {
+    public NBTDouble(string? name, double data) : base(name) {
         this.data = data;
     }
 
@@ -244,15 +244,15 @@ public class NBTTagDouble : NBTTag {
     }
 }
 
-public class NBTTagString : NBTTag {
+public class NBTString : NBTTag {
     public string data;
 
-    public override NBTTagType id => NBTTagType.TAG_String;
+    public override NBTType id => NBTType.TAG_String;
 
-    public NBTTagString(string? name) : base(name) {
+    public NBTString(string? name) : base(name) {
     }
 
-    public NBTTagString(string? name, string data) : base(name) {
+    public NBTString(string? name, string data) : base(name) {
         this.data = data;
     }
 
@@ -269,20 +269,20 @@ public class NBTTagString : NBTTag {
     }
 }
 
-public class NBTTagList<T> : NBTTag where T : NBTTag {
+public class NBTList<T> : NBTTag where T : NBTTag {
     public List<T> list;
-    public NBTTagType listType;
+    public NBTType listType;
 
-    public override NBTTagType id => NBTTagType.TAG_List;
+    public override NBTType id => NBTType.TAG_List;
 
-    public NBTTagList(string? name) : base(name) {
+    public NBTList(string? name) : base(name) {
         list = new List<T>();
     }
 
     public override void writeContents(BinaryWriter stream) {
         // empty list so type END
         if (list.Count == 0) {
-            listType = NBTTagType.TAG_End;
+            listType = NBTType.TAG_End;
         }
         else {
             listType = list[0].id;
@@ -298,7 +298,7 @@ public class NBTTagList<T> : NBTTag where T : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         // read type and length
-        listType = (NBTTagType)stream.ReadByte();
+        listType = (NBTType)stream.ReadByte();
         var length = stream.ReadInt32();
 
         // resize the list to be `length` long
@@ -336,16 +336,16 @@ public class NBTTagList<T> : NBTTag where T : NBTTag {
     }
 }
 
-public class NBTTagCompound : NBTTag {
+public class NBTCompound : NBTTag {
     public Dictionary<string, NBTTag> dict;
 
-    public override NBTTagType id => NBTTagType.TAG_Compound;
+    public override NBTType id => NBTType.TAG_Compound;
 
-    public NBTTagCompound(string? name) : base(name) {
+    public NBTCompound(string? name) : base(name) {
         dict = new Dictionary<string, NBTTag>();
     }
 
-    public NBTTagCompound() {
+    public NBTCompound() {
         dict = new Dictionary<string, NBTTag>();
     }
 
@@ -387,165 +387,165 @@ public class NBTTagCompound : NBTTag {
     }
 
     public void addByte(String name, byte value) {
-        dict.Add(name, new NBTTagByte(name, value));
+        dict.Add(name, new NBTByte(name, value));
     }
 
     public void addShort(String name, short value) {
-        dict.Add(name, new NBTTagShort(name, value));
+        dict.Add(name, new NBTShort(name, value));
     }
 
     public void addUShort(String name, ushort value) {
-        dict.Add(name, new NBTTagUShort(name, value));
+        dict.Add(name, new NBTUShort(name, value));
     }
 
     public void addInt(String name, int value) {
-        dict.Add(name, new NBTTagInt(name, value));
+        dict.Add(name, new NBTInt(name, value));
     }
 
     public void addUInt(String name, uint value) {
-        dict.Add(name, new NBTTagUInt(name, value));
+        dict.Add(name, new NBTUInt(name, value));
     }
 
     public void addLong(String name, long value) {
-        dict.Add(name, new NBTTagLong(name, value));
+        dict.Add(name, new NBTLong(name, value));
     }
 
     public void addULong(String name, ulong value) {
-        dict.Add(name, new NBTTagULong(name, value));
+        dict.Add(name, new NBTULong(name, value));
     }
 
     public void addFloat(String name, float value) {
-        dict.Add(name, new NBTTagFloat(name, value));
+        dict.Add(name, new NBTFloat(name, value));
     }
 
     public void addDouble(String name, double value) {
-        dict.Add(name, new NBTTagDouble(name, value));
+        dict.Add(name, new NBTDouble(name, value));
     }
 
     public void addString(String name, String value) {
-        dict.Add(name, new NBTTagString(name, value));
+        dict.Add(name, new NBTString(name, value));
     }
 
     public void addByteArray(String name, byte[] value) {
-        dict.Add(name, new NBTTagByteArray(name, value));
+        dict.Add(name, new NBTByteArray(name, value));
     }
 
     public void addShortArray(String name, short[] value) {
-        dict.Add(name, new NBTTagShortArray(name, value));
+        dict.Add(name, new NBTShortArray(name, value));
     }
 
     public void addUShortArray(String name, ushort[] value) {
-        dict.Add(name, new NBTTagUShortArray(name, value));
+        dict.Add(name, new NBTUShortArray(name, value));
     }
 
     public void addIntArray(String name, int[] value) {
-        dict.Add(name, new NBTTagIntArray(name, value));
+        dict.Add(name, new NBTIntArray(name, value));
     }
 
     public void addUIntArray(String name, uint[] value) {
-        dict.Add(name, new NBTTagUIntArray(name, value));
+        dict.Add(name, new NBTUIntArray(name, value));
     }
 
     public void addLongArray(String name, long[] value) {
-        dict.Add(name, new NBTTagLongArray(name, value));
+        dict.Add(name, new NBTLongArray(name, value));
     }
 
     public void addULongArray(String name, ulong[] value) {
-        dict.Add(name, new NBTTagULongArray(name, value));
+        dict.Add(name, new NBTULongArray(name, value));
     }
 
-    public void addCompoundTag(String name, NBTTagCompound value) {
+    public void addCompoundTag(String name, NBTCompound value) {
         dict.Add(name, value);
     }
 
-    public void addListTag(String name, NBTTagList<NBTTag> value) {
+    public void addListTag(String name, NBTList<NBTTag> value) {
         dict.Add(name, value);
     }
 
-    public void addListTag<T>(String name, NBTTagList<T> value) where T : NBTTag {
+    public void addListTag<T>(String name, NBTList<T> value) where T : NBTTag {
         dict.Add(name, value);
     }
 
     // Get functions
 
     public byte getByte(String name) {
-        return ((NBTTagByte)dict[name]).data;
+        return ((NBTByte)dict[name]).data;
     }
 
     public short getShort(String name) {
-        return ((NBTTagShort)dict[name]).data;
+        return ((NBTShort)dict[name]).data;
     }
 
     public ushort getUShort(String name) {
-        return ((NBTTagUShort)dict[name]).data;
+        return ((NBTUShort)dict[name]).data;
     }
 
     public int getInt(String name) {
-        return ((NBTTagInt)dict[name]).data;
+        return ((NBTInt)dict[name]).data;
     }
 
     public uint getUInt(String name) {
-        return ((NBTTagUInt)dict[name]).data;
+        return ((NBTUInt)dict[name]).data;
     }
 
     public long getLong(String name) {
-        return ((NBTTagLong)dict[name]).data;
+        return ((NBTLong)dict[name]).data;
     }
 
     public ulong getULong(String name) {
-        return ((NBTTagULong)dict[name]).data;
+        return ((NBTULong)dict[name]).data;
     }
 
     public float getFloat(String name) {
-        return ((NBTTagFloat)dict[name]).data;
+        return ((NBTFloat)dict[name]).data;
     }
 
     public double getDouble(String name) {
-        return ((NBTTagDouble)dict[name]).data;
+        return ((NBTDouble)dict[name]).data;
     }
 
     public string getString(String name) {
-        return ((NBTTagString)dict[name]).data;
+        return ((NBTString)dict[name]).data;
     }
 
     public byte[] getByteArray(String name) {
-        return ((NBTTagByteArray)dict[name]).data;
+        return ((NBTByteArray)dict[name]).data;
     }
 
     public short[] getShortArray(String name) {
-        return ((NBTTagShortArray)dict[name]).data;
+        return ((NBTShortArray)dict[name]).data;
     }
 
     public ushort[] getUShortArray(String name) {
-        return ((NBTTagUShortArray)dict[name]).data;
+        return ((NBTUShortArray)dict[name]).data;
     }
 
     public int[] getIntArray(String name) {
-        return ((NBTTagIntArray)dict[name]).data;
+        return ((NBTIntArray)dict[name]).data;
     }
 
     public uint[] getUIntArray(String name) {
-        return ((NBTTagUIntArray)dict[name]).data;
+        return ((NBTUIntArray)dict[name]).data;
     }
 
     public long[] getLongArray(String name) {
-        return ((NBTTagLongArray)dict[name]).data;
+        return ((NBTLongArray)dict[name]).data;
     }
 
     public ulong[] getULongArray(String name) {
-        return ((NBTTagULongArray)dict[name]).data;
+        return ((NBTULongArray)dict[name]).data;
     }
 
-    public NBTTagList<NBTTag> getListTag(String name) {
-        return (NBTTagList<NBTTag>)dict[name];
+    public NBTList<NBTTag> getListTag(String name) {
+        return (NBTList<NBTTag>)dict[name];
     }
 
-    public NBTTagList<T> getListTag<T>(String name) where T : NBTTag {
-        return (NBTTagList<T>)dict[name];
+    public NBTList<T> getListTag<T>(String name) where T : NBTTag {
+        return (NBTList<T>)dict[name];
     }
 
-    public NBTTagCompound getCompoundTag(String name) {
-        return (NBTTagCompound)dict[name];
+    public NBTCompound getCompoundTag(String name) {
+        return (NBTCompound)dict[name];
     }
 
     public void remove(string name) {
@@ -573,15 +573,15 @@ public class NBTTagCompound : NBTTag {
     }
 }
 
-public class NBTTagByteArray : NBTTag {
+public class NBTByteArray : NBTTag {
     public byte[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_Byte_Array;
+    public override NBTType id => NBTType.TAG_Byte_Array;
 
-    public NBTTagByteArray(string? name) : base(name) {
+    public NBTByteArray(string? name) : base(name) {
     }
 
-    public NBTTagByteArray(string? name, byte[] data) : base(name) {
+    public NBTByteArray(string? name, byte[] data) : base(name) {
         this.data = data;
     }
 
@@ -600,15 +600,15 @@ public class NBTTagByteArray : NBTTag {
     }
 }
 
-public class NBTTagShortArray : NBTTag {
+public class NBTShortArray : NBTTag {
     public short[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_Short_Array;
+    public override NBTType id => NBTType.TAG_Short_Array;
 
-    public NBTTagShortArray(string? name) : base(name) {
+    public NBTShortArray(string? name) : base(name) {
     }
 
-    public NBTTagShortArray(string? name, short[] data) : base(name) {
+    public NBTShortArray(string? name, short[] data) : base(name) {
         this.data = data;
     }
 
@@ -635,15 +635,15 @@ public class NBTTagShortArray : NBTTag {
     }
 }
 
-public class NBTTagUShortArray : NBTTag {
+public class NBTUShortArray : NBTTag {
     public ushort[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_UShort_Array;
+    public override NBTType id => NBTType.TAG_UShort_Array;
 
-    public NBTTagUShortArray(string? name) : base(name) {
+    public NBTUShortArray(string? name) : base(name) {
     }
 
-    public NBTTagUShortArray(string? name, ushort[] data) : base(name) {
+    public NBTUShortArray(string? name, ushort[] data) : base(name) {
         this.data = data;
     }
 
@@ -670,15 +670,15 @@ public class NBTTagUShortArray : NBTTag {
     }
 }
 
-public class NBTTagIntArray : NBTTag {
+public class NBTIntArray : NBTTag {
     public int[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_Int_Array;
+    public override NBTType id => NBTType.TAG_Int_Array;
 
-    public NBTTagIntArray(string? name) : base(name) {
+    public NBTIntArray(string? name) : base(name) {
     }
 
-    public NBTTagIntArray(string? name, int[] data) : base(name) {
+    public NBTIntArray(string? name, int[] data) : base(name) {
         this.data = data;
     }
 
@@ -705,15 +705,15 @@ public class NBTTagIntArray : NBTTag {
     }
 }
 
-public class NBTTagUIntArray : NBTTag {
+public class NBTUIntArray : NBTTag {
     public uint[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_UInt_Array;
+    public override NBTType id => NBTType.TAG_UInt_Array;
 
-    public NBTTagUIntArray(string? name) : base(name) {
+    public NBTUIntArray(string? name) : base(name) {
     }
 
-    public NBTTagUIntArray(string? name, uint[] data) : base(name) {
+    public NBTUIntArray(string? name, uint[] data) : base(name) {
         this.data = data;
     }
 
@@ -740,15 +740,15 @@ public class NBTTagUIntArray : NBTTag {
     }
 }
 
-public class NBTTagLongArray : NBTTag {
+public class NBTLongArray : NBTTag {
     public long[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_Long_Array;
+    public override NBTType id => NBTType.TAG_Long_Array;
 
-    public NBTTagLongArray(string? name) : base(name) {
+    public NBTLongArray(string? name) : base(name) {
     }
 
-    public NBTTagLongArray(string? name, long[] data) : base(name) {
+    public NBTLongArray(string? name, long[] data) : base(name) {
         this.data = data;
     }
 
@@ -775,15 +775,15 @@ public class NBTTagLongArray : NBTTag {
     }
 }
 
-public class NBTTagULongArray : NBTTag {
+public class NBTULongArray : NBTTag {
     public ulong[] data;
 
-    public override NBTTagType id => NBTTagType.TAG_ULong_Array;
+    public override NBTType id => NBTType.TAG_ULong_Array;
 
-    public NBTTagULongArray(string? name) : base(name) {
+    public NBTULongArray(string? name) : base(name) {
     }
 
-    public NBTTagULongArray(string? name, ulong[] data) : base(name) {
+    public NBTULongArray(string? name, ulong[] data) : base(name) {
         this.data = data;
     }
 

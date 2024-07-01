@@ -5,7 +5,7 @@ using Silk.NET.OpenGL;
 using TrippyGL;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class SettingsMenu : Menu {
 

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Authors>Xclud</Authors>
+    <Product>System.Numerics.Geometry</Product>
+    <PackageTags>Game Geometry 3D BoundingBox BoundingFrustum BoundingSphere OrientedBoundingBox Ray Triangle Intersection MonoGame SharpDX XNA</PackageTags>
+    <Description>An extension library for System.Numerics namespace adding common XNA/MonoGame/SharpDX classes to the namespace.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/xclud/system-numerics-geometry</RepositoryUrl>
+    <Version>1.0.0.1</Version>
+    <PackageProjectUrl>https://github.com/xclud/system-numerics-geometry</PackageProjectUrl>
+    <PackageReleaseNotes>This release brings OrientedBoundingBox as well as Ray-Triangle intersection.</PackageReleaseNotes>
+    <PackageId>Geometry</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Numerics.Vectors" Version="4.1.1" />
+  </ItemGroup>
+
+</Project>

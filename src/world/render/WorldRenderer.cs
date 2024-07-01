@@ -1,4 +1,4 @@
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
@@ -141,6 +141,7 @@ public class WorldRenderer {
             GL.BindVertexArray(outlineVao);
 
             // 24 verts of 3 floats
+            GL.DeleteBuffer(outlineVbo);
             outlineVbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
             GL.BufferData(BufferTargetARB.ArrayBuffer, 24 * 3 * sizeof(float), 0,

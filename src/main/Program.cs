@@ -1,15 +1,18 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using BlockGame;
 
 public class Program {
     public static void Main(string[] args) {
+        var devMode = args.Length > 0 && args[0] == "--dev";
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
         Game.initDedicatedGraphics();
-        _ = new Game();
+
+        _ = new Game(devMode);
     }
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
@@ -55,5 +58,13 @@ public class Program {
             Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
         }
         Console.WriteLine(e.ToString());
+    }
+
+    public static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
+    {
+        Console.Out.WriteLine(libraryName);
+
+        // Otherwise, fallback to default import resolver.
+        return IntPtr.Zero;
     }
 }

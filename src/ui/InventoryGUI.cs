@@ -5,7 +5,7 @@ using TrippyGL;
 using TrippyGL.ImageSharp;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class InventoryGUI : Menu {
 

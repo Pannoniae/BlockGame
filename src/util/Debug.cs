@@ -1,4 +1,4 @@
-using BlockGame.GUI;
+using BlockGame.ui;
 using Silk.NET.Maths;
 using TrippyGL;
 
