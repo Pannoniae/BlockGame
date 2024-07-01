@@ -10,7 +10,6 @@ flat in uint direction;
 in vec3 vertexPos;
 
 uniform sampler2D blockTexture;
-uniform sampler2D lightTexture;
 
 const float a[6] = float[6](0.8, 0.8, 0.6, 0.6, 0.6, 1);
 

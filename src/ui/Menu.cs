@@ -4,7 +4,7 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using TrippyGL;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class Menu {
 

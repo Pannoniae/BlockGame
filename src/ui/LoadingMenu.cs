@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace BlockGame.GUI;
+namespace BlockGame.ui;
 
 public class LoadingMenu : Menu {
 

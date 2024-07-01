@@ -49,13 +49,13 @@ public class VerySharedBlockVAO : VAO {
         format();
     }
 
-    public void upload(BlockVertex[] data, ushort[] indices) {
+    public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
-            fixed (BlockVertex* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+            fixed (BlockVertexPacked* d = data) {
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
                     BufferStorageMask.None);
             }
 
@@ -70,13 +70,13 @@ public class VerySharedBlockVAO : VAO {
         format();
     }
 
-    public void upload(Span<BlockVertex> data, Span<ushort> indices) {
+    public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
         unsafe {
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
-            fixed (BlockVertex* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertex)), d,
+            fixed (BlockVertexPacked* d = data) {
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
                     BufferStorageMask.None);
             }
 
@@ -98,8 +98,8 @@ public class VerySharedBlockVAO : VAO {
             GL.EnableVertexAttribArray(1);
             GL.EnableVertexAttribArray(2);
 
-            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
-            GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 3 * sizeof(ushort));
+            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 5 * sizeof(ushort));
 
             GL.VertexAttribBinding(0, 0);

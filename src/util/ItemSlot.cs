@@ -1,5 +1,5 @@
 using System.Numerics;
-using BlockGame.GUI;
+using BlockGame.ui;
 using Silk.NET.Maths;
 using Rectangle = System.Drawing.Rectangle;
 
@@ -34,8 +34,8 @@ public class ItemSlot {
         // draw amount text
         if (stack.quantity > 1) {
             var s = stack.quantity.ToString();
-            Game.gui.drawStringUIThin(s, new Vector2(inventory.guiBounds.X + itemPos.X + ITEMSIZE - PADDING - s.Length * 6f / GUI.GUI.guiScale,
-                inventory.guiBounds.Y + itemPos.Y + ITEMSIZE - 13f / GUI.GUI.guiScale - PADDING));
+            Game.gui.drawStringUIThin(s, new Vector2(inventory.guiBounds.X + itemPos.X + ITEMSIZE - PADDING - s.Length * 6f / ui.GUI.guiScale,
+                inventory.guiBounds.Y + itemPos.Y + ITEMSIZE - 13f / GUI.guiScale - PADDING));
         }
     }
 
@@ -43,8 +43,8 @@ public class ItemSlot {
         Game.gui.drawBlockUI(Blocks.get(stack.block), itemPos.X, itemPos.Y, ITEMSIZE);
         if (stack.quantity > 1) {
             var s = stack.quantity.ToString();
-            Game.gui.drawStringUIThin(s, new Vector2(itemPos.X + ITEMSIZE - PADDING - s.Length * 6f / GUI.GUI.guiScale,
-                itemPos.Y + ITEMSIZE - 13f / GUI.GUI.guiScale - PADDING));
+            Game.gui.drawStringUIThin(s, new Vector2(itemPos.X + ITEMSIZE - PADDING - s.Length * 6f / ui.GUI.guiScale,
+                itemPos.Y + ITEMSIZE - 13f / GUI.guiScale - PADDING));
         }
     }
 }

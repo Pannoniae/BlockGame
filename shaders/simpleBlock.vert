@@ -13,8 +13,6 @@ out vec4 light;
 
 out vec3 vertexPos;
 
-uniform sampler2D lightTexture;
-
 void main() {
     uint directionValue = iData & 0x7u;
     gl_Position = uMVP * vec4(vPos, 1.0);

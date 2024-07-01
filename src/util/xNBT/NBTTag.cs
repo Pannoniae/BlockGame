@@ -13,7 +13,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
     /// </summary>
     public abstract void writeContents(BinaryWriter stream);
 
-    public abstract NBTTagType id { get; }
+    public abstract NBTType id { get; }
 
     protected NBTTag() {
         name = "";
@@ -24,9 +24,9 @@ public abstract class NBTTag : IEquatable<NBTTag> {
     }
 
     public static NBTTag read(BinaryReader stream) {
-        NBTTagType type = (NBTTagType)stream.ReadByte();
-        if (type == NBTTagType.TAG_End) {
-            return new NBTTagEnd();
+        NBTType type = (NBTType)stream.ReadByte();
+        if (type == NBTType.TAG_End) {
+            return new NBTEnd();
         }
         string name = stream.ReadString();
         NBTTag tag = createTag(type, name);
@@ -36,80 +36,80 @@ public abstract class NBTTag : IEquatable<NBTTag> {
 
     public static void write(NBTTag tag, BinaryWriter stream) {
         stream.Write((byte)tag.id);
-        if (tag.id != NBTTagType.TAG_End) {
+        if (tag.id != NBTType.TAG_End) {
             stream.Write(tag.name);
             tag.writeContents(stream);
         }
     }
 
-    public static NBTTag createTag(NBTTagType tag, string? name) {
+    public static NBTTag createTag(NBTType tag, string? name) {
         // todo
         switch (tag) {
-            case NBTTagType.TAG_End:
-                return new NBTTagEnd();
-            case NBTTagType.TAG_Byte:
-                return new NBTTagByte(name);
-            case NBTTagType.TAG_Short:
-                return new NBTTagShort(name);
-            case NBTTagType.TAG_UShort:
-                return new NBTTagUShort(name);
-            case NBTTagType.TAG_Int:
-                return new NBTTagInt(name);
-            case NBTTagType.TAG_UInt:
-                return new NBTTagUInt(name);
-            case NBTTagType.TAG_Long:
-                return new NBTTagLong(name);
-            case NBTTagType.TAG_ULong:
-                return new NBTTagULong(name);
-            case NBTTagType.TAG_Float:
-                return new NBTTagFloat(name);
-            case NBTTagType.TAG_Double:
-                return new NBTTagDouble(name);
-            case NBTTagType.TAG_String:
-                return new NBTTagString(name);
-            case NBTTagType.TAG_List:
-                return new NBTTagList<NBTTag>(name);
-            case NBTTagType.TAG_Compound:
-                return new NBTTagCompound(name);
-            case NBTTagType.TAG_Byte_Array:
-                return new NBTTagByteArray(name);
-            case NBTTagType.TAG_Short_Array:
-                return new NBTTagShortArray(name);
-            case NBTTagType.TAG_UShort_Array:
-                return new NBTTagUShortArray(name);
-            case NBTTagType.TAG_Int_Array:
-                return new NBTTagIntArray(name);
-            case NBTTagType.TAG_UInt_Array:
-                return new NBTTagUIntArray(name);
-            case NBTTagType.TAG_Long_Array:
-                return new NBTTagLongArray(name);
-            case NBTTagType.TAG_ULong_Array:
-                return new NBTTagULongArray(name);
+            case NBTType.TAG_End:
+                return new NBTEnd();
+            case NBTType.TAG_Byte:
+                return new NBTByte(name);
+            case NBTType.TAG_Short:
+                return new NBTShort(name);
+            case NBTType.TAG_UShort:
+                return new NBTUShort(name);
+            case NBTType.TAG_Int:
+                return new NBTInt(name);
+            case NBTType.TAG_UInt:
+                return new NBTUInt(name);
+            case NBTType.TAG_Long:
+                return new NBTLong(name);
+            case NBTType.TAG_ULong:
+                return new NBTULong(name);
+            case NBTType.TAG_Float:
+                return new NBTFloat(name);
+            case NBTType.TAG_Double:
+                return new NBTDouble(name);
+            case NBTType.TAG_String:
+                return new NBTString(name);
+            case NBTType.TAG_List:
+                return new NBTList<NBTTag>(name);
+            case NBTType.TAG_Compound:
+                return new NBTCompound(name);
+            case NBTType.TAG_Byte_Array:
+                return new NBTByteArray(name);
+            case NBTType.TAG_Short_Array:
+                return new NBTShortArray(name);
+            case NBTType.TAG_UShort_Array:
+                return new NBTUShortArray(name);
+            case NBTType.TAG_Int_Array:
+                return new NBTIntArray(name);
+            case NBTType.TAG_UInt_Array:
+                return new NBTUIntArray(name);
+            case NBTType.TAG_Long_Array:
+                return new NBTLongArray(name);
+            case NBTType.TAG_ULong_Array:
+                return new NBTULongArray(name);
             default:
                 throw new ArgumentOutOfRangeException(nameof(tag), tag, null);
         }
     }
 
-    public static string getTypeName(NBTTagType id) {
+    public static string getTypeName(NBTType id) {
         return id switch {
-            NBTTagType.TAG_End => "TAG_End",
-            NBTTagType.TAG_Byte => "TAG_Byte",
-            NBTTagType.TAG_Short => "TAG_Short",
-            NBTTagType.TAG_UShort => "TAG_UShort",
-            NBTTagType.TAG_Int => "TAG_Int",
-            NBTTagType.TAG_UInt => "TAG_UInt",
-            NBTTagType.TAG_Long => "TAG_Long",
-            NBTTagType.TAG_ULong => "TAG_ULong",
-            NBTTagType.TAG_Float => "TAG_Float",
-            NBTTagType.TAG_Double => "TAG_Double",
-            NBTTagType.TAG_String => "TAG_String",
-            NBTTagType.TAG_List => "TAG_List",
-            NBTTagType.TAG_Compound => "TAG_Compound",
-            NBTTagType.TAG_Byte_Array => "TAG_Byte_Array",
-            NBTTagType.TAG_Short_Array => "TAG_Short_Array",
-            NBTTagType.TAG_UShort_Array => "TAG_UShort_Array",
-            NBTTagType.TAG_Int_Array => "TAG_Int_Array",
-            NBTTagType.TAG_UInt_Array => "TAG_UInt_Array",
+            NBTType.TAG_End => "TAG_End",
+            NBTType.TAG_Byte => "TAG_Byte",
+            NBTType.TAG_Short => "TAG_Short",
+            NBTType.TAG_UShort => "TAG_UShort",
+            NBTType.TAG_Int => "TAG_Int",
+            NBTType.TAG_UInt => "TAG_UInt",
+            NBTType.TAG_Long => "TAG_Long",
+            NBTType.TAG_ULong => "TAG_ULong",
+            NBTType.TAG_Float => "TAG_Float",
+            NBTType.TAG_Double => "TAG_Double",
+            NBTType.TAG_String => "TAG_String",
+            NBTType.TAG_List => "TAG_List",
+            NBTType.TAG_Compound => "TAG_Compound",
+            NBTType.TAG_Byte_Array => "TAG_Byte_Array",
+            NBTType.TAG_Short_Array => "TAG_Short_Array",
+            NBTType.TAG_UShort_Array => "TAG_UShort_Array",
+            NBTType.TAG_Int_Array => "TAG_Int_Array",
+            NBTType.TAG_UInt_Array => "TAG_UInt_Array",
             _ => "UNKNOWN"
         };
     }
@@ -140,7 +140,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
     }
 }
 
-public enum NBTTagType : byte {
+public enum NBTType : byte {
     TAG_End,
     TAG_Byte,
     TAG_Short,

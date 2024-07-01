@@ -25,7 +25,7 @@ public class WorldIO {
             Directory.CreateDirectory("level");
         }
 
-        var tag = new NBTTagCompound("world");
+        var tag = new NBTCompound("world");
         tag.addInt("seed", world.seed);
         tag.addDouble("posX", world.player.position.X);
         tag.addDouble("posY", world.player.position.Y);
@@ -48,15 +48,15 @@ public class WorldIO {
         NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.nbt");
     }
 
-    private NBTTagCompound serialiseChunkIntoNBT(Chunk chunk) {
-        var chunkTag = new NBTTagCompound("chunk");
+    private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
+        var chunkTag = new NBTCompound("chunk");
         chunkTag.addInt("posX", chunk.coord.x);
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
         // using YXZ order
-        var sectionsTag = new NBTTagList<NBTTagCompound>("sections");
+        var sectionsTag = new NBTList<NBTCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
-            var section = new NBTTagCompound();
+            var section = new NBTCompound();
             // if empty, just write zeros
             if (chunk.chunks[sectionY].blocks.inited) {
                 section.addByte("inited", 1);
@@ -90,7 +90,7 @@ public class WorldIO {
         return chunkTag;
     }
 
-    private Chunk loadChunkFromNBT(NBTTagCompound nbt) {
+    private Chunk loadChunkFromNBT(NBTCompound nbt) {
 
         var posX = nbt.getInt("posX");
         var posZ = nbt.getInt("posZ");
@@ -98,7 +98,7 @@ public class WorldIO {
         var chunk = new Chunk(world, posX, posZ) {
             status = (ChunkStatus)status
         };
-        var sections = nbt.getListTag<NBTTagCompound>("sections");
+        var sections = nbt.getListTag<NBTCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = sections.get(sectionY);
             // if not initialised, leave it be

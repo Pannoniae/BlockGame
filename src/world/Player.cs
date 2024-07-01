@@ -1,13 +1,13 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class Player {
+public class Player : Entity {
     public const double height = 1.75;
     public const double width = 0.625;
     public const double eyeHeight = 1.6;
@@ -86,6 +86,9 @@ public class Player {
         var f = camera.CalculateForwardVector();
         forward = new Vector3D<double>(f.X, f.Y, f.Z);
         calcAABB(ref aabb, position);
+
+        swingProgress = 0;
+        prevSwingProgress = 0;
     }
 
     public void render(double dt, double interp) {
@@ -100,6 +103,8 @@ public class Player {
         // after everything is done
         // calculate total traveled
         setPrevVars();
+        renderer.update(dt);
+        updateSwing();
 
         updateInputVelocity(dt);
         velocity += accel * dt;
@@ -148,6 +153,7 @@ public class Player {
         camera.prevBob = camera.bob;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
+        prevSwingProgress = swingProgress;
     }
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
@@ -572,6 +578,7 @@ public class Player {
 
     public void placeBlock() {
         if (Game.instance.previousPos.HasValue) {
+            setSwinging(true);
             var pos = Game.instance.previousPos.Value;
             var bl = hotbar.getSelected().block;
             // don't intersect the player
@@ -582,16 +589,23 @@ public class Player {
                 lastPlace = world.worldTime;
             }
         }
+        else {
+            setSwinging(false);
+        }
     }
 
     public void breakBlock() {
         if (Game.instance.targetedPos.HasValue) {
+            setSwinging(true);
             var pos = Game.instance.targetedPos.Value;
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdateWithNeighbours(pos);
             // place water if adjacent
             lastBreak = world.worldTime;
+        }
+        else {
+            setSwinging(false);
         }
     }
 }

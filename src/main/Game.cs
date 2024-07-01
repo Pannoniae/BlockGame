@@ -2,13 +2,12 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using BlockGame.GUI;
+using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
 using SFML.Audio;
-using Silk.NET.Core.Native;
-using Silk.NET.Direct3D11;
-using Silk.NET.DXGI;
+//using Silk.NET.Direct3D11;
+//using Silk.NET.DXGI;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -51,7 +50,9 @@ public partial class Game {
     /// </summary>
     public Screen currentScreen;
 
-    public static GUI.GUI gui;
+    public static bool devMode;
+
+    public static GUI gui;
 
     public static IMouse mouse;
     public static Vector2 mousePos;
@@ -126,7 +127,8 @@ public partial class Game {
     private static float g_maxSpan = 8.0f;
 
 
-    public Game() {
+    public Game(bool devMode) {
+        Game.devMode = devMode;
         instance = this;
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
@@ -222,7 +224,7 @@ public partial class Game {
 
 
             // needed for stupid laptop GPUs
-            #if !DEBUG
+            #if !DEBUG && LAPTOP_SUPPORT
             initDirectX();
             #endif
 
@@ -259,14 +261,14 @@ public partial class Game {
 
             // SFML
             // don't use local variables, they go out of scope so nothing plays..... hold them statically
-            var file = File.ReadAllBytes("snd/tests.flac");
-            buffer = new SoundBuffer(file);
-            music = new Sound(buffer);
-            music.Loop = true;
+            //var file = File.ReadAllBytes("snd/tests.flac");
+            //buffer = new SoundBuffer(file);
+            //music = new Sound(buffer);
+            //music.Loop = true;
             //music.Play();
             Console.Out.WriteLine("played?");
 
-            gui = new GUI.GUI();
+            gui = new GUI();
             fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
             gui.loadFont(13);
 
@@ -350,7 +352,7 @@ public partial class Game {
         }
     }
 
-
+#if LAPTOP_SUPPORT
     public static void initDirectX() {
         unsafe {
             try {
@@ -389,6 +391,7 @@ public partial class Game {
             }
         }
     }
+#endif
 
     private void onMouseMove(IMouse m, Vector2 pos) {
         currentScreen.onMouseMove(m, pos);
@@ -556,6 +559,7 @@ public partial class Game {
 
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, FBOtex);
 
         GD.DepthTestingEnabled = false;
@@ -623,7 +627,7 @@ public partial class Game {
     }
 
     private void close() {
-        buffer.Dispose();
-        music.Dispose();
+        buffer?.Dispose();
+        music?.Dispose();
     }
 }
