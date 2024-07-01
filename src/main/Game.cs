@@ -146,9 +146,11 @@ public partial class Game {
         // GLFW_PLATFORM = 0x00050003
         // #define GLFW_PLATFORM_WAYLAND   0x00060003
         // #define GLFW_PLATFORM_X11   0x00060004
-        GlfwProvider.UninitializedGLFW.Value.InitHint((InitHint)0x00050003, 0x00060004);
-        #endif
 
+        #endif
+        // force x11 in release too because wayland breaks everything
+        // it even breaks the fucking mouse position
+        GlfwProvider.UninitializedGLFW.Value.InitHint((InitHint)0x00050003, 0x00060004);
 
         windowOptions.API = api;
         Window.PrioritizeGlfw();
