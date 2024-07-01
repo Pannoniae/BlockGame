@@ -59,6 +59,7 @@ public class BTextureAtlas : IDisposable {
     }
 
     unsafe public void reload() {
+        GL.DeleteTexture(handle);
         handle = GL.GenTexture();
         bind();
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
@@ -108,7 +109,6 @@ public class BTextureAtlas : IDisposable {
     }
 
     public void Dispose() {
-        // TODO release managed resources here
         GL.DeleteTexture(handle);
     }
 }

@@ -131,6 +131,7 @@ public class GameScreen : Screen, IDisposable {
     }
 
     private void updateMemoryMethod() {
+        Game.proc.Refresh();
         workingSet = Game.proc.WorkingSet64;
         GCMemory = GC.GetTotalMemory(false);
     }
