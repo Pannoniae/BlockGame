@@ -26,6 +26,7 @@ public class PlayerRenderer {
 
     public PlayerRenderer(Player player) {
         this.player = player;
+        handItem = player.hotbar.getSelected();
         vao = new StreamingVAO<BlockVertex>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
@@ -53,7 +54,7 @@ public class PlayerRenderer {
         var sinSwing = Math.Sin(swingProgress * Math.PI);
         var sinSwingSqrt = Math.Sin(Math.Sqrt(swingProgress) * Math.PI);
         // we need something like a circle?
-        var circleishThing = Math.Sin(Math.Sqrt(swingProgress)* Math.PI * 2);
+        var circleishThing = Math.Sin(Math.Sqrt(swingProgress) * Math.PI * 2);
 
         // rotate 45 degrees
         var mat = Matrix4x4.CreateRotationY(Utils.deg2rad(45), new Vector3(0.5f, 0.5f, 0.5f)) *
@@ -77,7 +78,7 @@ public class PlayerRenderer {
         prevLower = lower;
         // if the player has the same item, raise, else lower
         double target;
-        
+
         var d = dt * 10;
         if (handSlot == player.hotbar.selected && handItem == player.hotbar.getSelected()) {
             target = 0;
