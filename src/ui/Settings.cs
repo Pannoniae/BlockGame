@@ -12,4 +12,9 @@ public class Settings {
     public bool fxaa = false;
 
     public static readonly Settings instance = new();
+
+    /// <summary>
+    /// Whether to use framebuffer effects.
+    /// </summary>
+    public bool framebufferEffects => fxaa;
 }

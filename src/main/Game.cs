@@ -354,7 +354,7 @@ public partial class Game {
         }
     }
 
-#if LAPTOP_SUPPORT
+    #if LAPTOP_SUPPORT
     public static void initDirectX() {
         unsafe {
             try {
@@ -393,7 +393,7 @@ public partial class Game {
             }
         }
     }
-#endif
+    #endif
 
     private void onMouseMove(IMouse m, Vector2 pos) {
         currentScreen.onMouseMove(m, pos);
@@ -554,23 +554,31 @@ public partial class Game {
 
         GLTracker.save();
 
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+        if (Settings.instance.framebufferEffects) {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+        }
+        else {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        }
         currentScreen.clear(GD, dt, interp);
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
 
-
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, FBOtex);
+        if (Settings.instance.framebufferEffects) {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, FBOtex);
+        }
 
         GD.DepthTestingEnabled = false;
 
-        fxaaShader.use();
-        fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
+        if (Settings.instance.framebufferEffects) {
+            fxaaShader.use();
+            fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
 
-        GL.BindVertexArray(throwawayVAO);
-        GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+            GL.BindVertexArray(throwawayVAO);
+            GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+        }
 
         // before this, only GL, after this, only GD
         GLTracker.load();
