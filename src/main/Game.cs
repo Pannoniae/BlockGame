@@ -448,7 +448,9 @@ public partial class Game {
         gui.resize(size);
         currentScreen.resize(size);
 
-        genFrameBuffer();
+        if (Settings.instance.framebufferEffects) {
+            genFrameBuffer();
+        }
     }
     private void recalcGUIScale() {
         var guiScaleTarget = 2;
