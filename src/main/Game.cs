@@ -6,8 +6,6 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
 using SFML.Audio;
-//using Silk.NET.Direct3D11;
-//using Silk.NET.DXGI;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -150,7 +148,9 @@ public partial class Game {
         #endif
         // force x11 in release too because wayland breaks everything
         // it even breaks the fucking mouse position
-        GlfwProvider.UninitializedGLFW.Value.InitHint((InitHint)0x00050003, 0x00060004);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+            GlfwProvider.UninitializedGLFW.Value.InitHint((InitHint)0x00050003, 0x00060004);
+        }
 
         windowOptions.API = api;
         Window.PrioritizeGlfw();
@@ -211,7 +211,7 @@ public partial class Game {
             fxaaShader.use();
             g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
             g_showEdgesLocation = fxaaShader.getUniformLocation("u_showEdges");
-            g_fxaaOnLocation = fxaaShader.getUniformLocation( "u_fxaaOn");
+            g_fxaaOnLocation = fxaaShader.getUniformLocation("u_fxaaOn");
 
             g_lumaThresholdLocation = fxaaShader.getUniformLocation("u_lumaThreshold");
             g_mulReduceLocation = fxaaShader.getUniformLocation("u_mulReduce");
