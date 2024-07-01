@@ -39,13 +39,16 @@ public class Entity {
         if (airHitCD > 0) {
             airHitCD--;
         }
+        Console.Out.WriteLine(airHitCD);
     }
 
     public void setSwinging(bool hit) {
-        if (!hit && airHitCD == 0) {
-            swinging = true;
-            swingTicks = 0;
-            airHitCD = AIR_HIT_CD;
+        if (!hit) {
+            if (airHitCD == 0) {
+                swinging = true;
+                swingTicks = 0;
+                airHitCD = AIR_HIT_CD;
+            }
         }
         else {
             swinging = true;
