@@ -41,11 +41,6 @@ public class Screen : Menu {
         currentMenu?.postDraw();
     }
 
-    public override void imGuiDraw() {
-        base.imGuiDraw();
-        currentMenu?.imGuiDraw();
-    }
-
     public override void onMouseUp(Vector2 pos) {
         base.onMouseUp(pos);
         currentMenu?.onMouseUp(pos);
