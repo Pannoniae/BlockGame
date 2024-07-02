@@ -6,6 +6,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
 using SFML.Audio;
+using Silk.NET.Core;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -13,6 +14,7 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Glfw;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
 using TrippyGL.ImageSharp;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
@@ -20,6 +22,7 @@ using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
 using ErrorCode = Silk.NET.GLFW.ErrorCode;
+using Image = SixLabors.ImageSharp.Image;
 using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 using Sound = SFML.Audio.Sound;
@@ -189,6 +192,9 @@ public partial class Game {
             GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
             #endif
 
+            // set icon
+            setIconToBlock();
+
             GL.GetInteger(GetPName.ContextFlags, out int noErrors);
             Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
@@ -294,6 +300,18 @@ public partial class Game {
             // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
             MemoryUtils.cleanGC();
         }
+    }
+
+    private void setIconToBlock() {
+        var logo = Image.Load<Rgba32>("logo.png");
+        var success = logo.DangerousTryGetSinglePixelMemory(out var imgData);
+        if (!success) {
+            Console.Out.WriteLine("Couldn't set window logo!");
+        }
+        // yes, this is a piece of shit code copying the pixels all over the place
+        // but we only do it once to set the logo so idc
+        var img = new RawImage(logo.Width, logo.Height, new Memory<byte>(MemoryMarshal.Cast<Rgba32, byte>(imgData.Span).ToArray()));
+        window.SetWindowIcon(ref img);
     }
 
 

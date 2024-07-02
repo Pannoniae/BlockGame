@@ -5,8 +5,8 @@ public static class Constants {
     public const int crosshairThickness = 2;
     public const long MEGABYTES = 1 * 1024 * 1024;
     public const float maxPitch = 89;
-    public const int initialWidth = 1200;
-    public const int initialHeight = 800;
+    public const int initialWidth = 1440;
+    public const int initialHeight = 960;
     public const double gravity = 20;
     public const double maxAccel = 50;
     public const double jumpSpeed = 7;
