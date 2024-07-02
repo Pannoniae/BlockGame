@@ -50,7 +50,7 @@ Add me on Discord (`pannoniae`) or join the project's [server](https://discord.g
 
 ## Contributing
 
-See [CONTRIBUTING.MD](CONTRIBUTING.MD).
+See [CONTRIBUTING.MD](./CONTRIBUTING.MD).
 
 ## Acknowledgements
 
