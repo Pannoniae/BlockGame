@@ -25,7 +25,7 @@ The existing games in the genre can be categorised into two main categories, eac
     In most updates, they add content, but none of that allows fun new gameplay. It just adds bloat to the game and makes the player have choice paralysis in what to build with.
     
     They often try to prioritise `modding support` but it's almost exclusively based on data-driven modding (with JSON files or similar), which has several problems.
-    It is often very limiting, and it's usually just painful/hard to use without generating data files, which adds friction for modders to get started.
+    It is often very limiting, and it's usually just painful/hard to use without generating data files, which adds friction for modders to get started. Many modders just give up when they see the complexity.
 
 2. #### Making an engine instead of a game
     These games are usually open source. They are often made by random contributors - not a single person or a team. They are often made by people who are more interested in making an engine than a game.
@@ -44,13 +44,13 @@ Right now, the game is not in a phase yet where there are public releases. It is
 
 ## Contact
 
-Add me on Discord (pannoniae) or join the project's [server](https://discord.gg/6mmuN6JBuT).
+Add me on Discord (`pannoniae`) or join the project's [server](https://discord.gg/6mmuN6JBuT).
 
 ## Contributing
 
 See [CONTRIBUTING.MD](CONTRIBUTING.MD).
 
-## Acknowledgments
+## Acknowledgements
 
 - Huge thanks to `ThomasMiz` for TrippyGL and the Silk.NET contributors for their bindings.
 - Thank you `rds1983` for FontStashSharp!
