@@ -80,9 +80,6 @@ public class Menu {
         }
     }
 
-    public virtual void imGuiDraw() {
-    }
-
     public virtual void update(double dt) {
         // update hover status
         foreach (var element in elements.Values) {

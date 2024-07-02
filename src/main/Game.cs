@@ -567,11 +567,6 @@ public partial class Game {
             window.Title = $"BlockGame {fps} ({ft * 1000:0.##}ms)";
             stopwatch.Restart();
         }
-        // handle imgui input
-        /*var IO = ImGui.GetIO();
-        if (IO.WantCaptureKeyboard || IO.WantCaptureMouse) {
-            focused = false;
-        }*/
 
         GLTracker.save();
 
@@ -617,11 +612,6 @@ public partial class Game {
         gui.immediatetb.End();
         GD.DepthTestingEnabled = true;
         GD.BlendingEnabled = false;
-        //if (gui.debugScreen) {
-        /*mgui.Update((float)dt);
-        menu.imGuiDraw();
-        imgui.Render();*/
-        //}
     }
 
     public TimerAction setInterval(long interval, Action action) {

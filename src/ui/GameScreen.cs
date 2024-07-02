@@ -389,14 +389,6 @@ public class GameScreen : Screen, IDisposable {
         }
         return new string(input);
     }
-    public override void postDraw() {
-        base.postDraw();
-        // draw hotbar
-    }
-
-    public override void imGuiDraw() {
-
-    }
 
     public override void clear(GraphicsDevice GD, double dt, double interp) {
         GD.ClearColor = WorldRenderer.defaultClearColour;
