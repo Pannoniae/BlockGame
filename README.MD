@@ -44,7 +44,7 @@ Right now, the game is not in a phase yet where there are public releases. It is
 
 ## Contact
 
-Add me on Discord (pannoniae) or join the project's [server](https://discord.gg/yes).
+Add me on Discord (pannoniae) or join the project's [server](https://discord.gg/6mmuN6JBuT).
 
 ## Contributing
 
