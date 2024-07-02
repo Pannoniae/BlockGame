@@ -31,4 +31,9 @@ public class TechDemoChunkGenerator : ChunkGenerator {
     public void populate(ChunkCoord coord) {
         var chunk = generator.world.getChunk(coord);
         chunk.status = ChunkStatus.POPULATED;
-    }}
+    }
+
+    public Random getRandom(ChunkCoord coord) {
+        return new Random(coord.GetHashCode());
+    }
+}

@@ -253,7 +253,7 @@ public class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (subChunk.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
+        if (!isEmptyRenderTranslucent) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
             shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16));
@@ -524,7 +524,7 @@ public class SubChunkRenderer : IDisposable {
                             test2 = Blocks.notSolid(nb) || !Blocks.isFullBlock(nb);
                             break;
                         case VertexConstructionMode.TRANSLUCENT:
-                            test2 = notTranslucent(nb) && (notSolid(nb) || !Blocks.isFullBlock(nb));
+                            test2 = !Blocks.isTranslucent(nb) && (Blocks.notSolid(nb) || !Blocks.isFullBlock(nb));
                             break;
                     }
                     test2 = test2 || (facesRef.nonFullFace && !Blocks.isTranslucent(nb));

@@ -139,7 +139,7 @@ public class Block {
     /// <summary>
     /// Display name
     /// </summary>
-    public string name = "";
+    public string name;
 
     public AABB? aabb;
 

@@ -1,8 +1,11 @@
 using BlockGame.util;
+using Silk.NET.Maths;
 
 namespace BlockGame;
 
 public class OverworldChunkGenerator : ChunkGenerator {
+
+    public const int WATER_LEVEL = 64;
 
     public OverworldWorldGenerator generator;
 
@@ -15,26 +18,53 @@ public class OverworldChunkGenerator : ChunkGenerator {
         var chunk = world.getChunk(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 // -1 to 1
                 // transform to the range -25 to 25, add 80 for 50 - 105
-                var height = generator.getNoise(worldPos.X, worldPos.Z) * 25 + 80;
-                for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlock(x, y, z, Blocks.DIRT.id);
+                var aux = generator.getNoise(generator.auxNoise, worldPos.X, worldPos.Z, 1, 0.5f);
+                var mountainness = MathF.Pow((generator.getNoise(generator.terrainNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 1) / 2f, 2);
+                var flatNoise = generator.getNoise(generator.terrainNoise, worldPos.X / 3f + aux * 5 + 1, worldPos.Z / 3f + aux * 5 + 1, 5, 0.5f);
+                //Console.Out.WriteLine(flatNoise);
+                // \sin\left(x\right)\cdot\ 0.8+\operatorname{sign}\left(x\right)\cdot x\cdot0.3
+                // sin(x) * 0.8 + sign(x) * x * 0.3
+                // this rescales the noise so there's more above than below
+                flatNoise = MathF.Sin(flatNoise) * 0.8f + MathF.Sign(flatNoise) * flatNoise * 0.3f;
+                //Console.Out.WriteLine(mountainness);
+                flatNoise *= mountainness * 64;
+                flatNoise += 64;
+                //Console.Out.WriteLine(flatNoise);
+
+                for (int y = 0; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
+                    if (y < flatNoise) {
+                        chunk.setBlock(x, y, z, Blocks.STONE.id);
+                    }
+                    else {
+                        break;
+                    }
                 }
+                int height = chunk.heightMap.get(x, z);
+                // replace top layers with dirt
+                var amt = generator.getNoise(generator.auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
+                for (int yy = height - 1; yy > height - 1 - amt; yy--) {
+                    chunk.setBlock(x, yy, z, Blocks.DIRT.id);
+                }
+
                 // water if low
-                if (height < 64) {
-                    chunk.setBlock(x, (int)height, z, Blocks.DIRT.id);
-                    for (int y2 = (int)Math.Round(height); y2 <= 64; y2++) {
+                if (height < WATER_LEVEL - 1) {
+                    for (int y2 = height; y2 < WATER_LEVEL; y2++) {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id);
                     }
                     // put sand on the lake floors
-                    if (generator.getNoise2(x, z) > 0) {
-                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Blocks.SAND.id);
+                    if (generator.getNoise2(worldPos.X, worldPos.Z) > 0) {
+                        chunk.setBlock(x, height, z, Blocks.SAND.id);
+                    }
+                    else {
+                        chunk.setBlock(x, height, z, Blocks.DIRT.id);
                     }
                 }
                 else {
-                    chunk.setBlock(x, (int)height, z, Blocks.GRASS.id);
+                    chunk.setBlock(x, height, z, Blocks.GRASS.id);
                 }
             }
         }
@@ -42,27 +72,30 @@ public class OverworldChunkGenerator : ChunkGenerator {
     }
 
     public void populate(ChunkCoord coord) {
+        var random = getRandom(coord);
         var world = generator.world;
         var chunk = world.getChunk(coord);
-        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
-                var height = chunk.heightMap.get(x, z);
-                // TREES
-                if (MathF.Abs(generator.treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
-                    worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
-                    placeTree(worldPos.X, worldPos.Y, worldPos.Z);
-                }
+
+        // TREES
+        var treeCount = Math.Pow(generator.treenoise.GetNoise(chunk.worldX / 16f, chunk.worldZ / 16f), 3) * 4;
+        for (int i = 0; i < treeCount; i++) {
+            var randomPos = random.Next(16 * 16);
+            var x = randomPos >> 4;
+            var z = randomPos & 0xF;
+            var height = chunk.heightMap.get(x, z);
+            var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
+            if ((height < 64 && random.NextSingle() < 0.25) || !(height < 64)) {
+                placeTree(worldPos.X, worldPos.Y, worldPos.Z);
             }
         }
         chunk.status = ChunkStatus.POPULATED;
     }
 
-    // Can place in neighbouring chunks, so they must be loaded first
+    public Random getRandom(ChunkCoord coord) {
+        return new Random(coord.GetHashCode());
+    }
 
-    // todo the trees are cut off when they are placed in a neighbouring chunk... but only when the coords are more?
-    // 63 to 64 is fine but 32 to 31 is not, it's cut off
-    // probably something to do with the chunk position calculations?
+    // Can place in neighbouring chunks, so they must be loaded first
     private void placeTree(int x, int y, int z) {
         var world = generator.world;
         // tree

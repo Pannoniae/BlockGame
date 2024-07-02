@@ -60,6 +60,10 @@ public class SimpleOverworldChunkGenerator : ChunkGenerator {
         chunk.status = ChunkStatus.POPULATED;
     }
 
+    public Random getRandom(ChunkCoord coord) {
+        return new Random(coord.GetHashCode());
+    }
+
     // Can place in neighbouring chunks, so they must be loaded first
 
     // todo the trees are cut off when they are placed in a neighbouring chunk... but only when the coords are more?

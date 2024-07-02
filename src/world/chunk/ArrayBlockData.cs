@@ -42,33 +42,41 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
             var old = blockRef;
             blockRef = value;
-            // adding block
-            if (value != 0 && old == 0) {
+            // if old was air, new is not
+            if (old == 0 && value != 0) {
                 blockCount++;
-                if (Blocks.get(value).randomTick) {
-                    randomTickCount++;
-                }
-                if (Blocks.isFullBlock(value)) {
-                    chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
-                    fullBlockCount++;
-                }
-                if (Blocks.isTranslucent(value)) {
-                    translucentCount++;
-                }
             }
-            // removing block
-            else if (value == 0 && old != 0) {
+            else if (old != 0 && value == 0) {
                 blockCount--;
-                if (Blocks.get(old).randomTick) {
-                    randomTickCount--;
-                }
-                if (Blocks.isFullBlock(old)) {
-                    chunk.removeFromHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
-                    fullBlockCount--;
-                }
-                if (Blocks.isTranslucent(old)) {
-                    translucentCount--;
-                }
+            }
+
+            var oldTick = Blocks.get(old).randomTick;
+            var tick = Blocks.get(value).randomTick;
+            if (!oldTick && tick) {
+                randomTickCount++;
+            }
+            else if (oldTick && !tick) {
+                randomTickCount--;
+            }
+
+            var oldFullBlock = Blocks.isFullBlock(old);
+            var fullBlock = Blocks.isFullBlock(value);
+            if (!oldFullBlock && fullBlock) {
+                chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
+                fullBlockCount++;
+            }
+            else if (oldFullBlock && !fullBlock) {
+                chunk.removeFromHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
+                fullBlockCount--;
+            }
+
+            var oldTranslucent = Blocks.isTranslucent(old);
+            var translucent = Blocks.isTranslucent(value);
+            if (!oldTranslucent && translucent) {
+                translucentCount++;
+            }
+            else if (oldTranslucent && !translucent) {
+                translucentCount--;
             }
         }
     }
