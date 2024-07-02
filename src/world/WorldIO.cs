@@ -58,7 +58,7 @@ public class WorldIO {
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = new NBTCompound();
             // if empty, just write zeros
-            if (chunk.chunks[sectionY].blocks.inited) {
+            if (chunk.subChunks[sectionY].blocks.inited) {
                 section.addByte("inited", 1);
 
                 // grab some arrays
@@ -69,8 +69,8 @@ public class WorldIO {
                 for (int y = 0; y < my; y++) {
                     for (int z = 0; z < mz; z++) {
                         for (int x = 0; x < mx; x++) {
-                            blocks[index] = chunk.chunks[sectionY].blocks[x, y, z];
-                            light[index] = chunk.chunks[sectionY].blocks.getLight(x, y, z);
+                            blocks[index] = chunk.subChunks[sectionY].blocks[x, y, z];
+                            light[index] = chunk.subChunks[sectionY].blocks.getLight(x, y, z);
                             index++;
                         }
                     }
@@ -103,7 +103,7 @@ public class WorldIO {
             var section = sections.get(sectionY);
             // if not initialised, leave it be
             if (section.getByte("inited") == 0) {
-                chunk.chunks[sectionY].blocks.inited = false;
+                chunk.subChunks[sectionY].blocks.inited = false;
                 continue;
             }
 
@@ -112,15 +112,15 @@ public class WorldIO {
             var light = section.getByteArray("light");
 
             // init chunk section
-            chunk.chunks[sectionY].blocks.loadInit();
+            chunk.subChunks[sectionY].blocks.loadInit();
 
             int index = 0;
             // using YXZ order
             for (int y = 0; y < my; y++) {
                 for (int z = 0; z < mz; z++) {
                     for (int x = 0; x < mx; x++) {
-                        chunk.chunks[sectionY].blocks[x, y, z] = blocks[index];
-                        chunk.chunks[sectionY].blocks.setLight(x, y, z, light[index]);
+                        chunk.subChunks[sectionY].blocks[x, y, z] = blocks[index];
+                        chunk.subChunks[sectionY].blocks.setLight(x, y, z, light[index]);
                         index++;
                     }
                 }

@@ -46,8 +46,6 @@ public class Player : Entity {
     public bool inLiquid;
     public bool wasInLiquid;
 
-    public int waterPushTicks = 0;
-
     public bool collisionXThisFrame;
     public bool collisionZThisFrame;
 
@@ -66,11 +64,19 @@ public class Player : Entity {
 
     public Inventory hotbar;
     public World world;
-    public Vector2D<double> strafeVector = new(0, 0);
+    public Vector3D<double> strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
 
     public double lastPlace;
     public double lastBreak;
+
+    /// <summary>
+    /// Used for flymode
+    /// </summary>
+    public long spacePress;
+
+    public bool flyMode;
+    private List<AABB> collisionTargets = [];
 
 
     // positions are feet positions
@@ -264,6 +270,13 @@ public class Player : Entity {
     }
 
     private void applyFriction() {
+        if (flyMode) {
+            var f = Constants.flyFriction;
+            velocity.X *= f;
+            velocity.Z *= f;
+            velocity.Y *= f;
+            return;
+        }
         // ground friction
         if (!inLiquid) {
             var f2 = Constants.verticalFriction;
@@ -292,8 +305,6 @@ public class Player : Entity {
             velocity.Z *= Constants.liquidFriction;
             velocity.Y *= Constants.liquidFriction + 0.05;
         }
-
-        var level = getWaterLevel();
 
         if (jumping && !wasInLiquid && inLiquid) {
             velocity.Y -= 1.4;
@@ -341,7 +352,7 @@ public class Player : Entity {
     }
 
     private void updateGravity(double dt) {
-        if (!onGround) {
+        if (!onGround && !flyMode) {
             accel.Y = -Constants.gravity;
         }
         else {
@@ -355,28 +366,47 @@ public class Player : Entity {
         }
         // convert strafe vector into actual movement
 
-        if (strafeVector.X != 0 || strafeVector.Y != 0) {
-            // if air, lessen control
-            Constants.moveSpeed = onGround ? Constants.groundMoveSpeed : Constants.airMoveSpeed;
-            if (inLiquid) {
-                Constants.moveSpeed = Constants.liquidMoveSpeed;
+        if (!flyMode) {
+            if (strafeVector.X != 0 || strafeVector.Z != 0) {
+                // if air, lessen control
+                Constants.moveSpeed = onGround ? Constants.groundMoveSpeed : Constants.airMoveSpeed;
+                if (inLiquid) {
+                    Constants.moveSpeed = Constants.liquidMoveSpeed;
+                }
+
+                if (sneaking) {
+                    Constants.moveSpeed *= Constants.sneakFactor;
+                }
+
+                // first, normalise (v / v.length) then multiply with movespeed
+                strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
+
+                Vector3D<double> moveVector = strafeVector.Z * forward +
+                                              strafeVector.X *
+                                              Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward));
+
+
+                moveVector.Y = 0;
+                inputVector = new Vector3D<double>(moveVector.X, 0, moveVector.Z);
+
             }
+        }
+        else {
+            if (strafeVector.X != 0 || strafeVector.Y != 0 || strafeVector.Z != 0) {
+                // if air, lessen control
+                Constants.moveSpeed = Constants.airFlySpeed;
 
-            if (sneaking) {
-                Constants.moveSpeed *= Constants.sneakFactor;
+                // first, normalise (v / v.length) then multiply with movespeed
+                strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
+
+                Vector3D<double> moveVector = strafeVector.Z * forward +
+                                              strafeVector.X *
+                                              Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward)) +
+                                              strafeVector.Y * Vector3D<double>.UnitY;
+
+                inputVector = new Vector3D<double>(moveVector.X, moveVector.Y, moveVector.Z);
+
             }
-
-            // first, normalise (v / v.length) then multiply with movespeed
-            strafeVector = Vector2D.Normalize(strafeVector) * Constants.moveSpeed;
-
-            Vector3D<double> moveVector = strafeVector.Y * forward +
-                                          strafeVector.X *
-                                          Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward));
-
-
-            moveVector.Y = 0;
-            inputVector = new Vector3D<double>(moveVector.X, 0, moveVector.Z);
-
         }
     }
 
@@ -397,10 +427,10 @@ public class Player : Entity {
         var oldPos = position;
         var blockPos = position.toBlockPos();
         // collect potential collision targets
-        List<AABB> collisionTargets = [];
-        ReadOnlySpan<Vector3D<int>> targets = stackalloc Vector3D<int>[] {
+        collisionTargets.Clear();
+        ReadOnlySpan<Vector3D<int>> targets = [
             blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)
-        };
+        ];
         foreach (Vector3D<int> target in targets) {
             // first, collide with the block the player is in
             var blockPos2 = feetPosition.toBlockPos();
@@ -514,6 +544,7 @@ public class Player : Entity {
         foreach (var blockAABB in collisionTargets) {
             if (AABB.isCollision(blockAABB, groundCheck)) {
                 onGround = true;
+                flyMode = false;
             }
         }
     }
@@ -536,17 +567,28 @@ public class Player : Entity {
         var keyboard = Game.keyboard;
         var mouse = Game.mouse;
 
-        sneaking = keyboard.IsKeyPressed(Key.ShiftLeft);
+
+        if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+            if (flyMode) {
+                strafeVector.Y -= 1;
+            }
+            else {
+                sneaking = true;
+            }
+        }
+        else {
+            sneaking = false;
+        }
 
         if (keyboard.IsKeyPressed(Key.W)) {
             // Move forwards
-            strafeVector.Y += 1;
+            strafeVector.Z += 1;
             pressedMovementKey = true;
         }
 
         if (keyboard.IsKeyPressed(Key.S)) {
             //Move backwards
-            strafeVector.Y -= 1;
+            strafeVector.Z -= 1;
             pressedMovementKey = true;
         }
 
@@ -562,9 +604,14 @@ public class Player : Entity {
             pressedMovementKey = true;
         }
 
-        if (keyboard.IsKeyPressed(Key.Space) && (onGround || inLiquid)) {
-            jumping = true;
-            pressedMovementKey = true;
+        if (keyboard.IsKeyPressed(Key.Space)) {
+            if ((onGround || inLiquid) && !flyMode) {
+                jumping = true;
+                pressedMovementKey = true;
+            }
+            if (flyMode) {
+                strafeVector.Y += 1;
+            }
         }
 
         if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTime - lastBreak > Constants.breakDelay) {

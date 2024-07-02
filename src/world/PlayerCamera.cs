@@ -79,7 +79,6 @@ public class PlayerCamera {
     }
 
     public Vector3 CalculateForwardVector() {
-        var p = 0;
 
         var cameraDirection = Vector3.Zero;
         cameraDirection.X = MathF.Cos(Utils.deg2rad(yaw));

@@ -15,6 +15,7 @@ public static class Constants {
     public const double maxVSpeed = 200;
     public const double friction = 0.57;
     public const double airFriction = 0.57;
+    public const double flyFriction = 0.81;
     public const double verticalFriction = 0.98;
     public const double liquidFriction = 0.75;
     public const double epsilon = 0.0001;
@@ -22,10 +23,12 @@ public static class Constants {
     public static double moveSpeed = 2.5;
     public const double groundMoveSpeed = 3;
     public const double airMoveSpeed = 2;
+    public const double airFlySpeed = 2.5;
     public const double liquidMoveSpeed = 0.9;
     public const double sneakFactor = 0.28;
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 6f;
     public const double breakDelay = 0.6;
     public const double placeDelay = 0.6;
+    public const double flyModeDelay = 0.4;
 }

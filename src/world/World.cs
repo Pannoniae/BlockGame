@@ -202,7 +202,7 @@ public class World {
         foreach (var chunk in chunks) {
             // distance check
             if (Vector2D.DistanceSquared(chunk.Value.centrePos, new Vector2D<int>((int)player.position.X, (int)player.position.Z)) < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
-                foreach (var chunksection in chunk.Value.chunks) {
+                foreach (var chunksection in chunk.Value.subChunks) {
                     for (int i = 0; i < numTicks; i++) {
                         // I pray this is random
                         var coord = random.Next(16 * 16 * 16);
@@ -852,47 +852,47 @@ public class World {
         return c;
     }
 
-    public ChunkSection getChunkSection(int x, int y, int z) {
+    public SubChunk getChunkSection(int x, int y, int z) {
         var pos = getChunkSectionPos(new Vector3D<int>(x, y, z));
-        return chunks[new ChunkCoord(pos.x, pos.z)].chunks[pos.y];
+        return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
 
-    public bool getChunkSectionMaybe(int x, int y, int z, out ChunkSection? section) {
+    public bool getChunkSectionMaybe(int x, int y, int z, out SubChunk? section) {
         var pos = getChunkSectionPos(x, y, z);
         var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
         if (!c || y is < 0 or >= WORLDHEIGHT) {
             section = null;
             return false;
         }
-        section = chunk!.chunks[pos.y];
+        section = chunk!.subChunks[pos.y];
         return true;
     }
 
-    public ChunkSection getChunkSection(Vector3D<int> coord) {
+    public SubChunk getChunkSection(Vector3D<int> coord) {
         var pos = getChunkSectionPos(coord);
-        return chunks[new ChunkCoord(pos.x, pos.z)].chunks[pos.y];
+        return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
 
-    public ChunkSection getChunkSection(ChunkSectionCoord sectionCoord) {
-        return chunks[new ChunkCoord(sectionCoord.x, sectionCoord.z)].chunks[sectionCoord.y];
+    public SubChunk getChunkSection(ChunkSectionCoord sectionCoord) {
+        return chunks[new ChunkCoord(sectionCoord.x, sectionCoord.z)].subChunks[sectionCoord.y];
     }
 
-    public bool getChunkSectionMaybe(ChunkSectionCoord pos, out ChunkSection? section) {
+    public bool getChunkSectionMaybe(ChunkSectionCoord pos, out SubChunk? section) {
         var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
         if (!c || pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             section = null;
             return false;
         }
-        section = chunk!.chunks[pos.y];
+        section = chunk!.subChunks[pos.y];
         return true;
     }
 
-    public ChunkSection? getChunkSectionUnsafe(ChunkSectionCoord pos) {
+    public SubChunk? getChunkSectionUnsafe(ChunkSectionCoord pos) {
         if (pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             return null;
         }
         bool c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
-        return !c ? null : chunk!.chunks[pos.y];
+        return !c ? null : chunk!.subChunks[pos.y];
     }
 
     public Chunk getChunk(Vector2D<int> position) {

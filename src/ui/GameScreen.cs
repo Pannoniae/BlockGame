@@ -140,7 +140,7 @@ public class GameScreen : Screen, IDisposable {
     public override void update(double dt) {
         base.update(dt);
         world.player.pressedMovementKey = false;
-        world.player.strafeVector = new Vector2D<double>(0, 0);
+        world.player.strafeVector = new Vector3D<double>(0, 0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
         if (!world.paused && !Game.lockingMouse) {
             world.player.updateInput(dt);
@@ -283,6 +283,13 @@ public class GameScreen : Screen, IDisposable {
                 world.inMenu = true;
                 Game.instance.unlockMouse();
             }
+        }
+
+        if (key == Key.Space) {
+            if (Game.permanentStopwatch.ElapsedMilliseconds < world.player.spacePress + Constants.flyModeDelay * 1000) {
+                world.player.flyMode = !world.player.flyMode;
+            }
+            world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
         }
 
 

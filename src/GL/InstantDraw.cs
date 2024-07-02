@@ -52,7 +52,7 @@ public class InstantDraw {
         if (currentVertex >= MAX_VERTICES - 1) {
             finish();
         }
-        //Console.Out.WriteLine(currentLine);
+        //Console.Out.TWriteLine(currentLine);
         currentVertex++;
     }
 

@@ -5,10 +5,10 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class ChunkSection : IDisposable {
+public class SubChunk : IDisposable {
 
     public Chunk chunk;
-    public ChunkSectionRenderer renderer;
+    public SubChunkRenderer renderer;
 
     public ArrayBlockData blocks;
 
@@ -36,9 +36,9 @@ public class ChunkSection : IDisposable {
     public ChunkSectionCoord chunkCoord => new(chunkX, chunkY, chunkZ);
 
 
-    public ChunkSection(World world, Chunk chunk, int xpos, int ypos, int zpos) {
+    public SubChunk(World world, Chunk chunk, int xpos, int ypos, int zpos) {
         this.chunk = chunk;
-        renderer = new ChunkSectionRenderer(this);
+        renderer = new SubChunkRenderer(this);
         chunkX = xpos;
         chunkY = ypos;
         chunkZ = zpos;

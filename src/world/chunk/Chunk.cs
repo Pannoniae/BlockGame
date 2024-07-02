@@ -7,9 +7,9 @@ namespace BlockGame;
 public class Chunk : IDisposable {
     public ChunkStatus status;
 
-    public HeightMap height;
+    public HeightMap heightMap;
     public ChunkCoord coord;
-    public ChunkSection[] chunks;
+    public SubChunk[] subChunks;
     public World world;
 
     public int worldX => coord.x * CHUNKSIZE;
@@ -32,15 +32,15 @@ public class Chunk : IDisposable {
         status = ChunkStatus.EMPTY;
         this.world = world;
 
-        chunks = new ChunkSection[CHUNKHEIGHT];
+        subChunks = new SubChunk[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
         // TODO FIX THIS SHIT
 
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i] = new ChunkSection(world, this, chunkX, i, chunkZ);
+            subChunks[i] = new SubChunk(world, this, chunkX, i, chunkZ);
         }
 
-        height = new HeightMap(this);
+        heightMap = new HeightMap(this);
 
         box = new AABB(new Vector3D<double>(chunkX * CHUNKSIZE, 0, chunkZ * CHUNKSIZE), new Vector3D<double>(chunkX * CHUNKSIZE + CHUNKSIZE, CHUNKHEIGHT * CHUNKSIZE, chunkZ * CHUNKSIZE + CHUNKSIZE));
     }
@@ -59,7 +59,7 @@ public class Chunk : IDisposable {
                 ushort bl = getBlock(x, y, z);
                 while (!Blocks.isFullBlock(bl)) {
                     // check if chunk is initialised first
-                    if (chunks[y >> 4].blocks.inited) {
+                    if (subChunks[y >> 4].blocks.inited) {
                         setSkyLight(x, y, z, 15);
                     }
                     y--;
@@ -74,7 +74,7 @@ public class Chunk : IDisposable {
         status = ChunkStatus.LIGHTED;
     }
 
-    public void lightSection(ChunkSection section) {
+    public void lightSection(SubChunk section) {
 
         // set the top of the chunk to 15 if not solid
         // then propagate down
@@ -106,7 +106,7 @@ public class Chunk : IDisposable {
     /// Uses chunk coordinates
     /// </summary>
     public void setBlock(int x, int y, int z, ushort block) {
-        chunks[y >> 4].blocks[x, y & 0xF, z] = block;
+        subChunks[y >> 4].blocks[x, y & 0xF, z] = block;
     }
 
     public void setBlockRemesh(int x, int y, int z, ushort block) {
@@ -114,7 +114,7 @@ public class Chunk : IDisposable {
         var yRem = y & 0xF;
 
         // handle empty chunksections
-        var section = chunks[sectionY];
+        var section = subChunks[sectionY];
         /*if (section.isEmpty && block != 0) {
             section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
@@ -183,14 +183,14 @@ public class Chunk : IDisposable {
     /// Uses chunk coordinates
     /// </summary>
     public void setLight(int x, int y, int z, byte value) {
-        chunks[y >> 4].blocks.setLight(x, y & 0xF, z, value);
+        subChunks[y >> 4].blocks.setLight(x, y & 0xF, z, value);
     }
 
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
     public void setSkyLight(int x, int y, int z, byte value) {
-        chunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, value);
+        subChunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, value);
     }
 
     public void setSkyLightRemesh(int x, int y, int z, byte value) {
@@ -199,7 +199,7 @@ public class Chunk : IDisposable {
         var yRem = y % CHUNKSIZE;
 
         // handle empty chunksections
-        var section = chunks[sectionY];
+        var section = subChunks[sectionY];
         section.blocks.setSkylight(x, yRem, z, value);
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
@@ -221,14 +221,14 @@ public class Chunk : IDisposable {
     /// </summary>
     public void setBlockLight(int x, int y, int z, byte value) {
         // handle empty chunksections
-        chunks[y >> 4].blocks.setBlocklight(x, y & 0xF, z, value);
+        subChunks[y >> 4].blocks.setBlocklight(x, y & 0xF, z, value);
 
     }
 
     public void setBlockLightRemesh(int x, int y, int z, byte value) {
 
         // handle empty chunksections
-        chunks[y >> 4].blocks.setBlocklight(x, y & 0xF, z, value);
+        subChunks[y >> 4].blocks.setBlocklight(x, y & 0xF, z, value);
 
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
@@ -245,47 +245,75 @@ public class Chunk : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Add the selected block to the heightmap.
+    /// </summary>
+    public void addToHeightMap(int x, int y, int z) {
+        var height = heightMap.get(x, z);
+        if (height < y && y < CHUNKHEIGHT * CHUNKSIZE) {
+            heightMap.set(x, z, (byte)y);
+        }
+    }
+
+
+    /// <summary>
+    /// Remove the selected block from the heightmap and finds the block below it to add to the heightmap.
+    /// </summary>
+    public void removeFromHeightMap(int x, int y, int z) {
+        var height = heightMap.get(x, z);
+        // if the block is the highest block in the column
+        if (height == y) {
+            // find the block below
+            for (int yy = y - 1; yy >= 0; yy--) {
+                if (Blocks.isFullBlock(getBlock(x, yy, z))) {
+                    heightMap.set(x, z, (byte)yy);
+                    return;
+                }
+            }
+            heightMap.set(x, z, 0);
+        }
+    }
+
 
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
     public ushort getBlock(int x, int y, int z) {
-        return chunks[y >> 4].blocks[x, y & 0xF, z];
+        return subChunks[y >> 4].blocks[x, y & 0xF, z];
     }
 
     public byte getLight(int x, int y, int z) {
-        return chunks[y >> 4].blocks.getLight(x, y & 0xF, z);
+        return subChunks[y >> 4].blocks.getLight(x, y & 0xF, z);
     }
 
     public byte getSkyLight(int x, int y, int z) {
-        return chunks[y >> 4].blocks.skylight(x, y & 0xF, z);
+        return subChunks[y >> 4].blocks.skylight(x, y & 0xF, z);
     }
 
     public byte getBlockLight(int x, int y, int z) {
-        return chunks[y >> 4].blocks.blocklight(x, y & 0xF, z);
+        return subChunks[y >> 4].blocks.blocklight(x, y & 0xF, z);
     }
 
     public Vector3D<int> getCoordInSection(int x, int y, int z) {
-        var yRem = y % CHUNKSIZE;
-        return new Vector3D<int>(x, yRem, z);
+        return new Vector3D<int>(x, y & 0xF, z);
     }
 
     public void meshChunk() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.meshChunk();
+            subChunks[i].renderer.meshChunk();
         }
         status = ChunkStatus.MESHED;
     }
 
     public void drawOpaque() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.drawOpaque();
+            subChunks[i].renderer.drawOpaque();
         }
     }
 
     public void drawTransparent(bool dummy = false) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            chunks[i].renderer.drawTransparent(dummy);
+            subChunks[i].renderer.drawTransparent(dummy);
         }
     }
 
@@ -293,9 +321,10 @@ public class Chunk : IDisposable {
         Dispose();
     }
     public void Dispose() {
-        foreach (var chunk in chunks) {
+        foreach (var chunk in subChunks) {
             chunk.Dispose();
         }
+        heightMap.Dispose();
     }
 }
 

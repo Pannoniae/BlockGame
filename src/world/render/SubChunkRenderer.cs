@@ -10,8 +10,8 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class ChunkSectionRenderer : IDisposable {
-    public ChunkSection section;
+public class SubChunkRenderer : IDisposable {
+    public SubChunk subChunk;
 
 
     // we need it here because completely full chunks are also empty of any rendering
@@ -121,8 +121,8 @@ public class ChunkSectionRenderer : IDisposable {
         0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
 
-    public ChunkSectionRenderer(ChunkSection section) {
-        this.section = section;
+    public SubChunkRenderer(SubChunk subChunk) {
+        this.subChunk = subChunk;
         uChunkPos = Game.worldShader.getUniformLocation("uChunkPos");
         dummyuChunkPos = Game.dummyShader.getUniformLocation("uChunkPos");
     }
@@ -152,11 +152,11 @@ public class ChunkSectionRenderer : IDisposable {
     /// </summary>
     public void meshChunk() {
         //zsw.Restart();
-        if (section.world.renderer.fastChunkSwitch) {
+        if (subChunk.world.renderer.fastChunkSwitch) {
             vao?.Dispose();
-            vao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
+            vao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);
             watervao?.Dispose();
-            watervao = new ExtremelySharedBlockVAO(section.world.renderer.chunkVAO);
+            watervao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);
         }
         else {
             vao?.Dispose();
@@ -167,7 +167,7 @@ public class ChunkSectionRenderer : IDisposable {
 
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
-        if (section.isEmpty) {
+        if (subChunk.isEmpty) {
             return;
         }
 
@@ -192,7 +192,7 @@ public class ChunkSectionRenderer : IDisposable {
         //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkIndices.Count > 0) {
             isEmptyRenderOpaque = false;
-            if (section.world.renderer.fastChunkSwitch) {
+            if (subChunk.world.renderer.fastChunkSwitch) {
                 (vao as ExtremelySharedBlockVAO).bindVAO();
             }
             else {
@@ -208,13 +208,13 @@ public class ChunkSectionRenderer : IDisposable {
         }
         //}
         //lock (meshingLock) {
-        if (section.blocks.hasTranslucentBlocks()) {
+        if (subChunk.blocks.hasTranslucentBlocks()) {
             // then we render everything which is translucent (water for now)
             constructVertices(VertexConstructionMode.TRANSLUCENT);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             if (chunkIndices.Count > 0) {
                 isEmptyRenderTranslucent = false;
-                if (section.world.renderer.fastChunkSwitch) {
+                if (subChunk.world.renderer.fastChunkSwitch) {
                     (watervao as ExtremelySharedBlockVAO).bindVAO();
                 }
                 else {
@@ -238,14 +238,14 @@ public class ChunkSectionRenderer : IDisposable {
 
 
     public bool isVisible(BoundingFrustum frustum) {
-        return frustum.Contains(section.bbbox) != ContainmentType.Disjoint;
+        return frustum.Contains(subChunk.bbbox) != ContainmentType.Disjoint;
     }
 
     public void drawOpaque() {
         if (!isEmptyRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            Game.worldShader.setUniform(uChunkPos, new Vector3(section.chunkX * 16f, section.chunkY * 16f, section.chunkZ * 16f));
+            Game.worldShader.setUniform(uChunkPos, new Vector3(subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f));
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedChunks += 1;
@@ -253,10 +253,10 @@ public class ChunkSectionRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (section.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
+        if (subChunk.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
-            shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(section.chunkX * 16, section.chunkY * 16, section.chunkZ * 16));
+            shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16));
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -267,7 +267,7 @@ public class ChunkSectionRenderer : IDisposable {
         //var sw = new Stopwatch();
         //sw.Start();
 
-        hasOnlySolid = section.blocks.isFull();
+        hasOnlySolid = subChunk.blocks.isFull();
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -275,17 +275,17 @@ public class ChunkSectionRenderer : IDisposable {
         // we load the 16x16 from the section itself then get the world for the rest
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
-        ref ushort sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.blocks);
-        ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.light);
+        ref ushort sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
+        ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.light);
         ref ushort blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref byte lightArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
-        var world = section.world;
+        var world = subChunk.world;
         int y;
         int z;
         int x;
 
         // setup neighbouring sections
-        var coord = section.chunkCoord;
+        var coord = subChunk.chunkCoord;
         ref var neighbourSectionsArray = ref MemoryMarshal.GetArrayDataReference(neighbourSections);
         for (y = -1; y <= 1; y++) {
             for (z = -1; z <= 1; z++) {
@@ -340,7 +340,7 @@ public class ChunkSectionRenderer : IDisposable {
                         : (ushort)0;
 
                     // if below world, pretend it's dirt (so it won't get meshed)
-                    if (section.chunkCoord.y == 0 && y == -1) {
+                    if (subChunk.chunkCoord.y == 0 && y == -1) {
                         bl = Blocks.DIRT.id;
                     }
 
@@ -408,7 +408,7 @@ public class ChunkSectionRenderer : IDisposable {
             return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
-        ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(section.blocks.blocks);
+        ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
         ref short offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTableCompact);
 
         Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
@@ -452,7 +452,7 @@ public class ChunkSectionRenderer : IDisposable {
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
             if (bl.customRender) {
-                var writtenIndices = bl.render(section.world, new Vector3D<int>(x, y, z), chunkVertices, chunkIndices, indices[0]);
+                var writtenIndices = bl.render(subChunk.world, new Vector3D<int>(x, y, z), chunkVertices, chunkIndices, indices[0]);
                 // add the number of written indices to the indices vector
                 indices += Vector128.Create(writtenIndices);
                 goto increment;

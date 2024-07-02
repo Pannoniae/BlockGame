@@ -28,7 +28,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public bool inited;
 
     public Chunk chunk;
-    public ChunkSection section;
+    public SubChunk section;
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
@@ -42,24 +42,28 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
             var old = blockRef;
             blockRef = value;
+            // adding block
             if (value != 0 && old == 0) {
                 blockCount++;
                 if (Blocks.get(value).randomTick) {
                     randomTickCount++;
                 }
                 if (Blocks.isFullBlock(value)) {
+                    chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
                     fullBlockCount++;
                 }
                 if (Blocks.isTranslucent(value)) {
                     translucentCount++;
                 }
             }
+            // removing block
             else if (value == 0 && old != 0) {
                 blockCount--;
                 if (Blocks.get(old).randomTick) {
                     randomTickCount--;
                 }
                 if (Blocks.isFullBlock(old)) {
+                    chunk.removeFromHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
                     fullBlockCount--;
                 }
                 if (Blocks.isTranslucent(old)) {
@@ -69,7 +73,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
-    public ArrayBlockData(Chunk chunk, ChunkSection section) {
+    public ArrayBlockData(Chunk chunk, SubChunk section) {
         this.chunk = chunk;
         this.section = section;
         inited = false;
