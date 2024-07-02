@@ -3,7 +3,7 @@ using BlockGame.util;
 namespace BlockGame;
 
 public class Inventory {
-    public ItemStack[] slots = new ItemStack[9];
+    public ItemStack[] slots = new ItemStack[10];
     /// <summary>
     /// Selected index
     /// </summary>
