@@ -15,7 +15,7 @@ This is a game made of blocks where you can do anything you want, with no one to
 It's currently under development - check back soon for updates!
 
 ## Why?
-The existing games in the genre can be categorised into two main categories, each with its own problems.
+The existing games in the genre can be categorised into two main categories, each with its own problems. We can do better than that!
 
 1. #### Soullessness and bloat
     These games are often made by large companies with the goal of making money. They are often filled with microtransactions and ads, and are often not very fun to play.
