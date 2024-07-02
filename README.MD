@@ -10,12 +10,11 @@
 
 ## What?
 
-This is a game made of blocks where you can do anything you want. It's currently under development - check back soon for updates!
+This is a game made of blocks where you can do anything you want, with no one to stop you. (Not even lawyers!)
+
+It's currently under development - check back soon for updates!
 
 ## Why?
-
-For a real software project, the [Introduction](#introduction) section – which you are presently reading – should summarize the motivations for creating the software, the need(s) addressed by the software, what the software does, and optionally, links to resources that can help orient readers. Ideally, this section should be short and use plain language. Keep in mind that not all readers will be familiar with the topic area.
-
 The existing games in the genre can be categorised into two main categories, each with its own problems.
 * ### Soullessness and bloat
 These games are often made by large companies with the goal of making money. They are often filled with microtransactions and ads, and are often not very fun to play.
@@ -26,8 +25,6 @@ In most updates, they add content, but none of that allows fun new gameplay. It 
 
 They often try to prioritise `modding support` but it's almost exclusively based on data-driven modding (with JSON files or similar), which has several problems.
 It is often very limiting, and it's usually just painful/hard to use without generating data files, which adds friction for modders to get started.
-Many modders give up before they even start because of this. It also makes it hard to make mods that change the core gameplay, as the game is not designed to be modded in that way.
-Most mods are just adding new content (more of the same) because removing/changing content means incompatibility with other mods, which is strictly shunned in these games.
 
 This 
 * ### Making an engine instead of a game
@@ -55,8 +52,8 @@ See [CONTRIBUTING.MD](CONTRIBUTING.MD).
 
 ## Acknowledgments
 
-- Huge thanks for ThomasMiz for TrippyGL and the Silk.NET contributors for their bindings.
+- Huge thanks to `ThomasMiz` for TrippyGL and the Silk.NET contributors for their bindings.
 - Thank you `rds1983` for FontStashSharp!
 - Thank you 1980's anons for making the X11 fixed spritefonts which the project uses. 
 - Thank you everyone on `my server` for feedback and testing.
-- Thank you `notch` for being a champ and making the ultimate sandbox!
+- Thank you `Notch` for being a champ and making the ultimate sandbox!
