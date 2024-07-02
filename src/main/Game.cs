@@ -284,17 +284,7 @@ public partial class Game {
             //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
 
             Console.Out.WriteLine("Loaded ASCII font.");
-            Task.Run(() => {
-                Console.Out.WriteLine("Loading unicode font...");
-                //gui.loadUnicodeFont();
-            }).ContinueWith(_ => {
-                Console.Out.WriteLine("Stitching unicode font...");
-                executeOnMainThread(() => {
-                    //gui.loadUnicodeFont2();
-                    Console.Out.WriteLine("Finished stitching unicode font.");
-                    switchTo(Menu.MAIN_MENU);
-                });
-            });
+            switchTo(Menu.MAIN_MENU);
             Blocks.postLoad();
             resize(new Vector2D<int>(width, height));
             // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much

@@ -224,7 +224,7 @@ public class GameScreen : Screen, IDisposable {
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         int y = (int)Math.Clamp(-scroll.Y, -1, 1);
         var newSelection = world.player.hotbar.selected + y;
-        newSelection = Utils.mod(newSelection, 9);
+        newSelection = Utils.mod(newSelection, 10);
         world.player.hotbar.selected = newSelection;
 
     }
