@@ -466,7 +466,9 @@ public class World : IDisposable {
     private void ReleaseUnmanagedResources() {
         foreach (var chunk in chunks) {
              worldIO.saveChunk(chunk.Value);
-             chunks[chunk.Key].destroyChunk();
+        }
+        foreach (var chunk in chunks) {
+            chunks[chunk.Key].destroyChunk();
         }
     }
 

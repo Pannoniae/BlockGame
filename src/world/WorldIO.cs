@@ -34,7 +34,7 @@ public class WorldIO {
 
         // save chunks
         foreach (var chunk in world.chunks.Values) {
-            var regionCoord = World.getRegionPos(chunk.coord);
+            //var regionCoord = World.getRegionPos(chunk.coord);
             saveChunk(chunk);
         }
         //regionCache.Clear();
@@ -91,15 +91,12 @@ public class WorldIO {
                 continue;
             }
 
-            // blocks
-            var blocks = section.getUShortArray("blocks");
-            var light = section.getByteArray("light");
-
             // init chunk section
             chunk.subChunks[sectionY].blocks.loadInit();
 
-            chunk.subChunks[sectionY].blocks.blocks = blocks;
-            chunk.subChunks[sectionY].blocks.light = light;
+            // blocks
+            chunk.subChunks[sectionY].blocks.blocks = section.getUShortArray("blocks");
+            chunk.subChunks[sectionY].blocks.light = section.getByteArray("light");
         }
         return chunk;
     }
