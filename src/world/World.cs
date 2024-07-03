@@ -464,15 +464,17 @@ public class World : IDisposable {
     }
 
     private void ReleaseUnmanagedResources() {
-        foreach (var chunk in chunks) {
-             worldIO.saveChunk(chunk.Value);
-        }
+        // do NOT save chunks!!! this fucks the new world
         foreach (var chunk in chunks) {
             chunks[chunk.Key].destroyChunk();
         }
     }
 
     public void Dispose() {
+        // of course, we can save it here since WE call it and not the GC
+        foreach (var chunk in chunks) {
+            worldIO.saveChunk(chunk.Value);
+        }
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }

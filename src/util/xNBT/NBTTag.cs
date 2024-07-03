@@ -29,21 +29,34 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             return new NBTEnd();
         }
         string name = stream.ReadString();
-        NBTTag tag = createTag(type, name);
+        // lists have a type
+        NBTTag tag;
+        if (type == NBTType.TAG_List) {
+            NBTType listType = (NBTType)stream.ReadByte();
+            tag = createListTag(listType, name);
+        }
+        else {
+            tag = createTag(type, name);
+        }
         tag.readContents(stream);
         return tag;
     }
 
     public static void write(NBTTag tag, BinaryWriter stream) {
         stream.Write((byte)tag.id);
-        if (tag.id != NBTType.TAG_End) {
-            stream.Write(tag.name);
-            tag.writeContents(stream);
+        if (tag.id == NBTType.TAG_End) {
+            return;
         }
+        stream.Write(tag.name);
+        if (tag.id == NBTType.TAG_List) {
+            // we can cast to anything, doesn't matter
+            NBTType listType = ((INBTList)tag).listType;
+            stream.Write((byte)listType);
+        }
+        tag.writeContents(stream);
     }
 
     public static NBTTag createTag(NBTType tag, string? name) {
-        // todo
         switch (tag) {
             case NBTType.TAG_End:
                 return new NBTEnd();
@@ -67,8 +80,6 @@ public abstract class NBTTag : IEquatable<NBTTag> {
                 return new NBTDouble(name);
             case NBTType.TAG_String:
                 return new NBTString(name);
-            case NBTType.TAG_List:
-                return new NBTList<NBTTag>(name);
             case NBTType.TAG_Compound:
                 return new NBTCompound(name);
             case NBTType.TAG_Byte_Array:
@@ -87,6 +98,53 @@ public abstract class NBTTag : IEquatable<NBTTag> {
                 return new NBTULongArray(name);
             default:
                 throw new ArgumentOutOfRangeException(nameof(tag), tag, null);
+        }
+    }
+    
+    private static NBTTag createListTag(NBTType listType, string name) {
+        switch (listType) {
+            case NBTType.TAG_End:
+                return new NBTList<NBTEnd>(listType, name);
+            case NBTType.TAG_Byte:
+                return new NBTList<NBTByte>(listType, name);
+            case NBTType.TAG_Short:
+                return new NBTList<NBTShort>(listType, name);
+            case NBTType.TAG_UShort:
+                return new NBTList<NBTUShort>(listType, name);
+            case NBTType.TAG_Int:
+                return new NBTList<NBTInt>(listType, name);
+            case NBTType.TAG_UInt:
+                return new NBTList<NBTUInt>(listType, name);
+            case NBTType.TAG_Long:
+                return new NBTList<NBTLong>(listType, name);
+            case NBTType.TAG_ULong:
+                return new NBTList<NBTULong>(listType, name);
+            case NBTType.TAG_Float:
+                return new NBTList<NBTFloat>(listType, name);
+            case NBTType.TAG_Double:
+                return new NBTList<NBTDouble>(listType, name);
+            case NBTType.TAG_String:
+                return new NBTList<NBTString>(listType, name);
+            case NBTType.TAG_List:
+                return new NBTList<NBTList<NBTTag>>(listType, name);
+            case NBTType.TAG_Compound:
+                return new NBTList<NBTCompound>(listType, name);
+            case NBTType.TAG_Byte_Array:
+                return new NBTList<NBTByteArray>(listType, name);
+            case NBTType.TAG_Short_Array:
+                return new NBTList<NBTShortArray>(listType, name);
+            case NBTType.TAG_UShort_Array:
+                return new NBTList<NBTUShortArray>(listType, name);
+            case NBTType.TAG_Int_Array:
+                return new NBTList<NBTIntArray>(listType, name);
+            case NBTType.TAG_UInt_Array:
+                return new NBTList<NBTUIntArray>(listType, name);
+            case NBTType.TAG_Long_Array:
+                return new NBTList<NBTLongArray>(listType, name);
+            case NBTType.TAG_ULong_Array:
+                return new NBTList<NBTULongArray>(listType, name);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(listType), listType, null);
         }
     }
 

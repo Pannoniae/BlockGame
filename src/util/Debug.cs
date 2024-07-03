@@ -25,8 +25,8 @@ public class Debug {
         // don't forget to use the program before setting uniforms.
         //Game.GD.ResetShaderProgramStates();
         Game.GL.UseProgram(debugShader.Handle);
-        debugShader.Projection = GameScreen.world.player.camera.getProjectionMatrix();
-        debugShader.View = GameScreen.world.player.camera.getViewMatrix(interp);
+        debugShader.Projection = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
+        debugShader.View = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
     }
 
     public void drawLine(Vector3D<double> from, Vector3D<double> to, Color4b colour = default) {

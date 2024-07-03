@@ -180,7 +180,7 @@ public partial class Game {
         if (currentScreen != Screen.GAME_SCREEN) {
             return;
         }
-        if (!given && !GameScreen.world.inMenu) {
+        if (!given && !Screen.GAME_SCREEN.world.inMenu) {
             Screen.GAME_SCREEN.pause();
         }
         else {

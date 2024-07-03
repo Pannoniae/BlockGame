@@ -57,7 +57,7 @@ public class Chunk : IDisposable {
                 var y = CHUNKSIZE * CHUNKHEIGHT - 1;
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
-                while (!Blocks.isFullBlock(bl)) {
+                while (!Blocks.isFullBlock(bl) && y > 0) {
                     // check if chunk is initialised first
                     if (subChunks[y >> 4].blocks.inited) {
                         setSkyLight(x, y, z, 15);
@@ -330,9 +330,6 @@ public class Chunk : IDisposable {
 
     private void Dispose(bool disposing) {
         ReleaseUnmanagedResources();
-        if (disposing) {
-            heightMap.Dispose();
-        }
     }
 
     public void Dispose() {

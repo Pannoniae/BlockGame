@@ -64,7 +64,7 @@ public class InventoryGUI : Menu {
             if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && slot.stack.block != Blocks.AIR.id) {
                 Console.Out.WriteLine("clicked!");
                 // swap it to the hotbar for now
-                var player = GameScreen.world.player;
+                var player = Screen.GAME_SCREEN.world.player;
                 player.hotbar.slots[player.hotbar.selected] = slot.stack.copy();
             }
         }

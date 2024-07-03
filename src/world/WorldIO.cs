@@ -41,9 +41,6 @@ public class WorldIO {
     }
 
     public void saveChunk(Chunk chunk) {
-        if (!Directory.Exists("level")) {
-            Directory.CreateDirectory("level");
-        }
         var nbt = serialiseChunkIntoNBT(chunk);
         NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.xnbt");
     }
@@ -54,7 +51,7 @@ public class WorldIO {
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
         // using YXZ order
-        var sectionsTag = new NBTList<NBTCompound>("sections");
+        var sectionsTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = new NBTCompound();
             // if empty, just write zeros
@@ -74,7 +71,7 @@ public class WorldIO {
         return chunkTag;
     }
 
-    private Chunk loadChunkFromNBT(NBTCompound nbt) {
+    private static Chunk loadChunkFromNBT(World world, NBTCompound nbt) {
 
         var posX = nbt.getInt("posX");
         var posZ = nbt.getInt("posZ");
@@ -97,6 +94,7 @@ public class WorldIO {
             // blocks
             chunk.subChunks[sectionY].blocks.blocks = section.getUShortArray("blocks");
             chunk.subChunks[sectionY].blocks.light = section.getByteArray("light");
+            chunk.subChunks[sectionY].blocks.refreshCounts();
         }
         return chunk;
     }
@@ -124,7 +122,8 @@ public class WorldIO {
 
     private static void loadChunkFromFile(World world, string file) {
         var nbt = NBT.readFile(file);
-        var chunk = new Chunk(world, nbt.getInt("posX"), nbt.getInt("posZ"));
+        var chunk = loadChunkFromNBT(world, nbt);
+
 
         // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
         if (chunk.status >= ChunkStatus.MESHED) {

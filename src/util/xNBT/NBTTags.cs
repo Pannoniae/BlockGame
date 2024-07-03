@@ -269,26 +269,27 @@ public class NBTString : NBTTag {
     }
 }
 
-public class NBTList<T> : NBTTag where T : NBTTag {
-    public List<T> list;
-    public NBTType listType;
+// has a typename
+public interface INBTList {
+    public NBTType listType { get; set; }
+}
+
+public class NBTList : NBTTag, INBTList {
+    public List<NBTTag> list;
+
+    public NBTType listType { get; set; }
 
     public override NBTType id => NBTType.TAG_List;
 
-    public NBTList(string? name) : base(name) {
-        list = new List<T>();
+    public NBTList(NBTType listType, string? name) : base(name) {
+        list = new List<NBTTag>();
+        this.listType = listType;
     }
 
     public override void writeContents(BinaryWriter stream) {
         // empty list so type END
-        if (list.Count == 0) {
-            listType = NBTType.TAG_End;
-        }
-        else {
-            listType = list[0].id;
-        }
+        listType = list.Count == 0 ? NBTType.TAG_End : list[0].id;
         // write type and length
-        stream.Write((byte)listType);
         stream.Write(list.Count);
         foreach (var t in list) {
             t.writeContents(stream);
@@ -298,7 +299,68 @@ public class NBTList<T> : NBTTag where T : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         // read type and length
-        listType = (NBTType)stream.ReadByte();
+        var length = stream.ReadInt32();
+
+        // resize the list to be `length` long
+        list.Clear();
+
+        for (int i = 0; i < length; ++i) {
+            var tag = createTag(listType, null);
+            tag.readContents(stream);
+            list.Add((NBTTag)tag);
+        }
+    }
+
+    public void add(NBTTag value) {
+        list.Add(value);
+    }
+
+    public void remove(NBTTag value) {
+        list.Remove(value);
+    }
+
+    public void removeAt(int index) {
+        list.RemoveAt(index);
+    }
+
+    public NBTTag get(int index) {
+        return list[index];
+    }
+
+    public int count() {
+        return list.Count;
+    }
+
+    public override String ToString() {
+        return list.Count + " entries of type " + getTypeName(listType);
+    }
+}
+
+public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
+    public List<T> list;
+
+    public NBTType listType { get; set; }
+
+    public override NBTType id => NBTType.TAG_List;
+
+    public NBTList(NBTType listType, string? name) : base(name) {
+        list = new List<T>();
+        this.listType = listType;
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        // empty list so type END
+        listType = list.Count == 0 ? NBTType.TAG_End : list[0].id;
+        // write type and length
+        stream.Write(list.Count);
+        foreach (var t in list) {
+            t.writeContents(stream);
+        }
+
+    }
+
+    public override void readContents(BinaryReader stream) {
+        // read type and length
         var length = stream.ReadInt32();
 
         // resize the list to be `length` long
@@ -386,165 +448,165 @@ public class NBTCompound : NBTTag {
         dict.Add(value.name, value);
     }
 
-    public void addByte(String name, byte value) {
+    public void addByte(string name, byte value) {
         dict.Add(name, new NBTByte(name, value));
     }
 
-    public void addShort(String name, short value) {
+    public void addShort(string name, short value) {
         dict.Add(name, new NBTShort(name, value));
     }
 
-    public void addUShort(String name, ushort value) {
+    public void addUShort(string name, ushort value) {
         dict.Add(name, new NBTUShort(name, value));
     }
 
-    public void addInt(String name, int value) {
+    public void addInt(string name, int value) {
         dict.Add(name, new NBTInt(name, value));
     }
 
-    public void addUInt(String name, uint value) {
+    public void addUInt(string name, uint value) {
         dict.Add(name, new NBTUInt(name, value));
     }
 
-    public void addLong(String name, long value) {
+    public void addLong(string name, long value) {
         dict.Add(name, new NBTLong(name, value));
     }
 
-    public void addULong(String name, ulong value) {
+    public void addULong(string name, ulong value) {
         dict.Add(name, new NBTULong(name, value));
     }
 
-    public void addFloat(String name, float value) {
+    public void addFloat(string name, float value) {
         dict.Add(name, new NBTFloat(name, value));
     }
 
-    public void addDouble(String name, double value) {
+    public void addDouble(string name, double value) {
         dict.Add(name, new NBTDouble(name, value));
     }
 
-    public void addString(String name, String value) {
+    public void addString(string name, string value) {
         dict.Add(name, new NBTString(name, value));
     }
 
-    public void addByteArray(String name, byte[] value) {
+    public void addByteArray(string name, byte[] value) {
         dict.Add(name, new NBTByteArray(name, value));
     }
 
-    public void addShortArray(String name, short[] value) {
+    public void addShortArray(string name, short[] value) {
         dict.Add(name, new NBTShortArray(name, value));
     }
 
-    public void addUShortArray(String name, ushort[] value) {
+    public void addUShortArray(string name, ushort[] value) {
         dict.Add(name, new NBTUShortArray(name, value));
     }
 
-    public void addIntArray(String name, int[] value) {
+    public void addIntArray(string name, int[] value) {
         dict.Add(name, new NBTIntArray(name, value));
     }
 
-    public void addUIntArray(String name, uint[] value) {
+    public void addUIntArray(string name, uint[] value) {
         dict.Add(name, new NBTUIntArray(name, value));
     }
 
-    public void addLongArray(String name, long[] value) {
+    public void addLongArray(string name, long[] value) {
         dict.Add(name, new NBTLongArray(name, value));
     }
 
-    public void addULongArray(String name, ulong[] value) {
+    public void addULongArray(string name, ulong[] value) {
         dict.Add(name, new NBTULongArray(name, value));
     }
 
-    public void addCompoundTag(String name, NBTCompound value) {
+    public void addCompoundTag(string name, NBTCompound value) {
         dict.Add(name, value);
     }
 
-    public void addListTag(String name, NBTList<NBTTag> value) {
+    public void addListTag(string name, NBTList<NBTTag> value) {
         dict.Add(name, value);
     }
 
-    public void addListTag<T>(String name, NBTList<T> value) where T : NBTTag {
+    public void addListTag<T>(string name, NBTList<T> value) where T : NBTTag {
         dict.Add(name, value);
     }
 
     // Get functions
 
-    public byte getByte(String name) {
+    public byte getByte(string name) {
         return ((NBTByte)dict[name]).data;
     }
 
-    public short getShort(String name) {
+    public short getShort(string name) {
         return ((NBTShort)dict[name]).data;
     }
 
-    public ushort getUShort(String name) {
+    public ushort getUShort(string name) {
         return ((NBTUShort)dict[name]).data;
     }
 
-    public int getInt(String name) {
+    public int getInt(string name) {
         return ((NBTInt)dict[name]).data;
     }
 
-    public uint getUInt(String name) {
+    public uint getUInt(string name) {
         return ((NBTUInt)dict[name]).data;
     }
 
-    public long getLong(String name) {
+    public long getLong(string name) {
         return ((NBTLong)dict[name]).data;
     }
 
-    public ulong getULong(String name) {
+    public ulong getULong(string name) {
         return ((NBTULong)dict[name]).data;
     }
 
-    public float getFloat(String name) {
+    public float getFloat(string name) {
         return ((NBTFloat)dict[name]).data;
     }
 
-    public double getDouble(String name) {
+    public double getDouble(string name) {
         return ((NBTDouble)dict[name]).data;
     }
 
-    public string getString(String name) {
+    public string getString(string name) {
         return ((NBTString)dict[name]).data;
     }
 
-    public byte[] getByteArray(String name) {
+    public byte[] getByteArray(string name) {
         return ((NBTByteArray)dict[name]).data;
     }
 
-    public short[] getShortArray(String name) {
+    public short[] getShortArray(string name) {
         return ((NBTShortArray)dict[name]).data;
     }
 
-    public ushort[] getUShortArray(String name) {
+    public ushort[] getUShortArray(string name) {
         return ((NBTUShortArray)dict[name]).data;
     }
 
-    public int[] getIntArray(String name) {
+    public int[] getIntArray(string name) {
         return ((NBTIntArray)dict[name]).data;
     }
 
-    public uint[] getUIntArray(String name) {
+    public uint[] getUIntArray(string name) {
         return ((NBTUIntArray)dict[name]).data;
     }
 
-    public long[] getLongArray(String name) {
+    public long[] getLongArray(string name) {
         return ((NBTLongArray)dict[name]).data;
     }
 
-    public ulong[] getULongArray(String name) {
+    public ulong[] getULongArray(string name) {
         return ((NBTULongArray)dict[name]).data;
     }
 
-    public NBTList<NBTTag> getListTag(String name) {
+    public NBTList<NBTTag> getListTag(string name) {
         return (NBTList<NBTTag>)dict[name];
     }
 
-    public NBTList<T> getListTag<T>(String name) where T : NBTTag {
+    public NBTList<T> getListTag<T>(string name) where T : NBTTag {
         return (NBTList<T>)dict[name];
     }
 
-    public NBTCompound getCompoundTag(String name) {
+    public NBTCompound getCompoundTag(string name) {
         return (NBTCompound)dict[name];
     }
 
@@ -560,7 +622,7 @@ public class NBTCompound : NBTTag {
         return (T)dict[name];
     }
 
-    public override String ToString() {
+    public override string ToString() {
         StringBuilder str = new StringBuilder();
         str.Append(name + ":{");
 

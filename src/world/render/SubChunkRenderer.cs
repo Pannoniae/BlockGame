@@ -132,15 +132,11 @@ public class SubChunkRenderer : IDisposable {
 
     private void ReleaseUnmanagedResources() {
         vao?.Dispose();
-        // watervao?.Dispose();
+        watervao?.Dispose();
     }
 
     private void Dispose(bool disposing) {
         ReleaseUnmanagedResources();
-        if (disposing) {
-            vao?.Dispose();
-            watervao?.Dispose();
-        }
     }
 
     public void Dispose() {
@@ -156,7 +152,7 @@ public class SubChunkRenderer : IDisposable {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //zsw.Restart();
+        //sw.Restart();
         if (subChunk.world.renderer.fastChunkSwitch) {
             vao?.Dispose();
             vao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);

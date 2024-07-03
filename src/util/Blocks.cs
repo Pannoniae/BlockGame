@@ -395,6 +395,7 @@ public class FallingBlock(ushort id, string name, BlockModel uvs) : Block(id, na
 /// <summary>
 /// Stores UV in block coordinates (1 = 16px)
 /// </summary>
+[StructLayout(LayoutKind.Auto)]
 public readonly record struct UVPair(float u, float v) {
 
     public readonly float u = u;

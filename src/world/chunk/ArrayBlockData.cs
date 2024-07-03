@@ -145,6 +145,39 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
 
+    /// <summary>
+    /// After loading, the counters will be gone. This method recalculates all of them.
+    /// </summary>
+    public void refreshCounts() {
+        blockCount = 0;
+        translucentCount = 0;
+        fullBlockCount = 0;
+        randomTickCount = 0;
+
+        ref var blockArray = ref MemoryMarshal.GetArrayDataReference(blocks);
+        for (int i = 0; i < blocks.Length; i++) {
+            int x = i & 0xF;
+            int z = i >> 4 & 0xF;
+            int y = i >> 8;
+            var block = blockArray;
+            if (block != 0) {
+                blockCount++;
+            }
+            if (Blocks.get(block).randomTick) {
+                randomTickCount++;
+            }
+            if (Blocks.isFullBlock(block)) {
+                chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
+                fullBlockCount++;
+            }
+            if (Blocks.isTranslucent(block)) {
+                translucentCount++;
+            }
+            blockArray = ref Unsafe.Add(ref blockArray, 1);
+        }
+    }
+
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {

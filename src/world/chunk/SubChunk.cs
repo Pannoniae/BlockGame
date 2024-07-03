@@ -80,10 +80,6 @@ public class SubChunk : IDisposable {
 
     private void Dispose(bool disposing) {
         ReleaseUnmanagedResources();
-        if (disposing) {
-            renderer.Dispose();
-            blocks.Dispose();
-        }
     }
 
     public void Dispose() {

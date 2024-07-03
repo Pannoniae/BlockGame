@@ -12,7 +12,7 @@ namespace BlockGame.ui;
 
 public class GameScreen : Screen, IDisposable {
 
-    public static World world;
+    public World world;
     public GraphicsDevice GD;
 
     private Utf16ValueStringBuilder debugStr;
@@ -126,6 +126,7 @@ public class GameScreen : Screen, IDisposable {
 
     public override void deactivate() {
         base.deactivate();
+        world?.Dispose();
         world = null;
         updateMemory.enabled = false;
     }
@@ -261,7 +262,7 @@ public class GameScreen : Screen, IDisposable {
         }
 
         if (key == Key.G) {
-            world.Dispose();
+            world?.Dispose();
             world = WorldIO.load("world");
             Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }

@@ -1,9 +1,11 @@
+using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 using Plane = System.Numerics.Plane;
 
 namespace BlockGame;
 
 // mutable
+[StructLayout(LayoutKind.Auto)]
 public struct AABB {
     public double minX => min.X;
     public double minY => min.Y;

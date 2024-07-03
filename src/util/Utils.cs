@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using Silk.NET.Maths;
 
@@ -97,6 +98,7 @@ public static class Utils {
 /// East = +X
 /// Doubles as a normal too
 /// </summary>
+[StructLayout(LayoutKind.Auto)]
 public readonly record struct Direction {
 
     public static int min = 0;
