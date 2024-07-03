@@ -30,7 +30,7 @@ public class WorldIO {
         tag.addDouble("posX", world.player.position.X);
         tag.addDouble("posY", world.player.position.Y);
         tag.addDouble("posZ", world.player.position.Z);
-        NBT.writeFile(tag, $"level/{filename}.nbt");
+        NBT.writeFile(tag, $"level/{filename}.xnbt");
 
         // save chunks
         foreach (var chunk in world.chunks.Values) {
@@ -45,7 +45,7 @@ public class WorldIO {
             Directory.CreateDirectory("level");
         }
         var nbt = serialiseChunkIntoNBT(chunk);
-        NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.nbt");
+        NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.xnbt");
     }
 
     private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
@@ -61,25 +61,9 @@ public class WorldIO {
             if (chunk.subChunks[sectionY].blocks.inited) {
                 section.addByte("inited", 1);
 
-                // grab some arrays
-                // blocks
-                int index = 0;
-                var blocks = saveBlockPool.grab();
-                var light = saveLightPool.grab();
-                for (int y = 0; y < my; y++) {
-                    for (int z = 0; z < mz; z++) {
-                        for (int x = 0; x < mx; x++) {
-                            blocks[index] = chunk.subChunks[sectionY].blocks[x, y, z];
-                            light[index] = chunk.subChunks[sectionY].blocks.getLight(x, y, z);
-                            index++;
-                        }
-                    }
-                }
                 // add the arrays
-                section.addUShortArray("blocks", blocks);
-                section.addByteArray("light", light);
-                saveBlockPool.putBack(blocks);
-                saveLightPool.putBack(light);
+                section.addUShortArray("blocks", chunk.subChunks[sectionY].blocks.blocks);
+                section.addByteArray("light", chunk.subChunks[sectionY].blocks.light);
             }
             else {
                 section.addByte("inited", 0);
@@ -114,23 +98,14 @@ public class WorldIO {
             // init chunk section
             chunk.subChunks[sectionY].blocks.loadInit();
 
-            int index = 0;
-            // using YXZ order
-            for (int y = 0; y < my; y++) {
-                for (int z = 0; z < mz; z++) {
-                    for (int x = 0; x < mx; x++) {
-                        chunk.subChunks[sectionY].blocks[x, y, z] = blocks[index];
-                        chunk.subChunks[sectionY].blocks.setLight(x, y, z, light[index]);
-                        index++;
-                    }
-                }
-            }
+            chunk.subChunks[sectionY].blocks.blocks = blocks;
+            chunk.subChunks[sectionY].blocks.light = light;
         }
         return chunk;
     }
 
     public static World load(string filename) {
-        var tag = NBT.readFile($"level/{filename}.nbt");
+        var tag = NBT.readFile($"level/{filename}.xnbt");
         var seed = tag.getInt("seed");
         var world = new World(seed);
         world.player.position.X = tag.getDouble("posX");
