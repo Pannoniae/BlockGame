@@ -34,7 +34,9 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 flatNoise *= mountainness * 64;
                 flatNoise += 64;
                 //Console.Out.WriteLine(flatNoise);
-
+                
+                chunk.setBlock(x, 0, z, Blocks.HELLSTONE.id);
+                
                 for (int y = 0; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
                     if (y < flatNoise) {
                         chunk.setBlock(x, y, z, Blocks.STONE.id);

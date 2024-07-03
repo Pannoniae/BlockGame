@@ -15,7 +15,7 @@ public class Blocks {
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
     public static bool[] translucentCache = new bool[MAXBLOCKS];
 
-    public static readonly int maxBlock = 33;
+    public static readonly int maxBlock = 34;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -51,6 +51,7 @@ public class Blocks {
     public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
     public static Block GRAVEL = register(new Block(33, "Gravel", BlockModel.makeCube(Block.cubeUVs(15, 0))));
+    public static Block HELLSTONE = register(new Block(34, "HellStone", BlockModel.makeCube(Block.cubeUVs(1, 1))).light(15));
     
     public static Block GLASS = register(new Block(6, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0)))
         .transparency()
