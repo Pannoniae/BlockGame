@@ -85,18 +85,18 @@ public class SettingsMenu : Menu {
         settingElements.Add(renderDistance);
         addElement(renderDistance);
 
-        var FOV = new FOVSlider(this, "FOV", 60, 120, 1, (int)settings.FOV);
+        var FOV = new FOVSlider(this, "FOV", 50, 150, 1, (int)settings.FOV);
         FOV.setPosition(new Rectangle(0, 112, 128, 16));
         FOV.topCentre();
         FOV.applied += () => { settings.FOV = (int)FOV.value; };
         FOV.getText = value => {
             if (value == 75)
                 return "Field of View: Normal";
-            if (value == 110)
-                return "Field of View: Quake Pro";
-            if (value == 60)
+            if (value == 50)
                 return "Field of View: Fish Eye";
             if (value == 120)
+                return "Field of View: Quake Pro";
+            if (value == 150)
                 return "Field of View: Tunnel Vision";
             return "Field of View: " + value;
         };
