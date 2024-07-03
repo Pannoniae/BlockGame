@@ -111,7 +111,27 @@ public class SettingsMenu : Menu {
         back.clicked += returnToMainMenu;
         addElement(back);
 
-        layoutSettings(settingElements, new Vector2D<int>(0, 16));
+        layoutSettingsTwoCols(settingElements, new Vector2D<int>(0, 16), vsync.GUIbounds.Width);
+    }
+
+    public void layoutSettingsTwoCols(List<GUIElement> elements, Vector2D<int> startPos, int buttonWidth) {
+        // to the left/right
+        var offset = buttonWidth / 2 + 8;
+        var pos = startPos;
+        for (int i = 0; i < elements.Count; i++) {
+            var element = elements[i];
+            int o;
+            if (i % 2 == 0) {
+                o = -offset;
+            }
+            else {
+                o = offset;
+            }
+            element.setPosition(new Rectangle(pos.X + o, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));
+            if (i % 2 == 1) {
+                pos.Y += 18;
+            }
+        }
     }
 
     public void layoutSettings(List<GUIElement> elements, Vector2D<int> startPos) {
