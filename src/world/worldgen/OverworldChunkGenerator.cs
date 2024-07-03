@@ -36,7 +36,9 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 //Console.Out.WriteLine(flatNoise);
                 
                 chunk.setBlock(x, 0, z, Blocks.HELLSTONE.id);
-                
+                // hack until we can propagate them properly AND cheaply
+                chunk.setBlockLight(x, 0, z, Blocks.HELLSTONE.lightLevel);
+
                 for (int y = 1; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
                     if (y < flatNoise) {
                         chunk.setBlock(x, y, z, Blocks.STONE.id);
