@@ -60,12 +60,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                         chunk.setBlock(x, y2, z, Blocks.WATER.id);
                     }
                     // put sand on the lake floors
-                    if (generator.getNoise2(worldPos.X, worldPos.Z) > 0) {
-                        chunk.setBlock(x, height, z, Blocks.SAND.id);
-                    }
-                    else {
-                        chunk.setBlock(x, height, z, Blocks.DIRT.id);
-                    }
+                    chunk.setBlock(x, height, z, generator.getNoise2(worldPos.X, worldPos.Z) > 0 ? Blocks.SAND.id : Blocks.DIRT.id);
                 }
                 else {
                     chunk.setBlock(x, height, z, Blocks.GRASS.id);
