@@ -9,13 +9,13 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     private static FixedArrayPool<ushort> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     private static FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
-    public ushort[] blocks;
+    public ushort[]? blocks;
 
     /// <summary>
     /// Skylight is on the lower 4 bits, blocklight is on the upper 4 bits.
     /// Stored in YZX order.
     /// </summary>
-    public byte[] light;
+    public byte[]? light;
 
     public int blockCount;
     public int translucentCount;
@@ -128,8 +128,12 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     // cleanup
     public void Dispose() {
-        blockPool.putBack(blocks);
-        lightPool.putBack(light);
+        if (blocks != null) {
+            blockPool.putBack(blocks);
+        }
+        if (light != null) {
+            lightPool.putBack(light);
+        }
     }
 
 

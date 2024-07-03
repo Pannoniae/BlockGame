@@ -7,14 +7,22 @@ public class FixedArrayPool<T> {
 
     public readonly int arrayLength;
 
+    private int grabCtr;
+    private int putBackCtr;
+
     public FixedArrayPool(int arrayLength) {
         this.arrayLength = arrayLength;
         _objects = new ConcurrentBag<T[]>();
     }
 
     public T[] grab() {
+        grabCtr++;
+        //Console.Out.WriteLine("diff: " + (grabCtr - putBackCtr));
         return _objects.TryTake(out var item) ? item : new T[arrayLength];
     }
 
-    public void putBack(T[] item) => _objects.Add(item);
+    public void putBack(T[] item) {
+        putBackCtr++;
+        _objects.Add(item);
+    }
 }

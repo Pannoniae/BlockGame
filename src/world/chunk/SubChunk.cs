@@ -74,5 +74,6 @@ public class SubChunk : IDisposable {
     }
     public void Dispose() {
         renderer.Dispose();
+        blocks.Dispose();
     }
 }

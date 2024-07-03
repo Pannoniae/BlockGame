@@ -261,6 +261,7 @@ public class GameScreen : Screen, IDisposable {
         }
 
         if (key == Key.G) {
+            world.Dispose();
             world = WorldIO.load("world");
             Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }

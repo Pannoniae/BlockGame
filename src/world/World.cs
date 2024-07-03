@@ -4,7 +4,7 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class World {
+public class World : IDisposable {
     public const int WORLDSIZE = 12;
     public const int REGIONSIZE = 32;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
@@ -461,6 +461,13 @@ public class World {
         worldIO.saveChunk(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);
+    }
+
+    public void Dispose() {
+        foreach (var chunk in chunks) {
+            worldIO.saveChunk(chunk.Value);
+            chunks[chunk.Key].destroyChunk();
+        }
     }
 
     /// <summary>
