@@ -194,115 +194,113 @@ public partial class Game {
     }
 
     private void init() {
-        unsafe {
-            input = window.CreateInput();
-            GL = window.CreateOpenGL();
-            #if DEBUG
+        //  set icon
+        setIconToBlock();
+        input = window.CreateInput();
+        GL = window.CreateOpenGL();
+        #if DEBUG
             // initialise debug print
             GL.Enable(EnableCap.DebugOutput);
             GL.Enable(EnableCap.DebugOutputSynchronous);
             GL.DebugMessageCallback(GLDebug, 0);
             GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
-            #endif
+        #endif
 
-            // set icon
-            setIconToBlock();
-
-            GL.GetInteger(GetPName.ContextFlags, out int noErrors);
-            Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
-
-            proc = Process.GetCurrentProcess();
-            Configuration.Default.PreferContiguousImageBuffers = true;
-            GD = new GraphicsDevice(GL);
-            //GD.BlendingEnabled = true;
-            GD.BlendState = initialBlendState;
-            GD.DepthTestingEnabled = true;
-            GD.DepthState = DepthState.Default;
-            GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
-            GD.FaceCullingEnabled = true;
-            GD.PolygonFrontFace = PolygonFace.CounterClockwise;
-            GD.CullFaceMode = CullingMode.CullBack;
-
-            GLTracker = new GLStateTracker(GL, GD);
-
-            textureManager = new TextureManager(GL, GD);
-
-            fxaaShader = new Shader(GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
-            fxaaShader.use();
-            g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
-            g_showEdgesLocation = fxaaShader.getUniformLocation("u_showEdges");
-            g_fxaaOnLocation = fxaaShader.getUniformLocation("u_fxaaOn");
-
-            g_lumaThresholdLocation = fxaaShader.getUniformLocation("u_lumaThreshold");
-            g_mulReduceLocation = fxaaShader.getUniformLocation("u_mulReduce");
-            g_minReduceLocation = fxaaShader.getUniformLocation("u_minReduce");
-            g_maxSpanLocation = fxaaShader.getUniformLocation("u_maxSpan");
-
-            fxaaShader.setUniform(g_showEdgesLocation, 0);
-            fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
-            fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
-            fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
-            fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
+        GL.GetInteger(GetPName.ContextFlags, out int noErrors);
+        Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
 
-            // needed for stupid laptop GPUs
-            #if !DEBUG && LAPTOP_SUPPORT
+        Configuration.Default.PreferContiguousImageBuffers = true;
+        proc = Process.GetCurrentProcess();
+        GD = new GraphicsDevice(GL);
+        //GD.BlendingEnabled = true;
+        GD.BlendState = initialBlendState;
+        GD.DepthTestingEnabled = true;
+        GD.DepthState = DepthState.Default;
+        GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
+        GD.FaceCullingEnabled = true;
+        GD.PolygonFrontFace = PolygonFace.CounterClockwise;
+        GD.CullFaceMode = CullingMode.CullBack;
+
+        GLTracker = new GLStateTracker(GL, GD);
+
+        textureManager = new TextureManager(GL, GD);
+
+        fxaaShader = new Shader(GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
+        fxaaShader.use();
+        g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
+        g_showEdgesLocation = fxaaShader.getUniformLocation("u_showEdges");
+        g_fxaaOnLocation = fxaaShader.getUniformLocation("u_fxaaOn");
+
+        g_lumaThresholdLocation = fxaaShader.getUniformLocation("u_lumaThreshold");
+        g_mulReduceLocation = fxaaShader.getUniformLocation("u_mulReduce");
+        g_minReduceLocation = fxaaShader.getUniformLocation("u_minReduce");
+        g_maxSpanLocation = fxaaShader.getUniformLocation("u_maxSpan");
+
+        fxaaShader.setUniform(g_showEdgesLocation, 0);
+        fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
+        fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
+        fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
+        fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
+
+
+        // needed for stupid laptop GPUs
+        #if !DEBUG && LAPTOP_SUPPORT
             initDirectX();
-            #endif
+        #endif
 
-            foreach (var mouse in input.Mice) {
-                mouse.MouseMove += onMouseMove;
-                mouse.MouseDown += onMouseDown;
-                mouse.MouseUp += onMouseUp;
-                mouse.Scroll += onMouseScroll;
-                mouse.Cursor.CursorMode = CursorMode.Normal;
-            }
-
-            mouse = input.Mice[0];
-
-            foreach (var keyboard in input.Keyboards) {
-                keyboard.KeyDown += onKeyDown;
-                keyboard.KeyUp += onKeyUp;
-            }
-
-            keyboard = input.Keyboards[0];
-            focused = true;
-
-            width = window.FramebufferSize.X;
-            height = window.FramebufferSize.Y;
-
-            metrics = new Metrics();
-            stopwatch.Start();
-            permanentStopwatch.Start();
-
-
-            //Menu.initScreens(gui);
-            currentScreen = new MainMenuScreen();
-            setMenu(Menu.LOADING);
-            //world = new World();
-
-            // SFML
-            // don't use local variables, they go out of scope so nothing plays..... hold them statically
-            //var file = File.ReadAllBytes("snd/tests.flac");
-            //buffer = new SoundBuffer(file);
-            //music = new Sound(buffer);
-            //music.Loop = true;
-            //music.Play();
-            Console.Out.WriteLine("played?");
-
-            gui = new GUI();
-            fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
-            gui.loadFont(13);
-
-            //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
-
-            Console.Out.WriteLine("Loaded ASCII font.");
-            switchTo(Menu.MAIN_MENU);
-            Blocks.postLoad();
-            resize(new Vector2D<int>(width, height));
-            // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
-            MemoryUtils.cleanGC();
+        foreach (var mouse in input.Mice) {
+            mouse.MouseMove += onMouseMove;
+            mouse.MouseDown += onMouseDown;
+            mouse.MouseUp += onMouseUp;
+            mouse.Scroll += onMouseScroll;
+            mouse.Cursor.CursorMode = CursorMode.Normal;
         }
+
+        mouse = input.Mice[0];
+
+        foreach (var keyboard in input.Keyboards) {
+            keyboard.KeyDown += onKeyDown;
+            keyboard.KeyUp += onKeyUp;
+        }
+
+        keyboard = input.Keyboards[0];
+        focused = true;
+
+        width = window.FramebufferSize.X;
+        height = window.FramebufferSize.Y;
+
+        metrics = new Metrics();
+        stopwatch.Start();
+        permanentStopwatch.Start();
+
+
+        //Menu.initScreens(gui);
+        currentScreen = new MainMenuScreen();
+        setMenu(Menu.LOADING);
+        //world = new World();
+
+        // SFML
+        // don't use local variables, they go out of scope so nothing plays..... hold them statically
+        //var file = File.ReadAllBytes("snd/tests.flac");
+        //buffer = new SoundBuffer(file);
+        //music = new Sound(buffer);
+        //music.Loop = true;
+        //music.Play();
+        Console.Out.WriteLine("played?");
+
+        gui = new GUI();
+        fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
+        gui.loadFont(13);
+
+        //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
+
+        Console.Out.WriteLine("Loaded ASCII font.");
+        switchTo(Menu.MAIN_MENU);
+        Blocks.postLoad();
+        resize(new Vector2D<int>(width, height));
+        // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
+        MemoryUtils.cleanGC();
     }
 
     private void setIconToBlock() {

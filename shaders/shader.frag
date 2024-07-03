@@ -12,8 +12,9 @@ in float ao;
 in vec4 light;
 
 in vec3 vertexPos;
+in vec3 vertexPosFromCamera;
 
-uniform vec3 uCameraPos;
+
 uniform int drawDistance;
 
 uniform sampler2D blockTexture;
@@ -24,18 +25,19 @@ uniform vec4 fogColour;
 
 float getFog(float d) {
     float fogMax = drawDistance - 16.0;
-    float fogMin = drawDistance - 32.0;
-    /*if (d >= fogMax) return 1.0;
-    if (d <= fogMin) return 0.0;*/
-    // replace with clamp
-    return clamp(1.0 - (fogMax - d) / (fogMax - fogMin), 0.0, 1.0);
+    // fog starts at 75% of drawdistance
+    float fogMin = drawDistance * 0.5;
+    // clamp fog
+    // also make it not linear
+    float ratio = clamp(1.0 - (fogMax - d) / (fogMax - fogMin), 0.0, 1.0);
+    return ratio;
 }
 
 void main() {
     // per-face lighting
     float lColor = a[direction];
     vec4 blockColour = texture(blockTexture, texCoords);
-    float ratio = getFog(distance(uCameraPos, vertexPos));
+    float ratio = getFog(length(vertexPosFromCamera));
     // extract skylight, 0 to 15
 
     color = vec4(blockColour.rgb * lColor * ao * light.rgb, blockColour.a);

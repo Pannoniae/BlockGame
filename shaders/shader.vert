@@ -14,7 +14,9 @@ flat out uint direction;
 out vec4 light;
 
 out vec3 vertexPos;
+out vec3 vertexPosFromCamera;
 
+uniform vec3 uCameraPos;
 uniform sampler2D lightTexture;
 
 const float aoArray[4] = float[](1.0, 0.75, 0.5, 0.25);
@@ -31,4 +33,5 @@ void main() {
     ivec2 lightCoords = ivec2((lightValue >> 4) & 0xFu, lightValue & 0xFu);
     light = texelFetch(lightTexture, lightCoords, 0);
     vertexPos = pos;
+    vertexPosFromCamera = pos - uCameraPos;
 }
