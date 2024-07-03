@@ -180,7 +180,6 @@ public partial class Game {
         if (currentScreen != Screen.GAME_SCREEN) {
             return;
         }
-        Console.Out.WriteLine(given);
         if (!given && !GameScreen.world.inMenu) {
             Screen.GAME_SCREEN.pause();
         }
