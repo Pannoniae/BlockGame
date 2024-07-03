@@ -14,6 +14,7 @@ public class Blocks {
     /// </summary>
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
     public static bool[] translucentCache = new bool[MAXBLOCKS];
+    public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
 
     public static readonly int maxBlock = 34;
 
@@ -37,11 +38,17 @@ public class Blocks {
             fullBlockCache[blocks[i].id] = blocks[i].isFullBlock;
             translucentCache[blocks[i].id] = blocks[i].type == BlockType.TRANSLUCENT;
         }
+        inventoryBlacklist[7] = true;
+        //inventoryBlacklist[34] = true;
     }
 
 
     public static bool isFullBlock(int id) {
         return fullBlockCache[id];
+    }
+
+    public static bool isBlacklisted(int block) {
+        return inventoryBlacklist[block];
     }
 
     public static Block AIR = register(new Block(0, "Air", BlockModel.emptyBlock()).air());
@@ -88,6 +95,7 @@ public class Blocks {
     public static Block CANDY_WHITE = register(new Block(29, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
     public static Block CANDY_GREY = register(new Block(30, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
     public static Block CANDY_BLACK = register(new Block(31, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
+    //public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3,1, 3, 2, 3, 3, 3,4, 3, 5, 3))).partialBlock());
     public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3,1, 3, 2, 3, 3, 3,4, 3, 5, 3))).partialBlock());
     
     public static bool isSolid(int block) {

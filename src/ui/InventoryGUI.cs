@@ -32,7 +32,12 @@ public class InventoryGUI : Menu {
         int i = 1;
         for (int y = 0; y < cols; y++) {
             for (int x = 0; x < rows; x++) {
-                var item = i > Blocks.maxBlock ? 0 : i;
+                while (Blocks.isBlacklisted(i)) {
+                    i++;
+                }
+
+                int item = i > Blocks.maxBlock ? 0 : i;
+
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
                 slots[y * rows + x] = new ItemSlot(this, slotX, slotY) {
