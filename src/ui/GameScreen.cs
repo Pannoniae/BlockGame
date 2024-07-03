@@ -234,11 +234,7 @@ public class GameScreen : Screen, IDisposable {
         if (key == Key.Escape) {
             // hack for back to main menu
             if (!world.inMenu) {
-                switchToMenu(PAUSE_MENU);
-                world.inMenu = true;
-                world.paused = true;
-                Game.instance.unlockMouse();
-                world.player.catchUpOnPrevVars();
+                pause();
             }
             else {
                 backToGame();
@@ -302,6 +298,14 @@ public class GameScreen : Screen, IDisposable {
         else {
             world.player.updatePickBlock(keyboard, key, scancode);
         }
+    }
+
+    public void pause() {
+        switchToMenu(PAUSE_MENU);
+        world.inMenu = true;
+        world.paused = true;
+        Game.instance.unlockMouse();
+        world.player.catchUpOnPrevVars();
     }
 
     public void backToGame() {

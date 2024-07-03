@@ -71,7 +71,10 @@ public class SettingsMenu : Menu {
         var fxaa = new ToggleButton(this, "fxaa", false, settings.fxaa ? 1 : 0,
             "FXAA: Disabled", "FXAA: Enabled");
         fxaa.topCentre();
-        fxaa.clicked += () => { settings.fxaa = fxaa.getIndex() == 1; };
+        fxaa.clicked += () => {
+            settings.fxaa = fxaa.getIndex() == 1;
+            Game.instance.updateFramebuffers();
+        };
         fxaa.tooltip = "FXAA is a fast anti-aliasing technique that smooths the jagged edges of blocks.";
         settingElements.Add(fxaa);
         addElement(fxaa);

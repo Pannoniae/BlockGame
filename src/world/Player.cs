@@ -570,7 +570,7 @@ public class Player : Entity {
 
         if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
             if (flyMode) {
-                strafeVector.Y -= 1;
+                strafeVector.Y -= 0.8;
             }
             else {
                 sneaking = true;
@@ -610,7 +610,7 @@ public class Player : Entity {
                 pressedMovementKey = true;
             }
             if (flyMode) {
-                strafeVector.Y += 1;
+                strafeVector.Y += 0.8;
             }
         }
 

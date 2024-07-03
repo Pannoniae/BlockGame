@@ -167,12 +167,26 @@ public partial class Game {
         #endif
         window = Window.Create(windowOptions);
         window.Load += init;
+        window.FocusChanged += focus;
         //window.Update += update;
         window.Render += mainLoop;
         window.FramebufferResize += resize;
         window.Closing += close;
 
         window.Run();
+    }
+
+    private void focus(bool given) {
+        if (currentScreen != Screen.GAME_SCREEN) {
+            return;
+        }
+        Console.Out.WriteLine(given);
+        if (!given && !GameScreen.world.inMenu) {
+            Screen.GAME_SCREEN.pause();
+        }
+        else {
+            //Screen.GAME_SCREEN.backToGame();
+        }
     }
 
     private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message, IntPtr userparam) {
@@ -457,7 +471,7 @@ public partial class Game {
         currentScreen.resize(size);
 
         if (Settings.instance.framebufferEffects) {
-            genFrameBuffer();
+            genFramebuffer();
         }
     }
     private void recalcGUIScale() {
@@ -472,7 +486,16 @@ public partial class Game {
         resize(new Vector2D<int>(width, height));
     }
 
-    unsafe private void genFrameBuffer() {
+    public void updateFramebuffers() {
+        if (Settings.instance.framebufferEffects) {
+            genFramebuffer();
+        }
+        else {
+            deleteFramebuffer();
+        }
+    }
+
+    unsafe private void genFramebuffer() {
         GL.DeleteFramebuffer(fbo);
         fbo = GL.GenFramebuffer();
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
@@ -509,6 +532,13 @@ public partial class Game {
 
         throwawayVAO = GL.CreateVertexArray();
 
+    }
+
+    private void deleteFramebuffer() {
+        GL.DeleteFramebuffer(fbo);
+        GL.DeleteTexture(FBOtex);
+        GL.DeleteRenderbuffer(depthBuffer);
+        GL.DeleteVertexArray(throwawayVAO);
     }
 
     public void executeOnMainThread(Action action) {
