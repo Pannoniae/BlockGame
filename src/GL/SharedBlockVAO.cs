@@ -8,7 +8,7 @@ namespace BlockGame;
 /// <summary>
 /// BlockVAO but we use separated vertex attribute format/bindings
 /// </summary>
-public class SharedBlockVAO : VAO {
+public sealed class SharedBlockVAO : VAO {
     public uint VAOHandle;
     public uint vbo;
     public uint ibo;

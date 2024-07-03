@@ -463,11 +463,20 @@ public class World : IDisposable {
         chunks.Remove(coord);
     }
 
-    public void Dispose() {
+    private void ReleaseUnmanagedResources() {
         foreach (var chunk in chunks) {
-            worldIO.saveChunk(chunk.Value);
-            chunks[chunk.Key].destroyChunk();
+             worldIO.saveChunk(chunk.Value);
+             chunks[chunk.Key].destroyChunk();
         }
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~World() {
+        ReleaseUnmanagedResources();
     }
 
     /// <summary>

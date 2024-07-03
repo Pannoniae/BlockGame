@@ -320,11 +320,28 @@ public class Chunk : IDisposable {
     public void destroyChunk() {
         Dispose();
     }
-    public void Dispose() {
+
+    private void ReleaseUnmanagedResources() {
         foreach (var chunk in subChunks) {
             chunk.Dispose();
         }
         heightMap.Dispose();
+    }
+
+    private void Dispose(bool disposing) {
+        ReleaseUnmanagedResources();
+        if (disposing) {
+            heightMap.Dispose();
+        }
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~Chunk() {
+        Dispose(false);
     }
 }
 

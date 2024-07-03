@@ -10,7 +10,7 @@ namespace BlockGame;
 /// SharedBlockVAO but we only use one VAO / vertex format then just rebind the vertex/index buffer
 /// It also uses only one buffer now instead of two
 /// </summary>
-public class ExtremelySharedBlockVAO : VAO {
+public sealed class ExtremelySharedBlockVAO : VAO {
     public uint VAOHandle;
     public uint buffer;
     public uint count;

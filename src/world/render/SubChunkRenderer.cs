@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -131,20 +130,26 @@ public class SubChunkRenderer : IDisposable {
         return b != 0 && Blocks.get(b).type != BlockType.TRANSLUCENT;
     }
 
-    private static bool notSolid(ushort b) {
-        return Blocks.notSolid(b);
+    private void ReleaseUnmanagedResources() {
+        vao?.Dispose();
+        // watervao?.Dispose();
     }
 
-    private static bool isSolid(Block b) {
-        return Blocks.isSolid(b);
+    private void Dispose(bool disposing) {
+        ReleaseUnmanagedResources();
+        if (disposing) {
+            vao?.Dispose();
+            watervao?.Dispose();
+        }
     }
 
-    private static bool notAir(Block b) {
-        return b.id != 0;
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
-    private static bool notTranslucent(ushort b) {
-        return !Blocks.isTranslucent(b);
+    ~SubChunkRenderer() {
+        Dispose(false);
     }
 
     /// <summary>
@@ -909,12 +914,11 @@ public class SubChunkRenderer : IDisposable {
             Unsafe.Add(ref arrayRef, index + i) = values[i];
         }
     }
+}
 
-    public void Dispose() {
-        vao?.Dispose();
-        watervao?.Dispose();
-    }
-
+public enum VertexConstructionMode {
+    OPAQUE,
+    TRANSLUCENT
 }
 
 [StructLayout(LayoutKind.Explicit)]
@@ -976,9 +980,4 @@ public struct TwoFloats {
     public float First;
     [FieldOffset(4)]
     public float Second;
-}
-
-public enum VertexConstructionMode {
-    OPAQUE,
-    TRANSLUCENT
 }

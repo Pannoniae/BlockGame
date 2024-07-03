@@ -72,8 +72,26 @@ public class SubChunk : IDisposable {
             }
         }
     }
-    public void Dispose() {
+
+    private void ReleaseUnmanagedResources() {
         renderer.Dispose();
         blocks.Dispose();
+    }
+
+    private void Dispose(bool disposing) {
+        ReleaseUnmanagedResources();
+        if (disposing) {
+            renderer.Dispose();
+            blocks.Dispose();
+        }
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~SubChunk() {
+        Dispose(false);
     }
 }

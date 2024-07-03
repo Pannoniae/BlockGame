@@ -23,8 +23,14 @@ public class HeightMap : IDisposable {
         // pack it back inside
         height[x * Chunk.CHUNKSIZE + z] = val;
     }
-
-    public void Dispose() {
+    private void ReleaseUnmanagedResources() {
         heightPool.putBack(height);
+    }
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+    ~HeightMap() {
+        ReleaseUnmanagedResources();
     }
 }

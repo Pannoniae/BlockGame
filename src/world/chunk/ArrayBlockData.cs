@@ -6,6 +6,7 @@ namespace BlockGame;
 
 public sealed class ArrayBlockData : BlockData, IDisposable {
 
+
     private static FixedArrayPool<ushort> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     private static FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
@@ -127,7 +128,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     // cleanup
-    public void Dispose() {
+    private void ReleaseUnmanagedResources() {
         if (blocks != null) {
             blockPool.putBack(blocks);
         }
@@ -135,6 +136,14 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             lightPool.putBack(light);
         }
     }
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+    ~ArrayBlockData() {
+        ReleaseUnmanagedResources();
+    }
+
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
