@@ -1,4 +1,5 @@
 using BlockGame.util;
+using JetBrains.Annotations;
 using Silk.NET.Maths;
 
 namespace BlockGame;
@@ -6,6 +7,14 @@ namespace BlockGame;
 public class Entity {
     public const int MAX_SWING_TICKS = 8;
     public const int AIR_HIT_CD = 10;
+
+    // is player walking on (colling with) ground
+    public bool onGround;
+
+    // is the player in the process of jumping
+    public bool jumping;
+
+    public bool sneaking;
 
     // entity positions are at feet
     public Vector3D<double> prevPosition;
@@ -41,6 +50,11 @@ public class Entity {
     public double totalTraveled;
     public double prevTotalTraveled;
 
+    public World world;
+
+    public bool flyMode;
+    private List<AABB> collisionTargets = [];
+
     public int airHitCD;
 
     public int swingTicks;
@@ -58,6 +72,141 @@ public class Entity {
     public ChunkCoord getChunk() {
         var blockPos = position.toBlockPos();
         return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
+    }
+
+    protected virtual void calcAABB(ref AABB aabb, Vector3D<double> pos) {
+        aabb = AABB.empty;
+    }
+
+    [Pure]
+    protected virtual AABB calcAABB(Vector3D<double> pos) {
+        return AABB.empty;
+    }
+
+    protected void collisionAndSneaking(double dt) {
+        var oldPos = position;
+        var blockPos = position.toBlockPos();
+        // collect potential collision targets
+        collisionTargets.Clear();
+        ReadOnlySpan<Vector3D<int>> targets = [
+            blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)
+        ];
+        foreach (Vector3D<int> target in targets) {
+            // first, collide with the block the player is in
+            var blockPos2 = feetPosition.toBlockPos();
+            var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z, world.getBlock(feetPosition.toBlockPos()));
+            if (currentAABB != null) {
+                collisionTargets.Add(currentAABB.Value);
+            }
+            foreach (var neighbour in world.getBlocksInBox(target + new Vector3D<int>(-1, -1, -1), target + new Vector3D<int>(1, 1, 1))) {
+                var block = world.getBlock(neighbour);
+                var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
+                if (blockAABB == null) {
+                    continue;
+                }
+
+                collisionTargets.Add(blockAABB.Value);
+            }
+        }
+
+        // Y axis resolution
+        position.Y += velocity.Y * dt;
+        foreach (var blockAABB in collisionTargets) {
+            var aabbY = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            if (AABB.isCollision(aabbY, blockAABB)) {
+                // left side
+                if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
+                    var diff = blockAABB.minY - aabbY.maxY;
+                    //if (diff < velocity.Y) {
+                    position.Y += diff;
+                    velocity.Y = 0;
+                    //}
+                }
+
+                else if (velocity.Y < 0 && aabbY.minY <= blockAABB.maxY) {
+                    var diff = blockAABB.maxY - aabbY.minY;
+                    //if (diff > velocity.Y) {
+                    position.Y += diff;
+                    velocity.Y = 0;
+                    //}
+                }
+            }
+        }
+
+
+        // X axis resolution
+        position.X += velocity.X * dt;
+        var hasAtLeastOneCollision = false;
+        foreach (var blockAABB in collisionTargets) {
+            var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var sneakaabbX = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
+            if (AABB.isCollision(aabbX, blockAABB)) {
+                collisionXThisFrame = true;
+                // left side
+                if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
+                    var diff = blockAABB.minX - aabbX.maxX;
+                    //if (diff < velocity.X) {
+                    position.X += diff;
+                    //}
+                }
+
+                else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
+                    var diff = blockAABB.maxX - aabbX.minX;
+                    //if (diff > velocity.X) {
+                    position.X += diff;
+                    //}
+                }
+            }
+            if (sneaking && AABB.isCollision(sneakaabbX, blockAABB)) {
+                hasAtLeastOneCollision = true;
+            }
+        }
+        // don't fall off while sneaking
+        if (sneaking && onGround && !hasAtLeastOneCollision) {
+            // revert movement
+            position.X = oldPos.X;
+        }
+
+        position.Z += velocity.Z * dt;
+        hasAtLeastOneCollision = false;
+        foreach (var blockAABB in collisionTargets) {
+            var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var sneakaabbZ = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
+            if (AABB.isCollision(aabbZ, blockAABB)) {
+                collisionZThisFrame = true;
+                if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
+                    var diff = blockAABB.minZ - aabbZ.maxZ;
+                    //if (diff < velocity.Z) {
+                    position.Z += diff;
+                    //}
+                }
+
+                else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
+                    var diff = blockAABB.maxZ - aabbZ.minZ;
+                    //if (diff > velocity.Z) {
+                    position.Z += diff;
+                    //}
+                }
+            }
+            if (sneaking && AABB.isCollision(sneakaabbZ, blockAABB)) {
+                hasAtLeastOneCollision = true;
+            }
+        }
+        // don't fall off while sneaking
+        if (sneaking && onGround && !hasAtLeastOneCollision) {
+            // revert movement
+            position.Z = oldPos.Z;
+        }
+
+        // is player on ground? check slightly below
+        var groundCheck = calcAABB(new Vector3D<double>(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
+        onGround = false;
+        foreach (var blockAABB in collisionTargets) {
+            if (AABB.isCollision(blockAABB, groundCheck)) {
+                onGround = true;
+                flyMode = false;
+            }
+        }
     }
 
     public double getSwingProgress(double dt) {

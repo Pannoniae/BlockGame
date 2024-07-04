@@ -14,18 +14,6 @@ public class Player : Entity {
     public const double sneakingEyeHeight = 1.45;
     public const double feetCheckHeight = 0.05;
 
-    // is player walking on (colling with) ground
-    public bool onGround;
-
-    // is the player in the process of jumping
-    public bool jumping;
-
-    // jump cooldown to prevent player jumping immediately again
-    // which we don't have
-    public double jumpCD;
-
-    public bool sneaking;
-
     public PlayerCamera camera;
 
     public Vector3D<double> inputVector;
@@ -34,7 +22,7 @@ public class Player : Entity {
 
 
     public Inventory hotbar;
-    public World world;
+
     public Vector3D<double> strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
 
@@ -46,8 +34,7 @@ public class Player : Entity {
     /// </summary>
     public long spacePress;
 
-    public bool flyMode;
-    private List<AABB> collisionTargets = [];
+
 
 
     // positions are feet positions
@@ -338,143 +325,17 @@ public class Player : Entity {
         }
     }
 
-    private static void calcAABB(ref AABB aabb, Vector3D<double> pos) {
+    protected override void calcAABB(ref AABB aabb, Vector3D<double> pos) {
         const double sizehalf = width / 2;
         AABB.update(ref aabb, new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
             new Vector3D<double>(width, height, width));
     }
 
     [Pure]
-    private AABB calcAABB(Vector3D<double> pos) {
+    protected override AABB calcAABB(Vector3D<double> pos) {
         var sizehalf = width / 2;
         return AABB.fromSize(new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
             new Vector3D<double>(width, height, width));
-    }
-
-    private void collisionAndSneaking(double dt) {
-        var oldPos = position;
-        var blockPos = position.toBlockPos();
-        // collect potential collision targets
-        collisionTargets.Clear();
-        ReadOnlySpan<Vector3D<int>> targets = [
-            blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)
-        ];
-        foreach (Vector3D<int> target in targets) {
-            // first, collide with the block the player is in
-            var blockPos2 = feetPosition.toBlockPos();
-            var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z, world.getBlock(feetPosition.toBlockPos()));
-            if (currentAABB != null) {
-                collisionTargets.Add(currentAABB.Value);
-            }
-            foreach (var neighbour in world.getBlocksInBox(target + new Vector3D<int>(-1, -1, -1), target + new Vector3D<int>(1, 1, 1))) {
-                var block = world.getBlock(neighbour);
-                var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
-                if (blockAABB == null) {
-                    continue;
-                }
-
-                collisionTargets.Add(blockAABB.Value);
-            }
-        }
-
-        // Y axis resolution
-        position.Y += velocity.Y * dt;
-        foreach (var blockAABB in collisionTargets) {
-            var aabbY = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-            if (AABB.isCollision(aabbY, blockAABB)) {
-                // left side
-                if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
-                    var diff = blockAABB.minY - aabbY.maxY;
-                    //if (diff < velocity.Y) {
-                    position.Y += diff;
-                    velocity.Y = 0;
-                    //}
-                }
-
-                else if (velocity.Y < 0 && aabbY.minY <= blockAABB.maxY) {
-                    var diff = blockAABB.maxY - aabbY.minY;
-                    //if (diff > velocity.Y) {
-                    position.Y += diff;
-                    velocity.Y = 0;
-                    //}
-                }
-            }
-        }
-
-
-        // X axis resolution
-        position.X += velocity.X * dt;
-        var hasAtLeastOneCollision = false;
-        foreach (var blockAABB in collisionTargets) {
-            var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-            var sneakaabbX = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
-            if (AABB.isCollision(aabbX, blockAABB)) {
-                collisionXThisFrame = true;
-                // left side
-                if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
-                    var diff = blockAABB.minX - aabbX.maxX;
-                    //if (diff < velocity.X) {
-                    position.X += diff;
-                    //}
-                }
-
-                else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
-                    var diff = blockAABB.maxX - aabbX.minX;
-                    //if (diff > velocity.X) {
-                    position.X += diff;
-                    //}
-                }
-            }
-            if (sneaking && AABB.isCollision(sneakaabbX, blockAABB)) {
-                hasAtLeastOneCollision = true;
-            }
-        }
-        // don't fall off while sneaking
-        if (sneaking && onGround && !hasAtLeastOneCollision) {
-            // revert movement
-            position.X = oldPos.X;
-        }
-
-        position.Z += velocity.Z * dt;
-        hasAtLeastOneCollision = false;
-        foreach (var blockAABB in collisionTargets) {
-            var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-            var sneakaabbZ = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
-            if (AABB.isCollision(aabbZ, blockAABB)) {
-                collisionZThisFrame = true;
-                if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
-                    var diff = blockAABB.minZ - aabbZ.maxZ;
-                    //if (diff < velocity.Z) {
-                    position.Z += diff;
-                    //}
-                }
-
-                else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
-                    var diff = blockAABB.maxZ - aabbZ.minZ;
-                    //if (diff > velocity.Z) {
-                    position.Z += diff;
-                    //}
-                }
-            }
-            if (sneaking && AABB.isCollision(sneakaabbZ, blockAABB)) {
-                hasAtLeastOneCollision = true;
-            }
-        }
-        // don't fall off while sneaking
-        if (sneaking && onGround && !hasAtLeastOneCollision) {
-            // revert movement
-            position.Z = oldPos.Z;
-        }
-
-        // is player on ground? check slightly below
-        var groundCheck = calcAABB(new Vector3D<double>(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
-        onGround = false;
-        foreach (var blockAABB in collisionTargets) {
-            if (AABB.isCollision(blockAABB, groundCheck)) {
-                onGround = true;
-                flyMode = false;
-            }
-        }
     }
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
