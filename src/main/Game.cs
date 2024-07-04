@@ -215,6 +215,7 @@ public partial class Game {
         GD = new GraphicsDevice(GL);
         //GD.BlendingEnabled = true;
         GD.BlendState = initialBlendState;
+        GD.BlendingEnabled = true;
         GD.DepthTestingEnabled = true;
         GD.DepthState = DepthState.Default;
         GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
@@ -603,6 +604,7 @@ public partial class Game {
         else {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
+        GD.DepthTestingEnabled = true;
         currentScreen.clear(GD, dt, interp);
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
@@ -627,8 +629,7 @@ public partial class Game {
         GLTracker.load();
 
         // for GUI, no depth test
-        GD.DepthTestingEnabled = false;
-        GD.BlendingEnabled = true;
+        //GD.BlendingEnabled = true;
         fontLoader.renderer.begin();
         gui.tb.Begin();
         gui.immediatetb.Begin(BatcherBeginMode.Immediate);
@@ -637,8 +638,7 @@ public partial class Game {
         gui.tb.End();
         fontLoader.renderer.end();
         gui.immediatetb.End();
-        GD.DepthTestingEnabled = true;
-        GD.BlendingEnabled = false;
+        //GD.BlendingEnabled = false;
     }
 
     public TimerAction setInterval(long interval, Action action) {

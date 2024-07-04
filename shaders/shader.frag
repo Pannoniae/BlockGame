@@ -22,6 +22,7 @@ uniform sampler2D lightTexture;
 
 const float a[6] = float[6](0.8, 0.8, 0.6, 0.6, 0.6, 1);
 uniform vec4 fogColour;
+uniform vec4 skyColour;
 
 float getFog(float d) {
     float fogMax = drawDistance - 16.0;
@@ -45,6 +46,8 @@ void main() {
     if (color.a <= 0) {
         discard;
     }
+    // mix the fog colour between it and the sky
+    vec4 mixedFogColour = mix(fogColour, skyColour, ratio);
     // mix fog
-    color = mix(color, fogColour, ratio);
+    color = mix(color, mixedFogColour, ratio);
 }

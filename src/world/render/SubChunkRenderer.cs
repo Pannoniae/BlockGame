@@ -254,7 +254,7 @@ public class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (!isEmptyRenderTranslucent) {
+        if (subChunk.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
             shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16));

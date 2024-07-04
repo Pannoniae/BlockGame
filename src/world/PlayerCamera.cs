@@ -131,7 +131,7 @@ public class PlayerCamera {
 
     public Matrix4x4 getProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
-        var maxPlane = Math.Max(128, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
+        var maxPlane = Math.Max(128, (Settings.instance.renderDistance + 4) * Chunk.CHUNKSIZE);
         return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(vfov), aspectRatio, 0.1f, maxPlane);
     }
 

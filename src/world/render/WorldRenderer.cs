@@ -27,7 +27,8 @@ public class WorldRenderer {
     public int uCameraPos;
     public int drawDistance;
     public int fogColour;
-    
+    public int skyColour;
+
     
     public int dummyuMVP;
 
@@ -41,6 +42,7 @@ public class WorldRenderer {
     private int outline_uProjection;
 
     public static Color4b defaultClearColour = Color4b.DeepSkyBlue;
+    public static Color4b defaultFogColour = new Color4b(210, 210, 210);
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
@@ -62,13 +64,15 @@ public class WorldRenderer {
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
         drawDistance = shader.getUniformLocation(nameof(drawDistance));
         fogColour = shader.getUniformLocation(nameof(fogColour));
+        skyColour = shader.getUniformLocation(nameof(skyColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
 
         
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
         shader.setUniform(drawDistance, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
-        shader.setUniform(fogColour, defaultClearColour);
+        shader.setUniform(fogColour, defaultFogColour);
+        shader.setUniform(skyColour, defaultClearColour);
     }
 
 
@@ -129,7 +133,7 @@ public class WorldRenderer {
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);
         GL.Enable(EnableCap.CullFace);
-        Game.GD.BlendingEnabled = false;
+        //Game.GD.BlendingEnabled = false;
 
     }
 
