@@ -28,35 +28,6 @@ public class Player : Entity {
 
     public PlayerCamera camera;
 
-    public AABB aabb;
-
-    // entity positions are at feet
-    public Vector3D<double> prevPosition;
-    public Vector3D<double> position;
-    public Vector3D<double> velocity;
-    public Vector3D<double> accel;
-
-    // slightly above so it doesn't think it's under the player
-    public Vector3D<double> feetPosition;
-
-    // TODO implement some MovementState system so movement constants don't have to be duplicated...
-    // it would store a set of values for acceleration, drag, friction, maxspeed, etc...
-
-    public ushort blockAtFeet;
-    public bool inLiquid;
-    public bool wasInLiquid;
-
-    public bool collisionXThisFrame;
-    public bool collisionZThisFrame;
-
-    /// <summary>
-    /// This number is lying to you.
-    /// </summary>
-    public double totalTraveled;
-    public double prevTotalTraveled;
-
-    public Vector3D<double> forward;
-
     public Vector3D<double> inputVector;
 
     public PlayerRenderer renderer;
@@ -167,16 +138,6 @@ public class Player : Entity {
         camera.prevPosition = camera.position;
     }
 
-    public ChunkCoord getChunk(Vector3D<double> pos) {
-        var blockPos = pos.toBlockPos();
-        return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
-    }
-
-    public ChunkCoord getChunk() {
-        var blockPos = position.toBlockPos();
-        return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
-    }
-
     public void loadChunksAroundThePlayer(int renderDistance) {
         var blockPos = position.toBlockPos();
         var chunk = World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
@@ -216,39 +177,6 @@ public class Player : Entity {
 
         if (Math.Abs(velocity.Z) < Constants.epsilon) {
             velocity.Z = 0;
-        }
-
-        if (velocity != Vector3D<double>.Zero) {
-            // clamp max speed
-            // If speed velocity is 0, we are fucked so check for that
-            /*
-            var hVel = new Vector3D<double>(velocity.X, 0, velocity.Z);
-            double maxSpeed;
-            if (inLiquid) {
-                maxSpeed = Constants.maxhLiquidSpeed;
-                if (sneaking) {
-                    maxSpeed = Constants.maxhLiquidSpeedSneak;
-                }
-            }
-            else {
-                if (onGround) {
-                    maxSpeed = Constants.maxhSpeed;
-                    if (sneaking) {
-                        maxSpeed = Constants.maxhSpeedSneak;
-                    }
-                }
-                else {
-                    maxSpeed = Constants.maxhAirSpeed;
-                    if (sneaking) {
-                        maxSpeed = Constants.maxhAirSpeedSneak;
-                    }
-                }
-            }
-            if (hVel.Length > maxSpeed) {
-                var cappedVel = Vector3D.Normalize(hVel) * maxSpeed;
-                velocity = new Vector3D<double>(cappedVel.X, velocity.Y, cappedVel.Z);
-            }
-            */
         }
 
         // clamp fallspeed

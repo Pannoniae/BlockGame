@@ -143,7 +143,7 @@ public class BTextureAtlas : IDisposable {
     }
 
     public void update(double dt) {
-        if (ticks % 4 == 0) {
+        if (ticks % 6 == 0) {
             updateTexture(16 * 7, 0, 16, 16, (i % 16) * 16, 0);
             i++;
         }
