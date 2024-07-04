@@ -26,6 +26,7 @@ public class GameScreen : Screen, IDisposable {
 
     private TimerAction updateMemory;
 
+
     // values for f3
     private long workingSet;
     private long GCMemory;

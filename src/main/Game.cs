@@ -551,6 +551,7 @@ public partial class Game {
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
         mousePos = mouse.Position;
+        textureManager.blockTexture.update(dt);
         currentScreen.update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
         //Console.Out.WriteLine(after - before);
@@ -595,7 +596,6 @@ public partial class Game {
             window.Title = $"BlockGame {fps} ({ft * 1000:0.##}ms)";
             stopwatch.Restart();
         }
-
         GLTracker.save();
 
         if (Settings.instance.framebufferEffects) {

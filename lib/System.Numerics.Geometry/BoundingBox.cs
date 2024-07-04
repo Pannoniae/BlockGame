@@ -428,6 +428,51 @@ namespace System.Numerics
             return result;
         }
 
+        public bool isFront(ref Plane plane)
+        {
+            // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+            Vector3 positiveVertex;
+            Vector3 negativeVertex;
+
+            if (plane.Normal.X >= 0)
+            {
+                positiveVertex.X = Max.X;
+                negativeVertex.X = Min.X;
+            }
+            else
+            {
+                positiveVertex.X = Min.X;
+                negativeVertex.X = Max.X;
+            }
+
+            if (plane.Normal.Y >= 0)
+            {
+                positiveVertex.Y = Max.Y;
+                negativeVertex.Y = Min.Y;
+            }
+            else
+            {
+                positiveVertex.Y = Min.Y;
+                negativeVertex.Y = Max.Y;
+            }
+
+            if (plane.Normal.Z >= 0)
+            {
+                positiveVertex.Z = Max.Z;
+                negativeVertex.Z = Min.Z;
+            }
+            else
+            {
+                positiveVertex.Z = Min.Z;
+                negativeVertex.Z = Max.Z;
+            }
+
+            // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+            var distance = plane.Normal.X * negativeVertex.X + plane.Normal.Y * negativeVertex.Y + plane.Normal.Z * negativeVertex.Z + plane.D;
+            return distance > 0;
+        }
+
         public void Intersects(ref Plane plane, out PlaneIntersectionType result)
         {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html

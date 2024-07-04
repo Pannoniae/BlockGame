@@ -180,6 +180,16 @@ namespace System.Numerics
             return result;
         }
 
+        public bool outside(BoundingBox boundingBox) {
+            var intersects = false;
+            for (var i = 0; i < PlaneCount; ++i) {
+                if (boundingBox.isFront(ref _planes[i])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         /// <summary>
         /// Containment test between this <see cref="BoundingFrustum"/> and specified <see cref="BoundingBox"/>.
         /// </summary>
