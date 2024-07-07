@@ -34,6 +34,16 @@ public static class VectorExtensions {
         return new Vector3D<float>(vec.X, vec.Y, vec.Z);
     }
 
+    public static Vector3D<int> toBlockPos(this Vector3D<double> currentPos) {
+        return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
+            (int)Math.Floor(currentPos.Z));
+    }
+
+    public static Vector3D<int> toBlockPos(this Vector3D<float> currentPos) {
+        return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
+            (int)Math.Floor(currentPos.Z));
+    }
+
     public static Vector3D<T> withoutY<T>(this Vector3D<T> vec) where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T> {
         return new Vector3D<T>(vec.X, default, vec.Z);
     }

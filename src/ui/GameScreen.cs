@@ -152,9 +152,19 @@ public class GameScreen : Screen, IDisposable {
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
-        var newPos = world.naiveRaycastBlock(out Game.instance.previousPos);
-        bool meshOutline = Game.instance.targetedPos != newPos && newPos != default;
-        Game.instance.targetedPos = newPos;
+        var prevTargetedPos = Game.instance.targetedPos;
+        var col = Raycast.raycast(world);
+        // previous pos
+        if (col.hit) {
+            Game.instance.targetedPos = col.block;
+            Game.instance.previousPos = col.previous;
+        }
+        else {
+            Game.instance.targetedPos = null;
+            Game.instance.previousPos = null;
+        }
+
+        bool meshOutline = col.hit && prevTargetedPos != Game.instance.targetedPos;
         if (meshOutline) {
             world.renderer.meshBlockOutline();
         }

@@ -41,12 +41,7 @@ public static class Utils {
     }
     public static float rad2deg(float radians) {
         return 180f / MathF.PI * radians;
-    }
-
-    public static Vector3D<int> toBlockPos(this Vector3D<double> currentPos) {
-        return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
-            (int)Math.Floor(currentPos.Z));
-    }
+}
 
     public static Half half(float value) {
         // Convert float to half float
@@ -143,6 +138,28 @@ public readonly record struct Direction {
             RawDirection.UP => UP,
             _ => throw new ArgumentOutOfRangeException(nameof(dir), dir, null)
         };
+    }
+
+    public static RawDirection getRawDirection(Vector3D<int> dir) {
+        if (dir == WEST) {
+            return RawDirection.WEST;
+        }
+        if (dir == EAST) {
+            return RawDirection.EAST;
+        }
+        if (dir == SOUTH) {
+            return RawDirection.SOUTH;
+        }
+        if (dir == NORTH) {
+            return RawDirection.NORTH;
+        }
+        if (dir == DOWN) {
+            return RawDirection.DOWN;
+        }
+        if (dir == UP) {
+            return RawDirection.UP;
+        }
+        throw new ArgumentException("Invalid direction!");
     }
 
 }

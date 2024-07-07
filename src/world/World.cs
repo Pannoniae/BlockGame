@@ -551,6 +551,16 @@ public class World : IDisposable {
         return chunk.getBlock(blockPos.X, y, blockPos.Z) != 0;
     }
 
+    public bool isSelectableBlock(int x, int y, int z) {
+        if (!inWorld(x, y, z)) {
+            return false;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        return Blocks.get(chunk.getBlock(blockPos.X, y, blockPos.Z)).selection;
+    }
+
     public ushort getBlock(int x, int y, int z) {
         if (y is < 0 or >= WORLDHEIGHT) {
             return 0;
@@ -946,41 +956,6 @@ public class World : IDisposable {
         return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
             y,
             chunkZ * Chunk.CHUNKSIZE + z);
-    }
-
-    /// <summary>
-    /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
-    /// </summary>
-    /// <param name="previous">The previous block (used for placing)</param>
-    /// <returns></returns>
-    public Vector3D<int>? naiveRaycastBlock(out Vector3D<int>? previous) {
-        // raycast
-        var cameraPos = player.camera.position;
-        var forward = player.camera.forward;
-        var cameraForward = new Vector3D<double>(forward.X, forward.Y, forward.Z);
-        var currentPos = new Vector3D<double>(cameraPos.X, cameraPos.Y, cameraPos.Z);
-
-        // don't round!!
-        //var blockPos = toBlockPos(currentPos);
-
-        previous = currentPos.toBlockPos();
-        for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
-            currentPos += cameraForward * Constants.RAYCASTSTEP;
-            var blockPos = currentPos.toBlockPos();
-            var block = Blocks.get(getBlock(blockPos));
-            if (isBlock(blockPos.X, blockPos.Y, blockPos.Z) && block.selection) {
-                // we also need to check if it's inside the selection of the block
-                if (AABB.isCollision(getSelectionAABB(blockPos.X, blockPos.Y, blockPos.Z, block) ?? AABB.empty, currentPos)) {
-                    //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
-                    return blockPos;
-                }
-            }
-
-            previous = blockPos;
-        }
-
-        previous = null;
-        return null;
     }
 
     public List<Vector3D<int>> getBlocksInBox(Vector3D<int> min, Vector3D<int> max) {
