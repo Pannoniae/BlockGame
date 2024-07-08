@@ -26,6 +26,8 @@ public class WorldRenderer {
     public int uMVP;
     public int uCameraPos;
     public int drawDistance;
+    public int fogMax;
+    public int fogMin;
     public int fogColour;
     public int skyColour;
 
@@ -62,7 +64,9 @@ public class WorldRenderer {
         uMVP = shader.getUniformLocation(nameof(uMVP));
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
-        drawDistance = shader.getUniformLocation(nameof(drawDistance));
+        //drawDistance = shader.getUniformLocation(nameof(drawDistance));
+        fogMax = shader.getUniformLocation(nameof(fogMax));
+        fogMin = shader.getUniformLocation(nameof(fogMin));
         fogColour = shader.getUniformLocation(nameof(fogColour));
         skyColour = shader.getUniformLocation(nameof(skyColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
@@ -70,7 +74,10 @@ public class WorldRenderer {
         
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
-        shader.setUniform(drawDistance, Settings.instance.renderDistance * Chunk.CHUNKSIZE);
+        var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
+        //shader.setUniform(drawDistance, dd);
+        shader.setUniform(fogMax, dd - 16);
+        shader.setUniform(fogMin, (int)(dd * 0.5f));
         shader.setUniform(fogColour, defaultFogColour);
         shader.setUniform(skyColour, defaultClearColour);
     }
@@ -109,6 +116,7 @@ public class WorldRenderer {
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
         foreach (var chunk in chunksToRender) {
+            Game.metrics.renderedChunks += 1;
             chunk.drawOpaque();
         }
         // TRANSLUCENT DEPTH PRE-PASS

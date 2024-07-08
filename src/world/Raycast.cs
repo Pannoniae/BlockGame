@@ -9,7 +9,6 @@ public class Raycast {
     /// <summary>
     /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
     /// </summary>
-    /// <param name="previous">The previous block (used for placing)</param>
     /// <returns></returns>
     public static RayCollision raycast(World world) {
         // raycast
@@ -81,7 +80,7 @@ public class Raycast {
     }
 }
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 public struct RayCollision {
 
     /// <summary>

@@ -112,7 +112,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public bool isEmpty() {
-        return blockCount == 0;
+        return blockCount == 0 || !inited;
     }
 
     public bool hasRandomTickingBlocks() {

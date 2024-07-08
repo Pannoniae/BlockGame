@@ -102,7 +102,7 @@ public class GameScreen : Screen, IDisposable {
                     debugStr.Append("No target\n");
             }
 
-            debugStr.AppendFormat("rC:{0} rV:{1}k\n", m.renderedChunks, m.renderedVerts / 1000);
+            debugStr.AppendFormat("rC:{0} rSC:{1} rV:{2}k\n", m.renderedChunks, m.renderedSubChunks, m.renderedVerts / 1000);
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);

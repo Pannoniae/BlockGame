@@ -120,6 +120,7 @@ public class PlayerCamera {
         var factor = 2f;
         //var axisZ = new Vector3(1f, 0, 1f);
         //var axisX = new Vector3(1f, 0, -1f);
+        // why 30 degrees? no bloody idea
         var axisZ = Vector3.Normalize(Vector3.Transform(new Vector3(0, 0, 1), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
         var axisX = Vector3.Normalize(Vector3.Transform(new Vector3(1, 0, 0), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
 

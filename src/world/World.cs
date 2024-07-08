@@ -830,8 +830,8 @@ public class World : IDisposable {
 
     public static RegionCoord getRegionPos(ChunkCoord pos) {
         return new RegionCoord(
-            pos.x >> 5,
-            pos.z >> 5);
+            pos.x >> 4,
+            pos.z >> 4);
     }
 
     public static Vector3D<int> getPosInChunk(int x, int y, int z) {

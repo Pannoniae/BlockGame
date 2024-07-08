@@ -169,6 +169,8 @@ public class SubChunkRenderer : IDisposable {
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
         if (subChunk.isEmpty) {
+            isEmptyRenderOpaque = true;
+            isEmptyRenderTranslucent = true;
             return;
         }
 
@@ -179,6 +181,8 @@ public class SubChunkRenderer : IDisposable {
 
         // if chunk is full, don't mesh either
         if (hasOnlySolid) {
+            isEmptyRenderOpaque = true;
+            isEmptyRenderTranslucent = true;
             return;
         }
 
@@ -249,7 +253,7 @@ public class SubChunkRenderer : IDisposable {
             Game.worldShader.setUniform(uChunkPos, new Vector3(subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f));
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
-            Game.metrics.renderedChunks += 1;
+            Game.metrics.renderedSubChunks += 1;
         }
     }
 
