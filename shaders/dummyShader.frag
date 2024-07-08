@@ -1,7 +1,7 @@
 ﻿#version 440
 
 // don't, glass will be fucked
-//layout(early_fragment_tests) in;
+layout(early_fragment_tests) in;
 layout(location = 0) out vec4 color;
 
 in vec2 texCoords;
