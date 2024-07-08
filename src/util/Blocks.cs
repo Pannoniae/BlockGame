@@ -64,7 +64,7 @@ public class Blocks {
         .transparency()
     );
 
-    public static Block WATER = register(new Water(7, "Water", BlockModel.makeLiquid(Block.cubeUVs(7, 0)))
+    public static Block WATER = register(new Water(7, "Water", BlockModel.makeLiquid(Block.cubeUVs(0, 4)))
         .makeLiquid());
 
     public static Block WOODEN_PLANKS = register(new Block(8, "Wooden Planks", BlockModel.makeCube(Block.cubeUVs(8, 0))));
