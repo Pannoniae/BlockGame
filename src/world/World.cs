@@ -108,32 +108,6 @@ public class World : IDisposable {
         player.loadChunksAroundThePlayerLoading(Settings.instance.renderDistance);
     }
 
-    private void genTerrainSine() {
-        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
-                for (int y = 0; y < 3; y++) {
-                    setBlock(x, y, z, 2);
-                }
-            }
-        }
-
-        var sinMin = 2;
-        for (int x = 0; x < WORLDSIZE * Chunk.CHUNKSIZE; x++) {
-            for (int z = 0; z < WORLDSIZE * Chunk.CHUNKSIZE; z++) {
-                var sin = Math.Sin(x / 3f) * 2 + sinMin + 1 + Math.Cos(z / 3f) * 2 + sinMin + 1;
-                for (int y = sinMin; y < sin; y++) {
-                    setBlock(x, y, z, 5);
-                }
-
-                if (sin < 4) {
-                    for (int y = 3; y < 4; y++) {
-                        setBlock(x, y, z, Blocks.WATER.id);
-                    }
-                }
-            }
-        }
-    }
-
     public void update(double dt) {
         worldTime += dt;
         worldTick++;

@@ -82,6 +82,16 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
+    /// <summary>
+    /// Your reponsibility to update the counts after a batch of changes.
+    /// </summary>
+    public void fastSet(int x, int y, int z, ushort value) {
+        if (!inited && value != 0) {
+            init();
+        }
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+    }
+
     public ArrayBlockData(Chunk chunk, SubChunk section) {
         this.chunk = chunk;
         this.section = section;

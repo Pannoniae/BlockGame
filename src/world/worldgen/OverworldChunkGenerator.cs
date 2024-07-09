@@ -35,13 +35,15 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 flatNoise += 64;
                 //Console.Out.WriteLine(flatNoise);
                 
-                chunk.setBlock(x, 0, z, Blocks.HELLSTONE.id);
+                chunk.setBlockFast(x, 0, z, Blocks.HELLSTONE.id);
                 // hack until we can propagate them properly AND cheaply
                 chunk.setBlockLight(x, 0, z, Blocks.HELLSTONE.lightLevel);
 
                 for (int y = 1; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
                     if (y < flatNoise) {
                         chunk.setBlock(x, y, z, Blocks.STONE.id);
+                        // set heightmap
+                        chunk.addToHeightMap(x, y, z);
                     }
                     else {
                         break;
@@ -51,20 +53,25 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 // replace top layers with dirt
                 var amt = generator.getNoise(generator.auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
                 for (int yy = height - 1; yy > height - 1 - amt; yy--) {
-                    chunk.setBlock(x, yy, z, Blocks.DIRT.id);
+                    chunk.setBlockFast(x, yy, z, Blocks.DIRT.id);
                 }
 
                 // water if low
                 if (height < WATER_LEVEL - 1) {
                     for (int y2 = height; y2 < WATER_LEVEL; y2++) {
-                        chunk.setBlock(x, y2, z, Blocks.WATER.id);
+                        chunk.setBlockFast(x, y2, z, Blocks.WATER.id);
                     }
                     // put sand on the lake floors
-                    chunk.setBlock(x, height, z, generator.getNoise2(worldPos.X, worldPos.Z) > 0 ? Blocks.SAND.id : Blocks.DIRT.id);
+                    chunk.setBlockFast(x, height, z, generator.getNoise2(worldPos.X, worldPos.Z) > 0 ? Blocks.SAND.id : Blocks.DIRT.id);
                 }
                 else {
-                    chunk.setBlock(x, height, z, Blocks.GRASS.id);
+                    chunk.setBlockFast(x, height, z, Blocks.GRASS.id);
                 }
+            }
+        }
+        foreach (var subChunk in chunk.subChunks) {
+            if (subChunk.blocks.inited) {
+                subChunk.blocks.refreshCounts();
             }
         }
         chunk.status = ChunkStatus.GENERATED;

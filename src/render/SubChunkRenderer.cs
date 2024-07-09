@@ -243,11 +243,11 @@ public class SubChunkRenderer : IDisposable {
 
 
     public bool isVisible(BoundingFrustum frustum) {
-        return frustum.Contains(subChunk.bbbox) != ContainmentType.Disjoint;
+        return !frustum.outside(subChunk.bbbox);
     }
 
     public void drawOpaque() {
-        if (!isEmptyRenderOpaque) {
+        if (!isEmptyRenderOpaque && isVisible(WorldRenderer.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
             Game.worldShader.setUniform(uChunkPos, new Vector3(subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f));
@@ -258,7 +258,7 @@ public class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (subChunk.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent) {
+        if (subChunk.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent && isVisible(WorldRenderer.frustum)) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.worldShader;
             shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16));
@@ -345,7 +345,7 @@ public class SubChunkRenderer : IDisposable {
                         : (ushort)0;
 
                     // if below world, pretend it's dirt (so it won't get meshed)
-                    if (subChunk.chunkCoord.y == 0 && y == -1) {
+                    if (subChunk.chunkY == 0 && y == -1) {
                         bl = Blocks.DIRT.id;
                     }
 

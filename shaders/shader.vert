@@ -11,7 +11,7 @@ uniform vec3 uChunkPos;
 out vec2 texCoords;
 out vec4 tint;
 
-out vec3 vertexPosFromCamera;
+out float vertexDist;
 
 uniform vec3 uCameraPos;
 uniform sampler2D lightTexture;
@@ -31,5 +31,5 @@ void main() {
     // per-face lighting
     // float lColor = a[direction]
     tint = texelFetch(lightTexture, lightCoords, 0) * a[direction] * aoArray[aoValue];
-    vertexPosFromCamera = pos - uCameraPos;
+    vertexDist = length(pos - uCameraPos);
 }

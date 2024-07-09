@@ -26,7 +26,7 @@ public class ChunkTicketComparer : IComparer<ChunkLoadTicket> {
         int statusDiff = (int)x.level - (int)y.level;
         // if statusDiff > 0, chunk2 is bigger
         //Console.Out.WriteLine($"{comparison} {statusDiff * 1000}");
-        return comparison + statusDiff * 1000;
+        return comparison + statusDiff * 10000;
     }
 }
 
@@ -42,6 +42,6 @@ public class ChunkTicketComparerReverse : IComparer<ChunkLoadTicket> {
         int statusDiff = (int)y.level - (int)x.level;
         // if statusDiff > 0, chunk2 is bigger
         //Console.Out.WriteLine($"{comparison} {statusDiff * 1000}");
-        return comparison + statusDiff * 1000;
+        return comparison + statusDiff * 10000;
     }
 }

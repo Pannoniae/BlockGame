@@ -109,6 +109,10 @@ public class Chunk : IDisposable {
         subChunks[y >> 4].blocks[x, y & 0xF, z] = block;
     }
 
+    public void setBlockFast(int x, int y, int z, ushort block) {
+        subChunks[y >> 4].blocks.fastSet(x, y & 0xF, z, block);
+    }
+
     public void setBlockRemesh(int x, int y, int z, ushort block) {
         var sectionY = y >> 4;
         var yRem = y & 0xF;

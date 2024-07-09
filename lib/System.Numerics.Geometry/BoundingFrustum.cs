@@ -181,9 +181,8 @@ namespace System.Numerics
         }
 
         public bool outside(BoundingBox boundingBox) {
-            var intersects = false;
             for (var i = 0; i < PlaneCount; ++i) {
-                if (boundingBox.isFront(ref _planes[i])) {
+                if (boundingBox.isFront(_planes[i])) {
                     return true;
                 }
             }

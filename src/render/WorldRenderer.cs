@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
@@ -33,6 +34,8 @@ public class WorldRenderer {
 
     
     public int dummyuMVP;
+
+    public static BoundingFrustum frustum;
 
 
     public Shader outline;
@@ -70,6 +73,7 @@ public class WorldRenderer {
         fogColour = shader.getUniformLocation(nameof(fogColour));
         skyColour = shader.getUniformLocation(nameof(skyColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
+        frustum = world.player.camera.frustum;
 
         
         shader.setUniform(blockTexture, 0);
