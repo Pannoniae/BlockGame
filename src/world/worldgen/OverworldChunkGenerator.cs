@@ -41,7 +41,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
 
                 for (int y = 1; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
                     if (y < flatNoise) {
-                        chunk.setBlock(x, y, z, Blocks.STONE.id);
+                        chunk.setBlockFast(x, y, z, Blocks.STONE.id);
                         // set heightmap
                         chunk.addToHeightMap(x, y, z);
                     }

@@ -103,6 +103,10 @@ namespace BlockGame {
             GL.Uniform3(loc, value.X, value.Y, value.Z);
         }
 
+        public void setUniform(int loc, float x, float y, float z) {
+            GL.Uniform3(loc, x, y, z);
+        }
+
         public void setUniform(int loc, Vector4 value) {
             GL.Uniform4(loc, value.X, value.Y, value.Z, value.W);
         }

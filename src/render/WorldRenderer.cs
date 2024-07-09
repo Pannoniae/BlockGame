@@ -16,8 +16,9 @@ public class WorldRenderer {
 
     public Shader shader;
     public Shader dummyShader;
+    public Shader waterShader;
 
-    public List<Chunk> chunksToRender = [];
+    public List<SubChunk> chunksToRender = [];
 
     public int uProjection;
 
@@ -25,6 +26,7 @@ public class WorldRenderer {
     public int blockTexture;
     public int lightTexture;
     public int uMVP;
+    public int dummyuMVP;
     public int uCameraPos;
     public int drawDistance;
     public int fogMax;
@@ -32,8 +34,13 @@ public class WorldRenderer {
     public int fogColour;
     public int skyColour;
 
-    
-    public int dummyuMVP;
+    public int waterBlockTexture;
+    public int waterLightTexture;
+    public int wateruMVP;
+    public int waterFogMax;
+    public int waterFogMin;
+    public int waterFogColour;
+    public int waterSkyColour;
 
     public static BoundingFrustum frustum;
 
@@ -61,29 +68,48 @@ public class WorldRenderer {
         Game.worldShader = shader;
         dummyShader = new Shader(GL, "shaders/dummyShader.vert");
         Game.dummyShader = dummyShader;
+        waterShader = new Shader(GL, "shaders/waterShader.vert", "shaders/waterShader.frag");
+        Game.waterShader = waterShader;
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
-        shader.use();
+        waterBlockTexture = shader.getUniformLocation("blockTexture");
+        waterLightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
+        wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
         fogMax = shader.getUniformLocation(nameof(fogMax));
         fogMin = shader.getUniformLocation(nameof(fogMin));
         fogColour = shader.getUniformLocation(nameof(fogColour));
         skyColour = shader.getUniformLocation(nameof(skyColour));
+        waterFogMax = shader.getUniformLocation(nameof(fogMax));
+        waterFogMin = shader.getUniformLocation(nameof(fogMin));
+        waterFogColour = shader.getUniformLocation(nameof(fogColour));
+        waterSkyColour = shader.getUniformLocation(nameof(skyColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
         frustum = world.player.camera.frustum;
 
-        
+        var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
+
+
+        shader.use();
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
-        var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
         //shader.setUniform(drawDistance, dd);
         shader.setUniform(fogMax, dd - 16);
         shader.setUniform(fogMin, (int)(dd * 0.5f));
         shader.setUniform(fogColour, defaultFogColour);
         shader.setUniform(skyColour, defaultClearColour);
+
+        waterShader.use();
+        waterShader.setUniform(waterBlockTexture, 0);
+        waterShader.setUniform(waterLightTexture, 1);
+        //shader.setUniform(drawDistance, dd);
+        waterShader.setUniform(waterFogMax, dd - 16);
+        waterShader.setUniform(waterFogMin, (int)(dd * 0.5f));
+        waterShader.setUniform(waterFogColour, defaultFogColour);
+        waterShader.setUniform(waterSkyColour, defaultClearColour);
     }
 
 
@@ -109,8 +135,14 @@ public class WorldRenderer {
         // gather chunks to render
         chunksToRender.Clear();
         foreach (var chunk in world.chunks.Values) {
-            if (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(world.player.camera.frustum)) {
-                chunksToRender.Add(chunk);
+            if (chunk.status >= ChunkStatus.MESHED) {
+                if (chunk.isVisible(frustum)) {
+                    foreach (var subchunk in chunk.subChunks) {
+                        if (subchunk.renderer.isVisible(frustum)) {
+                            chunksToRender.Add(subchunk);
+                        }
+                    }
+                }
             }
         }
         //chunksToRender.Sort(new ChunkComparer(world.player));
@@ -121,7 +153,7 @@ public class WorldRenderer {
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
         foreach (var chunk in chunksToRender) {
             Game.metrics.renderedChunks += 1;
-            chunk.drawOpaque();
+            chunk.renderer.drawOpaque();
         }
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
@@ -129,18 +161,19 @@ public class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
         foreach (var chunk in chunksToRender) {
-            chunk.drawTransparent(true);
+            chunk.renderer.drawTransparent(true);
         }
 
         Game.GD.BlendingEnabled = true;
         Game.GD.BlendState = Game.initialBlendState;
         // TRANSLUCENT PASS
-        shader.use();
+        waterShader.use();
+        waterShader.setUniform(wateruMVP, viewProj);
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
         foreach (var chunk in chunksToRender) {
-            chunk.drawTransparent();
+            chunk.renderer.drawTransparent(false);
         }
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);

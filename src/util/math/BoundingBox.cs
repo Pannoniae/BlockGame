@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 
-namespace System.Numerics
-{
-    
+namespace System.Numerics {
+
     [DebuggerDisplay("{DebugDisplayString,nq}")]
-    public struct BoundingBox : IEquatable<BoundingBox>
-    {
+    public struct BoundingBox : IEquatable<BoundingBox> {
 
         #region Public Fields
 
-        
         public Vector3 Min;
-      
-        
+
+
         public Vector3 Max;
 
         public const int CornerCount = 8;
@@ -25,8 +23,7 @@ namespace System.Numerics
 
         #region Public Constructors
 
-        public BoundingBox(Vector3 min, Vector3 max)
-        {
+        public BoundingBox(Vector3 min, Vector3 max) {
             this.Min = min;
             this.Max = max;
         }
@@ -36,8 +33,7 @@ namespace System.Numerics
 
         #region Public Methods
 
-        public ContainmentType Contains(BoundingBox box)
-        {
+        public ContainmentType Contains(BoundingBox box) {
             //test if all corner is in the same side of a face by just checking min and max
             if (box.Max.X < Min.X
                 || box.Min.X > Max.X
@@ -59,22 +55,19 @@ namespace System.Numerics
             return ContainmentType.Intersects;
         }
 
-        public void Contains(ref BoundingBox box, out ContainmentType result)
-        {
+        public void Contains(ref BoundingBox box, out ContainmentType result) {
             result = Contains(box);
         }
 
-        public ContainmentType Contains(BoundingFrustum frustum)
-        {
-            //TODO: bad done here need a fix. 
+        public ContainmentType Contains(BoundingFrustum frustum) {
+            //TODO: bad done here need a fix.
             //Because question is not frustum contain box but reverse and this is not the same
             int i;
             ContainmentType contained;
             Vector3[] corners = frustum.GetCorners();
 
             // First we check if frustum is in box
-            for (i = 0; i < corners.Length; i++)
-            {
+            for (i = 0; i < corners.Length; i++) {
                 this.Contains(ref corners[i], out contained);
                 if (contained == ContainmentType.Disjoint)
                     break;
@@ -83,7 +76,7 @@ namespace System.Numerics
             if (i == corners.Length) // This means we checked all the corners and they were all contain or instersect
                 return ContainmentType.Contains;
 
-            if (i != 0)             // if i is not equal to zero, we can fastpath and say that this box intersects
+            if (i != 0) // if i is not equal to zero, we can fastpath and say that this box intersects
                 return ContainmentType.Intersects;
 
 
@@ -91,8 +84,7 @@ namespace System.Numerics
             // So we assume that all other points will also be contained. If one of the points is disjoint, we can
             // exit immediately saying that the result is Intersects
             i++;
-            for (; i < corners.Length; i++)
-            {
+            for (; i < corners.Length; i++) {
                 this.Contains(ref corners[i], out contained);
                 if (contained != ContainmentType.Contains)
                     return ContainmentType.Intersects;
@@ -103,8 +95,7 @@ namespace System.Numerics
             return ContainmentType.Contains;
         }
 
-        public ContainmentType Contains(BoundingSphere sphere)
-        {
+        public ContainmentType Contains(BoundingSphere sphere) {
             if (sphere.Center.X - Min.X >= sphere.Radius
                 && sphere.Center.Y - Min.Y >= sphere.Radius
                 && sphere.Center.Z - Min.Z >= sphere.Radius
@@ -116,21 +107,16 @@ namespace System.Numerics
             double dmin = 0;
 
             double e = sphere.Center.X - Min.X;
-            if (e < 0)
-            {
-                if (e < -sphere.Radius)
-                {
+            if (e < 0) {
+                if (e < -sphere.Radius) {
                     return ContainmentType.Disjoint;
                 }
                 dmin += e * e;
             }
-            else
-            {
+            else {
                 e = sphere.Center.X - Max.X;
-                if (e > 0)
-                {
-                    if (e > sphere.Radius)
-                    {
+                if (e > 0) {
+                    if (e > sphere.Radius) {
                         return ContainmentType.Disjoint;
                     }
                     dmin += e * e;
@@ -138,21 +124,16 @@ namespace System.Numerics
             }
 
             e = sphere.Center.Y - Min.Y;
-            if (e < 0)
-            {
-                if (e < -sphere.Radius)
-                {
+            if (e < 0) {
+                if (e < -sphere.Radius) {
                     return ContainmentType.Disjoint;
                 }
                 dmin += e * e;
             }
-            else
-            {
+            else {
                 e = sphere.Center.Y - Max.Y;
-                if (e > 0)
-                {
-                    if (e > sphere.Radius)
-                    {
+                if (e > 0) {
+                    if (e > sphere.Radius) {
                         return ContainmentType.Disjoint;
                     }
                     dmin += e * e;
@@ -160,21 +141,16 @@ namespace System.Numerics
             }
 
             e = sphere.Center.Z - Min.Z;
-            if (e < 0)
-            {
-                if (e < -sphere.Radius)
-                {
+            if (e < 0) {
+                if (e < -sphere.Radius) {
                     return ContainmentType.Disjoint;
                 }
                 dmin += e * e;
             }
-            else
-            {
+            else {
                 e = sphere.Center.Z - Max.Z;
-                if (e > 0)
-                {
-                    if (e > sphere.Radius)
-                    {
+                if (e > 0) {
+                    if (e > sphere.Radius) {
                         return ContainmentType.Disjoint;
                     }
                     dmin += e * e;
@@ -187,36 +163,32 @@ namespace System.Numerics
             return ContainmentType.Disjoint;
         }
 
-        public void Contains(ref BoundingSphere sphere, out ContainmentType result)
-        {
+        public void Contains(ref BoundingSphere sphere, out ContainmentType result) {
             result = this.Contains(sphere);
         }
 
-        public ContainmentType Contains(Vector3 point)
-        {
+        public ContainmentType Contains(Vector3 point) {
             ContainmentType result;
             this.Contains(ref point, out result);
             return result;
         }
 
-        public void Contains(ref Vector3 point, out ContainmentType result)
-        {
+        public void Contains(ref Vector3 point, out ContainmentType result) {
             //first we get if point is out of box
             if (point.X < this.Min.X
                 || point.X > this.Max.X
                 || point.Y < this.Min.Y
                 || point.Y > this.Max.Y
                 || point.Z < this.Min.Z
-                || point.Z > this.Max.Z)
-            {
+                || point.Z > this.Max.Z) {
                 result = ContainmentType.Disjoint;
-            }//or if point is on box because coordonate of point is lesser or equal
+            } //or if point is on box because coordonate of point is lesser or equal
             else if (point.X == this.Min.X
-                || point.X == this.Max.X
-                || point.Y == this.Min.Y
-                || point.Y == this.Max.Y
-                || point.Z == this.Min.Z
-                || point.Z == this.Max.Z)
+                     || point.X == this.Max.X
+                     || point.Y == this.Min.Y
+                     || point.Y == this.Max.Y
+                     || point.Z == this.Min.Z
+                     || point.Z == this.Max.Z)
                 result = ContainmentType.Intersects;
             else
                 result = ContainmentType.Contains;
@@ -231,16 +203,14 @@ namespace System.Numerics
         /// <param name="points">The list of Vector3 instances defining the point cloud to bound</param>
         /// <returns>A bounding box that encapsulates the given point cloud.</returns>
         /// <exception cref="System.ArgumentException">Thrown if the given list has no points.</exception>
-        public static BoundingBox CreateFromPoints(IEnumerable<Vector3> points)
-        {
+        public static BoundingBox CreateFromPoints(IEnumerable<Vector3> points) {
             if (points == null)
                 throw new ArgumentNullException();
 
             var empty = true;
             var minVec = MaxVector3;
             var maxVec = MinVector3;
-            foreach (var ptVector in points)
-            {
+            foreach (var ptVector in points) {
                 minVec.X = (minVec.X < ptVector.X) ? minVec.X : ptVector.X;
                 minVec.Y = (minVec.Y < ptVector.Y) ? minVec.Y : ptVector.Y;
                 minVec.Z = (minVec.Z < ptVector.Z) ? minVec.Z : ptVector.Z;
@@ -257,29 +227,25 @@ namespace System.Numerics
             return new BoundingBox(minVec, maxVec);
         }
 
-        public static BoundingBox CreateFromSphere(BoundingSphere sphere)
-        {
+        public static BoundingBox CreateFromSphere(BoundingSphere sphere) {
             BoundingBox result;
             CreateFromSphere(ref sphere, out result);
             return result;
         }
 
-        public static void CreateFromSphere(ref BoundingSphere sphere, out BoundingBox result)
-        {
+        public static void CreateFromSphere(ref BoundingSphere sphere, out BoundingBox result) {
             var corner = new Vector3(sphere.Radius);
             result.Min = sphere.Center - corner;
             result.Max = sphere.Center + corner;
         }
 
-        public static BoundingBox CreateMerged(BoundingBox original, BoundingBox additional)
-        {
+        public static BoundingBox CreateMerged(BoundingBox original, BoundingBox additional) {
             BoundingBox result;
             CreateMerged(ref original, ref additional, out result);
             return result;
         }
 
-        public static void CreateMerged(ref BoundingBox original, ref BoundingBox additional, out BoundingBox result)
-        {
+        public static void CreateMerged(ref BoundingBox original, ref BoundingBox additional, out BoundingBox result) {
             result.Min.X = Math.Min(original.Min.X, additional.Min.X);
             result.Min.Y = Math.Min(original.Min.Y, additional.Min.Y);
             result.Min.Z = Math.Min(original.Min.Z, additional.Min.Z);
@@ -288,23 +254,20 @@ namespace System.Numerics
             result.Max.Z = Math.Max(original.Max.Z, additional.Max.Z);
         }
 
-        public bool Equals(BoundingBox other)
-        {
+        public bool Equals(BoundingBox other) {
             return (this.Min == other.Min) && (this.Max == other.Max);
         }
 
-        public override bool Equals(object obj)
-        {
+        public override bool Equals(object obj) {
             return (obj is BoundingBox) ? this.Equals((BoundingBox)obj) : false;
         }
 
-        public Vector3[] GetCorners()
-        {
+        public Vector3[] GetCorners() {
             return new Vector3[] {
-                new Vector3(this.Min.X, this.Max.Y, this.Max.Z), 
+                new Vector3(this.Min.X, this.Max.Y, this.Max.Z),
                 new Vector3(this.Max.X, this.Max.Y, this.Max.Z),
-                new Vector3(this.Max.X, this.Min.Y, this.Max.Z), 
-                new Vector3(this.Min.X, this.Min.Y, this.Max.Z), 
+                new Vector3(this.Max.X, this.Min.Y, this.Max.Z),
+                new Vector3(this.Min.X, this.Min.Y, this.Max.Z),
                 new Vector3(this.Min.X, this.Max.Y, this.Min.Z),
                 new Vector3(this.Max.X, this.Max.Y, this.Min.Z),
                 new Vector3(this.Max.X, this.Min.Y, this.Min.Z),
@@ -312,14 +275,11 @@ namespace System.Numerics
             };
         }
 
-        public void GetCorners(Vector3[] corners)
-        {
-            if (corners == null)
-            {
+        public void GetCorners(Vector3[] corners) {
+            if (corners == null) {
                 throw new ArgumentNullException("corners");
             }
-            if (corners.Length < 8)
-            {
+            if (corners.Length < 8) {
                 throw new ArgumentOutOfRangeException("corners", "Not Enought Corners");
             }
             corners[0].X = this.Min.X;
@@ -348,24 +308,19 @@ namespace System.Numerics
             corners[7].Z = this.Min.Z;
         }
 
-        public override int GetHashCode()
-        {
+        public override int GetHashCode() {
             return this.Min.GetHashCode() + this.Max.GetHashCode();
         }
 
-        public bool Intersects(BoundingBox box)
-        {
+        public bool Intersects(BoundingBox box) {
             bool result;
             Intersects(ref box, out result);
             return result;
         }
 
-        public void Intersects(ref BoundingBox box, out bool result)
-        {
-            if ((this.Max.X >= box.Min.X) && (this.Min.X <= box.Max.X))
-            {
-                if ((this.Max.Y < box.Min.Y) || (this.Min.Y > box.Max.Y))
-                {
+        public void Intersects(ref BoundingBox box, out bool result) {
+            if ((this.Max.X >= box.Min.X) && (this.Min.X <= box.Max.X)) {
+                if ((this.Max.Y < box.Min.Y) || (this.Min.Y > box.Max.Y)) {
                     result = false;
                     return;
                 }
@@ -378,13 +333,11 @@ namespace System.Numerics
             return;
         }
 
-        public bool Intersects(BoundingFrustum frustum)
-        {
+        public bool Intersects(BoundingFrustum frustum) {
             return frustum.Intersects(this);
         }
 
-        public bool Intersects(BoundingSphere sphere)
-        {
+        public bool Intersects(BoundingSphere sphere) {
             if (sphere.Center.X - Min.X > sphere.Radius
                 && sphere.Center.Y - Min.Y > sphere.Radius
                 && sphere.Center.Z - Min.Z > sphere.Radius
@@ -416,20 +369,17 @@ namespace System.Numerics
             return false;
         }
 
-        public void Intersects(ref BoundingSphere sphere, out bool result)
-        {
+        public void Intersects(ref BoundingSphere sphere, out bool result) {
             result = Intersects(sphere);
         }
 
-        public PlaneIntersectionType Intersects(Plane plane)
-        {
+        public PlaneIntersectionType Intersects(Plane plane) {
             PlaneIntersectionType result;
             Intersects(ref plane, out result);
             return result;
         }
 
-        public bool isFront(Plane plane)
-        {
+        public bool isFront(Plane plane) {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
 
             // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
@@ -439,58 +389,80 @@ namespace System.Numerics
             return plane.Normal.X * x + plane.Normal.Y * y + plane.Normal.Z * z + plane.D > 0;
         }
 
-        public void Intersects(ref Plane plane, out PlaneIntersectionType result)
-        {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool isFrontMin(Plane plane) {
+            // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+            // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+            return plane.Normal.X * Min.X + plane.Normal.Y * Min.Y + plane.Normal.Z * Min.Z + plane.D > 0;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool isFrontMax(Plane plane) {
+            // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+            // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+            return plane.Normal.X * Max.X + plane.Normal.Y * Max.Y + plane.Normal.Z * Max.Z + plane.D > 0;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool isFrontBottom(Plane plane) {
+            // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+            // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+            return plane.Normal.X * Min.X + plane.Normal.Y * Min.Y + plane.Normal.Z * Min.Z + plane.D > 0 &&
+                   plane.Normal.X * Max.X + plane.Normal.Y * Min.Y + plane.Normal.Z * Max.Z + plane.D > 0;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool isFrontTop(Plane plane) {
+            // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+            // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+            return plane.Normal.X * Min.X + plane.Normal.Y * Max.Y + plane.Normal.Z * Min.Z + plane.D > 0 &&
+                   plane.Normal.X * Max.X + plane.Normal.Y * Max.Y + plane.Normal.Z * Max.Z + plane.D > 0;
+        }
+
+        public void Intersects(ref Plane plane, out PlaneIntersectionType result) {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
 
             Vector3 positiveVertex;
             Vector3 negativeVertex;
 
-            if (plane.Normal.X >= 0)
-            {
+            if (plane.Normal.X >= 0) {
                 positiveVertex.X = Max.X;
                 negativeVertex.X = Min.X;
             }
-            else
-            {
+            else {
                 positiveVertex.X = Min.X;
                 negativeVertex.X = Max.X;
             }
 
-            if (plane.Normal.Y >= 0)
-            {
+            if (plane.Normal.Y >= 0) {
                 positiveVertex.Y = Max.Y;
                 negativeVertex.Y = Min.Y;
             }
-            else
-            {
+            else {
                 positiveVertex.Y = Min.Y;
                 negativeVertex.Y = Max.Y;
             }
 
-            if (plane.Normal.Z >= 0)
-            {
+            if (plane.Normal.Z >= 0) {
                 positiveVertex.Z = Max.Z;
                 negativeVertex.Z = Min.Z;
             }
-            else
-            {
+            else {
                 positiveVertex.Z = Min.Z;
                 negativeVertex.Z = Max.Z;
             }
 
             // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
             var distance = plane.Normal.X * negativeVertex.X + plane.Normal.Y * negativeVertex.Y + plane.Normal.Z * negativeVertex.Z + plane.D;
-            if (distance > 0)
-            {
+            if (distance > 0) {
                 result = PlaneIntersectionType.Front;
                 return;
             }
 
             // Inline Vector3.Dot(plane.Normal, positiveVertex) + plane.D;
             distance = plane.Normal.X * positiveVertex.X + plane.Normal.Y * positiveVertex.Y + plane.Normal.Z * positiveVertex.Z + plane.D;
-            if (distance < 0)
-            {
+            if (distance < 0) {
                 result = PlaneIntersectionType.Back;
                 return;
             }
@@ -498,39 +470,32 @@ namespace System.Numerics
             result = PlaneIntersectionType.Intersecting;
         }
 
-        public Nullable<float> Intersects(Ray ray)
-        {
+        public Nullable<float> Intersects(Ray ray) {
             return ray.Intersects(this);
         }
 
-        public void Intersects(ref Ray ray, out Nullable<float> result)
-        {
+        public void Intersects(ref Ray ray, out Nullable<float> result) {
             result = Intersects(ray);
         }
 
-        public static bool operator ==(BoundingBox a, BoundingBox b)
-        {
+        public static bool operator ==(BoundingBox a, BoundingBox b) {
             return a.Equals(b);
         }
 
-        public static bool operator !=(BoundingBox a, BoundingBox b)
-        {
+        public static bool operator !=(BoundingBox a, BoundingBox b) {
             return !a.Equals(b);
         }
 
-        internal string DebugDisplayString
-        {
-            get
-            {
+        internal string DebugDisplayString {
+            get {
                 return string.Concat(
                     "Min( ", this.Min.ToString(), " )  \r\n",
-                    "Max( ",this.Max.ToString(), " )"
-                    );
+                    "Max( ", this.Max.ToString(), " )"
+                );
             }
         }
 
-        public override string ToString()
-        {
+        public override string ToString() {
             return "{{Min:" + this.Min.ToString() + " Max:" + this.Max.ToString() + "}}";
         }
 

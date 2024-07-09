@@ -30,7 +30,6 @@ public class SubChunk : IDisposable {
     public Vector3D<int> centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
 
     public AABB box;
-    public BoundingBox bbbox;
 
     public World world;
     public ChunkSectionCoord chunkCoord => new(chunkX, chunkY, chunkZ);
@@ -46,7 +45,6 @@ public class SubChunk : IDisposable {
         blocks = new ArrayBlockData(chunk, this);
 
         box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
-        bbbox = new BoundingBox(box.min.toVec3(), box.max.toVec3());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

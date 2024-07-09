@@ -98,6 +98,7 @@ public partial class Game {
 
     public static Shader worldShader;
     public static Shader dummyShader;
+    public static Shader waterShader;
 
     public static Shader fxaaShader;
 

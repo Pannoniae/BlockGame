@@ -41,7 +41,7 @@ public static class Utils {
     }
     public static float rad2deg(float radians) {
         return 180f / MathF.PI * radians;
-}
+    }
 
     public static Half half(float value) {
         // Convert float to half float
@@ -162,6 +162,15 @@ public readonly record struct Direction {
         throw new ArgumentException("Invalid direction!");
     }
 
+}
+
+public static class UnsafeListAccessor<T> {
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] getItems(List<T> list);
+
+    public static Span<T> AsUnsafeSpanOnBackingArray(List<T> list) {
+        return new Span<T>(getItems(list));
+    }
 }
 
 public enum RawDirection : byte {

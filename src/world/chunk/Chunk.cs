@@ -46,7 +46,7 @@ public class Chunk : IDisposable {
     }
 
     public bool isVisible(BoundingFrustum frustum) {
-        return !frustum.outside(new BoundingBox(box.min.toVec3(), box.max.toVec3()));
+        return !frustum.outsideCameraHorizontal(box);
     }
 
     public void lightChunk() {

@@ -24,6 +24,7 @@ public class SubChunkRenderer : IDisposable {
 
     private int uChunkPos;
     private int dummyuChunkPos;
+    private int wateruChunkPos;
 
     private static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
 
@@ -124,6 +125,7 @@ public class SubChunkRenderer : IDisposable {
         this.subChunk = subChunk;
         uChunkPos = Game.worldShader.getUniformLocation("uChunkPos");
         dummyuChunkPos = Game.dummyShader.getUniformLocation("uChunkPos");
+        wateruChunkPos = Game.waterShader.getUniformLocation("uChunkPos");
     }
 
     private static bool opaqueBlocks(int b) {
@@ -243,14 +245,14 @@ public class SubChunkRenderer : IDisposable {
 
 
     public bool isVisible(BoundingFrustum frustum) {
-        return !frustum.outside(subChunk.bbbox);
+        return !frustum.outsideCameraUpDown(subChunk.box);
     }
 
     public void drawOpaque() {
-        if (!isEmptyRenderOpaque && isVisible(WorldRenderer.frustum)) {
+        if (!isEmptyRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            Game.worldShader.setUniform(uChunkPos, new Vector3(subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f));
+            Game.worldShader.setUniform(uChunkPos,subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -258,10 +260,10 @@ public class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (subChunk.blocks.hasTranslucentBlocks() && !isEmptyRenderTranslucent && isVisible(WorldRenderer.frustum)) {
+        if (!isEmptyRenderTranslucent && subChunk.blocks.hasTranslucentBlocks()) {
             watervao.bind();
-            var shader = dummy ? Game.dummyShader : Game.worldShader;
-            shader.setUniform(dummy ? dummyuChunkPos : uChunkPos, new Vector3(subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16));
+            var shader = dummy ? Game.dummyShader : Game.waterShader;
+            shader.setUniform(dummy ? dummyuChunkPos : wateruChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -418,12 +420,6 @@ public class SubChunkRenderer : IDisposable {
 
         Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
         Vector128<ushort> complement = Vector128.Create((ushort)4, 3, 2, 4, 2, 1, 0, 0);
-
-        // for offset indices
-        Vector256<short> multiplyMask = Vector256.Create(1, Chunk.CHUNKSIZEEXSQ, Chunk.CHUNKSIZEEX,
-            1, Chunk.CHUNKSIZEEXSQ, Chunk.CHUNKSIZEEX,
-            1, Chunk.CHUNKSIZEEXSQ, Chunk.CHUNKSIZEEX,
-            0, 0, 0, 0, 0, 0, 0);
 
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {

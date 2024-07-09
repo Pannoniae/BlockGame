@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.Maths;
 using Plane = System.Numerics.Plane;
@@ -33,6 +34,33 @@ public struct AABB {
     public static void update(ref AABB aabb, Vector3D<double> min, Vector3D<double> size) {
         aabb.min = min;
         aabb.max = min + size;
+    }
+
+    public bool isFront(Plane plane) {
+        // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+        // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+        var x = plane.Normal.X >= 0 ? min.X : max.X;
+        var y = plane.Normal.Y >= 0 ? min.Y : max.Y;
+        var z = plane.Normal.Z >= 0 ? min.Z : max.Z;
+        return plane.Normal.X * x + plane.Normal.Y * y + plane.Normal.Z * z + plane.D > 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool isFrontBottom(Plane plane) {
+        // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+        // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+        return plane.Normal.X * min.X + plane.Normal.Y * min.Y + plane.Normal.Z * min.Z + plane.D > 0 &&
+               plane.Normal.X * max.X + plane.Normal.Y * min.Y + plane.Normal.Z * max.Z + plane.D > 0;
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool isFrontTop(Plane plane) {
+        // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
+
+        // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
+        return plane.Normal.X * min.X + plane.Normal.Y * max.Y + plane.Normal.Z * min.Z + plane.D > 0 &&
+               plane.Normal.X * max.X + plane.Normal.Y * max.Y + plane.Normal.Z * max.Z + plane.D > 0;
     }
 
     public static bool isCollision(AABB box1, AABB box2) {

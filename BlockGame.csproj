@@ -80,6 +80,12 @@
         <None Update="logo.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Update="shaders\waterShader.frag">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="shaders\waterShader.vert">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>
@@ -102,7 +108,6 @@
         <ProjectReference Include="lib\TrippyGL.Fonts.Building\TrippyGL.Fonts.Building.csproj"/>
         <ProjectReference Include="lib\TrippyGL.Fonts.Extensions\TrippyGL.Fonts.Extensions.csproj"/>
         <ProjectReference Include="lib\TrippyGL.ImageSharp\TrippyGL.ImageSharp.csproj"/>
-        <ProjectReference Include="lib\System.Numerics.Geometry\System.Numerics.Geometry.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

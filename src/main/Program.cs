@@ -18,37 +18,39 @@ public class Program {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
 
         Console.Out.WriteLine("Your game crashed! Here are some relevant details:");
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            // call glxinfo
-            using var process = new Process {
-                StartInfo = new ProcessStartInfo {
-                    FileName = "glxinfo",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            // read its output
-            process.Start();
-            Console.Out.WriteLine("OpenGL info:");
-            Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
+        if (!Game.devMode) {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                // call glxinfo
+                using var process = new Process {
+                    StartInfo = new ProcessStartInfo {
+                        FileName = "glxinfo",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                // read its output
+                process.Start();
+                Console.Out.WriteLine("OpenGL info:");
+                Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                // call wglinfo
+                using var process = new Process {
+                    StartInfo = new ProcessStartInfo {
+                        FileName = "wglinfo64.exe",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                // read its output
+                process.Start();
+                Console.Out.WriteLine("OpenGL info:");
+                Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
+            }
+            Console.WriteLine(e.ToString());
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            // call wglinfo
-            var process = new Process {
-                StartInfo = new ProcessStartInfo {
-                    FileName = "wglinfo64.exe",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            // read its output
-            process.Start();
-            Console.Out.WriteLine("OpenGL info:");
-            Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
-        }
-        Console.WriteLine(e.ToString());
     }
 
     public static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
