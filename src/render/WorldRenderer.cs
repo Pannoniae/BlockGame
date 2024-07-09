@@ -37,6 +37,7 @@ public class WorldRenderer {
     public int waterBlockTexture;
     public int waterLightTexture;
     public int wateruMVP;
+    public int wateruCameraPos;
     public int waterFogMax;
     public int waterFogMin;
     public int waterFogColour;
@@ -72,21 +73,23 @@ public class WorldRenderer {
         Game.waterShader = waterShader;
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
-        waterBlockTexture = shader.getUniformLocation("blockTexture");
-        waterLightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
-        wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
-        //drawDistance = shader.getUniformLocation(nameof(drawDistance));
         fogMax = shader.getUniformLocation(nameof(fogMax));
         fogMin = shader.getUniformLocation(nameof(fogMin));
         fogColour = shader.getUniformLocation(nameof(fogColour));
         skyColour = shader.getUniformLocation(nameof(skyColour));
-        waterFogMax = shader.getUniformLocation(nameof(fogMax));
-        waterFogMin = shader.getUniformLocation(nameof(fogMin));
-        waterFogColour = shader.getUniformLocation(nameof(fogColour));
-        waterSkyColour = shader.getUniformLocation(nameof(skyColour));
+        //drawDistance = shader.getUniformLocation(nameof(drawDistance));
+
+        waterBlockTexture = waterShader.getUniformLocation("blockTexture");
+        waterLightTexture = waterShader.getUniformLocation("lightTexture");
+        wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
+        wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
+        waterFogMax = waterShader.getUniformLocation(nameof(fogMax));
+        waterFogMin = waterShader.getUniformLocation(nameof(fogMin));
+        waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
+        waterSkyColour = waterShader.getUniformLocation(nameof(skyColour));
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
         frustum = world.player.camera.frustum;
 
@@ -169,6 +172,7 @@ public class WorldRenderer {
         // TRANSLUCENT PASS
         waterShader.use();
         waterShader.setUniform(wateruMVP, viewProj);
+        waterShader.setUniform(wateruCameraPos, world.player.camera.renderPosition(interp));
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
