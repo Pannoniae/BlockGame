@@ -11,17 +11,6 @@ public class Menu {
     public Vector2D<int> size;
     public Vector2D<int> centre;
 
-
-    /// <summary>
-    /// If true, the menu lets screens under it update.
-    /// </summary>
-    public bool transparentUpdate = false;
-
-    /// <summary>
-    /// If true, the menu lets screens under it render. (e.g. the pause menu)
-    /// </summary>
-    public bool transparentRender = false;
-
     public Dictionary<string, GUIElement> elements = new();
 
     public GUIElement? hoveredElement;
@@ -35,15 +24,27 @@ public class Menu {
     public static MainMenu MAIN_MENU = new();
     public static SettingsMenu SETTINGS = new();
 
+
+    /// <summary>
+    /// Does this menu cover the whole screen?
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool isModal() {
+        return true;
+    }
+
     public Menu() {
     }
+
+    // there is no activate/deactivate here to manage elements here because multiple menus can exist (there no generic system for that; it's on a case-by-case basis)
+    // for example, the pause menu calls the ingame menu to still draw and update (in MP) while it's open
 
     public virtual void activate() {
 
     }
 
     public virtual void deactivate() {
-        elements.Clear();
+
     }
 
     public void addElement(GUIElement element) {

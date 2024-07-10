@@ -386,7 +386,7 @@ namespace System.Numerics {
             var x = plane.Normal.X >= 0 ? Min.X : Max.X;
             var y = plane.Normal.Y >= 0 ? Min.Y : Max.Y;
             var z = plane.Normal.Z >= 0 ? Min.Z : Max.Z;
-            return plane.Normal.X * x + plane.Normal.Y * y + plane.Normal.Z * z + plane.D > 0;
+            return Plane.DotCoordinate(plane, new Vector3(x, y, z)) > 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -394,30 +394,30 @@ namespace System.Numerics {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
 
             // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
-            return plane.Normal.X * Min.X + plane.Normal.Y * Min.Y + plane.Normal.Z * Min.Z + plane.D > 0;
+            return Plane.DotCoordinate(plane, Min) > 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool isFrontMax(Plane plane) {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
 
             // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
-            return plane.Normal.X * Max.X + plane.Normal.Y * Max.Y + plane.Normal.Z * Max.Z + plane.D > 0;
+            return Plane.DotCoordinate(plane, Max) > 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool isFrontBottom(Plane plane) {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
 
             // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
-            return plane.Normal.X * Min.X + plane.Normal.Y * Min.Y + plane.Normal.Z * Min.Z + plane.D > 0 &&
-                   plane.Normal.X * Max.X + plane.Normal.Y * Min.Y + plane.Normal.Z * Max.Z + plane.D > 0;
+            return Plane.DotCoordinate(plane, Min) > 0 &&
+                   Plane.DotCoordinate(plane, new Vector3(Max.X, Min.Y, Max.Z)) > 0;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool isFrontTop(Plane plane) {
             // See http://zach.in.tu-clausthal.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/index.html
 
             // Inline Vector3.Dot(plane.Normal, negativeVertex) + plane.D;
-            return plane.Normal.X * Min.X + plane.Normal.Y * Max.Y + plane.Normal.Z * Min.Z + plane.D > 0 &&
-                   plane.Normal.X * Max.X + plane.Normal.Y * Max.Y + plane.Normal.Z * Max.Z + plane.D > 0;
+            return Plane.DotCoordinate(plane, new Vector3(Min.X, Max.Y, Min.Z)) > 0 &&
+                   Plane.DotCoordinate(plane, Max) > 0;
         }
 
         public void Intersects(ref Plane plane, out PlaneIntersectionType result) {

@@ -90,15 +90,12 @@ public class WorldRenderer {
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
         frustum = world.player.camera.frustum;
 
-        var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
-
 
         shader.use();
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
         //shader.setUniform(drawDistance, dd);
-        shader.setUniform(fogMax, dd - 16);
-        shader.setUniform(fogMin, (int)(dd * 0.5f));
+
         shader.setUniform(fogColour, defaultFogColour);
         shader.setUniform(skyColour, defaultClearColour);
 
@@ -106,10 +103,31 @@ public class WorldRenderer {
         waterShader.setUniform(waterBlockTexture, 0);
         waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
-        waterShader.setUniform(waterFogMax, dd - 16);
-        waterShader.setUniform(waterFogMin, (int)(dd * 0.5f));
+
         waterShader.setUniform(waterFogColour, defaultFogColour);
         waterShader.setUniform(waterSkyColour, defaultClearColour);
+
+        setUniforms();
+    }
+
+    public void setUniforms() {
+
+        var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
+
+        // the problem is that with two chunks, the two values would be the same. so let's adjust them if so
+        var fogMaxValue = dd - 16;
+        var fogMinValue = (int)(dd * 0.5f);
+
+        if (fogMaxValue <= fogMinValue) {
+            fogMinValue = fogMaxValue - 16;
+        }
+
+        shader.use();
+        shader.setUniform(fogMax, fogMaxValue);
+        shader.setUniform(fogMin, fogMinValue);
+        waterShader.use();
+        waterShader.setUniform(waterFogMax, fogMaxValue);
+        waterShader.setUniform(waterFogMin, fogMinValue);
     }
 
 

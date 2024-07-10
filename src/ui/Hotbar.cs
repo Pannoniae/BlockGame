@@ -17,7 +17,7 @@ public class Hotbar : GUIElement {
     public Rectangle hotbarTexture = new Rectangle(0, 48, SIZE * 10, SIZE);
     public Rectangle selectedTexture = new Rectangle(200, 48, SIZE, SIZE);
 
-    public  Hotbar(Menu menu, string name, Vector2D<int> pos, string? text = default) : base(menu, name) {
+    public Hotbar(Menu menu, string name, Vector2D<int> pos, string? text = default) : base(menu, name) {
         setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 10; i++) {
             slots[i] = new ItemSlot(null!, Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
@@ -36,7 +36,7 @@ public class Hotbar : GUIElement {
             // if we draw in the middle, then we'll start in the middle of the 5th slot.... need to offset by half a slot
             slots[i].stack = items[i];
             slots[i].itemPos = new Vector2D<int>((int)(Game.gui.uiCentreX + ((i - 5) * SIZE) + 2),
-            GUI.instance.uiHeight - (BLOCKSIZE + 2));
+                GUI.instance.uiHeight - (BLOCKSIZE + 2));
             slots[i].drawItemWithoutInv();
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,

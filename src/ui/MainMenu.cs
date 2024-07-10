@@ -5,8 +5,7 @@ using TrippyGL;
 namespace BlockGame.ui;
 
 public class MainMenu : Menu {
-    public override void activate() {
-        base.activate();
+    public MainMenu() {
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
         sp.setPosition(new Vector2D<int>(0, -64));
         sp.centreContents();
@@ -28,6 +27,7 @@ public class MainMenu : Menu {
         settings.centreContents();
         settings.clicked += () => {
                 Game.instance.executeOnMainThread(() => {
+                    SETTINGS.prevMenu = MAIN_MENU;
                     Game.instance.switchTo(SETTINGS);
                 });
             }

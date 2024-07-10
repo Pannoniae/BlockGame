@@ -4,6 +4,7 @@
     <attachedFolders />
     <explicitIncludes />
     <explicitExcludes>
+      <Path>fonts</Path>
       <Path>lib</Path>
     </explicitExcludes>
   </component>

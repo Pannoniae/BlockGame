@@ -117,28 +117,18 @@ public class World : IDisposable {
         player.loadChunksAroundThePlayerLoading(Settings.instance.renderDistance);
     }
 
-    public void update(double dt) {
-        worldTick++;
-        /*if (Vector3D.DistanceSquared(player.position, player.lastSort) > 64) {
-            sortedTransparentChunks.Sort(new ChunkComparer(player.camera));
-            player.lastSort = player.position;
-        }*/
 
+    /// <summary>
+    /// Chunkloading and friends.
+    /// </summary>
+    public void renderUpdate() {
         var start = Game.permanentStopwatch.ElapsedMilliseconds;
         var ctr = 0;
+        // if is loading, don't throttle
         // consume the chunk queue
         // ONLY IF THERE ARE CHUNKS
         // otherwise don't wait for nothing
         // yes I was an idiot
-
-        // debug
-        /*Console.Out.WriteLine("---BEGIN---");
-        foreach (var chunk in chunkLoadQueue) {
-            Console.Out.WriteLine(chunk.level);
-        }
-        Console.Out.WriteLine("---END---");*/
-
-        // if is loading, don't throttle
         var limit = MAX_CHUNKLOAD_FRAMETIME;
         while (Game.permanentStopwatch.ElapsedMilliseconds - start < limit) {
             if (chunkLoadQueue.Count > 0) {
@@ -153,8 +143,28 @@ public class World : IDisposable {
                 break;
             }
         }
+        // debug
+        /*Console.Out.WriteLine("---BEGIN---");
+        foreach (var chunk in chunkLoadQueue) {
+            Console.Out.WriteLine(chunk.level);
+        }
+        Console.Out.WriteLine("---END---");*/
         //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
         //Console.Out.WriteLine($"{ctr} chunks loaded");
+
+        // empty the meshing queue
+        while (meshingQueue.TryDequeue(out var sectionCoord)) {
+            var section = getChunkSection(sectionCoord);
+            section.renderer.meshChunk();
+        }
+    }
+
+    public void update(double dt) {
+        worldTick++;
+        /*if (Vector3D.DistanceSquared(player.position, player.lastSort) > 64) {
+            sortedTransparentChunks.Sort(new ChunkComparer(player.camera));
+            player.lastSort = player.position;
+        }*/
 
         // execute tick actions
         for (int i = actionQueue.Count - 1; i >= 0; i--) {
@@ -198,12 +208,6 @@ public class World : IDisposable {
                     }
                 }
             }
-        }
-
-        // empty the meshing queue
-        while (meshingQueue.TryDequeue(out var sectionCoord)) {
-            var section = getChunkSection(sectionCoord);
-            section.renderer.meshChunk();
         }
     }
 

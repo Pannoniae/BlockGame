@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.Maths;
@@ -43,7 +44,7 @@ public struct AABB {
         var x = plane.Normal.X >= 0 ? min.X : max.X;
         var y = plane.Normal.Y >= 0 ? min.Y : max.Y;
         var z = plane.Normal.Z >= 0 ? min.Z : max.Z;
-        return plane.Normal.X * x + plane.Normal.Y * y + plane.Normal.Z * z + plane.D > 0;
+        return Plane.DotCoordinate(plane, new Vector3((float)x, (float)y, (float)z)) > 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

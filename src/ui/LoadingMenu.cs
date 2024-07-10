@@ -12,7 +12,7 @@ public class LoadingMenu : Menu {
 
     private Text text;
 
-    public override void activate() {
+    public LoadingMenu() {
         text = new Text(this, "loadingText", "Loading fonts...");
         text.setPosition(new Rectangle(0, 0, 160, 40));
         text.centreContents();

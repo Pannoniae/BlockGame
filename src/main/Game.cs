@@ -276,12 +276,6 @@ public partial class Game {
         stopwatch.Start();
         permanentStopwatch.Start();
 
-
-        //Menu.initScreens(gui);
-        currentScreen = new MainMenuScreen();
-        setMenu(Menu.LOADING);
-        //world = new World();
-
         // SFML
         // don't use local variables, they go out of scope so nothing plays..... hold them statically
         //var file = File.ReadAllBytes("snd/tests.flac");
@@ -292,6 +286,9 @@ public partial class Game {
         Console.Out.WriteLine("played?");
 
         gui = new GUI();
+
+        currentScreen = new MainMenuScreen();
+        setMenu(Menu.LOADING);
         fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
         gui.loadFont(13);
 

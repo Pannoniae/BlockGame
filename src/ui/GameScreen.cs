@@ -1,45 +1,31 @@
 using System.Drawing;
 using System.Numerics;
 using BlockGame.util;
-using Cysharp.Text;
-using FontStashSharp.RichText;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
 using TrippyGL;
 
 namespace BlockGame.ui;
 
-public class GameScreen : Screen, IDisposable {
+public class GameScreen : Screen {
 
     public World world;
     public GraphicsDevice GD;
 
-    private Utf16ValueStringBuilder debugStr;
-    // for top right corner debug shit
-    private Utf16ValueStringBuilder debugStrG;
     public Debug D;
 
     public bool debugScreen = false;
 
     public Menu PAUSE_MENU = new PauseMenu();
+    public IngameMenu INGAME_MENU = new IngameMenu();
 
     private TimerAction updateMemory;
+    private TimerAction updateDebugText;
 
 
-    // values for f3
-    private long workingSet;
-    private long GCMemory;
-    private RichTextLayout rendererText;
     private bool disposed;
 
     public override void activate() {
-        base.activate();
-        exitMenu();
-        debugStr.Dispose();
-        debugStr = ZString.CreateStringBuilder();
-        debugStrG.Dispose();
-        debugStrG = ZString.CreateStringBuilder();
         GD = Game.GD;
         D = new Debug();
 
@@ -47,82 +33,11 @@ public class GameScreen : Screen, IDisposable {
         var seed = Random.Shared.Next(int.MaxValue);
         world = new World(seed);
         world.loadAroundPlayer();
-        updateMemory = Game.instance.setInterval(200, updateMemoryMethod);
-        updateMemory = Game.instance.setInterval(50, updateDebugTextMethod);
 
-        // then add the GUI
-        var version = Text.createText(this, "version", new Vector2D<int>(2, 2), "BlockGame v0.0.2");
-        version.shadowed = true;
-        addElement(version);
-        var hotbar = new Hotbar(this, "hotbar", new Vector2D<int>(0, -20)) {
-            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
-            verticalAnchor = VerticalAnchor.BOTTOM
-        };
-        addElement(hotbar);
-        rendererText = new RichTextLayout {
-            Font = Game.gui.guiFontThin,
-            Text = "",
-            Width = 150 * GUI.guiScale
-        };
-    }
+        switchToMenu(INGAME_MENU);
 
-    public virtual void Dispose() {
-        debugStr.Dispose();
-        debugStrG.Dispose();
-    }
-
-    private void updateDebugTextMethod() {
-        if (debugScreen) {
-            var gui = Game.gui;
-            var i = Game.instance;
-            var p = world.player;
-            var c = p.camera;
-            var m = Game.metrics;
-            var loadedChunks = world.chunks.Count;
-            var pos = p.position.toBlockPos();
-            // current block
-            //var cb = world.getBlock(pos);
-            var sl = world.getSkyLight(pos.X, pos.Y, pos.Z);
-            var bl = world.getBlockLight(pos.X, pos.Y, pos.Z);
-
-
-            debugStr.Clear();
-            debugStrG.Clear();
-            if (Game.devMode) {
-                debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
-                debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length);
-                debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
-                debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
-                debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
-                debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
-                if (i.targetedPos.HasValue) {
-                    debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
-                }
-                else
-                    debugStr.Append("No target\n");
-            }
-
-            debugStr.AppendFormat("rC:{0} rSC:{1} rV:{2}k\n", m.renderedChunks, m.renderedSubChunks, m.renderedVerts / 1000);
-            debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
-
-            debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
-            if (Game.devMode) {
-                debugStr.AppendFormat("Seed: {0}\n", world.seed);
-            }
-
-
-
-            debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer), Game.GL.GetStringS(StringName.Vendor));
-            debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
-            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\n", GCMemory / Constants.MEGABYTES, workingSet / Constants.MEGABYTES);
-            // calculate textwidth
-            rendererText = new RichTextLayout {
-                Font = gui.guiFontThin,
-                Text = debugStrG.ToString(),
-                Width = 150 * GUI.guiScale
-            };
-
-        }
+        updateMemory = Game.instance.setInterval(200, INGAME_MENU.updateMemoryMethod);
+        updateDebugText = Game.instance.setInterval(50, INGAME_MENU.updateDebugTextMethod);
     }
 
     public override void deactivate() {
@@ -130,20 +45,20 @@ public class GameScreen : Screen, IDisposable {
         world?.Dispose();
         world = null;
         updateMemory.enabled = false;
-    }
-
-    private void updateMemoryMethod() {
-        Game.proc.Refresh();
-        workingSet = Game.proc.WorkingSet64;
-        GCMemory = GC.GetTotalMemory(false);
+        updateDebugText.enabled = false;
     }
 
 
     public override void update(double dt) {
         base.update(dt);
+        if (!currentMenu.isModal()) {
+            INGAME_MENU.update(dt);
+        }
+
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D<double>(0, 0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
+        world.renderUpdate();
         if (!world.paused && !Game.lockingMouse) {
             world.player.updateInput(dt);
             world.update(dt);
@@ -171,6 +86,10 @@ public class GameScreen : Screen, IDisposable {
     }
 
     public override void render(double dt, double interp) {
+        base.render(dt, interp);
+        if (!currentMenu.isModal()) {
+            INGAME_MENU.render(dt, interp);
+        }
         Game.metrics.clear();
 
         //world.mesh();
@@ -185,6 +104,9 @@ public class GameScreen : Screen, IDisposable {
     }
 
     public override void postRender(double dt, double interp) {
+        if (!currentMenu.isModal()) {
+            INGAME_MENU.postRender(dt, interp);
+        }
         // render entities
         GD.DepthTestingEnabled = false;
         world.player.render(dt, interp);
@@ -259,13 +181,7 @@ public class GameScreen : Screen, IDisposable {
 
         // reload chunks
         if (key == Key.A && keyboard.IsKeyPressed(Key.F3)) {
-            foreach (var chunk in world.chunks.Values) {
-                // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
-                if (chunk.status >= ChunkStatus.MESHED) {
-                    chunk.status = ChunkStatus.MESHED - 1;
-                }
-            }
-            world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+            remeshWorld();
         }
 
         if (key == Key.F) {
@@ -313,6 +229,21 @@ public class GameScreen : Screen, IDisposable {
         }
     }
 
+    public void remeshWorld() {
+        setUniforms();
+        foreach (var chunk in world.chunks.Values) {
+            // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
+            if (chunk.status >= ChunkStatus.MESHED) {
+                chunk.meshChunk();
+            }
+        }
+        world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+    }
+
+    public void setUniforms() {
+        world.renderer.setUniforms();
+    }
+
     public void pause() {
         switchToMenu(PAUSE_MENU);
         world.inMenu = true;
@@ -322,7 +253,7 @@ public class GameScreen : Screen, IDisposable {
     }
 
     public void backToGame() {
-        exitMenu();
+        switchToMenu(INGAME_MENU);
         world.inMenu = false;
         world.paused = false;
         Game.instance.lockMouse();
@@ -351,6 +282,9 @@ public class GameScreen : Screen, IDisposable {
 
     public override void draw() {
         base.draw();
+        if (!currentMenu.isModal()) {
+            INGAME_MENU.draw();
+        }
 
         var gui = Game.gui;
 
@@ -359,7 +293,7 @@ public class GameScreen : Screen, IDisposable {
         var centreY = Game.centreY;
 
 
-        if (!world.inMenu) {
+        if (currentMenu == INGAME_MENU) {
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
                     new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
@@ -373,30 +307,27 @@ public class GameScreen : Screen, IDisposable {
                 new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
                     new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
                 new Color4b(240, 240, 240));
+
+            if (debugScreen) {
+
+                D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
+                D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
+                //D.drawAABB(p.aabb);
+                D.flushLines();
+            }
         }
-        if (world.paused) {
+
+        if (world.paused && currentMenu == PAUSE_MENU) {
             var pauseText = "-PAUSED-";
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
                 Color4b.OrangeRed);
         }
+    }
 
-        // Draw block display
-        var blockStr = Blocks.get(world.player.hotbar.getSelected().block).name;
-        gui.drawStringCentred(blockStr, new Vector2(Game.centreX, Game.height - 120),
-            Color4b.White);
-
-        if (debugScreen) {
-
-            D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
-            D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
-            //D.drawAABB(p.aabb);
-            D.flushLines();
-
-            var ver = getElement("version");
-            gui.drawStringThin(debugStr.AsSpan(),
-                new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
-            gui.drawRString(rendererText,
-                new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
+    public override void postDraw() {
+        base.postDraw();
+        if (!currentMenu.isModal()) {
+            INGAME_MENU.postDraw();
         }
     }
 
@@ -421,5 +352,10 @@ public class GameScreen : Screen, IDisposable {
     }
     public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
 
+    }
+
+    public void openSettings() {
+        Menu.SETTINGS.prevMenu = PAUSE_MENU;
+        switchToMenu(Menu.SETTINGS);
     }
 }

@@ -9,8 +9,9 @@ namespace BlockGame.ui;
 
 public class SettingsMenu : Menu {
 
-    public override void activate() {
-        base.activate();
+    public Menu prevMenu;
+
+    public SettingsMenu() {
         // load settings (later)
         var settings = Settings.instance;
 
@@ -41,7 +42,10 @@ public class SettingsMenu : Menu {
         var AO = new ToggleButton(this, "ao", false, settings.AO ? 1 : 0,
             "Ambient Occlusion: Disabled", "Ambient Occlusion: Enabled");
         AO.topCentre();
-        AO.clicked += () => { settings.AO = AO.getIndex() == 1; };
+        AO.clicked += () => {
+            settings.AO = AO.getIndex() == 1;
+            remeshIfRequired();
+        };
         AO.tooltip = "Ambient Occlusion makes block corners darker to simulate shadows.";
         settingElements.Add(AO);
         addElement(AO);
@@ -49,7 +53,10 @@ public class SettingsMenu : Menu {
         var smoothLighting = new ToggleButton(this, "smoothLighting", false, settings.smoothLighting ? 1 : 0,
             "Smooth Lighting: Disabled", "Smooth Lighting: Enabled");
         smoothLighting.topCentre();
-        smoothLighting.clicked += () => { settings.smoothLighting = smoothLighting.getIndex() == 1; };
+        smoothLighting.clicked += () => {
+            settings.smoothLighting = smoothLighting.getIndex() == 1;
+            remeshIfRequired();
+        };
         smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
         settingElements.Add(smoothLighting);
         addElement(smoothLighting);
@@ -83,7 +90,10 @@ public class SettingsMenu : Menu {
         renderDistance.setPosition(new Rectangle(0, 112, 128, 16));
         renderDistance.topCentre();
         renderDistance.tooltip = "The maximum distance at which blocks are rendered.\nHigher values may reduce performance.";
-        renderDistance.applied += () => { settings.renderDistance = (int)renderDistance.value; };
+        renderDistance.applied += () => {
+            settings.renderDistance = (int)renderDistance.value;
+            remeshIfRequired();
+        };
         renderDistance.getText = value => "Render Distance: " + value;
         settingElements.Add(renderDistance);
         addElement(renderDistance);
@@ -111,10 +121,16 @@ public class SettingsMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         back.setPosition(new Vector2D<int>(2, -18));
-        back.clicked += returnToMainMenu;
+        back.clicked += returnToPrevMenu;
         addElement(back);
 
         layoutSettingsTwoCols(settingElements, new Vector2D<int>(0, 16), vsync.GUIbounds.Width);
+    }
+
+    private void remeshIfRequired() {
+        if (Game.instance.currentScreen == Screen.GAME_SCREEN) {
+            Screen.GAME_SCREEN.remeshWorld();
+        }
     }
 
     public void layoutSettingsTwoCols(List<GUIElement> elements, Vector2D<int> startPos, int buttonWidth) {
@@ -158,12 +174,12 @@ public class SettingsMenu : Menu {
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {
-            returnToMainMenu();
+            returnToPrevMenu();
         }
     }
 
-    public static void returnToMainMenu() {
-        Game.instance.executeOnMainThread(() => Game.instance.switchTo(MAIN_MENU));
+    public void returnToPrevMenu() {
+        Game.instance.executeOnMainThread(() => Game.instance.switchTo(prevMenu));
     }
 
     public override void draw() {

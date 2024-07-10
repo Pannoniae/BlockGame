@@ -23,6 +23,10 @@ public class InventoryGUI : Menu {
 
     public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/creative_inventory.png");
 
+    public override bool isModal() {
+        return false;
+    }
+
     public InventoryGUI(Vector2D<int> guiPos) {
         this.guiPos = guiPos;
         resize(guiPos);
