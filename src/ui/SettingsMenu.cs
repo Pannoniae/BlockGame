@@ -44,7 +44,7 @@ public class SettingsMenu : Menu {
         AO.topCentre();
         AO.clicked += () => {
             settings.AO = AO.getIndex() == 1;
-            remeshIfRequired();
+            remeshIfRequired(settings.renderDistance);
         };
         AO.tooltip = "Ambient Occlusion makes block corners darker to simulate shadows.";
         settingElements.Add(AO);
@@ -55,7 +55,7 @@ public class SettingsMenu : Menu {
         smoothLighting.topCentre();
         smoothLighting.clicked += () => {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
-            remeshIfRequired();
+            remeshIfRequired(settings.renderDistance);
         };
         smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
         settingElements.Add(smoothLighting);
@@ -92,7 +92,7 @@ public class SettingsMenu : Menu {
         renderDistance.tooltip = "The maximum distance at which blocks are rendered.\nHigher values may reduce performance.";
         renderDistance.applied += () => {
             settings.renderDistance = (int)renderDistance.value;
-            remeshIfRequired();
+            remeshIfRequired((int)renderDistance.value);
         };
         renderDistance.getText = value => "Render Distance: " + value;
         settingElements.Add(renderDistance);
@@ -127,9 +127,9 @@ public class SettingsMenu : Menu {
         layoutSettingsTwoCols(settingElements, new Vector2D<int>(0, 16), vsync.GUIbounds.Width);
     }
 
-    private void remeshIfRequired() {
+    private void remeshIfRequired(int oldRenderDist) {
         if (Game.instance.currentScreen == Screen.GAME_SCREEN) {
-            Screen.GAME_SCREEN.remeshWorld();
+            Screen.GAME_SCREEN.remeshWorld(oldRenderDist);
         }
     }
 

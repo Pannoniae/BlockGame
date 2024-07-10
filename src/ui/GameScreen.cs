@@ -181,7 +181,7 @@ public class GameScreen : Screen {
 
         // reload chunks
         if (key == Key.A && keyboard.IsKeyPressed(Key.F3)) {
-            remeshWorld();
+            remeshWorld(Settings.instance.renderDistance);
         }
 
         if (key == Key.F) {
@@ -229,12 +229,18 @@ public class GameScreen : Screen {
         }
     }
 
-    public void remeshWorld() {
+    public void remeshWorld(int oldRenderDist) {
         setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.MESHED) {
-                chunk.meshChunk();
+                if (oldRenderDist < Settings.instance.renderDistance) {
+                    // just unload everything
+                    chunk.status = ChunkStatus.MESHED - 1;
+                }
+                else {
+                    chunk.meshChunk();
+                }
             }
         }
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
