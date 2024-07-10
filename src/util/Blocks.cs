@@ -58,7 +58,7 @@ public class Blocks {
     public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
     public static Block GRAVEL = register(new Block(33, "Gravel", BlockModel.makeCube(Block.cubeUVs(15, 0))));
-    public static Block HELLSTONE = register(new Block(34, "Hellstone", BlockModel.makeCube(Block.cubeUVs(1, 1))).light(15));
+    public static Block HELLSTONE = register(new Block(34, "Hellstone", BlockModel.makeCube(Block.grassUVs(1, 1,2,1,2,1))).light(15));
     
     public static Block GLASS = register(new Block(6, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0)))
         .transparency()
