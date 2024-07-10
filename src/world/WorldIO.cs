@@ -129,6 +129,6 @@ public class WorldIO {
         if (chunk.status >= ChunkStatus.MESHED) {
             chunk.status = ChunkStatus.LIGHTED;
         }
-        world.chunks[chunk.coord] = chunk;
+        world.addChunk(chunk.coord, chunk);
     }
 }

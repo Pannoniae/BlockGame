@@ -7,7 +7,7 @@ namespace BlockGame;
 /// <summary>
 /// SharedBlockVAO but we only use one VAO / vertex format then just rebind the vertex/index buffer
 /// </summary>
-public class VerySharedBlockVAO : VAO {
+public sealed class VerySharedBlockVAO : VAO {
     public uint VAOHandle;
     public uint vbo;
     public uint ibo;

@@ -82,7 +82,7 @@ public class OverworldWorldGenerator : WorldGenerator {
 
     public float getNoise2(int x, int z) {
         // we want to have multiple octaves
-        return auxNoise.GetNoise(1 * x, 1 * z);
+        return auxNoise.GetNoise(x, z);
     }
 
     public void generate(ChunkCoord coord) {

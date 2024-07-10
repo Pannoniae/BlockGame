@@ -9,22 +9,21 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class SubChunkRenderer : IDisposable {
+public sealed class SubChunkRenderer : IDisposable {
     public SubChunk subChunk;
 
-
     // we need it here because completely full chunks are also empty of any rendering
-    private bool isEmptyRenderOpaque;
-    private bool isEmptyRenderTranslucent;
+    private bool hasRenderOpaque;
+    private bool hasRenderTranslucent;
 
     private VAO? vao;
     private VAO? watervao;
 
     private bool hasOnlySolid;
 
-    private int uChunkPos;
-    private int dummyuChunkPos;
-    private int wateruChunkPos;
+    private static int uChunkPos;
+    private static int dummyuChunkPos;
+    private static int wateruChunkPos;
 
     private static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
 
@@ -41,7 +40,7 @@ public class SubChunkRenderer : IDisposable {
     private static byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
     private static ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
-    private Stopwatch sw = new Stopwatch();
+    private static Stopwatch sw = new Stopwatch();
 
     public static readonly sbyte[] offsetTable = [
 
@@ -171,8 +170,8 @@ public class SubChunkRenderer : IDisposable {
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
         if (subChunk.isEmpty) {
-            isEmptyRenderOpaque = true;
-            isEmptyRenderTranslucent = true;
+            hasRenderOpaque = false;
+            hasRenderTranslucent = false;
             return;
         }
 
@@ -183,8 +182,8 @@ public class SubChunkRenderer : IDisposable {
 
         // if chunk is full, don't mesh either
         if (hasOnlySolid) {
-            isEmptyRenderOpaque = true;
-            isEmptyRenderTranslucent = true;
+            hasRenderOpaque = false;
+            hasRenderTranslucent = false;
             return;
         }
 
@@ -198,7 +197,7 @@ public class SubChunkRenderer : IDisposable {
             }*/
         //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkIndices.Count > 0) {
-            isEmptyRenderOpaque = false;
+            hasRenderOpaque = true;
             if (subChunk.world.renderer.fastChunkSwitch) {
                 (vao as ExtremelySharedBlockVAO).bindVAO();
             }
@@ -211,7 +210,7 @@ public class SubChunkRenderer : IDisposable {
             //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
-            isEmptyRenderOpaque = true;
+            hasRenderOpaque = false;
         }
         //}
         //lock (meshingLock) {
@@ -220,7 +219,7 @@ public class SubChunkRenderer : IDisposable {
             constructVertices(VertexConstructionMode.TRANSLUCENT);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             if (chunkIndices.Count > 0) {
-                isEmptyRenderTranslucent = false;
+                hasRenderTranslucent = true;
                 if (subChunk.world.renderer.fastChunkSwitch) {
                     (watervao as ExtremelySharedBlockVAO).bindVAO();
                 }
@@ -235,7 +234,7 @@ public class SubChunkRenderer : IDisposable {
             }
             else {
                 //world.sortedTransparentChunks.Remove(this);
-                isEmptyRenderTranslucent = true;
+                hasRenderTranslucent = false;
             }
         }
         //}
@@ -249,10 +248,10 @@ public class SubChunkRenderer : IDisposable {
     }
 
     public void drawOpaque() {
-        if (!isEmptyRenderOpaque) {
+        if (hasRenderOpaque && isVisible(WorldRenderer.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            Game.worldShader.setUniform(uChunkPos,subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
+            Game.worldShader.setUniform(uChunkPos, subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -260,7 +259,7 @@ public class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparent(bool dummy) {
-        if (!isEmptyRenderTranslucent && subChunk.blocks.hasTranslucentBlocks()) {
+        if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks() && isVisible(WorldRenderer.frustum)) {
             watervao.bind();
             var shader = dummy ? Game.dummyShader : Game.waterShader;
             shader.setUniform(dummy ? dummyuChunkPos : wateruChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);

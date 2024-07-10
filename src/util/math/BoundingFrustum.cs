@@ -177,47 +177,25 @@ namespace System.Numerics {
 
         public bool outsideCameraHorizontal(BoundingBox boundingBox) {
             // why bother checking front/back? come on, it's a camera frustum!
-            for (var i = 2; i < 4; ++i) {
-                if (boundingBox.isFront(_planes[i])) {
-                    return true;
-                }
-            }
-            return false;
+            return boundingBox.isFront(_planes[2]) || boundingBox.isFront(_planes[3]);
         }
 
         public bool outsideCameraHorizontal(AABB aabb) {
             // why bother checking front/back? come on, it's a camera frustum!
-            for (var i = 2; i < 4; ++i) {
-                if (aabb.isFront(_planes[i])) {
-                    return true;
-                }
-            }
-            return false;
+            return aabb.isFront(_planes[2]) || aabb.isFront(_planes[3]);
         }
 
 
         // for subchunks -> we already established that they are inside the horizontal bounds
         public bool outsideCameraUpDown(BoundingBox boundingBox) {
             // why bother checking front/back? come on, it's a camera frustum!
-            if (boundingBox.isFrontBottom(_planes[4])) {
-                return true;
-            }
-            if (boundingBox.isFrontTop(_planes[5])) {
-                return true;
-            }
-            return false;
+            return boundingBox.isFrontBottom(_planes[4]) || boundingBox.isFrontTop(_planes[5]);
         }
 
         // for subchunks -> we already established that they are inside the horizontal bounds
         public bool outsideCameraUpDown(AABB aabb) {
             // why bother checking front/back? come on, it's a camera frustum!
-            if (aabb.isFront(_planes[4])) {
-                return true;
-            }
-            if (aabb.isFront(_planes[5])) {
-                return true;
-            }
-            return false;
+            return aabb.isFront(_planes[4]) || aabb.isFront(_planes[5]);
         }
 
         /// <summary>

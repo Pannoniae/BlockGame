@@ -4,11 +4,11 @@ using Silk.NET.Maths;
 
 namespace BlockGame;
 
-public class Chunk : IDisposable {
+public class Chunk : IDisposable, IEquatable<Chunk> {
     public ChunkStatus status;
 
     public HeightMap heightMap;
-    public ChunkCoord coord;
+    public readonly ChunkCoord coord;
     public SubChunk[] subChunks;
     public World world;
 
@@ -18,6 +18,8 @@ public class Chunk : IDisposable {
     public Vector2D<int> centrePos => new(worldX + 8, worldZ + 8);
 
     public AABB box;
+
+    public bool isRendered = false;
 
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
@@ -343,6 +345,32 @@ public class Chunk : IDisposable {
 
     ~Chunk() {
         Dispose(false);
+    }
+
+    public bool Equals(Chunk? other) {
+        if (other is null)
+            return false;
+        if (ReferenceEquals(this, other))
+            return true;
+        return coord.Equals(other.coord);
+    }
+    public override bool Equals(object? obj) {
+        if (obj is null)
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != GetType())
+            return false;
+        return Equals((Chunk)obj);
+    }
+    public override int GetHashCode() {
+        return coord.GetHashCode();
+    }
+    public static bool operator ==(Chunk? left, Chunk? right) {
+        return Equals(left, right);
+    }
+    public static bool operator !=(Chunk? left, Chunk? right) {
+        return !Equals(left, right);
     }
 }
 

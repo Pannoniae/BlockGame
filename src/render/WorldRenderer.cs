@@ -3,6 +3,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.NV;
 using TrippyGL;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
@@ -17,10 +18,6 @@ public class WorldRenderer {
     public Shader shader;
     public Shader dummyShader;
     public Shader waterShader;
-
-    public List<SubChunk> chunksToRender = [];
-
-    public int uProjection;
 
     //public int uColor;
     public int blockTexture;
@@ -135,18 +132,11 @@ public class WorldRenderer {
         }
 
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
+        var chunkList = world.chunkList;
         // gather chunks to render
-        chunksToRender.Clear();
-        foreach (var chunk in world.chunks.Values) {
-            if (chunk.status >= ChunkStatus.MESHED) {
-                if (chunk.isVisible(frustum)) {
-                    foreach (var subchunk in chunk.subChunks) {
-                        if (subchunk.renderer.isVisible(frustum)) {
-                            chunksToRender.Add(subchunk);
-                        }
-                    }
-                }
-            }
+        for (int i = 0; i < chunkList.Count; i++) {
+            var chunk = chunkList[i];
+            chunk.isRendered = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
         }
         //chunksToRender.Sort(new ChunkComparer(world.player));
 
@@ -154,17 +144,29 @@ public class WorldRenderer {
         shader.use();
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
-        foreach (var chunk in chunksToRender) {
-            Game.metrics.renderedChunks += 1;
-            chunk.renderer.drawOpaque();
+        for (int i = 0; i < chunkList.Count; i++) {
+            var chunk = chunkList[i];
+            if (!chunk.isRendered) {
+                continue;
+            }
+            for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
+                Game.metrics.renderedChunks += 1;
+                chunk.subChunks[j].renderer.drawOpaque();
+            }
         }
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
         dummyShader.setUniform(dummyuMVP, viewProj);
         GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
-        foreach (var chunk in chunksToRender) {
-            chunk.renderer.drawTransparent(true);
+        for (int i = 0; i < chunkList.Count; i++) {
+            var chunk = chunkList[i];
+            if (!chunk.isRendered) {
+                continue;
+            }
+            for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
+                chunk.subChunks[j].renderer.drawTransparent(true);
+            }
         }
 
         Game.GD.BlendingEnabled = true;
@@ -176,8 +178,14 @@ public class WorldRenderer {
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
-        foreach (var chunk in chunksToRender) {
-            chunk.renderer.drawTransparent(false);
+        for (int i = 0; i < chunkList.Count; i++) {
+            var chunk = chunkList[i];
+            if (!chunk.isRendered) {
+                continue;
+            }
+            for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
+                chunk.subChunks[j].renderer.drawTransparent(false);
+            }
         }
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);

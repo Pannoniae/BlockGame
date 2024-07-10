@@ -9,7 +9,10 @@ public class World : IDisposable {
     public const int REGIONSIZE = 32;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
-    public Dictionary<ChunkCoord, Chunk> chunks;
+    public readonly Dictionary<ChunkCoord, Chunk> chunks;
+
+    // used for rendering
+    public readonly List<Chunk> chunkList;
     //public List<ChunkSection> sortedTransparentChunks = [];
 
     // Queues
@@ -71,6 +74,7 @@ public class World : IDisposable {
         this.seed = seed;
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
+        chunkList = new List<Chunk>(2048);
         // load a minimal amount of chunks so the world can get started
         if (!loadingSave) {
             loadSpawnChunks();
@@ -86,6 +90,11 @@ public class World : IDisposable {
         }
 
         renderer.initBlockOutline();
+    }
+
+    public void addChunk(ChunkCoord coord, Chunk chunk) {
+        chunks[coord] = chunk;
+        chunkList.Add(chunk);
     }
 
     private void loadSpawnChunks() {
@@ -433,6 +442,7 @@ public class World : IDisposable {
     public void unloadChunk(ChunkCoord coord) {
         // save chunk first
         worldIO.saveChunk(chunks[coord]);
+        chunkList.Remove(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);
     }
@@ -473,7 +483,9 @@ public class World : IDisposable {
         // right now we only generate, not load
         // if it's already generated, don't do it again
         if (status >= ChunkStatus.GENERATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
-            chunks[chunkCoord] = new Chunk(this, chunkCoord.x, chunkCoord.z);
+            var c = new Chunk(this, chunkCoord.x, chunkCoord.z);
+            chunks[chunkCoord] = c;
+            chunkList.Add(c);
             generator.generate(chunkCoord);
         }
         if (status >= ChunkStatus.POPULATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {

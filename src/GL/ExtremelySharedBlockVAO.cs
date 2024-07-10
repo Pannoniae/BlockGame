@@ -1,7 +1,7 @@
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
-using TrippyGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;
@@ -19,7 +19,7 @@ public sealed class ExtremelySharedBlockVAO : VAO {
     public uint indexOffset;
 
 
-    public GL GL;
+    public readonly GL GL;
 
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
@@ -95,6 +95,7 @@ public sealed class ExtremelySharedBlockVAO : VAO {
         GL.BindVertexArray(VAOHandle);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void bind() {
         GL.VertexArrayVertexBuffer(VAOHandle, 0, buffer, 0, 6 * sizeof(ushort));
         GL.VertexArrayElementBuffer(VAOHandle, buffer);
