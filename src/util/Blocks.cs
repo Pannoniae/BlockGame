@@ -52,7 +52,7 @@ public class Blocks {
     }
 
     public static Block AIR = register(new Block(0, "Air", BlockModel.emptyBlock()).air());
-    public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))));
+    public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))).tick());
     public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(Block.cubeUVs(2, 0))));
     public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(Block.cubeUVs(3, 0))));
     public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
@@ -339,6 +339,11 @@ public class Block {
         noCollision();
         noSelection();
         isFullBlock = false;
+        return this;
+    }
+
+    public Block tick() {
+        randomTick = true;
         return this;
     }
 }

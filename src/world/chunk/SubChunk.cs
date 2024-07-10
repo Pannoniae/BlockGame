@@ -52,20 +52,26 @@ public class SubChunk : IDisposable {
         return blocks[x, y, z];
     }
 
-    public void tick(int x, int y, int z) {
-        return;
+    public void tick(Random random, int x, int y, int z) {
         var block = getBlockInChunk(x, y, z);
-        // todo implement proper grass spread
-        if (block == Blocks.DIRT.id) {
-            if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) == 0) {
-                blocks[x, y, z] = Blocks.GRASS.id;
-                renderer.meshChunk();
-            }
-        }
+        var worldPos = World.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
 
         if (block == Blocks.GRASS.id) {
-            if (chunk.world.inWorld(x, y + 1, z) && getBlockInChunk(x, y + 1, z) != 0) {
+            if (y < 127 && world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z) != 0) {
                 blocks[x, y, z] = Blocks.DIRT.id;
+                renderer.meshChunk();
+            }
+            // spread grass to nearby dirt blocks
+            // in a 3x3x3 area
+            var r = Utils.getRandomCoord(random, 6, 6, 6);
+            var coord = World.toWorldPos(chunkX, chunkY, chunkZ, r.X, r.Y, r.Z);
+            var x1 = coord.X;
+            var y1 = coord.Y;
+            var z1 = coord.Z;
+            // if dirt + air above
+            // todo do it in world coords
+            if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Blocks.DIRT.id && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
+                world.setBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3, Blocks.GRASS.id);
                 renderer.meshChunk();
             }
         }

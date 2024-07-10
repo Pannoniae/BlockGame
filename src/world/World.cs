@@ -186,13 +186,16 @@ public class World : IDisposable {
             // distance check
             if (Vector2D.DistanceSquared(chunk.Value.centrePos, new Vector2D<int>((int)player.position.X, (int)player.position.Z)) < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
                 foreach (var chunksection in chunk.Value.subChunks) {
+                    if (!chunksection.blocks.hasRandomTickingBlocks()) {
+                        continue;
+                    }
                     for (int i = 0; i < numTicks; i++) {
                         // I pray this is random
                         var coord = random.Next(16 * 16 * 16);
-                        var x = coord / (16 * 16) % 16;
+                        var x = coord / (16 * 16);
                         var y = coord / 16 % 16;
                         var z = coord % 16;
-                        chunksection.tick(x, y, z);
+                        chunksection.tick(random, x, y, z);
                     }
                 }
             }
