@@ -6,13 +6,15 @@ namespace BlockGame;
 
 public class World : IDisposable {
     public const int WORLDSIZE = 12;
-    public const int REGIONSIZE = 32;
+    public const int REGIONSIZE = 16;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     public readonly Dictionary<ChunkCoord, Chunk> chunks;
 
     // used for rendering
     public readonly List<Chunk> chunkList;
+
+    public readonly List<Entity> entities;
     //public List<ChunkSection> sortedTransparentChunks = [];
 
     // Queues
@@ -44,7 +46,6 @@ public class World : IDisposable {
     public int seed;
 
 
-    public double worldTime;
     public int worldTick;
 
     public Random random;
@@ -67,7 +68,6 @@ public class World : IDisposable {
         renderer = new WorldRenderer(this);
 
         random = new Random(seed);
-        worldTime = 0;
         worldTick = 0;
 
         generator.setup(seed);
@@ -118,7 +118,6 @@ public class World : IDisposable {
     }
 
     public void update(double dt) {
-        worldTime += dt;
         worldTick++;
         /*if (Vector3D.DistanceSquared(player.position, player.lastSort) > 64) {
             sortedTransparentChunks.Sort(new ChunkComparer(player.camera));
@@ -938,6 +937,18 @@ public class World : IDisposable {
             chunkZ * Chunk.CHUNKSIZE + z);
     }
 
+    public static Vector3D<int> toWorldPos(ChunkSectionCoord coord, int x, int y, int z) {
+        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + x,
+            coord.y * Chunk.CHUNKSIZE + y,
+            coord.z * Chunk.CHUNKSIZE + z);
+    }
+
+    public static Vector3D<int> toWorldPos(ChunkSectionCoord coord, Vector3D<int> c) {
+        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + c.X,
+            coord.y * Chunk.CHUNKSIZE + c.Y,
+            coord.z * Chunk.CHUNKSIZE + c.Z);
+    }
+
     /// <summary>
     /// For chunks
     /// </summary>
@@ -945,6 +956,18 @@ public class World : IDisposable {
         return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
             y,
             chunkZ * Chunk.CHUNKSIZE + z);
+    }
+
+    public static Vector3D<int> toWorldPos(ChunkCoord coord, int x, int y, int z) {
+        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + x,
+            y,
+            coord.z * Chunk.CHUNKSIZE + z);
+    }
+
+    public static Vector3D<int> toWorldPos(ChunkCoord coord, Vector3D<int> c) {
+        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + c.X,
+            c.Y,
+            coord.z * Chunk.CHUNKSIZE + c.Z);
     }
 
     public List<Vector3D<int>> getBlocksInBox(Vector3D<int> min, Vector3D<int> max) {

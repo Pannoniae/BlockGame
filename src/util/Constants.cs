@@ -28,7 +28,7 @@ public static class Constants {
     public const double sneakFactor = 0.28;
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 6f;
-    public const double breakDelay = 0.6;
-    public const double placeDelay = 0.6;
+    public const double breakDelay = 8;
+    public const double placeDelay = 8;
     public const double flyModeDelay = 0.4;
 }

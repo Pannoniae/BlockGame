@@ -69,7 +69,6 @@ public class SubChunk : IDisposable {
             var y1 = coord.Y;
             var z1 = coord.Z;
             // if dirt + air above
-            // todo do it in world coords
             if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Blocks.DIRT.id && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
                 world.setBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3, Blocks.GRASS.id);
                 renderer.meshChunk();

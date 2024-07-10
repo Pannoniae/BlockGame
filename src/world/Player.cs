@@ -403,11 +403,11 @@ public class Player : Entity {
             }
         }
 
-        if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTime - lastBreak > Constants.breakDelay) {
+        if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTick - lastBreak > Constants.breakDelay) {
             breakBlock();
         }
 
-        if (mouse.IsButtonPressed(MouseButton.Right) && world.worldTime - lastPlace > Constants.placeDelay) {
+        if (mouse.IsButtonPressed(MouseButton.Right) && world.worldTick - lastPlace > Constants.placeDelay) {
             placeBlock();
         }
     }
@@ -422,7 +422,7 @@ public class Player : Entity {
             if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {
                 world.setBlockRemesh(pos.X, pos.Y, pos.Z, bl);
                 world.blockUpdateWithNeighbours(pos);
-                lastPlace = world.worldTime;
+                lastPlace = world.worldTick;
             }
         }
         else {
@@ -438,7 +438,7 @@ public class Player : Entity {
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdateWithNeighbours(pos);
             // place water if adjacent
-            lastBreak = world.worldTime;
+            lastBreak = world.worldTick;
         }
         else {
             setSwinging(false);
