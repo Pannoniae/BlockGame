@@ -10,6 +10,7 @@ public class OverworldWorldGenerator : WorldGenerator {
     public FastNoiseLite terrainNoise2;
     public FastNoiseLite auxNoise;
     public FastNoiseLite auxNoise2;
+    public FastNoiseLite noise3d;
     public FastNoiseLite treenoise;
 
     public Random random;
@@ -25,11 +26,13 @@ public class OverworldWorldGenerator : WorldGenerator {
         terrainNoise2 = new FastNoiseLite(random.Next(seed));
         auxNoise = new FastNoiseLite(random.Next(seed));
         auxNoise2 = new FastNoiseLite(random.Next(seed));
+        noise3d = new FastNoiseLite(random.Next(seed));
         treenoise = new FastNoiseLite(random.Next(seed));
         terrainNoise.SetFrequency(0.02f);
         terrainNoise2.SetFrequency(0.02f);
         auxNoise.SetFrequency(0.05f);
         auxNoise2.SetFrequency(0.05f);
+        noise3d.SetFrequency(1);
         treenoise.SetFrequency(1f);
     }
 
@@ -67,7 +70,7 @@ public class OverworldWorldGenerator : WorldGenerator {
                 + 1 / 4f * terrainNoise.GetNoise(4 * x, 4 * y, 4 * z)) / (8f + 4f + 2f + 1f + 0.5f + 1 / 4f);
     }
 
-    public float get3DNoise(FastNoiseLite noise, int x, int y, int z, int octaves, double gain) {
+    public float get3DNoise(FastNoiseLite noise, double x, double y, double z, int octaves, double gain) {
         // we want to have multiple octaves
         float result = 0;
         double amplitude = 0.5;

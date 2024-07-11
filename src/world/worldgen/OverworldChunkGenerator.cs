@@ -24,7 +24,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 // transform to the range -25 to 25, add 80 for 50 - 105
                 var aux = generator.getNoise(generator.auxNoise, worldPos.X, worldPos.Z, 1, 0.5f);
                 var mountainness = MathF.Pow((generator.getNoise(generator.terrainNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 1) / 2f, 2);
-                var flatNoise = generator.getNoise(generator.terrainNoise, worldPos.X / 3f + aux * 5 + 1, worldPos.Z / 3f + aux * 5 + 1, 5, 0.5f);
+                var flatNoise = generator.getNoise(generator.terrainNoise, worldPos.X / 3f + aux * 5 + 1, worldPos.Z / 3f + aux * 5 + 1, 5, 0.5);
                 //Console.Out.WriteLine(flatNoise);
                 // \sin\left(x\right)\cdot\ 0.8+\operatorname{sign}\left(x\right)\cdot x\cdot0.3
                 // sin(x) * 0.8 + sign(x) * x * 0.3
@@ -33,27 +33,40 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 //Console.Out.WriteLine(mountainness);
                 flatNoise *= mountainness * 64;
                 flatNoise += 64;
+
                 //Console.Out.WriteLine(flatNoise);
                 
                 chunk.setBlockFast(x, 0, z, Blocks.HELLSTONE.id);
                 // hack until we can propagate them properly AND cheaply
                 chunk.setBlockLight(x, 0, z, Blocks.HELLSTONE.lightLevel);
 
-                for (int y = 1; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
-                    if (y < flatNoise) {
+                for (int y = 1; y < World.WORLDHEIGHT; y++) {
+                    // reshape this so it's prevalent between 56 and 80
+                    // y=\min\left(\max\left(\frac{\left(x\ -\ 64\right)}{12},\ 0\right),1\right)\cdot0.3
+                    var func = (y - 64) / 12d;
+                    var contribution = Math.Min(Math.Max(func, 0), 1) * 0.6;
+
+
+
+                    worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, y, z);
+                    var noise3d = generator.get3DNoise(generator.noise3d, worldPos.X / 32f, worldPos.Y / 16f, worldPos.Z / 32f, 2, 0.5);
+                    var isFlatNoise = y < flatNoise ? 1 : 0;
+                    var threshold = isFlatNoise * (1 - contribution) + noise3d * contribution;
+
+                    if (threshold > 0.5) {
                         chunk.setBlockFast(x, y, z, Blocks.STONE.id);
                         // set heightmap
                         chunk.addToHeightMap(x, y, z);
-                    }
-                    else {
-                        break;
                     }
                 }
                 int height = chunk.heightMap.get(x, z);
                 // replace top layers with dirt
                 var amt = generator.getNoise(generator.auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
                 for (int yy = height - 1; yy > height - 1 - amt; yy--) {
-                    chunk.setBlockFast(x, yy, z, Blocks.DIRT.id);
+                    // if stone, replace
+                    if (chunk.getBlock(x, yy, z) == Blocks.STONE.id) {
+                        chunk.setBlockFast(x, yy, z, Blocks.DIRT.id);
+                    }
                 }
 
                 // water if low

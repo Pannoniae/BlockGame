@@ -260,12 +260,22 @@ public class World : IDisposable {
                 if (neighbourLevel + 2 <= level || isDown) {
                     byte newLevel = (byte)(isDown ? level : level - 1);
                     if (isSkylight) {
-                        setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        if (node.noRemesh) {
+                            setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        }
+                        else {
+                            setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        }
                     }
                     else {
-                        setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        if (node.noRemesh) {
+                            setBlockLight(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        }
+                        else {
+                            setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        }
                     }
-                    queue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
+                    queue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk, node.noRemesh));
                 }
             }
         }
@@ -290,10 +300,20 @@ public class World : IDisposable {
                 var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
                 if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                     if (isSkylight) {
-                        setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        if (node.noRemesh) {
+                            setSkyLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        }
+                        else {
+                            setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        }
                     }
                     else {
-                        setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        if (node.noRemesh) {
+                            setBlockLight(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        }
+                        else {
+                            setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        }
                     }
 
                     // Emplace new node to queue. (could use push as well)

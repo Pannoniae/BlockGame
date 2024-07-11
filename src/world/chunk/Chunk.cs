@@ -69,7 +69,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 }
 
                 // add the last item for propagation
-                world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                world.skyLightQueue.Add(new LightNode(worldX + x, y + 1, worldZ + z, this, true));
             }
         }
         world.processSkyLightQueue();
@@ -97,7 +97,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 }
                 if (atLeastOnce) {
                     // add the last item for propagation
-                    world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                    world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this, true));
                 }
             }
         }
