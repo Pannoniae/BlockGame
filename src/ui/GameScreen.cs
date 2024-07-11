@@ -31,7 +31,8 @@ public class GameScreen : Screen {
 
         // create the world first
         var seed = Random.Shared.Next(int.MaxValue);
-        world = new World(seed);
+        world?.Dispose();
+        world = WorldIO.worldExists("level") ? WorldIO.load("level") : new World(seed);
         world.loadAroundPlayer();
 
         switchToMenu(INGAME_MENU);
@@ -58,12 +59,12 @@ public class GameScreen : Screen {
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D<double>(0, 0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
-        world.renderUpdate();
         if (!world.paused && !Game.lockingMouse) {
             world.player.updateInput(dt);
             world.update(dt);
             world.player.update(dt);
         }
+        world.renderUpdate();
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
@@ -165,6 +166,11 @@ public class GameScreen : Screen {
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         base.onKeyDown(keyboard, key, scancode);
+
+        if (currentMenu.isModal() && currentMenu != INGAME_MENU) {
+            return;
+        }
+
         if (key == Key.Escape) {
             // hack for back to main menu
             if (!world.inMenu) {
@@ -185,12 +191,12 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.F) {
-            world.worldIO.save(world, "world");
+            world.worldIO.save(world, "level");
         }
 
         if (key == Key.G) {
             world?.Dispose();
-            world = WorldIO.load("world");
+            world = WorldIO.load("level");
             Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }
 
@@ -244,6 +250,10 @@ public class GameScreen : Screen {
             }
         }
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+
+        // free up memory from the block arraypool - we probably don't need that much
+        ArrayBlockData.blockPool.trim();
+        ArrayBlockData.lightPool.trim();
     }
 
     public void setUniforms() {

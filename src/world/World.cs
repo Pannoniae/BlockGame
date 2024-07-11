@@ -462,6 +462,7 @@ public class World : IDisposable {
 
     public void Dispose() {
         // of course, we can save it here since WE call it and not the GC
+        worldIO.save(this, "level");
         foreach (var chunk in chunks) {
             worldIO.saveChunk(chunk.Value);
         }
@@ -481,17 +482,29 @@ public class World : IDisposable {
         if (chunks.TryGetValue(chunkCoord, out var chunk) && chunk.status >= status) {
             return chunk;
         }
+
         // does the chunk exist?
         bool hasChunk = chunk != default;
 
-        //Console.Out.WriteLine($"chunkload0 {chunkCoord} {status}");
+        Chunk c;
+        bool chunkAdded = false;
+
+        // if it exists on disk, load it
+        if (!hasChunk && WorldIO.chunkFileExists(chunkCoord)) {
+            var ch = WorldIO.loadChunkFromFile(this, chunkCoord);
+            addChunk(chunkCoord, ch);
+            // we got the chunk so set to true
+            hasChunk = true;
+            chunkAdded = true;
+        }
 
         // right now we only generate, not load
         // if it's already generated, don't do it again
         if (status >= ChunkStatus.GENERATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
-            var c = new Chunk(this, chunkCoord.x, chunkCoord.z);
-            chunks[chunkCoord] = c;
-            chunkList.Add(c);
+            if (!chunkAdded) {
+                c = new Chunk(this, chunkCoord.x, chunkCoord.z);
+                addChunk(chunkCoord, c);
+            }
             generator.generate(chunkCoord);
         }
         if (status >= ChunkStatus.POPULATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {

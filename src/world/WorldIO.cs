@@ -112,7 +112,8 @@ public class WorldIO {
             // it's a chunk file
             var name = Path.GetFileName(file);
             if (name.StartsWith('c')) {
-                loadChunkFromFile(world, file);
+                var chunk = loadChunkFromFile(world, file);
+                world.addChunk(chunk.coord, chunk);
             }
         }
         world.player.prevPosition = world.player.position;
@@ -120,7 +121,19 @@ public class WorldIO {
         return world;
     }
 
-    private static void loadChunkFromFile(World world, string file) {
+    public static bool chunkFileExists(ChunkCoord coord) {
+        return File.Exists($"level/c{coord.x},{coord.z}.xnbt");
+    }
+
+    public static bool worldExists(string level) {
+        return File.Exists($"level/{level}.xnbt");
+    }
+
+    public static Chunk loadChunkFromFile(World world, ChunkCoord coord) {
+        return loadChunkFromFile(world, $"level/c{coord.x},{coord.z}.xnbt");
+    }
+
+    public static Chunk loadChunkFromFile(World world, string file) {
         var nbt = NBT.readFile(file);
         var chunk = loadChunkFromNBT(world, nbt);
 
@@ -129,6 +142,6 @@ public class WorldIO {
         if (chunk.status >= ChunkStatus.MESHED) {
             chunk.status = ChunkStatus.LIGHTED;
         }
-        world.addChunk(chunk.coord, chunk);
+        return chunk;
     }
 }

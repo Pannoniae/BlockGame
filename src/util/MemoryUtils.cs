@@ -6,6 +6,10 @@ namespace BlockGame.util;
 
 public static class MemoryUtils {
     public static void cleanGC() {
+
+        ArrayBlockData.blockPool.trim();
+        ArrayBlockData.lightPool.trim();
+
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");
         var sw = Stopwatch.StartNew();
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
