@@ -43,8 +43,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 for (int y = 1; y < World.WORLDHEIGHT; y++) {
                     // reshape this so it's prevalent between 56 and 80
                     // y=\min\left(\max\left(\frac{\left(x\ -\ 64\right)}{12},\ 0\right),1\right)\cdot0.3
-                    var func = (y - 64) / 12d;
-                    var contribution = Math.Min(Math.Max(func, 0), 1) * 0.6;
+                    var contribution = (y + 64) / 64d * 0.2d;
 
 
 
