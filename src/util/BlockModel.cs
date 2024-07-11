@@ -29,7 +29,7 @@ public class BlockModel {
         var model = new BlockModel();
         model.faces = new Face[6];
 
-        const float offset = 0.0005f;
+        const float offset = 0;
 
         const float height = 15 / 16f;
 
@@ -106,22 +106,22 @@ public class BlockModel {
 
     //make a 8x8 pixel half cube
     public static BlockModel makeHalfCube(UVPair[] uvs) {
-            var model = new BlockModel();
-            model.faces = new Face[6];
-            // west
-            model.faces[0] = new(0.25f, 0.5f, 0.75f, 0.25f, 0, 0.75f, 0.25f, 0, 0.25f, 0.25f, 0.5f, 0.25f, uvs[0], uvs[0] + 0.5f, RawDirection.WEST, true, true);
-            // east
-            model.faces[1] = new(0.75f, 0.5f, 0.25f, 0.75f, 0, 0.25f, 0.75f, 0, 0.75f, 0.75f, 0.5f, 0.75f, uvs[1], uvs[1] + 0.5f, RawDirection.EAST, true, true);
-            // south
-            model.faces[2] = new(0.25f, 0.5f, 0.25f, 0.25f, 0, 0.25f, 0.75f, 0, 0.25f, 0.75f, 0.5f, 0.25f, uvs[2], uvs[2] + 0.5f, RawDirection.SOUTH, true, true);
-            // north
-            model.faces[3] = new(0.75f, 0.5f, 0.75f, 0.75f, 0, 0.75f, 0.25f, 0, 0.75f, 0.25f,  0.5f, 0.75f, uvs[3],uvs[3] + 0.5f, RawDirection.NORTH, true, true);
-            // down
-            model.faces[4] = new(0.75f, 0, 0.75f, 0.75f, 0, 0.25f, 0.25f, 0, 0.25f, 0.25f, 0, 0.75f, uvs[4], uvs[4] + 0.5f, RawDirection.DOWN, true, true);
-            // up
-            model.faces[5] = new(0.25f, 0.5f, 0.75f, 0.25f, 0.5f, 0.25f, 0.75f, 0.5f, 0.25f, 0.75f, 0.5f, 0.75f, uvs[5], uvs[5] + 0.5f, RawDirection.UP, true, true);
-           return model;
-            
+        var model = new BlockModel();
+        model.faces = new Face[6];
+        // west
+        model.faces[0] = new(0.25f, 0.5f, 0.75f, 0.25f, 0, 0.75f, 0.25f, 0, 0.25f, 0.25f, 0.5f, 0.25f, uvs[0], uvs[0] + 0.5f, RawDirection.WEST, true, true);
+        // east
+        model.faces[1] = new(0.75f, 0.5f, 0.25f, 0.75f, 0, 0.25f, 0.75f, 0, 0.75f, 0.75f, 0.5f, 0.75f, uvs[0] + new UVPair(0.5f, 0), uvs[0] + new UVPair(1, 0.5f), RawDirection.EAST, true, true);
+        // south
+        model.faces[2] = new(0.25f, 0.5f, 0.25f, 0.25f, 0, 0.25f, 0.75f, 0, 0.25f, 0.75f, 0.5f, 0.25f, uvs[0] + new UVPair(0, 0.5f), uvs[0] + new UVPair(0.5f, 1), RawDirection.SOUTH, true, true);
+        // north
+        model.faces[3] = new(0.75f, 0.5f, 0.75f, 0.75f, 0, 0.75f, 0.25f, 0, 0.75f, 0.25f, 0.5f, 0.75f, uvs[0] + new UVPair(0.5f, 0.5f), uvs[0] + new UVPair(1, 1), RawDirection.NORTH, true, true);
+        // down
+        model.faces[4] = new(0.75f, 0, 0.75f, 0.75f, 0, 0.25f, 0.25f, 0, 0.25f, 0.25f, 0, 0.75f, uvs[1], uvs[1] + 0.5f, RawDirection.DOWN, true, true);
+        // up
+        model.faces[5] = new(0.25f, 0.5f, 0.75f, 0.25f, 0.5f, 0.25f, 0.75f, 0.5f, 0.25f, 0.75f, 0.5f, 0.75f, uvs[1]+ new UVPair(0, 0.5f), uvs[1] + new UVPair(0.5f, 1), RawDirection.UP, true, true);
+        return model;
+
     }
 
     public static BlockModel emptyBlock() {
