@@ -20,7 +20,7 @@ public class SettingsMenu : Menu {
         var vsync = new ToggleButton(this, "vsync", false, settings.vSync ? 1 : 0,
             "VSync: OFF", "VSync: ON");
         vsync.topCentre();
-        vsync.clicked += () => {
+        vsync.clicked += _ => {
             settings.vSync = vsync.getIndex() == 1;
             Game.window.VSync = settings.vSync;
         };
@@ -31,7 +31,7 @@ public class SettingsMenu : Menu {
         var guiScale = new ToggleButton(this, "guiScale", false, settings.guiScale == 4 ? 1 : 0,
             "GUI Scale: Small", "GUI Scale: Large");
         guiScale.topCentre();
-        guiScale.clicked += () => {
+        guiScale.clicked += _ => {
             settings.guiScale = guiScale.getIndex() == 1 ? 4 : 2;
             GUI.guiScale = settings.guiScale;
             Game.instance.resize();
@@ -42,7 +42,7 @@ public class SettingsMenu : Menu {
         var AO = new ToggleButton(this, "ao", false, settings.AO ? 1 : 0,
             "Ambient Occlusion: Disabled", "Ambient Occlusion: Enabled");
         AO.topCentre();
-        AO.clicked += () => {
+        AO.clicked += _ => {
             settings.AO = AO.getIndex() == 1;
             remeshIfRequired(settings.renderDistance);
         };
@@ -53,7 +53,7 @@ public class SettingsMenu : Menu {
         var smoothLighting = new ToggleButton(this, "smoothLighting", false, settings.smoothLighting ? 1 : 0,
             "Smooth Lighting: Disabled", "Smooth Lighting: Enabled");
         smoothLighting.topCentre();
-        smoothLighting.clicked += () => {
+        smoothLighting.clicked += _ => {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
             remeshIfRequired(settings.renderDistance);
         };
@@ -78,7 +78,7 @@ public class SettingsMenu : Menu {
         var fxaa = new ToggleButton(this, "fxaa", false, settings.fxaa ? 1 : 0,
             "FXAA: Disabled", "FXAA: Enabled");
         fxaa.topCentre();
-        fxaa.clicked += () => {
+        fxaa.clicked += _ => {
             settings.fxaa = fxaa.getIndex() == 1;
             Game.instance.updateFramebuffers();
         };
@@ -174,11 +174,11 @@ public class SettingsMenu : Menu {
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {
-            returnToPrevMenu();
+            returnToPrevMenu(null);
         }
     }
 
-    public void returnToPrevMenu() {
+    public void returnToPrevMenu(GUIElement guiElement) {
         Game.instance.executeOnMainThread(() => Game.instance.switchTo(prevMenu));
     }
 

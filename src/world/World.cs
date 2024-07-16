@@ -9,6 +9,8 @@ public class World : IDisposable {
     public const int REGIONSIZE = 16;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
+    public string name;
+
     public readonly Dictionary<ChunkCoord, Chunk> chunks;
 
     // used for rendering
@@ -61,7 +63,8 @@ public class World : IDisposable {
     /// </summary>
     public const int numTicks = 3;
 
-    public World(int seed, bool loadingSave = false) {
+    public World(string name, int seed, bool loadingSave = false) {
+        this.name = name;
         worldIO = new WorldIO(this);
         generator = new OverworldWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
@@ -455,7 +458,7 @@ public class World : IDisposable {
 
     public void unloadChunk(ChunkCoord coord) {
         // save chunk first
-        worldIO.saveChunk(chunks[coord]);
+        worldIO.saveChunk(this, chunks[coord]);
         chunkList.Remove(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);
@@ -470,9 +473,9 @@ public class World : IDisposable {
 
     public void Dispose() {
         // of course, we can save it here since WE call it and not the GC
-        worldIO.save(this, "level");
+        worldIO.save(this, name);
         foreach (var chunk in chunks) {
-            worldIO.saveChunk(chunk.Value);
+            worldIO.saveChunk(this, chunk.Value);
         }
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
@@ -498,7 +501,7 @@ public class World : IDisposable {
         bool chunkAdded = false;
 
         // if it exists on disk, load it
-        if (!hasChunk && WorldIO.chunkFileExists(chunkCoord)) {
+        if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
             var ch = WorldIO.loadChunkFromFile(this, chunkCoord);
             addChunk(chunkCoord, ch);
             // we got the chunk so set to true

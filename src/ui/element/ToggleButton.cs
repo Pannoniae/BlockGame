@@ -1,5 +1,3 @@
-using Silk.NET.Maths;
-
 namespace BlockGame.ui;
 
 public class ToggleButton : Button {
@@ -14,7 +12,7 @@ public class ToggleButton : Button {
         clicked += doClick;
     }
 
-    public void doClick() {
+    public void doClick(GUIElement guiElement) {
         index++;
         index %= states.Count;
         text = states[index];

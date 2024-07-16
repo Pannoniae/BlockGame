@@ -7,7 +7,7 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
 
-public class InventoryGUI : Menu {
+public class InventoryMenu : Menu {
 
     public const int rows = 10;
     public const int cols = 4;
@@ -27,7 +27,7 @@ public class InventoryGUI : Menu {
         return false;
     }
 
-    public InventoryGUI(Vector2D<int> guiPos) {
+    public InventoryMenu(Vector2D<int> guiPos) {
         this.guiPos = guiPos;
         resize(guiPos);
     }

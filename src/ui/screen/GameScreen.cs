@@ -168,18 +168,19 @@ public class GameScreen : Screen {
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         base.onKeyDown(keyboard, key, scancode);
 
-        if (currentMenu.isModal() && currentMenu != INGAME_MENU) {
-            return;
-        }
-
         if (key == Key.Escape) {
             // hack for back to main menu
-            if (!world.inMenu) {
+            if (!world.inMenu && !world.paused) {
                 pause();
             }
             else {
                 backToGame();
             }
+        }
+
+        // if there is a menu open, don't allow any other keypresses from this handler
+        if (currentMenu.isModal() && currentMenu != INGAME_MENU) {
+            return;
         }
 
         if (key == Key.F3) {
@@ -192,12 +193,12 @@ public class GameScreen : Screen {
         }
 
         if (key == Key.F) {
-            world.worldIO.save(world, "level");
+            world.worldIO.save(world, world.name);
         }
 
         if (key == Key.G) {
             world?.Dispose();
-            world = WorldIO.load("level");
+            world = WorldIO.load("level1");
             Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
         }
 
@@ -210,8 +211,8 @@ public class GameScreen : Screen {
                 backToGame();
             }
             else {
-                switchToMenu(new InventoryGUI(new Vector2D<int>(0, 32)));
-                ((InventoryGUI)currentMenu!).setup();
+                switchToMenu(new InventoryMenu(new Vector2D<int>(0, 32)));
+                ((InventoryMenu)currentMenu!).setup();
                 world.inMenu = true;
                 Game.instance.unlockMouse();
             }
