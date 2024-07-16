@@ -1,5 +1,9 @@
+using System.Buffers.Text;
+using System.Runtime.CompilerServices;
+using System.Text;
 using BlockGame.util;
 using BlockGame.util.xNBT;
+using SimpleBase;
 
 namespace BlockGame;
 
@@ -42,7 +46,10 @@ public class WorldIO {
 
     public void saveChunk(Chunk chunk) {
         var nbt = serialiseChunkIntoNBT(chunk);
-        NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.xnbt");
+        // ensure directory is created
+        var pathStr = getChunkString(chunk.coord);
+        Directory.CreateDirectory(Path.GetDirectoryName(pathStr) ?? string.Empty);
+        NBT.writeFile(nbt, pathStr);
     }
 
     private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
@@ -102,27 +109,39 @@ public class WorldIO {
     public static World load(string filename) {
         var tag = NBT.readFile($"level/{filename}.xnbt");
         var seed = tag.getInt("seed");
-        var world = new World(seed);
+        var world = new World(seed, true);
         world.player.position.X = tag.getDouble("posX");
         world.player.position.Y = tag.getDouble("posY");
         world.player.position.Z = tag.getDouble("posZ");
 
         // go over all chunks in the directory
-        foreach (var file in Directory.EnumerateFiles("level")) {
+        // don't, this bloats the world
+        /*foreach (var file in Directory.EnumerateFiles("level")) {
             // it's a chunk file
             var name = Path.GetFileName(file);
             if (name.StartsWith('c')) {
                 var chunk = loadChunkFromFile(world, file);
                 world.addChunk(chunk.coord, chunk);
             }
-        }
+        }*/
         world.player.prevPosition = world.player.position;
-        world.loadAroundPlayer();
         return world;
     }
 
+
+    /// <summary>
+    /// Gets the path for saving/loading a chunk.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string getChunkString(ChunkCoord coord) {
+        // Organises chunks into directories (chunk coord divided by 32, converted into base 64)
+        var xDir = (coord.x >> 5).ToString("X");
+        var zDir = (coord.z >> 5).ToString("X");
+        return $"level/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
+    }
+
     public static bool chunkFileExists(ChunkCoord coord) {
-        return File.Exists($"level/c{coord.x},{coord.z}.xnbt");
+        return File.Exists(getChunkString(coord));
     }
 
     public static bool worldExists(string level) {
@@ -130,7 +149,7 @@ public class WorldIO {
     }
 
     public static Chunk loadChunkFromFile(World world, ChunkCoord coord) {
-        return loadChunkFromFile(world, $"level/c{coord.x},{coord.z}.xnbt");
+        return loadChunkFromFile(world, getChunkString(coord));
     }
 
     public static Chunk loadChunkFromFile(World world, string file) {

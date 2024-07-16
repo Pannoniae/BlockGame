@@ -92,6 +92,14 @@ public class World : IDisposable {
         renderer.initBlockOutline();
     }
 
+    public void startMeshing() {
+        foreach (var chunk in chunks.Values) {
+            if (chunk.status < ChunkStatus.MESHED) {
+                addToChunkLoadQueue(chunk.coord, ChunkStatus.MESHED);
+            }
+        }
+    }
+
     public void addChunk(ChunkCoord coord, Chunk chunk) {
         chunks[coord] = chunk;
         chunkList.Add(chunk);
@@ -367,7 +375,7 @@ public class World : IDisposable {
             for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
-                    loadChunk(coord, ChunkStatus.GENERATED);
+                    addToChunkLoadQueue(coord, ChunkStatus.GENERATED);
                 }
             }
         }
@@ -377,8 +385,8 @@ public class World : IDisposable {
             for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
-                    loadChunk(coord, ChunkStatus.POPULATED);
-                    loadChunk(coord, ChunkStatus.LIGHTED);
+                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
+                    addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
                 }
             }
         }

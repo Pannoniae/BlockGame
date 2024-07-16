@@ -29,17 +29,18 @@ public class GameScreen : Screen {
         GD = Game.GD;
         D = new Debug();
 
-        // create the world first
-        var seed = Random.Shared.Next(int.MaxValue);
-        world?.Dispose();
-        world = WorldIO.worldExists("level") ? WorldIO.load("level") : new World(seed);
-        world.loadAroundPlayer();
-
         switchToMenu(INGAME_MENU);
 
         updateMemory = Game.instance.setInterval(200, INGAME_MENU.updateMemoryMethod);
         updateDebugText = Game.instance.setInterval(50, INGAME_MENU.updateDebugTextMethod);
     }
+
+    public void setWorld(World inWorld) {
+        world?.Dispose();
+        // create the world first
+        world = inWorld;
+    }
+
 
     public override void deactivate() {
         base.deactivate();
@@ -236,6 +237,7 @@ public class GameScreen : Screen {
     }
 
     public void remeshWorld(int oldRenderDist) {
+        Console.Out.WriteLine("remeshed!");
         setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors

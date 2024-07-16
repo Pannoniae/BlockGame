@@ -112,12 +112,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
+    // don't need to init - the arrays will be overwritten anyway
     public void loadInit() {
-        blocks = blockPool.grab();
-        light = lightPool.grab();
-        Array.Clear(blocks);
-        // fill it with empty
-        Array.Clear(light);
         inited = true;
     }
 

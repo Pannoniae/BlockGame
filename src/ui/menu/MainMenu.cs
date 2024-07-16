@@ -13,9 +13,7 @@ public class MainMenu : Menu {
             // we are *already* on the main thread; this is just needed so it executes a frame later
             // so we don't destroy the menu which we are clicking right now.
             Game.instance.executeOnMainThread(() => {
-                Console.Out.WriteLine("CLICKED");
-                Game.instance.switchToScreen(Screen.GAME_SCREEN);
-                Game.instance.lockMouse();
+                Game.instance.switchTo(LEVEL_SELECT);
             });
         };
         Console.Out.WriteLine("sp:" + sp.bounds);
