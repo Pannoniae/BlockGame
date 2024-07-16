@@ -52,8 +52,7 @@ public class World : IDisposable {
 
     public Random random;
 
-    // max. 5 msec in each frame for chunkload
-    private const long MAX_CHUNKLOAD_FRAMETIME = 10;
+    private const long MAX_CHUNKLOAD_FRAMETIME = 20;
     private const long MAX_LIGHT_FRAMETIME = 10;
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
@@ -125,7 +124,7 @@ public class World : IDisposable {
         // create terrain
         //genTerrainNoise();
         // separate loop so all data is there
-        player.loadChunksAroundThePlayerLoading(Settings.instance.renderDistance);
+        player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
     }
 
 
@@ -331,68 +330,6 @@ public class World : IDisposable {
     /// TODO unload chunks which are renderDistance + 2 away (this is bigger to prevent chunk flicker)
     /// </summary>
     public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance) {
-        // load +2 chunks around renderdistance
-        for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
-            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
-                    addToChunkLoadQueue(coord, ChunkStatus.GENERATED);
-                }
-            }
-        }
-        // populate around renderDistance + 1
-        // light around renderDistance + 1
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
-                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
-                    addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
-                }
-            }
-        }
-        // finally, mesh around renderDistance
-        for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
-            for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    addToChunkLoadQueue(coord, ChunkStatus.MESHED);
-                }
-            }
-        }
-
-        // unload chunks which are far away
-        foreach (var chunk in chunks.Values) {
-            var playerChunk = player.getChunk();
-            var coord = chunk.coord;
-            // if distance is greater than renderDistance + 3, unload
-            if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
-                unloadChunk(coord);
-            }
-        }
-    }
-
-    public void loadChunksAroundChunkLoading(ChunkCoord chunkCoord, int renderDistance) {
-        // load +2 chunks around renderdistance
-        for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
-            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
-                    addToChunkLoadQueue(coord, ChunkStatus.GENERATED);
-                }
-            }
-        }
-        // populate around renderDistance + 1
-        // light around renderDistance + 1
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
-                    addToChunkLoadQueue(coord, ChunkStatus.POPULATED);
-                    addToChunkLoadQueue(coord, ChunkStatus.LIGHTED);
-                }
-            }
-        }
         // finally, mesh around renderDistance
         for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
@@ -415,26 +352,6 @@ public class World : IDisposable {
     }
 
     public void loadChunksAroundChunkImmediately(ChunkCoord chunkCoord, int renderDistance) {
-        // load +2 chunks around renderdistance
-        for (int x = chunkCoord.x - renderDistance - 2; x <= chunkCoord.x + renderDistance + 2; x++) {
-            for (int z = chunkCoord.z - renderDistance - 2; z <= chunkCoord.z + renderDistance + 2; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 2) * (renderDistance + 2)) {
-                    loadChunk(coord, ChunkStatus.GENERATED);
-                }
-            }
-        }
-        // populate around renderDistance + 1
-        // light around renderDistance + 1
-        for (int x = chunkCoord.x - renderDistance - 1; x <= chunkCoord.x + renderDistance + 1; x++) {
-            for (int z = chunkCoord.z - renderDistance - 1; z <= chunkCoord.z + renderDistance + 1; z++) {
-                var coord = new ChunkCoord(x, z);
-                if (coord.distanceSq(chunkCoord) <= (renderDistance + 1) * (renderDistance + 1)) {
-                    loadChunk(coord, ChunkStatus.POPULATED);
-                    loadChunk(coord, ChunkStatus.LIGHTED);
-                }
-            }
-        }
         // finally, mesh around renderDistance
         for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
@@ -519,13 +436,23 @@ public class World : IDisposable {
             generator.generate(chunkCoord);
         }
         if (status >= ChunkStatus.POPULATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
-            //Console.Out.WriteLine($"chunkload {chunk.GetHashCode()}");
+            // load adjacent first
+            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z), ChunkStatus.GENERATED);
+            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.GENERATED);
+            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z - 1), ChunkStatus.GENERATED);
+            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z + 1), ChunkStatus.GENERATED);
+
             generator.populate(chunkCoord);
         }
         if (status >= ChunkStatus.LIGHTED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
             chunks[chunkCoord].lightChunk();
         }
         if (status >= ChunkStatus.MESHED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
+            // load adjacent first
+            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z), ChunkStatus.LIGHTED);
+            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.LIGHTED);
+            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z - 1), ChunkStatus.LIGHTED);
+            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z + 1), ChunkStatus.LIGHTED);
             chunks[chunkCoord].meshChunk();
         }
         return chunks[chunkCoord];

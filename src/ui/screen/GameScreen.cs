@@ -183,46 +183,44 @@ public class GameScreen : Screen {
             return;
         }
 
-        if (key == Key.F3) {
-            debugScreen = !debugScreen;
-        }
-
-        // reload chunks
-        if (key == Key.A && keyboard.IsKeyPressed(Key.F3)) {
-            remeshWorld(Settings.instance.renderDistance);
-        }
-
-        if (key == Key.F) {
-            world.worldIO.save(world, world.name);
-        }
-
-        if (key == Key.G) {
-            world?.Dispose();
-            world = WorldIO.load("level1");
-            Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
-        }
-
-        if (key == Key.F9) {
-            MemoryUtils.cleanGC();
-        }
-
-        if (key == Key.E) {
-            if (world.inMenu) {
-                backToGame();
+        switch (key) {
+            case Key.F3:
+                debugScreen = !debugScreen;
+                break;
+            // reload chunks
+            case Key.A when keyboard.IsKeyPressed(Key.F3):
+                remeshWorld(Settings.instance.renderDistance);
+                break;
+            case Key.F:
+                world.worldIO.save(world, world.name);
+                break;
+            case Key.G:
+                world?.Dispose();
+                world = WorldIO.load("level1");
+                Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
+                break;
+            case Key.F9:
+                MemoryUtils.cleanGC();
+                break;
+            case Key.E: {
+                if (world.inMenu) {
+                    backToGame();
+                }
+                else {
+                    switchToMenu(new InventoryMenu(new Vector2D<int>(0, 32)));
+                    ((InventoryMenu)currentMenu!).setup();
+                    world.inMenu = true;
+                    Game.instance.unlockMouse();
+                }
+                break;
             }
-            else {
-                switchToMenu(new InventoryMenu(new Vector2D<int>(0, 32)));
-                ((InventoryMenu)currentMenu!).setup();
-                world.inMenu = true;
-                Game.instance.unlockMouse();
+            case Key.Space: {
+                if (Game.permanentStopwatch.ElapsedMilliseconds < world.player.spacePress + Constants.flyModeDelay * 1000) {
+                    world.player.flyMode = !world.player.flyMode;
+                }
+                world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
+                break;
             }
-        }
-
-        if (key == Key.Space) {
-            if (Game.permanentStopwatch.ElapsedMilliseconds < world.player.spacePress + Constants.flyModeDelay * 1000) {
-                world.player.flyMode = !world.player.flyMode;
-            }
-            world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
         }
 
 
