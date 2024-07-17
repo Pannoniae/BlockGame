@@ -1,51 +1,40 @@
-using Silk.NET.Maths;
-using TrippyGL;
+using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
 public class ParticleManager {
-    private Particle[] particles;
+    private readonly List<Particle> particles = [];
 
-    public ParticleManager(int maxParticles) {
-        particles = new Particle[maxParticles];
+    public void add(Particle particle) {
+        particles.Add(particle);
     }
 
     public void update(double dt) {
-        for (int i = 0; i < particles.Length; i++) {
-            if (particles[i] != null) {
-                particles[i].update(dt);
-                if (particles[i].ttl <= 0) {
-                    particles[i].active = false;
-                }
+        for (var i = 0; i < particles.Count; i++) {
+            var particle = particles[i];
+            particle.update(dt);
+
+            if (!particle.active) {
+                particles.RemoveAt(i);
+                // don't skip the next particle
+                i--;
             }
         }
     }
 
-    public void render(double interp) {
-        for (int i = 0; i < particles.Length; i++) {
-            if (particles[i].active) {
-                particles[i].render(interp);
+    public void render(double dt, double interp) {
+
+        var currentTexture = "textures/blocks.png";
+        Game.GL.ActiveTexture(TextureUnit.Texture0);
+        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTexture.handle);
+
+        foreach (var particle in particles) {
+            if (particle.texture != currentTexture) {
+                Game.textureManager.load(particle.texture, particle.texture);
+                var tex = Game.textureManager.get(particle.texture);
+                Game.GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
             }
-        }
-    }
-
-    // TODO implement pooling
-    public Particle newParticle(Vector3D<double> position, Color4b color, double size, int ttl) {
-        return new Particle(position, color, size, ttl);
-    }
-
-    public void addParticle(Particle particle) {
-        for (int i = 0; i < particles.Length; i++) {
-            if (!particles[i].active) {
-                particles[i] = particle;
-                return;
-            }
-        }
-    }
-
-    public void clear() {
-        for (int i = 0; i < particles.Length; i++) {
-            particles[i].reset();
+            particle.render(dt, interp);
         }
     }
 }

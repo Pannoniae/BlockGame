@@ -173,7 +173,7 @@ public class GameScreen : Screen {
             if (!world.inMenu && !world.paused) {
                 pause();
             }
-            else {
+            else if (currentMenu != Menu.SETTINGS) {
                 backToGame();
             }
         }
@@ -241,13 +241,8 @@ public class GameScreen : Screen {
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.MESHED) {
-                if (oldRenderDist < Settings.instance.renderDistance) {
-                    // just unload everything
-                    chunk.status = ChunkStatus.MESHED - 1;
-                }
-                else {
-                    chunk.meshChunk();
-                }
+                // just unload everything
+                chunk.status = ChunkStatus.MESHED - 1;
             }
         }
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
