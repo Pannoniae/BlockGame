@@ -5,26 +5,44 @@ using TrippyGL;
 namespace BlockGame;
 
 public class Particle : Entity {
-    public Color4b tint;
+
+    /// <summary>
+    /// The texture coordinates of the particle.
+    /// </summary>
+    public float u;
+
+    /// <summary>
+    /// The texture coordinates of the particle.
+    /// </summary>
+    public float v;
+
+    /// <summary>
+    /// The texture the particle uses.
+    /// </summary>
+    public string texture;
+
+    /// <summary>
+    /// The size of the particle. (world coords)
+    /// </summary>
     public double size;
 
     /// <summary>
     /// The time-to-live of the particle in ticks.
     /// </summary>
     public int ttl;
-    public int maxLife;
 
     /// <summary>
     /// Is this particle valid?
     /// </summary>
     public bool active;
 
-    public Particle(Vector3D<double> position, Color4b tint, double size, int ttl) {
+    public Particle(Vector3D<double> position, string texture, float u, float v, double size, int ttl) {
         this.position = position;
-        this.tint = tint;
+        this.texture = texture;
+        this.u = u;
+        this.v = v;
         this.size = size;
         this.ttl = ttl;
-        maxLife = ttl;
         active = true;
     }
 
@@ -36,7 +54,7 @@ public class Particle : Entity {
         }
     }
 
-    public void render(double interp) {
+    public void render(double dt, double interp) {
         if (active) {
             //var pos = Vector3D<int>.Lerp(prevPosition, position, (float)interp);
             //var col = new Vector4(tint, ttl / maxLife);

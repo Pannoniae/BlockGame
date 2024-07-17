@@ -21,4 +21,5 @@ void main() {
     if (color.a <= 0) {
         discard;
     }
+    color.a = max(color.a, 1);
 }

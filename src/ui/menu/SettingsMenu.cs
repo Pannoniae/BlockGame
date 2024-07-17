@@ -91,8 +91,9 @@ public class SettingsMenu : Menu {
         renderDistance.topCentre();
         renderDistance.tooltip = "The maximum distance at which blocks are rendered.\nHigher values may reduce performance.";
         renderDistance.applied += () => {
+            var old = settings.renderDistance;
             settings.renderDistance = (int)renderDistance.value;
-            remeshIfRequired((int)renderDistance.value);
+            remeshIfRequired(old);
         };
         renderDistance.getText = value => "Render Distance: " + value;
         settingElements.Add(renderDistance);
