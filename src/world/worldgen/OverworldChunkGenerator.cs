@@ -105,18 +105,18 @@ public class OverworldChunkGenerator : ChunkGenerator {
     private void placeTree(int x, int y, int z) {
         var world = generator.world;
         // tree
-        for (int i = 0; i <= 6; i++) {
+        for (int i = 0; i <= 7; i++) {
             world.setBlock(x, y + i, z, Blocks.MAPLELOG.id);
         }
         // leaves, bottom
-        world.setBlock(x - 1, y + 3, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x + 1, y + 3, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 3, z - 1, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 3, z + 1, Blocks.MAPLELEAVES.id);
-        world.setBlock(x - 1, y + 6, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x + 1, y + 6, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 6, z - 1, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 6, z + 1, Blocks.MAPLELEAVES.id);
+        world.setBlock(x - 1, y + 4, z, Blocks.MAPLELEAVES.id);
+        world.setBlock(x + 1, y + 4, z, Blocks.MAPLELEAVES.id);
+        world.setBlock(x, y + 4, z - 1, Blocks.MAPLELEAVES.id);
+        world.setBlock(x, y + 4, z + 1, Blocks.MAPLELEAVES.id);
+        world.setBlock(x - 1, y + 7, z, Blocks.MAPLELEAVES.id);
+        world.setBlock(x + 1, y + 7, z, Blocks.MAPLELEAVES.id);
+        world.setBlock(x, y + 7, z - 1, Blocks.MAPLELEAVES.id);
+        world.setBlock(x, y + 7, z + 1, Blocks.MAPLELEAVES.id);
         // leaves, thick
         for (int x1 = -1; x1 <= 1; x1++) {
             for (int z1 = -1; z1 <= 1; z1++) {
@@ -124,12 +124,12 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 if (x1 == 0 && z1 == 0) {
                     continue;
                 }
-                for (int y1 = 4; y1 <= 5; y1++) {
+                for (int y1 = 5; y1 <= 6; y1++) {
                     world.setBlock(x + x1, y + y1, z + z1, Blocks.MAPLELEAVES.id);
                 }
             }
         }
 
-        world.setBlock(x, y + 7, z, Blocks.MAPLELEAVES.id);
+        world.setBlock(x, y + 8, z, Blocks.MAPLELEAVES.id);
     }
 }
