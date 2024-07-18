@@ -7,7 +7,7 @@ namespace BlockGame.util;
 public class Blocks {
 
     private const int MAXBLOCKS = 128;
-    public static Block[] blocks = new Block[MAXBLOCKS];
+    public static Block?[] blocks = new Block[MAXBLOCKS];
 
     /// <summary>
     /// Stores whether the block is a full block or not.
@@ -16,7 +16,7 @@ public class Blocks {
     public static bool[] translucentCache = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
 
-    public static readonly int maxBlock = 37;
+    public static readonly int maxBlock = 42;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -38,8 +38,8 @@ public class Blocks {
             fullBlockCache[blocks[i].id] = blocks[i].isFullBlock;
             translucentCache[blocks[i].id] = blocks[i].type == BlockType.TRANSLUCENT;
         }
-        inventoryBlacklist[7] = true;
-        //inventoryBlacklist[34] = true;
+        inventoryBlacklist[38] = true;
+        //inventoryBlacklist[7] = true;
     }
 
 
@@ -57,50 +57,52 @@ public class Blocks {
     public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(Block.cubeUVs(3, 0))));
     public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
-    public static Block GRAVEL = register(new Block(33, "Gravel", BlockModel.makeCube(Block.cubeUVs(15, 0))));
-    public static Block ORE = register(new Block(37, "Ore", BlockModel.makeCube(Block.cubeUVs(7, 0))));
-    public static Block HELLSTONE = register(new Block(34, "Hellstone", BlockModel.makeCube(Block.grassUVs(1, 1, 2, 1, 2, 1))).light(15));
+    public static Block GRAVEL = register(new Block(6, "Gravel", BlockModel.makeCube(Block.cubeUVs(7, 0))));
+    public static Block HELLSTONE = register(new Block(7, "Hellstone", BlockModel.makeCube(Block.grassUVs(8, 0, 9, 0, 9, 0))).light(15));
 
+    public static Block GLASS = register(new Block(8, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0))).transparency());
+    public static Block LANTERN = register(new Block(9, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15));
+    public static Block YELLOW_FLOWER = register(new Flower(10, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(2, 3)))).transparency().flowerAABB().noCollision();
+    public static Block RED_FLOWER = register(new Flower(11, "Red Flower", BlockModel.makeGrass(Block.crossUVs(3, 3)))).transparency().flowerAABB().noCollision();
+    //public static Block TALL_GRASS = register(new Flower(12, "Tall Grass", BlockModel.makeGrass(Block.crossUVs( , )))).transparency().flowerAABB().noCollision();
 
-    public static Block GLASS = register(new Block(6, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0)))
-        .transparency()
-    );
+    public static Block PLANKS = register(new Block(12, "Planks", BlockModel.makeCube(Block.cubeUVs(0, 5))));
+    public static Block STAIRS = register(new Block(13, "Stairs", BlockModel.makeStairs(Block.cubeUVs(0, 5))).partialBlock());
+    public static Block LOG = register(new Block(14, "Log", BlockModel.makeCube(Block.grassUVs(2, 5, 1, 5, 3, 5))));
+    public static Block LEAVES = register(new Block(15, "Leaves", BlockModel.makeCube(Block.cubeUVs(4, 5))).transparency());
+    public static Block MAPLE_PLANKS = register(new Block(16, "Maple Planks", BlockModel.makeCube(Block.cubeUVs(5, 5))));
+    public static Block MAPLE_STAIRS = register(new Block(17, "Maple Stairs", BlockModel.makeStairs(Block.cubeUVs(5, 5))).partialBlock());
+    public static Block MAPLE_LOG = register(new Block(18, "Maple Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
+    public static Block MAPLE_LEAVES = register(new Block(19, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
+    //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
+    //public static Block MAHOGANY_LEAVES = register(new Block(20, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
 
-    public static Block WATER = register(new Water(7, "Water", BlockModel.makeLiquid(Block.cubeUVs(0, 4)))
-        .makeLiquid());
+    public static Block METAL_CUBE_BLUE = register(new Block(20, "Blue Metal Block", BlockModel.makeCube(Block.cubeUVs(12, 1))));
+    public static Block CANDY_LIGHT_BLUE = register(new Block(21, "Light Blue Candy", BlockModel.makeCube(Block.cubeUVs(0, 2))));
+    public static Block CANDY_CYAN = register(new Block(22, "Cyan Candy", BlockModel.makeCube(Block.cubeUVs(1, 2))));
+    public static Block CANDY_TURQUOISE = register(new Block(23, "Turquoise Candy", BlockModel.makeCube(Block.cubeUVs(2, 2))));
+    public static Block CANDY_DARK_GREEN = register(new Block(24, "Dark Green Candy", BlockModel.makeCube(Block.cubeUVs(3, 2))));
+    public static Block CANDY_LIGHT_GREEN = register(new Block(25, "Light Green Candy", BlockModel.makeCube(Block.cubeUVs(4, 2))));
+    public static Block CANDY_ORANGE = register(new Block(26, "Orange Candy", BlockModel.makeCube(Block.cubeUVs(5, 2))));
+    public static Block CANDY_YELLOW = register(new Block(27, "Yellow Candy", BlockModel.makeCube(Block.cubeUVs(6, 2))));
+    public static Block CANDY_LIGHT_RED = register(new Block(28, "Light Red Candy", BlockModel.makeCube(Block.cubeUVs(7, 2))));
+    public static Block CANDY_PINK = register(new Block(29, "Pink Candy", BlockModel.makeCube(Block.cubeUVs(8, 2))));
+    public static Block CANDY_PURPLE = register(new Block(30, "Purple Candy", BlockModel.makeCube(Block.cubeUVs(9, 2))));
+    public static Block VIOLET = register(new Block(31, "Violet Candy", BlockModel.makeCube(Block.cubeUVs(10, 2))));
+    public static Block CANDY_RED = register(new Block(32, "Red Candy", BlockModel.makeCube(Block.cubeUVs(11, 2))));
+    public static Block CANDY_DARK_BLUE = register(new Block(33, "Dark Blue Candy", BlockModel.makeCube(Block.cubeUVs(12, 2))));
+    public static Block CANDY_WHITE = register(new Block(34, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
+    public static Block CANDY_GREY = register(new Block(35, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
+    public static Block CANDY_BLACK = register(new Block(36, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
 
-    public static Block WOODEN_PLANKS = register(new Block(8, "Wooden Planks", BlockModel.makeCube(Block.cubeUVs(8, 0))));
+    public static Block HEAD = register(new Block(37, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
 
-    public static Block WOODEN_STAIRS = register(new Block(9, "Wooden Stairs", BlockModel.makeStairs(Block.cubeUVs(8, 0))).partialBlock());
+    public static Block WATER = register(new Water(38, "Water", BlockModel.makeLiquid(Block.cubeUVs(0, 4))).makeLiquid());
 
-    public static Block LOG = register(new Block(10, "Wooden Log", BlockModel.makeCube(Block.grassUVs(10, 0, 9, 0, 11, 0))));
-    public static Block LEAVES = register(new Block(11, "Leaves", BlockModel.makeCube(Block.cubeUVs(12, 0))).transparency());
-    public static Block MAPLELOG = register(new Block(35, "Maple Log", BlockModel.makeCube(Block.grassUVs(10, 1, 9, 1, 11, 1))));
-    public static Block MAPLELEAVES = register(new Block(36, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(12, 1))).transparency());
-
-    public static Block YELLOW_FLOWER = register(new Flower(12, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(13, 0)))).transparency().flowerAABB().noCollision();
-    public static Block RED_FLOWER = register(new Flower(13, "Red Flower", BlockModel.makeGrass(Block.crossUVs(14, 0)))).transparency().flowerAABB().noCollision();
-
-    public static Block LANTERN = register(new Block(14, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15));
-
-    public static Block METAL_CUBE_BLUE = register(new Block(15, "Blue Metal Block", BlockModel.makeCube(Block.cubeUVs(0, 1))));
-    public static Block CANDY_LIGHT_BLUE = register(new Block(16, "Light Blue Candy", BlockModel.makeCube(Block.cubeUVs(0, 2))));
-    public static Block CANDY_CYAN = register(new Block(17, "Cyan Candy", BlockModel.makeCube(Block.cubeUVs(1, 2))));
-    public static Block CANDY_TURQUOISE = register(new Block(18, "Turquoise Candy", BlockModel.makeCube(Block.cubeUVs(2, 2))));
-    public static Block CANDY_DARK_GREEN = register(new Block(19, "Dark Green Candy", BlockModel.makeCube(Block.cubeUVs(3, 2))));
-    public static Block CANDY_LIGHT_GREEN = register(new Block(20, "Light Green Candy", BlockModel.makeCube(Block.cubeUVs(4, 2))));
-    public static Block CANDY_ORANGE = register(new Block(21, "Orange Candy", BlockModel.makeCube(Block.cubeUVs(5, 2))));
-    public static Block CANDY_YELLOW = register(new Block(22, "Yellow Candy", BlockModel.makeCube(Block.cubeUVs(6, 2))));
-    public static Block CANDY_LIGHT_RED = register(new Block(23, "Light Red Candy", BlockModel.makeCube(Block.cubeUVs(7, 2))));
-    public static Block CANDY_PINK = register(new Block(24, "Pink Candy", BlockModel.makeCube(Block.cubeUVs(8, 2))));
-    public static Block CANDY_PURPLE = register(new Block(25, "Purple Candy", BlockModel.makeCube(Block.cubeUVs(9, 2))));
-    public static Block VIOLET = register(new Block(26, "Violet Candy", BlockModel.makeCube(Block.cubeUVs(10, 2))));
-    public static Block CANDY_RED = register(new Block(27, "Red Candy", BlockModel.makeCube(Block.cubeUVs(11, 2))));
-    public static Block CANDY_DARK_BLUE = register(new Block(28, "Dark Blue Candy", BlockModel.makeCube(Block.cubeUVs(12, 2))));
-    public static Block CANDY_WHITE = register(new Block(29, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
-    public static Block CANDY_GREY = register(new Block(30, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
-    public static Block CANDY_BLACK = register(new Block(31, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
-    public static Block HEAD = register(new Block(32, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
+    public static Block RED_ORE = register(new Block(39, "Red Ore", BlockModel.makeCube(Block.cubeUVs(10, 0))));
+    public static Block PURPLE_ORE = register(new Block(40, "Purple Ore", BlockModel.makeCube(Block.cubeUVs(11, 0))));
+    public static Block AMBER_ORE = register(new Block(41, "Amber Ore", BlockModel.makeCube(Block.cubeUVs(12, 0))));
+    public static Block VIOLET_ORE = register(new Block(42, "Violet Ore", BlockModel.makeCube(Block.cubeUVs(13, 0))));
 
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;

@@ -104,32 +104,61 @@ public class OverworldChunkGenerator : ChunkGenerator {
     // Can place in neighbouring chunks, so they must be loaded first
     private void placeTree(int x, int y, int z) {
         var world = generator.world;
-        // tree
-        for (int i = 0; i <= 7; i++) {
-            world.setBlock(x, y + i, z, Blocks.MAPLELOG.id);
+
+        //generates oak trees
+        for (int i = 0; i < 7; i++) {
+            world.setBlock(x, y + i, z, Blocks.LOG.id);
         }
-        // leaves, bottom
-        world.setBlock(x - 1, y + 4, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x + 1, y + 4, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 4, z - 1, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 4, z + 1, Blocks.MAPLELEAVES.id);
-        world.setBlock(x - 1, y + 7, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x + 1, y + 7, z, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 7, z - 1, Blocks.MAPLELEAVES.id);
-        world.setBlock(x, y + 7, z + 1, Blocks.MAPLELEAVES.id);
         // leaves, thick
-        for (int x1 = -1; x1 <= 1; x1++) {
-            for (int z1 = -1; z1 <= 1; z1++) {
+        for (int x1 = -2; x1 <= 2; x1++) {
+            for (int z1 = -2; z1 <= 2; z1++) {
                 // don't overwrite the trunk
                 if (x1 == 0 && z1 == 0) {
                     continue;
                 }
-                for (int y1 = 5; y1 <= 6; y1++) {
-                    world.setBlock(x + x1, y + y1, z + z1, Blocks.MAPLELEAVES.id);
+                for (int y1 = 4; y1 < 6; y1++) {
+                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
                 }
             }
         }
+        // leaves, thin on top
+        for (int x2 = -1; x2 <= 1; x2++) {
+            for (int z2 = -1; z2 <= 1; z2++) {
+                for (int y2 = 6; y2 <= 7; y2++) {
+                    // don't overwrite the trunk
+                    if (x2 == 0 && z2 == 0 && y2 == 6) {
+                        continue;
+                    }
+                    world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id);
+                }
+            }
+        }
+        // generates maple trees
+        //for (int i = 0; i <= 7; i++) {
+        //    world.setBlock(x, y + i, z, Blocks.MAPLE_LOG.id);
+        //}
+        // leaves, bottom
+        //world.setBlock(x - 1, y + 4, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x + 1, y + 4, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 4, z - 1, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 4, z + 1, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x - 1, y + 7, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x + 1, y + 7, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 7, z - 1, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 7, z + 1, Blocks.MAPLE_LEAVES.id);
+        // leaves, thick
+        //for (int x1 = -1; x1 <= 1; x1++) {
+        //    for (int z1 = -1; z1 <= 1; z1++) {
+        //        // don't overwrite the trunk
+        //        if (x1 == 0 && z1 == 0) {
+        //            continue;
+        //        }
+       //         for (int y1 = 5; y1 <= 6; y1++) {
+       //             world.setBlock(x + x1, y + y1, z + z1, Blocks.MAPLE_LEAVES.id);
+       //         }
+       //     }
+       // }
 
-        world.setBlock(x, y + 8, z, Blocks.MAPLELEAVES.id);
+       // world.setBlock(x, y + 8, z, Blocks.MAPLE_LEAVES.id);
     }
 }
