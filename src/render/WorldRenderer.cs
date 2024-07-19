@@ -51,7 +51,7 @@ public class WorldRenderer {
     private int outline_uView;
     private int outline_uProjection;
 
-    public static Color4b defaultClearColour = Color4b.DeepSkyBlue;
+    public static Color4b defaultClearColour = new Color4b(70, 190, 225);
     public static Color4b defaultFogColour = new Color4b(210, 210, 210);
 
     public bool fastChunkSwitch = true;
@@ -207,9 +207,9 @@ public class WorldRenderer {
         }
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);
-        GL.Enable(EnableCap.CullFace);
         //Game.GD.BlendingEnabled = false;
-
+        world.particleManager.render(interp);
+        GL.Enable(EnableCap.CullFace);
     }
 
     public void initBlockOutline() {

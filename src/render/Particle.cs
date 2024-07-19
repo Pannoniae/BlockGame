@@ -46,19 +46,11 @@ public class Particle : Entity {
         active = true;
     }
 
-    public void update(double dt) {
+    public virtual void update(double dt) {
         if (active) {
             // gravity
             accel.Y = -5;
             ttl -= 1;
-        }
-    }
-
-    public void render(double dt, double interp) {
-        if (active) {
-            //var pos = Vector3D<int>.Lerp(prevPosition, position, (float)interp);
-            //var col = new Vector4(tint, ttl / maxLife);
-            //Renderer.instance.drawBillboard(pos, size, col);
         }
     }
 

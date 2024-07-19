@@ -65,7 +65,7 @@ public class GameScreen : Screen {
             world.update(dt);
             world.player.update(dt);
         }
-        world.renderUpdate();
+        world.renderUpdate(dt);
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
