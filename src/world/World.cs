@@ -17,6 +17,8 @@ public class World : IDisposable {
     public readonly List<Chunk> chunkList;
 
     public readonly List<Entity> entities;
+
+    public readonly ParticleManager particleManager;
     //public List<ChunkSection> sortedTransparentChunks = [];
 
     // Queues
@@ -77,6 +79,7 @@ public class World : IDisposable {
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
         chunkList = new List<Chunk>(2048);
+        particleManager = new ParticleManager(this);
         // load a minimal amount of chunks so the world can get started
         if (!loadingSave) {
             loadSpawnChunks();
@@ -131,7 +134,7 @@ public class World : IDisposable {
     /// <summary>
     /// Chunkloading and friends.
     /// </summary>
-    public void renderUpdate() {
+    public void renderUpdate(double dt) {
         var start = Game.permanentStopwatch.ElapsedMilliseconds;
         var ctr = 0;
         // if is loading, don't throttle
@@ -167,6 +170,7 @@ public class World : IDisposable {
             var section = getChunkSection(sectionCoord);
             section.renderer.meshChunk();
         }
+        particleManager.update(dt);
     }
 
     public void update(double dt) {
