@@ -76,6 +76,7 @@ public class PlayerCamera {
                             MathF.Cos(Utils.deg2rad(pitch));
 
         forward = Vector3.Normalize(cameraDirection);
+        up = Vector3.Normalize(Vector3.Cross(Vector3.Cross(forward, Vector3.UnitY), forward));
     }
 
     public Vector3 CalculateForwardVector() {
@@ -124,7 +125,7 @@ public class PlayerCamera {
         var axisZ = Vector3.Normalize(Vector3.Transform(new Vector3(0, 0, 1), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
         var axisX = Vector3.Normalize(Vector3.Transform(new Vector3(1, 0, 0), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
 
-        return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, up)
+        return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY)
                * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor))
                * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor));
 

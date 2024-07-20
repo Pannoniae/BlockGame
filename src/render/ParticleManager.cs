@@ -1,6 +1,5 @@
 using System.Numerics;
 using BlockGame.util;
-using Molten;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
@@ -15,9 +14,6 @@ public class ParticleManager {
 
     public ParticleManager(World world) {
         this.world = world;
-        for (int i = 0; i < 20; i++) {
-            add(new TerrainParticle(new Vector3D<double>(0, 100, 0), "textures/blocks.png", 0, 0, 0.5, 9_000_000));
-        }
     }
 
     public void add(Particle particle) {
@@ -30,7 +26,7 @@ public class ParticleManager {
             var particle = particles[i];
             particle.update(dt);
 
-            if (!particle.active) {
+            if (!particle.active || particle.ttl <= 0) {
                 particles.RemoveAt(i);
                 // don't skip the next particle
                 i--;
@@ -52,22 +48,35 @@ public class ParticleManager {
                 Game.GL.ActiveTexture(TextureUnit.Texture0);
                 Game.GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
             }
-
-            var billboard = Matrix4F.BillboardLH(particle.position.toVec3F(),
-                world.player.camera.position.toVec3FM(), world.player.camera.up.toVec3FM(), world.player.camera.forward.toVec3FM());
             InstantDraw.instantShader.setUniform(InstantDraw.uMVP, world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix());
-            var vert = new InstantVertex((float)particle.position.X, (float)particle.position.Y, (float)particle.position.Z,
+            // get interp pos
+            var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
+            var right = Vector3.Cross(world.player.camera.up, world.player.camera.forward);
+            var up = world.player.camera.up;
+            var ul = pos.toVec3() - right * (float)particle.size / 2 + up * (float)particle.size / 2;
+            var ll = pos.toVec3() - right * (float)particle.size / 2 - up * (float)particle.size / 2;
+            var lr = pos.toVec3() + right * (float)particle.size / 2 - up * (float)particle.size / 2;
+            var ur = pos.toVec3() + right * (float)particle.size / 2 + up * (float)particle.size / 2;
+            var vert = new InstantVertex(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, 255, 255, 255, 255);
             drawer.addVertex(vert);
-            vert = new InstantVertex((float)particle.position.X, (float)(particle.position.Y - particle.size), (float)particle.position.Z,
-                (Half)particle.u, (Half)(particle.v + particle.size), 255, 255, 255, 255);
+            vert = new InstantVertex(ll.X, ll.Y, ll.Z,
+                (Half)particle.u, (Half)(particle.v + particle.uvsize), 255, 255, 255, 255);
             drawer.addVertex(vert);
-            vert = new InstantVertex((float)(particle.position.X + particle.size), (float)(particle.position.Y - particle.size), (float)particle.position.Z,
-                (Half)(particle.u + particle.size), (Half)(particle.v + particle.size), 255, 255, 255, 255);
+            vert = new InstantVertex(lr.X, lr.Y, lr.Z,
+                (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), 255, 255, 255, 255);
             drawer.addVertex(vert);
-            //vert = new InstantVertex((float)(particle.position.X + particle.size), (float)particle.position.Y, (float)particle.position.Z,
-            //    (Half)(particle.u + particle.size), (Half)particle.v, 255, 255, 255, 255);
-            //drawer.addVertex(vert);
+
+            vert = new InstantVertex(ul.X, ul.Y, ul.Z,
+                (Half)particle.u, (Half)particle.v, 255, 255, 255, 255);
+            drawer.addVertex(vert);
+            vert = new InstantVertex(lr.X, lr.Y, lr.Z,
+                (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), 255, 255, 255, 255);
+            drawer.addVertex(vert);
+            vert = new InstantVertex(ur.X, ur.Y, ur.Z,
+                (Half)(particle.u + particle.uvsize), (Half)particle.v, 255, 255, 255, 255);
+            drawer.addVertex(vert);
+
         }
 
         drawer.finish();

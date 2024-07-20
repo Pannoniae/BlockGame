@@ -68,6 +68,9 @@ public partial class Game {
 
     public static BlendState initialBlendState = BlendState.NonPremultiplied;
 
+    public static Random random = new Random(1337 * 1337);
+    public static Random clientRandom = new Random(1337);
+
     public static Stopwatch stopwatch = new();
 
     /// <summary>
