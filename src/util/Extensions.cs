@@ -45,6 +45,9 @@ public static class VectorExtensions {
     public static Vector3D<float> toVec3F(this Vector3 vec) {
         return new Vector3D<float>(vec.X, vec.Y, vec.Z);
     }
+    public static Vector3D<double> toVec3D(this Vector3 vec) {
+        return new Vector3D<double>(vec.X, vec.Y, vec.Z);
+    }
     public static Vector3F toVec3FM(this Vector3 vec) {
         return new Vector3F(vec.X, vec.Y, vec.Z);
     }

@@ -38,7 +38,7 @@ public class Player : Entity {
 
 
     // positions are feet positions
-    public Player(World world, int x, int y, int z) {
+    public Player(World world, int x, int y, int z) : base(world) {
         position = new Vector3D<double>(x, y, z);
         prevPosition = position;
         hotbar = new Inventory();
@@ -318,7 +318,7 @@ public class Player : Entity {
         }
     }
 
-    protected override void calcAABB(ref AABB aabb, Vector3D<double> pos) {
+    protected void calcAABB(ref AABB aabb, Vector3D<double> pos) {
         const double sizehalf = width / 2;
         AABB.update(ref aabb, new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
             new Vector3D<double>(width, height, width));
@@ -427,6 +427,8 @@ public class Player : Entity {
         if (Game.instance.targetedPos.HasValue) {
             setSwinging(true);
             var pos = Game.instance.targetedPos.Value;
+            var bl = Blocks.get(world.getBlock(pos));
+            bl.crack(world, pos.X, pos.Y, pos.Z);
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdateWithNeighbours(pos);

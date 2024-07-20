@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.Maths;
@@ -146,6 +147,9 @@ public class Blocks {
 }
 
 public class Block {
+
+    private const int particleCount = 4;
+
     /// <summary>
     /// Block ID
     /// </summary>
@@ -352,6 +356,59 @@ public class Block {
         randomTick = true;
         return this;
     }
+
+    public virtual void crack(World world, int x, int y, int z) {
+        var factor = 1f / particleCount;
+        for (var x1 = 0; x1 < particleCount; x1++) {
+            for (var y1 = 0; y1 < particleCount; y1++) {
+                for (var z1 = 0; z1 < particleCount; z1++) {
+                    var particleX = x + (x1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.05f;
+                    var particleY = y + (y1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.05f;
+                    var particleZ = z + (z1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.05f;
+                    var particlePosition = new Vector3D<double>(particleX, particleY, particleZ);
+
+                    var size = Game.clientRandom.NextSingle() * 0.1f + 0.05f;
+                    var ttl = (int)(3f / (Game.clientRandom.NextSingle() + 0.05f));
+
+                    var randFace = model.faces[Game.clientRandom.Next(0, model.faces.Length)];
+
+                    var randU = texU(randFace.min.u + Game.clientRandom.NextSingle() * 0.75f);
+                    var randV = texV(randFace.min.v + Game.clientRandom.NextSingle() * 0.75f);
+
+                    // the closer to the centre, the less the motion
+                    // dx gives a number between -0.5 and 0.5 -> remap to between 0.5 and 3
+                    var dx = (particleX - x - 0.5f);
+                    var dy = (particleY - y - 0.5f);
+                    var dz = (particleZ - z - 0.5f);
+
+
+                    // between -0.7 and 0.7
+                    var motion = new Vector3(dx * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
+                        dy * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
+                        dz * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f);
+
+                    var speed = (MathF.Pow(Game.clientRandom.NextSingle(), 2) + 1) * 0.8f;
+
+                    motion *= speed;
+                    motion.Y += 0.15f;
+
+                    var particle = new Particle(
+                        world,
+                        particlePosition,
+                        "textures/blocks.png",
+                        randU,
+                        randV,
+                        size,
+                        1 / 16f * size,
+                        ttl);
+                    world.particleManager.add(particle);
+
+                    particle.velocity = motion.toVec3D();
+                }
+            }
+        }
+    }
+
 }
 
 public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
