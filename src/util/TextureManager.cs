@@ -12,7 +12,7 @@ public class TextureManager {
 
     public Texture2D blockTextureGUI;
     public BTextureAtlas blockTexture;
-    public Texture2D lightTexture;
+    public BTexture2D lightTexture;
 
     public Dictionary<string, Texture> textures = new();
 
@@ -22,7 +22,7 @@ public class TextureManager {
 
         blockTextureGUI = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
-        lightTexture = Texture2DExtensions.FromFile(GD, "textures/lightmap.png");
+        lightTexture = new BTexture2D("textures/lightmap.png");
     }
 
     public void load(string path, string name) {

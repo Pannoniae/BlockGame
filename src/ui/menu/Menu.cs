@@ -22,6 +22,7 @@ public class Menu {
 
     public static LoadingMenu LOADING = new();
     public static MainMenu MAIN_MENU = new();
+    public static LevelSelectMenu LEVEL_SELECT = new();
     public static SettingsMenu SETTINGS = new();
 
 

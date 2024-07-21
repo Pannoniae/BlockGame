@@ -29,17 +29,18 @@ public class GameScreen : Screen {
         GD = Game.GD;
         D = new Debug();
 
-        // create the world first
-        var seed = Random.Shared.Next(int.MaxValue);
-        world?.Dispose();
-        world = WorldIO.worldExists("level") ? WorldIO.load("level") : new World(seed);
-        world.loadAroundPlayer();
-
         switchToMenu(INGAME_MENU);
 
         updateMemory = Game.instance.setInterval(200, INGAME_MENU.updateMemoryMethod);
         updateDebugText = Game.instance.setInterval(50, INGAME_MENU.updateDebugTextMethod);
     }
+
+    public void setWorld(World inWorld) {
+        world?.Dispose();
+        // create the world first
+        world = inWorld;
+    }
+
 
     public override void deactivate() {
         base.deactivate();
@@ -64,7 +65,7 @@ public class GameScreen : Screen {
             world.update(dt);
             world.player.update(dt);
         }
-        world.renderUpdate();
+        world.renderUpdate(dt);
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
@@ -167,60 +168,59 @@ public class GameScreen : Screen {
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         base.onKeyDown(keyboard, key, scancode);
 
+        if (key == Key.Escape) {
+            // hack for back to main menu
+            if (!world.inMenu && !world.paused) {
+                pause();
+            }
+            else if (currentMenu != Menu.SETTINGS) {
+                backToGame();
+            }
+        }
+
+        // if there is a menu open, don't allow any other keypresses from this handler
         if (currentMenu.isModal() && currentMenu != INGAME_MENU) {
             return;
         }
 
-        if (key == Key.Escape) {
-            // hack for back to main menu
-            if (!world.inMenu) {
-                pause();
+        switch (key) {
+            case Key.F3:
+                debugScreen = !debugScreen;
+                break;
+            // reload chunks
+            case Key.A when keyboard.IsKeyPressed(Key.F3):
+                remeshWorld(Settings.instance.renderDistance);
+                break;
+            case Key.F:
+                world.worldIO.save(world, world.name);
+                break;
+            case Key.G:
+                world?.Dispose();
+                world = WorldIO.load("level1");
+                Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
+                break;
+            case Key.F9:
+                MemoryUtils.cleanGC();
+                break;
+            case Key.E: {
+                if (world.inMenu) {
+                    backToGame();
+                }
+                else {
+                    switchToMenu(new InventoryMenu(new Vector2D<int>(0, 32)));
+                    ((InventoryMenu)currentMenu!).setup();
+                    world.inMenu = true;
+                    Game.instance.unlockMouse();
+                }
+                break;
             }
-            else {
-                backToGame();
+            case Key.Space: {
+                if (Game.permanentStopwatch.ElapsedMilliseconds < world.player.spacePress + Constants.flyModeDelay * 1000) {
+                    world.player.flyMode = !world.player.flyMode;
+                }
+                world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
+                break;
             }
-        }
-
-        if (key == Key.F3) {
-            debugScreen = !debugScreen;
-        }
-
-        // reload chunks
-        if (key == Key.A && keyboard.IsKeyPressed(Key.F3)) {
-            remeshWorld(Settings.instance.renderDistance);
-        }
-
-        if (key == Key.F) {
-            world.worldIO.save(world, "level");
-        }
-
-        if (key == Key.G) {
-            world?.Dispose();
-            world = WorldIO.load("level");
-            Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
-        }
-
-        if (key == Key.F9) {
-            MemoryUtils.cleanGC();
-        }
-
-        if (key == Key.E) {
-            if (world.inMenu) {
-                backToGame();
-            }
-            else {
-                switchToMenu(new InventoryGUI(new Vector2D<int>(0, 32)));
-                ((InventoryGUI)currentMenu!).setup();
-                world.inMenu = true;
-                Game.instance.unlockMouse();
-            }
-        }
-
-        if (key == Key.Space) {
-            if (Game.permanentStopwatch.ElapsedMilliseconds < world.player.spacePress + Constants.flyModeDelay * 1000) {
-                world.player.flyMode = !world.player.flyMode;
-            }
-            world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
         }
 
 
@@ -236,17 +236,13 @@ public class GameScreen : Screen {
     }
 
     public void remeshWorld(int oldRenderDist) {
+        Console.Out.WriteLine("remeshed!");
         setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.MESHED) {
-                if (oldRenderDist < Settings.instance.renderDistance) {
-                    // just unload everything
-                    chunk.status = ChunkStatus.MESHED - 1;
-                }
-                else {
-                    chunk.meshChunk();
-                }
+                // just unload everything
+                chunk.status = ChunkStatus.MESHED - 1;
             }
         }
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);

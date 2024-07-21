@@ -53,10 +53,10 @@ public class GUI {
 
     public static GUI instance;
     private TrippyFontFile ff;
-    private VertexBuffer<BlockVertex> buffer;
+    private VertexBuffer<BlockVertexTinted> buffer;
     private Matrix4x4 ortho;
 
-    private List<BlockVertex> guiBlock;
+    private List<BlockVertexTinted> guiBlock;
     private List<ushort> guiBlockI;
 
     public GUI() {
@@ -70,10 +70,10 @@ public class GUI {
         guiTexture = Texture2DExtensions.FromFile(Game.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.GD, "textures/debug.png");
         instance = this;
-        guiBlockShader = ShaderProgram.FromFiles<BlockVertex>(
-            GD, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag", "vPos", "texCoord", "iData");
-        buffer = new VertexBuffer<BlockVertex>(GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw);
-        guiBlock = new List<BlockVertex>();
+        guiBlockShader = ShaderProgram.FromFiles<BlockVertexTinted>(
+            GD, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag", "vPos", "texCoord", "tintValue");
+        buffer = new VertexBuffer<BlockVertexTinted>(GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw);
+        guiBlock = new List<BlockVertexTinted>();
         guiBlockI = new List<ushort>();
 
 
@@ -289,7 +289,7 @@ public class GUI {
         var viewport = GD.Viewport;
         GD.VertexArray = buffer;
         GD.ShaderProgram = guiBlockShader;
-        WorldRenderer.meshBlock(block, ref guiBlock, ref guiBlockI);
+        WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 15);
         // assemble the matrix
         // this is something like 33.7 degrees if the inverse tangent is calculated....
         // still zero idea why this works but 30 deg is garbage, 45 is weirdly elongated and 60 is squished
@@ -315,6 +315,8 @@ public class GUI {
         var sSize = size * guiScale;
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
+        // status update: it doesn't segfault anymore because we hacked the trippygl layer to reset their expectations!
+        // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
         //GL.BindVertexArray(buffer.VertexArray.Handle);
         GD.DrawElements(PrimitiveType.Triangles, 0, (uint)spI.Length);
         GD.Viewport = viewport;

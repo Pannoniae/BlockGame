@@ -53,7 +53,7 @@ public class Entity {
     public World world;
 
     public bool flyMode;
-    private List<AABB> collisionTargets = [];
+    protected List<AABB> collisionTargets = [];
 
     public int airHitCD;
 
@@ -64,6 +64,10 @@ public class Entity {
     public double prevSwingProgress;
     public double swingProgress;
 
+    public Entity(World world) {
+        this.world = world;
+    }
+
     public ChunkCoord getChunk(Vector3D<double> pos) {
         var blockPos = pos.toBlockPos();
         return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
@@ -72,10 +76,6 @@ public class Entity {
     public ChunkCoord getChunk() {
         var blockPos = position.toBlockPos();
         return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
-    }
-
-    protected virtual void calcAABB(ref AABB aabb, Vector3D<double> pos) {
-        aabb = AABB.empty;
     }
 
     [Pure]

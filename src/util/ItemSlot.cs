@@ -17,12 +17,12 @@ public class ItemSlot {
 
     public ItemStack stack;
 
-    public InventoryGUI inventory;
+    public InventoryMenu inventory;
 
     public Rectangle rect;
     public Vector2D<int> itemPos;
 
-    public ItemSlot(InventoryGUI inventory, int x, int y) {
+    public ItemSlot(InventoryMenu inventory, int x, int y) {
         this.inventory = inventory;
         rect = new Rectangle(x, y, SLOTSIZE, SLOTSIZE);
         itemPos = new Vector2D<int>(x + PADDING, y + PADDING);

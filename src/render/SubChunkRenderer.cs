@@ -569,19 +569,19 @@ public sealed class SubChunkRenderer : IDisposable {
                             Unsafe.Add(ref lightRef, offsets[0]),
                             Unsafe.Add(ref lightRef, offsets[1]),
                             Unsafe.Add(ref lightRef, offsets[2]),
-                            0,
+                            lba[(byte)dir],
                             Unsafe.Add(ref lightRef, offsets[3]),
                             Unsafe.Add(ref lightRef, offsets[4]),
                             Unsafe.Add(ref lightRef, offsets[5]),
-                            0,
+                            lba[(byte)dir],
                             Unsafe.Add(ref lightRef, offsets[6]),
                             Unsafe.Add(ref lightRef, offsets[7]),
                             Unsafe.Add(ref lightRef, offsets[8]),
-                            0,
+                            lba[(byte)dir],
                             Unsafe.Add(ref lightRef, offsets[9]),
                             Unsafe.Add(ref lightRef, offsets[10]),
                             Unsafe.Add(ref lightRef, offsets[11]),
-                            0);
+                            lba[(byte)dir]);
 
                         o = (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
                                          Unsafe.Add(ref neighbourRef, offsets[0]))) |
@@ -620,11 +620,6 @@ public sealed class SubChunkRenderer : IDisposable {
                         if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
                             // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                             // calculate average
-                            l = Vector128.Add(l, Vector128.Create(
-                                0, 0, 0, lba[(byte)dir],
-                                0, 0, 0, lba[(byte)dir],
-                                0, 0, 0, lba[(byte)dir],
-                                0, 0, 0, lba[(byte)dir]));
 
 
                             var n = l.AsUInt32();

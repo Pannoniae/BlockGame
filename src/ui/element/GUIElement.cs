@@ -91,7 +91,7 @@ public class GUIElement {
         return absolutePos;
     }
 
-    public event Action? clicked;
+    public event Action<GUIElement>? clicked;
 
     protected GUIElement(Menu menu, string name) {
         this.menu = menu;
@@ -126,7 +126,7 @@ public class GUIElement {
     }
 
     public virtual void click() {
-        clicked?.Invoke();
+        clicked?.Invoke(this);
     }
 
     public virtual void onMouseMove() {
