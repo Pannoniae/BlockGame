@@ -1,5 +1,6 @@
 using System.Numerics;
 using BlockGame.util;
+using Molten;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
@@ -57,24 +58,28 @@ public class ParticleManager {
             var ll = pos.toVec3() - right * (float)particle.size / 2 - up * (float)particle.size / 2;
             var lr = pos.toVec3() + right * (float)particle.size / 2 - up * (float)particle.size / 2;
             var ur = pos.toVec3() + right * (float)particle.size / 2 + up * (float)particle.size / 2;
+            var skylight = world.getSkyLight((int)pos.X, (int)pos.Y, (int)pos.Z);
+            var blocklight = world.getBlockLight((int)pos.X, (int)pos.Y, (int)pos.Z);
+            var tint = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+
             var vert = new InstantVertex(ul.X, ul.Y, ul.Z,
-                (Half)particle.u, (Half)particle.v, 255, 255, 255, 255);
+                (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
             vert = new InstantVertex(ll.X, ll.Y, ll.Z,
-                (Half)particle.u, (Half)(particle.v + particle.uvsize), 255, 255, 255, 255);
+                (Half)particle.u, (Half)(particle.v + particle.uvsize), tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
             vert = new InstantVertex(lr.X, lr.Y, lr.Z,
-                (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), 255, 255, 255, 255);
+                (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
 
             vert = new InstantVertex(ul.X, ul.Y, ul.Z,
-                (Half)particle.u, (Half)particle.v, 255, 255, 255, 255);
+                (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
             vert = new InstantVertex(lr.X, lr.Y, lr.Z,
-                (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), 255, 255, 255, 255);
+                (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
             vert = new InstantVertex(ur.X, ur.Y, ur.Z,
-                (Half)(particle.u + particle.uvsize), (Half)particle.v, 255, 255, 255, 255);
+                (Half)(particle.u + particle.uvsize), (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
 
         }

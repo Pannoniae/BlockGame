@@ -92,6 +92,7 @@ public class Player : Entity {
             onChunkChanged();
         }
 
+
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
 
