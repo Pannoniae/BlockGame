@@ -4,6 +4,8 @@ using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.NV;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
@@ -143,7 +145,7 @@ public class WorldRenderer {
         GL.ActiveTexture(TextureUnit.Texture0);
         GL.BindTexture(TextureTarget.Texture2D, tex.handle);
         GL.ActiveTexture(TextureUnit.Texture1);
-        GL.BindTexture(TextureTarget.Texture2D, lightTex.Handle);
+        GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
 
         if (fastChunkSwitch) {
             GL.BindVertexArray(chunkVAO);
@@ -407,6 +409,115 @@ public class WorldRenderer {
             i += 4;
             ci += 6;
         }
+    }
+
+    public static void meshBlockTinted(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices, byte light) {
+        ushort i = 0;
+        const int wx = 0;
+        const int wy = 0;
+        const int wz = 0;
+
+        int c = 0;
+        int ci = 0;
+
+        vertices.Clear();
+        indices.Clear();
+
+
+        Block b = block;
+        Face face;
+
+        UVPair texCoords;
+        UVPair texCoordsMax;
+        Vector2D<float> tex;
+        Vector2D<float> texMax;
+        float u;
+        float v;
+        float maxU;
+        float maxV;
+
+        float offset = 0.0004f;
+
+        float x1;
+        float y1;
+        float z1;
+        float x2;
+        float y2;
+        float z2;
+        float x3;
+        float y3;
+        float z3;
+        float x4;
+        float y4;
+        float z4;
+
+        Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
+        Span<ushort> tempIndices = stackalloc ushort[6];
+
+        var faces = b.model.faces;
+
+        for (int d = 0; d < faces.Length; d++) {
+            face = faces[d];
+            var dir = face.direction;
+
+            texCoords = face.min;
+            texCoordsMax = face.max;
+            tex = Block.texCoords(texCoords);
+            texMax = Block.texCoords(texCoordsMax);
+            u = tex.X;
+            v = tex.Y;
+            maxU = texMax.X;
+            maxV = texMax.Y;
+
+            x1 = wx + face.x1;
+            y1 = wy + face.y1;
+            z1 = wz + face.z1;
+            x2 = wx + face.x2;
+            y2 = wy + face.y2;
+            z2 = wz + face.z2;
+            x3 = wx + face.x3;
+            y3 = wy + face.y3;
+            z3 = wz + face.z3;
+            x4 = wx + face.x4;
+            y4 = wy + face.y4;
+            z4 = wz + face.z4;
+
+            var tint = calculateTint((byte)dir, 0, light);
+
+
+            // add vertices
+
+            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, tint.R, tint.G, tint.B, tint.A);
+            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, tint.R, tint.G, tint.B, tint.A);
+            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, maxU, maxV, tint.R, tint.G, tint.B, tint.A);
+            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, tint.R, tint.G, tint.B, tint.A);
+            vertices.AddRange(tempVertices);
+            c += 4;
+            tempIndices[0] = i;
+            tempIndices[1] = (ushort)(i + 1);
+            tempIndices[2] = (ushort)(i + 2);
+            tempIndices[3] = (ushort)(i + 0);
+            tempIndices[4] = (ushort)(i + 2);
+            tempIndices[5] = (ushort)(i + 3);
+            indices.AddRange(tempIndices);
+            i += 4;
+            ci += 6;
+        }
+    }
+
+    public static readonly float[] aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+    public static readonly float[] a = [
+        0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
+    ];
+
+    private static Rgba32 calculateTint(byte dir, byte ao, byte light) {
+        dir = (byte)(dir & 0b111);
+        var blocklight = (byte)(light >> 4);
+        var skylight = (byte)(light & 0xF);
+        var lightVal = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        float tint = a[dir] * aoArray[ao];
+        var ab = new Rgba32(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
+        return ab;
     }
 }
 

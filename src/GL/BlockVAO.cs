@@ -162,6 +162,52 @@ public readonly struct BlockVertex : IVertex {
     public int AttribDescriptionCount => 3;
 }
 
+[StructLayout(LayoutKind.Sequential, Size = 20)]
+public readonly struct BlockVertexTinted : IVertex {
+    public readonly float x;
+    public readonly float y;
+    public readonly float z;
+    public readonly Half u;
+    public readonly Half v;
+    public readonly byte r;
+    public readonly byte g;
+    public readonly byte b;
+    public readonly byte a;
+
+
+    public BlockVertexTinted(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = (Half)u;
+        this.v = (Half)v;
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+
+    public BlockVertexTinted(ushort x, ushort y, ushort z, float u, float v, byte r, byte g, byte b, byte a) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = (Half)u;
+        this.v = (Half)v;
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+
+    public void WriteAttribDescriptions(Span<VertexAttribDescription> descriptions) {
+        descriptions[0] = new VertexAttribDescription(AttributeType.FloatVec3, false, AttributeBaseType.Float);
+        descriptions[1] = new VertexAttribDescription(AttributeType.FloatVec2, false, AttributeBaseType.HalfFloat);
+        descriptions[2] = new VertexAttribDescription(AttributeType.FloatVec4, true, AttributeBaseType.UnsignedByte);
+    }
+
+    public int AttribDescriptionCount => 3;
+}
+
 [StructLayout(LayoutKind.Sequential, Size = 12)]
 public struct BlockVertexPacked : IVertex {
     public ushort x;
