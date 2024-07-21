@@ -315,6 +315,8 @@ public class GUI {
         var sSize = size * guiScale;
         GD.Viewport = new Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
+        // status update: it doesn't segfault anymore because we hacked the trippygl layer to reset their expectations!
+        // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
         //GL.BindVertexArray(buffer.VertexArray.Handle);
         GD.DrawElements(PrimitiveType.Triangles, 0, (uint)spI.Length);
         GD.Viewport = viewport;
