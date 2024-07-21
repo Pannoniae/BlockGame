@@ -309,7 +309,7 @@ public class WorldRenderer {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, ref List<BlockVertex> vertices, ref List<ushort> indices) {
+    public static void meshBlock(Block block, ref List<BlockVertexPacked> vertices, ref List<ushort> indices) {
         ushort i = 0;
         const int wx = 0;
         const int wy = 0;
@@ -354,7 +354,7 @@ public class WorldRenderer {
         float y4;
         float z4;
 
-        Span<BlockVertex> tempVertices = stackalloc BlockVertex[4];
+        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
 
         var faces = b.model.faces;
@@ -393,10 +393,10 @@ public class WorldRenderer {
 
             // add vertices
 
-            tempVertices[0] = new BlockVertex(x1, y1, z1, u, v, data1);
-            tempVertices[1] = new BlockVertex(x2, y2, z2, u, maxV, data2);
-            tempVertices[2] = new BlockVertex(x3, y3, z3, maxU, maxV, data3);
-            tempVertices[3] = new BlockVertex(x4, y4, z4, maxU, v, data4);
+            tempVertices[0] = new BlockVertexPacked(x1, y1, z1, u, v, data1);
+            tempVertices[1] = new BlockVertexPacked(x2, y2, z2, u, maxV, data2);
+            tempVertices[2] = new BlockVertexPacked(x3, y3, z3, maxU, maxV, data3);
+            tempVertices[3] = new BlockVertexPacked(x4, y4, z4, maxU, v, data4);
             vertices.AddRange(tempVertices);
             c += 4;
             tempIndices[0] = i;

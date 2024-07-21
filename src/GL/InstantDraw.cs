@@ -11,7 +11,7 @@ public class InstantDraw {
     public static int uMVP;
 
     private readonly int maxVertices;
-    private readonly InstantVertex[] vertices;
+    private readonly BlockVertexTinted[] vertices;
 
     private readonly uint VAO;
     private readonly uint VBO;
@@ -22,7 +22,7 @@ public class InstantDraw {
     private Shader shader;
 
     public InstantDraw(int maxVertices) {
-        vertices = new InstantVertex[maxVertices];
+        vertices = new BlockVertexTinted[maxVertices];
         this.maxVertices = maxVertices;
         unsafe {
             GL = Game.GL;
@@ -35,7 +35,7 @@ public class InstantDraw {
             VBO = GL.CreateBuffer();
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(InstantVertex)), (void*)0, BufferStorageMask.DynamicStorageBit);
+            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(BlockVertexTinted)), (void*)0, BufferStorageMask.DynamicStorageBit);
             format();
         }
     }
@@ -62,7 +62,7 @@ public class InstantDraw {
         Game.GL.BindTexture(TextureTarget.Texture2D, handle);
     }
 
-    public void addVertex(InstantVertex vertex) {
+    public void addVertex(BlockVertexTinted vertex) {
         if (currentVertex >= maxVertices - 1) {
             finish();
         }
@@ -80,8 +80,8 @@ public class InstantDraw {
         // upload buffer
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            fixed (InstantVertex* v = vertices) {
-                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(InstantVertex)), v);
+            fixed (BlockVertexTinted* v = vertices) {
+                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)), v);
             }
         }
 
@@ -90,33 +90,5 @@ public class InstantDraw {
         GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)currentVertex);
 
         currentVertex = 0;
-    }
-}
-
-[StructLayout(LayoutKind.Sequential, Size = 20)]
-public readonly struct InstantVertex {
-    // position
-    public readonly float x;
-    public readonly float y;
-    public readonly float z;
-    // UV
-    public readonly Half u;
-    public readonly Half v;
-    // colour   
-    public readonly byte r;
-    public readonly byte g;
-    public readonly byte b;
-    public readonly byte a;
-
-    public InstantVertex(float x, float y, float z, Half u, Half v, byte r, byte g, byte b, byte a) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.u = u;
-        this.v = v;
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.a = a;
     }
 }
