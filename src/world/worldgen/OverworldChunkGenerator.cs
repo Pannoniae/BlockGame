@@ -35,7 +35,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 flatNoise += 64;
 
                 //Console.Out.WriteLine(flatNoise);
-                
+
                 chunk.setBlockFast(x, 0, z, Blocks.HELLSTONE.id);
                 // hack until we can propagate them properly AND cheaply
                 chunk.setBlockLight(x, 0, z, Blocks.HELLSTONE.lightLevel);
@@ -116,7 +116,8 @@ public class OverworldChunkGenerator : ChunkGenerator {
     // Can place in neighbouring chunks, so they must be loaded first
     private void placeTree(int x, int y, int z) {
         var world = generator.world;
-        // tree
+
+        //generates oak trees
         for (int i = 0; i < 7; i++) {
             world.setBlock(x, y + i, z, Blocks.LOG.id);
         }
@@ -144,5 +145,32 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 }
             }
         }
+        // generates maple trees
+        //for (int i = 0; i <= 7; i++) {
+        //    world.setBlock(x, y + i, z, Blocks.MAPLE_LOG.id);
+        //}
+        // leaves, bottom
+        //world.setBlock(x - 1, y + 4, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x + 1, y + 4, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 4, z - 1, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 4, z + 1, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x - 1, y + 7, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x + 1, y + 7, z, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 7, z - 1, Blocks.MAPLE_LEAVES.id);
+        //world.setBlock(x, y + 7, z + 1, Blocks.MAPLE_LEAVES.id);
+        // leaves, thick
+        //for (int x1 = -1; x1 <= 1; x1++) {
+        //    for (int z1 = -1; z1 <= 1; z1++) {
+        //        // don't overwrite the trunk
+        //        if (x1 == 0 && z1 == 0) {
+        //            continue;
+        //        }
+       //         for (int y1 = 5; y1 <= 6; y1++) {
+       //             world.setBlock(x + x1, y + y1, z + z1, Blocks.MAPLE_LEAVES.id);
+       //         }
+       //     }
+       // }
+
+       // world.setBlock(x, y + 8, z, Blocks.MAPLE_LEAVES.id);
     }
 }

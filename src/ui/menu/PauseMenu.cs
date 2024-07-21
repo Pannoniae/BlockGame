@@ -7,11 +7,11 @@ public class PauseMenu : Menu {
         var backToGame = new Button(this, "backToGame", false, "Back to the game");
         backToGame.setPosition(new Vector2D<int>(0, 0));
         backToGame.centreContents();
-        backToGame.clicked += () => { Screen.GAME_SCREEN.backToGame(); };
+        backToGame.clicked += _ => { Screen.GAME_SCREEN.backToGame(); };
         var settings = new Button(this, "settings", false, "Settings");
         settings.setPosition(new Vector2D<int>(0, 24));
         settings.centreContents();
-        settings.clicked += () => { Screen.GAME_SCREEN.openSettings(); };
+        settings.clicked += _ => { Screen.GAME_SCREEN.openSettings(); };
         var mainMenu = new Button(this, "mainMenu", false, "Quit to Main Menu");
         mainMenu.setPosition(new Vector2D<int>(0, 48));
         mainMenu.centreContents();
@@ -21,7 +21,7 @@ public class PauseMenu : Menu {
         addElement(mainMenu);
     }
 
-    public static void returnToMainMenu() {
+    public static void returnToMainMenu(GUIElement guiElement) {
         Game.instance.executeOnMainThread(() => Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN));
     }
 

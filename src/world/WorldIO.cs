@@ -1,5 +1,9 @@
+using System.Buffers.Text;
+using System.Runtime.CompilerServices;
+using System.Text;
 using BlockGame.util;
 using BlockGame.util.xNBT;
+using SimpleBase;
 
 namespace BlockGame;
 
@@ -21,8 +25,9 @@ public class WorldIO {
 
     public void save(World world, string filename) {
         // save metadata
-        if (!Directory.Exists("level")) {
-            Directory.CreateDirectory("level");
+        // create level folder
+        if (!Directory.Exists($"level/{filename}")) {
+            Directory.CreateDirectory($"level/{filename}");
         }
 
         var tag = new NBTCompound("world");
@@ -30,19 +35,22 @@ public class WorldIO {
         tag.addDouble("posX", world.player.position.X);
         tag.addDouble("posY", world.player.position.Y);
         tag.addDouble("posZ", world.player.position.Z);
-        NBT.writeFile(tag, $"level/{filename}.xnbt");
+        NBT.writeFile(tag, $"level/{filename}/level.xnbt");
 
         // save chunks
         foreach (var chunk in world.chunks.Values) {
             //var regionCoord = World.getRegionPos(chunk.coord);
-            saveChunk(chunk);
+            saveChunk(world, chunk);
         }
         //regionCache.Clear();
     }
 
-    public void saveChunk(Chunk chunk) {
+    public void saveChunk(World world, Chunk chunk) {
         var nbt = serialiseChunkIntoNBT(chunk);
-        NBT.writeFile(nbt, $"level/c{chunk.coord.x},{chunk.coord.z}.xnbt");
+        // ensure directory is created
+        var pathStr = getChunkString(world.name, chunk.coord);
+        Directory.CreateDirectory(Path.GetDirectoryName(pathStr) ?? string.Empty);
+        NBT.writeFile(nbt, pathStr);
     }
 
     private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
@@ -100,37 +108,41 @@ public class WorldIO {
     }
 
     public static World load(string filename) {
-        var tag = NBT.readFile($"level/{filename}.xnbt");
+        var tag = NBT.readFile($"level/{filename}/level.xnbt");
         var seed = tag.getInt("seed");
-        var world = new World(seed);
+        var world = new World(filename, seed, true);
         world.player.position.X = tag.getDouble("posX");
         world.player.position.Y = tag.getDouble("posY");
         world.player.position.Z = tag.getDouble("posZ");
 
-        // go over all chunks in the directory
-        foreach (var file in Directory.EnumerateFiles("level")) {
-            // it's a chunk file
-            var name = Path.GetFileName(file);
-            if (name.StartsWith('c')) {
-                var chunk = loadChunkFromFile(world, file);
-                world.addChunk(chunk.coord, chunk);
-            }
-        }
         world.player.prevPosition = world.player.position;
-        world.loadAroundPlayer();
         return world;
     }
 
-    public static bool chunkFileExists(ChunkCoord coord) {
-        return File.Exists($"level/c{coord.x},{coord.z}.xnbt");
+
+    /// <summary>
+    /// Gets the path for saving/loading a chunk.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string getChunkString(string levelname, ChunkCoord coord) {
+        // Organises chunks into directories (chunk coord divided by 32, converted into base 64)
+        var x = coord.x >> 5;
+        var z = coord.z >> 5;
+        var xDir = x < 0 ? $"-{-x:X}" : x.ToString("X");
+        var zDir = z < 0 ? $"-{-z:X}" : z.ToString("X");
+        return $"level/{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
+    }
+
+    public static bool chunkFileExists(string levelname, ChunkCoord coord) {
+        return File.Exists(getChunkString(levelname, coord));
     }
 
     public static bool worldExists(string level) {
-        return File.Exists($"level/{level}.xnbt");
+        return File.Exists($"level/{level}/level.xnbt");
     }
 
     public static Chunk loadChunkFromFile(World world, ChunkCoord coord) {
-        return loadChunkFromFile(world, $"level/c{coord.x},{coord.z}.xnbt");
+        return loadChunkFromFile(world, getChunkString(world.name, coord));
     }
 
     public static Chunk loadChunkFromFile(World world, string file) {

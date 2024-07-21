@@ -8,8 +8,8 @@ namespace BlockGame;
 public class PlayerRenderer {
 
     public Player player;
-    public StreamingVAO<BlockVertex> vao;
-    private List<BlockVertex> vertices = new();
+    public StreamingVAO<BlockVertexTinted> vao;
+    private List<BlockVertexTinted> vertices = new();
     private List<ushort> indices = new();
 
     private ItemStack? handItem;
@@ -27,7 +27,7 @@ public class PlayerRenderer {
     public PlayerRenderer(Player player) {
         this.player = player;
         handItem = player.hotbar.getSelected();
-        vao = new StreamingVAO<BlockVertex>();
+        vao = new StreamingVAO<BlockVertexTinted>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
         heldBlockShader = new Shader(Game.GL, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");
@@ -43,9 +43,12 @@ public class PlayerRenderer {
         if (handItem == null) {
             return;
         }
+        var world = player.world;
+        var pos = player.position.toBlockPos();
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.Handle);
-        WorldRenderer.meshBlock(Blocks.get(handItem.block), ref vertices, ref indices);
+        var light = world.getLight(pos.X, pos.Y, pos.Z);
+        WorldRenderer.meshBlockTinted(Blocks.get(handItem.block), ref vertices, ref indices, light);
         vao.bind();
         vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));
 

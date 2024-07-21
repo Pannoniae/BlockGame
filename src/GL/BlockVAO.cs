@@ -119,44 +119,59 @@ public class BlockVAO : VAO {
     }
 }
 
-[StructLayout(LayoutKind.Sequential, Size = 18)]
-public readonly struct BlockVertex : IVertex {
+[StructLayout(LayoutKind.Sequential, Size = 20)]
+public readonly struct BlockVertexTinted : IVertex {
     public readonly float x;
     public readonly float y;
     public readonly float z;
     public readonly Half u;
     public readonly Half v;
+    public readonly byte r;
+    public readonly byte g;
+    public readonly byte b;
+    public readonly byte a;
 
-    /// <summary>
-    /// from least significant:
-    /// second byte (8-16) is lighting
-    /// first 3 bits are side (see Direction enum)
-    /// next 2 bits are AO
-    /// </summary>
-    public readonly ushort d;
 
-    public BlockVertex(float x, float y, float z, float u, float v, ushort d) {
+    public BlockVertexTinted(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.u = (Half)u;
         this.v = (Half)v;
-        this.d = d;
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
     }
 
-    public BlockVertex(ushort x, ushort y, ushort z, float u, float v, ushort d) {
+    public BlockVertexTinted(ushort x, ushort y, ushort z, float u, float v, byte r, byte g, byte b, byte a) {
         this.x = x;
         this.y = y;
         this.z = z;
         this.u = (Half)u;
         this.v = (Half)v;
-        this.d = d;
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+
+    public BlockVertexTinted(float x, float y, float z, Half u, Half v, byte r, byte g, byte b, byte a) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = u;
+        this.v = v;
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
     }
 
     public void WriteAttribDescriptions(Span<VertexAttribDescription> descriptions) {
         descriptions[0] = new VertexAttribDescription(AttributeType.FloatVec3, false, AttributeBaseType.Float);
         descriptions[1] = new VertexAttribDescription(AttributeType.FloatVec2, false, AttributeBaseType.HalfFloat);
-        descriptions[2] = new VertexAttribDescription(AttributeType.UnsignedInt, false, AttributeBaseType.UnsignedShort);
+        descriptions[2] = new VertexAttribDescription(AttributeType.FloatVec4, true, AttributeBaseType.UnsignedByte);
     }
 
     public int AttribDescriptionCount => 3;

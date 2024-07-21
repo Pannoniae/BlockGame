@@ -1,4 +1,3 @@
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -28,7 +27,7 @@ public class RenderBlock {
         return flag;
     }
 
-    public static void addVertexWithAO(World world, Vector3D<int> pos, List<BlockVertex> vertexBuffer, List<ushort> indexBuffer,
+    public static void addVertexWithAO(World world, Vector3D<int> pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer,
         float vx, float vy, float vz, UVPair uv, RawDirection direction, int currentIndex) {
 
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference<sbyte>(SubChunkRenderer.offsetTable);
@@ -100,7 +99,7 @@ public class RenderBlock {
         }
 
         data = Block.packData((byte)direction, (byte)(ao & 0x3), light.First);
-        vertexBuffer.Add(new BlockVertex(pos.X + vx, pos.Y + vy, pos.Z + vz, Block.texU(uv.u), Block.texV(uv.v), data));
+        vertexBuffer.Add(new BlockVertexPacked(pos.X + vx, pos.Y + vy, pos.Z + vz, Block.texU(uv.u), Block.texV(uv.v), data));
         indexBuffer.Add((ushort)currentIndex);
     }
 }

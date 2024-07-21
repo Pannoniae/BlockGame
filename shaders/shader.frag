@@ -40,6 +40,9 @@ void main() {
     if (colour.a <= 0) {
         discard;
     }
+    // make it always opaque (for mipmapping)
+    colour.a = max(colour.a, 1);
+
     // mix the fog colour between it and the sky
     vec4 mixedFogColour = mix(fogColour, skyColour, ratio);
     // mix fog

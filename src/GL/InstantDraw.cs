@@ -5,26 +5,37 @@ using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 namespace BlockGame;
 
 public class InstantDraw {
-    private const int MAX_VERTICES = 1024;
 
-    private readonly InstantVertex[] vertices = new InstantVertex[MAX_VERTICES];
+    public static Shader instantShader;
+    public static int instantTexture;
+    public static int uMVP;
 
-    private uint VAO;
-    private uint VBO;
+    private readonly int maxVertices;
+    private readonly BlockVertexTinted[] vertices;
 
-    public GL GL;
+    private readonly uint VAO;
+    private readonly uint VBO;
+
+    public readonly GL GL;
     private int currentVertex = 0;
 
     private Shader shader;
 
-    public InstantDraw() {
+    public InstantDraw(int maxVertices) {
+        vertices = new BlockVertexTinted[maxVertices];
+        this.maxVertices = maxVertices;
         unsafe {
             GL = Game.GL;
-            VAO = GL.GenVertexArray();
-            VBO = GL.GenBuffer();
+            instantShader = new Shader(GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
+            instantShader.use();
+            instantTexture = instantShader.getUniformLocation("tex");
+            uMVP = instantShader.getUniformLocation(nameof(uMVP));
+            instantShader.setUniform(instantTexture, 0);
+            VAO = GL.CreateVertexArray();
+            VBO = GL.CreateBuffer();
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(MAX_VERTICES * sizeof(InstantVertex)), 0, BufferStorageMask.DynamicStorageBit);
+            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(BlockVertexTinted)), (void*)0, BufferStorageMask.DynamicStorageBit);
             format();
         }
     }
@@ -36,22 +47,27 @@ public class InstantDraw {
 
         GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
         GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
-        GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 8 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 8 * sizeof(ushort));
 
         GL.VertexAttribBinding(0, 0);
         GL.VertexAttribBinding(1, 0);
         GL.VertexAttribBinding(2, 0);
+
+        GL.BindVertexBuffer(0, VBO, 0, 10 * sizeof(ushort));
     }
 
-    public void update(double interp) {
-        shader.use();
+    public void setTexture(uint handle) {
+        instantShader.use();
+        Game.GL.ActiveTexture(TextureUnit.Texture0);
+        Game.GL.BindTexture(TextureTarget.Texture2D, handle);
     }
 
-    public void addVertex(InstantVertex vertex) {
-        if (currentVertex >= MAX_VERTICES - 1) {
+    public void addVertex(BlockVertexTinted vertex) {
+        if (currentVertex >= maxVertices - 1) {
             finish();
         }
-        //Console.Out.TWriteLine(currentLine);
+        //Console.Out.WriteLine(currentLine);
+        vertices[currentVertex] = vertex;
         currentVertex++;
     }
 
@@ -60,41 +76,19 @@ public class InstantDraw {
         if (currentVertex == 0) {
             return;
         }
+        GL.BindVertexArray(VAO);
         // upload buffer
+        unsafe {
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+            fixed (BlockVertexTinted* v = vertices) {
+                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)), v);
+            }
+        }
 
 
         // bind VAO, draw elements
-        GL.BindVertexArray(VAO);
         GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)currentVertex);
 
         currentVertex = 0;
-    }
-}
-
-[StructLayout(LayoutKind.Sequential, Size = 20)]
-public readonly struct InstantVertex {
-    // position
-    public readonly float x;
-    public readonly float y;
-    public readonly float z;
-    // UV
-    public readonly Half u;
-    public readonly Half v;
-    // colour   
-    public readonly byte r;
-    public readonly byte g;
-    public readonly byte b;
-    public readonly byte a;
-
-    public InstantVertex(float x, float y, float z, Half u, Half v, byte r, byte g, byte b, byte a) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.u = u;
-        this.v = v;
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.a = a;
     }
 }
