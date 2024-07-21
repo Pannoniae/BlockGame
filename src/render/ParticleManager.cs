@@ -62,23 +62,23 @@ public class ParticleManager {
             var blocklight = world.getBlockLight((int)pos.X, (int)pos.Y, (int)pos.Z);
             var tint = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
 
-            var vert = new InstantVertex(ul.X, ul.Y, ul.Z,
+            var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
-            vert = new InstantVertex(ll.X, ll.Y, ll.Z,
+            vert = new BlockVertexTinted(ll.X, ll.Y, ll.Z,
                 (Half)particle.u, (Half)(particle.v + particle.uvsize), tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
-            vert = new InstantVertex(lr.X, lr.Y, lr.Z,
+            vert = new BlockVertexTinted(lr.X, lr.Y, lr.Z,
                 (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
 
-            vert = new InstantVertex(ul.X, ul.Y, ul.Z,
+            vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
-            vert = new InstantVertex(lr.X, lr.Y, lr.Z,
+            vert = new BlockVertexTinted(lr.X, lr.Y, lr.Z,
                 (Half)(particle.u + particle.uvsize), (Half)(particle.v + particle.uvsize), tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
-            vert = new InstantVertex(ur.X, ur.Y, ur.Z,
+            vert = new BlockVertexTinted(ur.X, ur.Y, ur.Z,
                 (Half)(particle.u + particle.uvsize), (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
 

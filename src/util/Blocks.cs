@@ -362,9 +362,9 @@ public class Block {
         for (var x1 = 0; x1 < particleCount; x1++) {
             for (var y1 = 0; y1 < particleCount; y1++) {
                 for (var z1 = 0; z1 < particleCount; z1++) {
-                    var particleX = x + (x1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.05f;
-                    var particleY = y + (y1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.05f;
-                    var particleZ = z + (z1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.05f;
+                    var particleX = x + (x1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
+                    var particleY = y + (y1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
+                    var particleZ = z + (z1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
                     var particlePosition = new Vector3D<double>(particleX, particleY, particleZ);
 
                     var size = Game.clientRandom.NextSingle() * 0.1f + 0.05f;
