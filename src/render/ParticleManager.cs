@@ -52,14 +52,15 @@ public class ParticleManager {
             InstantDraw.instantShader.setUniform(InstantDraw.uMVP, world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix());
             // get interp pos
             var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
+            var blockPos = pos.toBlockPos();
             var right = Vector3.Cross(world.player.camera.up, world.player.camera.forward);
             var up = world.player.camera.up;
             var ul = pos.toVec3() - right * (float)particle.size / 2 + up * (float)particle.size / 2;
             var ll = pos.toVec3() - right * (float)particle.size / 2 - up * (float)particle.size / 2;
             var lr = pos.toVec3() + right * (float)particle.size / 2 - up * (float)particle.size / 2;
             var ur = pos.toVec3() + right * (float)particle.size / 2 + up * (float)particle.size / 2;
-            var skylight = world.getSkyLight((int)pos.X, (int)pos.Y, (int)pos.Z);
-            var blocklight = world.getBlockLight((int)pos.X, (int)pos.Y, (int)pos.Z);
+            var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
+            var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
             var tint = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
