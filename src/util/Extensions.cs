@@ -32,6 +32,9 @@ public static class VectorExtensions {
     public static Vector3 toVec3(this Vector3D<float> vec) {
         return new Vector3(vec.X, vec.Y, vec.Z);
     }
+    public static Vector3 toVec3(this Vector3D<int> vec) {
+        return new Vector3(vec.X, vec.Y, vec.Z);
+    }
     public static Vector3 toVec3(this Vector3F vec) {
         return new Vector3(vec.X, vec.Y, vec.Z);
     }
@@ -59,7 +62,6 @@ public static class VectorExtensions {
     public static Matrix4F to4F(Matrix4x4 mat) {
         return Unsafe.BitCast<Matrix4x4, Matrix4F>(mat);
     }
-
 
     public static Vector3D<int> toBlockPos(this Vector3D<double> currentPos) {
         return new Vector3D<int>((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),

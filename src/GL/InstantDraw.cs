@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
