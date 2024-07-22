@@ -152,6 +152,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         }
         else {
             world.removeSkyLightAndPropagate(wx, y, wz);
+            world.removeBlockLightAndPropagate(wx, y, wz);
         }
 
         // if the new block has light, add the light
@@ -162,10 +163,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             world.blockLightQueue.Add(new LightNode(wx, y, wz, this));
         }
         // if the old block had light, remove the light
-        if (block == 0 && Blocks.get(oldBlock).lightLevel > 0) {
-            // remove lightsource
-            world.removeBlockLightAndPropagate(wx, y, wz);
-        }
+        //if (block == 0 && Blocks.get(oldBlock).lightLevel > 0) {
+        //    // remove lightsource
+        //    world.removeBlockLightAndPropagate(wx, y, wz);
+        //}
 
         // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
 
