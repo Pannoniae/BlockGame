@@ -72,7 +72,7 @@ public class PlayerRenderer {
                   // swing translation
                   Matrix4x4.CreateTranslation((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
         heldBlockShader.use();
-        heldBlockShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getProjectionMatrix());
+        heldBlockShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getFixedProjectionMatrix());
         heldBlockShader.setUniform(blockTexture, 0);
         vao.render();
     }
