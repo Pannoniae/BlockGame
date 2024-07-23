@@ -137,6 +137,12 @@ public class PlayerCamera {
         return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(vfov), aspectRatio, 0.1f, maxPlane);
     }
 
+    public Matrix4x4 getFixedProjectionMatrix() {
+        // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
+        var maxPlane = Math.Max(128, (Settings.instance.renderDistance + 4) * Chunk.CHUNKSIZE);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(70), aspectRatio, 0.1f, maxPlane);
+    }
+
 
     /// <summary>
     /// Converts horizontal FOV to vertical FOV.
