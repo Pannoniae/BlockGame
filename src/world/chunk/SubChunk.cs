@@ -16,6 +16,7 @@ public class SubChunk : IDisposable {
     public int chunkY;
     public int chunkZ;
 
+    public bool isRendered = false;
 
     /// <summary>
     /// Sections start empty. If you place a block in them, they stop being empty and get array data.

@@ -248,7 +248,7 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     public void drawOpaque() {
-        if (hasRenderOpaque && isVisible(WorldRenderer.frustum)) {
+        if (hasRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
             Game.worldShader.setUniformBound(uChunkPos, subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
@@ -259,7 +259,7 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparent() {
-        if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks() && isVisible(WorldRenderer.frustum)) {
+        if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks()) {
             watervao.bind();
             Game.waterShader.setUniformBound(wateruChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
             uint renderedTransparentVerts = watervao.render();
@@ -268,7 +268,7 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     public void drawTransparentDummy() {
-        if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks() && isVisible(WorldRenderer.frustum)) {
+        if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks()) {
             watervao.bind();
             Game.dummyShader.setUniformBound(dummyuChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
             uint renderedTransparentVerts = watervao.render();
