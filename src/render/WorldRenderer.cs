@@ -157,6 +157,12 @@ public class WorldRenderer {
         for (int i = 0; i < chunkList.Count; i++) {
             var chunk = chunkList[i];
             chunk.isRendered = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
+            if (chunk.isRendered) {
+                for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
+                    var subChunk = chunk.subChunks[j];
+                    subChunk.isRendered = subChunk.renderer.isVisible(frustum);
+                }
+            }
         }
         //chunksToRender.Sort(new ChunkComparer(world.player));
 
@@ -170,8 +176,12 @@ public class WorldRenderer {
                 continue;
             }
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
+                var subChunk = chunk.subChunks[j];
+                if (!subChunk.isRendered) {
+                    continue;
+                }
                 Game.metrics.renderedChunks += 1;
-                chunk.subChunks[j].renderer.drawOpaque();
+                subChunk.renderer.drawOpaque();
             }
         }
         // TRANSLUCENT DEPTH PRE-PASS
@@ -185,7 +195,11 @@ public class WorldRenderer {
                 continue;
             }
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
-                chunk.subChunks[j].renderer.drawTransparentDummy();
+                var subChunk = chunk.subChunks[j];
+                if (!subChunk.isRendered) {
+                    continue;
+                }
+                subChunk.renderer.drawTransparentDummy();
             }
         }
 
@@ -204,14 +218,18 @@ public class WorldRenderer {
                 continue;
             }
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
-                chunk.subChunks[j].renderer.drawTransparent();
+                var subChunk = chunk.subChunks[j];
+                if (!subChunk.isRendered) {
+                    continue;
+                }
+                subChunk.renderer.drawTransparent();
             }
         }
         GL.DepthMask(true);
         //GL.DepthFunc(DepthFunction.Lequal);
         //Game.GD.BlendingEnabled = false;
-        world.particleManager.render(interp);
         GL.Enable(EnableCap.CullFace);
+        world.particleManager.render(interp);
     }
 
     public void initBlockOutline() {
