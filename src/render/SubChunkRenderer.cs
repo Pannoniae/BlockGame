@@ -251,18 +251,26 @@ public sealed class SubChunkRenderer : IDisposable {
         if (hasRenderOpaque && isVisible(WorldRenderer.frustum)) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            Game.worldShader.setUniform(uChunkPos, subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
+            Game.worldShader.setUniformBound(uChunkPos, subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
         }
     }
 
-    public void drawTransparent(bool dummy) {
+    public void drawTransparent() {
         if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks() && isVisible(WorldRenderer.frustum)) {
             watervao.bind();
-            var shader = dummy ? Game.dummyShader : Game.waterShader;
-            shader.setUniform(dummy ? dummyuChunkPos : wateruChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
+            Game.waterShader.setUniformBound(wateruChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
+            uint renderedTransparentVerts = watervao.render();
+            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+        }
+    }
+
+    public void drawTransparentDummy() {
+        if (hasRenderTranslucent && subChunk.blocks.hasTranslucentBlocks() && isVisible(WorldRenderer.frustum)) {
+            watervao.bind();
+            Game.dummyShader.setUniformBound(dummyuChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }

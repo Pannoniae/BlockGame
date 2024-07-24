@@ -185,7 +185,7 @@ public class WorldRenderer {
                 continue;
             }
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
-                chunk.subChunks[j].renderer.drawTransparent(true);
+                chunk.subChunks[j].renderer.drawTransparentDummy();
             }
         }
 
@@ -204,7 +204,7 @@ public class WorldRenderer {
                 continue;
             }
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
-                chunk.subChunks[j].renderer.drawTransparent(false);
+                chunk.subChunks[j].renderer.drawTransparent();
             }
         }
         GL.DepthMask(true);
