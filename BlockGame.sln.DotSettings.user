@@ -55,4 +55,5 @@
   &lt;Assembly Path="/usr/share/dotnet/packs/Microsoft.NETCore.App.Ref/9.0.0-preview.5.24306.7/ref/net9.0/System.Net.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:Boolean x:Key="/Default/Monitoring/IsToolWindowHidden/@EntryValue">True</s:Boolean>
+	<s:String x:Key="/Default/Monitoring/PerformanceProfilingMode/@EntryValue">Sampling</s:String>
 	</wpf:ResourceDictionary>

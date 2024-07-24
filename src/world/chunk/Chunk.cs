@@ -320,7 +320,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public void drawTransparent(bool dummy = false) {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            subChunks[i].renderer.drawTransparent(dummy);
+            subChunks[i].renderer.drawTransparent();
         }
     }
 
