@@ -154,10 +154,10 @@ public class WorldRenderer {
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = world.chunkList;
         // gather chunks to render
-        for (int i = 0; i < chunkList.Count; i++) {
-            var chunk = chunkList[i];
-            chunk.isRendered = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
-            if (chunk.isRendered) {
+        foreach (var chunk in chunkList) {
+            var test = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
+            chunk.isRendered = test;
+            if (test) {
                 for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                     var subChunk = chunk.subChunks[j];
                     subChunk.isRendered = subChunk.renderer.isVisible(frustum);
@@ -170,8 +170,7 @@ public class WorldRenderer {
         shader.use();
         shader.setUniform(uMVP, viewProj);
         shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
-        for (int i = 0; i < chunkList.Count; i++) {
-            var chunk = chunkList[i];
+        foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
             }
@@ -187,10 +186,8 @@ public class WorldRenderer {
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
         dummyShader.setUniform(dummyuMVP, viewProj);
-        GL.Disable(EnableCap.CullFace);
         GL.ColorMask(false, false, false, false);
-        for (int i = 0; i < chunkList.Count; i++) {
-            var chunk = chunkList[i];
+        foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
             }
@@ -203,8 +200,9 @@ public class WorldRenderer {
             }
         }
 
-        Game.GD.BlendingEnabled = true;
-        Game.GD.BlendState = Game.initialBlendState;
+        //Game.GD.BlendingEnabled = true;
+        //Game.GD.BlendState = Game.initialBlendState;
+        GL.Disable(EnableCap.CullFace);
         // TRANSLUCENT PASS
         waterShader.use();
         waterShader.setUniform(wateruMVP, viewProj);
@@ -212,8 +210,7 @@ public class WorldRenderer {
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
-        for (int i = 0; i < chunkList.Count; i++) {
-            var chunk = chunkList[i];
+        foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
             }
