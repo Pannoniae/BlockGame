@@ -147,6 +147,9 @@ public class WorldRenderer {
         GL.ActiveTexture(TextureUnit.Texture1);
         GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
 
+        // no blending solid shit!
+        GL.Disable(EnableCap.Blend);
+
         if (fastChunkSwitch) {
             GL.BindVertexArray(chunkVAO);
         }
@@ -199,9 +202,9 @@ public class WorldRenderer {
                 subChunk.renderer.drawTransparentDummy();
             }
         }
+        // start blending at transparent stuff
+        GL.Enable(EnableCap.Blend);
 
-        //Game.GD.BlendingEnabled = true;
-        //Game.GD.BlendState = Game.initialBlendState;
         GL.Disable(EnableCap.CullFace);
         // TRANSLUCENT PASS
         waterShader.use();
@@ -223,8 +226,6 @@ public class WorldRenderer {
             }
         }
         GL.DepthMask(true);
-        //GL.DepthFunc(DepthFunction.Lequal);
-        //Game.GD.BlendingEnabled = false;
         GL.Enable(EnableCap.CullFace);
         world.particleManager.render(interp);
     }
