@@ -107,120 +107,32 @@ public class OverworldChunkGenerator : ChunkGenerator {
 
 
         //generates oak trees
-        //for (int i = 0; i < 7; i++) {
-        //    world.setBlock(x, y + i, z, Blocks.LOG.id);
-        //}
-        // leaves, thick
-        //for (int x1 = -2; x1 <= 2; x1++) {
-        //    for (int z1 = -2; z1 <= 2; z1++) {
-        // don't overwrite the trunk
-        //        if (x1 == 0 && z1 == 0) {
-        //            continue;
-        //        }
-        //        for (int y1 = 4; y1 < 6; y1++) {
-        //            world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
-        //        }
-        //    }
-        //}
-        // leaves, thin on top
-        //for (int x1 = -1; x1 <= 1; x1++) {
-        //    for (int z1 = -1; z1 <= 1; z1++) {
-        //        for (int y1 = 6; y1 <= 7; y1++) {
-        //            // don't overwrite the trunk
-        //            if (x1 == 0 && z1 == 0 && y1 == 6) {
-        //                continue;
-        //            }
-        //            world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
-        //        }
-        //    }
-        //}
-
-
-        //generates maple trees
-        //for (int i = 0; i < 7; i++) {
-        //    world.setBlock(x, y + i, z, Blocks.MAPLE_LOG.id);
-        //}
-        // leaves, thin on bottom
-        //for (int x2= -1; x2 <= 1; x1++) {
-        // don't overwrite the trunk
-        //    if (x2 == 0) {
-        //        continue;
-        //    }
-        //    world.setBlock(x + x2, y + 4, z, Blocks.MAPLE_LEAVES.id);
-        //}
-        //for (int z2 = -1; z2 <=1; z2++) {
-        //don't overwrite the trunk
-        //    if (z2 == 0) {
-        //        continue;
-        //    }
-        //    world.setBlock(x, y + 4, z + z2, Blocks.MAPLE_LEAVES.id);
-        //}
-        // leaves, thick
-        //for (int x2 = -1; x2 <= 1; x2++) {
-        //    for (int z2 = -1; z2 <= 1; z2++) {
-        //        // don't overwrite the trunk
-        //        if (x2 == 0 && z2 == 0) {
-        //            continue;
-        //        }
-        //         for (int y2 = 5; y2 <= 6; y2++) {
-        //            world.setBlock(x + x2, y + y2, z + z2, Blocks.MAPLE_LEAVES.id);
-        //         }
-        //     }
-        // }
-        // leaves, thin on top
-        // //for (int x2 = -1; x2 <= 1; x2++) {
-        //    world.setBlock(x + x2, y + 7, z, Blocks.MAPLE_LEAVES.id);
-        //}
-        //for (int z2 = -1; z2 <=1; z2++) {
-        //    world.setBlock(x, y + 7, z + z2, Blocks.MAPLE_LEAVES.id);
-        //}
-        //world.setBlock(x, y + 8, z, Blocks.MAPLE_LEAVES.id);
-
-
-        //generates jungle trees
-        for (int i = 0; i <= 6; i++) {
-            if (i == 0) {
-                for (int x3 = -1; x3 <= 1; x3++) {
-                    world.setBlock(x + x3, y, z, Blocks.LOG.id);
-                }
-                for (int z3 = -1; z3 <= 1; z3++) {
-                    world.setBlock(x, y, z + z3, Blocks.LOG.id);
-                }
-            }
+        for (int i = 0; i < 7; i++) {
             world.setBlock(x, y + i, z, Blocks.LOG.id);
         }
-
-        world.setBlock(x + 1, y + 4, z, Blocks.LOG.id);
-        world.setBlock(x - 1, y + 6, z, Blocks.LOG.id);
-        world.setBlock(x - 1, y + 7, z, Blocks.LOG.id);
-        world.setBlock(x - 1, y + 8, z, Blocks.LOG.id);
-
-        for (int x3 = 1; x3 <= 2; x3++) {
-            for (int z3 = -1; z3 <= 1; z3++) {
-                world.setBlock(x + x3, y + 5, z+z3, Blocks.LEAVES.id);
-            }
-        }
-
-        world.setBlock(x+3, y + 5, z, Blocks.LEAVES.id);
-
-        for (int x3 = 1; x3 <= 2; x3++) {
-            world.setBlock(x + x3, y + 6, z, Blocks.LEAVES.id);
-        }
-
-        for (int x3 = -3; x3 <= 2; x3++) {
-            for (int z3 = -1; z3 <= 1; z3++) {
+        // leaves, thick
+        for (int x1 = -2; x1 <= 2; x1++) {
+            for (int z1 = -2; z1 <= 2; z1++) {
                 // don't overwrite the trunk
-                if (x3 == -1 && z3 == 0) {
+                if (x1 == 0 && z1 == 0) {
                     continue;
                 }
-                world.setBlock(x + x3, y + 8, z + z3, Blocks.LEAVES.id);
+                for (int y1 = 4; y1 < 6; y1++) {
+                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
+                }
             }
         }
-
-        for (int x3 = -2; x3 <= 1; x3++) {
-            world.setBlock(x + x3, y + 9, z, Blocks.LEAVES.id);
+        // leaves, thin on top
+        for (int x1 = -1; x1 <= 1; x1++) {
+            for (int z1 = -1; z1 <= 1; z1++) {
+                for (int y1 = 6; y1 <= 7; y1++) {
+                    // don't overwrite the trunk
+                    if (x1 == 0 && z1 == 0 && y1 == 6) {
+                        continue;
+                    }
+                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
+                }
+            }
         }
-
-        world.setBlock(x-1, y + 5, z, Blocks.LEAVES.id);
     }
 }
