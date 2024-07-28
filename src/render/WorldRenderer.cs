@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
@@ -155,7 +156,7 @@ public class WorldRenderer {
         }
 
         var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
-        var chunkList = world.chunkList;
+        var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
         // gather chunks to render
         foreach (var chunk in chunkList) {
             var test = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
