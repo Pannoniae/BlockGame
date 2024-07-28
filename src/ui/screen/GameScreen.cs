@@ -18,6 +18,7 @@ public class GameScreen : Screen {
 
     public Menu PAUSE_MENU = new PauseMenu();
     public IngameMenu INGAME_MENU = new IngameMenu();
+    public ChatMenu CHAT = new ChatMenu();
 
     private TimerAction updateMemory;
     private TimerAction updateDebugText;
@@ -61,7 +62,9 @@ public class GameScreen : Screen {
         world.player.strafeVector = new Vector3D<double>(0, 0, 0);
         world.player.inputVector = new Vector3D<double>(0, 0, 0);
         if (!world.paused && !Game.lockingMouse) {
-            world.player.updateInput(dt);
+            if (currentMenu == INGAME_MENU) {
+                world.player.updateInput(dt);
+            }
             world.update(dt);
             world.player.update(dt);
         }
@@ -117,7 +120,7 @@ public class GameScreen : Screen {
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
         base.onMouseDown(mouse, button);
-        if (world.inMenu) {
+        if (world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
 
@@ -133,7 +136,7 @@ public class GameScreen : Screen {
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
         base.onMouseMove(mouse, pos);
-        if (!Game.focused || world.inMenu) {
+        if (!Game.focused || world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
 
@@ -221,6 +224,18 @@ public class GameScreen : Screen {
                 world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
                 break;
             }
+            case Key.T: {
+                if (currentMenu == INGAME_MENU) {
+                    Game.instance.unlockMouse();
+                    switchToMenu(CHAT);
+                }
+                else if (currentMenu == CHAT) {
+                    Game.instance.lockMouse();
+                    switchToMenu(INGAME_MENU);
+                }
+                break;
+            }
+
         }
 
 
@@ -305,7 +320,7 @@ public class GameScreen : Screen {
         var centreY = Game.centreY;
 
 
-        if (currentMenu == INGAME_MENU) {
+        if (currentMenu == INGAME_MENU || currentMenu == CHAT) {
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
                     new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
@@ -321,7 +336,6 @@ public class GameScreen : Screen {
                 new Color4b(240, 240, 240));
 
             if (debugScreen) {
-
                 D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
                 D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
                 //D.drawAABB(p.aabb);
