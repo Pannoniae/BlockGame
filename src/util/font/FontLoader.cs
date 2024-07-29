@@ -1,10 +1,10 @@
 using FontStashSharp;
-using TrippyGL;
 
 namespace BlockGame.util.font;
 
 public class FontLoader {
-    public Renderer renderer;
+    public TextRenderer renderer;
+    public TextRenderer3D renderer3D;
     public FontSystem fontSystem;
     public FontSystem fontSystemThin;
 
@@ -15,7 +15,8 @@ public class FontLoader {
             TextureWidth = 256,
             TextureHeight = 256
         };
-        renderer = new Renderer(Game.GD);
+        renderer = new TextRenderer(Game.GD);
+        renderer3D = new TextRenderer3D(Game.GD);
 
         // todo hack something together in a better way
         fontSystem = new FontSystem(settings);

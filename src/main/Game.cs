@@ -461,6 +461,7 @@ public partial class Game {
     public void resize(Vector2D<int> size) {
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
         fontLoader.renderer.OnViewportChanged(size);
+        fontLoader.renderer3D.OnViewportChanged(size);
         width = size.X;
         height = size.Y;
 
@@ -599,12 +600,13 @@ public partial class Game {
         }
         GLTracker.save();
 
-        if (Settings.instance.framebufferEffects) {
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
-        }
-        else {
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-        }
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
+
+        fontLoader.renderer.begin();
+        fontLoader.renderer3D.begin();
+        gui.tb.Begin();
+        gui.immediatetb.Begin(BatcherBeginMode.Immediate);
+
         GD.DepthTestingEnabled = true;
         currentScreen.clear(GD, dt, interp);
         currentScreen.render(dt, interp);
@@ -631,11 +633,9 @@ public partial class Game {
 
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
-        fontLoader.renderer.begin();
-        gui.tb.Begin();
-        gui.immediatetb.Begin(BatcherBeginMode.Immediate);
         currentScreen.draw();
         currentScreen.postDraw();
+        fontLoader.renderer3D.end();
         gui.tb.End();
         fontLoader.renderer.end();
         gui.immediatetb.End();

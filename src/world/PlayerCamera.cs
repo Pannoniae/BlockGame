@@ -99,7 +99,18 @@ public class PlayerCamera {
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
+    }
 
+    public Matrix4x4 getViewMatrixRH(double interp) {
+        var interpPos = renderPosition(interp);
+        var iBob = float.DegreesToRadians(renderBob(interp));
+        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var factor = 0.4f;
+        var factor2 = 0.15f;
+        return Matrix4x4.CreateLookAt(interpPos, interpPos + forward, up)
+               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
+               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
+               * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
 
     public Matrix4x4 getTestViewMatrix(double interp) {

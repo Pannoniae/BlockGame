@@ -1,5 +1,5 @@
-using System.Drawing;
 using System.Numerics;
+using BlockGame.ui;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Silk.NET.Maths;
@@ -8,7 +8,7 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.util.font;
 
-public class Renderer : IFontStashRenderer {
+public class TextRenderer3D : IFontStashRenderer {
     private readonly SimpleShaderProgram shaderProgram;
     private readonly TextureBatcher tb;
     private readonly Texture2DManager _textureManager;
@@ -17,19 +17,28 @@ public class Renderer : IFontStashRenderer {
 
     public GraphicsDevice GraphicsDevice => _textureManager.GraphicsDevice;
 
-    public Renderer(GraphicsDevice graphicsDevice) {
+    public TextRenderer3D(GraphicsDevice graphicsDevice) {
         _textureManager = new Texture2DManager(graphicsDevice);
         tb = new TextureBatcher(GraphicsDevice);
-        shaderProgram = SimpleShaderProgram.Create<VertexColorTexture>(graphicsDevice, 0, 0, true);
+        shaderProgram = SimpleShaderProgram.Create<VertexColorTexture>(graphicsDevice);
         tb.SetShaderProgram(shaderProgram);
     }
 
     public void OnViewportChanged(Vector2D<int> size) {
-        shaderProgram.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, 0, 1);
+    }
+
+    public void setMatrix(ref Matrix4x4 mat) {
+        shaderProgram.World = mat;
+    }
+
+    public void renderTick(double interp) {
+        Game.GL.UseProgram(shaderProgram.Handle);
+        shaderProgram.View = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
+        shaderProgram.Projection = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
     }
 
     public void begin() {
-        tb.Begin();
+        tb.Begin(BatcherBeginMode.Immediate);
     }
 
     public void end() {
@@ -48,27 +57,7 @@ public class Renderer : IFontStashRenderer {
             rotation,
             Vector2.Zero,
             depth);
-    }
-}
-
-internal static class Utility {
-    public static Vector2 ToSystemNumeric(Point p) {
-        return new Vector2(p.X, p.Y);
-    }
-
-    public static Rectangle ToSystemDrawing(this Viewport r) {
-        return new Rectangle(r.X, r.Y, (int)r.Width, (int)r.Height);
-    }
-
-    public static Viewport ToTrippy(this Rectangle r) {
-        return new Viewport(r);
-    }
-
-    public static Color4b ToTrippy(this FSColor c) {
-        return new Color4b(c.R, c.G, c.B, c.A);
-    }
-
-    public static FSColor toFS(this Color4b c) {
-        return new FSColor(c.R, c.G, c.B, c.A);
+        //Console.Out.WriteLine(new Vector3(pos, depth));
+        //Console.Out.WriteLine(Vector4.Transform(new Vector3(pos, depth), shaderProgram.World * shaderProgram.View * shaderProgram.Projection));
     }
 }
