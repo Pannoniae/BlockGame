@@ -208,12 +208,20 @@ public class GUI {
         DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color4b color, Vector2 scale) {
-        DrawString(text, position * guiScale, color == default ? Color4b.White : color, TEXTSCALE * scale, default);
+    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale) {
+        DrawString(text, position * guiScale, colour == default ? Color4b.White : colour, TEXTSCALE * scale, default);
     }
 
-    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawStringThin(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour = default) {
+        DrawStringThin(text, position * guiScale, colour == default ? Color4b.White : colour, new Vector2(TEXTSCALE), default);
+    }
+
+    public void drawString3D(ReadOnlySpan<char> text, Vector3 position, Color4b colour = default) {
+        // flip the text - 2D rendering goes +y=down, we want +y=up
+        // 1 pt should be 1/16th pixel
+        var mat = Matrix4x4.CreateScale(1 / 16f) * Matrix4x4.CreateTranslation(position);
+        Game.fontLoader.renderer3D.setMatrix(ref mat);
+        guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS());
     }
 
     public void drawStringCentred(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {

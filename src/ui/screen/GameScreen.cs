@@ -92,6 +92,8 @@ public class GameScreen : Screen {
 
     public override void render(double dt, double interp) {
         base.render(dt, interp);
+        // update here because in the main menu, we don't have a world
+        Game.fontLoader.renderer3D.renderTick(interp);
         if (!currentMenu.isModal()) {
             INGAME_MENU.render(dt, interp);
         }
@@ -105,7 +107,8 @@ public class GameScreen : Screen {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
             world.renderer.drawBlockOutline(interp);
         }
-        D.update(interp);
+        D.renderTick(interp);
+        Game.gui.drawString3D("THIS IS A LONG TEXT", new Vector3(0, 100, 0));
     }
 
     public override void postRender(double dt, double interp) {

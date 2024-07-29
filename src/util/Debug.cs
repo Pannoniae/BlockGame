@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.ui;
 using Silk.NET.Maths;
 using TrippyGL;
@@ -17,7 +18,7 @@ public class Debug {
 
     private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.GD, excludeWorldMatrix: true);
 
-    public void update(double interp) {
+    public void renderTick(double interp) {
         // nothing to do, so why set the shader?
         //if (currentLine == 0) {
         //    return;
