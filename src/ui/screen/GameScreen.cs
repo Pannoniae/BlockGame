@@ -108,7 +108,13 @@ public class GameScreen : Screen {
             world.renderer.drawBlockOutline(interp);
         }
         D.renderTick(interp);
-        Game.gui.drawString3D("THIS IS A LONG TEXT", new Vector3(0, 100, 0));
+        var text = "THIS IS A LONG TEXT\nmultiple lines!";
+        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.WEST, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.EAST, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.SOUTH, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.NORTH, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.DOWN, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.UP, 2f);
     }
 
     public override void postRender(double dt, double interp) {
