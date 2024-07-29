@@ -216,12 +216,64 @@ public class GUI {
         DrawStringThin(text, position * guiScale, colour == default ? Color4b.White : colour, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawString3D(ReadOnlySpan<char> text, Vector3 position, Color4b colour = default) {
+
+    /// <summary>
+    /// Rotation Y = yaw (horizontal rotation)
+    /// Rotation X = pitch (banking down or up)
+    /// Rotation Z = roll (tilt sideways)
+    /// </summary>
+    public void drawString3D(ReadOnlySpan<char> text, Vector3 position, Vector3 rotation, float scale = 1f, Color4b colour = default) {
         // flip the text - 2D rendering goes +y=down, we want +y=up
         // 1 pt should be 1/16th pixel
-        var mat = Matrix4x4.CreateScale(1 / 16f) * Matrix4x4.CreateTranslation(position);
+        var flip = Matrix4x4.Identity;
+        flip.M22 = -1;
+        var rot = Matrix4x4.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
+        var mat = flip * rot * Matrix4x4.CreateScale(1 / 256f * scale) * Matrix4x4.CreateTranslation(position);
         Game.fontLoader.renderer3D.setMatrix(ref mat);
         guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS());
+    }
+
+    public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3D<int> pos, RawDirection face, float scale, Color4b colour = default) {
+        // draw slightly out so the block won't z-fight with the text
+        const float offset = 0.001f;
+        Vector3 rotation = Vector3.Zero;
+        var deg90ToRad = Utils.deg2rad(90);
+        var offsetVec = Vector3.Zero;
+        switch (face) {
+            case RawDirection.WEST:
+                pos.Z += 1;
+                rotation = new Vector3(0, deg90ToRad, 0);
+                offsetVec = new Vector3(-offset, 0, 0);
+                break;
+            case RawDirection.EAST:
+                pos.X += 1;
+                rotation = new Vector3(0, -deg90ToRad, 0);
+                offsetVec = new Vector3(offset, 0, 0);
+                break;
+            case RawDirection.SOUTH:
+                rotation = new Vector3(0, 0, 0);
+                offsetVec = new Vector3(0, 0, -offset);
+                break;
+            case RawDirection.NORTH:
+                pos.Z += 1;
+                pos.X += 1;
+                rotation = new Vector3(0, deg90ToRad * 2, 0);
+                offsetVec = new Vector3(0, 0, offset);
+                break;
+            case RawDirection.DOWN:
+                pos.Z += 1;
+                pos.X += 1;
+                pos.Y -= 1;
+                rotation = new Vector3(-deg90ToRad, deg90ToRad * 2, 0);
+                offsetVec = new Vector3(0, -offset, 0);
+                break;
+            case RawDirection.UP:
+                pos.Z += 1;
+                rotation = new Vector3(deg90ToRad, 0, 0);
+                offsetVec = new Vector3(0, offset, 0);
+                break;
+        }
+        drawString3D(text, pos.toVec3() + offsetVec, rotation, scale, colour);
     }
 
     public void drawStringCentred(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
