@@ -82,7 +82,8 @@ namespace FontStashSharp.RichText
 			if (_renderer != null)
 			{
 				position = position.Transform(ref _transformation);
-				_renderer.Draw(texture, position, sourceRegion, color, _rotation, _scale, _layerDepth);
+				var dummy = Matrix4x4.Identity;
+				_renderer.Draw(texture, position, ref dummy, sourceRegion, color, _rotation, _scale, _layerDepth);
 			}
 			else
 			{

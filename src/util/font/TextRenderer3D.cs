@@ -32,7 +32,6 @@ public class TextRenderer3D : IFontStashRenderer {
     }
 
     public void renderTick(double interp) {
-        Game.GL.UseProgram(shaderProgram.Handle);
         shaderProgram.View = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
         shaderProgram.Projection = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
     }
@@ -53,12 +52,12 @@ public class TextRenderer3D : IFontStashRenderer {
         tb.Begin();
     }
 
-    public void Draw(object texture, Vector2 pos, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
+    public void Draw(object texture, Vector2 pos, ref Matrix4x4 worldMatrix, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
         var tex = (Texture2D)texture;
-        var intPos = new Vector2((int)pos.X, (int)pos.Y);
         // texture height
         tb.Draw(tex,
-            intPos,
+            pos,
+            ref worldMatrix,
             src,
             color.ToTrippy(),
             scale,

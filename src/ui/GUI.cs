@@ -62,11 +62,11 @@ public class GUI {
     public GUI() {
         GL = Game.GL;
         GD = Game.GD;
-        tb = new TextureBatcher(Game.GD);
-        immediatetb = new TextureBatcher(Game.GD);
-        shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.GD, excludeWorldMatrix: true);
-        tb.SetShaderProgram(shader);
-        immediatetb.SetShaderProgram(shader);
+        shader = SimpleShaderProgram.Create<VertexColorTexture>(Game.GD);
+        Game.graphics.mainBatch.SetShaderProgram(shader);
+        Game.graphics.immediateBatch.SetShaderProgram(shader);
+        tb = Game.graphics.mainBatch;
+        immediatetb = Game.graphics.immediateBatch;
         guiTexture = Texture2DExtensions.FromFile(Game.GD, "textures/gui.png");
         colourTexture = Texture2DExtensions.FromFile(Game.GD, "textures/debug.png");
         instance = this;
@@ -229,9 +229,7 @@ public class GUI {
         flip.M22 = -1;
         var rot = Matrix4x4.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
         var mat = flip * rot * Matrix4x4.CreateScale(1 / 256f * scale) * Matrix4x4.CreateTranslation(position);
-        Game.fontLoader.renderer3D.setMatrix(ref mat);
-        guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS());
-        Game.fontLoader.renderer3D.flush();
+        guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS(), ref mat);
     }
 
     public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3D<int> pos, RawDirection face, float scale, Color4b colour = default) {
@@ -367,7 +365,7 @@ public class GUI {
             Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
         //Matrix4x4.CreateTranslation(0, 0, 0);
         //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
-        guiBlockShader.Uniforms["uMVP"].SetValueMat4(mat);
+        guiBlockShader.Uniforms["uMVP"].SetValueMat4(in mat);
         guiBlockShader.Uniforms["blockTexture"].SetValueTexture(Game.textureManager.blockTextureGUI);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         var spI = CollectionsMarshal.AsSpan(guiBlockI);

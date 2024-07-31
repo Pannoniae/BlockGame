@@ -53,6 +53,7 @@ public partial class Game {
 
     public static bool devMode;
 
+    public static Graphics graphics;
     public static GUI gui;
 
     public static IMouse mouse;
@@ -213,6 +214,15 @@ public partial class Game {
         GL.GetInteger(GetPName.ContextFlags, out int noErrors);
         Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
+        GL.GetInteger(GetPName.MinMapBufferAlignment, out int a);
+        Console.Out.WriteLine($"a: {a}");
+
+        GL.GetInteger(GetPName.UniformBufferOffsetAlignment, out a);
+        Console.Out.WriteLine($"b: {a}");
+
+        GL.GetInteger(GetPName.ShaderStorageBufferOffsetAlignment, out a);
+        Console.Out.WriteLine($"c: {a}");
+
 
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
@@ -288,6 +298,7 @@ public partial class Game {
         //music.Play();
         Console.Out.WriteLine("played?");
 
+        graphics = new Graphics();
         gui = new GUI();
 
         currentScreen = new MainMenuScreen();
@@ -460,7 +471,6 @@ public partial class Game {
 
     public void resize(Vector2D<int> size) {
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
-        fontLoader.renderer.OnViewportChanged(size);
         fontLoader.renderer3D.OnViewportChanged(size);
         width = size.X;
         height = size.Y;
@@ -602,15 +612,15 @@ public partial class Game {
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
 
-        fontLoader.renderer.begin();
+        graphics.mainBatch.Begin();
         fontLoader.renderer3D.begin();
-        gui.tb.Begin();
-        gui.immediatetb.Begin(BatcherBeginMode.Immediate);
+        graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
 
         GD.DepthTestingEnabled = true;
         currentScreen.clear(GD, dt, interp);
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
+        fontLoader.renderer3D.end();
 
         if (Settings.instance.framebufferEffects) {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
@@ -635,10 +645,8 @@ public partial class Game {
         //GD.BlendingEnabled = true;
         currentScreen.draw();
         currentScreen.postDraw();
-        fontLoader.renderer3D.end();
-        gui.tb.End();
-        fontLoader.renderer.end();
-        gui.immediatetb.End();
+        graphics.mainBatch.End();
+        graphics.immediateBatch.End();
         //GD.BlendingEnabled = false;
     }
 

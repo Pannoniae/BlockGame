@@ -178,12 +178,12 @@ public class WorldRenderer {
             if (!chunk.isRendered) {
                 continue;
             }
+            Game.metrics.renderedChunks += 1;
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                 var subChunk = chunk.subChunks[j];
                 if (!subChunk.isRendered) {
                     continue;
                 }
-                Game.metrics.renderedChunks += 1;
                 subChunk.renderer.drawOpaque();
             }
         }
