@@ -153,7 +153,7 @@ public sealed class SubChunkRenderer : IDisposable {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        sw.Restart();
+        //sw.Restart();
         if (subChunk.world.renderer.fastChunkSwitch) {
             vao?.Dispose();
             vao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);
@@ -207,7 +207,7 @@ public sealed class SubChunkRenderer : IDisposable {
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
             var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
             vao.upload(finalVertices, finalIndices);
-            Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+            //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
             hasRenderOpaque = false;
@@ -238,11 +238,11 @@ public sealed class SubChunkRenderer : IDisposable {
             }
         }
         //}
-        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         //if (!subChunk.isEmpty && !hasRenderOpaque && !hasRenderTranslucent) {
         //    Console.Out.WriteLine($"CHUNKDATA: {subChunk.blocks.blockCount} {subChunk.blocks.isFull()}");
         //}
-        sw.Stop();
+        //sw.Stop();
     }
 
 
@@ -629,10 +629,10 @@ public sealed class SubChunkRenderer : IDisposable {
 
                         // only apply AO if enabled
                         if ((settings & SETTING_AO) != 0 && !facesRef.noAO) {
-                            ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount((byte)(o.First & 7)));
-                            ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount((byte)(o.Second & 7)));
-                            ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount((byte)(o.Third & 7)));
-                            ao.Fourth = (byte)((o.Fourth & 3) == 3 ? 3 : byte.PopCount((byte)(o.Fourth & 7)));
+                            ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount(o.First));
+                            ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount(o.Second));
+                            ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount(o.Third));
+                            ao.Fourth = (byte)((o.Fourth & 3) == 3 ? 3 : byte.PopCount(o.Fourth));
                         }
 
                         // if face is noAO, don't average....
@@ -643,30 +643,10 @@ public sealed class SubChunkRenderer : IDisposable {
 
                             var n = l.AsUInt32();
                             // split light and reassemble it again
-                            light.First = (byte)(
-                                average((n[0] >> 4) & 0x0F0F0F0F,
-                                    (byte)(o.First & 7))
-                                << 4 |
-                                average(n[0] & 0x0F0F0F0F,
-                                    (byte)(o.First & 7)));
-                            light.Second = (byte)(
-                                average((n[1] >> 4) & 0x0F0F0F0F,
-                                    (byte)(o.Second & 7))
-                                << 4 |
-                                average(n[1] & 0x0F0F0F0F,
-                                    (byte)(o.Second & 7)));
-                            light.Third = (byte)(
-                                average((n[2] >> 4) & 0x0F0F0F0F,
-                                    (byte)(o.Third & 7))
-                                << 4 |
-                                average(n[2] & 0x0F0F0F0F,
-                                    (byte)(o.Third & 7)));
-                            light.Fourth = (byte)(
-                                average((n[3] >> 4) & 0x0F0F0F0F,
-                                    (byte)(o.Fourth & 7))
-                                << 4 |
-                                average(n[3] & 0x0F0F0F0F,
-                                    (byte)(o.Fourth & 7)));
+                            light.First = average2(n[0], o.First);
+                            light.Second = average2(n[1], o.Second);
+                            light.Third = average2(n[2], o.Third);
+                            light.Fourth = average2(n[3], o.Fourth);
                         }
                         //}
                     }
@@ -807,6 +787,34 @@ public sealed class SubChunkRenderer : IDisposable {
                           ((lightNibble >> 16) & 0xFF) * ((inv & 4) >> 2) +
                           (lightNibble >> 24) & 0xFF)
                       / (BitOperations.PopCount((byte)(inv & 0x7)) + 1));
+    }
+
+    /// <summary>
+    /// average but does blocklight and skylight at once
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte average2(uint lightNibble, byte oFlags) {
+        if (oFlags < 3) {
+            // set the 4 bit of oFlags to 0 because it is visible then
+            oFlags &= 3;
+        }
+
+        // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
+        // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
+        var inv = ~oFlags;
+        var popcnt = BitOperations.PopCount((byte)(inv & 0x7)) + 1;
+        var sky = (byte)(((lightNibble & 0xF) * (inv & 1) +
+                          (lightNibble >> 8 & 0xF) * ((inv & 2) >> 1) +
+                          (lightNibble >> 16 & 0xF) * ((inv & 4) >> 2) +
+                          (lightNibble >> 24 & 0xF))
+                      / popcnt);
+
+        var block = (byte)(((lightNibble >> 4 & 0xF) * (inv & 1) +
+                             (lightNibble >> 12 & 0xF) * ((inv & 2) >> 1) +
+                             (lightNibble >> 20 & 0xF) * ((inv & 4) >> 2) +
+                             (lightNibble >> 28 & 0xF))
+                         / popcnt);
+        return (byte)(sky | block << 4);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

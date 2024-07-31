@@ -231,6 +231,7 @@ public class GUI {
         var mat = flip * rot * Matrix4x4.CreateScale(1 / 256f * scale) * Matrix4x4.CreateTranslation(position);
         Game.fontLoader.renderer3D.setMatrix(ref mat);
         guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS());
+        Game.fontLoader.renderer3D.flush();
     }
 
     public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3D<int> pos, RawDirection face, float scale, Color4b colour = default) {
