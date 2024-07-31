@@ -397,6 +397,20 @@ namespace TrippyGL
             EndDraw(item);
         }
 
+        public void Draw(Texture2D texture, Vector2 position, ref Matrix4x4 worldMatrix, Rectangle? source, Color4b color, Vector2 scale,
+            float rotation, Vector2 origin = default, float depth = 0)
+        {
+            StartDraw(texture);
+
+            TextureBatchItem item = GetNextBatchItem();
+            if (rotation == 0)
+                item.SetValue(texture, position, ref worldMatrix, source, color, scale, origin, depth);
+            else
+                item.SetValue(texture, position, ref worldMatrix, source, color, scale, rotation, origin, depth);
+
+            EndDraw(item);
+        }
+
         /// <summary>
         /// Adds a <see cref="Texture2D"/> for drawing to the current batch.
         /// </summary>

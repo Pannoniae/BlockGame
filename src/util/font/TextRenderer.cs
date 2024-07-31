@@ -9,7 +9,6 @@ using Rectangle = System.Drawing.Rectangle;
 namespace BlockGame.util.font;
 
 public class TextRenderer : IFontStashRenderer {
-    private readonly SimpleShaderProgram shaderProgram;
     private readonly TextureBatcher tb;
     private readonly Texture2DManager _textureManager;
 
@@ -19,24 +18,10 @@ public class TextRenderer : IFontStashRenderer {
 
     public TextRenderer(GraphicsDevice graphicsDevice) {
         _textureManager = new Texture2DManager(graphicsDevice);
-        tb = new TextureBatcher(GraphicsDevice);
-        shaderProgram = SimpleShaderProgram.Create<VertexColorTexture>(graphicsDevice, 0, 0, true);
-        tb.SetShaderProgram(shaderProgram);
+        tb = Game.graphics.mainBatch;
     }
 
-    public void OnViewportChanged(Vector2D<int> size) {
-        shaderProgram.Projection = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, 0, 1);
-    }
-
-    public void begin() {
-        tb.Begin();
-    }
-
-    public void end() {
-        tb.End();
-    }
-
-    public void Draw(object texture, Vector2 pos, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
+    public void Draw(object texture, Vector2 pos, ref Matrix4x4 worldMatrix, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
         var tex = (Texture2D)texture;
         var intPos = new Vector2((int)pos.X, (int)pos.Y);
         // texture height
