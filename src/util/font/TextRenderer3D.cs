@@ -38,11 +38,19 @@ public class TextRenderer3D : IFontStashRenderer {
     }
 
     public void begin() {
-        tb.Begin(BatcherBeginMode.Immediate);
+        tb.Begin();
     }
 
     public void end() {
         tb.End();
+    }
+
+    /// <summary>
+    /// Finish drawing text.
+    /// </summary>
+    public void flush() {
+        tb.End();
+        tb.Begin();
     }
 
     public void Draw(object texture, Vector2 pos, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
