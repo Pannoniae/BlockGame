@@ -10,7 +10,7 @@ using Silk.NET.Maths;
 namespace BlockGame;
 
 public sealed class SubChunkRenderer : IDisposable {
-    public SubChunk subChunk;
+    private readonly SubChunk subChunk;
 
     // we need it here because completely full chunks are also empty of any rendering
     private bool hasRenderOpaque;
@@ -33,12 +33,12 @@ public sealed class SubChunkRenderer : IDisposable {
 
     // actually we don't need a list, regular arrays will do because it's only a few megs of space and it's shared
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of them and it will still be in the ballpark of 10MB
-    private static List<BlockVertexPacked> chunkVertices = new(2048);
-    private static List<ushort> chunkIndices = new(2048);
+    private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
+    private static readonly List<ushort> chunkIndices = new(2048);
     // YZX again
-    private static ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    private static byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    private static ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
+    private static readonly ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    private static readonly byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
     private static Stopwatch sw = new Stopwatch();
 
@@ -153,7 +153,7 @@ public sealed class SubChunkRenderer : IDisposable {
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk() {
-        //sw.Restart();
+        sw.Restart();
         if (subChunk.world.renderer.fastChunkSwitch) {
             vao?.Dispose();
             vao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);
@@ -207,7 +207,7 @@ public sealed class SubChunkRenderer : IDisposable {
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
             var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
             vao.upload(finalVertices, finalIndices);
-            //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+            Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
             hasRenderOpaque = false;
@@ -238,8 +238,11 @@ public sealed class SubChunkRenderer : IDisposable {
             }
         }
         //}
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us");
-        //sw.Stop();
+        Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+        //if (!subChunk.isEmpty && !hasRenderOpaque && !hasRenderTranslucent) {
+        //    Console.Out.WriteLine($"CHUNKDATA: {subChunk.blocks.blockCount} {subChunk.blocks.isFull()}");
+        //}
+        sw.Stop();
     }
 
 
@@ -361,7 +364,8 @@ public sealed class SubChunkRenderer : IDisposable {
                     // set neighbours array element  to block
                     blocksArrayRef = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
-                    if (hasOnlySolid && !Blocks.isFullBlock(bl)) {
+                    // NOTE: check if it's loaded (if it isn't loaded we don't give a shit about it)
+                    if (!Blocks.isFullBlock(bl) && nn) {
                         hasOnlySolid = false;
                     }
 
@@ -474,7 +478,12 @@ public sealed class SubChunkRenderer : IDisposable {
             // this is garbage but we'll deal with it later
 
             // one AO value fits on 2 bits so the whole thing fits in a byte
-            byte ao = 0;
+            FourBytes ao;
+            ao.Whole = 0;
+            Unsafe.SkipInit(out ao.First);
+            Unsafe.SkipInit(out ao.Second);
+            Unsafe.SkipInit(out ao.Third);
+            Unsafe.SkipInit(out ao.Fourth);
 
             // setup neighbour data
             // if all 6 neighbours are solid, we don't even need to bother iterating the faces
@@ -556,13 +565,13 @@ public sealed class SubChunkRenderer : IDisposable {
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                     if ((settings & 3) != 0) {
                         // ox, oy, oz
-                        ushort o;
+                        FourBytes o;
                         // need to store 9 sbytes so it's a 16-element vector
                         // lx, ly, lz, lo
                         // we need 12 bytes
                         Vector128<byte> l;
 
-                        ao = 0;
+                        ao.Whole = 0;
 
 
                         //for (int j = 0; j < 4; j++) {
@@ -572,7 +581,6 @@ public sealed class SubChunkRenderer : IDisposable {
                         // load the vector with the offsets
                         // we need 12 offsets
                         var offsets = Vector256.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 12));
-
                         l = Vector128.Create(
                             Unsafe.Add(ref lightRef, offsets[0]),
                             Unsafe.Add(ref lightRef, offsets[1]),
@@ -591,37 +599,40 @@ public sealed class SubChunkRenderer : IDisposable {
                             Unsafe.Add(ref lightRef, offsets[11]),
                             lba[(byte)dir]);
 
-                        o = (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[0]))) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[1]))) << 1) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[2]))) << 2) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[3]))) << 3) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[4]))) << 4) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[5]))) << 5) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[6]))) << 6) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[7]))) << 7) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[8]))) << 8) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[9]))) << 9) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[10]))) << 10) |
-                                     (ushort)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
-                                         Unsafe.Add(ref neighbourRef, offsets[11]))) << 11));
+                        o.First = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                             Unsafe.Add(ref neighbourRef, offsets[0]))) |
+                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                             Unsafe.Add(ref neighbourRef, offsets[1]))) << 1 |
+                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                             Unsafe.Add(ref neighbourRef, offsets[2]))) << 2);
+
+                        o.Second = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                              Unsafe.Add(ref neighbourRef, offsets[3]))) |
+                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                              Unsafe.Add(ref neighbourRef, offsets[4]))) << 1 |
+                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                              Unsafe.Add(ref neighbourRef, offsets[5]))) << 2);
+
+                        o.Third = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                             Unsafe.Add(ref neighbourRef, offsets[6]))) |
+                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                             Unsafe.Add(ref neighbourRef, offsets[7]))) << 1 |
+                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                             Unsafe.Add(ref neighbourRef, offsets[8]))) << 2);
+
+                        o.Fourth = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                              Unsafe.Add(ref neighbourRef, offsets[9]))) |
+                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                              Unsafe.Add(ref neighbourRef, offsets[10]))) << 1 |
+                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                              Unsafe.Add(ref neighbourRef, offsets[11]))) << 2);
 
                         // only apply AO if enabled
                         if ((settings & SETTING_AO) != 0 && !facesRef.noAO) {
-                            ao |= (byte)((o & 3) == 3 ? 3 : byte.PopCount((byte)(o & 7)));
-                            ao |= (byte)((((o >> 3) & 3) == 3 ? 3 : byte.PopCount((byte)((o >> 3) & 7))) << 2);
-                            ao |= (byte)((((o >> 6) & 3) == 3 ? 3 : byte.PopCount((byte)((o >> 6) & 7))) << 4);
-                            ao |= (byte)((((o >> 9) & 3) == 3 ? 3 : byte.PopCount((byte)((o >> 9) & 7))) << 6);
+                            ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount((byte)(o.First & 7)));
+                            ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount((byte)(o.Second & 7)));
+                            ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount((byte)(o.Third & 7)));
+                            ao.Fourth = (byte)((o.Fourth & 3) == 3 ? 3 : byte.PopCount((byte)(o.Fourth & 7)));
                         }
 
                         // if face is noAO, don't average....
@@ -634,28 +645,28 @@ public sealed class SubChunkRenderer : IDisposable {
                             // split light and reassemble it again
                             light.First = (byte)(
                                 average((n[0] >> 4) & 0x0F0F0F0F,
-                                    (byte)(o & 7))
+                                    (byte)(o.First & 7))
                                 << 4 |
                                 average(n[0] & 0x0F0F0F0F,
-                                    (byte)(o & 7)));
+                                    (byte)(o.First & 7)));
                             light.Second = (byte)(
                                 average((n[1] >> 4) & 0x0F0F0F0F,
-                                    (byte)((o >> 3) & 7))
+                                    (byte)(o.Second & 7))
                                 << 4 |
                                 average(n[1] & 0x0F0F0F0F,
-                                    (byte)((o >> 3) & 7)));
+                                    (byte)(o.Second & 7)));
                             light.Third = (byte)(
                                 average((n[2] >> 4) & 0x0F0F0F0F,
-                                    (byte)((o >> 6) & 7))
+                                    (byte)(o.Third & 7))
                                 << 4 |
                                 average(n[2] & 0x0F0F0F0F,
-                                    (byte)((o >> 6) & 7)));
+                                    (byte)(o.Third & 7)));
                             light.Fourth = (byte)(
                                 average((n[3] >> 4) & 0x0F0F0F0F,
-                                    (byte)((o >> 9) & 7))
+                                    (byte)(o.Fourth & 7))
                                 << 4 |
                                 average(n[3] & 0x0F0F0F0F,
-                                    (byte)((o >> 9) & 7)));
+                                    (byte)(o.Fourth & 7)));
                         }
                         //}
                     }
@@ -700,7 +711,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec[2];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[1];
-                    vertex.d = Block.packData((byte)dir, (byte)(ao & 0x3), light.First);
+                    vertex.d = Block.packData((byte)dir, ao.First, light.First);
 
                     vertex = ref tempVertices[1];
                     vertex.x = (ushort)vec[3];
@@ -708,7 +719,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec[5];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[3];
-                    vertex.d = Block.packData((byte)dir, (byte)(ao >> 2 & 0x3), light.Second);
+                    vertex.d = Block.packData((byte)dir, ao.Second, light.Second);
 
                     vertex = ref tempVertices[2];
                     vertex.x = (ushort)vec[6];
@@ -716,7 +727,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec2[0];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[3];
-                    vertex.d = Block.packData((byte)dir, (byte)(ao >> 4 & 0x3), light.Third);
+                    vertex.d = Block.packData((byte)dir, ao.Third, light.Third);
 
                     vertex = ref tempVertices[3];
                     vertex.x = (ushort)vec2[1];
@@ -724,7 +735,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec2[3];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[1];
-                    vertex.d = Block.packData((byte)dir, (byte)(ao >> 6), light.Fourth);
+                    vertex.d = Block.packData((byte)dir, ao.Fourth, light.Fourth);
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
 
