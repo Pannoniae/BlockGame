@@ -214,15 +214,6 @@ public partial class Game {
         GL.GetInteger(GetPName.ContextFlags, out int noErrors);
         Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
-        GL.GetInteger(GetPName.MinMapBufferAlignment, out int a);
-        Console.Out.WriteLine($"a: {a}");
-
-        GL.GetInteger(GetPName.UniformBufferOffsetAlignment, out a);
-        Console.Out.WriteLine($"b: {a}");
-
-        GL.GetInteger(GetPName.ShaderStorageBufferOffsetAlignment, out a);
-        Console.Out.WriteLine($"c: {a}");
-
 
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
@@ -236,6 +227,7 @@ public partial class Game {
         GD.FaceCullingEnabled = true;
         GD.PolygonFrontFace = PolygonFace.CounterClockwise;
         GD.CullFaceMode = CullingMode.CullBack;
+
 
         GLTracker = new GLStateTracker(GL, GD);
 
