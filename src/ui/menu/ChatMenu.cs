@@ -15,7 +15,7 @@ public class ChatMenu : Menu {
     public override void onKeyChar(IKeyboard keyboard, char ch) {
         if (ch != 't') {
             message += ch;
-        }c
+        }
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
