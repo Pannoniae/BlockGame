@@ -269,6 +269,7 @@ public partial class Game {
         foreach (var keyboard in input.Keyboards) {
             keyboard.KeyDown += onKeyDown;
             keyboard.KeyUp += onKeyUp;
+            keyboard.KeyChar += onKeyChar;
         }
 
         keyboard = input.Keyboards[0];
@@ -459,6 +460,11 @@ public partial class Game {
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
+        currentScreen.onKeyUp(keyboard, key, scancode);
+    }
+
+    private void onKeyChar(IKeyboard keyboard, char c) {
+        currentScreen.onKeyChar(keyboard, c);
     }
 
     public void resize(Vector2D<int> size) {

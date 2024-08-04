@@ -153,6 +153,10 @@ public class Menu {
 
     }
 
+    public virtual void onKeyChar(IKeyboard keyboard, char c) {
+
+    }
+
     public virtual void scroll(IMouse mouse, ScrollWheel scrollWheel) {
 
     }
