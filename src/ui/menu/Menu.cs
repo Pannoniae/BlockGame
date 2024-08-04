@@ -34,6 +34,14 @@ public class Menu {
         return true;
     }
 
+    /// <summary>
+    /// Does this menu block input from the screen?
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool isBlockingInput() {
+        return isModal();
+    }
+
     public Menu() {
     }
 

@@ -191,7 +191,7 @@ public class GameScreen : Screen {
         }
 
         // if there is a menu open, don't allow any other keypresses from this handler
-        if (currentMenu.isModal() && currentMenu != INGAME_MENU) {
+        if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
             return;
         }
 

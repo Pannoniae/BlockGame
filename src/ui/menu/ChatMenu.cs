@@ -11,22 +11,33 @@ public class ChatMenu : Menu {
     /// </summary>
     public string message = "Test";
 
+    public override bool isModal() {
+        return false;
+    }
+
+    public override bool isBlockingInput() {
+        return true;
+    }
 
     public override void onKeyChar(IKeyboard keyboard, char ch) {
-        if (ch != 't') {
+        if (ch != 't' &&
+            (char.IsLetterOrDigit(ch) || char.IsPunctuation(ch) || char.IsWhiteSpace(ch)) &&
+            !char.IsControl(ch)) {
             message += ch;
         }
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-        if (key == Key.Enter) {
-            message = "";
-            Game.instance.lockMouse();
-            Screen.GAME_SCREEN.switchToMenu(Screen.GAME_SCREEN.INGAME_MENU);
-        } else {
-            if (key == Key.Backspace && message.Length > 0) {
-                message = message[..^1];
-            }
+        if (key is Key.T or Key.Enter) {
+            // wait a frame so the key doesn't immediately get pressed again
+            Game.instance.executeOnMainThread(() => {
+                message = "";
+                Game.instance.lockMouse();
+                Screen.GAME_SCREEN.switchToMenu(Screen.GAME_SCREEN.INGAME_MENU);
+            });
+        }
+        else if (key == Key.Backspace && message.Length > 0) {
+            message = message[..^1];
         }
     }
 
@@ -36,9 +47,5 @@ public class ChatMenu : Menu {
         var gui = Game.gui;
         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4), color: new Color4b(0, 0, 0, 128));
         gui.drawStringUIThin("> " + message, new Vector2(6, Game.gui.uiHeight - 13));
-    }
-
-    public override bool isModal() {
-        return false;
     }
 }
