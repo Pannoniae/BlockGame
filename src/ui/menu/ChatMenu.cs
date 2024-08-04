@@ -20,27 +20,30 @@ public class ChatMenu : Menu {
     }
 
     public override void onKeyChar(IKeyboard keyboard, char ch) {
-        if (ch != 't' &&
-            (char.IsLetterOrDigit(ch) || char.IsPunctuation(ch) || char.IsWhiteSpace(ch)) &&
+        if ((char.IsLetterOrDigit(ch) || char.IsPunctuation(ch) || char.IsWhiteSpace(ch)) &&
             !char.IsControl(ch)) {
             message += ch;
         }
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-        if (key is Key.T or Key.Enter) {
-            // wait a frame so the key doesn't immediately get pressed again
-            Game.instance.executeOnMainThread(() => {
-                message = "";
-                Game.instance.lockMouse();
-                screen.switchToMenu(((GameScreen)screen).INGAME_MENU);
-            });
-        }
-        else if (key == Key.Backspace && message.Length > 0) {
-            message = message[..^1];
+        switch (key) {
+            case Key.Enter:
+                // if T is pressed but there's a message, don't return
+                // wait a frame so the key doesn't immediately get pressed again
+                Game.instance.executeOnMainThread(closeChat);
+                break;
+            case Key.Backspace when message.Length > 0:
+                message = message[..^1];
+                break;
         }
     }
 
+    public void closeChat() {
+        message = "";
+        Game.instance.lockMouse();
+        screen.switchToMenu(((GameScreen)screen).INGAME_MENU);
+    }
 
     public override void draw() {
         base.draw();
