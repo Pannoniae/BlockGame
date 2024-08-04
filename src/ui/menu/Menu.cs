@@ -20,6 +20,11 @@ public class Menu {
     /// </summary>
     public GUIElement? pressedElement;
 
+    /// <summary>
+    /// The current screen this menu is opened in.
+    /// </summary>
+    public Screen screen;
+
     public static LoadingMenu LOADING = new();
     public static MainMenu MAIN_MENU = new();
     public static LevelSelectMenu LEVEL_SELECT = new();
