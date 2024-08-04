@@ -177,12 +177,32 @@ public class GameScreen : Screen {
 
     }
 
+    public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyUp(keyboard, key, scancode);
+        // if there is a menu open, don't allow any other keypresses from this handler
+        if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
+            return;
+        }
+    }
+
+    public override void onKeyChar(IKeyboard keyboard, char c) {
+        base.onKeyChar(keyboard, c);
+        // if there is a menu open, don't allow any other keypresses from this handler
+        if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
+            return;
+        }
+    }
+
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         base.onKeyDown(keyboard, key, scancode);
 
         if (key == Key.Escape) {
+            if (currentMenu == CHAT) {
+                CHAT.closeChat();
+            }
+
             // hack for back to main menu
-            if (!world.inMenu && !world.paused) {
+            else if (!world.inMenu && !world.paused) {
                 pause();
             }
             else if (currentMenu != Menu.SETTINGS) {
@@ -235,8 +255,10 @@ public class GameScreen : Screen {
             }
             case Key.T: {
                 if (currentMenu == INGAME_MENU) {
-                    Game.instance.unlockMouse();
-                    switchToMenu(CHAT);
+                    Game.instance.executeOnMainThread(() => {
+                        Game.instance.unlockMouse();
+                        switchToMenu(CHAT);
+                    });
                 }
                 else if (currentMenu == CHAT) {
                     Game.instance.lockMouse();
@@ -384,9 +406,6 @@ public class GameScreen : Screen {
         GD.ClearColor = WorldRenderer.defaultClearColour;
         GD.ClearDepth = 1f;
         GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
-    }
-    public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
-
     }
 
     public void openSettings() {
