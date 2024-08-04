@@ -86,6 +86,10 @@ public class Screen {
         currentMenu?.onKeyUp(keyboard, key, scancode);
     }
 
+    public virtual void onKeyChar(IKeyboard keyboard, char c) {
+        currentMenu?.onKeyChar(keyboard, c);
+    }
+
     public virtual void scroll(IMouse mouse, ScrollWheel scrollWheel) {
         currentMenu?.scroll(mouse, scrollWheel);
     }

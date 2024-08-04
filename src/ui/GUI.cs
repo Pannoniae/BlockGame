@@ -178,6 +178,14 @@ public class GUI {
         tb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
     }
 
+    public void drawUI(Texture2D texture, RectangleF dest, Rectangle? source = null, Color4b color = default, float depth = 0f) {
+        tb.Draw(texture, new RectangleF(
+            (int)(dest.X * guiScale),
+            (int)(dest.Y * guiScale),
+            (int)(dest.Width * guiScale),
+            (int)(dest.Height * guiScale)), source, color == default ? Color4b.White : color, depth);
+    }
+
     public void drawUIImmediate(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         immediatetb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
