@@ -33,7 +33,7 @@ public class ChatMenu : Menu {
             Game.instance.executeOnMainThread(() => {
                 message = "";
                 Game.instance.lockMouse();
-                Screen.GAME_SCREEN.switchToMenu(Screen.GAME_SCREEN.INGAME_MENU);
+                screen.switchToMenu(((GameScreen)screen).INGAME_MENU);
             });
         }
         else if (key == Key.Backspace && message.Length > 0) {
@@ -45,7 +45,8 @@ public class ChatMenu : Menu {
     public override void draw() {
         base.draw();
         var gui = Game.gui;
+        var cursor = Game.permanentStopwatch.ElapsedMilliseconds % 1000 < 500 ? "|" : "";
         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4), color: new Color4b(0, 0, 0, 128));
-        gui.drawStringUIThin("> " + message, new Vector2(6, Game.gui.uiHeight - 13));
+        gui.drawStringUIThin("> " + message + cursor, new Vector2(6, Game.gui.uiHeight - 13));
     }
 }

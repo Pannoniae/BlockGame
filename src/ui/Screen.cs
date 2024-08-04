@@ -24,6 +24,7 @@ public class Screen {
         currentMenu = menu;
         menu.size = new Vector2D<int>(Game.width, Game.height);
         menu.centre = menu.size / 2;
+        menu.screen = this;
         menu.activate();
         menu.resize(new Vector2D<int>(Game.width, Game.height));
     }
