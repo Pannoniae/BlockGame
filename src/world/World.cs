@@ -446,6 +446,12 @@ public class World : IDisposable {
             loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z - 1), ChunkStatus.GENERATED);
             loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z + 1), ChunkStatus.GENERATED);
 
+
+            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z - 1), ChunkStatus.GENERATED);
+            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z + 1), ChunkStatus.GENERATED);
+            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z - 1), ChunkStatus.GENERATED);
+            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1), ChunkStatus.GENERATED);
+
             generator.populate(chunkCoord);
         }
         if (status >= ChunkStatus.LIGHTED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
@@ -457,6 +463,11 @@ public class World : IDisposable {
             loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.LIGHTED);
             loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z - 1), ChunkStatus.LIGHTED);
             loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z + 1), ChunkStatus.LIGHTED);
+
+            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z - 1), ChunkStatus.LIGHTED);
+            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z + 1), ChunkStatus.LIGHTED);
+            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z - 1), ChunkStatus.LIGHTED);
+            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1), ChunkStatus.LIGHTED);
             chunks[chunkCoord].meshChunk();
         }
         return chunks[chunkCoord];
@@ -468,7 +479,7 @@ public class World : IDisposable {
         }
     }
 
-    public bool isMisalignedBlock(Vector3D<int> position) {
+    public static bool isMisalignedBlock(Vector3D<int> position) {
         return position.X < 0 || position.X > 15 || position.Z < 0 || position.Z > 15;
     }
 
