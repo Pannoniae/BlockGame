@@ -83,6 +83,10 @@ public class Screen {
         currentMenu?.onKeyDown(keyboard, key, scancode);
     }
 
+    public virtual void onKeyRepeat(IKeyboard keyboard, Key key, int scancode) {
+        currentMenu?.onKeyRepeat(keyboard, key, scancode);
+    }
+
     public virtual void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
         currentMenu?.onKeyUp(keyboard, key, scancode);
     }

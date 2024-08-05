@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net9.0</TargetFrameworks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.Windowing.Glfw" Version="2.21.0"/>
+        <ProjectReference Include="..\Silk.NET.Input.Common\Silk.NET.Input.Common.csproj"/>
+    </ItemGroup>
+
+</Project>

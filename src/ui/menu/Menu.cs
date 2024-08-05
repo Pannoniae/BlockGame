@@ -162,6 +162,10 @@ public class Menu {
 
     }
 
+    public virtual void onKeyRepeat(IKeyboard keyboard, Key key, int scancode) {
+
+    }
+
     public virtual void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
 
     }

@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net9.0</TargetFrameworks>
+        <RootNamespace>Silk.NET.Input</RootNamespace>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Silk.NET.Input.Glfw</_Parameter1>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>Silk.NET.Input.Sdl</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.Windowing" Version="2.21.0"/>
+    </ItemGroup>
+
+</Project>
