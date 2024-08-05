@@ -268,6 +268,7 @@ public partial class Game {
 
         foreach (var keyboard in input.Keyboards) {
             keyboard.KeyDown += onKeyDown;
+            keyboard.KeyRepeat += onKeyRepeat;
             keyboard.KeyUp += onKeyUp;
             keyboard.KeyChar += onKeyChar;
         }
@@ -457,6 +458,10 @@ public partial class Game {
             );
         }
         currentScreen.onKeyDown(keyboard, key, scancode);
+    }
+
+    private void onKeyRepeat(IKeyboard keyboard, Key key, int scancode) {
+        currentScreen.onKeyRepeat(keyboard, key, scancode);
     }
 
     private void onKeyUp(IKeyboard keyboard, Key key, int scancode) {

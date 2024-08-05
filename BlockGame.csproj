@@ -33,7 +33,6 @@
         <PackageReference Include="Molten.Engine" Version="0.7.4" />
         <PackageReference Include="SFML.Audio" Version="2.6.0"/>
         <PackageReference Include="SFML.Net" Version="2.6.0"/>
-        <PackageReference Include="Silk.NET.Input" Version="2.21.0"/>
         <PackageReference Include="Silk.NET.OpenGL" Version="2.21.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.21.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.21.0"/>
@@ -115,6 +114,7 @@
         <ProjectReference Include="lib\TrippyGL.Fonts.Building\TrippyGL.Fonts.Building.csproj"/>
         <ProjectReference Include="lib\TrippyGL.Fonts.Extensions\TrippyGL.Fonts.Extensions.csproj"/>
         <ProjectReference Include="lib\TrippyGL.ImageSharp\TrippyGL.ImageSharp.csproj"/>
+        <ProjectReference Include="lib\Silk.NET.Input\Silk.NET.Input.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

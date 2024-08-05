@@ -39,6 +39,14 @@ public class ChatMenu : Menu {
         }
     }
 
+    public override void onKeyRepeat(IKeyboard keyboard, Key key, int scancode) {
+        switch (key) {
+            case Key.Backspace when message.Length > 0:
+                message = message[..^1];
+                break;
+        }
+    }
+
     public void closeChat() {
         message = "";
         Game.instance.lockMouse();

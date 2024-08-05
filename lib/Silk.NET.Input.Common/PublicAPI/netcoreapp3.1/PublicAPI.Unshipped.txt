@@ -1,0 +1,7 @@
+#nullable enable
+Silk.NET.Input.StandardCursor.ResizeAll = 9 -> Silk.NET.Input.StandardCursor
+Silk.NET.Input.StandardCursor.NeswResize = 8 -> Silk.NET.Input.StandardCursor
+Silk.NET.Input.StandardCursor.NotAllowed = 10 -> Silk.NET.Input.StandardCursor
+Silk.NET.Input.StandardCursor.NwseResize = 7 -> Silk.NET.Input.StandardCursor
+Silk.NET.Input.StandardCursor.Wait = 11 -> Silk.NET.Input.StandardCursor
+Silk.NET.Input.StandardCursor.WaitArrow = 12 -> Silk.NET.Input.StandardCursor

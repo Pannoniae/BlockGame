@@ -23,6 +23,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrippyGL.Fonts.Extensions",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrippyGL.ImageSharp", "lib\TrippyGL.ImageSharp\TrippyGL.ImageSharp.csproj", "{C9089610-35AF-404C-98C9-0A9CA18897F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silk.NET.Input", "lib\Silk.NET.Input\Silk.NET.Input.csproj", "{94706EF2-2F76-4602-951C-D477685D4C9B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silk.NET.Input.Common", "lib\Silk.NET.Input.Common\Silk.NET.Input.Common.csproj", "{D7E63F81-0909-4500-8DCF-1EC15A70B2C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silk.NET.Input.Extensions", "lib\Silk.NET.Input.Extensions\Silk.NET.Input.Extensions.csproj", "{0AE4D968-5820-4BFD-9CB8-75B89E55B970}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silk.NET.Input.Glfw", "lib\Silk.NET.Input.Glfw\Silk.NET.Input.Glfw.csproj", "{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,5 +85,21 @@ Global
 		{4634045C-C5C3-435C-A5D9-5ACE99AE2679}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4634045C-C5C3-435C-A5D9-5ACE99AE2679}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4634045C-C5C3-435C-A5D9-5ACE99AE2679}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94706EF2-2F76-4602-951C-D477685D4C9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94706EF2-2F76-4602-951C-D477685D4C9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94706EF2-2F76-4602-951C-D477685D4C9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94706EF2-2F76-4602-951C-D477685D4C9B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7E63F81-0909-4500-8DCF-1EC15A70B2C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7E63F81-0909-4500-8DCF-1EC15A70B2C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7E63F81-0909-4500-8DCF-1EC15A70B2C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7E63F81-0909-4500-8DCF-1EC15A70B2C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AE4D968-5820-4BFD-9CB8-75B89E55B970}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AE4D968-5820-4BFD-9CB8-75B89E55B970}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AE4D968-5820-4BFD-9CB8-75B89E55B970}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AE4D968-5820-4BFD-9CB8-75B89E55B970}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
