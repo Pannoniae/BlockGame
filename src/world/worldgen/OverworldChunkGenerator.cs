@@ -121,22 +121,12 @@ public class OverworldChunkGenerator : ChunkGenerator {
             // leaves, thin on top
             for (int x1 = -1; x1 <= 1; x1++) {
                 for (int z1 = -1; z1 <= 1; z1++) {
-                    for (int y1 = randomNumber; y1 <= randomNumber; y1++) {
-                        // don't overwrite the trunk
-                        if (x1 == 0 && z1 == 0 && y1 == randomNumber) {
-                            continue;
-                        }
+                    for (int y1 = randomNumber; y1 <= randomNumber+1; y1++) {
                         world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
                     }
                 }
             }
-            for (int x1 = -1; x1 <= 1; x1++) {
-                world.setBlock(x + x1, y + randomNumber + 1, z, Blocks.LEAVES.id);
-            }
-            world.setBlock(x, y + randomNumber + 1, z - 1, Blocks.LEAVES.id);
-            world.setBlock(x, y + randomNumber + 1, z + 1, Blocks.LEAVES.id);
         }
-
     }
     public void placeMapleTree(int x, int y, int z) {
         var world = generator.world;
