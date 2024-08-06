@@ -70,7 +70,7 @@ public partial class Game {
     public static BlendState initialBlendState = BlendState.NonPremultiplied;
 
     public static Random random = new Random(1337 * 1337);
-    public static Random clientRandom = new Random(1337);
+    public static Random clientRandom = new Random();
 
     public static Stopwatch stopwatch = new();
 
@@ -114,6 +114,9 @@ public partial class Game {
     private SoundBuffer buffer;
     private Sound music;
 
+    private readonly string[] splashes;
+    private readonly string splash;
+
     private uint fbo;
     private uint FBOtex;
     private uint throwawayVAO;
@@ -127,21 +130,24 @@ public partial class Game {
     private int g_minReduceLocation;
     private int g_maxSpanLocation;
 
-    private static float g_lumaThreshold = 0.5f;
-    private static float g_mulReduceReciprocal = 8.0f;
-    private static float g_minReduceReciprocal = 128.0f;
-    private static float g_maxSpan = 8.0f;
+    private static readonly float g_lumaThreshold = 0.5f;
+    private static readonly float g_mulReduceReciprocal = 8.0f;
+    private static readonly float g_minReduceReciprocal = 128.0f;
+    private static readonly float g_maxSpan = 8.0f;
 
 
     public Game(bool devMode) {
         Game.devMode = devMode;
         instance = this;
+
+        // load splashes
+        splashes = File.ReadAllLines("splashes.txt");
+
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
         //windowOptions.UpdatesPerSecond = 6000;
-
         windowOptions.VSync = false;
-        windowOptions.Title = "BlockGame";
+        splash = getRandomSplash();
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 0;
@@ -171,6 +177,7 @@ public partial class Game {
         GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
         #endif
         window = Window.Create(windowOptions);
+        setTitle("BlockGame", splash, "");
         window.Load += init;
         window.FocusChanged += focus;
         //window.Update += update;
@@ -179,6 +186,14 @@ public partial class Game {
         window.Closing += close;
 
         window.Run();
+    }
+
+    private string getRandomSplash() {
+        return splashes[clientRandom.Next(splashes.Length)];
+    }
+
+    public static void setTitle(string baseTitle, string splash, string addition) {
+        window.Title = $"{baseTitle} - {splash} {addition}";
     }
 
     private void focus(bool given) {
@@ -608,7 +623,7 @@ public partial class Game {
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);
-            window.Title = $"BlockGame {fps} ({ft * 1000:0.##}ms)";
+            setTitle("BlockGame", splash, $"{fps} ({ft * 1000:0.##}ms)");
             stopwatch.Restart();
         }
         GLTracker.save();
