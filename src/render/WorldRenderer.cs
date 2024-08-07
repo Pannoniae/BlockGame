@@ -54,7 +54,7 @@ public class WorldRenderer {
     private int outline_uView;
     private int outline_uProjection;
 
-    public static Color4b defaultClearColour = new Color4b(70, 190, 225);
+    public static Color4b defaultClearColour = new Color4b(148, 223, 255);
     public static Color4b defaultFogColour = new Color4b(210, 210, 210);
 
     public bool fastChunkSwitch = true;
