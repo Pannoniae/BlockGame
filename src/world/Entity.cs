@@ -83,6 +83,12 @@ public class Entity {
         return AABB.empty;
     }
 
+    public void teleport(Vector3D<double> pos) {
+        position = pos;
+        prevPosition = pos;
+        velocity = Vector3D<double>.Zero;
+    }
+
     protected void collisionAndSneaking(double dt) {
         var oldPos = position;
         var blockPos = position.toBlockPos();

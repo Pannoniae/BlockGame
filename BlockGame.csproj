@@ -16,6 +16,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="CircularBuffer" Version="1.4.0" />
         <PackageReference Include="ErrorProne.NET.CoreAnalyzers" Version="0.6.1-beta.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

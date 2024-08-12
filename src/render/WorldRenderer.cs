@@ -4,8 +4,6 @@ using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.NV;
-using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;

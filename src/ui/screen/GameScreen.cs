@@ -16,9 +16,9 @@ public class GameScreen : Screen {
 
     public bool debugScreen = false;
 
-    public Menu PAUSE_MENU = new PauseMenu();
-    public IngameMenu INGAME_MENU = new IngameMenu();
-    public ChatMenu CHAT = new ChatMenu();
+    public readonly PauseMenu PAUSE_MENU = new();
+    public readonly IngameMenu INGAME_MENU = new();
+    public readonly ChatMenu CHAT = new();
 
     private TimerAction updateMemory;
     private TimerAction updateDebugText;
@@ -57,6 +57,9 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal()) {
             INGAME_MENU.update(dt);
         }
+
+        // update current tick
+        CHAT.tick++;
 
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D<double>(0, 0, 0);
@@ -108,7 +111,7 @@ public class GameScreen : Screen {
             world.renderer.drawBlockOutline(interp);
         }
         D.renderTick(interp);
-        var text = "THIS IS A LONG TEXT\nmultiple lines!";
+        const string text = "THIS IS A LONG TEXT\nmultiple lines!";
         Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.WEST, 2f);
         Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.EAST, 2f);
         Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.SOUTH, 2f);
@@ -352,6 +355,8 @@ public class GameScreen : Screen {
 
 
         if (currentMenu == INGAME_MENU || currentMenu == CHAT) {
+
+            // Draw crosshair
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
                     new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
@@ -366,11 +371,40 @@ public class GameScreen : Screen {
                     new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
                 new Color4b(240, 240, 240));
 
+            // Draw debug lines
             if (debugScreen) {
                 D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
                 D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
                 //D.drawAABB(p.aabb);
                 D.flushLines();
+            }
+
+            // Draw chat
+
+            var msgLimit = currentMenu == CHAT ? 20 : 10;
+            var currentTick = CHAT.tick;
+            for (int i = 0; i < CHAT.messages.Size && i < msgLimit; i++) {
+                // if 200 ticks have passed, don't show the message
+                var age = currentTick - CHAT.messages[i].ticks;
+                if (age < 200 || currentMenu == CHAT) {
+                    float a = 1;
+                    if (currentMenu != CHAT) {
+                        // fade out from 180 to 200 ticks (from 1 to 0)
+
+                        // from 0 to 50
+                        var remTicks = age - 180;
+                        if (remTicks > 0) {
+                            a = 1 - remTicks / 20f;
+                        }
+                    }
+                    if (a > 0) {
+                        var msgHeight = gui.uiHeight - 42 - (7 * i);
+
+                        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 7), color: new Color4b(0, 0, 0, 128));
+                        Console.Out.WriteLine(a);
+                        gui.drawStringUIThin(CHAT.messages[i].message, new Vector2(6, msgHeight), new Color4b(255, 255, 255, a));
+                    }
+                }
             }
         }
 
