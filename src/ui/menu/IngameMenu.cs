@@ -43,7 +43,7 @@ public class IngameMenu : Menu, IDisposable {
 
     public override void draw() {
         base.draw();
-        var screen = Screen.GAME_SCREEN;
+        var screen = (GameScreen)this.screen;
         if (screen.debugScreen) {
             var ver = getElement("version");
             Game.gui.drawStringThin(debugStr.AsSpan(),
@@ -53,7 +53,7 @@ public class IngameMenu : Menu, IDisposable {
         }
         // Draw block display
         var blockStr = Blocks.get(screen.world.player.hotbar.getSelected().block).name;
-        Game.gui.drawStringCentred(blockStr, new Vector2(Game.centreX, Game.height - 120),
+        Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
             Color4b.White);
     }
 

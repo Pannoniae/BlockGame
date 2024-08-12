@@ -326,7 +326,7 @@ public partial class Game {
     }
 
     private void setIconToBlock() {
-        var logo = Image.Load<Rgba32>("logo.png");
+        using var logo = Image.Load<Rgba32>("logo.png");
         var success = logo.DangerousTryGetSinglePixelMemory(out var imgData);
         if (!success) {
             Console.Out.WriteLine("Couldn't set window logo!");
