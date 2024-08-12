@@ -401,7 +401,6 @@ public class GameScreen : Screen {
                         var msgHeight = gui.uiHeight - 42 - (7 * i);
 
                         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 7), color: new Color4b(0, 0, 0, 128));
-                        Console.Out.WriteLine(a);
                         gui.drawStringUIThin(CHAT.messages[i].message, new Vector2(6, msgHeight), new Color4b(255, 255, 255, a));
                     }
                 }
