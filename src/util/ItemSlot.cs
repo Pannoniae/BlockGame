@@ -1,6 +1,6 @@
 using System.Numerics;
 using BlockGame.ui;
-using Silk.NET.Maths;
+using Molten;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.util;
@@ -20,12 +20,12 @@ public class ItemSlot {
     public InventoryMenu inventory;
 
     public Rectangle rect;
-    public Vector2D<int> itemPos;
+    public Vector2I itemPos;
 
     public ItemSlot(InventoryMenu inventory, int x, int y) {
         this.inventory = inventory;
         rect = new Rectangle(x, y, SLOTSIZE, SLOTSIZE);
-        itemPos = new Vector2D<int>(x + PADDING, y + PADDING);
+        itemPos = new Vector2I(x + PADDING, y + PADDING);
     }
 
 

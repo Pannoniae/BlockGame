@@ -1,6 +1,6 @@
 using System.Numerics;
+using Molten;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using TrippyGL;
 
 namespace BlockGame.ui;
@@ -8,8 +8,8 @@ namespace BlockGame.ui;
 // It's like a menu but fullscreen!
 public class Screen {
 
-    public Vector2D<int> size;
-    public Vector2D<int> centre;
+    public Vector2I size;
+    public Vector2I centre;
 
     public static MainMenuScreen MAIN_MENU_SCREEN = new();
     public static GameScreen GAME_SCREEN = new();
@@ -22,11 +22,11 @@ public class Screen {
     public void switchToMenu(Menu menu) {
         //currentMenu?.deactivate();
         currentMenu = menu;
-        menu.size = new Vector2D<int>(Game.width, Game.height);
+        menu.size = new Vector2I(Game.width, Game.height);
         menu.centre = menu.size / 2;
         menu.screen = this;
         menu.activate();
-        menu.resize(new Vector2D<int>(Game.width, Game.height));
+        menu.resize(new Vector2I(Game.width, Game.height));
     }
 
     public virtual void activate() {
@@ -99,7 +99,7 @@ public class Screen {
         currentMenu?.scroll(mouse, scrollWheel);
     }
 
-    public virtual void resize(Vector2D<int> newSize) {
+    public virtual void resize(Vector2I newSize) {
         currentMenu?.resize(newSize);
     }
 }

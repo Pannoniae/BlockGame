@@ -1,7 +1,7 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -14,8 +14,8 @@ public class Raycast {
         // raycast
         var cameraPos = world.player.camera.position;
         var forward = world.player.camera.forward;
-        var cameraForward = new Vector3D<double>(forward.X, forward.Y, forward.Z);
-        var currentPos = new Vector3D<double>(cameraPos.X, cameraPos.Y, cameraPos.Z);
+        var cameraForward = new Vector3D(forward.X, forward.Y, forward.Z);
+        var currentPos = new Vector3D(cameraPos.X, cameraPos.Y, cameraPos.Z);
 
         // don't round!!
         //var blockPos = toBlockPos(currentPos);
@@ -23,7 +23,7 @@ public class Raycast {
 
         var previous = currentPos.toBlockPos();
         for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
-            dist += (cameraForward * Constants.RAYCASTSTEP).Length;
+            dist += (cameraForward * Constants.RAYCASTSTEP).Length();
             currentPos += cameraForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();
             var block = Blocks.get(world.getBlock(blockPos));
@@ -86,19 +86,19 @@ public struct RayCollision {
     /// <summary>
     /// Point of the nearest hit
     /// </summary>
-    public Vector3D<double> point;
+    public Vector3D point;
 
 
     /// <summary>
     /// The block position of the hit
     /// </summary>
-    public Vector3D<int> block;
+    public Vector3I block;
 
 
     /// <summary>
     /// The previous block which was hit
     /// </summary>
-    public Vector3D<int> previous;
+    public Vector3I previous;
 
     /// <summary>
     /// Which face of the block was hit?

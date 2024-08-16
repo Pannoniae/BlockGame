@@ -1,5 +1,6 @@
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -40,7 +41,7 @@ public class Particle : Entity {
     /// </summary>
     public bool active;
 
-    public Particle(World world, Vector3D<double> position, string texture, float u, float v, double size, double uvsize, int ttl) : base(world) {
+    public Particle(World world, Vector3D position, string texture, float u, float v, double size, double uvsize, int ttl) : base(world) {
         this.position = position;
         this.texture = texture;
         this.u = u;
@@ -51,8 +52,8 @@ public class Particle : Entity {
         active = true;
     }
 
-    protected override AABB calcAABB(Vector3D<double> pos) {
-        return new AABB(pos - new Vector3D<double>(size / 2), pos + new Vector3D<double>(size / 2));
+    protected override AABB calcAABB(Vector3D pos) {
+        return new AABB(pos - new Vector3D(size / 2), pos + new Vector3D(size / 2));
     }
 
     public virtual void update(double dt) {
@@ -76,7 +77,7 @@ public class Particle : Entity {
         if (currentAABB != null) {
             collisionTargets.Add(currentAABB.Value);
         }
-        foreach (var neighbour in world.getBlocksInBox(blockPos + new Vector3D<int>(-1, -1, -1), blockPos + new Vector3D<int>(1, 1, 1))) {
+        foreach (var neighbour in world.getBlocksInBox(blockPos + new Vector3I(-1, -1, -1), blockPos + new Vector3I(1, 1, 1))) {
             var block = world.getBlock(neighbour);
             var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
             if (blockAABB == null) {
@@ -89,7 +90,7 @@ public class Particle : Entity {
         // Y axis resolution
         position.Y += velocity.Y * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbY = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var aabbY = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             if (AABB.isCollision(aabbY, blockAABB)) {
                 // left side
                 if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
@@ -110,8 +111,8 @@ public class Particle : Entity {
         // X axis resolution
         position.X += velocity.X * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-            var sneakaabbX = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
+            var aabbX = calcAABB(new Vector3D(position.X, position.Y, position.Z));
+            var sneakaabbX = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbX, blockAABB)) {
                 collisionXThisFrame = true;
                 // left side
@@ -129,7 +130,7 @@ public class Particle : Entity {
 
         position.Z += velocity.Z * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var aabbZ = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             if (AABB.isCollision(aabbZ, blockAABB)) {
                 collisionZThisFrame = true;
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
@@ -143,7 +144,7 @@ public class Particle : Entity {
                 }
             }
         }
-        var groundCheck = calcAABB(new Vector3D<double>(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
+        var groundCheck = calcAABB(new Vector3D(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
         onGround = false;
         foreach (var blockAABB in collisionTargets) {
             if (AABB.isCollision(blockAABB, groundCheck)) {

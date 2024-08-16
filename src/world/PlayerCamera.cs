@@ -1,21 +1,22 @@
 using System.Numerics;
 using BlockGame.ui;
 using BlockGame.util;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
 public class PlayerCamera {
     private Player player;
 
-    public Vector3 prevPosition;
-    public Vector3 position;
-    public Vector3 forward;
+    public Vector3D prevPosition;
+    public Vector3D position;
+    public Vector3D forward;
 
-    public Vector3 renderPosition(double interp) => Vector3.Lerp(prevPosition, position, (float)interp);
+    public Vector3D renderPosition(double interp) => Vector3D.Lerp(prevPosition, position, interp);
 
     public float renderBob(double interp) => float.Lerp(prevBob, bob, (float)interp);
 
-    public Vector3 up { get; private set; }
+    public Vector3D up;
     public float viewportWidth;
     public float viewportHeight;
 
@@ -32,7 +33,7 @@ public class PlayerCamera {
 
     public BoundingFrustum frustum;
 
-    public PlayerCamera(Player player, Vector3 position, Vector3 forward, Vector3 up, float viewportWidth, float viewportHeight) {
+    public PlayerCamera(Player player, Vector3D position, Vector3D forward, Vector3D up, float viewportWidth, float viewportHeight) {
         this.player = player;
         prevPosition = position;
         this.position = position;
@@ -68,15 +69,15 @@ public class PlayerCamera {
         //We don't want to be able to look behind us by going over our head or under our feet so make sure it stays within these bounds
         pitch = Math.Clamp(pitch, -Constants.maxPitch, Constants.maxPitch);
 
-        var cameraDirection = Vector3.Zero;
+        var cameraDirection = Vector3D.Zero;
         cameraDirection.X = MathF.Cos(Utils.deg2rad(yaw)) *
                             MathF.Cos(Utils.deg2rad(pitch));
         cameraDirection.Y = MathF.Sin(Utils.deg2rad(pitch));
         cameraDirection.Z = MathF.Sin(Utils.deg2rad(yaw)) *
                             MathF.Cos(Utils.deg2rad(pitch));
 
-        forward = Vector3.Normalize(cameraDirection);
-        up = Vector3.Normalize(Vector3.Cross(Vector3.Cross(forward, Vector3.UnitY), forward));
+        forward = Vector3D.Normalize(cameraDirection);
+        up = Vector3D.Normalize(Vector3D.Cross(Vector3D.Cross(forward, Vector3D.UnitY), forward));
     }
 
     public Vector3 CalculateForwardVector() {
@@ -95,7 +96,19 @@ public class PlayerCamera {
         var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
         var factor = 0.4f;
         var factor2 = 0.15f;
-        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward, up)
+        return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), interpPos.toVec3() + forward.toVec3(), up.toVec3())
+               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
+               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
+               * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
+    }
+
+    public Matrix4x4 getStaticViewMatrix(double interp) {
+        var interpPos = Vector3.Zero;
+        var iBob = float.DegreesToRadians(renderBob(interp));
+        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var factor = 0.4f;
+        var factor2 = 0.15f;
+        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward.toVec3(), up.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
@@ -107,23 +120,10 @@ public class PlayerCamera {
         var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
         var factor = 0.4f;
         var factor2 = 0.15f;
-        return Matrix4x4.CreateLookAt(interpPos, interpPos + forward, up)
+        return Matrix4x4.CreateLookAt(interpPos.toVec3(), interpPos.toVec3() + forward.toVec3(), up.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
-    }
-
-    public Matrix4x4 getTestViewMatrix(double interp) {
-        var interpPos = new Vector3();
-        var iBob = float.DegreesToRadians(renderBob(interp));
-        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
-        var factor = 0.4f;
-        var factor2 = 0.15f;
-        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward, up)
-               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
-               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
-               * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
-
     }
 
     public Matrix4x4 getHandViewMatrix(double interp) {

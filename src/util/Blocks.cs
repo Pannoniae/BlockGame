@@ -1,7 +1,9 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Molten;
 using Silk.NET.Maths;
+using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.util;
 
@@ -219,13 +221,13 @@ public class Block {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2D<float> texCoords(float x, float y) {
-        return new Vector2D<float>(x * 16f / atlasSize, y * 16f / atlasSize);
+    public static Vector2F texCoords(float x, float y) {
+        return new Vector2F(x * 16f / atlasSize, y * 16f / atlasSize);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2D<float> texCoords(UVPair uv) {
-        return new Vector2D<float>(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
+    public static Vector2F texCoords(UVPair uv) {
+        return new Vector2F(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -270,12 +272,12 @@ public class Block {
     }
 
     public static AABB fullBlock() {
-        return new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1));
+        return new AABB(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1));
     }
 
     public Block flowerAABB() {
         var offset = 3 / 8f;
-        selectionAABB = new AABB(new Vector3D<double>(0 + offset, 0, 0 + offset), new Vector3D<double>(1 - offset, 0.5, 1 - offset));
+        selectionAABB = new AABB(new Vector3D(0 + offset, 0, 0 + offset), new Vector3D(1 - offset, 0.5, 1 - offset));
         return this;
     }
 
@@ -337,11 +339,11 @@ public class Block {
     }
 
 
-    public virtual void update(World world, Vector3D<int> pos) {
+    public virtual void update(World world, Vector3I pos) {
 
     }
 
-    public virtual ushort render(World world, Vector3D<int> pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
+    public virtual ushort render(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
         return 0;
     }
 
@@ -365,7 +367,7 @@ public class Block {
                     var particleX = x + (x1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
                     var particleY = y + (y1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
                     var particleZ = z + (z1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
-                    var particlePosition = new Vector3D<double>(particleX, particleY, particleZ);
+                    var particlePosition = new Vector3D(particleX, particleY, particleZ);
 
                     var size = Game.clientRandom.NextSingle() * 0.1f + 0.05f;
                     var ttl = (int)(3f / (Game.clientRandom.NextSingle() + 0.05f));
@@ -413,7 +415,7 @@ public class Block {
 
 public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
 
-    public override void update(World world, Vector3D<int> pos) {
+    public override void update(World world, Vector3I pos) {
         if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR.id);
         }
@@ -422,7 +424,7 @@ public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uv
 
 public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
 
-    public override void update(World world, Vector3D<int> pos) {
+    public override void update(World world, Vector3I pos) {
         foreach (var dir in Direction.directionsWaterSpread) {
             // queue block updates
             var neighbourBlock = pos + dir;
@@ -439,11 +441,11 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
 }
 
 public class FallingBlock(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
-    public override void update(World world, Vector3D<int> pos) {
+    public override void update(World world, Vector3I pos) {
         var y = pos.Y - 1;
         bool isSupported = true;
         // if not supported, set flag
-        while (world.getBlock(new Vector3D<int>(pos.X, y, pos.Z)) == 0) {
+        while (world.getBlock(new Vector3I(pos.X, y, pos.Z)) == 0) {
             // decrement Y
             isSupported = false;
             y--;
@@ -454,8 +456,8 @@ public class FallingBlock(ushort id, string name, BlockModel uvs) : Block(id, na
         }
 
         // if sand above, update
-        if (world.getBlock(new Vector3D<int>(pos.X, pos.Y + 1, pos.Z)) == id) {
-            world.blockUpdate(new Vector3D<int>(pos.X, pos.Y + 1, pos.Z));
+        if (world.getBlock(new Vector3I(pos.X, pos.Y + 1, pos.Z)) == id) {
+            world.blockUpdate(new Vector3I(pos.X, pos.Y + 1, pos.Z));
         }
     }
 }

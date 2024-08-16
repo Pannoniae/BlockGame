@@ -5,7 +5,9 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame.ui;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
+using BoundingFrustum = System.Numerics.BoundingFrustum;
 
 namespace BlockGame;
 
@@ -250,30 +252,35 @@ public sealed class SubChunkRenderer : IDisposable {
         return !frustum.outsideCameraUpDown(subChunk.box);
     }
 
-    public void drawOpaque() {
+    private void setUniformPos(Shader shader, Vector3D cameraPos) {
+        int loc = shader == Game.worldShader ? uChunkPos : shader == Game.waterShader ? wateruChunkPos : dummyuChunkPos;
+        shader.setUniformBound(loc, (float)(subChunk.chunkX * 16 - cameraPos.X), (float)(subChunk.chunkY * 16 - cameraPos.Y), (float)(subChunk.chunkZ * 16 - cameraPos.Z));
+    }
+
+    public void drawOpaque(Vector3D cameraPos) {
         if (hasRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            Game.worldShader.setUniformBound(uChunkPos, subChunk.chunkX * 16f, subChunk.chunkY * 16f, subChunk.chunkZ * 16f);
+            setUniformPos(Game.worldShader, cameraPos);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
         }
     }
 
-    public void drawTransparent() {
+    public void drawTransparent(Vector3D cameraPos) {
         if (hasRenderTranslucent) {
             watervao.bind();
-            Game.waterShader.setUniformBound(wateruChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
+            setUniformPos(Game.waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
-    public void drawTransparentDummy() {
+    public void drawTransparentDummy(Vector3D cameraPos) {
         if (hasRenderTranslucent) {
             watervao.bind();
-            Game.dummyShader.setUniformBound(dummyuChunkPos, subChunk.chunkX * 16, subChunk.chunkY * 16, subChunk.chunkZ * 16);
+            setUniformPos(Game.dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -464,7 +471,7 @@ public sealed class SubChunkRenderer : IDisposable {
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
             if (bl.customRender) {
-                var writtenIndices = bl.render(subChunk.world, new Vector3D<int>(x, y, z), chunkVertices, chunkIndices, indices[0]);
+                var writtenIndices = bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices, chunkIndices, indices[0]);
                 // add the number of written indices to the indices vector
                 indices += Vector128.Create(writtenIndices);
                 goto increment;
@@ -825,7 +832,7 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Vector3D<int> addAO(int x, int y, int z, int x1, int y1, int z1) {
+    private static Vector3I addAO(int x, int y, int z, int x1, int y1, int z1) {
         return new(x + x1, y + y1, z + z1);
     }
 

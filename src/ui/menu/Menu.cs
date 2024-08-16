@@ -1,15 +1,15 @@
-using System.Drawing;
 using System.Numerics;
+using Molten;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using TrippyGL;
+using RectangleF = System.Drawing.RectangleF;
 
 namespace BlockGame.ui;
 
 public class Menu {
 
-    public Vector2D<int> size;
-    public Vector2D<int> centre;
+    public Vector2I size;
+    public Vector2I centre;
 
     public Dictionary<string, GUIElement> elements = new();
 
@@ -178,7 +178,7 @@ public class Menu {
 
     }
 
-    public virtual void resize(Vector2D<int> newSize) {
+    public virtual void resize(Vector2I newSize) {
         size = newSize;
         centre = size / 2;
     }

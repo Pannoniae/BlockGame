@@ -1,17 +1,18 @@
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.util;
 using BlockGame.util.font;
 using FontStashSharp;
 using FontStashSharp.RichText;
-using Silk.NET.Maths;
+using Molten;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using TrippyGL.Fonts;
 using TrippyGL.ImageSharp;
 using PrimitiveType = TrippyGL.PrimitiveType;
 using Rectangle = System.Drawing.Rectangle;
+using RectangleF = System.Drawing.RectangleF;
+using Viewport = TrippyGL.Viewport;
 
 namespace BlockGame.ui;
 
@@ -86,7 +87,7 @@ public class GUI {
 
 
 
-    public void resize(Vector2D<int> size) {
+    public void resize(Vector2I size) {
         ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         shader.Projection = ortho;
         uiCentreX = size.X / 2 / guiScale;
@@ -133,8 +134,8 @@ public class GUI {
     /// Draw a full-screen background with a block texture and the specified block size in pixels.
     /// </summary>
     public void drawBG(Block block, float size) {
-        var texCoords = Block.texCoords(block.model.faces[0].min).As<float>();
-        var texCoordsMax = Block.texCoords(block.model.faces[0].max).As<float>();
+        var texCoords = Block.texCoords(block.model.faces[0].min);
+        var texCoordsMax = Block.texCoords(block.model.faces[0].max);
 
         // handle guiscale
         size *= guiScale * 2;
@@ -240,7 +241,7 @@ public class GUI {
         guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS(), ref mat);
     }
 
-    public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3D<int> pos, RawDirection face, float scale, Color4b colour = default) {
+    public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3I pos, RawDirection face, float scale, Color4b colour = default) {
         // draw slightly out so the block won't z-fight with the text
         const float offset = 0.001f;
         Vector3 rotation = Vector3.Zero;

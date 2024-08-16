@@ -1,9 +1,12 @@
 using System.Drawing;
 using System.Numerics;
 using BlockGame.util;
+using Molten;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using TrippyGL;
+using RectangleF = System.Drawing.RectangleF;
+using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.ui;
 
@@ -62,8 +65,8 @@ public class GameScreen : Screen {
         CHAT.tick++;
 
         world.player.pressedMovementKey = false;
-        world.player.strafeVector = new Vector3D<double>(0, 0, 0);
-        world.player.inputVector = new Vector3D<double>(0, 0, 0);
+        world.player.strafeVector = new Vector3D(0, 0, 0);
+        world.player.inputVector = new Vector3D(0, 0, 0);
         if (!world.paused && !Game.lockingMouse) {
             if (currentMenu == INGAME_MENU) {
                 world.player.updateInput(dt);
@@ -112,12 +115,12 @@ public class GameScreen : Screen {
         }
         D.renderTick(interp);
         const string text = "THIS IS A LONG TEXT\nmultiple lines!";
-        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.WEST, 2f);
-        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.EAST, 2f);
-        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.SOUTH, 2f);
-        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.NORTH, 2f);
-        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.DOWN, 2f);
-        Game.gui.drawStringOnBlock(text, new Vector3D<int>(0, 100, 0), RawDirection.UP, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.WEST, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.EAST, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.SOUTH, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.NORTH, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.DOWN, 2f);
+        Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.UP, 2f);
     }
 
     public override void postRender(double dt, double interp) {
@@ -242,7 +245,7 @@ public class GameScreen : Screen {
                     backToGame();
                 }
                 else {
-                    switchToMenu(new InventoryMenu(new Vector2D<int>(0, 32)));
+                    switchToMenu(new InventoryMenu(new Vector2I(0, 32)));
                     ((InventoryMenu)currentMenu!).setup();
                     world.inMenu = true;
                     Game.instance.unlockMouse();
@@ -336,7 +339,7 @@ public class GameScreen : Screen {
         }
     }
 
-    public override void resize(Vector2D<int> size) {
+    public override void resize(Vector2I size) {
         base.resize(size);
         world.player.camera.setViewport(size.X, size.Y);
     }
@@ -373,8 +376,8 @@ public class GameScreen : Screen {
 
             // Draw debug lines
             if (debugScreen) {
-                D.drawLine(new Vector3D<double>(0, 0, 0), new Vector3D<double>(1, 1, 1), Color4b.Red);
-                D.drawLine(new Vector3D<double>(1, 1, 1), new Vector3D<double>(24, 24, 24), Color4b.Red);
+                D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
+                D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
                 //D.drawAABB(p.aabb);
                 D.flushLines();
             }
@@ -400,8 +403,8 @@ public class GameScreen : Screen {
                     if (a > 0) {
                         var msgHeight = gui.uiHeight - 42 - (8 * i);
 
-                        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 8), color: new Color4b(0, 0, 0, 128));
-                        gui.drawStringUIThin(CHAT.messages[i].message, new Vector2(6, msgHeight + 0.5f), new Color4b(255, 255, 255, a));
+                        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 8), color: new Color4b(0, 0, 0, MathF.Min(a, 0.5f)));
+                        gui.drawStringUIThin(CHAT.messages[i].message, new Vector2(6, msgHeight + 0.5f), new Color4b(1, 1, 1, a));
                     }
                 }
             }

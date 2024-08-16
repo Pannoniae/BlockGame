@@ -1,6 +1,6 @@
 using System.Numerics;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
 using TrippyGL;
 using TrippyGL.ImageSharp;
 using Rectangle = System.Drawing.Rectangle;
@@ -18,7 +18,7 @@ public class InventoryMenu : Menu {
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];
 
-    public Vector2D<int> guiPos;
+    public Vector2I guiPos;
     public Rectangle guiBounds;
 
     public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/creative_inventory.png");
@@ -27,7 +27,7 @@ public class InventoryMenu : Menu {
         return false;
     }
 
-    public InventoryMenu(Vector2D<int> guiPos) {
+    public InventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
         resize(guiPos);
     }
@@ -74,7 +74,7 @@ public class InventoryMenu : Menu {
         }
     }
 
-    public sealed override void resize(Vector2D<int> newSize) {
+    public sealed override void resize(Vector2I newSize) {
         base.resize(newSize);
         guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.Width, (int)invTex.Height),
             HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);

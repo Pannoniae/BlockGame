@@ -1,7 +1,7 @@
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -27,8 +27,8 @@ public class SubChunk : IDisposable {
     public int worldX => chunkX * Chunk.CHUNKSIZE;
     public int worldY => chunkY * Chunk.CHUNKSIZE;
     public int worldZ => chunkZ * Chunk.CHUNKSIZE;
-    public Vector3D<int> worldPos => new(worldX, worldY, worldZ);
-    public Vector3D<int> centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
+    public Vector3I worldPos => new(worldX, worldY, worldZ);
+    public Vector3I centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
 
     public AABB box;
 
@@ -45,7 +45,7 @@ public class SubChunk : IDisposable {
         this.world = world;
         blocks = new ArrayBlockData(chunk, this);
 
-        box = new AABB(new Vector3D<double>(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D<double>(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
+        box = new AABB(new Vector3D(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

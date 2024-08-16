@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace System.Numerics
+﻿namespace System.Numerics
 {
     public class OrientedBoundingBox
     {

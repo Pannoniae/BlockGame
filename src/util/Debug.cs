@@ -1,6 +1,5 @@
-using System.Numerics;
 using BlockGame.ui;
-using Silk.NET.Maths;
+using Molten.DoublePrecision;
 using TrippyGL;
 
 namespace BlockGame.util;
@@ -30,7 +29,7 @@ public class Debug {
         debugShader.View = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
     }
 
-    public void drawLine(Vector3D<double> from, Vector3D<double> to, Color4b colour = default) {
+    public void drawLine(Vector3D from, Vector3D to, Color4b colour = default) {
         if (colour == default) {
             colour = Color4b.Red;
         }
@@ -47,14 +46,14 @@ public class Debug {
     public void drawAABB(AABB aabb, Color4b colour = default) {
         // corners
         var lsw = aabb.min;
-        var lse = new Vector3D<double>(aabb.maxX, aabb.minY, aabb.minZ);
-        var lnw = new Vector3D<double>(aabb.minX, aabb.minY, aabb.maxZ);
-        var lne = new Vector3D<double>(aabb.maxX, aabb.minY, aabb.maxZ);
+        var lse = new Vector3D(aabb.maxX, aabb.minY, aabb.minZ);
+        var lnw = new Vector3D(aabb.minX, aabb.minY, aabb.maxZ);
+        var lne = new Vector3D(aabb.maxX, aabb.minY, aabb.maxZ);
 
-        var usw = new Vector3D<double>(aabb.minX, aabb.maxY, aabb.minZ);
-        var use = new Vector3D<double>(aabb.maxX, aabb.maxY, aabb.minZ);
-        var unw = new Vector3D<double>(aabb.minX, aabb.maxY, aabb.maxZ);
-        var une = new Vector3D<double>(aabb.maxX, aabb.maxY, aabb.maxZ);
+        var usw = new Vector3D(aabb.minX, aabb.maxY, aabb.minZ);
+        var use = new Vector3D(aabb.maxX, aabb.maxY, aabb.minZ);
+        var unw = new Vector3D(aabb.minX, aabb.maxY, aabb.maxZ);
+        var une = new Vector3D(aabb.maxX, aabb.maxY, aabb.maxZ);
 
         // join them with lines
         drawLine(lsw, lse);

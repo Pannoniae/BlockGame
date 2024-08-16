@@ -2,7 +2,7 @@ using System.Numerics;
 using BlockGame.ui;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
-using Silk.NET.Maths;
+using Molten;
 using TrippyGL;
 using Rectangle = System.Drawing.Rectangle;
 
@@ -24,7 +24,7 @@ public class TextRenderer3D : IFontStashRenderer {
         tb.SetShaderProgram(shaderProgram);
     }
 
-    public void OnViewportChanged(Vector2D<int> size) {
+    public void OnViewportChanged(Vector2I size) {
     }
 
     public void setMatrix(ref Matrix4x4 mat) {

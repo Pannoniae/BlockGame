@@ -1,4 +1,4 @@
-using Silk.NET.Maths;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -9,7 +9,7 @@ public class ChunkComparer : IComparer<Chunk> {
         this.player = player;
     }
     public int Compare(Chunk x, Chunk y) {
-        return Vector2D.Distance(x.worldPos, new Vector2D<int>((int)player.position.X, (int)player.position.Z)) -
-               Vector2D.Distance(y.worldPos, new Vector2D<int>((int)player.position.X, (int)player.position.Z));
+        return (int)(Vector2D.Distance((Vector2D)x.worldPos, new Vector2D((int)player.position.X, (int)player.position.Z)) -
+                     Vector2D.Distance((Vector2D)y.worldPos, new Vector2D((int)player.position.X, (int)player.position.Z)));
     }
 }

@@ -1,11 +1,11 @@
 using System.Runtime.InteropServices;
-using Silk.NET.Maths;
+using Molten;
 
 namespace BlockGame;
 
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct TickAction(Vector3D<int> pos, Action action, int tick) {
-    public readonly Vector3D<int> pos = pos;
+public readonly record struct TickAction(Vector3I pos, Action action, int tick) {
+    public readonly Vector3I pos = pos;
     public readonly Action action = action;
     public readonly int tick = tick;
 

@@ -1,11 +1,12 @@
+using Molten;
 using Silk.NET.Maths;
 
 namespace BlockGame;
 
 public class ChunkCoordComparer : IComparer<ChunkCoord> {
-    public Vector3D<double> position;
+    public Molten.DoublePrecision.Vector3D position;
 
-    public ChunkCoordComparer(Vector3D<double> position) {
+    public ChunkCoordComparer(Molten.DoublePrecision.Vector3D position) {
         this.position = position;
     }
     public int Compare(ChunkCoord x, ChunkCoord y) {
@@ -15,9 +16,9 @@ public class ChunkCoordComparer : IComparer<ChunkCoord> {
 }
 
 public class ChunkTicketComparer : IComparer<ChunkLoadTicket> {
-    public Vector3D<int> position;
+    public Vector3I position;
 
-    public ChunkTicketComparer(Vector3D<int> position) {
+    public ChunkTicketComparer(Vector3I position) {
         this.position = position;
     }
     public int Compare(ChunkLoadTicket x, ChunkLoadTicket y) {
@@ -31,9 +32,9 @@ public class ChunkTicketComparer : IComparer<ChunkLoadTicket> {
 }
 
 public class ChunkTicketComparerReverse : IComparer<ChunkLoadTicket> {
-    public Vector3D<int> position;
+    public Vector3I position;
 
-    public ChunkTicketComparerReverse(Vector3D<int> position) {
+    public ChunkTicketComparerReverse(Vector3I position) {
         this.position = position;
     }
     public int Compare(ChunkLoadTicket x, ChunkLoadTicket y) {

@@ -2,7 +2,7 @@ using System.Drawing;
 using System.Numerics;
 using CircularBuffer;
 using Silk.NET.Input;
-using Silk.NET.Maths;
+using Molten.DoublePrecision;
 using TrippyGL;
 
 namespace BlockGame.ui;
@@ -13,6 +13,12 @@ public class ChatMenu : Menu {
     /// max. 24 messages
     /// </summary>
     public readonly CircularBuffer<ChatMessage> messages = new(20);
+    public readonly CircularBuffer<ChatMessage> history = new(20);
+
+    /// <summary>
+    /// How far in the history we are
+    /// </summary>
+    private int historyIndex = -1;
 
     /// <summary>
     /// Current message to be typed
@@ -41,11 +47,25 @@ public class ChatMenu : Menu {
             case Key.Enter:
                 // if T is pressed but there's a message, don't return
                 // wait a frame so the key doesn't immediately get pressed again
+                history.PushFront(new ChatMessage(message, tick));
                 doChat(message);
+                historyIndex = -1;
                 Game.instance.executeOnMainThread(closeChat);
                 break;
             case Key.Backspace when message.Length > 0:
                 message = message[..^1];
+                break;
+            case Key.Up:
+                if (historyIndex < history.Size - 1) {
+                    historyIndex++;
+                    message = history[historyIndex].message;
+                }
+                break;
+            case Key.Down:
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    message = history[historyIndex].message;
+                }
                 break;
         }
     }
@@ -69,7 +89,7 @@ public class ChatMenu : Menu {
                     if (args.Length == 4) {
                         if (int.TryParse(args[1], out int x) && int.TryParse(args[2], out int y) &&
                             int.TryParse(args[3], out int z)) {
-                            ((GameScreen)screen).world.player.teleport(new Vector3D<double>(x, y, z));
+                            ((GameScreen)screen).world.player.teleport(new Vector3D(x, y, z));
                             messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
                         }
                         else {
@@ -92,6 +112,18 @@ public class ChatMenu : Menu {
         switch (key) {
             case Key.Backspace when message.Length > 0:
                 message = message[..^1];
+                break;
+            case Key.Up:
+                if (historyIndex < history.Size - 1) {
+                    historyIndex++;
+                    message = history[historyIndex].message;
+                }
+                break;
+            case Key.Down:
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    message = history[historyIndex].message;
+                }
                 break;
         }
     }
