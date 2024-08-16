@@ -646,8 +646,6 @@ public partial class Game {
             GL.BindTexture(TextureTarget.Texture2D, FBOtex);
         }
 
-        GD.DepthTestingEnabled = false;
-
         if (Settings.instance.framebufferEffects) {
             fxaaShader.use();
             fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
@@ -658,6 +656,8 @@ public partial class Game {
 
         // before this, only GL, after this, only GD
         GLTracker.load();
+
+        GD.DepthTestingEnabled = false;
 
         // for GUI, no depth test
         //GD.BlendingEnabled = true;

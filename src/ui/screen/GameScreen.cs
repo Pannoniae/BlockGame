@@ -127,7 +127,7 @@ public class GameScreen : Screen {
         // render entities
         GD.DepthTestingEnabled = false;
         world.player.render(dt, interp);
-        //GD.DepthTestingEnabled = true;
+        GD.DepthTestingEnabled = true;
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
