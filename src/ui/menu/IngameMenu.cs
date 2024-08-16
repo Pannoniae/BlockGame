@@ -2,7 +2,7 @@ using System.Numerics;
 using BlockGame.util;
 using Cysharp.Text;
 using FontStashSharp.RichText;
-using Silk.NET.Maths;
+using Molten;
 using Silk.NET.OpenGL;
 using TrippyGL;
 
@@ -26,10 +26,10 @@ public class IngameMenu : Menu, IDisposable {
         debugStrG.Dispose();
         debugStrG = ZString.CreateStringBuilder();
         // then add the GUI
-        var version = Text.createText(this, "version", new Vector2D<int>(2, 2), "BlockGame v0.0.2");
+        var version = Text.createText(this, "version", new Vector2I(2, 2), "BlockGame v0.0.2");
         version.shadowed = true;
         addElement(version);
-        var hotbar = new Hotbar(this, "hotbar", new Vector2D<int>(0, -20)) {
+        var hotbar = new Hotbar(this, "hotbar", new Vector2I(0, -20)) {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.BOTTOM
         };

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-
-
-namespace System.Numerics
+﻿namespace System.Numerics
 {
     public static class PlaneHelper
     {

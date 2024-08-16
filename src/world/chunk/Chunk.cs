@@ -1,6 +1,7 @@
-using System.Numerics;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
+using BoundingFrustum = System.Numerics.BoundingFrustum;
 
 namespace BlockGame;
 
@@ -14,8 +15,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public int worldX => coord.x * CHUNKSIZE;
     public int worldZ => coord.z * CHUNKSIZE;
-    public Vector2D<int> worldPos => new(worldX, worldZ);
-    public Vector2D<int> centrePos => new(worldX + 8, worldZ + 8);
+    public Vector2I worldPos => new(worldX, worldZ);
+    public Vector2I centrePos => new(worldX + 8, worldZ + 8);
 
     public AABB box;
 
@@ -44,7 +45,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         heightMap = new HeightMap(this);
 
-        box = new AABB(new Vector3D<double>(chunkX * CHUNKSIZE, 0, chunkZ * CHUNKSIZE), new Vector3D<double>(chunkX * CHUNKSIZE + CHUNKSIZE, CHUNKHEIGHT * CHUNKSIZE, chunkZ * CHUNKSIZE + CHUNKSIZE));
+        box = new AABB(new Vector3D(chunkX * CHUNKSIZE, 0, chunkZ * CHUNKSIZE), new Vector3D(chunkX * CHUNKSIZE + CHUNKSIZE, CHUNKHEIGHT * CHUNKSIZE, chunkZ * CHUNKSIZE + CHUNKSIZE));
     }
 
     public bool isVisible(BoundingFrustum frustum) {
@@ -179,7 +180,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // TODO only remesh neighbours if on the edge of the chunk
         // we need to mesh EVERYTHING in the 3x3x3 area because AO is a bitch / affects non-adjacent blocks too
         foreach (var dir in Direction.directionsAll) {
-            var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
+            var neighbourSection = World.getChunkSectionPos(new Vector3I(wx, y, wz) + dir);
             if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
                 world.mesh(neighbourSection);
             }
@@ -216,7 +217,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         // TODO only remesh neighbours if on the edge of the chunk
         foreach (var dir in Direction.directions) {
-            var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
+            var neighbourSection = World.getChunkSectionPos(new Vector3I(wx, y, wz) + dir);
             if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
                 world.mesh(neighbourSection);
             }
@@ -245,7 +246,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         // TODO only remesh neighbours if on the edge of the chunk
         foreach (var dir in Direction.directions) {
-            var neighbourSection = World.getChunkSectionPos(new Vector3D<int>(wx, y, wz) + dir);
+            var neighbourSection = World.getChunkSectionPos(new Vector3I(wx, y, wz) + dir);
             if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
                 world.mesh(neighbourSection);
             }
@@ -301,8 +302,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         return subChunks[y >> 4].blocks.blocklight(x, y & 0xF, z);
     }
 
-    public Vector3D<int> getCoordInSection(int x, int y, int z) {
-        return new Vector3D<int>(x, y & 0xF, z);
+    public Vector3I getCoordInSection(int x, int y, int z) {
+        return new Vector3I(x, y & 0xF, z);
     }
 
     public void meshChunk() {
@@ -310,18 +311,6 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             subChunks[i].renderer.meshChunk();
         }
         status = ChunkStatus.MESHED;
-    }
-
-    public void drawOpaque() {
-        for (int i = 0; i < CHUNKHEIGHT; i++) {
-            subChunks[i].renderer.drawOpaque();
-        }
-    }
-
-    public void drawTransparent(bool dummy = false) {
-        for (int i = 0; i < CHUNKHEIGHT; i++) {
-            subChunks[i].renderer.drawTransparent();
-        }
     }
 
     public void destroyChunk() {

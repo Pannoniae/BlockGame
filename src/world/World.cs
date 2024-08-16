@@ -1,6 +1,7 @@
 using BlockGame.ui;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -207,7 +208,7 @@ public class World : IDisposable {
         // random block updates!
         foreach (var chunk in chunks) {
             // distance check
-            if (Vector2D.DistanceSquared(chunk.Value.centrePos, new Vector2D<int>((int)player.position.X, (int)player.position.Z)) < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
+            if (Vector2I.DistanceSquared(chunk.Value.centrePos, new Vector2I((int)player.position.X, (int)player.position.Z)) < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
                 foreach (var chunksection in chunk.Value.subChunks) {
                     if (!chunksection.blocks.hasRandomTickingBlocks()) {
                         continue;
@@ -248,7 +249,7 @@ public class World : IDisposable {
             var node = queue[cnt - 1];
             queue.RemoveAt(cnt - 1);
 
-            var blockPos = new Vector3D<int>(node.x, node.y, node.z);
+            var blockPos = new Vector3I(node.x, node.y, node.z);
             byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
 
             // if this is opaque (for skylight), don't bother
@@ -291,7 +292,7 @@ public class World : IDisposable {
             var node = queue[cnt - 1];
             queue.RemoveAt(cnt - 1);
 
-            var blockPos = new Vector3D<int>(node.x, node.y, node.z);
+            var blockPos = new Vector3I(node.x, node.y, node.z);
             var level = node.value;
 
             foreach (var dir in Direction.directionsLight) {
@@ -479,12 +480,12 @@ public class World : IDisposable {
         }
     }
 
-    public static bool isMisalignedBlock(Vector3D<int> position) {
+    public static bool isMisalignedBlock(Vector3I position) {
         return position.X < 0 || position.X > 15 || position.Z < 0 || position.Z > 15;
     }
 
     // get a block of a chunk position where the position is *outside* the chunk
-    public ushort getMisalignedBlock(Vector3D<int> position, Chunk chunk, out Chunk actualChunk) {
+    public ushort getMisalignedBlock(Vector3I position, Chunk chunk, out Chunk actualChunk) {
         var pos = toWorldPos(chunk.worldX, chunk.worldZ, position.X, position.Y, position.Z);
         var blockPos = getPosInChunk(pos);
         var success = getChunkMaybe(pos.X, pos.Z, out actualChunk);
@@ -492,7 +493,7 @@ public class World : IDisposable {
     }
 
     // normalise a block position into the proper chunk and return the chunk it actually belongs to
-    public Vector3D<int> alignBlock(Vector3D<int> position, Chunk chunk, out Chunk actualChunk) {
+    public Vector3I alignBlock(Vector3I position, Chunk chunk, out Chunk actualChunk) {
         var pos = toWorldPos(chunk.worldX, chunk.worldZ, position.X, position.Y, position.Z);
         var blockPos = getPosInChunk(pos);
         var success = getChunkMaybe(pos.X, pos.Z, out actualChunk);
@@ -657,7 +658,7 @@ public class World : IDisposable {
         return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : -1;
     }
 
-    public ushort getBlock(Vector3D<int> pos) {
+    public ushort getBlock(Vector3I pos) {
         return getBlock(pos.X, pos.Y, pos.Z);
     }
 
@@ -666,8 +667,8 @@ public class World : IDisposable {
         if (aabb == null) {
             return null;
         }
-        return new AABB(new Vector3D<double>(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
-            new Vector3D<double>(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
+        return new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
+            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
     }
 
     public AABB? getAABB(int x, int y, int z, ushort id) {
@@ -694,8 +695,8 @@ public class World : IDisposable {
         if (aabb == null) {
             return null;
         }
-        return new AABB(new Vector3D<double>(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
-            new Vector3D<double>(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
+        return new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
+            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
     }
 
     public void setBlock(int x, int y, int z, ushort block) {
@@ -719,14 +720,14 @@ public class World : IDisposable {
         chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
 
-    public void runLater(Vector3D<int> pos, Action action, int tick) {
+    public void runLater(Vector3I pos, Action action, int tick) {
         var tickAction = new TickAction(pos, action, worldTick + tick);
         if (!actionQueue.Contains(tickAction)) {
             actionQueue.Add(tickAction);
         }
     }
 
-    public void blockUpdateWithNeighbours(Vector3D<int> pos) {
+    public void blockUpdateWithNeighbours(Vector3I pos) {
         Blocks.get(getBlock(pos)).update(this, pos);
         foreach (var dir in Direction.directions) {
             var neighbourBlock = pos + dir;
@@ -734,11 +735,11 @@ public class World : IDisposable {
         }
     }
 
-    public void blockUpdate(Vector3D<int> pos) {
+    public void blockUpdate(Vector3I pos) {
         Blocks.get(getBlock(pos)).update(this, pos);
     }
 
-    public void blockUpdate(Vector3D<int> pos, int tick) {
+    public void blockUpdate(Vector3I pos, int tick) {
         var update = new BlockUpdate(pos, worldTick + tick);
         if (!blockUpdateQueue.Contains(update)) {
             blockUpdateQueue.Add(update);
@@ -760,7 +761,7 @@ public class World : IDisposable {
         return y is >= 0 and < WORLDHEIGHT;
     }
 
-    public static ChunkSectionCoord getChunkSectionPos(Vector3D<int> pos) {
+    public static ChunkSectionCoord getChunkSectionPos(Vector3I pos) {
         return new ChunkSectionCoord(
             pos.X >> 4,
             pos.Y >> 4,
@@ -774,7 +775,7 @@ public class World : IDisposable {
             z >> 4);
     }
 
-    public static ChunkCoord getChunkPos(Vector2D<int> pos) {
+    public static ChunkCoord getChunkPos(Vector2I pos) {
         return new ChunkCoord(
             pos.X >> 4,
             pos.Y >> 4);
@@ -792,29 +793,29 @@ public class World : IDisposable {
             pos.z >> 4);
     }
 
-    public static Vector3D<int> getPosInChunk(int x, int y, int z) {
-        return new Vector3D<int>(
+    public static Vector3I getPosInChunk(int x, int y, int z) {
+        return new Vector3I(
             x & 0xF,
             y,
             z & 0xF);
     }
 
-    public static Vector3D<int> getPosInChunk(Vector3D<int> pos) {
-        return new Vector3D<int>(
+    public static Vector3I getPosInChunk(Vector3I pos) {
+        return new Vector3I(
             pos.X & 0xF,
             pos.Y,
             pos.Z & 0xF);
     }
 
-    public static Vector3D<int> getPosInChunkSection(int x, int y, int z) {
-        return new Vector3D<int>(
+    public static Vector3I getPosInChunkSection(int x, int y, int z) {
+        return new Vector3I(
             x & 0xF,
             y & 0xF,
             z & 0xF);
     }
 
-    public static Vector3D<int> getPosInChunkSection(Vector3D<int> pos) {
-        return new Vector3D<int>(
+    public static Vector3I getPosInChunkSection(Vector3I pos) {
+        return new Vector3I(
             pos.X & 0xF,
             pos.Y & 0xF,
             pos.Z & 0xF);
@@ -841,7 +842,7 @@ public class World : IDisposable {
     }
 
     public SubChunk getChunkSection(int x, int y, int z) {
-        var pos = getChunkSectionPos(new Vector3D<int>(x, y, z));
+        var pos = getChunkSectionPos(new Vector3I(x, y, z));
         return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
 
@@ -856,7 +857,7 @@ public class World : IDisposable {
         return true;
     }
 
-    public SubChunk getChunkSection(Vector3D<int> coord) {
+    public SubChunk getChunkSection(Vector3I coord) {
         var pos = getChunkSectionPos(coord);
         return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
@@ -883,7 +884,7 @@ public class World : IDisposable {
         return !c ? null : chunk!.subChunks[pos.y];
     }
 
-    public Chunk getChunk(Vector2D<int> position) {
+    public Chunk getChunk(Vector2I position) {
         var pos = getChunkPos(position);
         return chunks[pos];
     }
@@ -901,20 +902,20 @@ public class World : IDisposable {
     /// <summary>
     /// For sections
     /// </summary>
-    public static Vector3D<int> toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
-        return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
+    public static Vector3I toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
+        return new Vector3I(chunkX * Chunk.CHUNKSIZE + x,
             chunkY * Chunk.CHUNKSIZE + y,
             chunkZ * Chunk.CHUNKSIZE + z);
     }
 
-    public static Vector3D<int> toWorldPos(ChunkSectionCoord coord, int x, int y, int z) {
-        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + x,
+    public static Vector3I toWorldPos(ChunkSectionCoord coord, int x, int y, int z) {
+        return new Vector3I(coord.x * Chunk.CHUNKSIZE + x,
             coord.y * Chunk.CHUNKSIZE + y,
             coord.z * Chunk.CHUNKSIZE + z);
     }
 
-    public static Vector3D<int> toWorldPos(ChunkSectionCoord coord, Vector3D<int> c) {
-        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + c.X,
+    public static Vector3I toWorldPos(ChunkSectionCoord coord, Vector3I c) {
+        return new Vector3I(coord.x * Chunk.CHUNKSIZE + c.X,
             coord.y * Chunk.CHUNKSIZE + c.Y,
             coord.z * Chunk.CHUNKSIZE + c.Z);
     }
@@ -922,30 +923,30 @@ public class World : IDisposable {
     /// <summary>
     /// For chunks
     /// </summary>
-    public static Vector3D<int> toWorldPos(int chunkX, int chunkZ, int x, int y, int z) {
-        return new Vector3D<int>(chunkX * Chunk.CHUNKSIZE + x,
+    public static Vector3I toWorldPos(int chunkX, int chunkZ, int x, int y, int z) {
+        return new Vector3I(chunkX * Chunk.CHUNKSIZE + x,
             y,
             chunkZ * Chunk.CHUNKSIZE + z);
     }
 
-    public static Vector3D<int> toWorldPos(ChunkCoord coord, int x, int y, int z) {
-        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + x,
+    public static Vector3I toWorldPos(ChunkCoord coord, int x, int y, int z) {
+        return new Vector3I(coord.x * Chunk.CHUNKSIZE + x,
             y,
             coord.z * Chunk.CHUNKSIZE + z);
     }
 
-    public static Vector3D<int> toWorldPos(ChunkCoord coord, Vector3D<int> c) {
-        return new Vector3D<int>(coord.x * Chunk.CHUNKSIZE + c.X,
+    public static Vector3I toWorldPos(ChunkCoord coord, Vector3I c) {
+        return new Vector3I(coord.x * Chunk.CHUNKSIZE + c.X,
             c.Y,
             coord.z * Chunk.CHUNKSIZE + c.Z);
     }
 
-    public List<Vector3D<int>> getBlocksInBox(Vector3D<int> min, Vector3D<int> max) {
-        var l = new List<Vector3D<int>>();
+    public List<Vector3I> getBlocksInBox(Vector3I min, Vector3I max) {
+        var l = new List<Vector3I>();
         for (int x = min.X; x <= max.X; x++) {
             for (int y = min.Y; y <= max.Y; y++) {
                 for (int z = min.Z; z <= max.Z; z++) {
-                    l.Add(new Vector3D<int>(x, y, z));
+                    l.Add(new Vector3I(x, y, z));
                 }
             }
         }

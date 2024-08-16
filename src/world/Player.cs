@@ -1,9 +1,9 @@
 using System.Diagnostics.Contracts;
-using System.Numerics;
 using BlockGame.ui;
 using BlockGame.util;
+using Molten;
 using Silk.NET.Input;
-using Silk.NET.Maths;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -16,14 +16,14 @@ public class Player : Entity {
 
     public PlayerCamera camera;
 
-    public Vector3D<double> inputVector;
+    public Vector3D inputVector;
 
     public PlayerRenderer renderer;
 
 
     public Inventory hotbar;
 
-    public Vector3D<double> strafeVector = new(0, 0, 0);
+    public Vector3D strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
 
     public double lastPlace;
@@ -39,16 +39,16 @@ public class Player : Entity {
 
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world) {
-        position = new Vector3D<double>(x, y, z);
+        position = new Vector3D(x, y, z);
         prevPosition = position;
         hotbar = new Inventory();
-        camera = new PlayerCamera(this, new Vector3(x, (float)(y + eyeHeight), z), Vector3.UnitZ * 1, Vector3.UnitY,
+        camera = new PlayerCamera(this, new Vector3D(x, (float)(y + eyeHeight), z), Vector3D.UnitZ * 1, Vector3D.UnitY,
             Constants.initialWidth, Constants.initialHeight);
         renderer = new PlayerRenderer(this);
 
         this.world = world;
         var f = camera.CalculateForwardVector();
-        forward = new Vector3D<double>(f.X, f.Y, f.Z);
+        forward = new Vector3D(f.X, f.Y, f.Z);
         calcAABB(ref aabb, position);
 
         swingProgress = 0;
@@ -94,19 +94,19 @@ public class Player : Entity {
 
 
         // don't increment if flying
-        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length * 2f : 0;
+        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
 
-        feetPosition = new Vector3D<double>(position.X, position.Y + feetCheckHeight, position.Z);
+        feetPosition = new Vector3D(position.X, position.Y + feetCheckHeight, position.Z);
 
         var trueEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
-        camera.position = new Vector3((float)position.X, (float)(position.Y + trueEyeHeight), (float)position.Z);
-        camera.prevPosition = new Vector3((float)prevPosition.X, (float)(prevPosition.Y + trueEyeHeight),
-            (float)prevPosition.Z);
+        camera.position = new Vector3D(position.X, (position.Y + trueEyeHeight), position.Z);
+        camera.prevPosition = new Vector3D(prevPosition.X, (prevPosition.Y + trueEyeHeight),
+            prevPosition.Z);
         var f = camera.CalculateForwardVector();
-        forward = new Vector3D<double>(f.X, f.Y, f.Z);
+        forward = new Vector3D(f.X, f.Y, f.Z);
         calcAABB(ref aabb, position);
-        if (Math.Abs(velocity.withoutY().Length) > 0.0001 && onGround) {
-            camera.bob = Math.Clamp((float)(velocity.Length / 4), 0, 1);
+        if (Math.Abs(velocity.withoutY().Length()) > 0.0001 && onGround) {
+            camera.bob = Math.Clamp((float)(velocity.Length() / 4), 0, 1);
         }
         else {
             camera.bob *= 0.9f;
@@ -128,7 +128,7 @@ public class Player : Entity {
 
     public void loadChunksAroundThePlayer(int renderDistance) {
         var blockPos = position.toBlockPos();
-        var chunk = World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
+        var chunk = World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
         world.loadChunksAroundChunk(chunk, renderDistance);
         world.sortChunks();
     }
@@ -191,7 +191,7 @@ public class Player : Entity {
             var f2 = Constants.verticalFriction;
             if (onGround) {
                 //if (sneaking) {
-                //    velocity = Vector3D<double>.Zero;
+                //    velocity = Vector3D.Zero;
                 //}
                 //else {
                 var f = Constants.friction;
@@ -237,7 +237,7 @@ public class Player : Entity {
     /// </summary>
     private double getWaterLevel() {
         var feet = world.getBlock(feetPosition.toBlockPos());
-        var torsoBlockPos = new Vector3D<double>(feetPosition.X, feetPosition.Y + 1, feetPosition.Z).toBlockPos();
+        var torsoBlockPos = new Vector3D(feetPosition.X, feetPosition.Y + 1, feetPosition.Z).toBlockPos();
         var torso = world.getBlock(torsoBlockPos);
 
         var feetLiquid = Blocks.get(feet).liquid;
@@ -290,13 +290,13 @@ public class Player : Entity {
                 // first, normalise (v / v.length) then multiply with movespeed
                 strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
 
-                Vector3D<double> moveVector = strafeVector.Z * forward +
+                Vector3D moveVector = strafeVector.Z * forward +
                                               strafeVector.X *
-                                              Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward));
+                                              Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward));
 
 
                 moveVector.Y = 0;
-                inputVector = new Vector3D<double>(moveVector.X, 0, moveVector.Z);
+                inputVector = new Vector3D(moveVector.X, 0, moveVector.Z);
 
             }
         }
@@ -308,28 +308,28 @@ public class Player : Entity {
                 // first, normalise (v / v.length) then multiply with movespeed
                 strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
 
-                Vector3D<double> moveVector = strafeVector.Z * forward +
+                Vector3D moveVector = strafeVector.Z * forward +
                                               strafeVector.X *
-                                              Vector3D.Normalize(Vector3D.Cross(Vector3D<double>.UnitY, forward)) +
-                                              strafeVector.Y * Vector3D<double>.UnitY;
+                                              Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward)) +
+                                              strafeVector.Y * Vector3D.UnitY;
 
-                inputVector = new Vector3D<double>(moveVector.X, moveVector.Y, moveVector.Z);
+                inputVector = new Vector3D(moveVector.X, moveVector.Y, moveVector.Z);
 
             }
         }
     }
 
-    protected void calcAABB(ref AABB aabb, Vector3D<double> pos) {
+    protected void calcAABB(ref AABB aabb, Vector3D pos) {
         const double sizehalf = width / 2;
-        AABB.update(ref aabb, new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
-            new Vector3D<double>(width, height, width));
+        AABB.update(ref aabb, new Vector3D(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
+            new Vector3D(width, height, width));
     }
 
     [Pure]
-    protected override AABB calcAABB(Vector3D<double> pos) {
+    protected override AABB calcAABB(Vector3D pos) {
         var sizehalf = width / 2;
-        return AABB.fromSize(new Vector3D<double>(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
-            new Vector3D<double>(width, height, width));
+        return AABB.fromSize(new Vector3D(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
+            new Vector3D(width, height, width));
     }
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {

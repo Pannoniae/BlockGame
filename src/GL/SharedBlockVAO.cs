@@ -1,5 +1,4 @@
 using Silk.NET.OpenGL;
-using TrippyGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;

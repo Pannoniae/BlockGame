@@ -1,6 +1,6 @@
 using BlockGame.util;
+using Molten;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using Rectangle = System.Drawing.Rectangle;
@@ -121,11 +121,11 @@ public class SettingsMenu : Menu {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
-        back.setPosition(new Vector2D<int>(2, -18));
+        back.setPosition(new Vector2I(2, -18));
         back.clicked += returnToPrevMenu;
         addElement(back);
 
-        layoutSettingsTwoCols(settingElements, new Vector2D<int>(0, 16), vsync.GUIbounds.Width);
+        layoutSettingsTwoCols(settingElements, new Vector2I(0, 16), vsync.GUIbounds.Width);
     }
 
     private void remeshIfRequired(int oldRenderDist) {
@@ -134,7 +134,7 @@ public class SettingsMenu : Menu {
         }
     }
 
-    public void layoutSettingsTwoCols(List<GUIElement> elements, Vector2D<int> startPos, int buttonWidth) {
+    public void layoutSettingsTwoCols(List<GUIElement> elements, Vector2I startPos, int buttonWidth) {
         // to the left/right
         var offset = buttonWidth / 2 + 8;
         var pos = startPos;
@@ -154,7 +154,7 @@ public class SettingsMenu : Menu {
         }
     }
 
-    public void layoutSettings(List<GUIElement> elements, Vector2D<int> startPos) {
+    public void layoutSettings(List<GUIElement> elements, Vector2I startPos) {
         var pos = startPos;
         foreach (var element in elements) {
             element.setPosition(new Rectangle(pos.X, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));

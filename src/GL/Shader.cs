@@ -7,7 +7,7 @@ public class Shader {
     private string vertexShader;
     private string fragmentShader;
 
-    private GL GL;
+    private readonly GL GL;
     private uint programHandle;
 
     public Shader(GL GL, string vertexShader, string fragmentShader) {

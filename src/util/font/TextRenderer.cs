@@ -2,7 +2,6 @@ using System.Drawing;
 using System.Numerics;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
-using Silk.NET.Maths;
 using TrippyGL;
 using Rectangle = System.Drawing.Rectangle;
 

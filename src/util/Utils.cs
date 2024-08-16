@@ -1,24 +1,23 @@
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame.util;
 
 public static class Utils {
     public static volatile byte[] waste;
 
-    public static Vector3D<double> copy(Vector3D<double> input) {
-        return new Vector3D<double>(input.X, input.Y, input.Z);
+    public static Vector3D copy(Vector3D input) {
+        return new Vector3D(input.X, input.Y, input.Z);
     }
 
-    public static Vector3D<float> copy(Vector3D<float> input) {
-        return new Vector3D<float>(input.X, input.Y, input.Z);
+    public static Vector3F copy(Vector3F input) {
+        return new Vector3F(input.X, input.Y, input.Z);
     }
 
-    public static Vector3D<int> copy(Vector3D<int> input) {
-        return new Vector3D<int>(input.X, input.Y, input.Z);
+    public static Vector3I copy(Vector3I input) {
+        return new Vector3I(input.X, input.Y, input.Z);
     }
 
     /// <summary>
@@ -43,16 +42,16 @@ public static class Utils {
         return 180f / MathF.PI * radians;
     }
 
-    public static Vector3D<int> getRandomCoord(Random random, int maxX, int maxY, int maxZ) {
+    public static Vector3I getRandomCoord(Random random, int maxX, int maxY, int maxZ) {
         var randomValue = random.Next(maxX * maxY * maxZ);
         var x = randomValue % maxX;
         var y = randomValue / maxX % maxY;
         var z = randomValue / (maxX * maxY);
-        return new Vector3D<int>(x, y, z);
+        return new Vector3I(x, y, z);
     }
 
-    public static Vector3D<int> getRandomCoord(Random random, int maxX, int maxY, int maxZ, int minX, int minY, int minZ) {
-        return getRandomCoord(random, maxX - minX, maxY - minY, maxZ - minZ) + new Vector3D<int>(minX, minY, minZ);
+    public static Vector3I getRandomCoord(Random random, int maxX, int maxY, int maxZ, int minX, int minY, int minZ) {
+        return getRandomCoord(random, maxX - minX, maxY - minY, maxZ - minZ) + new Vector3I(minX, minY, minZ);
     }
 }
 
@@ -69,21 +68,21 @@ public readonly record struct Direction {
     public static int min = 0;
     public static int max = 6;
 
-    public static readonly Vector3D<int> WEST = new(-1, 0, 0);
-    public static readonly Vector3D<int> EAST = new(1, 0, 0);
-    public static readonly Vector3D<int> SOUTH = new(0, 0, -1);
-    public static readonly Vector3D<int> NORTH = new(0, 0, 1);
-    public static readonly Vector3D<int> DOWN = new(0, -1, 0);
-    public static readonly Vector3D<int> UP = new(0, 1, 0);
-    public static readonly Vector3D<int> SELF = new(0, 0, 0);
+    public static readonly Vector3I WEST = new(-1, 0, 0);
+    public static readonly Vector3I EAST = new(1, 0, 0);
+    public static readonly Vector3I SOUTH = new(0, 0, -1);
+    public static readonly Vector3I NORTH = new(0, 0, 1);
+    public static readonly Vector3I DOWN = new(0, -1, 0);
+    public static readonly Vector3I UP = new(0, 1, 0);
+    public static readonly Vector3I SELF = new(0, 0, 0);
 
-    public static Vector3D<int>[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
-    public static Vector3D<int>[] directionsLight = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
-    public static Vector3D<int>[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
-    public static Vector3D<int>[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
-    public static Vector3D<int>[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
-    public static Vector3D<int>[] directionsAll = new Vector3D<int>[27];
-    public static Vector3D<int>[] directionsSelf = [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
+    public static Vector3I[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
+    public static Vector3I[] directionsLight = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
+    public static Vector3I[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
+    public static Vector3I[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
+    public static Vector3I[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
+    public static Vector3I[] directionsAll = new Vector3I[27];
+    public static Vector3I[] directionsSelf = [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
 
     static Direction() {
         // construct 27-box of all directions
@@ -91,14 +90,14 @@ public readonly record struct Direction {
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
-                    directionsAll[i] = new Vector3D<int>(x, y, z);
+                    directionsAll[i] = new Vector3I(x, y, z);
                     // don't forget to increment, you silly you!:P
                     i++;
                 }
             }
         }
     }
-    public static Vector3D<int> getDirection(RawDirection dir) {
+    public static Vector3I getDirection(RawDirection dir) {
         return dir switch {
             RawDirection.WEST => WEST,
             RawDirection.EAST => EAST,
@@ -110,7 +109,7 @@ public readonly record struct Direction {
         };
     }
 
-    public static RawDirection getRawDirection(Vector3D<int> dir) {
+    public static RawDirection getRawDirection(Vector3I dir) {
         if (dir == WEST) {
             return RawDirection.WEST;
         }

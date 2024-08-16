@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
+using Molten;
 using SFML.Audio;
 using Silk.NET.Core;
 using Silk.NET.GLFW;
@@ -12,17 +13,12 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
-using Silk.NET.Windowing.Glfw;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
-using TrippyGL.ImageSharp;
-using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
-using DebugSource = Silk.NET.OpenGL.DebugSource;
-using DebugType = Silk.NET.OpenGL.DebugType;
 using DepthFunction = TrippyGL.DepthFunction;
-using ErrorCode = Silk.NET.GLFW.ErrorCode;
 using Image = SixLabors.ImageSharp.Image;
+using IWindow = Silk.NET.Windowing.IWindow;
 using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 using Sound = SFML.Audio.Sound;
@@ -61,8 +57,8 @@ public partial class Game {
     public static IKeyboard keyboard;
 
     public Vector2 lastMousePos;
-    public Vector3D<int>? targetedPos;
-    public Vector3D<int>? previousPos;
+    public Vector3I? targetedPos;
+    public Vector3I? previousPos;
 
     public int fps;
     public double ft;
@@ -341,10 +337,10 @@ public partial class Game {
     // don't actually use unless you are an idiot
     private void setMenu(Menu menu) {
         currentScreen.currentMenu = menu;
-        menu.size = new Vector2D<int>(width, height);
+        menu.size = new Vector2I(width, height);
         menu.centre = menu.size / 2;
         menu.activate();
-        menu.resize(new Vector2D<int>(width, height));
+        menu.resize(new Vector2I(width, height));
     }
 
     /// <summary>
@@ -361,10 +357,10 @@ public partial class Game {
     public void switchToScreen(Screen screen) {
         currentScreen.deactivate();
         currentScreen = screen;
-        screen.size = new Vector2D<int>(width, height);
+        screen.size = new Vector2I(width, height);
         screen.centre = screen.size / 2;
         screen.activate();
-        screen.resize(new Vector2D<int>(width, height));
+        screen.resize(new Vector2I(width, height));
     }
 
     public partial class NV1 {
@@ -488,15 +484,16 @@ public partial class Game {
     }
 
     public void resize(Vector2D<int> size) {
+        var s = new Vector2I(size.X, size.Y);
         GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
-        fontLoader.renderer3D.OnViewportChanged(size);
+        fontLoader.renderer3D.OnViewportChanged(s);
         width = size.X;
         height = size.Y;
 
         // don't allow the screen to be too small
         recalcGUIScale();
-        gui.resize(size);
-        currentScreen.resize(size);
+        gui.resize(s);
+        currentScreen.resize(s);
 
         if (Settings.instance.framebufferEffects) {
             genFramebuffer();
@@ -576,7 +573,7 @@ public partial class Game {
     private void update(double dt) {
         //var before = permanentStopwatch.ElapsedMilliseconds;
         //dt = Math.Min(dt, 0.2);
-        /*var vec = new Vector2D<int>(0, 0);
+        /*var vec = new Vector2I(0, 0);
         Console.Out.WriteLine(window.PointToClient(vec));
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/

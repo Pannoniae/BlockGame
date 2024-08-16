@@ -1,6 +1,7 @@
 using BlockGame.util;
 using JetBrains.Annotations;
-using Silk.NET.Maths;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -17,20 +18,20 @@ public class Entity {
     public bool sneaking;
 
     // entity positions are at feet
-    public Vector3D<double> prevPosition;
-    public Vector3D<double> position;
-    public Vector3D<double> velocity;
-    public Vector3D<double> accel;
+    public Vector3D prevPosition;
+    public Vector3D position;
+    public Vector3D velocity;
+    public Vector3D accel;
 
     // slightly above so it doesn't think it's under the player
-    public Vector3D<double> feetPosition;
+    public Vector3D feetPosition;
 
 
     /// <summary>
     /// Which direction the entity faces (horizontally)
     /// TODO also store pitch/yaw for head without camera
     /// </summary>
-    public Vector3D<double> forward;
+    public Vector3D forward;
 
     public AABB aabb;
 
@@ -68,25 +69,25 @@ public class Entity {
         this.world = world;
     }
 
-    public ChunkCoord getChunk(Vector3D<double> pos) {
+    public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();
-        return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
+        return World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
     }
 
     public ChunkCoord getChunk() {
         var blockPos = position.toBlockPos();
-        return World.getChunkPos(new Vector2D<int>(blockPos.X, blockPos.Z));
+        return World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
     }
 
     [Pure]
-    protected virtual AABB calcAABB(Vector3D<double> pos) {
+    protected virtual AABB calcAABB(Vector3D pos) {
         return AABB.empty;
     }
 
-    public void teleport(Vector3D<double> pos) {
+    public void teleport(Vector3D pos) {
         position = pos;
         prevPosition = pos;
-        velocity = Vector3D<double>.Zero;
+        velocity = Vector3D.Zero;
     }
 
     protected void collisionAndSneaking(double dt) {
@@ -94,17 +95,17 @@ public class Entity {
         var blockPos = position.toBlockPos();
         // collect potential collision targets
         collisionTargets.Clear();
-        ReadOnlySpan<Vector3D<int>> targets = [
-            blockPos, new Vector3D<int>(blockPos.X, blockPos.Y + 1, blockPos.Z)
+        ReadOnlySpan<Vector3I> targets = [
+            blockPos, new Vector3I(blockPos.X, blockPos.Y + 1, blockPos.Z)
         ];
-        foreach (Vector3D<int> target in targets) {
+        foreach (Vector3I target in targets) {
             // first, collide with the block the player is in
             var blockPos2 = feetPosition.toBlockPos();
             var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z, world.getBlock(feetPosition.toBlockPos()));
             if (currentAABB != null) {
                 collisionTargets.Add(currentAABB.Value);
             }
-            foreach (var neighbour in world.getBlocksInBox(target + new Vector3D<int>(-1, -1, -1), target + new Vector3D<int>(1, 1, 1))) {
+            foreach (var neighbour in world.getBlocksInBox(target + new Vector3I(-1, -1, -1), target + new Vector3I(1, 1, 1))) {
                 var block = world.getBlock(neighbour);
                 var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
                 if (blockAABB == null) {
@@ -118,7 +119,7 @@ public class Entity {
         // Y axis resolution
         position.Y += velocity.Y * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbY = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
+            var aabbY = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             if (AABB.isCollision(aabbY, blockAABB)) {
                 // left side
                 if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
@@ -144,8 +145,8 @@ public class Entity {
         position.X += velocity.X * dt;
         var hasAtLeastOneCollision = false;
         foreach (var blockAABB in collisionTargets) {
-            var aabbX = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-            var sneakaabbX = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
+            var aabbX = calcAABB(new Vector3D(position.X, position.Y, position.Z));
+            var sneakaabbX = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbX, blockAABB)) {
                 collisionXThisFrame = true;
                 // left side
@@ -176,8 +177,8 @@ public class Entity {
         position.Z += velocity.Z * dt;
         hasAtLeastOneCollision = false;
         foreach (var blockAABB in collisionTargets) {
-            var aabbZ = calcAABB(new Vector3D<double>(position.X, position.Y, position.Z));
-            var sneakaabbZ = calcAABB(new Vector3D<double>(position.X, position.Y - 0.1, position.Z));
+            var aabbZ = calcAABB(new Vector3D(position.X, position.Y, position.Z));
+            var sneakaabbZ = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbZ, blockAABB)) {
                 collisionZThisFrame = true;
                 if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
@@ -205,7 +206,7 @@ public class Entity {
         }
 
         // is player on ground? check slightly below
-        var groundCheck = calcAABB(new Vector3D<double>(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
+        var groundCheck = calcAABB(new Vector3D(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
         onGround = false;
         foreach (var blockAABB in collisionTargets) {
             if (AABB.isCollision(blockAABB, groundCheck)) {

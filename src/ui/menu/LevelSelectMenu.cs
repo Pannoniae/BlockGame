@@ -1,5 +1,5 @@
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
 
 namespace BlockGame.ui;
 
@@ -14,7 +14,7 @@ public class LevelSelectMenu : Menu {
         for (int i = 0; i < NUM_LEVELS; i++) {
             var levelIndex = i + 1;
             var levelButton = new LevelSelectButton(this, $"level{levelIndex}", levelIndex, $"Level {levelIndex}");
-            levelButton.setPosition(new Vector2D<int>(0, 32 + i * 24));
+            levelButton.setPosition(new Vector2I(0, 32 + i * 24));
             levelButton.topCentre();
             levelButton.clicked += loadLevel;
             addElement(levelButton);
@@ -24,7 +24,7 @@ public class LevelSelectMenu : Menu {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
-        backButton.setPosition(new Vector2D<int>(2, -18));
+        backButton.setPosition(new Vector2I(2, -18));
         backButton.clicked += _ => { Game.instance.switchTo(MAIN_MENU); };
 
         addElement(backButton);

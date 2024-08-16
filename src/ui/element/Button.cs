@@ -1,5 +1,5 @@
 using System.Numerics;
-using Silk.NET.Maths;
+using Molten;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
@@ -22,7 +22,7 @@ public class Button : GUIElement {
 
     public bool shadowed = false;
 
-    public Vector2D<int> position {
+    public Vector2I position {
         get => new(GUIbounds.X, GUIbounds.Y);
         set => setPosition(new Rectangle(value.X, value.Y, wide ? 192 : 128, 16));
     }
@@ -34,7 +34,7 @@ public class Button : GUIElement {
         guiPosition.Height = 16;
     }
 
-    public void setPosition(Vector2D<int> pos) {
+    public void setPosition(Vector2I pos) {
         setPosition(new Rectangle(pos.X, pos.Y, guiPosition.Width, guiPosition.Height));
     }
 

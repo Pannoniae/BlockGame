@@ -1,7 +1,9 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Silk.NET.Maths;
+using BlockGame.util;
+using Molten;
+using Molten.DoublePrecision;
 using Plane = System.Numerics.Plane;
 
 namespace BlockGame;
@@ -16,23 +18,23 @@ public struct AABB {
     public double maxY => max.Y;
     public double maxZ => max.Z;
 
-    public Vector3D<double> min;
-    public Vector3D<double> max;
-    public static readonly AABB empty = new AABB(new Vector3D<double>(0, 0, 0), new Vector3D<double>(0, 0, 0));
+    public Vector3D min;
+    public Vector3D max;
+    public static readonly AABB empty = new AABB(new Vector3D(0, 0, 0), new Vector3D(0, 0, 0));
 
-    public Vector3D<double> centre => (max + min) * 0.5f; // Compute AABB center
-    public Vector3D<double> extents => max - centre; // Compute positive extents
+    public Vector3D centre => (max + min) * 0.5f; // Compute AABB center
+    public Vector3D extents => max - centre; // Compute positive extents
 
-    public AABB(Vector3D<double> min, Vector3D<double> max) {
+    public AABB(Vector3D min, Vector3D max) {
         this.min = min;
         this.max = max;
     }
 
-    public static AABB fromSize(Vector3D<double> min, Vector3D<double> size) {
+    public static AABB fromSize(Vector3D min, Vector3D size) {
         return new AABB(min, min + size);
     }
 
-    public static void update(ref AABB aabb, Vector3D<double> min, Vector3D<double> size) {
+    public static void update(ref AABB aabb, Vector3D min, Vector3D size) {
         aabb.min = min;
         aabb.max = min + size;
     }
@@ -73,7 +75,7 @@ public struct AABB {
                box1.minZ < box2.maxZ;
     }
 
-    public static bool isCollision(AABB box, Vector3D<double> point) {
+    public static bool isCollision(AABB box, Vector3D point) {
         return point.X > box.minX &&
                point.X < box.maxX &&
                point.Y > box.minY &&
@@ -101,13 +103,13 @@ public struct AABB {
         return $"{minX}, {minY}, {minZ}, {maxX}, {maxY}, {maxZ}";
     }
 
-    public bool intersects(Plane<double> plane) {
+    public bool intersects(Plane plane) {
 
         // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
         double r = extents.X * Math.Abs(plane.Normal.X) + extents.Y * Math.Abs(plane.Normal.Y) + extents.Z * Math.Abs(plane.Normal.Z);
 
         // Compute distance of box center from plane
-        double s = Vector3D.Dot(plane.Normal, centre) - plane.Distance;
+        double s = Vector3F.Dot(plane.Normal.toVec3FM(), (Vector3F)centre) - plane.D;
 
         // Intersection occurs when distance s falls within [-r,+r] interval
         return Math.Abs(s) <= r;

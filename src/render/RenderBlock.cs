@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame.ui;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
 
 namespace BlockGame;
 
@@ -12,7 +12,7 @@ namespace BlockGame;
 /// </summary>
 public class RenderBlock {
 
-    public static bool neighbourTest(World world, Vector3D<int> pos, RawDirection direction) {
+    public static bool neighbourTest(World world, Vector3I pos, RawDirection direction) {
         var neighbour = world.getBlock(pos + Direction.getDirection(direction));
         var isTranslucent = Blocks.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
         var flag = false;
@@ -27,7 +27,7 @@ public class RenderBlock {
         return flag;
     }
 
-    public static void addVertexWithAO(World world, Vector3D<int> pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer,
+    public static void addVertexWithAO(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer,
         float vx, float vy, float vz, UVPair uv, RawDirection direction, int currentIndex) {
 
         ref var offsetArray = ref MemoryMarshal.GetArrayDataReference<sbyte>(SubChunkRenderer.offsetTable);

@@ -1,11 +1,11 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
-using Silk.NET.Maths;
+using Molten;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
+using BoundingFrustum = System.Numerics.BoundingFrustum;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
@@ -122,6 +122,10 @@ public class WorldRenderer {
         if (fogMaxValue <= fogMinValue) {
             fogMinValue = fogMaxValue - 16;
         }
+        // don't let the fog in value be more than 8 chunks, otherwise the game will feel empty!
+        if (fogMinValue > 8 * Chunk.CHUNKSIZE) {
+            fogMinValue = 8 * Chunk.CHUNKSIZE;
+        }
 
         shader.use();
         shader.setUniform(fogMax, fogMaxValue);
@@ -153,7 +157,7 @@ public class WorldRenderer {
             GL.BindVertexArray(chunkVAO);
         }
 
-        var viewProj = world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix();
+        var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
         // gather chunks to render
         foreach (var chunk in chunkList) {
@@ -170,8 +174,9 @@ public class WorldRenderer {
 
         // OPAQUE PASS
         shader.use();
+        var cameraPos = world.player.camera.renderPosition(interp);
         shader.setUniform(uMVP, viewProj);
-        shader.setUniform(uCameraPos, world.player.camera.renderPosition(interp));
+        shader.setUniform(uCameraPos, 0);
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -182,7 +187,7 @@ public class WorldRenderer {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-                subChunk.renderer.drawOpaque();
+                subChunk.renderer.drawOpaque(cameraPos);
             }
         }
         // TRANSLUCENT DEPTH PRE-PASS
@@ -198,7 +203,7 @@ public class WorldRenderer {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-                subChunk.renderer.drawTransparentDummy();
+                subChunk.renderer.drawTransparentDummy(cameraPos);
             }
         }
         // start blending at transparent stuff
@@ -208,7 +213,7 @@ public class WorldRenderer {
         // TRANSLUCENT PASS
         waterShader.use();
         waterShader.setUniform(wateruMVP, viewProj);
-        waterShader.setUniform(wateruCameraPos, world.player.camera.renderPosition(interp));
+        waterShader.setUniform(wateruCameraPos, 0);
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
@@ -221,7 +226,7 @@ public class WorldRenderer {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-                subChunk.renderer.drawTransparent();
+                subChunk.renderer.drawTransparent(cameraPos);
             }
         }
         GL.DepthMask(true);
@@ -342,8 +347,8 @@ public class WorldRenderer {
 
         UVPair texCoords;
         UVPair texCoordsMax;
-        Vector2D<float> tex;
-        Vector2D<float> texMax;
+        Vector2F tex;
+        Vector2F texMax;
         float u;
         float v;
         float maxU;
@@ -444,8 +449,8 @@ public class WorldRenderer {
 
         UVPair texCoords;
         UVPair texCoordsMax;
-        Vector2D<float> tex;
-        Vector2D<float> texMax;
+        Vector2F tex;
+        Vector2F texMax;
         float u;
         float v;
         float maxU;
