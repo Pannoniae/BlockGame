@@ -83,7 +83,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     /// <summary>
-    /// Your reponsibility to update the counts after a batch of changes.
+    /// Your responsibility to update the counts after a batch of changes.
     /// </summary>
     public void fastSet(int x, int y, int z, ushort value) {
         if (!inited && value != 0) {
