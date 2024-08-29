@@ -20,7 +20,7 @@ public class PlayerRenderer {
     public double lower;
 
     private int uMVP;
-    private int blockTexture;
+    private int tex;
 
     public Shader heldBlockShader;
 
@@ -30,9 +30,9 @@ public class PlayerRenderer {
         vao = new StreamingVAO<BlockVertexTinted>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
-        heldBlockShader = new Shader(Game.GL, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");
+        heldBlockShader = new Shader(Game.GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
         uMVP = heldBlockShader.getUniformLocation("uMVP");
-        blockTexture = heldBlockShader.getUniformLocation("blockTexture");
+        tex = heldBlockShader.getUniformLocation("tex");
     }
 
     public double getLower(double dt) {
@@ -73,7 +73,7 @@ public class PlayerRenderer {
                   Matrix4x4.CreateTranslation((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
         heldBlockShader.use();
         heldBlockShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getFixedProjectionMatrix());
-        heldBlockShader.setUniform(blockTexture, 0);
+        heldBlockShader.setUniform(tex, 0);
         vao.render();
     }
 

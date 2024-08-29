@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
@@ -69,6 +70,8 @@ public class WorldRenderer {
         Game.dummyShader = dummyShader;
         waterShader = new Shader(GL, "shaders/waterShader.vert", "shaders/waterShader.frag");
         Game.waterShader = waterShader;
+
+        shader.use();
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
@@ -80,6 +83,7 @@ public class WorldRenderer {
         skyColour = shader.getUniformLocation(nameof(skyColour));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
 
+        waterShader.use();
         waterBlockTexture = waterShader.getUniformLocation("blockTexture");
         waterLightTexture = waterShader.getUniformLocation("lightTexture");
         wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
@@ -176,7 +180,7 @@ public class WorldRenderer {
         shader.use();
         var cameraPos = world.player.camera.renderPosition(interp);
         shader.setUniform(uMVP, viewProj);
-        shader.setUniform(uCameraPos, 0);
+        shader.setUniform(uCameraPos, new Vector3(0));
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -213,7 +217,7 @@ public class WorldRenderer {
         // TRANSLUCENT PASS
         waterShader.use();
         waterShader.setUniform(wateruMVP, viewProj);
-        waterShader.setUniform(wateruCameraPos, 0);
+        waterShader.setUniform(wateruCameraPos, new Vector3(0));
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
