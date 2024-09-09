@@ -248,7 +248,6 @@ public partial class Game {
         textureManager = new TextureManager(GL, GD);
 
         fxaaShader = new Shader(GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
-        fxaaShader.use();
         g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
         g_showEdgesLocation = fxaaShader.getUniformLocation("u_showEdges");
         g_fxaaOnLocation = fxaaShader.getUniformLocation("u_fxaaOn");

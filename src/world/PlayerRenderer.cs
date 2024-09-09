@@ -68,7 +68,7 @@ public class PlayerRenderer {
                   // scale down
                   Matrix4x4.CreateScale(0.6f, new Vector3(0.5f, 0.5f, 0.5f)) *
                   // translate into place
-                  Matrix4x4.CreateTranslation(new Vector3(0.75f, (float)(-1.6f - (getLower(interp) * 0.35f)), 1f)) *
+                  Matrix4x4.CreateTranslation(new Vector3(0.75f, (float)(-1.45f - (getLower(interp) * 0.35f)), 1f)) *
                   // swing translation
                   Matrix4x4.CreateTranslation((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
         heldBlockShader.use();

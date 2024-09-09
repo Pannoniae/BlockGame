@@ -96,6 +96,11 @@ public class World : IDisposable {
         }
 
         renderer.initBlockOutline();
+
+        // After everything is done, SAVE THE WORLD
+        // if we don't save the world, some of the chunks might get saved but no level.xnbt
+        // so the world is corrupted and we have horrible chunkglitches
+        worldIO.save(this, name, false);
     }
 
     public void startMeshing() {
@@ -396,9 +401,6 @@ public class World : IDisposable {
     public void Dispose() {
         // of course, we can save it here since WE call it and not the GC
         worldIO.save(this, name);
-        foreach (var chunk in chunks) {
-            worldIO.saveChunk(this, chunk.Value);
-        }
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }
