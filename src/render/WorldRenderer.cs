@@ -71,7 +71,6 @@ public class WorldRenderer {
         waterShader = new Shader(GL, "shaders/waterShader.vert", "shaders/waterShader.frag");
         Game.waterShader = waterShader;
 
-        shader.use();
         blockTexture = shader.getUniformLocation("blockTexture");
         lightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
@@ -83,7 +82,6 @@ public class WorldRenderer {
         skyColour = shader.getUniformLocation(nameof(skyColour));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
 
-        waterShader.use();
         waterBlockTexture = waterShader.getUniformLocation("blockTexture");
         waterLightTexture = waterShader.getUniformLocation("lightTexture");
         wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
@@ -96,7 +94,6 @@ public class WorldRenderer {
         frustum = world.player.camera.frustum;
 
 
-        shader.use();
         shader.setUniform(blockTexture, 0);
         shader.setUniform(lightTexture, 1);
         //shader.setUniform(drawDistance, dd);
@@ -104,7 +101,6 @@ public class WorldRenderer {
         shader.setUniform(fogColour, defaultFogColour);
         shader.setUniform(skyColour, defaultClearColour);
 
-        waterShader.use();
         waterShader.setUniform(waterBlockTexture, 0);
         waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
@@ -131,10 +127,8 @@ public class WorldRenderer {
             fogMinValue = 8 * Chunk.CHUNKSIZE;
         }
 
-        shader.use();
         shader.setUniform(fogMax, fogMaxValue);
         shader.setUniform(fogMin, fogMinValue);
-        waterShader.use();
         waterShader.setUniform(waterFogMax, fogMaxValue);
         waterShader.setUniform(waterFogMin, fogMinValue);
     }

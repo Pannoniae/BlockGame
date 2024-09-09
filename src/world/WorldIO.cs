@@ -20,7 +20,7 @@ public class WorldIO {
         this.world = world;
     }
 
-    public void save(World world, string filename) {
+    public void save(World world, string filename, bool saveChunks = true) {
         // save metadata
         // create level folder
         if (!Directory.Exists($"level/{filename}")) {
@@ -35,9 +35,11 @@ public class WorldIO {
         NBT.writeFile(tag, $"level/{filename}/level.xnbt");
 
         // save chunks
-        foreach (var chunk in world.chunks.Values) {
-            //var regionCoord = World.getRegionPos(chunk.coord);
-            saveChunk(world, chunk);
+        if (saveChunks) {
+            foreach (var chunk in world.chunks.Values) {
+                //var regionCoord = World.getRegionPos(chunk.coord);
+                saveChunk(world, chunk);
+            }
         }
         //regionCache.Clear();
     }
