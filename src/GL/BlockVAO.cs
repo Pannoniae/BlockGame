@@ -157,6 +157,15 @@ public readonly struct BlockVertexTinted : IVertex {
         this.a = a;
     }
 
+    public BlockVertexTinted(float x, float y, float z, float u, float v, Color c) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = (Half)u;
+        this.v = (Half)v;
+        this.c = c;
+    }
+
     public BlockVertexTinted(float x, float y, float z, Half u, Half v, Color c) {
         this.x = x;
         this.y = y;

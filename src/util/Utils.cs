@@ -76,13 +76,13 @@ public readonly record struct Direction {
     public static readonly Vector3I UP = new(0, 1, 0);
     public static readonly Vector3I SELF = new(0, 0, 0);
 
-    public static Vector3I[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
-    public static Vector3I[] directionsLight = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
-    public static Vector3I[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
-    public static Vector3I[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
-    public static Vector3I[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
-    public static Vector3I[] directionsAll = new Vector3I[27];
-    public static Vector3I[] directionsSelf = [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
+    public static readonly Vector3I[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
+    public static readonly Vector3I[] directionsLight = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
+    public static readonly Vector3I[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
+    public static readonly Vector3I[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
+    public static readonly Vector3I[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
+    public static readonly Vector3I[] directionsAll = new Vector3I[27];
+    public static readonly Vector3I[] directionsSelf = [WEST, EAST, SOUTH, NORTH, DOWN, UP, SELF];
 
     static Direction() {
         // construct 27-box of all directions
