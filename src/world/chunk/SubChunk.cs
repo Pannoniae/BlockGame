@@ -58,7 +58,7 @@ public class SubChunk : IDisposable {
         var worldPos = World.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
 
         if (block == Blocks.GRASS.id) {
-            if (y < 127 && world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z) != 0) {
+            if (y < 127 && Blocks.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
                 blocks[x, y, z] = Blocks.DIRT.id;
                 renderer.meshChunk();
             }

@@ -355,6 +355,8 @@ public class GUI {
     public void drawBlock(Block block, int x, int y, int size) {
         //GD.Clear(ClearBuffers.Color);
         var viewport = GD.Viewport;
+        var dt = GD.DepthTestingEnabled;
+        GD.DepthTestingEnabled = true;
         GD.VertexArray = buffer;
         GD.ShaderProgram = guiBlockShader;
         WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 15);
@@ -387,6 +389,9 @@ public class GUI {
         // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
         //GL.BindVertexArray(buffer.VertexArray.Handle);
         GD.DrawElements(PrimitiveType.Triangles, 0, (uint)spI.Length);
+
+        // restore
+        GD.DepthTestingEnabled = dt;
         GD.Viewport = viewport;
     }
 

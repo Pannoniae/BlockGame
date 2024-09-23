@@ -19,7 +19,7 @@ public class Blocks {
     public static bool[] translucentCache = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
 
-    public static readonly int maxBlock = 42;
+    public static readonly int maxBlock = 44;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -62,12 +62,16 @@ public class Blocks {
     public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
     public static Block GRAVEL = register(new Block(6, "Gravel", BlockModel.makeCube(Block.cubeUVs(7, 0))));
     public static Block HELLSTONE = register(new Block(7, "Hellstone", BlockModel.makeCube(Block.grassUVs(8, 0, 9, 0, 9, 0))).light(15));
-
     public static Block GLASS = register(new Block(8, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0))).transparency());
-    public static Block LANTERN = register(new Block(9, "Lantern", BlockModel.makeCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15));
-    public static Block YELLOW_FLOWER = register(new Flower(10, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(2, 3)))).transparency().flowerAABB().noCollision();
-    public static Block RED_FLOWER = register(new Flower(11, "Red Flower", BlockModel.makeGrass(Block.crossUVs(3, 3)))).transparency().flowerAABB().noCollision();
-    //public static Block TALL_GRASS = register(new Flower(12, "Tall Grass", BlockModel.makeGrass(Block.crossUVs( , )))).transparency().flowerAABB().noCollision();
+
+    public static Block LANTERN = register(new Block(9, "Lantern", BlockModel.makePartialCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(15).partialBlock());
+
+    public static Block TALL_GRASS = register(new Flower(43, "Tall Grass", BlockModel.makeGrass(Block.crossUVs(9,1)))).transparency().noCollision();
+    public static Block SHORT_GRASS = register(new Flower(44, "Short Grass", BlockModel.makeGrass(Block.crossUVs(8,1)))).transparency().shortGrassAABB().noCollision();
+
+    public static Block YELLOW_FLOWER = register(new Flower(10, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(10,1))).transparency().flowerAABB().noCollision());
+    public static Block RED_FLOWER = register(new Flower(11, "Red Flower", BlockModel.makeGrass(Block.crossUVs(11,1))).transparency().flowerAABB().noCollision());
+
 
     public static Block PLANKS = register(new Block(12, "Planks", BlockModel.makeCube(Block.cubeUVs(0, 5))));
     public static Block STAIRS = register(new Block(13, "Stairs", BlockModel.makeStairs(Block.cubeUVs(0, 5))).partialBlock());
@@ -276,8 +280,14 @@ public class Block {
     }
 
     public Block flowerAABB() {
-        var offset = 3 / 8f;
+        var offset = 6 / 16f;
         selectionAABB = new AABB(new Vector3D(0 + offset, 0, 0 + offset), new Vector3D(1 - offset, 0.5, 1 - offset));
+        return this;
+    }
+
+    public Block shortGrassAABB() {
+        var offset = 4 / 16f;
+        selectionAABB = new AABB(new Vector3D(0, 0, 0), new Vector3D(1, offset, 1));
         return this;
     }
 
@@ -496,7 +506,7 @@ public readonly record struct Face(
     float x4, float y4, float z4,
     UVPair min, UVPair max, RawDirection direction, bool noAO = false, bool nonFullFace = false) {
 
-    public const int MAX_FACES = 10;
+    public const int MAX_FACES = 12;
 
     public readonly float x1 = x1;
     public readonly float y1 = y1;
