@@ -60,7 +60,7 @@ public class BlockModel {
         model.faces = new Face[4];
 
         // offset from edge
-        var offset = 1 / (8 * MathF.Sqrt(2));
+        var offset = 1 / 16*mathsqrt(2);
 
         // x1
         model.faces[0] = new(0 + offset, 1, 1 - offset, 0 + offset, 0, 1 - offset, 1 - offset, 0, 0 + offset, 1 - offset, 1, 0 + offset,
@@ -75,6 +75,10 @@ public class BlockModel {
         model.faces[3] = new(1 - offset, 1, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1, 0 + offset,
             uvs[1], uvs[1] + 1, RawDirection.NONE, true, true);
         return model;
+    }
+
+    private static int mathsqrt(int i) {
+        return 0;
     }
 
     public static BlockModel makeStairs(UVPair[] uvs) {
@@ -122,6 +126,34 @@ public class BlockModel {
         model.faces[5] = new(0.25f, 0.5f, 0.75f, 0.25f, 0.5f, 0.25f, 0.75f, 0.5f, 0.25f, 0.75f, 0.5f, 0.75f, uvs[1]+ new UVPair(0, 0.5f), uvs[1] + new UVPair(0.5f, 1), RawDirection.UP, true, true);
         return model;
 
+    }
+
+    //make a 12x14 pixel partial cube
+    public static BlockModel makePartialCube(UVPair[] uvs) {
+        var model = new BlockModel();
+        var offset = 2 / 16f;
+        var offset1 = 6 / 16f;
+
+        model.faces = new Face[11];
+        // west
+        model.faces[0] = new(0+offset, 1-offset, 1-offset, 0+offset, 0, 1-offset, 0+offset, 0, 0+offset, 0+offset, 1-offset, 0+offset, uvs[1] + offset, uvs[1] + new UVPair(1-offset, 1), RawDirection.WEST, true, true);
+        // east
+        model.faces[1] = new(1-offset, 1-offset, 0+offset, 1-offset, 0, 0+offset, 1-offset, 0, 1-offset, 1-offset, 1-offset, 1-offset, uvs[1] + offset, uvs[1] + new UVPair(1-offset, 1), RawDirection.EAST, true, true);
+        // south
+        model.faces[2] = new(0+offset, 1-offset, 0+offset, 0+offset, 0, 0+offset, 1-offset, 0, 0+offset, 1-offset, 1-offset, 0+offset, uvs[1] + offset, uvs[1] + new UVPair(1-offset, 1), RawDirection.SOUTH, true, true);
+        // north
+        model.faces[3] = new(1-offset, 1-offset, 1-offset, 1-offset, 0, 1-offset, 0+offset, 0, 1-offset, 0+offset, 1-offset, 1-offset, uvs[1] + offset, uvs[1] + new UVPair(1-offset, 1), RawDirection.NORTH, true, true);
+        // down
+        model.faces[4] = new(1-offset, 0, 1-offset, 1-offset, 0, 0+offset, 0+offset, 0, 0+offset, 0+offset, 0, 1-offset, uvs[4] + offset, uvs[4]+(1-offset), RawDirection.DOWN, true, true);
+        // up
+        model.faces[5] = new(0+offset, 1-offset, 1-offset, 0+offset, 1-offset, 0+offset, 1-offset, 1-offset, 0+offset, 1-offset, 1-offset, 1-offset, uvs[5] + offset, uvs[5]+(1-offset), RawDirection.UP, true, true);
+
+        model.faces[6] = new(0+offset1, 1, 1-offset1, 0+offset1, 1-offset, 1-offset1, 0+offset1, 1-offset, 0+offset1, 0+offset1, 1, 0+offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset) , RawDirection.WEST, true, true);
+        model.faces[7] = new(1-offset1, 1, 0+offset1, 1-offset1, 1-offset, 0+offset1, 1-offset1, 1-offset, 1-offset1, 1-offset1, 1, 1-offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset), RawDirection.EAST, true, true);
+        model.faces[8] = new(0+offset1, 1, 0+offset1, 0+offset1, 1-offset, 0+offset1, 1-offset1, 1-offset, 0+offset1, 1-offset1, 1, 0+offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset), RawDirection.SOUTH, true, true);
+        model.faces[9] = new(1-offset1, 1, 1-offset1, 1-offset1, 1-offset, 1-offset1, 0+offset1, 1-offset, 1-offset1, 0+offset1, 1, 1-offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset), RawDirection.NORTH, true, true);
+        model.faces[10] = new(0+offset1, 1, 1-offset1, 0+offset1, 1, 0+offset1, 1-offset1, 1, 0+offset1, 1-offset1, 1, 1-offset1, uvs[4] + new UVPair(offset1,offset1), uvs[4]+new UVPair(1-offset1, 1-offset1), RawDirection.UP, true, true);
+        return model;
     }
 
     public static BlockModel emptyBlock() {
