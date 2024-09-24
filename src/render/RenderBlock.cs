@@ -30,7 +30,7 @@ public class RenderBlock {
     public static void addVertexWithAO(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer,
         float vx, float vy, float vz, UVPair uv, RawDirection direction, int currentIndex) {
 
-        ref var offsetArray = ref MemoryMarshal.GetArrayDataReference<sbyte>(SubChunkRenderer.offsetTable);
+        ref var offsetArray = ref MemoryMarshal.GetReference(SubChunkRenderer.offsetTable);
 
         var chunk = world.getChunkSection(World.getChunkSectionPos(pos));
 

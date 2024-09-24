@@ -44,7 +44,11 @@ public sealed class SubChunkRenderer : IDisposable {
 
     private static Stopwatch sw = new Stopwatch();
 
-    public static readonly sbyte[] offsetTable = [
+    /// Given a reasonably modern .NET runtime, this weird construct is optimised to the array being emitted to the data section of the binary.
+    /// This is very good for us because this shouldn't ever change (unless the game goes 4D? lol) and it's a fair amount faster to access
+    /// because no field access needed at all.
+    /// See https://github.com/dotnet/roslyn/pull/61414 for more.
+    public static ReadOnlySpan<sbyte> offsetTable => [
 
         // west
         -1, 0, 1, -1, 1, 0, -1, 1, 1,
@@ -83,7 +87,7 @@ public sealed class SubChunkRenderer : IDisposable {
         0, 1, 1, 1, 1, 0, 1, 1, 1,
     ];
 
-    public static readonly short[] offsetTableCompact = [
+    public static ReadOnlySpan<short> offsetTableCompact => [
 
         // west
         -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
@@ -434,7 +438,7 @@ public sealed class SubChunkRenderer : IDisposable {
         }
 
         ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
-        ref short offsetArray = ref MemoryMarshal.GetArrayDataReference(offsetTableCompact);
+        ref short offsetArray = ref MemoryMarshal.GetReference(offsetTableCompact);
 
         Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
         Vector128<ushort> complement = Vector128.Create((ushort)4, 3, 2, 4, 2, 1, 0, 0);
