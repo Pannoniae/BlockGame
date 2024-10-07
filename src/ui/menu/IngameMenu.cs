@@ -3,6 +3,7 @@ using BlockGame.util;
 using Cysharp.Text;
 using FontStashSharp.RichText;
 using Molten;
+using Molten.DoublePrecision;
 using Silk.NET.OpenGL;
 using TrippyGL;
 
@@ -81,10 +82,13 @@ public class IngameMenu : Menu, IDisposable {
             debugStr.Clear();
             debugStrG.Clear();
             if (Game.devMode) {
+                // calculate facing
+                var facing = cameraFacing(c.forward);
+
                 debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
                 debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X, p.velocity.Y, p.velocity.Z, p.velocity.Length());
                 debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
-                debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000}\n", c.forward.X, c.forward.Y, c.forward.Z);
+                debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000} {3}\n", c.forward.X, c.forward.Y, c.forward.Z, facing);
                 debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
                 debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
                 if (i.targetedPos.HasValue) {
@@ -114,6 +118,28 @@ public class IngameMenu : Menu, IDisposable {
                 Width = 150 * GUI.guiScale
             };
 
+        }
+    }
+
+    public static string cameraFacing(Vector3D direction) {
+        // Check for up/down first
+        double verticalThreshold = Math.Cos(45);
+        if (direction.Y > verticalThreshold) {
+            return "Facing up";
+        }
+        if (direction.Y < -verticalThreshold) {
+            return "Facing down";
+        }
+
+        // If not facing strongly up or down, determine horizontal direction
+        double absX = Math.Abs(direction.X);
+        double absZ = Math.Abs(direction.Z);
+
+        if (absX > absZ) {
+            return direction.X > 0 ? "Facing east" : "Facing west";
+        }
+        else {
+            return direction.Z > 0 ? "Facing north" : "Facing south";
         }
     }
 
