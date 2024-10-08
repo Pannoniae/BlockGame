@@ -159,25 +159,32 @@ public class BlockModel {
     //makeTorch
     public static BlockModel  makeTorch(UVPair[] uvs) {
         var model = new BlockModel();
-        model.faces = new Face[5];
-        // west
-        model.faces[0] = new(7/16f, 0.5f, 9/16f, 7/16f, 0, 9/16f, 7/16f, 0, 7/16f, 7/16f, 0.5f, 7/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1f), RawDirection.WEST, true, true);
+        model.faces = new Face[10];
+        //bottom
+        //west
+        model.faces[0] = new(7/16f, 0.5f, 9/16f, 7/16f, 0, 9/16f, 7/16f, 0, 7/16f, 7/16f, 0.5f, 7/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1), RawDirection.WEST, true, true);
         // east
-        model.faces[1] = new(9/16f, 0.5f, 7/16f, 9/16f, 0, 7/16f, 9/16f, 0, 9/16f, 9/16f, 0.5f, 9/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1f), RawDirection.EAST, true, true);
+        model.faces[1] = new(9/16f, 0.5f, 7/16f, 9/16f, 0, 7/16f, 9/16f, 0, 9/16f, 9/16f, 0.5f, 9/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1), RawDirection.EAST, true, true);
         // south
-        model.faces[2] = new(7/16f, 0.5f, 7/16f, 7/16f, 0, 7/16f, 9/16f, 0, 7/16f, 9/16f, 0.5f, 7/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1f), RawDirection.SOUTH, true, true);
+        model.faces[2] = new(7/16f, 0.5f, 7/16f, 7/16f, 0, 7/16f, 9/16f, 0, 7/16f, 9/16f, 0.5f, 7/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1), RawDirection.SOUTH, true, true);
         // north
-        model.faces[3] = new(9/16f, 0.5f, 9/16f, 9/16f, 0, 9/16f, 7/16f, 0, 9/16f, 7/16f, 0.5f, 9/16f, uvs[0]+new UVPair(1/16f,0.5f), uvs[0] + new UVPair(3/16f, 1f), RawDirection.NORTH, true, true);
-        // up
-        model.faces[4] = new(7/16f, 0.5f, 9/16f, 7/16f, 0.5f, 7/16f, 9/16f, 0.5f, 7/16f, 9/16f, 0.5f, 9/16f, uvs[5], uvs[5]+new UVPair(2/16f,2/16f), RawDirection.UP, true, true);
+        model.faces[3] = new(9/16f, 0.5f, 9/16f, 9/16f, 0, 9/16f, 7/16f, 0, 9/16f, 7/16f, 0.5f, 9/16f, uvs[0] + new UVPair(1/16f, 0.5f), uvs[0] + new UVPair(3/16f, 1), RawDirection.NORTH, true, true);
         // down
-        //model.faces[5] = new(8+offset1/2f, 0, 10/16f, 8+offset1/2f, 0, 10/16f, 8-offset1/2f, 0, 10/16f, 8-offset1/2f, 0, 10/16f, uvs[4], uvs[4]+new UVPair(offset1, offset1), RawDirection.DOWN, true, true);
+        model.faces[4] = new(9/16f, 0, 9/16f, 9/16f, 0, 7/16f, 7/16f, 0, 7/16f, 7/16f, 0, 9/16f, uvs[4]+new UVPair(0,4/16f), uvs[4]+4/16f, RawDirection.DOWN, true, true);
 
-        //model.faces[6] = new(0+offset1, 1, 1-offset1, 0+offset1, 1-offset, 1-offset1, 0+offset1, 1-offset, 0+offset1, 0+offset1, 1, 0+offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset) , RawDirection.WEST, true, true);
-        //model.faces[7] = new(1-offset1, 1, 0+offset1, 1-offset1, 1-offset, 0+offset1, 1-offset1, 1-offset, 1-offset1, 1-offset1, 1, 1-offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset), RawDirection.EAST, true, true);
-        //model.faces[8] = new(0+offset1, 1, 0+offset1, 0+offset1, 1-offset, 0+offset1, 1-offset1, 1-offset, 0+offset1, 1-offset1, 1, 0+offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset), RawDirection.SOUTH, true, true);
-        //model.faces[9] = new(1-offset1, 1, 1-offset1, 1-offset1, 1-offset, 1-offset1, 0+offset1, 1-offset, 1-offset1, 0+offset1, 1, 1-offset1, uvs[2] + new UVPair(offset1,0), uvs[2]+new UVPair(1-offset1, offset), RawDirection.NORTH, true, true);
-        //model.faces[10] = new(0+offset1, 1, 1-offset1, 0+offset1, 1, 0+offset1, 1-offset1, 1, 0+offset1, 1-offset1, 1, 1-offset1, uvs[4] + new UVPair(offset1,offset1), uvs[4]+new UVPair(1-offset1, 1-offset1), RawDirection.UP, true, true);
+        //top
+        //west
+        model.faces[5] = new(6/16f, 15/16f, 10/16f, 6/16f, 0.5f, 10/16f, 6/16f, 0.5f, 6/16f, 6/16f, 15/16f, 6/16f, uvs[0]+new UVPair(4/16f, 1/16f), uvs[0] + new UVPair(0, 0.5f), RawDirection.WEST, true, true);
+        // east
+        model.faces[6] = new(10/16f, 15/16f, 6/16f, 10/16f, 0.5f, 6/16f, 10/16f, 0.5f, 10/16f, 10/16f, 15/16f, 10/16f, uvs[0]+new UVPair(4/16f, 1/16f), uvs[0] + new UVPair(0, 0.5f), RawDirection.EAST, true, true);
+        // south
+        model.faces[7] = new(6/16f, 15/16f, 6/16f, 6/16f, 0.5f, 6/16f, 10/16f, 0.5f, 6/16f, 10/16f, 15/16f, 6/16f, uvs[0]+new UVPair(0, 1/16f), uvs[0] + new UVPair(4/16f, 0.5f), RawDirection.SOUTH, true, true);
+        // north
+        model.faces[8] = new(10/16f, 15/16f, 10/16f, 10/16f, 0.5f, 10/16f, 6/16f, 0.5f, 10/16f, 6/16f, 15/16f, 10/16f, uvs[0]+new UVPair(0, 1/16f), uvs[0] + new UVPair(4/16f, 0.5f), RawDirection.NORTH, true, true);
+
+        // up
+        model.faces[9] = new(6/16f, 15/16f, 10/16f, 6/16f, 15/16f, 6/16f, 10/16f, 15/16f, 6/16f, 10/16f, 15/16f, 10/16f, uvs[5], uvs[5]+new UVPair(4/16f,4/16f), RawDirection.UP, true, true);
+
         return model;
     }
 

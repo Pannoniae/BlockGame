@@ -110,7 +110,7 @@ public class Blocks {
     public static Block AMBER_ORE = register(new Block(41, "Amber Ore", BlockModel.makeCube(Block.cubeUVs(12, 0))));
     public static Block VIOLET_ORE = register(new Block(42, "Violet Ore", BlockModel.makeCube(Block.cubeUVs(13, 0))));
 
-    public static Block TORCH = register(new Block(45, "Torch", BlockModel.makeTorch(Block.grassUVs(4, 1,1, 1, 4,1))).partialBlock().torchAABB());
+    public static Block TORCH = register(new Block(45, "Torch", BlockModel.makeTorch(Block.grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
 
     public static bool isSolid(int block) {
         return block != 0 && get(block).type == BlockType.SOLID;
