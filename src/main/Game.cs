@@ -667,21 +667,21 @@ public partial class Game {
         //GD.BlendingEnabled = false;
     }
 
-    public TimerAction setInterval(long interval, Action action) {
+    public static TimerAction setInterval(long interval, Action action) {
         var now = permanentStopwatch.ElapsedMilliseconds;
         var ta = new TimerAction(action, now, true, interval);
         timerQueue.Add(ta);
         return ta;
     }
 
-    public TimerAction setTimeout(long timeout, Action action) {
+    public static TimerAction setTimeout(long timeout, Action action) {
         var now = permanentStopwatch.ElapsedMilliseconds;
         var ta = new TimerAction(action, now, false, timeout);
         timerQueue.Add(ta);
         return ta;
     }
 
-    private void handleTimers() {
+    private static void handleTimers() {
         foreach (var timerAction in timerQueue) {
             var now = permanentStopwatch.ElapsedMilliseconds;
             if (timerAction.enabled && now - timerAction.lastCalled > timerAction.interval) {

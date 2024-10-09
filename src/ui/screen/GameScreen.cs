@@ -35,8 +35,8 @@ public class GameScreen : Screen {
 
         switchToMenu(INGAME_MENU);
 
-        updateMemory = Game.instance.setInterval(200, INGAME_MENU.updateMemoryMethod);
-        updateDebugText = Game.instance.setInterval(50, INGAME_MENU.updateDebugTextMethod);
+        updateMemory = Game.setInterval(200, INGAME_MENU.updateMemoryMethod);
+        updateDebugText = Game.setInterval(50, INGAME_MENU.updateDebugTextMethod);
     }
 
     public void setWorld(World inWorld) {
