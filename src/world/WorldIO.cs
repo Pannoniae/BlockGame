@@ -27,12 +27,7 @@ public class WorldIO {
             Directory.CreateDirectory($"level/{filename}");
         }
 
-        var tag = new NBTCompound("world");
-        tag.addInt("seed", world.seed);
-        tag.addDouble("posX", world.player.position.X);
-        tag.addDouble("posY", world.player.position.Y);
-        tag.addDouble("posZ", world.player.position.Z);
-        NBT.writeFile(tag, $"level/{filename}/level.xnbt");
+        saveWorldData();
 
         // save chunks
         if (saveChunks) {
@@ -42,6 +37,15 @@ public class WorldIO {
             }
         }
         //regionCache.Clear();
+    }
+
+    public void saveWorldData() {
+        var tag = new NBTCompound("world");
+        tag.addInt("seed", world.seed);
+        tag.addDouble("posX", world.player.position.X);
+        tag.addDouble("posY", world.player.position.Y);
+        tag.addDouble("posZ", world.player.position.Z);
+        NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
     }
 
     public void saveChunk(World world, Chunk chunk) {
@@ -110,6 +114,9 @@ public class WorldIO {
         var tag = NBT.readFile($"level/{filename}/level.xnbt");
         var seed = tag.getInt("seed");
         var world = new World(filename, seed, true);
+        Console.Out.WriteLine(tag.getDouble("posX"));
+        Console.Out.WriteLine(tag.getDouble("posY"));
+        Console.Out.WriteLine(tag.getDouble("posZ"));
         world.player.position.X = tag.getDouble("posX");
         world.player.position.Y = tag.getDouble("posY");
         world.player.position.Z = tag.getDouble("posZ");

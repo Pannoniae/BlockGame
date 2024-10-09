@@ -54,6 +54,7 @@ public class World : IDisposable {
     public int worldTick;
 
     public Random random;
+    private readonly TimerAction saveWorld;
 
     private const long MAX_CHUNKLOAD_FRAMETIME = 20;
     private const long MAX_LIGHT_FRAMETIME = 10;
@@ -101,6 +102,14 @@ public class World : IDisposable {
         // if we don't save the world, some of the chunks might get saved but no level.xnbt
         // so the world is corrupted and we have horrible chunkglitches
         worldIO.save(this, name, false);
+
+
+        // setup world saving every 5 mins
+        saveWorld = Game.setInterval(5 * 60 * 1000, saveWorldMethod);
+    }
+
+    private void saveWorldMethod() {
+        worldIO.saveWorldData();
     }
 
     public void startMeshing() {
@@ -401,6 +410,7 @@ public class World : IDisposable {
     public void Dispose() {
         // of course, we can save it here since WE call it and not the GC
         worldIO.save(this, name);
+        saveWorld.enabled = false;
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }
