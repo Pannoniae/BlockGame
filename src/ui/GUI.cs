@@ -175,10 +175,10 @@ public class GUI {
         var texCoords = new Vector2(0, 0);
         var texCoordsMax = new Vector2(xCount, yCount);
         tb.DrawRaw(Game.textureManager.background,
-            new VertexColorTexture(new Vector3(left, top, 0), Color4b.Gray, new Vector2(texCoords.X, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, top, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoordsMax.Y)),
-            new VertexColorTexture(new Vector3(left, bottom, 0), Color4b.Gray, new Vector2(texCoords.X, texCoordsMax.Y)));
+            new VertexColorTexture(new Vector3(left, top, 0), Color4b.White, new Vector2(texCoords.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, top, 0), Color4b.White, new Vector2(texCoordsMax.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.White, new Vector2(texCoordsMax.X, texCoordsMax.Y)),
+            new VertexColorTexture(new Vector3(left, bottom, 0), Color4b.White, new Vector2(texCoords.X, texCoordsMax.Y)));
     }
 
 
