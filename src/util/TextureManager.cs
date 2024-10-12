@@ -11,6 +11,7 @@ public class TextureManager {
     public GraphicsDevice GD;
 
     public Texture2D blockTextureGUI;
+    public Texture2D background;
     public BTextureAtlas blockTexture;
     public BTexture2D lightTexture;
 
@@ -21,6 +22,7 @@ public class TextureManager {
         this.GD = GD;
 
         blockTextureGUI = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
+        background = Texture2DExtensions.FromFile(GD, "textures/bg.png");
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
         lightTexture = new BTexture2D("textures/lightmap.png");
     }

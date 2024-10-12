@@ -44,7 +44,7 @@ public class MainMenu : Menu {
     }
 
     public override void draw() {
-        Game.gui.drawBG(Blocks.DIRT, 16);
+        Game.gui.drawBG(16);
         base.draw();
     }
 }
