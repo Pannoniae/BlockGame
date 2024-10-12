@@ -159,6 +159,28 @@ public class GUI {
         }
     }
 
+    public void drawBG(float size) {
+        var left = 0;
+        var right = Game.width;
+        var top = 0;
+        var bottom = Game.height;
+
+        // handle guiscale
+        size *= guiScale * 2;
+
+        // if one block is a given size, how many blocks can we fit on the screen?
+        var xCount = Game.width / size;
+        var yCount = Game.height / size;
+
+        var texCoords = new Vector2(0, 0);
+        var texCoordsMax = new Vector2((float)xCount, (float)yCount);
+        tb.DrawRaw(Game.textureManager.background,
+            new VertexColorTexture(new Vector3(left, top, 0), Color4b.Gray, new Vector2(texCoords.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, top, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.Gray, new Vector2(texCoordsMax.X, texCoordsMax.Y)),
+            new VertexColorTexture(new Vector3(left, bottom, 0), Color4b.Gray, new Vector2(texCoords.X, texCoordsMax.Y)));
+    }
+
 
     public void draw(Texture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {

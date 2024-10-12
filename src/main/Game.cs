@@ -681,6 +681,10 @@ public partial class Game {
         return ta;
     }
 
+    public static void clearInterval(TimerAction action) {
+        timerQueue.Remove(action);
+    }
+
     private static void handleTimers() {
         foreach (var timerAction in timerQueue) {
             var now = permanentStopwatch.ElapsedMilliseconds;
