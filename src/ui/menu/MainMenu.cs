@@ -12,7 +12,7 @@ public class MainMenu : Menu {
 
 
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
-        sp.setPosition(new Vector2I(0, -64));
+        sp.setPosition(new Vector2I(0, -34));
         sp.centreContents();
         sp.clicked += _ => {
             // we are *already* on the main thread; this is just needed so it executes a frame later
@@ -21,10 +21,10 @@ public class MainMenu : Menu {
         };
         Console.Out.WriteLine("sp:" + sp.bounds);
         var button2 = new Button(this, "multiplayer", true, "Multiplayer (soon)");
-        button2.setPosition(new Vector2I(0, -32));
+        button2.setPosition(new Vector2I(0, -8));
         button2.centreContents();
         var settings = new Button(this, "settings", true, "Settings");
-        settings.setPosition(new Vector2I(0, 0));
+        settings.setPosition(new Vector2I(0, 18));
         settings.centreContents();
         settings.clicked += _ => {
             Game.instance.executeOnMainThread(() => {
@@ -33,7 +33,7 @@ public class MainMenu : Menu {
             });
         };
         var button4 = new Button(this, "quit", true, "Quit");
-        button4.setPosition(new Vector2I(0, 32));
+        button4.setPosition(new Vector2I(0, 44));
         button4.centreContents();
         button4.clicked += _ => Environment.Exit(0);
         addElement(title);
