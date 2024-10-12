@@ -43,7 +43,7 @@ public class ParticleManager {
 
         foreach (var particle in particles) {
             if (particle.texture != currentTexture) {
-                Game.textureManager.load(particle.texture, particle.texture);
+                Game.textureManager.get(particle.texture);
                 var tex = Game.textureManager.get(particle.texture);
                 Game.GL.ActiveTexture(TextureUnit.Texture0);
                 Game.GL.BindTexture(TextureTarget.Texture2D, tex.Handle);

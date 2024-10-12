@@ -15,7 +15,7 @@ public class TextureManager {
     public BTextureAtlas blockTexture;
     public BTexture2D lightTexture;
 
-    public Dictionary<string, Texture> textures = new();
+    public Dictionary<string, Texture2D> textures = new();
 
     public TextureManager(GL GL, GraphicsDevice GD) {
         this.GL = GL;
@@ -27,15 +27,10 @@ public class TextureManager {
         lightTexture = new BTexture2D("textures/lightmap.png");
     }
 
-    public void load(string path, string name) {
-        if (textures.ContainsKey(name))
-            return;
-        textures[name] = Texture2DExtensions.FromFile(GD, path);
-    }
-
-    public Texture get(string name) {
-        if (!textures.TryGetValue(name, out Texture? value))
-            throw new Exception($"Texture {name} not found");
-        return value;
+    public Texture2D get(string path) {
+        if (!textures.TryGetValue(path, out _)) {
+            textures[path] = Texture2DExtensions.FromFile(GD, path);;
+        }
+        return textures[path];
     }
 }
