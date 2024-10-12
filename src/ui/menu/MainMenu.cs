@@ -6,6 +6,11 @@ namespace BlockGame.ui;
 
 public class MainMenu : Menu {
     public MainMenu() {
+        var title = new Image(this, "title", "textures/title.png");
+        title.setPosition(new Vector2I(0, -96));
+        title.centreContents();
+
+
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
         sp.setPosition(new Vector2I(0, -64));
         sp.centreContents();
@@ -31,6 +36,7 @@ public class MainMenu : Menu {
         button4.setPosition(new Vector2I(0, 32));
         button4.centreContents();
         button4.clicked += _ => Environment.Exit(0);
+        addElement(title);
         addElement(sp);
         addElement(button2);
         addElement(settings);
