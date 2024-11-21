@@ -361,7 +361,7 @@ public class Block {
 
     }
 
-    public virtual ushort render(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer, ushort currentIndex) {
+    public virtual ushort render(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer) {
         return 0;
     }
 

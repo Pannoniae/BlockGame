@@ -1,117 +1,84 @@
+using System.Runtime.CompilerServices;
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame;
 
-
 /// <summary>
-/// BlockVAO but we use separated vertex attribute format/bindings
+/// SharedBlockVAO but we only use one VAO / vertex format then just rebind the vertex/index buffer
+/// It also uses only one buffer now instead of two
 /// </summary>
-public sealed class SharedBlockVAO : VAO {
+public sealed class SharedBlockVAO : VAO
+{
     public uint VAOHandle;
-    public uint vbo;
-    public uint ibo;
+    public uint buffer;
     public uint count;
 
-    public GL GL;
 
-    public SharedBlockVAO() {
+    public readonly GL GL;
+
+    public SharedBlockVAO(uint VAOHandle) {
+        this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        VAOHandle = GL.GenVertexArray();
-    }
-
-    public void upload(float[] data) {
-        unsafe {
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            count = (uint)data.Length;
-            fixed (float* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
-                    BufferUsageARB.DynamicDraw);
-            }
-        }
-
-        format();
-    }
-
-    public void upload(Span<float> data) {
-        unsafe {
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            count = (uint)data.Length;
-            fixed (float* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
-                    BufferUsageARB.DynamicDraw);
-            }
-        }
-
-        format();
     }
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            buffer = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
             count = (uint)indices.Length;
+            var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
             fixed (BlockVertexPacked* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
-                    BufferUsageARB.DynamicDraw);
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize, d,
+                    BufferStorageMask.None);
+            }
+        }
+
+        format();
+    }
+
+    public void upload(Span<BlockVertexPacked> data, uint _count) {
+        unsafe {
+            buffer = GL.GenBuffer();
+            count = (uint)(_count * 1.5);
+            var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
+            fixed (BlockVertexPacked* d = data) {
+                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize, d,
+                    BufferStorageMask.None);
             }
 
-            ibo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-            fixed (ushort* d = indices) {
-                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
-                    BufferUsageARB.DynamicDraw);
-            }
         }
 
         format();
     }
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
-        unsafe {
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            count = (uint)indices.Length;
-            fixed (BlockVertexPacked* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
-                    BufferUsageARB.DynamicDraw);
-            }
-
-            ibo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-            fixed (ushort* d = indices) {
-                GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
-                    BufferUsageARB.DynamicDraw);
-            }
-        }
-
-        format();
+        throw new Exception("this doesn't work!");
     }
 
     public void format() {
-        unsafe {
-            // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.EnableVertexAttribArray(0);
-            GL.EnableVertexAttribArray(1);
-            GL.EnableVertexAttribArray(2);
+        // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
 
-            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
-            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
-            GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 5 * sizeof(ushort));
+        GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+        GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+        GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 5 * sizeof(ushort));
 
-            GL.VertexAttribBinding(0, 0);
-            GL.VertexAttribBinding(1, 0);
-            GL.VertexAttribBinding(2, 0);
-
-            GL.BindVertexBuffer(0, vbo, 0, 6 * sizeof(ushort));
-
-        }
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
     }
 
-    public void bind() {
+    public void bindVAO() {
         GL.BindVertexArray(VAOHandle);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void bind() {
+        GL.VertexArrayVertexBuffer(VAOHandle, 0, buffer, 0, 6 * sizeof(ushort));
     }
 
     public uint render() {
@@ -122,8 +89,6 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     public void Dispose() {
-        GL.DeleteBuffer(vbo);
-        GL.DeleteBuffer(ibo);
-        GL.DeleteVertexArray(VAOHandle);
+        GL.DeleteBuffer(buffer);
     }
 }

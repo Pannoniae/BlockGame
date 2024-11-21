@@ -4,6 +4,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.NV;
 using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
@@ -42,6 +43,11 @@ public class WorldRenderer {
     public int waterFogColour;
     public int waterSkyColour;
 
+    /// <summary>
+    /// A buffer of indices for the maximum amount of quads.
+    /// </summary>
+    public uint fatQuadIndices;
+
     public static BoundingFrustum frustum;
 
 
@@ -63,6 +69,8 @@ public class WorldRenderer {
         this.world = world;
         GL = Game.GL;
         chunkVAO = GL.GenVertexArray();
+
+        genFatQuadIndices();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         Game.worldShader = shader;
@@ -111,6 +119,30 @@ public class WorldRenderer {
         setUniforms();
     }
 
+    private void genFatQuadIndices() {
+        var indices = new ushort[65535];
+        // 0 1 2 0 2 3
+        for (int i = 0; i < 65535 / 6; i++) {
+            indices[i * 6] = (ushort)(i * 4);
+            indices[i * 6 + 1] = (ushort)(i * 4 + 1);
+            indices[i * 6 + 2] = (ushort)(i * 4 + 2);
+            indices[i * 6 + 3] = (ushort)(i * 4);
+            indices[i * 6 + 4] = (ushort)(i * 4 + 2);
+            indices[i * 6 + 5] = (ushort)(i * 4 + 3);
+        }
+        fatQuadIndices = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, fatQuadIndices);
+        unsafe {
+            fixed (ushort* pIndices = indices) {
+                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), pIndices, BufferStorageMask.None);
+            }
+        }
+    }
+
+    public void bindQuad() {
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, fatQuadIndices);
+    }
+
     public void setUniforms() {
 
         var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
@@ -151,9 +183,8 @@ public class WorldRenderer {
         // no blending solid shit!
         GL.Disable(EnableCap.Blend);
 
-        if (fastChunkSwitch) {
-            GL.BindVertexArray(chunkVAO);
-        }
+        GL.BindVertexArray(chunkVAO);
+        bindQuad();
 
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
