@@ -18,8 +18,8 @@ public sealed class SubChunkRenderer : IDisposable {
     private bool hasRenderOpaque;
     private bool hasRenderTranslucent;
 
-    private VAO? vao;
-    private VAO? watervao;
+    private SharedBlockVAO? vao;
+    private SharedBlockVAO? watervao;
 
     private bool hasOnlySolid;
 
@@ -36,7 +36,6 @@ public sealed class SubChunkRenderer : IDisposable {
     // actually we don't need a list, regular arrays will do because it's only a few megs of space and it's shared
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of them and it will still be in the ballpark of 10MB
     private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
-    private static readonly List<ushort> chunkIndices = new(2048);
     // YZX again
     private static readonly ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
     private static readonly byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
@@ -137,6 +136,10 @@ public sealed class SubChunkRenderer : IDisposable {
         return b != 0 && Blocks.get(b).type != BlockType.TRANSLUCENT;
     }
 
+    private static bool notOpaqueBlocks(int b) {
+        return b == 0 || Blocks.get(b).type == BlockType.TRANSLUCENT;
+    }
+
     private void ReleaseUnmanagedResources() {
         vao?.Dispose();
         watervao?.Dispose();
@@ -160,18 +163,11 @@ public sealed class SubChunkRenderer : IDisposable {
     /// </summary>
     public void meshChunk() {
         //sw.Restart();
-        if (subChunk.world.renderer.fastChunkSwitch) {
-            vao?.Dispose();
-            vao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);
-            watervao?.Dispose();
-            watervao = new ExtremelySharedBlockVAO(subChunk.world.renderer.chunkVAO);
-        }
-        else {
-            vao?.Dispose();
-            vao = new SharedBlockVAO();
-            watervao?.Dispose();
-            watervao = new SharedBlockVAO();
-        }
+        vao?.Dispose();
+        vao = new SharedBlockVAO(subChunk.world.renderer.chunkVAO);
+        watervao?.Dispose();
+        watervao = new SharedBlockVAO(subChunk.world.renderer.chunkVAO);
+
 
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
@@ -202,17 +198,11 @@ public sealed class SubChunkRenderer : IDisposable {
                 MeasureProfiler.SaveData();
             }*/
         //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-        if (chunkIndices.Count > 0) {
+        if (chunkVertices.Count > 0) {
             hasRenderOpaque = true;
-            if (subChunk.world.renderer.fastChunkSwitch) {
-                (vao as ExtremelySharedBlockVAO).bindVAO();
-            }
-            else {
-                vao.bind();
-            }
+            vao.bindVAO();
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-            var finalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-            vao.upload(finalVertices, finalIndices);
+            vao.upload(finalVertices, (uint)finalVertices.Length);
             //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
@@ -224,17 +214,12 @@ public sealed class SubChunkRenderer : IDisposable {
             // then we render everything which is translucent (water for now)
             constructVertices(VertexConstructionMode.TRANSLUCENT);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-            if (chunkIndices.Count > 0) {
+            if (chunkVertices.Count > 0) {
                 hasRenderTranslucent = true;
-                if (subChunk.world.renderer.fastChunkSwitch) {
-                    (watervao as ExtremelySharedBlockVAO).bindVAO();
-                }
-                else {
-                    watervao.bind();
-                }
+                watervao.bindVAO();
+
                 var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                var tFinalIndices = CollectionsMarshal.AsSpan(chunkIndices);
-                watervao.upload(tFinalVertices, tFinalIndices);
+                watervao.upload(tFinalVertices, (uint)tFinalVertices.Length);
                 //Console.Out.WriteLine($"PartMeshing1.7: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 //world.sortedTransparentChunks.Add(this);
             }
@@ -372,7 +357,7 @@ public sealed class SubChunkRenderer : IDisposable {
                         bl = Blocks.DIRT.id;
                     }
 
-                    // set neighbours array element  to block
+                    // set neighbours array element to block
                     blocksArrayRef = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
                     // NOTE: check if it's loaded (if it isn't loaded we don't give a shit about it)
@@ -407,11 +392,8 @@ public sealed class SubChunkRenderer : IDisposable {
 
         // clear arrays before starting
         chunkVertices.Clear();
-        chunkIndices.Clear();
 
         Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
-        Span<ushort> tempIndices = stackalloc ushort[8].Slice(0, 6);
-        Vector128<ushort> indices = Vector128<ushort>.Zero;
 
         Span<ushort> nba = stackalloc ushort[6];
         Span<byte> lba = stackalloc byte[6];
@@ -440,9 +422,6 @@ public sealed class SubChunkRenderer : IDisposable {
         ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
         ref short offsetArray = ref MemoryMarshal.GetReference(offsetTableCompact);
 
-        Vector128<ushort> indicesMask = Vector128.Create((ushort)0, 1, 2, 0, 2, 3, 0, 0);
-        Vector128<ushort> complement = Vector128.Create((ushort)4, 3, 2, 4, 2, 1, 0, 0);
-
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             // index for array accesses
@@ -458,7 +437,7 @@ public sealed class SubChunkRenderer : IDisposable {
             Block bl = Blocks.get(blockArrayRef);
             switch (mode) {
                 case VertexConstructionMode.OPAQUE:
-                    if (!opaqueBlocks(blockArrayRef)) {
+                    if (notOpaqueBlocks(blockArrayRef)) {
                         goto increment;
                     }
                     break;
@@ -475,9 +454,7 @@ public sealed class SubChunkRenderer : IDisposable {
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
             if (bl.customRender) {
-                var writtenIndices = bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices, chunkIndices, indices[0]);
-                // add the number of written indices to the indices vector
-                indices += Vector128.Create(writtenIndices);
+                var writtenIndices = bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
                 goto increment;
             }
 
@@ -729,19 +706,6 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.d = Block.packData((byte)dir, ao.Fourth, light.Fourth);
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
-
-                    indices += indicesMask;
-                    // write it back to the span
-                    // how does this work?? vector is 8 bytes, span is only 6
-
-
-                    // write the vector indices into tempIndices while ensuring it fits into 6 bytes
-                    Unsafe.WriteUnaligned(
-                        ref Unsafe.As<ushort, byte>(ref MemoryMarshal.GetReference(tempIndices)), indices);
-                    chunkIndices.AddRange(tempIndices);
-
-                    // add to the indices so they become 4
-                    indices += complement;
                     //ci += 6;
                 }
                 increment2:
@@ -818,13 +782,13 @@ public sealed class SubChunkRenderer : IDisposable {
                           (lightNibble >> 8 & 0xF) * ((inv & 2) >> 1) +
                           (lightNibble >> 16 & 0xF) * ((inv & 4) >> 2) +
                           (lightNibble >> 24 & 0xF))
-                      / popcnt);
+                         / popcnt);
 
         var block = (byte)(((lightNibble >> 4 & 0xF) * (inv & 1) +
-                             (lightNibble >> 12 & 0xF) * ((inv & 2) >> 1) +
-                             (lightNibble >> 20 & 0xF) * ((inv & 4) >> 2) +
-                             (lightNibble >> 28 & 0xF))
-                         / popcnt);
+                            (lightNibble >> 12 & 0xF) * ((inv & 2) >> 1) +
+                            (lightNibble >> 20 & 0xF) * ((inv & 4) >> 2) +
+                            (lightNibble >> 28 & 0xF))
+                           / popcnt);
         return (byte)(sky | block << 4);
     }
 

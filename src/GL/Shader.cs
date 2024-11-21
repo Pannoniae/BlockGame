@@ -76,7 +76,6 @@ public class Shader {
     public void use() {
         GL.UseProgram(programHandle);
     }
-
     // uniforms
 
     public int getUniformLocation(string name) {
