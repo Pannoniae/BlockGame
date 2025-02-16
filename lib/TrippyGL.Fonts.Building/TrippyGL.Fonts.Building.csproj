@@ -26,8 +26,8 @@ This package provides integration with the SixLabors.Fonts library for the Tripp
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SixLabors.Fonts" Version="2.0.4" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4" />
+    <PackageReference Include="SixLabors.Fonts" Version="2.1.2" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
   </ItemGroup>
 
   <ItemGroup>

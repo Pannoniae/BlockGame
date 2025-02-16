@@ -128,6 +128,10 @@ public class Blocks {
         return translucentCache[block];
     }
 
+    public static bool notTranslucent(int block) {
+        return !translucentCache[block];
+    }
+
     public static bool hasCollision(int block) {
         return block != 0 && get(block).collision;
     }

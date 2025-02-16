@@ -1,25 +1,26 @@
 ﻿using FontStashSharp.Interfaces;
 using FreeTypeSharp;
-using FreeTypeSharp.Native;
+using FreeTypeSharp;
 using System;
 using System.Runtime.InteropServices;
 
 namespace FontStashSharp.Rasterizers.FreeType
 {
-	internal class FreeTypeSource: IFontSource
+	unsafe internal class FreeTypeSource: IFontSource
 	{
-		private static IntPtr _libraryHandle;
+		private static FT_LibraryRec_** _libraryHandle;
 		private GCHandle _memoryHandle;
-		private IntPtr _faceHandle;
-		private readonly FT_FaceRec _rec;
+		private FT_FaceRec_** _faceHandle;
+		private readonly FT_FaceRec_ _rec;
 
-		public FreeTypeSource(byte[] data)
+
+
+		unsafe public FreeTypeSource(byte[] data)
 		{
 			FT_Error err;
-			if (_libraryHandle == IntPtr.Zero)
-			{
-				IntPtr libraryRef;
-				err = FT.FT_Init_FreeType(out libraryRef);
+			if (_libraryHandle == (FT_LibraryRec_**)0) {
+				FT_LibraryRec_** libraryRef = (FT_LibraryRec_**)0;
+				err = FT.FT_Init_FreeType(libraryRef!);
 
 				if (err != FT_Error.FT_Err_Ok)
 					throw new FreeTypeException(err);
@@ -29,14 +30,14 @@ namespace FontStashSharp.Rasterizers.FreeType
 
 			_memoryHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
-			IntPtr faceRef;
-			err = FT.FT_New_Memory_Face(_libraryHandle, _memoryHandle.AddrOfPinnedObject(), data.Length, 0, out faceRef);
+			FT_FaceRec_** faceRef = null;
+			err = FT.FT_New_Memory_Face(*_libraryHandle, (byte*)_memoryHandle.AddrOfPinnedObject(), data.Length, 0, faceRef);
 
 			if (err != FT_Error.FT_Err_Ok)
 				throw new FreeTypeException(err);
 
 			_faceHandle = faceRef;
-			_rec = PInvokeHelper.PtrToStructure<FT_FaceRec>(_faceHandle);
+			_rec = **_faceHandle;
 		}
 
 		~FreeTypeSource()
@@ -46,10 +47,10 @@ namespace FontStashSharp.Rasterizers.FreeType
 
 		protected virtual void Dispose(bool disposing)
 		{
-			if (_faceHandle != IntPtr.Zero)
+			if (_faceHandle != (void*)0)
 			{
-				FT.FT_Done_Face(_faceHandle);
-				_faceHandle = IntPtr.Zero;
+				FT.FT_Done_Face(*_faceHandle);
+				_faceHandle = (FT_FaceRec_**)0;
 			}
 
 			if (_memoryHandle.IsAllocated)
@@ -64,7 +65,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 
 		public int? GetGlyphId(int codepoint)
 		{
-			var result = FT.FT_Get_Char_Index(_faceHandle, (uint)codepoint);
+			var result = FT.FT_Get_Char_Index(*_faceHandle, (uint)codepoint);
 			if (result == 0)
 			{
 				return null;
@@ -75,32 +76,32 @@ namespace FontStashSharp.Rasterizers.FreeType
 
 		public int GetGlyphKernAdvance(int previousGlyphId, int glyphId, float fontSize)
 		{
-			FT_Vector kerning;
-			if (FT.FT_Get_Kerning(_faceHandle, (uint)previousGlyphId, (uint)glyphId, 0, out kerning) != FT_Error.FT_Err_Ok)
+			FT_Vector_* kerning = (FT_Vector_*)0;
+			if (FT.FT_Get_Kerning(*_faceHandle, (uint)previousGlyphId, (uint)glyphId, 0, kerning) != FT_Error.FT_Err_Ok)
 			{
 				return 0;
 			}
 
-			return (int)kerning.x >> 6;
+			return (int)kerning->x >> 6;
 		}
 
 		private void SetPixelSizes(float width, float height)
 		{
-			var err = FT.FT_Set_Pixel_Sizes(_faceHandle, (uint)width, (uint)height);
+			var err = FT.FT_Set_Pixel_Sizes(*_faceHandle, (uint)width, (uint)height);
 			if (err != FT_Error.FT_Err_Ok)
 				throw new FreeTypeException(err);
 		}
 
 		private void LoadGlyph(int glyphId)
 		{
-			var err = FT.FT_Load_Glyph(_faceHandle, (uint)glyphId, FT.FT_LOAD_DEFAULT | FT.FT_LOAD_TARGET_NORMAL);
+			var err = FT.FT_Load_Glyph(*_faceHandle, (uint)glyphId, 0 | FT.FT_LOAD_TARGET_NORMAL);
 			if (err != FT_Error.FT_Err_Ok)
 				throw new FreeTypeException(err);
 		}
 
-		private unsafe void GetCurrentGlyph(out FT_GlyphSlotRec glyph)
+		private unsafe void GetCurrentGlyph(out FT_GlyphSlotRec_ glyph)
 		{
-			glyph = PInvokeHelper.PtrToStructure<FT_GlyphSlotRec>((IntPtr)_rec.glyph);
+			glyph = *_rec.glyph;
 		}
 
 		public void GetGlyphMetrics(int glyphId, float fontSize, out int advance, out int x0, out int y0, out int x1, out int y1)
@@ -108,7 +109,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 			SetPixelSizes(0, fontSize);
 			LoadGlyph(glyphId);
 
-			FT_GlyphSlotRec glyph;
+			FT_GlyphSlotRec_ glyph;
 			GetCurrentGlyph(out glyph);
 			advance = (int)glyph.advance.x >> 6;
 			x0 = (int)glyph.metrics.horiBearingX >> 6;
@@ -120,7 +121,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 		public unsafe void GetMetricsForSize(float fontSize, out int ascent, out int descent, out int lineHeight)
 		{
 			SetPixelSizes(0, fontSize);
-			var sizeRec = PInvokeHelper.PtrToStructure<FT_SizeRec>((IntPtr)_rec.size);
+			var sizeRec = *_rec.size;
 
 			ascent = (int)sizeRec.metrics.ascender >> 6;
 			descent = (int)sizeRec.metrics.descender >> 6;
@@ -132,9 +133,9 @@ namespace FontStashSharp.Rasterizers.FreeType
 			SetPixelSizes(0, fontSize);
 			LoadGlyph(glyphId);
 
-			FT.FT_Render_Glyph((IntPtr)_rec.glyph, FT_Render_Mode.FT_RENDER_MODE_NORMAL);
+			FT.FT_Render_Glyph(_rec.glyph, FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
 
-			FT_GlyphSlotRec glyph;
+			FT_GlyphSlotRec_ glyph;
 			GetCurrentGlyph(out glyph);
 			var ftbmp = glyph.bitmap;
 

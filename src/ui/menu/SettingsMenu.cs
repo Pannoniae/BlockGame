@@ -86,7 +86,7 @@ public class SettingsMenu : Menu {
         settingElements.Add(fxaa);
         addElement(fxaa);
 
-        var renderDistance = new Slider(this, "renderDistance", 2, 32, 1, settings.renderDistance);
+        var renderDistance = new Slider(this, "renderDistance", 2, 96, 1, settings.renderDistance);
         renderDistance.setPosition(new Rectangle(0, 112, 128, 16));
         renderDistance.topCentre();
         renderDistance.tooltip = "The maximum distance at which blocks are rendered.\nHigher values may reduce performance.";
