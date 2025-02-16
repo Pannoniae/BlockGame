@@ -9,6 +9,7 @@ public static class MemoryUtils {
 
         ArrayBlockData.blockPool.trim();
         ArrayBlockData.lightPool.trim();
+        Game.GL.ReleaseShaderCompiler();
 
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");
         var sw = Stopwatch.StartNew();

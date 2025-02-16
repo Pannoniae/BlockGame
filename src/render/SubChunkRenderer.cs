@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -434,7 +435,7 @@ public sealed class SubChunkRenderer : IDisposable {
             ref ushort neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
             ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
 
-            Block bl = Blocks.get(blockArrayRef);
+
             switch (mode) {
                 case VertexConstructionMode.OPAQUE:
                     if (notOpaqueBlocks(blockArrayRef)) {
@@ -442,7 +443,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     }
                     break;
                 case VertexConstructionMode.TRANSLUCENT:
-                    if (!Blocks.isTranslucent(blockArrayRef)) {
+                    if (Blocks.notTranslucent(blockArrayRef)) {
                         goto increment;
                     }
                     break;
@@ -453,8 +454,10 @@ public sealed class SubChunkRenderer : IDisposable {
             //float wy = section.chunkY * Chunk.CHUNKSIZE + y;
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
+            var bl = Blocks.get(blockArrayRef);
+
             if (bl.customRender) {
-                var writtenIndices = bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
+                bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
                 goto increment;
             }
 
