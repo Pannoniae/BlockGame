@@ -9,8 +9,10 @@
       <env name="MALLOC_ARENA_MAX" value="2" />
     </envs>
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="ENV_FILE_PATHS" value="" />
     <option name="USE_MONO" value="0" />
     <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="AUTO_ATTACH_CHILDREN" value="1" />
     <option name="PROJECT_PATH" value="$PROJECT_DIR$/BlockGame.csproj" />
     <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
     <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />

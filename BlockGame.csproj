@@ -112,6 +112,7 @@
 
     <ItemGroup>
         <ProjectReference Include="lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
+        <ProjectReference Include="lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
         <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
         <ProjectReference Include="lib\TrippyGL\TrippyGL.csproj"/>
         <ProjectReference Include="lib\TrippyGL.Fonts\TrippyGL.Fonts.csproj"/>

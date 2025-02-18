@@ -1,4 +1,6 @@
 using FontStashSharp;
+using FontStashSharp.Rasterizers.FreeType;
+using FontStashSharp.Rasterizers.StbTrueTypeSharp;
 
 namespace BlockGame.util.font;
 
@@ -11,7 +13,7 @@ public class FontLoader {
     public FontLoader(string name, string name2) {
         var settings = new FontSystemSettings
         {
-            FontLoader = new BDFLoader(),
+            FontLoader = new FreeTypeLoader(),
             TextureWidth = 256,
             TextureHeight = 256
         };

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 
 namespace FontStashSharp.Rasterizers.FreeType
 {
-	unsafe internal class FreeTypeSource: IFontSource
+	internal unsafe sealed class FreeTypeSource: IFontSource
 	{
-		private static FT_LibraryRec_** _libraryHandle;
+		private static FT_LibraryRec_* _libraryHandle;
 		private GCHandle _memoryHandle;
-		private FT_FaceRec_** _faceHandle;
+		private FT_FaceRec_* _faceHandle;
 		private readonly FT_FaceRec_ _rec;
 
 
@@ -19,25 +19,30 @@ namespace FontStashSharp.Rasterizers.FreeType
 		{
 			FT_Error err;
 			if (_libraryHandle == (FT_LibraryRec_**)0) {
-				FT_LibraryRec_** libraryRef = (FT_LibraryRec_**)0;
-				err = FT.FT_Init_FreeType(libraryRef!);
+				fixed (FT_LibraryRec_** a = &_libraryHandle) {
+					FT_LibraryRec_** libraryRef = a;
+					err = FT.FT_Init_FreeType(libraryRef!);
 
-				if (err != FT_Error.FT_Err_Ok)
-					throw new FreeTypeException(err);
 
-				_libraryHandle = libraryRef;
+					if (err != FT_Error.FT_Err_Ok)
+						throw new FreeTypeException(err);
+
+					_libraryHandle = *libraryRef;
+				}
 			}
 
 			_memoryHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
-			FT_FaceRec_** faceRef = null;
-			err = FT.FT_New_Memory_Face(*_libraryHandle, (byte*)_memoryHandle.AddrOfPinnedObject(), data.Length, 0, faceRef);
+			//FT_FaceRec_** faceRef = null;
+			fixed (FT_FaceRec_** a = &_faceHandle) {
+				err = FT.FT_New_Memory_Face(_libraryHandle, (byte*)_memoryHandle.AddrOfPinnedObject(), data.Length, 0, a);
+			}
 
 			if (err != FT_Error.FT_Err_Ok)
 				throw new FreeTypeException(err);
 
-			_faceHandle = faceRef;
-			_rec = **_faceHandle;
+			//_faceHandle = faceRef;
+			_rec = *_faceHandle;
 		}
 
 		~FreeTypeSource()
@@ -45,12 +50,12 @@ namespace FontStashSharp.Rasterizers.FreeType
 			Dispose(false);
 		}
 
-		protected virtual void Dispose(bool disposing)
+		private void Dispose(bool disposing)
 		{
 			if (_faceHandle != (void*)0)
 			{
-				FT.FT_Done_Face(*_faceHandle);
-				_faceHandle = (FT_FaceRec_**)0;
+				FT.FT_Done_Face(_faceHandle);
+				_faceHandle = (FT_FaceRec_*)0;
 			}
 
 			if (_memoryHandle.IsAllocated)
@@ -65,7 +70,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 
 		public int? GetGlyphId(int codepoint)
 		{
-			var result = FT.FT_Get_Char_Index(*_faceHandle, (uint)codepoint);
+			var result = FT.FT_Get_Char_Index(_faceHandle, (uint)codepoint);
 			if (result == 0)
 			{
 				return null;
@@ -77,7 +82,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 		public int GetGlyphKernAdvance(int previousGlyphId, int glyphId, float fontSize)
 		{
 			FT_Vector_* kerning = (FT_Vector_*)0;
-			if (FT.FT_Get_Kerning(*_faceHandle, (uint)previousGlyphId, (uint)glyphId, 0, kerning) != FT_Error.FT_Err_Ok)
+			if (FT.FT_Get_Kerning(_faceHandle, (uint)previousGlyphId, (uint)glyphId, 0, kerning) != FT_Error.FT_Err_Ok)
 			{
 				return 0;
 			}
@@ -87,14 +92,14 @@ namespace FontStashSharp.Rasterizers.FreeType
 
 		private void SetPixelSizes(float width, float height)
 		{
-			var err = FT.FT_Set_Pixel_Sizes(*_faceHandle, (uint)width, (uint)height);
+			var err = FT.FT_Set_Pixel_Sizes(_faceHandle, (uint)width, (uint)height);
 			if (err != FT_Error.FT_Err_Ok)
 				throw new FreeTypeException(err);
 		}
 
 		private void LoadGlyph(int glyphId)
 		{
-			var err = FT.FT_Load_Glyph(*_faceHandle, (uint)glyphId, 0 | FT.FT_LOAD_TARGET_NORMAL);
+			var err = FT.FT_Load_Glyph(_faceHandle, (uint)glyphId, (FT_LOAD)(0 | FT.FT_LOAD_TARGET_MONO));
 			if (err != FT_Error.FT_Err_Ok)
 				throw new FreeTypeException(err);
 		}
@@ -133,13 +138,13 @@ namespace FontStashSharp.Rasterizers.FreeType
 			SetPixelSizes(0, fontSize);
 			LoadGlyph(glyphId);
 
-			FT.FT_Render_Glyph(_rec.glyph, FT_Render_Mode_.FT_RENDER_MODE_NORMAL);
+			FT.FT_Render_Glyph(_rec.glyph, FT_Render_Mode_.FT_RENDER_MODE_MONO);
 
 			FT_GlyphSlotRec_ glyph;
 			GetCurrentGlyph(out glyph);
 			var ftbmp = glyph.bitmap;
 
-			fixed (byte* bptr = buffer)
+			/*fixed (byte* bptr = buffer)
 			{
 				for (var y = 0; y < outHeight; ++y)
 				{
@@ -149,7 +154,24 @@ namespace FontStashSharp.Rasterizers.FreeType
 					byte* src = (byte*)ftbmp.buffer + y * ftbmp.pitch;
 					for (var x = 0; x < outWidth; ++x)
 					{
-						*dst++ = *src++;
+						*dst++ = (byte)(*src++ * 255);
+					}
+				}
+			}*/
+			fixed (byte* bptr = buffer)
+			{
+				for (var y = 0; y < outHeight; ++y)
+				{
+					var pos = (y * outStride) + startIndex;
+
+					byte* dst = bptr + pos;
+					byte* src = (byte*)ftbmp.buffer + y * ftbmp.pitch;
+					byte bit = *src;
+					for (var x = 0; x < outWidth; ++x, bit <<= 1)
+					{
+						if ((x & 7) == 0)
+							bit = *src++;
+						*dst++ = (byte)((bit & 128) == 0 ? 0 : 255);
 					}
 				}
 			}
