@@ -112,7 +112,6 @@ public class Particle : Entity {
         position.X += velocity.X * dt;
         foreach (var blockAABB in collisionTargets) {
             var aabbX = calcAABB(new Vector3D(position.X, position.Y, position.Z));
-            var sneakaabbX = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbX, blockAABB)) {
                 collisionXThisFrame = true;
                 // left side

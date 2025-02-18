@@ -310,7 +310,7 @@ public partial class Game {
 
         currentScreen = new MainMenuScreen();
         setMenu(Menu.LOADING);
-        fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
+        fontLoader = new FontLoader("fonts/unifont-15.1.04.ttf", "fonts/unifont-15.1.04.ttf");
         gui.loadFont(13);
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
