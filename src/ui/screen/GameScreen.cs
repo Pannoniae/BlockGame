@@ -240,6 +240,17 @@ public class GameScreen : Screen {
             case Key.F9:
                 MemoryUtils.cleanGC();
                 break;
+            case Key.F10: {
+                // print vmem
+                var vmem = MemoryUtils.getVRAMUsage();
+                if (vmem == -1) {
+                    Console.Out.WriteLine("Can't get VRAM usage");
+                }
+                else {
+                    Console.Out.WriteLine($"VRAM usage: {vmem / (1024 * 1024)}MB");
+                }
+                break;
+            }
             case Key.E: {
                 if (world.inMenu) {
                     backToGame();

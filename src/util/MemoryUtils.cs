@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using Silk.NET.OpenGL;
 
 namespace BlockGame.util;
 
@@ -107,6 +108,40 @@ public static class MemoryUtils {
                 Console.WriteLine(exc);
             }
         }
+    }
+
+    // Get VRAM usage in bytes. Returns -1 if not supported.
+    public static long getVRAMUsage() {
+        var gl = Game.GL;
+        if (gl.IsExtensionPresent("GL_NVX_gpu_memory_info")) {
+            // Hell yeah, NVidia card
+            const uint NVX_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX = 0x9047;
+            const uint NVX_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX = 0x9049;
+            const uint NVX_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX = 0x904B;
+
+            gl.GetInteger((GetPName)NVX_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, out int totalMemKb);
+            gl.GetInteger((GetPName)NVX_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, out int freeMemKb);
+
+            // KB to bytes
+            return (totalMemKb - freeMemKb) * 1024L;
+        }
+
+        if (gl.IsExtensionPresent("GL_ATI_meminfo")) {
+            const uint ATI_MEMINFO_VBO_FREE_MEMORY_ATI = 0x87FB;
+
+            Span<int> memInfo = stackalloc int[4];
+            gl.GetInteger((GetPName)ATI_MEMINFO_VBO_FREE_MEMORY_ATI, memInfo);
+
+            int totalMemKb = memInfo[0]; // Total free memory
+
+            // This is a bit of a hack since we can only get free mem, not total
+            // Most AMD GPUs have 4-16GB VRAM, let's guesstimate 8GB
+            const int APPROX_TOTAL_MB = 8 * 1024;
+            return (APPROX_TOTAL_MB - (totalMemKb / 1024)) * 1024L * 1024L;
+        }
+
+        // Welp, we're fucked. No supported method found.
+        return -1;
     }
 
     public class WindowsMemoryUtility {
