@@ -1,5 +1,5 @@
 name: cats
-about: Adding cats!
+description: Adding cats!
 body:
 - type: checkboxes
   id: cat-preferences
