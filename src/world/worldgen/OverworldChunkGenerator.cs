@@ -15,40 +15,57 @@ public class OverworldChunkGenerator : ChunkGenerator {
     public void generate(ChunkCoord coord) {
         var world = generator.world;
         var chunk = world.getChunk(coord);
+
+        // terrain heights buffer - calc once, use twice, profit
+        var densityMap = new float[Chunk.CHUNKSIZE, Chunk.CHUNKSIZE];
+
+        // pass 1: calculate all the noise and stuff it in our buffer
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
-                // -1 to 1
-                // transform to the range -25 to 25, add 80 for 50 - 105
+
                 var aux = generator.getNoise(generator.auxNoise, worldPos.X, worldPos.Z, 1, 0.5f);
                 var mountainness = MathF.Pow((generator.getNoise(generator.terrainNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 1) / 2f, 2);
                 var flatNoise = generator.getNoise(generator.terrainNoise, worldPos.X / 3f + aux * 5 + 1, worldPos.Z / 3f + aux * 5 + 1, 5, 0.5f);
-                //Console.Out.WriteLine(flatNoise);
-                // \sin\left(x\right)\cdot\ 0.8+\operatorname{sign}\left(x\right)\cdot x\cdot0.3
-                // sin(x) * 0.8 + sign(x) * x * 0.3
+
                 // this rescales the noise so there's more above than below
                 flatNoise = MathF.Sin(flatNoise) * 0.8f + MathF.Sign(flatNoise) * flatNoise * 0.3f;
-                //Console.Out.WriteLine(mountainness);
                 flatNoise *= mountainness * 64;
                 flatNoise += 64;
-                //Console.Out.WriteLine(flatNoise);
+
+                // stash for later
+                densityMap[x, z] = flatNoise;
+            }
+        }
+
+        // pass 2: lay down the foundation (stone)
+        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var flatNoise = densityMap[x, z];
 
                 chunk.setBlockFast(x, 0, z, Blocks.HELLSTONE.id);
                 // hack until we can propagate them properly AND cheaply
                 chunk.setBlockLight(x, 0, z, Blocks.HELLSTONE.lightLevel);
 
-                for (int y = 1; y < World.WORLDHEIGHT * Chunk.CHUNKSIZE; y++) {
+                for (int y = 1; y < World.WORLDHEIGHT; y++) {
                     if (y < flatNoise) {
                         chunk.setBlockFast(x, y, z, Blocks.STONE.id);
                         // set heightmap
                         chunk.addToHeightMap(x, y, z);
                     }
                     else {
-                        break;
+                        break; // bail once we're above ground
                     }
                 }
+            }
+        }
+
+        // pass 3: decorate - dirt, water, grass
+        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 int height = chunk.heightMap.get(x, z);
+
                 // replace top layers with dirt
                 var amt = generator.getNoise(generator.auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
                 for (int yy = height - 1; yy > height - 1 - amt; yy--) {
@@ -68,6 +85,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 }
             }
         }
+
         foreach (var subChunk in chunk.subChunks) {
             if (subChunk.blocks.inited) {
                 subChunk.blocks.refreshCounts();

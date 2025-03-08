@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BlockGame" type="DotNetProject" factoryName=".NET Project">
-    <option name="EXE_PATH" value="$PROJECT_DIR$/bin/Debug/net9.0/BlockGame" />
+    <option name="EXE_PATH" value="$PROJECT_DIR$/bin/Release/net9.0/BlockGame" />
     <option name="PROGRAM_PARAMETERS" value="--dev" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin/Debug/net9.0" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin/Release/net9.0" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <envs>
       <env name="DOTNET_EnableWriteXorExecute" value="0" />

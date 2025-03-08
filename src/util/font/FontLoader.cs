@@ -1,4 +1,6 @@
 using FontStashSharp;
+using FontStashSharp.Rasterizers.FreeType;
+using FontStashSharp.Rasterizers.StbTrueTypeSharp;
 
 namespace BlockGame.util.font;
 

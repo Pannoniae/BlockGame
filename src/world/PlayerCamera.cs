@@ -90,6 +90,11 @@ public class PlayerCamera {
         return Vector3.Normalize(cameraDirection);
     }
 
+
+
+    /// <summary>
+    /// Returns a view matrix that moves with the player.
+    /// </summary>
     public Matrix4x4 getViewMatrix(double interp) {
         var interpPos = renderPosition(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
@@ -102,6 +107,9 @@ public class PlayerCamera {
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
 
+    /// <summary>
+    /// Returns a view matrix that doesn't move with the player.
+    /// </summary>
     public Matrix4x4 getStaticViewMatrix(double interp) {
         var interpPos = Vector3.Zero;
         var iBob = float.DegreesToRadians(renderBob(interp));
@@ -126,6 +134,10 @@ public class PlayerCamera {
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
 
+
+    /// <summary>
+    /// Gets the view matrix for the held hand/block.
+    /// </summary>
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);

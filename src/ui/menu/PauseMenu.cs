@@ -21,6 +21,9 @@ namespace BlockGame.ui {
         }
 
         public static void returnToMainMenu(GUIElement guiElement) {
+            // save world
+            Screen.GAME_SCREEN.world.worldIO.save(Screen.GAME_SCREEN.world, Screen.GAME_SCREEN.world.name);
+
             Game.instance.executeOnMainThread(() => Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN));
         }
 

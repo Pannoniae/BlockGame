@@ -56,6 +56,10 @@ public class WorldIO {
         NBT.writeFile(nbt, pathStr);
     }
 
+    public static void deleteLevel(string level) {
+        Directory.Delete($"level/{level}", true);
+    }
+
     private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
         var chunkTag = new NBTCompound("chunk");
         chunkTag.addInt("posX", chunk.coord.x);

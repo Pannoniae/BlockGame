@@ -104,3 +104,41 @@ public class PlayerRenderer {
         }
     }
 }
+
+public class MatrixStack2 {
+    private Stack<Matrix4x4> _stack = new();
+
+    public MatrixStack2() {
+        _stack.Push(Matrix4x4.Identity);
+    }
+
+    public Matrix4x4 Current => _stack.Peek();
+
+    public void Push() => _stack.Push(Current);
+
+    public void Pop() => _stack.Pop();
+
+    public void Scale(float scale, Vector3 center) =>
+        _stack.Push(Current * Matrix4x4.CreateScale(scale, center));
+
+    public void RotateX(float angle, Vector3 center) =>
+        _stack.Push(Current * Matrix4x4.CreateRotationX(angle, center));
+
+    public void RotateX(float angle) =>
+        _stack.Push(Current * Matrix4x4.CreateRotationX(angle));
+
+    public void RotateY(float angle, Vector3 center) =>
+        _stack.Push(Current * Matrix4x4.CreateRotationY(angle, center));
+
+    public void RotateY(float angle) =>
+        _stack.Push(Current * Matrix4x4.CreateRotationY(angle));
+
+    public void RotateZ(float angle, Vector3 center) =>
+        _stack.Push(Current * Matrix4x4.CreateRotationZ(angle, center));
+
+    public void RotateZ(float angle) =>
+        _stack.Push(Current * Matrix4x4.CreateRotationZ(angle));
+
+    public void Translate(Vector3 translation) =>
+        _stack.Push(Current * Matrix4x4.CreateTranslation(translation));
+}

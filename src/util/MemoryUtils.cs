@@ -12,6 +12,18 @@ public static class MemoryUtils {
         ArrayBlockData.lightPool.trim();
         Game.GL.ReleaseShaderCompiler();
 
+        // query binary formats
+
+        var gl = Game.GL;
+        gl.GetInteger(GetPName.NumProgramBinaryFormats, out int numFormats);
+        Span<int> formats = stackalloc int[numFormats];
+        gl.GetInteger(GetPName.ProgramBinaryFormats, formats);
+        Console.WriteLine($"Num program binary formats: {numFormats}");
+        for (int i = 0; i < numFormats; i++) {
+            Console.WriteLine($"Program binary format {i}: {formats[i]}");
+        }
+
+
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");
         var sw = Stopwatch.StartNew();
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
@@ -110,7 +122,7 @@ public static class MemoryUtils {
         }
     }
 
-    // Get VRAM usage in bytes. Returns -1 if not supported.
+    /// Get VRAM usage in bytes. Returns -1 if not supported.
     public static long getVRAMUsage() {
         var gl = Game.GL;
         if (gl.IsExtensionPresent("GL_NVX_gpu_memory_info")) {

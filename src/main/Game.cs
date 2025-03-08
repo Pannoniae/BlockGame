@@ -173,7 +173,7 @@ public partial class Game {
         // here, Glfw.GetApi() does not work, you have to use THIS so the context flags get picked up
         // which moron thought it shouldn't work?
         #if !DEBUG
-        GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
+        //GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
         #endif
         window = Window.Create(windowOptions);
         setTitle("BlockGame", splash, "");

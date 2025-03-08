@@ -11,7 +11,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 		private static FT_LibraryRec_** _libraryHandle;
 		private GCHandle _memoryHandle;
 		private FT_FaceRec_** _faceHandle;
-		private readonly FT_FaceRec_ _rec;
+		private readonly FT_FaceRec_  _rec;
 
 
 

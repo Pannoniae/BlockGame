@@ -20,6 +20,28 @@ public class LevelSelectMenu : Menu {
             addElement(levelButton);
         }
 
+        // delete levels
+        var deleteButton = new Button(this, $"deleteButton", false, "Delete levels") {
+            horizontalAnchor = HorizontalAnchor.RIGHT,
+            verticalAnchor = VerticalAnchor.TOP
+        };
+        deleteButton.setPosition(new Vector2I(0, 32 + NUM_LEVELS * 24 + 16));
+        deleteButton.topCentre();
+        deleteButton.clicked += _ => {
+            for (int i = 0; i < NUM_LEVELS; i++) {
+                var levelIndex = i + 1;
+                if (worldExists[i]) {
+                    worldExists[i] = false;
+                    elements[$"level{levelIndex}"].text = "-empty-";
+                    WorldIO.deleteLevel($"level{levelIndex}");
+
+                    // refresh elements
+                    activate();
+                }
+            }
+        };
+        addElement(deleteButton);
+
         var backButton = new Button(this, "back", false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM

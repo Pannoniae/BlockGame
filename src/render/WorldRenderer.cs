@@ -4,10 +4,10 @@ using BlockGame.ui;
 using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.NV;
 using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
+using Color = Molten.Color;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
@@ -50,6 +50,8 @@ public class WorldRenderer {
 
     public static BoundingFrustum frustum;
 
+    private InstantDrawColour idc = new InstantDrawColour(256);
+
 
     public Shader outline;
     private uint outlineVao;
@@ -59,7 +61,7 @@ public class WorldRenderer {
     private int outline_uView;
     private int outline_uProjection;
 
-    public static Color4b defaultClearColour = new Color4b(148, 223, 255);
+    public static Color4b defaultClearColour = new Color4b(178, 228, 255);
     public static Color4b defaultFogColour = new Color4b(210, 210, 210);
 
     public bool fastChunkSwitch = true;
@@ -180,11 +182,21 @@ public class WorldRenderer {
         GL.ActiveTexture(TextureUnit.Texture1);
         GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
 
+
+
+        GL.BindVertexArray(chunkVAO);
+        bindQuad();
+
+
+        GL.DepthMask(false);
+        // render sky
+        renderSky(interp);
+        GL.DepthMask(true);
+
         // no blending solid shit!
         GL.Disable(EnableCap.Blend);
 
         GL.BindVertexArray(chunkVAO);
-        bindQuad();
 
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
@@ -261,6 +273,59 @@ public class WorldRenderer {
         GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
         world.particleManager.render(interp);
+    }
+
+    private void renderSky(double interp) {
+        // render a flat plane at y = 16
+        var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
+        var modelView = world.player.camera.getStaticViewMatrix(interp);
+        var sky = new Vector3(0, 16, 0);
+        var skySize = 1024;
+
+        // slightly bluer than the default clear colour
+        var skyColour = new Color(100, 180, 255);
+        // deep blue
+        var underSkyColour = new Color(90, 165, 255);
+
+        // Enable fog for sky rendering
+        idc.EnableFog(true);
+        idc.SetFogColor(defaultClearColour.ToVector4());
+
+        var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
+
+        // Set fog distance parameters - start fog closer to camera for sky edges
+        idc.SetFogDistance(rd * 0.005f, rd);
+
+        InstantDrawColour.instantShader.use();
+        InstantDrawColour.instantShader.setUniform(InstantDrawColour.uMVP, viewProj);
+        InstantDrawColour.instantShader.setUniform(InstantDrawColour.uModelView, modelView);
+
+        // add 6 vertices for the quad
+        idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
+        idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z + skySize, skyColour));
+        idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z + skySize, skyColour));
+        idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z - skySize, skyColour));
+        idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
+        idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z + skySize, skyColour));
+        GL.Disable(EnableCap.CullFace);
+        idc.finish();
+
+
+        /*var underSky = new Vector3(0, -8, 0);
+
+        // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
+        idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
+
+        idc.finish();*/
+
+        // Disable fog after rendering sky
+        idc.EnableFog(false);
+        GL.Enable(EnableCap.CullFace);
     }
 
     public void initBlockOutline() {
