@@ -151,7 +151,7 @@ public class WorldRenderer {
 
         // the problem is that with two chunks, the two values would be the same. so let's adjust them if so
         var fogMaxValue = dd - 16;
-        var fogMinValue = (int)(dd * 0.5f);
+        var fogMinValue = (int)(dd * 0.25f);
 
         if (fogMaxValue <= fogMinValue) {
             fogMinValue = fogMaxValue - 16;
@@ -279,8 +279,8 @@ public class WorldRenderer {
         // render a flat plane at y = 16
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var modelView = world.player.camera.getStaticViewMatrix(interp);
-        var sky = new Vector3(0, 16, 0);
-        var skySize = 1024;
+        var sky = new Vector3(0, 8, 0);
+        const int skySize = 512;
 
         // slightly bluer than the default clear colour
         var skyColour = new Color(100, 180, 255);
