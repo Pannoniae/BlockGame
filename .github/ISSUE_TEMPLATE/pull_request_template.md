@@ -1,8 +1,8 @@
 ---
-name: cats
-about: Adding cats!
+name: catchange
+about: Change an existing cat.
 
 ---
 
 # Cat Change Description
-This PR is to add a new cat type.
+This PR is to change an existing cat type.
