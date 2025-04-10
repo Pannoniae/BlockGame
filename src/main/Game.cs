@@ -242,6 +242,8 @@ public partial class Game {
         GD.PolygonFrontFace = PolygonFace.CounterClockwise;
         GD.CullFaceMode = CullingMode.CullBack;
 
+        GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
+
 
         GLTracker = new GLStateTracker(GL, GD);
 
@@ -522,7 +524,7 @@ public partial class Game {
         }
     }
 
-    unsafe private void genFramebuffer() {
+    private unsafe void genFramebuffer() {
         GL.DeleteFramebuffer(fbo);
         fbo = GL.GenFramebuffer();
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);

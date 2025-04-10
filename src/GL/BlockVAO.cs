@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using CircularBuffer;
 using Molten;
 using Silk.NET.OpenGL;
 using TrippyGL;

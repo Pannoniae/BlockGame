@@ -8,9 +8,6 @@
 * [Contributing](#contributing)
 * [Acknowledgments](#acknowledgments)
 
-## Temporary notice
-Just so y'all aren't left hanging; development's a bit slow now because I'm in my final year in uni (pray for me I'll get thru my diss!) <3 Don't worry, nothing's abandoned. This ain't a tech demo or a fancy-ass renderer, I'm actually making a game :P
-
 ## What?
 
 This is a game made of blocks where you can do anything you want, with no one to stop you. (Not even lawyers!)
