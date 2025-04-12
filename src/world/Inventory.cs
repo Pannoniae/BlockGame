@@ -14,7 +14,7 @@ public class Inventory {
             slots[i] = new ItemStack((ushort)(i + 1), Random.Shared.Next(15));
         }
         // replace water with something useful
-        //slots[Blocks.WATER.id - 1] = new ItemStack(Blocks.LEAVES.id, 1);
+        //slots[Block.WATER.id - 1] = new ItemStack(Block.LEAVES.id, 1);
     }
 
     public ItemStack getSelected() {

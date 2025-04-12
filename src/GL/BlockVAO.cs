@@ -1,13 +1,11 @@
-using System.Numerics;
 using System.Runtime.InteropServices;
-using CircularBuffer;
 using Molten;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using AttributeType = TrippyGL.AttributeType;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public class BlockVAO : VAO {
     public uint handle;
@@ -15,7 +13,7 @@ public class BlockVAO : VAO {
     public uint ibo;
     public uint count;
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
 
     public BlockVAO() {
         GL = Game.GL;

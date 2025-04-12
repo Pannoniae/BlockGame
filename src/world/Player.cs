@@ -76,7 +76,7 @@ public class Player : Entity {
         clamp(dt);
 
         blockAtFeet = world.getBlock(feetPosition.toBlockPos());
-        inLiquid = Blocks.get(blockAtFeet).liquid;
+        inLiquid = Block.get(blockAtFeet).liquid;
 
 
         collisionAndSneaking(dt);
@@ -241,8 +241,8 @@ public class Player : Entity {
         var torsoBlockPos = new Vector3D(feetPosition.X, feetPosition.Y + 1, feetPosition.Z).toBlockPos();
         var torso = world.getBlock(torsoBlockPos);
 
-        var feetLiquid = Blocks.get(feet).liquid;
-        var torsoLiquid = Blocks.get(torso).liquid;
+        var feetLiquid = Block.get(feet).liquid;
+        var torsoLiquid = Block.get(torso).liquid;
 
         // if no liquid at feet, don't bother
         if (!feetLiquid) {
@@ -336,7 +336,7 @@ public class Player : Entity {
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
             hotbar.selected = (ushort)(key - Key.Number0 - 1);
-            if (!Blocks.tryGet(hotbar.getSelected().block, out _)) {
+            if (!Block.tryGet(hotbar.getSelected().block, out _)) {
                 hotbar.selected = 1;
             }
         }
@@ -429,7 +429,7 @@ public class Player : Entity {
         if (Game.instance.targetedPos.HasValue) {
             setSwinging(true);
             var pos = Game.instance.targetedPos.Value;
-            var bl = Blocks.get(world.getBlock(pos));
+            var bl = Block.get(world.getBlock(pos));
             bl.crack(world, pos.X, pos.Y, pos.Z);
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
             // we don't set it to anything, we just propagate from neighbours

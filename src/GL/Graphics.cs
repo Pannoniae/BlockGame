@@ -1,6 +1,6 @@
 using TrippyGL;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public class Graphics {
     public readonly TextureBatcher mainBatch;

@@ -7,6 +7,7 @@ using Molten.DoublePrecision;
 using Silk.NET.OpenGL;
 using TrippyGL;
 
+
 namespace BlockGame.ui;
 
 public class IngameMenu : Menu, IDisposable {
@@ -27,7 +28,7 @@ public class IngameMenu : Menu, IDisposable {
         debugStrG.Dispose();
         debugStrG = ZString.CreateStringBuilder();
         // then add the GUI
-        var version = Text.createText(this, "version", new Vector2I(2, 2), "BlockGame v0.0.2");
+        var version = Text.createText(this, "version", new Vector2I(2, 2), Game.VERSION);
         version.shadowed = true;
         addElement(version);
         var hotbar = new Hotbar(this, "hotbar", new Vector2I(0, -20)) {
@@ -53,7 +54,7 @@ public class IngameMenu : Menu, IDisposable {
                 new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
         }
         // Draw block display
-        var blockStr = Blocks.get(screen.world.player.hotbar.getSelected().block).name;
+        var blockStr = Block.get(screen.world.player.hotbar.getSelected().block).name;
         Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
             Color4b.White);
     }

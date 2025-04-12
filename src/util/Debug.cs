@@ -2,6 +2,7 @@ using BlockGame.ui;
 using Molten.DoublePrecision;
 using TrippyGL;
 
+
 namespace BlockGame.util;
 
 public class Debug {

@@ -4,7 +4,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public class BTextureAtlas : IDisposable {
     public uint handle;
@@ -12,7 +12,7 @@ public class BTextureAtlas : IDisposable {
 
     public string path;
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
 
     /// <summary>
     /// Image memory

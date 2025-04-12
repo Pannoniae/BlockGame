@@ -3,6 +3,7 @@ using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL;
 using TrippyGL;
+
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
@@ -57,7 +58,7 @@ public class SettingsMenu : Menu {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
             remeshIfRequired(settings.renderDistance);
         };
-        smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
+        smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between Block.";
         settingElements.Add(smoothLighting);
         addElement(smoothLighting);
 
@@ -82,7 +83,7 @@ public class SettingsMenu : Menu {
             settings.fxaa = fxaa.getIndex() == 1;
             Game.instance.updateFramebuffers();
         };
-        fxaa.tooltip = "FXAA is a fast anti-aliasing technique that smooths the jagged edges of blocks.";
+        fxaa.tooltip = "FXAA is a fast anti-aliasing technique that smooths the jagged edges of Block.";
         settingElements.Add(fxaa);
         addElement(fxaa);
 

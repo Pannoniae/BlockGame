@@ -5,6 +5,7 @@ using Silk.NET.Input;
 using Molten.DoublePrecision;
 using TrippyGL;
 
+
 namespace BlockGame.ui;
 
 public class ChatMenu : Menu {

@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using BlockGame.GL;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -14,14 +15,14 @@ public class RenderBlock {
 
     public static bool neighbourTest(World world, Vector3I pos, RawDirection direction) {
         var neighbour = world.getBlock(pos + Direction.getDirection(direction));
-        var isTranslucent = Blocks.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
+        var isTranslucent = Block.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
         var flag = false;
         switch (isTranslucent) {
             case false:
-                flag = Blocks.notSolid(neighbour) || !Blocks.isFullBlock(neighbour);
+                flag = Block.notSolid(neighbour) || !Block.isFullBlock(neighbour);
                 break;
             case true:
-                flag = !Blocks.isTranslucent(neighbour) && (Blocks.notSolid(neighbour) || !Blocks.isFullBlock(neighbour));
+                flag = !Block.isTranslucent(neighbour) && (Block.notSolid(neighbour) || !Block.isFullBlock(neighbour));
                 break;
         }
         return flag;
@@ -66,13 +67,13 @@ public class RenderBlock {
                     vector = Vector128.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)direction * 36 + j * 9));
 
                     // premultiply cuz its faster that way
-                    o = SubChunkRenderer.toByte(Blocks.isFullBlock(chunk.blocks[pos.X + vector[0], pos.Y + vector[1], pos.Z + vector[2]]));
+                    o = SubChunkRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[0], pos.Y + vector[1], pos.Z + vector[2]]));
                     l.First = chunk.blocks.getLight(pos.X + vector[0], pos.Y + vector[1], pos.Z + vector[2]);
 
-                    o |= (byte)(SubChunkRenderer.toByte(Blocks.isFullBlock(chunk.blocks[pos.X + vector[3], pos.Y + vector[4], pos.Z + vector[5]])) << 1);
+                    o |= (byte)(SubChunkRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[3], pos.Y + vector[4], pos.Z + vector[5]])) << 1);
                     l.Second = chunk.blocks.getLight(pos.X + vector[3], pos.Y + vector[4], pos.Z + vector[5]);
 
-                    o |= (byte)(SubChunkRenderer.toByte(Blocks.isFullBlock(chunk.blocks[pos.X + vector[6], pos.Y + vector[7], pos.Z + vector[8]])) << 2);
+                    o |= (byte)(SubChunkRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[6], pos.Y + vector[7], pos.Z + vector[8]])) << 2);
                     l.Third = chunk.blocks.getLight(pos.X + vector[6], pos.Y + vector[7], pos.Z + vector[8]);
 
                     // only apply AO if enabled

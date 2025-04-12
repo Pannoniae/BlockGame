@@ -1,3 +1,4 @@
+using BlockGame.GL;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
@@ -6,7 +7,7 @@ namespace BlockGame.model;
 
 /// <summary>
 /// A cube has 6 faces and 24 verts overall.
-/// It has a position, and vertices can are added to it.
+/// It has a position, and vertices can be added to it.
 /// </summary>
 public class Cube {
     public readonly BlockVertexTinted[] vertices = new BlockVertexTinted[24];

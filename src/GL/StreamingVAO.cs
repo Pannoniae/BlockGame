@@ -1,7 +1,7 @@
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 /// <summary>
 /// A VAO you can stream things into.
@@ -12,7 +12,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public uint ibo;
     public uint count;
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
 
     public StreamingVAO() {
         GL = Game.GL;

@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
@@ -16,6 +17,7 @@ using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using TrippyGL;
+using BatcherBeginMode = TrippyGL.BatcherBeginMode;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
@@ -24,6 +26,7 @@ using Image = SixLabors.ImageSharp.Image;
 using IWindow = Silk.NET.Windowing.IWindow;
 using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Shader = BlockGame.GL.Shader;
 using Sound = SFML.Audio.Sound;
 
 namespace BlockGame;
@@ -36,7 +39,7 @@ public partial class Game {
     public static int height;
 
     public static IWindow window;
-    public static GL GL = null!;
+    public static Silk.NET.OpenGL.GL GL = null!;
     public static GraphicsDevice GD = null!;
     public static IInputContext input = null!;
 
@@ -128,6 +131,12 @@ public partial class Game {
     private int g_mulReduceLocation;
     private int g_minReduceLocation;
     private int g_maxSpanLocation;
+
+#if DEBUG
+    public static string VERSION = "BlockGame v0.0.2 DEBUG";
+#else
+    public static string VERSION = "BlockGame v0.0.2";
+#endif
 
     private static readonly float g_lumaThreshold = 0.5f;
     private static readonly float g_mulReduceReciprocal = 8.0f;
@@ -319,7 +328,7 @@ public partial class Game {
 
         Console.Out.WriteLine("Loaded ASCII font.");
         switchTo(Menu.MAIN_MENU);
-        Blocks.postLoad();
+        Block.postLoad();
         resize(new Vector2D<int>(width, height));
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         MemoryUtils.cleanGC();

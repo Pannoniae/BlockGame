@@ -1,3 +1,4 @@
+using BlockGame.GL;
 using Silk.NET.OpenGL;
 using TrippyGL;
 using TrippyGL.ImageSharp;
@@ -7,7 +8,7 @@ namespace BlockGame.util;
 
 public class TextureManager {
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
     public GraphicsDevice GD;
 
     public Texture2D blockTextureGUI;
@@ -17,7 +18,7 @@ public class TextureManager {
 
     public Dictionary<string, Texture2D> textures = new();
 
-    public TextureManager(GL GL, GraphicsDevice GD) {
+    public TextureManager(Silk.NET.OpenGL.GL GL, GraphicsDevice GD) {
         this.GL = GL;
         this.GD = GD;
 

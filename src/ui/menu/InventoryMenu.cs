@@ -3,6 +3,7 @@ using BlockGame.util;
 using Molten;
 using TrippyGL;
 using TrippyGL.ImageSharp;
+
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
@@ -36,11 +37,11 @@ public class InventoryMenu : Menu {
         int i = 1;
         for (int y = 0; y < cols; y++) {
             for (int x = 0; x < rows; x++) {
-                while (Blocks.isBlacklisted(i)) {
+                while (Block.isBlacklisted(i)) {
                     i++;
                 }
 
-                int item = i > Blocks.maxBlock ? 0 : i;
+                int item = i > Block.maxBlock ? 0 : i;
 
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
@@ -65,7 +66,7 @@ public class InventoryMenu : Menu {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && slot.stack.block != Blocks.AIR.id) {
+            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && slot.stack.block != Block.AIR.id) {
                 Console.Out.WriteLine("clicked!");
                 // swap it to the hotbar for now
                 var player = Screen.GAME_SCREEN.world.player;

@@ -26,7 +26,7 @@ public class Raycast {
             dist += (cameraForward * Constants.RAYCASTSTEP).Length();
             currentPos += cameraForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();
-            var block = Blocks.get(world.getBlock(blockPos));
+            var block = Block.get(world.getBlock(blockPos));
             if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
                 // we also need to check if it's inside the selection of the block
                 if (AABB.isCollision(world.getSelectionAABB(blockPos.X, blockPos.Y, blockPos.Z, block) ?? AABB.empty, currentPos)) {

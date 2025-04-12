@@ -20,7 +20,7 @@ public class SubChunk : IDisposable {
 
     /// <summary>
     /// Sections start empty. If you place a block in them, they stop being empty and get array data.
-    /// They won't revert to being empty if you break the blocks. (maybe a low-priority background task later? I'm not gonna bother with it atm)
+    /// They won't revert to being empty if you break the Block. (maybe a low-priority background task later? I'm not gonna bother with it atm)
     /// </summary>
     public bool isEmpty => blocks.isEmpty();
 
@@ -57,9 +57,9 @@ public class SubChunk : IDisposable {
         var block = getBlockInChunk(x, y, z);
         var worldPos = World.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
 
-        if (block == Blocks.GRASS.id) {
-            if (y < 127 && Blocks.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
-                blocks[x, y, z] = Blocks.DIRT.id;
+        if (block == Block.GRASS.id) {
+            if (y < 127 && Block.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
+                blocks[x, y, z] = Block.DIRT.id;
                 renderer.meshChunk();
             }
             // spread grass to nearby dirt blocks
@@ -70,8 +70,8 @@ public class SubChunk : IDisposable {
             var y1 = coord.Y;
             var z1 = coord.Z;
             // if dirt + air above
-            if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Blocks.DIRT.id && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
-                world.setBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3, Blocks.GRASS.id);
+            if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Block.DIRT.id && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
+                world.setBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3, Block.GRASS.id);
                 renderer.meshChunk();
             }
         }

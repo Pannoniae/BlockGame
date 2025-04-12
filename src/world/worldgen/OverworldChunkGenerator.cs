@@ -43,13 +43,13 @@ public class OverworldChunkGenerator : ChunkGenerator {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var flatNoise = densityMap[x, z];
 
-                chunk.setBlockFast(x, 0, z, Blocks.HELLSTONE.id);
+                chunk.setBlockFast(x, 0, z, Block.HELLSTONE.id);
                 // hack until we can propagate them properly AND cheaply
-                chunk.setBlockLight(x, 0, z, Blocks.HELLSTONE.lightLevel);
+                chunk.setBlockLight(x, 0, z, Block.HELLSTONE.lightLevel);
 
                 for (int y = 1; y < World.WORLDHEIGHT; y++) {
                     if (y < flatNoise) {
-                        chunk.setBlockFast(x, y, z, Blocks.STONE.id);
+                        chunk.setBlockFast(x, y, z, Block.STONE.id);
                         // set heightmap
                         chunk.addToHeightMap(x, y, z);
                     }
@@ -69,19 +69,19 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 // replace top layers with dirt
                 var amt = generator.getNoise(generator.auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
                 for (int yy = height - 1; yy > height - 1 - amt; yy--) {
-                    chunk.setBlockFast(x, yy, z, Blocks.DIRT.id);
+                    chunk.setBlockFast(x, yy, z, Block.DIRT.id);
                 }
 
                 // water if low
                 if (height < WATER_LEVEL - 1) {
                     for (int y2 = height; y2 < WATER_LEVEL; y2++) {
-                        chunk.setBlockFast(x, y2, z, Blocks.WATER.id);
+                        chunk.setBlockFast(x, y2, z, Block.WATER.id);
                     }
                     // put sand on the lake floors
-                    chunk.setBlockFast(x, height, z, generator.getNoise2(worldPos.X, worldPos.Z) > 0 ? Blocks.SAND.id : Blocks.DIRT.id);
+                    chunk.setBlockFast(x, height, z, generator.getNoise2(worldPos.X, worldPos.Z) > 0 ? Block.SAND.id : Block.DIRT.id);
                 }
                 else {
-                    chunk.setBlockFast(x, height, z, Blocks.GRASS.id);
+                    chunk.setBlockFast(x, height, z, Block.GRASS.id);
                 }
             }
         }
@@ -122,7 +122,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
         var world = generator.world;
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
-            world.setBlock(x, y + i, z, Blocks.LOG.id);
+            world.setBlock(x, y + i, z, Block.LOG.id);
             // leaves, thick
             for (int x1 = -2; x1 <= 2; x1++) {
                 for (int z1 = -2; z1 <= 2; z1++) {
@@ -131,7 +131,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
                         continue;
                     }
                     for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
+                        world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                     }
                 }
             }
@@ -139,7 +139,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
             for (int x1 = -1; x1 <= 1; x1++) {
                 for (int z1 = -1; z1 <= 1; z1++) {
                     for (int y1 = randomNumber; y1 <= randomNumber+1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
+                        world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                     }
                 }
             }
@@ -148,7 +148,7 @@ public class OverworldChunkGenerator : ChunkGenerator {
     public void placeMapleTree(int x, int y, int z) {
         var world = generator.world;
         for (int i = 0; i < 7; i++) {
-            world.setBlock(x, y + i, z, Blocks.MAPLE_LOG.id);
+            world.setBlock(x, y + i, z, Block.MAPLE_LOG.id);
         }
         // leaves, thin on bottom
         for (int x2 = -1; x2 <= 1; x2++) {
@@ -156,14 +156,14 @@ public class OverworldChunkGenerator : ChunkGenerator {
             if (x2 == 0) {
                 continue;
             }
-            world.setBlock(x + x2, y + 4, z, Blocks.MAPLE_LEAVES.id);
+            world.setBlock(x + x2, y + 4, z, Block.MAPLE_LEAVES.id);
         }
         for (int z2 = -1; z2 <= 1; z2++) {
             //don't overwrite the trunk
             if (z2 == 0) {
                 continue;
             }
-            world.setBlock(x, y + 4, z + z2, Blocks.MAPLE_LEAVES.id);
+            world.setBlock(x, y + 4, z + z2, Block.MAPLE_LEAVES.id);
         }
         // leaves, thick
         for (int x2 = -1; x2 <= 1; x2++) {
@@ -173,17 +173,17 @@ public class OverworldChunkGenerator : ChunkGenerator {
                     continue;
                 }
                 for (int y2 = 5; y2 <= 6; y2++) {
-                    world.setBlock(x + x2, y + y2, z + z2, Blocks.MAPLE_LEAVES.id);
+                    world.setBlock(x + x2, y + y2, z + z2, Block.MAPLE_LEAVES.id);
                 }
             }
         }
         // leaves, thin on top
         for (int x2 = -1; x2 <= 1; x2++) {
-            world.setBlock(x + x2, y + 7, z, Blocks.MAPLE_LEAVES.id);
+            world.setBlock(x + x2, y + 7, z, Block.MAPLE_LEAVES.id);
         }
         for (int z2 = -1; z2 <= 1; z2++) {
-            world.setBlock(x, y + 7, z + z2, Blocks.MAPLE_LEAVES.id);
-            world.setBlock(x, y + 8, z, Blocks.MAPLE_LEAVES.id);
+            world.setBlock(x, y + 7, z + z2, Block.MAPLE_LEAVES.id);
+            world.setBlock(x, y + 8, z, Block.MAPLE_LEAVES.id);
         }
     }
 
@@ -192,30 +192,30 @@ public class OverworldChunkGenerator : ChunkGenerator {
         for (int i = 0; i <= 6; i++) {
             if (i == 0) {
                 for (int x3 = -1; x3 <= 1; x3++) {
-                    world.setBlock(x + x3, y, z, Blocks.LOG.id);
+                    world.setBlock(x + x3, y, z, Block.LOG.id);
                 }
                 for (int z3 = -1; z3 <= 1; z3++) {
-                    world.setBlock(x, y, z + z3, Blocks.LOG.id);
+                    world.setBlock(x, y, z + z3, Block.LOG.id);
                 }
             }
-            world.setBlock(x, y + i, z, Blocks.LOG.id);
+            world.setBlock(x, y + i, z, Block.LOG.id);
         }
 
-        world.setBlock(x + 1, y + 4, z, Blocks.LOG.id);
-        world.setBlock(x - 1, y + 6, z, Blocks.LOG.id);
-        world.setBlock(x - 1, y + 7, z, Blocks.LOG.id);
-        world.setBlock(x - 1, y + 8, z, Blocks.LOG.id);
+        world.setBlock(x + 1, y + 4, z, Block.LOG.id);
+        world.setBlock(x - 1, y + 6, z, Block.LOG.id);
+        world.setBlock(x - 1, y + 7, z, Block.LOG.id);
+        world.setBlock(x - 1, y + 8, z, Block.LOG.id);
 
         for (int x3 = 1; x3 <= 2; x3++) {
             for (int z3 = -1; z3 <= 1; z3++) {
-                world.setBlock(x + x3, y + 5, z + z3, Blocks.LEAVES.id);
+                world.setBlock(x + x3, y + 5, z + z3, Block.LEAVES.id);
             }
         }
 
-        world.setBlock(x + 3, y + 5, z, Blocks.LEAVES.id);
+        world.setBlock(x + 3, y + 5, z, Block.LEAVES.id);
 
         for (int x3 = 1; x3 <= 2; x3++) {
-            world.setBlock(x + x3, y + 6, z, Blocks.LEAVES.id);
+            world.setBlock(x + x3, y + 6, z, Block.LEAVES.id);
         }
 
         for (int x3 = -3; x3 <= 2; x3++) {
@@ -224,13 +224,13 @@ public class OverworldChunkGenerator : ChunkGenerator {
                 if (x3 == -1 && z3 == 0) {
                     continue;
                 }
-                world.setBlock(x + x3, y + 8, z + z3, Blocks.LEAVES.id);
+                world.setBlock(x + x3, y + 8, z + z3, Block.LEAVES.id);
             }
         }
 
         for (int x3 = -2; x3 <= 1; x3++) {
-            world.setBlock(x + x3, y + 9, z, Blocks.LEAVES.id);
+            world.setBlock(x + x3, y + 9, z, Block.LEAVES.id);
         }
-        world.setBlock(x - 1, y + 5, z, Blocks.LEAVES.id);
+        world.setBlock(x - 1, y + 5, z, Block.LEAVES.id);
     }
 }

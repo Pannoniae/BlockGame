@@ -1,10 +1,9 @@
-using Silk.NET.OpenGL;
 using TrippyGL;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public class GLStateTracker {
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
     public GraphicsDevice GD;
 
     public int activeTex;
@@ -21,7 +20,7 @@ public class GLStateTracker {
 
     public int VAO;
 
-    public GLStateTracker(GL gl, GraphicsDevice gd) {
+    public GLStateTracker(Silk.NET.OpenGL.GL gl, GraphicsDevice gd) {
         GL = gl;
         GD = gd;
     }

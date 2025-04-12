@@ -1,14 +1,67 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.util;
 
-public class Blocks {
+public class Block {
 
+    private const int particleCount = 4;
+
+    /// <summary>
+    /// Block ID
+    /// </summary>
+    public ushort id;
+
+    /// <summary>
+    /// Display name
+    /// </summary>
+    public string name;
+
+    public AABB? aabb;
+
+    public AABB? selectionAABB;
+
+    /// <summary>
+    /// Is fully transparent? (glass, leaves, etc.)
+    /// Is translucent? (partially transparent blocks like water)
+    /// </summary>
+    public BlockType type = BlockType.SOLID;
+
+    public BlockModel model;
+
+    /// <summary>
+    /// How much light does this block emit? (0 for none.)
+    /// </summary>
+    public byte lightLevel = 0;
+
+    public bool selection = true;
+    public bool collision = true;
+
+    /// <summary>
+    /// Is this block a liquid?
+    /// </summary>
+    public bool liquid = false;
+
+    [Obsolete("Use Block.isFullBlock() instead.")]
+    public bool fullBlock = true;
+
+    /// <summary>
+    /// If true, this block will tick randomly.
+    /// </summary>
+    public bool randomTick = false;
+
+    public const int atlasSize = 256;
+    public const int textureSize = 16;
+
+
+    public const float atlasRatio = textureSize / (float)atlasSize;
+    
+    
     private const int MAXBLOCKS = 128;
     public static Block?[] blocks = new Block[MAXBLOCKS];
 
@@ -18,6 +71,7 @@ public class Blocks {
     public static bool[] fullBlockCache = new bool[MAXBLOCKS];
     public static bool[] translucentCache = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
+    public static RenderType[] renderType = new RenderType[MAXBLOCKS];
 
     public static readonly int maxBlock = 45;
 
@@ -38,7 +92,7 @@ public class Blocks {
 
     public static void postLoad() {
         for (int i = 0; i <= maxBlock; i++) {
-            fullBlockCache[blocks[i].id] = blocks[i].isFullBlock;
+            fullBlockCache[blocks[i].id] = blocks[i].fullBlock;
             translucentCache[blocks[i].id] = blocks[i].type == BlockType.TRANSLUCENT;
         }
         inventoryBlacklist[38] = true;
@@ -155,66 +209,6 @@ public class Blocks {
     public static bool hasCollision(Block block) {
         return block.id != 0 && block.collision;
     }
-}
-
-public class Block {
-
-    private const int particleCount = 4;
-
-    /// <summary>
-    /// Block ID
-    /// </summary>
-    public ushort id;
-
-    /// <summary>
-    /// Display name
-    /// </summary>
-    public string name;
-
-    public AABB? aabb;
-
-    public AABB? selectionAABB;
-
-    /// <summary>
-    /// Is fully transparent? (glass, leaves, etc.)
-    /// Is translucent? (partially transparent blocks like water)
-    /// </summary>
-    public BlockType type = BlockType.SOLID;
-
-    public BlockModel model;
-
-    /// <summary>
-    /// How much light does this block emit? (0 for none.)
-    /// </summary>
-    public byte lightLevel = 0;
-
-    public bool selection = true;
-    public bool collision = true;
-
-    /// <summary>
-    /// Is this block a liquid?
-    /// </summary>
-    public bool liquid = false;
-
-    [Obsolete("Use Blocks.isFullBlock() instead.")]
-    public bool isFullBlock = true;
-
-
-    /// <summary>
-    /// If true, this block has a custom render method. (Used for dynamic blocks....)
-    /// </summary>
-    public bool customRender = false;
-
-    /// <summary>
-    /// If true, this block will tick randomly.
-    /// </summary>
-    public bool randomTick = false;
-
-    public const int atlasSize = 256;
-    public const int textureSize = 16;
-
-
-    public const float atlasRatio = textureSize / (float)atlasSize;
 
     /// <summary>
     /// 0 = 0, 65535 = 1
@@ -280,7 +274,7 @@ public class Block {
         return (ushort)(light << 8 | ao << 3 | direction & 0b111);
     }
 
-    public static AABB fullBlock() {
+    public static AABB fullBlockAABB() {
         return new AABB(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1));
     }
 
@@ -308,19 +302,19 @@ public class Block {
         this.name = name;
         this.model = model;
 
-        aabb = fullBlock();
-        selectionAABB = fullBlock();
+        aabb = fullBlockAABB();
+        selectionAABB = fullBlockAABB();
     }
 
     public Block transparency() {
         type = BlockType.TRANSPARENT;
-        isFullBlock = false;
+        fullBlock = false;
         return this;
     }
 
     public Block translucency() {
         type = BlockType.TRANSLUCENT;
-        isFullBlock = false;
+        fullBlock = false;
         return this;
     }
 
@@ -337,7 +331,7 @@ public class Block {
     }
 
     public Block partialBlock() {
-        isFullBlock = false;
+        fullBlock = false;
         return this;
     }
 
@@ -346,12 +340,12 @@ public class Block {
         noCollision();
         noSelection();
         liquid = true;
-        isFullBlock = false;
+        fullBlock = false;
         return this;
     }
 
     public Block setCustomRender() {
-        customRender = true;
+        renderType[id] = RenderType.CUSTOM;
         return this;
     }
 
@@ -372,7 +366,7 @@ public class Block {
     public Block air() {
         noCollision();
         noSelection();
-        isFullBlock = false;
+        fullBlock = false;
         return this;
     }
 
@@ -439,7 +433,7 @@ public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uv
 
     public override void update(World world, Vector3I pos) {
         if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
-            world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR.id);
+            world.setBlockRemesh(pos.X, pos.Y, pos.Z, Block.AIR.id);
         }
     }
 }
@@ -450,10 +444,10 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
         foreach (var dir in Direction.directionsWaterSpread) {
             // queue block updates
             var neighbourBlock = pos + dir;
-            if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
+            if (world.getBlock(neighbourBlock) == Block.AIR.id) {
                 world.runLater(neighbourBlock, () => {
-                    if (world.getBlock(neighbourBlock) == Blocks.AIR.id) {
-                        world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER.id);
+                    if (world.getBlock(neighbourBlock) == Block.AIR.id) {
+                        world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Block.WATER.id);
                     }
                 }, 10);
                 world.blockUpdate(neighbourBlock, 10);
@@ -554,4 +548,11 @@ public enum BlockType : byte {
     SOLID,
     TRANSPARENT,
     TRANSLUCENT
+}
+
+public enum RenderType : byte {
+    CUBE,
+    CROSS,
+    MODEL,
+    CUSTOM
 }

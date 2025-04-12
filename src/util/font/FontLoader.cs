@@ -1,6 +1,4 @@
 using FontStashSharp;
-using FontStashSharp.Rasterizers.FreeType;
-using FontStashSharp.Rasterizers.StbTrueTypeSharp;
 
 namespace BlockGame.util.font;
 
@@ -9,6 +7,7 @@ public class FontLoader {
     public TextRenderer3D renderer3D;
     public FontSystem fontSystem;
     public FontSystem fontSystemThin;
+    public FontSystem fontSystemThin3D;
 
     public FontLoader(string name, string name2) {
         var settings = new FontSystemSettings
@@ -25,5 +24,7 @@ public class FontLoader {
         fontSystem.AddFont(File.ReadAllBytes(name));
         fontSystemThin = new FontSystem(settings);
         fontSystemThin.AddFont(File.ReadAllBytes(name2));
+        fontSystemThin3D = new FontSystem(settings);
+        fontSystemThin3D.AddFont(File.ReadAllBytes(name2));
     }
 }

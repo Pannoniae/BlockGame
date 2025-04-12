@@ -20,22 +20,22 @@ public class SimpleOverworldChunkGenerator : ChunkGenerator {
                 // transform to the range -25 to 25, add 80 for 50 - 105
                 var height = generator.getNoise(worldPos.X, worldPos.Z) * 25 + 80;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlock(x, y, z, Blocks.DIRT.id);
+                    chunk.setBlock(x, y, z, Block.DIRT.id);
                 }
 
                 // water if low
                 if (height < 64) {
-                    chunk.setBlock(x, (int)height, z, Blocks.DIRT.id);
+                    chunk.setBlock(x, (int)height, z, Block.DIRT.id);
                     for (int y2 = (int)Math.Round(height); y2 <= 64; y2++) {
-                        chunk.setBlock(x, y2, z, Blocks.WATER.id);
+                        chunk.setBlock(x, y2, z, Block.WATER.id);
                     }
                     // put sand on the lake floors
                     if (generator.getNoise2(x, z) > 0) {
-                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Blocks.SAND.id);
+                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Block.SAND.id);
                     }
                 }
                 else {
-                    chunk.setBlock(x, (int)height, z, Blocks.GRASS.id);
+                    chunk.setBlock(x, (int)height, z, Block.GRASS.id);
                 }
             }
         }
@@ -73,7 +73,7 @@ public class SimpleOverworldChunkGenerator : ChunkGenerator {
         var world = generator.world;
         // tree
         for (int i = 0; i < 7; i++) {
-            world.setBlock(x, y + i, z, Blocks.LOG.id);
+            world.setBlock(x, y + i, z, Block.LOG.id);
         }
         // leaves, thick
         for (int x1 = -2; x1 <= 2; x1++) {
@@ -83,7 +83,7 @@ public class SimpleOverworldChunkGenerator : ChunkGenerator {
                     continue;
                 }
                 for (int y1 = 4; y1 < 6; y1++) {
-                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES.id);
+                    world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                 }
             }
         }
@@ -95,7 +95,7 @@ public class SimpleOverworldChunkGenerator : ChunkGenerator {
                     if (x2 == 0 && z2 == 0 && y2 == 6) {
                         continue;
                     }
-                    world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES.id);
+                    world.setBlock(x + x2, y + y2, z + z2, Block.LEAVES.id);
                 }
             }
         }

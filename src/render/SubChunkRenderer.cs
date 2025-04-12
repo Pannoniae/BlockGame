@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using BlockGame.GL;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -28,7 +29,7 @@ public sealed class SubChunkRenderer : IDisposable {
     private static int dummyuChunkPos;
     private static int wateruChunkPos;
 
-    private static readonly Func<int, bool> AOtest = bl => bl != -1 && Blocks.isSolid(bl);
+    private static readonly Func<int, bool> AOtest = bl => bl != -1 && Block.isSolid(bl);
 
     // we cheated GC! there is only one list preallocated
     // we need 16x16x16 blocks, each block has max. 24 vertices
@@ -134,11 +135,11 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     private static bool opaqueBlocks(int b) {
-        return b != 0 && Blocks.get(b).type != BlockType.TRANSLUCENT;
+        return b != 0 && Block.get(b).type != BlockType.TRANSLUCENT;
     }
 
     private static bool notOpaqueBlocks(int b) {
-        return b == 0 || Blocks.get(b).type == BlockType.TRANSLUCENT;
+        return b == 0 || Block.get(b).type == BlockType.TRANSLUCENT;
     }
 
     private void ReleaseUnmanagedResources() {
@@ -232,7 +233,7 @@ public sealed class SubChunkRenderer : IDisposable {
         //}
         //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         //if (!subChunk.isEmpty && !hasRenderOpaque && !hasRenderTranslucent) {
-        //    Console.Out.WriteLine($"CHUNKDATA: {subChunk.blocks.blockCount} {subChunk.blocks.isFull()}");
+        //    Console.Out.WriteLine($"CHUNKDATA: {subChunk.Block.blockCount} {subChunk.Block.isFull()}");
         //}
         //sw.Stop();
     }
@@ -355,14 +356,14 @@ public sealed class SubChunkRenderer : IDisposable {
 
                     // if below world, pretend it's dirt (so it won't get meshed)
                     if (subChunk.chunkY == 0 && y == -1) {
-                        bl = Blocks.DIRT.id;
+                        bl = Block.DIRT.id;
                     }
 
                     // set neighbours array element to block
                     blocksArrayRef = bl;
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
                     // NOTE: check if it's loaded (if it isn't loaded we don't give a shit about it)
-                    if (!Blocks.isFullBlock(bl) && nn) {
+                    if (!Block.isFullBlock(bl) && nn) {
                         hasOnlySolid = false;
                     }
 
@@ -443,7 +444,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     }
                     break;
                 case VertexConstructionMode.TRANSLUCENT:
-                    if (Blocks.notTranslucent(blockArrayRef)) {
+                    if (Block.notTranslucent(blockArrayRef)) {
                         goto increment;
                     }
                     break;
@@ -454,9 +455,9 @@ public sealed class SubChunkRenderer : IDisposable {
             //float wy = section.chunkY * Chunk.CHUNKSIZE + y;
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
-            var bl = Blocks.get(blockArrayRef);
+            var bl = Block.get(blockArrayRef);
 
-            if (bl.customRender) {
+            if (Block.renderType[bl.id] == RenderType.CUSTOM) {
                 bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
                 goto increment;
             }
@@ -484,12 +485,12 @@ public sealed class SubChunkRenderer : IDisposable {
             nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
             nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
             nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
-            if (Blocks.isFullBlock(nba[0]) &&
-                Blocks.isFullBlock(nba[1]) &&
-                Blocks.isFullBlock(nba[2]) &&
-                Blocks.isFullBlock(nba[3]) &&
-                Blocks.isFullBlock(nba[4]) &&
-                Blocks.isFullBlock(nba[5])) {
+            if (Block.isFullBlock(nba[0]) &&
+                Block.isFullBlock(nba[1]) &&
+                Block.isFullBlock(nba[2]) &&
+                Block.isFullBlock(nba[3]) &&
+                Block.isFullBlock(nba[4]) &&
+                Block.isFullBlock(nba[5])) {
                 goto increment;
             }
 
@@ -529,13 +530,13 @@ public sealed class SubChunkRenderer : IDisposable {
                     ushort nb = nba[(byte)dir];
                     switch (mode) {
                         case VertexConstructionMode.OPAQUE:
-                            test2 = Blocks.notSolid(nb) || !Blocks.isFullBlock(nb);
+                            test2 = Block.notSolid(nb) || !Block.isFullBlock(nb);
                             break;
                         case VertexConstructionMode.TRANSLUCENT:
-                            test2 = !Blocks.isTranslucent(nb) && (Blocks.notSolid(nb) || !Blocks.isFullBlock(nb));
+                            test2 = !Block.isTranslucent(nb) && (Block.notSolid(nb) || !Block.isFullBlock(nb));
                             break;
                     }
-                    test2 = test2 || (facesRef.nonFullFace && !Blocks.isTranslucent(nb));
+                    test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb));
                 }
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
@@ -590,32 +591,32 @@ public sealed class SubChunkRenderer : IDisposable {
                             Unsafe.Add(ref lightRef, offsets[11]),
                             lba[(byte)dir]);
 
-                        o.First = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                        o.First = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                              Unsafe.Add(ref neighbourRef, offsets[0]))) |
-                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                              Unsafe.Add(ref neighbourRef, offsets[1]))) << 1 |
-                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                              Unsafe.Add(ref neighbourRef, offsets[2]))) << 2);
 
-                        o.Second = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                        o.Second = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                               Unsafe.Add(ref neighbourRef, offsets[3]))) |
-                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                               Unsafe.Add(ref neighbourRef, offsets[4]))) << 1 |
-                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                               Unsafe.Add(ref neighbourRef, offsets[5]))) << 2);
 
-                        o.Third = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                        o.Third = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                              Unsafe.Add(ref neighbourRef, offsets[6]))) |
-                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                              Unsafe.Add(ref neighbourRef, offsets[7]))) << 1 |
-                                         Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                              Unsafe.Add(ref neighbourRef, offsets[8]))) << 2);
 
-                        o.Fourth = (byte)(Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                        o.Fourth = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                               Unsafe.Add(ref neighbourRef, offsets[9]))) |
-                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                               Unsafe.Add(ref neighbourRef, offsets[10]))) << 1 |
-                                          Unsafe.BitCast<bool, byte>(Blocks.isFullBlock(
+                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
                                               Unsafe.Add(ref neighbourRef, offsets[11]))) << 2);
 
                         // only apply AO if enabled

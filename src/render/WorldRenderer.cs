@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -10,13 +11,14 @@ using BoundingFrustum = System.Numerics.BoundingFrustum;
 using Color = Molten.Color;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
 
 public class WorldRenderer {
     public World world;
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
 
     public Shader shader;
     public Shader dummyShader;

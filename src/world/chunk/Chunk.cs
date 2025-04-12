@@ -60,7 +60,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 var y = CHUNKSIZE * CHUNKHEIGHT - 1;
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
-                while (!Blocks.isFullBlock(bl) && y > 0) {
+                while (!Block.isFullBlock(bl) && y > 0) {
                     // check if chunk is initialised first
                     if (subChunks[y >> 4].blocks.inited) {
                         setSkyLight(x, y, z, 15);
@@ -87,7 +87,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
                 var atLeastOnce = false;
-                while (!Blocks.isFullBlock(bl) && y > 0) {
+                while (!Block.isFullBlock(bl) && y > 0) {
                     atLeastOnce = true;
                     // check if chunk is initialised first
                     if (section.blocks.inited) {
@@ -157,14 +157,14 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         }
 
         // if the new block has light, add the light
-        if (Blocks.get(block).lightLevel > 0) {
+        if (Block.get(block).lightLevel > 0) {
             // add lightsource
-            setBlockLight(x, y, z, Blocks.get(block).lightLevel);
-            //Console.Out.WriteLine(Blocks.get(block).lightLevel);
+            setBlockLight(x, y, z, Block.get(block).lightLevel);
+            //Console.Out.WriteLine(Block.get(block).lightLevel);
             world.blockLightQueue.Add(new LightNode(wx, y, wz, this));
         }
         // if the old block had light, remove the light
-        if (block == 0 && Blocks.get(oldBlock).lightLevel > 0) {
+        if (block == 0 && Block.get(oldBlock).lightLevel > 0) {
             // remove lightsource
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
@@ -273,7 +273,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         if (height == y) {
             // find the block below
             for (int yy = y - 1; yy >= 0; yy--) {
-                if (Blocks.isFullBlock(getBlock(x, yy, z))) {
+                if (Block.isFullBlock(getBlock(x, yy, z))) {
                     heightMap.set(x, z, (byte)yy);
                     return;
                 }

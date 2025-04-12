@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using BlockGame.util;
 using BlockGame.util.font;
 using FontStashSharp;
@@ -13,6 +14,7 @@ using PrimitiveType = TrippyGL.PrimitiveType;
 using Rectangle = System.Drawing.Rectangle;
 using RectangleF = System.Drawing.RectangleF;
 using Viewport = TrippyGL.Viewport;
+using Color4b = TrippyGL.Color4b;
 
 namespace BlockGame.ui;
 
@@ -23,7 +25,7 @@ namespace BlockGame.ui;
 /// </summary>
 public class GUI {
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
     public GraphicsDevice GD;
 
     public SimpleShaderProgram shader;
@@ -48,6 +50,7 @@ public class GUI {
 
     public DynamicSpriteFont guiFont;
     public DynamicSpriteFont guiFontThin;
+    public DynamicSpriteFont guiFontThin3D;
 
     public Rectangle buttonRect = new(96, 0, 96, 16);
     public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
@@ -83,6 +86,7 @@ public class GUI {
     public void loadFont(int size) {
         guiFont = Game.fontLoader.fontSystem.GetFont(size);
         guiFontThin = Game.fontLoader.fontSystemThin.GetFont(size);
+        guiFontThin3D = Game.fontLoader.fontSystemThin3D.GetFont(size);
     }
 
 
@@ -260,7 +264,7 @@ public class GUI {
         flip.M22 = -1;
         var rot = Matrix4x4.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
         var mat = flip * rot * Matrix4x4.CreateScale(1 / 256f * scale) * Matrix4x4.CreateTranslation(position);
-        guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS(), ref mat);
+        guiFontThin3D.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0), colour == default ? FSColor.White : colour.toFS(), ref mat);
     }
 
     public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3I pos, RawDirection face, float scale, Color4b colour = default) {

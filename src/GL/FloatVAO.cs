@@ -1,6 +1,6 @@
 using Silk.NET.OpenGL;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public class FloatVAO {
     public uint handle;
@@ -9,7 +9,7 @@ public class FloatVAO {
 
     public uint count;
 
-    public GL GL;
+    public Silk.NET.OpenGL.GL GL;
 
     public FloatVAO() {
         GL = Game.GL;

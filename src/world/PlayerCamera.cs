@@ -122,23 +122,6 @@ public class PlayerCamera {
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
 
-    /// <summary>
-    /// Returns a view matrix that doesn't move with the player, but the Y is in worldspace (character moves up, skybox stays still). Used for sky rendering.
-    /// </summary>
-    public Matrix4x4 getStaticYViewMatrix(double interp) {
-        var interpPos = new Vector3();
-        // Only preserve Y coordinate from player position
-        var iBob = float.DegreesToRadians(renderBob(interp));
-        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
-        var factor = 0.4f;
-        var factor2 = 0.15f;
-        return Matrix4x4.CreateTranslation(0, -(float)renderPosition(interp).Y + 64, 0) *
-               Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward.toVec3(), up.toVec3())
-               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
-               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
-               * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
-    }
-
     public Matrix4x4 getViewMatrixRH(double interp) {
         var interpPos = renderPosition(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));

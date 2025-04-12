@@ -51,8 +51,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 blockCount--;
             }
 
-            var oldTick = Blocks.get(old).randomTick;
-            var tick = Blocks.get(value).randomTick;
+            var oldTick = Block.get(old).randomTick;
+            var tick = Block.get(value).randomTick;
             if (!oldTick && tick) {
                 randomTickCount++;
             }
@@ -60,8 +60,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 randomTickCount--;
             }
 
-            var oldFullBlock = Blocks.isFullBlock(old);
-            var fullBlock = Blocks.isFullBlock(value);
+            var oldFullBlock = Block.isFullBlock(old);
+            var fullBlock = Block.isFullBlock(value);
             if (!oldFullBlock && fullBlock) {
                 chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount++;
@@ -71,8 +71,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 fullBlockCount--;
             }
 
-            var oldTranslucent = Blocks.isTranslucent(old);
-            var translucent = Blocks.isTranslucent(value);
+            var oldTranslucent = Block.isTranslucent(old);
+            var translucent = Block.isTranslucent(value);
             if (!oldTranslucent && translucent) {
                 translucentCount++;
             }
@@ -169,14 +169,14 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             if (block != 0) {
                 blockCount++;
             }
-            if (Blocks.get(block).randomTick) {
+            if (Block.get(block).randomTick) {
                 randomTickCount++;
             }
-            if (Blocks.isFullBlock(block)) {
+            if (Block.isFullBlock(block)) {
                 chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount++;
             }
-            if (Blocks.isTranslucent(block)) {
+            if (Block.isTranslucent(block)) {
                 translucentCount++;
             }
             blockArray = ref Unsafe.Add(ref blockArray, 1);

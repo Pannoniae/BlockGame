@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 /// <summary>
 /// SharedBlockVAO but we only use one VAO / vertex format then just rebind the vertex/index buffer
@@ -15,7 +15,7 @@ public sealed class SharedBlockVAO : VAO
     public uint count;
 
 
-    public readonly GL GL;
+    public readonly Silk.NET.OpenGL.GL GL;
 
     public SharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;

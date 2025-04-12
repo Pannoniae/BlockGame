@@ -1,7 +1,9 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using BlockGame.util;
 using Silk.NET.OpenGL;
+using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
 
@@ -48,7 +50,7 @@ public class PlayerRenderer {
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.Handle);
         var light = world.getLight(pos.X, pos.Y, pos.Z);
-        WorldRenderer.meshBlockTinted(Blocks.get(handItem.block), ref vertices, ref indices, light);
+        WorldRenderer.meshBlockTinted(Block.get(handItem.block), ref vertices, ref indices, light);
         vao.bind();
         vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));
 

@@ -267,7 +267,7 @@ public class World : IDisposable {
             byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
 
             // if this is opaque (for skylight), don't bother
-            if (isSkylight && Blocks.isFullBlock(getBlock(node.x, node.y, node.z))) {
+            if (isSkylight && Block.isFullBlock(getBlock(node.x, node.y, node.z))) {
                 continue;
             }
 
@@ -276,7 +276,7 @@ public class World : IDisposable {
             foreach (var dir in Direction.directionsLight) {
                 var neighbour = blockPos + dir;
                 // if neighbour is opaque, don't bother either
-                if (Blocks.isFullBlock(getBlock(neighbour))) {
+                if (Block.isFullBlock(getBlock(neighbour))) {
                     continue;
                 }
                 byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
@@ -529,7 +529,7 @@ public class World : IDisposable {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return Blocks.get(chunk.getBlock(blockPos.X, y, blockPos.Z)).selection;
+        return Block.get(chunk.getBlock(blockPos.X, y, blockPos.Z)).selection;
     }
 
     public ushort getBlock(int x, int y, int z) {
@@ -688,7 +688,7 @@ public class World : IDisposable {
             return null;
         }
 
-        var block = Blocks.get(id);
+        var block = Block.get(id);
         return getAABB(x, y, z, block);
     }
 
@@ -697,7 +697,7 @@ public class World : IDisposable {
             return null;
         }
 
-        var block = Blocks.get(id);
+        var block = Block.get(id);
         return getSelectionAABB(x, y, z, block);
     }
 
@@ -740,15 +740,15 @@ public class World : IDisposable {
     }
 
     public void blockUpdateWithNeighbours(Vector3I pos) {
-        Blocks.get(getBlock(pos)).update(this, pos);
+        Block.get(getBlock(pos)).update(this, pos);
         foreach (var dir in Direction.directions) {
             var neighbourBlock = pos + dir;
-            Blocks.get(getBlock(neighbourBlock)).update(this, neighbourBlock);
+            Block.get(getBlock(neighbourBlock)).update(this, neighbourBlock);
         }
     }
 
     public void blockUpdate(Vector3I pos) {
-        Blocks.get(getBlock(pos)).update(this, pos);
+        Block.get(getBlock(pos)).update(this, pos);
     }
 
     public void blockUpdate(Vector3I pos, int tick) {

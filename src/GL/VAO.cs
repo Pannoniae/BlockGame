@@ -1,4 +1,4 @@
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public interface VAO : IDisposable {
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices);

@@ -2,7 +2,7 @@ using System.Numerics;
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 public class InstantDraw {
 
@@ -16,7 +16,7 @@ public class InstantDraw {
     private readonly uint VAO;
     private readonly uint VBO;
 
-    public readonly GL GL;
+    public readonly Silk.NET.OpenGL.GL GL;
     private int currentVertex = 0;
 
     private Shader shader;
@@ -108,7 +108,7 @@ public class InstantDrawColour {
     private readonly uint VAO;
     private readonly uint VBO;
 
-    public readonly GL GL;
+    public readonly Silk.NET.OpenGL.GL GL;
     private int currentVertex = 0;
 
     // Fog settings

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace BlockGame;
+namespace BlockGame.GL;
 
 /// <summary>
 /// A MatrixStack class handling matrix operations.
