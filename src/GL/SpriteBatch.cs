@@ -38,7 +38,7 @@ public sealed class SpriteBatch : IDisposable {
     public const uint InitialBatchItemsCapacity = 256;
     public const uint MaxBatchItemCapacity = int.MaxValue;
     private const uint InitialBufferCapacity = InitialBatchItemsCapacity * 4;
-    private const uint MaxBufferCapacity = 32768;
+    private const uint MaxBufferCapacity = 32768 * 16;
 
     // OpenGL resources
     private readonly Silk.NET.OpenGL.GL GL;
@@ -110,7 +110,7 @@ public sealed class SpriteBatch : IDisposable {
         indices = new ushort[InitialBufferCapacity * 6 / 4]; // Each quad uses 6 indices for 4 vertices
 
         // Set up indices for a quad (two triangles)
-        CreateIndices(indices, 0, InitialBufferCapacity / 4);
+        CreateIndices(indices, InitialBufferCapacity / 4);
 
         // Upload the index data
         unsafe {
@@ -123,7 +123,7 @@ public sealed class SpriteBatch : IDisposable {
 
         // Get uniform locations
         textureUniform = shader.getUniformLocation("tex");
-        
+
         // Set texture to 0
         shader.setUniform(textureUniform, 0);
 
@@ -131,9 +131,9 @@ public sealed class SpriteBatch : IDisposable {
         IsDisposed = false;
     }
 
-    private void CreateIndices(ushort[] indices, uint startIndex, uint quadCount) {
+    private void CreateIndices(ushort[] indices, uint quadCount) {
         for (uint i = 0, vertex = 0; i < quadCount; i++) {
-            uint idx = startIndex + i * 6;
+            uint idx = i * 6;
             indices[idx] = (ushort)vertex;
             indices[idx + 1] = (ushort)(vertex + 1);
             indices[idx + 2] = (ushort)(vertex + 2);
@@ -460,6 +460,10 @@ public sealed class SpriteBatch : IDisposable {
         GL.BindVertexArray(vao);
         shader.use();
 
+        // First, calculate total vertices required to avoid buffer resize issues
+        uint totalVertices = batchItemCount;
+        EnsureBufferCapacity(totalVertices);
+
         // Process items in batches by texture
         uint itemStartIndex = 0;
         while (itemStartIndex < batchItemCount) {
@@ -472,17 +476,14 @@ public sealed class SpriteBatch : IDisposable {
                 : FindDifferentTexture(currentTexture, itemStartIndex + 1);
             uint itemCount = itemEndIndex - itemStartIndex;
 
-            // Ensure we have enough space in the vertex buffer
-            EnsureBufferCapacity(itemCount * 4);
-
-            // Fill the vertex buffer
+            // Fill the vertex buffer for this texture batch
             uint vertexIndex = 0;
             for (uint i = itemStartIndex; i < itemEndIndex; i++) {
                 SpriteBatchItem item = batchItems[i];
                 vertices[vertexIndex++] = item.VertexTL;
-                vertices[vertexIndex++] = item.VertexTR;
-                vertices[vertexIndex++] = item.VertexBR;
                 vertices[vertexIndex++] = item.VertexBL;
+                vertices[vertexIndex++] = item.VertexBR;
+                vertices[vertexIndex++] = item.VertexTR;
             }
 
             // Upload vertex data
@@ -497,10 +498,14 @@ public sealed class SpriteBatch : IDisposable {
 
             // Bind the texture
             currentTexture.bind();
-            
+
             // Bind indices
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-            
+
+            /*Console.Out.WriteLine(
+                $"itemStarIndex: {itemStartIndex}, itemEndIndex: {itemEndIndex}, itemCount: {itemCount}, vertexIndex: {vertexIndex}," +
+                $" indices.Length: {indices.Length}, vertices.Length: {vertices.Length}");*/
+
             // Draw the batch
             unsafe {
                 GL.DrawElements(PrimitiveType.Triangles, itemCount * 6,
@@ -521,32 +526,40 @@ public sealed class SpriteBatch : IDisposable {
         return startIndex;
     }
 
-    private void EnsureBufferCapacity(uint requiredVertexCount) {
+    private void EnsureBufferCapacity(uint batchCount) {
+        var requiredVertexCount = batchCount * 4;
+        var requiredIndexCount = batchCount * 6;
         if (vertices.Length < requiredVertexCount) {
             uint newCapacity = Math.Min(NextPowerOfTwo(requiredVertexCount), (int)MaxBufferCapacity);
             Array.Resize(ref vertices, (int)newCapacity);
 
+            // Resize vertex buffer
+            unsafe {
+                fixed (VertexColorTexture* ptr = vertices) {
+                    GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                    GL.BufferData(BufferTargetARB.ArrayBuffer,
+                        (nuint)(newCapacity * sizeof(VertexColorTexture)),
+                        ptr, BufferUsageARB.StreamDraw);
+                }
+            }
+
             // Resize indices if needed (each quad uses 6 indices for 4 vertices)
-            uint requiredIndexCount = requiredVertexCount * 6 / 4;
             if (indices.Length < requiredIndexCount) {
                 var newIndexCapacity = Math.Min(NextPowerOfTwo(requiredIndexCount), MaxBufferCapacity * 6 / 4);
                 Array.Resize(ref indices, (int)newIndexCapacity);
 
                 // Set up new indices
-                var existingQuadCount = (uint)indices.Length / 6;
                 var newQuadCount = newIndexCapacity / 6;
 
-                if (newQuadCount > existingQuadCount) {
-                    CreateIndices(indices, existingQuadCount * 6, newQuadCount - existingQuadCount);
+                CreateIndices(indices, newQuadCount);
 
-                    // Upload the index data
-                    unsafe {
-                        fixed (ushort* ptr = indices) {
-                            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-                            GL.BufferData(BufferTargetARB.ElementArrayBuffer,
-                                (nuint)(newIndexCapacity * sizeof(ushort)),
-                                ptr, BufferUsageARB.StaticDraw);
-                        }
+                // Upload the index data
+                unsafe {
+                    fixed (ushort* ptr = indices) {
+                        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+                        GL.BufferData(BufferTargetARB.ElementArrayBuffer,
+                            newIndexCapacity * sizeof(ushort),
+                            ptr, BufferUsageARB.StaticDraw);
                     }
                 }
             }

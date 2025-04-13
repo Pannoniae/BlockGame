@@ -361,7 +361,10 @@ public class GameScreen : Screen {
         }
 
         var gui = Game.gui;
-
+        
+        // clear depth buffer so the gui can use it properly
+        //Game.GL.Clear(ClearBufferMask.DepthBufferBit);
+        
         Game.graphics.instantShader.use();
         var centreX = Game.centreX;
         var centreY = Game.centreY;

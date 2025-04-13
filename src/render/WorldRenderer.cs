@@ -111,14 +111,14 @@ public class WorldRenderer {
         //shader.setUniform(drawDistance, dd);
 
         shader.setUniform(fogColour, defaultFogColour);
-        shader.setUniform(skyColour, defaultClearColour);
+        shader.setUniform(skyColour, defaultClearColour with { A = 0 });
 
         waterShader.setUniform(waterBlockTexture, 0);
         waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
         waterShader.setUniform(waterFogColour, defaultFogColour);
-        waterShader.setUniform(waterSkyColour, defaultClearColour);
+        waterShader.setUniform(waterSkyColour, defaultClearColour with { A = 0 });
 
         setUniforms();
     }
@@ -196,7 +196,7 @@ public class WorldRenderer {
         GL.DepthMask(true);
 
         // no blending solid shit!
-        GL.Disable(EnableCap.Blend);
+        //GL.Disable(EnableCap.Blend);
 
         GL.BindVertexArray(chunkVAO);
 
@@ -250,7 +250,7 @@ public class WorldRenderer {
             }
         }
         // start blending at transparent stuff
-        GL.Enable(EnableCap.Blend);
+        //GL.Enable(EnableCap.Blend);
 
         GL.Disable(EnableCap.CullFace);
         // TRANSLUCENT PASS
@@ -296,7 +296,7 @@ public class WorldRenderer {
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
 
         // Set fog distance parameters - start fog closer to camera for sky edges
-        idc.SetFogDistance(rd * 0.005f, rd);
+        idc.SetFogDistance(rd * 0.005f, rd / 2f);
 
         InstantDrawColour.instantShader.use();
         InstantDrawColour.instantShader.setUniform(InstantDrawColour.uMVP, viewProj);
@@ -314,6 +314,8 @@ public class WorldRenderer {
 
 
         var underSky = new Vector3(0, -16, 0);
+        
+        idc.SetFogDistance(rd * 0.005f, rd);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));

@@ -686,6 +686,7 @@ public partial class Game {
         GLTracker.load();
 
         GL.Disable(EnableCap.DepthTest);
+        //GL.Disable(EnableCap.CullFace);
 
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
@@ -696,6 +697,7 @@ public partial class Game {
         graphics.immediateBatch.End();
         //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);
         //GD.BlendingEnabled = false;
+        GL.Enable(EnableCap.DepthTest);
     }
 
     public static TimerAction setInterval(long interval, Action action) {
