@@ -1,18 +1,18 @@
 using System.Numerics;
+using BlockGame.GL;
 using Molten;
-using TrippyGL;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
 
 public class Image : GUIElement {
 
-    Texture2D texture;
+    BTexture2D texture;
 
     public Image(Menu menu, string name, string path) : base(menu, name) {
         texture = Game.textureManager.get(path);
-        guiPosition.Width = (int)texture.Width;
-        guiPosition.Height = (int)texture.Height;
+        guiPosition.Width = (int)texture.width;
+        guiPosition.Height = (int)texture.height;
     }
 
     public void setPosition(Vector2I pos) {

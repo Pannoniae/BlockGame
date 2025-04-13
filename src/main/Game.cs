@@ -16,12 +16,10 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using TrippyGL;
-using BatcherBeginMode = TrippyGL.BatcherBeginMode;
+using BatcherBeginMode = BlockGame.GL.BatcherBeginMode;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
-using DepthFunction = TrippyGL.DepthFunction;
 using Image = SixLabors.ImageSharp.Image;
 using IWindow = Silk.NET.Windowing.IWindow;
 using MouseButton = Silk.NET.Input.MouseButton;
@@ -32,7 +30,6 @@ using Sound = SFML.Audio.Sound;
 namespace BlockGame;
 
 public partial class Game {
-
     public static Game instance { get; private set; }
 
     public static int width;
@@ -40,7 +37,6 @@ public partial class Game {
 
     public static IWindow window;
     public static Silk.NET.OpenGL.GL GL = null!;
-    public static GraphicsDevice GD = null!;
     public static IInputContext input = null!;
 
     public static Process proc;
@@ -68,8 +64,6 @@ public partial class Game {
 
     public int fps;
     public double ft;
-
-    public static BlendState initialBlendState = BlendState.NonPremultiplied;
 
     public static Random random = new Random(1337 * 1337);
     public static Random clientRandom = new Random();
@@ -132,11 +126,11 @@ public partial class Game {
     private int g_minReduceLocation;
     private int g_maxSpanLocation;
 
-#if DEBUG
+    #if DEBUG
     public static string VERSION = "BlockGame v0.0.2 DEBUG";
-#else
+    #else
     public static string VERSION = "BlockGame v0.0.2";
-#endif
+    #endif
 
     private static readonly float g_lumaThreshold = 0.5f;
     private static readonly float g_mulReduceReciprocal = 8.0f;
@@ -159,7 +153,8 @@ public partial class Game {
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 0;
-        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible, new APIVersion(4, 6));
+        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible,
+            new APIVersion(4, 6));
         ;
         #if DEBUG
         api.Flags = ContextFlags.Debug;
@@ -177,6 +172,11 @@ public partial class Game {
 
         windowOptions.API = api;
         Window.PrioritizeGlfw();
+
+        #if DEBUG
+        GlfwProvider.GLFW.Value.WindowHint(WindowHintRobustness.ContextRobustness, Robustness.LoseContextOnReset);
+        #endif
+
         // no errors if in release mode, fuck glGetError() ;)
         // ALSO WHAT THE FUCK SILK.NET
         // here, Glfw.GetApi() does not work, you have to use THIS so the context flags get picked up
@@ -208,6 +208,7 @@ public partial class Game {
         if (currentScreen != Screen.GAME_SCREEN) {
             return;
         }
+
         if (!given && !Screen.GAME_SCREEN.world.inMenu) {
             Screen.GAME_SCREEN.pause();
         }
@@ -216,7 +217,8 @@ public partial class Game {
         }
     }
 
-    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message, IntPtr userparam) {
+    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message,
+        IntPtr userparam) {
         string msg = Marshal.PtrToStringAnsi(message, length)!;
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
     }
@@ -226,37 +228,45 @@ public partial class Game {
         setIconToBlock();
         input = window.CreateInput();
         GL = window.CreateOpenGL();
-        #if DEBUG
-            // initialise debug print
-            GL.Enable(EnableCap.DebugOutput);
-            GL.Enable(EnableCap.DebugOutputSynchronous);
-            GL.DebugMessageCallback(GLDebug, 0);
-            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
-        #endif
+        //#if DEBUG
+        // initialise debug print
+        GL.Enable(EnableCap.DebugOutput);
+        GL.Enable(EnableCap.DebugOutputSynchronous);
+        GL.DebugMessageCallback(GLDebug, 0);
+        GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
+        //#endif
+
+        // send a test debug message
+        var str = "Debug message test";
+        GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeOther, 0,
+            DebugSeverity.DebugSeverityHigh, (uint)str.Length, str);
 
         GL.GetInteger(GetPName.ContextFlags, out int noErrors);
         Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
+        GL.GetInteger(GetPName.ContextFlags, out int robust);
+        Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
+
 
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
-        GD = new GraphicsDevice(GL);
-        //GD.BlendingEnabled = true;
-        GD.BlendState = initialBlendState;
-        GD.BlendingEnabled = true;
-        GD.DepthTestingEnabled = true;
-        GD.DepthState = DepthState.Default;
-        GD.DepthState.DepthComparison = DepthFunction.LessOrEqual;
-        GD.FaceCullingEnabled = true;
-        GD.PolygonFrontFace = PolygonFace.CounterClockwise;
-        GD.CullFaceMode = CullingMode.CullBack;
+        GL.Enable(EnableCap.Blend);
+        GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.DepthFunc(DepthFunction.Lequal);
+
+        //GL.Enable(EnableCap.CullFace);
+        GL.FrontFace(FrontFaceDirection.Ccw);
+        GL.CullFace(GLEnum.Back);
 
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
 
 
-        GLTracker = new GLStateTracker(GL, GD);
+        GLTracker = new GLStateTracker(GL);
 
-        textureManager = new TextureManager(GL, GD);
+        textureManager = new TextureManager(GL);
 
         fxaaShader = new Shader(GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
         g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
@@ -340,9 +350,11 @@ public partial class Game {
         if (!success) {
             Console.Out.WriteLine("Couldn't set window logo!");
         }
+
         // yes, this is a piece of shit code copying the pixels all over the place
         // but we only do it once to set the logo so idc
-        var img = new RawImage(logo.Width, logo.Height, new Memory<byte>(MemoryMarshal.Cast<Rgba32, byte>(imgData.Span).ToArray()));
+        var img = new RawImage(logo.Width, logo.Height,
+            new Memory<byte>(MemoryMarshal.Cast<Rgba32, byte>(imgData.Span).ToArray()));
         window.SetWindowIcon(ref img);
     }
 
@@ -387,7 +399,6 @@ public partial class Game {
     }
 
     public static void initDedicatedGraphics() {
-
         // fuck integrated GPUs, we want the dedicated card
         try {
             if (Environment.Is64BitProcess) {
@@ -481,6 +492,7 @@ public partial class Game {
                 throw new Exception("Manual crash!")
             );
         }
+
         currentScreen.onKeyDown(keyboard, key, scancode);
     }
 
@@ -498,7 +510,7 @@ public partial class Game {
 
     public void resize(Vector2D<int> size) {
         var s = new Vector2I(size.X, size.Y);
-        GD.SetViewport(0, 0, (uint)size.X, (uint)size.Y);
+        graphics.resize(size);
         fontLoader.renderer3D.OnViewportChanged(s);
         width = size.X;
         height = size.Y;
@@ -512,11 +524,14 @@ public partial class Game {
             genFramebuffer();
         }
     }
+
     private void recalcGUIScale() {
         var guiScaleTarget = 2;
-        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 300 && height / ((double)guiScaleTarget + 1) >= 200) {
+        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 300 &&
+               height / ((double)guiScaleTarget + 1) >= 200) {
             guiScaleTarget++;
         }
+
         GUI.guiScale = guiScaleTarget;
     }
 
@@ -537,12 +552,13 @@ public partial class Game {
         GL.DeleteFramebuffer(fbo);
         fbo = GL.GenFramebuffer();
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
-        GD.SetViewport(0, 0, (uint)width, (uint)height);
+        GL.Viewport(0, 0, (uint)width, (uint)height);
 
         GL.DeleteTexture(FBOtex);
         FBOtex = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, FBOtex);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba,
+            PixelType.UnsignedByte, null);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
@@ -551,13 +567,16 @@ public partial class Game {
         GL.DeleteRenderbuffer(depthBuffer);
         depthBuffer = GL.GenRenderbuffer();
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)width, (uint)height);
+        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)width,
+            (uint)height);
 
         // Attach the color buffer ...
-        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, FBOtex, 0);
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+            TextureTarget.Texture2D, FBOtex, 0);
 
         // ... and the depth buffer,
-        GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.Renderbuffer, depthBuffer);
+        GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
+            RenderbufferTarget.Renderbuffer, depthBuffer);
 
         // Check if the framebuffer is complete
         if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
@@ -569,7 +588,6 @@ public partial class Game {
         GL.Uniform2(g_texelStepLocation, 1.0f / width, 1.0f / width);
 
         throwawayVAO = GL.CreateVertexArray();
-
     }
 
     private void deleteFramebuffer() {
@@ -595,7 +613,6 @@ public partial class Game {
         currentScreen.update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
         //Console.Out.WriteLine(after - before);
-
     }
 
     /// <summary>
@@ -612,11 +629,11 @@ public partial class Game {
             accumTime -= fixeddt;
             //i++;
         }
+
         //Console.Out.WriteLine($"{i} updates called");
         // get remaining time between 0 and 1
         var interp = accumTime / fixeddt;
         actualRender(dt, interp);
-
     }
 
     private void actualRender(double dt, double interp) {
@@ -636,6 +653,7 @@ public partial class Game {
             setTitle("BlockGame", splash, $"{fps} ({ft * 1000:0.##}ms)");
             stopwatch.Restart();
         }
+
         GLTracker.save();
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
@@ -644,8 +662,8 @@ public partial class Game {
         fontLoader.renderer3D.begin();
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
 
-        GD.DepthTestingEnabled = true;
-        currentScreen.clear(GD, dt, interp);
+        GL.Enable(EnableCap.DepthTest);
+        currentScreen.clear(dt, interp);
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
         fontLoader.renderer3D.end();
@@ -667,14 +685,16 @@ public partial class Game {
         // before this, only GL, after this, only GD
         GLTracker.load();
 
-        GD.DepthTestingEnabled = false;
+        GL.Disable(EnableCap.DepthTest);
 
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
+        
         currentScreen.draw();
         currentScreen.postDraw();
         graphics.mainBatch.End();
         graphics.immediateBatch.End();
+        //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);
         //GD.BlendingEnabled = false;
     }
 
@@ -711,6 +731,7 @@ public partial class Game {
                 }
             }
         }
+
         // remove inactive timers
         timerQueue.RemoveAll(ta => !ta.enabled);
     }

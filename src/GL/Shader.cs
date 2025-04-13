@@ -117,3 +117,63 @@ public class Shader {
         GL.ProgramUniform1(programHandle, loc, value ? 1 : 0);
     }
 }
+
+
+public class InstantShader : Shader {
+    public int uMVP;
+
+    private Matrix4x4 world = Matrix4x4.Identity;
+    private Matrix4x4 view = Matrix4x4.Identity;
+    private Matrix4x4 projection = Matrix4x4.Identity;
+
+    public Matrix4x4 Projection {
+        get => projection;
+        set => setProjection(value);
+    }
+    
+    public Matrix4x4 View {
+        get => view;
+        set => setView(value);
+    }
+    
+    public Matrix4x4 World {
+        get => world;
+        set => setWorld(value);
+    }
+
+    private void setMVP(Matrix4x4 value) {
+        setUniform(uMVP, value);
+    }
+
+    public InstantShader(Silk.NET.OpenGL.GL GL, string vertexShader, string fragmentShader) : base(GL, vertexShader, fragmentShader) {
+        uMVP = getUniformLocation("uMVP");
+    }
+    
+    public InstantShader(Silk.NET.OpenGL.GL GL, string vertexShader) : base(GL, vertexShader) {
+        uMVP = getUniformLocation("uMVP");
+    }
+    
+    public void setWorld(Matrix4x4 mat) {
+        world = mat;
+        setUniform(uMVP, world * view * projection);
+    }
+    
+    public void setView(Matrix4x4 mat) {
+        view = mat;
+        setUniform(uMVP, world * view * projection);
+    }
+    
+    public void setProjection(Matrix4x4 mat) {
+        projection = mat;
+        setUniform(uMVP, world * view * projection);
+    }
+    
+    public void setMVP(Matrix4x4 world, Matrix4x4 view, Matrix4x4 projection) {
+        this.world = world;
+        this.view = view;
+        this.projection = projection;
+        setUniform(uMVP, world * view * projection);
+    }
+    
+    
+}

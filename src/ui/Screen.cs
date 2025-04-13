@@ -1,7 +1,6 @@
 using System.Numerics;
 using Molten;
 using Silk.NET.Input;
-using TrippyGL;
 
 namespace BlockGame.ui;
 
@@ -59,8 +58,8 @@ public class Screen {
         currentMenu?.update(dt);
     }
 
-    public virtual void clear(GraphicsDevice GD, double dt, double interp) {
-        currentMenu?.clear(GD, dt, interp);
+    public virtual void clear(double dt, double interp) {
+        currentMenu?.clear(dt, interp);
     }
 
     public virtual void render(double dt, double interp) {

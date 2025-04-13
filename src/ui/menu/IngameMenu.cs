@@ -1,11 +1,11 @@
 using System.Numerics;
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Cysharp.Text;
 using FontStashSharp.RichText;
 using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL;
-using TrippyGL;
 
 
 namespace BlockGame.ui;

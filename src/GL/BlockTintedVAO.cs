@@ -1,9 +1,8 @@
 using Silk.NET.OpenGL;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame.GL;
 
-public class BlockVAO : VAO {
+public class BlockTintedVAO {
     public uint handle;
     public uint vbo;
     public uint ibo;
@@ -11,7 +10,7 @@ public class BlockVAO : VAO {
 
     public Silk.NET.OpenGL.GL GL;
 
-    public BlockVAO() {
+    public BlockTintedVAO() {
         GL = Game.GL;
         handle = GL.GenVertexArray();
     }
@@ -44,13 +43,13 @@ public class BlockVAO : VAO {
         format();
     }
 
-    public void upload(BlockVertexPacked[] data, ushort[] indices) {
+    public void upload(BlockVertexTinted[] data, ushort[] indices) {
         unsafe {
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
-            fixed (BlockVertexPacked* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
+            fixed (BlockVertexTinted* d = data) {
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexTinted)), d,
                     BufferUsageARB.DynamicDraw);
             }
 
@@ -65,13 +64,13 @@ public class BlockVAO : VAO {
         format();
     }
 
-    public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
+    public void upload(Span<BlockVertexTinted> data, Span<ushort> indices) {
         unsafe {
             vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
-            fixed (BlockVertexPacked* d = data) {
-                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
+            fixed (BlockVertexTinted* d = data) {
+                GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexTinted)), d,
                     BufferUsageARB.DynamicDraw);
             }
 
@@ -88,12 +87,12 @@ public class BlockVAO : VAO {
 
     public void format() {
         unsafe {
-            // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.VertexAttribIPointer(0, 3, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)0);
+            // 20 bytes in total, 3*4 for pos, 2*2 for uv, 4 bytes for color
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, (uint)sizeof(BlockVertexTinted), (void*)0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribIPointer(1, 2, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 3 * sizeof(ushort)));
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.HalfFloat, false, (uint)sizeof(BlockVertexTinted), (void*)(0 + 3 * sizeof(float)));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 5 * sizeof(ushort)));
+            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(BlockVertexTinted), (void*)(0 + 4 * sizeof(float)));
             GL.EnableVertexAttribArray(2);
         }
     }

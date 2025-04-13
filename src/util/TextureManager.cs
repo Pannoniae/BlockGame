@@ -1,36 +1,31 @@
 using BlockGame.GL;
 using Silk.NET.OpenGL;
-using TrippyGL;
-using TrippyGL.ImageSharp;
-using Texture = TrippyGL.Texture;
 
 namespace BlockGame.util;
 
 public class TextureManager {
 
     public Silk.NET.OpenGL.GL GL;
-    public GraphicsDevice GD;
 
-    public Texture2D blockTextureGUI;
-    public Texture2D background;
+    public BTexture2D blockTextureGUI;
+    public BTexture2D background;
     public BTextureAtlas blockTexture;
     public BTexture2D lightTexture;
 
-    public Dictionary<string, Texture2D> textures = new();
+    public Dictionary<string, BTexture2D> textures = new();
 
-    public TextureManager(Silk.NET.OpenGL.GL GL, GraphicsDevice GD) {
+    public TextureManager(Silk.NET.OpenGL.GL GL) {
         this.GL = GL;
-        this.GD = GD;
 
-        blockTextureGUI = Texture2DExtensions.FromFile(GD, "textures/blocks.png");
-        background = Texture2DExtensions.FromFile(GD, "textures/bg.png");
+        blockTextureGUI = new BTexture2D("textures/blocks.png");
+        background = new BTexture2D("textures/bg.png");
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
         lightTexture = new BTexture2D("textures/lightmap.png");
     }
 
-    public Texture2D get(string path) {
+    public BTexture2D get(string path) {
         if (!textures.TryGetValue(path, out _)) {
-            textures[path] = Texture2DExtensions.FromFile(GD, path);;
+            textures[path] = new BTexture2D(path);;
         }
         return textures[path];
     }

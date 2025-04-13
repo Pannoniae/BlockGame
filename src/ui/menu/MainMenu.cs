@@ -1,7 +1,7 @@
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
-using TrippyGL;
-
+using Silk.NET.OpenGL;
 
 namespace BlockGame.ui;
 
@@ -44,10 +44,10 @@ public class MainMenu : Menu {
         addElement(button4);
     }
 
-    public override void clear(GraphicsDevice GD, double dt, double interp) {
-        GD.ClearColor = Color4b.SlateGray;
-        GD.ClearDepth = 1f;
-        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+    public override void clear(double dt, double interp) {
+        Game.graphics.clearColor(Color4b.SlateGray);
+        Game.GL.ClearDepth(1f);
+        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public override void draw() {

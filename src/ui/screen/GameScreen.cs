@@ -1,10 +1,11 @@
 using System.Drawing;
 using System.Numerics;
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using TrippyGL;
+using Silk.NET.OpenGL;
 using RectangleF = System.Drawing.RectangleF;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
@@ -13,7 +14,6 @@ namespace BlockGame.ui;
 public class GameScreen : Screen {
 
     public World world;
-    public GraphicsDevice GD;
 
     public Debug D;
 
@@ -30,8 +30,7 @@ public class GameScreen : Screen {
     private bool disposed;
 
     public override void activate() {
-        GD = Game.GD;
-        D = new Debug();
+        //D = new Debug();
 
         switchToMenu(INGAME_MENU);
 
@@ -113,7 +112,7 @@ public class GameScreen : Screen {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
             world.renderer.drawBlockOutline(interp);
         }
-        D.renderTick(interp);
+        //D.renderTick(interp);
         const string text = "THIS IS A LONG TEXT\nmultiple lines!";
         Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.WEST, 2f);
         Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.EAST, 2f);
@@ -128,9 +127,9 @@ public class GameScreen : Screen {
             INGAME_MENU.postRender(dt, interp);
         }
         // render entities
-        GD.DepthTestingEnabled = false;
+        Game.GL.Disable(EnableCap.DepthTest);
         world.player.render(dt, interp);
-        GD.DepthTestingEnabled = true;
+        Game.GL.Enable(EnableCap.DepthTest);
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
@@ -363,7 +362,7 @@ public class GameScreen : Screen {
 
         var gui = Game.gui;
 
-        GD.ShaderProgram = GUI.instance.shader;
+        Game.graphics.instantShader.use();
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 
@@ -387,10 +386,10 @@ public class GameScreen : Screen {
 
             // Draw debug lines
             if (debugScreen) {
-                D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
-                D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
+                //D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
+                //D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
                 //D.drawAABB(p.aabb);
-                D.flushLines();
+                //D.flushLines();
             }
 
             // Draw chat
@@ -449,10 +448,10 @@ public class GameScreen : Screen {
         return new string(input);
     }
 
-    public override void clear(GraphicsDevice GD, double dt, double interp) {
-        GD.ClearColor = WorldRenderer.defaultClearColour;
-        GD.ClearDepth = 1f;
-        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+    public override void clear(double dt, double interp) {
+        Game.graphics.clearColor(WorldRenderer.defaultClearColour);
+        Game.GL.ClearDepth(1f);
+        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public void openSettings() {

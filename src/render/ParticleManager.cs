@@ -47,7 +47,7 @@ public class ParticleManager {
                 Game.textureManager.get(particle.texture);
                 var tex = Game.textureManager.get(particle.texture);
                 Game.GL.ActiveTexture(TextureUnit.Texture0);
-                Game.GL.BindTexture(TextureTarget.Texture2D, tex.Handle);
+                Game.GL.BindTexture(TextureTarget.Texture2D, tex.handle);
             }
             InstantDraw.instantShader.setUniform(InstantDraw.uMVP, world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix());
             // get interp pos

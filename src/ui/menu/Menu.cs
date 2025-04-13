@@ -1,7 +1,8 @@
 using System.Numerics;
+using BlockGame.GL.vertexformats;
 using Molten;
 using Silk.NET.Input;
-using TrippyGL;
+using Silk.NET.OpenGL;
 
 using RectangleF = System.Drawing.RectangleF;
 
@@ -104,10 +105,10 @@ public class Menu {
         }
     }
 
-    public virtual void clear(GraphicsDevice GD, double dt, double interp) {
-        GD.ClearColor = WorldRenderer.defaultClearColour;
-        GD.ClearDepth = 1f;
-        GD.Clear(ClearBuffers.Color | ClearBuffers.Depth);
+    public virtual void clear(double dt, double interp) {
+        Game.graphics.clearColor(WorldRenderer.defaultClearColour);
+        Game.GL.ClearDepth(1f);
+        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public virtual void render(double dt, double interp) {

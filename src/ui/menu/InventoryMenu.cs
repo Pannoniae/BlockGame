@@ -1,8 +1,8 @@
 using System.Numerics;
+using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
-using TrippyGL;
-using TrippyGL.ImageSharp;
 
 using Rectangle = System.Drawing.Rectangle;
 
@@ -22,7 +22,7 @@ public class InventoryMenu : Menu {
     public Vector2I guiPos;
     public Rectangle guiBounds;
 
-    public Texture2D invTex = Texture2DExtensions.FromFile(Game.GD, "textures/creative_inventory.png");
+    public BTexture2D invTex = new BTexture2D("textures/creative_inventory.png");
 
     public override bool isModal() {
         return false;
@@ -77,7 +77,7 @@ public class InventoryMenu : Menu {
 
     public sealed override void resize(Vector2I newSize) {
         base.resize(newSize);
-        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.Width, (int)invTex.Height),
+        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.width, (int)invTex.height),
             HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 }

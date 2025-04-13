@@ -16,13 +16,13 @@ namespace BlockGame.GL
         public float SortValue;
 
         /// <summary>The top-left vertex.</summary>
-        public BatchVertex VertexTL;
+        public VertexColorTexture VertexTL;
         /// <summary>The top-right vertex.</summary>
-        public BatchVertex VertexTR;
+        public VertexColorTexture VertexTR;
         /// <summary>The bottom-left vertex.</summary>
-        public BatchVertex VertexBL;
+        public VertexColorTexture VertexBL;
         /// <summary>The bottom-right vertex.</summary>
-        public BatchVertex VertexBR;
+        public VertexColorTexture VertexBR;
 
         // Basic setup with position, source, and color
         public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color4b color, float depth)
@@ -235,7 +235,7 @@ namespace BlockGame.GL
         }
 
         // For raw vertices
-        public void SetVertices(BTexture2D texture, BatchVertex vTL, BatchVertex vTR, BatchVertex vBR, BatchVertex vBL)
+        public void SetVertices(BTexture2D texture, VertexColorTexture vTL, VertexColorTexture vTR, VertexColorTexture vBR, VertexColorTexture vBL)
         {
             Texture = texture;
             VertexTL = vTL;

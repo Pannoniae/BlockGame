@@ -119,11 +119,6 @@
         <ProjectReference Include="lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
         <ProjectReference Include="lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
         <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
-        <ProjectReference Include="lib\TrippyGL\TrippyGL.csproj"/>
-        <ProjectReference Include="lib\TrippyGL.Fonts\TrippyGL.Fonts.csproj"/>
-        <ProjectReference Include="lib\TrippyGL.Fonts.Building\TrippyGL.Fonts.Building.csproj"/>
-        <ProjectReference Include="lib\TrippyGL.Fonts.Extensions\TrippyGL.Fonts.Extensions.csproj"/>
-        <ProjectReference Include="lib\TrippyGL.ImageSharp\TrippyGL.ImageSharp.csproj"/>
         <ProjectReference Include="lib\Silk.NET.Input\Silk.NET.Input.csproj"/>
     </ItemGroup>
 

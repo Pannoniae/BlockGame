@@ -1,6 +1,10 @@
 using BlockGame.ui;
 using Molten.DoublePrecision;
-using TrippyGL;
+using Silk.NET.OpenGL;
+using System.Numerics;
+using BlockGame.GL;
+using Color4b = BlockGame.GL.vertexformats.Color4b;
+using Shader = BlockGame.GL.Shader;
 
 
 namespace BlockGame.util;
@@ -9,25 +13,65 @@ public class Debug {
     private const int MAX_LINE_VERTICES = 512;
     private const int MAX_POINT_VERTICES = 512;
 
-    private readonly VertexColor[] lineVertices = new VertexColor[MAX_LINE_VERTICES];
-    private readonly VertexBuffer<VertexColor> lineVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
+    private readonly VertexTinted[] lineVertices = new VertexTinted[MAX_LINE_VERTICES];
+    // Replace TrippyGL VertexBuffer with standard GL buffers
+    private uint lineVao;
+    private uint lineVbo;
     private int currentLine = 0;
-    private VertexColor[] pointVertices = new VertexColor[MAX_POINT_VERTICES];
-    private VertexBuffer<VertexColor> pointVertexBuffer = new(Game.GD, MAX_LINE_VERTICES, BufferUsage.StreamDraw);
+    private VertexTinted[] pointVertices = new VertexTinted[MAX_POINT_VERTICES];
+    private uint pointVao;
+    private uint pointVbo;
     private int currentPoint = 0;
 
-    private SimpleShaderProgram debugShader = SimpleShaderProgram.Create<VertexColor>(Game.GD, excludeWorldMatrix: true);
+    // Replace SimpleShaderProgram with standard shader program
+    private InstantShader debugShader;
+    
+    public Debug() {
+        unsafe {
+            // Create and setup VAO/VBO for lines
+            lineVao = Game.GL.CreateVertexArray();
+            lineVbo = Game.GL.CreateBuffer();
+            Game.GL.BindVertexArray(lineVao);
+            Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineVbo);
+            Game.GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(MAX_LINE_VERTICES * sizeof(VertexTinted)),
+                (void*)0, BufferUsageARB.StreamDraw);
 
+            // Set up vertex attributes (position and color)
+            Game.GL.EnableVertexAttribArray(0);
+            Game.GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, (uint)sizeof(VertexTinted),
+                (void*)0);
+            Game.GL.EnableVertexAttribArray(1);
+            Game.GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(VertexTinted),
+                (void*)12); // Offset to color (3 floats = 12 bytes)
+
+            // Same for points
+            pointVao = Game.GL.CreateVertexArray();
+            pointVbo = Game.GL.CreateBuffer();
+            Game.GL.BindVertexArray(pointVao);
+            Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, pointVbo);
+            Game.GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(MAX_POINT_VERTICES * sizeof(VertexTinted)),
+                IntPtr.Zero, BufferUsageARB.StreamDraw);
+            Game.GL.EnableVertexAttribArray(0);
+            Game.GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, (uint)sizeof(VertexTinted),
+                (void*)0);
+            Game.GL.EnableVertexAttribArray(1);
+            Game.GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(VertexTinted),
+                (void*)12);
+
+            // Create debug shader program (assumes the shaders are the same as the SimpleShaderProgram)
+            debugShader = new InstantShader(Game.GL, "shaders/debug.vert", "shaders/debug.frag");
+        }
+    }
+    
     public void renderTick(double interp) {
-        // nothing to do, so why set the shader?
-        //if (currentLine == 0) {
-        //    return;
-        //}
-        // don't forget to use the program before setting uniforms.
-        //Game.GD.ResetShaderProgramStates();
-        Game.GL.UseProgram(debugShader.Handle);
-        debugShader.Projection = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
-        debugShader.View = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
+        debugShader.use();
+        
+        // Set projection and view uniforms
+        Matrix4x4 projMatrix = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
+        Matrix4x4 viewMatrix = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
+        
+        debugShader.setProjection(projMatrix);
+        debugShader.setView(viewMatrix);
     }
 
     public void drawLine(Vector3D from, Vector3D to, Color4b colour = default) {
@@ -37,10 +81,9 @@ public class Debug {
         if (currentLine >= MAX_LINE_VERTICES - 2) {
             flushLines();
         }
-        //Console.Out.WriteLine(currentLine);
-        lineVertices[currentLine] = new VertexColor(from.toVec3(), colour);
+        lineVertices[currentLine] = new VertexTinted(from.toVec3(), colour);
         currentLine++;
-        lineVertices[currentLine] = new VertexColor(to.toVec3(), colour);
+        lineVertices[currentLine] = new VertexTinted(to.toVec3(), colour);
         currentLine++;
     }
 
@@ -79,11 +122,17 @@ public class Debug {
         if (currentLine == 0) {
             return;
         }
-        var GD = Game.GD;
-        lineVertexBuffer.DataSubset.SetData(lineVertices.AsSpan(0, currentLine));
-        GD.VertexArray = lineVertexBuffer;
-        GD.ShaderProgram = debugShader;
-        GD.DrawArrays(PrimitiveType.Lines, 0, (uint)currentLine);
+
+        Game.GL.BindVertexArray(lineVao);
+        Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineVbo);
+        unsafe {
+            Game.GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
+                (nuint)(currentLine * sizeof(VertexTinted)), lineVertices);
+        }
+
+        debugShader.use();
+        Game.GL.DrawArrays(PrimitiveType.Lines, 0, (uint)currentLine);
+        
         currentLine = 0;
     }
 }

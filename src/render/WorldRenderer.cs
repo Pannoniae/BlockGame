@@ -1,12 +1,12 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp.PixelFormats;
-using TrippyGL;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
 using Color = Molten.Color;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
@@ -287,7 +287,7 @@ public class WorldRenderer {
         // slightly bluer than the default clear colour
         var skyColour = new Color(100, 180, 255);
         // deep blue
-        var underSkyColour = new Color(90, 165, 255);
+        var underSkyColour = new Color(90, 145, 245);
 
         // Enable fog for sky rendering
         idc.EnableFog(true);
@@ -313,7 +313,7 @@ public class WorldRenderer {
         idc.finish();
 
 
-        /*var underSky = new Vector3(0, -8, 0);
+        var underSky = new Vector3(0, -16, 0);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
@@ -323,7 +323,7 @@ public class WorldRenderer {
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
         idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
 
-        idc.finish();*/
+        idc.finish();
 
         // Disable fog after rendering sky
         idc.EnableFog(false);

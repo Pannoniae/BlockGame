@@ -4,7 +4,6 @@ using BlockGame.ui;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Molten;
-using TrippyGL;
 using Color4b = BlockGame.GL.vertexformats.Color4b;
 using Rectangle = System.Drawing.Rectangle;
 
@@ -19,10 +18,8 @@ public class TextRenderer3D : IFontStashRenderer {
 
     public ITexture2DManager TextureManager => _textureManager;
 
-    public GraphicsDevice GraphicsDevice => _textureManager.GraphicsDevice;
-
-    public TextRenderer3D(GraphicsDevice graphicsDevice) {
-        _textureManager = new BTexture2DManager(graphicsDevice);
+    public TextRenderer3D() {
+        _textureManager = new BTexture2DManager();
         shader = new Shader(Game.GL, "shaders/batch.vert", "shaders/batch.frag");
         uMVP = shader.getUniformLocation("uMVP");
         tb = new SpriteBatch(Game.GL, shader);

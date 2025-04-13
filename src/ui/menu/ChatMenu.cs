@@ -1,9 +1,9 @@
 using System.Drawing;
 using System.Numerics;
+using BlockGame.GL.vertexformats;
 using CircularBuffer;
 using Silk.NET.Input;
 using Molten.DoublePrecision;
-using TrippyGL;
 
 
 namespace BlockGame.ui;

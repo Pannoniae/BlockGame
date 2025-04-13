@@ -48,7 +48,7 @@ public class PlayerRenderer {
         var world = player.world;
         var pos = player.position.toBlockPos();
         Game.GL.ActiveTexture(TextureUnit.Texture0);
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.Handle);
+        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.handle);
         var light = world.getLight(pos.X, pos.Y, pos.Z);
         WorldRenderer.meshBlockTinted(Block.get(handItem.block), ref vertices, ref indices, light);
         vao.bind();

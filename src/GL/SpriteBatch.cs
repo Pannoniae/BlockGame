@@ -3,8 +3,7 @@ using System.Drawing;
 using System.Numerics;
 using Silk.NET.OpenGL;
 using System.Runtime.InteropServices;
-using TrippyGL;
-using Color4b = BlockGame.GL.vertexformats.Color4b;
+using BlockGame.GL.vertexformats;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame.GL;
@@ -19,12 +18,12 @@ public enum BatcherBeginMode {
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct BatchVertex {
+public struct VertexColorTexture {
     public Vector3 Position;
     public Color4b Color;
     public Vector2 TexCoords;
 
-    public BatchVertex(Vector3 position, Color4b color, Vector2 texCoords) {
+    public VertexColorTexture(Vector3 position, Color4b color, Vector2 texCoords) {
         Position = position;
         Color = color;
         TexCoords = texCoords;
@@ -43,19 +42,18 @@ public sealed class SpriteBatch : IDisposable {
 
     // OpenGL resources
     private readonly Silk.NET.OpenGL.GL GL;
-    private readonly uint vao;
+    public readonly uint vao;
     private readonly uint vbo;
     private readonly uint ibo;
 
     // Shader
-    private readonly Shader shader;
+    internal readonly Shader shader;
     private readonly int textureUniform;
-    private readonly int mvpUniform;
 
     // Batch data
     private SpriteBatchItem[] batchItems;
     private uint batchItemCount;
-    private BatchVertex[] vertices;
+    private VertexColorTexture[] vertices;
     private ushort[] indices;
 
     // State
@@ -69,13 +67,8 @@ public sealed class SpriteBatch : IDisposable {
 
     public SpriteBatch(Silk.NET.OpenGL.GL gl, Shader shader, uint initialBatchCapacity = InitialBatchItemsCapacity) {
         this.shader = shader ?? throw new ArgumentNullException(nameof(shader));
-        textureUniform = shader.getUniformLocation("tex");
-        mvpUniform = shader.getUniformLocation("uMVP");
 
         GL = gl;
-
-        // Create shader (could be passed in, but we're making a fixed one)
-        shader = new Shader(GL, "shaders/batch.vert", "shaders/batch.frag");
 
         // Initialize OpenGL resources
         vao = GL.GenVertexArray();
@@ -91,17 +84,17 @@ public sealed class SpriteBatch : IDisposable {
         unsafe {
             // Position attribute (3 floats)
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false,
-                (uint)sizeof(BatchVertex), (void*)0);
+                (uint)sizeof(VertexColorTexture), (void*)0);
             GL.EnableVertexAttribArray(0);
 
             // Color attribute (4 bytes)
             GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true,
-                (uint)sizeof(BatchVertex), (void*)(3 * sizeof(float)));
+                (uint)sizeof(VertexColorTexture), (void*)(3 * sizeof(float)));
             GL.EnableVertexAttribArray(1);
 
             // TexCoord attribute (2 floats)
             GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false,
-                (uint)sizeof(BatchVertex), (void*)(3 * sizeof(float) + 4));
+                (uint)sizeof(VertexColorTexture), (void*)(3 * sizeof(float) + 4));
             GL.EnableVertexAttribArray(2);
         }
 
@@ -113,7 +106,7 @@ public sealed class SpriteBatch : IDisposable {
         batchItemCount = 0;
 
         // Initialize vertex and index arrays
-        vertices = new BatchVertex[InitialBufferCapacity];
+        vertices = new VertexColorTexture[InitialBufferCapacity];
         indices = new ushort[InitialBufferCapacity * 6 / 4]; // Each quad uses 6 indices for 4 vertices
 
         // Set up indices for a quad (two triangles)
@@ -130,7 +123,9 @@ public sealed class SpriteBatch : IDisposable {
 
         // Get uniform locations
         textureUniform = shader.getUniformLocation("tex");
-        mvpUniform = shader.getUniformLocation("uMVP");
+        
+        // Set texture to 0
+        shader.setUniform(textureUniform, 0);
 
         IsActive = false;
         IsDisposed = false;
@@ -220,8 +215,8 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     // DrawRaw methods
-    public void DrawRaw(BTexture2D texture, BatchVertex vertexTL, BatchVertex vertexTR,
-        BatchVertex vertexBR, BatchVertex vertexBL) {
+    public void DrawRaw(BTexture2D texture, VertexColorTexture vertexTL, VertexColorTexture vertexTR,
+        VertexColorTexture vertexBR, VertexColorTexture vertexBL) {
         ValidateBeginCalled();
 
         if (texture == null)
@@ -242,8 +237,8 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
     }
 
-    public void DrawRaw(BTexture2D texture, BatchVertex vertexTL, BatchVertex vertexTR,
-        BatchVertex vertexBR, BatchVertex vertexBL, Matrix4x4 matrix) {
+    public void DrawRaw(BTexture2D texture, VertexColorTexture vertexTL, VertexColorTexture vertexTR,
+        VertexColorTexture vertexBR, VertexColorTexture vertexBL, Matrix4x4 matrix) {
         ValidateBeginCalled();
 
         if (texture == null)
@@ -492,21 +487,23 @@ public sealed class SpriteBatch : IDisposable {
 
             // Upload vertex data
             unsafe {
-                fixed (BatchVertex* ptr = vertices) {
+                fixed (VertexColorTexture* ptr = vertices) {
                     GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
                     GL.BufferData(BufferTargetARB.ArrayBuffer,
-                        (nuint)(vertexIndex * sizeof(BatchVertex)),
+                        (nuint)(vertexIndex * sizeof(VertexColorTexture)),
                         ptr, BufferUsageARB.StreamDraw);
                 }
             }
 
             // Bind the texture
             currentTexture.bind();
-
-
+            
+            // Bind indices
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            
             // Draw the batch
             unsafe {
-                GL.DrawElements(PrimitiveType.Triangles, (uint)(itemCount * 6),
+                GL.DrawElements(PrimitiveType.Triangles, itemCount * 6,
                     DrawElementsType.UnsignedShort, (void*)0);
             }
 
