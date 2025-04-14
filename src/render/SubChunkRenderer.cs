@@ -135,11 +135,11 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     private static bool opaqueBlocks(int b) {
-        return b != 0 && Block.get(b).type != BlockType.TRANSLUCENT;
+        return b != 0 && Block.get(b).layer != RenderLayer.TRANSLUCENT;
     }
 
     private static bool notOpaqueBlocks(int b) {
-        return b == 0 || Block.get(b).type == BlockType.TRANSLUCENT;
+        return b == 0 || Block.get(b).layer == RenderLayer.TRANSLUCENT;
     }
 
     private void ReleaseUnmanagedResources() {
@@ -148,7 +148,9 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     private void Dispose(bool disposing) {
-        ReleaseUnmanagedResources();
+        if (disposing) {
+            ReleaseUnmanagedResources();
+        }
     }
 
     public void Dispose() {

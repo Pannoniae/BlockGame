@@ -22,38 +22,14 @@ public class Block {
     /// </summary>
     public string name;
 
-    public AABB? aabb;
-
-    public AABB? selectionAABB;
-
     /// <summary>
     /// Is fully transparent? (glass, leaves, etc.)
     /// Is translucent? (partially transparent blocks like water)
     /// </summary>
-    public BlockType type = BlockType.SOLID;
+    public RenderLayer layer = RenderLayer.SOLID;
+    public RenderType type = RenderType.MODEL;
 
-    public BlockModel model;
-
-    /// <summary>
-    /// How much light does this block emit? (0 for none.)
-    /// </summary>
-    public byte lightLevel = 0;
-
-    public bool selection = true;
-    public bool collision = true;
-
-    /// <summary>
-    /// Is this block a liquid?
-    /// </summary>
-    public bool liquid = false;
-
-    [Obsolete("Use Block.isFullBlock() instead.")]
-    public bool fullBlock = true;
-
-    /// <summary>
-    /// If true, this block will tick randomly.
-    /// </summary>
-    public bool randomTick = false;
+    public BlockModel? model;
 
     public const int atlasSize = 256;
     public const int textureSize = 16;
@@ -68,9 +44,17 @@ public class Block {
     /// <summary>
     /// Stores whether the block is a full block or not.
     /// </summary>
-    public static bool[] fullBlockCache = new bool[MAXBLOCKS];
-    public static bool[] translucentCache = new bool[MAXBLOCKS];
+    public static bool[] fullBlock = new bool[MAXBLOCKS];
+    
+    public static bool[] translucent = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
+    public static bool[] randomTick = new bool[MAXBLOCKS];
+    public static bool[] liquid = new bool[MAXBLOCKS];
+    public static bool[] selection = new bool[MAXBLOCKS];
+    public static bool[] collision = new bool[MAXBLOCKS];
+    public static byte[] lightLevel = new byte[MAXBLOCKS];
+    public static AABB?[] AABB = new AABB?[MAXBLOCKS];
+    public static AABB?[] selectionAABB = new AABB?[MAXBLOCKS];
     public static RenderType[] renderType = new RenderType[MAXBLOCKS];
 
     public static readonly int maxBlock = 45;
@@ -90,10 +74,13 @@ public class Block {
         return cond;
     }
 
+    public static void preLoad() {
+        
+    }
+
     public static void postLoad() {
         for (int i = 0; i <= maxBlock; i++) {
-            fullBlockCache[blocks[i].id] = blocks[i].fullBlock;
-            translucentCache[blocks[i].id] = blocks[i].type == BlockType.TRANSLUCENT;
+            translucent[blocks[i].id] = blocks[i].layer == RenderLayer.TRANSLUCENT;
         }
         inventoryBlacklist[38] = true;
         //inventoryBlacklist[7] = true;
@@ -101,7 +88,7 @@ public class Block {
 
 
     public static bool isFullBlock(int id) {
-        return fullBlockCache[id];
+        return fullBlock[id];
     }
 
     public static bool isBlacklisted(int block) {
@@ -109,105 +96,105 @@ public class Block {
     }
 
     public static Block AIR = register(new Block(0, "Air", BlockModel.emptyBlock()).air());
-    public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(Block.grassUVs(0, 0, 1, 0, 2, 0))).tick());
-    public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(Block.cubeUVs(2, 0))));
-    public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(Block.cubeUVs(3, 0))));
-    public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(Block.cubeUVs(4, 0))));
-    public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(Block.cubeUVs(5, 0))));
-    public static Block GRAVEL = register(new Block(6, "Gravel", BlockModel.makeCube(Block.cubeUVs(7, 0))));
-    public static Block HELLSTONE = register(new Block(7, "Hellstone", BlockModel.makeCube(Block.grassUVs(8, 0, 9, 0, 9, 0))).light(15));
-    public static Block GLASS = register(new Block(8, "Glass", BlockModel.makeCube(Block.cubeUVs(6, 0))).transparency());
+    public static Block GRASS = register(new Block(1, "Grass", BlockModel.makeCube(grassUVs(0, 0, 1, 0, 2, 0))).tick());
+    public static Block DIRT = register(new Block(2, "Dirt", BlockModel.makeCube(cubeUVs(2, 0))));
+    public static Block SAND = register(new FallingBlock(3, "Sand", BlockModel.makeCube(cubeUVs(3, 0))));
+    public static Block BASALT = register(new Block(4, "Basalt", BlockModel.makeCube(cubeUVs(4, 0))));
+    public static Block STONE = register(new Block(5, "Stone", BlockModel.makeCube(cubeUVs(5, 0))));
+    public static Block GRAVEL = register(new Block(6, "Gravel", BlockModel.makeCube(cubeUVs(7, 0))));
+    public static Block HELLSTONE = register(new Block(7, "Hellstone", BlockModel.makeCube(grassUVs(8, 0, 9, 0, 9, 0))).light(15));
+    public static Block GLASS = register(new Block(8, "Glass", BlockModel.makeCube(cubeUVs(6, 0))).transparency());
 
-    public static Block LANTERN = register(new Block(9, "Lantern", BlockModel.makePartialCube(Block.grassUVs(15, 1, 13, 1, 14, 1))).light(14).partialBlock());
+    public static Block LANTERN = register(new Block(9, "Lantern", BlockModel.makePartialCube(grassUVs(15, 1, 13, 1, 14, 1))).light(14).partialBlock());
 
-    public static Block TALL_GRASS = register(new Flower(43, "Tall Grass", BlockModel.makeGrass(Block.crossUVs(9,1)))).transparency().noCollision();
-    public static Block SHORT_GRASS = register(new Flower(44, "Short Grass", BlockModel.makeGrass(Block.crossUVs(8,1)))).transparency().shortGrassAABB().noCollision();
-    public static Block YELLOW_FLOWER = register(new Flower(10, "Yellow Flower", BlockModel.makeGrass(Block.crossUVs(10,1))).transparency().flowerAABB().noCollision());
-    public static Block RED_FLOWER = register(new Flower(11, "Red Flower", BlockModel.makeGrass(Block.crossUVs(11,1))).transparency().flowerAABB().noCollision());
+    public static Block TALL_GRASS = register(new Flower(43, "Tall Grass", BlockModel.makeGrass(crossUVs(9,1)))).transparency().noCollision();
+    public static Block SHORT_GRASS = register(new Flower(44, "Short Grass", BlockModel.makeGrass(crossUVs(8,1)))).transparency().shortGrassAABB().noCollision();
+    public static Block YELLOW_FLOWER = register(new Flower(10, "Yellow Flower", BlockModel.makeGrass(crossUVs(10,1))).transparency().flowerAABB().noCollision());
+    public static Block RED_FLOWER = register(new Flower(11, "Red Flower", BlockModel.makeGrass(crossUVs(11,1))).transparency().flowerAABB().noCollision());
 
 
-    public static Block PLANKS = register(new Block(12, "Planks", BlockModel.makeCube(Block.cubeUVs(0, 5))));
-    public static Block STAIRS = register(new Block(13, "Stairs", BlockModel.makeStairs(Block.cubeUVs(0, 5))).partialBlock());
-    public static Block LOG = register(new Block(14, "Log", BlockModel.makeCube(Block.grassUVs(2, 5, 1, 5, 3, 5))));
-    public static Block LEAVES = register(new Block(15, "Leaves", BlockModel.makeCube(Block.cubeUVs(4, 5))).transparency());
-    public static Block MAPLE_PLANKS = register(new Block(16, "Maple Planks", BlockModel.makeCube(Block.cubeUVs(5, 5))));
-    public static Block MAPLE_STAIRS = register(new Block(17, "Maple Stairs", BlockModel.makeStairs(Block.cubeUVs(5, 5))).partialBlock());
-    public static Block MAPLE_LOG = register(new Block(18, "Maple Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
-    public static Block MAPLE_LEAVES = register(new Block(19, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
+    public static Block PLANKS = register(new Block(12, "Planks", BlockModel.makeCube(cubeUVs(0, 5))));
+    public static Block STAIRS = register(new Block(13, "Stairs", BlockModel.makeStairs(cubeUVs(0, 5))).partialBlock());
+    public static Block LOG = register(new Block(14, "Log", BlockModel.makeCube(grassUVs(2, 5, 1, 5, 3, 5))));
+    public static Block LEAVES = register(new Block(15, "Leaves", BlockModel.makeCube(cubeUVs(4, 5))).transparency());
+    public static Block MAPLE_PLANKS = register(new Block(16, "Maple Planks", BlockModel.makeCube(cubeUVs(5, 5))));
+    public static Block MAPLE_STAIRS = register(new Block(17, "Maple Stairs", BlockModel.makeStairs(cubeUVs(5, 5))).partialBlock());
+    public static Block MAPLE_LOG = register(new Block(18, "Maple Log", BlockModel.makeCube(grassUVs(7, 5, 6, 5, 8, 5))));
+    public static Block MAPLE_LEAVES = register(new Block(19, "Maple Leaves", BlockModel.makeCube(cubeUVs(9, 5))).transparency());
     //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
     //public static Block MAHOGANY_LEAVES = register(new Block(20, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
 
-    public static Block METAL_CUBE_BLUE = register(new Block(20, "Blue Metal Block", BlockModel.makeCube(Block.cubeUVs(12, 1))));
-    public static Block CANDY_LIGHT_BLUE = register(new Block(21, "Light Blue Candy", BlockModel.makeCube(Block.cubeUVs(0, 2))));
-    public static Block CANDY_CYAN = register(new Block(22, "Cyan Candy", BlockModel.makeCube(Block.cubeUVs(1, 2))));
-    public static Block CANDY_TURQUOISE = register(new Block(23, "Turquoise Candy", BlockModel.makeCube(Block.cubeUVs(2, 2))));
-    public static Block CANDY_DARK_GREEN = register(new Block(24, "Dark Green Candy", BlockModel.makeCube(Block.cubeUVs(3, 2))));
-    public static Block CANDY_LIGHT_GREEN = register(new Block(25, "Light Green Candy", BlockModel.makeCube(Block.cubeUVs(4, 2))));
-    public static Block CANDY_ORANGE = register(new Block(26, "Orange Candy", BlockModel.makeCube(Block.cubeUVs(5, 2))));
-    public static Block CANDY_YELLOW = register(new Block(27, "Yellow Candy", BlockModel.makeCube(Block.cubeUVs(6, 2))));
-    public static Block CANDY_LIGHT_RED = register(new Block(28, "Light Red Candy", BlockModel.makeCube(Block.cubeUVs(7, 2))));
-    public static Block CANDY_PINK = register(new Block(29, "Pink Candy", BlockModel.makeCube(Block.cubeUVs(8, 2))));
-    public static Block CANDY_PURPLE = register(new Block(30, "Purple Candy", BlockModel.makeCube(Block.cubeUVs(9, 2))));
-    public static Block VIOLET = register(new Block(31, "Violet Candy", BlockModel.makeCube(Block.cubeUVs(10, 2))));
-    public static Block CANDY_RED = register(new Block(32, "Red Candy", BlockModel.makeCube(Block.cubeUVs(11, 2))));
-    public static Block CANDY_DARK_BLUE = register(new Block(33, "Dark Blue Candy", BlockModel.makeCube(Block.cubeUVs(12, 2))));
-    public static Block CANDY_WHITE = register(new Block(34, "White Candy", BlockModel.makeCube(Block.cubeUVs(13, 2))));
-    public static Block CANDY_GREY = register(new Block(35, "Grey Candy", BlockModel.makeCube(Block.cubeUVs(14, 2))));
-    public static Block CANDY_BLACK = register(new Block(36, "Black Candy", BlockModel.makeCube(Block.cubeUVs(15, 2))));
+    public static Block METAL_CUBE_BLUE = register(new Block(20, "Blue Metal Block", BlockModel.makeCube(cubeUVs(12, 1))));
+    public static Block CANDY_LIGHT_BLUE = register(new Block(21, "Light Blue Candy", BlockModel.makeCube(cubeUVs(0, 2))));
+    public static Block CANDY_CYAN = register(new Block(22, "Cyan Candy", BlockModel.makeCube(cubeUVs(1, 2))));
+    public static Block CANDY_TURQUOISE = register(new Block(23, "Turquoise Candy", BlockModel.makeCube(cubeUVs(2, 2))));
+    public static Block CANDY_DARK_GREEN = register(new Block(24, "Dark Green Candy", BlockModel.makeCube(cubeUVs(3, 2))));
+    public static Block CANDY_LIGHT_GREEN = register(new Block(25, "Light Green Candy", BlockModel.makeCube(cubeUVs(4, 2))));
+    public static Block CANDY_ORANGE = register(new Block(26, "Orange Candy", BlockModel.makeCube(cubeUVs(5, 2))));
+    public static Block CANDY_YELLOW = register(new Block(27, "Yellow Candy", BlockModel.makeCube(cubeUVs(6, 2))));
+    public static Block CANDY_LIGHT_RED = register(new Block(28, "Light Red Candy", BlockModel.makeCube(cubeUVs(7, 2))));
+    public static Block CANDY_PINK = register(new Block(29, "Pink Candy", BlockModel.makeCube(cubeUVs(8, 2))));
+    public static Block CANDY_PURPLE = register(new Block(30, "Purple Candy", BlockModel.makeCube(cubeUVs(9, 2))));
+    public static Block VIOLET = register(new Block(31, "Violet Candy", BlockModel.makeCube(cubeUVs(10, 2))));
+    public static Block CANDY_RED = register(new Block(32, "Red Candy", BlockModel.makeCube(cubeUVs(11, 2))));
+    public static Block CANDY_DARK_BLUE = register(new Block(33, "Dark Blue Candy", BlockModel.makeCube(cubeUVs(12, 2))));
+    public static Block CANDY_WHITE = register(new Block(34, "White Candy", BlockModel.makeCube(cubeUVs(13, 2))));
+    public static Block CANDY_GREY = register(new Block(35, "Grey Candy", BlockModel.makeCube(cubeUVs(14, 2))));
+    public static Block CANDY_BLACK = register(new Block(36, "Black Candy", BlockModel.makeCube(cubeUVs(15, 2))));
 
-    public static Block HEAD = register(new Block(37, "Head", BlockModel.makeHalfCube(Block.HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
+    public static Block HEAD = register(new Block(37, "Head", BlockModel.makeHalfCube(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
 
-    public static Block WATER = register(new Water(38, "Water", BlockModel.makeLiquid(Block.cubeUVs(0, 4))).makeLiquid());
+    public static Block WATER = register(new Water(38, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid());
 
-    public static Block RED_ORE = register(new Block(39, "Red Ore", BlockModel.makeCube(Block.cubeUVs(10, 0))));
-    public static Block PURPLE_ORE = register(new Block(40, "Purple Ore", BlockModel.makeCube(Block.cubeUVs(11, 0))));
-    public static Block AMBER_ORE = register(new Block(41, "Amber Ore", BlockModel.makeCube(Block.cubeUVs(12, 0))));
-    public static Block VIOLET_ORE = register(new Block(42, "Violet Ore", BlockModel.makeCube(Block.cubeUVs(13, 0))));
+    public static Block RED_ORE = register(new Block(39, "Red Ore", BlockModel.makeCube(cubeUVs(10, 0))));
+    public static Block PURPLE_ORE = register(new Block(40, "Purple Ore", BlockModel.makeCube(cubeUVs(11, 0))));
+    public static Block AMBER_ORE = register(new Block(41, "Amber Ore", BlockModel.makeCube(cubeUVs(12, 0))));
+    public static Block VIOLET_ORE = register(new Block(42, "Violet Ore", BlockModel.makeCube(cubeUVs(13, 0))));
 
-    public static Block TORCH = register(new Block(45, "Torch", BlockModel.makeTorch(Block.grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
+    public static Block TORCH = register(new Block(45, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
 
     public static bool isSolid(int block) {
-        return block != 0 && get(block).type == BlockType.SOLID;
+        return block != 0 && get(block).layer == RenderLayer.SOLID;
     }
 
     public static bool notSolid(int block) {
-        return block == 0 || get(block).type != BlockType.SOLID;
+        return block == 0 || get(block).layer != RenderLayer.SOLID;
     }
 
     public static bool isTransparent(int block) {
-        return block != 0 && get(block).type == BlockType.TRANSPARENT;
+        return block != 0 && get(block).layer == RenderLayer.TRANSPARENT;
     }
 
     public static bool isTranslucent(int block) {
-        return translucentCache[block];
+        return translucent[block];
     }
 
     public static bool notTranslucent(int block) {
-        return !translucentCache[block];
+        return !translucent[block];
     }
 
     public static bool hasCollision(int block) {
-        return block != 0 && get(block).collision;
+        return block != 0 && collision[block];
     }
 
     public static bool isSolid(Block block) {
-        return block.id != 0 && block.type == BlockType.SOLID;
+        return block.id != 0 && block.layer == RenderLayer.SOLID;
     }
 
     public static bool notSolid(Block block) {
-        return block.id == 0 || block.type != BlockType.SOLID;
+        return block.id == 0 || block.layer != RenderLayer.SOLID;
     }
 
     public static bool isTransparent(Block block) {
-        return block.id != 0 && block.type == BlockType.TRANSPARENT;
+        return block.id != 0 && block.layer == RenderLayer.TRANSPARENT;
     }
 
     public static bool isTranslucent(Block block) {
-        return block.id != 0 && block.type == BlockType.TRANSLUCENT;
+        return block.id != 0 && block.layer == RenderLayer.TRANSLUCENT;
     }
 
     public static bool hasCollision(Block block) {
-        return block.id != 0 && block.collision;
+        return block.id != 0 && collision[block.id];
     }
 
     /// <summary>
@@ -280,19 +267,19 @@ public class Block {
 
     public Block flowerAABB() {
         var offset = 6 / 16f;
-        selectionAABB = new AABB(new Vector3D(0 + offset, 0, 0 + offset), new Vector3D(1 - offset, 0.5, 1 - offset));
+        selectionAABB[id] = new AABB(new Vector3D(0 + offset, 0, 0 + offset), new Vector3D(1 - offset, 0.5, 1 - offset));
         return this;
     }
 
     public Block shortGrassAABB() {
         var offset = 4 / 16f;
-        selectionAABB = new AABB(new Vector3D(0, 0, 0), new Vector3D(1, offset, 1));
+        selectionAABB[id] = new AABB(new Vector3D(0, 0, 0), new Vector3D(1, offset, 1));
         return this;
     }
 
     public Block torchAABB() {
         var offset = 6 / 16f;
-        selectionAABB = new AABB(new Vector3D(0 + offset, 0, 0 + offset), new Vector3D(1 - offset, 1, 1 - offset));
+        selectionAABB[id] = new AABB(new Vector3D(0 + offset, 0, 0 + offset), new Vector3D(1 - offset, 1, 1 - offset));
         noCollision();
         return this;
     }
@@ -301,37 +288,43 @@ public class Block {
         this.id = id;
         this.name = name;
         this.model = model;
+        
+        fullBlock[id] = true;
+        selection[id] = true;
+        collision[id] = true;
+        liquid[id] = false;
+        randomTick[id] = false;
 
-        aabb = fullBlockAABB();
-        selectionAABB = fullBlockAABB();
+        AABB[id] = fullBlockAABB();
+        selectionAABB[id] = fullBlockAABB();
     }
 
     public Block transparency() {
-        type = BlockType.TRANSPARENT;
-        fullBlock = false;
+        layer = RenderLayer.TRANSPARENT;
+        fullBlock[id] = false;
         return this;
     }
 
     public Block translucency() {
-        type = BlockType.TRANSLUCENT;
-        fullBlock = false;
+        layer = RenderLayer.TRANSLUCENT;
+        fullBlock[id] = false;
         return this;
     }
 
     public Block noCollision() {
-        collision = false;
-        aabb = null;
+        collision[id] = false;
+        AABB[id] = null;
         return this;
     }
 
     public Block noSelection() {
-        selection = false;
-        selectionAABB = null;
+        selection[id] = false;
+        selectionAABB[id] = null;
         return this;
     }
 
     public Block partialBlock() {
-        fullBlock = false;
+        fullBlock[id] = false;
         return this;
     }
 
@@ -339,8 +332,8 @@ public class Block {
         translucency();
         noCollision();
         noSelection();
-        liquid = true;
-        fullBlock = false;
+        liquid[id] = true;
+        fullBlock[id] = false;
         return this;
     }
 
@@ -350,7 +343,7 @@ public class Block {
     }
 
     public Block light(byte amount) {
-        lightLevel = amount;
+        lightLevel[id] = amount;
         return this;
     }
 
@@ -366,12 +359,12 @@ public class Block {
     public Block air() {
         noCollision();
         noSelection();
-        fullBlock = false;
+        fullBlock[id] = false;
         return this;
     }
 
     public Block tick() {
-        randomTick = true;
+        randomTick[id] = true;
         return this;
     }
 
@@ -544,7 +537,7 @@ public enum FaceFlags : byte {
 /// <summary>
 /// Defines the render type / layer of a block.
 /// </summary>
-public enum BlockType : byte {
+public enum RenderLayer : byte {
     SOLID,
     TRANSPARENT,
     TRANSLUCENT

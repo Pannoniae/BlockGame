@@ -15,7 +15,7 @@ public class RenderBlock {
 
     public static bool neighbourTest(World world, Vector3I pos, RawDirection direction) {
         var neighbour = world.getBlock(pos + Direction.getDirection(direction));
-        var isTranslucent = Block.get(world.getBlock(pos)).type == BlockType.TRANSLUCENT;
+        var isTranslucent = Block.get(world.getBlock(pos)).layer == RenderLayer.TRANSLUCENT;
         var flag = false;
         switch (isTranslucent) {
             case false:

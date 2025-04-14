@@ -157,14 +157,14 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         }
 
         // if the new block has light, add the light
-        if (Block.get(block).lightLevel > 0) {
+        if (Block.lightLevel[block] > 0) {
             // add lightsource
-            setBlockLight(x, y, z, Block.get(block).lightLevel);
+            setBlockLight(x, y, z, Block.lightLevel[block]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
             world.blockLightQueue.Add(new LightNode(wx, y, wz, this));
         }
         // if the old block had light, remove the light
-        if (block == 0 && Block.get(oldBlock).lightLevel > 0) {
+        if (block == 0 && Block.lightLevel[oldBlock] > 0) {
             // remove lightsource
             world.removeBlockLightAndPropagate(wx, y, wz);
         }

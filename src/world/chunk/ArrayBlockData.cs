@@ -51,8 +51,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 blockCount--;
             }
 
-            var oldTick = Block.get(old).randomTick;
-            var tick = Block.get(value).randomTick;
+            var oldTick = Block.randomTick[old];
+            var tick = Block.randomTick[value];
             if (!oldTick && tick) {
                 randomTickCount++;
             }
@@ -169,7 +169,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             if (block != 0) {
                 blockCount++;
             }
-            if (Block.get(block).randomTick) {
+            if (Block.randomTick[block]) {
                 randomTickCount++;
             }
             if (Block.isFullBlock(block)) {

@@ -529,7 +529,7 @@ public class World : IDisposable {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        return Block.get(chunk.getBlock(blockPos.X, y, blockPos.Z)).selection;
+        return Block.selection[chunk.getBlock(blockPos.X, y, blockPos.Z)];
     }
 
     public ushort getBlock(int x, int y, int z) {
@@ -675,7 +675,7 @@ public class World : IDisposable {
     }
 
     public AABB? getAABB(int x, int y, int z, Block block) {
-        var aabb = block.aabb;
+        var aabb = Block.AABB[block.id];
         if (aabb == null) {
             return null;
         }
@@ -703,7 +703,7 @@ public class World : IDisposable {
 
     public AABB? getSelectionAABB(int x, int y, int z, Block block) {
 
-        var aabb = block.selectionAABB;
+        var aabb = Block.selectionAABB[block.id];
         if (aabb == null) {
             return null;
         }

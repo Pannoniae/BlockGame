@@ -333,6 +333,8 @@ public partial class Game {
         setMenu(Menu.LOADING);
         fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
         gui.loadFont(13);
+        
+        Block.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
 

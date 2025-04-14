@@ -76,7 +76,7 @@ public class Player : Entity {
         clamp(dt);
 
         blockAtFeet = world.getBlock(feetPosition.toBlockPos());
-        inLiquid = Block.get(blockAtFeet).liquid;
+        inLiquid = Block.liquid[blockAtFeet];
 
 
         collisionAndSneaking(dt);
@@ -241,8 +241,8 @@ public class Player : Entity {
         var torsoBlockPos = new Vector3D(feetPosition.X, feetPosition.Y + 1, feetPosition.Z).toBlockPos();
         var torso = world.getBlock(torsoBlockPos);
 
-        var feetLiquid = Block.get(feet).liquid;
-        var torsoLiquid = Block.get(torso).liquid;
+        var feetLiquid = Block.liquid[feet];
+        var torsoLiquid = Block.liquid[torso];
 
         // if no liquid at feet, don't bother
         if (!feetLiquid) {
