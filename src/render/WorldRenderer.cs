@@ -111,14 +111,14 @@ public class WorldRenderer {
         //shader.setUniform(drawDistance, dd);
 
         shader.setUniform(fogColour, defaultFogColour);
-        shader.setUniform(skyColour, defaultClearColour with { A = 0 });
+        shader.setUniform(skyColour, defaultClearColour);
 
         waterShader.setUniform(waterBlockTexture, 0);
         waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
         waterShader.setUniform(waterFogColour, defaultFogColour);
-        waterShader.setUniform(waterSkyColour, defaultClearColour with { A = 0 });
+        waterShader.setUniform(waterSkyColour, defaultClearColour);
 
         setUniforms();
     }
@@ -196,7 +196,7 @@ public class WorldRenderer {
         GL.DepthMask(true);
 
         // no blending solid shit!
-        //GL.Disable(EnableCap.Blend);
+        GL.Disable(EnableCap.Blend);
 
         GL.BindVertexArray(chunkVAO);
 
@@ -250,7 +250,7 @@ public class WorldRenderer {
             }
         }
         // start blending at transparent stuff
-        //GL.Enable(EnableCap.Blend);
+        GL.Enable(EnableCap.Blend);
 
         GL.Disable(EnableCap.CullFace);
         // TRANSLUCENT PASS
