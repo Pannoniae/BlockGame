@@ -75,6 +75,8 @@ public class WorldRenderer {
         chunkVAO = GL.GenVertexArray();
 
         genFatQuadIndices();
+        
+        idc.setup();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         Game.worldShader = shader;
@@ -152,8 +154,8 @@ public class WorldRenderer {
         var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
 
         // the problem is that with two chunks, the two values would be the same. so let's adjust them if so
-        var fogMaxValue = dd - 16;
-        var fogMinValue = (int)(dd * 0.25f);
+        float fogMaxValue = dd - 16;
+        float fogMinValue = (int)(dd * 0.25f);
 
         if (fogMaxValue <= fogMinValue) {
             fogMinValue = fogMaxValue - 16;
@@ -167,6 +169,21 @@ public class WorldRenderer {
         shader.setUniform(fogMin, fogMinValue);
         waterShader.setUniform(waterFogMax, fogMaxValue);
         waterShader.setUniform(waterFogMin, fogMinValue);
+
+        if (world.player.isUnderWater()) {
+            // set fog colour to blue
+            shader.setUniform(fogColour, Color4b.DarkBlue);
+            waterShader.setUniform(waterFogColour, Color4b.DarkBlue);
+            shader.setUniform(fogMin, 0f);
+            waterShader.setUniform(waterFogMin, 0f);
+            shader.setUniform(fogMax, 24f);
+            waterShader.setUniform(waterFogMax, 24f);
+        }
+        else {
+            // set fog colour to default
+            shader.setUniform(fogColour, defaultFogColour);
+            waterShader.setUniform(waterFogColour, defaultFogColour);
+        }
     }
 
 
@@ -189,6 +206,7 @@ public class WorldRenderer {
         GL.BindVertexArray(chunkVAO);
         bindQuad();
 
+        setUniforms();
 
         GL.DepthMask(false);
         // render sky
@@ -290,17 +308,18 @@ public class WorldRenderer {
         var underSkyColour = new Color(90, 145, 245);
 
         // Enable fog for sky rendering
-        idc.EnableFog(true);
-        idc.SetFogColor(defaultClearColour.ToVector4());
+        idc.enableFog(true);
+        idc.setFogType(FogType.Exp);
+        idc.fogColour(defaultClearColour.ToVector4());
 
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
 
-        // Set fog distance parameters - start fog closer to camera for sky edges
-        idc.SetFogDistance(rd * 0.005f, rd / 2f);
+        // Set fog density parameter for exp fog
+        idc.setFogDensity(0.002f);
 
-        InstantDrawColour.instantShader.use();
-        InstantDrawColour.instantShader.setUniform(InstantDrawColour.uMVP, viewProj);
-        InstantDrawColour.instantShader.setUniform(InstantDrawColour.uModelView, modelView);
+        idc.instantShader.use();
+        idc.instantShader.setUniform(idc.uMVP, viewProj);
+        idc.instantShader.setUniform(idc.uModelView, modelView);
 
         // add 6 vertices for the quad
         idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
@@ -315,7 +334,7 @@ public class WorldRenderer {
 
         var underSky = new Vector3(0, -16, 0);
         
-        idc.SetFogDistance(rd * 0.005f, rd);
+        idc.fogDistance(rd * 0.005f, rd);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
@@ -328,7 +347,7 @@ public class WorldRenderer {
         idc.finish();
 
         // Disable fog after rendering sky
-        idc.EnableFog(false);
+        idc.enableFog(false);
         GL.Enable(EnableCap.CullFace);
     }
 

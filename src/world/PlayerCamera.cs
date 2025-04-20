@@ -25,6 +25,11 @@ public class PlayerCamera {
 
     public float vfov => Settings.instance.FOV;
 
+    // FOV properties
+    private float normalFov = 70.0f;
+    private float underwaterFov = 60.0f; // Wider FOV underwater to simulate refraction
+    private float currentFov;
+    private float targetFov;
 
     // in degrees
     public float bob;
@@ -42,11 +47,17 @@ public class PlayerCamera {
         aspectRatio = this.viewportWidth / this.viewportHeight;
         this.forward = forward;
         this.up = up;
+        
+        currentFov = normalFov;
+        targetFov = normalFov;
+        
         var view = getViewMatrix(1);
         var proj = getProjectionMatrix();
         var mat = view * proj;
         frustum = new BoundingFrustum(mat);
         calculateFrustum(1);
+
+        
     }
 
     public void setViewport(float width, float height) {
@@ -60,6 +71,19 @@ public class PlayerCamera {
         var proj = getProjectionMatrix();
         var mat = view * proj;
         frustum.Matrix = mat;
+    }
+
+    public void updateFOV(bool isUnderwater, double dt) {
+        // Set target FOV based on underwater status
+        targetFov = isUnderwater ? underwaterFov : normalFov;
+        
+        // Smooth transition between FOVs
+        float transitionSpeed = 12.0f;
+        float step = (float)(transitionSpeed * dt);
+        
+        if (Math.Abs(currentFov - targetFov) > 0.01f) {
+            currentFov = MathHelper.Lerp(currentFov, targetFov, step);
+        }
     }
 
     public void ModifyDirection(float xOffset, float yOffset) {
@@ -157,13 +181,13 @@ public class PlayerCamera {
     public Matrix4x4 getProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance + 4) * Chunk.CHUNKSIZE);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(vfov), aspectRatio, 0.1f, maxPlane);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(currentFov), aspectRatio, 0.1f, maxPlane);
     }
 
     public Matrix4x4 getFixedProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance + 4) * Chunk.CHUNKSIZE);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(70), aspectRatio, 0.1f, maxPlane);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(normalFov), aspectRatio, 0.1f, maxPlane);
     }
 
 

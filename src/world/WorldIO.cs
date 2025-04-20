@@ -46,6 +46,7 @@ public class WorldIO {
         tag.addDouble("posY", world.player.position.Y);
         tag.addDouble("posZ", world.player.position.Z);
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
+        Console.Out.WriteLine($"Saved world data to level/{world.name}/level.xnbt");
     }
 
     public void saveChunk(World world, Chunk chunk) {
@@ -115,6 +116,7 @@ public class WorldIO {
     }
 
     public static World load(string filename) {
+        Console.Out.WriteLine($"Loaded data from level/{filename}/level.xnbt");
         var tag = NBT.readFile($"level/{filename}/level.xnbt");
         var seed = tag.getInt("seed");
         var world = new World(filename, seed, true);

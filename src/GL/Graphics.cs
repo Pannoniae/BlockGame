@@ -5,15 +5,21 @@ using Silk.NET.OpenGL;
 
 namespace BlockGame.GL;
 
+/// <summary>
+/// Keep track of all graphics resources here.
+/// </summary>
 public class Graphics {
+    
+    // SpriteBatches
     public readonly SpriteBatch mainBatch;
     public readonly SpriteBatch immediateBatch;
     
+    // Shaders
     public readonly InstantShader instantShader = new InstantShader(Game.GL, "shaders/batch.vert", "shaders/batch.frag");
 
     public readonly Silk.NET.OpenGL.GL GL;
 
-    private int[] viewportParams = new int[4]; // x, y, width, height
+    private readonly int[] viewportParams = new int[4]; // x, y, width, height
 
     public Graphics() {
         GL = Game.GL;

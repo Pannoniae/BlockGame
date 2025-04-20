@@ -12,8 +12,8 @@ in vec4 tint;
 in float vertexDist;
 
 
-uniform int fogMax;
-uniform int fogMin;
+uniform float fogMax;
+uniform float fogMin;
 
 uniform sampler2D blockTexture;
 uniform sampler2D lightTexture;

@@ -62,7 +62,7 @@ public class LevelSelectMenu : Menu {
             world = WorldIO.load($"level{levelSelect.levelIndex}");
         }
         else {
-            world = new World($"level{levelSelect.levelIndex}", Random.Shared.Next(int.MaxValue));
+            world = new World($"level{levelSelect.levelIndex}", Random.Shared.Next());
         }
         Screen.GAME_SCREEN.setWorld(world);
         Game.instance.switchToScreen(Screen.GAME_SCREEN);

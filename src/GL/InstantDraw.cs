@@ -4,43 +4,157 @@ using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame.GL;
 
-public class InstantDraw {
+// Define fog types as an enum for better code readability
+public enum FogType {
+    Linear = 0,
+    Exp = 1,
+    Exp2 = 2
+}
 
-    public static Shader instantShader;
-    public static int instantTexture;
-    public static int uMVP;
+public abstract class InstantDraw<T> where T : unmanaged {
+    public Shader instantShader;
+    public int uMVP;
+    public int uModelView;    // Added for fog
+    public int uFogColor;     // Added for fog
+    public int uFogStart;     // Added for fog
+    public int uFogEnd;       // Added for fog
+    public int uFogEnabled;   // Added for fog toggle
+    public int uFogType;      // Added for fog type
+    public int uFogDensity;   // Added for exp/exp2 fog
+    
+    protected readonly int maxVertices;
+    protected readonly T[] vertices;
 
-    private readonly int maxVertices;
-    private readonly BlockVertexTinted[] vertices;
+    protected uint VAO;
+    protected uint VBO;
 
-    private readonly uint VAO;
-    private readonly uint VBO;
+    public Silk.NET.OpenGL.GL GL;
+    protected int currentVertex = 0;
 
-    public readonly Silk.NET.OpenGL.GL GL;
-    private int currentVertex = 0;
-
-    private Shader shader;
-
+    // Fog settings
+    protected Vector4 fogColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+    protected float fogStart = 10.0f;
+    protected float fogEnd = 100.0f;
+    protected bool fogEnabled = false;  // Disabled by default
+    protected FogType fogType = FogType.Linear;
+    protected float fogDensity = 0.01f;
+    
     public InstantDraw(int maxVertices) {
-        vertices = new BlockVertexTinted[maxVertices];
+        vertices = new T[maxVertices];
         this.maxVertices = maxVertices;
         unsafe {
             GL = Game.GL;
-            instantShader = new Shader(GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
-            instantShader.use();
-            instantTexture = instantShader.getUniformLocation("tex");
-            uMVP = instantShader.getUniformLocation(nameof(uMVP));
-            instantShader.setUniform(instantTexture, 0);
+        }
+    }
+
+    public virtual void setup() {
+        unsafe {
             VAO = GL.CreateVertexArray();
             VBO = GL.CreateBuffer();
             GL.BindVertexArray(VAO);
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(BlockVertexTinted)), (void*)0, BufferStorageMask.DynamicStorageBit);
+            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(T)), (void*)0, BufferStorageMask.DynamicStorageBit);
             format();
         }
     }
+    
+    public abstract void format();
+    
+    // Fog control methods
+    public void enableFog(bool enable) {
+        fogEnabled = enable;
+        instantShader.setUniform(uFogEnabled, enable);
+    }
 
-    public void format() {
+    public void fogColour(Vector4 color) {
+        fogColor = color;
+        instantShader.setUniform(uFogColor, color);
+    }
+
+    public void fogDistance(float start, float end) {
+        fogStart = start;
+        fogEnd = end;
+        instantShader.setUniform(uFogStart, start);
+        instantShader.setUniform(uFogEnd, end);
+    }
+    
+    // New methods for fog type and density
+    public void setFogType(FogType type) {
+        fogType = type;
+        instantShader.setUniform(uFogType, (int)type);
+    }
+    
+    public void setFogDensity(float density) {
+        fogDensity = density;
+        instantShader.setUniform(uFogDensity, density);
+    }
+
+    public void addVertex(T vertex) {
+        if (currentVertex >= maxVertices - 1) {
+            finish();
+        }
+        //Console.Out.WriteLine(currentLine);
+        vertices[currentVertex] = vertex;
+        currentVertex++;
+    }
+    
+    public void finish() {
+        // nothing to do
+        if (currentVertex == 0) {
+            return;
+        }
+        GL.BindVertexArray(VAO);
+
+        // Apply current fog settings
+        instantShader.use();
+        if (fogEnabled) {
+            instantShader.setUniform(uFogEnabled, true);
+            instantShader.setUniform(uFogColor, fogColor);
+            instantShader.setUniform(uFogStart, fogStart);
+            instantShader.setUniform(uFogEnd, fogEnd);
+            instantShader.setUniform(uFogType, (int)fogType);
+            instantShader.setUniform(uFogDensity, fogDensity);
+        } else {
+            instantShader.setUniform(uFogEnabled, false);
+        }
+
+        // Upload buffer
+        unsafe {
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+            fixed (T* v = vertices) {
+                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(T)), v);
+            }
+        }
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)currentVertex);
+        currentVertex = 0;
+    }
+}
+
+public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted>(maxVertices) {
+    
+    public static int instantTexture;
+
+    public override void setup() {
+        base.setup();
+        instantShader = new Shader(GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
+        instantTexture = instantShader.getUniformLocation("tex");
+        uMVP = instantShader.getUniformLocation(nameof(uMVP));
+        uModelView = instantShader.getUniformLocation(nameof(uModelView));
+        uFogColor = instantShader.getUniformLocation("fogColor");
+        uFogStart = instantShader.getUniformLocation("fogStart");
+        uFogEnd = instantShader.getUniformLocation("fogEnd");
+        uFogEnabled = instantShader.getUniformLocation("fogEnabled");
+        uFogType = instantShader.getUniformLocation("fogType");
+        uFogDensity = instantShader.getUniformLocation("fogDensity");
+        instantShader.setUniform(instantTexture, 0);
+        
+        // Set default fog type
+        instantShader.setUniform(uFogType, (int)FogType.Linear);
+        instantShader.setUniform(uFogDensity, fogDensity);
+    }
+
+    public override void format() {
         GL.EnableVertexAttribArray(0);
         GL.EnableVertexAttribArray(1);
         GL.EnableVertexAttribArray(2);
@@ -61,89 +175,30 @@ public class InstantDraw {
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, handle);
     }
-
-    public void addVertex(BlockVertexTinted vertex) {
-        if (currentVertex >= maxVertices - 1) {
-            finish();
-        }
-        //Console.Out.WriteLine(currentLine);
-        vertices[currentVertex] = vertex;
-        currentVertex++;
-    }
-
-    public void finish() {
-        // nothing to do
-        if (currentVertex == 0) {
-            return;
-        }
-        GL.BindVertexArray(VAO);
-        // upload buffer
-        unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            fixed (BlockVertexTinted* v = vertices) {
-                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)), v);
-            }
-        }
-
-
-        // bind VAO, draw elements
-        GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)currentVertex);
-
-        currentVertex = 0;
-    }
 }
 
-public class InstantDrawColour {
-    public static Shader instantShader;
-    public static int uMVP;
-    public static int uModelView;    // Added for fog
-    public static int uFogColor;     // Added for fog
-    public static int uFogStart;     // Added for fog
-    public static int uFogEnd;       // Added for fog
-    public static int uFogEnabled;   // Added for fog toggle
+public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
+    public override void setup() {
+        base.setup();
+        instantShader = new Shader(GL, "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
+        uMVP = instantShader.getUniformLocation(nameof(uMVP));
+        uModelView = instantShader.getUniformLocation(nameof(uModelView));
+        uFogColor = instantShader.getUniformLocation("fogColor");
+        uFogStart = instantShader.getUniformLocation("fogStart");
+        uFogEnd = instantShader.getUniformLocation("fogEnd");
+        uFogEnabled = instantShader.getUniformLocation("fogEnabled");
+        uFogType = instantShader.getUniformLocation("fogType");
+        uFogDensity = instantShader.getUniformLocation("fogDensity");
 
-    private readonly int maxVertices;
-    private readonly VertexTinted[] vertices;
-
-    private readonly uint VAO;
-    private readonly uint VBO;
-
-    public readonly Silk.NET.OpenGL.GL GL;
-    private int currentVertex = 0;
-
-    // Fog settings
-    private Vector4 fogColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-    private float fogStart = 10.0f;
-    private float fogEnd = 100.0f;
-    private bool fogEnabled = false;  // Disabled by default
-
-    public InstantDrawColour(int maxVertices) {
-        vertices = new VertexTinted[maxVertices];
-        this.maxVertices = maxVertices;
-        unsafe {
-            GL = Game.GL;
-            instantShader = new Shader(GL, "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
-            instantShader.use();
-            uMVP = instantShader.getUniformLocation(nameof(uMVP));
-            uModelView = instantShader.getUniformLocation(nameof(uModelView));
-            uFogColor = instantShader.getUniformLocation("fogColor");
-            uFogStart = instantShader.getUniformLocation("fogStart");
-            uFogEnd = instantShader.getUniformLocation("fogEnd");
-            uFogEnabled = instantShader.getUniformLocation("fogEnabled");
-
-            // Initialize fog as disabled
-            instantShader.setUniform(uFogEnabled, false);
-
-            VAO = GL.CreateVertexArray();
-            VBO = GL.CreateBuffer();
-            GL.BindVertexArray(VAO);
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(VertexTinted)), (void*)0, BufferStorageMask.DynamicStorageBit);
-            format();
-        }
+        // Initialize fog as disabled
+        instantShader.setUniform(uFogEnabled, false);
+        
+        // Set default fog type
+        instantShader.setUniform(uFogType, (int)FogType.Linear);
+        instantShader.setUniform(uFogDensity, fogDensity);
     }
 
-    public void format() {
+    public override void format() {
         GL.EnableVertexAttribArray(0);
         GL.EnableVertexAttribArray(1);
         GL.EnableVertexAttribArray(2);
@@ -155,65 +210,5 @@ public class InstantDrawColour {
         GL.VertexAttribBinding(1, 0);
 
         GL.BindVertexBuffer(0, VBO, 0, 8 * sizeof(ushort));
-    }
-
-    // Fog control methods
-    public void EnableFog(bool enable) {
-        fogEnabled = enable;
-        instantShader.use();
-        instantShader.setUniform(uFogEnabled, enable);
-    }
-
-    public void SetFogColor(Vector4 color) {
-        fogColor = color;
-        instantShader.use();
-        instantShader.setUniform(uFogColor, color);
-    }
-
-    public void SetFogDistance(float start, float end) {
-        fogStart = start;
-        fogEnd = end;
-        instantShader.use();
-        instantShader.setUniform(uFogStart, start);
-        instantShader.setUniform(uFogEnd, end);
-    }
-
-    public void addVertex(VertexTinted vertex) {
-        if (currentVertex >= maxVertices - 1) {
-            finish();
-        }
-        //Console.Out.WriteLine(currentLine);
-        vertices[currentVertex] = vertex;
-        currentVertex++;
-    }
-
-    public void finish() {
-        // nothing to do
-        if (currentVertex == 0) {
-            return;
-        }
-        GL.BindVertexArray(VAO);
-
-        // Apply current fog settings
-        instantShader.use();
-        if (fogEnabled) {
-            instantShader.setUniform(uFogEnabled, true);
-            instantShader.setUniform(uFogColor, fogColor);
-            instantShader.setUniform(uFogStart, fogStart);
-            instantShader.setUniform(uFogEnd, fogEnd);
-        } else {
-            instantShader.setUniform(uFogEnabled, false);
-        }
-
-        // Upload buffer
-        unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            fixed (VertexTinted* v = vertices) {
-                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(VertexTinted)), v);
-            }
-        }
-
-        GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)currentVertex);
-        currentVertex = 0;
     }
 }

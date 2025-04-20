@@ -25,6 +25,9 @@ public class PlayerRenderer {
     private int tex;
 
     public Shader heldBlockShader;
+    
+    // Water overlay renderer
+    private InstantDrawTexture waterOverlayRenderer;
 
     public PlayerRenderer(Player player) {
         this.player = player;
@@ -35,6 +38,10 @@ public class PlayerRenderer {
         heldBlockShader = new Shader(Game.GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
         uMVP = heldBlockShader.getUniformLocation("uMVP");
         tex = heldBlockShader.getUniformLocation("tex");
+        
+        // Initialize water overlay renderer
+        waterOverlayRenderer = new InstantDrawTexture(60);
+        waterOverlayRenderer.setup();
     }
 
     public double getLower(double dt) {
@@ -77,6 +84,43 @@ public class PlayerRenderer {
         heldBlockShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getFixedProjectionMatrix());
         heldBlockShader.setUniform(tex, 0);
         vao.render();
+        
+        // Render water overlay if player is underwater
+        if (player.isUnderWater()) {
+            renderWaterOverlay();
+        }
+    }
+
+    private void renderWaterOverlay() {
+        // Set the water overlay texture
+        waterOverlayRenderer.setTexture(Game.textureManager.waterOverlay.handle);
+        
+        // Create a screen-space quad
+        waterOverlayRenderer.instantShader.use();
+        
+        // Set identity MVP matrix (screen space coordinates)
+        var identityMVP = Matrix4x4.Identity;
+        waterOverlayRenderer.instantShader.setUniform(waterOverlayRenderer.uMVP, identityMVP);
+        
+        // Set up underwater fog - use exp2 fog for better underwater effect
+        waterOverlayRenderer.enableFog(true);
+        waterOverlayRenderer.setFogType(FogType.Exp2);
+        waterOverlayRenderer.setFogDensity(0.05f);
+        waterOverlayRenderer.fogColour(new Vector4(0.0f, 0.1f, 0.4f, 1.0f));
+        
+        // Draw a full-screen quad with slightly blue tint
+        float alpha = 0.8f;
+        
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, -1, 0, 0f, 0f, 255, 255, 255, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, 255, 255, 255, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, 255, 255, 255, (byte)(alpha * 255)));
+        
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, 255, 255, 255, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, 255, 255, 255, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, 1, 0, 1f, 1f, 255, 255, 255, (byte)(alpha * 255)));
+        
+        // Render the overlay
+        waterOverlayRenderer.finish();
     }
 
     public void update(double dt) {

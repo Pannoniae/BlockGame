@@ -406,9 +406,9 @@ public sealed class SubChunkRenderer : IDisposable {
         // BYTE OF SETTINGS
         // 1 = AO
         // 2 = smooth lighting
-        byte settings = (byte)(toByte(Settings.instance.smoothLighting) << 1 | toByte(Settings.instance.AO));
-        const int SETTING_AO = 1;
-        const int SETTING_SMOOTH_LIGHTING = 2;
+        var settings = Settings.instance;
+        var smoothLighting = Settings.instance.smoothLighting;
+        var AO = Settings.instance.AO;
         //ushort cv = 0;
         //ushort ci = 0;
 
@@ -459,10 +459,23 @@ public sealed class SubChunkRenderer : IDisposable {
 
             var bl = Block.get(blockArrayRef);
 
-            if (Block.renderType[bl.id] == RenderType.CUSTOM) {
-                bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
-                goto increment;
+            switch (Block.renderType[bl.id]) {
+                case RenderType.CUBE:
+                    // get UVs from block
+                    break;
+                case RenderType.CROSS:
+                    break;
+                case RenderType.MODEL:
+                    goto model;
+                    break;
+                case RenderType.CUSTOM:
+                    bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
+                    goto increment;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
+
+            model:;
 
             // calculate texcoords
             Vector128<float> tex;
@@ -547,7 +560,7 @@ public sealed class SubChunkRenderer : IDisposable {
                         goto vertex;
                     }
 
-                    if ((settings & SETTING_SMOOTH_LIGHTING) == 0) {
+                    if (!smoothLighting) {
                         light.First = lba[(byte)dir];
                         light.Second = lba[(byte)dir];
                         light.Third = lba[(byte)dir];
@@ -557,7 +570,7 @@ public sealed class SubChunkRenderer : IDisposable {
                         light.Whole = 0;
                     }
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
-                    if ((settings & 3) != 0) {
+                    if (smoothLighting || AO) {
                         // ox, oy, oz
                         FourBytes o;
                         // need to store 9 sbytes so it's a 16-element vector
@@ -622,7 +635,7 @@ public sealed class SubChunkRenderer : IDisposable {
                                               Unsafe.Add(ref neighbourRef, offsets[11]))) << 2);
 
                         // only apply AO if enabled
-                        if ((settings & SETTING_AO) != 0 && !facesRef.noAO) {
+                        if (AO && !facesRef.noAO) {
                             ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount(o.First));
                             ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount(o.Second));
                             ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount(o.Third));
@@ -630,7 +643,7 @@ public sealed class SubChunkRenderer : IDisposable {
                         }
 
                         // if face is noAO, don't average....
-                        if ((settings & SETTING_SMOOTH_LIGHTING) != 0) {
+                        if (smoothLighting) {
                             // if smooth lighting enabled, average light from neighbour face + the 3 other ones
                             // calculate average
 

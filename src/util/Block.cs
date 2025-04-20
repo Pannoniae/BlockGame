@@ -56,6 +56,8 @@ public class Block {
     public static AABB?[] AABB = new AABB?[MAXBLOCKS];
     public static AABB?[] selectionAABB = new AABB?[MAXBLOCKS];
     public static RenderType[] renderType = new RenderType[MAXBLOCKS];
+    
+    public static UVPair?[] uvs = new UVPair?[6];
 
     public static readonly int maxBlock = 45;
 
@@ -284,7 +286,7 @@ public class Block {
         return this;
     }
 
-    public Block(ushort id, string name, BlockModel model) {
+    public Block(ushort id, string name, BlockModel? model) {
         this.id = id;
         this.name = name;
         this.model = model;

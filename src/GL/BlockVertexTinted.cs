@@ -39,6 +39,30 @@ public readonly struct BlockVertexTinted {
         this.a = a;
     }
 
+    public BlockVertexTinted(float x, float y, float z, Half u, Half v) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = u;
+        this.v = v;
+        r = 255;
+        g = 255;
+        b = 255;
+        a = 255;
+    }
+    
+    public BlockVertexTinted(float x, float y, float z, float u, float v) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = (Half)u;
+        this.v = (Half)v;
+        r = 255;
+        g = 255;
+        b = 255;
+        a = 255;
+    }
+
     public BlockVertexTinted(float x, float y, float z, float u, float v, Color c) {
         this.x = x;
         this.y = y;

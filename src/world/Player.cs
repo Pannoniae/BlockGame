@@ -56,6 +56,7 @@ public class Player : Entity {
     }
 
     public void render(double dt, double interp) {
+        camera.updateFOV(isUnderWater(), dt);
         renderer.render(dt, interp);
     }
 
@@ -77,7 +78,6 @@ public class Player : Entity {
 
         blockAtFeet = world.getBlock(feetPosition.toBlockPos());
         inLiquid = Block.liquid[blockAtFeet];
-
 
         collisionAndSneaking(dt);
         applyInputMovement(dt);
@@ -230,35 +230,6 @@ public class Player : Entity {
             onGround = false;
             jumping = false;
         }
-    }
-
-
-    /// <summary>
-    /// Get how deep the player is in water. 0 if not in water, 1 if submerged
-    /// </summary>
-    private double getWaterLevel() {
-        var feet = world.getBlock(feetPosition.toBlockPos());
-        var torsoBlockPos = new Vector3D(feetPosition.X, feetPosition.Y + 1, feetPosition.Z).toBlockPos();
-        var torso = world.getBlock(torsoBlockPos);
-
-        var feetLiquid = Block.liquid[feet];
-        var torsoLiquid = Block.liquid[torso];
-
-        // if no liquid at feet, don't bother
-        if (!feetLiquid) {
-            return 0;
-        }
-        // if submerged entirely, 1
-        if (feetLiquid && torsoLiquid) {
-            return 1;
-        }
-        // if completely dry, 0
-        if (!feetLiquid && !torsoLiquid) {
-            return 0;
-        }
-        // if feet has liquid but torso does not
-        // get the difference between the torso block pos and the feet position
-        return torsoBlockPos.Y - feetPosition.Y;
     }
 
     private void updateGravity(double dt) {
@@ -440,5 +411,23 @@ public class Player : Entity {
         else {
             setSwinging(false);
         }
+    }
+
+    public bool isUnderWater() {
+        // If not in liquid at all, definitely not underwater
+        if (!inLiquid) {
+            return false;
+        }
+        
+        // Calculate eye position based on sneaking state
+        double currentEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
+        Vector3D eyePosition = new Vector3D(position.X, position.Y + currentEyeHeight, position.Z);
+        
+        // Check if the block at eye position is liquid
+        Vector3I eyeBlockPos = eyePosition.toBlockPos();
+        ushort blockAtEyes = world.getBlock(eyeBlockPos);
+        
+        // Return true if eyes are in liquid
+        return Block.liquid[blockAtEyes];
     }
 }

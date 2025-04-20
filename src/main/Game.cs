@@ -221,6 +221,8 @@ public partial class Game {
         IntPtr userparam) {
         string msg = Marshal.PtrToStringAnsi(message, length)!;
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
+        // Dump stacktrace
+        //Console.Out.WriteLine(Environment.StackTrace);
     }
 
     private void init() {
@@ -290,24 +292,18 @@ public partial class Game {
             initDirectX();
         #endif
 
-        foreach (var mouse in input.Mice) {
-            mouse.MouseMove += onMouseMove;
-            mouse.MouseDown += onMouseDown;
-            mouse.MouseUp += onMouseUp;
-            mouse.Scroll += onMouseScroll;
-            mouse.Cursor.CursorMode = CursorMode.Normal;
-        }
-
         mouse = input.Mice[0];
-
-        foreach (var keyboard in input.Keyboards) {
-            keyboard.KeyDown += onKeyDown;
-            keyboard.KeyRepeat += onKeyRepeat;
-            keyboard.KeyUp += onKeyUp;
-            keyboard.KeyChar += onKeyChar;
-        }
+        mouse.MouseMove += onMouseMove;
+        mouse.MouseDown += onMouseDown;
+        mouse.MouseUp += onMouseUp;
+        mouse.Scroll += onMouseScroll;
+        mouse.Cursor.CursorMode = CursorMode.Normal;
 
         keyboard = input.Keyboards[0];
+        keyboard.KeyDown += onKeyDown;
+        keyboard.KeyRepeat += onKeyRepeat;
+        keyboard.KeyUp += onKeyUp;
+        keyboard.KeyChar += onKeyChar;
         focused = true;
 
         width = window.FramebufferSize.X;
@@ -333,7 +329,7 @@ public partial class Game {
         setMenu(Menu.LOADING);
         fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
         gui.loadFont(13);
-        
+
         Block.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
@@ -692,7 +688,7 @@ public partial class Game {
 
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
-        
+
         currentScreen.draw();
         currentScreen.postDraw();
         graphics.mainBatch.End();
