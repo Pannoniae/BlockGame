@@ -4,27 +4,19 @@ using Molten;
 namespace BlockGame.GL;
 
 [StructLayout(LayoutKind.Explicit, Size = 20)]
-public readonly struct BlockVertexTinted {
-    [FieldOffset(0)]
-    public readonly float x;
-    [FieldOffset(4)]
-    public readonly float y;
-    [FieldOffset(8)]
-    public readonly float z;
-    [FieldOffset(12)]
-    public readonly Half u;
-    [FieldOffset(14)]
-    public readonly Half v;
-    [FieldOffset(16)]
-    public readonly byte r;
-    [FieldOffset(17)]
-    public readonly byte g;
-    [FieldOffset(18)]
-    public readonly byte b;
-    [FieldOffset(19)]
-    public readonly byte a;
-    [FieldOffset(16)]
-    public readonly Color c;
+public struct BlockVertexTinted {
+    [FieldOffset(0)] public float x;
+    [FieldOffset(4)] public float y;
+    [FieldOffset(8)] public float z;
+    
+    [FieldOffset(12)] public Half u;
+    [FieldOffset(14)] public Half v;
+    
+    [FieldOffset(16)] public byte r;
+    [FieldOffset(17)] public byte g;
+    [FieldOffset(18)] public byte b;
+    [FieldOffset(19)] public byte a;
+    [FieldOffset(16)] public Color c;
 
 
     public BlockVertexTinted(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
@@ -50,7 +42,7 @@ public readonly struct BlockVertexTinted {
         b = 255;
         a = 255;
     }
-    
+
     public BlockVertexTinted(float x, float y, float z, float u, float v) {
         this.x = x;
         this.y = y;

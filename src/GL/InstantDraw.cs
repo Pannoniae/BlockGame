@@ -28,7 +28,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected uint VAO;
     protected uint VBO;
 
-    public Silk.NET.OpenGL.GL GL;
+    public readonly Silk.NET.OpenGL.GL GL;
     protected int currentVertex = 0;
 
     // Fog settings

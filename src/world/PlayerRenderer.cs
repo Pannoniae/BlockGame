@@ -102,14 +102,8 @@ public class PlayerRenderer {
         var identityMVP = Matrix4x4.Identity;
         waterOverlayRenderer.instantShader.setUniform(waterOverlayRenderer.uMVP, identityMVP);
         
-        // Set up underwater fog - use exp2 fog for better underwater effect
-        waterOverlayRenderer.enableFog(true);
-        waterOverlayRenderer.setFogType(FogType.Exp2);
-        waterOverlayRenderer.setFogDensity(0.05f);
-        waterOverlayRenderer.fogColour(new Vector4(0.0f, 0.1f, 0.4f, 1.0f));
-        
         // Draw a full-screen quad with slightly blue tint
-        float alpha = 0.8f;
+        float alpha = 0.5f;
         
         waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, -1, 0, 0f, 0f, 255, 255, 255, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, 255, 255, 255, (byte)(alpha * 255)));

@@ -15,7 +15,6 @@ uniform float fogMax;
 uniform float fogMin;
 
 uniform sampler2D blockTexture;
-uniform sampler2D lightTexture;
 
 uniform vec4 fogColour;
 uniform vec4 skyColour;

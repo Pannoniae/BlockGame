@@ -262,6 +262,22 @@ public class Block {
         // if none, treat it as an up (strip 4th byte)
         return (ushort)(light << 8 | ao << 3 | direction & 0b111);
     }
+    
+    
+    // ivec2 lightCoords = ivec2((lightValue >> 4) & 0xFu, lightValue & 0xFu);
+    // compute tint (light * ao * direction)
+    // per-face lighting
+    // float lColor = a[direction]
+    // tint = texelFetch(lightTexture, lightCoords, 0) * a[direction] * aoArray[aoValue];
+    public static Color packColour(byte direction, byte ao, byte light) {
+        direction = (byte)(direction & 0b111);
+        var blocklight = (byte)(light >> 4);
+        var skylight = (byte)(light & 0xF);
+        var lightVal = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        float tint = WorldRenderer.a[direction] * WorldRenderer.aoArray[ao];
+        var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
+        return ab;
+    }
 
     public static AABB fullBlockAABB() {
         return new AABB(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1));
