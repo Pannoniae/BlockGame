@@ -650,6 +650,9 @@ public partial class Game {
             fps = (int)(1 / ft);
             setTitle("BlockGame", splash, $"{fps} ({ft * 1000:0.##}ms)");
             stopwatch.Restart();
+        } else {
+            // Still update frametime for graph even if we don't update the title
+            ft = dt;
         }
 
         GLTracker.save();
