@@ -26,7 +26,6 @@ public class WorldRenderer {
 
     //public int uColor;
     public int blockTexture;
-    public int lightTexture;
     public int uMVP;
     public int dummyuMVP;
     public int uCameraPos;
@@ -37,7 +36,6 @@ public class WorldRenderer {
     public int skyColour;
 
     public int waterBlockTexture;
-    public int waterLightTexture;
     public int wateruMVP;
     public int wateruCameraPos;
     public int waterFogMax;
@@ -58,7 +56,9 @@ public class WorldRenderer {
     public Shader outline;
     private uint outlineVao;
     private uint outlineVbo;
+
     private uint outlineCount;
+
     //private int outline_uModel;
     private int outline_uView;
     private int outline_uProjection;
@@ -75,7 +75,7 @@ public class WorldRenderer {
         chunkVAO = GL.GenVertexArray();
 
         genFatQuadIndices();
-        
+
         idc.setup();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
@@ -86,7 +86,6 @@ public class WorldRenderer {
         Game.waterShader = waterShader;
 
         blockTexture = shader.getUniformLocation("blockTexture");
-        lightTexture = shader.getUniformLocation("lightTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
         uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
@@ -97,7 +96,6 @@ public class WorldRenderer {
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
 
         waterBlockTexture = waterShader.getUniformLocation("blockTexture");
-        waterLightTexture = waterShader.getUniformLocation("lightTexture");
         wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
         wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
         waterFogMax = waterShader.getUniformLocation(nameof(fogMax));
@@ -109,14 +107,12 @@ public class WorldRenderer {
 
 
         shader.setUniform(blockTexture, 0);
-        shader.setUniform(lightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
         shader.setUniform(fogColour, defaultFogColour);
         shader.setUniform(skyColour, defaultClearColour);
 
         waterShader.setUniform(waterBlockTexture, 0);
-        waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
         waterShader.setUniform(waterFogColour, defaultFogColour);
@@ -136,11 +132,13 @@ public class WorldRenderer {
             indices[i * 6 + 4] = (ushort)(i * 4 + 2);
             indices[i * 6 + 5] = (ushort)(i * 4 + 3);
         }
+
         fatQuadIndices = GL.GenBuffer();
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, fatQuadIndices);
         unsafe {
             fixed (ushort* pIndices = indices) {
-                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), pIndices, BufferStorageMask.None);
+                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)),
+                    pIndices, BufferStorageMask.None);
             }
         }
     }
@@ -150,7 +148,6 @@ public class WorldRenderer {
     }
 
     public void setUniforms() {
-
         var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
 
         // the problem is that with two chunks, the two values would be the same. so let's adjust them if so
@@ -160,6 +157,7 @@ public class WorldRenderer {
         if (fogMaxValue <= fogMinValue) {
             fogMinValue = fogMaxValue - 16;
         }
+
         // don't let the fog in value be more than 8 chunks, otherwise the game will feel empty!
         if (fogMinValue > 8 * Chunk.CHUNKSIZE) {
             fogMinValue = 8 * Chunk.CHUNKSIZE;
@@ -172,8 +170,10 @@ public class WorldRenderer {
 
         if (world.player.isUnderWater()) {
             // set fog colour to blue
-            shader.setUniform(fogColour, Color4b.DarkBlue);
-            waterShader.setUniform(waterFogColour, Color4b.DarkBlue);
+            shader.setUniform(fogColour, Color4b.CornflowerBlue);
+            waterShader.setUniform(waterFogColour, Color4b.CornflowerBlue);
+            shader.setUniform(skyColour, Color4b.CornflowerBlue);
+            waterShader.setUniform(waterSkyColour, Color4b.CornflowerBlue);
             shader.setUniform(fogMin, 0f);
             waterShader.setUniform(waterFogMin, 0f);
             shader.setUniform(fogMax, 24f);
@@ -183,6 +183,8 @@ public class WorldRenderer {
             // set fog colour to default
             shader.setUniform(fogColour, defaultFogColour);
             waterShader.setUniform(waterFogColour, defaultFogColour);
+            shader.setUniform(skyColour, defaultClearColour);
+            waterShader.setUniform(waterSkyColour, defaultClearColour);
         }
     }
 
@@ -200,7 +202,6 @@ public class WorldRenderer {
         GL.BindTexture(TextureTarget.Texture2D, tex.handle);
         GL.ActiveTexture(TextureUnit.Texture1);
         GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
-
 
 
         GL.BindVertexArray(chunkVAO);
@@ -242,15 +243,18 @@ public class WorldRenderer {
             if (!chunk.isRendered) {
                 continue;
             }
+
             Game.metrics.renderedChunks += 1;
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                 var subChunk = chunk.subChunks[j];
                 if (!subChunk.isRendered) {
                     continue;
                 }
+
                 subChunk.renderer.drawOpaque(cameraPos);
             }
         }
+
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
         dummyShader.setUniform(dummyuMVP, viewProj);
@@ -259,14 +263,17 @@ public class WorldRenderer {
             if (!chunk.isRendered) {
                 continue;
             }
+
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                 var subChunk = chunk.subChunks[j];
                 if (!subChunk.isRendered) {
                     continue;
                 }
+
                 subChunk.renderer.drawTransparentDummy(cameraPos);
             }
         }
+
         // start blending at transparent stuff
         GL.Enable(EnableCap.Blend);
 
@@ -282,14 +289,17 @@ public class WorldRenderer {
             if (!chunk.isRendered) {
                 continue;
             }
+
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                 var subChunk = chunk.subChunks[j];
                 if (!subChunk.isRendered) {
                     continue;
                 }
+
                 subChunk.renderer.drawTransparent(cameraPos);
             }
         }
+
         GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
         world.particleManager.render(interp);
@@ -309,13 +319,9 @@ public class WorldRenderer {
 
         // Enable fog for sky rendering
         idc.enableFog(true);
-        idc.setFogType(FogType.Exp);
         idc.fogColour(defaultClearColour.ToVector4());
 
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
-
-        // Set fog density parameter for exp fog
-        idc.setFogDensity(0.002f);
 
         idc.instantShader.use();
         idc.instantShader.setUniform(idc.uMVP, viewProj);
@@ -333,7 +339,7 @@ public class WorldRenderer {
 
 
         var underSky = new Vector3(0, -16, 0);
-        
+
         idc.fogDistance(rd * 0.005f, rd);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
@@ -385,6 +391,7 @@ public class WorldRenderer {
             if (!s.HasValue) {
                 return;
             }
+
             var sel = s.Value;
             const float OFFSET = 0.005f;
             var minX = (float)sel.min.X - OFFSET;
@@ -446,7 +453,7 @@ public class WorldRenderer {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, ref List<BlockVertexPacked> vertices, ref List<ushort> indices) {
+    public static void meshBlock(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices) {
         ushort i = 0;
         const int wx = 0;
         const int wy = 0;
@@ -471,10 +478,10 @@ public class WorldRenderer {
         float maxU;
         float maxV;
 
-        ushort data1;
-        ushort data2;
-        ushort data3;
-        ushort data4;
+        Rgba32 data1;
+        Rgba32 data2;
+        Rgba32 data3;
+        Rgba32 data4;
 
         float offset = 0.0004f;
 
@@ -491,7 +498,7 @@ public class WorldRenderer {
         float y4;
         float z4;
 
-        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
+        Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
 
         var faces = b.model.faces;
@@ -522,18 +529,18 @@ public class WorldRenderer {
             y4 = wy + face.y4;
             z4 = wz + face.z4;
 
-            data1 = Block.packData((byte)dir, 0, 15);
-            data2 = Block.packData((byte)dir, 0, 15);
-            data3 = Block.packData((byte)dir, 0, 15);
-            data4 = Block.packData((byte)dir, 0, 15);
+            data1 = calculateTint((byte)dir, 0, 15);
+            data2 = calculateTint((byte)dir, 0, 15);
+            data3 = calculateTint((byte)dir, 0, 15);
+            data4 = calculateTint((byte)dir, 0, 15);
 
 
             // add vertices
 
-            tempVertices[0] = new BlockVertexPacked(x1, y1, z1, u, v, data1);
-            tempVertices[1] = new BlockVertexPacked(x2, y2, z2, u, maxV, data2);
-            tempVertices[2] = new BlockVertexPacked(x3, y3, z3, maxU, maxV, data3);
-            tempVertices[3] = new BlockVertexPacked(x4, y4, z4, maxU, v, data4);
+            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, new Color(data1.R, data1.G, data1.B, data1.A));
+            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, new Color(data2.R, data2.G, data2.B, data2.A));
+            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, maxU, maxV, new Color(data3.R, data3.G, data3.B, data3.A));
+            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, new Color(data4.R, data4.G, data4.B, data4.A));
             vertices.AddRange(tempVertices);
             c += 4;
             tempIndices[0] = i;
@@ -548,7 +555,8 @@ public class WorldRenderer {
         }
     }
 
-    public static void meshBlockTinted(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices, byte light) {
+    public static void meshBlockTinted(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices,
+        byte light) {
         ushort i = 0;
         const int wx = 0;
         const int wy = 0;
@@ -643,6 +651,7 @@ public class WorldRenderer {
     }
 
     public static readonly float[] aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+
     public static readonly float[] a = [
         0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
     ];

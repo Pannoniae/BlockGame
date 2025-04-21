@@ -36,7 +36,7 @@ public class RenderBlock {
         var chunk = world.getChunkSection(World.getChunkSectionPos(pos));
 
         byte ao = 0;
-        ushort data;
+        Color data;
         FourBytes light;
         Unsafe.SkipInit(out light);
 
@@ -99,7 +99,7 @@ public class RenderBlock {
             }
         }
 
-        data = Block.packData((byte)direction, (byte)(ao & 0x3), light.First);
+        data = Block.packColour((byte)direction, (byte)(ao & 0x3), light.First);
         vertexBuffer.Add(new BlockVertexPacked(pos.X + vx, pos.Y + vy, pos.Z + vz, Block.texU(uv.u), Block.texV(uv.v), data));
         indexBuffer.Add((ushort)currentIndex);
     }

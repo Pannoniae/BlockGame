@@ -390,7 +390,7 @@ public sealed class SubChunkRenderer : IDisposable {
     [SkipLocalsInit]
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
     //unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
-    unsafe private void constructVertices(VertexConstructionMode mode) {
+    private unsafe void constructVertices(VertexConstructionMode mode) {
         //sw.Start();
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
 
@@ -698,7 +698,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec[2];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[1];
-                    vertex.d = Block.packData((byte)dir, ao.First, light.First);
+                    vertex.c = Block.packColour((byte)dir, ao.First, light.First);
 
                     vertex = ref tempVertices[1];
                     vertex.x = (ushort)vec[3];
@@ -706,7 +706,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec[5];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[3];
-                    vertex.d = Block.packData((byte)dir, ao.Second, light.Second);
+                    vertex.c = Block.packColour((byte)dir, ao.Second, light.Second);
 
                     vertex = ref tempVertices[2];
                     vertex.x = (ushort)vec[6];
@@ -714,7 +714,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec2[0];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[3];
-                    vertex.d = Block.packData((byte)dir, ao.Third, light.Third);
+                    vertex.c = Block.packColour((byte)dir, ao.Third, light.Third);
 
                     vertex = ref tempVertices[3];
                     vertex.x = (ushort)vec2[1];
@@ -722,7 +722,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     vertex.z = (ushort)vec2[3];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[1];
-                    vertex.d = Block.packData((byte)dir, ao.Fourth, light.Fourth);
+                    vertex.c = Block.packColour((byte)dir, ao.Fourth, light.Fourth);
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
                     //ci += 6;
