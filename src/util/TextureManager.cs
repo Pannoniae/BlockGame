@@ -15,6 +15,8 @@ public class TextureManager {
     public Dictionary<string, BTexture2D> textures = new();
     public BTexture2D waterOverlay;
 
+    public BTexture2D sunTexture;
+
     public TextureManager(Silk.NET.OpenGL.GL GL) {
         this.GL = GL;
 
@@ -23,6 +25,7 @@ public class TextureManager {
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
         lightTexture = new BTexture2D("textures/lightmap.png");
         waterOverlay = new BTexture2D("textures/water.png");
+        sunTexture = new BTexture2D("textures/sun_02.png");
     }
 
     public BTexture2D get(string path) {

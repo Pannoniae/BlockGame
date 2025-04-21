@@ -51,6 +51,7 @@ public class WorldRenderer {
     public static BoundingFrustum frustum;
 
     private InstantDrawColour idc = new InstantDrawColour(256);
+    private InstantDrawTexture idt = new InstantDrawTexture(256);
 
 
     public Shader outline;
@@ -77,6 +78,7 @@ public class WorldRenderer {
         genFatQuadIndices();
 
         idc.setup();
+        idt.setup();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
         Game.worldShader = shader;
@@ -196,12 +198,7 @@ public class WorldRenderer {
     /// maybe this will cut down on the VAO switching time??
     public void render(double interp) {
         //Game.GD.ResetStates();
-        var tex = Game.textureManager.blockTexture;
-        var lightTex = Game.textureManager.lightTexture;
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, tex.handle);
-        GL.ActiveTexture(TextureUnit.Texture1);
-        GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
+        
 
 
         GL.BindVertexArray(chunkVAO);
@@ -218,6 +215,13 @@ public class WorldRenderer {
         GL.Disable(EnableCap.Blend);
 
         GL.BindVertexArray(chunkVAO);
+        
+        var tex = Game.textureManager.blockTexture;
+        var lightTex = Game.textureManager.lightTexture;
+        GL.ActiveTexture(TextureUnit.Texture0);
+        GL.BindTexture(TextureTarget.Texture2D, tex.handle);
+        GL.ActiveTexture(TextureUnit.Texture1);
+        GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
 
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
@@ -334,7 +338,6 @@ public class WorldRenderer {
         idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z - skySize, skyColour));
         idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
         idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z + skySize, skyColour));
-        GL.Disable(EnableCap.CullFace);
         idc.finish();
 
 
@@ -344,16 +347,53 @@ public class WorldRenderer {
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
         idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
 
         idc.finish();
 
         // Disable fog after rendering sky
         idc.enableFog(false);
+        //GL.Enable(EnableCap.CullFace);
+
+        // Render sun
+        var sunPos = new Vector3(16, 0, 0);
+        var sunPosRotated = sunPos;
+        var sunSize = 1f;
+
+        idt.instantShader.use();
+        idt.instantShader.setUniform(idt.uMVP, viewProj);
+        idt.instantShader.setUniform(idt.uModelView, modelView);
+        Game.GL.ActiveTexture(TextureUnit.Texture0);
+        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.sunTexture.handle);
+        
+        // bind the texture
+        
+        GL.Disable(EnableCap.DepthTest);
+        GL.Disable(EnableCap.CullFace);
+        idt.addVertex(
+            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z - sunSize,
+                0f, 0f));
+        idt.addVertex(
+            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z + sunSize,
+                0f, 1f));
+        idt.addVertex(
+            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z + sunSize,
+                1f, 1f));
+        idt.addVertex(
+            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z - sunSize,
+                1f, 0f));
+        idt.addVertex(
+            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z - sunSize,
+                0f, 0f));
+        idt.addVertex(
+            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z + sunSize,
+                1f, 1f));
+        idt.finish();
+        GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
     }
 
@@ -539,7 +579,8 @@ public class WorldRenderer {
 
             tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, new Color(data1.R, data1.G, data1.B, data1.A));
             tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, new Color(data2.R, data2.G, data2.B, data2.A));
-            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, maxU, maxV, new Color(data3.R, data3.G, data3.B, data3.A));
+            tempVertices[2] =
+                new BlockVertexTinted(x3, y3, z3, maxU, maxV, new Color(data3.R, data3.G, data3.B, data3.A));
             tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, new Color(data4.R, data4.G, data4.B, data4.A));
             vertices.AddRange(tempVertices);
             c += 4;
