@@ -178,7 +178,7 @@ public class IngameMenu : Menu, IDisposable {
         }
 
         // Draw block display
-        var blockStr = Block.get(screen.world.player.hotbar.getSelected().block).name;
+        var blockStr = Block.get(Game.world.player.hotbar.getSelected().block).name;
         Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
             Color4b.White);
     }
@@ -193,15 +193,15 @@ public class IngameMenu : Menu, IDisposable {
         if (screen.debugScreen) {
             var gui = Game.gui;
             var i = Game.instance;
-            var p = screen.world.player;
+            var p = Game.player;
             var c = p.camera;
             var m = Game.metrics;
-            var loadedChunks = screen.world.chunks.Count;
+            var loadedChunks = Game.world.chunks.Count;
             var pos = p.position.toBlockPos();
             // current block
             //var cb = world.getBlock(pos);
-            var sl = screen.world.getSkyLight(pos.X, pos.Y, pos.Z);
-            var bl = screen.world.getBlockLight(pos.X, pos.Y, pos.Z);
+            var sl = Game.world.getSkyLight(pos.X, pos.Y, pos.Z);
+            var bl = Game.world.getBlockLight(pos.X, pos.Y, pos.Z);
 
 
             debugStr.Clear();
@@ -232,7 +232,7 @@ public class IngameMenu : Menu, IDisposable {
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
             if (Game.devMode) {
-                debugStr.AppendFormat("Seed: {0}\n", screen.world.seed);
+                debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
             }
 
 

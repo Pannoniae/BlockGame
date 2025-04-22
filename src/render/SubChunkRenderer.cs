@@ -129,9 +129,9 @@ public sealed class SubChunkRenderer : IDisposable {
 
     public SubChunkRenderer(SubChunk subChunk) {
         this.subChunk = subChunk;
-        uChunkPos = Game.worldShader.getUniformLocation("uChunkPos");
-        dummyuChunkPos = Game.dummyShader.getUniformLocation("uChunkPos");
-        wateruChunkPos = Game.waterShader.getUniformLocation("uChunkPos");
+        uChunkPos = Game.world.renderer.shader.getUniformLocation("uChunkPos");
+        dummyuChunkPos = Game.world.renderer.dummyShader.getUniformLocation("uChunkPos");
+        wateruChunkPos = Game.world.renderer.waterShader.getUniformLocation("uChunkPos");
     }
 
     private static bool opaqueBlocks(int b) {
@@ -246,7 +246,7 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
     private void setUniformPos(Shader shader, Vector3D cameraPos) {
-        int loc = shader == Game.worldShader ? uChunkPos : shader == Game.waterShader ? wateruChunkPos : dummyuChunkPos;
+        int loc = shader == Game.world.renderer.shader ? uChunkPos : shader == Game.world.renderer.waterShader ? wateruChunkPos : dummyuChunkPos;
         shader.setUniformBound(loc, (float)(subChunk.chunkX * 16 - cameraPos.X), (float)(subChunk.chunkY * 16 - cameraPos.Y), (float)(subChunk.chunkZ * 16 - cameraPos.Z));
     }
 
@@ -254,7 +254,7 @@ public sealed class SubChunkRenderer : IDisposable {
         if (hasRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            setUniformPos(Game.worldShader, cameraPos);
+            setUniformPos(Game.world.renderer.shader, cameraPos);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -264,7 +264,7 @@ public sealed class SubChunkRenderer : IDisposable {
     public void drawTransparent(Vector3D cameraPos) {
         if (hasRenderTranslucent) {
             watervao.bind();
-            setUniformPos(Game.waterShader, cameraPos);
+            setUniformPos(Game.world.renderer.waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -273,7 +273,7 @@ public sealed class SubChunkRenderer : IDisposable {
     public void drawTransparentDummy(Vector3D cameraPos) {
         if (hasRenderTranslucent) {
             watervao.bind();
-            setUniformPos(Game.dummyShader, cameraPos);
+            setUniformPos(Game.world.renderer.dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }

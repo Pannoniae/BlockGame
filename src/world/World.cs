@@ -71,6 +71,7 @@ public class World : IDisposable {
         worldIO = new WorldIO(this);
         generator = new OverworldWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
+        Game.player = player;
         renderer = new WorldRenderer(this);
 
         random = new Random(seed);
@@ -411,6 +412,8 @@ public class World : IDisposable {
         // of course, we can save it here since WE call it and not the GC
         worldIO.save(this, name);
         saveWorld.enabled = false;
+        Game.world = null;
+        Game.player = null;
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }

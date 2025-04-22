@@ -13,7 +13,7 @@ namespace BlockGame.ui;
 
 public class GameScreen : Screen {
 
-    public World world;
+    
 
     public Debug D;
 
@@ -38,17 +38,11 @@ public class GameScreen : Screen {
         updateDebugText = Game.setInterval(50, INGAME_MENU.updateDebugTextMethod);
     }
 
-    public void setWorld(World inWorld) {
-        world?.Dispose();
-        // create the world first
-        world = inWorld;
-    }
-
 
     public override void deactivate() {
         base.deactivate();
-        world?.Dispose();
-        world = null;
+        Game.world?.Dispose();
+        Game.world = null;
         updateMemory.enabled = false;
         updateDebugText.enabled = false;
     }
@@ -62,6 +56,8 @@ public class GameScreen : Screen {
 
         // update current tick
         CHAT.tick++;
+        
+        var world = Game.world;
 
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
@@ -103,6 +99,8 @@ public class GameScreen : Screen {
             INGAME_MENU.render(dt, interp);
         }
         Game.metrics.clear();
+        
+        var world = Game.world;
 
         //world.mesh();
         world.player.camera.calculateFrustum(interp);
@@ -128,29 +126,29 @@ public class GameScreen : Screen {
         }
         // render entities
         Game.GL.Disable(EnableCap.DepthTest);
-        world.player.render(dt, interp);
+        Game.world.player.render(dt, interp);
         Game.GL.Enable(EnableCap.DepthTest);
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
         base.onMouseDown(mouse, button);
-        if (world.inMenu || currentMenu != INGAME_MENU) {
+        if (Game.world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
 
         switch (button) {
             case MouseButton.Left:
-                world.player.breakBlock();
+                Game.world.player.breakBlock();
                 break;
             case MouseButton.Right:
-                world.player.placeBlock();
+                Game.world.player.placeBlock();
                 break;
         }
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
         base.onMouseMove(mouse, pos);
-        if (!Game.focused || world.inMenu || currentMenu != INGAME_MENU) {
+        if (!Game.focused || Game.world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
 
@@ -167,7 +165,7 @@ public class GameScreen : Screen {
                 var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
                 Game.instance.lastMousePos = pos;
 
-                world.player.camera.ModifyDirection(xOffset, yOffset);
+                Game.player.camera.ModifyDirection(xOffset, yOffset);
             }
         }
 
@@ -176,9 +174,9 @@ public class GameScreen : Screen {
 
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         int y = (int)Math.Clamp(-scroll.Y, -1, 1);
-        var newSelection = world.player.hotbar.selected + y;
+        var newSelection = Game.player.hotbar.selected + y;
         newSelection = Utils.mod(newSelection, 10);
-        world.player.hotbar.selected = newSelection;
+        Game.player.hotbar.selected = newSelection;
 
     }
 
@@ -207,7 +205,7 @@ public class GameScreen : Screen {
             }
 
             // hack for back to main menu
-            else if (!world.inMenu && !world.paused) {
+            else if (!Game.world.inMenu && !Game.world.paused) {
                 pause();
             }
             else if (currentMenu != Menu.SETTINGS) {
@@ -219,6 +217,8 @@ public class GameScreen : Screen {
         if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
             return;
         }
+        
+        var world = Game.world;
 
         switch (key) {
             case Key.F3:
@@ -298,6 +298,7 @@ public class GameScreen : Screen {
     }
 
     public void remeshWorld(int oldRenderDist) {
+        var world = Game.world;
         Console.Out.WriteLine("remeshed!");
         setUniforms();
         foreach (var chunk in world.chunks.Values) {
@@ -315,21 +316,21 @@ public class GameScreen : Screen {
     }
 
     public void setUniforms() {
-        world.renderer.setUniforms();
+        Game.world.renderer.setUniforms();
     }
 
     public void pause() {
         switchToMenu(PAUSE_MENU);
-        world.inMenu = true;
-        world.paused = true;
+        Game.world.inMenu = true;
+        Game.world.paused = true;
         Game.instance.unlockMouse();
-        world.player.catchUpOnPrevVars();
+        Game.world.player.catchUpOnPrevVars();
     }
 
     public void backToGame() {
         switchToMenu(INGAME_MENU);
-        world.inMenu = false;
-        world.paused = false;
+        Game.world.inMenu = false;
+        Game.world.paused = false;
         Game.instance.lockMouse();
         //Game.lockingMouse = true;
     }
@@ -351,7 +352,7 @@ public class GameScreen : Screen {
 
     public override void resize(Vector2I size) {
         base.resize(size);
-        world.player.camera.setViewport(size.X, size.Y);
+        Game.world.player.camera.setViewport(size.X, size.Y);
     }
 
     public override void draw() {
@@ -423,7 +424,7 @@ public class GameScreen : Screen {
             }
         }
 
-        if (world.paused && currentMenu == PAUSE_MENU) {
+        if (Game.world.paused && currentMenu == PAUSE_MENU) {
             var pauseText = "-PAUSED-";
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
                 Color4b.OrangeRed);

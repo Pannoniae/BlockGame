@@ -53,6 +53,9 @@ public partial class Game {
 
     public static Graphics graphics;
     public static GUI gui;
+    
+    public static World? world;
+    public static Player? player;
 
     public static IMouse mouse;
     public static Vector2 mousePos;
@@ -95,10 +98,6 @@ public partial class Game {
 
     public static TextureManager textureManager;
     public static Metrics metrics;
-
-    public static Shader worldShader;
-    public static Shader dummyShader;
-    public static Shader waterShader;
 
     public static Shader fxaaShader;
 
@@ -209,7 +208,7 @@ public partial class Game {
             return;
         }
 
-        if (!given && !Screen.GAME_SCREEN.world.inMenu) {
+        if (!given && !world.inMenu) {
             Screen.GAME_SCREEN.pause();
         }
         else {

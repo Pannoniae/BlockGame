@@ -33,12 +33,12 @@ public class TextRenderer3D : IFontStashRenderer {
     }
 
     public void renderTick(double interp) {
-        //shaderProgram.View = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
-        //shaderProgram.Projection = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
+        //shaderProgram.View = Game.world.player.camera.getViewMatrix(interp);
+        //shaderProgram.Projection = Game.world.player.camera.getProjectionMatrix();
 
         // set combined VP matrix
-        var mat = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp)
-                  * Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
+        var mat = Game.world.player.camera.getViewMatrix(interp)
+                  * Game.world.player.camera.getProjectionMatrix();
         shader.setUniform(uMVP, mat);
     }
 

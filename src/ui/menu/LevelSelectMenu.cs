@@ -64,7 +64,8 @@ public class LevelSelectMenu : Menu {
         else {
             world = new World($"level{levelSelect.levelIndex}", Random.Shared.Next());
         }
-        Screen.GAME_SCREEN.setWorld(world);
+        Game.world?.Dispose();
+        Game.world = world;
         Game.instance.switchToScreen(Screen.GAME_SCREEN);
         world.loadAroundPlayer();
         Game.instance.lockMouse();

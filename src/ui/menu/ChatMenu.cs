@@ -90,7 +90,7 @@ public class ChatMenu : Menu {
                     if (args.Length == 4) {
                         if (int.TryParse(args[1], out int x) && int.TryParse(args[2], out int y) &&
                             int.TryParse(args[3], out int z)) {
-                            ((GameScreen)screen).world.player.teleport(new Vector3D(x, y, z));
+                            Game.world.player.teleport(new Vector3D(x, y, z));
                             messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
                         }
                         else {

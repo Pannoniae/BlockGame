@@ -67,8 +67,8 @@ public class Debug {
         debugShader.use();
         
         // Set projection and view uniforms
-        Matrix4x4 projMatrix = Screen.GAME_SCREEN.world.player.camera.getProjectionMatrix();
-        Matrix4x4 viewMatrix = Screen.GAME_SCREEN.world.player.camera.getViewMatrix(interp);
+        Matrix4x4 projMatrix = Game.world.player.camera.getProjectionMatrix();
+        Matrix4x4 viewMatrix = Game.world.player.camera.getViewMatrix(interp);
         
         debugShader.setProjection(projMatrix);
         debugShader.setView(viewMatrix);

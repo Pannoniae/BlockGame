@@ -22,7 +22,7 @@ namespace BlockGame.ui {
 
         public static void returnToMainMenu(GUIElement guiElement) {
             // save world
-            Screen.GAME_SCREEN.world.worldIO.save(Screen.GAME_SCREEN.world, Screen.GAME_SCREEN.world.name);
+            Game.world.worldIO.save(Game.world, Game.world.name);
 
             Game.instance.executeOnMainThread(() => Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN));
         }
@@ -30,7 +30,7 @@ namespace BlockGame.ui {
         public override void update(double dt) {
             base.update(dt);
             // update ingame too!
-            if (!Screen.GAME_SCREEN.world.paused) {
+            if (!Game.world.paused) {
                 Screen.GAME_SCREEN.INGAME_MENU.update(dt);
             }
         }

@@ -27,7 +27,7 @@ public class Hotbar : GUIElement {
 
     public override void postDraw() {
         // draw hotbar
-        var world = Screen.GAME_SCREEN.world;
+        var world = Game.world;
         var items = world.player.hotbar.slots;
         var gui = Game.gui;
         Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);

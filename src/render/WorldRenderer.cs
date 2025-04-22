@@ -81,11 +81,8 @@ public class WorldRenderer {
         idt.setup();
 
         shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
-        Game.worldShader = shader;
         dummyShader = new Shader(GL, "shaders/dummyShader.vert");
-        Game.dummyShader = dummyShader;
         waterShader = new Shader(GL, "shaders/waterShader.vert", "shaders/waterShader.frag");
-        Game.waterShader = waterShader;
 
         blockTexture = shader.getUniformLocation("blockTexture");
         uMVP = shader.getUniformLocation(nameof(uMVP));
