@@ -20,7 +20,7 @@ public class Hotbar : GUIElement {
     public Hotbar(Menu menu, string name, Vector2I pos, string? text = default) : base(menu, name) {
         setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 10; i++) {
-            slots[i] = new ItemSlot(null!, Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
+            slots[i] = new ItemSlot(Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
                 GUI.instance.uiHeight - (BLOCKSIZE + 2));
         }
     }
@@ -37,7 +37,7 @@ public class Hotbar : GUIElement {
             slots[i].stack = items[i];
             slots[i].itemPos = new Vector2I((int)(Game.gui.uiCentreX + ((i - 5) * SIZE) + 2),
                 GUI.instance.uiHeight - (BLOCKSIZE + 2));
-            slots[i].drawItemWithoutInv();
+            Game.gui.drawItemWithoutInv(slots[i]);
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,
                 // not a mix of GUI/screen coords for UI positions and texture drawing like now.....

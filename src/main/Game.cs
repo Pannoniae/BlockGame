@@ -56,6 +56,7 @@ public partial class Game {
     
     public static World? world;
     public static Player? player;
+    public static WorldRenderer? renderer;
 
     public static IMouse mouse;
     public static Vector2 mousePos;
@@ -98,10 +99,7 @@ public partial class Game {
 
     public static TextureManager textureManager;
     public static Metrics metrics;
-
-    public static Shader fxaaShader;
-
-    public static GLStateTracker GLTracker;
+    
     public static FontLoader fontLoader;
 
     public BlockingCollection<Action> mainThreadQueue = new();
@@ -274,26 +272,25 @@ public partial class Game {
 
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
 
-
-        GLTracker = new GLStateTracker(GL);
-
+        
+        graphics = new Graphics();
+        
         textureManager = new TextureManager(GL);
+        
+        g_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
+        g_showEdgesLocation = graphics.fxaaShader.getUniformLocation("u_showEdges");
+        g_fxaaOnLocation = graphics.fxaaShader.getUniformLocation("u_fxaaOn");
 
-        fxaaShader = new Shader(GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
-        g_texelStepLocation = fxaaShader.getUniformLocation("u_texelStep");
-        g_showEdgesLocation = fxaaShader.getUniformLocation("u_showEdges");
-        g_fxaaOnLocation = fxaaShader.getUniformLocation("u_fxaaOn");
+        g_lumaThresholdLocation = graphics.fxaaShader.getUniformLocation("u_lumaThreshold");
+        g_mulReduceLocation = graphics.fxaaShader.getUniformLocation("u_mulReduce");
+        g_minReduceLocation = graphics.fxaaShader.getUniformLocation("u_minReduce");
+        g_maxSpanLocation = graphics.fxaaShader.getUniformLocation("u_maxSpan");
 
-        g_lumaThresholdLocation = fxaaShader.getUniformLocation("u_lumaThreshold");
-        g_mulReduceLocation = fxaaShader.getUniformLocation("u_mulReduce");
-        g_minReduceLocation = fxaaShader.getUniformLocation("u_minReduce");
-        g_maxSpanLocation = fxaaShader.getUniformLocation("u_maxSpan");
-
-        fxaaShader.setUniform(g_showEdgesLocation, 0);
-        fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
-        fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
-        fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
-        fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
+        graphics.fxaaShader.setUniform(g_showEdgesLocation, 0);
+        graphics.fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
+        graphics.fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
+        graphics.fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
+        graphics.fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
 
 
         // needed for stupid laptop GPUs
@@ -330,8 +327,7 @@ public partial class Game {
         //music.Loop = true;
         //music.Play();
         Console.Out.WriteLine("played?");
-
-        graphics = new Graphics();
+        
         gui = new GUI();
 
         currentScreen = new MainMenuScreen();
@@ -590,7 +586,7 @@ public partial class Game {
             throw new Exception("Framebuffer is not complete");
         }
 
-        fxaaShader.use();
+        graphics.fxaaShader.use();
 
         GL.Uniform2(g_texelStepLocation, 1.0f / width, 1.0f / width);
 
@@ -665,8 +661,6 @@ public partial class Game {
             ft = dt;
         }
 
-        GLTracker.save();
-
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
 
         graphics.mainBatch.Begin();
@@ -686,15 +680,12 @@ public partial class Game {
         }
 
         if (Settings.instance.framebufferEffects) {
-            fxaaShader.use();
-            fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
+            graphics.fxaaShader.use();
+            graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
         }
-
-        // before this, only GL, after this, only GD
-        GLTracker.load();
 
         GL.Disable(EnableCap.DepthTest);
         //GL.Disable(EnableCap.CullFace);

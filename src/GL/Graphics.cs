@@ -15,7 +15,11 @@ public class Graphics {
     public readonly SpriteBatch immediateBatch;
     
     // Shaders
-    public readonly InstantShader instantShader = new InstantShader(Game.GL, "shaders/batch.vert", "shaders/batch.frag");
+    public readonly InstantShader batchShader = new InstantShader(Game.GL, "shaders/batch.vert", "shaders/batch.frag");
+    public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
+    public readonly InstantShader instantColourShader = new InstantShader(Game.GL, "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
+    
+    public readonly Shader fxaaShader = new Shader(Game.GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
 
     public readonly Silk.NET.OpenGL.GL GL;
 
@@ -23,8 +27,8 @@ public class Graphics {
 
     public Graphics() {
         GL = Game.GL;
-        mainBatch = new SpriteBatch(GL, instantShader);
-        immediateBatch = new SpriteBatch(GL, instantShader);
+        mainBatch = new SpriteBatch(GL, batchShader);
+        immediateBatch = new SpriteBatch(GL, batchShader);
     }
 
     public void clearColor(Color4b color) {
@@ -43,9 +47,9 @@ public class Graphics {
         GL.Viewport(0, 0, (uint)size.X, (uint)size.Y);
         var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
         
-        instantShader.World = Matrix4x4.Identity;
-        instantShader.View = Matrix4x4.Identity;
-        instantShader.Projection = ortho;
+        batchShader.World = Matrix4x4.Identity;
+        batchShader.View = Matrix4x4.Identity;
+        batchShader.Projection = ortho;
         
     }
 }

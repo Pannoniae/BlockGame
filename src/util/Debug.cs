@@ -22,9 +22,6 @@ public class Debug {
     private uint pointVao;
     private uint pointVbo;
     private int currentPoint = 0;
-
-    // Replace SimpleShaderProgram with standard shader program
-    private InstantShader debugShader;
     
     public Debug() {
         unsafe {
@@ -57,21 +54,18 @@ public class Debug {
             Game.GL.EnableVertexAttribArray(1);
             Game.GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(VertexTinted),
                 (void*)12);
-
-            // Create debug shader program (assumes the shaders are the same as the SimpleShaderProgram)
-            debugShader = new InstantShader(Game.GL, "shaders/debug.vert", "shaders/debug.frag");
         }
     }
     
     public void renderTick(double interp) {
-        debugShader.use();
+        Game.graphics.instantColourShader.use();
         
         // Set projection and view uniforms
         Matrix4x4 projMatrix = Game.world.player.camera.getProjectionMatrix();
         Matrix4x4 viewMatrix = Game.world.player.camera.getViewMatrix(interp);
         
-        debugShader.setProjection(projMatrix);
-        debugShader.setView(viewMatrix);
+        Game.graphics.instantColourShader.setProjection(projMatrix);
+        Game.graphics.instantColourShader.setView(viewMatrix);
     }
 
     public void drawLine(Vector3D from, Vector3D to, Color4b colour = default) {
@@ -130,7 +124,7 @@ public class Debug {
                 (nuint)(currentLine * sizeof(VertexTinted)), lineVertices);
         }
 
-        debugShader.use();
+        Game.graphics.instantColourShader.use();
         Game.GL.DrawArrays(PrimitiveType.Lines, 0, (uint)currentLine);
         
         currentLine = 0;

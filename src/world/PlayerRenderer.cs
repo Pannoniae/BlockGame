@@ -23,8 +23,6 @@ public class PlayerRenderer {
 
     private int uMVP;
     private int tex;
-
-    public Shader heldBlockShader;
     
     // Water overlay renderer
     private InstantDrawTexture waterOverlayRenderer;
@@ -35,9 +33,8 @@ public class PlayerRenderer {
         vao = new StreamingVAO<BlockVertexTinted>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
-        heldBlockShader = new Shader(Game.GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
-        uMVP = heldBlockShader.getUniformLocation("uMVP");
-        tex = heldBlockShader.getUniformLocation("tex");
+        uMVP = Game.graphics.instantTextureShader.getUniformLocation("uMVP");
+        tex = Game.graphics.instantTextureShader.getUniformLocation("tex");
         
         // Initialize water overlay renderer
         waterOverlayRenderer = new InstantDrawTexture(60);
@@ -80,9 +77,9 @@ public class PlayerRenderer {
                   Matrix4x4.CreateTranslation(new Vector3(0.75f, (float)(-1.45f - (getLower(interp) * 0.35f)), 1f)) *
                   // swing translation
                   Matrix4x4.CreateTranslation((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
-        heldBlockShader.use();
-        heldBlockShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getFixedProjectionMatrix());
-        heldBlockShader.setUniform(tex, 0);
+        Game.graphics.instantTextureShader.use();
+        Game.graphics.instantTextureShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getFixedProjectionMatrix());
+        Game.graphics.instantTextureShader.setUniform(tex, 0);
         vao.render();
         
         // Render water overlay if player is underwater

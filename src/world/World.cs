@@ -35,9 +35,8 @@ public class World : IDisposable {
     /// <summary>
     /// What needs to be meshed at the end of the frame
     /// </summary>
-    public Queue<ChunkSectionCoord> meshingQueue = new();
-
-    public WorldRenderer renderer;
+    public Queue<SubChunkCoord> meshingQueue = new();
+    
     public WorldGenerator generator;
 
     public bool isLoading;
@@ -72,7 +71,6 @@ public class World : IDisposable {
         generator = new OverworldWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
         Game.player = player;
-        renderer = new WorldRenderer(this);
 
         random = new Random(seed);
         worldTick = 0;
@@ -96,8 +94,6 @@ public class World : IDisposable {
                 player.position.Y += 1;
             }
         }
-
-        renderer.initBlockOutline();
 
         // After everything is done, SAVE THE WORLD
         // if we don't save the world, some of the chunks might get saved but no level.xnbt
@@ -184,7 +180,7 @@ public class World : IDisposable {
         // empty the meshing queue
         while (meshingQueue.TryDequeue(out var sectionCoord)) {
             var section = getChunkSection(sectionCoord);
-            section.renderer.meshChunk();
+            Game.renderer.meshChunk(section);
         }
         particleManager.update(dt);
     }
@@ -414,6 +410,7 @@ public class World : IDisposable {
         saveWorld.enabled = false;
         Game.world = null;
         Game.player = null;
+        Game.renderer = null;
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }
@@ -489,7 +486,7 @@ public class World : IDisposable {
         return chunks[chunkCoord];
     }
 
-    public void mesh(ChunkSectionCoord coord) {
+    public void mesh(SubChunkCoord coord) {
         if (!meshingQueue.Contains(coord)) {
             meshingQueue.Enqueue(coord);
         }
@@ -776,15 +773,15 @@ public class World : IDisposable {
         return y is >= 0 and < WORLDHEIGHT;
     }
 
-    public static ChunkSectionCoord getChunkSectionPos(Vector3I pos) {
-        return new ChunkSectionCoord(
+    public static SubChunkCoord getChunkSectionPos(Vector3I pos) {
+        return new SubChunkCoord(
             pos.X >> 4,
             pos.Y >> 4,
             pos.Z >> 4);
     }
 
-    public static ChunkSectionCoord getChunkSectionPos(int x, int y, int z) {
-        return new ChunkSectionCoord(
+    public static SubChunkCoord getChunkSectionPos(int x, int y, int z) {
+        return new SubChunkCoord(
             x >> 4,
             y >> 4,
             z >> 4);
@@ -836,7 +833,7 @@ public class World : IDisposable {
             pos.Z & 0xF);
     }
 
-    public bool isChunkSectionInWorld(ChunkSectionCoord pos) {
+    public bool isChunkSectionInWorld(SubChunkCoord pos) {
         return chunks.ContainsKey(new ChunkCoord(pos.x, pos.z)) && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT;
     }
 
@@ -877,11 +874,11 @@ public class World : IDisposable {
         return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
 
-    public SubChunk getChunkSection(ChunkSectionCoord sectionCoord) {
-        return chunks[new ChunkCoord(sectionCoord.x, sectionCoord.z)].subChunks[sectionCoord.y];
+    public SubChunk getChunkSection(SubChunkCoord coord) {
+        return chunks[new ChunkCoord(coord.x, coord.z)].subChunks[coord.y];
     }
 
-    public bool getChunkSectionMaybe(ChunkSectionCoord pos, out SubChunk? section) {
+    public bool getChunkSectionMaybe(SubChunkCoord pos, out SubChunk? section) {
         var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
         if (!c || pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             section = null;
@@ -891,7 +888,7 @@ public class World : IDisposable {
         return true;
     }
 
-    public SubChunk? getChunkSectionUnsafe(ChunkSectionCoord pos) {
+    public SubChunk? getChunkSectionUnsafe(SubChunkCoord pos) {
         if (pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             return null;
         }
@@ -923,13 +920,13 @@ public class World : IDisposable {
             chunkZ * Chunk.CHUNKSIZE + z);
     }
 
-    public static Vector3I toWorldPos(ChunkSectionCoord coord, int x, int y, int z) {
+    public static Vector3I toWorldPos(SubChunkCoord coord, int x, int y, int z) {
         return new Vector3I(coord.x * Chunk.CHUNKSIZE + x,
             coord.y * Chunk.CHUNKSIZE + y,
             coord.z * Chunk.CHUNKSIZE + z);
     }
 
-    public static Vector3I toWorldPos(ChunkSectionCoord coord, Vector3I c) {
+    public static Vector3I toWorldPos(SubChunkCoord coord, Vector3I c) {
         return new Vector3I(coord.x * Chunk.CHUNKSIZE + c.X,
             coord.y * Chunk.CHUNKSIZE + c.Y,
             coord.z * Chunk.CHUNKSIZE + c.Z);

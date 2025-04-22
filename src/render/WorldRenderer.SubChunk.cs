@@ -13,17 +13,14 @@ using BoundingFrustum = System.Numerics.BoundingFrustum;
 
 namespace BlockGame;
 
-public sealed class SubChunkRenderer : IDisposable {
-    private readonly SubChunk subChunk;
+public partial class WorldRenderer {
 
     // we need it here because completely full chunks are also empty of any rendering
-    private bool hasRenderOpaque;
-    private bool hasRenderTranslucent;
+    private Dictionary<SubChunkCoord, bool> hasRenderOpaque = new();
+    private Dictionary<SubChunkCoord, bool> hasRenderTranslucent = new();
 
-    private SharedBlockVAO? vao;
-    private SharedBlockVAO? watervao;
-
-    private bool hasOnlySolid;
+    private Dictionary<SubChunkCoord, SharedBlockVAO?> vao = new();
+    private Dictionary<SubChunkCoord, SharedBlockVAO?> watervao = new();
 
     private static int uChunkPos;
     private static int dummyuChunkPos;
@@ -127,13 +124,6 @@ public sealed class SubChunkRenderer : IDisposable {
         0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
 
-    public SubChunkRenderer(SubChunk subChunk) {
-        this.subChunk = subChunk;
-        uChunkPos = Game.world.renderer.shader.getUniformLocation("uChunkPos");
-        dummyuChunkPos = Game.world.renderer.dummyShader.getUniformLocation("uChunkPos");
-        wateruChunkPos = Game.world.renderer.waterShader.getUniformLocation("uChunkPos");
-    }
-
     private static bool opaqueBlocks(int b) {
         return b != 0 && Block.get(b).layer != RenderLayer.TRANSLUCENT;
     }
@@ -141,55 +131,38 @@ public sealed class SubChunkRenderer : IDisposable {
     private static bool notOpaqueBlocks(int b) {
         return b == 0 || Block.get(b).layer == RenderLayer.TRANSLUCENT;
     }
-
-    private void ReleaseUnmanagedResources() {
-        vao?.Dispose();
-        watervao?.Dispose();
-    }
-
-    private void Dispose(bool disposing) {
-        if (disposing) {
-            ReleaseUnmanagedResources();
-        }
-    }
-
-    public void Dispose() {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~SubChunkRenderer() {
-        Dispose(false);
-    }
+    
 
     /// <summary>
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
-    public void meshChunk() {
+    public void meshChunk(SubChunk subChunk) {
+        
         //sw.Restart();
-        vao?.Dispose();
-        vao = new SharedBlockVAO(subChunk.world.renderer.chunkVAO);
-        watervao?.Dispose();
-        watervao = new SharedBlockVAO(subChunk.world.renderer.chunkVAO);
-
-
+        vao.GetValueOrDefault(subChunk.coord)?.Dispose();
+        vao[subChunk.coord] = new SharedBlockVAO(chunkVAO);
+        watervao.GetValueOrDefault(subChunk.coord)?.Dispose();
+        watervao[subChunk.coord] = new SharedBlockVAO(chunkVAO);
+        
+        var currentVAO = vao[subChunk.coord];
+        var currentWaterVAO = watervao[subChunk.coord];
+        
+        hasRenderOpaque[subChunk.coord] = false;
+        hasRenderTranslucent[subChunk.coord] = false;
+        
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
         if (subChunk.isEmpty) {
-            hasRenderOpaque = false;
-            hasRenderTranslucent = false;
             return;
         }
 
         //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
         // first we render everything which is NOT translucent
         //lock (meshingLock) {
-        setupNeighbours();
+        setupNeighbours(subChunk);
 
         // if chunk is full, don't mesh either
-        if (hasOnlySolid) {
-            hasRenderOpaque = false;
-            hasRenderTranslucent = false;
+        if (subChunk.hasOnlySolid) {
             return;
         }
 
@@ -197,39 +170,39 @@ public sealed class SubChunkRenderer : IDisposable {
                 MeasureProfiler.StartCollectingData();
             }*/
         //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
-        constructVertices(VertexConstructionMode.OPAQUE);
+        constructVertices(subChunk, VertexConstructionMode.OPAQUE);
         /*if (World.glob) {
                 MeasureProfiler.SaveData();
             }*/
         //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkVertices.Count > 0) {
-            hasRenderOpaque = true;
-            vao.bindVAO();
+            hasRenderOpaque[subChunk.coord] = true;
+            currentVAO.bindVAO();
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-            vao.upload(finalVertices, (uint)finalVertices.Length);
+            currentVAO.upload(finalVertices, (uint)finalVertices.Length);
             //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
-            hasRenderOpaque = false;
+            hasRenderOpaque[subChunk.coord] = false;
         }
         //}
         //lock (meshingLock) {
         if (subChunk.blocks.hasTranslucentBlocks()) {
             // then we render everything which is translucent (water for now)
-            constructVertices(VertexConstructionMode.TRANSLUCENT);
+            constructVertices(subChunk, VertexConstructionMode.TRANSLUCENT);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             if (chunkVertices.Count > 0) {
-                hasRenderTranslucent = true;
-                watervao.bindVAO();
+                hasRenderTranslucent[subChunk.coord] = true;
+                currentWaterVAO.bindVAO();
 
                 var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
-                watervao.upload(tFinalVertices, (uint)tFinalVertices.Length);
+                currentWaterVAO.upload(tFinalVertices, (uint)tFinalVertices.Length);
                 //Console.Out.WriteLine($"PartMeshing1.7: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
                 //world.sortedTransparentChunks.Add(this);
             }
             else {
                 //world.sortedTransparentChunks.Remove(this);
-                hasRenderTranslucent = false;
+                hasRenderTranslucent[subChunk.coord] = false;
             }
         }
         //}
@@ -241,50 +214,53 @@ public sealed class SubChunkRenderer : IDisposable {
     }
 
 
-    public bool isVisible(BoundingFrustum frustum) {
+    public bool isVisible(SubChunk subChunk, BoundingFrustum frustum) {
         return !frustum.outsideCameraUpDown(subChunk.box);
     }
 
-    private void setUniformPos(Shader shader, Vector3D cameraPos) {
-        int loc = shader == Game.world.renderer.shader ? uChunkPos : shader == Game.world.renderer.waterShader ? wateruChunkPos : dummyuChunkPos;
-        shader.setUniformBound(loc, (float)(subChunk.chunkX * 16 - cameraPos.X), (float)(subChunk.chunkY * 16 - cameraPos.Y), (float)(subChunk.chunkZ * 16 - cameraPos.Z));
+    private void setUniformPos(SubChunk subChunk, Shader s, Vector3D cameraPos) {
+        int loc = s == shader ? uChunkPos : s == waterShader ? wateruChunkPos : dummyuChunkPos;
+        s.setUniformBound(loc, (float)(subChunk.chunkX * 16 - cameraPos.X), (float)(subChunk.chunkY * 16 - cameraPos.Y), (float)(subChunk.chunkZ * 16 - cameraPos.Z));
     }
 
-    public void drawOpaque(Vector3D cameraPos) {
-        if (hasRenderOpaque) {
+    public void drawOpaque(SubChunk subChunk, Vector3D cameraPos) {
+        var vao = this.vao[subChunk.coord];
+        if (hasRenderOpaque[subChunk.coord]) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            setUniformPos(Game.world.renderer.shader, cameraPos);
+            setUniformPos(subChunk, shader, cameraPos);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
         }
     }
 
-    public void drawTransparent(Vector3D cameraPos) {
-        if (hasRenderTranslucent) {
+    public void drawTransparent(SubChunk subChunk, Vector3D cameraPos) {
+        var watervao = this.watervao[subChunk.coord];
+        if (hasRenderTranslucent[subChunk.coord]) {
             watervao.bind();
-            setUniformPos(Game.world.renderer.waterShader, cameraPos);
+            setUniformPos(subChunk, waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
-    public void drawTransparentDummy(Vector3D cameraPos) {
-        if (hasRenderTranslucent) {
+    public void drawTransparentDummy(SubChunk subChunk, Vector3D cameraPos) {
+        var watervao = this.watervao[subChunk.coord];
+        if (hasRenderTranslucent[subChunk.coord]) {
             watervao.bind();
-            setUniformPos(Game.world.renderer.dummyShader, cameraPos);
+            setUniformPos(subChunk, dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
     [SkipLocalsInit]
-    private void setupNeighbours() {
+    private void setupNeighbours(SubChunk subChunk) {
         //var sw = new Stopwatch();
         //sw.Start();
 
-        hasOnlySolid = subChunk.blocks.isFull();
+        subChunk.hasOnlySolid = subChunk.blocks.isFull();
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -302,12 +278,12 @@ public sealed class SubChunkRenderer : IDisposable {
         int x;
 
         // setup neighbouring sections
-        var coord = subChunk.chunkCoord;
+        var coord = subChunk.coord;
         ref var neighbourSectionsArray = ref MemoryMarshal.GetArrayDataReference(neighbourSections);
         for (y = -1; y <= 1; y++) {
             for (z = -1; z <= 1; z++) {
                 for (x = -1; x <= 1; x++) {
-                    var sec = world.getChunkSectionUnsafe(new ChunkSectionCoord(coord.x + x, coord.y + y, coord.z + z));
+                    var sec = world.getChunkSectionUnsafe(new SubChunkCoord(coord.x + x, coord.y + y, coord.z + z));
                     neighbourSectionsArray = sec?.blocks;
                     neighbourSectionsArray = ref Unsafe.Add(ref neighbourSectionsArray, 1)!;
                 }
@@ -366,7 +342,7 @@ public sealed class SubChunkRenderer : IDisposable {
                     // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
                     // NOTE: check if it's loaded (if it isn't loaded we don't give a shit about it)
                     if (!Block.isFullBlock(bl) && nn) {
-                        hasOnlySolid = false;
+                        subChunk.hasOnlySolid = false;
                     }
 
                     // set light array element to light
@@ -386,11 +362,10 @@ public sealed class SubChunkRenderer : IDisposable {
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
     }
 
-    // sorry for this mess, even fucking calli has big overhead
+    // sorry for this mess
     [SkipLocalsInit]
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    //unsafe private void constructVertices(delegate*<int, bool> whichBlocks, delegate*<int, bool> neighbourTest) {
-    private unsafe void constructVertices(VertexConstructionMode mode) {
+    private unsafe void constructVertices(SubChunk subChunk, VertexConstructionMode mode) {
         //sw.Start();
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
 
@@ -406,7 +381,6 @@ public sealed class SubChunkRenderer : IDisposable {
         // BYTE OF SETTINGS
         // 1 = AO
         // 2 = smooth lighting
-        var settings = Settings.instance;
         var smoothLighting = Settings.instance.smoothLighting;
         var AO = Settings.instance.AO;
         //ushort cv = 0;
@@ -606,33 +580,33 @@ public sealed class SubChunkRenderer : IDisposable {
                             Unsafe.Add(ref lightRef, offsets[11]),
                             lba[(byte)dir]);
 
-                        o.First = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                             Unsafe.Add(ref neighbourRef, offsets[0]))) |
-                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                             Unsafe.Add(ref neighbourRef, offsets[1]))) << 1 |
-                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                             Unsafe.Add(ref neighbourRef, offsets[2]))) << 2);
+                        o.First = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                             Unsafe.Add(ref neighbourRef, offsets[0])]) |
+                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                             Unsafe.Add(ref neighbourRef, offsets[1])]) << 1 |
+                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                             Unsafe.Add(ref neighbourRef, offsets[2])]) << 2);
 
-                        o.Second = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                              Unsafe.Add(ref neighbourRef, offsets[3]))) |
-                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                              Unsafe.Add(ref neighbourRef, offsets[4]))) << 1 |
-                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                              Unsafe.Add(ref neighbourRef, offsets[5]))) << 2);
+                        o.Second = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                              Unsafe.Add(ref neighbourRef, offsets[3])]) |
+                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                              Unsafe.Add(ref neighbourRef, offsets[4])]) << 1 |
+                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                              Unsafe.Add(ref neighbourRef, offsets[5])]) << 2);
 
-                        o.Third = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                             Unsafe.Add(ref neighbourRef, offsets[6]))) |
-                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                             Unsafe.Add(ref neighbourRef, offsets[7]))) << 1 |
-                                         Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                             Unsafe.Add(ref neighbourRef, offsets[8]))) << 2);
+                        o.Third = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                             Unsafe.Add(ref neighbourRef, offsets[6])]) |
+                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                             Unsafe.Add(ref neighbourRef, offsets[7])]) << 1 |
+                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                             Unsafe.Add(ref neighbourRef, offsets[8])]) << 2);
 
-                        o.Fourth = (byte)(Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                              Unsafe.Add(ref neighbourRef, offsets[9]))) |
-                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                              Unsafe.Add(ref neighbourRef, offsets[10]))) << 1 |
-                                          Unsafe.BitCast<bool, byte>(Block.isFullBlock(
-                                              Unsafe.Add(ref neighbourRef, offsets[11]))) << 2);
+                        o.Fourth = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                              Unsafe.Add(ref neighbourRef, offsets[9])]) |
+                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                              Unsafe.Add(ref neighbourRef, offsets[10])]) << 1 |
+                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
+                                              Unsafe.Add(ref neighbourRef, offsets[11])]) << 2);
 
                         // only apply AO if enabled
                         if (AO && !facesRef.noAO) {

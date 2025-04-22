@@ -15,7 +15,7 @@ using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
 
-public class WorldRenderer {
+public sealed partial class WorldRenderer : IDisposable {
     public World world;
 
     public Silk.NET.OpenGL.GL GL;
@@ -23,6 +23,16 @@ public class WorldRenderer {
     public Shader shader;
     public Shader dummyShader;
     public Shader waterShader;
+
+    public Shader outline;
+    private uint outlineVao;
+    private uint outlineVbo;
+
+    private uint outlineCount;
+
+    //private int outline_uModel;
+    private int outline_uView;
+    private int outline_uProjection;
 
     //public int uColor;
     public int blockTexture;
@@ -52,17 +62,6 @@ public class WorldRenderer {
 
     private InstantDrawColour idc = new InstantDrawColour(256);
     private InstantDrawTexture idt = new InstantDrawTexture(256);
-
-
-    public Shader outline;
-    private uint outlineVao;
-    private uint outlineVbo;
-
-    private uint outlineCount;
-
-    //private int outline_uModel;
-    private int outline_uView;
-    private int outline_uProjection;
 
     public static Color4b defaultClearColour = new Color4b(178, 228, 255);
     public static Color4b defaultFogColour = new Color4b(210, 210, 210);
@@ -101,8 +100,10 @@ public class WorldRenderer {
         waterFogMin = waterShader.getUniformLocation(nameof(fogMin));
         waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
         waterSkyColour = waterShader.getUniformLocation(nameof(skyColour));
+        uChunkPos = shader.getUniformLocation("uChunkPos");
+        dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
+        wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
         outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
-        frustum = world.player.camera.frustum;
 
 
         shader.setUniform(blockTexture, 0);
@@ -116,6 +117,8 @@ public class WorldRenderer {
 
         waterShader.setUniform(waterFogColour, defaultFogColour);
         waterShader.setUniform(waterSkyColour, defaultClearColour);
+
+        initBlockOutline();
 
         setUniforms();
     }
@@ -195,8 +198,8 @@ public class WorldRenderer {
     /// maybe this will cut down on the VAO switching time??
     public void render(double interp) {
         //Game.GD.ResetStates();
-        
 
+        frustum = Game.player.camera.frustum;
 
         GL.BindVertexArray(chunkVAO);
         bindQuad();
@@ -212,7 +215,7 @@ public class WorldRenderer {
         GL.Disable(EnableCap.Blend);
 
         GL.BindVertexArray(chunkVAO);
-        
+
         var tex = Game.textureManager.blockTexture;
         var lightTex = Game.textureManager.lightTexture;
         GL.ActiveTexture(TextureUnit.Texture0);
@@ -229,7 +232,7 @@ public class WorldRenderer {
             if (test) {
                 for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                     var subChunk = chunk.subChunks[j];
-                    subChunk.isRendered = subChunk.renderer.isVisible(frustum);
+                    subChunk.isRendered = isVisible(subChunk, frustum);
                 }
             }
         }
@@ -252,7 +255,7 @@ public class WorldRenderer {
                     continue;
                 }
 
-                subChunk.renderer.drawOpaque(cameraPos);
+                drawOpaque(subChunk, cameraPos);
             }
         }
 
@@ -271,7 +274,7 @@ public class WorldRenderer {
                     continue;
                 }
 
-                subChunk.renderer.drawTransparentDummy(cameraPos);
+                drawTransparentDummy(subChunk, cameraPos);
             }
         }
 
@@ -297,7 +300,7 @@ public class WorldRenderer {
                     continue;
                 }
 
-                subChunk.renderer.drawTransparent(cameraPos);
+                drawTransparent(subChunk, cameraPos);
             }
         }
 
@@ -366,9 +369,9 @@ public class WorldRenderer {
         idt.instantShader.setUniform(idt.uModelView, modelView);
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.sunTexture.handle);
-        
+
         // bind the texture
-        
+
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
         idt.addVertex(
@@ -703,6 +706,25 @@ public class WorldRenderer {
         float tint = a[dir] * aoArray[ao];
         var ab = new Rgba32(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
+    }
+
+    private void ReleaseUnmanagedResources() {
+        foreach (var vao in vao.Values) {
+            vao?.Dispose();
+        }
+
+        foreach (var watervao in watervao.Values) {
+            watervao?.Dispose();
+        }
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~WorldRenderer() {
+        ReleaseUnmanagedResources();
     }
 }
 

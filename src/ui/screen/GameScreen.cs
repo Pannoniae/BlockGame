@@ -43,6 +43,7 @@ public class GameScreen : Screen {
         base.deactivate();
         Game.world?.Dispose();
         Game.world = null;
+        Game.renderer = null;
         updateMemory.enabled = false;
         updateDebugText.enabled = false;
     }
@@ -87,7 +88,7 @@ public class GameScreen : Screen {
 
         bool meshOutline = col.hit && prevTargetedPos != Game.instance.targetedPos;
         if (meshOutline) {
-            world.renderer.meshBlockOutline();
+            Game.renderer.meshBlockOutline();
         }
     }
 
@@ -105,10 +106,10 @@ public class GameScreen : Screen {
         //world.mesh();
         world.player.camera.calculateFrustum(interp);
         //Console.Out.WriteLine(world.player.camera.frustum);
-        world.renderer.render(interp);
+        Game.renderer.render(interp);
         if (Game.instance.targetedPos.HasValue) {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
-            world.renderer.drawBlockOutline(interp);
+            Game.renderer.drawBlockOutline(interp);
         }
         //D.renderTick(interp);
         const string text = "THIS IS A LONG TEXT\nmultiple lines!";
@@ -300,7 +301,7 @@ public class GameScreen : Screen {
     public void remeshWorld(int oldRenderDist) {
         var world = Game.world;
         Console.Out.WriteLine("remeshed!");
-        setUniforms();
+        Game.renderer.setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.MESHED) {
@@ -313,10 +314,6 @@ public class GameScreen : Screen {
         // free up memory from the block arraypool - we probably don't need that much
         ArrayBlockData.blockPool.trim();
         ArrayBlockData.lightPool.trim();
-    }
-
-    public void setUniforms() {
-        Game.world.renderer.setUniforms();
     }
 
     public void pause() {
@@ -366,7 +363,7 @@ public class GameScreen : Screen {
         // clear depth buffer so the gui can use it properly
         //Game.GL.Clear(ClearBufferMask.DepthBufferBit);
         
-        Game.graphics.instantShader.use();
+        Game.graphics.batchShader.use();
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 

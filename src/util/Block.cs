@@ -540,7 +540,7 @@ public readonly record struct Face(
     public readonly UVPair min = min;
     public readonly UVPair max = max;
     public readonly RawDirection direction = direction;
-    public readonly byte flags = (byte)(SubChunkRenderer.toByte(nonFullFace) | SubChunkRenderer.toByte(noAO) << 1);
+    public readonly byte flags = (byte)(WorldRenderer.toByte(nonFullFace) | WorldRenderer.toByte(noAO) << 1);
 
     public bool nonFullFace => (flags & (byte)FaceFlags.NON_FULL_FACE) != 0;
     public bool noAO => (flags & (byte)FaceFlags.NO_AO) != 0;

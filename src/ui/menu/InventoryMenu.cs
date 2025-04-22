@@ -45,7 +45,7 @@ public class InventoryMenu : Menu {
 
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
-                slots[y * rows + x] = new ItemSlot(this, slotX, slotY) {
+                slots[y * rows + x] = new ItemSlot(slotX, slotY) {
                     stack = new ItemStack((ushort)item, 1),
                 };
                 i++;
@@ -58,7 +58,7 @@ public class InventoryMenu : Menu {
         // draw inventory text
         Game.gui.drawStringUI("Inventory", new Vector2(guiBounds.X + invOffsetX, guiBounds.Y + textOffsetY), Color4b.White, new Vector2(2, 2));
         foreach (var slot in slots) {
-            slot.drawItem();
+            Game.gui.drawItem(slot, slot.stack, this);
         }
     }
 

@@ -31,7 +31,7 @@ public class RenderBlock {
     public static void addVertexWithAO(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer, List<ushort> indexBuffer,
         float vx, float vy, float vz, UVPair uv, RawDirection direction, int currentIndex) {
 
-        ref var offsetArray = ref MemoryMarshal.GetReference(SubChunkRenderer.offsetTable);
+        ref var offsetArray = ref MemoryMarshal.GetReference(WorldRenderer.offsetTable);
 
         var chunk = world.getChunkSection(World.getChunkSectionPos(pos));
 
@@ -67,18 +67,18 @@ public class RenderBlock {
                     vector = Vector128.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)direction * 36 + j * 9));
 
                     // premultiply cuz its faster that way
-                    o = SubChunkRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[0], pos.Y + vector[1], pos.Z + vector[2]]));
+                    o = WorldRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[0], pos.Y + vector[1], pos.Z + vector[2]]));
                     l.First = chunk.blocks.getLight(pos.X + vector[0], pos.Y + vector[1], pos.Z + vector[2]);
 
-                    o |= (byte)(SubChunkRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[3], pos.Y + vector[4], pos.Z + vector[5]])) << 1);
+                    o |= (byte)(WorldRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[3], pos.Y + vector[4], pos.Z + vector[5]])) << 1);
                     l.Second = chunk.blocks.getLight(pos.X + vector[3], pos.Y + vector[4], pos.Z + vector[5]);
 
-                    o |= (byte)(SubChunkRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[6], pos.Y + vector[7], pos.Z + vector[8]])) << 2);
+                    o |= (byte)(WorldRenderer.toByte(Block.isFullBlock(chunk.blocks[pos.X + vector[6], pos.Y + vector[7], pos.Z + vector[8]])) << 2);
                     l.Third = chunk.blocks.getLight(pos.X + vector[6], pos.Y + vector[7], pos.Z + vector[8]);
 
                     // only apply AO if enabled
                     if (Settings.instance.AO) {
-                        ao |= (byte)((SubChunkRenderer.calculateAOFixed(o) & 0x3) << j * 2);
+                        ao |= (byte)((WorldRenderer.calculateAOFixed(o) & 0x3) << j * 2);
                         //Console.Out.WriteLine(ao);
                     }
                     if (Settings.instance.smoothLighting) {
@@ -88,10 +88,10 @@ public class RenderBlock {
 
                         // split light and reassemble it again
                         light.Whole |= (uint)((byte)(
-                            SubChunkRenderer.average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
+                            WorldRenderer.average(Unsafe.BitCast<uint, FourBytes>((l.Whole >> 4) & 0x0F0F0F0F),
                                 o)
                             << 4 |
-                            SubChunkRenderer.average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
+                            WorldRenderer.average(Unsafe.BitCast<uint, FourBytes>(l.Whole & 0x0F0F0F0F),
                                 o)
                         ) << j * 8);
                     }

@@ -172,7 +172,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
 
         // mesh this section
-        world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
+        world.mesh(new SubChunkCoord(coord.x, sectionY, coord.z));
 
         // get global coords
         var chunkPos = World.getChunkSectionPos(wx, y, wz);
@@ -212,7 +212,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
-        world.mesh(new ChunkSectionCoord(coord.x, sectionY, coord.z));
+        world.mesh(new SubChunkCoord(coord.x, sectionY, coord.z));
         var chunkPos = World.getChunkSectionPos(wx, y, wz);
 
         // TODO only remesh neighbours if on the edge of the chunk
@@ -241,7 +241,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
-        world.mesh(new ChunkSectionCoord(coord.x, y >> 4, coord.z));
+        world.mesh(new SubChunkCoord(coord.x, y >> 4, coord.z));
         var chunkPos = World.getChunkSectionPos(wx, y, wz);
 
         // TODO only remesh neighbours if on the edge of the chunk
@@ -308,7 +308,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public void meshChunk() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            subChunks[i].renderer.meshChunk();
+            Game.renderer.meshChunk(subChunks[i]);
         }
         status = ChunkStatus.MESHED;
     }
@@ -383,7 +383,7 @@ public readonly record struct ChunkCoord(int x, int z) {
     }
 }
 
-public readonly record struct ChunkSectionCoord(int x, int y, int z) {
+public readonly record struct SubChunkCoord(int x, int y, int z) {
     public readonly int x = x;
     public readonly int y = y;
     public readonly int z = z;

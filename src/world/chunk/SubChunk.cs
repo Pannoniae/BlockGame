@@ -8,7 +8,6 @@ namespace BlockGame;
 public class SubChunk : IDisposable {
 
     public Chunk chunk;
-    public SubChunkRenderer renderer;
 
     public ArrayBlockData blocks;
 
@@ -17,6 +16,8 @@ public class SubChunk : IDisposable {
     public int chunkZ;
 
     public bool isRendered = false;
+
+    public bool hasOnlySolid = false;
 
     /// <summary>
     /// Sections start empty. If you place a block in them, they stop being empty and get array data.
@@ -33,17 +34,17 @@ public class SubChunk : IDisposable {
     public AABB box;
 
     public World world;
-    public ChunkSectionCoord chunkCoord => new(chunkX, chunkY, chunkZ);
+    public SubChunkCoord coord;
 
 
     public SubChunk(World world, Chunk chunk, int xpos, int ypos, int zpos) {
         this.chunk = chunk;
-        renderer = new SubChunkRenderer(this);
         chunkX = xpos;
         chunkY = ypos;
         chunkZ = zpos;
         this.world = world;
         blocks = new ArrayBlockData(chunk, this);
+        coord = new SubChunkCoord(chunkX, chunkY, chunkZ);
 
         box = new AABB(new Vector3D(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
     }
@@ -60,7 +61,7 @@ public class SubChunk : IDisposable {
         if (block == Block.GRASS.id) {
             if (y < 127 && Block.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
                 blocks[x, y, z] = Block.DIRT.id;
-                renderer.meshChunk();
+                Game.renderer.meshChunk(this);
             }
             // spread grass to nearby dirt blocks
             // in a 3x3x3 area
@@ -72,13 +73,12 @@ public class SubChunk : IDisposable {
             // if dirt + air above
             if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Block.DIRT.id && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
                 world.setBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3, Block.GRASS.id);
-                renderer.meshChunk();
+                Game.renderer.meshChunk(this);
             }
         }
     }
 
     private void ReleaseUnmanagedResources() {
-        renderer.Dispose();
         blocks.Dispose();
     }
 
