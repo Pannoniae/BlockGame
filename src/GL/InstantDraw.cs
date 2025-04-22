@@ -201,7 +201,6 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
     public override void format() {
         GL.EnableVertexAttribArray(0);
         GL.EnableVertexAttribArray(1);
-        GL.EnableVertexAttribArray(2);
 
         GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
         GL.VertexAttribFormat(1, 4, VertexAttribType.UnsignedByte, true, 0 + 6 * sizeof(ushort));

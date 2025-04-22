@@ -2,7 +2,7 @@ using Silk.NET.OpenGL;
 
 namespace BlockGame.GL;
 
-public class BlockTintedVAO {
+public class BlockTintedVAO : IDisposable {
     public uint handle;
     public uint vbo;
     public uint ibo;
@@ -13,11 +13,12 @@ public class BlockTintedVAO {
     public BlockTintedVAO() {
         GL = Game.GL;
         handle = GL.GenVertexArray();
+        vbo = GL.GenBuffer();
+        ibo = GL.GenBuffer();
     }
 
     public void upload(float[] data) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
@@ -31,7 +32,6 @@ public class BlockTintedVAO {
 
     public void upload(Span<float> data) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
@@ -45,7 +45,6 @@ public class BlockTintedVAO {
 
     public void upload(BlockVertexTinted[] data, ushort[] indices) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
             fixed (BlockVertexTinted* d = data) {
@@ -53,7 +52,6 @@ public class BlockTintedVAO {
                     BufferUsageARB.DynamicDraw);
             }
 
-            ibo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
             fixed (ushort* d = indices) {
                 GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
@@ -66,7 +64,7 @@ public class BlockTintedVAO {
 
     public void upload(Span<BlockVertexTinted> data, Span<ushort> indices) {
         unsafe {
-            vbo = GL.GenBuffer();
+
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
             fixed (BlockVertexTinted* d = data) {
@@ -74,7 +72,7 @@ public class BlockTintedVAO {
                     BufferUsageARB.DynamicDraw);
             }
 
-            ibo = GL.GenBuffer();
+
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
             fixed (ushort* d = indices) {
                 GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,

@@ -401,6 +401,7 @@ public class WorldRenderer {
         unsafe {
             var GL = Game.GL;
 
+            GL.DeleteVertexArray(outlineVao);
             outlineVao = GL.GenVertexArray();
             GL.BindVertexArray(outlineVao);
 

@@ -14,11 +14,12 @@ public class BlockVAO : VAO {
     public BlockVAO() {
         GL = Game.GL;
         handle = GL.GenVertexArray();
+        vbo = GL.GenBuffer();
+        ibo = GL.GenBuffer();
     }
 
     public void upload(float[] data) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
@@ -32,7 +33,6 @@ public class BlockVAO : VAO {
 
     public void upload(Span<float> data) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
@@ -46,7 +46,6 @@ public class BlockVAO : VAO {
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
             fixed (BlockVertexPacked* d = data) {
@@ -54,7 +53,6 @@ public class BlockVAO : VAO {
                     BufferUsageARB.DynamicDraw);
             }
 
-            ibo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
             fixed (ushort* d = indices) {
                 GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
@@ -67,15 +65,13 @@ public class BlockVAO : VAO {
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
         unsafe {
-            vbo = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             count = (uint)indices.Length;
             fixed (BlockVertexPacked* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
                     BufferUsageARB.DynamicDraw);
             }
-
-            ibo = GL.GenBuffer();
+            
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
             fixed (ushort* d = indices) {
                 GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,

@@ -24,11 +24,11 @@ public sealed class ExtremelySharedBlockVAO : VAO {
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
         GL = Game.GL;
+        buffer = GL.GenBuffer();
     }
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
-            buffer = GL.GenBuffer();
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
             count = (uint)indices.Length;
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
@@ -51,7 +51,6 @@ public sealed class ExtremelySharedBlockVAO : VAO {
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
         unsafe {
-            buffer = GL.GenBuffer();
             count = (uint)indices.Length;
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
             var indexSize = (uint)(indices.Length * sizeof(ushort));

@@ -222,7 +222,7 @@ public partial class Game {
         string msg = Marshal.PtrToStringAnsi(message, length)!;
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
         // Dump stacktrace
-        //Console.Out.WriteLine(Environment.StackTrace);
+        Console.Out.WriteLine(Environment.StackTrace);
     }
 
     private void init() {
@@ -232,23 +232,33 @@ public partial class Game {
         GL = window.CreateOpenGL();
         //#if DEBUG
         // initialise debug print
-        GL.Enable(EnableCap.DebugOutput);
-        GL.Enable(EnableCap.DebugOutputSynchronous);
-        GL.DebugMessageCallback(GLDebug, 0);
-        GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, 0, true);
-        //#endif
+        unsafe {
+            GL.Enable(EnableCap.DebugOutput);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
+            GL.DebugMessageCallback(GLDebug, 0);
+            #if DEBUG
+            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, (uint*)0, true);
+            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DebugSeverityNotification, 0, (uint*)0, false);
+            #else
+            // stop buffer source spam
+            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, (uint*)0, true);
+            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DebugSeverityNotification, 0, (uint*)0, false);
+            #endif
+            //#endif
 
-        // send a test debug message
-        var str = "Debug message test";
-        GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeOther, 0,
-            DebugSeverity.DebugSeverityHigh, (uint)str.Length, str);
+            // send a test debug message
+            #if DEBUG
+            var str = "Debug message test";
+            GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeOther, 0,
+                 DebugSeverity.DebugSeverityHigh, (uint)str.Length, str);
+            #endif
 
-        GL.GetInteger(GetPName.ContextFlags, out int noErrors);
-        Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
+            GL.GetInteger(GetPName.ContextFlags, out int noErrors);
+            Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
-        GL.GetInteger(GetPName.ContextFlags, out int robust);
-        Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
-
+            GL.GetInteger(GetPName.ContextFlags, out int robust);
+            Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
+        }
 
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
@@ -650,7 +660,8 @@ public partial class Game {
             fps = (int)(1 / ft);
             setTitle("BlockGame", splash, $"{fps} ({ft * 1000:0.##}ms)");
             stopwatch.Restart();
-        } else {
+        }
+        else {
             // Still update frametime for graph even if we don't update the title
             ft = dt;
         }
