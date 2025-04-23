@@ -430,4 +430,14 @@ public class Player : Entity {
         // Return true if eyes are in liquid
         return Block.liquid[blockAtEyes];
     }
+
+    public void pickBlock() {
+        if (Game.instance.targetedPos.HasValue) {
+            var pos = Game.instance.targetedPos.Value;
+            var bl = Block.get(world.getBlock(pos));
+            if (bl != null) {
+                hotbar.slots[hotbar.selected] = new ItemStack(bl.id, 1);
+            }
+        }
+    }
 }

@@ -144,6 +144,9 @@ public class GameScreen : Screen {
             case MouseButton.Right:
                 Game.world.player.placeBlock();
                 break;
+            case MouseButton.Middle:
+                Game.world.player.pickBlock();
+                break;
         }
     }
 
