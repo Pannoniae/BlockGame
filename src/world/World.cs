@@ -53,7 +53,7 @@ public class World : IDisposable {
     public int worldTick;
 
     public Random random;
-    private readonly TimerAction saveWorld;
+    private TimerAction saveWorld;
 
     private const long MAX_CHUNKLOAD_FRAMETIME = 20;
     private const long MAX_LIGHT_FRAMETIME = 10;
@@ -65,7 +65,7 @@ public class World : IDisposable {
     /// </summary>
     public const int numTicks = 3;
 
-    public World(string name, int seed, bool loadingSave = false) {
+    public World(string name, int seed) {
         this.name = name;
         worldIO = new WorldIO(this);
         generator = new OverworldWorldGenerator(this);
@@ -81,6 +81,9 @@ public class World : IDisposable {
         chunks = new Dictionary<ChunkCoord, Chunk>();
         chunkList = new List<Chunk>(2048);
         particleManager = new ParticleManager(this);
+    }
+
+    public void init(bool loadingSave = false) {
         // load a minimal amount of chunks so the world can get started
         if (!loadingSave) {
             loadSpawnChunks();
@@ -410,7 +413,7 @@ public class World : IDisposable {
         saveWorld.enabled = false;
         Game.world = null;
         Game.player = null;
-        Game.renderer = null;
+        //Game.renderer = null;
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }

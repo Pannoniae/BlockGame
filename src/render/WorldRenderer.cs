@@ -69,8 +69,7 @@ public sealed partial class WorldRenderer : IDisposable {
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
 
-    public WorldRenderer(World world) {
-        this.world = world;
+    public WorldRenderer() {
         GL = Game.GL;
         chunkVAO = GL.GenVertexArray();
 
@@ -120,7 +119,11 @@ public sealed partial class WorldRenderer : IDisposable {
 
         initBlockOutline();
 
-        setUniforms();
+        //setUniforms();
+    }
+    
+    public void setWorld(World world) {
+        this.world = world;
     }
 
     private void genFatQuadIndices() {

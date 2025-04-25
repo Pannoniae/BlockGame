@@ -66,7 +66,8 @@ public class LevelSelectMenu : Menu {
         }
         Game.world?.Dispose();
         Game.world = world;
-        Game.renderer = new WorldRenderer(world);
+        Game.renderer.setWorld(world);
+        Game.world.init();
         Game.instance.switchToScreen(Screen.GAME_SCREEN);
         world.loadAroundPlayer();
         Game.instance.lockMouse();

@@ -1,10 +1,8 @@
 namespace BlockGame;
 
-public class SimpleOverworldWorldGenerator : WorldGenerator {
+public partial class SimpleWorldGenerator : WorldGenerator {
 
     public World world;
-
-    public SimpleOverworldChunkGenerator chunkGenerator;
 
     public FastNoiseLite noise;
     public FastNoiseLite noise2;
@@ -12,12 +10,11 @@ public class SimpleOverworldWorldGenerator : WorldGenerator {
 
     public Random random;
 
-    public SimpleOverworldWorldGenerator(World world) {
+    public SimpleWorldGenerator(World world) {
         this.world = world;
     }
 
     public void setup(int seed) {
-        chunkGenerator = new SimpleOverworldChunkGenerator(this);
         random = new Random(seed);
         noise = new FastNoiseLite(seed);
         noise2 = new FastNoiseLite(random.Next(seed));
@@ -51,14 +48,6 @@ public class SimpleOverworldWorldGenerator : WorldGenerator {
     public float getNoise2(int x, int z) {
         // we want to have multiple octaves
         return noise2.GetNoise(1 * x, 1 * z);
-    }
-
-    public void generate(ChunkCoord coord) {
-        chunkGenerator.generate(coord);
-    }
-
-    public void populate(ChunkCoord coord) {
-        chunkGenerator.populate(coord);
     }
 
 }

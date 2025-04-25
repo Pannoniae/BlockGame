@@ -43,7 +43,7 @@ public class GameScreen : Screen {
         base.deactivate();
         Game.world?.Dispose();
         Game.world = null;
-        Game.renderer = null;
+        //Game.renderer = null;
         updateMemory.enabled = false;
         updateDebugText.enabled = false;
     }

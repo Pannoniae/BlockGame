@@ -119,7 +119,8 @@ public class WorldIO {
         Console.Out.WriteLine($"Loaded data from level/{filename}/level.xnbt");
         var tag = NBT.readFile($"level/{filename}/level.xnbt");
         var seed = tag.getInt("seed");
-        var world = new World(filename, seed, true);
+        var world = new World(filename, seed);
+        world.init(true);
         Console.Out.WriteLine(tag.getDouble("posX"));
         Console.Out.WriteLine(tag.getDouble("posY"));
         Console.Out.WriteLine(tag.getDouble("posZ"));

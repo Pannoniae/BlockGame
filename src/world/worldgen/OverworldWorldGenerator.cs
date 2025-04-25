@@ -1,10 +1,8 @@
 namespace BlockGame;
 
-public class OverworldWorldGenerator : WorldGenerator {
+public partial class OverworldWorldGenerator : WorldGenerator {
 
     public World world;
-
-    public OverworldChunkGenerator chunkGenerator;
 
     public FastNoiseLite terrainNoise;
     public FastNoiseLite terrainNoise2;
@@ -19,7 +17,6 @@ public class OverworldWorldGenerator : WorldGenerator {
     }
 
     public void setup(int seed) {
-        chunkGenerator = new OverworldChunkGenerator(this);
         random = new Random(seed);
         terrainNoise = new FastNoiseLite(seed);
         terrainNoise2 = new FastNoiseLite(random.Next(seed));
@@ -83,14 +80,6 @@ public class OverworldWorldGenerator : WorldGenerator {
     public float getNoise2(int x, int z) {
         // we want to have multiple octaves
         return auxNoise.GetNoise(x, z);
-    }
-
-    public void generate(ChunkCoord coord) {
-        chunkGenerator.generate(coord);
-    }
-
-    public void populate(ChunkCoord coord) {
-        chunkGenerator.populate(coord);
     }
 
 }

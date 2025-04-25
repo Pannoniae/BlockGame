@@ -329,6 +329,7 @@ public partial class Game {
         Console.Out.WriteLine("played?");
         
         gui = new GUI();
+        renderer = new WorldRenderer();
 
         currentScreen = new MainMenuScreen();
         setMenu(Menu.LOADING);
