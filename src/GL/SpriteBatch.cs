@@ -43,8 +43,8 @@ public sealed class SpriteBatch : IDisposable {
     // OpenGL resources
     private readonly Silk.NET.OpenGL.GL GL;
     public readonly uint vao;
-    private readonly uint vbo;
-    private readonly uint ibo;
+    private uint vbo;
+    private uint ibo;
 
     // Shader
     internal readonly Shader shader;
@@ -71,31 +71,34 @@ public sealed class SpriteBatch : IDisposable {
         GL = gl;
 
         // Initialize OpenGL resources
-        vao = GL.GenVertexArray();
+        vao = GL.CreateVertexArray();
         GL.BindVertexArray(vao);
 
-        vbo = GL.GenBuffer();
+        vbo = GL.CreateBuffer();
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
 
-        ibo = GL.GenBuffer();
+        ibo = GL.CreateBuffer();
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
 
         // Set up vertex attributes
         unsafe {
-            // Position attribute (3 floats)
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false,
-                (uint)sizeof(VertexColorTexture), (void*)0);
+            // Set up vertex attributes using the separate format API
             GL.EnableVertexAttribArray(0);
-
-            // Color attribute (4 bytes)
-            GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true,
-                (uint)sizeof(VertexColorTexture), (void*)(3 * sizeof(float)));
             GL.EnableVertexAttribArray(1);
-
-            // TexCoord attribute (2 floats)
-            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false,
-                (uint)sizeof(VertexColorTexture), (void*)(3 * sizeof(float) + 4));
             GL.EnableVertexAttribArray(2);
+
+            // Define formats
+            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexAttribFormat(1, 4, VertexAttribType.UnsignedByte, true, 3 * sizeof(float));
+            GL.VertexAttribFormat(2, 2, VertexAttribType.Float, false, 3 * sizeof(float) + 4);
+
+            // Bind attributes to binding point 0
+            GL.VertexAttribBinding(0, 0);
+            GL.VertexAttribBinding(1, 0);
+            GL.VertexAttribBinding(2, 0);
+
+            // Bind buffer to binding point with stride
+            GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
         }
 
         // Initialize batch data
@@ -112,12 +115,20 @@ public sealed class SpriteBatch : IDisposable {
         // Set up indices for a quad (two triangles)
         CreateIndices(indices, InitialBufferCapacity / 4);
 
+        // Create vertices
+        unsafe {
+            GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
+                (nuint)(vertices.Length * sizeof(VertexColorTexture)),
+                null, BufferStorageMask.DynamicStorageBit);
+        }
+
         // Upload the index data
         unsafe {
             fixed (ushort* ptr = indices) {
-                GL.BufferData(BufferTargetARB.ElementArrayBuffer,
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer,
                     (nuint)(indices.Length * sizeof(ushort)),
-                    ptr, BufferUsageARB.StaticDraw);
+                    ptr, BufferStorageMask.DynamicStorageBit);
             }
         }
 
@@ -490,9 +501,10 @@ public sealed class SpriteBatch : IDisposable {
             unsafe {
                 fixed (VertexColorTexture* ptr = vertices) {
                     GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-                    GL.BufferData(BufferTargetARB.ArrayBuffer,
-                        (nuint)(vertexIndex * sizeof(VertexColorTexture)),
-                        ptr, BufferUsageARB.StreamDraw);
+                    GL.BufferSubData(BufferTargetARB.ArrayBuffer,
+                        0,
+                        (uint)(vertexIndex * sizeof(VertexColorTexture)),
+                        ptr);
                 }
             }
 
@@ -536,10 +548,15 @@ public sealed class SpriteBatch : IDisposable {
             // Resize vertex buffer
             unsafe {
                 fixed (VertexColorTexture* ptr = vertices) {
+                    GL.DeleteBuffer(vbo);
+                    vbo = GL.CreateBuffer();
                     GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-                    GL.BufferData(BufferTargetARB.ArrayBuffer,
+                    GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
                         (nuint)(newCapacity * sizeof(VertexColorTexture)),
-                        ptr, BufferUsageARB.StreamDraw);
+                        null, BufferStorageMask.DynamicStorageBit);
+                
+                    // Update binding with new buffer
+                    GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
                 }
             }
 
@@ -556,10 +573,12 @@ public sealed class SpriteBatch : IDisposable {
                 // Upload the index data
                 unsafe {
                     fixed (ushort* ptr = indices) {
+                        GL.DeleteBuffer(ibo);
+                        ibo = GL.CreateBuffer();
                         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-                        GL.BufferData(BufferTargetARB.ElementArrayBuffer,
+                        GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer,
                             newIndexCapacity * sizeof(ushort),
-                            ptr, BufferUsageARB.StaticDraw);
+                            ptr, BufferStorageMask.DynamicStorageBit);
                     }
                 }
             }

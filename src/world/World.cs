@@ -68,7 +68,7 @@ public class World : IDisposable {
     public World(string name, int seed) {
         this.name = name;
         worldIO = new WorldIO(this);
-        generator = new OverworldWorldGenerator(this);
+        generator = new PerlinWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
         Game.player = player;
 
