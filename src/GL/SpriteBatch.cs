@@ -553,7 +553,7 @@ public sealed class SpriteBatch : IDisposable {
                     GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
                     GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
                         (nuint)(newCapacity * sizeof(VertexColorTexture)),
-                        null, BufferStorageMask.DynamicStorageBit);
+                        ptr, BufferStorageMask.DynamicStorageBit);
                 
                     // Update binding with new buffer
                     GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
