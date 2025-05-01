@@ -34,9 +34,6 @@ public class Player : Entity {
     /// </summary>
     public long spacePress;
 
-
-
-
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world) {
         position = new Vector3D(x, y, z);
@@ -132,6 +129,11 @@ public class Player : Entity {
         var chunk = World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
         world.loadChunksAroundChunk(chunk, renderDistance);
         world.sortChunks();
+    }
+
+    public override void teleport(Vector3D pos) {
+        base.teleport(pos);
+        onChunkChanged();
     }
 
     public void onChunkChanged() {

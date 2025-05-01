@@ -74,23 +74,23 @@ public class ChatMenu : Menu {
     private void doChat(string msg) {
         // if command, execute
         if (msg.StartsWith('/')) {
-            var args = msg.Split(' ');
+            var args = msg.Split(' ')[1..];
             switch (args[0]) {
-                case "/help":
+                case "help":
                     messages.PushFront(new ChatMessage("Commands: /help", tick));
                     break;
-                case "/clear":
+                case "clear":
                     messages.Clear();
                     messages.PushFront(new ChatMessage("Cleared chat!", tick));
                     break;
                 default:
                     messages.PushFront(new ChatMessage("Unknown command: " + args[0], tick));
                     break;
-                case "/tp":
+                case "tp":
                     if (args.Length == 4) {
                         if (int.TryParse(args[1], out int x) && int.TryParse(args[2], out int y) &&
                             int.TryParse(args[3], out int z)) {
-                            Game.world.player.teleport(new Vector3D(x, y, z));
+                            Game.player.teleport(new Vector3D(x, y, z));
                             messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
                         }
                         else {
@@ -101,7 +101,7 @@ public class ChatMenu : Menu {
                         messages.PushFront(new ChatMessage("Usage: /tp <x> <y> <z>", tick));
                     }
                     break;
-                case "/cb":
+                case "cb":
                     if (Screen.GAME_SCREEN.chunkBorders) {
                         Screen.GAME_SCREEN.chunkBorders = false;
                         messages.PushFront(new ChatMessage("Chunk borders disabled", tick));
@@ -111,6 +111,10 @@ public class ChatMenu : Menu {
                         messages.PushFront(new ChatMessage("Chunk borders enabled", tick));
                     }
 
+                    break;
+                case "fly":
+                    Game.player.noClip = !Game.player.noClip;
+                    messages.PushFront(new ChatMessage("Noclip " + (Game.player.noClip ? "enabled" : "disabled"), tick));
                     break;
             }
         }

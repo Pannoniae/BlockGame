@@ -8,11 +8,9 @@ public partial class OverworldWorldGenerator {
 
     public void generate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
-
-        // terrain heights buffer - calc once, use twice, profit
+        
         var densityMap = new float[Chunk.CHUNKSIZE, Chunk.CHUNKSIZE];
-
-        // pass 1: calculate all the noise and stuff it in our buffer
+        
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
@@ -25,13 +23,11 @@ public partial class OverworldWorldGenerator {
                 flatNoise = MathF.Sin(flatNoise) * 0.8f + MathF.Sign(flatNoise) * flatNoise * 0.3f;
                 flatNoise *= mountainness * 64;
                 flatNoise += 64;
-
-                // stash for later
+                
                 densityMap[x, z] = flatNoise;
             }
         }
-
-        // pass 2: lay down the foundation (stone)
+        
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var flatNoise = densityMap[x, z];

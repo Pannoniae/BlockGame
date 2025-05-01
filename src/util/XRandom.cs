@@ -67,7 +67,7 @@ public sealed class XRandom {
     }
 
     // Seed with int (standard Random compatibility)
-    public XRandom(int seed) : this((ulong)(uint)seed) {
+    public XRandom(int seed) : this((ulong)seed) {
     }
 
     // Seed with multiple values
@@ -112,6 +112,10 @@ public sealed class XRandom {
                 _s3 = ptr[3];
             } while ((_s0 | _s1 | _s2 | _s3) == 0);
         }
+    }
+    
+    public void Seed(int seed) {
+        SplitMix64Seed((ulong)(uint)seed);
     }
 
     // Convenience array constructor

@@ -1,4 +1,8 @@
+using System.IO.Hashing;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BlockGame.util;
+using K4os.Hash.xxHash;
 using Molten;
 using Molten.DoublePrecision;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
@@ -391,17 +395,30 @@ public readonly record struct ChunkCoord(int x, int z) {
         int dz = z - chunkCoord.z;
         return dx * dx + dz * dz;
     }
+
+    public override int GetHashCode() {
+        return x * 397 ^ z;
+    }
 }
 
 public readonly record struct SubChunkCoord(int x, int y, int z) {
     public readonly int x = x;
+    
     public readonly int y = y;
     public readonly int z = z;
+    
+    public override int GetHashCode() {
+        return (x * 397 ^ y) * 397 ^ z;
+    }
 }
 
 public readonly record struct RegionCoord(int x, int z) {
     public readonly int x = x;
     public readonly int z = z;
+    
+    public override int GetHashCode() {
+        return x * 397 ^ z;
+    }
 }
 
 public enum ChunkStatus : byte {

@@ -54,6 +54,8 @@ public class Entity {
     public World world;
 
     public bool flyMode;
+    public bool noClip;
+
     protected List<AABB> collisionTargets = [];
 
     public int airHitCD;
@@ -84,7 +86,7 @@ public class Entity {
         return AABB.empty;
     }
 
-    public void teleport(Vector3D pos) {
+    public virtual void teleport(Vector3D pos) {
         position = pos;
         prevPosition = pos;
         velocity = Vector3D.Zero;
@@ -95,24 +97,31 @@ public class Entity {
         var blockPos = position.toBlockPos();
         // collect potential collision targets
         collisionTargets.Clear();
-        ReadOnlySpan<Vector3I> targets = [
-            blockPos, new Vector3I(blockPos.X, blockPos.Y + 1, blockPos.Z)
-        ];
-        foreach (Vector3I target in targets) {
-            // first, collide with the block the player is in
-            var blockPos2 = feetPosition.toBlockPos();
-            var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z, world.getBlock(feetPosition.toBlockPos()));
-            if (currentAABB != null) {
-                collisionTargets.Add(currentAABB.Value);
-            }
-            foreach (var neighbour in world.getBlocksInBox(target + new Vector3I(-1, -1, -1), target + new Vector3I(1, 1, 1))) {
-                var block = world.getBlock(neighbour);
-                var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
-                if (blockAABB == null) {
-                    continue;
+
+        if (!noClip) {
+
+            ReadOnlySpan<Vector3I> targets = [
+                blockPos, new Vector3I(blockPos.X, blockPos.Y + 1, blockPos.Z)
+            ];
+            foreach (Vector3I target in targets) {
+                // first, collide with the block the player is in
+                var blockPos2 = feetPosition.toBlockPos();
+                var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z,
+                    world.getBlock(feetPosition.toBlockPos()));
+                if (currentAABB != null) {
+                    collisionTargets.Add(currentAABB.Value);
                 }
 
-                collisionTargets.Add(blockAABB.Value);
+                foreach (var neighbour in world.getBlocksInBox(target + new Vector3I(-1, -1, -1),
+                             target + new Vector3I(1, 1, 1))) {
+                    var block = world.getBlock(neighbour);
+                    var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
+                    if (blockAABB == null) {
+                        continue;
+                    }
+
+                    collisionTargets.Add(blockAABB.Value);
+                }
             }
         }
 

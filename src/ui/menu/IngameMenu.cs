@@ -202,6 +202,8 @@ public class IngameMenu : Menu, IDisposable {
             //var cb = world.getBlock(pos);
             var sl = Game.world.getSkyLight(pos.X, pos.Y, pos.Z);
             var bl = Game.world.getBlockLight(pos.X, pos.Y, pos.Z);
+            Game.world.getChunkSectionMaybe(World.getChunkSectionPos(pos), out var subChunk);
+            var inited = subChunk?.blocks?.inited;
 
 
             debugStr.Clear();
@@ -216,7 +218,7 @@ public class IngameMenu : Menu, IDisposable {
                 debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
                 debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000} {3}\n", c.forward.X, c.forward.Y, c.forward.Z,
                     facing);
-                debugStr.AppendFormat("sl:{0}, bl:{1}\n", sl, bl);
+                debugStr.AppendFormat($"sl:{{0}}, bl:{{1}}, i:{inited}\n", sl, bl, inited);
                 debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
                 if (i.targetedPos.HasValue) {
                     debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y,
