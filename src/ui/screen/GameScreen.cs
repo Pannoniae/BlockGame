@@ -18,6 +18,7 @@ public class GameScreen : Screen {
     public Debug D;
 
     public bool debugScreen = false;
+    public bool chunkBorders = false;
 
     public readonly PauseMenu PAUSE_MENU = new();
     public readonly IngameMenu INGAME_MENU = new();
@@ -30,7 +31,7 @@ public class GameScreen : Screen {
     private bool disposed;
 
     public override void activate() {
-        //D = new Debug();
+        D = new Debug();
 
         switchToMenu(INGAME_MENU);
 
@@ -111,7 +112,7 @@ public class GameScreen : Screen {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
             Game.renderer.drawBlockOutline(interp);
         }
-        //D.renderTick(interp);
+        D.renderTick(interp);
         const string text = "THIS IS A LONG TEXT\nmultiple lines!";
         Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.WEST, 2f);
         Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.EAST, 2f);
@@ -390,10 +391,14 @@ public class GameScreen : Screen {
 
             // Draw debug lines
             if (debugScreen) {
-                //D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
-                //D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
-                //D.drawAABB(p.aabb);
-                //D.flushLines();
+                D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
+                D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
+                D.flushLines();
+            }
+            
+            // Draw chunk borders
+            if (chunkBorders) {
+                drawChunkBorders();
             }
 
             // Draw chat
@@ -428,6 +433,57 @@ public class GameScreen : Screen {
             var pauseText = "-PAUSED-";
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
                 Color4b.OrangeRed);
+        }
+    }
+
+    private void drawChunkBorders() {
+        var world = Game.world;
+
+        // draw chunk borders
+        for (int x = -Settings.instance.renderDistance; x <= Settings.instance.renderDistance; x++) {
+            for (int z = -Settings.instance.renderDistance; z <= Settings.instance.renderDistance; z++) {
+                var playerPos = world.player.position;
+                var playerChunkPos = World.getChunkPos((int)playerPos.X, (int)playerPos.Z);
+                var chunkPos = new ChunkCoord(playerChunkPos.x + x, playerChunkPos.z + z);
+                world.getChunkMaybe(new ChunkCoord(chunkPos.x, chunkPos.z), out var chunk);
+                if (chunk != null) {
+                    var pos = World.toWorldPos(chunkPos, new Vector3I(0, 0, 0));
+                    var size = new Vector3I(Chunk.CHUNKSIZE, Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT, Chunk.CHUNKSIZE);
+                    var min = pos;
+                    var max = pos + size;
+                    var colour = Color4b.Red;
+                    var a = 0.5f;
+                    if (chunk.status == ChunkStatus.MESHED) {
+                        colour = Color4b.Blue;
+                    }
+                    else if (chunk.status == ChunkStatus.LIGHTED) {
+                        colour = Color4b.Green;
+                    }
+                    else if (chunk.status == ChunkStatus.POPULATED) {
+                        colour = Color4b.Yellow;
+                    }
+                    else if (chunk.status == ChunkStatus.GENERATED) {
+                        colour = Color4b.Orange;
+                    }
+                    else if (chunk.status == ChunkStatus.EMPTY) {
+                        colour = Color4b.Gray;
+                    }
+                    
+                    // draw the chunk borders
+                    D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, min.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(max.X, min.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(max.X, min.Y, min.Z), colour);
+                    D.drawLine(new Vector3D(max.X, min.Y, min.Z), new Vector3D(min.X, min.Y, min.Z), colour);
+                    D.drawLine(new Vector3D(min.X, max.Y, min.Z), new Vector3D(min.X, max.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(min.X, max.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(max.X, max.Y, max.Z), new Vector3D(max.X, max.Y, min.Z), colour);
+                    D.drawLine(new Vector3D(max.X, max.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), colour);
+                    D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), colour);
+                    D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(min.X, max.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(max.X, min.Y, min.Z), new Vector3D(max.X, max.Y, min.Z), colour);
+                }
+            }
         }
     }
 

@@ -107,8 +107,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         inited = true;
 
         // if we are already lighted, we can light the section (don't do it during worldgen - it will light the entire chunk full of ground
+        // todo this will light caves & shit too. fix this so chunk is only lighted once
         if (chunk.status >= ChunkStatus.LIGHTED) {
-            chunk.lightSection(section);
+            
         }
     }
 
@@ -155,6 +156,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     /// After loading, the counters will be gone. This method recalculates all of them.
     /// </summary>
     public void refreshCounts() {
+        if (!inited) {
+            return;
+        }
         blockCount = 0;
         translucentCount = 0;
         fullBlockCount = 0;

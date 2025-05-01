@@ -18,16 +18,16 @@ public class Debug {
     private uint lineVao;
     private uint lineVbo;
     private int currentLine = 0;
-    private VertexTinted[] pointVertices = new VertexTinted[MAX_POINT_VERTICES];
-    private uint pointVao;
-    private uint pointVbo;
-    private int currentPoint = 0;
     
     public Debug() {
         unsafe {
+            
+            Game.graphics.saveVAO();
+            
             // Create and setup VAO/VBO for lines
             lineVao = Game.GL.CreateVertexArray();
             lineVbo = Game.GL.CreateBuffer();
+            
             Game.GL.BindVertexArray(lineVao);
             Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineVbo);
             Game.GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(MAX_LINE_VERTICES * sizeof(VertexTinted)),
@@ -40,20 +40,8 @@ public class Debug {
             Game.GL.EnableVertexAttribArray(1);
             Game.GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(VertexTinted),
                 (void*)12); // Offset to color (3 floats = 12 bytes)
-
-            // Same for points
-            pointVao = Game.GL.CreateVertexArray();
-            pointVbo = Game.GL.CreateBuffer();
-            Game.GL.BindVertexArray(pointVao);
-            Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, pointVbo);
-            Game.GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(MAX_POINT_VERTICES * sizeof(VertexTinted)),
-                IntPtr.Zero, BufferUsageARB.StreamDraw);
-            Game.GL.EnableVertexAttribArray(0);
-            Game.GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, (uint)sizeof(VertexTinted),
-                (void*)0);
-            Game.GL.EnableVertexAttribArray(1);
-            Game.GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(VertexTinted),
-                (void*)12);
+            
+            Game.graphics.restoreVAO();
         }
     }
     

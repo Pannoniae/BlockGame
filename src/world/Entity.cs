@@ -243,16 +243,16 @@ public class Entity {
     }
 
     public void setSwinging(bool hit) {
-        if (!hit) {
+        if (hit) {
+            swinging = true;
+            swingTicks = 0;
+        }
+        else {
             if (airHitCD == 0) {
                 swinging = true;
                 swingTicks = 0;
                 airHitCD = AIR_HIT_CD;
             }
-        }
-        else {
-            swinging = true;
-            swingTicks = 0;
         }
     }
 }

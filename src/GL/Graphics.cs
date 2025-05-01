@@ -25,6 +25,8 @@ public class Graphics {
 
     private readonly int[] viewportParams = new int[4]; // x, y, width, height
 
+    private int vao;
+
     public Graphics() {
         GL = Game.GL;
         mainBatch = new SpriteBatch(GL, batchShader);
@@ -43,6 +45,14 @@ public class Graphics {
         GL.Viewport(viewportParams[0], viewportParams[1], (uint)viewportParams[2], (uint)viewportParams[3]);
     }
     
+    public void saveVAO() {
+        GL.GetInteger(GetPName.VertexArrayBinding, out vao);
+    }
+    
+    public void restoreVAO() {
+        GL.BindVertexArray((uint)vao);
+    }
+    
     public void resize(Vector2D<int> size) {
         GL.Viewport(0, 0, (uint)size.X, (uint)size.Y);
         var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
@@ -50,6 +60,5 @@ public class Graphics {
         batchShader.World = Matrix4x4.Identity;
         batchShader.View = Matrix4x4.Identity;
         batchShader.Projection = ortho;
-        
     }
 }

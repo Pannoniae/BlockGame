@@ -432,7 +432,7 @@ public class World : IDisposable {
         }
 
         // does the chunk exist?
-        bool hasChunk = chunk != default;
+        bool hasChunk = chunk != null;
 
         Chunk c;
         bool chunkAdded = false;
@@ -906,12 +906,6 @@ public class World : IDisposable {
 
     public Chunk getChunk(ChunkCoord position) {
         return chunks[position];
-    }
-
-    public void mesh() {
-        foreach (var chunk in chunks) {
-            chunk.Value.meshChunk();
-        }
     }
 
     /// <summary>

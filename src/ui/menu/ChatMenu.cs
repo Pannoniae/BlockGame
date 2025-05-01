@@ -101,6 +101,17 @@ public class ChatMenu : Menu {
                         messages.PushFront(new ChatMessage("Usage: /tp <x> <y> <z>", tick));
                     }
                     break;
+                case "/cb":
+                    if (Screen.GAME_SCREEN.chunkBorders) {
+                        Screen.GAME_SCREEN.chunkBorders = false;
+                        messages.PushFront(new ChatMessage("Chunk borders disabled", tick));
+                    }
+                    else {
+                        Screen.GAME_SCREEN.chunkBorders = true;
+                        messages.PushFront(new ChatMessage("Chunk borders enabled", tick));
+                    }
+
+                    break;
             }
         }
         // if not command, just print with player name

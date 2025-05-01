@@ -162,9 +162,10 @@ public partial class WorldRenderer {
         setupNeighbours(subChunk);
 
         // if chunk is full, don't mesh either
-        if (subChunk.hasOnlySolid) {
-            return;
-        }
+        // status update: this is actually bullshit and causes rendering bugs with *weird* worlds such as "all stone until building height". So this won't work anymore
+        //if (subChunk.hasOnlySolid) {
+            //return;
+        //}
 
         /*if (World.glob) {
                 MeasureProfiler.StartCollectingData();
@@ -259,8 +260,7 @@ public partial class WorldRenderer {
     private void setupNeighbours(SubChunk subChunk) {
         //var sw = new Stopwatch();
         //sw.Start();
-
-        subChunk.hasOnlySolid = subChunk.blocks.isFull();
+        
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -339,11 +339,6 @@ public partial class WorldRenderer {
 
                     // set neighbours array element to block
                     blocksArrayRef = bl;
-                    // if neighbour is not solid, we still have to mesh this chunk even though all of it is solid
-                    // NOTE: check if it's loaded (if it isn't loaded we don't give a shit about it)
-                    if (!Block.isFullBlock(bl) && nn) {
-                        subChunk.hasOnlySolid = false;
-                    }
 
                     // set light array element to light
                     lightArrayRef = nn

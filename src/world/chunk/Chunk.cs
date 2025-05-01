@@ -70,7 +70,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 }
 
                 // add the last item for propagation
-                world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                world.skyLightQueue.Add(new LightNode(worldX + x, y + 1, worldZ + z, this));
             }
         }
         world.processSkyLightQueue();
@@ -114,6 +114,16 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public void setBlockFast(int x, int y, int z, ushort block) {
         subChunks[y >> 4].blocks.fastSet(x, y & 0xF, z, block);
+    }
+    
+    public void recalc() {
+        for (int i = 0; i < CHUNKHEIGHT; i++) {
+            subChunks[i].blocks.refreshCounts();
+        }
+    }
+    
+    public void recalc(int i) {
+        subChunks[i].blocks.refreshCounts();
     }
 
     public void setBlockRemesh(int x, int y, int z, ushort block) {
