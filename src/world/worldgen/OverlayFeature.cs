@@ -16,8 +16,19 @@ public abstract class OverlayFeature {
 
     public void place(World world, ChunkCoord coord) {
         // we want to seed this unique to the world seed but also take into account the chunk
-        var seed = (int)(coord.GetHashCode() + world.seed);
-        rand.Seed(seed);
+        var seed = coord.GetHashCode() ^ world.seed;
+        //rand.Seed(seed);
+        for (int xd = -radius; xd <= radius; xd++) {
+            for (int zd = -radius; zd <= radius; zd++) {
+                var checkCoord = new ChunkCoord(coord.x + xd, coord.z + zd);
+                
+                // reseed based on the original seed - we need this to be consistent for the generation
+                rand.Seed(checkCoord.GetHashCode() ^ world.seed);
+                if (world.isChunkInWorld(checkCoord)) {
+                    generate(world, checkCoord, coord);
+                }
+            }
+        }
     }
     
     /// <summary>

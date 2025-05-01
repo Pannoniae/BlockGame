@@ -82,7 +82,7 @@ public class PlayerCamera {
         float step = (float)(transitionSpeed * dt);
         
         if (Math.Abs(currentFov - targetFov) > 0.01f) {
-            currentFov = MathHelper.Lerp(currentFov, targetFov, step);
+            currentFov = Meth.lerp(currentFov, targetFov, step);
         }
     }
 
@@ -94,11 +94,11 @@ public class PlayerCamera {
         pitch = Math.Clamp(pitch, -Constants.maxPitch, Constants.maxPitch);
 
         var cameraDirection = Vector3D.Zero;
-        cameraDirection.X = MathF.Cos(Utils.deg2rad(yaw)) *
-                            MathF.Cos(Utils.deg2rad(pitch));
-        cameraDirection.Y = MathF.Sin(Utils.deg2rad(pitch));
-        cameraDirection.Z = MathF.Sin(Utils.deg2rad(yaw)) *
-                            MathF.Cos(Utils.deg2rad(pitch));
+        cameraDirection.X = MathF.Cos(Meth.deg2rad(yaw)) *
+                            MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.Y = MathF.Sin(Meth.deg2rad(pitch));
+        cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw)) *
+                            MathF.Cos(Meth.deg2rad(pitch));
 
         forward = Vector3D.Normalize(cameraDirection);
         up = Vector3D.Normalize(Vector3D.Cross(Vector3D.Cross(forward, Vector3D.UnitY), forward));
@@ -107,9 +107,9 @@ public class PlayerCamera {
     public Vector3 CalculateForwardVector() {
 
         var cameraDirection = Vector3.Zero;
-        cameraDirection.X = MathF.Cos(Utils.deg2rad(yaw));
+        cameraDirection.X = MathF.Cos(Meth.deg2rad(yaw));
         cameraDirection.Y = 0;
-        cameraDirection.Z = MathF.Sin(Utils.deg2rad(yaw));
+        cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw));
 
         return Vector3.Normalize(cameraDirection);
     }
@@ -169,8 +169,8 @@ public class PlayerCamera {
         //var axisZ = new Vector3(1f, 0, 1f);
         //var axisX = new Vector3(1f, 0, -1f);
         // why 30 degrees? no bloody idea
-        var axisZ = Vector3.Normalize(Vector3.Transform(new Vector3(0, 0, 1), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
-        var axisX = Vector3.Normalize(Vector3.Transform(new Vector3(1, 0, 0), Matrix4x4.CreateRotationY(Utils.deg2rad(30f))));
+        var axisZ = Vector3.Normalize(Vector3.Transform(new Vector3(0, 0, 1), Matrix4x4.CreateRotationY(Meth.deg2rad(30f))));
+        var axisX = Vector3.Normalize(Vector3.Transform(new Vector3(1, 0, 0), Matrix4x4.CreateRotationY(Meth.deg2rad(30f))));
 
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY)
                * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor))
@@ -181,13 +181,13 @@ public class PlayerCamera {
     public Matrix4x4 getProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance + 4) * Chunk.CHUNKSIZE);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(currentFov), aspectRatio, 0.1f, maxPlane);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(currentFov), aspectRatio, 0.1f, maxPlane);
     }
 
     public Matrix4x4 getFixedProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance + 4) * Chunk.CHUNKSIZE);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Utils.deg2rad(normalFov), aspectRatio, 0.1f, maxPlane);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(normalFov), aspectRatio, 0.1f, maxPlane);
     }
 
 
@@ -195,6 +195,6 @@ public class PlayerCamera {
     /// Converts horizontal FOV to vertical FOV.
     /// </summary>
     public float hfov2vfov(float hfov) {
-        return 2 * MathF.Atan(MathF.Tan(Utils.deg2rad(hfov) * 0.5f) / aspectRatio);
+        return 2 * MathF.Atan(MathF.Tan(Meth.deg2rad(hfov) * 0.5f) / aspectRatio);
     }
 }

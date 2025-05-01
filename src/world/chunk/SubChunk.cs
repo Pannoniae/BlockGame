@@ -63,7 +63,7 @@ public class SubChunk : IDisposable {
             }
             // spread grass to nearby dirt blocks
             // in a 3x3x3 area
-            var r = Utils.getRandomCoord(random, 6, 6, 6);
+            var r = Meth.getRandomCoord(random, 6, 6, 6);
             var coord = World.toWorldPos(chunkX, chunkY, chunkZ, r.X, r.Y, r.Z);
             var x1 = coord.X;
             var y1 = coord.Y;

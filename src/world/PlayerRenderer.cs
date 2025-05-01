@@ -66,11 +66,11 @@ public class PlayerRenderer {
         var circleishThing = Math.Sin(Math.Sqrt(swingProgress) * Math.PI * 2);
 
         // rotate 45 degrees
-        var mat = Matrix4x4.CreateRotationY(Utils.deg2rad(45), new Vector3(0.5f, 0.5f, 0.5f)) *
+        var mat = Matrix4x4.CreateRotationY(Meth.deg2rad(45), new Vector3(0.5f, 0.5f, 0.5f)) *
                   // swing block rotation
-                  Matrix4x4.CreateRotationY((float)(-sinSwing * Utils.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
-                  Matrix4x4.CreateRotationZ((float)(sinSwingSqrt * Utils.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
-                  Matrix4x4.CreateRotationX((float)(sinSwingSqrt * Utils.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
+                  Matrix4x4.CreateRotationY((float)(-sinSwing * Meth.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
+                  Matrix4x4.CreateRotationZ((float)(sinSwingSqrt * Meth.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
+                  Matrix4x4.CreateRotationX((float)(sinSwingSqrt * Meth.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
                   // scale down
                   Matrix4x4.CreateScale(0.6f, new Vector3(0.5f, 0.5f, 0.5f)) *
                   // translate into place

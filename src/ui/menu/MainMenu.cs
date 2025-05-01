@@ -51,7 +51,7 @@ public class MainMenu : Menu {
     }
 
     public override void draw() {
-        Game.gui.drawBG(16);
+        Game.gui.drawScrollingBG(16);
         base.draw();
     }
 }

@@ -615,6 +615,7 @@ public partial class Game {
         mousePos = mouse.Position;
         textureManager.blockTexture.update(dt);
         currentScreen.update(dt);
+        gui.update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
         //Console.Out.WriteLine(after - before);
     }

@@ -180,7 +180,7 @@ public class GameScreen : Screen {
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         int y = (int)Math.Clamp(-scroll.Y, -1, 1);
         var newSelection = Game.player.hotbar.selected + y;
-        newSelection = Utils.mod(newSelection, 10);
+        newSelection = Meth.mod(newSelection, 10);
         Game.player.hotbar.selected = newSelection;
 
     }

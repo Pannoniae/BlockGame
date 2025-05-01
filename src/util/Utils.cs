@@ -5,7 +5,11 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.util;
 
-public static class Utils {
+
+/// <summary>
+/// It's like math but meth ;)
+/// </summary>
+public static partial class Meth {
     public static volatile byte[] waste;
 
     public static Vector3D copy(Vector3D input) {
@@ -52,6 +56,16 @@ public static class Utils {
 
     public static Vector3I getRandomCoord(Random random, int maxX, int maxY, int maxZ, int minX, int minY, int minZ) {
         return getRandomCoord(random, maxX - minX, maxY - minY, maxZ - minZ) + new Vector3I(minX, minY, minZ);
+    }
+
+    public static float ToDegrees(double radians)
+    {
+        return (float)(radians * 180.0 / Math.PI);
+    }
+
+    public static float lerp(float start, float end, float amount)
+    {
+        return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
     }
 }
 

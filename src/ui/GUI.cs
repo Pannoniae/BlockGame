@@ -56,6 +56,9 @@ public class GUI {
     private List<ushort> guiBlockI;
     private int uMVP;
     private int blockTexture = 0;
+    
+    private Vector2 backgroundScrollOffset = Vector2.Zero;
+    private const float SCROLL_SPEED = 32.0f; // pixels per second
 
     public GUI() {
         GL = Game.GL;
@@ -91,6 +94,23 @@ public class GUI {
         uiHeight = size.Y / guiScale;
         //worldShader.Projection = Game.instance.world.player.camera.getProjectionMatrix();
         //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
+        
+        // handle guiscale
+        var blockSize = 16d;
+        blockSize *= guiScale * 2;
+
+        // if one block is a given size, how many blocks can we fit on the screen?
+        var xCount = (int)Math.Ceiling(Game.width / blockSize);
+        var yCount = (int)Math.Ceiling(Game.height / blockSize);
+    }
+
+    public void update(double dt) {
+        updateBackgroundScroll(dt);
+    }
+    
+    // Call this in your update method
+    public void updateBackgroundScroll(double dt) {
+        backgroundScrollOffset.Y += (float)(SCROLL_SPEED * dt); // Slower vertical scroll
     }
 
 
@@ -192,15 +212,107 @@ public class GUI {
         var xCount = Game.width / size;
         var yCount = Game.height / size;
 
+        var overlay = Color4b.DimGray;
+
         var texCoords = new Vector2(0, 0);
         var texCoordsMax = new Vector2(xCount, yCount);
         tb.DrawRaw(Game.textureManager.background,
-            new VertexColorTexture(new Vector3(left, top, 0), Color4b.White, new Vector2(texCoords.X, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, top, 0), Color4b.White, new Vector2(texCoordsMax.X, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.White,
+            new VertexColorTexture(new Vector3(left, top, 0), overlay, new Vector2(texCoords.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, top, 0), overlay, new Vector2(texCoordsMax.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, bottom, 0), overlay,
                 new Vector2(texCoordsMax.X, texCoordsMax.Y)),
-            new VertexColorTexture(new Vector3(left, bottom, 0), Color4b.White,
+            new VertexColorTexture(new Vector3(left, bottom, 0), overlay,
                 new Vector2(texCoords.X, texCoordsMax.Y)));
+        
+    }
+    
+    public void drawScrollingBG(float size) {
+        var left = 0;
+        var right = Game.width;
+        var top = 0;
+        var bottom = Game.height;
+
+        // Handle guiscale
+        float blockSize = size * guiScale * 2;
+
+        // Calculate visible area in blocks
+        var xCount = (int)Math.Ceiling(Game.width / blockSize) + 2; // +2 for smooth scrolling
+        var yCount = (int)Math.Ceiling(Game.height / blockSize) + 2;
+
+        
+        // Get starting world coordinates
+        int startX = (int)Math.Floor(backgroundScrollOffset.X / blockSize);
+        int startY = (int)Math.Floor(backgroundScrollOffset.Y / blockSize);
+        
+        // Calculate fractional offset for smooth scrolling
+        float offsetX = backgroundScrollOffset.X % blockSize;
+        float offsetY = backgroundScrollOffset.Y % blockSize;
+        
+        var overlay = Color4b.DimGray;
+        
+        Span<ushort> ores = [Block.AMBER_ORE.id, Block.PURPLE_ORE.id, Block.RED_ORE.id, Block.VIOLET_ORE.id];
+        
+        // Draw ores
+        for (int x = 0; x < xCount; x++) {
+            for (int y = 0; y < yCount; y++) {
+                // Calculate screen position
+                float tileLeft = x * blockSize - offsetX;
+                float tileTop = y * blockSize - offsetY;
+                
+                // Calculate absolute world position
+                int worldX = startX + x;
+                int worldY = startY + y;
+                
+                // Check if we should place an ore here (absolute world coords)
+                if (shouldPlaceOre(worldX, worldY)) {
+                    int oreIndex = Math.Abs((worldX * 73856093) ^ (worldY * 19349663)) % ores.Length;
+                    ushort oreId = ores[oreIndex];
+                    
+                    // Get ore texcoords
+                    var block = Block.get(oreId);
+                    var oreTexCoords_ = Block.texCoords(block.model!.faces[0].min);
+                    var oreTexCoordsMax_ = Block.texCoords(block.model!.faces[0].max);
+                    var oreTexCoords = new Vector2(oreTexCoords_.X, oreTexCoords_.Y);
+                    var oreTexCoordsMax = new Vector2(oreTexCoordsMax_.X, oreTexCoordsMax_.Y);
+                    
+                    tb.DrawRaw(Game.textureManager.blockTextureGUI,
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), overlay, oreTexCoords),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), overlay, new Vector2(oreTexCoordsMax.X, oreTexCoords.Y)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), overlay, oreTexCoordsMax),
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), overlay, new Vector2(oreTexCoords.X, oreTexCoordsMax.Y)));
+                }
+                else {
+                    // Draw stone
+                    var block = Block.get(Block.STONE.id);
+                    var texCoords_ = Block.texCoords(block.model!.faces[0].min);
+                    var texCoordsMax_ = Block.texCoords(block.model!.faces[0].max);
+                    var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
+                    var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
+                    tb.DrawRaw(Game.textureManager.blockTextureGUI,
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), overlay, texCoords),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), overlay, new Vector2(texCoordsMax.X, texCoords.Y)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), overlay, texCoordsMax),
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), overlay, new Vector2(texCoords.X, texCoordsMax.Y)));
+                }
+            }
+        }
+    }
+    
+    // Add a hash-based random placement helper
+    private bool shouldPlaceOre(int worldX, int worldZ) {
+        // Jenkins one-at-a-time hash
+        uint hash = 0;
+        hash += (uint)worldX;
+        hash += hash << 10;
+        hash ^= hash >> 6;
+        hash += (uint)worldZ;
+        hash += hash << 10;
+        hash ^= hash >> 6;
+        hash += hash << 3;
+        hash ^= hash >> 11;
+        
+        // 5% chance for an ore
+        return hash % 10 == 0;
     }
 
 
@@ -299,7 +411,7 @@ public class GUI {
         // draw slightly out so the block won't z-fight with the text
         const float offset = 0.001f;
         Vector3 rotation = Vector3.Zero;
-        var deg90ToRad = Utils.deg2rad(90);
+        var deg90ToRad = Meth.deg2rad(90);
         var offsetVec = Vector3.Zero;
         switch (face) {
             case RawDirection.WEST:

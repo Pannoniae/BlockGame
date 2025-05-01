@@ -327,6 +327,10 @@ public partial class World {
     public bool isChunkSectionInWorld(SubChunkCoord pos) {
         return chunks.ContainsKey(new ChunkCoord(pos.x, pos.z)) && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT;
     }
+    
+    public bool isChunkInWorld(ChunkCoord pos) {
+        return chunks.ContainsKey(pos);
+    }
 
     public Chunk getChunk(int x, int z) {
         var pos = getChunkPos(x, z);

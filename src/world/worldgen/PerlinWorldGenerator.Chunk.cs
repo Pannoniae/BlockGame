@@ -15,17 +15,18 @@ public partial class PerlinWorldGenerator {
     public const int WATER_LEVEL = 64;
 
     private readonly double[] buffer = new double[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    
+
     private readonly Cave caves = new();
 
     public const double LOW_FREQUENCY = 1 / 292d;
     public const double HIGH_FREQUENCY = 1 / 135d;
     public const double SELECTOR_FREQUENCY = 1 / 490d;
-    
+
     public const double Y_DIVIDER = 1 / 16d;
 
     public const double BLOCK_VARIATION_FREQUENCY = 1 / 16d;
-    
+    public const double HELLSTONE_FREQUENCY = 1 / 4d;
+
     public const double FOLIAGE_FREQUENCY = 1 / 69d;
 
     public void generate(ChunkCoord coord) {
@@ -52,7 +53,8 @@ public partial class PerlinWorldGenerator {
                     var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
 
                     // sample lowNoise
-                    double low = getNoise3D(lowNoise, x * LOW_FREQUENCY, y * LOW_FREQUENCY * Y_DIVIDER, z * LOW_FREQUENCY, 8, 2f);
+                    double low = getNoise3D(lowNoise, x * LOW_FREQUENCY, y * LOW_FREQUENCY * Y_DIVIDER,
+                        z * LOW_FREQUENCY, 8, 2f);
                     // sample highNoise
                     double high = getNoise3D(highNoise, x * HIGH_FREQUENCY, y * HIGH_FREQUENCY, z * HIGH_FREQUENCY, 8,
                         2f);
@@ -64,26 +66,26 @@ public partial class PerlinWorldGenerator {
                     selector = double.CopySign(selector, double.Sqrt(double.Abs(selector)));
                     selector *= 2;
                     selector = double.Clamp(selector, 0, 1);
-                    
+
                     // we only want mountains when selector is high
 
                     // squish selector towards zero - more flat areas, less mountains
                     //selector *= selector;
-                    
+
                     // squish the high noise towards zero when the selector is low - more flat areas, less mountains
 
                     // Reduce the density when too high above 64 and increase it when too low
                     var airBias = (y - WATER_LEVEL) / (double)World.WORLDHEIGHT;
-                    
+
                     // flatten out low noise
                     //low -= airBias;
-                    
+
                     // reduce it below ground (is water anyway, useless)
                     if (airBias < 0) {
                         airBias *= 4;
                     }
-                    
-                    
+
+
                     // combine the two
                     double density = low + (high - low) * selector;
                     density -= airBias;
@@ -137,7 +139,7 @@ public partial class PerlinWorldGenerator {
 
                     // Interpolate along z
                     var value = lerp(c0, c1, zd);
-                    
+
                     // if below sea level, water
                     if (value > 0) {
                         chunk.setBlockFast(x, y, z, Block.STONE.id);
@@ -161,21 +163,21 @@ public partial class PerlinWorldGenerator {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 int height = chunk.heightMap.get(x, z);
-                
+
                 // move down until it's solid
                 while (height > 0 && !Block.fullBlock[chunk.getBlock(x, height, z)]) {
                     height--;
                 }
 
                 // replace top layers with dirt
-                
+
                 // if it's rock (otherwise it's water which we don't wanna replace)
                 if (chunk.getBlock(x, height, z) == Block.STONE.id) {
                     var amt = getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
                     for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {
                         chunk.setBlockFast(x, yy, z, Block.DIRT.id);
                     }
-                    
+
                     if (height < WATER_LEVEL - 1) {
                         // put sand on the lake floors
                         chunk.setBlockFast(x, height, z, getNoise3D(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
@@ -204,10 +206,20 @@ public partial class PerlinWorldGenerator {
     public void populate(ChunkCoord coord) {
         var random = getRandom(coord);
         var chunk = world.getChunk(coord);
-        
+
         var xWorld = coord.x * Chunk.CHUNKSIZE;
         var zWorld = coord.z * Chunk.CHUNKSIZE;
-        
+
+        // place hellstone on bottom of the world
+        var height = getNoise(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1);
+        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                for (int y = 0; y < height; y++) {
+                    chunk.setBlockFast(x, y, z, Block.HELLSTONE.id);
+                }
+            }
+        }
+
         var foliage = getNoise(foliageNoise, xWorld * FOLIAGE_FREQUENCY, zWorld * FOLIAGE_FREQUENCY, 2, 2);
         var treeCount = foliage;
         if (foliage < 0) {
@@ -220,9 +232,9 @@ public partial class PerlinWorldGenerator {
         for (int i = 0; i < treeCount; i++) {
             placeTree(random, coord);
         }
-        
+
         // Do caves
-        
+        caves.place(world, coord);
 
         chunk.status = ChunkStatus.POPULATED;
     }
@@ -236,15 +248,15 @@ public partial class PerlinWorldGenerator {
         if (y > 120) {
             return;
         }
-        
+
         // if not on dirt, don't bother
         if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
             return;
         }
-        
+
         var xWorld = coord.x * Chunk.CHUNKSIZE + x;
         var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-        
+
         // if there's stuff in the bounding box, don't place a tree
         for (int xd = -2; xd <= 2; xd++) {
             for (int zd = -2; zd <= 2; zd++) {
@@ -255,10 +267,10 @@ public partial class PerlinWorldGenerator {
                 }
             }
         }
-        
+
         placeOakTree(random, x + coord.x * Chunk.CHUNKSIZE, y + 1, z + coord.z * Chunk.CHUNKSIZE);
     }
-    
+
     public void placeOakTree(XRandom random, int x, int y, int z) {
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
@@ -270,15 +282,17 @@ public partial class PerlinWorldGenerator {
                     if (x1 == 0 && z1 == 0) {
                         continue;
                     }
+
                     for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
                         world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                     }
                 }
             }
+
             // leaves, thin on top
             for (int x1 = -1; x1 <= 1; x1++) {
                 for (int z1 = -1; z1 <= 1; z1++) {
-                    for (int y1 = randomNumber; y1 <= randomNumber+1; y1++) {
+                    for (int y1 = randomNumber; y1 <= randomNumber + 1; y1++) {
                         world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                     }
                 }

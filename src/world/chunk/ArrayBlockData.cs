@@ -103,7 +103,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         light = lightPool.grab();
         Array.Clear(blocks);
         // fill it with empty
-        Array.Fill(light, (byte)0xFF);
+        Array.Fill(light, (byte)0x0F);
         inited = true;
 
         // if we are already lighted, we can light the section (don't do it during worldgen - it will light the entire chunk full of ground

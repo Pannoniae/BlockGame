@@ -37,8 +37,7 @@ public class ChatMenu : Menu {
     }
 
     public override void onKeyChar(IKeyboard keyboard, char ch) {
-        if ((char.IsLetterOrDigit(ch) || char.IsPunctuation(ch) || char.IsWhiteSpace(ch)) &&
-            !char.IsControl(ch)) {
+        if (!char.IsControl(ch)) {
             message += ch;
         }
     }
@@ -74,7 +73,7 @@ public class ChatMenu : Menu {
     private void doChat(string msg) {
         // if command, execute
         if (msg.StartsWith('/')) {
-            var args = msg.Split(' ')[1..];
+            var args = msg[1..].Split(' ');
             switch (args[0]) {
                 case "help":
                     messages.PushFront(new ChatMessage("Commands: /help", tick));
@@ -88,14 +87,48 @@ public class ChatMenu : Menu {
                     break;
                 case "tp":
                     if (args.Length == 4) {
-                        if (int.TryParse(args[1], out int x) && int.TryParse(args[2], out int y) &&
-                            int.TryParse(args[3], out int z)) {
+                        int x, y, z;
+                        
+                        if (int.TryParse(args[1], out x) && int.TryParse(args[2], out y) &&
+                            int.TryParse(args[3], out z)) {
                             Game.player.teleport(new Vector3D(x, y, z));
                             messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
+                            break;
+                        }
+                        
+                        // relative coords?
+                        if (args[1][0] == '~') {
+                            x = (int)Game.player.position.X;
                         }
                         else {
-                            messages.PushFront(new ChatMessage("Invalid coordinates", tick));
+                            bool success = int.TryParse(args[1], out x);
+                            if (!success) {
+                                messages.PushFront(new ChatMessage("Invalid coordinates", tick));
+                                return;
+                            }
                         }
+                        if (args[2][0] == '~') {
+                            y = (int)Game.player.position.Y;
+                        }
+                        else {
+                            bool success = int.TryParse(args[2], out y);
+                            if (!success) {
+                                messages.PushFront(new ChatMessage("Invalid coordinates", tick));
+                                return;
+                            }
+                        }
+                        if (args[3][0] == '~') {
+                            z = (int)Game.player.position.Z;
+                        }
+                        else {
+                            bool success = int.TryParse(args[3], out z);
+                            if (!success) {
+                                messages.PushFront(new ChatMessage("Invalid coordinates", tick));
+                                return;
+                            }
+                        }
+                        Game.player.teleport(new Vector3D(x, y, z));
+                        messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
                     }
                     else {
                         messages.PushFront(new ChatMessage("Usage: /tp <x> <y> <z>", tick));

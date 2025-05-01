@@ -418,7 +418,7 @@ public class Player : Entity {
     public bool isUnderWater() {
         // If not in liquid at all, definitely not underwater
         if (!inLiquid) {
-            return false;
+            //return false;
         }
         
         // Calculate eye position based on sneaking state
