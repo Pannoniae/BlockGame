@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.id;
 using BlockGame.util;
 using Molten.DoublePrecision;
 
@@ -19,14 +20,21 @@ public class Cave : OverlayFeature {
     // Direction vectors
     public Vector3D d;
 
+    /// <summary>
+    /// Between -PI and PI
+    /// </summary>
     public double hAngle;
+
+    /// <summary>
+    /// Between -PI/2 and PI/2
+    /// </summary>
     public double vAngle;
 
     public override void generate(World world, ChunkCoord coord, ChunkCoord origin) {
         var chunk = world.getChunk(coord);
 
         // if this chunk isn't lucky, it gets murdered
-        if (rand.Next(5) != 0) {
+        if (rand.Next(10) != 0) {
             return;
         }
 
@@ -41,6 +49,12 @@ public class Cave : OverlayFeature {
             var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
             var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
             var y = rand.Next(World.WORLDHEIGHT);
+
+            // if above the terrain heightmap, skip
+            if (y > world.getHeight(x, z) + 6) {
+                continue;
+            }
+
             genCave(world, x, y, z, origin);
         }
     }
@@ -73,11 +87,24 @@ public class Cave : OverlayFeature {
         vAngle = (rand.NextDouble() - 0.5) * Math.PI * 0.25;
         //Console.Out.WriteLine("Cave: " + cx + ", " + cy + ", " + cz);
         for (int i = 0; i < steps; i++) {
-            genCaveInner(world, x, y, z, i, steps, origin);
+            genCaveInner(world, i, steps, origin);
         }
     }
 
-    private void genCaveInner(World world, int x, int y, int z, int step, int steps, ChunkCoord origin) {
+    private void genCaveInner(World world, int step, int steps, ChunkCoord origin) {
+        
+        // copy shit into locals
+        // idk JIT probably doesn't do that
+        var width = this.width;
+        var rand = this.rand;
+        var d = this.d;
+        var hAngle = this.hAngle;
+        var vAngle = this.vAngle;
+        var cx = this.cx;
+        var cy = this.cy;
+        var cz = this.cz;
+        
+        
         // in the beginning/end, we want to be narrower to "tail it off"
         int taperingSteps = steps / 10; // 10% at each end
         double appliedWidth = width;
@@ -91,16 +118,25 @@ public class Cave : OverlayFeature {
 
         //Console.Out.WriteLine("Step: " + step + ", Width: " + appliedWidth);
 
-        if (rand.Next(10 + (int)width) == 0) {
-            width += 0.5;
+        var widthVar = rand.NextDouble();
+        // if wide, don't increase further
+        if (widthVar < 0.02) {
+            width += 0.3;
         }
 
-        if (rand.Next(10) == 0) {
-            width -= 0.5;
+        if (widthVar > 0.98) {
+            width -= 0.3;
         }
 
-        if (width < 1.5) {
-            return;
+        if (width < 2) {
+            goto cleanup;
+        }
+
+        if (width > 5) {
+            // create a room
+            d = Vector3D.Zero;
+            width += 2;
+            goto gen;
         }
 
         // vary the direction or something unfinished idk
@@ -108,61 +144,50 @@ public class Cave : OverlayFeature {
         // angle shit
 
         // if the cave is very narrow, we want to move less so it doesn't look too blocky TODO?
-        var offset = appliedWidth;
+        var offset = appliedWidth / 2;
 
         // vary the direction with rotations
         double rotationChance = rand.NextDouble();
-        
-        // if we are vertical, mellow it out
-        if (Math.Abs(Vector3D.Dot(d, new Vector3D(0, 1, 0))) > 0.9) {
-            d.Y *= 0.76;
-        }
 
-        if (rotationChance < 0.03) {
+        // if we are vertical, mellow it out
+        vAngle *= 0.76;
+
+        if (rotationChance < 0.01) {
             // 1% chance for a vertical drop
             // Keep small horizontal movement but add strong downward component
-            d = new Vector3D(d.X * 0.2, -2.0 + d.Y * 0.1, d.Z * 0.2);
+            vAngle = Meth.deg2rad(rand.Next(-30, -70));
             //Console.Out.WriteLine("VERTICAL DROP");
         }
-        else if (rotationChance < 0.1) {
-            // 9% chance for a drastic turn (30-70 degrees)
-            double angle = Meth.deg2rad(30 + rand.Next(40));
-
-            // Create random rotation axis (perpendicular to current direction for maximum turning effect)
-            Vector3D up = new Vector3D(0, 1, 0);
-            Vector3D rotationAxis;
-
-            // If direction is mostly vertical, use a different reference vector
-            if (Math.Abs(Vector3D.Dot(d, up)) > 0.9) {
-                rotationAxis = Vector3D.Cross(d, new Vector3D(1, 0, 0));
-            }
-            else {
-                rotationAxis = Vector3D.Cross(d, up);
-            }
-
-            rotationAxis = Vector3D.Normalize(rotationAxis);
-
-            // Apply rotation
-            d = rot(d, rotationAxis, angle);
+        else if (rotationChance < 0.05) {
+            // 5% chance for a drastic turn (-90..+90 degrees)
+            double angle = Meth.deg2rad(rand.Next(180) - 90);
+            hAngle += angle;
+            double v = Meth.deg2rad(rand.Next(90) - 45);
+            vAngle += v;
+        }
+        else if (rotationChance < 0.4) {
+            double angle = Meth.deg2rad(rand.Next(90) - 45);
+            hAngle += angle;
+            double v = Meth.deg2rad(rand.Next(90) - 45);
+            vAngle += v;
         }
         else {
             // 90% chance for a small turn (1-15 degrees)
-            double angle = Meth.deg2rad(1 + rand.Next(15));
-
-            // Create random rotation axis for more naturalistic movement
-            Vector3D rotationAxis = new Vector3D(
-                rand.NextDouble() * 2 - 1,
-                rand.NextDouble() * 2 - 1,
-                rand.NextDouble() * 2 - 1
-            );
-            rotationAxis = Vector3D.Normalize(rotationAxis);
-
-            // Apply rotation
-            d = rot(d, rotationAxis, angle);
+            double angle = Meth.deg2rad(rand.Next(15) - 7.5f);
+            hAngle += angle;
+            double v = Meth.deg2rad(rand.Next(15) - 7.5f);
+            vAngle += v;
         }
+
+        // update d vector with the angles
+        d.X = Math.Cos(hAngle) * Math.Cos(vAngle);
+        d.Y = Math.Sin(vAngle);
+        d.Z = Math.Sin(hAngle) * Math.Cos(vAngle);
 
         // Keep direction normalized for consistent "speed"
         d = Vector3D.Normalize(d) * offset;
+
+        gen: ;
 
         // update position
         cx += d.X;
@@ -187,36 +212,45 @@ public class Cave : OverlayFeature {
         zMax = Math.Min(zMax, (origin.z + 1) * Chunk.CHUNKSIZE);
 
         for (int xd = (int)xMin; xd < (int)xMax; xd++) {
-                for (int zd = (int)zMin; zd < (int)zMax; zd++) {
-                    bool hasGrass = false;
-                    
-                    // IMPORTANT do it upside down because the whole grass replacing stuff
-                    // if you do it the right way around we won't know whether we've ruined terrain or not
-                    for (int yd = (int)yMax - 1; yd >= (int)yMin; yd--) {
+            for (int zd = (int)zMin; zd < (int)zMax; zd++) {
+                bool hasGrass = false;
+
+                // IMPORTANT do it upside down because the whole grass replacing stuff
+                // if you do it the right way around we won't know whether we've ruined terrain or not
+                for (int yd = (int)yMax - 1; yd >= (int)yMin; yd--) {
                     // distance check
-                    var dist = Math.Sqrt(
+                    var dist =
                         (cx - xd) * (cx - xd) +
                         (cy - yd) * (cy - yd) +
-                        (cz - zd) * (cz - zd));
-                    if (dist < (int)appliedWidth) {
+                        (cz - zd) * (cz - zd);
+                    if (dist < (int)(appliedWidth * appliedWidth)) {
                         var block = world.getBlock(xd, yd, zd);
-                        
+
                         // if it's grass, exchange below
-                        if (block == Block.GRASS.id) {
+                        if (block == Blocks.GRASS) {
                             hasGrass = true;
                         }
-                        
+
                         // if it's a solid block, remove it
-                        if (Block.isSolid(block)) {
-                            world.setBlock(xd, yd, zd, Block.AIR.id);
-                            if (hasGrass && world.getBlock(xd, yd - 1, zd) == Block.DIRT.id) {
-                                world.setBlock(xd, yd - 1, zd, Block.GRASS.id);
+                        if (Block.fullBlock[block]) {
+                            world.setBlock(xd, yd, zd, Blocks.AIR);
+                            if (hasGrass && world.getBlock(xd, yd - 1, zd) == Blocks.DIRT) {
+                                world.setBlock(xd, yd - 1, zd, Blocks.GRASS);
                             }
                         }
                     }
                 }
             }
         }
+        
+        cleanup: ;
+        this.width = width;
+        this.d = d;
+        this.hAngle = hAngle;
+        this.vAngle = vAngle;
+        this.cx = cx;
+        this.cy = cy;
+        this.cz = cz;
     }
 
     private static Vector3D rot(Vector3D vector, Vector3D axis, double angle) {

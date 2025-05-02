@@ -302,6 +302,12 @@ public partial class World {
             y,
             z & 0xF);
     }
+    
+    public static Vector2I getPosInChunk(int x, int z) {
+        return new Vector2I(
+            x & 0xF,
+            z & 0xF);
+    }
 
     public static Vector3I getPosInChunk(Vector3I pos) {
         return new Vector3I(
@@ -440,5 +446,15 @@ public partial class World {
         return new Vector3I(coord.x * Chunk.CHUNKSIZE + c.X,
             c.Y,
             coord.z * Chunk.CHUNKSIZE + c.Z);
+    }
+
+    public int getHeight(int x, int z) {
+        var pos = getChunkPos(x, z);
+        if (!chunks.TryGetValue(pos, out var chunk)) {
+            return 0;
+        }
+        
+        var blockPos = getPosInChunk(x, z);
+        return chunk.heightMap.get(blockPos.X, blockPos.Y);
     }
 }

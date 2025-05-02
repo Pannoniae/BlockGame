@@ -1,3 +1,5 @@
+using System.Runtime.Intrinsics;
+using BlockGame.id;
 using BlockGame.util;
 
 namespace BlockGame;
@@ -7,6 +9,21 @@ public partial class PerlinWorldGenerator {
     public const int NOISE_PER_X = 4;
     public const int NOISE_PER_Y = 4;
     public const int NOISE_PER_Z = 4;
+    
+    // mod 4 == & 3
+    const int NOISE_PER_X_MASK = 3;
+    const int NOISE_PER_Y_MASK = 3;
+    const int NOISE_PER_Z_MASK = 3;
+    
+    // div 4 == >> 2
+    const int NOISE_PER_X_SHIFT = 2;
+    const int NOISE_PER_Y_SHIFT = 2;
+    const int NOISE_PER_Z_SHIFT = 2;
+    
+    // x / y = x * (1 / y)
+    const double NOISE_PER_X_INV = 1d / NOISE_PER_X;
+    const double NOISE_PER_Y_INV = 1d / NOISE_PER_Y;
+    const double NOISE_PER_Z_INV = 1d / NOISE_PER_Z;
 
     public const int NOISE_SIZE_X = (Chunk.CHUNKSIZE / NOISE_PER_X) + 1;
     public const int NOISE_SIZE_Y = (Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT) / NOISE_PER_Y + 1;
@@ -15,6 +32,13 @@ public partial class PerlinWorldGenerator {
     public const int WATER_LEVEL = 64;
 
     private readonly double[] buffer = new double[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] lowBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] highBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] selectorBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] auxBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] foliageBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] temperatureBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] humidityBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
 
@@ -43,6 +67,7 @@ public partial class PerlinWorldGenerator {
 
     public void getDensity(double[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
+        // get the noise
 
         for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
@@ -64,8 +89,14 @@ public partial class PerlinWorldGenerator {
                     // make it more radical
                     // can't sqrt a negative number so sign(abs(x))
                     selector = double.Abs(selector);
+                    
+                    // sin it
+                    //selector = 0.5 * double.SinPi(selector - 0.5) + 0.5;
+                    
                     selector *= 2;
                     selector = double.Clamp(selector, 0, 1);
+
+                    //Console.Out.WriteLine("b: " + selector);
 
                     // we only want mountains when selector is high
 
@@ -84,7 +115,8 @@ public partial class PerlinWorldGenerator {
                     if (airBias < 0) {
                         airBias *= 4;
                     }
-
+                    
+                    // only sample if actually required
 
                     // combine the two
                     double density = low + (high - low) * selector;
@@ -103,19 +135,21 @@ public partial class PerlinWorldGenerator {
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
                 for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                    
                     // the grid cell that contains the point
-                    var x0 = x / NOISE_PER_X;
-                    var y0 = y / NOISE_PER_Y;
-                    var z0 = z / NOISE_PER_Z;
+                    var x0 = x >> NOISE_PER_X_SHIFT;
+                    var y0 = y >> NOISE_PER_Y_SHIFT;
+                    var z0 = z >> NOISE_PER_Z_SHIFT;
 
                     var x1 = x0 + 1;
                     var y1 = y0 + 1;
                     var z1 = z0 + 1;
 
                     // the lerp (between 0 and 1)
-                    double xd = (x % NOISE_PER_X) / (double)NOISE_PER_X;
-                    double yd = (y % NOISE_PER_Y) / (double)NOISE_PER_Y;
-                    double zd = (z % NOISE_PER_Z) / (double)NOISE_PER_Z;
+                    // double xd = (x % NOISE_PER_X) / (double)NOISE_PER_X;
+                    double xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
+                    double yd = (y & NOISE_PER_X_MASK) * NOISE_PER_Y_INV;
+                    double zd = (z & NOISE_PER_X_MASK) * NOISE_PER_Z_INV;
 
                     // the eight corner values from the buffer
                     var c000 = buffer[getIndex(x0, y0, z0)];
@@ -142,12 +176,12 @@ public partial class PerlinWorldGenerator {
 
                     // if below sea level, water
                     if (value > 0) {
-                        chunk.setBlockFast(x, y, z, Block.STONE.id);
+                        chunk.setBlockFast(x, y, z, Blocks.STONE);
                         chunk.addToHeightMap(x, y, z);
                     }
                     else {
                         if (y < WATER_LEVEL) {
-                            chunk.setBlockFast(x, y, z, Block.WATER.id);
+                            chunk.setBlockFast(x, y, z, Blocks.WATER);
                             chunk.addToHeightMap(x, y, z);
                         }
                     }
@@ -172,10 +206,10 @@ public partial class PerlinWorldGenerator {
                 // replace top layers with dirt
 
                 // if it's rock (otherwise it's water which we don't wanna replace)
-                if (chunk.getBlock(x, height, z) == Block.STONE.id) {
+                if (chunk.getBlock(x, height, z) == Blocks.STONE) {
                     var amt = getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
                     for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {
-                        chunk.setBlockFast(x, yy, z, Block.DIRT.id);
+                        chunk.setBlockFast(x, yy, z, Blocks.DIRT);
                     }
 
                     if (height < WATER_LEVEL - 1) {
@@ -184,11 +218,11 @@ public partial class PerlinWorldGenerator {
                             128,
                             worldPos.Z * BLOCK_VARIATION_FREQUENCY,
                             1, 1) > 0
-                            ? Block.SAND.id
-                            : Block.DIRT.id);
+                            ? Blocks.SAND
+                            : Blocks.DIRT);
                     }
                     else {
-                        chunk.setBlockFast(x, height, z, Block.GRASS.id);
+                        chunk.setBlockFast(x, height, z, Blocks.GRASS);
                     }
                 }
             }
@@ -200,6 +234,10 @@ public partial class PerlinWorldGenerator {
     }
 
     private static double lerp(double a, double b, double t) {
+        return a + t * (b - a);
+    }
+    
+    private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
         return a + t * (b - a);
     }
 
