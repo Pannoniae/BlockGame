@@ -1,17 +1,67 @@
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace BlockGame.util;
 
 internal sealed partial class Interop {
-    [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_GetNonCryptographicallySecureRandomBytes")]
+    
+    private static MethodInfo? _getRandomBytesMethod;
+    
+    /*[LibraryImport(Interop.Libraries.SystemNative, EntryPoint = "SystemNative_GetNonCryptographicallySecureRandomBytes")]
     internal static unsafe partial void GetNonCryptographicallySecureRandomBytes(
         byte* buffer,
-        int length);
+        int length);*/
+    
+    // we reflect this thing
+    /*internal static partial class Interop
+    {
+        internal static partial class Sys
+        {
+            [LibraryImport(Interop.Libraries.SystemNative, EntryPoint = "SystemNative_GetNonCryptographicallySecureRandomBytes")]
+            internal static unsafe partial void GetNonCryptographicallySecureRandomBytes(byte* buffer, int length);
+
+            [LibraryImport(Interop.Libraries.SystemNative, EntryPoint = "SystemNative_GetCryptographicallySecureRandomBytes")]
+            internal static unsafe partial int GetCryptographicallySecureRandomBytes(byte* buffer, int length);
+        }
+
+        internal static unsafe void GetRandomBytes(byte* buffer, int length)
+        {
+        
+        }  
+    */
+
+
+    static Interop() {
+        // time to reflect!
+        var a = typeof(object).Assembly;
+        var type = a.GetType("Interop");
+        var method = type.GetMethod("GetRandomBytes", BindingFlags.Static | BindingFlags.NonPublic);
+        
+        // store the method info in a field
+        if (method != null) {
+            _getRandomBytesMethod = method;
+        }
+        else {
+            throw new InvalidOperationException("Failed to get GetRandomBytes method");
+        }
+    }
 
     internal static unsafe void GetRandomBytes(byte* buffer, int length) {
-        GetNonCryptographicallySecureRandomBytes(buffer, length);
+        var bufferP = Pointer.Box(buffer, typeof(byte*));
+        var result = _getRandomBytesMethod.Invoke(null, [ bufferP, length ]);
+    }
+    
+    internal static unsafe void GetRandomBytes2(byte* buffer, int length) {
+        if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+        if (length < 0) throw new ArgumentOutOfRangeException(nameof(length));
+        if (length == 0) return;
+    
+        // Zero-allocation approach using Span over the unsafe buffer
+        // This leverages hardware acceleration when available
+        System.Security.Cryptography.RandomNumberGenerator.Fill(
+            new Span<byte>(buffer, length));
     }
 }
 
@@ -38,7 +88,7 @@ public sealed class XRandom {
     public unsafe XRandom() {
         ulong* ptr = stackalloc ulong[4];
         do {
-            Interop.GetRandomBytes((byte*)ptr, 4 * sizeof(ulong));
+            Interop.GetRandomBytes2((byte*)ptr, 4 * sizeof(ulong));
             _s0 = ptr[0];
             _s1 = ptr[1];
             _s2 = ptr[2];
@@ -105,7 +155,7 @@ public sealed class XRandom {
             // Empty span - fall back to default random initialization
             ulong* ptr = stackalloc ulong[4];
             do {
-                Interop.GetRandomBytes((byte*)ptr, 4 * sizeof(ulong));
+                Interop.GetRandomBytes2((byte*)ptr, 4 * sizeof(ulong));
                 _s0 = ptr[0];
                 _s1 = ptr[1];
                 _s2 = ptr[2];

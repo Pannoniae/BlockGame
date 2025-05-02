@@ -114,10 +114,16 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// </summary>
     public void setBlock(int x, int y, int z, ushort block) {
         subChunks[y >> 4].blocks[x, y & 0xF, z] = block;
+        if (Block.fullBlock[block]) {
+            subChunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, 0);
+        }
     }
 
     public void setBlockFast(int x, int y, int z, ushort block) {
         subChunks[y >> 4].blocks.fastSet(x, y & 0xF, z, block);
+        if (Block.fullBlock[block]) {
+            subChunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, 0);
+        }
     }
     
     public void recalc() {
