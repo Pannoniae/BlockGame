@@ -26,6 +26,7 @@ public class Graphics {
     private readonly int[] viewportParams = new int[4]; // x, y, width, height
 
     private int vao;
+    public bool fullbright;
 
     public Graphics() {
         GL = Game.GL;

@@ -9,11 +9,11 @@ using Molten.DoublePrecision;
 namespace BlockGame.ui;
 
 public class ChatMenu : Menu {
-
     /// <summary>
     /// max. 24 messages
     /// </summary>
     public readonly CircularBuffer<ChatMessage> messages = new(20);
+
     public readonly CircularBuffer<ChatMessage> history = new(20);
 
     /// <summary>
@@ -60,12 +60,14 @@ public class ChatMenu : Menu {
                     historyIndex++;
                     message = history[historyIndex].message;
                 }
+
                 break;
             case Key.Down:
                 if (historyIndex > 0) {
                     historyIndex--;
                     message = history[historyIndex].message;
                 }
+
                 break;
         }
     }
@@ -88,14 +90,14 @@ public class ChatMenu : Menu {
                 case "tp":
                     if (args.Length == 4) {
                         int x, y, z;
-                        
+
                         if (int.TryParse(args[1], out x) && int.TryParse(args[2], out y) &&
                             int.TryParse(args[3], out z)) {
                             Game.player.teleport(new Vector3D(x, y, z));
                             messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
                             break;
                         }
-                        
+
                         // relative coords?
                         if (args[1][0] == '~') {
                             x = (int)Game.player.position.X;
@@ -107,6 +109,7 @@ public class ChatMenu : Menu {
                                 return;
                             }
                         }
+
                         if (args[2][0] == '~') {
                             y = (int)Game.player.position.Y;
                         }
@@ -117,6 +120,7 @@ public class ChatMenu : Menu {
                                 return;
                             }
                         }
+
                         if (args[3][0] == '~') {
                             z = (int)Game.player.position.Z;
                         }
@@ -127,12 +131,14 @@ public class ChatMenu : Menu {
                                 return;
                             }
                         }
+
                         Game.player.teleport(new Vector3D(x, y, z));
                         messages.PushFront(new ChatMessage($"Teleported to {x}, {y}, {z}!", tick));
                     }
                     else {
                         messages.PushFront(new ChatMessage("Usage: /tp <x> <y> <z>", tick));
                     }
+
                     break;
                 case "cb":
                     if (Screen.GAME_SCREEN.chunkBorders) {
@@ -145,9 +151,26 @@ public class ChatMenu : Menu {
                     }
 
                     break;
+                case "fb":
+                    // enable fullbright
+                    if (Game.graphics.fullbright) {
+                        Game.graphics.fullbright = false;
+                        messages.PushFront(new ChatMessage("Fullbright disabled", tick));
+                    }
+                    else {
+                        Game.graphics.fullbright = true;
+                        messages.PushFront(new ChatMessage("Fullbright enabled", tick));
+                    }
+
+                    // remesh everything to update lighting
+                    Game.instance.executeOnMainThread(() => {
+                        Screen.GAME_SCREEN.remeshWorld(0);
+                    });
+                    break;
                 case "fly":
                     Game.player.noClip = !Game.player.noClip;
-                    messages.PushFront(new ChatMessage("Noclip " + (Game.player.noClip ? "enabled" : "disabled"), tick));
+                    messages.PushFront(new ChatMessage("Noclip " + (Game.player.noClip ? "enabled" : "disabled"),
+                        tick));
                     break;
             }
         }
@@ -167,12 +190,14 @@ public class ChatMenu : Menu {
                     historyIndex++;
                     message = history[historyIndex].message;
                 }
+
                 break;
             case Key.Down:
                 if (historyIndex > 0) {
                     historyIndex--;
                     message = history[historyIndex].message;
                 }
+
                 break;
         }
     }
@@ -187,7 +212,8 @@ public class ChatMenu : Menu {
         base.draw();
         var gui = Game.gui;
         var cursor = Game.permanentStopwatch.ElapsedMilliseconds % 1000 < 500 ? "|" : "";
-        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4), color: new Color4b(0, 0, 0, 128));
+        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4),
+            color: new Color4b(0, 0, 0, 128));
         gui.drawStringUIThin("> " + message + cursor, new Vector2(6, Game.gui.uiHeight - 13));
     }
 }

@@ -47,13 +47,8 @@ public class SubChunk : IDisposable {
         box = new AABB(new Vector3D(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ushort getBlockInChunk(int x, int y, int z) {
-        return blocks[x, y, z];
-    }
-
     public void tick(Random random, int x, int y, int z) {
-        var block = getBlockInChunk(x, y, z);
+        var block = blocks[x, y, z];
         var worldPos = World.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
 
         if (block == Block.GRASS.id) {

@@ -353,6 +353,11 @@ public partial class WorldRenderer {
                 }
             }
         }
+        
+        // if fullbright, just overwrite all lights to 15
+        if (Game.graphics.fullbright) {
+            neighbourLights.AsSpan().Fill(15);
+        }
 
         //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
     }

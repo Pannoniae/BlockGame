@@ -11,16 +11,18 @@ namespace BlockGame;
 // mutable
 [StructLayout(LayoutKind.Auto)]
 public struct AABB {
+    
+    public static readonly AABB empty = new AABB(new Vector3D(0, 0, 0), new Vector3D(0, 0, 0));
+
+    public Vector3D min;
+    public Vector3D max;
+    
     public double minX => min.X;
     public double minY => min.Y;
     public double minZ => min.Z;
     public double maxX => max.X;
     public double maxY => max.Y;
     public double maxZ => max.Z;
-
-    public Vector3D min;
-    public Vector3D max;
-    public static readonly AABB empty = new AABB(new Vector3D(0, 0, 0), new Vector3D(0, 0, 0));
 
     public Vector3D centre => (max + min) * 0.5f; // Compute AABB center
     public Vector3D extents => max - centre; // Compute positive extents

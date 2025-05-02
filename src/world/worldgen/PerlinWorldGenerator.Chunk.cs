@@ -63,7 +63,7 @@ public partial class PerlinWorldGenerator {
                         z * SELECTOR_FREQUENCY, 2, 2f);
                     // make it more radical
                     // can't sqrt a negative number so sign(abs(x))
-                    selector = double.CopySign(selector, double.Sqrt(double.Abs(selector)));
+                    selector = double.Abs(selector);
                     selector *= 2;
                     selector = double.Clamp(selector, 0, 1);
 
