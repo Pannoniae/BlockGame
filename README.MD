@@ -1,4 +1,4 @@
-![BlockGame image (terrain)](cover.png)
+![BlockGame image (terrain)](cover1.png)
 ![BlockGame image (caves)](cover2.png)
 
 # BlockGame
