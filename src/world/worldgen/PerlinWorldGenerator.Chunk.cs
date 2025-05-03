@@ -48,7 +48,7 @@ public partial class PerlinWorldGenerator {
 
     public const double Y_DIVIDER = 1 / 16d;
 
-    public const double BLOCK_VARIATION_FREQUENCY = 1 / 16d;
+    public const double BLOCK_VARIATION_FREQUENCY = 1 / 412d;
     public const double HELLSTONE_FREQUENCY = 1 / 4d;
 
     public const double FOLIAGE_FREQUENCY = 1 / 69d;
@@ -225,7 +225,7 @@ public partial class PerlinWorldGenerator {
 
                 // beaches
                 else if (height > WATER_LEVEL - 3 && height < WATER_LEVEL + 1) {
-                    if (blockVar > -0.3) {
+                    if (blockVar > -0.2) {
                         topBlock = Blocks.SAND;
                         filler = Blocks.SAND;
                     }
