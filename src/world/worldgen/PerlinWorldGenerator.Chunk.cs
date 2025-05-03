@@ -202,26 +202,53 @@ public partial class PerlinWorldGenerator {
                     height--;
                 }
 
-                // replace top layers with dirt
+                // thickness of the soil layer layer
+                var amt = getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
+                var blockVar = getNoise3D(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
+                    128,
+                    worldPos.Z * BLOCK_VARIATION_FREQUENCY,
+                    1, 1);
 
-                // if it's rock (otherwise it's water which we don't wanna replace)
-                if (chunk.getBlock(x, height, z) == Blocks.STONE) {
-                    var amt = getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
-                    for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {
-                        chunk.setBlockFast(x, yy, z, Blocks.DIRT);
-                    }
-
-                    if (height < WATER_LEVEL - 1) {
-                        // put sand on the lake floors
-                        chunk.setBlockFast(x, height, z, getNoise3D(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
-                            128,
-                            worldPos.Z * BLOCK_VARIATION_FREQUENCY,
-                            1, 1) > 0
-                            ? Blocks.SAND
-                            : Blocks.DIRT);
+                ushort topBlock = 0;
+                ushort filler = 0;
+                // determine the top layer
+                if (height < WATER_LEVEL - 1) {
+                    if (blockVar > 0) {
+                        topBlock = Blocks.DIRT;
+                        filler = Blocks.DIRT;
                     }
                     else {
-                        chunk.setBlockFast(x, height, z, Blocks.GRASS);
+                        topBlock = Blocks.SAND;
+                        filler = Blocks.SAND;
+                    }
+                }
+
+                // beaches
+                else if (height > WATER_LEVEL - 3 && height < WATER_LEVEL + 1) {
+                    if (blockVar > -0.3) {
+                        topBlock = Blocks.SAND;
+                        filler = Blocks.SAND;
+                    }
+                    else {
+                        topBlock = Blocks.GRAVEL;
+                        filler = Blocks.GRAVEL;
+                    }
+                }
+                else {
+                    topBlock = Blocks.GRASS;
+                    filler = Blocks.DIRT;
+                }
+
+                // replace top layers with dirt
+                // if it's rock (otherwise it's water which we don't wanna replace)
+                if (chunk.getBlock(x, height, z) == Blocks.STONE) {
+                    // replace top layer with topBlock
+                    chunk.setBlockFast(x, height, z, topBlock);
+                    for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {  
+                        // replace stone with dirt
+                        if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
+                            chunk.setBlockFast(x, yy, z, filler);
+                        }
                     }
                 }
             }

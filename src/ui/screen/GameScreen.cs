@@ -405,9 +405,9 @@ public class GameScreen : Screen {
 
             var msgLimit = currentMenu == CHAT ? 20 : 10;
             var currentTick = CHAT.tick;
-            for (int i = 0; i < CHAT.messages.Size && i < msgLimit; i++) {
+            for (int i = 0; i < CHAT.getMessages().Size && i < msgLimit; i++) {
                 // if 200 ticks have passed, don't show the message
-                var age = currentTick - CHAT.messages[i].ticks;
+                var age = currentTick - CHAT.getMessages()[i].ticks;
                 if (age < 200 || currentMenu == CHAT) {
                     float a = 1;
                     if (currentMenu != CHAT) {
@@ -423,7 +423,7 @@ public class GameScreen : Screen {
                         var msgHeight = gui.uiHeight - 42 - (8 * i);
 
                         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 8), color: new Color4b(0, 0, 0, MathF.Min(a, 0.5f)));
-                        gui.drawStringUIThin(CHAT.messages[i].message, new Vector2(6, msgHeight + 0.5f), new Color4b(1, 1, 1, a));
+                        gui.drawStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight + 0.5f), new Color4b(1, 1, 1, a));
                     }
                 }
             }
