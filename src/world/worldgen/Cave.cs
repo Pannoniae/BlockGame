@@ -92,7 +92,6 @@ public class Cave : OverlayFeature {
     }
 
     private void genCaveInner(World world, int step, int steps, ChunkCoord origin) {
-        
         // copy shit into locals
         // idk JIT probably doesn't do that
         var width = this.width;
@@ -103,8 +102,8 @@ public class Cave : OverlayFeature {
         var cx = this.cx;
         var cy = this.cy;
         var cz = this.cz;
-        
-        
+
+
         // in the beginning/end, we want to be narrower to "tail it off"
         int taperingSteps = steps / 10; // 10% at each end
         double appliedWidth = width;
@@ -155,7 +154,7 @@ public class Cave : OverlayFeature {
         if (rotationChance < 0.01) {
             // 1% chance for a vertical drop
             // Keep small horizontal movement but add strong downward component
-            vAngle = Meth.deg2rad(rand.Next(-30, -70));
+            vAngle = Meth.deg2rad(rand.Next(-70, -30));
             //Console.Out.WriteLine("VERTICAL DROP");
         }
         else if (rotationChance < 0.05) {
@@ -203,6 +202,17 @@ public class Cave : OverlayFeature {
         var zMin = cz - appliedWidth;
         var zMax = cz + appliedWidth;
 
+
+        // if we are outside the chunk, bail
+        if (xMax < origin.x * Chunk.CHUNKSIZE ||
+            xMin > (origin.x + 1) * Chunk.CHUNKSIZE ||
+            yMax < 1 || 
+            yMin > World.WORLDHEIGHT - 4 ||
+            zMax < origin.z * Chunk.CHUNKSIZE || 
+            zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
+            goto cleanup;
+        }
+
         // cap them to the original chunk
         xMin = Math.Max(xMin, origin.x * Chunk.CHUNKSIZE);
         xMax = Math.Min(xMax, (origin.x + 1) * Chunk.CHUNKSIZE);
@@ -242,7 +252,7 @@ public class Cave : OverlayFeature {
                 }
             }
         }
-        
+
         cleanup: ;
         this.width = width;
         this.d = d;

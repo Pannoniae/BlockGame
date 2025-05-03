@@ -9,17 +9,17 @@ public partial class PerlinWorldGenerator {
     public const int NOISE_PER_X = 4;
     public const int NOISE_PER_Y = 4;
     public const int NOISE_PER_Z = 4;
-    
+
     // mod 4 == & 3
     const int NOISE_PER_X_MASK = 3;
     const int NOISE_PER_Y_MASK = 3;
     const int NOISE_PER_Z_MASK = 3;
-    
+
     // div 4 == >> 2
     const int NOISE_PER_X_SHIFT = 2;
     const int NOISE_PER_Y_SHIFT = 2;
     const int NOISE_PER_Z_SHIFT = 2;
-    
+
     // x / y = x * (1 / y)
     const double NOISE_PER_X_INV = 1d / NOISE_PER_X;
     const double NOISE_PER_Y_INV = 1d / NOISE_PER_Y;
@@ -69,9 +69,9 @@ public partial class PerlinWorldGenerator {
         var chunk = world.getChunk(coord);
         // get the noise
 
-        for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
+        for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
-                for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
+                for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
                     // restore the actual coordinates (to see where we sample at)
                     var x = coord.x * Chunk.CHUNKSIZE + nx * NOISE_PER_X;
                     var y = ny * NOISE_PER_Y;
@@ -89,10 +89,10 @@ public partial class PerlinWorldGenerator {
                     // make it more radical
                     // can't sqrt a negative number so sign(abs(x))
                     selector = double.Abs(selector);
-                    
+
                     // sin it
                     //selector = 0.5 * double.SinPi(selector - 0.5) + 0.5;
-                    
+
                     selector *= 2;
                     selector = double.Clamp(selector, 0, 1);
 
@@ -115,7 +115,7 @@ public partial class PerlinWorldGenerator {
                     if (airBias < 0) {
                         airBias *= 4;
                     }
-                    
+
                     // only sample if actually required
 
                     // combine the two
@@ -132,10 +132,9 @@ public partial class PerlinWorldGenerator {
     private void interpolate(double[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
-        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-            for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-                for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                    
+        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     // the grid cell that contains the point
                     var x0 = x >> NOISE_PER_X_SHIFT;
                     var y0 = y >> NOISE_PER_Y_SHIFT;
@@ -230,13 +229,13 @@ public partial class PerlinWorldGenerator {
     }
 
     private static int getIndex(int x, int y, int z) {
-        return x + y * NOISE_SIZE_X + z * NOISE_SIZE_X * NOISE_SIZE_Y;
+        return x + z * NOISE_SIZE_X + y * NOISE_SIZE_X * NOISE_SIZE_Z;
     }
 
     private static double lerp(double a, double b, double t) {
         return a + t * (b - a);
     }
-    
+
     private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
         return a + t * (b - a);
     }
@@ -250,9 +249,9 @@ public partial class PerlinWorldGenerator {
 
         // place hellstone on bottom of the world
         var height = getNoise(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1);
-        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+        for (int y = 0; y < height; y++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                for (int y = 0; y < height; y++) {
+                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     chunk.setBlockFast(x, y, z, Block.HELLSTONE.id);
                 }
             }
@@ -296,9 +295,9 @@ public partial class PerlinWorldGenerator {
         var zWorld = coord.z * Chunk.CHUNKSIZE + z;
 
         // if there's stuff in the bounding box, don't place a tree
-        for (int xd = -2; xd <= 2; xd++) {
+        for (int yd = 1; yd < 8; yd++) {
             for (int zd = -2; zd <= 2; zd++) {
-                for (int yd = 1; yd < 8; yd++) {
+                for (int xd = -2; xd <= 2; xd++) {
                     if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
                         return;
                     }
