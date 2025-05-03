@@ -8,13 +8,11 @@ namespace BlockGame;
 public class SubChunk : IDisposable {
 
     public Chunk chunk;
-
     public ArrayBlockData blocks;
-
-    public int chunkX;
-    public int chunkY;
-    public int chunkZ;
-
+    public SubChunkCoord coord;
+    public AABB box;
+    
+    
     public bool isRendered = false;
 
     /// <summary>
@@ -23,33 +21,24 @@ public class SubChunk : IDisposable {
     /// </summary>
     public bool isEmpty => blocks.isEmpty();
 
-    public int worldX => chunkX * Chunk.CHUNKSIZE;
-    public int worldY => chunkY * Chunk.CHUNKSIZE;
-    public int worldZ => chunkZ * Chunk.CHUNKSIZE;
+    public int worldX => coord.x * Chunk.CHUNKSIZE;
+    public int worldY => coord.y * Chunk.CHUNKSIZE;
+    public int worldZ => coord.z * Chunk.CHUNKSIZE;
     public Vector3I worldPos => new(worldX, worldY, worldZ);
     public Vector3I centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
-
-    public AABB box;
-
-    public World world;
-    public SubChunkCoord coord;
-
+    
 
     public SubChunk(World world, Chunk chunk, int xpos, int ypos, int zpos) {
         this.chunk = chunk;
-        chunkX = xpos;
-        chunkY = ypos;
-        chunkZ = zpos;
-        this.world = world;
         blocks = new ArrayBlockData(chunk, this);
-        coord = new SubChunkCoord(chunkX, chunkY, chunkZ);
+        coord = new SubChunkCoord(xpos, ypos, zpos);
 
-        box = new AABB(new Vector3D(chunkX * 16, chunkY * 16, chunkZ * 16), new Vector3D(chunkX * 16 + 16, chunkY * 16 + 16, chunkZ * 16 + 16));
+        box = new AABB(new Vector3D(xpos * 16, ypos * 16, zpos * 16), new Vector3D(xpos * 16 + 16, ypos * 16 + 16, zpos * 16 + 16));
     }
 
-    public void tick(Random random, int x, int y, int z) {
+    public void tick(World world, Random random, int x, int y, int z) {
         var block = blocks[x, y, z];
-        var worldPos = World.toWorldPos(chunkX, chunkY, chunkZ, x, y, z);
+        var worldPos = World.toWorldPos(coord.x, coord.y, coord.z, x, y, z);
 
         if (block == Block.GRASS.id) {
             if (y < 127 && Block.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
@@ -59,7 +48,7 @@ public class SubChunk : IDisposable {
             // spread grass to nearby dirt blocks
             // in a 3x3x3 area
             var r = Meth.getRandomCoord(random, 6, 6, 6);
-            var coord = World.toWorldPos(chunkX, chunkY, chunkZ, r.X, r.Y, r.Z);
+            var coord = World.toWorldPos(this.coord.x, this.coord.y, this.coord.z, r.X, r.Y, r.Z);
             var x1 = coord.X;
             var y1 = coord.Y;
             var z1 = coord.Z;

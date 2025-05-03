@@ -63,11 +63,11 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             var oldFullBlock = Block.isFullBlock(old);
             var fullBlock = Block.isFullBlock(value);
             if (!oldFullBlock && fullBlock) {
-                chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
+                chunk.addToHeightMap(x, section.coord.y * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount++;
             }
             else if (oldFullBlock && !fullBlock) {
-                chunk.removeFromHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
+                chunk.removeFromHeightMap(x, section.coord.y * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount--;
             }
 
@@ -177,7 +177,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 randomTickCount++;
             }
             if (Block.isFullBlock(block)) {
-                chunk.addToHeightMap(x, section.chunkY * Chunk.CHUNKSIZE + y, z);
+                chunk.addToHeightMap(x, section.coord.y * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount++;
             }
             if (Block.isTranslucent(block)) {

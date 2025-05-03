@@ -240,7 +240,7 @@ public partial class World : IDisposable {
                         var x = coord / (16 * 16);
                         var y = coord / 16 % 16;
                         var z = coord % 16;
-                        chunksection.tick(random, x, y, z);
+                        chunksection.tick(this, random, x, y, z);
                     }
                 }
             }

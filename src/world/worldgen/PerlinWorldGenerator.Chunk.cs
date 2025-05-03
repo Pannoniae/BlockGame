@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using BlockGame.id;
 using BlockGame.util;
@@ -258,10 +259,13 @@ public partial class PerlinWorldGenerator {
         }
     }
 
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int getIndex(int x, int y, int z) {
         return x + z * NOISE_SIZE_X + y * NOISE_SIZE_X * NOISE_SIZE_Z;
     }
-
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double lerp(double a, double b, double t) {
         return a + t * (b - a);
     }

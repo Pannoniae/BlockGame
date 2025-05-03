@@ -180,7 +180,7 @@ namespace System.Numerics {
 
         public bool outsideCameraHorizontal(AABB aabb) {
             // why bother checking front/back? come on, it's a camera frustum!
-            return aabb.isFront(_planes[2]) || aabb.isFront(_planes[3]);
+            return aabb.isFrontTwo(_planes[2], _planes[3]);
         }
 
 
@@ -193,7 +193,7 @@ namespace System.Numerics {
         // for subchunks -> we already established that they are inside the horizontal bounds
         public bool outsideCameraUpDown(AABB aabb) {
             // why bother checking front/back? come on, it's a camera frustum!
-            return aabb.isFront(_planes[4]) || aabb.isFront(_planes[5]);
+            return aabb.isFrontTwo(_planes[4], _planes[5]);
         }
 
         /// <summary>

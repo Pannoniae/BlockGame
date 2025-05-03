@@ -94,7 +94,7 @@ public class Cave : OverlayFeature {
             genCaveInner(world, i, steps, origin);
         }
     }
-    
+
     // I know we are hiding them, THAT'S THE ENTIRE FUCKING POINT
     [SuppressMessage("ReSharper", "LocalVariableHidesMember")]
     private void genCaveInner(World world, int step, int steps, ChunkCoord origin) {
@@ -124,9 +124,9 @@ public class Cave : OverlayFeature {
         if (width < 2) {
             goto cleanup;
         }
-        
+
         double appliedWidth = width;
-        
+
         // if room, continue being a room, if not, 0.1% chance of flipping into one
         if (isRoom || (widthVar > 0.45 && widthVar < 0.451)) {
             // create a room
@@ -136,7 +136,7 @@ public class Cave : OverlayFeature {
             isRoom = true;
             goto gen;
         }
-        
+
         // in the beginning/end, we want to be narrower to "tail it off"
         int taperingSteps = steps / 10; // 10% at each end
         if (step < taperingSteps) {
@@ -163,7 +163,7 @@ public class Cave : OverlayFeature {
         if (rotationChance < 0.01) {
             // 1% chance for a vertical drop
             // Keep small horizontal movement but add strong downward component
-            vAngle = Meth.deg2rad(rand.Next(-70, -30));
+            vAngle = Meth.deg2rad(rand.Next(-70, 70));
             //Console.Out.WriteLine("VERTICAL DROP");
         }
         else if (rotationChance < 0.05) {
@@ -215,9 +215,9 @@ public class Cave : OverlayFeature {
         // if we are outside the chunk, bail
         if (xMax < origin.x * Chunk.CHUNKSIZE ||
             xMin > (origin.x + 1) * Chunk.CHUNKSIZE ||
-            yMax < 2 || 
+            yMax < 2 ||
             yMin > World.WORLDHEIGHT - 4 ||
-            zMax < origin.z * Chunk.CHUNKSIZE || 
+            zMax < origin.z * Chunk.CHUNKSIZE ||
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
             goto cleanup;
         }
@@ -237,23 +237,22 @@ public class Cave : OverlayFeature {
                 // IMPORTANT do it upside down because the whole grass replacing stuff
                 // if you do it the right way around we won't know whether we've ruined terrain or not
                 for (int yd = (int)yMax - 1; yd >= (int)yMin; yd--) {
-                    
-                    
                     // distance check
 
-                    var dist = (cx - xd) * (cx - xd) +
+                    double dist;
+                    // if it's a room, don't do a circle - make the bottom flat
+                    if (isRoom && yd < cy) {
+                        dist = (cx - xd) * (cx - xd) +
+                               ((cy - yd) * 2d) * ((cy - yd) * 2d) +
+                               (cz - zd) * (cz - zd);
+                    }
+                    else {
+                        dist = (cx - xd) * (cx - xd) +
                                (cy - yd) * (cy - yd) +
                                (cz - zd) * (cz - zd);
-                    // if it's a room, don't do a circle - make the bottom flat
-                    if (isRoom) {
-                        if (yd < cy) {
-                            dist = (cx - xd) * (cx - xd) +
-                                ((cy - yd) * 2d) * ((cy - yd) * 2d) +
-                                (cz - zd) * (cz - zd);
-                        }
                     }
-                    
-                    
+
+
                     if (dist < (int)(appliedWidth * appliedWidth)) {
                         var block = world.getBlock(xd, yd, zd);
 

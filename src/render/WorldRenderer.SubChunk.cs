@@ -14,7 +14,6 @@ using BoundingFrustum = System.Numerics.BoundingFrustum;
 namespace BlockGame;
 
 public partial class WorldRenderer {
-
     // we need it here because completely full chunks are also empty of any rendering
     private Dictionary<SubChunkCoord, bool> hasRenderOpaque = new();
     private Dictionary<SubChunkCoord, bool> hasRenderTranslucent = new();
@@ -35,9 +34,13 @@ public partial class WorldRenderer {
     // actually we don't need a list, regular arrays will do because it's only a few megs of space and it's shared
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of them and it will still be in the ballpark of 10MB
     private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
+
     // YZX again
     private static readonly ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
-    private static readonly byte[] neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+
+    private static readonly byte[]
+        neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+
     private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
     private static Stopwatch sw = new Stopwatch();
@@ -47,7 +50,6 @@ public partial class WorldRenderer {
     /// because no field access needed at all.
     /// See https://github.com/dotnet/roslyn/pull/61414 for more.
     public static ReadOnlySpan<sbyte> offsetTable => [
-
         // west
         -1, 0, 1, -1, 1, 0, -1, 1, 1,
         -1, 0, 1, -1, -1, 0, -1, -1, 1,
@@ -86,42 +88,65 @@ public partial class WorldRenderer {
     ];
 
     public static ReadOnlySpan<short> offsetTableCompact => [
-
         // west
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
 
         // east
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
 
         // south
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
 
         // north
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
 
         // down
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
 
         // up
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
+        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
+        1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
 
     private static bool opaqueBlocks(int b) {
@@ -131,25 +156,24 @@ public partial class WorldRenderer {
     private static bool notOpaqueBlocks(int b) {
         return b == 0 || Block.get(b).layer == RenderLayer.TRANSLUCENT;
     }
-    
+
 
     /// <summary>
     /// TODO store the number of blocks in the chunksection and only allocate the vertex list up to that length
     /// </summary>
     public void meshChunk(SubChunk subChunk) {
-        
         //sw.Restart();
         vao.GetValueOrDefault(subChunk.coord)?.Dispose();
         vao[subChunk.coord] = new SharedBlockVAO(chunkVAO);
         watervao.GetValueOrDefault(subChunk.coord)?.Dispose();
         watervao[subChunk.coord] = new SharedBlockVAO(chunkVAO);
-        
+
         var currentVAO = vao[subChunk.coord];
         var currentWaterVAO = watervao[subChunk.coord];
-        
+
         hasRenderOpaque[subChunk.coord] = false;
         hasRenderTranslucent[subChunk.coord] = false;
-        
+
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
         if (subChunk.isEmpty) {
@@ -164,7 +188,7 @@ public partial class WorldRenderer {
         // if chunk is full, don't mesh either
         // status update: this is actually bullshit and causes rendering bugs with *weird* worlds such as "all stone until building height". So this won't work anymore
         //if (subChunk.hasOnlySolid) {
-            //return;
+        //return;
         //}
 
         /*if (World.glob) {
@@ -186,6 +210,7 @@ public partial class WorldRenderer {
         else {
             hasRenderOpaque[subChunk.coord] = false;
         }
+
         //}
         //lock (meshingLock) {
         if (subChunk.blocks.hasTranslucentBlocks()) {
@@ -219,17 +244,28 @@ public partial class WorldRenderer {
         return !frustum.outsideCameraUpDown(subChunk.box);
     }
 
-    private void setUniformPos(SubChunk subChunk, Shader s, Vector3D cameraPos) {
-        int loc = s == shader ? uChunkPos : s == waterShader ? wateruChunkPos : dummyuChunkPos;
-        s.setUniformBound(loc, (float)(subChunk.chunkX * 16 - cameraPos.X), (float)(subChunk.chunkY * 16 - cameraPos.Y), (float)(subChunk.chunkZ * 16 - cameraPos.Z));
+    private void setUniformPos(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
+        s.setUniformBound(uChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y),
+            (float)(coord.z * 16 - cameraPos.Z));
+    }
+
+    private void setUniformPosWater(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
+        s.setUniformBound(wateruChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y),
+            (float)(coord.z * 16 - cameraPos.Z));
+    }
+
+    private void setUniformPosDummy(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
+        s.setUniformBound(dummyuChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y),
+            (float)(coord.z * 16 - cameraPos.Z));
     }
 
     public void drawOpaque(SubChunk subChunk, Vector3D cameraPos) {
-        var vao = this.vao[subChunk.coord];
-        if (hasRenderOpaque[subChunk.coord]) {
+        var coord = subChunk.coord;
+        var vao = this.vao[coord];
+        if (hasRenderOpaque[coord]) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            setUniformPos(subChunk, shader, cameraPos);
+            setUniformPos(coord, shader, cameraPos);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -237,20 +273,22 @@ public partial class WorldRenderer {
     }
 
     public void drawTransparent(SubChunk subChunk, Vector3D cameraPos) {
-        var watervao = this.watervao[subChunk.coord];
-        if (hasRenderTranslucent[subChunk.coord]) {
+        var coord = subChunk.coord;
+        var watervao = this.watervao[coord];
+        if (hasRenderTranslucent[coord]) {
             watervao.bind();
-            setUniformPos(subChunk, waterShader, cameraPos);
+            setUniformPosWater(coord, waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
     public void drawTransparentDummy(SubChunk subChunk, Vector3D cameraPos) {
-        var watervao = this.watervao[subChunk.coord];
-        if (hasRenderTranslucent[subChunk.coord]) {
+        var coord = subChunk.coord;
+        var watervao = this.watervao[coord];
+        if (hasRenderTranslucent[coord]) {
             watervao.bind();
-            setUniformPos(subChunk, dummyShader, cameraPos);
+            setUniformPosDummy(coord, dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -260,7 +298,7 @@ public partial class WorldRenderer {
     private void setupNeighbours(SubChunk subChunk) {
         //var sw = new Stopwatch();
         //sw.Start();
-        
+
         //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
 
         // cache blocks
@@ -272,7 +310,7 @@ public partial class WorldRenderer {
         ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.light);
         ref ushort blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref byte lightArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
-        var world = subChunk.world;
+        var world = this.world;
         int y;
         int z;
         int x;
@@ -302,7 +340,6 @@ public partial class WorldRenderer {
                     if (x is >= 0 and < Chunk.CHUNKSIZE &&
                         z is >= 0 and < Chunk.CHUNKSIZE &&
                         y is >= 0 and < Chunk.CHUNKSIZE) {
-
                         blocksArrayRef = sourceBlockArrayRef;
                         lightArrayRef = sourceLightArrayRef;
 
@@ -333,7 +370,7 @@ public partial class WorldRenderer {
                         : (ushort)0;
 
                     // if below world, pretend it's dirt (so it won't get meshed)
-                    if (subChunk.chunkY == 0 && y == -1) {
+                    if (subChunk.coord.y == 0 && y == -1) {
                         bl = Block.DIRT.id;
                     }
 
@@ -353,7 +390,7 @@ public partial class WorldRenderer {
                 }
             }
         }
-        
+
         // if fullbright, just overwrite all lights to 15
         if (Game.graphics.fullbright) {
             neighbourLights.AsSpan().Fill(15);
@@ -418,11 +455,13 @@ public partial class WorldRenderer {
                     if (notOpaqueBlocks(blockArrayRef)) {
                         goto increment;
                     }
+
                     break;
                 case VertexConstructionMode.TRANSLUCENT:
                     if (Block.notTranslucent(blockArrayRef)) {
                         goto increment;
                     }
+
                     break;
             }
 
@@ -443,13 +482,13 @@ public partial class WorldRenderer {
                     goto model;
                     break;
                 case RenderType.CUSTOM:
-                    bl.render(subChunk.world, new Vector3I(x, y, z), chunkVertices);
+                    bl.render(world, new Vector3I(x, y, z), chunkVertices);
                     goto increment;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
 
-            model:;
+            model: ;
 
             // calculate texcoords
             Vector128<float> tex;
@@ -525,8 +564,10 @@ public partial class WorldRenderer {
                             test2 = !Block.isTranslucent(nb) && (Block.notSolid(nb) || !Block.isFullBlock(nb));
                             break;
                     }
+
                     test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb));
                 }
+
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
                     // if face is none, skip the whole lighting business
@@ -543,6 +584,7 @@ public partial class WorldRenderer {
                     else {
                         light.Whole = 0;
                     }
+
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                     if (smoothLighting || AO) {
                         // ox, oy, oz
@@ -631,6 +673,7 @@ public partial class WorldRenderer {
                         }
                         //}
                     }
+
                     vertex:
                     /*tex.X = facesRef.min.u * 16f / Block.atlasSize;
                     tex.Y = facesRef.min.v * 16f / Block.atlasSize;
@@ -701,9 +744,11 @@ public partial class WorldRenderer {
                     //cv += 4;
                     //ci += 6;
                 }
+
                 increment2:
                 facesRef = ref Unsafe.Add(ref facesRef, 1);
             }
+
             // increment the array pointer
             increment:
             blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
@@ -818,9 +863,11 @@ public partial class WorldRenderer {
         if (!Settings.instance.AO) {
             return 0;
         }
+
         if (AOtest(side1) && AOtest(side2)) {
             return 3;
         }
+
         return (byte)(toInt(AOtest(side1)) + toInt(AOtest(side2)) + toInt(AOtest(corner)));
     }
 
@@ -908,36 +955,28 @@ public enum VertexConstructionMode {
 
 [StructLayout(LayoutKind.Explicit)]
 public struct FourShorts {
-    [FieldOffset(0)]
-    public ulong Whole;
-    [FieldOffset(0)]
-    public ushort First;
-    [FieldOffset(2)]
-    public ushort Second;
-    [FieldOffset(4)]
-    public ushort Third;
-    [FieldOffset(6)]
-    public ushort Fourth;
+    [FieldOffset(0)] public ulong Whole;
+    [FieldOffset(0)] public ushort First;
+    [FieldOffset(2)] public ushort Second;
+    [FieldOffset(4)] public ushort Third;
+    [FieldOffset(6)] public ushort Fourth;
 }
 
 [StructLayout(LayoutKind.Explicit)]
 public struct FourBytes {
-    [FieldOffset(0)]
-    public uint Whole;
-    [FieldOffset(0)]
-    public byte First;
-    [FieldOffset(1)]
-    public byte Second;
-    [FieldOffset(2)]
-    public byte Third;
-    [FieldOffset(3)]
-    public byte Fourth;
+    [FieldOffset(0)] public uint Whole;
+    [FieldOffset(0)] public byte First;
+    [FieldOffset(1)] public byte Second;
+    [FieldOffset(2)] public byte Third;
+    [FieldOffset(3)] public byte Fourth;
+
     public FourBytes(byte b0, byte b1, byte b2, byte b3) {
         First = b0;
         Second = b1;
         Third = b2;
         Fourth = b3;
     }
+
     public FourBytes(uint whole) {
         Whole = whole;
     }
@@ -945,24 +984,16 @@ public struct FourBytes {
 
 [StructLayout(LayoutKind.Explicit)]
 public struct FourSBytes {
-    [FieldOffset(0)]
-    public int Whole;
-    [FieldOffset(0)]
-    public sbyte First;
-    [FieldOffset(1)]
-    public sbyte Second;
-    [FieldOffset(2)]
-    public sbyte Third;
-    [FieldOffset(3)]
-    public sbyte Fourth;
+    [FieldOffset(0)] public int Whole;
+    [FieldOffset(0)] public sbyte First;
+    [FieldOffset(1)] public sbyte Second;
+    [FieldOffset(2)] public sbyte Third;
+    [FieldOffset(3)] public sbyte Fourth;
 }
 
 [StructLayout(LayoutKind.Explicit)]
 public struct TwoFloats {
-    [FieldOffset(0)]
-    public ulong Whole;
-    [FieldOffset(0)]
-    public float First;
-    [FieldOffset(4)]
-    public float Second;
+    [FieldOffset(0)] public ulong Whole;
+    [FieldOffset(0)] public float First;
+    [FieldOffset(4)] public float Second;
 }
