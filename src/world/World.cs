@@ -182,6 +182,13 @@ public partial class World : IDisposable {
 
         // empty the meshing queue
         while (meshingQueue.TryDequeue(out var sectionCoord)) {
+            
+            // if this chunk doesn't exist anymore (because we unloaded it)
+            // then don't mesh! otherwise we'll fucking crash
+            if (!isChunkSectionInWorld(sectionCoord)) {
+                continue;
+            }
+            
             var section = getChunkSection(sectionCoord);
             Game.renderer.meshChunk(section);
         }
@@ -395,6 +402,7 @@ public partial class World : IDisposable {
     public void unloadChunk(ChunkCoord coord) {
         // save chunk first
         worldIO.saveChunk(this, chunks[coord]);
+        
         chunkList.Remove(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);

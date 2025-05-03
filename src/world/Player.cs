@@ -34,6 +34,8 @@ public class Player : Entity {
     /// </summary>
     public long spacePress;
 
+    private bool fastMode = false;
+
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world) {
         position = new Vector3D(x, y, z);
@@ -281,6 +283,10 @@ public class Player : Entity {
 
                 // first, normalise (v / v.length) then multiply with movespeed
                 strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
+                
+                if (fastMode) {
+                    strafeVector *= 5;
+                }
 
                 Vector3D moveVector = strafeVector.Z * forward +
                                               strafeVector.X *
@@ -370,6 +376,8 @@ public class Player : Entity {
                 strafeVector.Y += 0.8;
             }
         }
+        
+        fastMode = keyboard.IsKeyPressed(Key.ControlLeft);
 
         if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTick - lastBreak > Constants.breakDelay) {
             breakBlock();

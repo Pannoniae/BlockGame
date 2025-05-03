@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using BlockGame.id;
 using BlockGame.util;
@@ -29,6 +30,8 @@ public class Cave : OverlayFeature {
     /// Between -PI/2 and PI/2
     /// </summary>
     public double vAngle;
+
+    public bool isRoom = false;
 
     public override void generate(World world, ChunkCoord coord, ChunkCoord origin) {
         var chunk = world.getChunk(coord);
@@ -85,12 +88,15 @@ public class Cave : OverlayFeature {
         cz = z;
         hAngle = rand.NextDouble() * Math.PI * 2;
         vAngle = (rand.NextDouble() - 0.5) * Math.PI * 0.25;
+        isRoom = false;
         //Console.Out.WriteLine("Cave: " + cx + ", " + cy + ", " + cz);
         for (int i = 0; i < steps; i++) {
             genCaveInner(world, i, steps, origin);
         }
     }
-
+    
+    // I know we are hiding them, THAT'S THE ENTIRE FUCKING POINT
+    [SuppressMessage("ReSharper", "LocalVariableHidesMember")]
     private void genCaveInner(World world, int step, int steps, ChunkCoord origin) {
         // copy shit into locals
         // idk JIT probably doesn't do that
@@ -102,18 +108,6 @@ public class Cave : OverlayFeature {
         var cx = this.cx;
         var cy = this.cy;
         var cz = this.cz;
-
-
-        // in the beginning/end, we want to be narrower to "tail it off"
-        int taperingSteps = steps / 10; // 10% at each end
-        double appliedWidth = width;
-        if (step < taperingSteps) {
-            appliedWidth = 1 + (width - 1) * step / taperingSteps;
-        }
-        // Last few blocks - taper from normalWidth to 1
-        else if (step > steps - taperingSteps) {
-            appliedWidth = 1 + (width - 1) * (steps - step) / taperingSteps;
-        }
 
         //Console.Out.WriteLine("Step: " + step + ", Width: " + appliedWidth);
 
@@ -130,12 +124,27 @@ public class Cave : OverlayFeature {
         if (width < 2) {
             goto cleanup;
         }
-
-        if (width > 5) {
+        
+        double appliedWidth = width;
+        
+        // if room, continue being a room, if not, 0.1% chance of flipping into one
+        if (isRoom || (widthVar > 0.45 && widthVar < 0.451)) {
             // create a room
-            d = Vector3D.Zero;
-            width += 2;
+            // make D small & random
+            d = new Vector3D(rand.NextDouble() * 0.3, rand.NextDouble() * 0.05, rand.NextDouble() * 0.3);
+            width = rand.NextDouble() * 4 + 5;
+            isRoom = true;
             goto gen;
+        }
+        
+        // in the beginning/end, we want to be narrower to "tail it off"
+        int taperingSteps = steps / 10; // 10% at each end
+        if (step < taperingSteps) {
+            appliedWidth = 1 + (width - 1) * step / taperingSteps;
+        }
+        // Last few blocks - taper from normalWidth to 1
+        else if (step > steps - taperingSteps) {
+            appliedWidth = 1 + (width - 1) * (steps - step) / taperingSteps;
         }
 
         // vary the direction or something unfinished idk
@@ -206,7 +215,7 @@ public class Cave : OverlayFeature {
         // if we are outside the chunk, bail
         if (xMax < origin.x * Chunk.CHUNKSIZE ||
             xMin > (origin.x + 1) * Chunk.CHUNKSIZE ||
-            yMax < 1 || 
+            yMax < 2 || 
             yMin > World.WORLDHEIGHT - 4 ||
             zMax < origin.z * Chunk.CHUNKSIZE || 
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
@@ -216,7 +225,7 @@ public class Cave : OverlayFeature {
         // cap them to the original chunk
         xMin = Math.Max(xMin, origin.x * Chunk.CHUNKSIZE);
         xMax = Math.Min(xMax, (origin.x + 1) * Chunk.CHUNKSIZE);
-        yMin = Math.Max(yMin, 1);
+        yMin = Math.Max(yMin, 2);
         yMax = Math.Min(yMax, World.WORLDHEIGHT - 4);
         zMin = Math.Max(zMin, origin.z * Chunk.CHUNKSIZE);
         zMax = Math.Min(zMax, (origin.z + 1) * Chunk.CHUNKSIZE);
@@ -228,11 +237,23 @@ public class Cave : OverlayFeature {
                 // IMPORTANT do it upside down because the whole grass replacing stuff
                 // if you do it the right way around we won't know whether we've ruined terrain or not
                 for (int yd = (int)yMax - 1; yd >= (int)yMin; yd--) {
+                    
+                    
                     // distance check
-                    var dist =
-                        (cx - xd) * (cx - xd) +
-                        (cy - yd) * (cy - yd) +
-                        (cz - zd) * (cz - zd);
+
+                    var dist = (cx - xd) * (cx - xd) +
+                               (cy - yd) * (cy - yd) +
+                               (cz - zd) * (cz - zd);
+                    // if it's a room, don't do a circle - make the bottom flat
+                    if (isRoom) {
+                        if (yd < cy) {
+                            dist = (cx - xd) * (cx - xd) +
+                                ((cy - yd) * 2d) * ((cy - yd) * 2d) +
+                                (cz - zd) * (cz - zd);
+                        }
+                    }
+                    
+                    
                     if (dist < (int)(appliedWidth * appliedWidth)) {
                         var block = world.getBlock(xd, yd, zd);
 

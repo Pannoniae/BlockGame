@@ -75,6 +75,15 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
                 // add the last item for propagation
                 world.skyLightQueue.Add(new LightNode(worldX + x, y + 1, worldZ + z, this));
+                
+                // loop from y down to the bottom of the world
+                for (int yy = y - 1; yy >= 0; yy--) {
+                    bl = getBlock(x, yy, z);
+                    // if blocklight, propagate
+                    if (Block.lightLevel[bl] > 0) {
+                        world.blockLightQueue.Add(new LightNode(worldX + x, yy, worldZ + z, this));
+                    }
+                }
             }
         }
         world.processSkyLightQueue();
@@ -90,6 +99,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 var y = section.worldY + 15;
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
+                
                 var atLeastOnce = false;
                 while (!Block.isFullBlock(bl) && y > 0) {
                     atLeastOnce = true;
@@ -104,9 +114,19 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     // add the last item for propagation
                     world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
                 }
+                
+                // loop from y down to the bottom of the world
+                for (int yy = y - 1; yy >= 0; yy--) {
+                    bl = getBlock(x, yy, z);
+                    // if blocklight, propagate
+                    if (Block.lightLevel[bl] > 0) {
+                        world.blockLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                    }
+                }
             }
         }
         world.processSkyLightQueue();
+        world.processBlockLightQueue();
     }
 
     /// <summary>

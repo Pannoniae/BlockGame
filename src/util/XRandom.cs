@@ -165,7 +165,7 @@ public sealed class XRandom {
     }
     
     public void Seed(int seed) {
-        SplitMix64Seed((ulong)(uint)seed);
+        SplitMix64Seed((ulong)seed);
     }
 
     // Convenience array constructor

@@ -49,7 +49,7 @@ public partial class PerlinWorldGenerator {
     public const double Y_DIVIDER = 1 / 16d;
 
     public const double BLOCK_VARIATION_FREQUENCY = 1 / 412d;
-    public const double HELLSTONE_FREQUENCY = 1 / 4d;
+    public const double HELLSTONE_FREQUENCY = 1 / 1.5d;
 
     public const double FOLIAGE_FREQUENCY = 1 / 69d;
 
@@ -68,6 +68,12 @@ public partial class PerlinWorldGenerator {
     public void getDensity(double[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         // get the noise
+        getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
+            LOW_FREQUENCY, 8, 2f);
+        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
+            HIGH_FREQUENCY, 8, 2f);
+        getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
+            SELECTOR_FREQUENCY, 2, 2f);
 
         for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
@@ -78,14 +84,11 @@ public partial class PerlinWorldGenerator {
                     var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
 
                     // sample lowNoise
-                    double low = getNoise3D(lowNoise, x * LOW_FREQUENCY, y * LOW_FREQUENCY * Y_DIVIDER,
-                        z * LOW_FREQUENCY, 8, 2f);
+                    double low = lowBuffer[getIndex(nx, ny, nz)];
                     // sample highNoise
-                    double high = getNoise3D(highNoise, x * HIGH_FREQUENCY, y * HIGH_FREQUENCY, z * HIGH_FREQUENCY, 8,
-                        2f);
+                    double high = highBuffer[getIndex(nx, ny, nz)];
                     // sample selectorNoise
-                    double selector = getNoise3D(selectorNoise, x * SELECTOR_FREQUENCY, y * SELECTOR_FREQUENCY,
-                        z * SELECTOR_FREQUENCY, 2, 2f);
+                    double selector = selectorBuffer[getIndex(nx, ny, nz)];
                     // make it more radical
                     // can't sqrt a negative number so sign(abs(x))
                     selector = double.Abs(selector);
@@ -244,7 +247,7 @@ public partial class PerlinWorldGenerator {
                 if (chunk.getBlock(x, height, z) == Blocks.STONE) {
                     // replace top layer with topBlock
                     chunk.setBlockFast(x, height, z, topBlock);
-                    for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {  
+                    for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {
                         // replace stone with dirt
                         if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
                             chunk.setBlockFast(x, yy, z, filler);
@@ -271,20 +274,29 @@ public partial class PerlinWorldGenerator {
         var random = getRandom(coord);
         var chunk = world.getChunk(coord);
 
-        var xWorld = coord.x * Chunk.CHUNKSIZE;
-        var zWorld = coord.z * Chunk.CHUNKSIZE;
+        var xChunk = coord.x * Chunk.CHUNKSIZE;
+        var zChunk = coord.z * Chunk.CHUNKSIZE;
 
         // place hellstone on bottom of the world
-        var height = getNoise(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1);
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+        // height should be between 1 and 4
+        for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+            for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+                
+                var xWorld = coord.x * Chunk.CHUNKSIZE + x;
+                var zWorld = coord.z * Chunk.CHUNKSIZE + z;
+                
+                var height =
+                    getNoise(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
+                height = float.Clamp(height, 1, 5);
+                for (int y = 0; y < height; y++) {
+
                     chunk.setBlockFast(x, y, z, Block.HELLSTONE.id);
+                    chunk.setBlockLight(x, y, z, 15);
                 }
             }
         }
 
-        var foliage = getNoise(foliageNoise, xWorld * FOLIAGE_FREQUENCY, zWorld * FOLIAGE_FREQUENCY, 2, 2);
+        var foliage = getNoise(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);
         var treeCount = foliage;
         if (foliage < 0) {
             treeCount = 0;

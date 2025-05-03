@@ -99,7 +99,7 @@ public class Shader {
         GL.ProgramUniform1(programHandle, loc, value);
     }
 
-    unsafe public void setUniform(int loc, Vector3 value) {
+    public unsafe void setUniform(int loc, Vector3 value) {
         GL.ProgramUniform3(programHandle, loc, 1, (float*)&value);
     }
 
@@ -109,7 +109,7 @@ public class Shader {
         GL.Uniform3(loc, x, y, z);
     }
 
-    unsafe public void setUniform(int loc, Vector4 value) {
+    public unsafe void setUniform(int loc, Vector4 value) {
         GL.ProgramUniform4(programHandle, loc, 1, (float*)&value);
     }
 

@@ -12,7 +12,7 @@ public abstract class OverlayFeature {
     /// <summary>
     /// How many chunks to check around the populated chunk.
     /// </summary>
-    public int radius = 8;
+    public int radius = 6;
 
     public void place(World world, ChunkCoord coord) {
         // we want to seed this unique to the world seed but also take into account the chunk
@@ -24,6 +24,12 @@ public abstract class OverlayFeature {
                 
                 // reseed based on the original seed - we need this to be consistent for the generation
                 rand.Seed(checkCoord.GetHashCode() ^ world.seed);
+                
+                // only do it in a circle!! we don't actually need to do the whole square because the cave VERY likely won't extend diagonally that far.
+                // if ppl complain about cutoff caves or whatever we can increase the radius or something
+                if (xd * xd + zd * zd > radius * radius) {
+                    continue;
+                }
                 if (world.isChunkInWorld(checkCoord)) {
                     generate(world, checkCoord, coord);
                 }
