@@ -60,7 +60,7 @@ public class Block {
     
     public static UVPair?[] uvs = new UVPair?[6];
 
-    public static readonly int maxBlock = 45;
+    public static readonly int maxBlock = 46;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -150,11 +150,13 @@ public class Block {
     public static Block WATER = register(new Water(Blocks.WATER, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid());
 
     public static Block RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore", BlockModel.makeCube(cubeUVs(10, 0))));
-    public static Block PURPLE_ORE = register(new Block(Blocks.PURPLE_ORE, "Purple Ore", BlockModel.makeCube(cubeUVs(11, 0))));
+    public static Block TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore", BlockModel.makeCube(cubeUVs(11, 0))));
     public static Block AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore", BlockModel.makeCube(cubeUVs(12, 0))));
-    public static Block VIOLET_ORE = register(new Block(Blocks.VIOLET_ORE, "Violet Ore", BlockModel.makeCube(cubeUVs(13, 0))));
+    public static Block AMETIST_ORE = register(new Block(Blocks.AMETIST_ORE, "Ametist Ore", BlockModel.makeCube(cubeUVs(13, 0))));
+    public static Block EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore", BlockModel.makeCube(cubeUVs(14, 0))));
+    public static Block DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore", BlockModel.makeCube(cubeUVs(15, 0))));
 
-    public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
+    //public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
 
     public static bool isSolid(int block) {
         return block != 0 && get(block).layer == RenderLayer.SOLID;

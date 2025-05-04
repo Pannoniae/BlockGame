@@ -41,10 +41,12 @@ public class Blocks {
     public const ushort HEAD = 37;
     public const ushort WATER = 38;
     public const ushort RED_ORE = 39;
-    public const ushort PURPLE_ORE = 40;
+    public const ushort TITANIUM_ORE = 40;
     public const ushort AMBER_ORE = 41;
-    public const ushort VIOLET_ORE = 42;
-    public const ushort TALL_GRASS = 43;
-    public const ushort SHORT_GRASS = 44;
-    public const ushort TORCH = 45;
+    public const ushort AMETIST_ORE = 42;
+    public const ushort EMERALD_ORE = 43;
+    public const ushort DIAMOND_ORE = 44;
+    public const ushort TALL_GRASS = 45;
+    public const ushort SHORT_GRASS = 46;
+    //public const ushort TORCH = 45;
 }
