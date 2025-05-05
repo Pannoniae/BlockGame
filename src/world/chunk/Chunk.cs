@@ -152,6 +152,19 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //}
     }
     
+    /// <summary>
+    /// It's like setBlockFast but doesn't check if the chunk is initialised.
+    /// </summary>
+    public void setBlockFastUnsafe(int x, int y, int z, ushort block) {
+        subChunks[y >> 4].blocks.fastSetUnsafe(x, y & 0xF, z, block);
+        if (Block.fullBlock[block]) {
+            subChunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, 0);
+        }
+        //else {
+        //    subChunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, 15);
+        //}
+    }
+    
     public void recalc() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             subChunks[i].blocks.refreshCounts();

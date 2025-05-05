@@ -27,7 +27,9 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         lowNoise.SetFrequency(1f);
         highNoise = new FastNoiseLite(random.Next(seed));
         highNoise.SetFrequency(1f);
-        lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        //lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        // todo
+        //highNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         selectorNoise = new FastNoiseLite(random.Next(seed));
         selectorNoise.SetFrequency(1f);
 
@@ -53,7 +55,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     }
 
     // 2D
-    public float getNoise(FastNoiseLite noise, double x, double z, int octaves, float falloff) {
+    public float getNoise2D(FastNoiseLite noise, double x, double z, int octaves, float falloff) {
         if (falloff <= 0.0f) {
             throw new ArgumentException("Falloff must be positive");
         }
@@ -112,6 +114,8 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         return result;
     }
 
+    /// TODO also replace fastNoiseLite with a custom noise generator
+    /// probably caching the noise values + 
     public float getNoise3D(FastNoiseLite noise, double x, double y, double z, int octaves, float falloff) {
         float result;
         float frequency;
@@ -201,7 +205,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
                 int z = worldZ + nz * NOISE_PER_Z;
-                float value = getNoise(noise, x * frequency * xScale, z * frequency * zScale, octaves, falloff);
+                float value = getNoise2D(noise, x * frequency * xScale, z * frequency * zScale, octaves, falloff);
 
                 for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
                     buffer[getIndex(nx, ny, nz)] = value;

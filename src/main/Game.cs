@@ -640,6 +640,10 @@ public partial class Game {
         var interp = accumTime / fixeddt;
         actualRender(dt, interp);
     }
+    
+    public static void yes() {
+        Console.Out.WriteLine("yes");
+    }
 
     private void actualRender(double dt, double interp) {
         /*if (dt > 0.016) {

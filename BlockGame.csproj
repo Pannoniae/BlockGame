@@ -106,10 +106,12 @@
 
     <ItemGroup>
         <Compile Remove="lib\**"/>
+        <Compile Remove="BlockGameTesting\**"/>
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Remove="lib\**"/>
+        <EmbeddedResource Remove="BlockGameTesting\**"/>
     </ItemGroup>
 
     <ItemGroup>

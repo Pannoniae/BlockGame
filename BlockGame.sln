@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silk.NET.Input.Extensions",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Silk.NET.Input.Glfw", "lib\Silk.NET.Input.Glfw\Silk.NET.Input.Glfw.csproj", "{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockGameTesting", "BlockGameTesting\BlockGameTesting.csproj", "{00893D00-50A6-43C4-9069-9FEF2FC6BCE0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,5 +103,9 @@ Global
 		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4E209A2-C0E6-43BD-9CCE-8169581B7D8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00893D00-50A6-43C4-9069-9FEF2FC6BCE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00893D00-50A6-43C4-9069-9FEF2FC6BCE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00893D00-50A6-43C4-9069-9FEF2FC6BCE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00893D00-50A6-43C4-9069-9FEF2FC6BCE0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

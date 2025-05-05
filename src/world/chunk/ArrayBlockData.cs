@@ -91,13 +91,22 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
         Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
     }
+    
+    /// <summary>
+    /// Kind of like <see cref="fastSet"/>, but doesn't check if the block data is initialized. I've warned you.
+    /// </summary>
+    public void fastSetUnsafe(int x, int y, int z, ushort value) {
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+    }
 
     public ArrayBlockData(Chunk chunk, SubChunk section) {
         this.chunk = chunk;
         this.section = section;
         inited = false;
     }
-
+    
+    // don't inline this, lots of useless code we don't need in the common case.
+    //[MethodImpl(MethodImplOptions.NoInlining)]
     public void init() {
         blocks = blockPool.grab();
         light = lightPool.grab();
@@ -108,9 +117,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
         // if we are already lighted, we can light the section (don't do it during worldgen - it will light the entire chunk full of ground
         // todo this will light caves & shit too. fix this so chunk is only lighted once
-        if (chunk.status >= ChunkStatus.LIGHTED) {
-            
-        }
+        //if (chunk.status >= ChunkStatus.LIGHTED) {
+        //    
+        //}
     }
 
     // don't need to init - the arrays will be overwritten anyway

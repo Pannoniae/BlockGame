@@ -1,0 +1,18 @@
+<Solution>
+  <Project Path="BlockGame.csproj" />
+  <Project Path="BlockGameTesting/BlockGameTesting.csproj" />
+  <Project Path="lib/FontStashSharp.Base/FontStashSharp.Base.csproj" />
+  <Project Path="lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj" />
+  <Project Path="lib/FontStashSharp.Rasterizers.SixLabors.Fonts/FontStashSharp.Rasterizers.SixLabors.Fonts.csproj" />
+  <Project Path="lib/FontStashSharp.Rasterizers.StbTrueTypeSharp/FontStashSharp.Rasterizers.StbTrueTypeSharp.csproj" />
+  <Project Path="lib/FontStashSharp/FontStashSharp.csproj" />
+  <Project Path="lib/Silk.NET.Input.Common/Silk.NET.Input.Common.csproj" />
+  <Project Path="lib/Silk.NET.Input.Extensions/Silk.NET.Input.Extensions.csproj" />
+  <Project Path="lib/Silk.NET.Input.Glfw/Silk.NET.Input.Glfw.csproj" />
+  <Project Path="lib/Silk.NET.Input/Silk.NET.Input.csproj" />
+  <Project Path="lib/TrippyGL.Fonts.Building/TrippyGL.Fonts.Building.csproj" />
+  <Project Path="lib/TrippyGL.Fonts.Extensions/TrippyGL.Fonts.Extensions.csproj" />
+  <Project Path="lib/TrippyGL.Fonts/TrippyGL.Fonts.csproj" />
+  <Project Path="lib/TrippyGL.ImageSharp/TrippyGL.ImageSharp.csproj" />
+  <Project Path="lib/TrippyGL/TrippyGL.csproj" />
+</Solution>

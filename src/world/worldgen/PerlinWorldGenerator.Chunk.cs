@@ -73,6 +73,14 @@ public partial class PerlinWorldGenerator {
             LOW_FREQUENCY, 8, 2f);
         getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
             HIGH_FREQUENCY, 8, 2f);
+        
+        
+        // todo the selector could be sampled less frequently because it doesn't need to be as precise
+        // also sample it less in the Y axis too because it should be 2d you know?
+        // also todo migrate it to valuecubic somehow? yes the broken valuecubic octave summer combined with simplex
+        // produces the actually cool results BUT we could cook something up with maths to make it more extreme and stuff
+        // basically it should be mostly 0 (flat) or 1 (quirky shit) with transitions inbetween
+        // im sure we can cook something up mr white
         getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
             SELECTOR_FREQUENCY, 2, 2f);
 
@@ -80,9 +88,9 @@ public partial class PerlinWorldGenerator {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
                 for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
                     // restore the actual coordinates (to see where we sample at)
-                    var x = coord.x * Chunk.CHUNKSIZE + nx * NOISE_PER_X;
+                    //var x = coord.x * Chunk.CHUNKSIZE + nx * NOISE_PER_X;
                     var y = ny * NOISE_PER_Y;
-                    var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
+                    //var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
 
                     // sample lowNoise
                     double low = lowBuffer[getIndex(nx, ny, nz)];
@@ -98,6 +106,7 @@ public partial class PerlinWorldGenerator {
                     //selector = 0.5 * double.SinPi(selector - 0.5) + 0.5;
 
                     selector *= 2;
+                    //high *= 2;
                     selector = double.Clamp(selector, 0, 1);
 
                     //Console.Out.WriteLine("b: " + selector);
@@ -136,47 +145,91 @@ public partial class PerlinWorldGenerator {
     private void interpolate(double[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
+        // we do this so we don't check "is chunk initialised" every single time we set a block.
+        // this cuts our asm code size by half lol from all that inlining and shit
+        // TODO it doesnt work properly, I'll fix it later
+        // Span<bool> initialised = stackalloc bool[Chunk.CHUNKHEIGHT];
+
         for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+            var y0 = y >> NOISE_PER_Y_SHIFT;
+            var y1 = y0 + 1;
+            double yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var z0 = z >> NOISE_PER_Z_SHIFT;
+                var z1 = z0 + 1;
+                double zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     // the grid cell that contains the point
                     var x0 = x >> NOISE_PER_X_SHIFT;
-                    var y0 = y >> NOISE_PER_Y_SHIFT;
-                    var z0 = z >> NOISE_PER_Z_SHIFT;
-
                     var x1 = x0 + 1;
-                    var y1 = y0 + 1;
-                    var z1 = z0 + 1;
 
                     // the lerp (between 0 and 1)
                     // double xd = (x % NOISE_PER_X) / (double)NOISE_PER_X;
                     double xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
-                    double yd = (y & NOISE_PER_X_MASK) * NOISE_PER_Y_INV;
-                    double zd = (z & NOISE_PER_X_MASK) * NOISE_PER_Z_INV;
+                    //var ys = y >> 4;
 
-                    // the eight corner values from the buffer
-                    var c000 = buffer[getIndex(x0, y0, z0)];
-                    var c001 = buffer[getIndex(x0, y0, z1)];
-                    var c010 = buffer[getIndex(x0, y1, z0)];
-                    var c011 = buffer[getIndex(x0, y1, z1)];
-                    var c100 = buffer[getIndex(x1, y0, z0)];
-                    var c101 = buffer[getIndex(x1, y0, z1)];
-                    var c110 = buffer[getIndex(x1, y1, z0)];
-                    var c111 = buffer[getIndex(x1, y1, z1)];
+                    double value;
 
-                    // Interpolate along x
-                    var c00 = lerp(c000, c100, xd);
-                    var c01 = lerp(c001, c101, xd);
-                    var c10 = lerp(c010, c110, xd);
-                    var c11 = lerp(c011, c111, xd);
+                    /*if (Avx2.IsSupported && false) {
+                        unsafe {
+                            // load the eight corner values from the buffer into a vector
+                            var c000 = buffer[getIndex(x0, y0, z0)];
+                            var c001 = buffer[getIndex(x0, y0, z1)];
+                            var c010 = buffer[getIndex(x0, y1, z0)];
+                            var c011 = buffer[getIndex(x0, y1, z1)];
+                            var c100 = buffer[getIndex(x1, y0, z0)];
+                            var c101 = buffer[getIndex(x1, y0, z1)];
+                            var c110 = buffer[getIndex(x1, y1, z0)];
+                            var c111 = buffer[getIndex(x1, y1, z1)];
 
-                    // Interpolate along y
-                    var c0 = lerp(c00, c10, yd);
-                    var c1 = lerp(c01, c11, yd);
 
-                    // Interpolate along z
-                    var value = lerp(c0, c1, zd);
+                            var values1 = Vector256.Create(c000, c001, c010, c011);
+                            var values2 = Vector256.Create(c100, c101, c110, c111);
 
+                            // the two vectors contain the two halves of the cube to be interpolated.
+                            // We need to interpolate element-wise.
+                            var interp = lerp4(values1, values2, Vector256.Create(xd));
+
+                            // now the vector contains the 4 interpolated values. interpolate narrower (2x2)
+                            var low = interp.GetLower();
+                            var high = interp.GetUpper();
+                            var interp2 = lerp2(low, high, Vector128.Create(yd));
+
+                            // now the vector contains the 2 interpolated values. interpolate again (1x2)
+                            var lower = interp2.GetElement(0);
+                            var higher = interp2.GetElement(1);
+                            value = lerp(lower, higher, zd);
+                        }
+                    }
+                    else */
+                    {
+                        // the eight corner values from the buffer
+                        var c000 = buffer[getIndex(x0, y0, z0)];
+                        var c001 = buffer[getIndex(x0, y0, z1)];
+                        var c010 = buffer[getIndex(x0, y1, z0)];
+                        var c011 = buffer[getIndex(x0, y1, z1)];
+                        var c100 = buffer[getIndex(x1, y0, z0)];
+                        var c101 = buffer[getIndex(x1, y0, z1)];
+                        var c110 = buffer[getIndex(x1, y1, z0)];
+                        var c111 = buffer[getIndex(x1, y1, z1)];
+
+                        // Interpolate along x
+                        var c00 = lerp(c000, c100, xd);
+                        var c01 = lerp(c001, c101, xd);
+                        var c10 = lerp(c010, c110, xd);
+                        var c11 = lerp(c011, c111, xd);
+
+                        // Interpolate along y
+                        var c0 = lerp(c00, c10, yd);
+                        var c1 = lerp(c01, c11, yd);
+
+                        // Interpolate along z
+                        value = lerp(c0, c1, zd);
+                    }
+
+                    // if we haven't initialised the chunk yet, do so
                     // if below sea level, water
                     if (value > 0) {
                         chunk.setBlockFast(x, y, z, Blocks.STONE);
@@ -196,8 +249,8 @@ public partial class PerlinWorldGenerator {
     public void generateSurface(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
-        for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+        for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+            for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
                 int height = chunk.heightMap.get(x, z);
 
@@ -207,7 +260,7 @@ public partial class PerlinWorldGenerator {
                 }
 
                 // thickness of the soil layer layer
-                var amt = getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
+                var amt = getNoise2D(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
                 var blockVar = getNoise3D(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
                     128,
                     worldPos.Z * BLOCK_VARIATION_FREQUENCY,
@@ -259,18 +312,22 @@ public partial class PerlinWorldGenerator {
         }
     }
 
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int getIndex(int x, int y, int z) {
         return x + z * NOISE_SIZE_X + y * NOISE_SIZE_X * NOISE_SIZE_Z;
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double lerp(double a, double b, double t) {
         return a + t * (b - a);
     }
 
     private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
+        return a + t * (b - a);
+    }
+
+    private static Vector128<double> lerp2(Vector128<double> a, Vector128<double> b, Vector128<double> t) {
         return a + t * (b - a);
     }
 
@@ -285,22 +342,20 @@ public partial class PerlinWorldGenerator {
         // height should be between 1 and 4
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                
                 var xWorld = coord.x * Chunk.CHUNKSIZE + x;
                 var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-                
+
                 var height =
-                    getNoise(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
+                    getNoise2D(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
-
                     chunk.setBlockFast(x, y, z, Block.HELLSTONE.id);
                     chunk.setBlockLight(x, y, z, 15);
                 }
             }
         }
 
-        var foliage = getNoise(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);
+        var foliage = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);
         var treeCount = foliage;
         if (foliage < 0) {
             treeCount = 0;
