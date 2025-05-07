@@ -22,9 +22,9 @@ public partial class PerlinWorldGenerator {
     const int NOISE_PER_Z_SHIFT = 2;
 
     // x / y = x * (1 / y)
-    const double NOISE_PER_X_INV = 1d / NOISE_PER_X;
-    const double NOISE_PER_Y_INV = 1d / NOISE_PER_Y;
-    const double NOISE_PER_Z_INV = 1d / NOISE_PER_Z;
+    const float NOISE_PER_X_INV = 1f / NOISE_PER_X;
+    const float NOISE_PER_Y_INV = 1f / NOISE_PER_Y;
+    const float NOISE_PER_Z_INV = 1f / NOISE_PER_Z;
 
     public const int NOISE_SIZE_X = (Chunk.CHUNKSIZE / NOISE_PER_X) + 1;
     public const int NOISE_SIZE_Y = (Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT) / NOISE_PER_Y + 1;
@@ -32,27 +32,27 @@ public partial class PerlinWorldGenerator {
 
     public const int WATER_LEVEL = 64;
 
-    private readonly double[] buffer = new double[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] lowBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] highBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] selectorBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] auxBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] foliageBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] temperatureBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private readonly float[] humidityBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] buffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] lowBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] highBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] selectorBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] auxBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] foliageBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] temperatureBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] humidityBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
 
-    public const double LOW_FREQUENCY = 1 / 292d;
-    public const double HIGH_FREQUENCY = 1 / 135d;
-    public const double SELECTOR_FREQUENCY = 1 / 490d;
+    public const float LOW_FREQUENCY = 1 / 292f;
+    public const float HIGH_FREQUENCY = 1 / 135f;
+    public const float SELECTOR_FREQUENCY = 1 / 490f;
 
-    public const double Y_DIVIDER = 1 / 16d;
+    public const float Y_DIVIDER = 1 / 16f;
 
-    public const double BLOCK_VARIATION_FREQUENCY = 1 / 412d;
-    public const double HELLSTONE_FREQUENCY = 1 / 1.5d;
+    public const float BLOCK_VARIATION_FREQUENCY = 1 / 412f;
+    public const float HELLSTONE_FREQUENCY = 1 / 1.5f;
 
-    public const double FOLIAGE_FREQUENCY = 1 / 69d;
+    public const float FOLIAGE_FREQUENCY = 1 / 69f;
 
     public void generate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
@@ -66,15 +66,15 @@ public partial class PerlinWorldGenerator {
     }
 
 
-    public void getDensity(double[] buffer, ChunkCoord coord) {
+    public void getDensity(float[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         // get the noise
         getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
             LOW_FREQUENCY, 8, 2f);
         getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
             HIGH_FREQUENCY, 8, 2f);
-        
-        
+
+
         // todo the selector could be sampled less frequently because it doesn't need to be as precise
         // also sample it less in the Y axis too because it should be 2d you know?
         // also todo migrate it to valuecubic somehow? yes the broken valuecubic octave summer combined with simplex
@@ -93,21 +93,21 @@ public partial class PerlinWorldGenerator {
                     //var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
 
                     // sample lowNoise
-                    double low = lowBuffer[getIndex(nx, ny, nz)];
+                    float low = lowBuffer[getIndex(nx, ny, nz)];
                     // sample highNoise
-                    double high = highBuffer[getIndex(nx, ny, nz)];
+                    float high = highBuffer[getIndex(nx, ny, nz)];
                     // sample selectorNoise
-                    double selector = selectorBuffer[getIndex(nx, ny, nz)];
+                    float selector = selectorBuffer[getIndex(nx, ny, nz)];
                     // make it more radical
                     // can't sqrt a negative number so sign(abs(x))
-                    selector = double.Abs(selector);
+                    selector = float.Abs(selector);
 
                     // sin it
-                    //selector = 0.5 * double.SinPi(selector - 0.5) + 0.5;
+                    //selector = 0.5 * float.SinPi(selector - 0.5) + 0.5;
 
                     selector *= 2;
                     //high *= 2;
-                    selector = double.Clamp(selector, 0, 1);
+                    selector = float.Clamp(selector, 0, 1);
 
                     //Console.Out.WriteLine("b: " + selector);
 
@@ -119,7 +119,7 @@ public partial class PerlinWorldGenerator {
                     // squish the high noise towards zero when the selector is low - more flat areas, less mountains
 
                     // Reduce the density when too high above 64 and increase it when too low
-                    var airBias = (y - WATER_LEVEL) / (double)World.WORLDHEIGHT;
+                    var airBias = (y - WATER_LEVEL) / (float)World.WORLDHEIGHT;
 
                     // flatten out low noise
                     //low -= airBias;
@@ -132,7 +132,7 @@ public partial class PerlinWorldGenerator {
                     // only sample if actually required
 
                     // combine the two
-                    double density = low + (high - low) * selector;
+                    float density = low + (high - low) * selector;
                     density -= airBias;
 
                     // store the value in the buffer
@@ -142,7 +142,7 @@ public partial class PerlinWorldGenerator {
         }
     }
 
-    private void interpolate(double[] buffer, ChunkCoord coord) {
+    private void interpolate(float[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
         // we do this so we don't check "is chunk initialised" every single time we set a block.
@@ -153,12 +153,12 @@ public partial class PerlinWorldGenerator {
         for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
             var y0 = y >> NOISE_PER_Y_SHIFT;
             var y1 = y0 + 1;
-            double yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+            float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
 
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var z0 = z >> NOISE_PER_Z_SHIFT;
                 var z1 = z0 + 1;
-                double zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+                float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
 
                 for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
                     // the grid cell that contains the point
@@ -166,11 +166,11 @@ public partial class PerlinWorldGenerator {
                     var x1 = x0 + 1;
 
                     // the lerp (between 0 and 1)
-                    // double xd = (x % NOISE_PER_X) / (double)NOISE_PER_X;
-                    double xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
+                    // float xd = (x % NOISE_PER_X) / (float)NOISE_PER_X;
+                    float xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
                     //var ys = y >> 4;
 
-                    double value;
+                    float value;
 
                     /*if (Avx2.IsSupported && false) {
                         unsafe {
@@ -228,6 +228,79 @@ public partial class PerlinWorldGenerator {
                         // Interpolate along z
                         value = lerp(c0, c1, zd);
                     }
+
+                    // if we haven't initialised the chunk yet, do so
+                    // if below sea level, water
+                    if (value > 0) {
+                        chunk.setBlockFast(x, y, z, Blocks.STONE);
+                        chunk.addToHeightMap(x, y, z);
+                    }
+                    else {
+                        if (y < WATER_LEVEL) {
+                            chunk.setBlockFast(x, y, z, Blocks.WATER);
+                            chunk.addToHeightMap(x, y, z);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void interpolateSIMD(float[] buffer, ChunkCoord coord) {
+        var chunk = world.getChunk(coord);
+
+        // we do this so we don't check "is chunk initialised" every single time we set a block.
+        // this cuts our asm code size by half lol from all that inlining and shit
+        // TODO it doesnt work properly, I'll fix it later
+        // Span<bool> initialised = stackalloc bool[Chunk.CHUNKHEIGHT];
+
+        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+            var y0 = y >> NOISE_PER_Y_SHIFT;
+            var y1 = y0 + 1;
+            float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var z0 = z >> NOISE_PER_Z_SHIFT;
+                var z1 = z0 + 1;
+                float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+
+                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
+                    // the grid cell that contains the point
+                    var x0 = x >> NOISE_PER_X_SHIFT;
+                    var x1 = x0 + 1;
+
+                    // the lerp (between 0 and 1)
+                    // float xd = (x % NOISE_PER_X) / (float)NOISE_PER_X;
+                    float xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
+                    //var ys = y >> 4;
+
+                    // load the eight corner values from the buffer into a vector
+                    var c000 = buffer[getIndex(x0, y0, z0)];
+                    var c001 = buffer[getIndex(x0, y0, z1)];
+                    var c010 = buffer[getIndex(x0, y1, z0)];
+                    var c011 = buffer[getIndex(x0, y1, z1)];
+                    var c100 = buffer[getIndex(x1, y0, z0)];
+                    var c101 = buffer[getIndex(x1, y0, z1)];
+                    var c110 = buffer[getIndex(x1, y1, z0)];
+                    var c111 = buffer[getIndex(x1, y1, z1)];
+
+
+                    var values1 = Vector128.Create(c000, c001, c010, c011);
+                    var values2 = Vector128.Create(c100, c101, c110, c111);
+
+                    // the two vectors contain the two halves of the cube to be interpolated.
+                    // We need to interpolate element-wise.
+                    var interp = lerp4(values1, values2, Vector128.Create(xd));
+
+                    // now the vector contains the 4 interpolated values. interpolate narrower (2x2)
+                    var low = interp.GetLower();
+                    var high = interp.GetUpper();
+                    var interp2 = lerp2(low, high, Vector64.Create(yd));
+
+                    // now the vector contains the 2 interpolated values. interpolate again (1x2)
+                    var lower = interp2.GetElement(0);
+                    var higher = interp2.GetElement(1);
+                    var value = lerp(lower, higher, zd);
 
                     // if we haven't initialised the chunk yet, do so
                     // if below sea level, water
@@ -317,17 +390,29 @@ public partial class PerlinWorldGenerator {
     private static int getIndex(int x, int y, int z) {
         return x + z * NOISE_SIZE_X + y * NOISE_SIZE_X * NOISE_SIZE_Z;
     }
+    
+    private static Vector128<int> getIndex4(int x, int y, int z) {
+        return Vector128.Create(x) + Vector128.Create(z) * NOISE_SIZE_X + Vector128.Create(y) * NOISE_SIZE_X * NOISE_SIZE_Z;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static double lerp(double a, double b, double t) {
+    private static float lerp(float a, float b, float t) {
         return a + t * (b - a);
     }
 
     private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
         return a + t * (b - a);
     }
+    
+    private static Vector128<float> lerp4(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
+        return a + t * (b - a);
+    }
 
-    private static Vector128<double> lerp2(Vector128<double> a, Vector128<double> b, Vector128<double> t) {
+    private static Vector128<float> lerp2(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
+        return a + t * (b - a);
+    }
+    
+    private static Vector64<float> lerp2(Vector64<float> a, Vector64<float> b, Vector64<float> t) {
         return a + t * (b - a);
     }
 

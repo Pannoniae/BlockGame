@@ -8,17 +8,40 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <PublicizeAll>true</PublicizeAll>
+    </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.2"/>
+        <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0"/>
         <PackageReference Include="NUnit" Version="4.2.2"/>
         <PackageReference Include="NUnit.Analyzers" Version="4.4.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
-        <ProjectReference Include="..\BlockGame.csproj"/>
+        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.6" />
+        <Reference Include="BlockGame">
+            <HintPath>..\bin\$(Configuration)\$(TargetFramework)\BlockGame.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <Publicize Include="BlockGame" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PublicizerClearCacheOnClean>true</PublicizerClearCacheOnClean>
+    </PropertyGroup>
+
+    <Target Name="PublicizerClean" BeforeTargets="Build">
+        <RemoveDir Directories="$(IntermediateOutputPath)PublicizedAssemblies" />
+    </Target>
 
 </Project>
