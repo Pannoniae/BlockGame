@@ -53,11 +53,6 @@ public sealed partial class WorldRenderer : IDisposable {
     public int waterFogColour;
     public int waterSkyColour;
 
-    /// <summary>
-    /// A buffer of indices for the maximum amount of quads.
-    /// </summary>
-    public uint fatQuadIndices;
-
     public static BoundingFrustum frustum;
 
     private InstantDrawColour idc = new InstantDrawColour(256);
@@ -138,8 +133,8 @@ public sealed partial class WorldRenderer : IDisposable {
             indices[i * 6 + 5] = (ushort)(i * 4 + 3);
         }
 
-        fatQuadIndices = GL.GenBuffer();
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, fatQuadIndices);
+        Game.graphics.fatQuadIndices = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
         unsafe {
             fixed (ushort* pIndices = indices) {
                 GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)),
@@ -149,7 +144,7 @@ public sealed partial class WorldRenderer : IDisposable {
     }
 
     public void bindQuad() {
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, fatQuadIndices);
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
     }
 
     public void setUniforms() {
@@ -333,30 +328,30 @@ public sealed partial class WorldRenderer : IDisposable {
         //idc.instantShader.use();
         idc.setMVP(viewProj);
         idc.setMV(modelView);
+        
+        idc.begin(PrimitiveType.Quads);
 
         // add 6 vertices for the quad
         idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
         idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z + skySize, skyColour));
         idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z + skySize, skyColour));
         idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z - skySize, skyColour));
-        idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
-        idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z + skySize, skyColour));
-        idc.finish();
+        idc.end();
 
 
         var underSky = new Vector3(0, -16, 0);
+        
+        idc.begin(PrimitiveType.Quads);
 
         idc.fogDistance(rd * 0.005f, rd);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
+        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
         idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
 
-        idc.finish();
+        idc.end();
 
         // Disable fog after rendering sky
         idc.enableFog(false);
@@ -376,6 +371,7 @@ public sealed partial class WorldRenderer : IDisposable {
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
+        idc.begin(PrimitiveType.Triangles);
         idt.addVertex(
             new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z - sunSize,
                 0f, 0f));
@@ -394,7 +390,7 @@ public sealed partial class WorldRenderer : IDisposable {
         idt.addVertex(
             new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z + sunSize,
                 1f, 1f));
-        idt.finish();
+        idt.end();
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
     }

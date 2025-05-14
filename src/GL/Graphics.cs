@@ -27,6 +27,11 @@ public class Graphics {
 
     private int vao;
     public bool fullbright;
+    
+    /// <summary>
+    /// A buffer of indices for the maximum amount of quads.
+    /// </summary>
+    public uint fatQuadIndices;
 
     public Graphics() {
         GL = Game.GL;

@@ -62,6 +62,8 @@ public class ParticleManager {
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
             var tint = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+            
+            drawer.begin(PrimitiveType.Triangles);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
@@ -85,6 +87,6 @@ public class ParticleManager {
 
         }
 
-        drawer.finish();
+        drawer.end();
     }
 }

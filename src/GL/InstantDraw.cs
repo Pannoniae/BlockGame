@@ -1,4 +1,5 @@
 using System.Numerics;
+using Silk.NET.Core.Native;
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
@@ -12,6 +13,19 @@ public enum FogType {
 }
 
 public abstract class InstantDraw<T> where T : unmanaged {
+    
+    protected PrimitiveType vertexType;
+    
+    protected readonly int maxVertices;
+    protected readonly T[] vertices;
+    protected int currentVertex = 0;
+
+    public readonly Silk.NET.OpenGL.GL GL;
+    
+    protected uint VAO;
+    protected uint VBO;
+    
+    
     protected Shader instantShader;
     public int uMVP;
     public int uModelView;
@@ -21,15 +35,6 @@ public abstract class InstantDraw<T> where T : unmanaged {
     public int uFogEnabled;
     public int uFogType;      // Added for fog type
     public int uFogDensity;   // Added for exp/exp2 fog
-    
-    protected readonly int maxVertices;
-    protected readonly T[] vertices;
-
-    protected uint VAO;
-    protected uint VBO;
-
-    public readonly Silk.NET.OpenGL.GL GL;
-    protected int currentVertex = 0;
 
     // Fog settings
     protected Vector4 fogColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -38,7 +43,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected bool fogEnabled = false;  // Disabled by default
     protected FogType fogType = FogType.Linear;
     protected float fogDensity = 0.01f;
-    
+
     public InstantDraw(int maxVertices) {
         vertices = new T[maxVertices];
         this.maxVertices = maxVertices;
@@ -96,17 +101,25 @@ public abstract class InstantDraw<T> where T : unmanaged {
     public void setMVP(Matrix4x4 mvp) {
         instantShader.setUniform(uMVP, mvp);
     }
+    
+    /// <summary>
+    /// Set the primitive mode for the instant draw.
+    /// When set to quads, it will use triangles on the OpenGL side - but it will be transparently handled by using the shared indices.
+    /// </summary>
+    public void begin(PrimitiveType type) {
+        vertexType = type;
+    }
 
     public void addVertex(T vertex) {
         if (currentVertex >= maxVertices - 1) {
-            finish();
+            end();
         }
         //Console.Out.WriteLine(currentLine);
         vertices[currentVertex] = vertex;
         currentVertex++;
     }
     
-    public void finish() {
+    public void end() {
         // nothing to do
         if (currentVertex == 0) {
             return;
@@ -133,8 +146,20 @@ public abstract class InstantDraw<T> where T : unmanaged {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(T)), v);
             }
         }
+        
+        // handle the vertex type
+        var effectiveMode = vertexType;
+        if (vertexType == PrimitiveType.Quads) {
+            unsafe {
+                effectiveMode = PrimitiveType.Triangles;
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+                GL.DrawElements(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedShort, (void*)0);
+            }
+        }
+        else {
+            GL.DrawArrays(effectiveMode, 0, (uint)currentVertex);
+        }
 
-        GL.DrawArrays(PrimitiveType.Triangles, 0, (uint)currentVertex);
         currentVertex = 0;
     }
 }

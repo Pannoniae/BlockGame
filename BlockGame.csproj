@@ -113,6 +113,11 @@
         <EmbeddedResource Remove="lib\**"/>
         <EmbeddedResource Remove="BlockGameTesting\**"/>
     </ItemGroup>
+    
+    <ItemGroup>
+        <None Remove="lib\**"/>
+        <None Remove="BlockGameTesting\**"/>
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>

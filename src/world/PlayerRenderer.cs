@@ -100,6 +100,8 @@ public class PlayerRenderer {
         // Draw a full-screen quad with slightly blue tint
         float alpha = 0.5f;
         
+        waterOverlayRenderer.begin(PrimitiveType.Triangles);
+        
         waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, -1, 0, 0f, 0f, 255, 255, 255, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, 255, 255, 255, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, 255, 255, 255, (byte)(alpha * 255)));
@@ -109,7 +111,7 @@ public class PlayerRenderer {
         waterOverlayRenderer.addVertex(new BlockVertexTinted(1, 1, 0, 1f, 1f, 255, 255, 255, (byte)(alpha * 255)));
         
         // Render the overlay
-        waterOverlayRenderer.finish();
+        waterOverlayRenderer.end();
     }
 
     public void update(double dt) {
