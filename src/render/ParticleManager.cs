@@ -40,7 +40,6 @@ public class ParticleManager {
         var currentTexture = "textures/blocks.png";
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTexture.handle);
-        drawer.instantShader.use();
 
 
         foreach (var particle in particles) {
@@ -50,7 +49,7 @@ public class ParticleManager {
                 Game.GL.ActiveTexture(TextureUnit.Texture0);
                 Game.GL.BindTexture(TextureTarget.Texture2D, tex.handle);
             }
-            drawer.instantShader.setUniform(drawer.uMVP, world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix());
+            drawer.setMVP(world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix());
             // get interp pos
             var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
             var blockPos = pos.toBlockPos();

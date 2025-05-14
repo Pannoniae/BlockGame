@@ -330,9 +330,9 @@ public sealed partial class WorldRenderer : IDisposable {
 
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
 
-        idc.instantShader.use();
-        idc.instantShader.setUniform(idc.uMVP, viewProj);
-        idc.instantShader.setUniform(idc.uModelView, modelView);
+        //idc.instantShader.use();
+        idc.setMVP(viewProj);
+        idc.setMV(modelView);
 
         // add 6 vertices for the quad
         idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
@@ -367,9 +367,8 @@ public sealed partial class WorldRenderer : IDisposable {
         var sunPosRotated = sunPos;
         var sunSize = 1f;
 
-        idt.instantShader.use();
-        idt.instantShader.setUniform(idt.uMVP, viewProj);
-        idt.instantShader.setUniform(idt.uModelView, modelView);
+        idt.setMVP(viewProj);
+        idt.setMV(modelView);
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.sunTexture.handle);
 

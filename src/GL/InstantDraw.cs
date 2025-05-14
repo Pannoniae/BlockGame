@@ -12,13 +12,13 @@ public enum FogType {
 }
 
 public abstract class InstantDraw<T> where T : unmanaged {
-    public Shader instantShader;
+    protected Shader instantShader;
     public int uMVP;
-    public int uModelView;    // Added for fog
-    public int uFogColor;     // Added for fog
-    public int uFogStart;     // Added for fog
-    public int uFogEnd;       // Added for fog
-    public int uFogEnabled;   // Added for fog toggle
+    public int uModelView;
+    public int uFogColor;
+    public int uFogStart;
+    public int uFogEnd;
+    public int uFogEnabled;
     public int uFogType;      // Added for fog type
     public int uFogDensity;   // Added for exp/exp2 fog
     
@@ -87,6 +87,14 @@ public abstract class InstantDraw<T> where T : unmanaged {
     public void setFogDensity(float density) {
         fogDensity = density;
         instantShader.setUniform(uFogDensity, density);
+    }
+    
+    public void setMV(Matrix4x4 modelView) {
+        instantShader.setUniform(uModelView, modelView);
+    }
+    
+    public void setMVP(Matrix4x4 mvp) {
+        instantShader.setUniform(uMVP, mvp);
     }
 
     public void addVertex(T vertex) {

@@ -92,12 +92,10 @@ public class PlayerRenderer {
         // Set the water overlay texture
         waterOverlayRenderer.setTexture(Game.textureManager.waterOverlay.handle);
         
-        // Create a screen-space quad
-        waterOverlayRenderer.instantShader.use();
-        
         // Set identity MVP matrix (screen space coordinates)
         var identityMVP = Matrix4x4.Identity;
-        waterOverlayRenderer.instantShader.setUniform(waterOverlayRenderer.uMVP, identityMVP);
+        waterOverlayRenderer.setMVP(identityMVP);
+        
         
         // Draw a full-screen quad with slightly blue tint
         float alpha = 0.5f;
