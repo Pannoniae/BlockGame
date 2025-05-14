@@ -23,9 +23,7 @@
         <PackageReference Include="NUnit.Analyzers" Version="4.4.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.6" />
-        <Reference Include="BlockGame">
-            <HintPath>..\bin\$(Configuration)\$(TargetFramework)\BlockGame.dll</HintPath>
-        </Reference>
+        <ProjectReference Include="..\BlockGame.csproj" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>

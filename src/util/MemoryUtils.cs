@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
+using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
@@ -6,6 +8,16 @@ using Silk.NET.OpenGL;
 namespace BlockGame.util;
 
 public static class MemoryUtils {
+
+    /// <summary>
+    /// Gets the alignment of the given object.
+    /// </summary>
+    public static unsafe int getAlignment(object o) {
+        var ptr = &o;
+        var alignment = BitOperations.TrailingZeroCount((uint)ptr);
+        return alignment;
+    }
+    
     public static void cleanGC() {
 
         ArrayBlockData.blockPool.trim();
@@ -78,7 +90,6 @@ public static class MemoryUtils {
         /// https://linux.die.net/man/2/madvise
         /// </summary>
         public static void ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_PAGEOUT() {
-
             try {
                 var startMemoryAddress = Process.GetCurrentProcess().MainModule.BaseAddress;
                 var memoryLength = new UIntPtr((ulong)Process.GetCurrentProcess().WorkingSet64);

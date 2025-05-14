@@ -184,6 +184,7 @@ namespace System.Numerics {
         }
 
 
+        
         // for subchunks -> we already established that they are inside the horizontal bounds
         public bool outsideCameraUpDown(BoundingBox boundingBox) {
             // why bother checking front/back? come on, it's a camera frustum!
