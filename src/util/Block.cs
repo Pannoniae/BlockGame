@@ -78,7 +78,11 @@ public class Block {
     }
 
     public static void preLoad() {
-        
+        for (int i = 0; i < blocks.Length; i++) {
+            if (blocks[i] != null) {
+                renderType[i] = RenderType.MODEL;
+            }
+        }
     }
 
     public static void postLoad() {

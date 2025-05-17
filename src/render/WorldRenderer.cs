@@ -342,7 +342,6 @@ public sealed partial class WorldRenderer : IDisposable {
         var underSky = new Vector3(0, -16, 0);
         
         idc.begin(PrimitiveType.Quads);
-
         idc.fogDistance(rd * 0.005f, rd);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)

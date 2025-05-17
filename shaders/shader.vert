@@ -16,7 +16,7 @@ out float vertexDist;
 uniform vec3 uCameraPos;
 
 void main() {
-    vec3 pos = uChunkPos + (vPos >> 8) - 16;
+    vec3 pos = uChunkPos + vPos / 256. - 16;
     gl_Position = uMVP * vec4(pos, 1.0);
     texCoords = texCoord / 32768.;
     tint = colour;

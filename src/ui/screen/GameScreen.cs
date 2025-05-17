@@ -455,22 +455,15 @@ public class GameScreen : Screen {
                     var max = pos + size;
                     var colour = Color4b.Red;
                     var a = 0.5f;
-                    if (chunk.status == ChunkStatus.MESHED) {
-                        colour = Color4b.Blue;
-                    }
-                    else if (chunk.status == ChunkStatus.LIGHTED) {
-                        colour = Color4b.Green;
-                    }
-                    else if (chunk.status == ChunkStatus.POPULATED) {
-                        colour = Color4b.Yellow;
-                    }
-                    else if (chunk.status == ChunkStatus.GENERATED) {
-                        colour = Color4b.Orange;
-                    }
-                    else if (chunk.status == ChunkStatus.EMPTY) {
-                        colour = Color4b.Gray;
-                    }
-                    
+                    colour = chunk.status switch {
+                        ChunkStatus.MESHED => Color4b.Blue,
+                        ChunkStatus.LIGHTED => Color4b.Green,
+                        ChunkStatus.POPULATED => Color4b.Yellow,
+                        ChunkStatus.GENERATED => Color4b.Orange,
+                        ChunkStatus.EMPTY => Color4b.Gray,
+                        _ => colour
+                    };
+
                     // draw the chunk borders
                     D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, min.Y, max.Z), colour);
                     D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(max.X, min.Y, max.Z), colour);
@@ -482,8 +475,8 @@ public class GameScreen : Screen {
                     D.drawLine(new Vector3D(max.X, max.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), colour);
                     D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), colour);
                     D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(min.X, max.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(max.X, min.Y, min.Z), new Vector3D(max.X, max.Y, min.Z), colour);
+                    D.drawLine(new Vector3D(max.X, pos.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), colour);
+                    D.drawLine(new Vector3D(max.X, pos.Y, pos.Z), new Vector3D(max.X, max.Y, pos.Z), colour);
                 }
             }
         }

@@ -17,7 +17,6 @@ public class Cube {
     /// </summary>
     public Vector3D position;
 
-
     /// <summary>
     /// The the relative position of the cube (from the base position)
     /// </summary>

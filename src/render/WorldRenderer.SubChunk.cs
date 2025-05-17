@@ -472,7 +472,7 @@ public partial class WorldRenderer {
 
             var bl = Block.get(blockArrayRef);
 
-            switch (Block.renderType[bl.id]) {
+            /*switch (Block.renderType[bl.id]) {
                 case RenderType.CUBE:
                     // get UVs from block
                     break;
@@ -486,9 +486,9 @@ public partial class WorldRenderer {
                     goto increment;
                 default:
                     throw new ArgumentOutOfRangeException();
-            }
+            }*/
 
-            model: ;
+            model:;
 
             // calculate texcoords
             Vector128<float> tex;
