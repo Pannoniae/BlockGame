@@ -66,6 +66,7 @@ public class WorldIO {
         chunkTag.addInt("posX", chunk.coord.x);
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
+        chunkTag.addULong("lastSaved", chunk.lastSaved);
         // using YXZ order
         var sectionsTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
@@ -92,8 +93,10 @@ public class WorldIO {
         var posX = nbt.getInt("posX");
         var posZ = nbt.getInt("posZ");
         var status = nbt.getByte("status");
+        var lastSaved = nbt.getULong("lastSaved");
         var chunk = new Chunk(world, posX, posZ) {
-            status = (ChunkStatus)status
+            status = (ChunkStatus)status,
+            lastSaved = lastSaved
         };
         var sections = nbt.getListTag<NBTCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {

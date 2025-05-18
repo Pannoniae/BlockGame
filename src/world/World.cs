@@ -104,12 +104,24 @@ public partial class World : IDisposable {
         worldIO.save(this, name, false);
 
 
-        // setup world saving every 5 mins
-        saveWorld = Game.setInterval(5 * 60 * 1000, saveWorldMethod);
+        // setup world saving every 5 seconds
+        saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
     }
 
     private void saveWorldMethod() {
+        autoSaveChunks();
         worldIO.saveWorldData();
+    }
+    
+    /// <summary>
+    /// Autosave any chunks which haven't been saved in more than a minute.
+    /// </summary>
+    private void autoSaveChunks() {
+        foreach (var chunk in chunks.Values) {
+            if (chunk.status >= ChunkStatus.MESHED && chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+                worldIO.saveChunk(this, chunk);
+            }
+        }
     }
 
     public void startMeshing() {

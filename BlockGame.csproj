@@ -107,6 +107,7 @@
     <ItemGroup>
         <Compile Remove="lib\**"/>
         <Compile Remove="BlockGameTesting\**"/>
+        <Compile Remove="src\ui\element\ProgressBar.cs" />
     </ItemGroup>
 
     <ItemGroup>

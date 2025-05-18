@@ -1,8 +1,4 @@
-using System.IO.Hashing;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BlockGame.util;
-using K4os.Hash.xxHash;
 using Molten;
 using Molten.DoublePrecision;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
@@ -10,22 +6,7 @@ using BoundingFrustum = System.Numerics.BoundingFrustum;
 namespace BlockGame;
 
 public class Chunk : IDisposable, IEquatable<Chunk> {
-    public ChunkStatus status;
-
-    public HeightMap heightMap;
-    public readonly ChunkCoord coord;
-    public SubChunk[] subChunks;
-    public World world;
-
-    public int worldX => coord.x * CHUNKSIZE;
-    public int worldZ => coord.z * CHUNKSIZE;
-    public Vector2I worldPos => new(worldX, worldZ);
-    public Vector2I centrePos => new(worldX + 8, worldZ + 8);
-
-    public AABB box;
-
-    public bool isRendered = false;
-
+    
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
     public const int CHUNKSIZESQ = 16 * 16;
@@ -33,6 +14,23 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public const int CHUNKSIZEEX = 18;
     public const int CHUNKSIZEEXSQ = 18 * 18;
     public const int MAXINDEXEX = 18 * 18 * 18;
+    
+    public ChunkStatus status;
+
+    public HeightMap heightMap;
+    public readonly ChunkCoord coord;
+    public SubChunk[] subChunks;
+    public World world;
+
+    public AABB box;
+
+    public bool isRendered = false;
+    public ulong lastSaved;
+
+    public int worldX => coord.x * CHUNKSIZE;
+    public int worldZ => coord.z * CHUNKSIZE;
+    public Vector2I worldPos => new(worldX, worldZ);
+    public Vector2I centrePos => new(worldX + 8, worldZ + 8);
 
 
     public Chunk(World world, int chunkX, int chunkZ) {
