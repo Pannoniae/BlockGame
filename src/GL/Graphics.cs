@@ -15,11 +15,11 @@ public class Graphics {
     public readonly SpriteBatch immediateBatch;
     
     // Shaders
-    public readonly InstantShader batchShader = new InstantShader(Game.GL, "shaders/batch.vert", "shaders/batch.frag");
-    public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
-    public readonly InstantShader instantColourShader = new InstantShader(Game.GL, "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
+    public readonly InstantShader batchShader = new InstantShader(Game.GL, nameof(batchShader), "shaders/batch.vert", "shaders/batch.frag");
+    public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, nameof(instantTextureShader), "shaders/instantVertex.vert", "shaders/instantVertex.frag");
+    public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader), "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
     
-    public readonly Shader fxaaShader = new Shader(Game.GL, "shaders/fxaa.vert", "shaders/fxaa.frag");
+    public readonly Shader fxaaShader = new Shader(Game.GL, nameof(fxaaShader), "shaders/fxaa.vert", "shaders/fxaa.frag");
 
     public readonly Silk.NET.OpenGL.GL GL;
 

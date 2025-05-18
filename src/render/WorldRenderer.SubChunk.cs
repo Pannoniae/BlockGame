@@ -265,7 +265,7 @@ public partial class WorldRenderer {
         if (hasRenderOpaque[coord]) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
-            setUniformPos(coord, shader, cameraPos);
+            setUniformPos(coord, worldShader, cameraPos);
             uint renderedVerts = vao.render();
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;

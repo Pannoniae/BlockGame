@@ -170,7 +170,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 
     public override void setup() {
         base.setup();
-        instantShader = new Shader(GL, "shaders/instantVertex.vert", "shaders/instantVertex.frag");
+        instantShader = new Shader(GL, nameof(instantShader), "shaders/instantVertex.vert", "shaders/instantVertex.frag");
         instantTexture = instantShader.getUniformLocation("tex");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
@@ -213,7 +213,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
     public override void setup() {
         base.setup();
-        instantShader = new Shader(GL, "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
+        instantShader = new Shader(GL, nameof(instantShader), "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
         uFogColor = instantShader.getUniformLocation("fogColor");

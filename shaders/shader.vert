@@ -15,10 +15,13 @@ out float vertexDist;
 
 uniform vec3 uCameraPos;
 
+const float m = 1 / 256.;
+const float n = 1 / 32768.;
+
 void main() {
-    vec3 pos = uChunkPos + vPos / 256. - 16;
+    vec3 pos = uChunkPos + ((vPos * m) - 16);
     gl_Position = uMVP * vec4(pos, 1.0);
-    texCoords = texCoord / 32768.;
+    texCoords = texCoord * n;
     tint = colour;
     vertexDist = length(pos - uCameraPos);
 }

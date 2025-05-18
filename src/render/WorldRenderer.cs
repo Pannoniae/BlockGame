@@ -20,7 +20,7 @@ public sealed partial class WorldRenderer : IDisposable {
 
     public Silk.NET.OpenGL.GL GL;
 
-    public Shader shader;
+    public Shader worldShader;
     public Shader dummyShader;
     public Shader waterShader;
 
@@ -40,16 +40,16 @@ public sealed partial class WorldRenderer : IDisposable {
     public int dummyuMVP;
     public int uCameraPos;
     public int drawDistance;
-    public int fogMax;
-    public int fogMin;
+    public int fogStart;
+    public int fogEnd;
     public int fogColour;
     public int skyColour;
 
     public int waterBlockTexture;
     public int wateruMVP;
     public int wateruCameraPos;
-    public int waterFogMax;
-    public int waterFogMin;
+    public int waterFogStart;
+    public int waterFogEnd;
     public int waterFogColour;
     public int waterSkyColour;
 
@@ -73,38 +73,38 @@ public sealed partial class WorldRenderer : IDisposable {
         idc.setup();
         idt.setup();
 
-        shader = new Shader(GL, "shaders/shader.vert", "shaders/shader.frag");
-        dummyShader = new Shader(GL, "shaders/dummyShader.vert");
-        waterShader = new Shader(GL, "shaders/waterShader.vert", "shaders/waterShader.frag");
+        worldShader = new Shader(GL, nameof(worldShader), "shaders/shader.vert", "shaders/shader.frag");
+        dummyShader = new Shader(GL, nameof(dummyShader), "shaders/dummyShader.vert");
+        waterShader = new Shader(GL, nameof(waterShader), "shaders/waterShader.vert", "shaders/waterShader.frag");
 
-        blockTexture = shader.getUniformLocation("blockTexture");
-        uMVP = shader.getUniformLocation(nameof(uMVP));
+        blockTexture = worldShader.getUniformLocation("blockTexture");
+        uMVP = worldShader.getUniformLocation(nameof(uMVP));
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
-        uCameraPos = shader.getUniformLocation(nameof(uCameraPos));
-        fogMax = shader.getUniformLocation(nameof(fogMax));
-        fogMin = shader.getUniformLocation(nameof(fogMin));
-        fogColour = shader.getUniformLocation(nameof(fogColour));
-        skyColour = shader.getUniformLocation(nameof(skyColour));
+        uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
+        fogStart = worldShader.getUniformLocation(nameof(fogStart));
+        fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
+        fogColour = worldShader.getUniformLocation(nameof(fogColour));
+        skyColour = worldShader.getUniformLocation(nameof(skyColour));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
 
         waterBlockTexture = waterShader.getUniformLocation("blockTexture");
         wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
         wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
-        waterFogMax = waterShader.getUniformLocation(nameof(fogMax));
-        waterFogMin = waterShader.getUniformLocation(nameof(fogMin));
+        waterFogStart = waterShader.getUniformLocation(nameof(fogStart));
+        waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
         waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
         waterSkyColour = waterShader.getUniformLocation(nameof(skyColour));
-        uChunkPos = shader.getUniformLocation("uChunkPos");
+        uChunkPos = worldShader.getUniformLocation("uChunkPos");
         dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
         wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
-        outline = new Shader(Game.GL, "shaders/outline.vert", "shaders/outline.frag");
+        outline = new Shader(Game.GL, nameof(outline), "shaders/outline.vert", "shaders/outline.frag");
 
 
-        shader.setUniform(blockTexture, 0);
+        worldShader.setUniform(blockTexture, 0);
         //shader.setUniform(drawDistance, dd);
 
-        shader.setUniform(fogColour, defaultFogColour);
-        shader.setUniform(skyColour, defaultClearColour);
+        worldShader.setUniform(fogColour, defaultFogColour);
+        worldShader.setUniform(skyColour, defaultClearColour);
 
         waterShader.setUniform(waterBlockTexture, 0);
         //shader.setUniform(drawDistance, dd);
@@ -163,27 +163,27 @@ public sealed partial class WorldRenderer : IDisposable {
             fogMinValue = 8 * Chunk.CHUNKSIZE;
         }
 
-        shader.setUniform(fogMax, fogMaxValue);
-        shader.setUniform(fogMin, fogMinValue);
-        waterShader.setUniform(waterFogMax, fogMaxValue);
-        waterShader.setUniform(waterFogMin, fogMinValue);
+        worldShader.setUniform(fogStart, fogMaxValue);
+        worldShader.setUniform(fogEnd, fogMinValue);
+        waterShader.setUniform(waterFogStart, fogMaxValue);
+        waterShader.setUniform(waterFogEnd, fogMinValue);
 
         if (world.player.isUnderWater()) {
             // set fog colour to blue
-            shader.setUniform(fogColour, Color4b.CornflowerBlue);
+            worldShader.setUniform(fogColour, Color4b.CornflowerBlue);
             waterShader.setUniform(waterFogColour, Color4b.CornflowerBlue);
-            shader.setUniform(skyColour, Color4b.CornflowerBlue);
+            worldShader.setUniform(skyColour, Color4b.CornflowerBlue);
             waterShader.setUniform(waterSkyColour, Color4b.CornflowerBlue);
-            shader.setUniform(fogMin, 0f);
-            waterShader.setUniform(waterFogMin, 0f);
-            shader.setUniform(fogMax, 24f);
-            waterShader.setUniform(waterFogMax, 24f);
+            worldShader.setUniform(fogEnd, 0f);
+            waterShader.setUniform(waterFogEnd, 0f);
+            worldShader.setUniform(fogStart, 24f);
+            waterShader.setUniform(waterFogStart, 24f);
         }
         else {
             // set fog colour to default
-            shader.setUniform(fogColour, defaultFogColour);
+            worldShader.setUniform(fogColour, defaultFogColour);
             waterShader.setUniform(waterFogColour, defaultFogColour);
-            shader.setUniform(skyColour, defaultClearColour);
+            worldShader.setUniform(skyColour, defaultClearColour);
             waterShader.setUniform(waterSkyColour, defaultClearColour);
         }
     }
@@ -237,10 +237,10 @@ public sealed partial class WorldRenderer : IDisposable {
         //chunksToRender.Sort(new ChunkComparer(world.player));
 
         // OPAQUE PASS
-        shader.use();
+        worldShader.use();
         var cameraPos = world.player.camera.renderPosition(interp);
-        shader.setUniform(uMVP, viewProj);
-        shader.setUniform(uCameraPos, new Vector3(0));
+        worldShader.setUniform(uMVP, viewProj);
+        worldShader.setUniform(uCameraPos, new Vector3(0));
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;

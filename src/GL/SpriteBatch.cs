@@ -4,6 +4,7 @@ using System.Numerics;
 using Silk.NET.OpenGL;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
+using SFML.Graphics;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame.GL;
@@ -62,7 +63,7 @@ public sealed class SpriteBatch : IDisposable {
     public bool IsDisposed { get; private set; }
 
     public SpriteBatch(Silk.NET.OpenGL.GL gl, uint initialBatchCapacity = InitialBatchItemsCapacity)
-        : this(gl, new Shader(gl, "shaders/batch.vert", "shaders/batch.frag"), initialBatchCapacity) {
+        : this(gl, new Shader(gl, nameof(SpriteBatch), "shaders/batch.vert", "shaders/batch.frag"), initialBatchCapacity) {
     }
 
     public SpriteBatch(Silk.NET.OpenGL.GL gl, Shader shader, uint initialBatchCapacity = InitialBatchItemsCapacity) {

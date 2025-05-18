@@ -68,7 +68,7 @@ public class GUI {
         guiTexture = new BTexture2D("textures/gui.png");
         colourTexture = new BTexture2D("textures/debug.png");
         instance = this;
-        guiBlockShader = new Shader(Game.GL, "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");
+        guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");
         buffer = new BlockTintedVAO();
         // GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw
         guiBlock = new List<BlockVertexTinted>();
