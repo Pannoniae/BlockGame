@@ -60,7 +60,7 @@ public class Block {
     
     public static UVPair?[] uvs = new UVPair?[6];
 
-    public static readonly int maxBlock = 46;
+    public static readonly int maxBlock = 48;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -159,6 +159,8 @@ public class Block {
     public static Block AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore", BlockModel.makeCube(cubeUVs(13, 0))));
     public static Block EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore", BlockModel.makeCube(cubeUVs(14, 0))));
     public static Block DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore", BlockModel.makeCube(cubeUVs(15, 0))));
+    public static Block GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore", BlockModel.makeCube(cubeUVs(0, 1))));
+    public static Block IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore", BlockModel.makeCube(cubeUVs(1, 1))));
 
     //public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
 
@@ -267,6 +269,7 @@ public class Block {
         // idx[0] = texU == 1, idx[1] = texV == 1
 
         // if none, treat it as an up (strip 4th byte)
+        var a = 2;
         return (ushort)(light << 8 | ao << 3 | direction & 0b111);
     }
     
