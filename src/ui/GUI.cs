@@ -250,7 +250,7 @@ public class GUI {
         
         var overlay = Color4b.DimGray;
         
-        Span<ushort> ores = [Block.AMBER_ORE.id, Block.RED_ORE.id, Block.EMERALD_ORE.id, Block.DIAMOND_ORE.id,Block.TITANIUM_ORE.id, Block.AMETIST_ORE.id];
+        Span<ushort> ores = [Block.AMBER_ORE.id, Block.RED_ORE.id, Block.EMERALD_ORE.id, Block.DIAMOND_ORE.id,Block.TITANIUM_ORE.id, Block.AMETHYST_ORE.id];
         
         // Draw ores
         for (int x = 0; x < xCount; x++) {

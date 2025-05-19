@@ -156,7 +156,7 @@ public class Block {
     public static Block RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore", BlockModel.makeCube(cubeUVs(10, 0))));
     public static Block TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore", BlockModel.makeCube(cubeUVs(11, 0))));
     public static Block AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore", BlockModel.makeCube(cubeUVs(12, 0))));
-    public static Block AMETIST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Ametist Ore", BlockModel.makeCube(cubeUVs(13, 0))));
+    public static Block AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore", BlockModel.makeCube(cubeUVs(13, 0))));
     public static Block EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore", BlockModel.makeCube(cubeUVs(14, 0))));
     public static Block DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore", BlockModel.makeCube(cubeUVs(15, 0))));
 
