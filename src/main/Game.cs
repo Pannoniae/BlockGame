@@ -323,7 +323,7 @@ public partial class Game {
 
         // SFML
         // don't use local variables, they go out of scope so nothing plays..... hold them statically
-        var file = File.ReadAllBytes("snd/tests.flac");
+        var file = File.ReadAllBytes("snd/tests.ogg");
         // Initialize the audio engine with the MiniAudio backend
         // Ensure a sample rate compatible with WebRTC APM (8k, 16k, 32k, or 48k Hz) if using the APM extension.
         audioEngine = new MiniAudioEngine(48000, Capability.Playback);

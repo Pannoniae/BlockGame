@@ -72,7 +72,7 @@
         <None Include="fonts/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="snd\tests.flac">
+        <None Update="snd\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Remove="lib\**"/>
@@ -103,8 +103,6 @@
         <None Update="shaders\instantVertexColour.frag">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Remove=".gitmodules" />
-        <None Remove="snd\tests.ogg" />
     </ItemGroup>
 
     <ItemGroup>
