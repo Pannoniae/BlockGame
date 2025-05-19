@@ -54,6 +54,7 @@
         <PackageReference Include="SixLabors.Fonts" Version="2.1.2" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5"/>
+        <PackageReference Include="SoundFlow" Version="1.0.4" />
         <PackageReference Include="System.IO.Hashing" Version="10.0.0-preview.3.25171.5" />
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
@@ -102,6 +103,8 @@
         <None Update="shaders\instantVertexColour.frag">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+        <None Remove=".gitmodules" />
+        <None Remove="snd\tests.ogg" />
     </ItemGroup>
 
     <ItemGroup>

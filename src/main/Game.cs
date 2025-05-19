@@ -7,7 +7,6 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
 using Molten;
-using SFML.Audio;
 using Silk.NET.Core;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
@@ -16,6 +15,10 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SoundFlow.Backends.MiniAudio;
+using SoundFlow.Components;
+using SoundFlow.Enums;
+using SoundFlow.Providers;
 using BatcherBeginMode = BlockGame.GL.BatcherBeginMode;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
@@ -24,8 +27,6 @@ using Image = SixLabors.ImageSharp.Image;
 using IWindow = Silk.NET.Windowing.IWindow;
 using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
-using Shader = BlockGame.GL.Shader;
-using Sound = SFML.Audio.Sound;
 
 namespace BlockGame;
 
@@ -53,7 +54,7 @@ public partial class Game {
 
     public static Graphics graphics;
     public static GUI gui;
-    
+
     public static World? world;
     public static Player? player;
     public static WorldRenderer? renderer;
@@ -99,13 +100,13 @@ public partial class Game {
 
     public static TextureManager textureManager;
     public static Metrics metrics;
-    
+
     public static FontLoader fontLoader;
 
     public BlockingCollection<Action> mainThreadQueue = new();
 
-    private SoundBuffer buffer;
-    private Sound music;
+    private SoundPlayer soundPlayer;
+    private MiniAudioEngine audioEngine;
 
     private readonly string[] splashes;
     private readonly string splash;
@@ -122,6 +123,7 @@ public partial class Game {
     private int g_mulReduceLocation;
     private int g_minReduceLocation;
     private int g_maxSpanLocation;
+
 
     #if DEBUG
     public static string VERSION = "BlockGame v0.0.2 DEBUG";
@@ -272,11 +274,11 @@ public partial class Game {
 
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
 
-        
+
         graphics = new Graphics();
-        
+
         textureManager = new TextureManager(GL);
-        
+
         g_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
         g_showEdgesLocation = graphics.fxaaShader.getUniformLocation("u_showEdges");
         g_fxaaOnLocation = graphics.fxaaShader.getUniformLocation("u_fxaaOn");
@@ -321,13 +323,24 @@ public partial class Game {
 
         // SFML
         // don't use local variables, they go out of scope so nothing plays..... hold them statically
-        //var file = File.ReadAllBytes("snd/tests.flac");
-        //buffer = new SoundBuffer(file);
-        //music = new Sound(buffer);
-        //music.Loop = true;
-        //music.Play();
+        var file = File.ReadAllBytes("snd/tests.flac");
+        // Initialize the audio engine with the MiniAudio backend
+        // Ensure a sample rate compatible with WebRTC APM (8k, 16k, 32k, or 48k Hz) if using the APM extension.
+        audioEngine = new MiniAudioEngine(48000, Capability.Playback);
+
+        // Create a SoundPlayer and load an audio file
+        soundPlayer = new SoundPlayer(new StreamDataProvider(File.OpenRead("snd/tests.flac")));
+
+        // Add the player to the master mixer
+        Mixer.Master.AddComponent(soundPlayer);
+
+        // Start playback
+        soundPlayer.IsLooping = true;
+        soundPlayer.Play();
+
+        // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");
-        
+
         gui = new GUI();
         renderer = new WorldRenderer();
 
@@ -640,7 +653,7 @@ public partial class Game {
         var interp = accumTime / fixeddt;
         actualRender(dt, interp);
     }
-    
+
     public static void yes() {
         Console.Out.WriteLine("yes");
     }
@@ -747,7 +760,7 @@ public partial class Game {
     }
 
     private void close() {
-        buffer?.Dispose();
-        music?.Dispose();
+        ///dev?.Dispose();
+        //buffer?.Dispose();
     }
 }
