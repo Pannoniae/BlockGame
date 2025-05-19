@@ -42,6 +42,8 @@ public partial class PerlinWorldGenerator {
     private float[] humidityBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
+    private readonly OreFeature ironOre = new(Blocks.RED_ORE, 6, 12);
+    private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
 
     public const float LOW_FREQUENCY = 1 / 292f;
     public const float HIGH_FREQUENCY = 1 / 135f;
@@ -419,6 +421,12 @@ public partial class PerlinWorldGenerator {
     public void populate(ChunkCoord coord) {
         var random = getRandom(coord);
         var chunk = world.getChunk(coord);
+        
+        var xWorld = coord.x * Chunk.CHUNKSIZE;
+        var zWorld = coord.z * Chunk.CHUNKSIZE;
+        
+        // set seed to chunk
+        random.Seed(coord.GetHashCode());
 
         var xChunk = coord.x * Chunk.CHUNKSIZE;
         var zChunk = coord.z * Chunk.CHUNKSIZE;
@@ -427,17 +435,32 @@ public partial class PerlinWorldGenerator {
         // height should be between 1 and 4
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-                var zWorld = coord.z * Chunk.CHUNKSIZE + z;
+                var xs = xWorld + x;
+                var zs = zWorld + z;
 
                 var height =
-                    getNoise2D(auxNoise, -xWorld * HELLSTONE_FREQUENCY, -zWorld * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
+                    getNoise2D(auxNoise, -xs * HELLSTONE_FREQUENCY, -zs * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
                     chunk.setBlockFast(x, y, z, Block.HELLSTONE.id);
                     chunk.setBlockLight(x, y, z, 15);
                 }
             }
+        }
+        
+        // Do ore
+        for (int i = 0; i < 16; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(0, World.WORLDHEIGHT);
+            coalOre.place(world, this.random, x, y, z);
+        }
+        
+        for (int i = 0; i < 16; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(0, World.WORLDHEIGHT / 2);
+            ironOre.place(world, this.random, x, y, z);
         }
 
         var foliage = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);

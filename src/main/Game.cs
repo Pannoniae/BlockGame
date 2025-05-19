@@ -80,7 +80,7 @@ public partial class Game {
     public static Stopwatch permanentStopwatch = new();
 
     public double accumTime;
-    public static readonly double fixeddt = 1 / 30d;
+    public static readonly double fixeddt = 1 / 60d;
     public static readonly double maxTimestep = 1 / 5f;
     public double t;
 

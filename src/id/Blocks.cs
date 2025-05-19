@@ -43,7 +43,7 @@ public class Blocks {
     public const ushort RED_ORE = 39;
     public const ushort TITANIUM_ORE = 40;
     public const ushort AMBER_ORE = 41;
-    public const ushort AMETIST_ORE = 42;
+    public const ushort AMETHYST_ORE = 42;
     public const ushort EMERALD_ORE = 43;
     public const ushort DIAMOND_ORE = 44;
     public const ushort TALL_GRASS = 45;

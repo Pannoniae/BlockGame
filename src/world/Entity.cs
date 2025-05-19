@@ -6,8 +6,8 @@ using Molten.DoublePrecision;
 namespace BlockGame;
 
 public class Entity {
-    public const int MAX_SWING_TICKS = 8;
-    public const int AIR_HIT_CD = 10;
+    public const int MAX_SWING_TICKS = 16;
+    public const int AIR_HIT_CD = 20;
 
     // is player walking on (colling with) ground
     public bool onGround;

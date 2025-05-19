@@ -7,6 +7,9 @@ using Molten.DoublePrecision;
 namespace BlockGame;
 
 public class Cave : OverlayFeature {
+    
+    public override int radius => 7;
+    
     /// <summary>
     /// The current cave width
     /// </summary>
@@ -33,7 +36,7 @@ public class Cave : OverlayFeature {
 
     public bool isRoom = false;
 
-    public override void generate(World world, ChunkCoord coord, ChunkCoord origin) {
+    public override void generate(World world, XRandom rand, ChunkCoord coord, ChunkCoord origin) {
         var chunk = world.getChunk(coord);
 
         // if this chunk isn't lucky, it gets murdered

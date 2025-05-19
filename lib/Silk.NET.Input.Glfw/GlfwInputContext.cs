@@ -13,8 +13,8 @@ namespace Silk.NET.Input.Glfw
 {
     internal class GlfwInputContext : InputContextImplementationBase
     {
-        private readonly GlfwGamepad[] _gamepads = new GlfwGamepad[16];
-        private readonly GlfwJoystick[] _joysticks = new GlfwJoystick[16];
+        private readonly GlfwGamepad[] _gamepads = new GlfwGamepad[4];
+        private readonly GlfwJoystick[] _joysticks = new GlfwJoystick[0];
         private readonly GlfwKeyboard[] _keyboards = new GlfwKeyboard[1];
         private readonly GlfwMouse[] _mice = new GlfwMouse[1];
         private readonly IGlfwSubscriber[] _subscribers = new IGlfwSubscriber[2];

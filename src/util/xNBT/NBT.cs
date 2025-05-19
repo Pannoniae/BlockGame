@@ -2,7 +2,7 @@ using K4os.Compression.LZ4.Streams;
 
 namespace BlockGame.util.xNBT;
 
-public class NBT {
+public static class NBT {
     public static NBTCompound readCompressed(Stream stream) {
         using var decompress = LZ4Stream.Decode(stream);
         using var reader = new BinaryReader(decompress);

@@ -50,6 +50,7 @@ public class WorldIO {
     }
 
     public void saveChunk(World world, Chunk chunk) {
+        chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
         // ensure directory is created
         var pathStr = getChunkString(world.name, chunk.coord);

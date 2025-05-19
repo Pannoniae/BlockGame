@@ -6,14 +6,14 @@ using System.Runtime.InteropServices;
 namespace BlockGame.util;
 
 internal sealed partial class Interop {
-    
+
     private static MethodInfo? _getRandomBytesMethod;
-    
+
     /*[LibraryImport(Interop.Libraries.SystemNative, EntryPoint = "SystemNative_GetNonCryptographicallySecureRandomBytes")]
     internal static unsafe partial void GetNonCryptographicallySecureRandomBytes(
         byte* buffer,
         int length);*/
-    
+
     // we reflect this thing
     /*internal static partial class Interop
     {
@@ -28,8 +28,8 @@ internal sealed partial class Interop {
 
         internal static unsafe void GetRandomBytes(byte* buffer, int length)
         {
-        
-        }  
+
+        }
     */
 
 
@@ -38,7 +38,7 @@ internal sealed partial class Interop {
         var a = typeof(object).Assembly;
         var type = a.GetType("Interop");
         var method = type.GetMethod("GetRandomBytes", BindingFlags.Static | BindingFlags.NonPublic);
-        
+
         // store the method info in a field
         if (method != null) {
             _getRandomBytesMethod = method;
@@ -50,14 +50,14 @@ internal sealed partial class Interop {
 
     internal static unsafe void GetRandomBytes(byte* buffer, int length) {
         var bufferP = Pointer.Box(buffer, typeof(byte*));
-        var result = _getRandomBytesMethod.Invoke(null, [ bufferP, length ]);
+        var result = _getRandomBytesMethod.Invoke(null, [bufferP, length]);
     }
-    
+
     internal static unsafe void GetRandomBytes2(byte* buffer, int length) {
         if (buffer == null) throw new ArgumentNullException(nameof(buffer));
         if (length < 0) throw new ArgumentOutOfRangeException(nameof(length));
         if (length == 0) return;
-    
+
         // Zero-allocation approach using Span over the unsafe buffer
         // This leverages hardware acceleration when available
         System.Security.Cryptography.RandomNumberGenerator.Fill(
@@ -163,7 +163,7 @@ public sealed class XRandom {
             } while ((_s0 | _s1 | _s2 | _s3) == 0);
         }
     }
-    
+
     public void Seed(int seed) {
         SplitMix64Seed((ulong)seed);
     }
@@ -342,5 +342,33 @@ public sealed class XRandom {
     public double Sample() {
         System.Diagnostics.Debug.Fail("Not used or called for this implementation.");
         throw new NotSupportedException();
+    }
+
+    public double ApproxGaussian() {
+        //ported version of dist_normal_approx from https://marc-b-reynolds.github.io/distribution/2021/03/18/CheapGaussianApprox.html
+        Span<byte> rnd = stackalloc byte[16];
+        NextBytes(rnd);
+
+        long bd = BitOperations.PopCount(BitConverter.ToUInt64(rnd)) - 32;
+        return ((bd << 32) + BitConverter.ToUInt32(rnd[8..]) - BitConverter.ToUInt32(rnd[12..])) * 5.76916501E-11;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="mu">The mean of the distribution.</param>
+    /// <param name="sigma">The standard deviation of the distribution.</param>
+    /// <returns></returns>
+    public double ApproxGaussian(double mu, double sigma) {
+        return mu + sigma * ApproxGaussian();
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sigma">The standard deviation of the distribution.</param>
+    /// <returns></returns>
+    public double ApproxGaussian(double sigma) {
+        return sigma * ApproxGaussian();
     }
 }

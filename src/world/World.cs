@@ -55,15 +55,15 @@ public partial class World : IDisposable {
     public Random random;
     private TimerAction saveWorld;
 
-    private const long MAX_CHUNKLOAD_FRAMETIME = 20;
-    private const long MAX_LIGHT_FRAMETIME = 10;
+    private const double MAX_CHUNKLOAD_FRAMETIME = 7.5;
+    private const long MAX_LIGHT_FRAMETIME = 5;
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
     /// </summary>
-    public const int numTicks = 3;
+    public const int numTicks = 1;
 
     public World(string name, int seed) {
         this.name = name;
@@ -117,10 +117,15 @@ public partial class World : IDisposable {
     /// Autosave any chunks which haven't been saved in more than a minute.
     /// </summary>
     private void autoSaveChunks() {
+        var x = 0;
         foreach (var chunk in chunks.Values) {
             if (chunk.status >= ChunkStatus.MESHED && chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
                 worldIO.saveChunk(this, chunk);
+                x++;
             }
+        }
+        if (x > 0) {
+            Console.Out.WriteLine($"Saved {x} chunks");
         }
     }
 
@@ -162,7 +167,7 @@ public partial class World : IDisposable {
     /// Chunkloading and friends.
     /// </summary>
     public void renderUpdate(double dt) {
-        var start = Game.permanentStopwatch.ElapsedMilliseconds;
+        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var ctr = 0;
         // if is loading, don't throttle
         // consume the chunk queue
@@ -170,7 +175,7 @@ public partial class World : IDisposable {
         // otherwise don't wait for nothing
         // yes I was an idiot
         var limit = MAX_CHUNKLOAD_FRAMETIME;
-        while (Game.permanentStopwatch.ElapsedMilliseconds - start < limit) {
+        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < limit) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
                 chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
