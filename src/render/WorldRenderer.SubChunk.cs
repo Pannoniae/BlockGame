@@ -10,6 +10,7 @@ using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
+using Debug = System.Diagnostics.Debug;
 
 namespace BlockGame;
 
@@ -36,10 +37,10 @@ public partial class WorldRenderer {
     private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
     // YZX again
-    private static readonly ushort[] neighbours = new ushort[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+    private static readonly ushort[] neighbours = GC.AllocateArray<ushort>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
 
     private static readonly byte[]
-        neighbourLights = new byte[Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX];
+        neighbourLights = GC.AllocateArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
 
     private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
@@ -148,6 +149,8 @@ public partial class WorldRenderer {
         0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
         1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
+    
+    public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
     private static bool opaqueBlocks(int b) {
         return b != 0 && Block.get(b).layer != RenderLayer.TRANSLUCENT;
@@ -412,7 +415,6 @@ public partial class WorldRenderer {
         Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
 
         Span<ushort> nba = stackalloc ushort[6];
-        Span<byte> lba = stackalloc byte[6];
 
 
         // BYTE OF SETTINGS
@@ -439,17 +441,7 @@ public partial class WorldRenderer {
 
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
-            // index for array accesses
-            int x = idx & 0xF;
-            int z = idx >> 4 & 0xF;
-            int y = idx >> 8;
-
-            var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
-            // pre-add index
-            ref ushort neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
-            ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
-
-
+            
             switch (mode) {
                 case VertexConstructionMode.OPAQUE:
                     if (notOpaqueBlocks(blockArrayRef)) {
@@ -464,6 +456,16 @@ public partial class WorldRenderer {
 
                     break;
             }
+            
+            // index for array accesses
+            int x = idx & 0xF;
+            int z = idx >> 4 & 0xF;
+            int y = idx >> 8;
+
+            var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
+            // pre-add index
+            ref ushort neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
+            ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
 
             // unrolled world.toWorldPos
             //float wx = section.chunkX * Chunk.CHUNKSIZE + x;
@@ -531,18 +533,21 @@ public partial class WorldRenderer {
             Unsafe.SkipInit(out light.Fourth);
 
             // get light data too
-            lba[0] = Unsafe.Add(ref lightRef, -1);
-            lba[1] = Unsafe.Add(ref lightRef, +1);
-            lba[2] = Unsafe.Add(ref lightRef, -Chunk.CHUNKSIZEEX);
-            lba[3] = Unsafe.Add(ref lightRef, +Chunk.CHUNKSIZEEX);
-            lba[4] = Unsafe.Add(ref lightRef, -Chunk.CHUNKSIZEEXSQ);
-            lba[5] = Unsafe.Add(ref lightRef, +Chunk.CHUNKSIZEEXSQ);
 
 
             ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
 
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;
+                
+                
+                // if dir = 0, add -1
+                // if dir = 1, add +1
+                // if dir = 2, add -Chunk.CHUNKSIZEEX
+                // if dir = 3, add +Chunk.CHUNKSIZEEX
+                // if dir = 4, add -Chunk.CHUNKSIZEEXSQ
+                // if dir = 5, add +Chunk.CHUNKSIZEEXSQ
+                var lb = Unsafe.Add(ref lightRef, lightOffsets[(byte)dir]);
 
                 test2 = false;
 
@@ -576,10 +581,10 @@ public partial class WorldRenderer {
                     }
 
                     if (!smoothLighting) {
-                        light.First = lba[(byte)dir];
-                        light.Second = lba[(byte)dir];
-                        light.Third = lba[(byte)dir];
-                        light.Fourth = lba[(byte)dir];
+                        light.First = lb;
+                        light.Second = lb;
+                        light.Third = lb;
+                        light.Fourth = lb;
                     }
                     else {
                         light.Whole = 0;
@@ -608,19 +613,20 @@ public partial class WorldRenderer {
                             Unsafe.Add(ref lightRef, offsets[0]),
                             Unsafe.Add(ref lightRef, offsets[1]),
                             Unsafe.Add(ref lightRef, offsets[2]),
-                            lba[(byte)dir],
+                            lb,
                             Unsafe.Add(ref lightRef, offsets[3]),
                             Unsafe.Add(ref lightRef, offsets[4]),
                             Unsafe.Add(ref lightRef, offsets[5]),
-                            lba[(byte)dir],
+                            lb,
                             Unsafe.Add(ref lightRef, offsets[6]),
                             Unsafe.Add(ref lightRef, offsets[7]),
                             Unsafe.Add(ref lightRef, offsets[8]),
-                            lba[(byte)dir],
+                            lb,
                             Unsafe.Add(ref lightRef, offsets[9]),
                             Unsafe.Add(ref lightRef, offsets[10]),
                             Unsafe.Add(ref lightRef, offsets[11]),
-                            lba[(byte)dir]);
+                            lb);
+                        
 
                         o.First = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
                                              Unsafe.Add(ref neighbourRef, offsets[0])]) |
@@ -805,17 +811,21 @@ public partial class WorldRenderer {
     /// <summary>
     /// average but does blocklight and skylight at once
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte average2(uint lightNibble, byte oFlags) {
-        if (oFlags < 3) {
+        /*if (oFlags < 3) {
             // set the 4 bit of oFlags to 0 because it is visible then
             oFlags &= 3;
-        }
+        }*/
+        int mask = 3 | ~((oFlags - 3) >> 31);
+        oFlags = (byte)(oFlags & mask);
 
         // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
         // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
-        var inv = ~oFlags;
-        var popcnt = BitOperations.PopCount((byte)(inv & 0x7)) + 1;
+        byte inv = (byte)(~oFlags & 0x7);
+        var popcnt = BitOperations.PopCount(inv) + 1;
+        Debug.Assert(popcnt > 0);
+        Debug.Assert(popcnt <= 4);
         var sky = (byte)(((lightNibble & 0xF) * (inv & 1) +
                           (lightNibble >> 8 & 0xF) * ((inv & 2) >> 1) +
                           (lightNibble >> 16 & 0xF) * ((inv & 4) >> 2) +

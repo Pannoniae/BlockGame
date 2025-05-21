@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.ui;
@@ -15,10 +16,8 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SoundFlow.Backends.MiniAudio;
-using SoundFlow.Components;
-using SoundFlow.Enums;
-using SoundFlow.Providers;
+using Un4seen.Bass;
+using Un4seen.Bass.AddOn.Flac;
 using BatcherBeginMode = BlockGame.GL.BatcherBeginMode;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
@@ -41,6 +40,11 @@ public partial class Game {
     public static IInputContext input = null!;
 
     public static Process proc;
+    
+    /// <summary>
+    /// Stop logspam
+    /// </summary>
+    public static bool shutUp = false;
 
     public static int centreX => width / 2;
     public static int centreY => height / 2;
@@ -105,9 +109,6 @@ public partial class Game {
 
     public BlockingCollection<Action> mainThreadQueue = new();
 
-    private SoundPlayer soundPlayer;
-    private MiniAudioEngine audioEngine;
-
     private readonly string[] splashes;
     private readonly string splash;
 
@@ -141,8 +142,10 @@ public partial class Game {
         Game.devMode = devMode;
         instance = this;
 
+        regNativeLib();
+
         // load splashes
-        splashes = File.ReadAllLines("splashes.txt");
+        splashes = File.ReadAllLines("assets/splashes.txt");
 
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
@@ -193,6 +196,50 @@ public partial class Game {
         window.Closing += close;
 
         window.Run();
+    }
+
+
+    private static void regNativeLib() {
+        //NativeLibrary.SetDllImportResolver(typeof(Game).Assembly, nativeLibPath);
+        NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
+    }
+    private static IntPtr nativeLibPath(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
+        // Get platform and architecture
+        string arch = RuntimeInformation.OSArchitecture == Architecture.X64 ? "x64" : "x86";
+
+        // Create path to library
+        string libsPath = Path.Combine(AppContext.BaseDirectory, "libs", arch);
+        string libraryPath;
+
+        // Determine full path based on platform
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            libraryPath = Path.Combine(libsPath, $"{libraryName}.dll");
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+            // macOS has a special path regardless of architecture
+            libsPath = Path.Combine(AppContext.BaseDirectory, "libs", "osx");
+            libraryPath = Path.Combine(libsPath, $"lib{libraryName}.dylib");
+        }
+        // Linux
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+            libraryPath = Path.Combine(libsPath, $"lib{libraryName}.so");
+        }
+        else {
+            throw new PlatformNotSupportedException($"Platform {RuntimeInformation.OSDescription} is not supported.");
+        }
+
+        // Try to load the library if it exists
+        if (File.Exists(libraryPath)) {
+            if (!shutUp) {
+                Console.WriteLine($"Loading native library: {libraryName} {libraryPath}");
+            }
+            shutUp = true;
+            return NativeLibrary.Load(libraryPath);
+        }
+
+        // Fallback to default resolution
+        Console.WriteLine($"Couldn't find native library {libraryName}, falling back to default resolution");
+        return IntPtr.Zero;
     }
 
     private string getRandomSplash() {
@@ -320,23 +367,35 @@ public partial class Game {
         metrics = new Metrics();
         stopwatch.Start();
         permanentStopwatch.Start();
-
-        // SFML
+        
         // don't use local variables, they go out of scope so nothing plays..... hold them statically
-        var file = File.ReadAllBytes("snd/tests.ogg");
-        // Initialize the audio engine with the MiniAudio backend
-        // Ensure a sample rate compatible with WebRTC APM (8k, 16k, 32k, or 48k Hz) if using the APM extension.
-        audioEngine = new MiniAudioEngine(48000, Capability.Playback);
+       // init BASS using the default output device
+        if (Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero)) {
+            // create a stream channel from a file
+            int res = Bass.BASS_PluginLoad("bassflac");
+            if (res == 0) {
+                // error loading the plugin
+                Console.WriteLine("Plugin error: {0}", Bass.BASS_ErrorGetCode());
+            }
+            int stream = Bass.BASS_StreamCreateFile("snd/tests.flac", 0, 0, BASSFlag.BASS_MUSIC_LOOP);
+            if (stream != 0) {
+                // play the stream channel
+                Bass.BASS_ChannelPlay(stream, false);
+            }
+            else {
+                // error creating the stream
+                Console.WriteLine("Stream error: {0}", Bass.BASS_ErrorGetCode());
+            }
 
-        // Create a SoundPlayer and load an audio file
-        soundPlayer = new SoundPlayer(new StreamDataProvider(File.OpenRead("snd/tests.flac")));
+            // wait for a key
+            Console.WriteLine("Press any key to exit");
+            //Console.ReadKey(false);
 
-        // Add the player to the master mixer
-        Mixer.Master.AddComponent(soundPlayer);
-
-        // Start playback
-        soundPlayer.IsLooping = true;
-        soundPlayer.Play();
+            // free the stream
+            //Bass.BASS_StreamFree(stream);
+            // free BASS
+            //Bass.BASS_Free();
+        }
 
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");

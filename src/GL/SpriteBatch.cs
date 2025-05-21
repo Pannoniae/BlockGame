@@ -4,7 +4,6 @@ using System.Numerics;
 using Silk.NET.OpenGL;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
-using SFML.Graphics;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame.GL;

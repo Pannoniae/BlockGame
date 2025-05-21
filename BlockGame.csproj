@@ -11,6 +11,7 @@
         <InvariantGlobalization>true</InvariantGlobalization>
     </PropertyGroup>
 
+    <!-- Give .PDBs to the poor players/modders -->
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
       <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
@@ -32,21 +33,17 @@
         <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
         <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8"/>
         <PackageReference Include="Molten.Engine" Version="0.7.4" />
-        <PackageReference Include="SFML.Audio" Version="2.6.1"/>
-        <PackageReference Include="SFML.Net" Version="2.6.1"/>
+        <PackageReference Include="nulastudio.NetBeauty" Version="2.1.4.6" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.EXT" Version="2.22.0"/>
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.INTEL" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.KHR" Version="2.22.0"/>
-        <PackageReference Include="Silk.NET.OpenGL.Extensions.MESA" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.NV" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.22.0"/>
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.INTEL" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.22.0"/>
@@ -54,7 +51,6 @@
         <PackageReference Include="SixLabors.Fonts" Version="2.1.2" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5"/>
-        <PackageReference Include="SoundFlow" Version="1.0.4" />
         <PackageReference Include="System.IO.Hashing" Version="10.0.0-preview.3.25171.5" />
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
@@ -75,50 +71,35 @@
         <None Update="snd\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Remove="lib\**"/>
         <None Update="wglinfo64.exe">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         <None Update="logo.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="shaders\waterShader.frag">
+        <None Update="assets\**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="shaders\waterShader.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="shaders\instantVertex.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="shaders\instantVertex.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="splashes.txt">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="shaders\instantVertexColour.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="shaders\instantVertexColour.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
+        <None Remove="lib\**"/>
         <Compile Remove="lib\**"/>
         <Compile Remove="BlockGameTesting\**"/>
-        <Compile Remove="src\ui\element\ProgressBar.cs" />
+        <EmbeddedResource Remove="lib\**"/>
+        <EmbeddedResource Remove="BlockGameTesting\**"/>
+        <None Remove="lib\**"/>
+        <None Remove="BlockGameTesting\**"/>
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Remove="lib\**"/>
-        <EmbeddedResource Remove="BlockGameTesting\**"/>
+        <Compile Include="lib\FastNoiseLite.cs"/>
     </ItemGroup>
-    
+
+    <!-- These are the NATIVE libs 
+    IDK how to do proper RID-specific inclusion. So we just copy all of them lol
+    -->
     <ItemGroup>
-        <None Remove="lib\**"/>
-        <None Remove="BlockGameTesting\**"/>
+        <Content Include="libs\**">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -126,10 +107,48 @@
         <ProjectReference Include="lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
         <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
         <ProjectReference Include="lib\Silk.NET.Input\Silk.NET.Input.csproj"/>
+        <Reference Include="Bass.Net">
+            <HintPath>lib\BASS\core\Bass.Net.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Include="lib\FastNoiseLite.cs"/>
-    </ItemGroup>
+    <PropertyGroup>
+        <BeautySharedRuntimeMode>False</BeautySharedRuntimeMode>
+        <!-- beauty into sub-directory, default is libs, quote with "" if contains space  -->
+        <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) == 'True'">../libs</BeautyLibsDir>
+        <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) != 'True'">./libs</BeautyLibsDir>
+        <!-- dlls that you don't want to be moved or can not be moved -->
+        <!-- <BeautyExcludes>dll1.dll;lib*;...</BeautyExcludes> -->
+        <!-- dlls that end users never needed, so hide them -->
+        <!-- <BeautyHiddens>hostfxr;hostpolicy;*.deps.json;*.runtimeconfig*.json</BeautyHiddens> -->
+        <!-- set to True if you want to disable -->
+        <DisableBeauty>False</DisableBeauty>
+        <!-- set to False if you want to beauty on build -->
+        <BeautyOnPublishOnly>False</BeautyOnPublishOnly>
+        <!-- DO NOT TOUCH THIS OPTION -->
+        <BeautyNoRuntimeInfo>False</BeautyNoRuntimeInfo>
+        <!-- valid values: auto|with|without -->
+        <BeautyNBLoaderVerPolicy>auto</BeautyNBLoaderVerPolicy>
+        <!-- set to True if you want to allow 3rd debuggers(like dnSpy) debugs the app -->
+        <BeautyEnableDebugging>True</BeautyEnableDebugging>
+        <!-- the patch can reduce the file count -->
+        <!-- set to False if you want to disable -->
+        <!-- SCD Mode Feature Only -->
+        <BeautyUsePatch>True</BeautyUsePatch>
+        <!-- App Entry Dll = BeautyDir + BeautyAppHostDir + BeautyAppHostEntry -->
+        <!-- see https://github.com/nulastudio/NetBeauty2#customize-apphost for more details -->
+        <!-- relative path based on AppHostDir -->
+        <!-- .NET Core Non Single-File Only -->
+        <!-- <BeautyAppHostEntry>bin/MyApp.dll</BeautyAppHostEntry> -->
+        <!-- relative path based on BeautyDir -->
+        <!-- .NET Core Non Single-File Only -->
+        <!-- <BeautyAppHostDir>..</BeautyAppHostDir> -->
+        <!-- <BeautyAfterTasks></BeautyAfterTasks> -->
+        <!-- valid values: Error|Detail|Info -->
+        <BeautyLogLevel>Info</BeautyLogLevel>
+        <!-- set to a repo mirror if you have troble in connecting github -->
+        <!-- <BeautyGitCDN>https://gitee.com/liesauer/HostFXRPatcher</BeautyGitCDN> -->
+        <!-- <BeautyGitTree>master</BeautyGitTree> -->
+    </PropertyGroup>
 
 </Project>

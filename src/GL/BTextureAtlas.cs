@@ -126,7 +126,7 @@ public class BTextureAtlas : IDisposable {
             throw new Exception("Couldn't load the atlas contiguously!");
         }
 
-        Console.Out.WriteLine("Loading textures the proper way!");
+        //Console.Out.WriteLine("Loading textures the proper way!");
         // Load image
         // Thanks ClassiCube for the idea!
         generateMipmaps(memory.Span, image.Width, image.Height, maxLevel);
