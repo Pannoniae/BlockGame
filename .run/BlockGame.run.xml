@@ -7,7 +7,6 @@
     <envs>
       <env name="DOTNET_EnableWriteXorExecute" value="0" />
       <env name="MALLOC_ARENA_MAX" value="2" />
-      <env name="DOTNET_JitDisasm" value="average2" />
     </envs>
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
     <option name="ENV_FILE_PATHS" value="" />
