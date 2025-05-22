@@ -20,6 +20,9 @@ public class Player : Entity {
 
     public PlayerRenderer renderer;
 
+    // sound stuff
+    private double lastFootstepDistance = 0;
+    private const double FOOTSTEP_DISTANCE = 3.0; // Distance between footstep sounds
 
     public Inventory hotbar;
 
@@ -94,6 +97,15 @@ public class Player : Entity {
 
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
+
+        // Play footstep sounds when moving on ground
+        if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
+            if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
+                Console.Out.WriteLine(totalTraveled - lastFootstepDistance);
+                Game.snd.playFootstep();
+                lastFootstepDistance = totalTraveled;
+            }
+        }
 
         feetPosition = new Vector3D(position.X, position.Y + feetCheckHeight, position.Z);
 
@@ -417,6 +429,8 @@ public class Player : Entity {
             world.blockUpdateWithNeighbours(pos);
             // place water if adjacent
             lastBreak = world.worldTick;
+            
+            Game.snd.playBlockHit();
         }
         else {
             setSwinging(false);

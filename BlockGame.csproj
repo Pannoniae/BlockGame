@@ -111,6 +111,12 @@
             <HintPath>lib\BASS\core\Bass.Net.dll</HintPath>
         </Reference>
     </ItemGroup>
+    
+    
+    <!-- Print the RID -->
+    <Target Name="PrintRID" BeforeTargets="Build">
+        <Message Text="Runtime Identifier: $(RuntimeIdentifier)" Importance="high" />
+    </Target>
 
     <PropertyGroup>
         <BeautySharedRuntimeMode>False</BeautySharedRuntimeMode>

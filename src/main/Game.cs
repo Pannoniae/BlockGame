@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
+using BlockGame.snd;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
@@ -30,7 +31,7 @@ using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 namespace BlockGame;
 
 public partial class Game {
-    public static Game instance { get; private set; }
+    public static Game instance;
 
     public static int width;
     public static int height;
@@ -46,9 +47,6 @@ public partial class Game {
     /// </summary>
     public static bool shutUp = false;
 
-    public static int centreX => width / 2;
-    public static int centreY => height / 2;
-
     /// <summary>
     /// The current game screen which is shown.
     /// </summary>
@@ -58,7 +56,13 @@ public partial class Game {
 
     public static Graphics graphics;
     public static GUI gui;
+    
+    public static TextureManager textureManager;
+    public static Metrics metrics;
 
+    public static FontLoader fontLoader;
+    public static SoundEngine snd;
+    
     public static World? world;
     public static Player? player;
     public static WorldRenderer? renderer;
@@ -102,11 +106,6 @@ public partial class Game {
     /// </summary>
     public static bool lockingMouse;
 
-    public static TextureManager textureManager;
-    public static Metrics metrics;
-
-    public static FontLoader fontLoader;
-
     public BlockingCollection<Action> mainThreadQueue = new();
 
     private readonly string[] splashes;
@@ -136,6 +135,9 @@ public partial class Game {
     private static readonly float g_mulReduceReciprocal = 8.0f;
     private static readonly float g_minReduceReciprocal = 128.0f;
     private static readonly float g_maxSpan = 8.0f;
+    
+    public static int centreX => width / 2;
+    public static int centreY => height / 2;
 
 
     public Game(bool devMode) {
@@ -204,19 +206,17 @@ public partial class Game {
         NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
     }
     private static IntPtr nativeLibPath(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
-        // Get platform and architecture
         string arch = RuntimeInformation.OSArchitecture == Architecture.X64 ? "x64" : "x86";
 
-        // Create path to library
+        // Create path to libs
         string libsPath = Path.Combine(AppContext.BaseDirectory, "libs", arch);
         string libraryPath;
-
-        // Determine full path based on platform
+        
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             libraryPath = Path.Combine(libsPath, $"{libraryName}.dll");
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            // macOS has a special path regardless of architecture
+            // macOS has *one* path regardless of architecture
             libsPath = Path.Combine(AppContext.BaseDirectory, "libs", "osx");
             libraryPath = Path.Combine(libsPath, $"lib{libraryName}.dylib");
         }
@@ -368,34 +368,10 @@ public partial class Game {
         stopwatch.Start();
         permanentStopwatch.Start();
         
-        // don't use local variables, they go out of scope so nothing plays..... hold them statically
-       // init BASS using the default output device
-        if (Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero)) {
-            // create a stream channel from a file
-            int res = Bass.BASS_PluginLoad("bassflac");
-            if (res == 0) {
-                // error loading the plugin
-                Console.WriteLine("Plugin error: {0}", Bass.BASS_ErrorGetCode());
-            }
-            int stream = Bass.BASS_StreamCreateFile("snd/tests.flac", 0, 0, BASSFlag.BASS_MUSIC_LOOP);
-            if (stream != 0) {
-                // play the stream channel
-                Bass.BASS_ChannelPlay(stream, false);
-            }
-            else {
-                // error creating the stream
-                Console.WriteLine("Stream error: {0}", Bass.BASS_ErrorGetCode());
-            }
+        snd = new SoundEngine();
 
-            // wait for a key
-            Console.WriteLine("Press any key to exit");
-            //Console.ReadKey(false);
-
-            // free the stream
-            //Bass.BASS_StreamFree(stream);
-            // free BASS
-            //Bass.BASS_Free();
-        }
+        var music = snd.playMusic("snd/tests.flac");
+        snd.setLoop(music, true);
 
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");

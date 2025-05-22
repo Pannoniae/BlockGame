@@ -80,7 +80,7 @@ public sealed class SharedBlockVAO : VAO
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void bind() {
-        GL.VertexArrayVertexBuffer(VAOHandle, 0, buffer, 0, 7 * sizeof(ushort));
+        GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
     }
 
     public uint render() {
