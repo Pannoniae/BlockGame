@@ -370,8 +370,8 @@ public partial class Game {
         
         snd = new SoundEngine();
 
-        var music = snd.playMusic("snd/tests.flac");
-        snd.setLoop(music, true);
+        //var music = snd.playMusic("snd/tests.flac");
+        //snd.setLoop(music, true);
 
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");
@@ -671,7 +671,7 @@ public partial class Game {
     /// <summary>
     /// Now the main loop which calls <see cref="update"/> too.
     /// </summary>
-    /// <param name="dt">dt as fractions of a second. 1 = 1s</param>
+    /// <param name="dt">dt as fractions of a second. 1 = 1s</param> 
     private void mainLoop(double dt) {
         dt = Math.Min(dt, maxTimestep);
         accumTime += dt;
