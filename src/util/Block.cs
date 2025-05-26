@@ -149,7 +149,6 @@ public class Block {
     public static Block CANDY_GREY = register(new Block(Blocks.CANDY_GREY, "Grey Candy", BlockModel.makeCube(cubeUVs(14, 2))));
     public static Block CANDY_BLACK = register(new Block(Blocks.CANDY_BLACK, "Black Candy", BlockModel.makeCube(cubeUVs(15, 2))));
 
-
     public static Block HEAD = register(new Block(Blocks.HEAD, "Head", BlockModel.makeHalfCube(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
 
     public static Block WATER = register(new Water(Blocks.WATER, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid());
