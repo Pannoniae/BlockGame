@@ -237,7 +237,7 @@ public class IngameMenu : Menu, IDisposable {
                 debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
             }
             
-            var smem = Game.snd.getMemoryUsage() / Constants.MEGABYTES;
+            var smem = -1;
             debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer),
                 Game.GL.GetStringS(StringName.Vendor));
             debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));

@@ -17,8 +17,6 @@ using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Flac;
 using BatcherBeginMode = BlockGame.GL.BatcherBeginMode;
 using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
 using DebugSource = Silk.NET.OpenGL.DebugSource;
@@ -203,7 +201,7 @@ public partial class Game {
 
     private static void regNativeLib() {
         //NativeLibrary.SetDllImportResolver(typeof(Game).Assembly, nativeLibPath);
-        NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
+        //NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
     }
     private static IntPtr nativeLibPath(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
         string arch = RuntimeInformation.OSArchitecture == Architecture.X64 ? "x64" : "x86";
@@ -703,6 +701,7 @@ public partial class Game {
         }
 
         handleTimers();
+        snd.update();
 
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;

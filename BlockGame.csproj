@@ -30,6 +30,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.0.0" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
         <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8"/>
         <PackageReference Include="Molten.Engine" Version="0.7.4" />
@@ -107,9 +108,6 @@
         <ProjectReference Include="lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
         <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
         <ProjectReference Include="lib\Silk.NET.Input\Silk.NET.Input.csproj"/>
-        <Reference Include="Bass.Net">
-            <HintPath>lib\BASS\core\Bass.Net.dll</HintPath>
-        </Reference>
     </ItemGroup>
     
     
