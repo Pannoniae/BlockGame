@@ -93,6 +93,7 @@ public class SoundEngine : IDisposable {
         if (clip == null) {
             throw new SoundException("Audio clip is null");
         }
+        Console.Out.WriteLine($"Loaded {footstepSounds.Count} footstep sounds");
         
         var source = new AudioSource();
         source.Pitch = pitch;
@@ -118,6 +119,8 @@ public class SoundEngine : IDisposable {
         catch (Exception ex) {
             throw new SoundException($"Failed to play music {name}: {ex.Message}");
         }
+        
+        Console.Out.WriteLine($"Loaded {blockHitSounds.Count} block hit sounds");
     }
 
     public void setLoop(Sound sound, bool loop) {

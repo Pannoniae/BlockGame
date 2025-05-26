@@ -368,8 +368,8 @@ public partial class Game {
         
         snd = new SoundEngine();
 
-        //var music = snd.playMusic("snd/tests.flac");
-        //snd.setLoop(music, true);
+        var music = snd.playMusic("snd/tests.flac");
+        snd.setLoop(music, true);
 
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");
