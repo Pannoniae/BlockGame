@@ -45,7 +45,7 @@ public static partial class Meth {
         return 180f / MathF.PI * radians;
     }
 
-    public static Vector3I getRandomCoord(Random random, int maxX, int maxY, int maxZ) {
+    public static Vector3I getRandomCoord(XRandom random, int maxX, int maxY, int maxZ) {
         var randomValue = random.Next(maxX * maxY * maxZ);
         var x = randomValue % maxX;
         var y = randomValue / maxX % maxY;
@@ -53,7 +53,7 @@ public static partial class Meth {
         return new Vector3I(x, y, z);
     }
 
-    public static Vector3I getRandomCoord(Random random, int maxX, int maxY, int maxZ, int minX, int minY, int minZ) {
+    public static Vector3I getRandomCoord(XRandom random, int maxX, int maxY, int maxZ, int minX, int minY, int minZ) {
         return getRandomCoord(random, maxX - minX, maxY - minY, maxZ - minZ) + new Vector3I(minX, minY, minZ);
     }
 

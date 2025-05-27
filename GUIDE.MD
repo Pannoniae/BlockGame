@@ -19,3 +19,10 @@
 Or if you have an `Entity`, don't create a `World` field for it. Methods which require *both* should live in the parent. (e.g. in `World`).
 
   This avoids a huge spaghetti mess of references.
+
+
+## Footguns/noobtraps
+- NEVER use the built-in `Random` class. Use `XRandom` instead. The no-arg constructor is good but you can't control the seed -
+the seeded constructor has backwards compatibility bullshit, so it's doggone slow.
+- NEVER use built-in hashcodes, especially in worldgen/where you want consistent results. IT IS LITERALLY RANDOM ON PURPOSE.
+Shitty-ass design. I'll cook something up later but for now, DIY homebrew a solution with XOR or something

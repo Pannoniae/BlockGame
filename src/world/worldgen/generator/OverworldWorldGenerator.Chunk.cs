@@ -102,11 +102,11 @@ public partial class OverworldWorldGenerator {
         chunk.status = ChunkStatus.POPULATED;
     }
 
-    public Random getRandom(ChunkCoord coord) {
-        return new Random(coord.GetHashCode());
+    public XRandom getRandom(ChunkCoord coord) {
+        return new XRandom(coord.GetHashCode());
     }
 
-    public void placeOakTree(Random random, int x, int y, int z) {
+    public void placeOakTree(XRandom random, int x, int y, int z) {
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
             world.setBlock(x, y + i, z, Block.LOG.id);

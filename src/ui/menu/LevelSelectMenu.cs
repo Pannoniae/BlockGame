@@ -1,5 +1,6 @@
 using BlockGame.util;
 using Molten;
+using Silk.NET.Input;
 
 namespace BlockGame.ui;
 
@@ -62,7 +63,12 @@ public class LevelSelectMenu : Menu {
             world = WorldIO.load($"level{levelSelect.levelIndex}");
         }
         else {
-            world = new World($"level{levelSelect.levelIndex}", Random.Shared.Next());
+            var seed = Game.random.Next();
+            if (Game.keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                // if shift is pressed, use the seed from the level select button
+                seed = 674414719;
+            }
+            world = new World($"level{levelSelect.levelIndex}", seed);
         }
         Game.world?.Dispose();
         Game.world = world;

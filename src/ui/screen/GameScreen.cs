@@ -19,6 +19,7 @@ public class GameScreen : Screen {
 
     public bool debugScreen = false;
     public bool chunkBorders = false;
+    public bool music = true;
 
     public readonly PauseMenu PAUSE_MENU = new();
     public readonly IngameMenu INGAME_MENU = new();
@@ -246,7 +247,7 @@ public class GameScreen : Screen {
                 break;
             case Key.F10: {
                 // print vmem
-                var vmem = MemoryUtils.getVRAMUsage();
+                var vmem = MemoryUtils.getVRAMUsage(out _);
                 if (vmem == -1) {
                     Console.Out.WriteLine("Can't get VRAM usage");
                 }
@@ -286,6 +287,17 @@ public class GameScreen : Screen {
                 else if (currentMenu == CHAT) {
                     Game.instance.lockMouse();
                     switchToMenu(INGAME_MENU);
+                }
+                break;
+            }
+            case Key.M: {
+                // toggle music
+                music = !music;
+                if (music) {
+                    Game.snd.unmuteMusic();
+                }
+                else {
+                    Game.snd.muteMusic();
                 }
                 break;
             }
@@ -442,8 +454,8 @@ public class GameScreen : Screen {
         var world = Game.world;
 
         // draw chunk borders
-        for (int x = -Settings.instance.renderDistance; x <= Settings.instance.renderDistance; x++) {
-            for (int z = -Settings.instance.renderDistance; z <= Settings.instance.renderDistance; z++) {
+        for (int x = -Settings.instance.renderDistance - 2; x <= Settings.instance.renderDistance + 2; x++) {
+            for (int z = -Settings.instance.renderDistance - 2; z <= Settings.instance.renderDistance + 2; z++) {
                 var playerPos = world.player.position;
                 var playerChunkPos = World.getChunkPos((int)playerPos.X, (int)playerPos.Z);
                 var chunkPos = new ChunkCoord(playerChunkPos.x + x, playerChunkPos.z + z);

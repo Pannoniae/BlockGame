@@ -1,3 +1,5 @@
+using BlockGame.util;
+
 namespace BlockGame;
 
 public partial class OverworldWorldGenerator : WorldGenerator {
@@ -10,14 +12,14 @@ public partial class OverworldWorldGenerator : WorldGenerator {
     public FastNoiseLite auxNoise2;
     public FastNoiseLite treenoise;
 
-    public Random random;
+    public XRandom random;
 
     public OverworldWorldGenerator(World world) {
         this.world = world;
     }
 
     public void setup(int seed) {
-        random = new Random(seed);
+        random = new XRandom(seed);
         terrainNoise = new FastNoiseLite(seed);
         terrainNoise2 = new FastNoiseLite(random.Next(seed));
         auxNoise = new FastNoiseLite(random.Next(seed));

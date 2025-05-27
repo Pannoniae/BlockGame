@@ -236,13 +236,13 @@ public class IngameMenu : Menu, IDisposable {
             if (Game.devMode) {
                 debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
             }
-            
-            var smem = -1;
+
+            long vmem = MemoryUtils.getVRAMUsage(out var stat); 
             debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer),
                 Game.GL.GetStringS(StringName.Vendor));
             debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
-            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nsmem: {2:0.###}", GCMemory / Constants.MEGABYTES,
-                workingSet / Constants.MEGABYTES, smem);
+            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})", GCMemory / Constants.MEGABYTES,
+                workingSet / Constants.MEGABYTES, vmem / Constants.MEGABYTES, stat);
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,

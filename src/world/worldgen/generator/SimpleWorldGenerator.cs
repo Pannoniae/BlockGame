@@ -1,3 +1,5 @@
+using BlockGame.util;
+
 namespace BlockGame;
 
 public partial class SimpleWorldGenerator : WorldGenerator {
@@ -8,14 +10,14 @@ public partial class SimpleWorldGenerator : WorldGenerator {
     public FastNoiseLite noise2;
     public FastNoiseLite treenoise;
 
-    public Random random;
+    public XRandom random;
 
     public SimpleWorldGenerator(World world) {
         this.world = world;
     }
 
     public void setup(int seed) {
-        random = new Random(seed);
+        random = new XRandom(seed);
         noise = new FastNoiseLite(seed);
         noise2 = new FastNoiseLite(random.Next(seed));
         treenoise = new FastNoiseLite(random.Next(seed));

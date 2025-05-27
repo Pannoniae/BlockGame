@@ -76,8 +76,8 @@ public partial class Game {
     public int fps;
     public double ft;
 
-    public static Random random = new Random(1337 * 1337);
-    public static Random clientRandom = new Random();
+    public static XRandom random = new XRandom();
+    public static XRandom clientRandom = new XRandom();
 
     public static Stopwatch stopwatch = new();
 

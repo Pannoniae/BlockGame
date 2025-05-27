@@ -86,6 +86,8 @@ public sealed class XRandom {
     private ulong _s0, _s1, _s2, _s3;
 
     public unsafe XRandom() {
+        //Console.Out.WriteLine("called! (noarg)");
+        //Console.Out.WriteLine(Environment.StackTrace);
         ulong* ptr = stackalloc ulong[4];
         do {
             Interop.GetRandomBytes2((byte*)ptr, 4 * sizeof(ulong));
@@ -96,32 +98,29 @@ public sealed class XRandom {
         } while ((_s0 | _s1 | _s2 | _s3) == 0); // at least one value must be non-zero
     }
 
-    private static ulong NextSplitMix64(ref ulong x) {
-        ulong z = (x += 0x9E3779B97F4A7C15UL);
-        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
-        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
-        return z ^ (z >> 31);
-    }
-
-    private void SplitMix64Seed(ulong seed) {
-        // Initialize all four states
-        _s0 = NextSplitMix64(ref seed);
-        _s1 = NextSplitMix64(ref seed);
-        _s2 = NextSplitMix64(ref seed);
-        _s3 = NextSplitMix64(ref seed);
-    }
-
     // Seed with ulong
     public XRandom(ulong seed) {
+        //Console.Out.WriteLine("called! (u)");
+        //Console.Out.WriteLine(Environment.StackTrace);
         SplitMix64Seed(seed);
     }
 
     // Seed with int (standard Random compatibility)
     public XRandom(int seed) : this((ulong)seed) {
+        //Console.Out.WriteLine("called! (i)");
+        //Console.Out.WriteLine(Environment.StackTrace);
+    }
+    
+    // Convenience array constructor
+    public XRandom(ulong[] seeds) : this(seeds.AsSpan()) {
+        //Console.Out.WriteLine("called! (a)");
+        //Console.Out.WriteLine(Environment.StackTrace);
     }
 
     // Seed with multiple values
     public unsafe XRandom(ReadOnlySpan<ulong> seeds) {
+        //Console.Out.WriteLine("called! (s)");
+        //Console.Out.WriteLine(Environment.StackTrace);
         if (seeds.Length >= 4) {
             // Use provided seeds directly
             _s0 = seeds[0];
@@ -163,13 +162,24 @@ public sealed class XRandom {
             } while ((_s0 | _s1 | _s2 | _s3) == 0);
         }
     }
+    
+    private static ulong NextSplitMix64(ref ulong x) {
+        ulong z = (x += 0x9E3779B97F4A7C15UL);
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+        return z ^ (z >> 31);
+    }
+
+    private void SplitMix64Seed(ulong seed) {
+        // Initialize all four states
+        _s0 = NextSplitMix64(ref seed);
+        _s1 = NextSplitMix64(ref seed);
+        _s2 = NextSplitMix64(ref seed);
+        _s3 = NextSplitMix64(ref seed);
+    }
 
     public void Seed(int seed) {
         SplitMix64Seed((ulong)seed);
-    }
-
-    // Convenience array constructor
-    public XRandom(ulong[] seeds) : this(seeds.AsSpan()) {
     }
 
     /// <summary>Produces a value in the range [0, uint.MaxValue].</summary>
@@ -251,7 +261,7 @@ public sealed class XRandom {
     // NextUInt32/64 algorithms based on https://arxiv.org/pdf/1805.10941.pdf and https://github.com/lemire/fastrange.
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static uint NextUInt32(uint maxValue, XRandom xoshiro) {
+    private static uint NextUInt32(uint maxValue, XRandom xoshiro) {
         ulong randomProduct = (ulong)maxValue * xoshiro.NextUInt32();
         uint lowPart = (uint)randomProduct;
 
@@ -268,7 +278,7 @@ public sealed class XRandom {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ulong NextUInt64(ulong maxValue, XRandom xoshiro) {
+    private static ulong NextUInt64(ulong maxValue, XRandom xoshiro) {
         ulong randomProduct = Math.BigMul(maxValue, xoshiro.NextUInt64(), out ulong lowPart);
 
         if (lowPart < maxValue) {

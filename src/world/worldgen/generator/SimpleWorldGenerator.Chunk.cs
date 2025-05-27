@@ -52,8 +52,8 @@ public partial class SimpleWorldGenerator {
         chunk.status = ChunkStatus.POPULATED;
     }
 
-    public Random getRandom(ChunkCoord coord) {
-        return new Random(coord.GetHashCode());
+    public XRandom getRandom(ChunkCoord coord) {
+        return new XRandom(coord.GetHashCode());
     }
 
     // Can place in neighbouring chunks, so they must be loaded first

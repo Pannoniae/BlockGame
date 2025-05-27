@@ -52,7 +52,7 @@ public partial class World : IDisposable {
 
     public int worldTick;
 
-    public Random random;
+    public XRandom random;
     private TimerAction saveWorld;
 
     private const double MAX_CHUNKLOAD_FRAMETIME = 7.5;
@@ -72,7 +72,7 @@ public partial class World : IDisposable {
         player = new Player(this, 6, 20, 6);
         Game.player = player;
 
-        random = new Random(seed);
+        random = new XRandom(seed);
         worldTick = 0;
 
         generator.setup(seed);

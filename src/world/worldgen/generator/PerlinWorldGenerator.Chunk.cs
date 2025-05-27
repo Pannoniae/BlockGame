@@ -419,7 +419,6 @@ public partial class PerlinWorldGenerator {
     }
 
     public void populate(ChunkCoord coord) {
-        var random = getRandom(coord);
         var chunk = world.getChunk(coord);
         
         var xWorld = coord.x * Chunk.CHUNKSIZE;
@@ -453,14 +452,14 @@ public partial class PerlinWorldGenerator {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT);
-            coalOre.place(world, this.random, x, y, z);
+            coalOre.place(world, random, x, y, z);
         }
         
         for (int i = 0; i < 16; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 2);
-            ironOre.place(world, this.random, x, y, z);
+            ironOre.place(world, random, x, y, z);
         }
 
         var foliage = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);
@@ -541,9 +540,5 @@ public partial class PerlinWorldGenerator {
                 }
             }
         }
-    }
-
-    public XRandom getRandom(ChunkCoord coord) {
-        return new XRandom(coord.GetHashCode());
     }
 }

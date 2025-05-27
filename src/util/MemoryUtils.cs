@@ -134,7 +134,7 @@ public static class MemoryUtils {
     }
 
     /// Get VRAM usage in bytes. Returns -1 if not supported.
-    public static long getVRAMUsage() {
+    public static long getVRAMUsage(out int stat) {
         var gl = Game.GL;
         if (gl.IsExtensionPresent("GL_NVX_gpu_memory_info")) {
             // Hell yeah, NVidia card
@@ -145,6 +145,7 @@ public static class MemoryUtils {
             gl.GetInteger((GetPName)NVX_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX, out int totalMemKb);
             gl.GetInteger((GetPName)NVX_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, out int freeMemKb);
 
+            stat = 1;
             // KB to bytes
             return (totalMemKb - freeMemKb) * 1024L;
         }
@@ -160,9 +161,10 @@ public static class MemoryUtils {
             // This is a bit of a hack since we can only get free mem, not total
             // Most AMD GPUs have 4-16GB VRAM, let's guesstimate 8GB
             const int APPROX_TOTAL_MB = 8 * 1024;
+            stat = 2;
             return (APPROX_TOTAL_MB - (totalMemKb / 1024)) * 1024L * 1024L;
         }
-
+        stat = 0;
         // Welp, we're fucked. No supported method found.
         return -1;
     }

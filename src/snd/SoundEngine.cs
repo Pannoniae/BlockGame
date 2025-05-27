@@ -22,14 +22,10 @@ public class SoundEngine : IDisposable {
         const uint CHANNELS = 2;
         
         // use default device
-        var devices = AudioContext.GetDevices();
-        foreach (var device in devices) {
-            Console.Out.WriteLine(device.Name);
-        }
-        if (devices.Length == 0) {
-            throw new SoundException("No audio devices found");
-        }
-        var defaultDevice = devices[0];
+        //var devices = AudioContext.GetDevices();
+        //foreach (var device in devices) {
+        //    Console.Out.WriteLine(device.Name);
+        //}
         AudioContext.Initialize(SAMPLE_RATE, CHANNELS);
         loadSounds();
     }
@@ -112,7 +108,7 @@ public class SoundEngine : IDisposable {
             var source = new AudioSource();
             source.Play(clip);
             
-            var sound = new Sound(source);
+            var sound = new Sound(source, isMusic: true);
             sounds.Add(sound);
             return sound;
         }
@@ -121,6 +117,22 @@ public class SoundEngine : IDisposable {
         }
         
         Console.Out.WriteLine($"Loaded {blockHitSounds.Count} block hit sounds");
+    }
+
+    public void muteMusic() {
+        foreach (var sound in sounds) {
+            if (sound.isMusic && sound.source != null) {
+                sound.source.Volume = 0.0f;
+            }
+        }
+    }
+    
+    public void unmuteMusic() {
+        foreach (var sound in sounds) {
+            if (sound.isMusic && sound.source != null) {
+                sound.source.Volume = 1.0f;
+            }
+        }
     }
 
     public void setLoop(Sound sound, bool loop) {
@@ -206,9 +218,11 @@ public class SoundEngine : IDisposable {
 
 public class Sound {
     public AudioSource? source;
+    public bool isMusic;
 
-    public Sound(AudioSource? audioSource) {
+    public Sound(AudioSource? audioSource, bool isMusic = false) {
         source = audioSource;
+        this.isMusic = isMusic;
     }
 }
 

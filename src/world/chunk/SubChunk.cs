@@ -36,7 +36,7 @@ public class SubChunk : IDisposable {
         box = new AABB(new Vector3D(xpos * 16, ypos * 16, zpos * 16), new Vector3D(xpos * 16 + 16, ypos * 16 + 16, zpos * 16 + 16));
     }
 
-    public void tick(World world, Random random, int x, int y, int z) {
+    public void tick(World world, XRandom random, int x, int y, int z) {
         var block = blocks[x, y, z];
         var worldPos = World.toWorldPos(coord.x, coord.y, coord.z, x, y, z);
 
