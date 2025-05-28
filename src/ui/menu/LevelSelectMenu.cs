@@ -72,11 +72,12 @@ public class LevelSelectMenu : Menu {
         }
         Game.world?.Dispose();
         Game.world = world;
-        Game.renderer.setWorld(world);
-        Game.world.init();
-        Game.instance.switchToScreen(Screen.GAME_SCREEN);
-        world.loadAroundPlayer();
-        Game.instance.lockMouse();
+        
+        // set to loading screen
+        Game.instance.switchTo(LOADING);
+        LOADING.load(world);
+        
+        // logic continues in the loading screen
     }
 
     // when activated, refresh the button states/texts

@@ -11,14 +11,21 @@ public class LoadingMenu : Menu {
     public int dots = 2;
 
     private Text text;
+    private World world;
 
     public LoadingMenu() {
-        text = new Text(this, "loadingText", "Loading fonts...");
+        text = new Text(this, "loadingText", "Loading world...");
         text.setPosition(new Rectangle(0, 0, 160, 40));
         text.centreContents();
         addElement(text);
 
         counter = 0;
+    }
+    
+    public void load(World world) {
+        this.world = world;
+        Game.renderer.setWorld(world);
+        Game.world.init();
     }
 
     public override void render(double dt, double interp) {
@@ -30,6 +37,12 @@ public class LoadingMenu : Menu {
             counter = 0;
             text.text = "Loading fonts" + new string('.', dots + 1);
         }
+        
+        
+        world.loadAroundPlayer();
+        Game.instance.lockMouse();
+        
+        Game.setTimeout(1000, () => Game.instance.switchToScreen(Screen.GAME_SCREEN));
     }
 
     public void sleep() {

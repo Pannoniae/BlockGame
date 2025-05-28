@@ -774,7 +774,8 @@ public partial class Game {
     }
 
     private static void handleTimers() {
-        foreach (var timerAction in timerQueue) {
+        for (var i = 0; i < timerQueue.Count; i++) {
+            var timerAction = timerQueue[i];
             var now = permanentStopwatch.ElapsedMilliseconds;
             if (timerAction.enabled && now - timerAction.lastCalled > timerAction.interval) {
                 timerAction.action();
