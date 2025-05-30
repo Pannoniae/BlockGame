@@ -100,6 +100,7 @@ public class Cave : OverlayFeature {
         // copy shit into locals
         // idk JIT probably doesn't do that
         var width = this.width;
+        var d = this.d;
         var hAngle = this.hAngle;
         var vAngle = this.vAngle;
         var cx = this.cx;
@@ -300,6 +301,7 @@ public class Cave : OverlayFeature {
 
         cleanup: ;
         this.width = width;
+        this.d = d;
         this.hAngle = hAngle;
         this.vAngle = vAngle;
         this.cx = cx;

@@ -38,11 +38,10 @@ public class LoadingMenu : Menu {
             text.text = "Loading fonts" + new string('.', dots + 1);
         }
         
-        
+        Game.instance.switchToScreen(Screen.GAME_SCREEN);
         world.loadAroundPlayer();
         Game.instance.lockMouse();
         
-        Game.setTimeout(1000, () => Game.instance.switchToScreen(Screen.GAME_SCREEN));
     }
 
     public void sleep() {

@@ -210,6 +210,7 @@ public partial class World : IDisposable {
             Game.renderer.meshChunk(section);
         }
         particleManager.update(dt);
+        
     }
 
     public void update(double dt) {
