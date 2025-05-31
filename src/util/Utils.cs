@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Molten;
@@ -21,6 +22,43 @@ public static partial class Meth {
 
     public static Vector3I copy(Vector3I input) {
         return new Vector3I(input.X, input.Y, input.Z);
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector3D norm(this Vector3D v) {
+        
+        double lengthSq = double.MultiplyAddEstimate(v.X, v.X, double.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
+        double invLength = double.ReciprocalSqrtEstimate(lengthSq);
+        return new Vector3D(v.X * invLength, v.Y * invLength, v.Z * invLength);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void normi(this ref Vector3D v) {
+        double lengthSq = double.MultiplyAddEstimate(v.X, v.X, double.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
+        double invLength = double.ReciprocalSqrtEstimate(lengthSq);
+        v.X *= invLength;
+        v.Y *= invLength;
+        v.Z *= invLength;
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void normi(this ref Vector3 v) {
+        float lengthSq = float.MultiplyAddEstimate(v.X, v.X, float.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
+        float invLength = float.ReciprocalSqrtEstimate(lengthSq);
+        v.X *= invLength;
+        v.Y *= invLength;
+        v.Z *= invLength;
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static double dot(this Vector3D a, Vector3D b) {
+        return double.MultiplyAddEstimate(a.X, b.X, double.MultiplyAddEstimate(a.Y, b.Y, a.Z * b.Z));
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float dot(this Vector3 a, Vector3 b) {
+        return float.MultiplyAddEstimate(a.X, b.X, float.MultiplyAddEstimate(a.Y, b.Y, a.Z * b.Z));
     }
 
     /// <summary>

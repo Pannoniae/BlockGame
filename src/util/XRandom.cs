@@ -226,13 +226,13 @@ public sealed class XRandom {
     public int Next(int maxValue) {
         System.Diagnostics.Debug.Assert(maxValue >= 0);
 
-        return (int)NextUInt32((uint)maxValue, this);
+        return (int)_NextUInt32((uint)maxValue);
     }
 
     public int Next(int minValue, int maxValue) {
         System.Diagnostics.Debug.Assert(minValue <= maxValue);
 
-        return (int)NextUInt32((uint)(maxValue - minValue), this) + minValue;
+        return (int)_NextUInt32((uint)(maxValue - minValue)) + minValue;
     }
 
     public long NextInt64() {
@@ -250,27 +250,27 @@ public sealed class XRandom {
     public long NextInt64(long maxValue) {
         System.Diagnostics.Debug.Assert(maxValue >= 0);
 
-        return (long)NextUInt64((ulong)maxValue, this);
+        return (long)_NextUInt64((ulong)maxValue);
     }
 
     public long NextInt64(long minValue, long maxValue) {
         System.Diagnostics.Debug.Assert(minValue <= maxValue);
 
-        return (long)NextUInt64((ulong)(maxValue - minValue), this) + minValue;
+        return (long)_NextUInt64((ulong)(maxValue - minValue)) + minValue;
     }
 
     // NextUInt32/64 algorithms based on https://arxiv.org/pdf/1805.10941.pdf and https://github.com/lemire/fastrange.
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint NextUInt32(uint maxValue, XRandom xoshiro) {
-        ulong randomProduct = (ulong)maxValue * xoshiro.NextUInt32();
+    private uint _NextUInt32(uint maxValue) {
+        ulong randomProduct = (ulong)maxValue * NextUInt32();
         uint lowPart = (uint)randomProduct;
 
         if (lowPart < maxValue) {
             uint remainder = (0u - maxValue) % maxValue;
 
             while (lowPart < remainder) {
-                randomProduct = (ulong)maxValue * xoshiro.NextUInt32();
+                randomProduct = (ulong)maxValue * NextUInt32();
                 lowPart = (uint)randomProduct;
             }
         }
@@ -279,14 +279,14 @@ public sealed class XRandom {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ulong NextUInt64(ulong maxValue, XRandom xoshiro) {
-        ulong randomProduct = Math.BigMul(maxValue, xoshiro.NextUInt64(), out ulong lowPart);
+    private ulong _NextUInt64(ulong maxValue) {
+        ulong randomProduct = Math.BigMul(maxValue, NextUInt64(), out ulong lowPart);
 
         if (lowPart < maxValue) {
             ulong remainder = (0ul - maxValue) % maxValue;
 
             while (lowPart < remainder) {
-                randomProduct = Math.BigMul(maxValue, xoshiro.NextUInt64(), out lowPart);
+                randomProduct = Math.BigMul(maxValue, NextUInt64(), out lowPart);
             }
         }
 
@@ -436,7 +436,7 @@ public sealed class XRandom {
         double u = NextDouble();
         double v = NextDouble();
 
-        double t = u * 2 * MathF.PI;
+        double t = u * 2 * Math.PI;
         double z = 2 * v - 1;
         double sf = Math.Sqrt(1 - z * z);
         (double sin, double cos) = Math.SinCos(t);

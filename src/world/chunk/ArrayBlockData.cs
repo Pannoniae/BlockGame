@@ -82,6 +82,10 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
+    public ushort fastGet(int x, int y, int z) {
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+    }
+
     /// <summary>
     /// Your responsibility to update the counts after a batch of changes.
     /// </summary>
