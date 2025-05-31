@@ -34,10 +34,19 @@ public class Cave : OverlayFeature {
     public double vAngle;
 
     public bool isRoom = false;
+    private Chunk chunk;
 
+
+    /// <summary>
+    /// TODO generate less caves in plains biomes / flat terrain
+    /// especially less caves which cut the surface so we don't have a fucking warzone of holes everywhere
+    /// There was a RNG desync bug with getHeight() which caused caves to desync and generate differently even with the same seed/get cut off randomly.
+    /// This was because generated chunks didn't have trees and stuff, populated chunks did, and getHeight() used the heightmap which is obviously modified by the trees. (and in the future, the other terrain structures)
+    /// Solution? Create a "base" terrain heightmap (which will be saved!!) and use that for cave generation and all the stuff which should get the "raw" terrain...
+    /// </summary>
     public override void generate(World world, XRandom rand, ChunkCoord coord, ChunkCoord origin) {
         // if this chunk isn't lucky, it gets murdered
-        var luck = rand.Next(10);
+        var luck = rand.Next(20);
         //Console.WriteLine($"Chunk {coord}: luck={luck}");
         if (luck != 0) {
             return;
@@ -50,18 +59,20 @@ public class Cave : OverlayFeature {
 
         // trim
         //count = rand.Next(count);
+        
+        chunk = world.getChunk(origin);
 
         for (int i = 0; i < count; i++) {
             // get random position to start with
             var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
             var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
-            var y = rand.Next(World.WORLDHEIGHT);
+            var y = rand.Next(8, 96);
 
             // if above the terrain heightmap, skip
             // TODO this completely fucks cavegen. Why? TIME TO FIND OUT
-            if (y > world.getHeight(x, z) + 6) {
+            //if (y > world.getHeight(x, z) + 6) {
                 //continue;
-            }
+            //}
 
             genCave(world, rand, x, y, z, origin);
         }
@@ -106,31 +117,35 @@ public class Cave : OverlayFeature {
         var cx = this.cx;
         var cy = this.cy;
         var cz = this.cz;
+        var isRoom = this.isRoom;
+        var chunk = this.chunk;
 
 
         //Console.Out.WriteLine("Step: " + step + ", Width: " + appliedWidth);
 
         var widthVar = rand.NextDouble();
-        // if wide, don't increase further
-        if (widthVar < 0.02) {
-            width += 0.3;
+        switch (widthVar) {
+            // if wide, don't increase further
+            case < 0.02:
+                width += 0.3;
+                break;
+            case > 0.98:
+                width -= 0.3;
+                break;
         }
 
-        if (widthVar > 0.98) {
-            width -= 0.3;
-        }
         // min width is 1
         width = double.Max(1, width);
 
-        if (width < 1) {
-            Console.Out.WriteLine(width);
-        }
+        //if (width < 1) {
+        //    Console.Out.WriteLine(width);
+        //}
 
         //if (width < 2) {
             //goto cleanup;
         //}
 
-        double appliedWidth = width;
+        //double appliedWidth = width;
         
         // if step 0, just carve
         if (step == 0) {
@@ -138,10 +153,14 @@ public class Cave : OverlayFeature {
         }
 
         // if room, continue being a room, if not, 0.1% chance of flipping into one
-        if (isRoom || (widthVar > 0.45 && widthVar < 0.451)) {
+        if (isRoom || widthVar is > 0.45 and < 0.451) {
             // create a room
             // make D small & random
-            d = new Vector3D(rand.NextDouble() * 0.3, rand.NextDouble() * 0.05, rand.NextDouble() * 0.3);
+            //d = new Vector3D(rand.NextDouble() * 0.3, rand.NextDouble() * 0.05, rand.NextDouble() * 0.3);
+            d = rand.NextUnitVector3D();
+            d.X *= 0.3;
+            d.Y *= 0.05;
+            d.Z *= 0.3;
             width = rand.NextDouble() * 4 + 5;
             isRoom = true;
             cx += d.X;
@@ -165,44 +184,37 @@ public class Cave : OverlayFeature {
         // angle shit
 
         // if the cave is very narrow, we want to move less so it doesn't look too blocky TODO?
-        var offset = appliedWidth / 2;
 
         // vary the direction with rotations
-        double rotationChance = rand.NextDouble();
+        //double rotationChance = rand.NextDouble();
 
         // if we are vertical, mellow it out
         vAngle *= 0.76;
 
-        switch (rotationChance) {
+        switch (rand.NextDouble()) {
             case < 0.01: {
                 // 1% chance for a vertical drop
                 // Keep small horizontal movement but add strong downward component
                 vAngle = Meth.deg2rad(rand.Next(-70, 70));
-                var a = rand.Next(-70, 70);
+                //var a = rand.Next(-70, 70);
                 //Console.Out.WriteLine("VERTICAL DROP");
                 break;
             }
             case < 0.05: {
                 // 5% chance for a drastic turn (-90..+90 degrees)
-                double angle = Meth.deg2rad(rand.Next(180) - 90);
-                hAngle += angle;
-                double v = Meth.deg2rad(rand.Next(90) - 45);
-                vAngle += v;
+                hAngle += Meth.deg2rad(rand.Next(180) - 90);
+                vAngle += Meth.deg2rad(rand.Next(90) - 45);
                 break;
             }
             case < 0.4: {
-                double angle = Meth.deg2rad(rand.Next(90) - 45);
-                hAngle += angle;
-                double v = Meth.deg2rad(rand.Next(90) - 45);
-                vAngle += v;
+                hAngle += Meth.deg2rad(rand.Next(90) - 45);
+                vAngle += Meth.deg2rad(rand.Next(90) - 45);
                 break;
             }
             default: {
                 // 90% chance for a small turn (1-15 degrees)
-                double angle = Meth.deg2rad(rand.Next(15) - 7.5f);
-                hAngle += angle;
-                double v = Meth.deg2rad(rand.Next(15) - 7.5f);
-                vAngle += v;
+                hAngle += Meth.deg2rad(rand.Next(15) - 7.5f);
+                vAngle += Meth.deg2rad(rand.Next(15) - 7.5f);
                 break;
             }
         }
@@ -213,7 +225,8 @@ public class Cave : OverlayFeature {
         d.Z = Math.Sin(hAngle) * Math.Cos(vAngle);
 
         // Keep direction normalized for consistent "speed"
-        d = Vector3D.Normalize(d) * offset;
+        // var offset = width / 2;
+        d = Vector3D.Normalize(d) * (width / 2);
         
         // update position
         cx += d.X;
@@ -222,16 +235,13 @@ public class Cave : OverlayFeature {
 
         gen: ;
 
-        
-
-
         // actually carve
-        var xMin = cx - appliedWidth;
-        var xMax = cx + appliedWidth;
-        var yMin = cy - appliedWidth;
-        var yMax = cy + appliedWidth;
-        var zMin = cz - appliedWidth;
-        var zMax = cz + appliedWidth;
+        var xMin = (int)(cx - width);
+        var xMax = (int)(cx + width);
+        var yMin = (int)(cy - width);
+        var yMax = (int)(cy + width);
+        var zMin = (int)(cz - width);
+        var zMax = (int)(cz + width);
 
 
         // if we are outside the chunk, bail
@@ -251,32 +261,35 @@ public class Cave : OverlayFeature {
         yMax = Math.Min(yMax, World.WORLDHEIGHT - 4);
         zMin = Math.Max(zMin, origin.z * Chunk.CHUNKSIZE);
         zMax = Math.Min(zMax, (origin.z + 1) * Chunk.CHUNKSIZE);
+        
+        // create chunk-relative coordinates
+        
+        //var icx = (int)cx;
+        //var icy = (int)cy;
+        //var icz = (int)cz;
 
-        for (int xx = (int)xMin; xx < (int)xMax; xx++) {
-            for (int zz = (int)zMin; zz < (int)zMax; zz++) {
+        for (int xx = xMin; xx < xMax; xx++) {
+            for (int zz = zMin; zz < zMax; zz++) {
                 bool hasGrass = false;
 
                 // IMPORTANT do it upside down because the whole grass replacing stuff
                 // if you do it the right way around we won't know whether we've ruined terrain or not
-                for (int yy = (int)yMax - 1; yy >= (int)yMin; yy--) {
+                for (int yy = yMax - 1; yy >= yMin; yy--) {
                     // distance check
 
-                    double dist;
+                    double dist = (cx - xx) * (cx - xx) + 
+                                  (cz - zz) * (cz - zz);
                     // if it's a room, don't do a circle - make the bottom flat
                     if (isRoom && yy < cy) {
-                        dist = (cx - xx) * (cx - xx) +
-                               ((cy - yy) * 2d) * ((cy - yy) * 2d) +
-                               (cz - zz) * (cz - zz);
+                        dist += (cy - yy) * 2 * (cy - yy) * 2;
                     }
                     else {
-                        dist = (cx - xx) * (cx - xx) +
-                               (cy - yy) * (cy - yy) +
-                               (cz - zz) * (cz - zz);
+                        dist += (cy - yy) * (cy - yy);
                     }
 
 
-                    if (dist < appliedWidth * appliedWidth) {
-                        var block = world.getBlock(xx, yy, zz);
+                    if (dist < width * width) {
+                        var block = chunk.getBlock(xx & 0xF, yy, zz & 0xF);
                         //if (block == 69 && yy < 60) {
                         //    Console.Out.WriteLine("wtf?");
                         //} 
@@ -288,9 +301,9 @@ public class Cave : OverlayFeature {
 
                         // if it's a solid block, remove it
                         if (Block.fullBlock[block]) {
-                            world.setBlock(xx, yy, zz, Blocks.AIR);
-                            if (hasGrass && world.getBlock(xx, yy - 1, zz) == Blocks.DIRT) {
-                                world.setBlock(xx, yy - 1, zz, Blocks.GRASS);
+                            chunk.setBlock(xx & 0xF, yy, zz & 0xF, Blocks.AIR);
+                            if (hasGrass && chunk.getBlock(xx & 0xF, yy - 1, zz & 0xF) == Blocks.DIRT) {
+                                chunk.setBlock(xx & 0xF, yy - 1, zz & 0xF, Blocks.GRASS);
                             }
                         }
                     }
@@ -307,6 +320,7 @@ public class Cave : OverlayFeature {
         this.cx = cx;
         this.cy = cy;
         this.cz = cz;
+        this.isRoom = isRoom;
     }
 
     private static Vector3D rot(Vector3D vector, Vector3D axis, double angle) {

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.Tracing;
 using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
@@ -18,6 +17,11 @@ public static class MemoryUtils {
         return alignment;
     }
     
+    public static unsafe void crash(string exceptionMessage) {
+        Console.WriteLine("MANUAL CRASH: " + exceptionMessage);
+        *(int*)0 = 42;
+    }
+
     public static void cleanGC() {
 
         ArrayBlockData.blockPool.trim();

@@ -30,6 +30,7 @@ public class GameScreen : Screen {
 
 
     private bool disposed;
+    private long altF10Press;
 
     public override void activate() {
         D = new Debug();
@@ -61,6 +62,11 @@ public class GameScreen : Screen {
         CHAT.tick++;
         
         var world = Game.world;
+        
+        // if user holds down alt + f10 for 5 seconds, crash the game lul
+        if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) && Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
+            MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
+        }
 
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
@@ -246,6 +252,8 @@ public class GameScreen : Screen {
                 MemoryUtils.cleanGC();
                 break;
             case Key.F10: {
+                altF10Press = Game.permanentStopwatch.ElapsedMilliseconds;
+
                 // print vmem
                 var vmem = MemoryUtils.getVRAMUsage(out _);
                 if (vmem == -1) {
@@ -258,6 +266,7 @@ public class GameScreen : Screen {
                 Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].subChunks[0].blocks.blocks[0]));
                 break;
             }
+            
             case Key.E: {
                 if (world.inMenu) {
                     backToGame();

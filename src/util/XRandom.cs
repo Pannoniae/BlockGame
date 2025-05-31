@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Molten.DoublePrecision;
 
 namespace BlockGame.util;
 
@@ -348,6 +349,27 @@ public sealed class XRandom {
     public float NextSingle() =>
         // Same as above, but with 24 bits instead of 53.
         (NextUInt64() >> 40) * (1.0f / (1u << 24));
+    
+    /// <summary>
+    /// Produces a random single-precision floating-point in the specified range.
+    /// </summary>
+    /// <param name="max">The inclusive maximum value.</param>
+    /// <returns>A random value in the range [0.0 &lt;= x &lt;= <paramref name="max"/>].</returns>
+    public float NextSingle(float max)
+    {
+        return max * NextSingle();
+    }
+
+    /// <summary>
+    /// Produces a random single-precision floating-point in the specified range.
+    /// </summary>
+    /// <param name="min">The inclusive minimum value.</param>
+    /// <param name="max">The inclusive maximum value.</param>
+    /// <returns>A random value in the range [<paramref name="min"/> &lt;= x &lt;= <paramref name="max"/>].</returns>
+    public float NextSingle(float min, float max)
+    {
+        return (max - min) * NextSingle() + min;
+    }
 
     public double Sample() {
         System.Diagnostics.Debug.Fail("Not used or called for this implementation.");
@@ -380,5 +402,47 @@ public sealed class XRandom {
     /// <returns></returns>
     public double ApproxGaussian(double sigma) {
         return sigma * ApproxGaussian();
+    }
+    
+    public float NextAngle()
+    {
+        return NextSingle(-MathF.PI, MathF.PI);
+    }
+
+    public Vector2 NextUnitVector2()
+    {
+        float angle = NextAngle();
+        (float sin, float cos) = MathF.SinCos(angle);
+        return new Vector2(cos, sin);
+    }
+
+    public Vector3 NextUnitVector3()
+    {
+        float u = NextSingle();
+        float v = NextSingle();
+
+        float t = u * 2 * MathF.PI;
+        float z = 2 * v - 1;
+        float sf = MathF.Sqrt(1 - z * z);
+        (float sin, float cos) = MathF.SinCos(t);
+        float x = cos * sf;
+        float y = sin * sf;
+
+        return new Vector3(x, y, z);
+    }
+    
+    public Vector3D NextUnitVector3D()
+    {
+        double u = NextDouble();
+        double v = NextDouble();
+
+        double t = u * 2 * MathF.PI;
+        double z = 2 * v - 1;
+        double sf = Math.Sqrt(1 - z * z);
+        (double sin, double cos) = Math.SinCos(t);
+        double x = cos * sf;
+        double y = sin * sf;
+
+        return new Vector3D(x, y, z);
     }
 }

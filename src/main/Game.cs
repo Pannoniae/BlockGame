@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.snd;
@@ -39,7 +40,7 @@ public partial class Game {
     public static IInputContext input = null!;
 
     public static Process proc;
-    
+
     /// <summary>
     /// Stop logspam
     /// </summary>
@@ -54,13 +55,13 @@ public partial class Game {
 
     public static Graphics graphics;
     public static GUI gui;
-    
+
     public static TextureManager textureManager;
     public static Metrics metrics;
 
     public static FontLoader fontLoader;
     public static SoundEngine snd;
-    
+
     public static World? world;
     public static Player? player;
     public static WorldRenderer? renderer;
@@ -133,7 +134,7 @@ public partial class Game {
     private static readonly float g_mulReduceReciprocal = 8.0f;
     private static readonly float g_minReduceReciprocal = 128.0f;
     private static readonly float g_maxSpan = 8.0f;
-    
+
     public static int centreX => width / 2;
     public static int centreY => height / 2;
 
@@ -143,6 +144,7 @@ public partial class Game {
         instance = this;
 
         regNativeLib();
+        sigHandler();
 
         // load splashes
         splashes = File.ReadAllLines("assets/splashes.txt");
@@ -198,18 +200,83 @@ public partial class Game {
         window.Run();
     }
 
+    private static PosixSignalRegistration reg;
+    private static PosixSignalRegistration reg2;
+
+    private static sigaction_t sa;
+    private static sigaction_t sa2;
+
+    private static void sigSegvHandler(PosixSignalContext psc) {
+        //psc.Cancel = true;
+        Console.WriteLine("SIGSEGV in managed thread");
+        Console.Out.Flush();
+        //Environment.Exit(139);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct sigaction_t {
+        public IntPtr sa_handler;
+        public ulong sa_mask;
+        public int sa_flags;
+        public IntPtr sa_restorer;
+    }
+
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial int sigaction(int signum, ref sigaction_t act, IntPtr oldact);
+
+    [UnmanagedCallersOnly(CallConvs = new[] {typeof(CallConvCdecl)})]
+    static void sigSegvHandler(int signal) {
+        // can't reliably use Console.WriteLine here, use write() syscall
+        byte[] msg = "SIGSEGV caught\n"u8.ToArray();
+        write(2, in msg[0], (nuint)msg.Length); // stderr
+        fsync(2); // flush stderr 
+        //_exit(139);
+    }
+    
+    [LibraryImport("libc")]
+    private static partial int fsync(int fd);
+
+    [LibraryImport("libc")]
+    private static partial nint write(int fd, in byte buf, nuint count);
+
+    [LibraryImport("libc")]
+    private static partial void _exit(int status);
+    
+
+    private unsafe void sigHandler() {
+        if (OperatingSystem.IsLinux()) {
+            /*
+            // todo this shit doesn't work..... why?
+            //reg = PosixSignalRegistration.Create((PosixSignal)11, sigSegvHandler);
+            //reg2 = PosixSignalRegistration.Create((PosixSignal)6, sigSegvHandler);
+            
+            sa = new sigaction_t {
+                sa_handler = (IntPtr)(delegate* unmanaged[Cdecl]<int, void>)&sigSegvHandler,
+                sa_flags = 0x40000000 // SA_RESTART
+            };
+            sigaction(11, ref sa, IntPtr.Zero);
+            sa2 = new sigaction_t {
+                sa_handler = (IntPtr)(delegate* unmanaged[Cdecl]<int, void>)&sigSegvHandler,
+                sa_flags = 0x40000000 // SA_RESTART
+            };
+            sigaction(6, ref sa2, IntPtr.Zero);
+            */
+        }
+    }
+
 
     private static void regNativeLib() {
         //NativeLibrary.SetDllImportResolver(typeof(Game).Assembly, nativeLibPath);
         //NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
     }
+    
     private static IntPtr nativeLibPath(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
         string arch = RuntimeInformation.OSArchitecture == Architecture.X64 ? "x64" : "x86";
 
         // Create path to libs
         string libsPath = Path.Combine(AppContext.BaseDirectory, "libs", arch);
         string libraryPath;
-        
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             libraryPath = Path.Combine(libsPath, $"{libraryName}.dll");
         }
@@ -365,7 +432,7 @@ public partial class Game {
         metrics = new Metrics();
         stopwatch.Start();
         permanentStopwatch.Start();
-        
+
         snd = new SoundEngine();
 
         var music = snd.playMusic("snd/tests.flac");

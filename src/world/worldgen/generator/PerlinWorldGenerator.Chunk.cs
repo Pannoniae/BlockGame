@@ -42,6 +42,7 @@ public partial class PerlinWorldGenerator {
     private float[] humidityBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
+    private readonly Ravine ravines = new();
     private readonly OreFeature ironOre = new(Blocks.RED_ORE, 6, 12);
     private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
 
@@ -477,6 +478,8 @@ public partial class PerlinWorldGenerator {
 
         // Do caves
         caves.place(world, coord);
+        // Do ravines
+        ravines.place(world, coord);
 
         chunk.status = ChunkStatus.POPULATED;
     }

@@ -48,6 +48,12 @@ public class ChatMenu : Menu {
 
     public override void onKeyChar(IKeyboard keyboard, char ch) {
         if (!char.IsControl(ch)) {
+            
+            // if the message is empty, only one thing to do
+            if (message.Length == 0) {
+                cursorPos = 0;
+            }
+
             message = message.Insert(cursorPos, ch.ToString());
             cursorPos++;
         }

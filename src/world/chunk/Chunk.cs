@@ -15,6 +15,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public const int CHUNKSIZEEXSQ = 18 * 18;
     public const int MAXINDEXEX = 18 * 18 * 18;
     
+    public const int CHUNKSIZEMASK = CHUNKSIZE - 1;
+
     public ChunkStatus status;
 
     public HeightMap heightMap;
@@ -345,6 +347,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// </summary>
     public ushort getBlock(int x, int y, int z) {
         return subChunks[y >> 4].blocks[x, y & 0xF, z];
+    }
+    
+    public ushort getBlockFast(int x, int y, int z) {
+        return subChunks[y >> 4].blocks.fastGet(x, y & 0xF, z);
     }
 
     public byte getLight(int x, int y, int z) {
