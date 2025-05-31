@@ -77,10 +77,10 @@ public static partial class Meth {
         waste = new byte[(int)(megs * 1024 * 1024 * dt)];
     }
     public static float deg2rad(float degrees) {
-        return MathF.PI / 180f * degrees;
+        return float.Pi / 180f * degrees;
     }
     public static float rad2deg(float radians) {
-        return 180f / MathF.PI * radians;
+        return 180f / float.Pi * radians;
     }
 
     public static Vector3I getRandomCoord(XRandom random, int maxX, int maxY, int maxZ) {
