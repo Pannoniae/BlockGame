@@ -30,13 +30,13 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.0.1" />
+        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.0.2" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.1.0-eap1" />
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.9" />
         <PackageReference Include="JetBrains.Profiler.SelfApi" Version="2.5.13" />
         <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8"/>
         <PackageReference Include="Molten.Engine" Version="0.7.4" />
-        <PackageReference Include="nulastudio.NetBeauty" Version="2.1.4.6" />
+        <PackageReference Include="nulastudio.NetBeauty" Version="2.1.5" />
         <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.AMD" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Extensions.ARB" Version="2.22.0"/>
@@ -51,10 +51,10 @@
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NVX" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.Windowing" Version="2.22.0"/>
-        <PackageReference Include="SixLabors.Fonts" Version="2.1.2" />
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
+        <PackageReference Include="SixLabors.Fonts" Version="2.1.3" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.8" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5"/>
-        <PackageReference Include="System.IO.Hashing" Version="10.0.0-preview.3.25171.5" />
+        <PackageReference Include="System.IO.Hashing" Version="10.0.0-preview.4.25258.110" />
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
 
@@ -127,7 +127,7 @@
         <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) == 'True'">../libs</BeautyLibsDir>
         <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) != 'True'">./libs</BeautyLibsDir>
         <!-- dlls that you don't want to be moved or can not be moved -->
-        <!-- <BeautyExcludes>dll1.dll;lib*;...</BeautyExcludes> -->
+        <BeautyExcludes>glfw3.dll;</BeautyExcludes>
         <!-- dlls that end users never needed, so hide them -->
         <!-- <BeautyHiddens>hostfxr;hostpolicy;*.deps.json;*.runtimeconfig*.json</BeautyHiddens> -->
         <!-- set to True if you want to disable -->
@@ -144,8 +144,9 @@
         <!-- set to False if you want to disable -->
         <!-- SCD Mode Feature Only -->
         <BeautyUsePatch>True</BeautyUsePatch>
+        
         <!-- App Entry Dll = BeautyDir + BeautyAppHostDir + BeautyAppHostEntry -->
-        <!-- see https://github.com/nulastudio/NetBeauty2#customize-apphost for more details -->
+        <!-- see https://github.com/nulastudio/NetBeauty2#customize-apphost r more details -->
         <!-- relative path based on AppHostDir -->
         <!-- .NET Core Non Single-File Only -->
         <!-- <BeautyAppHostEntry>bin/MyApp.dll</BeautyAppHostEntry> -->
@@ -154,10 +155,11 @@
         <!-- <BeautyAppHostDir>..</BeautyAppHostDir> -->
         <!-- <BeautyAfterTasks></BeautyAfterTasks> -->
         <!-- valid values: Error|Detail|Info -->
-        <BeautyLogLevel>Info</BeautyLogLevel>
+        <BeautyLogLevel>Detail</BeautyLogLevel>
         <!-- set to a repo mirror if you have troble in connecting github -->
         <!-- <BeautyGitCDN>https://gitee.com/liesauer/HostFXRPatcher</BeautyGitCDN> -->
         <!-- <BeautyGitTree>master</BeautyGitTree> -->
     </PropertyGroup>
+
 
 </Project>
