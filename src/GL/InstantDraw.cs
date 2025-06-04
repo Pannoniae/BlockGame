@@ -107,6 +107,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     /// When set to quads, it will use triangles on the OpenGL side - but it will be transparently handled by using the shared indices.
     /// </summary>
     public void begin(PrimitiveType type) {
+        currentVertex = 0;
         vertexType = type;
     }
 

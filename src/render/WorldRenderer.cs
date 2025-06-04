@@ -55,8 +55,8 @@ public sealed partial class WorldRenderer : IDisposable {
 
     public static BoundingFrustum frustum;
 
-    private InstantDrawColour idc = new InstantDrawColour(256);
-    private InstantDrawTexture idt = new InstantDrawTexture(256);
+    public InstantDrawColour idc = new InstantDrawColour(256);
+    public InstantDrawTexture idt = new InstantDrawTexture(256);
 
     public static Color4b defaultClearColour = new Color4b(178, 228, 255);
     public static Color4b defaultFogColour = new Color4b(210, 210, 210);
