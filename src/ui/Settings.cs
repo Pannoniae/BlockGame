@@ -34,7 +34,7 @@ public class Settings {
             1 => "FXAA",
             2 => "2x SSAA",
             3 => "4x SSAA",
-            _ => "Unknown"
+            _ => "Unknown AA"
         };
     }
 }
