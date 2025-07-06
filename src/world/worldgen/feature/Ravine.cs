@@ -108,16 +108,21 @@ public class Ravine : OverlayFeature {
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
             goto cleanup;
         }
+        
+        // Carve from top down
+        var topY = (int)cy;
+        var bottomY = Math.Max(2, topY - depth);
+        
+        // if the area has water, bail
+        if (world.anyWater((int)xMin, bottomY, (int)zMin, (int)xMax, topY, (int)zMax)) {
+            return;
+        }
 
         // Cap to chunk boundaries
         xMin = Math.Max(xMin, origin.x * Chunk.CHUNKSIZE);
         xMax = Math.Min(xMax, (origin.x + 1) * Chunk.CHUNKSIZE);
         zMin = Math.Max(zMin, origin.z * Chunk.CHUNKSIZE);
         zMax = Math.Min(zMax, (origin.z + 1) * Chunk.CHUNKSIZE);
-
-        // Carve from top down
-        var topY = (int)cy;
-        var bottomY = Math.Max(2, topY - depth);
 
         for (int xx = (int)xMin; xx < (int)xMax; xx++) {
             for (int zz = (int)zMin; zz < (int)zMax; zz++) {

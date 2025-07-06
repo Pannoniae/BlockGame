@@ -25,7 +25,7 @@ public static class PlaneExtensions {
 
 
 // convert vectors between different libraries
-public static class VectorExtensions {
+public static partial class Meth {
 
     public static Vector3 toVec3(this Vector3D vec) {
         return new Vector3((float)vec.X, (float)vec.Y, (float)vec.Z);
@@ -73,20 +73,28 @@ public static class VectorExtensions {
         return new Vector3I((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
             (int)Math.Floor(currentPos.Z));
     }
+    
+    public static int toBlockPos(this double d) {
+        return (int)Math.Floor(d);
+    }
+    
+    public static int toBlockPos(this float f) {
+        return (int)Math.Floor(f);
+    }
 
     public static Vector3D<T> withoutY<T>(this Vector3D<T> vec) where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T> {
         return new Vector3D<T>(vec.X, default, vec.Z);
     }
 
     public static Vector3F withoutY(this Vector3F vec) {
-        return new Vector3F(vec.X, default, vec.Z);
+        return new Vector3F(vec.X, 0, vec.Z);
     }
 
     public static Vector3D withoutY(this Vector3D vec) {
-        return new Vector3D(vec.X, default, vec.Z);
+        return new Vector3D(vec.X, 0, vec.Z);
     }
 
     public static Vector3I withoutY(this Vector3I vec) {
-        return new Vector3I(vec.X, default, vec.Z);
+        return new Vector3I(vec.X, 0, vec.Z);
     }
 }

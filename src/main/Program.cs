@@ -1,13 +1,23 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Diagnostics;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using BlockGame;
 
 public class Program {
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
+
+        Console.Out.WriteLine(Vector<int>.Count);
+        Console.Out.WriteLine(Vector256<int>.Count);
+        Console.Out.WriteLine(Vector512<int>.Count);
+        Console.Out.WriteLine(Vector256<int>.IsSupported);
+        Console.Out.WriteLine(Vector512<int>.IsSupported);
+        Console.Out.WriteLine(Vector256.IsHardwareAccelerated);
+        Console.Out.WriteLine(Vector512.IsHardwareAccelerated);
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
         Game.initDedicatedGraphics();

@@ -35,6 +35,7 @@ public class Cave : OverlayFeature {
     public float vAngle;
 
     public bool isRoom = false;
+    private World world;
     private Chunk chunk;
 
 
@@ -60,7 +61,7 @@ public class Cave : OverlayFeature {
 
         // trim
         //count = rand.Next(count);
-
+        this.world = world;
         chunk = world.getChunk(origin);
 
         for (int i = 0; i < count; i++) {
@@ -258,6 +259,11 @@ public class Cave : OverlayFeature {
             zMax < origin.z * Chunk.CHUNKSIZE ||
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
             goto cleanup;
+        }
+        
+        // if the area has water, bail
+        if (world.anyWater(xMin, yMin, zMin, xMax, yMax, zMax)) {
+            return;
         }
 
         // cap them to the original chunk
