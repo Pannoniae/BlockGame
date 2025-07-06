@@ -116,12 +116,23 @@ public class BTextureAtlas : IDisposable {
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
+        //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
         image?.Dispose();
         image = Image.Load<Rgba32>(path);
         var maxLevel = Settings.instance.mipmapping;
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, maxLevel);
         GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)image.Width, (uint)image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+        
+        // print dimensions of different mipmaps
+        Console.Out.WriteLine($"Texture atlas size: {image.Width}x{image.Height}, max mipmap level: {maxLevel}");
+        for (int j = 0; j <= maxLevel; j++) {
+            int width = image.Width >> j;
+            int height = image.Height >> j;
+            if (width < 1) width = 1;
+            if (height < 1) height = 1;
+            Console.Out.WriteLine($"Mipmap level {j}: {width}x{height}");
+        }
+        
         if (!image.DangerousTryGetSinglePixelMemory(out memory)) {
             throw new Exception("Couldn't load the atlas contiguously!");
         }

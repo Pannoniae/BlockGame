@@ -1,3 +1,4 @@
+using BlockGame.id;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -558,5 +559,21 @@ public partial class World : IDisposable {
         }
 
         return l;
+    }
+    
+    /// <summary>
+    /// Returns if the area contains any water.
+    /// </summary>
+    public bool anyWater(int xMin, int yMin, int zMin, int xMax, int yMax, int zMax) {
+        for (int x = xMin; x <= xMax; x++) {
+            for (int y = yMin; y <= yMax; y++) {
+                for (int z = zMin; z <= zMax; z++) {
+                    if (getBlock(x, y, z) == Blocks.WATER) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

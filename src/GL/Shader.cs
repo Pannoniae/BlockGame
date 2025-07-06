@@ -242,6 +242,10 @@ public partial class Shader {
     public void setUniform(int loc, bool value) {
         GL.ProgramUniform1(programHandle, loc, value ? 1 : 0);
     }
+
+    public unsafe void setUniform(int loc, Vector2 value) {
+        GL.ProgramUniform2(programHandle, loc, 1, (float*)&value);
+    }
 }
 
 public class InstantShader : Shader {

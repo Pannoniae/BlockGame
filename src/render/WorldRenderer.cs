@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
@@ -42,6 +43,7 @@ public sealed partial class WorldRenderer : IDisposable {
     public int drawDistance;
     public int fogStart;
     public int fogEnd;
+    public int wh;
     public int fogColour;
     public int skyColour;
 
@@ -83,6 +85,7 @@ public sealed partial class WorldRenderer : IDisposable {
         uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
         fogStart = worldShader.getUniformLocation(nameof(fogStart));
         fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
+        wh = worldShader.getUniformLocation(nameof(wh));
         fogColour = worldShader.getUniformLocation(nameof(fogColour));
         skyColour = worldShader.getUniformLocation(nameof(skyColour));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
@@ -165,6 +168,7 @@ public sealed partial class WorldRenderer : IDisposable {
 
         worldShader.setUniform(fogStart, fogMaxValue);
         worldShader.setUniform(fogEnd, fogMinValue);
+        worldShader.setUniform(wh, new Vector2(Game.width, Game.height));
         waterShader.setUniform(waterFogStart, fogMaxValue);
         waterShader.setUniform(waterFogEnd, fogMinValue);
 
@@ -198,6 +202,11 @@ public sealed partial class WorldRenderer : IDisposable {
         //Game.GD.ResetStates();
 
         frustum = Game.player.camera.frustum;
+        
+        var GL = Game.GL;
+        
+        // enable AF
+        //GL.TextureParameter(Game.textureManager.blockTexture.handle, GLEnum.TextureMaxAnisotropy, 4f);
 
         GL.BindVertexArray(chunkVAO);
         bindQuad();
@@ -234,6 +243,7 @@ public sealed partial class WorldRenderer : IDisposable {
                 }
             }
         }
+        world.chunkList.AddRange();
         //chunksToRender.Sort(new ChunkComparer(world.player));
 
         // OPAQUE PASS

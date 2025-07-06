@@ -686,7 +686,7 @@ public partial class WorldRenderer {
                     tex.Z = facesRef.max.u * 16f / Block.atlasSize;
                     tex.W = facesRef.max.v * 16f / Block.atlasSize;*/
 
-                    tex = Vector128.Create(facesRef.min.u, facesRef.min.v, facesRef.max.u, facesRef.max.v);
+                    tex = Vector128.Create(0f, 0f, 1f, 1f);
 
                     // divide by texture size / atlas size, multiply by scaling factor
                     const float factor = Block.atlasRatio * 32768f;
