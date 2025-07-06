@@ -233,6 +233,16 @@ public class IngameMenu : Menu, IDisposable {
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
+            
+            // show FB info
+            if (Settings.instance.framebufferEffects) {
+                var fbw = Game.width * Settings.instance.ssaa;
+                var fbh = Game.height * Settings.instance.ssaa;
+                debugStr.AppendFormat("FB:{0}x{1} ({2})\n", fbw, fbh, Settings.instance.getAAText());
+            } else {
+                debugStr.AppendFormat("FB:{0}x{1} (0fx)\n", Game.width, Game.height);
+            }
+            
             if (Game.devMode) {
                 debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
             }

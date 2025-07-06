@@ -76,16 +76,18 @@ public class SettingsMenu : Menu {
         settingElements.Add(mipmapping);
         addElement(mipmapping);
 
-        var fxaa = new ToggleButton(this, "fxaa", false, settings.fxaa ? 1 : 0,
-            "FXAA: Disabled", "FXAA: Enabled");
-        fxaa.topCentre();
-        fxaa.clicked += _ => {
-            settings.fxaa = fxaa.getIndex() == 1;
+        var antiAliasing = new ToggleButton(this, "antiAliasing", false, settings.antiAliasing,
+            "Anti-Aliasing: Off", "Anti-Aliasing: FXAA", "Anti-Aliasing: 2x SSAA", "Anti-Aliasing: 4x SSAA");
+        antiAliasing.topCentre();
+        antiAliasing.clicked += _ => {
+            var index = antiAliasing.getIndex();
+            
+            settings.antiAliasing = index;
             Game.instance.updateFramebuffers();
         };
-        fxaa.tooltip = "FXAA is a fast anti-aliasing technique that smooths the jagged edges of Block.";
-        settingElements.Add(fxaa);
-        addElement(fxaa);
+        antiAliasing.tooltip = "Anti-Aliasing techniques smooth jagged edges.\nFXAA is fast, SSAA provides better quality but impacts performance significantly.";
+        settingElements.Add(antiAliasing);
+        addElement(antiAliasing);
 
         var renderDistance = new Slider(this, "renderDistance", 2, 96, 1, settings.renderDistance);
         renderDistance.setPosition(new Rectangle(0, 112, 128, 16));

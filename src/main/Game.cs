@@ -669,12 +669,16 @@ public partial class Game {
         GL.DeleteFramebuffer(fbo);
         fbo = GL.GenFramebuffer();
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
-        GL.Viewport(0, 0, (uint)width, (uint)height);
+        
+        var ssaaWidth = width * Settings.instance.ssaa;
+        var ssaaHeight = height * Settings.instance.ssaa;
+        
+        GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
 
         GL.DeleteTexture(FBOtex);
         FBOtex = GL.GenTexture();
         GL.BindTexture(TextureTarget.Texture2D, FBOtex);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba,
+        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0, PixelFormat.Rgba,
             PixelType.UnsignedByte, null);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
@@ -684,8 +688,8 @@ public partial class Game {
         GL.DeleteRenderbuffer(depthBuffer);
         depthBuffer = GL.GenRenderbuffer();
         GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)width,
-            (uint)height);
+        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)ssaaWidth,
+            (uint)ssaaHeight);
 
         // Attach the color buffer ...
         GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
@@ -702,7 +706,7 @@ public partial class Game {
 
         graphics.fxaaShader.use();
 
-        GL.Uniform2(g_texelStepLocation, 1.0f / width, 1.0f / width);
+        GL.Uniform2(g_texelStepLocation, 1.0f / ssaaWidth, 1.0f / ssaaHeight);
 
         throwawayVAO = GL.CreateVertexArray();
     }
@@ -783,6 +787,13 @@ public partial class Game {
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
 
+        // Set viewport for SSAA rendering
+        if (Settings.instance.framebufferEffects) {
+            var ssaaWidth = width * Settings.instance.ssaa;
+            var ssaaHeight = height * Settings.instance.ssaa;
+            GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
+        }
+
         graphics.mainBatch.Begin();
         fontLoader.renderer3D.begin();
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
@@ -795,6 +806,8 @@ public partial class Game {
 
         if (Settings.instance.framebufferEffects) {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            // Restore viewport for final screen rendering
+            GL.Viewport(0, 0, (uint)width, (uint)height);
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, FBOtex);
         }

@@ -76,9 +76,11 @@ public sealed class SpriteBatch : IDisposable {
 
         vbo = GL.CreateBuffer();
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+        GL.ObjectLabel(ObjectIdentifier.Buffer, vbo, uint.MaxValue, "SpriteBatch Vertex Buffer");
 
         ibo = GL.CreateBuffer();
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+        GL.ObjectLabel(ObjectIdentifier.Buffer, ibo, uint.MaxValue, "SpriteBatch Index Buffer");
 
         // Set up vertex attributes
         unsafe {
@@ -554,6 +556,7 @@ public sealed class SpriteBatch : IDisposable {
                     GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
                         (nuint)(newCapacity * sizeof(VertexColorTexture)),
                         ptr, BufferStorageMask.DynamicStorageBit);
+                    GL.ObjectLabel(ObjectIdentifier.Buffer, vbo, uint.MaxValue, "SpriteBatch Vertex Buffer");
                 
                     // Update binding with new buffer
                     GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
@@ -579,6 +582,7 @@ public sealed class SpriteBatch : IDisposable {
                         GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer,
                             newIndexCapacity * sizeof(ushort),
                             ptr, BufferStorageMask.DynamicStorageBit);
+                        GL.ObjectLabel(ObjectIdentifier.Buffer, ibo, uint.MaxValue, "SpriteBatch Index Buffer");
                     }
                 }
             }

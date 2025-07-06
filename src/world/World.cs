@@ -13,6 +13,8 @@ public partial class World : IDisposable {
     public string name;
 
     public readonly Dictionary<ChunkCoord, Chunk> chunks;
+    
+    public readonly List<WorldListener> listeners = [];
 
     // used for rendering
     public readonly List<Chunk> chunkList;
@@ -106,11 +108,23 @@ public partial class World : IDisposable {
 
         // setup world saving every 5 seconds
         saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
+        
+        foreach (var l in listeners) {
+            l.onWorldLoad(this);
+        }
     }
 
     private void saveWorldMethod() {
         autoSaveChunks();
         worldIO.saveWorldData();
+    }
+    
+    public void listen(WorldListener listener) {
+        listeners.Add(listener);
+    }
+    
+    public void unlisten(WorldListener listener) {
+        listeners.Remove(listener);
     }
     
     /// <summary>
@@ -140,6 +154,9 @@ public partial class World : IDisposable {
     public void addChunk(ChunkCoord coord, Chunk chunk) {
         chunks[coord] = chunk;
         chunkList.Add(chunk);
+        foreach (var l in listeners) {
+            l.onChunkLoad(this, coord);
+        }
     }
 
     private void loadSpawnChunks() {
@@ -421,6 +438,10 @@ public partial class World : IDisposable {
         // save chunk first
         worldIO.saveChunk(this, chunks[coord]);
         
+        foreach (var l in listeners) {
+            l.onChunkUnload(this, coord);
+        }
+        
         chunkList.Remove(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);
@@ -433,9 +454,18 @@ public partial class World : IDisposable {
         }
     }
 
+    public void unload() {
+        Dispose();
+    }
+
     public void Dispose() {
         // of course, we can save it here since WE call it and not the GC
         worldIO.save(this, name);
+        
+        foreach (var l in listeners) {
+            l.onWorldUnload(this);
+        }
+        
         saveWorld.enabled = false;
         Game.world = null;
         Game.player = null;

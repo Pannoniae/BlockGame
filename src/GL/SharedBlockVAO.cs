@@ -49,6 +49,9 @@ public sealed class SharedBlockVAO : VAO
                 GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize, d,
                     BufferStorageMask.None);
             }
+            
+            // name the buffer
+            GL.ObjectLabel(ObjectIdentifier.Buffer, buffer, uint.MaxValue, "SharedBlockVAO Buffer");
 
         }
 
@@ -91,6 +94,15 @@ public sealed class SharedBlockVAO : VAO
     }
 
     public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    private void ReleaseUnmanagedResources() {
         GL.DeleteBuffer(buffer);
+    }
+
+    ~SharedBlockVAO() {
+        ReleaseUnmanagedResources();
     }
 }

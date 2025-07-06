@@ -15,8 +15,8 @@ using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
 
-public sealed partial class WorldRenderer : IDisposable {
-    public World world;
+public sealed partial class WorldRenderer : WorldListener, IDisposable {
+    public World? world;
 
     public Silk.NET.OpenGL.GL GL;
 
@@ -117,8 +117,40 @@ public sealed partial class WorldRenderer : IDisposable {
         //setUniforms();
     }
     
+    public void onWorldLoad(World world) {
+        
+    }
+
+    public void onWorldUnload(World world) {
+        
+    }
+
+    public void onWorldTick(World world, float delta) {
+        
+    }
+
+    public void onWorldRender(World world, float delta) {
+        
+    }
+
+    public void onChunkLoad(World world, ChunkCoord coord) {
+        // added in meshChunk
+    }
+
+    public void onChunkUnload(World world, ChunkCoord coord) {
+
+        foreach (var subChunk in world.getChunk(coord).subChunks) {
+            vao.GetValueOrDefault(subChunk.coord)?.Dispose();
+            watervao.GetValueOrDefault(subChunk.coord)?.Dispose();
+            vao.Remove(subChunk.coord);
+            watervao.Remove(subChunk.coord);
+        }
+    }
+    
     public void setWorld(World world) {
+        this.world?.unlisten(this);
         this.world = world;
+        this.world.listen(this);
     }
 
     private void genFatQuadIndices() {
@@ -139,6 +171,7 @@ public sealed partial class WorldRenderer : IDisposable {
             fixed (ushort* pIndices = indices) {
                 GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)),
                     pIndices, BufferStorageMask.None);
+                GL.ObjectLabel(ObjectIdentifier.Buffer, Game.graphics.fatQuadIndices, uint.MaxValue, "Shared quad indices");
             }
         }
     }

@@ -457,4 +457,17 @@ public partial class World {
         var blockPos = getPosInChunk(x, z);
         return chunk.heightMap.get(blockPos.X, blockPos.Y);
     }
+
+    public bool anyWater(int x0, int y0, int z0, int x1, int y1, int z1) {
+        for (int x = x0; x <= x1; x++) {
+            for (int y = y0; y <= y1; y++) {
+                for (int z = z0; z <= z1; z++) {
+                    if (getBlock(x, y, z) == Block.WATER.id) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }
