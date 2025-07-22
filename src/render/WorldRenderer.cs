@@ -44,6 +44,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int fogEnd;
     public int fogColour;
     public int skyColour;
+    
+    public int aniso;
 
     public int waterBlockTexture;
     public int wateruMVP;
@@ -86,6 +88,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         fogColour = worldShader.getUniformLocation(nameof(fogColour));
         skyColour = worldShader.getUniformLocation(nameof(skyColour));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
+        
+        aniso = worldShader.getUniformLocation(nameof(aniso));
 
         waterBlockTexture = waterShader.getUniformLocation("blockTexture");
         wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
@@ -113,6 +117,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterSkyColour, defaultClearColour);
 
         initBlockOutline();
+        
+        // Initialize EWA filter uniforms
+        
 
         //setUniforms();
     }
@@ -180,7 +187,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
     }
 
+    public void updateAF() {
+        var settings = Settings.instance;
+        var anisoLevel = settings.anisotropy;
+
+        worldShader.setUniform(aniso, (float)anisoLevel);
+    }
+
     public void setUniforms() {
+        updateAF();
         var dd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
 
         // the problem is that with two chunks, the two values would be the same. so let's adjust them if so
@@ -195,6 +210,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (fogMinValue > 8 * Chunk.CHUNKSIZE) {
             fogMinValue = 8 * Chunk.CHUNKSIZE;
         }
+        
+        
 
         worldShader.setUniform(fogStart, fogMaxValue);
         worldShader.setUniform(fogEnd, fogMinValue);
@@ -475,7 +492,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             GL.BindVertexArray(outlineVao);
 
 
-            Span<float> vertices = stackalloc float[24 * 3] {
+            Span<float> vertices = [
                 // bottom
                 minX, minY, minZ,
                 minX, minY, maxZ,
@@ -505,8 +522,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 minX, maxY, maxZ,
                 maxX, minY, maxZ,
                 maxX, maxY, maxZ
-            };
+            ];
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
+            GL.InvalidateBufferData(outlineVbo);
             fixed (float* data = vertices) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(vertices.Length * sizeof(float)), data);
             }

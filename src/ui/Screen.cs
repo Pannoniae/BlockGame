@@ -50,8 +50,8 @@ public class Screen {
         currentMenu?.postDraw();
     }
 
-    public virtual void onMouseUp(Vector2 pos) {
-        currentMenu?.onMouseUp(pos);
+    public virtual void onMouseUp(Vector2 pos, MouseButton button) {
+        currentMenu?.onMouseUp(pos, button);
     }
 
     public virtual void update(double dt) {

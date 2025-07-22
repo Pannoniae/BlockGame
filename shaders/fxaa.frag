@@ -11,7 +11,7 @@ uniform float u_mulReduce;
 uniform float u_minReduce;
 uniform float u_maxSpan;
 
-in vec2 v_texCoord;
+centroid in vec2 v_texCoord;
 
 out vec4 fragColor;
 

@@ -4,7 +4,7 @@
 //layout(early_fragment_tests) in;
 layout(location = 0) out vec4 outColour;
 
-in vec2 texCoords;
+centroid in vec2 texCoords;
 in vec4 colour;
 in vec4 viewPosition; // Changed from fogDepth to view position
 

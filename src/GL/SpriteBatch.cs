@@ -503,6 +503,7 @@ public sealed class SpriteBatch : IDisposable {
             unsafe {
                 fixed (VertexColorTexture* ptr = vertices) {
                     GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                    GL.InvalidateBufferData(vbo);
                     GL.BufferSubData(BufferTargetARB.ArrayBuffer,
                         0,
                         (uint)(vertexIndex * sizeof(VertexColorTexture)),

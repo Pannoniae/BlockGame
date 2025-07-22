@@ -121,25 +121,28 @@ public class Menu {
 
     public virtual void onMouseDown(IMouse mouse, MouseButton button) {
         foreach (var element in elements.Values) {
-            if (element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
+            if (button == MouseButton.Left && element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
                 pressedElement = element;
             }
         }
     }
 
-    public virtual void onMouseUp(Vector2 pos) {
+    public virtual void onMouseUp(Vector2 pos, MouseButton button) {
         foreach (var element in elements.Values) {
             //Console.Out.WriteLine(element);
             //Console.Out.WriteLine(element.bounds);
             //Console.Out.WriteLine(pos);
-            element.onMouseUp();
+            element.onMouseUp(button);
             if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
-                element.click();
+                element.click(button);
             }
         }
 
         // clear pressed element
-        pressedElement = null;
+        if (button == MouseButton.Left && pressedElement != null) {
+            pressedElement = null;
+        }
+        
     }
 
     public virtual void onMouseMove(IMouse mouse, Vector2 pos) {

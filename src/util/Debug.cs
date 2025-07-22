@@ -107,6 +107,7 @@ public class Debug {
 
         Game.GL.BindVertexArray(lineVao);
         Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineVbo);
+        Game.GL.InvalidateBufferData(lineVbo);
         unsafe {
             Game.GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
                 (nuint)(currentLine * sizeof(VertexTinted)), lineVertices);

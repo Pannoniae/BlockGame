@@ -5,32 +5,27 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.model;
 
-/// <summary>
-/// A cube has 6 faces and 24 verts overall.
-/// It has a position, and vertices can be added to it.
-/// </summary>
+/**
+ * A cube has 6 faces and 24 verts overall.
+ * It has a position, and vertices can be added to it.
+ **/
 public class Cube {
     public readonly BlockVertexTinted[] vertices = new BlockVertexTinted[24];
 
-    /// <summary>
-    /// The position of the cube.
-    /// </summary>
+    /** The position of the cube. */
     public Vector3D position;
 
-    /// <summary>
-    /// The the relative position of the cube (from the base position)
-    /// </summary>
+    /** The the relative position of the cube (from the base position) */
     public Vector3D cubePos;
 
-    /// <summary>
-    /// The rotation of the cube (from the base position)
-    /// </summary>
+    /** The rotation of the cube (from the base position) */
     public Vector3D rotation;
 
-    /// <summary>
-    /// The extents of the cube.
-    /// </summary>
+    /** The extents of the cube. */
     public Vector3D ext;
+
+    /** The integer texcoords of the cube. */
+    public Vector2D texCoords;
 
     public Cube(Vector3D cubePos, Vector3D ext, double expand, UVPair[] uvs) {
         this.cubePos = cubePos - expand;
@@ -56,7 +51,7 @@ public class Cube {
         return this;
     }
 
-    public void render(double scale) {
+    public void render(InstantDrawTexture idt, double scale) {
 
     }
 }

@@ -5,7 +5,8 @@ using Molten.DoublePrecision;
 
 namespace BlockGame;
 
-public class Entity {
+public class Entity(World world) {
+    
     public const int MAX_SWING_TICKS = 16;
     public const int AIR_HIT_CD = 20;
 
@@ -51,7 +52,7 @@ public class Entity {
     public double totalTraveled;
     public double prevTotalTraveled;
 
-    public World world;
+    public World world = world;
 
     public bool flyMode;
     public bool noClip;
@@ -67,12 +68,9 @@ public class Entity {
     public double prevSwingProgress;
     public double swingProgress;
 
-    public Entity(World world) {
-        this.world = world;
-    }
-
     public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();
+        //world.actionQueue
         return World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
     }
 
@@ -84,6 +82,9 @@ public class Entity {
     [Pure]
     protected virtual AABB calcAABB(Vector3D pos) {
         return AABB.empty;
+        
+        
+        
     }
 
     public virtual void teleport(Vector3D pos) {

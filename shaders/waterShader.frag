@@ -5,7 +5,7 @@
 layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
 
-in vec2 texCoords;
+centroid in vec2 texCoords;
 in vec4 tint;
 in float vertexDist;
 

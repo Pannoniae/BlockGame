@@ -1,7 +1,7 @@
 #version 440
 
 in vec4 vColor;
-in vec2 vTexCoords;
+centroid in vec2 vTexCoords;
 
 layout(location = 0) out vec4 FragColor;
 

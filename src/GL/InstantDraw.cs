@@ -143,6 +143,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         // Upload buffer
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+            Game.GL.InvalidateBufferData(VBO);
             fixed (T* v = vertices) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(T)), v);
             }

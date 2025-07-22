@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using BlockGame.GL;
+using BlockGame.id;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -366,15 +367,16 @@ public partial class WorldRenderer {
                     // get neighbouring section
                     var neighbourSection =
                         Unsafe.Add(ref neighbourSectionsArray, ((y >> 4) + 1) * 9 + ((z >> 4) + 1) * 3 + (x >> 4) + 1);
-                    var nn = neighbourSection != null && neighbourSection.inited;
+                    var nn = neighbourSection?.inited == true;
                     var bl = nn
                         ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.blocks),
                             offset)
                         : (ushort)0;
+                    
 
                     // if below world, pretend it's dirt (so it won't get meshed)
                     if (subChunk.coord.y == 0 && y == -1) {
-                        bl = Block.DIRT.id;
+                        bl = Blocks.DIRT;
                     }
 
                     // set neighbours array element to block

@@ -1,4 +1,5 @@
 using System.Drawing;
+using Silk.NET.Input;
 
 namespace BlockGame.ui;
 
@@ -125,14 +126,20 @@ public class GUIElement {
 
     }
 
-    public virtual void click() {
+    public virtual void click(MouseButton button) {
+        if (button == MouseButton.Left) {
+            doClick();
+        }
+    }
+
+    public void doClick() {
         clicked?.Invoke(this);
     }
 
     public virtual void onMouseMove() {
     }
 
-    public virtual void onMouseUp() {
+    public virtual void onMouseUp(MouseButton button) {
     }
 
     public virtual void update() {

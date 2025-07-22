@@ -37,12 +37,14 @@ public class StreamingVAO<T> where T : unmanaged {
     public void upload(Span<T> data, Span<ushort> indices) {
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.GL.InvalidateBufferData(vbo);
             count = (uint)indices.Length;
             fixed (T* d = data) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(data.Length * sizeof(T)), d);
             }
 
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            Game.GL.InvalidateBufferData(ibo);
             fixed (ushort* d = indices) {
                 GL.BufferSubData(BufferTargetARB.ElementArrayBuffer, 0, (uint)(indices.Length * sizeof(ushort)), d);
             }

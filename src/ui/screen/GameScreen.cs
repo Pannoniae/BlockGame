@@ -18,6 +18,7 @@ public class GameScreen : Screen {
     public Debug D;
 
     public bool debugScreen = false;
+    public bool fpsOnly = false;
     public bool chunkBorders = false;
     public bool music = true;
 
@@ -234,6 +235,9 @@ public class GameScreen : Screen {
 
         switch (key) {
             case Key.F3:
+                if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                    fpsOnly = !fpsOnly;
+                }
                 debugScreen = !debugScreen;
                 break;
             // reload chunks
@@ -366,8 +370,8 @@ public class GameScreen : Screen {
         });
     }
 
-    public override void onMouseUp(Vector2 pos) {
-        base.onMouseUp(pos);
+    public override void onMouseUp(Vector2 pos, MouseButton button) {
+        base.onMouseUp(pos, button);
         // if no longer holding, the player isn't clicking into the window anymore
         if (Game.focused && Game.lockingMouse) {
             Game.lockingMouse = false;
@@ -413,7 +417,7 @@ public class GameScreen : Screen {
                 new Color4b(240, 240, 240));
 
             // Draw debug lines
-            if (debugScreen) {
+            if (debugScreen && !fpsOnly) {
                 D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
                 D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
                 D.flushLines();

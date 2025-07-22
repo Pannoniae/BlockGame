@@ -71,84 +71,84 @@ public class IngameMenu : Menu, IDisposable {
         var screen = (GameScreen)this.screen;
 
         // Only draw when debug screen is enabled
-        if (!screen.debugScreen) return;
+        if (screen.debugScreen || screen.fpsOnly) {
+            var gui = Game.gui;
 
-        var gui = Game.gui;
+            // Fixed size and position in bottom-left
+            int graphX = GRAPH_PADDING;
+            int graphY = Game.height - GRAPH_HEIGHT - GRAPH_PADDING;
 
-        // Fixed size and position in bottom-left
-        int graphX = GRAPH_PADDING;
-        int graphY = Game.height - GRAPH_HEIGHT - GRAPH_PADDING;
-
-        // Background rectangle with transparency
-        gui.tb.Draw(gui.colourTexture,
-            new System.Drawing.RectangleF(graphX, graphY, GRAPH_WIDTH, GRAPH_HEIGHT),
-            new Color4b(0, 0, 0, 180));
-
-        // Fixed 60 FPS threshold (16.67ms)
-        const float MAX_FRAMETIME = 33.3f; // Cap display at 30 FPS for readability
-
-        // Calculate y position of 60 FPS line (16.67ms)
-        float sixtyFpsY = graphY + (16.67f / MAX_FRAMETIME) * GRAPH_HEIGHT;
-
-        // Draw guide line
-        gui.tb.Draw(gui.colourTexture,
-            new System.Drawing.RectangleF(graphX, sixtyFpsY, GRAPH_WIDTH, 1),
-            new Color4b(0, 255, 0, 150)); // 60 FPS line (green)
-
-        // Draw FPS marker
-        gui.drawStringThin("60 FPS",
-            new Vector2(graphX + 5, sixtyFpsY - 12),
-            new Color4b(0, 255, 0));
-
-        // Draw vertical bars
-        const float BAR_WIDTH = GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE;
-
-        for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
-            int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
-
-            if (frametimeHistory[idx] <= 0)
-                continue;
-
-            // Cap at MAX_FRAMETIME ms
-            float frametime = frametimeHistory[idx];
-
-            // Calculate positions
-            float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
-
-            // Calculate bar height based on frametime
-            float barHeight = (frametime / MAX_FRAMETIME) * GRAPH_HEIGHT;
-            float y = graphY + GRAPH_HEIGHT - barHeight;
-
-            // Lerp between green and red based on frametime. Between 0 and 60FPS from green to yellow, between 60FPS and 30FPS from yellow to red
-            // Determine color based on performance (lerp between values)
-            Color4b barColor;
-            const float SIXTY_FPS = 16.6f;
-            const float THIRTY_FPS = 33.3f;
-
-            if (frametime < SIXTY_FPS) {
-                float t = frametime / SIXTY_FPS; // 0 to 1
-                barColor = new Color4b(
-                    (byte)(255 * t),
-                    255,
-                    0
-                );
-            }
-            else if (frametime < THIRTY_FPS) {
-                float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
-                barColor = new Color4b(
-                    255,
-                    (byte)(255 * (1 - t)),
-                    0
-                );
-            }
-            else {
-                barColor = new Color4b(255, 0, 0);
-            }
-
-            // Draw bar
+            // Background rectangle with transparency
             gui.tb.Draw(gui.colourTexture,
-                new System.Drawing.RectangleF(x, y, BAR_WIDTH, barHeight),
-                barColor);
+                new System.Drawing.RectangleF(graphX, graphY, GRAPH_WIDTH, GRAPH_HEIGHT),
+                new Color4b(0, 0, 0, 180));
+
+            // Fixed 60 FPS threshold (16.67ms)
+            const float MAX_FRAMETIME = 33.3f; // Cap display at 30 FPS for readability
+
+            // Calculate y position of 60 FPS line (16.67ms)
+            float sixtyFpsY = graphY + (16.67f / MAX_FRAMETIME) * GRAPH_HEIGHT;
+
+            // Draw guide line
+            gui.tb.Draw(gui.colourTexture,
+                new System.Drawing.RectangleF(graphX, sixtyFpsY, GRAPH_WIDTH, 1),
+                new Color4b(0, 255, 0, 150)); // 60 FPS line (green)
+
+            // Draw FPS marker
+            gui.drawStringThin("60 FPS",
+                new Vector2(graphX + 5, sixtyFpsY - 12),
+                new Color4b(0, 255, 0));
+
+            // Draw vertical bars
+            const float BAR_WIDTH = GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE;
+
+            for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
+                int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
+
+                if (frametimeHistory[idx] <= 0)
+                    continue;
+
+                // Cap at MAX_FRAMETIME ms
+                float frametime = frametimeHistory[idx];
+
+                // Calculate positions
+                float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
+
+                // Calculate bar height based on frametime
+                float barHeight = (frametime / MAX_FRAMETIME) * GRAPH_HEIGHT;
+                float y = graphY + GRAPH_HEIGHT - barHeight;
+
+                // Lerp between green and red based on frametime. Between 0 and 60FPS from green to yellow, between 60FPS and 30FPS from yellow to red
+                // Determine color based on performance (lerp between values)
+                Color4b barColor;
+                const float SIXTY_FPS = 16.6f;
+                const float THIRTY_FPS = 33.3f;
+
+                if (frametime < SIXTY_FPS) {
+                    float t = frametime / SIXTY_FPS; // 0 to 1
+                    barColor = new Color4b(
+                        (byte)(255 * t),
+                        255,
+                        0
+                    );
+                }
+                else if (frametime < THIRTY_FPS) {
+                    float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
+                    barColor = new Color4b(
+                        255,
+                        (byte)(255 * (1 - t)),
+                        0
+                    );
+                }
+                else {
+                    barColor = new Color4b(255, 0, 0);
+                }
+
+                // Draw bar
+                gui.tb.Draw(gui.colourTexture,
+                    new System.Drawing.RectangleF(x, y, BAR_WIDTH, barHeight),
+                    barColor);
+            }
         }
     }
     
@@ -164,7 +164,7 @@ public class IngameMenu : Menu, IDisposable {
     public override void draw() {
         base.draw();
         var screen = (GameScreen)this.screen;
-        if (screen.debugScreen) {
+        if (screen.debugScreen && !screen.fpsOnly) {
             var ver = getElement("version");
             Game.gui.drawStringThin(debugStr.AsSpan(),
                 new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
@@ -190,7 +190,7 @@ public class IngameMenu : Menu, IDisposable {
 
     public void updateDebugTextMethod() {
         var screen = Screen.GAME_SCREEN;
-        if (screen.debugScreen) {
+        if (screen.debugScreen && !screen.fpsOnly) {
             var gui = Game.gui;
             var i = Game.instance;
             var p = Game.player;

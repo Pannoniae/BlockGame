@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using Silk.NET.Input;
 
 namespace BlockGame.ui;
 
@@ -41,7 +42,7 @@ public class Slider : GUIElement {
         }
     }
 
-    public override void onMouseUp() {
+    public override void onMouseUp(MouseButton button) {
         apply();
     }
 

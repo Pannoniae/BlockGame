@@ -3,7 +3,7 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
-
+using Silk.NET.Input;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
@@ -62,7 +62,7 @@ public class InventoryMenu : Menu {
         }
     }
 
-    public override void onMouseUp(Vector2 pos) {
+    public override void onMouseUp(Vector2 pos, MouseButton button) {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
