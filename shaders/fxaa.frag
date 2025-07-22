@@ -5,6 +5,7 @@ layout (binding = 0) uniform sampler2D u_colorTexture;
 uniform vec2 u_texelStep;
 uniform int u_showEdges;
 uniform int u_fxaaOn;
+uniform int u_ssaaFactor;
 
 uniform float u_lumaThreshold;
 uniform float u_mulReduce;
@@ -27,7 +28,32 @@ void main(void)
     // Possibility to toggle FXAA on and off.
     if (u_fxaaOn == 0)
     {
-        fragColor = vec4(rgbM, 1.0);
+        // If SSAA is enabled, do proper downsampling instead of point sampling
+        if (u_ssaaFactor > 1)
+        {
+            vec3 rgbSum = vec3(0.0);
+            float invSsaaFactor = 1.0 / float(u_ssaaFactor);
+            
+            // Sample all pixels in the SSAA block and average them
+            // Center the sampling block around the current texel
+            float halfFactor = float(u_ssaaFactor) * 0.5;
+            for (int x = 0; x < u_ssaaFactor; x++)
+            {
+                for (int y = 0; y < u_ssaaFactor; y++)
+                {
+                    // Offset from center of block: [-halfFactor + 0.5, halfFactor - 0.5]
+                    vec2 offset = (vec2(float(x), float(y)) - halfFactor + 0.5) * u_texelStep;
+                    rgbSum += texture(u_colorTexture, v_texCoord + offset).rgb;
+                }
+            }
+            
+            fragColor = vec4(rgbSum * invSsaaFactor * invSsaaFactor, 1.0);
+        }
+        else
+        {
+            // No SSAA, just use the regular sample
+            fragColor = vec4(rgbM, 1.0);
+        }
 
         return;
     }

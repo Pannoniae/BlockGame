@@ -549,12 +549,13 @@ public partial class WorldRenderer {
                 // if dir = 3, add +Chunk.CHUNKSIZEEX
                 // if dir = 4, add -Chunk.CHUNKSIZEEXSQ
                 // if dir = 5, add +Chunk.CHUNKSIZEEXSQ
-                var lb = Unsafe.Add(ref lightRef, lightOffsets[(byte)dir]);
+                byte lb;
 
                 test2 = false;
 
                 if (dir == RawDirection.NONE) {
                     // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
+                    lb = lightRef;
                     test2 = true;
                     light.First = lightRef;
                     light.Second = lightRef;
@@ -562,6 +563,7 @@ public partial class WorldRenderer {
                     light.Fourth = lightRef;
                 }
                 else {
+                    lb = Unsafe.Add(ref lightRef, lightOffsets[(byte)dir]);
                     ushort nb = nba[(byte)dir];
                     switch (mode) {
                         case VertexConstructionMode.OPAQUE:
@@ -574,6 +576,7 @@ public partial class WorldRenderer {
 
                     test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb));
                 }
+                
 
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {

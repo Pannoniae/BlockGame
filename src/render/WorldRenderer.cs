@@ -60,8 +60,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public InstantDrawColour idc = new InstantDrawColour(256);
     public InstantDrawTexture idt = new InstantDrawTexture(256);
 
-    public static Color4b defaultClearColour = new Color4b(178, 228, 255);
-    public static Color4b defaultFogColour = new Color4b(210, 210, 210);
+    public static Color4b defaultClearColour = new Color4b(168, 204, 232);
+    public static Color4b defaultFogColour = Color4b.White;
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
@@ -210,6 +210,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (fogMinValue > 8 * Chunk.CHUNKSIZE) {
             fogMinValue = 8 * Chunk.CHUNKSIZE;
         }
+        
+        // make the fog slightly less dense if the render distance is higher
+        fogMinValue += (dd - 8 * Chunk.CHUNKSIZE) * 0.1f;
         
         
 
@@ -367,13 +370,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // slightly bluer than the default clear colour
         var skyColour = new Color(100, 180, 255);
         // deep blue
-        var underSkyColour = new Color(90, 145, 245);
+        var underSkyColour = new Color(110, 175, 245);
 
         // Enable fog for sky rendering
         idc.enableFog(true);
         idc.fogColour(defaultClearColour.ToVector4());
 
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
+        // cap rd to 12 max
+        if (rd > 8 * Chunk.CHUNKSIZE) {
+            rd = 8 * Chunk.CHUNKSIZE;
+        }
+        
+        idc.fogDistance(rd * 0.005f, rd);
 
         //idc.instantShader.use();
         idc.setMVP(viewProj);
@@ -389,10 +398,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.end();
 
 
-        var underSky = new Vector3(0, -16, 0);
+        var underSky = new Vector3(0, -64, 0);
         
         idc.begin(PrimitiveType.Quads);
-        idc.fogDistance(rd * 0.005f, rd);
+        idc.fogDistance(float.Max(rd * 0.005f, 4 * Chunk.CHUNKSIZE), Settings.instance.renderDistance * Chunk.CHUNKSIZE);
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));

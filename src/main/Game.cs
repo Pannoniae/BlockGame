@@ -24,8 +24,10 @@ using DebugSource = Silk.NET.OpenGL.DebugSource;
 using DebugType = Silk.NET.OpenGL.DebugType;
 using Image = SixLabors.ImageSharp.Image;
 using IWindow = Silk.NET.Windowing.IWindow;
+using Monitor = Silk.NET.Windowing.Monitor;
 using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using VideoMode = Silk.NET.Windowing.VideoMode;
 
 namespace BlockGame;
 
@@ -107,6 +109,10 @@ public partial class Game {
 
     public BlockingCollection<Action> mainThreadQueue = new();
 
+    private Vector2D<int> preFullscreenSize;
+    private Vector2D<int> preFullscreenPosition;
+    private WindowState preFullscreenState;
+
     private readonly string[] splashes;
     private readonly string splash;
 
@@ -122,6 +128,7 @@ public partial class Game {
     private int g_texelStepLocation;
     private int g_showEdgesLocation;
     private int g_fxaaOnLocation;
+    private int g_ssaaFactorLocation;
     private int g_lumaThresholdLocation;
     private int g_mulReduceLocation;
     private int g_minReduceLocation;
@@ -158,12 +165,19 @@ public partial class Game {
         //windowOptions.UpdatesPerSecond = 6000;
         windowOptions.VSync = false;
         splash = getRandomSplash();
+        
+        
+        IMonitor mainMonitor = Monitor.GetMainMonitor(null);
+        Vector2D<int> windowSize = GetNewWindowSize(mainMonitor);
+        
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
+        windowOptions.VideoMode = new VideoMode(windowSize);
+        windowOptions.ShouldSwapAutomatically = true;
+        windowOptions.IsVisible = true;
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 0;
-        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.ForwardCompatible,
+        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability, ContextFlags.Default | ContextFlags.Debug,
             new APIVersion(4, 6));
-        ;
         #if DEBUG
         api.Flags = ContextFlags.Debug;
         // if we are in debug mode, force x11 because stupid wayland doesn't work with renderdoc for debugging
@@ -201,8 +215,36 @@ public partial class Game {
         window.Render += mainLoop;
         window.FramebufferResize += resize;
         window.Closing += close;
+        
+        window.Initialize();
+        window.Run(runCallback);
+        
+        window.DoEvents();
+        window.Reset();
+    }
+    
+    /// <summary>
+    /// Calculates the size to use for a new window as two thirds the size of the main monitor.
+    /// </summary>
+    /// <param name="monitor">The monitor in which the window will be located.</param>
+    private static Vector2D<int> GetNewWindowSize(IMonitor monitor)
+    {
+        return (monitor.VideoMode.Resolution ?? monitor.Bounds.Origin);
+    }
 
-        window.Run();
+    private static void runCallback() {
+        window.DoEvents();
+            if (!window.IsClosing)
+            {
+                window.DoUpdate();
+            }
+            if (!window.IsClosing)
+            {
+                window.DoRender();
+                //window.SwapBuffers();
+                //GL.Finish();
+                //GL.Flush();
+            }
     }
 
     private static PosixSignalRegistration reg;
@@ -399,6 +441,7 @@ public partial class Game {
         g_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
         g_showEdgesLocation = graphics.fxaaShader.getUniformLocation("u_showEdges");
         g_fxaaOnLocation = graphics.fxaaShader.getUniformLocation("u_fxaaOn");
+        g_ssaaFactorLocation = graphics.fxaaShader.getUniformLocation("u_ssaaFactor");
 
         g_lumaThresholdLocation = graphics.fxaaShader.getUniformLocation("u_lumaThreshold");
         g_mulReduceLocation = graphics.fxaaShader.getUniformLocation("u_mulReduce");
@@ -462,6 +505,10 @@ public partial class Game {
         switchTo(Menu.MAIN_MENU);
         Block.postLoad();
         resize(new Vector2D<int>(width, height));
+        
+        // apply fullscreen setting
+        setFullscreen(Settings.instance.fullscreen);
+        
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         MemoryUtils.cleanGC();
     }
@@ -615,6 +662,11 @@ public partial class Game {
             );
         }
 
+        if (key == Key.F11) {
+            Settings.instance.fullscreen = !Settings.instance.fullscreen;
+            setFullscreen(Settings.instance.fullscreen);
+        }
+
         currentScreen.onKeyDown(keyboard, key, scancode);
     }
 
@@ -676,11 +728,11 @@ public partial class Game {
         
         var ssaaWidth = width * Settings.instance.ssaa;
         var ssaaHeight = height * Settings.instance.ssaa;
-        var msaaSamples = Settings.instance.msaa;
+        var samples = Settings.instance.msaa;
         
         GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
 
-        if (msaaSamples > 1) {
+        if (samples > 1) {
             // Create MSAA framebuffer
             fbo = GL.GenFramebuffer();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
@@ -689,13 +741,13 @@ public partial class Game {
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2DMultisample, FBOtex);
-            GL.TexImage2DMultisample(TextureTarget.Texture2DMultisample, (uint)msaaSamples, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, true);
+            GL.TexImage2DMultisample(TextureTarget.Texture2DMultisample, (uint)samples, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, true);
 
             // Create multisampled depth buffer
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.GenRenderbuffer();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, (uint)msaaSamples, InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, (uint)samples, InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
 
             // Attach to MSAA framebuffer
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2DMultisample, FBOtex, 0);
@@ -770,6 +822,57 @@ public partial class Game {
 
     public void executeOnMainThread(Action action) {
         mainThreadQueue.Add(action);
+    }
+
+    public void setFullscreen(bool fullscreen) {
+        
+        if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
+            Console.Out.WriteLine("Already in desired state, returning");
+            return;
+        }
+
+        var windowMonitor = window.Monitor;
+        if (windowMonitor == null) {
+            Console.Out.WriteLine("Failed to switch to fullscreen: window isn't on any monitor!");
+            return;
+        }
+
+        // temporarily remove resize handler to prevent issues during switch
+        window.FramebufferResize -= resize;
+
+        if (fullscreen) {
+            var screenSize = windowMonitor.VideoMode.Resolution ?? windowMonitor.Bounds.Size;
+            preFullscreenSize = window.Size;
+            preFullscreenPosition = window.Position;
+            preFullscreenState = window.WindowState;
+            
+            // Force Normal state first, then Fullscreen
+            if (window.WindowState != WindowState.Normal) {
+                window.WindowState = WindowState.Normal;
+            }
+            window.WindowState = WindowState.Fullscreen;
+            window.Size = screenSize;
+        } else {
+            Console.Out.WriteLine("Exiting fullscreen");
+            if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
+                preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
+                preFullscreenPosition = windowMonitor.Bounds.Origin + new Vector2D<int>(50);
+                preFullscreenState = WindowState.Normal;
+                Console.Out.WriteLine("Using fallback window settings");
+            }
+
+            // Always go to Normal first, then to the desired state
+            window.WindowState = WindowState.Normal;
+            window.Size = preFullscreenSize;
+            window.Position = preFullscreenPosition;
+            if (preFullscreenState != WindowState.Normal) {
+                window.WindowState = preFullscreenState;
+            }
+        }
+
+        // restore resize handler and trigger resize
+        window.FramebufferResize += resize;
+        resize(window.FramebufferSize);
     }
 
     private void update(double dt) {
@@ -885,6 +988,7 @@ public partial class Game {
         if (Settings.instance.framebufferEffects) {
             graphics.fxaaShader.use();
             graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
+            graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
@@ -903,6 +1007,9 @@ public partial class Game {
         //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);
         //GD.BlendingEnabled = false;
         GL.Enable(EnableCap.DepthTest);
+        
+        GL.Finish();
+        GL.Flush();
     }
 
     public static TimerAction setInterval(long interval, Action action) {

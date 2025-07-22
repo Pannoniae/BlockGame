@@ -30,6 +30,17 @@ public class SettingsMenu : Menu {
         settingElements.Add(vsync);
         addElement(vsync);
 
+        var fullscreen = new ToggleButton(this, "fullscreen", false, settings.fullscreen ? 1 : 0,
+            "Fullscreen: OFF", "Fullscreen: ON");
+        fullscreen.topCentre();
+        fullscreen.clicked += _ => {
+            settings.fullscreen = fullscreen.getIndex() == 1;
+            Game.instance.setFullscreen(settings.fullscreen);
+        };
+        fullscreen.tooltip = "Toggles fullscreen mode.";
+        settingElements.Add(fullscreen);
+        addElement(fullscreen);
+
         var guiScale = new ToggleButton(this, "guiScale", false, settings.guiScale == 4 ? 1 : 0,
             "GUI Scale: Small", "GUI Scale: Large");
         guiScale.topCentre();
@@ -78,19 +89,19 @@ public class SettingsMenu : Menu {
         addElement(mipmapping);
 
         var anisotropy = new ToggleButton(this, "anisotropy", false, 
-            settings.anisotropy switch { 1 => 0, 2 => 1, 4 => 2, 8 => 3, 16 => 4, 32 => 5, 64 => 6, 128 => 7, _ => 3 },
-            "Anisotropic Filtering: 1x", "Anisotropic Filtering: 2x", "Anisotropic Filtering: 4x", 
+            settings.anisotropy switch { 0 => 0, 1 => 1, 2 => 2, 4 => 3, 8 => 4, 16 => 5, 32 => 6, 64 => 7, 128 => 8, _ => 3 },
+            "Anisotropic Filtering: OFF", "Anisotropic Filtering: 1x", "Anisotropic Filtering: 2x", "Anisotropic Filtering: 4x", 
             "Anisotropic Filtering: 8x", "Anisotropic Filtering: 16x", "Anisotropic Filtering: 32x", "Anisotropic Filtering: 64x", "Anisotropic Filtering: 128x");
         anisotropy.topCentre();
         anisotropy.clicked += _ => {
-            settings.anisotropy = anisotropy.getIndex() switch { 0 => 1, 1 => 2, 2 => 4, 3 => 8, 4 => 16, 5 => 32, 6 => 64, 7 => 128, _ => 8 };
+            settings.anisotropy = anisotropy.getIndex() switch { 0 => 0, 1 => 1, 2 => 2, 3 => 4, 4 => 8, 5 => 16, 6 => 32, 7 => 64, 8 => 128, _ => 8 };
             Game.textureManager.blockTexture.reload();
             Game.renderer?.updateAF();
         };
-        anisotropy.tooltip = "Anisotropic filtering improves texture quality at oblique angles.\nHigher values provide better quality but may impact performance.";
+        anisotropy.tooltip = "Anisotropic filtering improves texture quality at oblique angles.\nHigher values provide better quality but may impact performance.\nValues above 16x are practically unnoticeable.";
         settingElements.Add(anisotropy);
         addElement(anisotropy);
-
+        
         var antiAliasing = new ToggleButton(this, "antiAliasing", false, settings.antiAliasing,
             "Anti-Aliasing: Off", "Anti-Aliasing: FXAA", "Anti-Aliasing: 2x MSAA", "Anti-Aliasing: 4x MSAA", 
             "Anti-Aliasing: 2x SSAA", "Anti-Aliasing: 4x SSAA", "Anti-Aliasing: 2x MSAA + 2x SSAA", 
@@ -102,7 +113,7 @@ public class SettingsMenu : Menu {
             settings.antiAliasing = index;
             Game.instance.updateFramebuffers();
         };
-        antiAliasing.tooltip = "Anti-Aliasing techniques smooth jagged edges.\nFXAA is fast, MSAA provides good quality with moderate performance impact,\nSSAA provides best quality but impacts performance significantly.";
+        antiAliasing.tooltip = "Anti-Aliasing techniques smooth jagged edges.\nFXAA is fast, MSAA provides good quality with moderate performance impact,\nSSAA provides best quality but impacts performance significantly.\nIt will kill your RTX 5090, I warned you!";
         settingElements.Add(antiAliasing);
         addElement(antiAliasing);
 

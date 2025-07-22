@@ -7,9 +7,25 @@
 
 
 uniform float aniso = 0f;
+uniform int debugAniso = 0;
 
 float det(mat2 matrix) {
     return matrix[0].x * matrix[1].y - matrix[0].y * matrix[1].x;
+}
+
+vec4 mapAniso(float h) {
+    vec4 colours[3];
+    colours[0] = vec4(0., 0., 1., 1.);
+    colours[1] = vec4(1., 1., 0., 1.);
+    colours[2] = vec4(1., 0., 0., 1.);
+
+    h = clamp(h, 0, 16);
+    if(h>8) {
+        return mix(colours[1], colours[2], (h-8)/8);
+    }
+    else {
+        return mix(colours[0], colours[1], h/8);
+    }
 }
 
 vec4 textureAF(sampler2D texSampler, vec2 uv) {
@@ -26,19 +42,38 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
 
     mat2 J = inverse(mat2(dFdx(uv), dFdy(uv)));
     J = transpose(J)*J;
-    float d = det(J), t = J[0][0]+J[1][1],
-    D = sqrt(abs(t*t-4.001*d)), // using 4.001 instead of 4.0 fixes a rare texture glitch with square texture atlas
-    V = (t-D)/2.0, v = (t+D)/2.0,
-    M = 1.0/sqrt(V), m = 1./sqrt(v);
+    float d = det(J);
+    float t = J[0][0]+J[1][1];
+    float D = sqrt(abs(t*t-4.001*d));
+    // major
+    float V = (t-D)/2.0;
+    // minor
+    float v = (t+D)/2.0;
+    // magnify along major axis
+    float M = 1.0/sqrt(V);
+    // magnify along minor axis
+    float m = 1./sqrt(v);
+    // major axis dv
     vec2 A = M * normalize(vec2(-J[0][1], J[0][0]-V));
 
+    // calculate anisotropy ratio and adapt sample count
+    float anisotropy = max(M/m, 1.0);
+    float sampleCount = min(aniso, ceil(anisotropy));
+    
+    // debug mode: return anisotropy visualization
+    if (debugAniso != 0) {
+        vec4 baseColor = texture(texSampler, clamp(uv, subtexMin, subtexMax));
+        vec4 anisoColor = mapAniso(anisotropy);
+        return mix(anisoColor, baseColor, 0.4);
+    }
+    
     float lod = 0.0;
 
-    float samplesDiv2 = aniso / 2.0;
-    vec2 ADivSamples = A / aniso;
+    float samplesHalf = sampleCount / 2.0;
+    vec2 ADivSamples = A / sampleCount;
 
     vec4 c = vec4(0.0);
-    for (float i = -samplesDiv2 + 0.5; i < samplesDiv2; i++) {
+    for (float i = -samplesHalf + 0.5; i < samplesHalf; i++) {
         vec2 sampleUV = uv + ADivSamples * i;
         sampleUV = clamp(sampleUV, subtexMin, subtexMax);
         vec4 colorSample = textureLod(texSampler, sampleUV, lod);
@@ -46,8 +81,8 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
         c.rgb += colorSample.rgb * colorSample.a;
         c.a += colorSample.a;
     }
-    c.rgb /= aniso;
-    c.a /= aniso;
+    c.rgb /= c.a;
+    c.a /= sampleCount;
 
     return c;
 }
@@ -64,8 +99,14 @@ in float vertexDist;
 uniform sampler2D blockTexture;
 
 void main() {
-
-    vec4 blockColour = textureAF(blockTexture, texCoords);
+    vec4 blockColour;
+    if (aniso == 0.0) {
+        // no anisotropic filtering, use regular texture lookup
+        blockColour = texture(blockTexture, texCoords);
+    } else {
+        // use anisotropic filtering
+        blockColour = textureAF(blockTexture, texCoords);
+    }
     float ratio = getFog(vertexDist);
     // extract skylight, 0 to 15
 
