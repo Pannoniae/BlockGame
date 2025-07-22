@@ -41,8 +41,8 @@ void main(void)
             {
                 for (int y = 0; y < u_ssaaFactor; y++)
                 {
-                    // Offset from center of block: [-halfFactor + 0.5, halfFactor - 0.5]
-                    vec2 offset = (vec2(float(x), float(y)) - halfFactor + 0.5) * u_texelStep;
+                    // Sample within [0, 1) texel range, centered on current pixel
+                    vec2 offset = vec2(float(x), float(y)) / float(u_ssaaFactor) * u_texelStep;
                     rgbSum += texture(u_colorTexture, v_texCoord + offset).rgb;
                 }
             }
