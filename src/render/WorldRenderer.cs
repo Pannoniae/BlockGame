@@ -211,6 +211,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogMinValue = 8 * Chunk.CHUNKSIZE;
         }
         
+        
         // make the fog slightly less dense if the render distance is higher
         fogMinValue += (dd - 8 * Chunk.CHUNKSIZE) * 0.1f;
         

@@ -20,7 +20,7 @@ public class GameScreen : Screen {
     public bool debugScreen = false;
     public bool fpsOnly = false;
     public bool chunkBorders = false;
-    public bool music = true;
+    public bool music = false;
 
     public readonly PauseMenu PAUSE_MENU = new();
     public readonly IngameMenu INGAME_MENU = new();

@@ -10,6 +10,7 @@ public class Settings {
     public int mipmapping = 0;
     public int anisotropy = 0; // 0, 1, 2, 4, 8, 16, 32, 64, 128
     public int antiAliasing = 0; // 0=Off, 1=FXAA, 2=2xMSAA, 3=4xMSAA, 4=2xSSAA, 5=4xSSAA, 6=2xMSAA+2xSSAA, 7=4xMSAA+2xSSAA, 8=4xMSAA+4xSSAA
+    public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public bool fullscreen = false;
 
     public static readonly Settings instance = new();
@@ -27,20 +28,45 @@ public class Settings {
     /// <summary>
     /// SSAA multiplier (1, 2, or 4).
     /// </summary>
-    public int ssaa => antiAliasing switch {
-        4 or 6 or 7 => 2,           // 2xSSAA, 2xMSAA+2xSSAA, 4xMSAA+2xSSAA
-        5 or 8 => 4,      // 4xSSAA, 4xMSAA+4xSSAA
-        _ => 1
-    };
-    
+    public int ssaa {
+        get {
+            var factor = antiAliasing switch {
+                4 or 6 or 7 => 2, // 2xSSAA, 2xMSAA+2xSSAA, 4xMSAA+2xSSAA
+                5 or 8 => 4, // 4xSSAA, 4xMSAA+4xSSAA
+                _ => 1
+            };
+            
+            // per-sample mode doesn't use traditional SSAA scaling
+            if (ssaaMode == 2) return 1;
+            
+            return factor;
+        }
+    }
+
     /// <summary>
     /// MSAA sample count (1, 2, 4, or 8).
     /// </summary>
-    public int msaa => antiAliasing switch {
-        2 or 6 => 2,           // 2xMSAA, 2xMSAA+2xSSAA
-        3 or 7 or 8 => 4,      // 4xMSAA, 4xMSAA+2xSSAA, 4xMSAA+4xSSAA
-        _ => 1
-    };
+    public int msaa {
+        get {
+            var factor = antiAliasing switch {
+                2 or 6 => 2, // 2xMSAA, 2xMSAA+2xSSAA
+                3 or 7 or 8 => 4, // 4xMSAA, 4xMSAA+2xSSAA, 4xMSAA+4xSSAA
+                _ => 1
+            };
+            
+            // per-sample mode requires MSAA, force it on if not already enabled
+            if (ssaaMode == 2 && factor == 1) {
+                factor = 4; // default to 4x MSAA for per-sample mode
+            }
+            
+            return factor;
+        }
+    }
+
+    /// <summary>
+    /// Effective framebuffer scale factor for rendering (1 for per-sample mode, ssaa for others)
+    /// </summary>
+    public int effectiveScale => ssaaMode == 2 ? 1 : ssaa;
 
     public string getAAText() {
         return antiAliasing switch {

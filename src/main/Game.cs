@@ -15,6 +15,8 @@ using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ARB;
+using Silk.NET.OpenGL.Extensions.NV;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -121,6 +123,8 @@ public partial class Game {
     private uint throwawayVAO;
     private uint depthBuffer;
     
+    public static bool sampleShadingSupported = false;
+    
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;
     private uint resolveTex;
@@ -129,6 +133,7 @@ public partial class Game {
     private int g_showEdgesLocation;
     private int g_fxaaOnLocation;
     private int g_ssaaFactorLocation;
+    private int g_ssaaModeLocation;
     private int g_lumaThresholdLocation;
     private int g_mulReduceLocation;
     private int g_minReduceLocation;
@@ -388,6 +393,11 @@ public partial class Game {
         setIconToBlock();
         input = window.CreateInput();
         GL = window.CreateOpenGL();
+        
+        // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
+        var version = GL.GetStringS(StringName.Version);
+        sampleShadingSupported = version.StartsWith("4.") || GL.TryGetExtension(out ArbSampleShading arbSampleShading);
+
         //#if DEBUG
         // initialise debug print
         unsafe {
@@ -417,7 +427,53 @@ public partial class Game {
             GL.GetInteger(GetPName.ContextFlags, out int robust);
             Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
         }
-
+        
+        // get nv internalformat_sample_query
+        
+        var _e = GL.TryGetExtension(out NVInternalformatSampleQuery nvInternalformatSampleQuery);
+        
+        if (_e) {
+            Console.Out.WriteLine("NVInternalformatSampleQuery extension is available.");
+            
+            // Implement the NV sample query functionality
+            unsafe {
+                const InternalFormat ifmt = InternalFormat.Rgba8;
+                const TextureTarget target = TextureTarget.Texture2DMultisample;
+                
+                // Obtain supported sample count for a format
+                long numSampleCounts = 0;
+                GL.GetInternalformat(target, ifmt, InternalFormatPName.NumSampleCounts, 1u, &numSampleCounts);
+                
+                if (numSampleCounts > 0) {
+                    // Get the list of supported samples for this format
+                    int* samples = stackalloc int[(int)numSampleCounts];
+                    GL.GetInternalformat(target, ifmt, InternalFormatPName.Samples, (uint)numSampleCounts, samples);
+                    
+                    // Loop over the supported formats and get per-sample properties
+                    for (int i = 0; i < numSampleCounts; i++) {
+                        int multisample = 0;
+                        int ssScaleX = 0, ssScaleY = 0;
+                        int conformant = 0;
+                        
+                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
+                            NV.MultisamplesNV, 1, &multisample);
+                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
+                            NV.SupersampleScaleXNV, 1, &ssScaleX);
+                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
+                            NV.SupersampleScaleYNV, 1, &ssScaleY);
+                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
+                            NV.ConformantNV, 1, &conformant);
+                        
+                        Console.Out.WriteLine($"Sample {i}: samples={samples[i]}, multisample={multisample}, " +
+                                            $"ss_scale_x={ssScaleX}, ss_scale_y={ssScaleY}, conformant={conformant}");
+                    }
+                }
+            }
+        }
+        else {
+            Console.Out.WriteLine("NVInternalformatSampleQuery extension is NOT available.");
+        }
+        
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
         GL.Enable(EnableCap.Blend);
@@ -442,8 +498,8 @@ public partial class Game {
         g_showEdgesLocation = graphics.fxaaShader.getUniformLocation("u_showEdges");
         g_fxaaOnLocation = graphics.fxaaShader.getUniformLocation("u_fxaaOn");
         g_ssaaFactorLocation = graphics.fxaaShader.getUniformLocation("u_ssaaFactor");
+        g_ssaaModeLocation = graphics.fxaaShader.getUniformLocation("u_ssaaMode");
 
-        g_lumaThresholdLocation = graphics.fxaaShader.getUniformLocation("u_lumaThreshold");
         g_mulReduceLocation = graphics.fxaaShader.getUniformLocation("u_mulReduce");
         g_minReduceLocation = graphics.fxaaShader.getUniformLocation("u_minReduce");
         g_maxSpanLocation = graphics.fxaaShader.getUniformLocation("u_maxSpan");
@@ -485,6 +541,8 @@ public partial class Game {
 
         var music = snd.playMusic("snd/tests.flac");
         snd.setLoop(music, true);
+        
+        snd.muteMusic();
 
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");
@@ -726,8 +784,8 @@ public partial class Game {
         GL.DeleteFramebuffer(fbo);
         GL.DeleteFramebuffer(resolveFbo);
         
-        var ssaaWidth = width * Settings.instance.ssaa;
-        var ssaaHeight = height * Settings.instance.ssaa;
+        var ssaaWidth = width * Settings.instance.effectiveScale;
+        var ssaaHeight = height * Settings.instance.effectiveScale;
         var samples = Settings.instance.msaa;
         
         GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
@@ -812,6 +870,9 @@ public partial class Game {
     }
 
     private void deleteFramebuffer() {
+        if (sampleShadingSupported) {
+            GL.Disable(EnableCap.SampleShading); // disable per-sample shading
+        }
         GL.DeleteFramebuffer(fbo);
         GL.DeleteTexture(FBOtex);
         GL.DeleteRenderbuffer(depthBuffer);
@@ -940,10 +1001,10 @@ public partial class Game {
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
 
-        // Set viewport for SSAA rendering
+        // Set viewport for SSAA/MSAA rendering
         if (Settings.instance.framebufferEffects) {
-            var ssaaWidth = width * Settings.instance.ssaa;
-            var ssaaHeight = height * Settings.instance.ssaa;
+            var ssaaWidth = width * Settings.instance.effectiveScale;
+            var ssaaHeight = height * Settings.instance.effectiveScale;
             GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
         }
 
@@ -958,8 +1019,8 @@ public partial class Game {
         fontLoader.renderer3D.end();
 
         if (Settings.instance.framebufferEffects) {
-            var ssaaWidth = width * Settings.instance.ssaa;
-            var ssaaHeight = height * Settings.instance.ssaa;
+            var ssaaWidth = width * Settings.instance.effectiveScale;
+            var ssaaHeight = height * Settings.instance.effectiveScale;
             
             // Handle MSAA resolve if needed
             if (Settings.instance.msaa > 1) {
@@ -986,12 +1047,22 @@ public partial class Game {
         }
 
         if (Settings.instance.framebufferEffects) {
+            // enable per-sample shading if using per-sample SSAA mode and supported
+            if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
+                GL.Enable(EnableCap.SampleShading);
+                GL.MinSampleShading(1.0f); // force per-sample shading
+            } else if (sampleShadingSupported) {
+                GL.Disable(EnableCap.SampleShading);
+            }
+            
             graphics.fxaaShader.use();
             graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
             graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
+            graphics.fxaaShader.setUniform(g_ssaaModeLocation, Settings.instance.ssaaMode);
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+            
         }
 
         GL.Disable(EnableCap.DepthTest);

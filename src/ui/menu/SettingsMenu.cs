@@ -117,6 +117,28 @@ public class SettingsMenu : Menu {
         settingElements.Add(antiAliasing);
         addElement(antiAliasing);
 
+        var ssaaModeOptions = new List<string> { "SSAA Mode: Normal", "SSAA Mode: Weighted" };
+        var ssaaModeTooltip = "SSAA sampling mode.\nNormal: uniform sampling\nWeighted: center-biased sampling for less blur";
+        
+        // Add per-sample option if supported
+        if (Game.sampleShadingSupported) {
+            ssaaModeOptions.Add("SSAA Mode: Per-Sample");
+            ssaaModeTooltip += "\nPer-Sample: hardware-accelerated per-sample shading";
+        } else {
+            // clamp setting if per-sample was selected but not supported
+            if (settings.ssaaMode >= 2) settings.ssaaMode = 0;
+        }
+        
+        var ssaaMode = new ToggleButton(this, "ssaaMode", false, settings.ssaaMode, ssaaModeOptions.ToArray());
+        ssaaMode.topCentre();
+        ssaaMode.clicked += _ => {
+            settings.ssaaMode = ssaaMode.getIndex();
+            Game.instance.updateFramebuffers();
+        };
+        ssaaMode.tooltip = ssaaModeTooltip;
+        settingElements.Add(ssaaMode);
+        addElement(ssaaMode);
+
         var renderDistance = new Slider(this, "renderDistance", 2, 96, 1, settings.renderDistance);
         renderDistance.setPosition(new Rectangle(0, 112, 128, 16));
         renderDistance.topCentre();
