@@ -4,45 +4,50 @@ using Molten.DoublePrecision;
 
 namespace BlockGame;
 
-public class Particle : Entity {
+public class Particle {
+    
+    public World world;
 
-    /// <summary>
-    /// The texture coordinates of the particle.
-    /// </summary>
-    public float u;
+    /** current position */
+    public Vector3D position;
 
-    /// <summary>
-    /// The texture coordinates of the particle.
-    /// </summary>
-    public float v;
+    /** previous frame position for interpolation */
+    public Vector3D prevPosition;
 
-    /// <summary>
-    /// The texture the particle uses.
-    /// </summary>
-    public string texture;
+    /** current velocity */
+    public Vector3D velocity;
 
-    /// <summary>
-    /// The size of the particle. (world coords)
-    /// </summary>
-    public double size;
+    /** whether particle is touching ground */
+    public bool onGround;
 
-    /// <summary>
-    /// The size of the texture on the particle.
-    /// </summary>
-    public double uvsize;
-
-    /// <summary>
-    /// The time-to-live of the particle in ticks.
-    /// </summary>
-    public int ttl;
-
-    /// <summary>
-    /// Is this particle valid?
-    /// </summary>
+    /** whether particle is alive */
     public bool active;
 
-    public Particle(World world, Vector3D position, string texture, float u, float v, double size, double uvsize, int ttl) : base(world) {
+    /** time-to-live in ticks */
+    public int ttl;
+
+    /** texture path */
+    public string texture;
+
+    /** texture U coordinate */
+    public float u;
+
+    /** texture V coordinate */
+    public float v;
+
+    /** particle size in world units */
+    public double size;
+
+    /** texture size on particle (UV scale) */
+    public double uvsize;
+
+    /** collision detection cache */
+    private readonly List<AABB> collisionTargets = [];
+
+    public Particle(World world, Vector3D position, string texture, float u, float v, double size, double uvsize, int ttl) {
+        this.world = world;
         this.position = position;
+        this.prevPosition = position;
         this.texture = texture;
         this.u = u;
         this.v = v;
@@ -50,20 +55,24 @@ public class Particle : Entity {
         this.uvsize = uvsize;
         this.ttl = ttl;
         active = true;
+        velocity = Vector3D.Zero;
     }
 
-    protected override AABB calcAABB(Vector3D pos) {
+    private AABB calcAABB(Vector3D pos) {
         return new AABB(pos - new Vector3D(size / 2), pos + new Vector3D(size / 2));
     }
 
-    public virtual void update(double dt) {
+    public void update(double dt) {
         prevPosition = position;
-        if (active) {
-            // gravity
-            velocity.Y -= 6 * dt;
-            ttl -= 1;
+        if (!active) {
+            return;
         }
-        // cursed logic?
+
+        // gravity
+        velocity.Y -= 6 * dt;
+        ttl -= 1;
+
+        // apply friction
         velocity.X *= Constants.verticalFriction;
         velocity.Z *= Constants.verticalFriction;
         velocity.Y *= Constants.verticalFriction;
@@ -71,84 +80,72 @@ public class Particle : Entity {
             velocity.X *= Constants.airFriction;
             velocity.Z *= Constants.airFriction;
         }
+
+        // collect collision targets
         var blockPos = position.toBlockPos();
         collisionTargets.Clear();
-        var currentAABB = world.getAABB(blockPos.X, blockPos.Y, blockPos.Z, world.getBlock(blockPos));
-        if (currentAABB != null) {
-            collisionTargets.Add(currentAABB.Value);
-        }
+        
         foreach (var neighbour in world.getBlocksInBox(blockPos + new Vector3I(-1, -1, -1), blockPos + new Vector3I(1, 1, 1))) {
             var block = world.getBlock(neighbour);
             var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
-            if (blockAABB == null) {
-                continue;
+            if (blockAABB != null) {
+                collisionTargets.Add(blockAABB.Value);
             }
-
-            collisionTargets.Add(blockAABB.Value);
         }
 
-        // Y axis resolution
+        // Y axis collision
         position.Y += velocity.Y * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbY = calcAABB(new Vector3D(position.X, position.Y, position.Z));
-            if (AABB.isCollision(aabbY, blockAABB)) {
-                // left side
-                if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
-                    var diff = blockAABB.minY - aabbY.maxY;
-                    position.Y += diff;
+            var aabb = calcAABB(position);
+            if (AABB.isCollision(aabb, blockAABB)) {
+                if (velocity.Y > 0 && aabb.maxY >= blockAABB.minY) {
+                    position.Y += blockAABB.minY - aabb.maxY;
                     velocity.Y = 0;
                 }
-
-                else if (velocity.Y < 0 && aabbY.minY <= blockAABB.maxY) {
-                    var diff = blockAABB.maxY - aabbY.minY;
-                    position.Y += diff;
+                else if (velocity.Y < 0 && aabb.minY <= blockAABB.maxY) {
+                    position.Y += blockAABB.maxY - aabb.minY;
                     velocity.Y = 0;
                 }
             }
         }
 
-
-        // X axis resolution
+        // X axis collision
         position.X += velocity.X * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbX = calcAABB(new Vector3D(position.X, position.Y, position.Z));
-            var sneakaabbX = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
-            if (AABB.isCollision(aabbX, blockAABB)) {
-                collisionXThisFrame = true;
-                // left side
-                if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
-                    var diff = blockAABB.minX - aabbX.maxX;
-                    position.X += diff;
+            var aabb = calcAABB(position);
+            if (AABB.isCollision(aabb, blockAABB)) {
+                if (velocity.X > 0 && aabb.maxX >= blockAABB.minX) {
+                    position.X += blockAABB.minX - aabb.maxX;
                 }
-
-                else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
-                    var diff = blockAABB.maxX - aabbX.minX;
-                    position.X += diff;
+                else if (velocity.X < 0 && aabb.minX <= blockAABB.maxX) {
+                    position.X += blockAABB.maxX - aabb.minX;
                 }
+                velocity.X = 0;
             }
         }
 
+        // Z axis collision
         position.Z += velocity.Z * dt;
         foreach (var blockAABB in collisionTargets) {
-            var aabbZ = calcAABB(new Vector3D(position.X, position.Y, position.Z));
-            if (AABB.isCollision(aabbZ, blockAABB)) {
-                collisionZThisFrame = true;
-                if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
-                    var diff = blockAABB.minZ - aabbZ.maxZ;
-                    position.Z += diff;
+            var aabb = calcAABB(position);
+            if (AABB.isCollision(aabb, blockAABB)) {
+                if (velocity.Z > 0 && aabb.maxZ >= blockAABB.minZ) {
+                    position.Z += blockAABB.minZ - aabb.maxZ;
                 }
-
-                else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
-                    var diff = blockAABB.maxZ - aabbZ.minZ;
-                    position.Z += diff;
+                else if (velocity.Z < 0 && aabb.minZ <= blockAABB.maxZ) {
+                    position.Z += blockAABB.maxZ - aabb.minZ;
                 }
+                velocity.Z = 0;
             }
         }
+
+        // ground check
         var groundCheck = calcAABB(new Vector3D(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
         onGround = false;
         foreach (var blockAABB in collisionTargets) {
             if (AABB.isCollision(blockAABB, groundCheck)) {
                 onGround = true;
+                break;
             }
         }
     }
