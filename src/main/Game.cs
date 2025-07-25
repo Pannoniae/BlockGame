@@ -386,6 +386,12 @@ public partial class Game {
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
         // Dump stacktrace
         //Console.Out.WriteLine(Environment.StackTrace);
+        
+        // if error, dump stacktrace
+        if (severity == (GLEnum)DebugSeverity.DebugSeverityHigh || severity == (GLEnum)DebugSeverity.DebugSeverityMedium ||
+            severity == (GLEnum)DebugSeverity.DebugSeverityLow) {
+            Console.Out.WriteLine(Environment.StackTrace);
+        }
     }
 
     private void init() {
@@ -500,6 +506,7 @@ public partial class Game {
         g_ssaaFactorLocation = graphics.fxaaShader.getUniformLocation("u_ssaaFactor");
         g_ssaaModeLocation = graphics.fxaaShader.getUniformLocation("u_ssaaMode");
 
+        g_lumaThresholdLocation = graphics.fxaaShader.getUniformLocation("u_lumaThreshold");
         g_mulReduceLocation = graphics.fxaaShader.getUniformLocation("u_mulReduce");
         g_minReduceLocation = graphics.fxaaShader.getUniformLocation("u_minReduce");
         g_maxSpanLocation = graphics.fxaaShader.getUniformLocation("u_maxSpan");
