@@ -1086,8 +1086,8 @@ public partial class Game {
         //GD.BlendingEnabled = false;
         GL.Enable(EnableCap.DepthTest);
         
-        GL.Finish();
-        GL.Flush();
+        //GL.Finish();
+        //GL.Flush();
     }
 
     public static TimerAction setInterval(long interval, Action action) {
