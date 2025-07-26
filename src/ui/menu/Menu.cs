@@ -27,10 +27,10 @@ public class Menu {
     /// </summary>
     public Screen screen;
 
-    public static LoadingMenu LOADING = new();
-    public static MainMenu MAIN_MENU = new();
-    public static LevelSelectMenu LEVEL_SELECT = new();
-    public static SettingsMenu SETTINGS = new();
+    public static LoadingMenu LOADING;
+    public static MainMenu MAIN_MENU;
+    public static LevelSelectMenu LEVEL_SELECT;
+    public static SettingsMenu SETTINGS;
 
 
     /// <summary>
@@ -49,7 +49,11 @@ public class Menu {
         return isModal();
     }
 
-    public Menu() {
+    public static void init() {
+        LOADING = new LoadingMenu();
+        MAIN_MENU = new MainMenu();
+        LEVEL_SELECT = new LevelSelectMenu();
+        SETTINGS = new SettingsMenu();
     }
 
     // there is no activate/deactivate here to manage elements here because multiple menus can exist (there no generic system for that; it's on a case-by-case basis)

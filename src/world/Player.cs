@@ -120,7 +120,7 @@ public class Player : Entity {
             camera.bob = Math.Clamp((float)(velocity.Length() / 4), 0, 1);
         }
         else {
-            camera.bob *= 0.9f;
+            camera.bob *= 0.935f;
         }
     }
 

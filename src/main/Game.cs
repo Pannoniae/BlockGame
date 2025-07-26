@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
@@ -70,6 +71,8 @@ public partial class Game {
     public static Player? player;
     public static WorldRenderer? renderer;
 
+    private static Coroutines cs;
+
     public static IMouse mouse;
     public static Vector2 mousePos;
     public static IKeyboard keyboard;
@@ -122,9 +125,9 @@ public partial class Game {
     private uint FBOtex;
     private uint throwawayVAO;
     private uint depthBuffer;
-    
+
     public static bool sampleShadingSupported = false;
-    
+
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;
     private uint resolveTex;
@@ -170,18 +173,19 @@ public partial class Game {
         //windowOptions.UpdatesPerSecond = 6000;
         windowOptions.VSync = false;
         splash = getRandomSplash();
-        
-        
+
+
         IMonitor mainMonitor = Monitor.GetMainMonitor(null);
         Vector2D<int> windowSize = GetNewWindowSize(mainMonitor);
-        
+
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.VideoMode = new VideoMode(windowSize);
         windowOptions.ShouldSwapAutomatically = true;
         windowOptions.IsVisible = true;
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 0;
-        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability, ContextFlags.Default | ContextFlags.Debug,
+        var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability,
+            ContextFlags.Default | ContextFlags.Debug,
             new APIVersion(4, 6));
         #if DEBUG
         api.Flags = ContextFlags.Debug;
@@ -220,36 +224,34 @@ public partial class Game {
         window.Render += mainLoop;
         window.FramebufferResize += resize;
         window.Closing += close;
-        
+
         window.Initialize();
         window.Run(runCallback);
-        
+
         window.DoEvents();
         window.Reset();
     }
-    
+
     /// <summary>
     /// Calculates the size to use for a new window as two thirds the size of the main monitor.
     /// </summary>
     /// <param name="monitor">The monitor in which the window will be located.</param>
-    private static Vector2D<int> GetNewWindowSize(IMonitor monitor)
-    {
+    private static Vector2D<int> GetNewWindowSize(IMonitor monitor) {
         return (monitor.VideoMode.Resolution ?? monitor.Bounds.Origin);
     }
 
     private static void runCallback() {
         window.DoEvents();
-            if (!window.IsClosing)
-            {
-                window.DoUpdate();
-            }
-            if (!window.IsClosing)
-            {
-                window.DoRender();
-                //window.SwapBuffers();
-                //GL.Finish();
-                //GL.Flush();
-            }
+        if (!window.IsClosing) {
+            window.DoUpdate();
+        }
+
+        if (!window.IsClosing) {
+            window.DoRender();
+            //window.SwapBuffers();
+            //GL.Finish();
+            //GL.Flush();
+        }
     }
 
     private static PosixSignalRegistration reg;
@@ -276,7 +278,7 @@ public partial class Game {
     [LibraryImport("libc", SetLastError = true)]
     private static partial int sigaction(int signum, ref sigaction_t act, IntPtr oldact);
 
-    [UnmanagedCallersOnly(CallConvs = new[] {typeof(CallConvCdecl)})]
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     static void sigSegvHandler(int signal) {
         // can't reliably use Console.WriteLine here, use write() syscall
         byte[] msg = "SIGSEGV caught\n"u8.ToArray();
@@ -284,7 +286,7 @@ public partial class Game {
         fsync(2); // flush stderr 
         //_exit(139);
     }
-    
+
     [LibraryImport("libc")]
     private static partial int fsync(int fd);
 
@@ -293,7 +295,7 @@ public partial class Game {
 
     [LibraryImport("libc")]
     private static partial void _exit(int status);
-    
+
 
     private unsafe void sigHandler() {
         if (OperatingSystem.IsLinux()) {
@@ -301,7 +303,7 @@ public partial class Game {
             // todo this shit doesn't work..... why?
             //reg = PosixSignalRegistration.Create((PosixSignal)11, sigSegvHandler);
             //reg2 = PosixSignalRegistration.Create((PosixSignal)6, sigSegvHandler);
-            
+
             sa = new sigaction_t {
                 sa_handler = (IntPtr)(delegate* unmanaged[Cdecl]<int, void>)&sigSegvHandler,
                 sa_flags = 0x40000000 // SA_RESTART
@@ -321,7 +323,7 @@ public partial class Game {
         //NativeLibrary.SetDllImportResolver(typeof(Game).Assembly, nativeLibPath);
         //NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
     }
-    
+
     private static IntPtr nativeLibPath(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
         string arch = RuntimeInformation.OSArchitecture == Architecture.X64 ? "x64" : "x86";
 
@@ -350,6 +352,7 @@ public partial class Game {
             if (!shutUp) {
                 Console.WriteLine($"Loading native library: {libraryName} {libraryPath}");
             }
+
             shutUp = true;
             return NativeLibrary.Load(libraryPath);
         }
@@ -386,9 +389,10 @@ public partial class Game {
         Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
         // Dump stacktrace
         //Console.Out.WriteLine(Environment.StackTrace);
-        
+
         // if error, dump stacktrace
-        if (severity == (GLEnum)DebugSeverity.DebugSeverityHigh || severity == (GLEnum)DebugSeverity.DebugSeverityMedium ||
+        if (severity == (GLEnum)DebugSeverity.DebugSeverityHigh ||
+            severity == (GLEnum)DebugSeverity.DebugSeverityMedium ||
             severity == (GLEnum)DebugSeverity.DebugSeverityLow) {
             Console.Out.WriteLine(Environment.StackTrace);
         }
@@ -399,7 +403,7 @@ public partial class Game {
         setIconToBlock();
         input = window.CreateInput();
         GL = window.CreateOpenGL();
-        
+
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
         var version = GL.GetStringS(StringName.Version);
         sampleShadingSupported = version.StartsWith("4.") || GL.TryGetExtension(out ArbSampleShading arbSampleShading);
@@ -408,7 +412,7 @@ public partial class Game {
         // initialise debug print
         unsafe {
             GL.Enable(EnableCap.DebugOutput);
-            GL.Enable(EnableCap.DebugOutputSynchronous);
+            //GL.Enable(EnableCap.DebugOutputSynchronous);
             GL.DebugMessageCallback(GLDebug, 0);
             #if DEBUG
             GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, (uint*)0, true);
@@ -416,7 +420,8 @@ public partial class Game {
             #else
             // stop buffer source spam
             GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DontCare, 0, (uint*)0, true);
-            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DebugSeverityNotification, 0, (uint*)0, false);
+            GL.DebugMessageControl(DebugSource.DontCare, DebugType.DontCare, DebugSeverity.DebugSeverityNotification, 0,
+                (uint*)0, false);
             #endif
             //#endif
 
@@ -433,34 +438,34 @@ public partial class Game {
             GL.GetInteger(GetPName.ContextFlags, out int robust);
             Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
         }
-        
+
         // get nv internalformat_sample_query
-        
+
         var _e = GL.TryGetExtension(out NVInternalformatSampleQuery nvInternalformatSampleQuery);
-        
+
         if (_e) {
             Console.Out.WriteLine("NVInternalformatSampleQuery extension is available.");
-            
+
             // Implement the NV sample query functionality
             unsafe {
                 const InternalFormat ifmt = InternalFormat.Rgba8;
                 const TextureTarget target = TextureTarget.Texture2DMultisample;
-                
+
                 // Obtain supported sample count for a format
                 long numSampleCounts = 0;
                 GL.GetInternalformat(target, ifmt, InternalFormatPName.NumSampleCounts, 1u, &numSampleCounts);
-                
+
                 if (numSampleCounts > 0) {
                     // Get the list of supported samples for this format
                     int* samples = stackalloc int[(int)numSampleCounts];
                     GL.GetInternalformat(target, ifmt, InternalFormatPName.Samples, (uint)numSampleCounts, samples);
-                    
+
                     // Loop over the supported formats and get per-sample properties
                     for (int i = 0; i < numSampleCounts; i++) {
                         int multisample = 0;
                         int ssScaleX = 0, ssScaleY = 0;
                         int conformant = 0;
-                        
+
                         nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
                             NV.MultisamplesNV, 1, &multisample);
                         nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
@@ -469,9 +474,9 @@ public partial class Game {
                             NV.SupersampleScaleYNV, 1, &ssScaleY);
                         nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
                             NV.ConformantNV, 1, &conformant);
-                        
+
                         Console.Out.WriteLine($"Sample {i}: samples={samples[i]}, multisample={multisample}, " +
-                                            $"ss_scale_x={ssScaleX}, ss_scale_y={ssScaleY}, conformant={conformant}");
+                                              $"ss_scale_x={ssScaleX}, ss_scale_y={ssScaleY}, conformant={conformant}");
                     }
                 }
             }
@@ -479,7 +484,7 @@ public partial class Game {
         else {
             Console.Out.WriteLine("NVInternalformatSampleQuery extension is NOT available.");
         }
-        
+
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
         GL.Enable(EnableCap.Blend);
@@ -546,21 +551,27 @@ public partial class Game {
 
         snd = new SoundEngine();
 
+        cs = new Coroutines();
+
         var music = snd.playMusic("snd/tests.flac");
         snd.setLoop(music, true);
-        
+
         snd.muteMusic();
 
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");
 
+        fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
+
         gui = new GUI();
+        gui.loadFont(13);
         renderer = new WorldRenderer();
+        Menu.init();
+
 
         currentScreen = new MainMenuScreen();
         setMenu(Menu.LOADING);
-        fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
-        gui.loadFont(13);
+
 
         Block.preLoad();
 
@@ -570,10 +581,10 @@ public partial class Game {
         switchTo(Menu.MAIN_MENU);
         Block.postLoad();
         resize(new Vector2D<int>(width, height));
-        
+
         // apply fullscreen setting
         setFullscreen(Settings.instance.fullscreen);
-        
+
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         MemoryUtils.cleanGC();
     }
@@ -620,6 +631,32 @@ public partial class Game {
         screen.centre = screen.size / 2;
         screen.activate();
         screen.resize(new Vector2I(width, height));
+    }
+
+    public static Coroutine startCoroutine(IEnumerator coroutine) {
+        return cs.start(coroutine);
+    }
+
+    public static Coroutine<T> startCoroutine<T>(IEnumerator<T> coroutine) {
+        return cs.start(coroutine);
+    }
+
+    /** Start a typed coroutine, R is the type of the result. */
+    public static TypedCoroutine<R> startCoroutine<R>(IEnumerator coroutine) {
+        return cs.start<R>(coroutine);
+    }
+
+    public static Coroutine startCoroutineNextFrame(IEnumerator coroutine) {
+        return cs.startNextFrame(coroutine);
+    }
+
+    public static Coroutine<T> startCoroutineNextFrame<T>(IEnumerator<T> coroutine) {
+        return cs.startNextFrame(coroutine);
+    }
+
+    /** Start a typed coroutine, R is the type of the result. */
+    public static TypedCoroutine<R> startCoroutineNextFrame<R>(IEnumerator coroutine) {
+        return cs.startNextFrame<R>(coroutine);
     }
 
     public partial class NV1 {
@@ -790,11 +827,11 @@ public partial class Game {
     private unsafe void genFramebuffer() {
         GL.DeleteFramebuffer(fbo);
         GL.DeleteFramebuffer(resolveFbo);
-        
+
         var ssaaWidth = width * Settings.instance.effectiveScale;
         var ssaaHeight = height * Settings.instance.effectiveScale;
         var samples = Settings.instance.msaa;
-        
+
         GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
 
         if (samples > 1) {
@@ -806,17 +843,21 @@ public partial class Game {
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2DMultisample, FBOtex);
-            GL.TexImage2DMultisample(TextureTarget.Texture2DMultisample, (uint)samples, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, true);
+            GL.TexImage2DMultisample(TextureTarget.Texture2DMultisample, (uint)samples, InternalFormat.Rgba8,
+                (uint)ssaaWidth, (uint)ssaaHeight, true);
 
             // Create multisampled depth buffer
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.GenRenderbuffer();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, (uint)samples, InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, (uint)samples,
+                InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
 
             // Attach to MSAA framebuffer
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2DMultisample, FBOtex, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.Renderbuffer, depthBuffer);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2DMultisample, FBOtex, 0);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
+                RenderbufferTarget.Renderbuffer, depthBuffer);
 
             if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
                 throw new Exception("MSAA Framebuffer is not complete");
@@ -829,18 +870,21 @@ public partial class Game {
             GL.DeleteTexture(resolveTex);
             resolveTex = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, resolveTex);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, null);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, resolveTex, 0);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D, resolveTex, 0);
 
             if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
                 throw new Exception("Resolve Framebuffer is not complete");
             }
-        } else {
+        }
+        else {
             // Regular framebuffer (no MSAA)
             fbo = GL.GenFramebuffer();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
@@ -848,7 +892,8 @@ public partial class Game {
             GL.DeleteTexture(FBOtex);
             FBOtex = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, FBOtex);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0,
+                PixelFormat.Rgba, PixelType.UnsignedByte, null);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
@@ -857,10 +902,13 @@ public partial class Game {
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.GenRenderbuffer();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)ssaaWidth,
+                (uint)ssaaHeight);
 
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, FBOtex, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, RenderbufferTarget.Renderbuffer, depthBuffer);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                TextureTarget.Texture2D, FBOtex, 0);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
+                RenderbufferTarget.Renderbuffer, depthBuffer);
 
             if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
                 throw new Exception("Framebuffer is not complete");
@@ -880,6 +928,7 @@ public partial class Game {
         if (sampleShadingSupported) {
             GL.Disable(EnableCap.SampleShading); // disable per-sample shading
         }
+
         GL.DeleteFramebuffer(fbo);
         GL.DeleteTexture(FBOtex);
         GL.DeleteRenderbuffer(depthBuffer);
@@ -893,7 +942,6 @@ public partial class Game {
     }
 
     public void setFullscreen(bool fullscreen) {
-        
         if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
             Console.Out.WriteLine("Already in desired state, returning");
             return;
@@ -913,14 +961,16 @@ public partial class Game {
             preFullscreenSize = window.Size;
             preFullscreenPosition = window.Position;
             preFullscreenState = window.WindowState;
-            
+
             // Force Normal state first, then Fullscreen
             if (window.WindowState != WindowState.Normal) {
                 window.WindowState = WindowState.Normal;
             }
+
             window.WindowState = WindowState.Fullscreen;
             window.Size = screenSize;
-        } else {
+        }
+        else {
             Console.Out.WriteLine("Exiting fullscreen");
             if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
                 preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
@@ -951,6 +1001,7 @@ public partial class Game {
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
         mousePos = mouse.Position;
+        cs.update(dt);
         textureManager.blockTexture.update(dt);
         currentScreen.update(dt);
         gui.update(dt);
@@ -993,6 +1044,7 @@ public partial class Game {
         }
 
         handleTimers();
+        cs.updateFrame(dt);
         snd.update();
 
         if (stopwatch.ElapsedMilliseconds > 1000) {
@@ -1016,40 +1068,47 @@ public partial class Game {
         }
 
         graphics.mainBatch.Begin();
-        fontLoader.renderer3D.begin();
+        if (currentScreen == Screen.GAME_SCREEN) {
+            fontLoader.renderer3D.begin();
+        }
+
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
 
         GL.Enable(EnableCap.DepthTest);
         currentScreen.clear(dt, interp);
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
-        fontLoader.renderer3D.end();
+
+        if (currentScreen == Screen.GAME_SCREEN) {
+            fontLoader.renderer3D.end();
+        }
 
         if (Settings.instance.framebufferEffects) {
             var ssaaWidth = width * Settings.instance.effectiveScale;
             var ssaaHeight = height * Settings.instance.effectiveScale;
-            
+
             // Handle MSAA resolve if needed
             if (Settings.instance.msaa > 1) {
                 // Resolve MSAA framebuffer to regular texture
                 GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, fbo);
                 GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, resolveFbo);
-                GL.BlitFramebuffer(0, 0, ssaaWidth, ssaaHeight, 0, 0, ssaaWidth, ssaaHeight, 
+                GL.BlitFramebuffer(0, 0, ssaaWidth, ssaaHeight, 0, 0, ssaaWidth, ssaaHeight,
                     ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Nearest);
-                
+
                 // Use resolve texture for post-processing
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, resolveTex);
-            } else {
+            }
+            else {
                 // Regular framebuffer path
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, FBOtex);
             }
-            
+
             // Restore viewport for final screen rendering
-            
+
             GL.Viewport(0, 0, (uint)width, (uint)height);
         }
 
@@ -1058,10 +1117,11 @@ public partial class Game {
             if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
                 GL.Enable(EnableCap.SampleShading);
                 GL.MinSampleShading(1.0f); // force per-sample shading
-            } else if (sampleShadingSupported) {
+            }
+            else if (sampleShadingSupported) {
                 GL.Disable(EnableCap.SampleShading);
             }
-            
+
             graphics.fxaaShader.use();
             graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
             graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
@@ -1069,7 +1129,6 @@ public partial class Game {
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
-            
         }
 
         GL.Disable(EnableCap.DepthTest);
@@ -1085,7 +1144,7 @@ public partial class Game {
         //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);
         //GD.BlendingEnabled = false;
         GL.Enable(EnableCap.DepthTest);
-        
+
         //GL.Finish();
         //GL.Flush();
     }

@@ -49,7 +49,7 @@ public class GUI {
     public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
 
     public static GUI instance;
-    private BlockTintedVAO buffer;
+    private StreamingVAO<BlockVertexTinted> buffer;
     private Matrix4x4 ortho;
 
     private List<BlockVertexTinted> guiBlock;
@@ -69,7 +69,9 @@ public class GUI {
         colourTexture = new BTexture2D("textures/debug.png");
         instance = this;
         guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");
-        buffer = new BlockTintedVAO();
+        buffer = new StreamingVAO<BlockVertexTinted>();
+        buffer.bind();
+        buffer.setSize(Face.MAX_FACES * 4);
         // GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw
         guiBlock = new List<BlockVertexTinted>();
         guiBlockI = new List<ushort>();
@@ -519,13 +521,39 @@ public class GUI {
         TextHorizontalAlignment alignment) {
         layout.Draw(Game.fontLoader.renderer, position, colour.toFS(), 0, new Vector2(0), scale, 0f, alignment);
     }
-
+    
+    // selector versions
+    
+    public void drawStringShadowed(string text, Vector2 position, bool thin) {
+        if (thin) {
+            DrawStringThin(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
+            DrawStringThin(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+        }
+        else {
+            DrawString(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
+            DrawString(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+        }
+    }
+    
+    public void drawString(string text, Vector2 position, bool thin) {
+        if (thin) {
+            DrawStringThin(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+        }
+        else {
+            DrawString(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+        }
+    }
+    
     public Vector2 measureString(ReadOnlySpan<char> text) {
         return guiFont.MeasureString(text, TEXTSCALEV);
     }
 
     public Vector2 measureStringThin(ReadOnlySpan<char> text) {
         return guiFontThin.MeasureString(text, TEXTSCALEV);
+    }
+    
+    public Vector2 measureString(string text, bool thin) {
+        return thin ? guiFontThin.MeasureString(text, TEXTSCALEV) : guiFont.MeasureString(text, TEXTSCALEV);
     }
 
     public Vector2 measureStringSmall(ReadOnlySpan<char> text) {

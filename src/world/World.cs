@@ -58,6 +58,9 @@ public partial class World : IDisposable {
     private TimerAction saveWorld;
 
     private const double MAX_CHUNKLOAD_FRAMETIME = 7.5;
+    
+    // when loading the world, we can load chunks faster because fuck cares about a loading screen?
+    private const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 20.0;
     private const long MAX_LIGHT_FRAMETIME = 5;
     private const int SPAWNCHUNKS_SIZE = 1;
     private const int MAX_TICKING_DISTANCE = 128;
@@ -186,18 +189,25 @@ public partial class World : IDisposable {
     public void renderUpdate(double dt) {
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var ctr = 0;
+        updateChunkloading(start, loading: false, ref ctr);
+        particleManager.update(dt);
+        
+    }
+
+    /** This is separate so this can be called from the outside without updating the whole (still nonexistent) world. */
+    public void updateChunkloading(double startTime, bool loading, ref int loadedChunks) {
         // if is loading, don't throttle
         // consume the chunk queue
         // ONLY IF THERE ARE CHUNKS
         // otherwise don't wait for nothing
         // yes I was an idiot
-        var limit = MAX_CHUNKLOAD_FRAMETIME;
-        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < limit) {
+        var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
+        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
                 chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
                 loadChunk(ticket.chunkCoord, ticket.level);
-                ctr++;
+                loadedChunks++;
             }
             else {
                 // chunk queue empty, don't loop more
@@ -225,9 +235,7 @@ public partial class World : IDisposable {
             
             var section = getChunkSection(sectionCoord);
             Game.renderer.meshChunk(section);
-        }
-        particleManager.update(dt);
-        
+        }                                                                                                                                                                                                                                                                                                                        
     }
 
     public void update(double dt) {

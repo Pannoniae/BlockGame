@@ -119,7 +119,7 @@ public class PlayerRenderer {
         // if the player has the same item, raise, else lower
         double target;
 
-        var d = dt * 10;
+        var d = dt * 5;
         if (handSlot == player.hotbar.selected && handItem == player.hotbar.getSelected()) {
             target = 0;
         }

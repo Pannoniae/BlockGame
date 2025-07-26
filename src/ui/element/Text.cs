@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.GL.vertexformats;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
 
@@ -7,10 +8,29 @@ namespace BlockGame.ui;
 public class Text : GUIElement {
 
     public bool shadowed = false;
+    private string _text = "";
+    public bool thin;
+
+    public new string text {
+        get => _text;
+        set {
+            _text = value;
+            updateLayout();
+        }
+    }
 
     public Text(Menu menu, string name, string text) : base(menu, name) {
-        this.text = text;
+        _text = text;
         unscaledSize = true;
+        updateLayout();
+    }
+    
+    private void updateLayout() {
+        if (!string.IsNullOrEmpty(_text)) {
+            var textSize = Game.gui.measureString(_text, thin);
+            guiPosition.Width = (int)textSize.X;
+            guiPosition.Height = (int)textSize.Y;
+        }
     }
 
     public static Text createText(Menu menu, string name, Vector2I pos, string text) {
@@ -23,10 +43,10 @@ public class Text : GUIElement {
 
     public override void draw() {
         if (shadowed) {
-            Game.gui.drawStringShadowed(text, new Vector2(bounds.X, bounds.Y));
+            Game.gui.drawStringShadowed(_text, new Vector2(bounds.X, bounds.Y), thin);
         }
         else {
-            Game.gui.drawString(text, new Vector2(bounds.X, bounds.Y));
+            Game.gui.drawString(_text, new Vector2(bounds.X, bounds.Y), thin);
         }
     }
 }

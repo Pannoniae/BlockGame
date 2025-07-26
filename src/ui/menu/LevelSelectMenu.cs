@@ -104,7 +104,7 @@ public class LevelSelectMenu : Menu {
     }
 
     private static long getDirSize(string folderPath) {
-        DirectoryInfo di = new DirectoryInfo(folderPath);
+        var di = new DirectoryInfo(folderPath);
         return di.EnumerateFiles("*.*", SearchOption.AllDirectories).Sum(fi => fi.Length);
     }
 }

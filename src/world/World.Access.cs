@@ -470,4 +470,20 @@ public partial class World {
         }
         return false;
     }
+    
+    /** This is like <see cref="anyWater"/> except that we know it's all in one chunk. Less lookups needed. */
+    public bool anyWaterInChunk(int x0, int y0, int z0, int x1, int y1, int z1) {
+        
+        var chunk = getChunk(x0, z0);
+        for (int x = x0; x <= x1; x++) {
+            for (int y = y0; y <= y1; y++) {
+                for (int z = z0; z <= z1; z++) {
+                    if (chunk.getBlock(x & 0xF, y, z & 0xF) == Block.WATER.id) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }
