@@ -383,17 +383,23 @@ public partial class Game {
         }
     }
 
-    private void GLDebug(GLEnum source, GLEnum type, int id, GLEnum severity, int length, IntPtr message,
+    private static void GLDebug(GLEnum _source, GLEnum _type, int id, GLEnum _severity, int length, IntPtr message,
         IntPtr userparam) {
+        
+        // convert types into something usable (probably a noop)
+        var source = (DebugSource)_source;
+        var type = (DebugType)_type;
+        var severity = (DebugSeverity)_severity;
+        
         string msg = Marshal.PtrToStringAnsi(message, length)!;
-        Console.Out.WriteLine($"{source} [{severity}] ({id}): {type}, {msg}");
+        Console.Out.WriteLine($"{source} [{type}] [{severity}] ({id}): , {msg}");
         // Dump stacktrace
         //Console.Out.WriteLine(Environment.StackTrace);
-
-        // if error, dump stacktrace
-        if (severity == (GLEnum)DebugSeverity.DebugSeverityHigh ||
-            severity == (GLEnum)DebugSeverity.DebugSeverityMedium ||
-            severity == (GLEnum)DebugSeverity.DebugSeverityLow) {
+        
+        
+        
+        // sort by severity
+        if (type == DebugType.DebugTypeError || type == DebugType.DebugTypeOther || type == DebugType.DebugTypePortability) {
             Console.Out.WriteLine(Environment.StackTrace);
         }
     }

@@ -262,7 +262,7 @@ public class Cave : OverlayFeature {
         }
         
         // if the area has water, bail
-        if (world.anyWater(xMin, yMin, zMin, xMax, yMax, zMax)) {
+        if (world.anyWaterInArea(xMin, yMin, zMin, xMax, yMax, zMax)) {
             return;
         }
 

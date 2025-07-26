@@ -398,7 +398,9 @@ public partial class PerlinWorldGenerator {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int getIndex(int x, int y, int z) {
-        return x + z * NOISE_SIZE_X + y * NOISE_SIZE_X * NOISE_SIZE_Z;
+        // THE PARENTHESES ARE IMPORTANT
+        // otherwise it does 5 * 5 for some reason??? completely useless multiplication
+        return x + z * NOISE_SIZE_X + y * (NOISE_SIZE_X * NOISE_SIZE_Z);
     }
     
     private static Vector128<int> getIndex4(int x, int y, int z) {
@@ -410,18 +412,22 @@ public partial class PerlinWorldGenerator {
         return a + t * (b - a);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
         return a + t * (b - a);
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<float> lerp4(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
         return a + t * (b - a);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<float> lerp2(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
         return a + t * (b - a);
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector64<float> lerp2(Vector64<float> a, Vector64<float> b, Vector64<float> t) {
         return a + t * (b - a);
     }

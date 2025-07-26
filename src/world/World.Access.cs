@@ -486,4 +486,42 @@ public partial class World {
         }
         return false;
     }
+    
+    public bool anyWaterInArea(int x0, int y0, int z0, int x1, int y1, int z1) {
+        // chunk bounds (at most 2x2 in XZ)
+        int chunkX0 = x0 >> 4;
+        int chunkX1 = x1 >> 4;
+        int chunkZ0 = z0 >> 4;
+        int chunkZ1 = z1 >> 4;
+        
+        // cap Y to the valid world height values!
+        y0 = int.Max(0, y0);
+        y1 = int.Min(WORLDHEIGHT - 1, y1);
+
+        // for each chunk in the area...
+        for (int chunkX = chunkX0; chunkX <= chunkX1; chunkX++) {
+            for (int chunkZ = chunkZ0; chunkZ <= chunkZ1; chunkZ++) {
+                var chunk = getChunk(chunkX, chunkZ);
+
+                // calculate intersection of the search area with this chunk
+                int localX0 = Math.Max(x0, chunkX << 4) & 0xF;
+                int localX1 = Math.Min(x1, ((chunkX + 1) << 4) - 1) & 0xF;
+                int localZ0 = Math.Max(z0, chunkZ << 4) & 0xF;
+                int localZ1 = Math.Min(z1, ((chunkZ + 1) << 4) - 1) & 0xF;
+
+                // ...check this chunk's portion
+                for (int x = localX0; x <= localX1; x++) {
+                    for (int y = y0; y <= y1; y++) {
+                        for (int z = localZ0; z <= localZ1; z++) {
+                            if (chunk.getBlock(x, y, z) == Block.WATER.id) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 }
