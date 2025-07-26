@@ -112,7 +112,20 @@ public class Menu {
                 textPos.Y -= overflow;
             }
             
-            Game.gui.draw(Game.gui.colourTexture, new RectangleF((int)pos.X, (int)pos.Y, (int)posExt.X, (int)posExt.Y), null, new Color4b(28, 28, 28, 255));
+            var borderSize = GUI.guiScale;
+            var borderRect = new RectangleF(pos.X - borderSize, pos.Y - borderSize, posExt.X + borderSize * 2, posExt.Y + borderSize * 2);
+            var bgRect = new RectangleF(pos.X, pos.Y, posExt.X, posExt.Y);
+            
+            // draw border with gradient (vibrant purple to deep blue)
+            var borderColorTop = new Color4b(147, 51, 234, 255);    // bright purple
+            var borderColorBottom = new Color4b(59, 130, 246, 255); // bright blue
+            Game.gui.drawGradientVertical(Game.gui.colourTexture, borderRect, borderColorTop, borderColorBottom);
+            
+            // draw background with gradient (dark purple to dark blue)  
+            var bgColorTop = new Color4b(30, 15, 45, 240);    // dark purple
+            var bgColorBottom = new Color4b(15, 25, 45, 240); // dark blue
+            Game.gui.drawGradientVertical(Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
+            
             Game.gui.drawStringThin(tooltip, textPos);
         }
     }

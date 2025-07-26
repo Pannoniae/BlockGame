@@ -327,6 +327,23 @@ public class GUI {
         tb.Draw(texture, dest, source, color == default ? Color4b.White : color);
     }
 
+    public void drawGradientVertical(BTexture2D texture, RectangleF dest, Color4b topColor, Color4b bottomColor, Rectangle? source = null) {
+        var left = dest.X;
+        var right = dest.X + dest.Width;
+        var top = dest.Y;
+        var bottom = dest.Y + dest.Height;
+        
+        var texCoords = source.HasValue ? 
+            new RectangleF(source.Value.X, source.Value.Y, source.Value.Width, source.Value.Height) :
+            new RectangleF(0, 0, 1, 1);
+        
+        tb.DrawRaw(texture,
+            new VertexColorTexture(new Vector3(left, top, 0), topColor, new Vector2(texCoords.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, top, 0), topColor, new Vector2(texCoords.Right, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, bottom, 0), bottomColor, new Vector2(texCoords.Right, texCoords.Bottom)),
+            new VertexColorTexture(new Vector3(left, bottom, 0), bottomColor, new Vector2(texCoords.X, texCoords.Bottom)));
+    }
+
     public void drawImmediate(BTexture2D texture, Vector2 position, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
         immediatetb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin,
