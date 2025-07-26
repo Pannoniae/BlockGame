@@ -40,13 +40,9 @@ public class LoadingMenu : Menu, ProgressUpdater {
         counter = 0;
     }
 
-    public void load(World world) {
+    public void load(World world, bool isLoading) {
         this.world = world;
-        loadingCoroutine = Game.startCoroutine(loadWorldCoroutine());
-    }
-
-    public override void clear(double dt, double interp) {
-        Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
+        loadingCoroutine = Game.startCoroutine(loadWorldCoroutine(isLoading));
     }
 
 
@@ -71,7 +67,14 @@ public class LoadingMenu : Menu, ProgressUpdater {
         progressBar.setProgress(currentProgress);
     }
 
-    private IEnumerator loadWorldCoroutine() {
+    public override void draw() {
+        
+        // we draw BG first! elements after
+        Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
+        base.draw();
+    }
+
+    private IEnumerator loadWorldCoroutine(bool isLoading) {
         var setupTimer = new WaitForMinimumTime(0.1);
         start("Setting up world");
 
@@ -82,7 +85,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
         var initTimer = new WaitForMinimumTime(0.2);
         stage("Initializing world");
-        Game.world.init();
+        Game.world.init(isLoading);
         update(0.08f);
         yield return initTimer;
 

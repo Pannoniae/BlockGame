@@ -122,6 +122,7 @@ public partial class PerlinWorldGenerator {
                     // squish the high noise towards zero when the selector is low - more flat areas, less mountains
 
                     // Reduce the density when too high above 64 and increase it when too low
+                    // range: // -0.5 (at y=128) to 0.5 (at y=0)
                     var airBias = (y - WATER_LEVEL) / (float)World.WORLDHEIGHT;
 
                     // flatten out low noise
@@ -131,6 +132,12 @@ public partial class PerlinWorldGenerator {
                     if (airBias < 0) {
                         airBias *= 4;
                     }
+                    
+                    // between y=120-128, taper it off to -1
+                    // at max should be 0.5
+                    // ^2 to have a better taper
+                    var t = float.Max((y - 120), 0) / 16f;
+                    airBias += t * t;
 
                     // only sample if actually required
 

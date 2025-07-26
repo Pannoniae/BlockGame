@@ -47,8 +47,8 @@ public sealed class SpriteBatch : IDisposable {
     private uint ibo;
 
     // Shader
-    internal readonly Shader shader;
-    private readonly int textureUniform;
+    internal Shader shader;
+    private int textureUniform;
 
     // Batch data
     private SpriteBatchItem[] batchItems;
@@ -61,12 +61,7 @@ public sealed class SpriteBatch : IDisposable {
     public BatcherBeginMode BeginMode { get; private set; }
     public bool IsDisposed { get; private set; }
 
-    public SpriteBatch(Silk.NET.OpenGL.GL gl, uint initialBatchCapacity = InitialBatchItemsCapacity)
-        : this(gl, new Shader(gl, nameof(SpriteBatch), "shaders/batch.vert", "shaders/batch.frag"), initialBatchCapacity) {
-    }
-
-    public SpriteBatch(Silk.NET.OpenGL.GL gl, Shader shader, uint initialBatchCapacity = InitialBatchItemsCapacity) {
-        this.shader = shader ?? throw new ArgumentNullException(nameof(shader));
+    public SpriteBatch(Silk.NET.OpenGL.GL gl, uint initialBatchCapacity = InitialBatchItemsCapacity) {
 
         GL = gl;
 
@@ -134,14 +129,25 @@ public sealed class SpriteBatch : IDisposable {
             }
         }
 
-        // Get uniform locations
-        textureUniform = shader.getUniformLocation("tex");
-
-        // Set texture to 0
-        shader.setUniform(textureUniform, 0);
-
         IsActive = false;
         IsDisposed = false;
+    }
+    
+    public void setShader(Shader newShader) {
+        ObjectDisposedException.ThrowIf(IsDisposed, nameof(SpriteBatch));
+        ArgumentNullException.ThrowIfNull(newShader);
+
+        // Set the new shader
+        shader = newShader;
+
+        // Rebind the VAO and set the texture uniform
+        GL.BindVertexArray(vao);
+        
+        // Get uniform locations
+        textureUniform = shader.getUniformLocation("tex");
+        shader.use();
+        // Set texture to 0
+        shader.setUniform(textureUniform, 0);
     }
 
     private void CreateIndices(ushort[] indices, uint quadCount) {
@@ -183,8 +189,9 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     private void ValidateBeginCalled() {
-        if (!IsActive)
+        if (!IsActive) {
             throw new InvalidOperationException("Draw() must be called in between Begin() and End().");
+        }
     }
 
     private bool EnsureBatchListCapacity(uint requiredCapacity) {

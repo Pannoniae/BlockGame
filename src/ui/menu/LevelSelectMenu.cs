@@ -59,8 +59,10 @@ public class LevelSelectMenu : Menu {
         // if exists, load
         // it doesn't, create
         World world;
+        bool isLoading;
         if (worldExists[levelSelect.levelIndex - 1]) {
             world = WorldIO.load($"level{levelSelect.levelIndex}");
+            isLoading = true;
         }
         else {
             var seed = Game.random.Next();
@@ -69,13 +71,14 @@ public class LevelSelectMenu : Menu {
                 seed = 674414719;
             }
             world = new World($"level{levelSelect.levelIndex}", seed);
+            isLoading = false;
         }
         Game.world?.Dispose();
         Game.world = world;
         
         // set to loading screen
         Game.instance.switchTo(LOADING);
-        LOADING.load(world);
+        LOADING.load(world, isLoading);
         
         // logic continues in the loading screen
     }

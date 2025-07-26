@@ -1057,6 +1057,8 @@ public partial class Game {
             // Still update frametime for graph even if we don't update the title
             ft = dt;
         }
+        
+        currentScreen.clear(dt, interp);
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
 
@@ -1066,16 +1068,13 @@ public partial class Game {
             var ssaaHeight = height * Settings.instance.effectiveScale;
             GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
         }
-
-        graphics.mainBatch.Begin();
+        
+        GL.Enable(EnableCap.DepthTest);
+        
         if (currentScreen == Screen.GAME_SCREEN) {
             fontLoader.renderer3D.begin();
         }
-
-        graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
-
-        GL.Enable(EnableCap.DepthTest);
-        currentScreen.clear(dt, interp);
+        
         currentScreen.render(dt, interp);
         currentScreen.postRender(dt, interp);
 
@@ -1136,6 +1135,9 @@ public partial class Game {
 
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
+        
+        graphics.mainBatch.Begin();
+        graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
 
         currentScreen.draw();
         currentScreen.postDraw();
