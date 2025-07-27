@@ -23,7 +23,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
     private float currentProgress;
 
     public LoadingMenu() {
-        titleText = Text.createText(this, "titleText", new Vector2I(0, 0), "Loading world...");
+        titleText = Text.createText(this, "titleText", new Vector2I(0, 0), "Loading world");
         //titleText.updateLayout();
         titleText.centreContents();
         //titleText.thin = true;

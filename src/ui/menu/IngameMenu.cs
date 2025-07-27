@@ -151,7 +151,7 @@ public class IngameMenu : Menu, IDisposable {
             }
         }
     }
-    
+
     private void UpdateFrametimeHistory(float frametime) {
         // Cap extremely high framerates to avoid visual glitches
         //frametime = Math.Max(frametime, 0.1f);
@@ -202,8 +202,16 @@ public class IngameMenu : Menu, IDisposable {
             //var cb = world.getBlock(pos);
             var sl = Game.world.getSkyLight(pos.X, pos.Y, pos.Z);
             var bl = Game.world.getBlockLight(pos.X, pos.Y, pos.Z);
-            Game.world.getChunkSectionMaybe(World.getChunkSectionPos(pos), out var subChunk);
-            var inited = subChunk?.blocks?.inited;
+            Game.world.getChunkMaybe(World.getChunkPos(new Vector2I(pos.X, pos.Z)), out var chunk);
+
+            bool inited;
+            // if outside, don't bother
+            if (pos.Y < 0 || pos.Y >= Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE) {
+                inited = false;
+            }
+            else {
+                inited = chunk?.blocks[pos.Y >> 4].inited ?? false;
+            }
 
 
             debugStr.Clear();
@@ -233,25 +241,27 @@ public class IngameMenu : Menu, IDisposable {
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
-            
+
             // show FB info
             if (Settings.instance.framebufferEffects) {
                 var fbw = Game.width * Settings.instance.ssaa;
                 var fbh = Game.height * Settings.instance.ssaa;
                 debugStr.AppendFormat("FB:{0}x{1} ({2})\n", fbw, fbh, Settings.instance.getAAText());
-            } else {
+            }
+            else {
                 debugStr.AppendFormat("FB:{0}x{1} (0fx)\n", Game.width, Game.height);
             }
-            
+
             if (Game.devMode) {
                 debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
             }
 
-            long vmem = MemoryUtils.getVRAMUsage(out var stat); 
+            long vmem = MemoryUtils.getVRAMUsage(out var stat);
             debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer),
                 Game.GL.GetStringS(StringName.Vendor));
             debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
-            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})", GCMemory / Constants.MEGABYTES,
+            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})",
+                GCMemory / Constants.MEGABYTES,
                 workingSet / Constants.MEGABYTES, vmem / Constants.MEGABYTES, stat);
             // calculate textwidth
             rendererText = new RichTextLayout {

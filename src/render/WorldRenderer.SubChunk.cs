@@ -310,8 +310,9 @@ public partial class WorldRenderer {
         // we load the 16x16 from the section itself then get the world for the rest
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
-        ref ushort sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
-        ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.light);
+        var blocks = subChunk.blocks;
+        ref ushort sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.blocks);
+        ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.light);
         ref ushort blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref byte lightArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
         var world = this.world;

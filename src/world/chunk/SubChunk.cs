@@ -5,10 +5,10 @@ using Molten.DoublePrecision;
 
 namespace BlockGame;
 
-public class SubChunk : IDisposable {
+public class SubChunk {
 
     public Chunk chunk;
-    public ArrayBlockData blocks;
+    public ArrayBlockData blocks => chunk.blocks[coord.y];
     public SubChunkCoord coord;
     public AABB box;
     
@@ -30,9 +30,7 @@ public class SubChunk : IDisposable {
 
     public SubChunk(World world, Chunk chunk, int xpos, int ypos, int zpos) {
         this.chunk = chunk;
-        blocks = new ArrayBlockData(chunk, this);
         coord = new SubChunkCoord(xpos, ypos, zpos);
-
         box = new AABB(new Vector3D(xpos * 16, ypos * 16, zpos * 16), new Vector3D(xpos * 16 + 16, ypos * 16 + 16, zpos * 16 + 16));
     }
 
@@ -58,22 +56,5 @@ public class SubChunk : IDisposable {
                 Game.renderer.meshChunk(this);
             }
         }
-    }
-
-    private void ReleaseUnmanagedResources() {
-        blocks.Dispose();
-    }
-
-    private void Dispose(bool disposing) {
-        ReleaseUnmanagedResources();
-    }
-
-    public void Dispose() {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    ~SubChunk() {
-        Dispose(false);
     }
 }

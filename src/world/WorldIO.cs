@@ -73,12 +73,12 @@ public class WorldIO {
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = new NBTCompound();
             // if empty, just write zeros
-            if (chunk.subChunks[sectionY].blocks.inited) {
+            if (chunk.blocks[sectionY].inited) {
                 section.addByte("inited", 1);
 
                 // add the arrays
-                section.addUShortArray("blocks", chunk.subChunks[sectionY].blocks.blocks);
-                section.addByteArray("light", chunk.subChunks[sectionY].blocks.light);
+                section.addUShortArray("blocks", chunk.blocks[sectionY].blocks);
+                section.addByteArray("light", chunk.blocks[sectionY].light);
             }
             else {
                 section.addByte("inited", 0);
@@ -102,19 +102,20 @@ public class WorldIO {
         var sections = nbt.getListTag<NBTCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = sections.get(sectionY);
+            var blocks = chunk.blocks[sectionY];
             // if not initialised, leave it be
             if (section.getByte("inited") == 0) {
-                chunk.subChunks[sectionY].blocks.inited = false;
+                blocks.inited = false;
                 continue;
             }
 
             // init chunk section
-            chunk.subChunks[sectionY].blocks.loadInit();
+            blocks.loadInit();
 
             // blocks
-            chunk.subChunks[sectionY].blocks.blocks = section.getUShortArray("blocks");
-            chunk.subChunks[sectionY].blocks.light = section.getByteArray("light");
-            chunk.subChunks[sectionY].blocks.refreshCounts();
+            blocks.blocks = section.getUShortArray("blocks");
+            blocks.light = section.getByteArray("light");
+            blocks.refreshCounts();
         }
         return chunk;
     }

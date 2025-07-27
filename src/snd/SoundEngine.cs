@@ -1,6 +1,7 @@
 using BlockGame.util;
 using MiniAudioExNET;
 using MiniAudioExNET.Core;
+using MiniAudioExNET.DSP;
 
 namespace BlockGame.snd;
 
@@ -12,6 +13,8 @@ public class SoundEngine : IDisposable {
     
     private List<AudioClip> footstepSounds = [];
     private List<AudioClip> blockHitSounds = [];
+    //private FMGenerator sine;
+    //private AudioSource sinesrc;
 
     // The range for pitch variation (0.85 to 1.15 means 15% lower or higher pitch)
     private const float MIN_PITCH = 0.85f;
@@ -110,13 +113,19 @@ public class SoundEngine : IDisposable {
             
             var sound = new Sound(source, isMusic: true);
             sounds.Add(sound);
+            
+            
+            // play sine wave
+            //sinesrc = new AudioSource();
+            //sine = new FMGenerator(WaveType.Sine, 440.0f, 0.5f);
+            //sinesrc.AddGenerator(sine);
+            //sinesrc.Play();
+            
             return sound;
         }
         catch (Exception ex) {
             throw new SoundException($"Failed to play music {name}: {ex.Message}");
         }
-        
-        Console.Out.WriteLine($"Loaded {blockHitSounds.Count} block hit sounds");
     }
 
     public void muteMusic() {
@@ -125,6 +134,7 @@ public class SoundEngine : IDisposable {
                 sound.source.Volume = 0.0f;
             }
         }
+        //sinesrc.Volume = 0.0f; // also mute the sine wave
     }
     
     public void unmuteMusic() {
@@ -133,6 +143,7 @@ public class SoundEngine : IDisposable {
                 sound.source.Volume = 1.0f;
             }
         }
+        //sinesrc.Volume = 1.0f; // unmute the sine wave
     }
 
     public void setLoop(Sound sound, bool loop) {

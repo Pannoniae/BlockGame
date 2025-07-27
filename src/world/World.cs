@@ -58,7 +58,7 @@ public partial class World : IDisposable {
     private TimerAction saveWorld;
     
     // try to keep 120 FPS at least
-    private const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 120.0;
+    private const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
     
     
     // when loading the world, we can load chunks faster because fuck cares about a loading screen?

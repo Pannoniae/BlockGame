@@ -266,8 +266,8 @@ public class GameScreen : Screen {
                 else {
                     Console.Out.WriteLine($"VRAM usage: {vmem / (1024 * 1024)}MB");
                 }
-                Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].subChunks[0].blocks.blocks));
-                Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].subChunks[0].blocks.blocks[0]));
+                Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks));
+                Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks[0]));
                 break;
             }
             

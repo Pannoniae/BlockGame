@@ -75,9 +75,9 @@ public partial class OverworldWorldGenerator {
             }
         }
 
-        foreach (var subChunk in chunk.subChunks) {
-            if (subChunk.blocks.inited) {
-                subChunk.blocks.refreshCounts();
+        foreach (var blocks in chunk.blocks) {
+            if (blocks.inited) {
+                blocks.refreshCounts();
             }
         }
         chunk.status = ChunkStatus.GENERATED;

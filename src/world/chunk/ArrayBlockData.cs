@@ -29,7 +29,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public bool inited;
 
     public Chunk chunk;
-    public SubChunk section;
+    public int yCoord;
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
@@ -63,11 +63,11 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             var oldFullBlock = Block.isFullBlock(old);
             var fullBlock = Block.isFullBlock(value);
             if (!oldFullBlock && fullBlock) {
-                chunk.addToHeightMap(x, section.coord.y * Chunk.CHUNKSIZE + y, z);
+                chunk.addToHeightMap(x, yCoord * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount++;
             }
             else if (oldFullBlock && !fullBlock) {
-                chunk.removeFromHeightMap(x, section.coord.y * Chunk.CHUNKSIZE + y, z);
+                chunk.removeFromHeightMap(x, yCoord * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount--;
             }
 
@@ -103,9 +103,9 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
     }
 
-    public ArrayBlockData(Chunk chunk, SubChunk section) {
+    public ArrayBlockData(Chunk chunk, int yCoord) {
         this.chunk = chunk;
-        this.section = section;
+        this.yCoord = yCoord;
         inited = false;
     }
     
@@ -190,7 +190,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 randomTickCount++;
             }
             if (Block.isFullBlock(block)) {
-                chunk.addToHeightMap(x, section.coord.y * Chunk.CHUNKSIZE + y, z);
+                chunk.addToHeightMap(x, yCoord * Chunk.CHUNKSIZE + y, z);
                 fullBlockCount++;
             }
             if (Block.isTranslucent(block)) {
