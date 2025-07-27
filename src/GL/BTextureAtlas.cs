@@ -108,7 +108,7 @@ public class BTextureAtlas : IDisposable {
         }
     }
 
-    unsafe public void reload() {
+    public unsafe void reload() {
         GL.DeleteTexture(handle);
         handle = GL.GenTexture();
         bind();
@@ -116,7 +116,7 @@ public class BTextureAtlas : IDisposable {
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
         GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
+        //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
         image?.Dispose();
         image = Image.Load<Rgba32>(path);
         var maxLevel = Settings.instance.mipmapping;
@@ -126,10 +126,18 @@ public class BTextureAtlas : IDisposable {
             throw new Exception("Couldn't load the atlas contiguously!");
         }
 
+        /*fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {
+            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
+                PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+        }*/
+
         //Console.Out.WriteLine("Loading textures the proper way!");
         // Load image
         // Thanks ClassiCube for the idea!
         generateMipmaps(memory.Span, image.Width, image.Height, maxLevel);
+        
+        // generate mipmaps (opengl)
+        //GL.GenerateMipmap(TextureTarget.Texture2D);
     }
 
 

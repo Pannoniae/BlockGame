@@ -8,7 +8,7 @@ public class Settings {
     public int renderDistance = 8;
     public float FOV = 75;
     public int mipmapping = 0;
-    public int anisotropy = 0; // 0, 1, 2, 4, 8, 16, 32, 64, 128
+    public int anisotropy = 0; // 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
     public int antiAliasing = 0; // 0=Off, 1=FXAA, 2=2xMSAA, 3=4xMSAA, 4=2xSSAA, 5=4xSSAA, 6=2xMSAA+2xSSAA, 7=4xMSAA+2xSSAA, 8=4xMSAA+4xSSAA
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public bool fullscreen = false;

@@ -32,6 +32,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         //highNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         selectorNoise = new FastNoiseLite(random.Next(seed));
         selectorNoise.SetFrequency(1f);
+        
 
         // DONT UNCOMMENT THIS
         // yes the selector is broken, trying to use the valuecubic interpolation with opensimplex noise

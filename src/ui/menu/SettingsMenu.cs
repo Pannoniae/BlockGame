@@ -91,7 +91,7 @@ public class SettingsMenu : Menu {
         var anisotropy = new ToggleButton(this, "anisotropy", false, 
             settings.anisotropy switch { 0 => 0, 1 => 1, 2 => 2, 4 => 3, 8 => 4, 16 => 5, 32 => 6, 64 => 7, 128 => 8, _ => 3 },
             "Anisotropic Filtering: OFF", "Anisotropic Filtering: 1x", "Anisotropic Filtering: 2x", "Anisotropic Filtering: 4x", 
-            "Anisotropic Filtering: 8x", "Anisotropic Filtering: 16x", "Anisotropic Filtering: 32x", "Anisotropic Filtering: 64x", "Anisotropic Filtering: 128x");
+            "Anisotropic Filtering: 8x", "Anisotropic Filtering: 16x", "Anisotropic Filtering: 32x", "Anisotropic Filtering: 64x", "Anisotropic Filtering: 128x", "Anisotropic Filtering: 256x", "Anisotropic Filtering: 512x", "Anisotropic Filtering: 1024x");
         anisotropy.topCentre();
         anisotropy.clicked += _ => {
             settings.anisotropy = anisotropy.getIndex() switch { 0 => 0, 1 => 1, 2 => 2, 3 => 4, 4 => 8, 5 => 16, 6 => 32, 7 => 64, 8 => 128, _ => 8 };

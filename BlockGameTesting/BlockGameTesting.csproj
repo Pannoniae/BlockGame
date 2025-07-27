@@ -8,9 +8,9 @@
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup>
+    <ItemGroup>
         <Publicize Include="BlockGame" />
-    </PropertyGroup>
+    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="coverlet.collector" Version="6.0.4"/>
