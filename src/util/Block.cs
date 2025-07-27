@@ -123,7 +123,7 @@ public class Block {
     public static Block PLANKS = register(new Block(Blocks.PLANKS, "Planks", BlockModel.makeCube(cubeUVs(0, 5))));
     public static Block STAIRS = register(new Block(Blocks.STAIRS, "Stairs", BlockModel.makeStairs(cubeUVs(0, 5))).partialBlock());
     public static Block LOG = register(new Block(Blocks.LOG, "Log", BlockModel.makeCube(grassUVs(2, 5, 1, 5, 3, 5))));
-    public static Block LEAVES = register(new Block(Blocks.LEAVES, "Leaves", BlockModel.makeLeaves(cubeUVs(4, 5))).transparency());
+    public static Block LEAVES = register(new Block(Blocks.LEAVES, "Leaves", BlockModel.makeCube(cubeUVs(4, 5))).transparency());
     public static Block MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks", BlockModel.makeCube(cubeUVs(5, 5))));
     public static Block MAPLE_STAIRS = register(new Block(Blocks.MAPLE_STAIRS, "Maple Stairs", BlockModel.makeStairs(cubeUVs(5, 5))).partialBlock());
     public static Block MAPLE_LOG = register(new Block(Blocks.MAPLE_LOG, "Maple Log", BlockModel.makeCube(grassUVs(7, 5, 6, 5, 8, 5))));
