@@ -15,8 +15,8 @@ public class IngameMenu : Menu, IDisposable {
     public RichTextLayout rendererText;
 
     // values for f3
-    private long workingSet;
-    private long GCMemory;
+    public long workingSet;
+    public long GCMemory;
 
     private Utf16ValueStringBuilder debugStr;
 
@@ -293,11 +293,5 @@ public class IngameMenu : Menu, IDisposable {
         else {
             return direction.Z > 0 ? "Facing north" : "Facing south";
         }
-    }
-
-    public void updateMemoryMethod() {
-        Game.proc.Refresh();
-        workingSet = Game.proc.WorkingSet64;
-        GCMemory = GC.GetTotalMemory(false);
     }
 }

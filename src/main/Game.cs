@@ -141,6 +141,7 @@ public partial class Game {
     private int g_mulReduceLocation;
     private int g_minReduceLocation;
     private int g_maxSpanLocation;
+    public static bool noUpdate;
 
 
     #if DEBUG
@@ -936,7 +937,10 @@ public partial class Game {
         }
 
         graphics.fxaaShader.use();
-        GL.Uniform2(g_texelStepLocation, 1.0f / ssaaWidth, 1.0f / ssaaHeight);
+        graphics.fxaaShader.setUniform(g_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
+        graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
+        graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
+        graphics.fxaaShader.setUniform(g_ssaaModeLocation, Settings.instance.ssaaMode);
 
         throwawayVAO = GL.CreateVertexArray();
     }
@@ -1034,11 +1038,19 @@ public partial class Game {
         dt = Math.Min(dt, maxTimestep);
         accumTime += dt;
         //var i = 0;
-        while (accumTime >= fixeddt) {
-            update(fixeddt);
-            t += fixeddt;
-            accumTime -= fixeddt;
-            //i++;
+        if (!noUpdate) {
+            while (accumTime >= fixeddt) {
+                update(fixeddt);
+                t += fixeddt;
+                accumTime -= fixeddt;
+                //i++;
+            }
+        }
+        else {
+            while (accumTime >= fixeddt) {
+                t += fixeddt;
+                accumTime -= fixeddt;
+            }
         }
 
         //Console.Out.WriteLine($"{i} updates called");
@@ -1142,9 +1154,7 @@ public partial class Game {
             }
 
             graphics.fxaaShader.use();
-            graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
-            graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
-            graphics.fxaaShader.setUniform(g_ssaaModeLocation, Settings.instance.ssaaMode);
+            
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);

@@ -29,6 +29,8 @@ public class GameScreen : Screen {
 
     private TimerAction updateMemory;
     private TimerAction updateDebugText;
+    
+    private UpdateMemoryThread umt;
 
 
     private bool disposed;
@@ -39,8 +41,13 @@ public class GameScreen : Screen {
 
         switchToMenu(INGAME_MENU);
 
-        updateMemory = Game.setInterval(200, INGAME_MENU.updateMemoryMethod);
-        updateDebugText = Game.setInterval(50, INGAME_MENU.updateDebugTextMethod);
+        umt?.stop();
+        umt = new UpdateMemoryThread(this);
+
+        umt.start();
+
+        //updateMemory = Game.setInterval(200, updateMemoryMethod);
+        updateDebugText = Game.setInterval(100, INGAME_MENU.updateDebugTextMethod);
     }
 
 
@@ -252,6 +259,9 @@ public class GameScreen : Screen {
                 world?.Dispose();
                 world = WorldIO.load("level1");
                 Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
+                break;
+            case Key.F8:
+                Game.noUpdate = !Game.noUpdate;
                 break;
             case Key.F9:
                 // on shift, just clean GC
@@ -545,5 +555,42 @@ public class GameScreen : Screen {
     public void openSettings() {
         Menu.SETTINGS.prevMenu = PAUSE_MENU;
         switchToMenu(Menu.SETTINGS);
+    }
+}
+
+public class UpdateMemoryThread(GameScreen screen) {
+
+    private GameScreen screen = screen;
+    public volatile bool stopped;
+
+    public void run() {
+        while (true) {
+            if (stopped) {
+                break;
+            }
+            updateMemoryMethod();
+            
+        }
+    }
+
+    public void stop() {
+        stopped = true;
+    }
+
+    public void start() {
+        stopped = false;
+        
+        // run thread
+        var thread = new Thread(run) {
+            IsBackground = true,
+            Name = "UpdateMemoryThread"
+        };
+        thread.Start();
+    }
+    
+    public void updateMemoryMethod() {
+        Game.proc.Refresh();
+        screen.INGAME_MENU.workingSet = Game.proc.WorkingSet64;
+        screen.INGAME_MENU.GCMemory = GC.GetTotalMemory(false);
     }
 }
