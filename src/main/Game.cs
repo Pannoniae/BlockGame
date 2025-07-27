@@ -1075,9 +1075,12 @@ public partial class Game {
             ft = dt;
         }
         
-        currentScreen.clear(dt, interp);
+        //currentScreen.clear(dt, interp);
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
+        // clear AFTER binding the framebuffer
+        // otherwise it won't clean shit
+        currentScreen.clear(dt, interp);
 
         // Set viewport for SSAA/MSAA rendering
         if (Settings.instance.framebufferEffects) {

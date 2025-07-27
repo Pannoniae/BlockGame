@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using System.Runtime;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
@@ -253,6 +254,13 @@ public class GameScreen : Screen {
                 Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
                 break;
             case Key.F9:
+                // on shift, just clean GC
+                if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                    Console.Out.WriteLine("Cleaning GC");
+                    GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                    GC.Collect(2, GCCollectionMode.Aggressive, true, true);
+                    break;
+                }
                 MemoryUtils.cleanGC();
                 break;
             case Key.F10: {

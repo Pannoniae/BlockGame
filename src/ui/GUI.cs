@@ -58,6 +58,7 @@ public class GUI {
     private int blockTexture = 0;
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
+    private static readonly Color4b bgGray = Color4b.DarkGray;
     private const float SCROLL_SPEED = 32.0f; // pixels per second
 
     public GUI() {
@@ -189,13 +190,13 @@ public class GUI {
                 var top = y * size;
                 var bottom = y * size + size;
                 tb.DrawRaw(Game.textureManager.blockTextureGUI,
-                    new VertexColorTexture(new Vector3(left, top, 0), Color4b.Gray,
+                    new VertexColorTexture(new Vector3(left, top, 0), bgGray,
                         new Vector2(texCoords.X, texCoords.Y)),
-                    new VertexColorTexture(new Vector3(right, top, 0), Color4b.Gray,
+                    new VertexColorTexture(new Vector3(right, top, 0), bgGray,
                         new Vector2(texCoordsMax.X, texCoords.Y)),
-                    new VertexColorTexture(new Vector3(right, bottom, 0), Color4b.Gray,
+                    new VertexColorTexture(new Vector3(right, bottom, 0), bgGray,
                         new Vector2(texCoordsMax.X, texCoordsMax.Y)),
-                    new VertexColorTexture(new Vector3(left, bottom, 0), Color4b.Gray,
+                    new VertexColorTexture(new Vector3(left, bottom, 0), bgGray,
                         new Vector2(texCoords.X, texCoordsMax.Y)));
             }
         }
@@ -214,16 +215,14 @@ public class GUI {
         var xCount = Game.width / size;
         var yCount = Game.height / size;
 
-        var overlay = Color4b.DimGray;
-
         var texCoords = new Vector2(0, 0);
         var texCoordsMax = new Vector2(xCount, yCount);
         tb.DrawRaw(Game.textureManager.background,
-            new VertexColorTexture(new Vector3(left, top, 0), overlay, new Vector2(texCoords.X, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, top, 0), overlay, new Vector2(texCoordsMax.X, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, bottom, 0), overlay,
+            new VertexColorTexture(new Vector3(left, top, 0), bgGray, new Vector2(texCoords.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, top, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
+            new VertexColorTexture(new Vector3(right, bottom, 0), bgGray,
                 new Vector2(texCoordsMax.X, texCoordsMax.Y)),
-            new VertexColorTexture(new Vector3(left, bottom, 0), overlay,
+            new VertexColorTexture(new Vector3(left, bottom, 0), bgGray,
                 new Vector2(texCoords.X, texCoordsMax.Y)));
 
     }
@@ -249,8 +248,6 @@ public class GUI {
         // Calculate fractional offset for smooth scrolling
         float offsetX = backgroundScrollOffset.X % blockSize;
         float offsetY = backgroundScrollOffset.Y % blockSize;
-
-        var overlay = Color4b.DimGray;
 
         Span<ushort> ores = [Block.AMBER_ORE.id, Block.RED_ORE.id, Block.EMERALD_ORE.id, Block.DIAMOND_ORE.id, Block.TITANIUM_ORE.id, Block.AMETHYST_ORE.id];
 
@@ -278,10 +275,10 @@ public class GUI {
                     var oreTexCoordsMax = new Vector2(oreTexCoordsMax_.X, oreTexCoordsMax_.Y);
 
                     tb.DrawRaw(Game.textureManager.blockTextureGUI,
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), overlay, oreTexCoords),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), overlay, new Vector2(oreTexCoordsMax.X, oreTexCoords.Y)),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), overlay, oreTexCoordsMax),
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), overlay, new Vector2(oreTexCoords.X, oreTexCoordsMax.Y)));
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, oreTexCoords),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(oreTexCoordsMax.X, oreTexCoords.Y)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, oreTexCoordsMax),
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray, new Vector2(oreTexCoords.X, oreTexCoordsMax.Y)));
                 }
                 else {
                     // Draw stone
@@ -291,10 +288,10 @@ public class GUI {
                     var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                     var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
                     tb.DrawRaw(Game.textureManager.blockTextureGUI,
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), overlay, texCoords),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), overlay, new Vector2(texCoordsMax.X, texCoords.Y)),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), overlay, texCoordsMax),
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), overlay, new Vector2(texCoords.X, texCoordsMax.Y)));
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, texCoords),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, texCoordsMax),
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray, new Vector2(texCoords.X, texCoordsMax.Y)));
                 }
             }
         }
