@@ -371,8 +371,10 @@ public class GUI {
             origin, depth);
     }
 
-    internal static int TEXTSCALE => guiScale / 2;
-    internal static Vector2 TEXTSCALEV => new(TEXTSCALE, TEXTSCALE);
+    
+    /** Text rendering is at half gui scale, which is normally 2x (compared to the guiscale 4x) */
+    public static int TEXTSCALE => guiScale / 2;
+    public static Vector2 TEXTSCALEV => new(TEXTSCALE, TEXTSCALE);
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
 
@@ -529,14 +531,17 @@ public class GUI {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
     }
 
-    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale,
-        Vector2 offset) {
+    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
         var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
         guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
     }
 
-    protected void DrawRString(RichTextLayout layout, Vector2 position, Color4b colour, Vector2 scale,
-        TextHorizontalAlignment alignment) {
+    protected void DrawRString(RichTextLayout layout, Vector2 position, Color4b colour, Vector2 scale, TextHorizontalAlignment alignment) {
+        if (layout.Font == guiFontThin) {
+            // If the layout uses the thin font, we need to adjust the scale for the aspect ratio
+            scale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
+        }
+        
         layout.Draw(Game.fontLoader.renderer, position, colour.toFS(), 0, new Vector2(0), scale, 0f, alignment);
     }
     
@@ -571,7 +576,7 @@ public class GUI {
         return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
     
-    public Vector2 measureString(string text, bool thin) {
+    public Vector2 measureString(ReadOnlySpan<char> text, bool thin) {
         if (thin) {
             var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
             return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
@@ -582,6 +587,28 @@ public class GUI {
     public Vector2 measureStringSmall(ReadOnlySpan<char> text) {
         var measurement = guiFontThin.MeasureString(text, TEXTSCALEV / 2f);
         return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
+    }
+    
+    public Vector2 measureStringUI(ReadOnlySpan<char> text) {
+        // 
+        return guiFont.MeasureString(text);
+    }
+    
+    public Vector2 measureStringUIThin(ReadOnlySpan<char> text) {
+        var measurement = guiFontThin.MeasureString(text);
+        return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
+    }
+    
+    public Vector2 measureStringUICentred(ReadOnlySpan<char> text) {
+        return guiFont.MeasureString(text) / 2f;
+    }
+    
+    public Vector2 measureStringUI(ReadOnlySpan<char> text, bool thin) {
+        if (thin) {
+            var measurement = guiFontThin.MeasureString(text);
+            return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
+        }
+        return guiFont.MeasureString(text);
     }
 
     public void drawBlock(Block block, int x, int y, int size) {

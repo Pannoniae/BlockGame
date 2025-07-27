@@ -11,8 +11,7 @@ public class FontLoader {
     public float thinFontAspectRatio = 0.75f; // 3:4 ratio (narrower)
 
     public FontLoader(string name, string name2) {
-        var settings = new FontSystemSettings
-        {
+        var settings = new FontSystemSettings {
             FontLoader = new FreeTypeLoader(),
             TextureWidth = 256,
             TextureHeight = 256

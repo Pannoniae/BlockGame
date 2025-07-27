@@ -217,6 +217,7 @@ public partial class Game {
         //GlfwProvider.GLFW.Value.WindowHint(WindowHintBool.ContextNoError, true);
         #endif
         window = Window.Create(windowOptions);
+
         setTitle("BlockGame", splash, "");
         window.Load += init;
         window.FocusChanged += focus;
@@ -224,8 +225,13 @@ public partial class Game {
         window.Render += mainLoop;
         window.FramebufferResize += resize;
         window.Closing += close;
-
+        
         window.Initialize();
+        unsafe {
+            GlfwProvider.GLFW.Value.SetWindowSizeLimits((WindowHandle*)window.Native.Glfw,
+                Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
+        }
+        
         window.Run(runCallback);
 
         window.DoEvents();
@@ -812,6 +818,11 @@ public partial class Game {
         while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 300 &&
                height / ((double)guiScaleTarget + 1) >= 200) {
             guiScaleTarget++;
+        }
+        
+        // if resized, debug print
+        if (guiScaleTarget != GUI.guiScale) {
+            Console.Out.WriteLine($"GUI scale changed from {GUI.guiScale} to {guiScaleTarget}");
         }
 
         GUI.guiScale = guiScaleTarget;

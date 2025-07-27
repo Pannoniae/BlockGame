@@ -1,8 +1,11 @@
 using System.Collections;
 using System.Drawing;
+using System.Numerics;
+using BlockGame.GL.vertexformats;
 using BlockGame.id;
 using BlockGame.ui.element;
 using BlockGame.util;
+using Molten;
 
 namespace BlockGame.ui;
 
@@ -17,23 +20,23 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     private Coroutine loadingCoroutine;
     private string currentStage = "Initializing";
-    private float currentProgress = 0f;
+    private float currentProgress;
 
     public LoadingMenu() {
-        titleText = new Text(this, "titleText", "Loading world...");
-        titleText.setPosition(new Rectangle(0, 0, 200, 20));
+        titleText = Text.createText(this, "titleText", new Vector2I(0, 0), "Loading world...");
+        //titleText.updateLayout();
         titleText.centreContents();
         //titleText.thin = true;
         addElement(titleText);
 
-        statusText = new Text(this, "statusText", "Initializing...");
-        statusText.setPosition(new Rectangle(0, 25, 200, 20));
+        statusText = Text.createText(this, "statusText", new Vector2I(0, 25), "Initializing...");
+        //statusText.updateLayout();
         statusText.centreContents();
         //statusText.thin = true;
         addElement(statusText);
 
-        progressBar = new ProgressBar(this, "progressBar", 150, 3);
-        progressBar.setPosition(new Rectangle(0, 35, 150, 3));
+        progressBar = new ProgressBar(this, "progressBar", 200, 3);
+        progressBar.setPosition(new Vector2(0, 35));
         progressBar.centreContents();
         addElement(progressBar);
 
@@ -72,6 +75,10 @@ public class LoadingMenu : Menu, ProgressUpdater {
         // we draw BG first! elements after
         Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
         base.draw();
+        
+        // draw a random vertical line at x = 0
+        // draw a rectangle (that's what we can draw)
+        // Game.gui.draw(Game.gui.colourTexture, new RectangleF(Game.width / 2f, 0, 1, Game.height), color: Color4b.Red);
     }
 
     private IEnumerator loadWorldCoroutine(bool isLoading) {
@@ -111,6 +118,11 @@ public class LoadingMenu : Menu, ProgressUpdater {
             if (processedChunks % 10 == 0) {
                 stage($"Loading chunks ({processedChunks}/{totalChunks})");
             }
+            
+            // pause 0.1 seconds every 100 chunks to avoid freezing the UI
+            //if (processedChunks % 10 == 0) {
+                // yield return new WaitForSeconds(0.1);
+            //}
         }
 
         var finalizeTimer = new WaitForMinimumTime(0.3);

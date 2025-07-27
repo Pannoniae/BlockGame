@@ -52,7 +52,7 @@ public class Button : GUIElement {
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
         
         // shift centre down by 1 gui px
-        centre.Y += (int)(GUI.u2s(1) / 2f);
+        //centre.Y += (int)(GUI.u2s(1) / 2f);
         
         if (text != null) {
             if (shadowed) {

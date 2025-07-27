@@ -263,7 +263,7 @@ public class ChatMenu : Menu {
 
         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4),
             color: new Color4b(0, 0, 0, 128));
-        gui.drawStringUIThin("> " + msgWithCursor, new Vector2(6, Game.gui.uiHeight - 13));
+        gui.drawStringUIThin("> " + msgWithCursor, new Vector2(6, Game.gui.uiHeight - 14));
     }
 }
 

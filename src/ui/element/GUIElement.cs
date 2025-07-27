@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Numerics;
 using Silk.NET.Input;
 
 namespace BlockGame.ui;
@@ -16,11 +17,12 @@ public class GUIElement {
     public string? text = null;
 
     public string tooltip = "";
-
-    /// <summary>
-    /// If true, guiScale does not adjust the size of this element (e.g. text)
-    /// </summary>
+    
+    /** If true, guiScale does not adjust the size of this element (e.g. text) */
     public bool unscaledSize = false;
+    
+    /** If true, the element is scaled with the TEXTSIZE instead of the guiScale. */
+    public bool textScaledSize = false;
 
     public bool hovered = false;
     public bool pressed = false;
@@ -35,10 +37,17 @@ public class GUIElement {
             absolutePos.X *= GUI.guiScale;
             absolutePos.Y *= GUI.guiScale;
             // handle guiscale
-            if (!unscaledSize) {
+            if (!unscaledSize && !textScaledSize) {
                 absolutePos.Width *= GUI.guiScale;
                 absolutePos.Height *= GUI.guiScale;
             }
+            
+            if (textScaledSize) {
+                // if textScaledSize is true, we use the TEXTSIZE instead of the guiScale
+                absolutePos.Width *= GUI.TEXTSCALE;
+                absolutePos.Height *= GUI.TEXTSCALE;
+            }
+            
             return resolveAnchors(absolutePos, horizontalAnchor, verticalAnchor, menu, false);
         }
     }
@@ -101,6 +110,10 @@ public class GUIElement {
 
     public void setPosition(Rectangle pos) {
         guiPosition = pos;
+    }
+
+    public void setPosition(Vector2 pos) {
+        guiPosition = new Rectangle((int)pos.X, (int)pos.Y, guiPosition.Width, guiPosition.Height);
     }
 
     public void centre() {

@@ -7,6 +7,8 @@ public static class Constants {
     public const float maxPitch = 89;
     public const int initialWidth = 1440;
     public const int initialHeight = 960;
+    public const int minWidth = 640;
+    public const int minHeight = 480;
     public const double gravity = 20;
     public const double maxAccel = 50;
     public const double jumpSpeed = 7;

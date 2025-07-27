@@ -501,7 +501,10 @@ public partial class World {
         // for each chunk in the area...
         for (int chunkX = chunkX0; chunkX <= chunkX1; chunkX++) {
             for (int chunkZ = chunkZ0; chunkZ <= chunkZ1; chunkZ++) {
-                var chunk = getChunk(chunkX, chunkZ);
+                var succ = getChunkMaybe(chunkX, chunkZ, out var chunk);
+                if (!succ) {
+                    continue; // no chunk in this area for some reason??
+                }
 
                 // calculate intersection of the search area with this chunk
                 int localX0 = Math.Max(x0, chunkX << 4) & 0xF;
