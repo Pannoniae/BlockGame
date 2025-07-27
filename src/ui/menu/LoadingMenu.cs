@@ -23,13 +23,13 @@ public class LoadingMenu : Menu, ProgressUpdater {
         titleText = new Text(this, "titleText", "Loading world...");
         titleText.setPosition(new Rectangle(0, 0, 200, 20));
         titleText.centreContents();
-        titleText.thin = true;
+        //titleText.thin = true;
         addElement(titleText);
 
         statusText = new Text(this, "statusText", "Initializing...");
         statusText.setPosition(new Rectangle(0, 25, 200, 20));
         statusText.centreContents();
-        statusText.thin = true;
+        //statusText.thin = true;
         addElement(statusText);
 
         progressBar = new ProgressBar(this, "progressBar", 150, 3);

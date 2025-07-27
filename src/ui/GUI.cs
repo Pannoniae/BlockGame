@@ -531,7 +531,8 @@ public class GUI {
 
     protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale,
         Vector2 offset) {
-        guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
+        var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
+        guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
     }
 
     protected void DrawRString(RichTextLayout layout, Vector2 position, Color4b colour, Vector2 scale,
@@ -566,15 +567,21 @@ public class GUI {
     }
 
     public Vector2 measureStringThin(ReadOnlySpan<char> text) {
-        return guiFontThin.MeasureString(text, TEXTSCALEV);
+        var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
+        return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
     
     public Vector2 measureString(string text, bool thin) {
-        return thin ? guiFontThin.MeasureString(text, TEXTSCALEV) : guiFont.MeasureString(text, TEXTSCALEV);
+        if (thin) {
+            var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
+            return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
+        }
+        return guiFont.MeasureString(text, TEXTSCALEV);
     }
 
     public Vector2 measureStringSmall(ReadOnlySpan<char> text) {
-        return guiFontThin.MeasureString(text, TEXTSCALEV / 2f);
+        var measurement = guiFontThin.MeasureString(text, TEXTSCALEV / 2f);
+        return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
 
     public void drawBlock(Block block, int x, int y, int size) {

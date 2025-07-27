@@ -1,4 +1,5 @@
 using FontStashSharp;
+using FontStashSharp.Rasterizers.FreeType;
 
 namespace BlockGame.util.font;
 
@@ -7,11 +8,12 @@ public class FontLoader {
     public TextRenderer3D renderer3D;
     public FontSystem fontSystem;
     public FontSystem fontSystemThin;
+    public float thinFontAspectRatio = 0.75f; // 3:4 ratio (narrower)
 
     public FontLoader(string name, string name2) {
         var settings = new FontSystemSettings
         {
-            FontLoader = new BDFLoader(),
+            FontLoader = new FreeTypeLoader(),
             TextureWidth = 256,
             TextureHeight = 256
         };

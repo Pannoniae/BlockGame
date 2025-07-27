@@ -101,18 +101,20 @@ public class Menu {
             var screenWidth = Game.window.Size.X;
             var screenHeight = Game.window.Size.Y;
             
-            if (pos.X + posExt.X > screenWidth) {
-                var overflow = pos.X + posExt.X - screenWidth;
+            var borderSize = GUI.guiScale;
+            
+            
+            if (pos.X + posExt.X + borderSize > screenWidth) {
+                var overflow = pos.X + posExt.X + borderSize - screenWidth;
                 pos.X -= overflow;
                 textPos.X -= overflow;
             }
-            if (pos.Y + posExt.Y > screenHeight) {
-                var overflow = pos.Y + posExt.Y - screenHeight;
+            if (pos.Y + posExt.Y + borderSize > screenHeight) {
+                var overflow = pos.Y + posExt.Y + borderSize - screenHeight;
                 pos.Y -= overflow;
                 textPos.Y -= overflow;
             }
             
-            var borderSize = GUI.guiScale;
             var borderRect = new RectangleF(pos.X - borderSize, pos.Y - borderSize, posExt.X + borderSize * 2, posExt.Y + borderSize * 2);
             var bgRect = new RectangleF(pos.X, pos.Y, posExt.X, posExt.Y);
             

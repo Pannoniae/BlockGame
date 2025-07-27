@@ -567,10 +567,10 @@ public partial class Game {
         // Keep the console application running until playback finishes
         Console.Out.WriteLine("played?");
 
-        fontLoader = new FontLoader("fonts/8x13.bdf", "fonts/6x13.bdf");
+        fontLoader = new FontLoader("fonts/BmPlus_IBM_VGA_9x16.otb", "fonts/BmPlus_IBM_VGA_9x16.otb");
 
         gui = new GUI();
-        gui.loadFont(13);
+        gui.loadFont(16);
         renderer = new WorldRenderer();
         Menu.init();
 

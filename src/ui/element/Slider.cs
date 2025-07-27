@@ -64,6 +64,9 @@ public class Slider : GUIElement {
         float knobY = GUIbounds.Y - 1f;
         Game.gui.drawUI(Game.gui.guiTexture, new Vector2(knobX, knobY), knob);
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
+        // shift centre down by 1 gui px
+        centre.Y += (int)(GUI.u2s(1) / 2f);
+        
         Game.gui.drawStringCentred(getText(value), centre);
     }
 
