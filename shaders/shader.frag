@@ -6,7 +6,7 @@
 #include "inc/fog.inc"
 
 
-uniform float aniso = 0f;
+uniform float aniso = 0;
 uniform int debugAniso = 0;
 
 float det(mat2 matrix) {
