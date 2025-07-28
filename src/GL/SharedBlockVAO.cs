@@ -63,7 +63,7 @@ public sealed class SharedBlockVAO : VAO
     }
 
     public void format() {
-        // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
+        // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
         GL.EnableVertexAttribArray(0);
         GL.EnableVertexAttribArray(1);
         GL.EnableVertexAttribArray(2);

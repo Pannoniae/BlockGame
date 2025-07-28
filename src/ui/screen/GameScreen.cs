@@ -56,7 +56,7 @@ public class GameScreen : Screen {
         Game.world?.Dispose();
         Game.world = null;
         //Game.renderer = null;
-        updateMemory.enabled = false;
+        //updateMemory.enabled = false;
         updateDebugText.enabled = false;
     }
 
@@ -111,11 +111,6 @@ public class GameScreen : Screen {
 
     public override void render(double dt, double interp) {
         base.render(dt, interp);
-        // update here because in the main menu, we don't have a world
-        Game.fontLoader.renderer3D.renderTick(interp);
-        if (!currentMenu.isModal()) {
-            INGAME_MENU.render(dt, interp);
-        }
         Game.metrics.clear();
         
         var world = Game.world;
@@ -128,7 +123,13 @@ public class GameScreen : Screen {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
             Game.renderer.drawBlockOutline(interp);
         }
+        
         D.renderTick(interp);
+        // update here because in the main menu, we don't have a world
+        Game.fontLoader.renderer3D.renderTick(interp);
+        if (!currentMenu.isModal()) {
+            INGAME_MENU.render(dt, interp);
+        }
         const string text = "THIS IS A LONG TEXT\nmultiple lines!";
         /*Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.WEST, 2f);
         Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.EAST, 2f);
@@ -272,6 +273,7 @@ public class GameScreen : Screen {
                     break;
                 }
                 MemoryUtils.cleanGC();
+                Game.mm();
                 break;
             case Key.F10: {
                 altF10Press = Game.permanentStopwatch.ElapsedMilliseconds;
@@ -569,6 +571,8 @@ public class UpdateMemoryThread(GameScreen screen) {
                 break;
             }
             updateMemoryMethod();
+            // sleep 200ms
+            Thread.Sleep(200);
             
         }
     }

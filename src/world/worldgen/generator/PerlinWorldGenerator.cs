@@ -29,7 +29,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         highNoise.SetFrequency(1f);
         //lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         // todo
-        //highNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        highNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         selectorNoise = new FastNoiseLite(random.Next(seed));
         selectorNoise.SetFrequency(1f);
         

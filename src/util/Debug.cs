@@ -46,7 +46,7 @@ public class Debug {
     }
     
     public void renderTick(double interp) {
-        Game.graphics.instantColourShader.use();
+        //Game.graphics.instantColourShader.use();
         
         // Set projection and view uniforms
         Matrix4x4 projMatrix = Game.world.player.camera.getProjectionMatrix();

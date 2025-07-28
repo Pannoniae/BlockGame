@@ -41,7 +41,7 @@ public class Text : GUIElement {
      */
     public static Text createText(Menu menu, string name, Vector2I pos, string text) {
         var bounds = Game.gui.measureStringUI(text);
-        Console.Out.WriteLine("Text bounds: " + bounds);
+        //Console.Out.WriteLine("Text bounds: " + bounds);
         var guitext = new Text(menu, name, text);
         guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(pos.X + bounds.X), (int)(pos.Y + bounds.Y)));
         return guitext;

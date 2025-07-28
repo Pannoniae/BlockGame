@@ -107,6 +107,8 @@ public partial class Game {
     public static bool focused;
     public static bool firstFrame;
 
+    public static bool mouseDisabled;
+
     /// <summary>
     /// True while clicking back into the game. Used to prevent the player instantly breaking a block when clicking on the menu to get back into the game world.
     /// </summary>
@@ -233,6 +235,9 @@ public partial class Game {
                 Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
         }
         
+        // GLFW get version
+        Console.Out.WriteLine(GlfwProvider.GLFW.Value.GetVersionString());
+        
         window.Run(runCallback);
 
         window.DoEvents();
@@ -256,6 +261,7 @@ public partial class Game {
         if (!window.IsClosing) {
             window.DoRender();
             //window.SwapBuffers();
+            //GlfwWindow
             //GL.Finish();
             //GL.Flush();
         }
@@ -547,7 +553,7 @@ public partial class Game {
         mouse.MouseUp += onMouseUp;
         mouse.Scroll += onMouseScroll;
         mouse.Cursor.CursorMode = CursorMode.Normal;
-
+        
         keyboard = input.Keyboards[0];
         keyboard.KeyDown += onKeyDown;
         keyboard.KeyRepeat += onKeyRepeat;
@@ -750,7 +756,7 @@ public partial class Game {
     }
 
     public void lockMouse() {
-        mouse.Cursor.CursorMode = CursorMode.Disabled;
+        mouse.Cursor.CursorMode = CursorMode.Raw;
         //mouse.Position = new Vector2(centre.X, centre.Y);
         focused = true;
         firstFrame = true;
@@ -1223,5 +1229,16 @@ public partial class Game {
     private void close() {
         ///dev?.Dispose();
         //buffer?.Dispose();
+    }
+
+    public static void mm() {
+        mouseDisabled = !mouseDisabled;
+        
+        if (mouseDisabled) {
+            mouse.MouseMove -= instance.onMouseMove;
+        }
+        else {
+            mouse.MouseMove += instance.onMouseMove;
+        }
     }
 }

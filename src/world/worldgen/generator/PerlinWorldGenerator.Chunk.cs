@@ -51,6 +51,7 @@ public partial class PerlinWorldGenerator {
     public const float SELECTOR_FREQUENCY = 1 / 490f;
 
     public const float Y_DIVIDER = 1 / 16f;
+    public const float Y_DIVIDER_INV = 16f;
 
     public const float BLOCK_VARIATION_FREQUENCY = 1 / 412f;
     public const float HELLSTONE_FREQUENCY = 1 / 1.5f;
@@ -74,7 +75,7 @@ public partial class PerlinWorldGenerator {
         // get the noise
         getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
             LOW_FREQUENCY, 8, 2f);
-        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
+        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY * Y_DIVIDER_INV,
             HIGH_FREQUENCY, 8, 2f);
 
 
@@ -124,6 +125,7 @@ public partial class PerlinWorldGenerator {
                     // Reduce the density when too high above 64 and increase it when too low
                     // range: // -0.5 (at y=128) to 0.5 (at y=0)
                     var airBias = (y - WATER_LEVEL) / (float)World.WORLDHEIGHT;
+                    airBias *= 0.5f;
 
                     // flatten out low noise
                     //low -= airBias;
