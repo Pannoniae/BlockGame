@@ -176,6 +176,7 @@ public class IngameMenu : Menu, IDisposable {
         if (frametimeGraphEnabled) {
             DrawFrametimeGraph();
         }
+        
 
         // Draw block display
         var blockStr = Block.get(Game.world.player.hotbar.getSelected().block).name;
