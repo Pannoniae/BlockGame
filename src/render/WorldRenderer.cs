@@ -17,6 +17,7 @@ namespace BlockGame;
 
 public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public World? world;
+    private int currentAnisoLevel = -1;
 
     public Silk.NET.OpenGL.GL GL;
 
@@ -45,7 +46,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int fogColour;
     public int skyColour;
     
-    public int aniso;
 
     public int waterBlockTexture;
     public int wateruMVP;
@@ -75,7 +75,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.setup();
         idt.setup();
 
-        worldShader = new Shader(GL, nameof(worldShader), "shaders/shader.vert", "shaders/shader.frag");
+        worldShader = createWorldShader();
         dummyShader = new Shader(GL, nameof(dummyShader), "shaders/dummyShader.vert");
         waterShader = new Shader(GL, nameof(waterShader), "shaders/waterShader.vert", "shaders/waterShader.frag");
 
@@ -89,7 +89,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         skyColour = worldShader.getUniformLocation(nameof(skyColour));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
         
-        aniso = worldShader.getUniformLocation(nameof(aniso));
 
         waterBlockTexture = waterShader.getUniformLocation("blockTexture");
         wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
@@ -187,11 +186,35 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
     }
 
+    private Shader createWorldShader() {
+        var settings = Settings.instance;
+        var anisoLevel = settings.anisotropy;
+        currentAnisoLevel = anisoLevel;
+        
+        var definitions = new List<Definition>();
+        definitions.Add(new Definition("ANISO_LEVEL", anisoLevel.ToString()));
+        definitions.Add(new Definition("DEBUG_ANISO", "0"));
+        
+        return new Shader(GL, nameof(worldShader), "shaders/shader.vert", "shaders/shader.frag", definitions);
+    }
+
     public void updateAF() {
         var settings = Settings.instance;
         var anisoLevel = settings.anisotropy;
+        
 
-        worldShader.setUniform(aniso, (float)anisoLevel);
+        if (currentAnisoLevel != anisoLevel) {
+            worldShader = createWorldShader();
+            
+            // re-get uniform locations since we have a new shader
+            blockTexture = worldShader.getUniformLocation("blockTexture");
+            uMVP = worldShader.getUniformLocation(nameof(uMVP));
+            uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
+            fogStart = worldShader.getUniformLocation(nameof(fogStart));
+            fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
+            fogColour = worldShader.getUniformLocation(nameof(fogColour));
+            skyColour = worldShader.getUniformLocation(nameof(skyColour));
+        }
     }
 
     public void setUniforms() {

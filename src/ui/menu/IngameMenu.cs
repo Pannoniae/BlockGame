@@ -26,6 +26,7 @@ public class IngameMenu : Menu, IDisposable {
     // Frametime graph data
     private const int FRAMETIME_HISTORY_SIZE = 400;
     private float[] frametimeHistory = new float[FRAMETIME_HISTORY_SIZE];
+    private ProfileData[] profileHistory = new ProfileData[FRAMETIME_HISTORY_SIZE];
     private int frametimeHistoryIndex = 0;
     private float minFrametime = float.MaxValue;
     private float maxFrametime = float.MinValue;
@@ -33,6 +34,7 @@ public class IngameMenu : Menu, IDisposable {
     private const int GRAPH_WIDTH = 200 * 4;
     private const int GRAPH_PADDING = 5;
     private bool frametimeGraphEnabled = true;
+    private bool segmentedMode = false;
 
     public IngameMenu() {
         debugStr.Dispose();
@@ -57,6 +59,7 @@ public class IngameMenu : Menu, IDisposable {
         // Initialize frametime history
         for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
             frametimeHistory[i] = 0f;
+            profileHistory[i] = new ProfileData();
         }
     }
 
@@ -98,57 +101,141 @@ public class IngameMenu : Menu, IDisposable {
             gui.drawStringThin("60 FPS",
                 new Vector2(graphX + 5, sixtyFpsY - 12),
                 new Color4b(0, 255, 0));
+                
+            // Draw mode indicator
+            string modeText = segmentedMode ? "Segmented" : "Simple";
+            gui.drawStringThin($"[F4] {modeText}",
+                new Vector2(graphX + GRAPH_WIDTH - 80, graphY - 40),
+                new Color4b(200, 200, 200));
 
             // Draw vertical bars
             const float BAR_WIDTH = GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE;
 
-            for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
-                int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
-
-                if (frametimeHistory[idx] <= 0)
-                    continue;
-
-                // Cap at MAX_FRAMETIME ms
-                float frametime = frametimeHistory[idx];
-
-                // Calculate positions
-                float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
-
-                // Calculate bar height based on frametime
-                float barHeight = (frametime / MAX_FRAMETIME) * GRAPH_HEIGHT;
-                float y = graphY + GRAPH_HEIGHT - barHeight;
-
-                // Lerp between green and red based on frametime. Between 0 and 60FPS from green to yellow, between 60FPS and 30FPS from yellow to red
-                // Determine color based on performance (lerp between values)
-                Color4b barColor;
-                const float SIXTY_FPS = 16.6f;
-                const float THIRTY_FPS = 33.3f;
-
-                if (frametime < SIXTY_FPS) {
-                    float t = frametime / SIXTY_FPS; // 0 to 1
-                    barColor = new Color4b(
-                        (byte)(255 * t),
-                        255,
-                        0
-                    );
-                }
-                else if (frametime < THIRTY_FPS) {
-                    float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
-                    barColor = new Color4b(
-                        255,
-                        (byte)(255 * (1 - t)),
-                        0
-                    );
-                }
-                else {
-                    barColor = new Color4b(255, 0, 0);
-                }
-
-                // Draw bar
-                gui.tb.Draw(gui.colourTexture,
-                    new System.Drawing.RectangleF(x, y, BAR_WIDTH, barHeight),
-                    barColor);
+            if (segmentedMode) {
+                DrawSegmentedBars(gui, graphX, graphY, BAR_WIDTH, MAX_FRAMETIME);
             }
+            else {
+                DrawSimpleBars(gui, graphX, graphY, BAR_WIDTH, MAX_FRAMETIME);
+            }
+        }
+    }
+    
+    private void DrawSimpleBars(GUI gui, int graphX, int graphY, float barWidth, float maxFrametime) {
+        for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
+            int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
+
+            if (frametimeHistory[idx] <= 0)
+                continue;
+
+            // Cap at MAX_FRAMETIME ms
+            float frametime = frametimeHistory[idx];
+
+            // Calculate positions
+            float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
+
+            // Calculate bar height based on frametime
+            float barHeight = (frametime / maxFrametime) * GRAPH_HEIGHT;
+            float y = graphY + GRAPH_HEIGHT - barHeight;
+
+            // Determine color based on performance
+            Color4b barColor;
+            const float SIXTY_FPS = 16.6f;
+            const float THIRTY_FPS = 33.3f;
+
+            if (frametime < SIXTY_FPS) {
+                float t = frametime / SIXTY_FPS; // 0 to 1
+                barColor = new Color4b(
+                    (byte)(255 * t),
+                    255,
+                    0
+                );
+            }
+            else if (frametime < THIRTY_FPS) {
+                float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
+                barColor = new Color4b(
+                    255,
+                    (byte)(255 * (1 - t)),
+                    0
+                );
+            }
+            else {
+                barColor = new Color4b(255, 0, 0);
+            }
+
+            // Draw bar
+            gui.tb.Draw(gui.colourTexture,
+                new System.Drawing.RectangleF(x, y, barWidth, barHeight),
+                barColor);
+        }
+    }
+    
+    private void DrawSegmentedBars(GUI gui, int graphX, int graphY, float barWidth, float maxFrametime) {
+        // Make segmented mode 4x taller for better visibility
+        const float SEGMENTED_HEIGHT_MULTIPLIER = 4.0f;
+        
+        for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
+            int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
+            var profile = profileHistory[idx];
+
+            if (profile.total <= 0)
+                continue;
+
+            float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
+            float currentY = graphY + GRAPH_HEIGHT;
+
+            // Draw each section as a stacked segment
+            var sections = new[] {
+                ProfileSection.Events,
+                ProfileSection.Logic,
+                ProfileSection.World3D,
+                ProfileSection.PostFX,
+                ProfileSection.GUI,
+                ProfileSection.Swap,
+                ProfileSection.Other
+            };
+
+            foreach (var section in sections) {
+                float sectionTime = profile.getTime(section);
+                if (sectionTime <= 0) continue;
+
+                float segmentHeight = (sectionTime / maxFrametime) * GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER;
+                currentY -= segmentHeight;
+
+                // Draw segment
+                gui.tb.Draw(gui.colourTexture,
+                    new System.Drawing.RectangleF(x, currentY, barWidth, segmentHeight),
+                    ProfileData.getColour(section));
+            }
+        }
+        
+        // Draw legend in top-right corner of graph
+        DrawSegmentedLegend(gui, graphX + GRAPH_WIDTH - 100, graphY - 5);
+    }
+    
+    private void DrawSegmentedLegend(GUI gui, float legendX, float legendY) {
+        var sections = new[] {
+            ProfileSection.Events,
+            ProfileSection.Logic,
+            ProfileSection.World3D,
+            ProfileSection.PostFX,
+            ProfileSection.GUI,
+            ProfileSection.Swap,
+            ProfileSection.Other
+        };
+        
+        float yOffset = 10;
+        foreach (var section in sections) {
+            // Draw color square
+            gui.tb.Draw(gui.colourTexture,
+                new System.Drawing.RectangleF(legendX, legendY + yOffset, 8, 8),
+                ProfileData.getColour(section));
+                
+            // Draw label
+            gui.drawStringThin(Profiler.getSectionName(section),
+                new Vector2(legendX + 12, legendY + yOffset - 16),
+                new Color4b(200, 200, 200));
+                
+            yOffset += 24;
         }
     }
 
@@ -159,6 +246,16 @@ public class IngameMenu : Menu, IDisposable {
         // Store the value and increment the index
         frametimeHistory[frametimeHistoryIndex] = frametime;
         frametimeHistoryIndex = (frametimeHistoryIndex + 1) % FRAMETIME_HISTORY_SIZE;
+    }
+    
+    public void UpdateProfileHistory(ProfileData profileData) {
+        profileHistory[frametimeHistoryIndex] = profileData;
+        // Also update frametime history for compatibility with existing graph
+        //UpdateFrametimeHistory(profileData.TotalTime);
+    }
+    
+    public void ToggleSegmentedMode() {
+        segmentedMode = !segmentedMode;
     }
 
     public override void draw() {
@@ -187,6 +284,7 @@ public class IngameMenu : Menu, IDisposable {
     public void Dispose() {
         debugStr.Dispose();
         debugStrG.Dispose();
+        
     }
 
     public void updateDebugTextMethod() {

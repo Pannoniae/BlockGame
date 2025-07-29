@@ -249,6 +249,9 @@ public class GameScreen : Screen {
                 }
                 debugScreen = !debugScreen;
                 break;
+            case Key.F4:
+                INGAME_MENU.ToggleSegmentedMode();
+                break;
             // reload chunks
             case Key.A when keyboard.IsKeyPressed(Key.F3):
                 remeshWorld(Settings.instance.renderDistance);

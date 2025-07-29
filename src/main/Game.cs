@@ -18,6 +18,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ARB;
 using Silk.NET.OpenGL.Extensions.NV;
+using Silk.NET.WGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -43,7 +44,11 @@ public partial class Game {
     public static IWindow window;
     public static Silk.NET.OpenGL.GL GL = null!;
     public static IInputContext input = null!;
-
+    
+    //private static WGL wgl;
+    private static Glfw glfw;
+    private static bool windows = OperatingSystem.IsWindows();
+    
     public static Process proc;
 
     /// <summary>
@@ -63,6 +68,7 @@ public partial class Game {
 
     public static TextureManager textureManager;
     public static Metrics metrics;
+    public static Profiler profiler;
 
     public static FontLoader fontLoader;
     public static SoundEngine snd;
@@ -129,6 +135,7 @@ public partial class Game {
     private uint depthBuffer;
 
     public static bool sampleShadingSupported = false;
+    private static bool sampleShadingEnabled = false;
 
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;
@@ -143,6 +150,7 @@ public partial class Game {
     private int g_mulReduceLocation;
     private int g_minReduceLocation;
     private int g_maxSpanLocation;
+    private static IntPtr hdc;
     public static bool noUpdate;
 
 
@@ -183,7 +191,7 @@ public partial class Game {
 
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.VideoMode = new VideoMode(windowSize);
-        windowOptions.ShouldSwapAutomatically = true;
+        windowOptions.ShouldSwapAutomatically = false;
         windowOptions.IsVisible = true;
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 0;
@@ -230,13 +238,18 @@ public partial class Game {
         window.Closing += close;
         
         window.Initialize();
+        glfw = Glfw.GetApi();
         unsafe {
-            GlfwProvider.GLFW.Value.SetWindowSizeLimits((WindowHandle*)window.Native.Glfw,
+            glfw.SetWindowSizeLimits((WindowHandle*)window.Native.Glfw,
                 Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
         }
         
+        if (windows) {
+            hdc = window.Native!.Win32!.Value!.HDC;
+        }
+        
         // GLFW get version
-        Console.Out.WriteLine(GlfwProvider.GLFW.Value.GetVersionString());
+        Console.Out.WriteLine(glfw.GetVersionString());
         
         window.Run(runCallback);
 
@@ -253,17 +266,30 @@ public partial class Game {
     }
 
     private static void runCallback() {
+        profiler.startFrame();
+        
+        profiler.section(ProfileSection.Events);
         window.DoEvents();
+        
         if (!window.IsClosing) {
             window.DoUpdate();
         }
 
         if (!window.IsClosing) {
             window.DoRender();
-            //window.SwapBuffers();
+            profiler.section(ProfileSection.Swap);
+            window.SwapBuffers();
             //GlfwWindow
             //GL.Finish();
             //GL.Flush();
+        }
+        
+        // Store profiling data for this frame after swap is complete
+        var profileData = profiler.endFrame();
+        
+        // Only update if we're in the game screen to avoid profiling menus
+        if (instance.currentScreen == Screen.GAME_SCREEN) {
+            ((GameScreen)instance.currentScreen).INGAME_MENU.UpdateProfileHistory(profileData);
         }
     }
 
@@ -565,6 +591,7 @@ public partial class Game {
         height = window.FramebufferSize.Y;
 
         metrics = new Metrics();
+        profiler = new Profiler();
         stopwatch.Start();
         permanentStopwatch.Start();
 
@@ -948,12 +975,24 @@ public partial class Game {
         graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
         graphics.fxaaShader.setUniform(g_ssaaModeLocation, Settings.instance.ssaaMode);
 
+        // Set sample shading state based on settings
+        if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
+            GL.Enable(EnableCap.SampleShading);
+            GL.MinSampleShading(1.0f); // force per-sample shading
+            sampleShadingEnabled = true;
+        }
+        else if (sampleShadingSupported) {
+            GL.Disable(EnableCap.SampleShading);
+            sampleShadingEnabled = false;
+        }
+
         throwawayVAO = GL.CreateVertexArray();
     }
 
     private void deleteFramebuffer() {
         if (sampleShadingSupported) {
             GL.Disable(EnableCap.SampleShading); // disable per-sample shading
+            sampleShadingEnabled = false;
         }
 
         GL.DeleteFramebuffer(fbo);
@@ -1045,6 +1084,7 @@ public partial class Game {
         accumTime += dt;
         //var i = 0;
         if (!noUpdate) {
+            profiler.section(ProfileSection.Logic);
             while (accumTime >= fixeddt) {
                 update(fixeddt);
                 t += fixeddt;
@@ -1073,6 +1113,8 @@ public partial class Game {
         /*if (dt > 0.016) {
             Console.Out.WriteLine("Missed a frame!");
         }*/
+        
+        profiler.section(ProfileSection.Other);
         // consume main thread actions
         while (mainThreadQueue.TryTake(out var action)) {
             action();
@@ -1109,6 +1151,7 @@ public partial class Game {
         
         GL.Enable(EnableCap.DepthTest);
         
+        profiler.section(ProfileSection.World3D);
         if (currentScreen == Screen.GAME_SCREEN) {
             fontLoader.renderer3D.begin();
         }
@@ -1120,6 +1163,7 @@ public partial class Game {
             fontLoader.renderer3D.end();
         }
 
+        profiler.section(ProfileSection.PostFX);
         if (Settings.instance.framebufferEffects) {
             var ssaaWidth = width * Settings.instance.effectiveScale;
             var ssaaHeight = height * Settings.instance.effectiveScale;
@@ -1150,15 +1194,6 @@ public partial class Game {
         }
 
         if (Settings.instance.framebufferEffects) {
-            // enable per-sample shading if using per-sample SSAA mode and supported
-            if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
-                GL.Enable(EnableCap.SampleShading);
-                GL.MinSampleShading(1.0f); // force per-sample shading
-            }
-            else if (sampleShadingSupported) {
-                GL.Disable(EnableCap.SampleShading);
-            }
-
             graphics.fxaaShader.use();
             
 
@@ -1172,6 +1207,7 @@ public partial class Game {
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
         
+        profiler.section(ProfileSection.GUI);
         graphics.mainBatch.Begin();
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
 

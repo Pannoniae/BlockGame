@@ -5,32 +5,44 @@
 
 #include "inc/fog.inc"
 
-
-uniform float aniso = 0;
-uniform int debugAniso = 0;
+//#if not defined(ANISO_LEVEL)
+//#define ANISO_LEVEL 0
+//#endif
 
 float det(mat2 matrix) {
     return matrix[0].x * matrix[1].y - matrix[0].y * matrix[1].x;
 }
 
-vec4 mapAniso(float h) {
+vec2 mirror(vec2 uv, vec2 minBounds, vec2 maxBounds) {
+    vec2 range = maxBounds - minBounds;
+    vec2 normalized = (uv - minBounds) / range;
+    
+    // mirror each component independently
+    normalized.x = 1.0 - abs(mod(normalized.x, 2.0) - 1.0);
+    normalized.y = 1.0 - abs(mod(normalized.y, 2.0) - 1.0);
+    
+    return minBounds + normalized * range;
+}
+
+vec4 mapAniso(float h, float maxrange) {
     vec4 colours[3];
     colours[0] = vec4(0., 0., 1., 1.);
     colours[1] = vec4(1., 1., 0., 1.);
     colours[2] = vec4(1., 0., 0., 1.);
 
-    h = clamp(h, 0, 16);
-    if(h>8) {
-        return mix(colours[1], colours[2], (h-8)/8);
+    float halfrange = maxrange / 2.0;
+    h = clamp(h, 0, maxrange);
+    if(h > halfrange) {
+        return mix(colours[1], colours[2], (h-halfrange)/halfrange);
     }
     else {
-        return mix(colours[0], colours[1], h/8);
+        return mix(colours[0], colours[1], h/halfrange);
     }
 }
 
 vec4 textureAF(sampler2D texSampler, vec2 uv) {
 
-    // calculate subtexture boundaries for clamping
+    // calculate subtexture boundaries for mirroring
     // atlas is 256x256 with 16x16 textures (16 textures per row/column)
     const float subtexSize = 1.0/16.0; // each subtexture is 1/16 of atlas
     const float texelSize = 1.0/256.0; // size of one texel in normalized coords
@@ -58,12 +70,12 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
 
     // calculate anisotropy ratio and adapt sample count
     float anisotropy = max(M/m, 1.0);
-    float sampleCount = min(aniso, ceil(anisotropy));
+    float sampleCount = min(ANISO_LEVEL, ceil(anisotropy));
     
     // debug mode: return anisotropy visualization
-    if (debugAniso != 0) {
-        vec4 baseColor = texture(texSampler, clamp(uv, subtexMin, subtexMax));
-        vec4 anisoColor = mapAniso(anisotropy);
+    if (DEBUG_ANISO != 0) {
+        vec4 baseColor = texture(texSampler, mirror(uv, subtexMin, subtexMax));
+        vec4 anisoColor = mapAniso(anisotropy, 256.0);
         return mix(anisoColor, baseColor, 0.4);
     }
     
@@ -75,7 +87,7 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
     vec4 c = vec4(0.0);
     for (float i = -samplesHalf + 0.5; i < samplesHalf; i++) {
         vec2 sampleUV = uv + ADivSamples * i;
-        sampleUV = clamp(sampleUV, subtexMin, subtexMax);
+        sampleUV = mirror(sampleUV, subtexMin, subtexMax);
         vec4 colorSample = textureLod(texSampler, sampleUV, lod);
         
         c.rgb += colorSample.rgb * colorSample.a;
@@ -100,13 +112,13 @@ uniform sampler2D blockTexture;
 
 void main() {
     vec4 blockColour;
-    if (aniso == 0.0) {
-        // no anisotropic filtering, use regular texture lookup
-        blockColour = texture(blockTexture, texCoords);
-    } else {
-        // use anisotropic filtering
-        blockColour = textureAF(blockTexture, texCoords);
-    }
+#if ANISO_LEVEL == 0
+    // no anisotropic filtering, use regular texture lookup
+    blockColour = texture(blockTexture, texCoords);
+#else
+    // use anisotropic filtering
+    blockColour = textureAF(blockTexture, texCoords);
+#endif
     float ratio = getFog(vertexDist);
     // extract skylight, 0 to 15
 
