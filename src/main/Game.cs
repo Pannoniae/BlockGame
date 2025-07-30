@@ -268,7 +268,7 @@ public partial class Game {
     private static void runCallback() {
         profiler.startFrame();
         
-        profiler.section(ProfileSection.Events);
+        profiler.section(ProfileSectionName.Events);
         window.DoEvents();
         
         if (!window.IsClosing) {
@@ -277,7 +277,7 @@ public partial class Game {
 
         if (!window.IsClosing) {
             window.DoRender();
-            profiler.section(ProfileSection.Swap);
+            profiler.section(ProfileSectionName.Swap);
             window.SwapBuffers();
             //GlfwWindow
             //GL.Finish();
@@ -1084,7 +1084,7 @@ public partial class Game {
         accumTime += dt;
         //var i = 0;
         if (!noUpdate) {
-            profiler.section(ProfileSection.Logic);
+            profiler.section(ProfileSectionName.Logic);
             while (accumTime >= fixeddt) {
                 update(fixeddt);
                 t += fixeddt;
@@ -1114,7 +1114,7 @@ public partial class Game {
             Console.Out.WriteLine("Missed a frame!");
         }*/
         
-        profiler.section(ProfileSection.Other);
+        profiler.section(ProfileSectionName.Other);
         // consume main thread actions
         while (mainThreadQueue.TryTake(out var action)) {
             action();
@@ -1151,7 +1151,7 @@ public partial class Game {
         
         GL.Enable(EnableCap.DepthTest);
         
-        profiler.section(ProfileSection.World3D);
+        profiler.section(ProfileSectionName.World3D);
         if (currentScreen == Screen.GAME_SCREEN) {
             fontLoader.renderer3D.begin();
         }
@@ -1163,7 +1163,7 @@ public partial class Game {
             fontLoader.renderer3D.end();
         }
 
-        profiler.section(ProfileSection.PostFX);
+        profiler.section(ProfileSectionName.PostFX);
         if (Settings.instance.framebufferEffects) {
             var ssaaWidth = width * Settings.instance.effectiveScale;
             var ssaaHeight = height * Settings.instance.effectiveScale;
@@ -1207,7 +1207,7 @@ public partial class Game {
         // for GUI, no depth test
         //GD.BlendingEnabled = true;
         
-        profiler.section(ProfileSection.GUI);
+        profiler.section(ProfileSectionName.GUI);
         graphics.mainBatch.Begin();
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
 

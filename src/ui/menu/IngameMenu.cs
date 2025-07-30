@@ -184,18 +184,9 @@ public class IngameMenu : Menu, IDisposable {
             float currentY = graphY + GRAPH_HEIGHT;
 
             // Draw each section as a stacked segment
-            var sections = new[] {
-                ProfileSection.Events,
-                ProfileSection.Logic,
-                ProfileSection.World3D,
-                ProfileSection.PostFX,
-                ProfileSection.GUI,
-                ProfileSection.Swap,
-                ProfileSection.Other
-            };
 
-            foreach (var section in sections) {
-                float sectionTime = profile.getTime(section);
+            for (int s = 0; s < ProfileSection.SECTION_COUNT; s++) {
+                float sectionTime = profile.getTime((ProfileSectionName)s);
                 if (sectionTime <= 0) continue;
 
                 float segmentHeight = (sectionTime / maxFrametime) * GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER;
@@ -204,7 +195,7 @@ public class IngameMenu : Menu, IDisposable {
                 // Draw segment
                 gui.tb.Draw(gui.colourTexture,
                     new System.Drawing.RectangleF(x, currentY, barWidth, segmentHeight),
-                    ProfileData.getColour(section));
+                    ProfileData.getColour((ProfileSectionName)s));
             }
         }
         
@@ -213,25 +204,16 @@ public class IngameMenu : Menu, IDisposable {
     }
     
     private void DrawSegmentedLegend(GUI gui, float legendX, float legendY) {
-        var sections = new[] {
-            ProfileSection.Events,
-            ProfileSection.Logic,
-            ProfileSection.World3D,
-            ProfileSection.PostFX,
-            ProfileSection.GUI,
-            ProfileSection.Swap,
-            ProfileSection.Other
-        };
         
         float yOffset = 10;
-        foreach (var section in sections) {
+        for (int i = 0; i < ProfileSection.SECTION_COUNT; i++) {
             // Draw color square
             gui.tb.Draw(gui.colourTexture,
                 new System.Drawing.RectangleF(legendX, legendY + yOffset, 8, 8),
-                ProfileData.getColour(section));
+                ProfileData.getColour((ProfileSectionName)i));
                 
             // Draw label
-            gui.drawStringThin(Profiler.getSectionName(section),
+            gui.drawStringThin(Profiler.getSectionName((ProfileSectionName)i),
                 new Vector2(legendX + 12, legendY + yOffset - 16),
                 new Color4b(200, 200, 200));
                 
