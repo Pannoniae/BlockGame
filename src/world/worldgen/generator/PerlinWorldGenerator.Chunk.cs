@@ -75,7 +75,7 @@ public partial class PerlinWorldGenerator {
         // get the noise
         getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
             LOW_FREQUENCY, 8, 2f);
-        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY * Y_DIVIDER_INV,
+        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
             HIGH_FREQUENCY, 8, 2f);
 
 
@@ -143,8 +143,8 @@ public partial class PerlinWorldGenerator {
 
                     // only sample if actually required
 
-                    // combine the two
-                    float density = low + (high - low) * selector;
+                    // combine the two with the ratio selector
+                    float density = lerp(low, high, selector);
                     density -= airBias;
 
                     // store the value in the buffer

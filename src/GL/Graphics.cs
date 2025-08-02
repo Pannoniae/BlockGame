@@ -28,6 +28,7 @@ public class Graphics {
     public readonly Silk.NET.OpenGL.GL GL;
 
     private readonly int[] viewportParams = new int[4]; // x, y, width, height
+    private int currentViewportX, currentViewportY, currentViewportWidth, currentViewportHeight;
 
     private int vao;
     public bool fullbright;
@@ -51,12 +52,23 @@ public class Graphics {
         GL.ClearColor(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
     }
 
+    public void setViewport(int x, int y, int width, int height) {
+        GL.Viewport(x, y, (uint)width, (uint)height);
+        currentViewportX = x;
+        currentViewportY = y;
+        currentViewportWidth = width;
+        currentViewportHeight = height;
+    }
+
     public void saveViewport() {
-        GL.GetInteger(GLEnum.Viewport, viewportParams);
+        viewportParams[0] = currentViewportX;
+        viewportParams[1] = currentViewportY;
+        viewportParams[2] = currentViewportWidth;
+        viewportParams[3] = currentViewportHeight;
     }
 
     public void restoreViewport() {
-        GL.Viewport(viewportParams[0], viewportParams[1], (uint)viewportParams[2], (uint)viewportParams[3]);
+        setViewport(viewportParams[0], viewportParams[1], viewportParams[2], viewportParams[3]);
     }
 
     public void saveVAO() {
@@ -68,7 +80,7 @@ public class Graphics {
     }
 
     public void resize(Vector2D<int> size) {
-        GL.Viewport(0, 0, (uint)size.X, (uint)size.Y);
+        setViewport(0, 0, size.X, size.Y);
         var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
 
         batchShader.World = Matrix4x4.Identity;

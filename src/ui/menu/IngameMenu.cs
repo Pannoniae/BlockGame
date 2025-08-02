@@ -232,8 +232,6 @@ public class IngameMenu : Menu, IDisposable {
     
     public void UpdateProfileHistory(ProfileData profileData) {
         profileHistory[frametimeHistoryIndex] = profileData;
-        // Also update frametime history for compatibility with existing graph
-        //UpdateFrametimeHistory(profileData.TotalTime);
     }
     
     public void ToggleSegmentedMode() {

@@ -1,3 +1,4 @@
+using BlockGame.id;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
@@ -501,22 +502,33 @@ public partial class World {
         // for each chunk in the area...
         for (int chunkX = chunkX0; chunkX <= chunkX1; chunkX++) {
             for (int chunkZ = chunkZ0; chunkZ <= chunkZ1; chunkZ++) {
-                var succ = getChunkMaybe(chunkX, chunkZ, out var chunk);
+                var succ = getChunkMaybe(new ChunkCoord(chunkX, chunkZ), out Chunk? chunk);
                 if (!succ) {
                     continue; // no chunk in this area for some reason??
                 }
 
                 // calculate intersection of the search area with this chunk
-                int localX0 = Math.Max(x0, chunkX << 4) & 0xF;
-                int localX1 = Math.Min(x1, ((chunkX + 1) << 4) - 1) & 0xF;
-                int localZ0 = Math.Max(z0, chunkZ << 4) & 0xF;
-                int localZ1 = Math.Min(z1, ((chunkZ + 1) << 4) - 1) & 0xF;
+                int chunkMinX = chunkX << 4;
+                int chunkMaxX = ((chunkX + 1) << 4) - 1;
+                int chunkMinZ = chunkZ << 4;
+                int chunkMaxZ = ((chunkZ + 1) << 4) - 1;
+                
+                // check if there's actually an intersection
+                if (x1 < chunkMinX || x0 > chunkMaxX || z1 < chunkMinZ || z0 > chunkMaxZ) {
+                    continue; // no intersection with this chunk
+                }
+                
+                // calculate local coordinates within the chunk
+                int localX0 = Math.Max(x0, chunkMinX) & 0xF;
+                int localX1 = Math.Min(x1, chunkMaxX) & 0xF;
+                int localZ0 = Math.Max(z0, chunkMinZ) & 0xF;
+                int localZ1 = Math.Min(z1, chunkMaxZ) & 0xF;
 
                 // ...check this chunk's portion
                 for (int x = localX0; x <= localX1; x++) {
                     for (int y = y0; y <= y1; y++) {
                         for (int z = localZ0; z <= localZ1; z++) {
-                            if (chunk.getBlock(x, y, z) == Block.WATER.id) {
+                            if (chunk!.getBlock(x, y, z) == Blocks.WATER) {
                                 return true;
                             }
                         }

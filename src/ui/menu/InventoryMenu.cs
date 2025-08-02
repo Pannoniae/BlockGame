@@ -14,7 +14,7 @@ public class InventoryMenu : Menu {
     public const int cols = 5;
 
     public const int invOffsetY = 20;
-    public const int textOffsetY = 4;
+    public const int textOffsetY = 2;
     public const int invOffsetX = 4;
 
     public ItemSlot[] slots = new ItemSlot[rows * cols];

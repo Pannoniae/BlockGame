@@ -59,7 +59,9 @@ public class GUI {
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
     private static readonly Color4b bgGray = Color4b.DarkGray;
-    private const float SCROLL_SPEED = 32.0f; // pixels per second
+    
+    /** pixels per second */
+    private const float SCROLL_SPEED = 32.0f; 
 
     public GUI() {
         GL = Game.GL;
@@ -645,7 +647,7 @@ public class GUI {
         var spI = CollectionsMarshal.AsSpan(guiBlockI);
         buffer.upload(sp, spI);
         var sSize = size * guiScale;
-        Game.GL.Viewport(x, Game.height - y - sSize, (uint)sSize, (uint)sSize);
+        Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
         // status update: it doesn't segfault anymore because we hacked the trippygl layer to reset their expectations!
         // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer

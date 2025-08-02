@@ -11,7 +11,7 @@ See above, WSL.
 ## Architecture Overview
 
 BlockGame is a 3D block-based game (+engine) written in C# targeting .NET 10.0 preview. The architecture follows a layered, event-driven design optimized for real-time 3D rendering.
-Consult @GUIDE.MD on coding stuff and architecture stuff. (FYI)
+Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI)
 
 ### Core Systems
 
@@ -85,7 +85,7 @@ lib/             # Custom libraries and dependencies
 
 TODO, indicating a design that could support modding through reflection or similar mechanisms.
 
-## Important Notes
+## THE INCREDIBLY IMPORTANT PARTS
 
 - This is a .NET 10.0 preview project using latest C# language features
 - Unsafe code is enabled for performance-critical operations
@@ -93,9 +93,9 @@ TODO, indicating a design that could support modding through reflection or simil
 - Strong focus on performance with custom memory management and pooling
 - Uses event-driven architecture for decoupled system communication
 
-## Code Style Guidelines
 - Java-style naming conventions (PascalCase for types, camelCase for variables)
-- Generally short names and abbreviations, prefer brevity to clarity, e.g. `pos`, `xx`, `xp`, `c00`, `sp`, `title`
+- Generally short names and abbreviations, prefer brevity to expressivity, e.g. `pos`, `xx`, `xp`, `c00`, `sp`, `title`. This is so the code doesn't get cluttered. You can leave a comment to explain it fully.
 - Comment the "why" and the "how", not the "what" - leave the tutorial-level comments out of the codebase. Prefer starting with lowercase for one-line comments.
 - Use /** (Java)-style doc comments instead of ///.
 - When designing features, aim for simplicity, minimalism and performance. When they conflict, prefer performance.
+- WHEN IN DOUBT, ASK. REFUSE TO DO ANYTHING UNLESS THE TASK IS CLEAR.
