@@ -36,11 +36,11 @@ public partial class Shader {
         }
 
         // Load and preprocess the shaders
-        this.vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
-        this.fragmentShader = preprocess(fragmentShaderPath, File.ReadAllText(fragmentShaderPath));
+        vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
+        fragmentShader = preprocess(fragmentShaderPath, File.ReadAllText(fragmentShaderPath));
 
-        var vert = load(this.vertexShader, ShaderType.VertexShader);
-        var frag = load(this.fragmentShader, ShaderType.FragmentShader);
+        var vert = load(vertexShader, ShaderType.VertexShader);
+        var frag = load(fragmentShader, ShaderType.FragmentShader);
         link(vert, frag);
     }
 

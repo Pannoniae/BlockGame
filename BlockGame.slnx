@@ -15,4 +15,5 @@
   <Project Path="lib/TrippyGL.Fonts/TrippyGL.Fonts.csproj" />
   <Project Path="lib/TrippyGL.ImageSharp/TrippyGL.ImageSharp.csproj" />
   <Project Path="lib/TrippyGL/TrippyGL.csproj" />
+  <Project Path="NBTTool\NBTTool.csproj" Type="Classic C#" />
 </Solution>
