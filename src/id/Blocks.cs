@@ -48,7 +48,8 @@ public class Blocks {
     public const ushort DIAMOND_ORE = 44;
     public const ushort GOLD_ORE = 45;
     public const ushort IRON_ORE = 46;
-    public const ushort TALL_GRASS = 47;
-    public const ushort SHORT_GRASS = 48;
+    public const ushort COAL_ORE = 47;
+    public const ushort TALL_GRASS = 48;
+    public const ushort SHORT_GRASS = 49;
     //public const ushort TORCH = 45;
 }

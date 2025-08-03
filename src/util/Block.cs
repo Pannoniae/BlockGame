@@ -161,6 +161,7 @@ public class Block {
     public static Block DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore", BlockModel.makeCube(cubeUVs(15, 0))));
     public static Block GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore", BlockModel.makeCube(cubeUVs(0, 1))));
     public static Block IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore", BlockModel.makeCube(cubeUVs(1, 1))));
+    public static Block COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore", BlockModel.makeCube(cubeUVs(4, 1))));
 
     //public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
 
