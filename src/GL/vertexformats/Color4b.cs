@@ -156,6 +156,12 @@ public struct Color4b : IEquatable<Color4b> {
 
     public static Color4b operator *(Color4b color, float scale) => MultiplyIncludeAlpha(color, scale);
     public static Color4b operator *(float scale, Color4b color) => MultiplyIncludeAlpha(color, scale);
+    
+    public static Color4b operator *(Color4b color1, Color4b color2) => new(
+        (byte)Math.Clamp(color1.R * color2.R / 255, 0, 255),
+        (byte)Math.Clamp(color1.G * color2.G / 255, 0, 255),
+        (byte)Math.Clamp(color1.B * color2.B / 255, 0, 255),
+        (byte)Math.Clamp(color1.A * color2.A / 255, 0, 255));
 
     public static implicit operator Vector4(Color4b color) => color.ToVector4();
     public static implicit operator Color4b(Vector4 vector) => new Color4b(vector);

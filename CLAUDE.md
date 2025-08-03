@@ -3,10 +3,11 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ### Building and Running
-Don't run the project, you are in WSL.
+Use `dotnet build BlockGame.slnx` to build the entire solution.
+Use `dotnet run --project BlockGame.csproj` to run the main project.
 
 ### Testing
-See above, WSL.
+No specific test framework configured yet.
 
 ## Architecture Overview
 
@@ -40,6 +41,8 @@ Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI)
 - Blocks are defined in `src/id/Blocks.cs` with static registration
 - Block models and rendering data in `src/util/Block.cs` and `src/util/BlockModel.cs`
 - Texture atlasing system in `src/util/TextureManager.cs`
+
+**Hashing**: Use `XHash` for deterministic hashing instead of built-in GetHashCode()
 
 **World Generation**
 

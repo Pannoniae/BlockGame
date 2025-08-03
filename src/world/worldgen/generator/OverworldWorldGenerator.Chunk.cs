@@ -1,3 +1,4 @@
+using BlockGame.id;
 using BlockGame.util;
 
 namespace BlockGame;
@@ -58,19 +59,19 @@ public partial class OverworldWorldGenerator {
                 // replace top layers with dirt
                 var amt = getNoise(auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
                 for (int yy = height - 1; yy > height - 1 - amt; yy--) {
-                    chunk.setBlockFast(x, yy, z, Block.DIRT.id);
+                    chunk.setBlockFast(x, yy, z, Blocks.DIRT);
                 }
 
                 // water if low
                 if (height < WATER_LEVEL - 1) {
                     for (int y2 = height; y2 < WATER_LEVEL; y2++) {
-                        chunk.setBlockFast(x, y2, z, Block.WATER.id);
+                        chunk.setBlockFast(x, y2, z, Blocks.WATER);
                     }
                     // put sand on the lake floors
                     chunk.setBlockFast(x, height, z, getNoise2(worldPos.X, worldPos.Z) > 0 ? Block.SAND.id : Block.DIRT.id);
                 }
                 else {
-                    chunk.setBlockFast(x, height, z, Block.GRASS.id);
+                    chunk.setBlockFast(x, height, z, Blocks.GRASS);
                 }
             }
         }

@@ -1,3 +1,4 @@
+using BlockGame.id;
 using BlockGame.util;
 
 namespace BlockGame;
@@ -13,22 +14,22 @@ public partial class SimpleWorldGenerator {
                 // transform to the range -25 to 25, add 80 for 50 - 105
                 var height = getNoise(worldPos.X, worldPos.Z) * 25 + 80;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlock(x, y, z, Block.DIRT.id);
+                    chunk.setBlock(x, y, z, Blocks.DIRT);
                 }
 
                 // water if low
                 if (height < 64) {
-                    chunk.setBlock(x, (int)height, z, Block.DIRT.id);
+                    chunk.setBlock(x, (int)height, z, Blocks.DIRT);
                     for (int y2 = (int)Math.Round(height); y2 <= 64; y2++) {
-                        chunk.setBlock(x, y2, z, Block.WATER.id);
+                        chunk.setBlock(x, y2, z, Blocks.WATER);
                     }
                     // put sand on the lake floors
                     if (getNoise2(x, z) > 0) {
-                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Block.SAND.id);
+                        chunk.setBlock(x, (int)Math.Round(height) - 1, z, Blocks.SAND);
                     }
                 }
                 else {
-                    chunk.setBlock(x, (int)height, z, Block.GRASS.id);
+                    chunk.setBlock(x, (int)height, z, Blocks.GRASS);
                 }
             }
         }
@@ -64,7 +65,7 @@ public partial class SimpleWorldGenerator {
     private void placeTree(int x, int y, int z) {
         // tree
         for (int i = 0; i < 7; i++) {
-            world.setBlock(x, y + i, z, Block.LOG.id);
+            world.setBlock(x, y + i, z, Blocks.LOG);
         }
         // leaves, thick
         for (int x1 = -2; x1 <= 2; x1++) {
@@ -74,7 +75,7 @@ public partial class SimpleWorldGenerator {
                     continue;
                 }
                 for (int y1 = 4; y1 < 6; y1++) {
-                    world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
+                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES);
                 }
             }
         }
@@ -86,7 +87,7 @@ public partial class SimpleWorldGenerator {
                     if (x2 == 0 && z2 == 0 && y2 == 6) {
                         continue;
                     }
-                    world.setBlock(x + x2, y + y2, z + z2, Block.LEAVES.id);
+                    world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES);
                 }
             }
         }

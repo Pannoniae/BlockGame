@@ -507,9 +507,7 @@ public readonly record struct ChunkCoord(int x, int z) {
     }
 
     public override int GetHashCode() {
-        unchecked {
-            return x * 73856093 ^ z * 19349663;
-        }
+        return XHash.hash(x, z);
     }
 }
 
@@ -519,9 +517,7 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
     public readonly int z = z;
     
     public override int GetHashCode() {
-        unchecked {
-            return x * 73856093 ^ z * 19349663;
-        }
+        return XHash.hash(x, z);
     }
 }
 
@@ -530,9 +526,7 @@ public readonly record struct RegionCoord(int x, int z) {
     public readonly int z = z;
 
     public override int GetHashCode() {
-        unchecked {
-            return x * 73856093 ^ z * 19349663;
-        }
+        return XHash.hash(x, z);
     }
 }
 

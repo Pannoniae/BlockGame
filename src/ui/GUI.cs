@@ -59,6 +59,7 @@ public class GUI {
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
     private static readonly Color4b bgGray = Color4b.DarkGray;
+    private static readonly Color4b skyc = Color4b.CornflowerBlue;
     
     /** pixels per second */
     private const float SCROLL_SPEED = 32.0f; 
@@ -242,10 +243,10 @@ public class GUI {
         var xCount = (int)Math.Ceiling(Game.width / blockSize) + 2; // +2 for smooth scrolling
         var yCount = (int)Math.Ceiling(Game.height / blockSize) + 2;
 
-
         // Get starting world coordinates
+        // Start 3 blocks above the grass layer so grass is visible at top of screen
         int startX = (int)Math.Floor(backgroundScrollOffset.X / blockSize);
-        int startY = (int)Math.Floor(backgroundScrollOffset.Y / blockSize);
+        int startY = (int)Math.Floor(backgroundScrollOffset.Y / blockSize) - 3;
 
         // Calculate fractional offset for smooth scrolling
         float offsetX = backgroundScrollOffset.X % blockSize;
@@ -253,67 +254,83 @@ public class GUI {
 
         Span<ushort> ores = [Block.AMBER_ORE.id, Block.RED_ORE.id, Block.EMERALD_ORE.id, Block.DIAMOND_ORE.id, Block.TITANIUM_ORE.id, Block.AMETHYST_ORE.id];
 
-        // Draw ores
+        // Draw layered background
         for (int x = 0; x < xCount; x++) {
             for (int y = 0; y < yCount; y++) {
-                // Calculate screen position
+                // screen position
                 float tileLeft = x * blockSize - offsetX;
                 float tileTop = y * blockSize - offsetY;
 
-                // Calculate absolute world position
+                // absolute world position
                 int worldX = startX + x;
                 int worldY = startY + y;
-
-                // Check if we should place an ore here (absolute world coords)
-                if (shouldPlaceOre(worldX, worldY)) {
-                    int oreIndex = Math.Abs((worldX * 73856093) ^ (worldY * 19349663)) % ores.Length;
-                    ushort oreId = ores[oreIndex];
-
-                    // Get ore texcoords
-                    var block = Block.get(oreId);
-                    var oreTexCoords_ = Block.texCoords(block.model!.faces[0].min);
-                    var oreTexCoordsMax_ = Block.texCoords(block.model!.faces[0].max);
-                    var oreTexCoords = new Vector2(oreTexCoords_.X, oreTexCoords_.Y);
-                    var oreTexCoordsMax = new Vector2(oreTexCoordsMax_.X, oreTexCoordsMax_.Y);
-
-                    tb.DrawRaw(Game.textureManager.blockTextureGUI,
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, oreTexCoords),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(oreTexCoordsMax.X, oreTexCoords.Y)),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, oreTexCoordsMax),
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray, new Vector2(oreTexCoords.X, oreTexCoordsMax.Y)));
+                
+                
+                ushort blockId = getBlockTypeForDepth(worldX, worldY);
+                
+                // Skip drawing air blocks
+                if (blockId == Block.AIR.id) {
+                    
+                    // draw gray rectangle for air blocks
+                    tb.DrawRaw(colourTexture,
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray * skyc, new Vector2(0, 0)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray * skyc, new Vector2(1, 0)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray * skyc, new Vector2(1, 1)),
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray * skyc, new Vector2(0, 1)));
+                    
+                    continue;
                 }
-                else {
-                    // Draw stone
-                    var block = Block.get(Block.STONE.id);
-                    var texCoords_ = Block.texCoords(block.model!.faces[0].min);
-                    var texCoordsMax_ = Block.texCoords(block.model!.faces[0].max);
-                    var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
-                    var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
-                    tb.DrawRaw(Game.textureManager.blockTextureGUI,
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, texCoords),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, texCoordsMax),
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray, new Vector2(texCoords.X, texCoordsMax.Y)));
+                
+                // If it's in the stone layer, check for ores
+                if (blockId == Block.STONE.id && shouldPlaceOre(worldX, worldY)) {
+                    int oreIndex = XHash.hashRange(worldX, worldY, ores.Length);
+                    blockId = ores[oreIndex];
                 }
+                
+                var block = Block.get(blockId);
+                var texCoords_ = Block.texCoords(block.model!.faces[0].min);
+                var texCoordsMax_ = Block.texCoords(block.model!.faces[0].max);
+                var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
+                var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
+
+                tb.DrawRaw(Game.textureManager.blockTextureGUI,
+                    new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, texCoords),
+                    new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
+                    new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, texCoordsMax),
+                    new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray, new Vector2(texCoords.X, texCoordsMax.Y)));
             }
         }
     }
 
-    // Add a hash-based random placement helper
     private bool shouldPlaceOre(int worldX, int worldZ) {
-        // Jenkins one-at-a-time hash
-        uint hash = 0;
-        hash += (uint)worldX;
-        hash += hash << 10;
-        hash ^= hash >> 6;
-        hash += (uint)worldZ;
-        hash += hash << 10;
-        hash ^= hash >> 6;
-        hash += hash << 3;
-        hash ^= hash >> 11;
+        return XHash.hashRange(worldX, worldZ, 20) == 0; // 5% chance
+    }
 
-        // 5% chance for an ore
-        return hash % 10 == 0;
+    // determine block type based on depth (y coordinate)
+    private ushort getBlockTypeForDepth(int worldX, int worldY) {
+        // air above surface (y < 0)
+        if (worldY < 0) {
+            return Block.AIR.id;
+        }
+        
+        // surface layer (y = 0) is grass
+        if (worldY == 0) {
+            return Block.GRASS.id;
+        }
+        
+        // dirt percentage increases linearly from depth 1 to 7
+        if (worldY >= 1 && worldY <= 7) {
+            // calculate dirt percentage: 100% at depth 1, decreasing to ~15% at depth 7
+            float dirtPercentage = 1.0f - ((worldY - 1) / 6.0f * 0.85f);
+            float randomValue = XHash.hashFloat(worldX, worldY);
+            
+            if (randomValue < dirtPercentage) {
+                return Block.DIRT.id;
+            }
+        }
+        
+        // what isn't dirt is stone
+        return Block.STONE.id;
     }
 
 
