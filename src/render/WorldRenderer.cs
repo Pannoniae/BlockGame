@@ -45,6 +45,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int fogEnd;
     public int fogColour;
     public int skyColour;
+    public int uSkyDarken;
     
 
     public int waterBlockTexture;
@@ -54,6 +55,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int waterFogEnd;
     public int waterFogColour;
     public int waterSkyColour;
+    public int wateruSkyDarken;
 
     public static BoundingFrustum frustum;
 
@@ -87,6 +89,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
         fogColour = worldShader.getUniformLocation(nameof(fogColour));
         skyColour = worldShader.getUniformLocation(nameof(skyColour));
+        uSkyDarken = worldShader.getUniformLocation(nameof(uSkyDarken));
         //drawDistance = shader.getUniformLocation(nameof(drawDistance));
         
 
@@ -97,6 +100,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
         waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
         waterSkyColour = waterShader.getUniformLocation(nameof(skyColour));
+        wateruSkyDarken = waterShader.getUniformLocation(nameof(uSkyDarken));
         uChunkPos = worldShader.getUniformLocation("uChunkPos");
         dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
         wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
@@ -116,9 +120,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterSkyColour, defaultClearColour);
 
         initBlockOutline();
-        
-        // Initialize EWA filter uniforms
-        
 
         //setUniforms();
     }
@@ -214,6 +215,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             skyColour = worldShader.getUniformLocation(nameof(skyColour));
+            uSkyDarken = worldShader.getUniformLocation(nameof(uSkyDarken));
         }
     }
 
@@ -257,11 +259,17 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader.setUniform(waterFogStart, 24f);
         }
         else {
-            // set fog colour to default
-            worldShader.setUniform(fogColour, defaultFogColour);
-            waterShader.setUniform(waterFogColour, defaultFogColour);
-            worldShader.setUniform(skyColour, defaultClearColour);
-            waterShader.setUniform(waterSkyColour, defaultClearColour);
+            // use time-based colors
+            var currentFogColour = world.getFogColour(world.worldTick);
+            var currentSkyColour = world.getSkyColour(world.worldTick);
+            var currentSkyDarken = world.getSkyDarken(world.worldTick);
+            
+            worldShader.setUniform(fogColour, currentFogColour);
+            waterShader.setUniform(waterFogColour, currentFogColour);
+            worldShader.setUniform(skyColour, currentSkyColour);
+            waterShader.setUniform(waterSkyColour, currentSkyColour);
+            worldShader.setUniform(uSkyDarken, currentSkyDarken);
+            waterShader.setUniform(wateruSkyDarken, currentSkyDarken);
         }
     }
 
@@ -391,14 +399,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var sky = new Vector3(0, 8, 0);
         const int skySize = 512;
 
-        // slightly bluer than the default clear colour
-        var skyColour = new Color(100, 180, 255);
-        // deep blue
-        var underSkyColour = new Color(110, 175, 245);
+        // get time-based colors
+        var horizonColour = world.getHorizonColour(world.worldTick).toColor();
+        var skyColour = world.getSkyColour(world.worldTick).toColor();
+        // slightly darker for undersky
+        var underSkyColour = new Color(skyColour.R * 0.8f, skyColour.G * 0.8f, skyColour.B * 0.8f);
 
         // Enable fog for sky rendering
+        var currentFogColour = world.getFogColour(world.worldTick);
         idc.enableFog(true);
-        idc.fogColour(defaultClearColour.ToVector4());
+        idc.fogColour(horizonColour.toVec4());
 
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
         // cap rd to 12 max
@@ -440,39 +450,48 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //GL.Enable(EnableCap.CullFace);
 
         // Render sun
-        var sunPos = new Vector3(16, 0, 0);
-        var sunPosRotated = sunPos;
-        var sunSize = 1f;
+        float dayPercent = world.getDayPercentage(world.worldTick);
+        
+        
+        float sunAngle = dayPercent * -MathF.PI * 2; // -π/2 to π/2
+        
+        var sunDistance = 64f;
+        const float sunSize = 2f;
 
         idt.setMVP(viewProj);
         idt.setMV(modelView);
+        //idt.enableFog(false); // disable fog for sun
+        // bind the texture
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.sunTexture.handle);
 
-        // bind the texture
+        var mat = new MatrixStack();
+        mat.reversed();
+        mat.rotate(Meth.rad2deg(sunAngle), 1, 0, 0); // rotate around X axis
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
-        idc.begin(PrimitiveType.Triangles);
-        idt.addVertex(
-            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z - sunSize,
-                0f, 0f));
-        idt.addVertex(
-            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z + sunSize,
-                0f, 1f));
-        idt.addVertex(
-            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z + sunSize,
-                1f, 1f));
-        idt.addVertex(
-            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z - sunSize,
-                1f, 0f));
-        idt.addVertex(
-            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y - sunSize, sunPosRotated.Z - sunSize,
-                0f, 0f));
-        idt.addVertex(
-            new BlockVertexTinted(sunPosRotated.X, sunPosRotated.Y + sunSize, sunPosRotated.Z + sunSize,
-                1f, 1f));
+        idt.begin(PrimitiveType.Quads);
+        
+        // create billboard quad vertices that always face the camera
+        var v1 = new Vector3(-sunSize, -sunSize, sunDistance);
+        var v2 = new Vector3(sunSize, -sunSize, sunDistance);
+        var v3 = new Vector3(sunSize, sunSize, sunDistance);
+        var v4 = new Vector3(-sunSize, sunSize, sunDistance);
+
+        v1 = Vector3.Transform(v1, mat.top);
+        v2 = Vector3.Transform(v2, mat.top);
+        v3 = Vector3.Transform(v3, mat.top);
+        v4 = Vector3.Transform(v4, mat.top);
+        
+        idt.addVertex(new BlockVertexTinted(v1.X, v1.Y, v1.Z, 0f, 0f));
+        idt.addVertex(new BlockVertexTinted(v2.X, v2.Y, v2.Z, 0f, 1f));
+        idt.addVertex(new BlockVertexTinted(v3.X, v3.Y, v3.Z, 1f, 1f));
+        idt.addVertex(new BlockVertexTinted(v4.X, v4.Y, v4.Z, 1f, 0f));
         idt.end();
+        
+        // TODO render moon!
+        
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
     }
@@ -784,6 +803,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
         var lightVal = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        
+        // apply darken
+        //var darken = Game.world.getSkyDarken(Game.world.worldTick);
+        //lightVal *= 1 - darken;
+        
         float tint = a[dir] * aoArray[ao];
         var ab = new Rgba32(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;

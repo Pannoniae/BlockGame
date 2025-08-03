@@ -1,3 +1,4 @@
+using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -53,6 +54,10 @@ public partial class World : IDisposable {
 
 
     public int worldTick;
+    /** how darker it is compared to full daylight */
+    public int skyDarken;
+    
+    public const int TICKS_PER_DAY = 72000;
 
     public XRandom random;
     private TimerAction saveWorld;
@@ -182,6 +187,112 @@ public partial class World : IDisposable {
         //genTerrainNoise();
         // separate loop so all data is there
         player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+    }
+
+    public int getBrightness(byte skylight, byte skyDarken) {
+        // apply sky darkening to skylight only
+        return  Math.Max(0, skylight - skyDarken);
+    }
+
+    public float getDayPercentage(int ticks) {
+        return (ticks % TICKS_PER_DAY) / (float)TICKS_PER_DAY;
+    }
+
+    public Color4b getHorizonColour(int ticks) {
+        float dayPercent = getDayPercentage(ticks);
+        
+        // 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
+        if (dayPercent < 0.1f) {
+            // sunrise
+            float t = dayPercent / 0.1f;
+            return Color4b.Lerp(new Color4b(15, 15, 40), new Color4b(135, 206, 235), t); // dark blue to day blue
+        }
+        else if (dayPercent < 0.5f) {
+            // day
+            return new Color4b(135, 206, 235); // sky blue
+        }
+        else if (dayPercent < 0.6f) {
+            // sunset
+            float t = (dayPercent - 0.5f) / 0.1f;
+            return Color4b.Lerp(new Color4b(135, 206, 235), new Color4b(15, 15, 40), t); // sky blue to night
+        }
+        else {
+            // night
+            return new Color4b(15, 15, 40); // dark blue
+        }
+    }
+
+    public Color4b getFogColour(int ticks) {
+        float dayPercent = getDayPercentage(ticks);
+        
+        // 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
+        if (dayPercent < 0.1f) {
+            // sunrise fog
+            float t = dayPercent / 0.1f;
+            return Color4b.Lerp(new Color4b(10, 10, 25), new Color4b(255, 255, 255), t);
+        }
+        else if (dayPercent < 0.5f) {
+            // day fog - light
+            return new Color4b(255, 255, 255);
+        }
+        else if (dayPercent < 0.6f) {
+            // sunset fog
+            float t = (dayPercent - 0.5f) / 0.1f;
+            return Color4b.Lerp(new Color4b(255, 255, 255), new Color4b(10, 10, 25), t);
+        }
+        else {
+            // night fog
+            return new Color4b(10, 10, 25);
+        }
+    }
+
+    public Color4b getSkyColour(int ticks) {
+        float dayPercent = getDayPercentage(ticks);
+        
+        // 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
+        if (dayPercent < 0.1f) {
+            // sunrise sky
+            float t = dayPercent / 0.1f;
+            return Color4b.Lerp(new Color4b(5, 5, 15), new Color4b(100, 180, 255), t);
+        }
+        else if (dayPercent < 0.5f) {
+            // day sky - bright blue
+            return new Color4b(100, 180, 255);
+        }
+        else if (dayPercent < 0.6f) {
+            // sunset sky
+            float t = (dayPercent - 0.5f) / 0.1f;
+            return Color4b.Lerp(new Color4b(100, 180, 255), new Color4b(5, 5, 15), t);
+        }
+        else {
+            // night sky
+            return new Color4b(5, 5, 15);
+        }
+    }
+
+    /** effective skylight */
+    public byte getSkyDarken(int ticks) {
+        float dayPercent = getDayPercentage(ticks);
+        
+        // remapped: 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
+        if (dayPercent < 0.1f) {
+            // sunrise - gradually getting brighter
+            float t = dayPercent / 0.1f;
+            return (byte)(11 * (1 - t)); // 11 to 0
+        }
+        else if (dayPercent < 0.5f) {
+            // day - full brightness
+            return 0;
+        }
+        else if (dayPercent < 0.6f) {
+            // sunset - gradually getting darker
+            float t = (dayPercent - 0.5f) / 0.1f;
+            return (byte)(11 * t); // 0 to 11
+        }
+        else {
+            // night - maximum darkness (11 levels down from 15)
+            return 11;
+        }
     }
 
 

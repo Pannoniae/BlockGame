@@ -1,5 +1,11 @@
+# Saves
 level/
+
+# Random debugging files
 debug/
+
+# Publish output
+publish/
 
 bin/
 obj/

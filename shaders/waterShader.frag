@@ -6,6 +6,7 @@ layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
 
 centroid in vec2 texCoords;
+flat in int skyDarken;
 in vec4 tint;
 in float vertexDist;
 
@@ -17,7 +18,10 @@ void main() {
     float ratio = getFog(vertexDist);
     // extract skylight, 0 to 15
 
-    colour = vec4(blockColour.rgb * tint.rgb, blockColour.a);
+    // apply skyDarken - reduce lighting based on day/night cycle
+    float darkenFactor = 1.0 - (skyDarken.x / 15.0);
+    vec3 darkenedTint = tint.rgb * darkenFactor;
+    colour = vec4(blockColour.rgb * darkenedTint, blockColour.a);
 
     if (colour.a <= 0) {
         discard;

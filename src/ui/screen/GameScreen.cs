@@ -31,6 +31,10 @@ public class GameScreen : Screen {
     private TimerAction updateDebugText;
     
     private UpdateMemoryThread umt;
+    
+    // time acceleration for day/night cycle testing
+    private float timeAcceleration = 1.0f;
+    private float targetTimeAcceleration = 1.0f;
 
 
     private bool disposed;
@@ -72,6 +76,34 @@ public class GameScreen : Screen {
         
         var world = Game.world;
         
+        // time control for day/night cycle testing
+        if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
+            // speed up time
+            targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 64.0f);
+            Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
+        }
+        else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
+            // slow down time
+            targetTimeAcceleration = Math.Max(targetTimeAcceleration / 2.0f, 0.25f);
+            Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
+        }
+        else {
+            targetTimeAcceleration = 1.0f; // reset to normal speed
+        }
+        
+        // smooth time acceleration transition
+        if (Math.Abs(timeAcceleration - targetTimeAcceleration) > 0.01f) {
+            timeAcceleration = Meth.lerp(timeAcceleration, targetTimeAcceleration, (float)(dt * 2.0)); // 2x lerp speed
+        } else {
+            timeAcceleration = targetTimeAcceleration;
+        }
+        
+        // apply time acceleration (frame-rate independent)
+        if (timeAcceleration != 1.0f) {
+            int additionalTicks = (int)((timeAcceleration - 1.0f) * dt * 60); // 60 TPS base
+            world.worldTick += additionalTicks;
+        }
+        
         // if user holds down alt + f10 for 5 seconds, crash the game lul
         if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) && Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
             MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
@@ -80,6 +112,7 @@ public class GameScreen : Screen {
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
         world.player.inputVector = new Vector3D(0, 0, 0);
+        
         if (!world.paused && !Game.lockingMouse) {
             if (currentMenu == INGAME_MENU) {
                 world.player.updateInput(dt);
@@ -337,6 +370,20 @@ public class GameScreen : Screen {
                 }
                 break;
             }
+            
+            // time control for day/night cycle testing
+            case Key.KeypadMultiply: {
+                // reset time speed
+                targetTimeAcceleration = 1.0f;
+                Console.Out.WriteLine("Time acceleration: 1x (normal)");
+                break;
+            }
+            case Key.KeypadDivide: {
+                // pause time
+                targetTimeAcceleration = 0.0f;
+                Console.Out.WriteLine("Time paused");
+                break;
+            }
 
         }
 
@@ -552,7 +599,9 @@ public class GameScreen : Screen {
     }
 
     public override void clear(double dt, double interp) {
-        Game.graphics.clearColor(WorldRenderer.defaultClearColour);
+        var world = Game.world;
+        var clearColour = world?.getHorizonColour(world.worldTick) ?? WorldRenderer.defaultClearColour;
+        Game.graphics.clearColor(clearColour);
         Game.GL.ClearDepth(1f);
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }

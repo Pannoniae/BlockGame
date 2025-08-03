@@ -54,7 +54,7 @@ public class PlayerRenderer {
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.handle);
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
-        WorldRenderer.meshBlockTinted(Block.get(handItem.block), ref vertices, ref indices, light);
+        WorldRenderer.meshBlockTinted(Block.get(handItem.block), ref vertices, ref indices, (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)));
         vao.bind();
         vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));
 

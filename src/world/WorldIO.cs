@@ -45,6 +45,7 @@ public class WorldIO {
         tag.addDouble("posX", world.player.position.X);
         tag.addDouble("posY", world.player.position.Y);
         tag.addDouble("posZ", world.player.position.Z);
+        tag.addInt("time", world.worldTick);
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
         Console.Out.WriteLine($"Saved world data to level/{world.name}/level.xnbt");
     }
@@ -132,6 +133,7 @@ public class WorldIO {
         world.player.position.X = tag.getDouble("posX");
         world.player.position.Y = tag.getDouble("posY");
         world.player.position.Z = tag.getDouble("posZ");
+        world.worldTick = tag.has("time") ? tag.getInt("time") : 0;
 
         world.player.prevPosition = world.player.position;
         return world;

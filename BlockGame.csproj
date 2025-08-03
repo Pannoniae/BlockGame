@@ -94,14 +94,17 @@
         <None Remove="lib\**"/>
         <None Remove="BlockGameTesting\**"/>
         <None Remove="NBTTool\**"/>
+        <None Remove="publish\**"/>
         
         <Compile Remove="lib\**"/>
         <Compile Remove="BlockGameTesting\**"/>
         <Compile Remove="NBTTool\**"/>
+        <Compile Remove="publish\**"/>
         
         <EmbeddedResource Remove="lib\**"/>
         <EmbeddedResource Remove="BlockGameTesting\**"/>
         <EmbeddedResource Remove="NBTTool\**"/>
+        <EmbeddedResource Remove="publish\**"/>
         
         
         <None Update="runtimes\linux-x64\native\libminiaudioex.so">

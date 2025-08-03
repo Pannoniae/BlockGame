@@ -3,11 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ### Building and Running
-Use `dotnet build BlockGame.slnx` to build the entire solution.
-Use `dotnet run --project BlockGame.csproj` to run the main project.
-
-### Testing
-No specific test framework configured yet.
+Use `dotnet build BlockGame.slnx -c Release` to build the entire solution in Release mode.
+Use `dotnet run --project BlockGame.csproj -c Release` to run the main project in Release mode.
 
 ## Architecture Overview
 

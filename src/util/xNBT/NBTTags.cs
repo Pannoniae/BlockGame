@@ -617,6 +617,10 @@ public class NBTCompound : NBTTag {
     public NBTTag get(string name) {
         return dict[name];
     }
+    
+    public bool has(string name) {
+        return dict.ContainsKey(name);
+    }
 
     public T get<T>(string name) where T : NBTTag {
         return (T)dict[name];
@@ -626,7 +630,6 @@ public class NBTCompound : NBTTag {
         StringBuilder str = new StringBuilder();
         str.Append(name + ":{");
 
-        string var3;
         foreach (string key in dict.Keys) {
             str.Append(key + ":" + dict[key] + ",");
         }

@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using BlockGame.GL.vertexformats;
 using Molten;
 using Silk.NET.Maths;
 using Plane = System.Numerics.Plane;
@@ -38,6 +39,38 @@ public static partial class Meth {
     }
     public static Vector3 toVec3(this Vector3F vec) {
         return new Vector3(vec.X, vec.Y, vec.Z);
+    }
+    
+    public static Vector4 toVec4(this Color4 color) {
+        return new Vector4(color.R, color.G, color.B, color.A);
+    }
+    
+    public static Vector4 toVec4(this Color color) {
+        return new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+    }
+    
+    public static Vector4 toVec4(this Color4b color) {
+        return new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+    }
+
+    public static Color4b to4b(this Color color) {
+        return new Color4b(color.R, color.G, color.B, color.A);
+    }
+    
+    public static Color4b to4b(this Color4 color) {
+        return new Color4b((byte)(color.R * 255), (byte)(color.G * 255), (byte)(color.B * 255), (byte)(color.A * 255));
+    }
+    
+    public static Color toColor(this Color4b color) {
+        return new Color(color.R, color.G, color.B, color.A);
+    }
+    
+    public static Color4 toColor4(this Color4b color) {
+        return new Color4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+    }
+    
+    public static Color4 toColor4(this Color color) {
+        return new Color4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
     }
 
     public static Vector3F toVec3F(this Vector3D vec) {

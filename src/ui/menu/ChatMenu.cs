@@ -200,6 +200,31 @@ public class ChatMenu : Menu {
                     Game.player.noClip = !Game.player.noClip;
                     addMessage("Noclip " + (Game.player.noClip ? "enabled" : "disabled"));
                     break;
+                case "time":
+                    if (args.Length == 1) {
+                        // display current time
+                        var currentTick = Game.world.worldTick;
+                        var dayPercent = Game.world.getDayPercentage(currentTick);
+                        var timeOfDay = (int)(dayPercent * World.TICKS_PER_DAY);
+                        addMessage($"The time is {timeOfDay} (day {currentTick / World.TICKS_PER_DAY})");
+                    }
+                    else if (args.Length == 3 && args[1] == "set") {
+                        // set time
+                        if (int.TryParse(args[2], out int newTime)) {
+                            Game.world.worldTick = newTime;
+                            addMessage($"Set time to {newTime}");
+                            
+                            // remesh world
+                            //Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
+                        }
+                        else {
+                            addMessage("Usage: /time set <time>");
+                        }
+                    }
+                    else {
+                        addMessage("Usage: /time or /time set <time>");
+                    }
+                    break;
             }
         }
         // if not command, just print with player name
