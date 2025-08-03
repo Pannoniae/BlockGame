@@ -434,6 +434,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var underSky = new Vector3(0, -64, 0);
         
+        
         idc.begin(PrimitiveType.Quads);
         idc.fogDistance(float.Max(rd * 0.005f, 4 * Chunk.CHUNKSIZE), Settings.instance.renderDistance * Chunk.CHUNKSIZE);
 
@@ -458,9 +459,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var sunDistance = 64f;
         const float sunSize = 2f;
 
-        idt.setMVP(viewProj);
-        idt.setMV(modelView);
-        //idt.enableFog(false); // disable fog for sun
         // bind the texture
         Game.GL.ActiveTexture(TextureUnit.Texture0);
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.sunTexture.handle);
@@ -468,6 +466,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var mat = new MatrixStack();
         mat.reversed();
         mat.rotate(Meth.rad2deg(sunAngle), 1, 0, 0); // rotate around X axis
+
+        // apply transformation to shader matrices instead of manually transforming vertices
+        idt.setMVP(mat.top * viewProj);
+        idt.setMV(mat.top * modelView);
+        //idt.enableFog(false); // disable fog for sun
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
@@ -478,11 +481,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var v2 = new Vector3(sunSize, -sunSize, sunDistance);
         var v3 = new Vector3(sunSize, sunSize, sunDistance);
         var v4 = new Vector3(-sunSize, sunSize, sunDistance);
-
-        v1 = Vector3.Transform(v1, mat.top);
-        v2 = Vector3.Transform(v2, mat.top);
-        v3 = Vector3.Transform(v3, mat.top);
-        v4 = Vector3.Transform(v4, mat.top);
         
         idt.addVertex(new BlockVertexTinted(v1.X, v1.Y, v1.Z, 0f, 0f));
         idt.addVertex(new BlockVertexTinted(v2.X, v2.Y, v2.Z, 0f, 1f));
