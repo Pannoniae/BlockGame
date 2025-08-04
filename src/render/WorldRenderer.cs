@@ -391,6 +391,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     private void renderSky(double interp) {
+        
+        // if <= 4 chunks, don't render sky
+        if (Settings.instance.renderDistance <= 4) {
+            return;
+        }
+        
         // render a flat plane at y = 16
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var modelView = world.player.camera.getStaticViewMatrix(interp);
@@ -401,7 +407,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var horizonColour = world.getHorizonColour(world.worldTick).toColor();
         var skyColour = world.getSkyColour(world.worldTick).toColor();
         // slightly darker for undersky
-        var underSkyColour = new Color(skyColour.R * 0.8f, skyColour.G * 0.8f, skyColour.B * 0.8f);
+        var underSkyColour = new Color(skyColour.R / 255f * 0.8f, skyColour.G / 255f * 0.8f, skyColour.B / 255f * 0.8f);
 
         // Enable fog for sky rendering
         var currentFogColour = world.getFogColour(world.worldTick);
@@ -434,12 +440,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.setFogType(FogType.Linear);
 
 
-        var underSky = new Vector3(0, -64, 0);
+        var underSky = new Vector3(0, -32, 0);
 
 
         idc.begin(PrimitiveType.Quads);
         idc.fogDistance(float.Max(rd * 0.005f, 4 * Chunk.CHUNKSIZE),
-            Settings.instance.renderDistance * Chunk.CHUNKSIZE);
+            float.Min(8 * Chunk.CHUNKSIZE, Settings.instance.renderDistance * Chunk.CHUNKSIZE));
 
         // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
         idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
@@ -513,8 +519,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render stars at night
         renderStars(dayPercent, viewProj, modelView);
-
-        // TODO render moon!
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
