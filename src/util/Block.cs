@@ -399,6 +399,12 @@ public class Block {
     }
 
     public virtual void crack(World world, int x, int y, int z) {
+        
+        if (model == null || model.faces.Length == 0) {
+            // no model, no particles
+            return;
+        }
+        
         var factor = 1f / particleCount;
         for (var x1 = 0; x1 < particleCount; x1++) {
             for (var y1 = 0; y1 < particleCount; y1++) {

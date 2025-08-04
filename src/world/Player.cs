@@ -390,7 +390,9 @@ public class Player : Entity {
         }
         
         fastMode = keyboard.IsKeyPressed(Key.ControlLeft);
-
+        
+        // TODO this horribly breaks when you speed time up, you become a terminator and be able to break/place blocks instantly
+        // oh no it's a debug feature anyway but yk
         if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTick - lastBreak > Constants.breakDelay) {
             breakBlock();
         }

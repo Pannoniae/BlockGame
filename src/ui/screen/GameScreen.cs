@@ -80,12 +80,12 @@ public class GameScreen : Screen {
         if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
             // speed up time
             targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 64.0f);
-            Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
+            //Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
         }
         else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
             // slow down time
             targetTimeAcceleration = Math.Max(targetTimeAcceleration / 2.0f, 0.25f);
-            Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
+            //Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
         }
         else {
             targetTimeAcceleration = 1.0f; // reset to normal speed
