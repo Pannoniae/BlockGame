@@ -76,7 +76,7 @@ vec4 psssaa(sampler2D screenTex, vec2 uv) {
 // see FXAA
 // http://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
 // http://iryoku.com/aacourse/downloads/09-FXAA-3.11-in-15-Slides.pdf
-// http://horde3d.org/wiki/index.php5?title=Shading_Technique_-_FXAA
+// http://horde3d.org/wiki/index.php5?title=Shading_Technique_-_FXAA 
 
 void main(void)
 {

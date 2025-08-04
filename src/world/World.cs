@@ -295,7 +295,10 @@ public partial class World : IDisposable {
         }
     }
 
-    /** effective skylight (float version for rendering) */
+    /** effective skylight (float version for rendering)
+     * 0 = daylight, 11 = night
+     * 16 = black
+     */
     public float getSkyDarkenFloat(int ticks) {
         float dayPercent = getDayPercentage(ticks);
         

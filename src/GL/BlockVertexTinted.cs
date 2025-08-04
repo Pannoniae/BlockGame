@@ -96,4 +96,16 @@ public struct BlockVertexTinted {
         this.b = b;
         this.a = a;
     }
+
+    public BlockVertexTinted(float x, float y, float z, Half u, Half v, float r, float g, float b, float a) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.u = u;
+        this.v = v;
+        this.r = (byte)(r * 255);
+        this.g = (byte)(g * 255);
+        this.b = (byte)(b * 255);
+        this.a = (byte)(a * 255);
+    }
 }

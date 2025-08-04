@@ -825,6 +825,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public static readonly float[] a = [
         0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
     ];
+    
+    public Color4 getLightColour(byte blocklight, byte skylight) {
+        var px = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
+        // apply darken
+        var darken = world.getSkyDarkenFloat(world.worldTick) / 16f; // 0 to 1 range
+        var a = lightVal.A;
+        lightVal *= 1 - darken;
+        lightVal.A = a; // keep alpha the same
+        return lightVal;
+
+    }
 
     private static Rgba32 calculateTint(byte dir, byte ao, byte light) {
         dir = (byte)(dir & 0b111);

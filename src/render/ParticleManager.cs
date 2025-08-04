@@ -43,6 +43,9 @@ public class ParticleManager {
         
         drawer.begin(PrimitiveType.Triangles);
 
+        var world = this.world;
+        var renderer = Game.renderer!;
+
         foreach (var particle in particles) {
             if (particle.texture != currentTexture) {
                 Game.textureManager.get(particle.texture);
@@ -62,7 +65,8 @@ public class ParticleManager {
             var ur = pos.toVec3() + right * (float)particle.size / 2 + up * (float)particle.size / 2;
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
-            var tint = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+            
+            var tint = renderer.getLightColour(skylight, blocklight);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
