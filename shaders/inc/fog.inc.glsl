@@ -9,7 +9,7 @@ uniform bool fogEnabled;
 uniform int fogType; // 0 = linear, 1 = exp, 2 = exp2
 uniform float fogDensity;
 uniform vec4 fogColour;
-uniform vec4 skyColour;
+uniform vec4 horizonColour;
 
 // Standard fog calculation for all non-terrain shaders
 float getFog(float fogDepth) {

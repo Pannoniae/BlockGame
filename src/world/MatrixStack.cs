@@ -70,6 +70,14 @@ public class MatrixStack {
         var b = Matrix4x4.CreateFromAxisAngle(axis, Meth.deg2rad(angle));
         swapIf(ref a, ref b);
     }
+    
+    public void rotate(float angle, float x, float y, float z) {
+        var current = stack.Pop();
+        var axis = Vector3.Normalize(new Vector3(x, y, z));
+        var a = current;
+        var b = Matrix4x4.CreateFromAxisAngle(axis, Meth.deg2rad(angle));
+        swapIf(ref a, ref b);
+    }
 
     public void translate(int x, int y, int z) {
         var current = stack.Pop();

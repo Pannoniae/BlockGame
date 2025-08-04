@@ -83,6 +83,34 @@ public static partial class Meth {
         return 180f / float.Pi * radians;
     }
 
+    /// <summary>
+    /// Maps a value from one range to another range.
+    /// For example, mapRange(0.75f, 0.5f, 1.0f, 0f, 2f) maps 0.75 from range [0.5-1.0] to range [0-2], returning 1.0
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float mapRange(float value, float fromStart, float fromEnd, float toStart, float toEnd) {
+        if (value < fromStart) return toStart;
+        if (value > fromEnd) return toEnd;
+        float t = (value - fromStart) / (fromEnd - fromStart);
+        return toStart + t * (toEnd - toStart);
+    }
+
+    /// <summary>
+    /// Fade in from 0 to 1 over a range
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float fadeIn(float value, float start, float end) {
+        return mapRange(value, start, end, 0f, 1f);
+    }
+
+    /// <summary>
+    /// Fade out from 1 to 0 over a range
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float fadeOut(float value, float start, float end) {
+        return mapRange(value, start, end, 1f, 0f);
+    }
+
     public static Vector3I getRandomCoord(XRandom random, int maxX, int maxY, int maxZ) {
         var randomValue = random.Next(maxX * maxY * maxZ);
         var x = randomValue % maxX;

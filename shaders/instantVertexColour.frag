@@ -5,7 +5,7 @@
 layout(location = 0) out vec4 outColour;
 
 in vec4 colour;
-in vec4 viewPosition; // Changed from fogDepth to view position
+in vec4 viewPosition;
 
 uniform vec4 fogColor;
 uniform float fogStart;
@@ -14,10 +14,27 @@ uniform bool fogEnabled;
 uniform int fogType; // 0 = linear, 1 = exp, 2 = exp2
 uniform float fogDensity; // For exp and exp2 fog
 
+float dither(vec2 coord) {
+    // use a simple 4x4 Bayer matrix pattern
+    int x = int(coord.x) % 4;
+    int y = int(coord.y) % 4;
+    
+    const float bayerMatrix[16] = float[16](
+        -0.5, 0.0, -0.375, 0.125,
+        0.25, -0.25, 0.375, -0.125,
+        -0.3125, 0.1875, -0.4375, 0.0625,
+        0.4375, -0.0625, 0.3125, -0.1875
+    );
+    
+    return bayerMatrix[y * 4 + x] / 255.0; // scale to single RGB colour step
+}
+
 void main() {
     if (colour.a <= 0) {
         discard;
     }
+
+    vec4 finalColour = colour;
 
     if (fogEnabled) {
         // Calculate fogDepth in the fragment shader
@@ -40,8 +57,12 @@ void main() {
         fogFactor = clamp(fogFactor, 0.0, 1.0);
 
         // Mix original color with fog color
-        outColour = mix(fogColor, colour, fogFactor);
-    } else {
-        outColour = colour;
+        finalColour = mix(fogColor, colour, fogFactor);
     }
+    
+    // Apply dithering to reduce banding in dark colors
+    float ditherValue = dither(gl_FragCoord.xy);
+    finalColour.rgb += ditherValue;
+    
+    outColour = finalColour;
 }

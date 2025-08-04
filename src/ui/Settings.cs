@@ -12,6 +12,7 @@ public class Settings {
     public int antiAliasing = 0; // 0=Off, 1=FXAA, 2=2xMSAA, 3=4xMSAA, 4=2xSSAA, 5=4xSSAA, 6=2xMSAA+2xSSAA, 7=4xMSAA+2xSSAA, 8=4xMSAA+4xSSAA
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public bool fullscreen = false;
+    public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
 
     public static readonly Settings instance = new();
 

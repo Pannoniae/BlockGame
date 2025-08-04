@@ -55,7 +55,7 @@ public partial class World : IDisposable {
 
     public int worldTick;
     /** how darker it is compared to full daylight */
-    public int skyDarken;
+    public float skyDarken;
     
     public const int TICKS_PER_DAY = 72000;
 
@@ -292,6 +292,36 @@ public partial class World : IDisposable {
         else {
             // night - maximum darkness (11 levels down from 15)
             return 11;
+        }
+    }
+
+    /** effective skylight (float version for rendering) */
+    public float getSkyDarkenFloat(int ticks) {
+        float dayPercent = getDayPercentage(ticks);
+        
+        if (Settings.instance.smoothDayNight) {
+            if (dayPercent < 0.1f) {
+                // sunrise - gradually getting brighter
+                float t = dayPercent / 0.1f;
+                return 11f * (1f - t); // 11 to 0
+            }
+            else if (dayPercent < 0.5f) {
+                // day - full brightness
+                return 0f;
+            }
+            else if (dayPercent < 0.6f) {
+                // sunset - gradually getting darker
+                float t = (dayPercent - 0.5f) / 0.1f;
+                return 11f * t; // 0 to 11
+            }
+            else {
+                // night - maximum darkness (11 levels down from 15)
+                return 11f;
+            }
+        }
+        else {
+            // classic mode
+            return getSkyDarken(ticks);
         }
     }
 

@@ -6,7 +6,7 @@ layout(location = 0) out vec4 outColour;
 
 centroid in vec2 texCoords;
 in vec4 colour;
-in vec4 viewPosition; // Changed from fogDepth to view position
+in vec4 viewPosition;
 
 uniform vec4 fogColor;
 uniform float fogStart;

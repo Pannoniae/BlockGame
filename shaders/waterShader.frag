@@ -1,12 +1,12 @@
 ﻿#version 440
 
-#include "inc/fog.inc"
+#include "inc/fog.inc.glsl"
 
 layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
 
 centroid in vec2 texCoords;
-flat in int skyDarken;
+flat in float skyDarken;
 in vec4 tint;
 in float vertexDist;
 
@@ -19,7 +19,7 @@ void main() {
     // extract skylight, 0 to 15
 
     // apply skyDarken - reduce lighting based on day/night cycle
-    float darkenFactor = 1.0 - (skyDarken.x / 15.0);
+    float darkenFactor = 1.0 - (skyDarken / 15.0);
     vec3 darkenedTint = tint.rgb * darkenFactor;
     colour = vec4(blockColour.rgb * darkenedTint, blockColour.a);
 
@@ -27,7 +27,7 @@ void main() {
         discard;
     }
     // mix the fog colour between it and the sky
-    vec4 mixedFogColour = mix(fogColour, skyColour, ratio);
+    vec4 mixedFogColour = mix(fogColour, horizonColour, ratio);
     // mix fog
     colour = mix(colour, mixedFogColour, ratio);
 }

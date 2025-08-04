@@ -16,6 +16,7 @@ public class TextureManager {
     public BTexture2D waterOverlay;
 
     public BTexture2D sunTexture;
+    public BTexture2D moonTexture;
 
     public TextureManager(Silk.NET.OpenGL.GL GL) {
         this.GL = GL;
@@ -26,6 +27,7 @@ public class TextureManager {
         lightTexture = new BTexture2D("textures/lightmap.png");
         waterOverlay = new BTexture2D("textures/water.png");
         sunTexture = new BTexture2D("textures/sun_03.png");
+        moonTexture = new BTexture2D("textures/moon_01.png");
     }
 
     public BTexture2D get(string path) {

@@ -74,6 +74,16 @@ public class SettingsMenu : Menu {
         settingElements.Add(smoothLighting);
         addElement(smoothLighting);
 
+        var dayNightCycle = new ToggleButton(this, "dayNightCycle", false, settings.smoothDayNight ? 1 : 0,
+            "Daylight Cycle: Classic", "Daylight Cycle: Dynamic");
+        dayNightCycle.topCentre();
+        dayNightCycle.clicked += _ => {
+            settings.smoothDayNight = dayNightCycle.getIndex() == 1;
+        };
+        dayNightCycle.tooltip = "Controls how lighting changes throughout the day.\nClassic: sharp light level transitions like retro games.\nDynamic: smooth light level changes.";
+        settingElements.Add(dayNightCycle);
+        addElement(dayNightCycle);
+
         var mipmapping = new Slider(this, "mipmapping", 0, 4, 1, settings.mipmapping);
         mipmapping.setPosition(new Rectangle(0, 112, 128, 16));
         mipmapping.topCentre();
