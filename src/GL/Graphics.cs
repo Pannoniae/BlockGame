@@ -1,7 +1,9 @@
 using System.Numerics;
+using System.Text;
 using BlockGame.GL.vertexformats;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.AMD;
 
 namespace BlockGame.GL;
 
@@ -37,6 +39,11 @@ public class Graphics {
     /// A buffer of indices for the maximum amount of quads.
     /// </summary>
     public uint fatQuadIndices;
+    
+    public int groupCount;
+
+    public MatrixStack modelView = new MatrixStack().reversed();
+    public MatrixStack projection = new MatrixStack().reversed();
 
     public Graphics() {
         GL = Game.GL;
@@ -86,5 +93,23 @@ public class Graphics {
         batchShader.World = Matrix4x4.Identity;
         batchShader.View = Matrix4x4.Identity;
         batchShader.Projection = ortho;
+    }
+
+    public void popGroup() {
+        if (groupCount <= 0) {
+            return;
+        }
+        groupCount--;
+        
+        GL.PopDebugGroup();
+    }
+
+    public unsafe void pushGroup(string group, Color4b colour) {
+        groupCount++;
+        Span<byte> buffer = stackalloc byte[128];
+        int bytesWritten = Encoding.UTF8.GetBytes(group, buffer);
+        fixed (byte* ptr = buffer) {
+            GL.PushDebugGroup(DebugSource.DebugSourceApplication, 0, (uint)bytesWritten, ptr);
+        }
     }
 }

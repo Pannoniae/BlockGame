@@ -67,6 +67,7 @@ public class Entity(World world) {
     /// 0 to 1
     public double prevSwingProgress;
     public double swingProgress;
+    private readonly List<Vector3I> neighbours = new(26);
 
     public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();
@@ -113,8 +114,10 @@ public class Entity(World world) {
                     collisionTargets.Add(currentAABB.Value);
                 }
 
-                foreach (var neighbour in world.getBlocksInBox(target + new Vector3I(-1, -1, -1),
-                             target + new Vector3I(1, 1, 1))) {
+
+                World.getBlocksInBox(neighbours, target + new Vector3I(-1, -1, -1),
+                    target + new Vector3I(1, 1, 1));
+                foreach (var neighbour in neighbours) {
                     var block = world.getBlock(neighbour);
                     var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
                     if (blockAABB == null) {

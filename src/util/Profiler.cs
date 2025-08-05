@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
+using Silk.NET.OpenGL;
 
 namespace BlockGame.util;
 
@@ -20,10 +22,12 @@ public record struct ProfileSection(ProfileSectionName section, float time) {
     public float time = time;
 }
 
-public readonly record struct ProfileData {
-    public readonly ProfileSection[] sections = new ProfileSection[ProfileSection.SECTION_COUNT];
+public record struct ProfileData {
+    
+    public ProfileSections sections;
 
     public ProfileData() {
+        
     }
 
     public float total {
@@ -41,7 +45,8 @@ public readonly record struct ProfileData {
     }
 
     public void setTime(ProfileSectionName section, float time) {
-        sections[(int)section].time = time;
+        ref var profileSection = ref sections[(int)section];
+        profileSection.time = time;
     }
 
     public static Color4b getColour(ProfileSectionName section) => section switch {
@@ -54,6 +59,12 @@ public readonly record struct ProfileData {
         ProfileSectionName.Other => new Color4b(200, 200, 200), // Gray
         _ => Color4b.White
     };
+}
+
+[InlineArray(ProfileSection.SECTION_COUNT)]
+public struct ProfileSections
+{
+    private ProfileSection section;
 }
 
 public class Profiler {
@@ -71,6 +82,9 @@ public class Profiler {
 
     public void section(ProfileSectionName section) {
         var now = (float)stopwatch.Elapsed.TotalMilliseconds;
+        
+        // pop previous group
+        Game.graphics.popGroup();
 
         // Add time spent in previous section
         if (currentSection != section) {
@@ -79,6 +93,11 @@ public class Profiler {
             sectionStartTime = now;
             currentSection = section;
         }
+        
+        Game.graphics.pushGroup(getSectionName(section), ProfileData.getColour(section));
+        
+        // add debug marker
+        //Game.GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeMarker, 0, DebugSeverity.DebugSeverityNotification, uint.MaxValue, $"Section: {getSectionName(section)}");
     }
 
     public ProfileData endFrame() {

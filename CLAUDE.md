@@ -9,7 +9,7 @@ Use `dotnet run --project BlockGame.csproj -c Release` to run the main project i
 ## Architecture Overview
 
 BlockGame is a 3D block-based game (+engine) written in C# targeting .NET 10.0 preview. The architecture follows a layered, event-driven design optimized for real-time 3D rendering.
-Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI)
+Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI) ALWAYS READ IT! EVERY SINGLE RUN. NO EXCEPTIONS.
 
 ### Core Systems
 
@@ -38,8 +38,6 @@ Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI)
 - Blocks are defined in `src/id/Blocks.cs` with static registration
 - Block models and rendering data in `src/util/Block.cs` and `src/util/BlockModel.cs`
 - Texture atlasing system in `src/util/TextureManager.cs`
-
-**Hashing**: Use `XHash` for deterministic hashing instead of built-in GetHashCode()
 
 **World Generation**
 
@@ -92,10 +90,4 @@ TODO, indicating a design that could support modding through reflection or simil
 - The project includes extensive custom libraries rather than relying on third-party game engines
 - Strong focus on performance with custom memory management and pooling
 - Uses event-driven architecture for decoupled system communication
-
-- Java-style naming conventions (PascalCase for types, camelCase for variables)
-- Generally short names and abbreviations, prefer brevity to expressivity, e.g. `pos`, `xx`, `xp`, `c00`, `sp`, `title`. This is so the code doesn't get cluttered. You can leave a comment to explain it fully.
-- Comment the "why" and the "how", not the "what" - leave the tutorial-level comments out of the codebase. Prefer starting with lowercase for one-line comments.
-- Use /** (Java)-style doc comments instead of ///.
-- When designing features, aim for simplicity, minimalism and performance. When they conflict, prefer performance.
 - WHEN IN DOUBT, ASK. REFUSE TO DO ANYTHING UNLESS THE TASK IS CLEAR.

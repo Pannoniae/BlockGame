@@ -465,11 +465,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         float sunAngle = dayPercent * -MathF.PI * 2; // -π/2 to π/2
 
-        var sunDistance = 64f;
+        const float sunDistance = 64f;
         const float sunSize = 8f;
 
-        var mat = new MatrixStack();
-        mat.reversed();
+        var mat = Game.graphics.modelView;
+        mat.push();
 
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
@@ -495,10 +495,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.addVertex(new BlockVertexTinted(v3.X, v3.Y, v3.Z, 1f, 1f));
         idt.addVertex(new BlockVertexTinted(v4.X, v4.Y, v4.Z, 1f, 0f));
         idt.end();
+        
 
         // render moon opposite to sun
         const float moonSize = 8f;
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.moonTexture.handle);
+        
+        mat.push();
 
         mat.rotate(Meth.rad2deg(MathF.PI), 1, 0, 0); // rotate 180 degrees more
         idt.setMVP(mat.top * viewProj);
@@ -516,6 +519,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.addVertex(new BlockVertexTinted(mv3.X, mv3.Y, mv3.Z, 1f, 1f));
         idt.addVertex(new BlockVertexTinted(mv4.X, mv4.Y, mv4.Z, 1f, 0f));
         idt.end();
+        
+        mat.pop();
+        mat.pop();
 
         // render stars at night
         renderStars(dayPercent, viewProj, modelView);

@@ -9,7 +9,7 @@ public class MatrixStack {
     private bool reverse;
 
     public MatrixStack() {
-        stack.Push(Matrix4x4.Identity);
+        loadIdentity();
     }
 
     /** Reverses the order of operations in the stack.

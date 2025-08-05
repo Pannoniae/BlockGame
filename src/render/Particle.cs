@@ -43,6 +43,7 @@ public class Particle {
 
     /** collision detection cache */
     private readonly List<AABB> collisionTargets = [];
+    private readonly List<Vector3I> collisionTargetsList = [];
 
     public Particle(World world, Vector3D position, string texture, float u, float v, double size, double uvsize, int ttl) {
         this.world = world;
@@ -84,8 +85,10 @@ public class Particle {
         // collect collision targets
         var blockPos = position.toBlockPos();
         collisionTargets.Clear();
-        
-        foreach (var neighbour in world.getBlocksInBox(blockPos + new Vector3I(-1, -1, -1), blockPos + new Vector3I(1, 1, 1))) {
+
+        World.getBlocksInBox(collisionTargetsList, blockPos + new Vector3I(-1, -1, -1),
+            blockPos + new Vector3I(1, 1, 1));
+        foreach (var neighbour in collisionTargetsList) {
             var block = world.getBlock(neighbour);
             var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
             if (blockAABB != null) {
