@@ -466,7 +466,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         float sunAngle = dayPercent * -MathF.PI * 2; // -π/2 to π/2
 
         var sunDistance = 64f;
-        const float sunSize = 2f;
+        const float sunSize = 8f;
 
         var mat = new MatrixStack();
         mat.reversed();
@@ -497,7 +497,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.end();
 
         // render moon opposite to sun
-        const float moonSize = 1.8f;
+        const float moonSize = 8f;
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.moonTexture.handle);
 
         mat.rotate(Meth.rad2deg(MathF.PI), 1, 0, 0); // rotate 180 degrees more
