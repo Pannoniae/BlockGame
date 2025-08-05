@@ -498,7 +498,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         
 
         // render moon opposite to sun
-        const float moonSize = 8f;
+        const float moonSize = 6f;
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.moonTexture.handle);
         
         mat.push();
