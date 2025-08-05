@@ -42,16 +42,16 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
         auxNoise = new FastNoiseLite(random.Next(seed));
         auxNoise.SetFrequency(1f);
-        auxNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        //auxNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
 
         foliageNoise = new FastNoiseLite(random.Next(seed));
-        foliageNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        //foliageNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         foliageNoise.SetFrequency(1f);
         temperatureNoise = new FastNoiseLite(random.Next(seed));
-        temperatureNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        //temperatureNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         temperatureNoise.SetFrequency(1f);
         humidityNoise = new FastNoiseLite(random.Next(seed));
-        humidityNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        //humidityNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         humidityNoise.SetFrequency(1f);
     }
 

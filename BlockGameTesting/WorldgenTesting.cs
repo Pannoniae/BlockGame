@@ -20,8 +20,8 @@ public class WorldgenTesting {
         var img = new Image<Rgba32>(512, 512);
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
-                var val = gen.getNoise3D(gen.highNoise, x / 20f, 0, y / 20f, 1, 2f);
-                Console.Out.WriteLine(val);
+                var val = gen.getNoise3D(gen.highNoise, x / 20f, 0, y / 20f, 8, 2f);
+                //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(
                     (byte) ((val + 1) * 127.5f),
                     (byte) ((val + 1) * 127.5f),
