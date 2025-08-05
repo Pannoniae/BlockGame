@@ -131,10 +131,20 @@ public partial class PerlinWorldGenerator {
                     //low -= airBias;
 
                     // reduce it below ground (is water anyway, useless)
-                    if (airBias < 0) {
+                    if (y < WATER_LEVEL) {
                         airBias *= 4;
                     }
                     
+                    // border
+                    if (y is < 44 and > 36) {
+                        // make it more extreme
+                        airBias *= int.Max(44 - y, y - 36) - 2;
+                    }
+                    
+                    // under y=40
+                    var caveDepth = float.Max(0, float.Min(y - 6, 36 - y));
+                    airBias += caveDepth * 0.036f;
+
                     // between y=120-128, taper it off to -1
                     // at max should be 0.5
                     // ^2 to have a better taper
@@ -248,7 +258,7 @@ public partial class PerlinWorldGenerator {
                         chunk.addToHeightMap(x, y, z);
                     }
                     else {
-                        if (y < WATER_LEVEL) {
+                        if (y is < WATER_LEVEL and >= 40) {
                             chunk.setBlockFast(x, y, z, Blocks.WATER);
                             chunk.addToHeightMap(x, y, z);
                         }
@@ -404,9 +414,10 @@ public partial class PerlinWorldGenerator {
         // otherwise it does 5 * 5 for some reason??? completely useless multiplication
         return x + z * NOISE_SIZE_X + y * (NOISE_SIZE_X * NOISE_SIZE_Z);
     }
-    
+
     private static Vector128<int> getIndex4(int x, int y, int z) {
-        return Vector128.Create(x) + Vector128.Create(z) * NOISE_SIZE_X + Vector128.Create(y) * NOISE_SIZE_X * NOISE_SIZE_Z;
+        return Vector128.Create(x) + Vector128.Create(z) * NOISE_SIZE_X +
+               Vector128.Create(y) * NOISE_SIZE_X * NOISE_SIZE_Z;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -418,7 +429,7 @@ public partial class PerlinWorldGenerator {
     private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
         return a + t * (b - a);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<float> lerp4(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
         return a + t * (b - a);
@@ -428,7 +439,7 @@ public partial class PerlinWorldGenerator {
     private static Vector128<float> lerp2(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
         return a + t * (b - a);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector64<float> lerp2(Vector64<float> a, Vector64<float> b, Vector64<float> t) {
         return a + t * (b - a);
@@ -436,10 +447,10 @@ public partial class PerlinWorldGenerator {
 
     public void populate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
-        
+
         var xWorld = coord.x * Chunk.CHUNKSIZE;
         var zWorld = coord.z * Chunk.CHUNKSIZE;
-        
+
         // set seed to chunk
         random.Seed(coord.GetHashCode());
 
@@ -462,7 +473,7 @@ public partial class PerlinWorldGenerator {
                 }
             }
         }
-        
+
         // Do ore
         for (int i = 0; i < 16; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
@@ -470,7 +481,7 @@ public partial class PerlinWorldGenerator {
             var y = random.Next(0, World.WORLDHEIGHT);
             coalOre.place(world, random, x, y, z);
         }
-        
+
         for (int i = 0; i < 16; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
