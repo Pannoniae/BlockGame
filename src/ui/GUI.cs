@@ -642,20 +642,32 @@ public class GUI {
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.handle);
 
         WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 15);
-        // assemble the matrix
-        // this is something like 33.7 degrees if the inverse tangent is calculated....
-        // still zero idea why this works but 30 deg is garbage, 45 is weirdly elongated and 60 is squished
+        
+        // assemble the matrix using existing matrix stacks from Graphics
+        Game.graphics.projection.push();
+        Game.graphics.projection.loadIdentity();
+        var projMatrix = Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
+        Game.graphics.projection.multiply(projMatrix);
+        
+        Game.graphics.modelView.push();
+        Game.graphics.modelView.loadIdentity();
+        
+        
+        // view transformation - camera position
         var camPos = new Vector3(1, 2 / 3f, 1);
-
-        // how I got these numbers? I don't fucking know anymore, and this is probably not the right way to do it
-        var mat =
-            // first we translate to the coords
-            // model
-            Matrix4x4.CreateScale(1, -1, 1) *
-            Matrix4x4.CreateTranslation(0, 5 / 6f, 0) *
-            Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0)) *
-            // projection
-            Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
+        var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+        Game.graphics.modelView.multiply(viewMatrix);
+        
+        // model transformations
+        Game.graphics.modelView.translate(0, 5 / 6f, 0);
+        Game.graphics.modelView.scale(1, -1, 1);
+        
+        // combine matrices
+        var mat = Game.graphics.modelView.top * Game.graphics.projection.top;
+        
+        // restore matrix stacks
+        Game.graphics.modelView.pop();
+        Game.graphics.projection.pop();
         //Matrix4x4.CreateTranslation(0, 0, 0);
         //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.setUniform(uMVP, mat);

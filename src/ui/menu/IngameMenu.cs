@@ -211,12 +211,16 @@ public class IngameMenu : Menu, IDisposable {
             gui.tb.Draw(gui.colourTexture,
                 new System.Drawing.RectangleF(legendX, legendY + yOffset, 8, 8),
                 ProfileData.getColour((ProfileSectionName)i));
-                
+            yOffset += 24;
+        }
+        
+        // Draw section names
+        yOffset = 10;
+        for (int i = 0; i < ProfileSection.SECTION_COUNT; i++) {
             // Draw label
             gui.drawStringThin(Profiler.getSectionName((ProfileSectionName)i),
                 new Vector2(legendX + 12, legendY + yOffset - 16),
                 new Color4b(200, 200, 200));
-                
             yOffset += 24;
         }
     }

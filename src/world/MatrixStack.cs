@@ -9,7 +9,7 @@ public class MatrixStack {
     private bool reverse;
 
     public MatrixStack() {
-        loadIdentity();
+        stack.Push(Matrix4x4.Identity);
     }
 
     /** Reverses the order of operations in the stack.
@@ -38,7 +38,7 @@ public class MatrixStack {
     }
     
     public void loadIdentity() {
-        stack.Clear();
+        stack.Pop();
         stack.Push(Matrix4x4.Identity);
     }
 
@@ -62,6 +62,14 @@ public class MatrixStack {
         var b = Matrix4x4.CreateScale(x, y, z);
         swapIf(ref a, ref b);
     }
+    
+    public void scale(float x, float y, float z) {
+        var current = stack.Pop();
+        var a = current;
+        var b = Matrix4x4.CreateScale(x, y, z);
+        swapIf(ref a, ref b);
+        
+    }
 
     public void rotate(float angle, int x, int y, int z) {
         var current = stack.Pop();
@@ -83,6 +91,20 @@ public class MatrixStack {
         var current = stack.Pop();
         var a = current;
         var b = Matrix4x4.CreateTranslation(x, y, z);
+        swapIf(ref a, ref b);
+    }
+    
+    public void translate(float x, float y, float z) {
+        var current = stack.Pop();
+        var a = current;
+        var b = Matrix4x4.CreateTranslation(x, y, z);
+        swapIf(ref a, ref b);
+    }
+    
+    public void multiply(Matrix4x4 matrix) {
+        var current = stack.Pop();
+        var a = current;
+        var b = matrix;
         swapIf(ref a, ref b);
     }
 }
