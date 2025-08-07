@@ -2,7 +2,7 @@
 
 // don't, glass will be fucked
 //layout(early_fragment_tests) in;
-layout(location = 0) out vec4 outColour;
+layout (location = 0) out vec4 outColour;
 
 centroid in vec2 texCoords;
 in vec4 colour;
@@ -18,7 +18,7 @@ uniform float fogDensity; // For exp and exp2 fog
 uniform sampler2D tex;
 
 void main() {
-
+    
     vec4 texColour = texture(tex, texCoords);
     if (colour.a <= 0) {
         discard;
@@ -27,23 +27,29 @@ void main() {
     if (fogEnabled) {
         // Calculate fogDepth in the fragment shader
         float fogDepth = length(viewPosition.xyz); // Use distance from camera instead of just z
-
+        
         // Calculate fog factor based on fog type
         float fogFactor = 1.0;
         
-        if (fogType == 0) {
-            // Linear fog
-            fogFactor = (fogEnd - fogDepth) / (fogEnd - fogStart);
-        } else if (fogType == 1) {
-            // Exponential fog
-            fogFactor = exp(-fogDensity * fogDepth);
-        } else if (fogType == 2) {
-            // Exponential squared fog
-            fogFactor = exp(-fogDensity * fogDensity * fogDepth * fogDepth);
+        switch (fogType) {
+            case 0:
+        // Linear fog
+                fogFactor = (fogEnd - fogDepth) / (fogEnd - fogStart);
+                break;
+            
+            case 1:
+        // Exponential fog
+                fogFactor = exp(-fogDensity * fogDepth);
+                break;
+            
+            case 2:
+        // Exponential squared fog
+                fogFactor = exp(-fogDensity * fogDensity * fogDepth * fogDepth);
+                break;
         }
         
         fogFactor = clamp(fogFactor, 0.0, 1.0);
-
+        
         // Mix original color with fog color
         outColour = mix(fogColor, mixColour, fogFactor);
     } else {

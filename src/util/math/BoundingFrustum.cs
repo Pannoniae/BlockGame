@@ -196,6 +196,13 @@ namespace System.Numerics {
             // why bother checking front/back? come on, it's a camera frustum!
             return aabb.isFrontTwo(_planes[4], _planes[5]);
         }
+        
+        /// <summary>
+        /// Batched visibility test for 8 AABBs at once. Returns a byte mask where each bit indicates if the corresponding AABB is outside the camera frustum.
+        /// </summary>
+        public unsafe byte outsideCameraUpDownEight(AABB* aabbs) {
+            return AABB.isFrontTwoEight(aabbs, _planes[4], _planes[5]);
+        }
 
         /// <summary>
         /// Containment test between this <see cref="BoundingFrustum"/> and specified <see cref="BoundingBox"/>.

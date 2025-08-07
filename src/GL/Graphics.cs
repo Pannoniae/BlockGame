@@ -24,8 +24,15 @@ public class Graphics {
     public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
         "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
 
+    // Post-processing shaders
     public readonly Shader fxaaShader =
-        new Shader(Game.GL, nameof(fxaaShader), "shaders/fxaa.vert", "shaders/fxaa.frag");
+        new Shader(Game.GL, nameof(fxaaShader), "shaders/post.vert", "shaders/fxaa_only.frag");
+    
+    public readonly Shader ssaaShader =
+        new Shader(Game.GL, nameof(ssaaShader), "shaders/post.vert", "shaders/ssaa.frag");
+    
+    public readonly Shader simplePostShader =
+        new Shader(Game.GL, nameof(simplePostShader), "shaders/post.vert", "shaders/simple_post.frag");
 
     public readonly Silk.NET.OpenGL.GL GL;
 
@@ -39,6 +46,7 @@ public class Graphics {
     /// A buffer of indices for the maximum amount of quads.
     /// </summary>
     public uint fatQuadIndices;
+    public uint fatQuadIndicesLen;
     
     public int groupCount;
 

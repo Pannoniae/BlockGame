@@ -343,9 +343,10 @@ public class IngameMenu : Menu, IDisposable {
             debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer),
                 Game.GL.GetStringS(StringName.Vendor));
             debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
-            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})",
+            debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})\n",
                 GCMemory / Constants.MEGABYTES,
                 workingSet / Constants.MEGABYTES, vmem / Constants.MEGABYTES, stat);
+            debugStrG.AppendFormat("EXT: SBL: {0}, VBUM: {1}", Game.hasSBL, Game.hasVBUM); 
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,

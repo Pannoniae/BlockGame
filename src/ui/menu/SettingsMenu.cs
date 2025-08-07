@@ -90,7 +90,7 @@ public class SettingsMenu : Menu {
         mipmapping.applied += () => {
             settings.mipmapping = (int)mipmapping.value;
             Game.textureManager.blockTexture.bind();
-            Game.GL.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, settings.mipmapping != 0 ? (int)GLEnum.NearestMipmapLinear : (int)GLEnum.Nearest);
+            Game.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, settings.mipmapping != 0 ? (int)GLEnum.NearestMipmapLinear : (int)GLEnum.Nearest);
             Game.textureManager.blockTexture.reload();
         };
         mipmapping.getText = value => value == 0 ? "Mipmapping: Off" : $"Mipmapping: {value}x";

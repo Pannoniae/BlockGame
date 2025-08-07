@@ -10,6 +10,15 @@ namespace BlockGame.util;
 public static class XHash {
     
     /**
+     * Hash an integer.
+     */
+    public static int hash(int x) {
+        Span<byte> data = stackalloc byte[4];
+        MemoryMarshal.Write(data[..4], in x);
+        return (int)XxHash3.HashToUInt64(data);
+    }
+    
+    /**
      * Hash 2D coordinates.
      */
     public static int hash(int x, int y) {
@@ -58,6 +67,14 @@ public static class XHash {
         MemoryMarshal.Write(data[4..8], in y);
         MemoryMarshal.Write(data[8..], in z);
         return (int)XxHash3.HashToUInt64(data, seed);
+    }
+    
+    /**
+     * Hash to normalized float [0.0, 1.0).
+     */
+    public static float hashFloat(int x) {
+        var h = (uint)hash(x);
+        return h * (1.0f / (1L << 32));
     }
 
     /**

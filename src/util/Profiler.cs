@@ -106,6 +106,8 @@ public class Profiler {
         // Add remaining time to current section
         var elapsed = now - sectionStartTime;
         currentFrame.setTime(currentSection, currentFrame.getTime(currentSection) + elapsed);
+        
+        Game.graphics.popGroup();
 
         return currentFrame;
     }

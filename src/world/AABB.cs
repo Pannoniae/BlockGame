@@ -123,6 +123,65 @@ public struct AABB {
         // Return true if either dot product is greater than the plane distance
         return vDot > 0 | vDot2 > 0;
     }
+    
+    /// <summary>
+    /// Vectorised isFrontTwo check for 8 AABBs at once. Returns a byte mask with each bit representing if the corresponding AABB is in front of either plane.
+    /// </summary>
+    public static unsafe byte isFrontTwoEight(AABB* aabbs, Plane p1, Plane p2) {
+        // Load planes into SIMD registers
+        var vP1 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
+        var vP2 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
+        
+        byte result = 0;
+        
+        // Process 8 AABBs
+        for (int i = 0; i < 8; i++) {
+            var aabb = aabbs[i];
+            
+            // Load the AABB min and max
+            var mi = Vector256.LoadUnsafe(ref Unsafe.As<Vector3D, double>(ref aabb.min));
+            var ma = Vector256.LoadUnsafe(ref Unsafe.As<Vector3D, double>(ref aabb.max));
+
+            Vector128<float> vMin;
+            Vector128<float> vMax;
+            if (Avx2.IsSupported) {
+                vMin = Avx.ConvertToVector128Single(mi);
+                vMax = Avx.ConvertToVector128Single(ma);
+            } else {
+                vMin = Vector128.Create((float)mi[0], (float)mi[1], (float)mi[2], 0);
+                vMax = Vector128.Create((float)ma[0], (float)ma[1], (float)ma[2], 0);
+            }
+
+            // Select min or max based on the plane normal
+            var vPNormal1 = Vector128.GreaterThanOrEqual(vP1, Vector128<float>.Zero);
+            var vPNormal2 = Vector128.GreaterThanOrEqual(vP2, Vector128<float>.Zero);
+
+            Vector128<float> vCoord1;
+            Vector128<float> vCoord2;
+            if (Avx2.IsSupported) {
+                vCoord1 = Sse41.BlendVariable(vMax, vMin, vPNormal1);
+                vCoord2 = Sse41.BlendVariable(vMax, vMin, vPNormal2);
+            } else {
+                vCoord1 = Vector128.ConditionalSelect(vPNormal1, vMin, vMax);
+                vCoord2 = Vector128.ConditionalSelect(vPNormal2, vMin, vMax);
+            }
+
+            // Set the last element to one
+            vCoord1 = vCoord1.WithElement(3, 1);
+            vCoord2 = vCoord2.WithElement(3, 1);
+
+            // Compute the dot products
+            var vDot1 = Vector128.Dot(vP1, vCoord1);
+            var vDot2 = Vector128.Dot(vP2, vCoord2);
+
+            // Set bit if either dot product is positive
+            if (vDot1 > 0 | vDot2 > 0) {
+                result |= (byte)(1 << i);
+            }
+        }
+        
+        return result;
+    }
 
     public static bool isCollision(AABB box1, AABB box2) {
         return box1.maxX > box2.minX &&

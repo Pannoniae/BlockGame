@@ -545,7 +545,7 @@ public partial class PerlinWorldGenerator {
     public void placeOakTree(XRandom random, int x, int y, int z) {
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
-            world.setBlock(x, y + i, z, Block.MAPLE_LOG.id);
+            world.setBlock(x, y + i, z, Block.LOG.id);
             // leaves, thick
             for (int x1 = -2; x1 <= 2; x1++) {
                 for (int z1 = -2; z1 <= 2; z1++) {
@@ -555,7 +555,7 @@ public partial class PerlinWorldGenerator {
                     }
 
                     for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Block.MAPLE_LEAVES.id);
+                        world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                     }
                 }
             }
@@ -564,7 +564,7 @@ public partial class PerlinWorldGenerator {
             for (int x1 = -1; x1 <= 1; x1++) {
                 for (int z1 = -1; z1 <= 1; z1++) {
                     for (int y1 = randomNumber; y1 <= randomNumber + 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Block.MAPLE_LEAVES.id);
+                        world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
                     }
                 }
             }

@@ -3,7 +3,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
 using BlockGame.GL;
 using BlockGame.id;
 using BlockGame.ui;
@@ -16,12 +15,6 @@ using Debug = System.Diagnostics.Debug;
 namespace BlockGame;
 
 public partial class WorldRenderer {
-    // we need it here because completely full chunks are also empty of any rendering
-    private Dictionary<SubChunkCoord, bool> hasRenderOpaque = new();
-    private Dictionary<SubChunkCoord, bool> hasRenderTranslucent = new();
-
-    private Dictionary<SubChunkCoord, SharedBlockVAO?> vao = new();
-    private Dictionary<SubChunkCoord, SharedBlockVAO?> watervao = new();
 
     private static int uChunkPos;
     private static int dummyuChunkPos;
@@ -167,16 +160,16 @@ public partial class WorldRenderer {
     /// </summary>
     public void meshChunk(SubChunk subChunk) {
         //sw.Restart();
-        vao.GetValueOrDefault(subChunk.coord)?.Dispose();
-        vao[subChunk.coord] = new SharedBlockVAO(chunkVAO);
-        watervao.GetValueOrDefault(subChunk.coord)?.Dispose();
-        watervao[subChunk.coord] = new SharedBlockVAO(chunkVAO);
+        subChunk.vao?.Dispose();
+        subChunk.vao = new SharedBlockVAO(chunkVAO);
+        subChunk.watervao?.Dispose();
+        subChunk.watervao = new SharedBlockVAO(chunkVAO);
 
-        var currentVAO = vao[subChunk.coord];
-        var currentWaterVAO = watervao[subChunk.coord];
+        var currentVAO = subChunk.vao;
+        var currentWaterVAO = subChunk.watervao;
 
-        hasRenderOpaque[subChunk.coord] = false;
-        hasRenderTranslucent[subChunk.coord] = false;
+        subChunk.hasRenderOpaque = false;
+        subChunk.hasRenderTranslucent = false;
 
         // if the section is empty, nothing to do
         // if is empty, just return, don't need to get neighbours
@@ -205,14 +198,14 @@ public partial class WorldRenderer {
             }*/
         //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         if (chunkVertices.Count > 0) {
-            hasRenderOpaque[subChunk.coord] = true;
+            subChunk.hasRenderOpaque = true;
             currentVAO.bindVAO();
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
             currentVAO.upload(finalVertices, (uint)finalVertices.Length);
             //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
-            hasRenderOpaque[subChunk.coord] = false;
+            subChunk.hasRenderOpaque = false;
         }
 
         //}
@@ -222,7 +215,7 @@ public partial class WorldRenderer {
             constructVertices(subChunk, VertexConstructionMode.TRANSLUCENT);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             if (chunkVertices.Count > 0) {
-                hasRenderTranslucent[subChunk.coord] = true;
+                subChunk.hasRenderTranslucent = true;
                 currentWaterVAO.bindVAO();
 
                 var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
@@ -232,7 +225,7 @@ public partial class WorldRenderer {
             }
             else {
                 //world.sortedTransparentChunks.Remove(this);
-                hasRenderTranslucent[subChunk.coord] = false;
+                subChunk.hasRenderTranslucent = false;
             }
         }
         //}
@@ -246,6 +239,25 @@ public partial class WorldRenderer {
 
     public bool isVisible(SubChunk subChunk, BoundingFrustum frustum) {
         return !frustum.outsideCameraUpDown(subChunk.box);
+    }
+    
+    /// <summary>
+    /// Batched visibility check for 8 subchunks at once. Updates the isRendered field for each subchunk based on visibility.
+    /// </summary>
+    public unsafe void isVisibleEight(SubChunk[] subChunks, BoundingFrustum frustum) {
+        // Extract AABBs from subchunks
+        AABB* aabbs = stackalloc AABB[8];
+        for (int i = 0; i < 8; i++) {
+            aabbs[i] = subChunks[i].box;
+        }
+        
+        // Get visibility mask (1 bit = outside/not visible, 0 bit = visible)
+        byte outsideMask = frustum.outsideCameraUpDownEight(aabbs);
+        
+        // Update isRendered for each subchunk
+        for (int i = 0; i < 8; i++) {
+            subChunks[i].isRendered = (outsideMask & (1 << i)) == 0;
+        }
     }
 
     private void setUniformPos(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
@@ -265,8 +277,8 @@ public partial class WorldRenderer {
 
     public void drawOpaque(SubChunk subChunk, Vector3D cameraPos) {
         var coord = subChunk.coord;
-        var vao = this.vao[coord];
-        if (hasRenderOpaque[coord]) {
+        var vao = subChunk.vao;
+        if (subChunk.hasRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
             setUniformPos(coord, worldShader, cameraPos);
@@ -278,8 +290,8 @@ public partial class WorldRenderer {
 
     public void drawTransparent(SubChunk subChunk, Vector3D cameraPos) {
         var coord = subChunk.coord;
-        var watervao = this.watervao[coord];
-        if (hasRenderTranslucent[coord]) {
+        var watervao = subChunk.watervao;
+        if (subChunk.hasRenderTranslucent) {
             watervao.bind();
             setUniformPosWater(coord, waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
@@ -289,8 +301,8 @@ public partial class WorldRenderer {
 
     public void drawTransparentDummy(SubChunk subChunk, Vector3D cameraPos) {
         var coord = subChunk.coord;
-        var watervao = this.watervao[coord];
-        if (hasRenderTranslucent[coord]) {
+        var watervao = subChunk.watervao;
+        if (subChunk.hasRenderTranslucent) {
             watervao.bind();
             setUniformPosDummy(coord, dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();

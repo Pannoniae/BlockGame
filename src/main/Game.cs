@@ -43,6 +43,7 @@ public partial class Game {
 
     public static IWindow window;
     public static Silk.NET.OpenGL.GL GL = null!;
+    public static Silk.NET.OpenGL.Legacy.GL GLL = null!;
     public static IInputContext input = null!;
     
     //private static WGL wgl;
@@ -136,20 +137,29 @@ public partial class Game {
 
     public static bool sampleShadingSupported = false;
     private static bool sampleShadingEnabled = false;
+    
+    public static bool hasVBUM = false;
+    public static bool hasSBL = false;
+
+    public static NVVertexBufferUnifiedMemory vbum;
+    public static NVShaderBufferLoad sbl;
 
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;
     private uint resolveTex;
 
-    private int g_texelStepLocation;
-    private int g_showEdgesLocation;
-    private int g_fxaaOnLocation;
-    private int g_ssaaFactorLocation;
-    private int g_ssaaModeLocation;
-    private int g_lumaThresholdLocation;
-    private int g_mulReduceLocation;
-    private int g_minReduceLocation;
-    private int g_maxSpanLocation;
+    // FXAA shader uniforms
+    private int g_fxaa_texelStepLocation;
+    private int g_fxaa_showEdgesLocation;
+    private int g_fxaa_lumaThresholdLocation;
+    private int g_fxaa_mulReduceLocation;
+    private int g_fxaa_minReduceLocation;
+    private int g_fxaa_maxSpanLocation;
+    
+    // SSAA shader uniforms
+    private int g_ssaa_texelStepLocation;
+    private int g_ssaa_factorLocation;
+    private int g_ssaa_modeLocation;
     private static IntPtr hdc;
     public static bool noUpdate;
 
@@ -277,11 +287,13 @@ public partial class Game {
 
         if (!window.IsClosing) {
             window.DoRender();
-            profiler.section(ProfileSectionName.Swap);
-            window.SwapBuffers();
+            
             //GlfwWindow
             //GL.Finish();
             //GL.Flush();
+            
+            profiler.section(ProfileSectionName.Swap);
+            window.SwapBuffers();
         }
         
         // Store profiling data for this frame after swap is complete
@@ -448,10 +460,23 @@ public partial class Game {
         setIconToBlock();
         input = window.CreateInput();
         GL = window.CreateOpenGL();
+        GLL = Silk.NET.OpenGL.Legacy.GL.GetApi(window);
 
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
         var version = GL.GetStringS(StringName.Version);
         sampleShadingSupported = version.StartsWith("4.") || GL.TryGetExtension(out ArbSampleShading arbSampleShading);
+        
+        // check for NV vertex buffer unified memory support
+        hasVBUM = GL.TryGetExtension(out NVVertexBufferUnifiedMemory nvVertexBufferUnifiedMemory);
+        vbum = nvVertexBufferUnifiedMemory;
+        Console.Out.WriteLine($"NV_vertex_buffer_unified_memory supported: {hasVBUM}");
+        //hasVBUM = false;
+        
+        // check for NV shader buffer load support
+        hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
+        sbl = nvShaderBufferLoad;
+        Console.Out.WriteLine($"NV_shader_buffer_load supported: {hasSBL}");
+        //hasSBL = false;
 
         //#if DEBUG
         // initialise debug print
@@ -550,22 +575,24 @@ public partial class Game {
 
         textureManager = new TextureManager(GL);
 
-        g_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
-        g_showEdgesLocation = graphics.fxaaShader.getUniformLocation("u_showEdges");
-        g_fxaaOnLocation = graphics.fxaaShader.getUniformLocation("u_fxaaOn");
-        g_ssaaFactorLocation = graphics.fxaaShader.getUniformLocation("u_ssaaFactor");
-        g_ssaaModeLocation = graphics.fxaaShader.getUniformLocation("u_ssaaMode");
+        // Initialize FXAA shader uniforms
+        g_fxaa_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
+        g_fxaa_showEdgesLocation = graphics.fxaaShader.getUniformLocation("u_showEdges");
+        g_fxaa_lumaThresholdLocation = graphics.fxaaShader.getUniformLocation("u_lumaThreshold");
+        g_fxaa_mulReduceLocation = graphics.fxaaShader.getUniformLocation("u_mulReduce");
+        g_fxaa_minReduceLocation = graphics.fxaaShader.getUniformLocation("u_minReduce");
+        g_fxaa_maxSpanLocation = graphics.fxaaShader.getUniformLocation("u_maxSpan");
 
-        g_lumaThresholdLocation = graphics.fxaaShader.getUniformLocation("u_lumaThreshold");
-        g_mulReduceLocation = graphics.fxaaShader.getUniformLocation("u_mulReduce");
-        g_minReduceLocation = graphics.fxaaShader.getUniformLocation("u_minReduce");
-        g_maxSpanLocation = graphics.fxaaShader.getUniformLocation("u_maxSpan");
-
-        graphics.fxaaShader.setUniform(g_showEdgesLocation, 0);
-        graphics.fxaaShader.setUniform(g_lumaThresholdLocation, g_lumaThreshold);
-        graphics.fxaaShader.setUniform(g_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
-        graphics.fxaaShader.setUniform(g_minReduceLocation, 1.0f / g_minReduceReciprocal);
-        graphics.fxaaShader.setUniform(g_maxSpanLocation, g_maxSpan);
+        graphics.fxaaShader.setUniform(g_fxaa_showEdgesLocation, 0);
+        graphics.fxaaShader.setUniform(g_fxaa_lumaThresholdLocation, g_lumaThreshold);
+        graphics.fxaaShader.setUniform(g_fxaa_mulReduceLocation, 1.0f / g_mulReduceReciprocal);
+        graphics.fxaaShader.setUniform(g_fxaa_minReduceLocation, 1.0f / g_minReduceReciprocal);
+        graphics.fxaaShader.setUniform(g_fxaa_maxSpanLocation, g_maxSpan);
+        
+        // Initialize SSAA shader uniforms
+        g_ssaa_texelStepLocation = graphics.ssaaShader.getUniformLocation("u_texelStep");
+        g_ssaa_factorLocation = graphics.ssaaShader.getUniformLocation("u_ssaaFactor");
+        g_ssaa_modeLocation = graphics.ssaaShader.getUniformLocation("u_ssaaMode");
 
 
         // needed for stupid laptop GPUs
@@ -968,12 +995,12 @@ public partial class Game {
             resolveFbo = 0;
             resolveTex = 0;
         }
-
-        graphics.fxaaShader.use();
-        graphics.fxaaShader.setUniform(g_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
-        graphics.fxaaShader.setUniform(g_fxaaOnLocation, Settings.instance.fxaa);
-        graphics.fxaaShader.setUniform(g_ssaaFactorLocation, Settings.instance.ssaa);
-        graphics.fxaaShader.setUniform(g_ssaaModeLocation, Settings.instance.ssaaMode);
+        
+        graphics.fxaaShader.setUniform(g_fxaa_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
+        
+        graphics.ssaaShader.setUniform(g_ssaa_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
+        graphics.ssaaShader.setUniform(g_ssaa_factorLocation, Settings.instance.ssaa);
+        graphics.ssaaShader.setUniform(g_ssaa_modeLocation, Settings.instance.ssaaMode);
 
         // Set sample shading state based on settings
         if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
@@ -1194,8 +1221,14 @@ public partial class Game {
         }
 
         if (Settings.instance.framebufferEffects) {
-            graphics.fxaaShader.use();
-            
+            // Select the appropriate post-processing shader
+            if (Settings.instance.fxaa) {
+                graphics.fxaaShader.use();
+            } else if (Settings.instance.ssaa > 1) {
+                graphics.ssaaShader.use();
+            } else {
+                graphics.simplePostShader.use();
+            }
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);

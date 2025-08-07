@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using BlockGame.GL;
 using BlockGame.id;
 using BlockGame.util;
 using Molten;
@@ -15,6 +16,13 @@ public class SubChunk {
     
     
     public bool isRendered = false;
+    public bool hasRenderOpaque = false;
+    public bool hasRenderTranslucent = false;
+    
+    public SharedBlockVAO? vao;
+    public SharedBlockVAO? watervao;
+    
+    
 
     /// <summary>
     /// Sections start empty. If you place a block in them, they stop being empty and get array data.

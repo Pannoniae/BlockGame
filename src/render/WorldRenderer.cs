@@ -6,6 +6,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using SixLabors.ImageSharp.PixelFormats;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
 using Color = Molten.Color;
@@ -69,6 +70,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
+    private ulong elementAddress;
 
     public WorldRenderer() {
         GL = Game.GL;
@@ -144,10 +146,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public void onChunkUnload(World world, ChunkCoord coord) {
         foreach (var subChunk in world.getChunk(coord).subChunks) {
-            vao.GetValueOrDefault(subChunk.coord)?.Dispose();
-            watervao.GetValueOrDefault(subChunk.coord)?.Dispose();
-            vao.Remove(subChunk.coord);
-            watervao.Remove(subChunk.coord);
+            subChunk.vao?.Dispose();
+            subChunk.watervao?.Dispose();
+            subChunk.vao = null;
+            subChunk.watervao = null;
         }
     }
 
@@ -177,6 +179,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     pIndices, BufferStorageMask.None);
                 GL.ObjectLabel(ObjectIdentifier.Buffer, Game.graphics.fatQuadIndices, uint.MaxValue,
                     "Shared quad indices");
+            }
+
+            Game.graphics.fatQuadIndicesLen = (uint)(indices.Length * sizeof(ushort));
+
+            // make element buffer resident for unified memory if supported
+            if (Game.hasVBUM && Game.hasSBL) {
+                Game.sbl.MakeBufferResident((Silk.NET.OpenGL.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
+                    (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
+                Game.sbl.GetBufferParameter((Silk.NET.OpenGL.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
+                    Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV, out elementAddress);
             }
         }
     }
@@ -282,8 +294,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         frustum = Game.player.camera.frustum;
 
-        GL.BindVertexArray(chunkVAO);
-        bindQuad();
 
         setUniforms();
         GL.Enable(EnableCap.Blend);
@@ -296,6 +306,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.Disable(EnableCap.Blend);
 
         GL.BindVertexArray(chunkVAO);
+        bindQuad();
+
+        // enable unified memory for chunk rendering
+        if (Game.hasVBUM && Game.hasSBL) {
+            #pragma warning disable CS0618 // Type or member is obsolete
+            Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
+            Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
+            #pragma warning restore CS0618 // Type or member is obsolete
+
+            // set up element array address (shared index buffer)
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
+                Game.graphics.fatQuadIndicesLen);
+        }
 
         var tex = Game.textureManager.blockTexture;
         var lightTex = Game.textureManager.lightTexture;
@@ -311,10 +334,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             var test = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
             chunk.isRendered = test;
             if (test) {
-                for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
-                    var subChunk = chunk.subChunks[j];
-                    subChunk.isRendered = isVisible(subChunk, frustum);
-                }
+                isVisibleEight(chunk.subChunks, frustum);
             }
         }
         //chunksToRender.Sort(new ChunkComparer(world.player));
@@ -324,6 +344,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var cameraPos = world.player.camera.renderPosition(interp);
         worldShader.setUniform(uMVP, viewProj);
         worldShader.setUniform(uCameraPos, new Vector3(0));
+
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -385,18 +406,25 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             }
         }
 
+        // disable unified memory after all chunk rendering passes
+        if (Game.hasVBUM && Game.hasSBL) {
+            #pragma warning disable CS0618 // Type or member is obsolete
+            Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
+            Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
+            #pragma warning restore CS0618 // Type or member is obsolete
+        }
+
         GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
         world.particleManager.render(interp);
     }
 
     private void renderSky(double interp) {
-        
         // if <= 4 chunks, don't render sky
         if (Settings.instance.renderDistance <= 4) {
             return;
         }
-        
+
         // render a flat plane at y = 16
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var modelView = world.player.camera.getStaticViewMatrix(interp);
@@ -495,12 +523,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.addVertex(new BlockVertexTinted(v3.X, v3.Y, v3.Z, 1f, 1f));
         idt.addVertex(new BlockVertexTinted(v4.X, v4.Y, v4.Z, 1f, 0f));
         idt.end();
-        
+
 
         // render moon opposite to sun
         const float moonSize = 6f;
         Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.moonTexture.handle);
-        
+
         mat.push();
 
         mat.rotate(Meth.rad2deg(MathF.PI), 1, 0, 0); // rotate 180 degrees more
@@ -519,7 +547,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.addVertex(new BlockVertexTinted(mv3.X, mv3.Y, mv3.Z, 1f, 1f));
         idt.addVertex(new BlockVertexTinted(mv4.X, mv4.Y, mv4.Z, 1f, 0f));
         idt.end();
-        
+
         mat.pop();
         mat.pop();
 
@@ -831,7 +859,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public static readonly float[] a = [
         0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
     ];
-    
+
     public Color4 getLightColour(byte blocklight, byte skylight) {
         var px = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
@@ -841,7 +869,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         lightVal *= 1 - darken;
         lightVal.A = a; // keep alpha the same
         return lightVal;
-
     }
 
     private static Rgba32 calculateTint(byte dir, byte ao, byte light) {
@@ -860,12 +887,29 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     private void ReleaseUnmanagedResources() {
-        foreach (var vao in vao.Values) {
-            vao?.Dispose();
+        if (chunkVAO != 0) {
+            Game.GL.DeleteVertexArray(chunkVAO);
+            chunkVAO = 0;
         }
 
-        foreach (var watervao in watervao.Values) {
-            watervao?.Dispose();
+        if (outlineVao != 0) {
+            Game.GL.DeleteVertexArray(outlineVao);
+            outlineVao = 0;
+        }
+
+        if (outlineVbo != 0) {
+            Game.GL.DeleteBuffer(outlineVbo);
+            outlineVbo = 0;
+        }
+
+        if (worldShader != null!) {
+            worldShader.Dispose();
+            worldShader = null!;
+        }
+
+        if (waterShader != null!) {
+            waterShader.Dispose();
+            waterShader = null!;
         }
     }
 
@@ -923,7 +967,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var starColour = new Color(1f, 1f, 1f, starAlpha);
         const float starSize = 0.15f;
-        
+
         float continuousTime = dayPercent * 360;
         var mat = new MatrixStack();
         mat.reversed();
@@ -935,7 +979,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         idc.begin(PrimitiveType.Quads);
 
-        foreach (var starPos in starPositions) {
+        for (int i = 0; i < starPositions.Length; i++) {
+            Vector3 starPos = starPositions[i];
             // create billboard quad that faces the camera (like the sun)
             var toCamera = Vector3.Normalize(-starPos); // direction from star to camera (at origin)
             var right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, toCamera));
@@ -947,10 +992,33 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             var v3 = starPos + (right + up) * starSize;
             var v4 = starPos + (-right + up) * starSize;
 
-            idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, starColour));
-            idc.addVertex(new VertexTinted(v2.X, v2.Y, v2.Z, starColour));
-            idc.addVertex(new VertexTinted(v3.X, v3.Y, v3.Z, starColour));
-            idc.addVertex(new VertexTinted(v4.X, v4.Y, v4.Z, starColour));
+            // generate flicker
+            // so we do it per star
+            var time = world.worldTick;
+
+            var hash = XHash.hash(i);
+
+            const int THRESHOLD = 1980;
+
+            // smash the hash into an offset into the function
+            // below 80% 1, above 80% sin into 0
+            var pc = Meth.mod(world.worldTick + hash, 2000);
+
+            // 1 to 20
+            var rem = pc - 1980;
+
+            // 0 to 10
+            var pc2 = float.Max(0, float.Max(rem - 20, 20 - rem));
+            var pc3 = pc2 / 30f; // 0 to 0.3ish???
+            var flicker = pc > 1980 ? pc3 : 0f;
+
+            var sc = starColour * (1 - flicker);
+
+
+            idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, sc));
+            idc.addVertex(new VertexTinted(v2.X, v2.Y, v2.Z, sc));
+            idc.addVertex(new VertexTinted(v3.X, v3.Y, v3.Z, sc));
+            idc.addVertex(new VertexTinted(v4.X, v4.Y, v4.Z, sc));
         }
 
         idc.end();

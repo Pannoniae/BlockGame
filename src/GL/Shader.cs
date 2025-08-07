@@ -11,7 +11,7 @@ public class Definition(string name, string value = "") {
 
 }
 
-public partial class Shader {
+public partial class Shader : IDisposable {
 
     private string name;
     
@@ -245,6 +245,25 @@ public partial class Shader {
 
     public void setUniform(int loc, bool value) {
         GL.ProgramUniform1(programHandle, loc, value ? 1 : 0);
+    }
+
+    private void ReleaseUnmanagedResources() {
+        if (programHandle != 0) {
+            GL.DeleteProgram(programHandle);
+            programHandle = 0;
+        }
+        
+        defs.Clear();
+        includes.Clear();
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~Shader() {
+        ReleaseUnmanagedResources();
     }
 }
 

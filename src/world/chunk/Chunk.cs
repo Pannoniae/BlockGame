@@ -517,7 +517,7 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
     public readonly int z = z;
     
     public override int GetHashCode() {
-        return XHash.hash(x, z);
+        return XHash.hash(x, y, z);
     }
 }
 
