@@ -17,9 +17,7 @@ vec2 mirror(vec2 uv, vec2 minBounds, vec2 maxBounds) {
     vec2 range = maxBounds - minBounds;
     vec2 normalized = (uv - minBounds) / range;
     
-    // mirror each component independently
-    normalized.x = 1.0 - abs(mod(normalized.x, 2.0) - 1.0);
-    normalized.y = 1.0 - abs(mod(normalized.y, 2.0) - 1.0);
+    normalized = 1.0 - abs(mod(normalized, 2.0) - 1.0);
     
     return minBounds + normalized * range;
 }
@@ -49,8 +47,10 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
     const float margin = texelSize * 0.5; // half-texel margin to prevent bleeding
 
     vec2 subtexIndex = floor(uv / subtexSize);
-    vec2 subtexMin = subtexIndex * subtexSize + margin;
-    vec2 subtexMax = (subtexIndex + 1.0) * subtexSize - margin;
+    vec2 subtexMin = subtexIndex * subtexSize;
+    vec2 subtexMax = (subtexIndex + 1.0) * subtexSize;
+    vec2 subtexMinClamped = subtexMin + margin;
+    vec2 subtexMaxClamped = subtexMax - margin;
 
     mat2 J = inverse(mat2(dFdx(uv), dFdy(uv)));
     J = transpose(J)*J;
@@ -74,7 +74,7 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
     
     // debug mode: return anisotropy visualization
     if (DEBUG_ANISO != 0) {
-        vec4 baseColor = texture(texSampler, mirror(uv, subtexMin, subtexMax));
+        vec4 baseColor = texture(texSampler, clamp(mirror(uv, subtexMin, subtexMax), subtexMinClamped, subtexMaxClamped));
         vec4 anisoColor = mapAniso(anisotropy, 256.0);
         return mix(anisoColor, baseColor, 0.4);
     }
@@ -87,7 +87,7 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
     vec4 c = vec4(0.0);
     for (float i = -samplesHalf + 0.5; i < samplesHalf; i++) {
         vec2 sampleUV = uv + ADivSamples * i;
-        sampleUV = mirror(sampleUV, subtexMin, subtexMax);
+        sampleUV = clamp(mirror(sampleUV, subtexMin, subtexMax), subtexMinClamped, subtexMaxClamped);
         vec4 colorSample = textureLod(texSampler, sampleUV, lod);
         
         c.rgb += colorSample.rgb * colorSample.a;
