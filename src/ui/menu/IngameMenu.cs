@@ -346,7 +346,7 @@ public class IngameMenu : Menu, IDisposable {
             debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})\n",
                 GCMemory / Constants.MEGABYTES,
                 workingSet / Constants.MEGABYTES, vmem / Constants.MEGABYTES, stat);
-            debugStrG.AppendFormat("EXT: SBL: {0}, VBUM: {1}", Game.hasSBL, Game.hasVBUM); 
+            debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2}", Game.hasSBL.yes(), Game.hasVBUM.yes(), Game.hasUBUM.yes()); 
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,

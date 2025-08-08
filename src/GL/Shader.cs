@@ -19,7 +19,7 @@ public partial class Shader : IDisposable {
     private string fragmentShader;
 
     private readonly Silk.NET.OpenGL.GL GL;
-    private uint programHandle;
+    public uint programHandle;
     private Dictionary<string, Definition> defs = new();
     private readonly HashSet<string> includes = [];
 

@@ -200,7 +200,7 @@ namespace System.Numerics {
         /// <summary>
         /// Batched visibility test for 8 AABBs at once. Returns a byte mask where each bit indicates if the corresponding AABB is outside the camera frustum.
         /// </summary>
-        public unsafe byte outsideCameraUpDownEight(AABB* aabbs) {
+        public byte outsideCameraUpDownEight(Span<AABB> aabbs) {
             return AABB.isFrontTwoEight(aabbs, _planes[4], _planes[5]);
         }
 

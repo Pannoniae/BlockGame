@@ -16,6 +16,11 @@ using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
 
+[StructLayout(LayoutKind.Sequential)]
+public readonly record struct ChunkUniforms(Vector3 uChunkPos) {
+    public readonly Vector4 data = new(uChunkPos, 1);   
+}
+
 public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public World? world;
     private int currentAnisoLevel = -1;
@@ -71,6 +76,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
     private ulong elementAddress;
+    
+    private UniformBuffer chunkUBO;
 
     public WorldRenderer() {
         GL = Game.GL;
@@ -124,6 +131,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterHorizonColour, defaultClearColour);
 
         initBlockOutline();
+        
+        // initialize chunk UBO (16 bytes: vec3 + padding)
+        //chunkUBO = new UniformBuffer(GL, 256, 0);
 
         //setUniforms();
     }
@@ -307,6 +317,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.BindVertexArray(chunkVAO);
         bindQuad();
+        // we'll be using this for a while
+        //chunkUBO.bind();
+        //chunkUBO.bindToPoint();
 
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
@@ -911,6 +924,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader.Dispose();
             waterShader = null!;
         }
+        
+        //chunkUBO?.Dispose();
     }
 
     public void Dispose() {

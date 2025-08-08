@@ -246,7 +246,7 @@ public partial class WorldRenderer {
     /// </summary>
     public unsafe void isVisibleEight(SubChunk[] subChunks, BoundingFrustum frustum) {
         // Extract AABBs from subchunks
-        AABB* aabbs = stackalloc AABB[8];
+        Span<AABB> aabbs = stackalloc AABB[8];
         for (int i = 0; i < 8; i++) {
             aabbs[i] = subChunks[i].box;
         }
@@ -260,6 +260,19 @@ public partial class WorldRenderer {
         }
     }
 
+    /*private void setUniformPosUBO(SubChunkCoord coord, Vector3D cameraPos) {
+        var chunkUniforms = new ChunkUniforms(
+            new Vector3(
+                (float)(coord.x * 16 - cameraPos.X),
+                (float)(coord.y * 16 - cameraPos.Y),
+                (float)(coord.z * 16 - cameraPos.Z)
+            )
+        );
+        
+        chunkUBO.updateData(in chunkUniforms);
+        chunkUBO.upload();
+    }*/
+    
     private void setUniformPos(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
         s.setUniformBound(uChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y),
             (float)(coord.z * 16 - cameraPos.Z));

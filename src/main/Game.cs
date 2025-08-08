@@ -18,6 +18,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ARB;
 using Silk.NET.OpenGL.Extensions.NV;
+using Silk.NET.OpenGL.Legacy.Extensions.EXT;
 using Silk.NET.WGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
@@ -138,11 +139,14 @@ public partial class Game {
     public static bool sampleShadingSupported = false;
     private static bool sampleShadingEnabled = false;
     
-    public static bool hasVBUM = false;
+    
     public static bool hasSBL = false;
-
-    public static NVVertexBufferUnifiedMemory vbum;
+    public static bool hasVBUM = false;
+    public static bool hasUBUM = false;
+    
     public static NVShaderBufferLoad sbl;
+    public static NVVertexBufferUnifiedMemory vbum;
+    public static ExtBindableUniform extbu;
 
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;
@@ -466,17 +470,25 @@ public partial class Game {
         var version = GL.GetStringS(StringName.Version);
         sampleShadingSupported = version.StartsWith("4.") || GL.TryGetExtension(out ArbSampleShading arbSampleShading);
         
+        // check for NV shader buffer load support
+        hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
+        sbl = nvShaderBufferLoad;
+        Console.Out.WriteLine($"NV_shader_buffer_load supported: {hasSBL}");
+        //hasSBL = false;
+        
         // check for NV vertex buffer unified memory support
         hasVBUM = GL.TryGetExtension(out NVVertexBufferUnifiedMemory nvVertexBufferUnifiedMemory);
         vbum = nvVertexBufferUnifiedMemory;
         Console.Out.WriteLine($"NV_vertex_buffer_unified_memory supported: {hasVBUM}");
         //hasVBUM = false;
         
-        // check for NV shader buffer load support
-        hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
-        sbl = nvShaderBufferLoad;
-        Console.Out.WriteLine($"NV_shader_buffer_load supported: {hasSBL}");
-        //hasSBL = false;
+        // check for NV uniform buffer unified memory support
+        hasUBUM = GL.IsExtensionPresent("NV_uniform_buffer_unified_memory");
+        Console.Out.WriteLine($"NV_uniform_buffer_unified_memory supported: {hasUBUM}");
+        //hasUBUM = false;
+        
+        GLL.TryGetExtension(out extbu);
+        
 
         //#if DEBUG
         // initialise debug print
