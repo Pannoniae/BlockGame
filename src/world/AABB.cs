@@ -128,20 +128,22 @@ public struct AABB {
     /// Vectorised isFrontTwo check for 8 AABBs at once. Returns a byte mask with each bit representing if the corresponding AABB is in front of either plane.
     /// Optimized to process multiple AABBs simultaneously using SIMD.
     /// </summary>
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe byte isFrontTwoEight(Span<AABB> aabbs, Plane p1, Plane p2) {
         // todo actually make this shit different
         // rn its just a copy of the other method
-        if (false && Avx512F.IsSupported) {
-            return isFrontTwoEightAvx512(aabbs, p1, p2);
-        }
-        if (Avx2.IsSupported) {
+        //if (false && Avx512F.IsSupported) {
+        //    return isFrontTwoEightAvx512(aabbs, p1, p2);
+        //}
+        //if (Avx2.IsSupported) {
             return isFrontTwoEightAvx2(aabbs, p1, p2);
-        }
-        return isFrontTwoEightFallback(aabbs, p1, p2);
+        //}
+        //return isFrontTwoEightFallback(aabbs, p1, p2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe byte isFrontTwoEightAvx512(Span<AABB> aabbs, Plane p1, Plane p2) {
+    public static unsafe byte isFrontTwoEightAvx512(Span<AABB> aabbs, Plane p1, Plane p2) {
         // Load planes once
         var vP1_128 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
         var vP2_128 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
@@ -221,7 +223,7 @@ public struct AABB {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe byte isFrontTwoEightAvx2(Span<AABB> aabbs, Plane p1, Plane p2) {
+    public static unsafe byte isFrontTwoEightAvx2(Span<AABB> aabbs, Plane p1, Plane p2) {
         // Load planes once
         var vP1_128 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
         var vP2_128 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
@@ -301,7 +303,7 @@ public struct AABB {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe byte isFrontTwoEightFallback(Span<AABB> aabbs, Plane p1, Plane p2) {
+    public static unsafe byte isFrontTwoEightFallback(Span<AABB> aabbs, Plane p1, Plane p2) {
         // Fallback implementation for non-AVX2 systems - still better than the original due to reduced overhead
         var vP1 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
         var vP2 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
