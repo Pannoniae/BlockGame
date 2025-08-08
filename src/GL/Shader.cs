@@ -249,7 +249,7 @@ public partial class Shader : IDisposable {
 
     private void ReleaseUnmanagedResources() {
         if (programHandle != 0) {
-            GL.DeleteProgram(programHandle);
+            //GL.DeleteProgram(programHandle);
             programHandle = 0;
         }
         

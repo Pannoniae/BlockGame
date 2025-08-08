@@ -92,6 +92,7 @@ public class AABBBenchmark {
         Console.WriteLine($"isFrontTwoEightFallback: {sw.Elapsed.TotalMicroseconds:F1} μs total, {sw.Elapsed.TotalMicroseconds / benchmarkIterations:F3} μs/call, result: {result:X2}");
 
         // benchmark individual AABB checks for comparison
+        
         sw.Restart();
         byte individualResult = 0;
         for (int i = 0; i < benchmarkIterations; i++) {
