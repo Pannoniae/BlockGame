@@ -272,6 +272,8 @@ public class NBTString : NBTTag {
 // has a typename
 public interface INBTList {
     public NBTType listType { get; set; }
+    
+    public int count();
 }
 
 public class NBTList : NBTTag, INBTList {
@@ -344,7 +346,7 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
     public override NBTType id => NBTType.TAG_List;
 
     public NBTList(NBTType listType, string? name) : base(name) {
-        list = new List<T>();
+        list = [];
         this.listType = listType;
         
         // if this thing is EVER a generic NBTTag, throw an exception. This should never happen and it's a result of skill-issue programming.

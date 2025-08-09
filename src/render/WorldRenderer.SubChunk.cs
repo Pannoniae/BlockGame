@@ -181,6 +181,7 @@ public partial class WorldRenderer {
         // first we render everything which is NOT translucent
         //lock (meshingLock) {
         setupNeighbours(subChunk);
+        
 
         // if chunk is full, don't mesh either
         // status update: this is actually bullshit and causes rendering bugs with *weird* worlds such as "all stone until building height". So this won't work anymore

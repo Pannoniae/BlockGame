@@ -5,7 +5,6 @@ using BlockGame.util.xNBT;
 namespace BlockGame;
 
 public class WorldIO {
-
     //public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
 
     private const int my = Chunk.CHUNKSIZE;
@@ -40,7 +39,7 @@ public class WorldIO {
     }
 
     public void saveWorldData() {
-        var tag = new NBTCompound("world");
+        var tag = new NBTCompound("");
         tag.addInt("seed", world.seed);
         tag.addDouble("posX", world.player.position.X);
         tag.addDouble("posY", world.player.position.Y);
@@ -64,7 +63,7 @@ public class WorldIO {
     }
 
     private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
-        var chunkTag = new NBTCompound("chunk");
+        var chunkTag = new NBTCompound();
         chunkTag.addInt("posX", chunk.coord.x);
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
@@ -84,14 +83,15 @@ public class WorldIO {
             else {
                 section.addByte("inited", 0);
             }
+
             sectionsTag.add(section);
         }
+
         chunkTag.addListTag("sections", sectionsTag);
         return chunkTag;
     }
 
     private static Chunk loadChunkFromNBT(World world, NBTCompound nbt) {
-
         var posX = nbt.getInt("posX");
         var posZ = nbt.getInt("posZ");
         var status = nbt.getByte("status");
@@ -118,6 +118,13 @@ public class WorldIO {
             blocks.light = section.getByteArray("light");
             blocks.refreshCounts();
         }
+
+        var file = "chunk.xnbt";
+        if (File.Exists(file)) {
+            File.Delete(file);
+        }
+
+        SNBT.writeToFile(nbt, file, prettyPrint: true);
         return chunk;
     }
 
@@ -136,6 +143,15 @@ public class WorldIO {
         world.worldTick = tag.has("time") ? tag.getInt("time") : 0;
 
         world.player.prevPosition = world.player.position;
+
+        // dump nbt into file
+        var file = "dump.xnbt";
+        if (File.Exists(file)) {
+            File.Delete(file);
+        }
+
+        SNBT.writeToFile(tag, file, prettyPrint: true);
+
         return world;
     }
 
@@ -174,6 +190,7 @@ public class WorldIO {
         if (chunk.status >= ChunkStatus.MESHED) {
             chunk.status = ChunkStatus.LIGHTED;
         }
+
         return chunk;
     }
 }

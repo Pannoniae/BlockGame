@@ -11,39 +11,45 @@ public class NBTTest {
     [Test]
     public void TestPrimitives() {
         // Test all primitive types
-        AssertRoundtrip(new NBTByte("", 127), "127b");
-        AssertRoundtrip(new NBTByte("", 255), "255b"); // unsigned byte
-        AssertRoundtrip(new NBTShort("", -32768), "-32768s");
-        AssertRoundtrip(new NBTUShort("", 65535), "65535us");
-        AssertRoundtrip(new NBTInt("", -2147483648), "-2147483648");
-        AssertRoundtrip(new NBTUInt("", 4294967295), "4294967295u");
-        AssertRoundtrip(new NBTLong("", -9223372036854775808), "-9223372036854775808L");
-        AssertRoundtrip(new NBTULong("", 18446744073709551615), "18446744073709551615uL");
-        AssertRoundtrip(new NBTFloat("", 3.14159f), "3.14159f");
-        AssertRoundtrip(new NBTDouble("", 2.718281828), "2.718281828d");
-        AssertRoundtrip(new NBTString("", "Hello, World!"), "\"Hello, World!\"");
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTByte("", 127), "127b");
+            AssertRoundtrip(new NBTByte("", 255), "255b"); // unsigned byte
+            AssertRoundtrip(new NBTShort("", -32768), "-32768s");
+            AssertRoundtrip(new NBTUShort("", 65535), "65535us");
+            AssertRoundtrip(new NBTInt("", -2147483648), "-2147483648");
+            AssertRoundtrip(new NBTUInt("", 4294967295), "4294967295u");
+            AssertRoundtrip(new NBTLong("", -9223372036854775808), "-9223372036854775808L");
+            AssertRoundtrip(new NBTULong("", 18446744073709551615), "18446744073709551615uL");
+            AssertRoundtrip(new NBTFloat("", 3.14159f), "3.14159f");
+            AssertRoundtrip(new NBTDouble("", 2.718281828), "2.718281828d");
+            AssertRoundtrip(new NBTString("", "Hello, World!"), "\"Hello, World!\"");
+        }
     }
 
     [Test]
     public void TestStringEscaping() {
-        AssertRoundtrip(new NBTString("", "Quote: \"test\""), "\"Quote: \\\"test\\\"\"");
-        AssertRoundtrip(new NBTString("", "Backslash: \\test\\"), "\"Backslash: \\\\test\\\\\"");
-        AssertRoundtrip(new NBTString("", "Both: \"\\\""), "\"Both: \\\"\\\\\\\"\"");
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTString("", "Quote: \"test\""), "\"Quote: \\\"test\\\"\"");
+            AssertRoundtrip(new NBTString("", "Backslash: \\test\\"), "\"Backslash: \\\\test\\\\\"");
+            AssertRoundtrip(new NBTString("", "Both: \"\\\""), "\"Both: \\\"\\\\\\\"\"");
+        }
     }
 
     [Test]
     public void TestArrays() {
-        AssertRoundtrip(new NBTByteArray("", [1, 2, 3]), "[B; 1, 2, 3]");
-        AssertRoundtrip(new NBTShortArray("", [-1, 0, 1]), "[S; -1, 0, 1]");
-        AssertRoundtrip(new NBTUShortArray("", [0, 32768, 65535]), "[US; 0, 32768, 65535]");
-        AssertRoundtrip(new NBTIntArray("", [-1000, 0, 1000]), "[I; -1000, 0, 1000]");
-        AssertRoundtrip(new NBTUIntArray("", [0, 2147483648]), "[UI; 0, 2147483648]");
-        AssertRoundtrip(new NBTLongArray("", [-1L, 0L, 1L]), "[L; -1, 0, 1]");
-        AssertRoundtrip(new NBTULongArray("", [0, 9223372036854775808]), "[UL; 0, 9223372036854775808]");
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTByteArray("", [1, 2, 3]), "[B; 1, 2, 3]");
+            AssertRoundtrip(new NBTShortArray("", [-1, 0, 1]), "[S; -1, 0, 1]");
+            AssertRoundtrip(new NBTUShortArray("", [0, 32768, 65535]), "[US; 0, 32768, 65535]");
+            AssertRoundtrip(new NBTIntArray("", [-1000, 0, 1000]), "[I; -1000, 0, 1000]");
+            AssertRoundtrip(new NBTUIntArray("", [0, 2147483648]), "[UI; 0, 2147483648]");
+            AssertRoundtrip(new NBTLongArray("", [-1L, 0L, 1L]), "[L; -1, 0, 1]");
+            AssertRoundtrip(new NBTULongArray("", [0, 9223372036854775808]), "[UL; 0, 9223372036854775808]");
 
-        // Empty arrays
-        AssertRoundtrip(new NBTByteArray("", []), "[B; ]");
-        AssertRoundtrip(new NBTIntArray("", []), "[I; ]");
+            // Empty arrays
+            AssertRoundtrip(new NBTByteArray("", []), "[B; ]");
+            AssertRoundtrip(new NBTIntArray("", []), "[I; ]");
+        }
     }
 
     [Test]
@@ -54,10 +60,13 @@ public class NBTTest {
         compound.addString("str", "test");
 
         var parsed = SNBT.parse(SNBT.toString(compound)) as NBTCompound;
-        Assert.That(parsed, Is.Not.Null);
-        Assert.That(parsed.getByte("byte"), Is.EqualTo(1));
-        Assert.That(parsed.getInt("int"), Is.EqualTo(42));
-        Assert.That(parsed.getString("str"), Is.EqualTo("test"));
+
+        using (Assert.EnterMultipleScope()) {
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed.getByte("byte"), Is.EqualTo(1));
+            Assert.That(parsed.getInt("int"), Is.EqualTo(42));
+            Assert.That(parsed.getString("str"), Is.EqualTo("test"));
+        }
     }
 
     [Test]
@@ -72,10 +81,13 @@ public class NBTTest {
         child.addCompoundTag("grandchild", grandchild);
 
         var parsed = SNBT.parse(SNBT.toString(root)) as NBTCompound;
-        Assert.That(parsed, Is.Not.Null);
-        Assert.That(parsed.getCompoundTag("child").getInt("value"), Is.EqualTo(123));
-        Assert.That(parsed.getCompoundTag("child").getCompoundTag("grandchild").getString("deep"),
-            Is.EqualTo("nested"));
+
+        using (Assert.EnterMultipleScope()) {
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed.getCompoundTag("child").getInt("value"), Is.EqualTo(123));
+            Assert.That(parsed.getCompoundTag("child").getCompoundTag("grandchild").getString("deep"),
+                Is.EqualTo("nested"));
+        }
     }
 
     [Test]
@@ -91,7 +103,7 @@ public class NBTTest {
         var strList = new NBTList<NBTString>(NBTType.TAG_String, "");
         strList.add(new NBTString(null, "hello"));
         strList.add(new NBTString(null, "world"));
-        AssertRoundtrip(strList, "[\"hello\", \"world\"]");
+        AssertRoundtrip(strList, "[hello, world]");
 
         // List of compounds
         var compList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "");
@@ -102,25 +114,29 @@ public class NBTTest {
         compList.add(comp1);
         compList.add(comp2);
 
-        var parsed = SNBT.parse(SNBT.toString(compList));
-        Assert.That(parsed, Is.Not.Null);
-        Assert.That(parsed, Is.TypeOf<NBTList<NBTCompound>>());
-        
-        // test binary NBT too
-        var parsedBinary = NBT.read(NBT.write(compList));
-        Assert.That(parsedBinary, Is.Not.Null);
-        Assert.That(parsedBinary, Is.TypeOf<NBTList<NBTCompound>>());
+        using (Assert.EnterMultipleScope()) {
+            var parsed = SNBT.parse(SNBT.toString(compList));
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed, Is.TypeOf<NBTList<NBTCompound>>());
+
+            // test binary NBT too
+            var parsedBinary = NBT.read(NBT.write(compList));
+            Assert.That(parsedBinary, Is.Not.Null);
+            Assert.That(parsedBinary, Is.TypeOf<NBTList<NBTCompound>>());
+        }
     }
 
     [Test]
     public void TestEmptyLists() {
         // Empty list of each type
-        AssertRoundtrip(new NBTList<NBTByte>(NBTType.TAG_Byte, ""), "[TAG_Byte;]");
-        AssertRoundtrip(new NBTList<NBTShort>(NBTType.TAG_Short, ""), "[TAG_Short;]");
-        AssertRoundtrip(new NBTList<NBTInt>(NBTType.TAG_Int, ""), "[TAG_Int;]");
-        AssertRoundtrip(new NBTList<NBTString>(NBTType.TAG_String, ""), "[TAG_String;]");
-        AssertRoundtrip(new NBTList<NBTCompound>(NBTType.TAG_Compound, ""), "[TAG_Compound;]");
-        AssertRoundtrip(new NBTList<NBTList<NBTTag>>(NBTType.TAG_List, ""), "[TAG_List;]");
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTList<NBTByte>(NBTType.TAG_Byte, ""), "[TAG_Byte;]");
+            AssertRoundtrip(new NBTList<NBTShort>(NBTType.TAG_Short, ""), "[TAG_Short;]");
+            AssertRoundtrip(new NBTList<NBTInt>(NBTType.TAG_Int, ""), "[TAG_Int;]");
+            AssertRoundtrip(new NBTList<NBTString>(NBTType.TAG_String, ""), "[TAG_String;]");
+            AssertRoundtrip(new NBTList<NBTCompound>(NBTType.TAG_Compound, ""), "[TAG_Compound;]");
+            AssertRoundtrip(new NBTList<NBTList<NBTTag>>(NBTType.TAG_List, ""), "[TAG_List;]");
+        }
     }
 
     [Test]
@@ -155,18 +171,20 @@ public class NBTTest {
         string snbt = SNBT.toString(root);
         var parsed = SNBT.parse(snbt) as NBTCompound;
 
-        Assert.That(parsed, Is.Not.Null);
-        Assert.That(parsed.getByte("byte"), Is.EqualTo(127));
-        Assert.That(parsed.getShort("short"), Is.EqualTo(32767));
-        Assert.That(parsed.getInt("int"), Is.EqualTo(2147483647));
-        Assert.That(parsed.getLong("long"), Is.EqualTo(9223372036854775807));
-        Assert.That(parsed.getFloat("float"), Is.EqualTo(1.23f).Within(0.00001f));
-        Assert.That(parsed.getDouble("double"), Is.EqualTo(4.56).Within(0.0000000001));
-        Assert.That(parsed.getString("string"), Is.EqualTo("Hello \"World\"!"));
-        Assert.That(parsed.getByteArray("bytes"), Is.EqualTo(new byte[] { 1, 2, 3 }));
-        Assert.That(parsed.getIntArray("ints"), Is.EqualTo([10, 20, 30]));
-        Assert.That(parsed.getCompoundTag("nested").getString("key"), Is.EqualTo("value"));
-        Assert.That(parsed.getListTag<NBTInt>("list").count(), Is.EqualTo(2));
+        using (Assert.EnterMultipleScope()) {
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed.getByte("byte"), Is.EqualTo(127));
+            Assert.That(parsed.getShort("short"), Is.EqualTo(32767));
+            Assert.That(parsed.getInt("int"), Is.EqualTo(2147483647));
+            Assert.That(parsed.getLong("long"), Is.EqualTo(9223372036854775807));
+            Assert.That(parsed.getFloat("float"), Is.EqualTo(1.23f).Within(0.00001f));
+            Assert.That(parsed.getDouble("double"), Is.EqualTo(4.56).Within(0.0000000001));
+            Assert.That(parsed.getString("string"), Is.EqualTo("Hello \"World\"!"));
+            Assert.That(parsed.getByteArray("bytes"), Is.EqualTo(new byte[] { 1, 2, 3 }));
+            Assert.That(parsed.getIntArray("ints"), Is.EqualTo([10, 20, 30]));
+            Assert.That(parsed.getCompoundTag("nested").getString("key"), Is.EqualTo("value"));
+            Assert.That(parsed.getListTag<NBTInt>("list").count(), Is.EqualTo(2));
+        }
     }
 
     [Test]
@@ -193,53 +211,150 @@ public class NBTTest {
             ("{\n  \"key\": 123\n}", 123),
             ("{\t\"key\":\t123\t}", 123)
         };
-
-        foreach (var (snbt, expected) in testCases) {
-            var parsed = SNBT.parse(snbt) as NBTCompound;
-            Assert.That(parsed, Is.Not.Null);
-            Assert.That(expected, Is.EqualTo(parsed.getInt("key")));
+        using (Assert.EnterMultipleScope()) {
+            foreach (var (snbt, expected) in testCases) {
+                var parsed = SNBT.parse(snbt) as NBTCompound;
+                Assert.That(parsed, Is.Not.Null);
+                Assert.That(expected, Is.EqualTo(parsed.getInt("key")));
+            }
         }
     }
 
     [Test]
     public void TestErrorHandling() {
         // Invalid syntax should throw
-        Assert.Throws<FormatException>(() => SNBT.parse("{"));
-        Assert.Throws<FormatException>(() => SNBT.parse("{ \"key\" }"));
-        Assert.Throws<FormatException>(() => SNBT.parse("{ \"key\": }"));
-        Assert.Throws<FormatException>(() => SNBT.parse("[1, 2, 3"));
-        Assert.Throws<FormatException>(() => SNBT.parse("\"unterminated string"));
-        Assert.Throws<FormatException>(() => SNBT.parse("123xyz")); // invalid suffix
-        Assert.Throws<FormatException>(() => SNBT.parse("[X; 1, 2, 3]")); // invalid array type
+        using (Assert.EnterMultipleScope()) {
+            Assert.Throws<FormatException>(() => SNBT.parse("{"));
+            Assert.Throws<FormatException>(() => SNBT.parse("{ \"key\" }"));
+            Assert.Throws<FormatException>(() => SNBT.parse("{ \"key\": }"));
+            Assert.Throws<FormatException>(() => SNBT.parse("[1, 2, 3"));
+            Assert.Throws<FormatException>(() => SNBT.parse("\"unterminated string"));
+            Assert.Throws<FormatException>(() => SNBT.parse("123xyz")); // invalid suffix
+            Assert.Throws<FormatException>(() => SNBT.parse("[X; 1, 2, 3]")); // invalid array type
 
-        // Mixed types in list should throw
-        Assert.Throws<FormatException>(() => SNBT.parse("[1, \"string\"]"));
-        Assert.Throws<FormatException>(() => SNBT.parse("[1, 2.5f]"));
+            // Mixed types in list should throw
+            Assert.Throws<FormatException>(() => SNBT.parse("[1, \"string\"]"));
+            Assert.Throws<FormatException>(() => SNBT.parse("[1, 2.5f]"));
+        }
+    }
+
+    [Test]
+    public void TestQuotedAndUnquotedStrings() {
+        // Test unquoted strings (valid identifiers)
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTString("", "hello"), "hello");
+            AssertRoundtrip(new NBTString("", "world123"), "world123");
+            AssertRoundtrip(new NBTString("", "valid_name"), "valid_name");
+            AssertRoundtrip(new NBTString("", "with.dots"), "with.dots");
+            AssertRoundtrip(new NBTString("", "with+plus"), "with+plus");
+            AssertRoundtrip(new NBTString("", "with-minus"), "with-minus");
+            AssertRoundtrip(new NBTString("", "_underscore"), "_underscore");
+        }
+
+        // Test strings that must be quoted (invalid as unquoted)
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTString("", ""), "\"\""); // empty string
+            AssertRoundtrip(new NBTString("", "123"), "\"123\""); // starts with number
+            AssertRoundtrip(new NBTString("", "hello world"), "\"hello world\""); // contains space
+            AssertRoundtrip(new NBTString("", "special@chars"), "\"special@chars\""); // special chars
+            AssertRoundtrip(new NBTString("", "with:colon"), "\"with:colon\""); // colon
+            AssertRoundtrip(new NBTString("", "with,comma"), "\"with,comma\""); // comma
+            AssertRoundtrip(new NBTString("", "with{brace"), "\"with{brace\""); // brace
+            AssertRoundtrip(new NBTString("", "with[bracket"), "\"with[bracket\""); // bracket
+        }
+
+        // Test reserved suffixes that must be quoted
+        using (Assert.EnterMultipleScope()) {
+            AssertRoundtrip(new NBTString("", "b"), "\"b\"");
+            AssertRoundtrip(new NBTString("", "ub"), "\"ub\"");
+            AssertRoundtrip(new NBTString("", "s"), "\"s\"");
+            AssertRoundtrip(new NBTString("", "us"), "\"us\"");
+            AssertRoundtrip(new NBTString("", "u"), "\"u\"");
+            AssertRoundtrip(new NBTString("", "L"), "\"L\"");
+            AssertRoundtrip(new NBTString("", "uL"), "\"uL\"");
+            AssertRoundtrip(new NBTString("", "f"), "\"f\"");
+            AssertRoundtrip(new NBTString("", "d"), "\"d\"");
+            AssertRoundtrip(new NBTString("", "END"), "\"END\"");
+        }
+
+        // Test that parser can handle both quoted and unquoted in compounds
+        var compound = new NBTCompound("");
+        compound.addString("unquoted_key", "unquoted_value");
+        compound.addString("quoted key", "quoted value with spaces");
+        compound.addString("123", "number_key_quoted");
+
+        var snbt = SNBT.toString(compound);
+        var parsed = SNBT.parse(snbt) as NBTCompound;
+        using (Assert.EnterMultipleScope()) {
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed.getString("unquoted_key"), Is.EqualTo("unquoted_value"));
+            Assert.That(parsed.getString("quoted key"), Is.EqualTo("quoted value with spaces"));
+            Assert.That(parsed.getString("123"), Is.EqualTo("number_key_quoted"));
+        }
+
+        // Test parsing manually constructed SNBT with mixed quoting
+        var mixedParsed =
+            SNBT.parse("{unquoted: hello, \"quoted\": \"world with spaces\", \"123\": number_start}") as NBTCompound;
+        using (Assert.EnterMultipleScope()) {
+            Assert.That(mixedParsed, Is.Not.Null);
+            Assert.That(mixedParsed.getString("unquoted"), Is.EqualTo("hello"));
+            Assert.That(mixedParsed.getString("quoted"), Is.EqualTo("world with spaces"));
+            Assert.That(mixedParsed.getString("123"), Is.EqualTo("number_start"));
+        }
     }
 
     [Test]
     public void TestEmptyNBTList() {
-        // Create an empty NBTList<NBTByte>
+        // Test empty list roundtrip with type preservation
         var emptyByteList = new NBTList<NBTByte>(NBTType.TAG_Byte, "test");
-        Console.WriteLine($"Original list type: {emptyByteList.listType}");
-        Console.WriteLine($"Original list count: {emptyByteList.count()}");
+        
+        // Verify initial state
+        Assert.That(emptyByteList.listType, Is.EqualTo(NBTType.TAG_Byte));
+        Assert.That(emptyByteList.count(), Is.Zero);
 
-        // Convert to SNBT
+        // Convert to SNBT - should include type information
         string snbt = SNBT.toString(emptyByteList);
-        Console.WriteLine($"SNBT output: '{snbt}'");
+        Assert.That(snbt, Is.EqualTo("[TAG_Byte;]"));
 
         // Parse it back
         var parsed = SNBT.parse(snbt);
-        Console.WriteLine($"Parsed type: {parsed.GetType().Name}");
-        if (parsed is INBTList list) {
-            Console.WriteLine($"Parsed list type: {list.listType}");
-        }
+        Assert.That(parsed, Is.Not.Null);
+        Assert.That(parsed, Is.InstanceOf<INBTList>());
+        
+        var parsedList = parsed as INBTList;
+        Assert.That(parsedList, Is.Not.Null);
+        Assert.That(parsedList.listType, Is.EqualTo(NBTType.TAG_Byte));
 
-        // Convert back to SNBT
+        // Convert back to SNBT - should be identical
         string snbt2 = SNBT.toString(parsed);
-        Console.WriteLine($"Second SNBT output: '{snbt2}'");
+        Assert.That(snbt2, Is.EqualTo(snbt));
+        Assert.That(snbt2, Is.EqualTo("[TAG_Byte;]"));
 
-        Console.WriteLine($"Match: {snbt == snbt2}");
+        // Test with different empty list types
+        using (Assert.EnterMultipleScope()) {
+            var testCases = new (NBTTag, string)[] {
+                (new NBTList<NBTShort>(NBTType.TAG_Short, ""), "[TAG_Short;]"),
+                (new NBTList<NBTInt>(NBTType.TAG_Int, ""), "[TAG_Int;]"),
+                (new NBTList<NBTString>(NBTType.TAG_String, ""), "[TAG_String;]"),
+                (new NBTList<NBTCompound>(NBTType.TAG_Compound, ""), "[TAG_Compound;]"),
+                (new NBTList<NBTFloat>(NBTType.TAG_Float, ""), "[TAG_Float;]"),
+                (new NBTList<NBTDouble>(NBTType.TAG_Double, ""), "[TAG_Double;]")
+            };
+
+            foreach (var (list, expectedSnbt) in testCases) {
+                Assert.That(((INBTList)list).count(), Is.Zero);
+                
+                string listSnbt = SNBT.toString(list);
+                Assert.That(listSnbt, Is.EqualTo(expectedSnbt));
+                
+                var parsedListTest = SNBT.parse(listSnbt);
+                Assert.That(parsedListTest, Is.Not.Null);
+                Assert.That(((INBTList)parsedListTest).listType, Is.EqualTo(((INBTList)list).listType));
+                
+                string listSnbt2 = SNBT.toString(parsedListTest);
+                Assert.That(listSnbt2, Is.EqualTo(expectedSnbt));
+            }
+        }
     }
 
     [Test]

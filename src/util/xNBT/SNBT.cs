@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BlockGame.util.xNBT;
-
 
 /**
  * Primitives: 123b (byte), 123s (short), 123 (int), 123L (long), 3.14f (float), 3.14d (double)
@@ -13,35 +13,79 @@ namespace BlockGame.util.xNBT;
  * Arrays: [B; 1,2,3] for byte[], [I; ...] for int[], etc.
  */
 public static class SNBT {
-    public static string toString(NBTTag tag) {
-        
+    public static string toString(NBTTag tag, bool prettyPrint = false) {
         // root tag can't have a name if compound
         if (tag is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
             throw new ArgumentException("Root tag must not have a name!", nameof(tag));
         }
-        
-        var writer = new SNBTWriter();
+
+        var writer = new SNBTWriter(prettyPrint);
         return writer.write(tag);
     }
 
     public static NBTTag parse(string snbt) {
-        
         var parser = new SNBTParser(snbt);
         var nbt = parser.parse();
         // root tag can't have a name if compound
         if (nbt is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
             throw new ArgumentException("Root tag must not have a name!", nameof(snbt));
         }
+
         return nbt;
+    }
+
+    public static void writeToFile(NBTTag tag, string path, bool prettyPrint = false) {
+        var s = toString(tag, prettyPrint);
+        File.WriteAllText(path, s);
+    }
+
+    public static NBTTag readFromFile(string path) {
+        if (!File.Exists(path)) {
+            throw new FileNotFoundException($"File not found: {path}");
+        }
+
+        var content = File.ReadAllText(path);
+        return parse(content);
     }
 }
 
-internal class SNBTWriter {
+internal partial class SNBTWriter {
     private readonly StringBuilder sb = new();
+    private readonly bool prettyPrint;
+    private int indentLevel;
+    private const string INDENT = "  ";
+    
+    // Regex for valid unquoted strings
+    private static readonly Regex UnquotedPattern = unquoted();
+    private static readonly HashSet<string> ReservedSuffixes = ["b", "ub", "s", "us", "u", "L", "uL", "f", "d", "END"];
+
+    public SNBTWriter(bool prettyPrint = false) {
+        this.prettyPrint = prettyPrint;
+        this.indentLevel = 0;
+    }
 
     public string write(NBTTag tag) {
         writeValue(tag);
         return sb.ToString();
+    }
+
+    private void writeIndent() {
+        if (!prettyPrint) return;
+        for (int i = 0; i < indentLevel; i++) {
+            sb.Append(INDENT);
+        }
+    }
+
+    private void writeNewLine() {
+        if (prettyPrint) {
+            sb.AppendLine();
+        }
+    }
+
+    private bool canBeUnquoted(string s) {
+        if (string.IsNullOrEmpty(s)) return false;
+        if (ReservedSuffixes.Contains(s)) return false;
+        return UnquotedPattern.IsMatch(s);
     }
 
     private void writeValue(NBTTag tag) {
@@ -116,65 +160,134 @@ internal class SNBTWriter {
                         foreach (var item in items) {
                             tagList.Add((NBTTag)item);
                         }
+
                         writeList(tagList, listTag.listType);
                     }
                 }
                 else {
                     throw new ArgumentException($"Unsupported NBTTag type: {tag.GetType().Name}", nameof(tag));
                 }
+
                 break;
         }
     }
 
     private void writeString(string s) {
-        sb.Append('"');
-        foreach (char c in s) {
-            if (c == '"') sb.Append("\\\"");
-            else if (c == '\\') sb.Append(@"\\");
-            else sb.Append(c);
+        if (canBeUnquoted(s)) {
+            sb.Append(s);
+        } else {
+            sb.Append('"');
+            foreach (char c in s) {
+                if (c == '"') sb.Append("\\\"");
+                else if (c == '\\') sb.Append(@"\\");
+                else sb.Append(c);
+            }
+            sb.Append('"');
         }
-        sb.Append('"');
     }
 
     private void writeCompound(NBTCompound compound) {
         sb.Append('{');
+        if (compound.dict.Count > 0 && prettyPrint) {
+            writeNewLine();
+            indentLevel++;
+        }
+        
         bool first = true;
         foreach (var kvp in compound.dict) {
-            if (!first) sb.Append(", ");
+            if (!first) {
+                sb.Append(',');
+                if (prettyPrint) {
+                    writeNewLine();
+                } else {
+                    sb.Append(' ');
+                }
+            }
             first = false;
-            writeString(kvp.Key);
+            
+            if (prettyPrint) writeIndent();
+            
+            // Write key (prefer unquoted if possible)
+            if (canBeUnquoted(kvp.Key)) {
+                sb.Append(kvp.Key);
+            } else {
+                sb.Append('"');
+                foreach (char c in kvp.Key) {
+                    if (c == '"') sb.Append("\\\"");
+                    else if (c == '\\') sb.Append(@"\\");
+                    else sb.Append(c);
+                }
+                sb.Append('"');
+            }
+            
             sb.Append(": ");
             writeValue(kvp.Value);
+        }
+
+        if (compound.dict.Count > 0 && prettyPrint) {
+            indentLevel--;
+            writeNewLine();
+            writeIndent();
         }
         sb.Append('}');
     }
 
     private void writeList(List<NBTTag> list, NBTType listType) {
         sb.Append('[');
+        
         if (list.Count == 0) {
             sb.Append(NBTTag.getTypeName(listType)).Append(';');
-        } else {
+        }
+        else {
+            if (prettyPrint && (list.Any(t => t is NBTCompound || t is INBTList))) {
+                writeNewLine();
+                indentLevel++;
+            }
+            
             for (int i = 0; i < list.Count; i++) {
-                if (i > 0) sb.Append(", ");
+                if (i > 0) {
+                    sb.Append(',');
+                    if (prettyPrint) {
+                        if (list[i] is NBTCompound || list[i] is INBTList) {
+                            writeNewLine();
+                        } else {
+                            sb.Append(' ');
+                        }
+                    } else {
+                        sb.Append(' ');
+                    }
+                }
+                
+                if (prettyPrint && (list[i] is NBTCompound || list[i] is INBTList)) {
+                    writeIndent();
+                }
+                
                 writeValue(list[i]);
             }
+            
+            if (prettyPrint && (list.Any(t => t is NBTCompound || t is INBTList))) {
+                indentLevel--;
+                writeNewLine();
+                writeIndent();
+            }
         }
+
         sb.Append(']');
     }
 
     private void writeArray<T>(string prefix, NBTTag t, T[] data) {
         sb.Append('[').Append(prefix).Append("; ");
-        // don't actually do this lol
-        //if (data.Length == 0) {
-        //    sb.Append(NBTTag.getTypeName(t.id)).Append(';');
-        //}
-
+        
         for (int i = 0; i < data.Length; i++) {
             if (i > 0) sb.Append(", ");
             sb.Append(data[i]?.ToString() ?? "0");
         }
+
         sb.Append(']');
     }
+
+    [GeneratedRegex(@"^[a-zA-Z_][a-zA-Z0-9_\.\+\-]*$")]
+    private static partial Regex unquoted();
 }
 
 internal class SNBTParser {
@@ -193,6 +306,7 @@ internal class SNBTParser {
         if (pos < input.Length) {
             throw new FormatException($"Unexpected character at position {pos}: {input[pos]}");
         }
+
         return result;
     }
 
@@ -216,16 +330,25 @@ internal class SNBTParser {
 
         if (c == '{') {
             return parseCompound(name);
-        } else if (c == '[') {
+        }
+        else if (c == '[') {
             return parseListOrArray(name);
-        } else if (c == '"') {
-            return new NBTString(name, parseString());
-        } else if (c == '-' || char.IsDigit(c)) {
+        }
+        else if (c == '"') {
+            return new NBTString(name, parseQuotedString());
+        }
+        else if (c == '-' || char.IsDigit(c)) {
             return parseNumber(name);
-        } else if (input.Length - pos >= 3 && input.Substring(pos, 3) == "END") {
+        }
+        else if (input.Length - pos >= 3 && input.Substring(pos, 3) == "END") {
             pos += 3;
             return new NBTEnd();
-        } else {
+        }
+        else if (char.IsLetter(c) || c == '_') {
+            // Could be unquoted string
+            return parseUnquotedStringOrNumber(name);
+        }
+        else {
             throw new FormatException($"Unexpected character at position {pos}: {c}");
         }
     }
@@ -236,47 +359,148 @@ internal class SNBTParser {
         skipWhitespace();
 
         while (peek() != '}') {
-            string key = parseString();
+            string key = parseKey();
             skipWhitespace();
             if (next() != ':') {
                 throw new FormatException($"Expected ':' at position {pos - 1}");
             }
+
             skipWhitespace();
             var value = parseValue(key);
             compound.add(value);
-            
+
             skipWhitespace();
             if (peek() == ',') {
                 next();
                 skipWhitespace();
-            } else if (peek() != '}') {
+            }
+            else if (peek() != '}') {
                 throw new FormatException($"Expected ',' or '}}' at position {pos}");
             }
         }
+
         next(); // consume '}'
         return compound;
+    }
+
+    private string parseKey() {
+        skipWhitespace();
+        if (peek() == '"') {
+            return parseQuotedString();
+        } else {
+            return parseUnquotedKey();
+        }
+    }
+
+    private string parseUnquotedKey() {
+        int start = pos;
+        while (pos < input.Length) {
+            char c = input[pos];
+            if (char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '+' || c == '-') {
+                pos++;
+            } else {
+                break;
+            }
+        }
+        
+        if (pos == start) {
+            throw new FormatException($"Expected key at position {pos}");
+        }
+        
+        return input.Substring(start, pos - start);
+    }
+
+    private NBTTag parseUnquotedStringOrNumber(string? name) {
+        int start = pos;
+        
+        // Collect the unquoted token
+        while (pos < input.Length) {
+            char c = input[pos];
+            if (char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '+' || c == '-') {
+                pos++;
+            } else {
+                break;
+            }
+        }
+        
+        string token = input.Substring(start, pos - start);
+        
+        // Check for number suffixes
+        if (token.EndsWith('b') && tryParseNumber(token[..^1], out var b)) {
+            return new NBTByte(name, byte.Parse(token[..^1]));
+        }
+        if (token.EndsWith("ub") && tryParseNumber(token[..^2], out var ub)) {
+            return new NBTByte(name, byte.Parse(token[..^2]));
+        }
+        if (token.EndsWith('s') && tryParseNumber(token[..^1], out var s)) {
+            return new NBTShort(name, short.Parse(token[..^1]));
+        }
+        if (token.EndsWith("us") && tryParseNumber(token[..^2], out var us)) {
+            return new NBTUShort(name, ushort.Parse(token[..^2]));
+        }
+        if (token.EndsWith('u') && tryParseNumber(token[..^1], out var u)) {
+            return new NBTUInt(name, uint.Parse(token[..^1]));
+        }
+        if (token.EndsWith('L') && tryParseNumber(token[..^1], out var l)) {
+            return new NBTLong(name, long.Parse(token[..^1]));
+        }
+        if (token.EndsWith("uL") && tryParseNumber(token[..^2], out var ul)) {
+            return new NBTULong(name, ulong.Parse(token[..^2]));
+        }
+        if (token.EndsWith('f') && tryParseFloat(token[..^1], out var f)) {
+            return new NBTFloat(name, float.Parse(token[..^1], CultureInfo.InvariantCulture));
+        }
+        if (token.EndsWith('d') && tryParseFloat(token[..^1], out var d)) {
+            return new NBTDouble(name, double.Parse(token[..^1], CultureInfo.InvariantCulture));
+        }
+        
+        // Not a number, treat as unquoted string
+        return new NBTString(name, token);
+    }
+
+    private bool tryParseNumber(string s, out object _) {
+        _ = null;
+        return !string.IsNullOrEmpty(s) && s.All(c => char.IsDigit(c) || c == '-');
+    }
+
+    private bool tryParseFloat(string s, out object _) {
+        _ = null;
+        if (string.IsNullOrEmpty(s)) return false;
+        int dotCount = 0;
+        for (int i = 0; i < s.Length; i++) {
+            char c = s[i];
+            if (c == '.') {
+                dotCount++;
+                if (dotCount > 1) return false;
+            } else if (c == '-') {
+                if (i != 0) return false;
+            } else if (!char.IsDigit(c)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private NBTTag parseListOrArray(string? name) {
         next(); // consume '['
         skipWhitespace();
-        
+
         // Check for array prefix or empty list type
         int savedPos = pos;
         string? prefix = tryParseArrayPrefix();
-        
+
         if (prefix != null) {
             // It's an array
             return parseArray(name, prefix);
         }
-        
+
         // Check for empty list with type
         pos = savedPos;
         var emptyListType = tryParseEmptyListType();
         if (emptyListType != null) {
-            return createEmptyList(emptyListType.Value, name);
+            return NBTTag.createListTag(emptyListType.Value, name);
         }
-        
+
         // Regular list
         pos = savedPos;
         return parseList(name);
@@ -287,7 +511,7 @@ internal class SNBTParser {
         while (pos < input.Length && char.IsLetter(input[pos])) {
             pos++;
         }
-        
+
         if (pos > start && pos < input.Length && input[pos] == ';') {
             string prefix = input.Substring(start, pos - start);
             if (isValidArrayPrefix(prefix)) {
@@ -295,7 +519,7 @@ internal class SNBTParser {
                 return prefix;
             }
         }
-        
+
         pos = start;
         return null;
     }
@@ -305,7 +529,7 @@ internal class SNBTParser {
         while (pos < input.Length && (char.IsLetter(input[pos]) || input[pos] == '_')) {
             pos++;
         }
-        
+
         if (pos > start && pos < input.Length && input[pos] == ';') {
             string typeName = input.Substring(start, pos - start);
             var type = parseTypeName(typeName);
@@ -318,7 +542,7 @@ internal class SNBTParser {
                 }
             }
         }
-        
+
         pos = start;
         return null;
     }
@@ -336,6 +560,7 @@ internal class SNBTParser {
                 return type;
             }
         }
+
         return null;
     }
 
@@ -368,19 +593,21 @@ internal class SNBTParser {
     private NBTTag parseArray(string? name, string prefix) {
         skipWhitespace();
         var values = new List<string>();
-        
+
         while (peek() != ']') {
             values.Add(parseArrayValue());
             skipWhitespace();
             if (peek() == ',') {
                 next();
                 skipWhitespace();
-            } else if (peek() != ']') {
+            }
+            else if (peek() != ']') {
                 throw new FormatException($"Expected ',' or ']' at position {pos}");
             }
         }
+
         next(); // consume ']'
-        
+
         return prefix switch {
             "B" => new NBTByteArray(name, Array.ConvertAll(values.ToArray(), byte.Parse)),
             "S" => new NBTShortArray(name, Array.ConvertAll(values.ToArray(), short.Parse)),
@@ -398,34 +625,38 @@ internal class SNBTParser {
         while (pos < input.Length && input[pos] != ',' && input[pos] != ']' && !char.IsWhiteSpace(input[pos])) {
             pos++;
         }
+
         return input.Substring(start, pos - start);
     }
 
     private NBTTag parseList(string? name) {
         var items = new List<NBTTag>();
-        
+
         while (peek() != ']') {
             items.Add(parseValue(null));
             skipWhitespace();
             if (peek() == ',') {
                 next();
                 skipWhitespace();
-            } else if (peek() != ']') {
+            }
+            else if (peek() != ']') {
                 throw new FormatException($"Expected ',' or ']' at position {pos}");
             }
         }
+
         next(); // consume ']'
-        
+
         if (items.Count == 0) {
             // Plain empty list [] without type specification defaults to TAG_End
             return new NBTList<NBTEnd>(NBTType.TAG_End, name);
         }
-        
+
         // Infer list type from first element
         NBTType listType = items[0].id;
-        var list = createEmptyList(listType, name);
-        
+        var list = NBTTag.createListTag(listType, name);
+
         // Add items using reflection (ugly but necessary due to generic constraints)
+        // TODO actually fix this lol
         var listProp = list.GetType().GetField("list");
         var actualList = listProp?.GetValue(list);
         if (actualList is System.Collections.IList ilist) {
@@ -433,34 +664,39 @@ internal class SNBTParser {
                 if (item.id != listType) {
                     throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
                 }
+
                 ilist.Add(item);
             }
         }
-        
+
         return list;
     }
 
-    private string parseString() {
+    private string parseQuotedString() {
         if (next() != '"') {
             throw new FormatException($"Expected '\"' at position {pos - 1}");
         }
-        
+
         var sb = new StringBuilder();
         while (true) {
             char c = next();
             if (c == '\0') {
                 throw new FormatException("Unterminated string");
-            } else if (c == '"') {
+            }
+            else if (c == '"') {
                 break;
-            } else if (c == '\\') {
+            }
+            else if (c == '\\') {
                 char escaped = next();
                 if (escaped == '"') sb.Append('"');
                 else if (escaped == '\\') sb.Append('\\');
                 else throw new FormatException($"Invalid escape sequence at position {pos - 1}");
-            } else {
+            }
+            else {
                 sb.Append(c);
             }
         }
+
         return sb.ToString();
     }
 
@@ -468,36 +704,39 @@ internal class SNBTParser {
         int start = pos;
         bool negative = false;
         bool isFloat = false;
-        
+
         if (peek() == '-') {
             negative = true;
             next();
         }
-        
+
         while (pos < input.Length) {
             char c = input[pos];
             if (char.IsDigit(c)) {
                 pos++;
-            } else if (c == '.' && !isFloat) {
+            }
+            else if (c == '.' && !isFloat) {
                 isFloat = true;
                 pos++;
-            } else {
+            }
+            else {
                 break;
             }
         }
-        
+
         string numStr = input.Substring(start, pos - start);
-        
+
         // Check for suffix
         string suffix = "";
         int suffixStart = pos;
         while (pos < input.Length && char.IsLetter(input[pos])) {
             pos++;
         }
+
         if (pos > suffixStart) {
             suffix = input.Substring(suffixStart, pos - suffixStart);
         }
-        
+
         // Parse based on suffix
         return suffix switch {
             "b" => new NBTByte(name, byte.Parse(numStr)),
