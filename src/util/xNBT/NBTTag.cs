@@ -64,12 +64,12 @@ public abstract class NBTTag : IEquatable<NBTTag> {
         return read(reader);
     }
     
-    public static void writeS(NBTTag tag, string s) {
+    public static string writeS(NBTTag tag) {
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
         write(tag, writer);
         writer.Flush();
-        File.WriteAllText(s, Encoding.UTF8.GetString(stream.ToArray()));
+        return Encoding.UTF8.GetString(stream.ToArray());
     }
 
     public static NBTTag createTag(NBTType tag, string? name) {

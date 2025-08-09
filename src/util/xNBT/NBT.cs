@@ -8,29 +8,67 @@ public static class NBT {
         using var reader = new BinaryReader(decompress);
         var nbt = NBTTag.read(reader);
         if (nbt is NBTCompound compound) {
+            
+            // root tag can't have a name
+            if (!string.IsNullOrEmpty(compound.name)) {
+                throw new IOException("Root tag must not have a name!");
+            }
+            
             return compound;
         }
         throw new IOException("Root tag must be a compound!");
     }
 
     public static void writeCompressed(NBTCompound nbt, Stream stream) {
+        
+        // root tag can't have a name
+        if (!string.IsNullOrEmpty(nbt.name)) {
+            throw new IOException("Root tag must not have a name!");
+        }
+        
         using var compress = LZ4Stream.Encode(stream);
         using var writer = new BinaryWriter(compress);
         NBTTag.write(nbt, writer);
     }
     
-    public static void write(NBTCompound nbt, Stream stream) {
+    public static void write(NBTTag nbt, Stream stream) {
+        
+        // root tag can't have a name if compound
+        if (nbt is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
+            throw new IOException("Root tag must not have a name!");
+        }
+        
         using var writer = new BinaryWriter(stream);
         NBTTag.write(nbt, writer);
     }
     
-    public static NBTCompound read(Stream stream) {
+    public static NBTTag read(Stream stream) {
         using var reader = new BinaryReader(stream);
         var nbt = NBTTag.read(reader);
-        if (nbt is NBTCompound compound) {
-            return compound;
+        
+        // root tag can't have a name if compound
+        if (nbt is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
+            throw new IOException("Root tag must not have a name!");
         }
-        throw new IOException("Root tag must be a compound!");
+        
+        //if (nbt is NBTCompound compound) {
+        //    return compound;
+        //}
+        //throw new IOException("Root tag must be a compound!");
+        return nbt;
+    }
+    
+    /** Convenience method, copies the data. */
+    public static byte[] write(NBTTag nbt) {
+        using var stream = new MemoryStream();
+        write(nbt, stream);
+        return stream.ToArray();
+    }
+    
+    /** Convenience method, copies the data. */
+    public static NBTTag read(ReadOnlySpan<byte> data) {
+        using var stream = new MemoryStream(data.ToArray());
+        return read(stream);
     }
 
     public static void writeFile(NBTCompound nbt, string name) {

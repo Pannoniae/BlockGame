@@ -14,13 +14,25 @@ namespace BlockGame.util.xNBT;
  */
 public static class SNBT {
     public static string toString(NBTTag tag) {
+        
+        // root tag can't have a name if compound
+        if (tag is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
+            throw new ArgumentException("Root tag must not have a name!", nameof(tag));
+        }
+        
         var writer = new SNBTWriter();
         return writer.write(tag);
     }
 
     public static NBTTag parse(string snbt) {
+        
         var parser = new SNBTParser(snbt);
-        return parser.parse();
+        var nbt = parser.parse();
+        // root tag can't have a name if compound
+        if (nbt is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
+            throw new ArgumentException("Root tag must not have a name!", nameof(snbt));
+        }
+        return nbt;
     }
 }
 
@@ -319,7 +331,7 @@ internal class SNBTParser {
     }
 
     private NBTType? parseTypeName(string name) {
-        foreach (NBTType type in Enum.GetValues(typeof(NBTType))) {
+        foreach (NBTType type in Enum.GetValues<NBTType>()) {
             if (NBTTag.getTypeName(type) == name) {
                 return type;
             }
@@ -327,7 +339,7 @@ internal class SNBTParser {
         return null;
     }
 
-    private NBTTag createEmptyList(NBTType listType, string? name) {
+    private static NBTTag createEmptyList(NBTType listType, string? name) {
         return listType switch {
             NBTType.TAG_End => new NBTList<NBTEnd>(listType, name),
             NBTType.TAG_Byte => new NBTList<NBTByte>(listType, name),

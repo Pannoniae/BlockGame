@@ -346,11 +346,17 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
     public NBTList(NBTType listType, string? name) : base(name) {
         list = new List<T>();
         this.listType = listType;
+        
+        // if this thing is EVER a generic NBTTag, throw an exception. This should never happen and it's a result of skill-issue programming.
+        // We "specialise" the lists by a huge fucking switch statement when constructing them. This is not *good* but better than reflection shit.
+        if (typeof(T) == typeof(NBTTag)) {
+            throw new SkillIssueException($"Overly generic NBTList was constructed with name {name} and type {listType} ({list.Count} values)");
+        }
     }
 
     public override void writeContents(BinaryWriter stream) {
         // empty list so type END
-        listType = list.Count == 0 ? NBTType.TAG_End : list[0].id;
+        //listType = list.Count == 0 ? NBTType.TAG_End : list[0].id;
         // write type and length
         stream.Write(list.Count);
         foreach (var t in list) {

@@ -40,7 +40,7 @@ public class NBTTest {
         AssertRoundtrip(new NBTUIntArray("", [0, 2147483648]), "[UI; 0, 2147483648]");
         AssertRoundtrip(new NBTLongArray("", [-1L, 0L, 1L]), "[L; -1, 0, 1]");
         AssertRoundtrip(new NBTULongArray("", [0, 9223372036854775808]), "[UL; 0, 9223372036854775808]");
-        
+
         // Empty arrays
         AssertRoundtrip(new NBTByteArray("", []), "[B; ]");
         AssertRoundtrip(new NBTIntArray("", []), "[I; ]");
@@ -48,11 +48,11 @@ public class NBTTest {
 
     [Test]
     public void TestCompound() {
-        var compound = new NBTCompound("test");
+        var compound = new NBTCompound("");
         compound.addByte("byte", 1);
         compound.addInt("int", 42);
         compound.addString("str", "test");
-        
+
         var parsed = SNBT.parse(SNBT.toString(compound)) as NBTCompound;
         Assert.That(parsed, Is.Not.Null);
         Assert.That(parsed.getByte("byte"), Is.EqualTo(1));
@@ -62,48 +62,54 @@ public class NBTTest {
 
     [Test]
     public void TestNestedCompound() {
-        var root = new NBTCompound("root");
+        var root = new NBTCompound("");
         var child = new NBTCompound("child");
         child.addInt("value", 123);
         root.addCompoundTag("child", child);
-        
+
         var grandchild = new NBTCompound("grandchild");
         grandchild.addString("deep", "nested");
         child.addCompoundTag("grandchild", grandchild);
-        
+
         var parsed = SNBT.parse(SNBT.toString(root)) as NBTCompound;
         Assert.That(parsed, Is.Not.Null);
         Assert.That(parsed.getCompoundTag("child").getInt("value"), Is.EqualTo(123));
-        Assert.That(parsed.getCompoundTag("child").getCompoundTag("grandchild").getString("deep"), Is.EqualTo("nested"));
+        Assert.That(parsed.getCompoundTag("child").getCompoundTag("grandchild").getString("deep"),
+            Is.EqualTo("nested"));
     }
 
     [Test]
     public void TestLists() {
         // List of ints
-        var intList = new NBTList<NBTInt>(NBTType.TAG_Int, "test");
+        var intList = new NBTList<NBTInt>(NBTType.TAG_Int, "");
         intList.add(new NBTInt(null, 1));
         intList.add(new NBTInt(null, 2));
         intList.add(new NBTInt(null, 3));
         AssertRoundtrip(intList, "[1, 2, 3]");
-        
+
         // List of strings
-        var strList = new NBTList<NBTString>(NBTType.TAG_String, "test");
+        var strList = new NBTList<NBTString>(NBTType.TAG_String, "");
         strList.add(new NBTString(null, "hello"));
         strList.add(new NBTString(null, "world"));
         AssertRoundtrip(strList, "[\"hello\", \"world\"]");
-        
+
         // List of compounds
-        var compList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "test");
+        var compList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "");
         var comp1 = new NBTCompound(null);
         comp1.addInt("x", 1);
         var comp2 = new NBTCompound(null);
         comp2.addInt("x", 2);
         compList.add(comp1);
         compList.add(comp2);
-        
+
         var parsed = SNBT.parse(SNBT.toString(compList));
         Assert.That(parsed, Is.Not.Null);
-        Assert.That(parsed, Is.TypeOf<NBTList<NBTTag>>());
+        Assert.That(parsed, Is.TypeOf<NBTList<NBTCompound>>());
+        
+        // test binary NBT too
+        var parsedBinary = NBT.read(NBT.write(compList));
+        Assert.That(parsedBinary, Is.Not.Null);
+        Assert.That(parsedBinary, Is.TypeOf<NBTList<NBTCompound>>());
     }
 
     [Test]
@@ -119,8 +125,8 @@ public class NBTTest {
 
     [Test]
     public void TestComplexStructure() {
-        var root = new NBTCompound("root");
-        
+        var root = new NBTCompound("");
+
         // Add various primitives
         root.addByte("byte", 127);
         root.addShort("short", 32767);
@@ -129,26 +135,26 @@ public class NBTTest {
         root.addFloat("float", 1.23f);
         root.addDouble("double", 4.56);
         root.addString("string", "Hello \"World\"!");
-        
+
         // Add arrays
         root.addByteArray("bytes", [1, 2, 3]);
         root.addIntArray("ints", [10, 20, 30]);
-        
+
         // Add nested compound
         var nested = new NBTCompound("nested");
         nested.addString("key", "value");
         root.addCompoundTag("nested", nested);
-        
+
         // Add list
         var list = new NBTList<NBTInt>(NBTType.TAG_Int, "list");
         list.add(new NBTInt(null, 100));
         list.add(new NBTInt(null, 200));
         root.addListTag("list", list);
-        
+
         // Test roundtrip
         string snbt = SNBT.toString(root);
         var parsed = SNBT.parse(snbt) as NBTCompound;
-        
+
         Assert.That(parsed, Is.Not.Null);
         Assert.That(parsed.getByte("byte"), Is.EqualTo(127));
         Assert.That(parsed.getShort("short"), Is.EqualTo(32767));
@@ -168,12 +174,12 @@ public class NBTTest {
         // Test that any tag type can be at root
         AssertRoundtrip(new NBTInt(null, 42), "42");
         AssertRoundtrip(new NBTString(null, "root string"), "\"root string\"");
-        
+
         var list = new NBTList<NBTInt>(NBTType.TAG_Int, null);
         list.add(new NBTInt(null, 1));
         list.add(new NBTInt(null, 2));
         AssertRoundtrip(list, "[1, 2]");
-        
+
         AssertRoundtrip(new NBTByteArray(null, [1, 2, 3]), "[B; 1, 2, 3]");
     }
 
@@ -187,7 +193,7 @@ public class NBTTest {
             ("{\n  \"key\": 123\n}", 123),
             ("{\t\"key\":\t123\t}", 123)
         };
-        
+
         foreach (var (snbt, expected) in testCases) {
             var parsed = SNBT.parse(snbt) as NBTCompound;
             Assert.That(parsed, Is.Not.Null);
@@ -205,25 +211,50 @@ public class NBTTest {
         Assert.Throws<FormatException>(() => SNBT.parse("\"unterminated string"));
         Assert.Throws<FormatException>(() => SNBT.parse("123xyz")); // invalid suffix
         Assert.Throws<FormatException>(() => SNBT.parse("[X; 1, 2, 3]")); // invalid array type
-        
+
         // Mixed types in list should throw
         Assert.Throws<FormatException>(() => SNBT.parse("[1, \"string\"]"));
         Assert.Throws<FormatException>(() => SNBT.parse("[1, 2.5f]"));
     }
 
     [Test]
+    public void TestEmptyNBTList() {
+        // Create an empty NBTList<NBTByte>
+        var emptyByteList = new NBTList<NBTByte>(NBTType.TAG_Byte, "test");
+        Console.WriteLine($"Original list type: {emptyByteList.listType}");
+        Console.WriteLine($"Original list count: {emptyByteList.count()}");
+
+        // Convert to SNBT
+        string snbt = SNBT.toString(emptyByteList);
+        Console.WriteLine($"SNBT output: '{snbt}'");
+
+        // Parse it back
+        var parsed = SNBT.parse(snbt);
+        Console.WriteLine($"Parsed type: {parsed.GetType().Name}");
+        if (parsed is INBTList list) {
+            Console.WriteLine($"Parsed list type: {list.listType}");
+        }
+
+        // Convert back to SNBT
+        string snbt2 = SNBT.toString(parsed);
+        Console.WriteLine($"Second SNBT output: '{snbt2}'");
+
+        Console.WriteLine($"Match: {snbt == snbt2}");
+    }
+
+    [Test]
     public void TestBinaryCompatibility() {
         // Create a complex NBT structure
-        var root = new NBTCompound("root");
+        var root = new NBTCompound("");
         root.addString("name", "Test");
         root.addInt("version", 1);
-        
+
         var pos = new NBTCompound("pos");
         pos.addDouble("x", 123.456);
         pos.addDouble("y", 78.9);
         pos.addDouble("z", -45.6);
         root.addCompoundTag("pos", pos);
-        
+
         var items = new NBTList<NBTCompound>(NBTType.TAG_Compound, "items");
         for (int i = 0; i < 3; i++) {
             var item = new NBTCompound(null);
@@ -231,24 +262,25 @@ public class NBTTest {
             item.addInt("count", i + 1);
             items.add(item);
         }
+
         root.addListTag("items", items);
-        
+
         // Convert to SNBT and back
         string snbt = SNBT.toString(root);
         var fromSnbt = SNBT.parse(snbt) as NBTCompound;
-        
+
         // Write both to binary and compare
         using var originalStream = new MemoryStream();
         using var snbtStream = new MemoryStream();
-        
+
         using (var writer = new BinaryWriter(originalStream)) {
             NBTTag.write(root, writer);
         }
-        
+
         using (var writer = new BinaryWriter(snbtStream)) {
             NBTTag.write(fromSnbt!, writer);
         }
-        
+
         // Binary representations should be identical
         var originalBytes = originalStream.ToArray();
         var snbtBytes = snbtStream.ToArray();
@@ -259,27 +291,27 @@ public class NBTTest {
         // Test toString
         string snbt = SNBT.toString(tag);
         Assert.That(snbt, Is.EqualTo(expectedSnbt));
-        
+
         // Test parse
         var parsed = SNBT.parse(snbt);
-        
+
         // Verify they produce the same binary output
         using var originalStream = new MemoryStream();
         using var parsedStream = new MemoryStream();
-        
+
         using (var writer = new BinaryWriter(originalStream)) {
             NBTTag.write(tag, writer);
         }
-        
+
         using (var writer = new BinaryWriter(parsedStream)) {
             NBTTag.write(parsed, writer);
         }
-        
+
         var originalVal = originalStream.ToArray();
         var parsedVal = parsedStream.ToArray();
-        
+
         Assert.That(originalVal, Is.EqualTo(parsedVal));
-        
+
         // Double roundtrip
         string snbt2 = SNBT.toString(parsed);
         Assert.That(snbt2, Is.EqualTo(expectedSnbt));

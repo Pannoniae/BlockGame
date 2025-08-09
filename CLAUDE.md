@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Building and Running
 Use `dotnet build BlockGame.slnx -c Release` to build the entire solution in Release mode.
 Use `dotnet run --project BlockGame.csproj -c Release` to run the main project in Release mode.
+If you want to run tests, do `dotnet test BlockGameTesting\BlockGameTesting.csproj`.
 
 ## Architecture Overview
 
