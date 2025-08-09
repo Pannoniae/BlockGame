@@ -119,12 +119,12 @@ public class WorldIO {
             blocks.refreshCounts();
         }
 
-        var file = "chunk.xnbt";
+        /*var file = "chunk.xnbt";
         if (File.Exists(file)) {
             File.Delete(file);
         }
 
-        SNBT.writeToFile(nbt, file, prettyPrint: true);
+        SNBT.writeToFile(nbt, file, prettyPrint: true);*/
         return chunk;
     }
 
@@ -145,12 +145,12 @@ public class WorldIO {
         world.player.prevPosition = world.player.position;
 
         // dump nbt into file
-        var file = "dump.xnbt";
+        /*var file = "dump.xnbt";
         if (File.Exists(file)) {
             File.Delete(file);
         }
 
-        SNBT.writeToFile(tag, file, prettyPrint: true);
+        SNBT.writeToFile(tag, file, prettyPrint: true);*/
 
         return world;
     }
