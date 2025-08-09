@@ -18,6 +18,20 @@ public static class NBT {
         using var writer = new BinaryWriter(compress);
         NBTTag.write(nbt, writer);
     }
+    
+    public static void write(NBTCompound nbt, Stream stream) {
+        using var writer = new BinaryWriter(stream);
+        NBTTag.write(nbt, writer);
+    }
+    
+    public static NBTCompound read(Stream stream) {
+        using var reader = new BinaryReader(stream);
+        var nbt = NBTTag.read(reader);
+        if (nbt is NBTCompound compound) {
+            return compound;
+        }
+        throw new IOException("Root tag must be a compound!");
+    }
 
     public static void writeFile(NBTCompound nbt, string name) {
         using var stream = new FileStream(name, FileMode.Create, FileAccess.Write);

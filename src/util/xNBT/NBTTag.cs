@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace BlockGame.util.xNBT;
 
 public abstract class NBTTag : IEquatable<NBTTag> {
@@ -54,6 +56,20 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             stream.Write((byte)listType);
         }
         tag.writeContents(stream);
+    }
+
+    public static NBTTag readS(string s) {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(s));
+        using var reader = new BinaryReader(stream);
+        return read(reader);
+    }
+    
+    public static void writeS(NBTTag tag, string s) {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+        write(tag, writer);
+        writer.Flush();
+        File.WriteAllText(s, Encoding.UTF8.GetString(stream.ToArray()));
     }
 
     public static NBTTag createTag(NBTType tag, string? name) {
