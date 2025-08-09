@@ -1013,19 +1013,23 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             var hash = XHash.hash(i);
 
-            const int THRESHOLD = 1980;
+            const int TOTAL = 5000;
+            const int THRESHOLD = 4950;
+            const int REM = 50;
+            // so that the flicker is between 0 and 0.3
+            const float DIVIDER = (REM) / 2f / 0.3f;
 
             // smash the hash into an offset into the function
             // below 80% 1, above 80% sin into 0
-            var pc = Meth.mod(world.worldTick + hash, 2000);
+            var pc = Meth.mod(world.worldTick + hash, TOTAL);
 
-            // 1 to 20
-            var rem = pc - 1980;
+            // 1 to 50 (REM)
+            var rem = pc - THRESHOLD;
 
-            // 0 to 10
-            var pc2 = float.Max(0, float.Max(rem - 20, 20 - rem));
-            var pc3 = pc2 / 30f; // 0 to 0.3ish???
-            var flicker = pc > 1980 ? pc3 : 0f;
+            // 0 to rem / 2 (25)
+            var pc2 = float.Max(0, float.Max(rem - REM, REM - rem));
+            var pc3 = pc2 / DIVIDER; // 0 to 0.3ish???
+            var flicker = pc > THRESHOLD ? pc3 : 0f;
 
             var sc = starColour * (1 - flicker);
 
