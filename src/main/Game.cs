@@ -1243,7 +1243,7 @@ public partial class Game {
             }
 
             GL.BindVertexArray(throwawayVAO);
-            GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         }
 
         GL.Disable(EnableCap.DepthTest);

@@ -128,7 +128,6 @@ public struct AABB {
     /// Vectorised isFrontTwo check for 8 AABBs at once. Returns a byte mask with each bit representing if the corresponding AABB is in front of either plane.
     /// Optimized to process multiple AABBs simultaneously using SIMD.
     /// </summary>
-    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe byte isFrontTwoEight(Span<AABB> aabbs, Plane p1, Plane p2) {
         // todo actually make this shit different
@@ -137,16 +136,20 @@ public struct AABB {
         //    return isFrontTwoEightAvx512(aabbs, p1, p2);
         //}
         //if (Avx2.IsSupported) {
-            return isFrontTwoEightAvx2(aabbs, p1, p2);
+        return isFrontTwoEightAvx512(aabbs, p1, p2);
         //}
         //return isFrontTwoEightFallback(aabbs, p1, p2);
     }
 
+
+    /// todo not actually avx512 yet lol
+    /// status update: optimising this function did fuck-all in terms of runtime performance.
+    /// oh well but it was a learning experience and it was fun
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static unsafe byte isFrontTwoEightAvx512(Span<AABB> aabbs, Plane p1, Plane p2) {
         // Load planes once
-        var vP1_128 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
-        var vP2_128 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
+        ref var pp1 = ref Unsafe.As<Plane, float>(ref p1);
+        ref var pp2 = ref Unsafe.As<Plane, float>(ref p2);
 
         // [minX0-7, minY0-7, minZ0-7, maxX0-7, maxY0-7, maxZ0-7]
         Span<float> coords = stackalloc float[48]; // 8 AABBs * 6 components
@@ -161,8 +164,8 @@ public struct AABB {
             coords[i + 32] = (float)aabb.max.Y;
             coords[i + 40] = (float)aabb.max.Z;
         }
-        
-        
+
+
         var vMinX = Vector256.LoadUnsafe(ref coords[0]);
         var vMinY = Vector256.LoadUnsafe(ref coords[8]);
         var vMinZ = Vector256.LoadUnsafe(ref coords[16]);
@@ -171,15 +174,15 @@ public struct AABB {
         var vMaxZ = Vector256.LoadUnsafe(ref coords[40]);
 
         // Broadcast plane components for parallel comparison with all 8 AABBs
-        var vPlaneX1 = Vector256.Create(vP1_128[0]);
-        var vPlaneY1 = Vector256.Create(vP1_128[1]);
-        var vPlaneZ1 = Vector256.Create(vP1_128[2]);
-        var vPlaneD1 = Vector256.Create(vP1_128[3]);
+        var vPlaneX1 = Vector256.Create(pp1);
+        var vPlaneY1 = Vector256.Create(Unsafe.Add(ref pp1, 1));
+        var vPlaneZ1 = Vector256.Create(Unsafe.Add(ref pp1, 2));
+        var vPlaneD1 = Vector256.Create(Unsafe.Add(ref pp1, 3));
 
-        var vPlaneX2 = Vector256.Create(vP2_128[0]);
-        var vPlaneY2 = Vector256.Create(vP2_128[1]);
-        var vPlaneZ2 = Vector256.Create(vP2_128[2]);
-        var vPlaneD2 = Vector256.Create(vP2_128[3]);
+        var vPlaneX2 = Vector256.Create(pp2);
+        var vPlaneY2 = Vector256.Create(Unsafe.Add(ref pp2, 1));
+        var vPlaneZ2 = Vector256.Create(Unsafe.Add(ref pp2, 2));
+        var vPlaneD2 = Vector256.Create(Unsafe.Add(ref pp2, 3));
 
         // Select min or max coordinates based on plane normal signs - parallel for all 8 AABBs
         var vCoordX1 = Avx.BlendVariable(vMaxX, vMinX,
@@ -196,22 +199,15 @@ public struct AABB {
         var vCoordZ2 = Avx.BlendVariable(vMaxZ, vMinZ,
             Avx.Compare(vPlaneZ2, Vector256<float>.Zero, FloatComparisonMode.OrderedGreaterThanOrEqualNonSignaling));
 
-        // Compute dot products for all 8 AABBs in parallel: dot = normal.x*coord.x + normal.y*coord.y + normal.z*coord.z + D
-        var vDots1 = Avx.Add(
-            Avx.Add(
-                Avx.Add(
-                    Avx.Multiply(vPlaneX1, vCoordX1),
-                    Avx.Multiply(vPlaneY1, vCoordY1)),
-                Avx.Multiply(vPlaneZ1, vCoordZ1)),
-            vPlaneD1);
+        var zd1 = Fma.MultiplyAdd(vPlaneZ1, vCoordZ1, vPlaneD1);
+        var zd2 = Fma.MultiplyAdd(vPlaneZ2, vCoordZ2, vPlaneD2);
+        
+        var yd1 = Fma.MultiplyAdd(vPlaneY1, vCoordY1, zd1);
+        var yd2 = Fma.MultiplyAdd(vPlaneY2, vCoordY2, zd2);
 
-        var vDots2 = Avx.Add(
-            Avx.Add(
-                Avx.Add(
-                    Avx.Multiply(vPlaneX2, vCoordX2),
-                    Avx.Multiply(vPlaneY2, vCoordY2)),
-                Avx.Multiply(vPlaneZ2, vCoordZ2)),
-            vPlaneD2);
+        // Compute dot products for all 8 AABBs in parallel: dot = normal.x*coord.x + normal.y*coord.y + normal.z*coord.z + D
+        var vDots1 = Fma.MultiplyAdd(vPlaneX1, vCoordX1, yd1);
+        var vDots2 = Fma.MultiplyAdd(vPlaneX2, vCoordX2, yd2);
 
         // Check which AABBs are in front of either plane (dot product > 0)
         var positive1 = Avx.Compare(vDots1, Vector256<float>.Zero, FloatComparisonMode.OrderedGreaterThanNonSignaling);
@@ -328,7 +324,7 @@ public struct AABB {
 
             var vDot1 = Vector128.Dot(vP1, vCoord1);
             var vDot2 = Vector128.Dot(vP2, vCoord2);
-            
+
             result |= (byte)((vDot1 > 0 | vDot2 > 0).toByte() << i);
         }
 
