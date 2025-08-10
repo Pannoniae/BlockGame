@@ -18,7 +18,7 @@ namespace BlockGame;
 
 [StructLayout(LayoutKind.Sequential)]
 public readonly record struct ChunkUniforms(Vector3 uChunkPos) {
-    public readonly Vector4 data = new(uChunkPos, 1);   
+    public readonly Vector4 data = new(uChunkPos, 1);
 }
 
 public sealed partial class WorldRenderer : WorldListener, IDisposable {
@@ -65,6 +65,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public static BoundingFrustum frustum;
 
+    /// <summary>
+    /// What needs to be meshed at the end of the frame
+    /// </summary>
+    public Queue<SubChunkCoord> meshingQueue = new();
+
     public InstantDrawColour idc = new InstantDrawColour(8192);
     public InstantDrawTexture idt = new InstantDrawTexture(8192);
 
@@ -73,10 +78,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public static Color4b defaultClearColour = new Color4b(168, 204, 232);
     public static Color4b defaultFogColour = Color4b.White;
 
+    private HashSet<SubChunkCoord> chunksToMesh = [];
+
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
     private ulong elementAddress;
-    
+
     private UniformBuffer chunkUBO;
 
     public WorldRenderer() {
@@ -131,35 +138,60 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterHorizonColour, defaultClearColour);
 
         initBlockOutline();
-        
+
         // initialize chunk UBO (16 bytes: vec3 + padding)
         //chunkUBO = new UniformBuffer(GL, 256, 0);
 
         //setUniforms();
     }
 
-    public void onWorldLoad(World world) {
+    public void onWorldLoad() {
     }
 
-    public void onWorldUnload(World world) {
+    public void onWorldUnload() {
     }
 
-    public void onWorldTick(World world, float delta) {
+    public void onWorldTick(float delta) {
     }
 
-    public void onWorldRender(World world, float delta) {
+    public void onWorldRender(float delta) {
     }
 
-    public void onChunkLoad(World world, ChunkCoord coord) {
+    public void onChunkLoad(ChunkCoord coord) {
         // added in meshChunk
     }
 
-    public void onChunkUnload(World world, ChunkCoord coord) {
+    public void onChunkUnload(ChunkCoord coord) {
         foreach (var subChunk in world.getChunk(coord).subChunks) {
             subChunk.vao?.Dispose();
             subChunk.watervao?.Dispose();
             subChunk.vao = null;
             subChunk.watervao = null;
+        }
+    }
+
+    // remeshing methods
+    public void onDirtyChunk(SubChunkCoord coord) {
+        chunksToMesh.Add(coord);
+    }
+
+    public void onDirtyArea(Vector3I min, Vector3I max) {
+        // iterate through all chunks in the area and add them to the meshing
+
+        // Don't clear, these will be processed in the next frame
+        //chunksToMesh.Clear();
+        for (int x = min.X; x <= max.X; x++) {
+            for (int y = min.Y; y <= max.Y; y++) {
+                for (int z = min.Z; z <= max.Z; z++) {
+                    // section coord
+                    var coord = World.getChunkSectionPos(x, y, z);
+                    world.getSubChunkMaybe(coord, out SubChunk? subChunk);
+                    if (subChunk != null && !subChunk.isEmpty) {
+                        // add to meshing list
+                        chunksToMesh.Add(coord);
+                    }
+                }
+            }
         }
     }
 
@@ -293,12 +325,43 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
     }
 
+    public void mesh(SubChunkCoord coord) {
+        if (!meshingQueue.Contains(coord)) {
+            meshingQueue.Enqueue(coord);
+        }
+    }
 
-    /// TODO add a path where there's only one VAO for all chunks
-    /// and only the VBO is swapped (with glBindVertexBuffer) + the IBO.
-    /// Obviously changing the setting in-game would trigger a complete remesh since a different BlockVAO class would be needed
-    /// (one which doesn't use a separate VAO but a shared one, and only stores the VBO handle
-    /// maybe this will cut down on the VAO switching time??
+    /**
+     * This runs once every tick
+     * <param name="dt"></param>
+     */
+    public void update(double dt) {
+        // enqueue the to-be-meshed-list
+        // this can *probably* be eliminated in the future but yk, keeping it for now
+        foreach (var subChunk in chunksToMesh) {
+            if (!meshingQueue.Contains(subChunk)) {
+                meshingQueue.Enqueue(subChunk);
+            }
+        }
+
+        chunksToMesh.Clear();
+
+        var startTime = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+        var limit = World.MAX_CHUNKLOAD_FRAMETIME;
+        // empty the meshing queue
+        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit &&
+               meshingQueue.TryDequeue(out var sectionCoord)) {
+            // if this chunk doesn't exist anymore (because we unloaded it)
+            // then don't mesh! otherwise we'll fucking crash
+            if (!world!.isChunkSectionInWorld(sectionCoord)) {
+                continue;
+            }
+
+            var section = world.getSubChunk(sectionCoord);
+            meshChunk(section);
+        }
+    }
+    
     public void render(double interp) {
         //Game.GD.ResetStates();
 
@@ -924,7 +987,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader.Dispose();
             waterShader = null!;
         }
-        
+
         //chunkUBO?.Dispose();
     }
 

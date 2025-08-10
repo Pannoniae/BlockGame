@@ -377,6 +377,20 @@ public partial class World : IDisposable {
                 break;
             }
         }
+        
+        // if we're loading, we can also mesh chunks
+        // empty the meshing queue
+        while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
+            // if this chunk doesn't exist anymore (because we unloaded it)
+            // then don't mesh! otherwise we'll fucking crash
+            if (!isChunkSectionInWorld(sectionCoord)) {
+                continue;
+            }
+            
+            var section = getSubChunk(sectionCoord);
+            Game.renderer.meshChunk(section);
+        }  
+        
         // debug
         /*Console.Out.WriteLine("---BEGIN---");
         foreach (var chunk in chunkLoadQueue) {
