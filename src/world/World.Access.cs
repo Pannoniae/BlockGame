@@ -355,12 +355,12 @@ public partial class World {
         return c;
     }
 
-    public SubChunk getChunkSection(int x, int y, int z) {
+    public SubChunk getSubChunk(int x, int y, int z) {
         var pos = getChunkSectionPos(new Vector3I(x, y, z));
         return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
 
-    public bool getChunkSectionMaybe(int x, int y, int z, out SubChunk? section) {
+    public bool getSubChunkMaybe(int x, int y, int z, out SubChunk? section) {
         var pos = getChunkSectionPos(x, y, z);
         var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
         if (!c || y is < 0 or >= WORLDHEIGHT) {
@@ -371,16 +371,16 @@ public partial class World {
         return true;
     }
 
-    public SubChunk getChunkSection(Vector3I coord) {
+    public SubChunk getSubChunk(Vector3I coord) {
         var pos = getChunkSectionPos(coord);
         return chunks[new ChunkCoord(pos.x, pos.z)].subChunks[pos.y];
     }
 
-    public SubChunk getChunkSection(SubChunkCoord coord) {
+    public SubChunk getSubChunk(SubChunkCoord coord) {
         return chunks[new ChunkCoord(coord.x, coord.z)].subChunks[coord.y];
     }
 
-    public bool getChunkSectionMaybe(SubChunkCoord pos, out SubChunk? section) {
+    public bool getSubChunkMaybe(SubChunkCoord pos, out SubChunk? section) {
         var c = chunks.TryGetValue(new ChunkCoord(pos.x, pos.z), out var chunk);
         if (!c || pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             section = null;
@@ -390,7 +390,7 @@ public partial class World {
         return true;
     }
 
-    public SubChunk? getChunkSectionUnsafe(SubChunkCoord pos) {
+    public SubChunk? getSubChunkUnsafe(SubChunkCoord pos) {
         if (pos.y is < 0 or >= Chunk.CHUNKHEIGHT) {
             return null;
         }

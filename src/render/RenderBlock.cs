@@ -33,7 +33,7 @@ public class RenderBlock {
 
         ref var offsetArray = ref MemoryMarshal.GetReference(WorldRenderer.offsetTable);
 
-        var chunk = world.getChunkSection(World.getChunkSectionPos(pos));
+        var chunk = world.getSubChunk(World.getChunkSectionPos(pos));
 
         byte ao = 0;
         Color data;

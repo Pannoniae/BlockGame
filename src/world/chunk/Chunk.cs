@@ -286,22 +286,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
 
-        // if it needs to be remeshed, add this and neighbouring chunksections to the remesh queue
-
-        // mesh this section
-        world.mesh(new SubChunkCoord(coord.x, sectionY, coord.z));
-
-        // get global coords
-        var chunkPos = World.getChunkSectionPos(wx, y, wz);
-
-        // TODO only remesh neighbours if on the edge of the chunk
-        // we need to mesh EVERYTHING in the 3x3x3 area because AO is a bitch / affects non-adjacent blocks too
-        foreach (var dir in Direction.directionsAll) {
-            var neighbourSection = World.getChunkSectionPos(new Vector3I(wx, y, wz) + dir);
-            if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                world.mesh(neighbourSection);
-            }
-        }
+        // set neighbours dirty
+        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
 
     /// <summary>
@@ -327,16 +313,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
-        world.mesh(new SubChunkCoord(coord.x, sectionY, coord.z));
-        var chunkPos = World.getChunkSectionPos(wx, y, wz);
-
-        // TODO only remesh neighbours if on the edge of the chunk
-        foreach (var dir in Direction.directions) {
-            var neighbourSection = World.getChunkSectionPos(new Vector3I(wx, y, wz) + dir);
-            if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                world.mesh(neighbourSection);
-            }
-        }
+        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
 
     /// <summary>
@@ -354,16 +331,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
-        world.mesh(new SubChunkCoord(coord.x, y >> 4, coord.z));
-        var chunkPos = World.getChunkSectionPos(wx, y, wz);
-
-        // TODO only remesh neighbours if on the edge of the chunk
-        foreach (var dir in Direction.directions) {
-            var neighbourSection = World.getChunkSectionPos(new Vector3I(wx, y, wz) + dir);
-            if (world.isChunkSectionInWorld(neighbourSection) && neighbourSection != chunkPos) {
-                world.mesh(neighbourSection);
-            }
-        }
+        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
 
     /// <summary>

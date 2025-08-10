@@ -131,39 +131,7 @@ public partial class Game {
     private readonly string[] splashes;
     private readonly string splash;
 
-    private uint fbo;
-    private uint FBOtex;
-    private uint throwawayVAO;
-    private uint depthBuffer;
-
-    public static bool sampleShadingSupported = false;
-    private static bool sampleShadingEnabled = false;
     
-    
-    public static bool hasSBL = false;
-    public static bool hasVBUM = false;
-    public static bool hasUBUM = false;
-    
-    public static NVShaderBufferLoad sbl;
-    public static NVVertexBufferUnifiedMemory vbum;
-    public static ExtBindableUniform extbu;
-
-    // MSAA resolve framebuffer (for MSAA -> regular texture)
-    private uint resolveFbo;
-    private uint resolveTex;
-
-    // FXAA shader uniforms
-    private int g_fxaa_texelStepLocation;
-    private int g_fxaa_showEdgesLocation;
-    private int g_fxaa_lumaThresholdLocation;
-    private int g_fxaa_mulReduceLocation;
-    private int g_fxaa_minReduceLocation;
-    private int g_fxaa_maxSpanLocation;
-    
-    // SSAA shader uniforms
-    private int g_ssaa_texelStepLocation;
-    private int g_ssaa_factorLocation;
-    private int g_ssaa_modeLocation;
     private static IntPtr hdc;
     public static bool noUpdate;
 
@@ -173,11 +141,6 @@ public partial class Game {
     #else
     public static string VERSION = "BlockGame v0.0.2";
     #endif
-
-    private static readonly float g_lumaThreshold = 0.5f;
-    private static readonly float g_mulReduceReciprocal = 8.0f;
-    private static readonly float g_minReduceReciprocal = 128.0f;
-    private static readonly float g_maxSpan = 8.0f;
 
     public static int centreX => width / 2;
     public static int centreY => height / 2;
@@ -309,113 +272,6 @@ public partial class Game {
         }
     }
 
-    private static PosixSignalRegistration reg;
-    private static PosixSignalRegistration reg2;
-
-    private static sigaction_t sa;
-    private static sigaction_t sa2;
-
-    private static void sigSegvHandler(PosixSignalContext psc) {
-        //psc.Cancel = true;
-        Console.WriteLine("SIGSEGV in managed thread");
-        Console.Out.Flush();
-        //Environment.Exit(139);
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct sigaction_t {
-        public IntPtr sa_handler;
-        public ulong sa_mask;
-        public int sa_flags;
-        public IntPtr sa_restorer;
-    }
-
-    [LibraryImport("libc", SetLastError = true)]
-    private static partial int sigaction(int signum, ref sigaction_t act, IntPtr oldact);
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    static void sigSegvHandler(int signal) {
-        // can't reliably use Console.WriteLine here, use write() syscall
-        byte[] msg = "SIGSEGV caught\n"u8.ToArray();
-        write(2, in msg[0], (nuint)msg.Length); // stderr
-        fsync(2); // flush stderr 
-        //_exit(139);
-    }
-
-    [LibraryImport("libc")]
-    private static partial int fsync(int fd);
-
-    [LibraryImport("libc")]
-    private static partial nint write(int fd, in byte buf, nuint count);
-
-    [LibraryImport("libc")]
-    private static partial void _exit(int status);
-
-
-    private unsafe void sigHandler() {
-        if (OperatingSystem.IsLinux()) {
-            /*
-            // todo this shit doesn't work..... why?
-            //reg = PosixSignalRegistration.Create((PosixSignal)11, sigSegvHandler);
-            //reg2 = PosixSignalRegistration.Create((PosixSignal)6, sigSegvHandler);
-
-            sa = new sigaction_t {
-                sa_handler = (IntPtr)(delegate* unmanaged[Cdecl]<int, void>)&sigSegvHandler,
-                sa_flags = 0x40000000 // SA_RESTART
-            };
-            sigaction(11, ref sa, IntPtr.Zero);
-            sa2 = new sigaction_t {
-                sa_handler = (IntPtr)(delegate* unmanaged[Cdecl]<int, void>)&sigSegvHandler,
-                sa_flags = 0x40000000 // SA_RESTART
-            };
-            sigaction(6, ref sa2, IntPtr.Zero);
-            */
-        }
-    }
-
-
-    private static void regNativeLib() {
-        //NativeLibrary.SetDllImportResolver(typeof(Game).Assembly, nativeLibPath);
-        //NativeLibrary.SetDllImportResolver(typeof(Bass).Assembly, nativeLibPath);
-    }
-
-    private static IntPtr nativeLibPath(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
-        string arch = RuntimeInformation.OSArchitecture == Architecture.X64 ? "x64" : "x86";
-
-        // Create path to libs
-        string libsPath = Path.Combine(AppContext.BaseDirectory, "libs", arch);
-        string libraryPath;
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-            libraryPath = Path.Combine(libsPath, $"{libraryName}.dll");
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
-            // macOS has *one* path regardless of architecture
-            libsPath = Path.Combine(AppContext.BaseDirectory, "libs", "osx");
-            libraryPath = Path.Combine(libsPath, $"lib{libraryName}.dylib");
-        }
-        // Linux
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            libraryPath = Path.Combine(libsPath, $"lib{libraryName}.so");
-        }
-        else {
-            throw new PlatformNotSupportedException($"Platform {RuntimeInformation.OSDescription} is not supported.");
-        }
-
-        // Try to load the library if it exists
-        if (File.Exists(libraryPath)) {
-            if (!shutUp) {
-                Console.WriteLine($"Loading native library: {libraryName} {libraryPath}");
-            }
-
-            shutUp = true;
-            return NativeLibrary.Load(libraryPath);
-        }
-
-        // Fallback to default resolution
-        Console.WriteLine($"Couldn't find native library {libraryName}, falling back to default resolution");
-        return IntPtr.Zero;
-    }
 
     private string getRandomSplash() {
         return splashes[clientRandom.Next(splashes.Length)];
@@ -450,8 +306,6 @@ public partial class Game {
         Console.Out.WriteLine($"{source} [{type}] [{severity}] ({id}): , {msg}");
         // Dump stacktrace
         //Console.Out.WriteLine(Environment.StackTrace);
-        
-        
         
         // sort by severity
         if (type == DebugType.DebugTypeError || type == DebugType.DebugTypeOther || type == DebugType.DebugTypePortability) {
@@ -744,75 +598,6 @@ public partial class Game {
         return cs.startNextFrame<R>(coroutine);
     }
 
-    public partial class NV1 {
-        [LibraryImport("nvapi.dll", EntryPoint = "nvapi_QueryInterface")]
-        internal static partial int NvAPI_Initialize();
-    }
-
-    public static partial class NV2 {
-        [LibraryImport("nvapi64.dll", EntryPoint = "nvapi_QueryInterface")]
-        internal static partial int NvAPI_Initialize();
-    }
-
-    public static void initDedicatedGraphics() {
-        // fuck integrated GPUs, we want the dedicated card
-        try {
-            if (Environment.Is64BitProcess) {
-                NativeLibrary.Load("nvapi64.dll");
-                NV2.NvAPI_Initialize();
-            }
-            else {
-                NativeLibrary.Load("nvapi.dll");
-                NV1.NvAPI_Initialize();
-            }
-        }
-        catch (Exception e) {
-            // nothing!
-            Console.Out.WriteLine("Well, apparently there is no nVidia");
-        }
-    }
-
-    #if LAPTOP_SUPPORT
-    public static void initDirectX() {
-        unsafe {
-            try {
-                const bool forceDxvk = false;
-
-                DXGI dxgi = null!;
-                D3D11 d3d11 = null!;
-
-                ComPtr<ID3D11Device> device = default;
-                ComPtr<ID3D11DeviceContext> deviceContext = default;
-
-                dxgi = DXGI.GetApi(window, forceDxvk);
-                d3d11 = D3D11.GetApi(window, forceDxvk);
-
-                // Create our D3D11 logical device.
-                SilkMarshal.ThrowHResult
-                (
-                    d3d11.CreateDevice
-                    (
-                        default(ComPtr<IDXGIAdapter>),
-                        D3DDriverType.Hardware,
-                        Software: default,
-                        (uint)CreateDeviceFlag.None,
-                        null,
-                        0,
-                        D3D11.SdkVersion,
-                        ref device,
-                        null,
-                        ref deviceContext
-                    )
-                );
-                Console.Out.WriteLine("Successfully setup DirectX!");
-            }
-            catch (Exception e) {
-                Console.Out.WriteLine("Couldn't setup DirectX!");
-            }
-        }
-    }
-    #endif
-
     private void onMouseMove(IMouse m, Vector2 pos) {
         currentScreen.onMouseMove(m, pos);
     }
@@ -905,143 +690,6 @@ public partial class Game {
         resize(new Vector2D<int>(width, height));
     }
 
-    public void updateFramebuffers() {
-        if (Settings.instance.framebufferEffects) {
-            genFramebuffer();
-        }
-        else {
-            deleteFramebuffer();
-        }
-    }
-
-    private unsafe void genFramebuffer() {
-        GL.DeleteFramebuffer(fbo);
-        GL.DeleteFramebuffer(resolveFbo);
-
-        var ssaaWidth = width * Settings.instance.effectiveScale;
-        var ssaaHeight = height * Settings.instance.effectiveScale;
-        var samples = Settings.instance.msaa;
-
-        GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
-
-        if (samples > 1) {
-            // Create MSAA framebuffer
-            fbo = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
-
-            // Create multisampled color texture
-            GL.DeleteTexture(FBOtex);
-            FBOtex = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2DMultisample, FBOtex);
-            GL.TexImage2DMultisample(TextureTarget.Texture2DMultisample, (uint)samples, InternalFormat.Rgba8,
-                (uint)ssaaWidth, (uint)ssaaHeight, true);
-
-            // Create multisampled depth buffer
-            GL.DeleteRenderbuffer(depthBuffer);
-            depthBuffer = GL.GenRenderbuffer();
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, (uint)samples,
-                InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
-
-            // Attach to MSAA framebuffer
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2DMultisample, FBOtex, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
-                RenderbufferTarget.Renderbuffer, depthBuffer);
-
-            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
-                throw new Exception("MSAA Framebuffer is not complete");
-            }
-
-            // Create resolve framebuffer for post-processing
-            resolveFbo = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, resolveFbo);
-
-            GL.DeleteTexture(resolveTex);
-            resolveTex = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, resolveTex);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, null);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
-
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2D, resolveTex, 0);
-
-            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
-                throw new Exception("Resolve Framebuffer is not complete");
-            }
-        }
-        else {
-            // Regular framebuffer (no MSAA)
-            fbo = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
-
-            GL.DeleteTexture(FBOtex);
-            FBOtex = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, FBOtex);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, null);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
-
-            GL.DeleteRenderbuffer(depthBuffer);
-            depthBuffer = GL.GenRenderbuffer();
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)ssaaWidth,
-                (uint)ssaaHeight);
-
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2D, FBOtex, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
-                RenderbufferTarget.Renderbuffer, depthBuffer);
-
-            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
-                throw new Exception("Framebuffer is not complete");
-            }
-
-            resolveFbo = 0;
-            resolveTex = 0;
-        }
-        
-        graphics.fxaaShader.setUniform(g_fxaa_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
-        
-        graphics.ssaaShader.setUniform(g_ssaa_texelStepLocation, new Vector2(1.0f / ssaaWidth, 1.0f / ssaaHeight));
-        graphics.ssaaShader.setUniform(g_ssaa_factorLocation, Settings.instance.ssaa);
-        graphics.ssaaShader.setUniform(g_ssaa_modeLocation, Settings.instance.ssaaMode);
-
-        // Set sample shading state based on settings
-        if (Settings.instance.ssaaMode == 2 && Settings.instance.msaa > 1 && sampleShadingSupported) {
-            GL.Enable(EnableCap.SampleShading);
-            GL.MinSampleShading(1.0f); // force per-sample shading
-            sampleShadingEnabled = true;
-        }
-        else if (sampleShadingSupported) {
-            GL.Disable(EnableCap.SampleShading);
-            sampleShadingEnabled = false;
-        }
-
-        throwawayVAO = GL.CreateVertexArray();
-    }
-
-    private void deleteFramebuffer() {
-        if (sampleShadingSupported) {
-            GL.Disable(EnableCap.SampleShading); // disable per-sample shading
-            sampleShadingEnabled = false;
-        }
-
-        GL.DeleteFramebuffer(fbo);
-        GL.DeleteTexture(FBOtex);
-        GL.DeleteRenderbuffer(depthBuffer);
-        GL.DeleteFramebuffer(resolveFbo);
-        GL.DeleteTexture(resolveTex);
-        GL.DeleteVertexArray(throwawayVAO);
-    }
-
     public void executeOnMainThread(Action action) {
         mainThreadQueue.Add(action);
     }
@@ -1106,7 +754,6 @@ public partial class Game {
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
         mousePos = mouse.Position;
-        cs.update(dt);
         textureManager.blockTexture.update(dt);
         currentScreen.update(dt);
         gui.update(dt);

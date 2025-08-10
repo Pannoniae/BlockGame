@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime;
@@ -121,6 +122,7 @@ public class GameScreen : Screen {
             world.player.update(dt);
         }
         world.renderUpdate(dt);
+        Game.renderer.update(dt);
 
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
@@ -309,7 +311,7 @@ public class GameScreen : Screen {
                     break;
                 }
                 MemoryUtils.cleanGC();
-                Game.mm();
+                //Game.mm();
                 break;
             case Key.F10: {
                 altF10Press = Game.permanentStopwatch.ElapsedMilliseconds;

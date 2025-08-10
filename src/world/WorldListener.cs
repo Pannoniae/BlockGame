@@ -1,19 +1,25 @@
-﻿namespace BlockGame;
+﻿using Molten;
+
+namespace BlockGame;
 
 
 /** https://stackoverflow.com/questions/550785/c-events-or-an-observer-interface-pros-cons */
 public interface WorldListener {
 
-    void onWorldLoad(World world);
+    void onWorldLoad();
 
-    void onWorldUnload(World world);
+    void onWorldUnload();
     
-    void onWorldTick(World world, float delta);
+    void onWorldTick(float delta);
     
-    void onWorldRender(World world, float delta);
+    void onWorldRender(float delta);
     
-    void onChunkLoad(World world, ChunkCoord coord);
+    void onChunkLoad(ChunkCoord coord);
     
-    void onChunkUnload(World world, ChunkCoord coord);
+    void onChunkUnload(ChunkCoord coord);
+
+    void onDirtyChunk(SubChunkCoord coord);
     
+    void onDirtyArea(Vector3I min, Vector3I max);
+
 }

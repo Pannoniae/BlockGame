@@ -2,7 +2,6 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
-using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -34,11 +33,6 @@ public partial class World : IDisposable {
     public List<LightRemovalNode> skyLightRemovalQueue = new();
     public List<LightNode> blockLightQueue = new();
     public List<LightRemovalNode> blockLightRemovalQueue = new();
-
-    /// <summary>
-    /// What needs to be meshed at the end of the frame
-    /// </summary>
-    public Queue<SubChunkCoord> meshingQueue = new();
     
     public WorldGenerator generator;
 
@@ -63,14 +57,15 @@ public partial class World : IDisposable {
     private TimerAction saveWorld;
     
     // try to keep 120 FPS at least
-    private const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
+    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
+    public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
     
     
     // when loading the world, we can load chunks faster because fuck cares about a loading screen?
-    private const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 20.0;
-    private const long MAX_LIGHT_FRAMETIME = 5;
-    private const int SPAWNCHUNKS_SIZE = 1;
-    private const int MAX_TICKING_DISTANCE = 128;
+    public const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 20.0;
+    public const long MAX_LIGHT_FRAMETIME = 5;
+    public const int SPAWNCHUNKS_SIZE = 1;
+    public const int MAX_TICKING_DISTANCE = 128;
 
     /// <summary>
     /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
@@ -120,7 +115,7 @@ public partial class World : IDisposable {
         saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
         
         foreach (var l in listeners) {
-            l.onWorldLoad(this);
+            l.onWorldLoad();
         }
     }
 
@@ -160,12 +155,33 @@ public partial class World : IDisposable {
             }
         }
     }
+    
+    public void setBlockNeighboursDirty(Vector3I block) {
+        // dirty the block and its neighbours
+        dirtyChunk(new SubChunkCoord(block.X >> 4, block.Y >> 4, block.Z >> 4));
+        foreach (var dir in Direction.directions) {
+            var neighbour = block + dir;
+            dirtyChunk(new SubChunkCoord(neighbour.X >> 4, neighbour.Y >> 4, neighbour.Z >> 4));
+        }
+    }
+
+    public void dirtyChunk(SubChunkCoord coord) {
+        foreach (var l in listeners) {
+            l.onDirtyChunk(coord);
+        }
+    }
+    
+    public void dirtyArea(Vector3I min, Vector3I max) {
+        foreach (var l in listeners) {
+            l.onDirtyArea(min, max);
+        }
+    }
 
     public void addChunk(ChunkCoord coord, Chunk chunk) {
         chunks[coord] = chunk;
         chunkList.Add(chunk);
         foreach (var l in listeners) {
-            l.onChunkLoad(this, coord);
+            l.onChunkLoad(coord);
         }
     }
 
@@ -369,19 +385,6 @@ public partial class World : IDisposable {
         Console.Out.WriteLine("---END---");*/
         //Console.Out.WriteLine(Game.permanentStopwatch.ElapsedMilliseconds - start);
         //Console.Out.WriteLine($"{ctr} chunks loaded");
-
-        // empty the meshing queue
-        while (meshingQueue.TryDequeue(out var sectionCoord)) {
-            
-            // if this chunk doesn't exist anymore (because we unloaded it)
-            // then don't mesh! otherwise we'll fucking crash
-            if (!isChunkSectionInWorld(sectionCoord)) {
-                continue;
-            }
-            
-            var section = getChunkSection(sectionCoord);
-            Game.renderer.meshChunk(section);
-        }                                                                                                                                                                                                                                                                                                                        
     }
 
     public void update(double dt) {
@@ -593,7 +596,7 @@ public partial class World : IDisposable {
         worldIO.saveChunk(this, chunks[coord]);
         
         foreach (var l in listeners) {
-            l.onChunkUnload(this, coord);
+            l.onChunkUnload(coord);
         }
         
         chunkList.Remove(chunks[coord]);
@@ -617,7 +620,7 @@ public partial class World : IDisposable {
         worldIO.save(this, name);
         
         foreach (var l in listeners) {
-            l.onWorldUnload(this);
+            l.onWorldUnload();
         }
         
         saveWorld.enabled = false;
@@ -649,11 +652,20 @@ public partial class World : IDisposable {
 
         // if it exists on disk, load it
         if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
-            var ch = WorldIO.loadChunkFromFile(this, chunkCoord);
-            addChunk(chunkCoord, ch);
-            // we got the chunk so set to true
-            hasChunk = true;
-            chunkAdded = true;
+            Chunk ch;
+            try {
+                ch = WorldIO.loadChunkFromFile(this, chunkCoord);
+                addChunk(chunkCoord, ch);
+                // we got the chunk so set to true
+                hasChunk = true;
+                chunkAdded = true;
+            }
+            catch (EndOfStreamException e) {
+                // corrupted chunk file!
+                Console.Error.WriteLine($"Corrupted chunk file for {chunkCoord}: {e.Message}");
+                hasChunk = false;
+                chunkAdded = false;
+            }
         }
 
         // right now we only generate, not load
@@ -697,12 +709,6 @@ public partial class World : IDisposable {
             chunks[chunkCoord].meshChunk();
         }
         return chunks[chunkCoord];
-    }
-
-    public void mesh(SubChunkCoord coord) {
-        if (!meshingQueue.Contains(coord)) {
-            meshingQueue.Enqueue(coord);
-        }
     }
     
     public void runLater(Vector3I pos, Action action, int tick) {

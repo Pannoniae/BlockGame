@@ -352,7 +352,7 @@ public partial class WorldRenderer {
         for (y = -1; y <= 1; y++) {
             for (z = -1; z <= 1; z++) {
                 for (x = -1; x <= 1; x++) {
-                    var sec = world.getChunkSectionUnsafe(new SubChunkCoord(coord.x + x, coord.y + y, coord.z + z));
+                    var sec = world.getSubChunkUnsafe(new SubChunkCoord(coord.x + x, coord.y + y, coord.z + z));
                     neighbourSectionsArray = sec?.blocks;
                     neighbourSectionsArray = ref Unsafe.Add(ref neighbourSectionsArray, 1)!;
                 }

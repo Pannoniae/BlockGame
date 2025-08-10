@@ -6,6 +6,7 @@
       <Path>shaders</Path>
     </explicitIncludes>
     <explicitExcludes>
+      <Path>debug</Path>
       <Path>fonts</Path>
       <Path>lib</Path>
     </explicitExcludes>
