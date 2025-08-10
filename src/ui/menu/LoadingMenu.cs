@@ -82,7 +82,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
     }
 
     private IEnumerator loadWorldCoroutine(bool isLoading) {
-        var setupTimer = new WaitForMinimumTime(0.1);
+        var setupTimer = new WaitForMinimumTime(0.05);
         start("Setting up world");
 
         Game.renderer.setWorld(world);
@@ -90,7 +90,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         yield return new WaitForNextFrame();
         yield return setupTimer;
 
-        var initTimer = new WaitForMinimumTime(0.2);
+        var initTimer = new WaitForMinimumTime(0.1);
         stage("Initializing world");
         Game.world.init(isLoading);
         update(0.08f);
@@ -125,12 +125,12 @@ public class LoadingMenu : Menu, ProgressUpdater {
             //}
         }
 
-        var finalizeTimer = new WaitForMinimumTime(0.3);
+        var finalizeTimer = new WaitForMinimumTime(0.1);
         stage("Finalizing world");
         update(0.95f);
         yield return finalizeTimer;
 
-        var readyTimer = new WaitForMinimumTime(0.2);
+        var readyTimer = new WaitForMinimumTime(0.05);
         stage("Ready!");
         update(1.0f);
         yield return readyTimer;

@@ -30,9 +30,9 @@ public class SubChunk {
     /// </summary>
     public bool isEmpty => blocks.isEmpty();
 
-    public int worldX => coord.x * Chunk.CHUNKSIZE;
-    public int worldY => coord.y * Chunk.CHUNKSIZE;
-    public int worldZ => coord.z * Chunk.CHUNKSIZE;
+    public int worldX => coord.x << 4;
+    public int worldY => coord.y << 4;
+    public int worldZ => coord.z << 4;
     public Vector3I worldPos => new(worldX, worldY, worldZ);
     public Vector3I centrePos => new(worldX + 8, worldY + 8, worldZ + 8);
     

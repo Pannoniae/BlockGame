@@ -248,13 +248,6 @@ public partial class Shader : IDisposable {
     }
 
     private void ReleaseUnmanagedResources() {
-        if (programHandle != 0) {
-            //GL.DeleteProgram(programHandle);
-            programHandle = 0;
-        }
-        
-        defs.Clear();
-        includes.Clear();
     }
 
     public void Dispose() {

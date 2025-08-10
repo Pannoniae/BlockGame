@@ -5,6 +5,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
+using Molten.HalfPrecision;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using SixLabors.ImageSharp.PixelFormats;
@@ -85,6 +86,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     private ulong elementAddress;
 
     private UniformBuffer chunkUBO;
+    private ShaderStorageBuffer chunkSSBO;
 
     public WorldRenderer() {
         GL = Game.GL;
@@ -95,9 +97,23 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.setup();
         idt.setup();
 
-        worldShader = createWorldShader();
-        dummyShader = new Shader(GL, nameof(dummyShader), "shaders/dummyShader.vert");
-        waterShader = new Shader(GL, nameof(waterShader), "shaders/waterShader.vert", "shaders/waterShader.frag");
+        
+
+        // initialize instanced shaders if supported
+        if (Game.hasInstancedUBO) {
+            worldShader = createWorldShader();
+            dummyShader = new Shader(GL, nameof(dummyShader) + " (instanced)", "shaders/dummyShader_instanced.vert");
+            waterShader = new Shader(GL, nameof(waterShader) + " (instanced)", "shaders/waterShader_instanced.vert",
+                "shaders/waterShader.frag");
+
+            // allocate SSBO for chunk positions (32MB = 4M chunks * 8 bytes)
+            chunkSSBO = new ShaderStorageBuffer(GL, 32 * 1024 * 1024, 0);
+        }
+        else {
+            worldShader = createWorldShader();
+            dummyShader = new Shader(GL, nameof(dummyShader), "shaders/dummyShader.vert");
+            waterShader = new Shader(GL, nameof(waterShader), "shaders/waterShader.vert", "shaders/waterShader.frag");
+        }
 
         blockTexture = worldShader.getUniformLocation("blockTexture");
         uMVP = worldShader.getUniformLocation(nameof(uMVP));
@@ -119,9 +135,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
         waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
         wateruSkyDarken = waterShader.getUniformLocation(nameof(uSkyDarken));
-        uChunkPos = worldShader.getUniformLocation("uChunkPos");
-        dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
-        wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
+
+        if (!Game.hasInstancedUBO) {
+            uChunkPos = worldShader.getUniformLocation("uChunkPos");
+            dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
+            wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
+        }
+
         outline = new Shader(Game.GL, nameof(outline), "shaders/outline.vert", "shaders/outline.frag");
 
 
@@ -248,7 +268,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         definitions.Add(new Definition("ANISO_LEVEL", anisoLevel.ToString()));
         definitions.Add(new Definition("DEBUG_ANISO", "0"));
 
-        return new Shader(GL, nameof(worldShader), "shaders/shader.vert", "shaders/shader.frag", definitions);
+        var vert = Game.hasInstancedUBO ? "shaders/shader_instanced.vert" : "shaders/shader.vert";
+
+        return new Shader(GL, nameof(worldShader), vert, "shaders/shader.frag", definitions);
     }
 
     public void updateAF() {
@@ -361,7 +383,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             meshChunk(section);
         }
     }
-    
+
     public void render(double interp) {
         //Game.GD.ResetStates();
 
@@ -405,22 +427,57 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
-        // gather chunks to render
-        foreach (var chunk in chunkList) {
-            var test = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
-            chunk.isRendered = test;
-            if (test) {
-                isVisibleEight(chunk.subChunks, frustum);
-            }
-        }
-        //chunksToRender.Sort(new ChunkComparer(world.player));
 
-        // OPAQUE PASS
-        worldShader.use();
+
         var cameraPos = world.player.camera.renderPosition(interp);
         worldShader.setUniform(uMVP, viewProj);
         worldShader.setUniform(uCameraPos, new Vector3(0));
 
+        Vector4[] chunkData = null!;
+        if (Game.hasInstancedUBO) {
+            chunkData = new Vector4[chunkList.Length * Chunk.CHUNKHEIGHT];
+        }
+
+        // chunkData index
+        int cd = 0;
+
+        // gather chunks to render
+        for (int i = 0; i < chunkList.Length; i++) {
+            Chunk? chunk = chunkList[i];
+            var test = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
+            chunk.isRendered = test;
+            if (test) {
+                // updates isRendered
+                isVisibleEight(chunk.subChunks, frustum);
+
+                // if using the UBO path, upload to UBO
+                if (Game.hasInstancedUBO) {
+                    for (int sc = 0; sc < Chunk.CHUNKHEIGHT; sc++) {
+                        var subChunk = chunk.subChunks[sc];
+                        if (subChunk.isRendered) {
+                            // calculate chunkpos
+                            // s.setUniformBound(uChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y), (float)(coord.z * 16 - cameraPos.Z));
+                            chunkData[cd++] = new Vector4((float)(subChunk.worldX - cameraPos.X),
+                                (float)(subChunk.worldY - cameraPos.Y), (float)(subChunk.worldZ - cameraPos.Z), 1);
+                        }
+                    }
+                }
+            }
+        }
+        //chunksToRender.Sort(new ChunkComparer(world.player));
+
+        // upload chunkdata to ssbo
+        if (Game.hasInstancedUBO) {
+            // upload to SSBO
+            chunkSSBO.bind();
+            chunkSSBO.updateData(chunkData);
+            chunkSSBO.upload();
+            chunkSSBO.bindToPoint();
+        }
+
+        // OPAQUE PASS
+        worldShader.use();
+        cd = 0;
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -433,14 +490,22 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                drawOpaque(subChunk, cameraPos);
+                if (Game.hasInstancedUBO) {
+                    drawOpaqueUBO(subChunk, (uint)cd++);
+                }
+                else {
+                    drawOpaque(subChunk, cameraPos);
+                }
             }
         }
 
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
         dummyShader.setUniform(dummyuMVP, viewProj);
+
         GL.ColorMask(false, false, false, false);
+
+        cd = 0;
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -452,7 +517,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                drawTransparentDummy(subChunk, cameraPos);
+                if (Game.hasInstancedUBO) {
+                    drawTransparentDummyUBO(subChunk, (uint)cd++);
+                }
+                else {
+                    drawTransparentDummy(subChunk, cameraPos);
+                }
             }
         }
 
@@ -461,12 +531,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.Disable(EnableCap.CullFace);
         // TRANSLUCENT PASS
+        
         waterShader.use();
         waterShader.setUniform(wateruMVP, viewProj);
         waterShader.setUniform(wateruCameraPos, new Vector3(0));
+
         GL.ColorMask(true, true, true, true);
         GL.DepthMask(false);
         GL.DepthFunc(DepthFunction.Lequal);
+
+        cd = 0;
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -478,7 +552,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                drawTransparent(subChunk, cameraPos);
+                if (Game.hasInstancedUBO) {
+                    drawTransparentUBO(subChunk, (uint)cd++);
+                }
+                else {
+                    drawTransparent(subChunk, cameraPos);
+                }
             }
         }
 

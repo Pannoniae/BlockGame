@@ -245,7 +245,7 @@ public partial class WorldRenderer {
     /// <summary>
     /// Batched visibility check for 8 subchunks at once. Updates the isRendered field for each subchunk based on visibility.
     /// </summary>
-    public unsafe void isVisibleEight(SubChunk[] subChunks, BoundingFrustum frustum) {
+    public static unsafe void isVisibleEight(SubChunk[] subChunks, BoundingFrustum frustum) {
         // Extract AABBs from subchunks
         Span<AABB> aabbs = stackalloc AABB[8];
         for (int i = 0; i < 8; i++) {
@@ -320,6 +320,37 @@ public partial class WorldRenderer {
             watervao.bind();
             setUniformPosDummy(coord, dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
+            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+        }
+    }
+    
+    public void drawOpaqueUBO(SubChunk subChunk, uint idx) {
+        var coord = subChunk.coord;
+        var vao = subChunk.vao;
+        if (subChunk.hasRenderOpaque) {
+            vao.bind();
+            uint renderedVerts = vao.renderBaseInstance(idx);
+            Game.metrics.renderedVerts += (int)renderedVerts;
+            Game.metrics.renderedSubChunks += 1;
+        }
+    }
+
+    public void drawTransparentUBO(SubChunk subChunk, uint idx) {
+        var coord = subChunk.coord;
+        var watervao = subChunk.watervao;
+        if (subChunk.hasRenderTranslucent) {
+            watervao.bind();
+            uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
+            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+        }
+    }
+
+    public void drawTransparentDummyUBO(SubChunk subChunk, uint idx) {
+        var coord = subChunk.coord;
+        var watervao = subChunk.watervao;
+        if (subChunk.hasRenderTranslucent) {
+            watervao.bind();
+            uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }

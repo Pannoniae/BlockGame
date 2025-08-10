@@ -341,6 +341,14 @@ public partial class Game {
         Console.Out.WriteLine($"NV_uniform_buffer_unified_memory supported: {hasUBUM}");
         //hasUBUM = false;
         
+        // check for gl_BaseInstance UBO rendering support (OpenGL 4.6)
+        var ver = GL.GetStringS(StringName.Version);
+        var majorVersion = int.Parse(ver.Split('.')[0]);
+        var minorVersion = int.Parse(ver.Split('.')[1].Split(' ')[0]);
+        hasInstancedUBO = (majorVersion > 4) || (majorVersion == 4 && minorVersion >= 6);
+        Console.Out.WriteLine($"gl_BaseInstance UBO rendering supported: {hasInstancedUBO}");
+        //hasInstancedUBO = false;
+        
         GLL.TryGetExtension(out extbu);
         
 

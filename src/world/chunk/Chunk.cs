@@ -30,8 +30,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public bool isRendered = false;
     public ulong lastSaved;
 
-    public int worldX => coord.x * CHUNKSIZE;
-    public int worldZ => coord.z * CHUNKSIZE;
+    public int worldX => coord.x << 4;
+    public int worldZ => coord.z << 4;
     public Vector2I worldPos => new(worldX, worldZ);
     public Vector2I centrePos => new(worldX + 8, worldZ + 8);
 

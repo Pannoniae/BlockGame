@@ -19,6 +19,7 @@ public partial class Game {
     public static bool hasSBL = false;
     public static bool hasVBUM = false;
     public static bool hasUBUM = false;
+    public static bool hasInstancedUBO = false;
     
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;

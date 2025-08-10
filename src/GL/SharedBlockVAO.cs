@@ -135,7 +135,14 @@ public sealed class SharedBlockVAO : VAO
 
     public uint render() {
         unsafe {
-            GL.DrawElementsInstancedBaseInstance(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0, 1, 3);
+            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
+            return count;
+        }
+    }
+
+    public uint renderBaseInstance(uint baseInstance) {
+        unsafe {
+            GL.DrawElementsInstancedBaseInstance(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0, 1, baseInstance);
             return count;
         }
     }
