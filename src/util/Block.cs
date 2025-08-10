@@ -60,7 +60,7 @@ public class Block {
     
     public static UVPair?[] uvs = new UVPair?[6];
 
-    public static readonly int maxBlock = 48;
+    public static readonly int maxBlock = 50;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -109,7 +109,8 @@ public class Block {
     public static Block BASALT = register(new Block(Blocks.BASALT, "Basalt", BlockModel.makeCube(cubeUVs(4, 0))));
     public static Block STONE = register(new Block(Blocks.STONE, "Stone", BlockModel.makeCube(cubeUVs(5, 0))));
     public static Block GRAVEL = register(new Block(Blocks.GRAVEL, "Gravel", BlockModel.makeCube(cubeUVs(7, 0))));
-    public static Block HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone", BlockModel.makeCube(grassUVs(8, 0, 9, 0, 9, 0))).light(15));
+    public static Block HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone", BlockModel.makeCube(cubeUVs(8, 0))).light(15));
+    public static Block WORLD_BOTTOM = register(new Block(Blocks.WORLD_BOTTOM, "World_Bottom", BlockModel.makeCube(cubeUVs(9, 0))));
     public static Block GLASS = register(new Block(Blocks.GLASS, "Glass", BlockModel.makeCube(cubeUVs(6, 0))).transparency());
 
     public static Block LANTERN = register(new Block(Blocks.LANTERN, "Lantern", BlockModel.makePartialCube(grassUVs(15, 1, 13, 1, 14, 1))).light(14).partialBlock());
