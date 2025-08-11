@@ -84,6 +84,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
     public ulong elementAddress;
+    public uint elementLen;
 
     public UniformBuffer chunkUBO;
     public ShaderStorageBuffer chunkSSBO;
@@ -92,6 +93,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public WorldRenderer() {
         GL = Game.GL;
+        
         chunkVAO = GL.GenVertexArray();
 
         genFatQuadIndices();
@@ -113,7 +115,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 // allocate command buffer for chunk rendering
                 chunkCMD = new CommandBuffer(GL, 64 * 1024 * 1024);
             }
-            
+
             // allocate bindless indirect buffer if supported
             if (Game.hasBindlessMDI) {
                 // 8MB buffer should be enough for thousands of chunks
@@ -152,7 +154,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
             wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
         }
-        
+
         if (Game.hasInstancedUBO) {
             chunkData = new List<Vector4>(8192 * Chunk.CHUNKHEIGHT);
         }
@@ -275,6 +277,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
                 Game.sbl.GetBufferParameter((Silk.NET.OpenGL.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
                     Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV, out elementAddress);
+                elementLen = Game.graphics.fatQuadIndicesLen;
             }
         }
     }
@@ -428,7 +431,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // no blending solid shit!
         GL.Disable(EnableCap.Blend);
 
-        worldShader.use();
+        //worldShader.use();
 
         GL.BindVertexArray(chunkVAO);
         bindQuad();
@@ -437,7 +440,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //chunkUBO.bindToPoint();
 
         worldShader.use();
-        
+
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
             #pragma warning disable CS0618 // Type or member is obsolete
@@ -486,14 +489,24 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         int cd = 0;
         chunkData.Clear();
 
+        var noCulling = !Settings.instance.frustumCulling;
+
         // gather chunks to render
         for (int i = 0; i < chunkList.Length; i++) {
             Chunk? chunk = chunkList[i];
-            var test = chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum);
+            var test = noCulling || (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum));
             chunk.isRendered = test;
             if (test) {
                 // updates isRendered
-                isVisibleEight(chunk.subChunks, frustum);
+                if (noCulling) {
+                    for (int sc = 0; sc < Chunk.CHUNKHEIGHT; sc++) {
+                        var subChunk = chunk.subChunks[sc];
+                        subChunk.isRendered = true;
+                    }
+                }
+                else {
+                    isVisibleEight(chunk.subChunks, frustum);
+                }
 
                 // if using the UBO path, upload to UBO
                 if (Game.hasInstancedUBO) {
@@ -559,24 +572,22 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //Game.cmdl.StateCapture(state, (Silk.NET.OpenGL.Extensions.NV.NV)PrimitiveType.Triangles);
 
         // OPAQUE PASS
-        worldShader.use();
-        
-        // enable dynamic state
-        #pragma warning disable CS0618 // Type or member is obsolete
-        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
-        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
-        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
-        #pragma warning restore CS0618 // Type or member is obsolete
-        
+        //worldShader.use();
+
         // enable "default" state
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
-
             for (uint i = 0; i < 3; i++) {
+                // why is this necessary?? otherwise it just says
+                // DebugSourceApi [DebugTypeOther] [DebugSeverityMedium] (65537): ,  BufferAddressRange (address=0x0000000000000000, length=0x0000000000000000) for attrib 0 is not contained in a resident buffer. This may not be fatal depending on which addresses are actually referenced.
+                // wtf
+                //
+                // status update: probably because the validation happens before the indirect buffer is parsed, so it complains
+                // well, this is cheap enough for me to not care! :P
                 Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, i,
                     elementAddress, 0);
-                Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
-                    elementAddress, 0);
+                //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
+                //    elementAddress, 0);
             }
 
             /* glVertexAttribFormat(VERTEX_POS, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
@@ -595,9 +606,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
               glEnableVertexAttribArray(VERTEX_COLOR);
 
               glEnableVertexAttribArray(VERTEX_MATRIXINDEX);*/
-            
+
             /*var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
-            
+
             GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
@@ -605,15 +616,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             GL.VertexAttribBinding(0, 0);
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
-            
+
             GL.EnableVertexAttribArray(0);
             GL.EnableVertexAttribArray(1);
             GL.EnableVertexAttribArray(2);
-            
+
             GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));
             GL.BindVertexBuffer(1, firstBuffer, 3 * sizeof(ushort), 7 * sizeof(ushort));
             GL.BindVertexBuffer(2, firstBuffer, 5 * sizeof(ushort), 7 * sizeof(ushort));
-            
+
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, firstBuffer);
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);*/
 
@@ -621,19 +632,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             //GL.BindVertexBuffer(0, handle, 0, 7 * sizeof(ushort));
             //GL.BindVertexBuffer(1, handle, 3 * sizeof(ushort), 7 * sizeof(ushort));
             //GL.BindVertexBuffer(2, handle, 5 * sizeof(ushort), 7 * sizeof(ushort));
-            
+
             // glBindBufferBase(GL_UNIFORM_BUFFER, UBO_SCENE, buffers.scene_ubo);
             //glBindVertexBuffer(0, buffers.scene_vbo, 0, sizeof(Vertex));
             //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers.scene_ibo);
             //glBindVertexBuffer(1, buffers.scene_matrixindices, 0, sizeof(GLint));
-
-            
         }
-        
-        // set up element array address (shared index buffer)
-        Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
-            Game.graphics.fatQuadIndicesLen);
-        
+
         cd = 0;
 
         if (usingCMDL) {
@@ -659,7 +664,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 }
 
                 if (usingBindlessMDI) {
-                    // use bindless multi draw indirect for batch rendering
                     addOpaqueToBindlessBuffer(subChunk, (uint)cd++);
                 }
                 else if (usingCMDL || Game.hasInstancedUBO) {
@@ -672,9 +676,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // execute bindless opaque rendering if commands were added
-        if (Game.hasBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+        if (Game.hasBindlessMDI && bindlessBuffer.commands > 0) {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} opaque bindless draw commands");
-            bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
+            bindlessBuffer.executeDrawCommands();
         }
 
         // TRANSLUCENT DEPTH PRE-PASS
@@ -687,8 +691,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (usingCMDL) {
             chunkCMD.clear();
         }
-
-        // clear bindless buffer for transparent dummy rendering
+        
         if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
@@ -718,9 +721,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // execute bindless transparent dummy rendering if commands were added
-        if (Game.hasBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+        if (Game.hasBindlessMDI && bindlessBuffer.commands > 0) {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} transparent dummy bindless draw commands");
-            bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
+            bindlessBuffer.executeDrawCommands();
         }
 
         if (usingCMDL) {
@@ -749,8 +752,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (usingCMDL) {
             chunkCMD.clear();
         }
-
-        // clear bindless buffer for transparent rendering
+        
         if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
@@ -780,9 +782,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // execute bindless transparent rendering if commands were added
-        if (usingBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+        if (usingBindlessMDI && bindlessBuffer.commands > 0) {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} transparent bindless draw commands");
-            bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
+            bindlessBuffer.executeDrawCommands();
         }
 
         if (usingCMDL) {
@@ -800,9 +802,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
             //Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
-            
         }
-        
+
         // disable dynamic state
         /*GL.DisableVertexAttribArray(2);
         GL.DisableVertexAttribArray(1);
@@ -820,7 +821,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public ulong testidx;
     private ulong ssboaddr;
-    
+
     /** Stores the chunk positions! */
     private List<Vector4> chunkData;
 
@@ -1266,7 +1267,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     ];
 
     public Color4 getLightColour(byte blocklight, byte skylight) {
-        var px = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        var px = Game.textureManager.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
         // apply darken
         var darken = world.getSkyDarkenFloat(world.worldTick) / 16f; // 0 to 1 range
@@ -1280,7 +1281,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         dir = (byte)(dir & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
-        var lightVal = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        var lightVal = Game.textureManager.light(blocklight, skylight);
 
         // apply darken
         //var darken = Game.world.getSkyDarken(Game.world.worldTick);

@@ -285,7 +285,7 @@ public class Block {
         direction = (byte)(direction & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
-        var lightVal = Game.textureManager.lightTexture.getPixel(blocklight, skylight);
+        var lightVal = Game.textureManager.light(blocklight, skylight);
         float tint = WorldRenderer.a[direction] * WorldRenderer.aoArray[ao];
         var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;

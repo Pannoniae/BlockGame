@@ -1,5 +1,6 @@
 using BlockGame.GL;
 using Silk.NET.OpenGL;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace BlockGame.util;
 
@@ -17,6 +18,8 @@ public class TextureManager {
 
     public BTexture2D sunTexture;
     public BTexture2D moonTexture;
+    
+    public readonly Rgba32[] lightmap = new Rgba32[256];
 
     public TextureManager(Silk.NET.OpenGL.GL GL) {
         this.GL = GL;
@@ -28,6 +31,11 @@ public class TextureManager {
         waterOverlay = new BTexture2D("textures/water.png");
         sunTexture = new BTexture2D("textures/sun_03.png");
         moonTexture = new BTexture2D("textures/moon_01.png");
+        
+        // init lightmap
+        for (int i = 0; i < 256; i++) {
+            lightmap[i] = lightTexture.getPixel(i & 15, i >> 4);
+        }
     }
 
     public BTexture2D get(string path) {
@@ -35,5 +43,9 @@ public class TextureManager {
             textures[path] = new BTexture2D(path);;
         }
         return textures[path];
+    }
+
+    public Rgba32 light(int x, int y) {
+        return lightmap[y | (x << 4)];
     }
 }

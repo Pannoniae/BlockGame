@@ -179,6 +179,17 @@ public class SettingsMenu : Menu {
         };
         settingElements.Add(FOV);
         addElement(FOV);
+        
+        var frustumCulling = new ToggleButton(this, "frustumCulling", false, settings.frustumCulling ? 1 : 0,
+            "Frustum Culling: OFF", "Frustum Culling: ON");
+        frustumCulling.topCentre();
+        frustumCulling.clicked += _ => {
+            settings.frustumCulling = frustumCulling.getIndex() == 1;
+        };
+        frustumCulling.tooltip = "Frustum Culling skips rendering blocks outside the camera's view.\nThis can improve performance in large worlds.";
+        settingElements.Add(frustumCulling);
+        addElement(frustumCulling);
+        
 
         var back = new Button(this, "back", false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,

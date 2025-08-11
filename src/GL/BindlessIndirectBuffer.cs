@@ -11,6 +11,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
     public readonly Silk.NET.OpenGL.GL GL;
     public uint handle;
     public DrawElementsIndirectBindlessCommandNV* data;
+    public int commands;
     public int capacity;
     public int size;
     public int offset;
@@ -27,6 +28,9 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         // Allocate staging memory
         data = (DrawElementsIndirectBindlessCommandNV*)NativeMemory.AlignedAlloc((nuint)capacity, 16);
         
+        // sizeof
+        Console.WriteLine("Size of structure: " + sizeof(DrawElementsIndirectBindlessCommandNV));
+        
         Console.WriteLine($"BindlessIndirectBuffer created with capacity {capacity} bytes");
     }
 
@@ -36,6 +40,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
     public void clear() {
         offset = 0;
         size = 0;
+        commands = 0;
     }
 
     /// <summary>
@@ -43,16 +48,16 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
     /// </summary>
     public void upload() {
         if (size > 0) {
-            GL.BindBuffer(BufferTargetARB.DrawIndirectBuffer, handle);
-            GL.BufferSubData(BufferTargetARB.DrawIndirectBuffer, 0, (nuint)size, data);
+            GL.InvalidateBufferData(handle);
+            GL.NamedBufferSubData(handle, 0, (nuint)size, data);
         }
     }
 
     /// <summary>
     /// Execute all queued bindless multi draw indirect commands
     /// </summary>
-    public void executeDrawCommands(int drawCount) {
-        if (size == 0 || drawCount == 0) {
+    public void executeDrawCommands() {
+        if (size == 0 || commands == 0) {
             return;
         }
 
@@ -68,8 +73,11 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         
         //Console.WriteLine($"Executing {drawCount} bindless draw commands, stride={stride}, vertexBufferCount={vertexBufferCount}");
         
+        // update metrics
+        Game.metrics.renderedSubChunks = commands;
+        
         Game.bmdi.MultiDrawElementsIndirectBindles(PrimitiveType.Triangles, DrawElementsType.UnsignedShort, 
-            (void*)null, (uint)drawCount, 0, vertexBufferCount);
+            (void*)null, (uint)commands, 0, vertexBufferCount);
     }
 
     /// <summary>
@@ -77,13 +85,6 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
     /// </summary>
     public int getMaxCommands() {
         return capacity / SharedBlockVAO.getStride();
-    }
-
-    /// <summary>
-    /// Get the current number of commands in the buffer
-    /// </summary>
-    public int getCommandCount() {
-        return size / SharedBlockVAO.getStride();
     }
 
     public void Dispose() {

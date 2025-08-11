@@ -13,6 +13,7 @@ public class Settings {
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public bool fullscreen = false;
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
+    public bool frustumCulling = true;
 
     public static readonly Settings instance = new();
 

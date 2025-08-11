@@ -126,8 +126,8 @@ public sealed class SharedBlockVAO : VAO {
             //GL.BindVertexBuffer(2, handle, 5 * sizeof(ushort), 7 * sizeof(ushort));
             
             // this will work?
-            //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 0);
-            //Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 0);
+            Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 0);
+            Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 0);
         }
     }
 
@@ -292,19 +292,22 @@ public sealed class SharedBlockVAO : VAO {
      * Also stop zeroing lol
      */
     [SkipLocalsInit]
-    public unsafe void addChunkCommand(BindlessIndirectBuffer indirect, uint instanceCount, uint baseInstance, ulong elementAddress, uint elementLength) {
-        int commandSize = getStride();
+    public unsafe void addChunkCommand(BindlessIndirectBuffer indirect, uint baseInstance, ulong elementAddress, uint elementLength) {
+        // hardcode sizeof(DrawElementsIndirectBindlessCommandNV) for codegen
+        const int commandSize = 72;
         
-        if (indirect.offset + commandSize > indirect.capacity) {
-            throw new InvalidOperationException($"Not enough space in indirect buffer. Need {commandSize} bytes, have {indirect.capacity - indirect.offset} remaining");
-        }
+        // uncomment this if you want to check for enough space in the indirect buffer
+        // i dont think it will ever happen, but it *does* fuck the codegen up so we don't need it
+        //if (indirect.offset + commandSize > indirect.capacity) {
+        //    throw new InvalidOperationException($"Not enough space in indirect buffer. Need {commandSize} bytes, have {indirect.capacity - indirect.offset} remaining");
+        //}
 
         DrawElementsIndirectBindlessCommandNV* commandBuffer = (DrawElementsIndirectBindlessCommandNV*)((byte*)indirect.data + indirect.offset);
         // Create the complete bindless command structure and just write it in one step
         *commandBuffer = new DrawElementsIndirectBindlessCommandNV {
             cmd = new DrawElementsIndirectCommand {
                 count = count,
-                instanceCount = instanceCount,
+                instanceCount = 1,
                 firstIndex = 0,
                 baseVertex = 0,
                 baseInstance = baseInstance
@@ -328,5 +331,9 @@ public sealed class SharedBlockVAO : VAO {
         if (indirect.offset > indirect.size) {
             indirect.size = indirect.offset;
         }
+        indirect.commands++;
+        
+        // game metrics
+        Game.metrics.renderedVerts += (int)count;
     }
 }
