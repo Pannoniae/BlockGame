@@ -345,13 +345,21 @@ public partial class WorldRenderer {
         }
     }
 
-    public void drawTransparentDummyUBO(SubChunk subChunk, uint idx) {
-        var coord = subChunk.coord;
-        var watervao = subChunk.watervao;
+    /// <summary>
+    /// Add opaque chunks to the bindless indirect buffer for batch rendering
+    /// </summary>
+    public void addOpaqueToBindlessBuffer(SubChunk subChunk, uint instanceId) {
+        if (subChunk.hasRenderOpaque) {
+            subChunk.vao.addChunkCommand(bindlessBuffer, 1, instanceId, elementAddress, Game.graphics.fatQuadIndicesLen);
+        }
+    }
+
+    /// <summary>
+    /// Add transparent chunks to the bindless indirect buffer for batch rendering
+    /// </summary>
+    public void addTransparentToBindlessBuffer(SubChunk subChunk, uint instanceId) {
         if (subChunk.hasRenderTranslucent) {
-            watervao.bind();
-            uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
-            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+            subChunk.watervao.addChunkCommand(bindlessBuffer, 1, instanceId, elementAddress, Game.graphics.fatQuadIndicesLen);
         }
     }
 

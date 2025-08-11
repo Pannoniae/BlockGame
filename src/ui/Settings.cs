@@ -19,7 +19,7 @@ public class Settings {
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => antiAliasing > 0;
+    public bool framebufferEffects => antiAliasing > 0 || Game.hasCMDL;
     
     /// <summary>
     /// Whether FXAA is enabled.

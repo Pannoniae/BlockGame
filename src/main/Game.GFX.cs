@@ -8,10 +8,10 @@ using Silk.NET.OpenGL.Legacy.Extensions.EXT;
 namespace BlockGame;
 
 public partial class Game {
-    private uint fbo;
-    private uint FBOtex;
-    private uint throwawayVAO;
-    private uint depthBuffer;
+    public uint fbo;
+    public uint FBOtex;
+    public uint throwawayVAO;
+    public uint depthBuffer;
     
     public static bool sampleShadingSupported = false;
     private static bool sampleShadingEnabled = false;
@@ -20,10 +20,14 @@ public partial class Game {
     public static bool hasVBUM = false;
     public static bool hasUBUM = false;
     public static bool hasInstancedUBO = false;
+    public static bool hasCMDL = false;
+    public static bool hasBindlessMDI = false;
     
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;
     public static ExtBindableUniform extbu;
+    public static NVCommandList cmdl;
+    public static NVBindlessMultiDrawIndirect bmdi;
     
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;

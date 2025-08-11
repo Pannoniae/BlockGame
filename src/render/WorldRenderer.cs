@@ -83,10 +83,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
-    private ulong elementAddress;
+    public ulong elementAddress;
 
-    private UniformBuffer chunkUBO;
-    private ShaderStorageBuffer chunkSSBO;
+    public UniformBuffer chunkUBO;
+    public ShaderStorageBuffer chunkSSBO;
+    public CommandBuffer chunkCMD;
+    public BindlessIndirectBuffer bindlessBuffer;
 
     public WorldRenderer() {
         GL = Game.GL;
@@ -97,7 +99,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.setup();
         idt.setup();
 
-        
 
         // initialize instanced shaders if supported
         if (Game.hasInstancedUBO) {
@@ -106,8 +107,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader = new Shader(GL, nameof(waterShader) + " (instanced)", "shaders/waterShader_instanced.vert",
                 "shaders/waterShader.frag");
 
-            // allocate SSBO for chunk positions (32MB = 4M chunks * 8 bytes)
+            // allocate SSBO for chunk positions (32MB)
             chunkSSBO = new ShaderStorageBuffer(GL, 32 * 1024 * 1024, 0);
+            if (Game.hasCMDL) {
+                // allocate command buffer for chunk rendering
+                chunkCMD = new CommandBuffer(GL, 64 * 1024 * 1024);
+            }
+            
+            // allocate bindless indirect buffer if supported
+            if (Game.hasBindlessMDI) {
+                // 8MB buffer should be enough for thousands of chunks
+                bindlessBuffer = new BindlessIndirectBuffer(GL, 8 * 1024 * 1024);
+            }
         }
         else {
             worldShader = createWorldShader();
@@ -141,6 +152,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
             wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
         }
+        
+        if (Game.hasInstancedUBO) {
+            chunkData = new List<Vector4>(8192 * Chunk.CHUNKHEIGHT);
+        }
+        else {
+            chunkData = null!;
+        }
 
         outline = new Shader(Game.GL, nameof(outline), "shaders/outline.vert", "shaders/outline.frag");
 
@@ -161,6 +179,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // initialize chunk UBO (16 bytes: vec3 + padding)
         //chunkUBO = new UniformBuffer(GL, 256, 0);
+
+        // make resident
+        // get address of the ssbo
+        Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV,
+            out ssboaddr);
+        Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
 
         //setUniforms();
     }
@@ -400,12 +424,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // no blending solid shit!
         GL.Disable(EnableCap.Blend);
 
+        worldShader.use();
+
         GL.BindVertexArray(chunkVAO);
         bindQuad();
         // we'll be using this for a while
         //chunkUBO.bind();
         //chunkUBO.bindToPoint();
 
+        worldShader.use();
+        
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
             #pragma warning disable CS0618 // Type or member is obsolete
@@ -417,6 +445,23 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
                 Game.graphics.fatQuadIndicesLen);
         }
+
+        // format it again
+        /*GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+        GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
+
+        // get first vertex buffer
+        //var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
+        // bind the vertex buffer to the VAO
+        Game.vbum.VertexAttribIFormat(0, 3, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        Game.vbum.VertexAttribIFormat(1, 2, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
+        //GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));*/
 
         var tex = Game.textureManager.blockTexture;
         var lightTex = Game.textureManager.lightTexture;
@@ -433,13 +478,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         worldShader.setUniform(uMVP, viewProj);
         worldShader.setUniform(uCameraPos, new Vector3(0));
 
-        Vector4[] chunkData = null!;
-        if (Game.hasInstancedUBO) {
-            chunkData = new Vector4[chunkList.Length * Chunk.CHUNKHEIGHT];
-        }
-
         // chunkData index
         int cd = 0;
+        chunkData.Clear();
 
         // gather chunks to render
         for (int i = 0; i < chunkList.Length; i++) {
@@ -457,8 +498,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                         if (subChunk.isRendered) {
                             // calculate chunkpos
                             // s.setUniformBound(uChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y), (float)(coord.z * 16 - cameraPos.Z));
-                            chunkData[cd++] = new Vector4((float)(subChunk.worldX - cameraPos.X),
-                                (float)(subChunk.worldY - cameraPos.Y), (float)(subChunk.worldZ - cameraPos.Z), 1);
+                            chunkData.Add(new Vector4((float)(subChunk.worldX - cameraPos.X),
+                                (float)(subChunk.worldY - cameraPos.Y), (float)(subChunk.worldZ - cameraPos.Z), 1));
                         }
                     }
                 }
@@ -470,14 +511,137 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (Game.hasInstancedUBO) {
             // upload to SSBO
             chunkSSBO.bind();
-            chunkSSBO.updateData(chunkData);
+            chunkSSBO.updateData(CollectionsMarshal.AsSpan(chunkData));
             chunkSSBO.upload();
             chunkSSBO.bindToPoint();
+            // get chunkpos uniform
+
+            /*var uChunkPos = worldShader.getUniformLocation("chunkPos");
+            var uChunkPosWater = waterShader.getUniformLocation("chunkPos");
+            var uChunkPosWaterDummy = dummyShader.getUniformLocation("chunkPos");
+
+
+            worldShader.setUniform(uChunkPos, ssboaddr);
+            waterShader.setUniform(uChunkPosWater, ssboaddr);
+            dummyShader.setUniform(uChunkPosWaterDummy, ssboaddr);*/
+
+            //chunkSSBO.bindToPoint();
+            // unbind ssbo
+            //GL.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, 0);
         }
+
+        //GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+        //GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+        //GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+
+        //GL.VertexAttribBinding(0, 0);
+        //GL.VertexAttribBinding(1, 0);
+        //GL.VertexAttribBinding(2, 0);
+
+        // get first vertex buffer
+        //var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
+        // bind the vertex buffer to the VAO
+        //Game.vbum.VertexAttribIFormat(0, 3, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribIFormat(1, 2, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
+        //GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));
+
+        //Game.sbl.GetNamedBufferParameter(firstBuffer, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV, out testidx);
+
+        //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0, 0, 69);
+        //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0, testidx, 96);
+
+        //uint state = Game.cmdl.CreateState();
+        //Game.cmdl.StateCapture(state, (Silk.NET.OpenGL.Extensions.NV.NV)PrimitiveType.Triangles);
 
         // OPAQUE PASS
         worldShader.use();
+        
+        // enable "default" state
+        // enable unified memory for chunk rendering
+        if (Game.hasVBUM && Game.hasSBL) {
+
+            for (uint i = 0; i < 3; i++) {
+                Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, i,
+                    elementAddress, 0);
+                Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
+                    elementAddress, 0);
+            }
+
+            /* glVertexAttribFormat(VERTEX_POS, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+              glVertexAttribFormat(VERTEX_NORMAL, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
+              glVertexAttribFormat(VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
+              glVertexAttribBinding(VERTEX_POS, 0);
+              glVertexAttribBinding(VERTEX_NORMAL, 0);
+              glVertexAttribBinding(VERTEX_COLOR, 0);
+
+              glVertexAttribIFormat(VERTEX_MATRIXINDEX, 1, GL_INT, 0);
+              glVertexAttribBinding(VERTEX_MATRIXINDEX, 1);
+              glVertexBindingDivisor(1, 1);
+
+              glEnableVertexAttribArray(VERTEX_POS);
+              glEnableVertexAttribArray(VERTEX_NORMAL);
+              glEnableVertexAttribArray(VERTEX_COLOR);
+
+              glEnableVertexAttribArray(VERTEX_MATRIXINDEX);*/
+            
+            /*var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
+            
+            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+            GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+
+            GL.VertexAttribBinding(0, 0);
+            GL.VertexAttribBinding(1, 0);
+            GL.VertexAttribBinding(2, 0);
+            
+            GL.EnableVertexAttribArray(0);
+            GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
+            
+            GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));
+            GL.BindVertexBuffer(1, firstBuffer, 3 * sizeof(ushort), 7 * sizeof(ushort));
+            GL.BindVertexBuffer(2, firstBuffer, 5 * sizeof(ushort), 7 * sizeof(ushort));
+            
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, firstBuffer);
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);*/
+
+            // bind the vertex buffer to the VAO
+            //GL.BindVertexBuffer(0, handle, 0, 7 * sizeof(ushort));
+            //GL.BindVertexBuffer(1, handle, 3 * sizeof(ushort), 7 * sizeof(ushort));
+            //GL.BindVertexBuffer(2, handle, 5 * sizeof(ushort), 7 * sizeof(ushort));
+            
+            // glBindBufferBase(GL_UNIFORM_BUFFER, UBO_SCENE, buffers.scene_ubo);
+            //glBindVertexBuffer(0, buffers.scene_vbo, 0, sizeof(Vertex));
+            //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers.scene_ibo);
+            //glBindVertexBuffer(1, buffers.scene_matrixindices, 0, sizeof(GLint));
+
+            
+        }
+        
+        // enable dynamic state
+        #pragma warning disable CS0618 // Type or member is obsolete
+        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
+        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
+        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+        #pragma warning restore CS0618 // Type or member is obsolete
+        
+        // set up element array address (shared index buffer)
+        Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
+            Game.graphics.fatQuadIndicesLen);
+        
         cd = 0;
+
+        if (Game.hasCMDL) {
+            chunkCMD.clear();
+        }
+
+        // clear bindless buffer for opaque rendering
+        if (Game.hasBindlessMDI) {
+            bindlessBuffer.clear();
+        }
+
+        // try formatting again?
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -490,13 +654,23 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (Game.hasInstancedUBO) {
+                if (Game.hasBindlessMDI && Game.hasInstancedUBO) {
+                    // use bindless multi draw indirect for batch rendering
+                    addOpaqueToBindlessBuffer(subChunk, (uint)cd++);
+                }
+                else if (Game.hasInstancedUBO) {
                     drawOpaqueUBO(subChunk, (uint)cd++);
                 }
                 else {
                     drawOpaque(subChunk, cameraPos);
                 }
             }
+        }
+
+        // execute bindless opaque rendering if commands were added
+        if (Game.hasBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+            //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} opaque bindless draw commands");
+            bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
         }
 
         // TRANSLUCENT DEPTH PRE-PASS
@@ -506,6 +680,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.ColorMask(false, false, false, false);
 
         cd = 0;
+        if (Game.hasCMDL) {
+            chunkCMD.clear();
+        }
+
+        // clear bindless buffer for transparent dummy rendering
+        if (Game.hasBindlessMDI) {
+            bindlessBuffer.clear();
+        }
+
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -517,8 +700,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (Game.hasInstancedUBO) {
-                    drawTransparentDummyUBO(subChunk, (uint)cd++);
+                if (Game.hasBindlessMDI && Game.hasInstancedUBO) {
+                    // use bindless multi draw indirect for batch rendering
+                    addTransparentToBindlessBuffer(subChunk, (uint)cd++);
+                }
+                else if (Game.hasInstancedUBO) {
+                    drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
                     drawTransparentDummy(subChunk, cameraPos);
@@ -526,12 +713,26 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             }
         }
 
+        // execute bindless transparent dummy rendering if commands were added
+        if (Game.hasBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+            //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} transparent dummy bindless draw commands");
+            bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
+        }
+
+        if (Game.hasCMDL) {
+            chunkCMD.upload();
+            chunkCMD.drawCommands(PrimitiveType.Triangles, 0);
+
+            chunkCMD.clear();
+        }
+
         // start blending at transparent stuff
         GL.Enable(EnableCap.Blend);
 
         GL.Disable(EnableCap.CullFace);
+
         // TRANSLUCENT PASS
-        
+
         waterShader.use();
         waterShader.setUniform(wateruMVP, viewProj);
         waterShader.setUniform(wateruCameraPos, new Vector3(0));
@@ -541,6 +742,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthFunc(DepthFunction.Lequal);
 
         cd = 0;
+        if (Game.hasCMDL) {
+            chunkCMD.clear();
+        }
+
+        // clear bindless buffer for transparent rendering
+        if (Game.hasBindlessMDI) {
+            bindlessBuffer.clear();
+        }
+
         foreach (var chunk in chunkList) {
             if (!chunk.isRendered) {
                 continue;
@@ -552,7 +762,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (Game.hasInstancedUBO) {
+                if (Game.hasBindlessMDI && Game.hasInstancedUBO) {
+                    // use bindless multi draw indirect for batch rendering
+                    addTransparentToBindlessBuffer(subChunk, (uint)cd++);
+                }
+                else if (Game.hasInstancedUBO) {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -561,18 +775,50 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             }
         }
 
+        // execute bindless transparent rendering if commands were added
+        if (Game.hasBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+            //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} transparent bindless draw commands");
+            bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
+        }
+
+        if (Game.hasCMDL) {
+            chunkCMD.upload();
+            chunkCMD.drawCommands(PrimitiveType.Triangles, 0);
+        }
+
+        skip: ;
+        GL.Enable(EnableCap.Blend);
+
         // disable unified memory after all chunk rendering passes
         if (Game.hasVBUM && Game.hasSBL) {
             #pragma warning disable CS0618 // Type or member is obsolete
             Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
             Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
+            //Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
+            
         }
+        
+        // disable dynamic state
+        /*GL.DisableVertexAttribArray(2);
+        GL.DisableVertexAttribArray(1);
+        GL.DisableVertexAttribArray(0);
+        GL.BindBufferBase(BufferTargetARB.UniformBuffer, 0, 0);
+        GL.BindVertexBuffer(0, 0, 0, 0);
+        GL.BindVertexBuffer(1, 0, 0, 0);
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, 0);
+        GL.BindBuffer(BufferTargetARB.ArrayBuffer, 0);*/
 
         GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
         world.particleManager.render(interp);
     }
+
+    public ulong testidx;
+    private ulong ssboaddr;
+    
+    /** Stores the chunk positions! */
+    private List<Vector4> chunkData;
 
     private void renderSky(double interp) {
         // if <= 4 chunks, don't render sky
@@ -1068,6 +1314,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         //chunkUBO?.Dispose();
+        bindlessBuffer?.Dispose();
     }
 
     public void Dispose() {

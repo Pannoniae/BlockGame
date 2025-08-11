@@ -9,7 +9,7 @@ namespace BlockGame.GL;
 /// </summary>
 public unsafe class ShaderStorageBuffer : IDisposable {
     private readonly Silk.NET.OpenGL.GL GL;
-    private readonly uint handle;
+    public readonly uint handle;
     private readonly uint bindingPoint;
     private int size;
     private int capacity;

@@ -1,4 +1,7 @@
 ﻿#version 440
+#extension GL_NV_command_list : enable
+
+//layout(commandBindableNV) uniform;
 
 // don't, glass will be fucked
 layout(early_fragment_tests) in;

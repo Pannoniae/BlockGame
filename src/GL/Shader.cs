@@ -224,6 +224,10 @@ public partial class Shader : IDisposable {
     public void setUniform(int loc, float value) {
         GL.ProgramUniform1(programHandle, loc, value);
     }
+
+    public void setUniform(int loc, ulong value) {
+        Game.sbl.ProgramUniform(programHandle, loc, value);
+    }
     
     public unsafe void setUniform(int loc, Vector2 value) {
         GL.ProgramUniform2(programHandle, loc, 1, (float*)&value);

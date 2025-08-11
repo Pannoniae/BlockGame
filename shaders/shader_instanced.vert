@@ -1,5 +1,8 @@
 #version 460
 #extension GL_NV_gpu_shader5 : enable
+#extension GL_NV_command_list : enable
+
+//layout(commandBindableNV) uniform;
 
 layout (location = 0) in uvec3 vPos;
 layout (location = 1) in uvec2 texCoord;
@@ -12,6 +15,17 @@ uniform float uSkyDarken;
 layout(std430, binding = 0) restrict readonly buffer ChunkPositions {
     vec4 chunkPos[];
 };
+
+struct buf {
+    vec4 pos;
+};
+
+// UBO with pointer to chunkpos buffer
+/*layout(std140, binding = 0) uniform ChunkPositions {
+    buf* chunkPos;
+};*/
+
+//uniform vec4 *chunkPos;
 
 out vec2 texCoords;
 out float skyDarken;
