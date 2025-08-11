@@ -88,35 +88,46 @@ public struct DrawElementsIndirectBindlessCommandNV {
  * </summary>
  *
  * <remarks>
+ * <para>
  * NOTE: this extension is *slightly* janky for OBVIOUS reasons (after all, we're just pushing tokens into the GPU's decoder)
  * What you need to know:
+ * </para>
  * 
+ * <para>
  * 1. Validation happens *before* any of the commands are seen, so ALWAYS have the attribute data properly formatted, and each buffer binding point bound.
  * This is obviously VAO state, so you need to do the following:
  * Even if they are completely bogus bindings, have them bound. Use glBindVertexBuffer to associate the attributes with the buffer binding points.
  * The buffers you bind in there are completely irrelevant, you only care that you have a good combination of glVertexAttribBinding(attrib, binding) and
  * glBindVertexBuffer(binding, bogusBuffer, irrelevantOffset, correctStride);
  * The stride is important for sourcing vertex buffer data.
- * 
+ * </para>
+ *
+ * <para>
  * 2. Additionally, before executing any glDrawCommandsNV, you need to have addresses for each binding point. The NV specs are being unclear/shit about this point,
  * but every time you see a reference to attributes in any of the bindless address extensions (where you give a GPU address to an attribute,
  * stuff like the AttributeAddressCommandNV token or glBufferAddressRangeNV(VERTEX_ATTRIB_ARRAY_ADDRESS_NV). These might SAY attribute, but they in reality refer to binding points.
+ * </para>
  *
- *
+ * <para>
  * If you don't do these things, shit *might* (read: will probably) still work, but the driver will keep throwing bogus validation errors, which is something you don't want. (you either mask them in the debug callback and risk masking important correctness issues,
  * or you do print them but they'll cause an enormous logspam, neither are good.)
- *
+ * </para><para>
  * Keeping the driver happy is easy and doesn't cost shit in performance, so always do that.
- *
+ * </para>
+ * 
+ * <para>
  * 3. ARB_shader_draw_parameters do *not* work with this extension for some godforsaken reason. It's okay, but that means that you can't use gl_BaseInstance as a makeshift constant buffer.
  * You *can* use per-instance data though, so a good way of passing very small constants (like a buffer index or something) are "constant" vertex attributes, i.e. something with a >0 divisor,
  * which means it increments per-instance. Set to a high value if you want it constant over instances, set to 1 if you want it per instance.
  * MAKE SURE TO CALL THE RIGHT FUNCTION. It's glVertexBindingDivisor, NOT glVertexAttribDivisor. Forget about the second one, it doesn't exist.
  * You can't use gl_BaseVertex either, and shit like gl_VertexIndex or gl_InstanceIndex are out of the question too.
- *
+ * </para>
+ * 
+ * <para>
  * 4. As said earlier, we are pushing tokens into the GPU's decoder buffer. This means the only validation you get is a great fucking segfault of your process or an assertion hardcrash inside the driver, which isn't really helpful.
  * I've included a very limited and very janky (read: written by LLM) validator for your command buffers which validates that you didn't fuck up the writing or the headers.
  * Call cmdBuffer.dumpCommands() just before you issue a drawCommands() and check the console for errors.
+ * </para>
  * </remarks> 
 */
 public unsafe class CommandBuffer : IDisposable {
