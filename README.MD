@@ -60,3 +60,7 @@ See [CONTRIBUTING.MD](./CONTRIBUTING.md).
 - Thank you 1980's anons for making the X11 fixed spritefonts which the project uses. 
 - Thank you everyone on `my server` for feedback and testing.
 - Thank you `Notch` for being a champ and making the ultimate sandbox!
+
+
+### Obligatory max render distance screenshot which every failed game has lol
+![Obligatory max render distance](flex.png)
