@@ -414,6 +414,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         frustum = Game.player.camera.frustum;
 
 
+        var usingCMDL = Game.hasCMDL;
+        var usingBindlessMDI = Game.hasBindlessMDI && !usingCMDL;
+
+
         setUniforms();
         GL.Enable(EnableCap.Blend);
         GL.DepthMask(false);
@@ -557,6 +561,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // OPAQUE PASS
         worldShader.use();
         
+        // enable dynamic state
+        #pragma warning disable CS0618 // Type or member is obsolete
+        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
+        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
+        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+        #pragma warning restore CS0618 // Type or member is obsolete
+        
         // enable "default" state
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
@@ -619,25 +630,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             
         }
         
-        // enable dynamic state
-        #pragma warning disable CS0618 // Type or member is obsolete
-        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
-        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
-        Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
-        #pragma warning restore CS0618 // Type or member is obsolete
-        
         // set up element array address (shared index buffer)
         Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
             Game.graphics.fatQuadIndicesLen);
         
         cd = 0;
 
-        if (Game.hasCMDL) {
+        if (usingCMDL) {
             chunkCMD.clear();
         }
 
         // clear bindless buffer for opaque rendering
-        if (Game.hasBindlessMDI) {
+        if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
 
@@ -654,11 +658,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (Game.hasBindlessMDI && Game.hasInstancedUBO) {
+                if (usingBindlessMDI) {
                     // use bindless multi draw indirect for batch rendering
                     addOpaqueToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (Game.hasInstancedUBO) {
+                else if (usingCMDL || Game.hasInstancedUBO) {
                     drawOpaqueUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -680,12 +684,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.ColorMask(false, false, false, false);
 
         cd = 0;
-        if (Game.hasCMDL) {
+        if (usingCMDL) {
             chunkCMD.clear();
         }
 
         // clear bindless buffer for transparent dummy rendering
-        if (Game.hasBindlessMDI) {
+        if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
 
@@ -700,11 +704,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (Game.hasBindlessMDI && Game.hasInstancedUBO) {
+                if (usingBindlessMDI) {
                     // use bindless multi draw indirect for batch rendering
                     addTransparentToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (Game.hasInstancedUBO) {
+                else if (usingCMDL || Game.hasInstancedUBO) {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -719,7 +723,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
         }
 
-        if (Game.hasCMDL) {
+        if (usingCMDL) {
             chunkCMD.upload();
             chunkCMD.drawCommands(PrimitiveType.Triangles, 0);
 
@@ -742,12 +746,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthFunc(DepthFunction.Lequal);
 
         cd = 0;
-        if (Game.hasCMDL) {
+        if (usingCMDL) {
             chunkCMD.clear();
         }
 
         // clear bindless buffer for transparent rendering
-        if (Game.hasBindlessMDI) {
+        if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
 
@@ -762,11 +766,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (Game.hasBindlessMDI && Game.hasInstancedUBO) {
+                if (usingBindlessMDI) {
                     // use bindless multi draw indirect for batch rendering
                     addTransparentToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (Game.hasInstancedUBO) {
+                else if (usingCMDL || Game.hasInstancedUBO) {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -776,12 +780,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // execute bindless transparent rendering if commands were added
-        if (Game.hasBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
+        if (usingBindlessMDI && bindlessBuffer.getCommandCount() > 0) {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} transparent bindless draw commands");
             bindlessBuffer.executeDrawCommands(bindlessBuffer.getCommandCount());
         }
 
-        if (Game.hasCMDL) {
+        if (usingCMDL) {
             chunkCMD.upload();
             chunkCMD.drawCommands(PrimitiveType.Triangles, 0);
         }
