@@ -93,7 +93,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public WorldRenderer() {
         GL = Game.GL;
-        
+
         chunkVAO = GL.GenVertexArray();
 
         genFatQuadIndices();
@@ -577,67 +577,67 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // enable "default" state
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
-            for (uint i = 0; i < 3; i++) {
-                // why is this necessary?? otherwise it just says
-                // DebugSourceApi [DebugTypeOther] [DebugSeverityMedium] (65537): ,  BufferAddressRange (address=0x0000000000000000, length=0x0000000000000000) for attrib 0 is not contained in a resident buffer. This may not be fatal depending on which addresses are actually referenced.
-                // wtf
-                //
-                // status update: probably because the validation happens before the indirect buffer is parsed, so it complains
-                // well, this is cheap enough for me to not care! :P
-                Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, i,
-                    elementAddress, 0);
-                //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
-                //    elementAddress, 0);
-            }
+            // why is this necessary?? otherwise it just says
+            // DebugSourceApi [DebugTypeOther] [DebugSeverityMedium] (65537): ,  BufferAddressRange (address=0x0000000000000000, length=0x0000000000000000) for attrib 0 is not contained in a resident buffer. This may not be fatal depending on which addresses are actually referenced.
+            // wtf
+            //
+            // status update: probably because the validation happens before the indirect buffer is parsed, so it complains
+            // well, this is cheap enough for me to not care! :P
+            // status update 2.0: apparently, the error message in the driver refers to the attrib, which *is* hooked onto index 0.... so just select the pointer on index 0 and we're good
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0,
+                elementAddress, 0);
 
-            /* glVertexAttribFormat(VERTEX_POS, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
-              glVertexAttribFormat(VERTEX_NORMAL, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
-              glVertexAttribFormat(VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
-              glVertexAttribBinding(VERTEX_POS, 0);
-              glVertexAttribBinding(VERTEX_NORMAL, 0);
-              glVertexAttribBinding(VERTEX_COLOR, 0);
-
-              glVertexAttribIFormat(VERTEX_MATRIXINDEX, 1, GL_INT, 0);
-              glVertexAttribBinding(VERTEX_MATRIXINDEX, 1);
-              glVertexBindingDivisor(1, 1);
-
-              glEnableVertexAttribArray(VERTEX_POS);
-              glEnableVertexAttribArray(VERTEX_NORMAL);
-              glEnableVertexAttribArray(VERTEX_COLOR);
-
-              glEnableVertexAttribArray(VERTEX_MATRIXINDEX);*/
-
-            /*var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
-
-            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
-            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
-            GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
-
-            GL.VertexAttribBinding(0, 0);
-            GL.VertexAttribBinding(1, 0);
-            GL.VertexAttribBinding(2, 0);
-
-            GL.EnableVertexAttribArray(0);
-            GL.EnableVertexAttribArray(1);
-            GL.EnableVertexAttribArray(2);
-
-            GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));
-            GL.BindVertexBuffer(1, firstBuffer, 3 * sizeof(ushort), 7 * sizeof(ushort));
-            GL.BindVertexBuffer(2, firstBuffer, 5 * sizeof(ushort), 7 * sizeof(ushort));
-
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, firstBuffer);
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);*/
-
-            // bind the vertex buffer to the VAO
-            //GL.BindVertexBuffer(0, handle, 0, 7 * sizeof(ushort));
-            //GL.BindVertexBuffer(1, handle, 3 * sizeof(ushort), 7 * sizeof(ushort));
-            //GL.BindVertexBuffer(2, handle, 5 * sizeof(ushort), 7 * sizeof(ushort));
-
-            // glBindBufferBase(GL_UNIFORM_BUFFER, UBO_SCENE, buffers.scene_ubo);
-            //glBindVertexBuffer(0, buffers.scene_vbo, 0, sizeof(Vertex));
-            //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers.scene_ibo);
-            //glBindVertexBuffer(1, buffers.scene_matrixindices, 0, sizeof(GLint));
+            //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
+            //    elementAddress, 0);
         }
+
+        /* glVertexAttribFormat(VERTEX_POS, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
+          glVertexAttribFormat(VERTEX_NORMAL, 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, normal));
+          glVertexAttribFormat(VERTEX_COLOR, 4, GL_FLOAT, GL_FALSE, offsetof(Vertex, color));
+          glVertexAttribBinding(VERTEX_POS, 0);
+          glVertexAttribBinding(VERTEX_NORMAL, 0);
+          glVertexAttribBinding(VERTEX_COLOR, 0);
+
+          glVertexAttribIFormat(VERTEX_MATRIXINDEX, 1, GL_INT, 0);
+          glVertexAttribBinding(VERTEX_MATRIXINDEX, 1);
+          glVertexBindingDivisor(1, 1);
+
+          glEnableVertexAttribArray(VERTEX_POS);
+          glEnableVertexAttribArray(VERTEX_NORMAL);
+          glEnableVertexAttribArray(VERTEX_COLOR);
+
+          glEnableVertexAttribArray(VERTEX_MATRIXINDEX);*/
+
+        /*var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
+
+        GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+        GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
+
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
+
+        GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));
+        GL.BindVertexBuffer(1, firstBuffer, 3 * sizeof(ushort), 7 * sizeof(ushort));
+        GL.BindVertexBuffer(2, firstBuffer, 5 * sizeof(ushort), 7 * sizeof(ushort));
+
+        GL.BindBuffer(BufferTargetARB.ArrayBuffer, firstBuffer);
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);*/
+
+        // bind the vertex buffer to the VAO
+        //GL.BindVertexBuffer(0, handle, 0, 7 * sizeof(ushort));
+        //GL.BindVertexBuffer(1, handle, 3 * sizeof(ushort), 7 * sizeof(ushort));
+        //GL.BindVertexBuffer(2, handle, 5 * sizeof(ushort), 7 * sizeof(ushort));
+
+        // glBindBufferBase(GL_UNIFORM_BUFFER, UBO_SCENE, buffers.scene_ubo);
+        //glBindVertexBuffer(0, buffers.scene_vbo, 0, sizeof(Vertex));
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers.scene_ibo);
+        //glBindVertexBuffer(1, buffers.scene_matrixindices, 0, sizeof(GLint));
 
         cd = 0;
 
@@ -691,7 +691,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (usingCMDL) {
             chunkCMD.clear();
         }
-        
+
         if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
@@ -752,7 +752,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (usingCMDL) {
             chunkCMD.clear();
         }
-        
+
         if (usingBindlessMDI) {
             bindlessBuffer.clear();
         }
