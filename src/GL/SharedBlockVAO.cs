@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
@@ -73,12 +74,10 @@ public sealed class SharedBlockVAO : VAO {
                     throw new Exception($"Failed to get GPU address for vertex buffer {buffer}");
                 }
                 //Console.WriteLine($"SharedBlockVAO: buffer={buffer}, address=0x{bufferAddress:X16}, length={bufferLength}");
-                
-                
-                
             }
             else {
-                throw new Exception("SharedBlockVAO requires NV_vertex_buffer_unified_memory support to work properly!");
+                throw new Exception(
+                    "SharedBlockVAO requires NV_vertex_buffer_unified_memory support to work properly!");
             }
         }
 
@@ -91,10 +90,6 @@ public sealed class SharedBlockVAO : VAO {
 
     public void format() {
         var GL = Game.GL;
-        // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
-        GL.EnableVertexAttribArray(0);
-        GL.EnableVertexAttribArray(1);
-        GL.EnableVertexAttribArray(2);
 
         // NOTE: THE NV_vertex_buffer_unified_memory extension specs are LYING TO YOU!
         // (probably by accident, to be fair, but still...)
@@ -112,22 +107,38 @@ public sealed class SharedBlockVAO : VAO {
         }
         else {
             // regular format setup
+
+            // bind the vertex buffer to the VAO
+            GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
+            // FAKE BINDING FOR THE BUFFER (only to shut up driver validation)
+            GL.BindVertexBuffer(1, Game.graphics.fatQuadIndices, 0, 4 * sizeof(float));
+
+            // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
+            GL.EnableVertexAttribArray(0);
+            GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
+            GL.EnableVertexAttribArray(3);
+
             GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+            GL.VertexAttribFormat(3, 4, VertexAttribType.Float, false, 0);
 
             GL.VertexAttribBinding(0, 0);
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
+            GL.VertexAttribBinding(3, 1); // Different binding point for constant attribute
 
-            // bind the vertex buffer to the VAO
-            GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
+            GL.VertexBindingDivisor(1,
+                1); // Set divisor for attribute 1 (chunk position) to 1, so it updates per instance (which we only have one of, so a constant!)
+
+
             //GL.BindVertexBuffer(1, handle, 3 * sizeof(ushort), 7 * sizeof(ushort));
             //GL.BindVertexBuffer(2, handle, 5 * sizeof(ushort), 7 * sizeof(ushort));
-            
+
             // this will work?
-            Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 0);
-            Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 0);
+            //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 0);
+            //Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 0);
         }
     }
 
@@ -138,171 +149,107 @@ public sealed class SharedBlockVAO : VAO {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void bind() {
         if (Game.hasVBUM) {
-            if (Game.hasCMDL) {
-                var cmdBuffer = Game.renderer.chunkCMD;
-                // set the vertex buffer address range for the VAO
-                //var addr = bufferAddress;
-                //Console.Out.WriteLine($"Setting vertex buffer address: 0x{addr:X16}, length={bufferLength} bytes");
-                var cmd0 = new AttributeAddressCommandNV {
-                    header = CommandBuffer.attribaddressToken,
-                    index = 0,
-                    addressLo = (uint)(bufferAddress & 0xFFFFFFFF),
-                    addressHi = (uint)(bufferAddress >> 32),
-                };
-                cmdBuffer.putData(cmd0);
-    
-                // Attribute 1: UV at offset 3*sizeof(ushort) = 6 bytes
-                var addr1 = bufferAddress;
-                var cmd1 = new AttributeAddressCommandNV {
-                    header = CommandBuffer.attribaddressToken,
-                    index = 1,
-                    addressLo = (uint)(addr1 & 0xFFFFFFFF),
-                    addressHi = (uint)(addr1 >> 32),
-                };
-                cmdBuffer.putData(cmd1);
-    
-                // Attribute 2: color at offset 5*sizeof(ushort) = 10 bytes  
-                var addr2 = bufferAddress;
-                var cmd2 = new AttributeAddressCommandNV {
-                    header = CommandBuffer.attribaddressToken,
-                    index = 2,
-                    addressLo = (uint)(addr2 & 0xFFFFFFFF),
-                    addressHi = (uint)(addr2 >> 32),
-                };
-                cmdBuffer.putData(cmd2);
-    
-                // Element buffer address
-                /*var cmdElem = new ElementAddressCommandNV {
-                    header = CommandBuffer.elementAddressToken,
-                    addressLo = (uint)(Game.renderer.elementAddress & 0xFFFFFFFF),
-                    addressHi = (uint)(Game.renderer.elementAddress >> 32),
-                    typeSizeInByte = sizeof(ushort)
-                };
-                cmdBuffer.putData(cmdElem);*/
-                
-                //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, bufferAddress, bufferLength);
-                //Console.Out.WriteLine($"Set vertex buffer address for buffer {buffer} : 0x{addr:X16}, length={bufferLength} bytes");
-                
-                /*var cmd2 = new AttributeAddressCommandNV {
-                    header = CommandBuffer.attribaddressToken,
-                    index = 1,
-                    addressLo = (uint)((addr + (3 * sizeof(ushort))) & 0xFFFFFFFF),
-                    addressHi = (uint)((addr + (3 * sizeof(ushort))) >> 32),
-                };
-                cmdBuffer.putData(cmd2);
-                
-                var cmd3 = new AttributeAddressCommandNV {
-                    header = CommandBuffer.attribaddressToken,
-                    index = 2,
-                    addressLo = (uint)((addr + (5 * sizeof(ushort))) & 0xFFFFFFFF),
-                    addressHi = (uint)((addr + (5 * sizeof(ushort))) >> 32),
-                };
-                cmdBuffer.putData(cmd3);*/
-                
-                //Game.vbum.VertexAttribIFormat(0, 3, (NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-                //Game.vbum.VertexAttribIFormat(1, 2, (NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-                //Game.vbum.VertexAttribFormat(2, 4, (NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
-                
-                //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 69);
-                //Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 69);
-            }
-            else {
-                // use unified memory path - set vertex attrib addresses directly
-                //var addr0 = bufferAddress;
-                //var addr1 = bufferAddress + (ulong)(3 * sizeof(ushort));
-                //var addr2 = bufferAddress + (ulong)(5 * sizeof(ushort));
-                //Console.WriteLine($"Setting vertex attrib addresses: 0=0x{addr0:X16}, 1=0x{addr1:X16}, 2=0x{addr2:X16}");
-                Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, bufferAddress, bufferLength);
-                //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 1, addr1, bufferLength - (3 * sizeof(ushort)));
-                //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 2, addr2, bufferLength - (5 * sizeof(ushort)));
-            }
+            // use unified memory path - set vertex attrib addresses directly
+            //var addr0 = bufferAddress;
+            //var addr1 = bufferAddress + (ulong)(3 * sizeof(ushort));
+            //var addr2 = bufferAddress + (ulong)(5 * sizeof(ushort));
+            //Console.WriteLine($"Setting vertex attrib addresses: 0=0x{addr0:X16}, 1=0x{addr1:X16}, 2=0x{addr2:X16}");
+            Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, bufferAddress, bufferLength);
+            //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 1, addr1, bufferLength - (3 * sizeof(ushort)));
+            //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 2, addr2, bufferLength - (5 * sizeof(ushort)));
         }
         else {
             // fallback to regular vertex buffer binding
             GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
         }
     }
+    
+    public void addCMDLCommand() {
+        var cmdBuffer = Game.renderer.chunkCMD;
+        // set the vertex buffer address range for the VAO
+        //var addr = bufferAddress;
+        //Console.Out.WriteLine($"Setting vertex buffer address: 0x{addr:X16}, length={bufferLength} bytes");
+        var cmd0 = new AttributeAddressCommandNV {
+            header = CommandBuffer.attribaddressToken,
+            index = 0,
+            addressLo = (uint)(bufferAddress & 0xFFFFFFFF),
+            addressHi = (uint)(bufferAddress >> 32),
+        };
+        cmdBuffer.putData(cmd0);
 
-    public uint render() {  
-        unsafe {
-            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
-            return count;
-        }
-    }
+        // Attribute 1: UV at offset 3*sizeof(ushort) = 6 bytes
+        /*var addr1 = bufferAddress;
+        var cmd1 = new AttributeAddressCommandNV {
+            header = CommandBuffer.attribaddressToken,
+            index = 1,
+            addressLo = (uint)(addr1 & 0xFFFFFFFF),
+            addressHi = (uint)(addr1 >> 32),
+        };
+        cmdBuffer.putData(cmd1);
 
-    public uint renderBaseInstance(uint baseInstance) {
-        unsafe {
-            if (Game.hasCMDL) {
-                var cmdBuffer = Game.renderer.chunkCMD;
+        // Attribute 2: color at offset 5*sizeof(ushort) = 10 bytes
+        var addr2 = bufferAddress;
+        var cmd2 = new AttributeAddressCommandNV {
+            header = CommandBuffer.attribaddressToken,
+            index = 2,
+            addressLo = (uint)(addr2 & 0xFFFFFFFF),
+            addressHi = (uint)(addr2 >> 32),
+        };
+        cmdBuffer.putData(cmd2);*/
 
-                // set the draw command parameters
-                var cmd = new DrawElementsInstancedCommandNV {
-                    header = CommandBuffer.drawelementsToken,
-                    mode = (uint)PrimitiveType.Triangles,
-                    count = count,
-                    instanceCount = 1,
-                    first = 0,
-                    //firstIndex = 0,
-                    baseVertex = 0,
-                    baseInstance = baseInstance
-                };
+        // Element buffer address
+        /*var cmdElem = new ElementAddressCommandNV {
+            header = CommandBuffer.elementAddressToken,
+            addressLo = (uint)(Game.renderer.elementAddress & 0xFFFFFFFF),
+            addressHi = (uint)(Game.renderer.elementAddress >> 32),
+            typeSizeInByte = sizeof(ushort)
+        };
+        cmdBuffer.putData(cmdElem);*/
 
-                cmdBuffer.putData(cmd);
-                
-                //cmdBuffer.upload();
-                //cmdBuffer.drawCommands(PrimitiveType.Triangles, 0);
-                
-            }
-            else {
-                GL.DrawElementsInstancedBaseInstance(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort,
-                    (void*)0, 1u, baseInstance);
-            }
+        //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, bufferAddress, bufferLength);
+        //Console.Out.WriteLine($"Set vertex buffer address for buffer {buffer} : 0x{addr:X16}, length={bufferLength} bytes");
 
-            return count;
-        }
-    }
+        /*var cmd2 = new AttributeAddressCommandNV {
+            header = CommandBuffer.attribaddressToken,
+            index = 1,
+            addressLo = (uint)((addr + (3 * sizeof(ushort))) & 0xFFFFFFFF),
+            addressHi = (uint)((addr + (3 * sizeof(ushort))) >> 32),
+        };
+        cmdBuffer.putData(cmd2);
 
-    /// <summary>
-    /// Get the size needed for a bindless draw command structure
-    /// </summary>
-    public static unsafe int getStride() {
-        return sizeof(DrawElementsIndirectBindlessCommandNV);
-    }
+        var cmd3 = new AttributeAddressCommandNV {
+            header = CommandBuffer.attribaddressToken,
+            index = 2,
+            addressLo = (uint)((addr + (5 * sizeof(ushort))) & 0xFFFFFFFF),
+            addressHi = (uint)((addr + (5 * sizeof(ushort))) >> 32),
+        };
+        cmdBuffer.putData(cmd3);*/
 
-    public void Dispose() {
-        ReleaseUnmanagedResources();
-        GC.SuppressFinalize(this);
-    }
+        //Game.vbum.VertexAttribIFormat(0, 3, (NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribIFormat(1, 2, (NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribFormat(2, 4, (NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
 
-    private void ReleaseUnmanagedResources() {
-        if (Game.hasVBUM && Game.hasSBL && buffer != 0) {
-            // make buffer non-resident before deleting
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-            Game.sbl.MakeBufferNonResident((NV)BufferTargetARB.ArrayBuffer);
-        }
-
-        GL.DeleteBuffer(buffer);
-    }
-
-    ~SharedBlockVAO() {
-        ReleaseUnmanagedResources();
+        //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 69);
+        //Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 69);
     }
 
     /** Add a chunk's bindless draw command to the buffer
      * Also stop zeroing lol
      */
     [SkipLocalsInit]
-    public unsafe void addChunkCommand(BindlessIndirectBuffer indirect, uint baseInstance, ulong elementAddress, uint elementLength) {
+    public unsafe void addChunkCommand(BindlessIndirectBuffer indirect, uint baseInstance, ulong elementAddress,
+        uint elementLength) {
         // hardcode sizeof(DrawElementsIndirectBindlessCommandNV) for codegen
         const int commandSize = 72;
-        
+
         // uncomment this if you want to check for enough space in the indirect buffer
         // i dont think it will ever happen, but it *does* fuck the codegen up so we don't need it
         //if (indirect.offset + commandSize > indirect.capacity) {
         //    throw new InvalidOperationException($"Not enough space in indirect buffer. Need {commandSize} bytes, have {indirect.capacity - indirect.offset} remaining");
         //}
 
-        DrawElementsIndirectBindlessCommandNV* commandBuffer = (DrawElementsIndirectBindlessCommandNV*)((byte*)indirect.data + indirect.offset);
+        DrawElementsIndirectBindlessCommandNV* commandBuffer =
+            (DrawElementsIndirectBindlessCommandNV*)((byte*)indirect.data + indirect.offset);
         // Create the complete bindless command structure and just write it in one step
         *commandBuffer = new DrawElementsIndirectBindlessCommandNV {
             cmd = new DrawElementsIndirectCommand {
@@ -331,9 +278,99 @@ public sealed class SharedBlockVAO : VAO {
         if (indirect.offset > indirect.size) {
             indirect.size = indirect.offset;
         }
+
         indirect.commands++;
-        
+
         // game metrics
         Game.metrics.renderedVerts += (int)count;
+    }
+
+    public uint render() {
+        unsafe {
+            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
+            return count;
+        }
+    }
+
+    public uint renderBaseInstance(uint baseInstance) {
+        unsafe {
+            GL.DrawElementsInstancedBaseInstance(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort,
+                (void*)0, 1u, baseInstance);
+
+            return count;
+        }
+    }
+
+    public uint renderCMDL(uint baseInstance) {
+        var cmdBuffer = Game.renderer.chunkCMD;
+        /*
+         * From the NV_command_list spec:
+         * Interactions with ARB_shader_draw_parameters
+         *
+         * The drawing operations performed through this extension will not support
+         * setting of the built-in GLSL values that were added by
+         * ARB_shader_draw_parameters (gl_BaseInstanceARB, gl_BaseVertexARB, gl_DrawIDARB).
+         * Accessing these variables will result in undefined values.
+         * i.e. this shit doesn't work
+         */
+
+        ulong baseAddress = Game.renderer.ssboaddr;
+        ulong chunkPosAddress = baseAddress + (baseInstance * 16); // Each Vector4 is 16 bytes
+
+        // Set attribute 3 to point to the chunk position in SSBO
+        var cmd3 = new AttributeAddressCommandNV {
+            header = CommandBuffer.attribaddressToken,
+            index = 1,
+            addressLo = (uint)(chunkPosAddress & 0xFFFFFFFF),
+            addressHi = (uint)(chunkPosAddress >> 32),
+        };
+        cmdBuffer.putData(cmd3);
+
+        // set the draw command parameters
+        var cmd = new DrawElementsCommandNV {
+            header = CommandBuffer.drawelementsToken,
+            //mode = (uint)PrimitiveType.Triangles,
+            count = count,
+            //instanceCount = 1,
+            firstIndex = 0,
+            //firstIndex = 0, 
+            baseVertex = 0,
+            //baseInstance = 0
+        };
+
+        //Console.Out.WriteLine(baseInstance);
+
+        cmdBuffer.putData(cmd);
+        
+        return count;
+
+        //cmdBuffer.upload();
+        //cmdBuffer.drawCommands(PrimitiveType.Triangles, 0);
+    }
+
+    /// <summary>
+    /// Get the size needed for a bindless draw command structure
+    /// </summary>
+    public static unsafe int getStride() {
+        return sizeof(DrawElementsIndirectBindlessCommandNV);
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    private void ReleaseUnmanagedResources() {
+        if (Game.hasVBUM && Game.hasSBL && buffer != 0) {
+            // make buffer non-resident before deleting
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
+            Game.sbl.MakeBufferNonResident((NV)BufferTargetARB.ArrayBuffer);
+        }
+
+        GL.DeleteBuffer(buffer);
+    }
+
+    ~SharedBlockVAO() {
+        ReleaseUnmanagedResources();
     }
 }

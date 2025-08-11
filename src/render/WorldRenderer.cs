@@ -105,9 +105,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // initialize instanced shaders if supported
         if (Game.hasInstancedUBO) {
             worldShader = createWorldShader();
-            dummyShader = new Shader(GL, nameof(dummyShader) + " (instanced)", "shaders/dummyShader_instanced.vert");
-            waterShader = new Shader(GL, nameof(waterShader) + " (instanced)", "shaders/waterShader_instanced.vert",
-                "shaders/waterShader.frag");
+
+            if (Game.hasCMDL) {
+                dummyShader = new Shader(GL, nameof(dummyShader) + " (CMDL)", "shaders/dummyShader_cmdl.vert");
+                waterShader = new Shader(GL, nameof(waterShader) + " (CMDL)", "shaders/waterShader_cmdl.vert",
+                    "shaders/waterShader.frag");
+            }
+            else {
+                dummyShader = new Shader(GL, nameof(dummyShader) + " (instanced)",
+                    "shaders/dummyShader_instanced.vert");
+                waterShader = new Shader(GL, nameof(waterShader) + " (instanced)", "shaders/waterShader_instanced.vert",
+                    "shaders/waterShader.frag");
+            }
 
             // allocate SSBO for chunk positions (32MB)
             chunkSSBO = new ShaderStorageBuffer(GL, 32 * 1024 * 1024, 0);
@@ -184,9 +193,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // make resident
         // get address of the ssbo
+        Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
         Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV,
             out ssboaddr);
-        Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
 
         //setUniforms();
     }
@@ -295,7 +304,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         definitions.Add(new Definition("ANISO_LEVEL", anisoLevel.ToString()));
         definitions.Add(new Definition("DEBUG_ANISO", "0"));
 
-        var vert = Game.hasInstancedUBO ? "shaders/shader_instanced.vert" : "shaders/shader.vert";
+        string vert;
+        if (Game.hasInstancedUBO) {
+            if (Game.hasCMDL) {
+                vert = "shaders/shader_cmdl.vert";
+            }
+            else {
+                vert = "shaders/shader_instanced.vert";
+            }
+        }
+        else {
+            vert = "shaders/shader.vert";
+        }
 
         return new Shader(GL, nameof(worldShader), vert, "shaders/shader.frag", definitions);
     }
@@ -411,6 +431,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
     }
 
+    /** NOTE: read <see cref="CommandBuffer"/> for NV_command_list-specific noobtraps and shit.*/
     public void render(double interp) {
         //Game.GD.ResetStates();
 
@@ -446,6 +467,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             #pragma warning disable CS0618 // Type or member is obsolete
             Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
             Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
+                Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
 
             // set up element array address (shared index buffer)
@@ -525,7 +547,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //chunksToRender.Sort(new ChunkComparer(world.player));
 
         // upload chunkdata to ssbo
-        if (Game.hasInstancedUBO) {
+        if (Game.hasCMDL || Game.hasInstancedUBO) {
             // upload to SSBO
             chunkSSBO.bind();
             chunkSSBO.updateData(CollectionsMarshal.AsSpan(chunkData));
@@ -533,14 +555,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             chunkSSBO.bindToPoint();
             // get chunkpos uniform
 
-            /*var uChunkPos = worldShader.getUniformLocation("chunkPos");
-            var uChunkPosWater = waterShader.getUniformLocation("chunkPos");
-            var uChunkPosWaterDummy = dummyShader.getUniformLocation("chunkPos");
+            //var uChunkPos = worldShader.getUniformLocation("chunkPos");
+            //var uChunkPosWater = waterShader.getUniformLocation("chunkPos");
+            //var uChunkPosWaterDummy = dummyShader.getUniformLocation("chunkPos");
 
 
-            worldShader.setUniform(uChunkPos, ssboaddr);
-            waterShader.setUniform(uChunkPosWater, ssboaddr);
-            dummyShader.setUniform(uChunkPosWaterDummy, ssboaddr);*/
+            //worldShader.setUniform(uChunkPos, ssboaddr);
+            //waterShader.setUniform(uChunkPosWater, ssboaddr);
+            //dummyShader.setUniform(uChunkPosWaterDummy, ssboaddr);
 
             //chunkSSBO.bindToPoint();
             // unbind ssbo
@@ -585,6 +607,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // well, this is cheap enough for me to not care! :P
             // status update 2.0: apparently, the error message in the driver refers to the attrib, which *is* hooked onto index 0.... so just select the pointer on index 0 and we're good
             Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0,
+                elementAddress, 0);
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 1,
                 elementAddress, 0);
 
             //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
@@ -663,10 +687,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     continue;
                 }
 
-                if (usingBindlessMDI) {
+                if (usingCMDL) {
+                    drawOpaqueCMDL(subChunk, (uint)cd++);
+                }
+                else if (usingBindlessMDI) {
                     addOpaqueToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (usingCMDL || Game.hasInstancedUBO) {
+                else if (Game.hasInstancedUBO) {
                     drawOpaqueUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -676,10 +703,23 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // execute bindless opaque rendering if commands were added
-        if (Game.hasBindlessMDI && bindlessBuffer.commands > 0) {
+        if (usingBindlessMDI && bindlessBuffer.commands > 0) {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} opaque bindless draw commands");
             bindlessBuffer.executeDrawCommands();
         }
+        
+        if (usingCMDL) {
+            chunkCMD.upload();
+            
+            // dump validity
+            //chunkCMD.dumpCommands();
+            
+            chunkCMD.drawCommands(PrimitiveType.Triangles, 0);
+
+            chunkCMD.clear();
+        }
+
+        //goto skip;
 
         // TRANSLUCENT DEPTH PRE-PASS
         dummyShader.use();
@@ -706,8 +746,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-
-                if (usingBindlessMDI) {
+                
+                if (usingCMDL) {
+                    drawTransparentCMDL(subChunk, (uint)cd++);
+                }
+                else if (usingBindlessMDI) {
                     // use bindless multi draw indirect for batch rendering
                     addTransparentToBindlessBuffer(subChunk, (uint)cd++);
                 }
@@ -721,7 +764,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // execute bindless transparent dummy rendering if commands were added
-        if (Game.hasBindlessMDI && bindlessBuffer.commands > 0) {
+        if (usingBindlessMDI && bindlessBuffer.commands > 0) {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} transparent dummy bindless draw commands");
             bindlessBuffer.executeDrawCommands();
         }
@@ -767,8 +810,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-
-                if (usingBindlessMDI) {
+                
+                if (usingCMDL) {
+                    drawTransparentCMDL(subChunk, (uint)cd++);
+                }
+                else if (usingBindlessMDI) {
                     // use bindless multi draw indirect for batch rendering
                     addTransparentToBindlessBuffer(subChunk, (uint)cd++);
                 }
@@ -800,7 +846,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             #pragma warning disable CS0618 // Type or member is obsolete
             Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
             Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
-            //Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
         }
 
@@ -820,10 +866,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     public ulong testidx;
-    private ulong ssboaddr;
+    public ulong ssboaddr;
 
     /** Stores the chunk positions! */
-    private List<Vector4> chunkData;
+    private readonly List<Vector4> chunkData;
 
     private void renderSky(double interp) {
         // if <= 4 chunks, don't render sky

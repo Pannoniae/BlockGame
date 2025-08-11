@@ -355,7 +355,7 @@ public partial class Game {
         hasCMDL = GL.TryGetExtension(out NVCommandList nvCommandList);
         cmdl = nvCommandList;
         Console.Out.WriteLine($"NV_command_list supported: {hasCMDL}");
-        hasCMDL = false;
+        //hasCMDL = false;
         
         // check for NV_bindless_multi_draw_indirect support
         hasBindlessMDI = GL.TryGetExtension(out NVBindlessMultiDrawIndirect nvBindlessMultiDrawIndirect);
@@ -368,7 +368,7 @@ public partial class Game {
         // initialise debug print
         unsafe {
             GL.Enable(EnableCap.DebugOutput);
-            //GL.Enable(EnableCap.DebugOutputSynchronous);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
             GL.DebugMessageCallback(GLDebug, 0);
             #if DEBUG
             GL.Enable(EnableCap.DebugOutputSynchronous);

@@ -329,6 +329,7 @@ public partial class WorldRenderer {
         var vao = subChunk.vao;
         if (subChunk.hasRenderOpaque) {
             vao.bind();
+            
             uint renderedVerts = vao.renderBaseInstance(idx);
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -340,7 +341,31 @@ public partial class WorldRenderer {
         var watervao = subChunk.watervao;
         if (subChunk.hasRenderTranslucent) {
             watervao.bind();
+            
             uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
+            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+        }
+    }
+    
+    public void drawOpaqueCMDL(SubChunk subChunk, uint idx) {
+        var coord = subChunk.coord;
+        var vao = subChunk.vao;
+        if (subChunk.hasRenderOpaque) {
+            vao.addCMDLCommand();
+            
+            uint renderedVerts = vao.renderCMDL(idx);
+            Game.metrics.renderedVerts += (int)renderedVerts;
+            Game.metrics.renderedSubChunks += 1;
+        }
+    }
+
+    public void drawTransparentCMDL(SubChunk subChunk, uint idx) {
+        var coord = subChunk.coord;
+        var watervao = subChunk.watervao;
+        if (subChunk.hasRenderTranslucent) {
+            watervao.addCMDLCommand();
+            
+            uint renderedTransparentVerts = watervao.renderCMDL(idx);
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
