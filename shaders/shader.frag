@@ -2,9 +2,14 @@
 
 #extension GL_ARB_texture_query_lod : enable
 #extension GL_EXT_gpu_shader4 : enable
-#extension GL_NV_command_list : enable
 
+#ifdef NV_COMMAND_LIST
+#extension GL_NV_command_list : enable
+#endif
+
+#ifdef NV_COMMAND_LIST
 layout(commandBindableNV) uniform;
+#endif
 
 #include "inc/fog.inc.glsl"
 
