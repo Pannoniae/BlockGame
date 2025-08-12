@@ -22,6 +22,7 @@ public partial class Game {
     public static bool hasInstancedUBO = false;
     public static bool hasCMDL = false;
     public static bool hasBindlessMDI = false;
+    public static bool isNVCard = false;
     
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;

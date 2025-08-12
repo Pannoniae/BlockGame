@@ -1,3 +1,5 @@
+using BlockGame.util.xNBT;
+
 namespace BlockGame.ui;
 
 public class Settings {
@@ -83,5 +85,47 @@ public class Settings {
             8 => "4x MSAA + 4x SSAA",
             _ => "Unknown AA"
         };
+    }
+
+    public void save() {
+        var tag = new NBTCompound("");
+        tag.addByte("vSync", (byte)(vSync ? 1 : 0));
+        tag.addInt("guiScale", guiScale);
+        tag.addByte("AO", (byte)(AO ? 1 : 0));
+        tag.addByte("smoothLighting", (byte)(smoothLighting ? 1 : 0));
+        tag.addInt("renderDistance", renderDistance);
+        tag.addFloat("FOV", FOV);
+        tag.addInt("mipmapping", mipmapping);
+        tag.addInt("anisotropy", anisotropy);
+        tag.addInt("antiAliasing", antiAliasing);
+        tag.addInt("ssaaMode", ssaaMode);
+        tag.addByte("fullscreen", (byte)(fullscreen ? 1 : 0));
+        tag.addByte("smoothDayNight", (byte)(smoothDayNight ? 1 : 0));
+        tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
+        
+        SNBT.writeToFile(tag, "settings.snbt", true);
+    }
+
+    public void load() {
+        try {
+            if (!File.Exists("settings.snbt")) return;
+            
+            var tag = (NBTCompound)SNBT.readFromFile("settings.snbt");
+            vSync = tag.getByte("vSync") != 0;
+            guiScale = tag.getInt("guiScale");
+            AO = tag.getByte("AO") != 0;
+            smoothLighting = tag.getByte("smoothLighting") != 0;
+            renderDistance = tag.getInt("renderDistance");
+            FOV = tag.getFloat("FOV");
+            mipmapping = tag.getInt("mipmapping");
+            anisotropy = tag.getInt("anisotropy");
+            antiAliasing = tag.getInt("antiAliasing");
+            ssaaMode = tag.getInt("ssaaMode");
+            fullscreen = tag.getByte("fullscreen") != 0;
+            smoothDayNight = tag.getByte("smoothDayNight") != 0;
+            frustumCulling = tag.getByte("frustumCulling") != 0;
+        } catch (Exception e) {
+            Console.WriteLine($"Failed to load settings: {e.Message}");
+        }
     }
 }

@@ -12,6 +12,8 @@ If you want to run tests, do `dotnet test BlockGameTesting\BlockGameTesting.cspr
 BlockGame is a 3D block-based game (+engine) written in C# targeting .NET 10.0 preview. The architecture follows a layered, event-driven design optimized for real-time 3D rendering.
 Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI) ALWAYS READ IT! EVERY SINGLE RUN. NO EXCEPTIONS.
 
+**Documentation**: Additional design documents are in `docs/` directory, including entity rendering architecture.
+
 ### Core Systems
 
 **Entry Point**: `src/main/Program.cs` → `src/main/Game.cs` (singleton pattern)
@@ -21,6 +23,7 @@ Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI) ALWAYS READ IT! EVER
 **Rendering System** (`src/render/`, `src/GL/`):
 - `WorldRenderer`: Multi-pass rendering (opaque → transparent depth pre-pass → translucent)
 - `Graphics`: SpriteBatch system and OpenGL abstraction layer
+- `CommandBuffer`: NVIDIA command list renderer for high-performance rendering
 - Frustum culling for chunks and specialized shaders for world/water/outlines
 
 **World Management** (`src/world/`):
@@ -66,7 +69,8 @@ src/
 ├── util/        # Utilities, math, NBT, fonts, constants
 └── snd/         # Sound engine
 
-shaders/         # GLSL shaders
+docs/            # Design documents and architecture specs
+shaders/         # GLSL shaders (including cmdl variants)
 textures/        # Game textures and atlases
 fonts/           # BDF and TTF fonts
 lib/             # Custom libraries and dependencies
@@ -79,6 +83,9 @@ lib/             # Custom libraries and dependencies
 - Vertex buffer reuse with shared indices
 - Memory pooling for temporary allocations
 - SIMD optimizations where applicable (pretty much everywhere lol)
+- NV command list rendering for high-performance draw calls
+- Advanced VAO sharing and streaming systems (or something like that idk)
+
 
 ### Modding Architecture
 

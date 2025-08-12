@@ -8,13 +8,20 @@ namespace BlockGame.GL;
 public class Definition(string name, string value = "") {
     public string name { get; set; } = name;
     public string value { get; set; } = value;
+}
 
+public enum ShaderVariant {
+    /* Normal shader, no special features */
+    Normal,
+    /* Used for "fake" instanced chunk rendering, when ARB_shader_draw_parameters is available */
+    Instanced,
+    /* Used for command list rendering, when NV_command_list is available */
+    CommandList
 }
 
 public partial class Shader : IDisposable {
-
     private string name;
-    
+
     private string vertexShader;
     private string fragmentShader;
 
@@ -44,6 +51,40 @@ public partial class Shader : IDisposable {
         link(vert, frag);
     }
 
+    public static Shader createVariant(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath,
+        string? fragmentShaderPath = null, ShaderVariant? variant = null, IEnumerable<Definition>? defs = null) {
+        var definitions = new List<Definition>();
+        
+        // append additional definitions
+        if (defs != null) {
+            definitions.AddRange(defs);
+        }
+
+        // autoselect if null
+        var selectedVariant = variant ?? (Game.hasCMDL ? ShaderVariant.CommandList :
+            Game.hasInstancedUBO ? ShaderVariant.Instanced :
+            ShaderVariant.Normal);
+        
+        if (Game.isNVCard) {
+            definitions.Add(new Definition("NV_EXTENSIONS"));
+        }
+
+        // Add variant-specific defines
+        switch (selectedVariant) {
+            case ShaderVariant.Instanced:
+                definitions.Add(new Definition("INSTANCED_RENDERING"));
+                break;
+            case ShaderVariant.CommandList:
+                definitions.Add(new Definition("INSTANCED_RENDERING"));
+                definitions.Add(new Definition("NV_COMMAND_LIST"));
+                break;
+        }
+
+        return fragmentShaderPath == null
+            ? new Shader(GL, name, vertexShaderPath, definitions)
+            : new Shader(GL, name, vertexShaderPath, fragmentShaderPath, definitions);
+    }
+
     /// <summary>
     /// Used for depth pass shaders.
     /// </summary>
@@ -60,14 +101,14 @@ public partial class Shader : IDisposable {
         }
 
         // Load and preprocess the shader
-        this.vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
-        var vert = load(this.vertexShader, ShaderType.VertexShader);
+        vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
+        var vert = load(vertexShader, ShaderType.VertexShader);
         link(vert);
     }
-    
+
     [GeneratedRegex(@"#include\s+[""<](.+)["">]")]
     private static partial Regex includeRegex();
-    
+
     [GeneratedRegex(@"#define\s+(\w+)(?:\s+(.*))?")]
     private static partial Regex defineRegex();
 
@@ -80,10 +121,26 @@ public partial class Shader : IDisposable {
         // Add this file to included files to prevent circular includes
         includes.Add(Path.GetFullPath(filePath));
 
-        var lines = source.Split('\n');
+        var lines = source.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
         var result = new StringBuilder();
+        bool definitionsInjected = false;
 
         foreach (string line in lines) {
+            // Inject definitions after #version directive
+            if (!definitionsInjected && line.TrimStart().StartsWith("#version")) {
+                result.AppendLine(line);
+                
+                // Inject constructor-provided definitions after #version
+                foreach (var def in defs) {
+                    if (string.IsNullOrEmpty(def.Value.value)) {
+                        result.AppendLine($"#define {def.Key}");
+                    } else {
+                        result.AppendLine($"#define {def.Key} {def.Value.value}");
+                    }
+                }
+                definitionsInjected = true;
+                continue;
+            }
             // Handle #include directives
             if (line.TrimStart().StartsWith("#include")) {
                 // Extract the file path from the include directive
@@ -101,7 +158,7 @@ public partial class Shader : IDisposable {
                             var includeContent = File.ReadAllText(fullPath);
                             // Recursively preprocess the included file
                             var processedInclude = preprocess(fullPath, includeContent);
-                            result.AppendLine(processedInclude);
+                            result.Append(processedInclude);
                         }
                         else {
                             // Add comment showing the include failed
@@ -133,23 +190,15 @@ public partial class Shader : IDisposable {
                     var name = match.Groups[1].Value;
                     var value = match.Groups[2].Success ? match.Groups[2].Value.Trim() : "";
 
-                    // Store the definition
-                    defs[name] = new Definition(name, value);
-                }
-            }
-            // Process normal code with replacements for defined macros
-            else {
-                var processedLine = line;
-
-                // Replace defined macros
-                foreach (var def in defs) {
-                    if (!string.IsNullOrEmpty(def.Value.value)) {
-                        var regex = new Regex($@"\b{def.Key}\b");
-                        processedLine = regex.Replace(processedLine, def.Value.value);
+                    // Only store the definition if it doesn't already exist (constructor definitions take precedence)
+                    if (!defs.ContainsKey(name)) {
+                        defs[name] = new Definition(name, value);
                     }
                 }
-
-                result.AppendLine(processedLine);
+            }
+            // Process normal code (OpenGL compiler handles macro expansion)
+            else {
+                result.AppendLine(line);
             }
         }
 
@@ -228,7 +277,7 @@ public partial class Shader : IDisposable {
     public void setUniform(int loc, ulong value) {
         Game.sbl.ProgramUniform(programHandle, loc, value);
     }
-    
+
     public unsafe void setUniform(int loc, Vector2 value) {
         GL.ProgramUniform2(programHandle, loc, 1, (float*)&value);
     }
@@ -290,7 +339,8 @@ public class InstantShader : Shader {
         setUniform(uMVP, value);
     }
 
-    public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader, string fragmentShader) : base(GL, name, vertexShader, fragmentShader) {
+    public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader, string fragmentShader) : base(GL,
+        name, vertexShader, fragmentShader) {
         uMVP = getUniformLocation("uMVP");
     }
 
@@ -319,6 +369,4 @@ public class InstantShader : Shader {
         this.projection = projection;
         setUniform(uMVP, world * view * projection);
     }
-
-
 }

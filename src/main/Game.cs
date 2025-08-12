@@ -308,7 +308,8 @@ public partial class Game {
         //Console.Out.WriteLine(Environment.StackTrace);
         
         // sort by severity
-        if (type == DebugType.DebugTypeError || type == DebugType.DebugTypeOther || type == DebugType.DebugTypePortability) {
+        if (type is DebugType.DebugTypeError or DebugType.DebugTypeOther or DebugType.DebugTypePortability && 
+            severity is DebugSeverity.DebugSeverityHigh or DebugSeverity.DebugSeverityMedium) {
             Console.Out.WriteLine(Environment.StackTrace);
         }
     }
@@ -323,6 +324,11 @@ public partial class Game {
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
         var version = GL.GetStringS(StringName.Version);
         sampleShadingSupported = version.StartsWith("4.") || GL.TryGetExtension(out ArbSampleShading arbSampleShading);
+        
+        // check if this is an NVIDIA card
+        var vendor = GL.GetStringS(StringName.Vendor);
+        isNVCard = vendor.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase);
+        Console.Out.WriteLine($"GPU Vendor: {vendor} (NVIDIA: {isNVCard})");
         
         // check for NV shader buffer load support
         hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
@@ -526,6 +532,8 @@ public partial class Game {
         gui = new GUI();
         gui.loadFont(16);
         renderer = new WorldRenderer();
+        
+        Settings.instance.load();
         Menu.init();
 
 

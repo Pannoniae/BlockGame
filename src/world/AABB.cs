@@ -117,8 +117,11 @@ public struct AABB {
         vCoord2 = vCoord2.WithElement(3, 1);
 
         // Compute the dot products
+        // replace this with actual dot product lol
         var vDot = Vector128.Dot(vP1, vCoord1);
         var vDot2 = Vector128.Dot(vP2, vCoord2);
+        
+        // dot product = normal.x * coord.x + normal.y * coord.y + normal.z * coord.z + D
 
         // Return true if either dot product is greater than the plane distance
         return vDot > 0 | vDot2 > 0;

@@ -15,7 +15,7 @@ namespace BlockGame.util.xNBT;
 public static class SNBT {
     public static string toString(NBTTag tag, bool prettyPrint = false) {
         // root tag can't have a name if compound
-        if (tag is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) {
+        if (tag is NBTCompound compound && !string.IsNullOrEmpty(compound.name)) { 
             throw new ArgumentException("Root tag must not have a name!", nameof(tag));
         }
 
@@ -49,7 +49,7 @@ public static class SNBT {
     }
 }
 
-internal partial class SNBTWriter {
+public partial class SNBTWriter {
     private readonly StringBuilder sb = new();
     private readonly bool prettyPrint;
     private int indentLevel;
@@ -178,9 +178,17 @@ internal partial class SNBTWriter {
         } else {
             sb.Append('"');
             foreach (char c in s) {
-                if (c == '"') sb.Append("\\\"");
-                else if (c == '\\') sb.Append(@"\\");
-                else sb.Append(c);
+                switch (c) {
+                    case '"':
+                        sb.Append("\\\"");
+                        break;
+                    case '\\':
+                        sb.Append(@"\\");
+                        break;
+                    default:
+                        sb.Append(c);
+                        break;
+                }
             }
             sb.Append('"');
         }
@@ -213,9 +221,17 @@ internal partial class SNBTWriter {
             } else {
                 sb.Append('"');
                 foreach (char c in kvp.Key) {
-                    if (c == '"') sb.Append("\\\"");
-                    else if (c == '\\') sb.Append(@"\\");
-                    else sb.Append(c);
+                    switch (c) {
+                        case '"':
+                            sb.Append("\\\"");
+                            break;
+                        case '\\':
+                            sb.Append(@"\\");
+                            break;
+                        default:
+                            sb.Append(c);
+                            break;
+                    }
                 }
                 sb.Append('"');
             }

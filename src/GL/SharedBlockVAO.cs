@@ -244,9 +244,11 @@ public sealed class SharedBlockVAO : VAO {
 
         // uncomment this if you want to check for enough space in the indirect buffer
         // i dont think it will ever happen, but it *does* fuck the codegen up so we don't need it
-        //if (indirect.offset + commandSize > indirect.capacity) {
-        //    throw new InvalidOperationException($"Not enough space in indirect buffer. Need {commandSize} bytes, have {indirect.capacity - indirect.offset} remaining");
-        //}
+        #if DEBUG
+        if (indirect.offset + commandSize > indirect.capacity) {
+            throw new InvalidOperationException($"Not enough space in indirect buffer. Need {commandSize} bytes, have {indirect.capacity - indirect.offset} remaining");
+        }
+        #endif
 
         DrawElementsIndirectBindlessCommandNV* commandBuffer =
             (DrawElementsIndirectBindlessCommandNV*)((byte*)indirect.data + indirect.offset);

@@ -221,6 +221,9 @@ public unsafe class CommandBuffer : IDisposable {
     }
 
     public void putData<T>(int offset, T src) where T : unmanaged {
+        
+        // again comment this for codegen, THIS SHOULD NOT HAPPEN
+        #if DEBUG
         if (offset + sizeof(T) > capacity) {
             throw new ArgumentOutOfRangeException(nameof(src), "Not enough space in command buffer");
             /*
@@ -245,6 +248,7 @@ public unsafe class CommandBuffer : IDisposable {
             size = 0; // reset size to 0, we will upload the data again
             offset = 0; // reset offset to 0, we will write from the start*/
         }
+        #endif
 
         // copy data to the staging buffer
         //Buffer.MemoryCopy(&src, data + offset, capacity - offset, sizeof(T));

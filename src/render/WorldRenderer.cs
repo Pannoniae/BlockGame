@@ -102,24 +102,17 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.setup();
 
 
-        // initialize instanced shaders if supported
+        // initialize shaders
+        worldShader = createWorldShader();
+        dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/dummyShader_unified.vert");
+        waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/waterShader_unified.vert", "shaders/waterShader.frag");
+        
+        
+        // todo do proper buffer sizing instead of just hardcoding a large enough value
         if (Game.hasInstancedUBO) {
-            worldShader = createWorldShader();
-
-            if (Game.hasCMDL) {
-                dummyShader = new Shader(GL, nameof(dummyShader) + " (CMDL)", "shaders/dummyShader_cmdl.vert");
-                waterShader = new Shader(GL, nameof(waterShader) + " (CMDL)", "shaders/waterShader_cmdl.vert",
-                    "shaders/waterShader.frag");
-            }
-            else {
-                dummyShader = new Shader(GL, nameof(dummyShader) + " (instanced)",
-                    "shaders/dummyShader_instanced.vert");
-                waterShader = new Shader(GL, nameof(waterShader) + " (instanced)", "shaders/waterShader_instanced.vert",
-                    "shaders/waterShader.frag");
-            }
-
             // allocate SSBO for chunk positions (32MB)
             chunkSSBO = new ShaderStorageBuffer(GL, 32 * 1024 * 1024, 0);
+            
             if (Game.hasCMDL) {
                 // allocate command buffer for chunk rendering
                 chunkCMD = new CommandBuffer(GL, 64 * 1024 * 1024);
@@ -130,11 +123,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 // 8MB buffer should be enough for thousands of chunks
                 bindlessBuffer = new BindlessIndirectBuffer(GL, 8 * 1024 * 1024);
             }
-        }
-        else {
-            worldShader = createWorldShader();
-            dummyShader = new Shader(GL, nameof(dummyShader), "shaders/dummyShader.vert");
-            waterShader = new Shader(GL, nameof(waterShader), "shaders/waterShader.vert", "shaders/waterShader.frag");
         }
 
         blockTexture = worldShader.getUniformLocation("blockTexture");
@@ -300,24 +288,17 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var anisoLevel = settings.anisotropy;
         currentAnisoLevel = anisoLevel;
 
-        var definitions = new List<Definition>();
-        definitions.Add(new Definition("ANISO_LEVEL", anisoLevel.ToString()));
-        definitions.Add(new Definition("DEBUG_ANISO", "0"));
+        var defs = new List<Definition> {
+            new("ANISO_LEVEL", anisoLevel.ToString()),
+            new("DEBUG_ANISO", "0")
+        };
 
-        string vert;
-        if (Game.hasInstancedUBO) {
-            if (Game.hasCMDL) {
-                vert = "shaders/shader_cmdl.vert";
-            }
-            else {
-                vert = "shaders/shader_instanced.vert";
-            }
-        }
-        else {
-            vert = "shaders/shader.vert";
-        }
+        // Add variant-specific defines
+        var variant = Game.hasCMDL ? ShaderVariant.CommandList : 
+                     Game.hasInstancedUBO ? ShaderVariant.Instanced : 
+                     ShaderVariant.Normal;
 
-        return new Shader(GL, nameof(worldShader), vert, "shaders/shader.frag", definitions);
+        return Shader.createVariant(GL, nameof(worldShader), "shaders/shader_unified.vert", "shaders/shader.frag", variant, defs);
     }
 
     public void updateAF() {

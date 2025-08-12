@@ -238,7 +238,7 @@ public class SettingsMenu : Menu {
 
     public override void deactivate() {
         base.deactivate();
-        // save settings too
+        Settings.instance.save();
     }
 
     public override void clear(double dt, double interp) {
