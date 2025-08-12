@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.snd;
 using BlockGame.ui;
 using BlockGame.util;
@@ -334,18 +335,18 @@ public partial class Game {
         hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
         sbl = nvShaderBufferLoad;
         Console.Out.WriteLine($"NV_shader_buffer_load supported: {hasSBL}");
-        //hasSBL = false;
+        hasSBL = false;
         
         // check for NV vertex buffer unified memory support
         hasVBUM = GL.TryGetExtension(out NVVertexBufferUnifiedMemory nvVertexBufferUnifiedMemory);
         vbum = nvVertexBufferUnifiedMemory;
         Console.Out.WriteLine($"NV_vertex_buffer_unified_memory supported: {hasVBUM}");
-        //hasVBUM = false;
+        hasVBUM = false;
         
         // check for NV uniform buffer unified memory support
         hasUBUM = GL.IsExtensionPresent("NV_uniform_buffer_unified_memory");
         Console.Out.WriteLine($"NV_uniform_buffer_unified_memory supported: {hasUBUM}");
-        //hasUBUM = false;
+        hasUBUM = false;
         
         // check for gl_BaseInstance UBO rendering support (OpenGL 4.6)
         var ver = GL.GetStringS(StringName.Version);
@@ -361,13 +362,13 @@ public partial class Game {
         hasCMDL = GL.TryGetExtension(out NVCommandList nvCommandList);
         cmdl = nvCommandList;
         Console.Out.WriteLine($"NV_command_list supported: {hasCMDL}");
-        //hasCMDL = false;
+        hasCMDL = false;
         
         // check for NV_bindless_multi_draw_indirect support
         hasBindlessMDI = GL.TryGetExtension(out NVBindlessMultiDrawIndirect nvBindlessMultiDrawIndirect);
         bmdi = nvBindlessMultiDrawIndirect;
         Console.Out.WriteLine($"NV_bindless_multi_draw_indirect supported: {hasBindlessMDI}");
-        //hasBindlessMDI = false;
+        hasBindlessMDI = false;
         
 
         //#if DEBUG
@@ -667,6 +668,11 @@ public partial class Game {
             Settings.instance.fullscreen = !Settings.instance.fullscreen;
             setFullscreen(Settings.instance.fullscreen);
         }
+        
+        // gui wireframe code needs to be here because we want it to apply on all screens
+        if (key == Key.Keypad9) {
+            GUI.WIREFRAME = !GUI.WIREFRAME;
+        }
 
         currentScreen.onKeyDown(keyboard, key, scancode);
     }
@@ -934,6 +940,15 @@ public partial class Game {
 
         currentScreen.draw();
         currentScreen.postDraw();
+        
+        
+        // if wireframe, draw bbox
+        if (GUI.WIREFRAME) {
+            foreach (var element in currentScreen.currentMenu.elements.Values) {
+                gui.drawWireframe(element.bounds, Color4b.Red);
+            }
+        }
+        
         graphics.mainBatch.End();
         graphics.immediateBatch.End();
         //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);

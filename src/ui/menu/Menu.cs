@@ -76,6 +76,7 @@ public class Menu {
     }
 
     public virtual void draw() {
+        
         foreach (var element in elements.Values) {
             if (element.active) {
                 element.draw();

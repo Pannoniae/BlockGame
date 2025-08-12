@@ -13,7 +13,7 @@ public class TextBox : GUIElement {
 
 
     public override void draw() {
-        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), Game.gui.grayButtonRect);
+        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: Game.gui.grayButtonRect);
         Game.gui.drawString(input, new Vector2(bounds.X + padding, bounds.Y + padding));
     }
 }

@@ -60,6 +60,8 @@ public class GUI {
     private Vector2 backgroundScrollOffset = Vector2.Zero;
     private static readonly Color4b bgGray = Color4b.DarkGray;
     private static readonly Color4b skyc = Color4b.CornflowerBlue;
+
+    public static bool WIREFRAME = false;
     
     /** pixels per second */
     private const float SCROLL_SPEED = 32.0f; 
@@ -334,9 +336,9 @@ public class GUI {
     }
 
 
-    public void draw(BTexture2D texture, Vector2 position, Rectangle? source = null,
+    public void draw(BTexture2D texture, Vector2 position, float scale = 1f, Rectangle? source = null,
         Color4b color = default, Vector2 origin = default, float depth = 0f) {
-        tb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin, depth);
+        tb.Draw(texture, position, source, color == default ? Color4b.White : color, scale != 1f ? guiScale * scale : guiScale, 0f, origin, depth);
     }
 
     public void draw(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color4b color = default) {
@@ -625,6 +627,17 @@ public class GUI {
             return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
         }
         return guiFont.MeasureString(text);
+    }
+    
+    public void drawWireframe(Rectangle bounds, Color4b col) {
+        // draw an empty rectangle with the given color
+        
+        tb.DrawRaw(colourTexture,
+            new VertexColorTexture(new Vector3(bounds.X, bounds.Y, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(bounds.X + bounds.Width, bounds.Y, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(bounds.X + bounds.Width, bounds.Y + bounds.Height, 0), col,
+                new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(bounds.X, bounds.Y + bounds.Height, 0), col, new Vector2(0, 1)));
     }
 
     public void drawBlock(Block block, int x, int y, int size) {

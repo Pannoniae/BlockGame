@@ -48,7 +48,7 @@ public class Button : GUIElement {
             tex = hovered ? hoveredButton : button;
             tex = pressed ? pressedButton : tex;
         }
-        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), tex);
+        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: tex);
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
         
         // shift centre down by 1 gui px
