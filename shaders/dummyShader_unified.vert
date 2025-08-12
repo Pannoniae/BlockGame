@@ -43,7 +43,7 @@ void main() {
     #ifdef NV_COMMAND_LIST
         chunkOffset = aChunkOffset;
     #else
-        chunkOffset = chunkPos[gl_BaseInstance].xyz;
+        chunkOffset = chunkPos[gl_BaseInstanceARB].xyz;
     #endif
 #else
     chunkOffset = uChunkPos;
