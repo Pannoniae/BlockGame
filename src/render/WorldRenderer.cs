@@ -181,9 +181,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // make resident
         // get address of the ssbo
-        Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
-        Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV,
-            out ssboaddr);
+
+        if (Game.hasSBL) {
+            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
+            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV,
+                out ssboaddr);
+        }
 
         //setUniforms();
     }
