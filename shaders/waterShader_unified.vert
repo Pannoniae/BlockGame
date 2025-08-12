@@ -39,6 +39,8 @@ out float skyDarken;
 out vec4 tint;
 out float vertexDist;
 
+const float m = 1 / 256.;
+
 void main() {
     vec3 chunkOffset;
     
@@ -52,7 +54,7 @@ void main() {
     chunkOffset = uChunkPos;
 #endif
 
-    vec3 pos = chunkOffset + vPos / 256. - 16;
+    vec3 pos = chunkOffset + ((vPos * m) - 16);
     gl_Position = uMVP * vec4(pos, 1.0);
     texCoords = texCoord / 32768.;
     skyDarken = uSkyDarken;
