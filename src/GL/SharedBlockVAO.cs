@@ -75,10 +75,6 @@ public sealed class SharedBlockVAO : VAO {
                 }
                 //Console.WriteLine($"SharedBlockVAO: buffer={buffer}, address=0x{bufferAddress:X16}, length={bufferLength}");
             }
-            else {
-                throw new Exception(
-                    "SharedBlockVAO requires NV_vertex_buffer_unified_memory support to work properly!");
-            }
         }
 
         format();
@@ -98,14 +94,10 @@ public sealed class SharedBlockVAO : VAO {
         // it's also lying to you because you do NOT need to set BufferAddressRangeNV for each attribute, you only need it per vertex buffer *binding*.
         // so if you use vertexAttribBinding to hook up the attributes to a binding, you only need to set the address range once for that binding.
         // so we have 3 attributes here but they come from the same buffer -> you only need to set the buffer address once.
-
-        if (false && Game.hasVBUM) {
-            // use unified memory format functions
-            Game.vbum.VertexAttribIFormat(0, 3, (NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-            Game.vbum.VertexAttribIFormat(1, 2, (NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-            Game.vbum.VertexAttribFormat(2, 4, (NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
-        }
-        else {
+        
+        
+        // cmdlist path
+        if (Game.hasCMDL) {
             // regular format setup
 
             // bind the vertex buffer to the VAO
@@ -139,6 +131,23 @@ public sealed class SharedBlockVAO : VAO {
             // this will work?
             //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 0);
             //Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 0);
+        }
+        // normal path
+        else {
+            GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
+
+            // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
+            GL.EnableVertexAttribArray(0);
+            GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
+
+            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+            GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+
+            GL.VertexAttribBinding(0, 0);
+            GL.VertexAttribBinding(1, 0);
+            GL.VertexAttribBinding(2, 0);
         }
     }
 
