@@ -44,6 +44,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     //public int uColor;
     public int blockTexture;
+    public int lightTexture;
     public int uMVP;
     public int dummyuMVP;
     public int uCameraPos;
@@ -52,17 +53,21 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int fogEnd;
     public int fogColour;
     public int horizonColour;
-    public int uSkyDarken;
 
 
     public int waterBlockTexture;
+    public int waterLightTexture;
     public int wateruMVP;
     public int wateruCameraPos;
     public int waterFogStart;
     public int waterFogEnd;
     public int waterFogColour;
     public int waterHorizonColour;
-    public int wateruSkyDarken;
+
+    // chunk pos uniforms for non-UBO path
+    public int uChunkPos;
+    public int dummyuChunkPos;
+    public int wateruChunkPos;
 
     public static BoundingFrustum frustum;
 
@@ -90,6 +95,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public ShaderStorageBuffer chunkSSBO;
     public CommandBuffer chunkCMD;
     public BindlessIndirectBuffer bindlessBuffer;
+    
 
     public WorldRenderer() {
         GL = Game.GL;
@@ -103,9 +109,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
         // initialize shaders
-        worldShader = createWorldShader();
-        dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/dummyShader_unified.vert");
-        waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/waterShader_unified.vert", "shaders/waterShader.frag");
+        initializeShaders();
         
         
         // todo do proper buffer sizing instead of just hardcoding a large enough value
@@ -125,32 +129,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             }
         }
 
-        blockTexture = worldShader.getUniformLocation("blockTexture");
-        uMVP = worldShader.getUniformLocation(nameof(uMVP));
-        dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
-        uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
-        fogStart = worldShader.getUniformLocation(nameof(fogStart));
-        fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
-        fogColour = worldShader.getUniformLocation(nameof(fogColour));
-        horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
-        uSkyDarken = worldShader.getUniformLocation(nameof(uSkyDarken));
-        //drawDistance = shader.getUniformLocation(nameof(drawDistance));
-
-
-        waterBlockTexture = waterShader.getUniformLocation("blockTexture");
-        wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
-        wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
-        waterFogStart = waterShader.getUniformLocation(nameof(fogStart));
-        waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
-        waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
-        waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
-        wateruSkyDarken = waterShader.getUniformLocation(nameof(uSkyDarken));
-
-        if (!Game.hasInstancedUBO) {
-            uChunkPos = worldShader.getUniformLocation("uChunkPos");
-            dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
-            wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
-        }
+        initializeUniforms();
 
         if (Game.hasInstancedUBO) {
             chunkData = new List<Vector4>(8192 * Chunk.CHUNKHEIGHT);
@@ -158,17 +137,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         else {
             chunkData = null!;
         }
+        
 
-        outline = new Shader(Game.GL, nameof(outline), "shaders/outline.vert", "shaders/outline.frag");
-
+        outline = new Shader(Game.GL, nameof(outline), "shaders/utility/outline.vert", "shaders/utility/outline.frag");
 
         worldShader.setUniform(blockTexture, 0);
+        worldShader.setUniform(lightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
         worldShader.setUniform(fogColour, defaultFogColour);
         worldShader.setUniform(horizonColour, defaultClearColour);
 
         waterShader.setUniform(waterBlockTexture, 0);
+        waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
         waterShader.setUniform(waterFogColour, defaultFogColour);
@@ -301,26 +282,68 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                      Game.hasInstancedUBO ? ShaderVariant.Instanced : 
                      ShaderVariant.Normal;
 
-        return Shader.createVariant(GL, nameof(worldShader), "shaders/shader_unified.vert", "shaders/shader.frag", variant, defs);
+        return Shader.createVariant(GL, nameof(worldShader), "shaders/world/shader.vert", "shaders/world/shader.frag", variant, defs);
+    }
+
+    private void initializeShaders() {
+        worldShader = createWorldShader();
+        dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert");
+        waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/world/waterShader.vert", "shaders/world/waterShader.frag");
+    }
+
+    private void initializeUniforms() {
+        // world shader uniforms
+        blockTexture = worldShader.getUniformLocation(nameof(blockTexture));
+        lightTexture = worldShader.getUniformLocation(nameof(lightTexture));
+        uMVP = worldShader.getUniformLocation(nameof(uMVP));
+        uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
+        fogStart = worldShader.getUniformLocation(nameof(fogStart));
+        fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
+        fogColour = worldShader.getUniformLocation(nameof(fogColour));
+        horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
+
+        // dummy shader uniforms
+        dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
+
+        // water shader uniforms
+        waterBlockTexture = waterShader.getUniformLocation(nameof(blockTexture));
+        waterLightTexture = waterShader.getUniformLocation(nameof(lightTexture));
+        wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
+        wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
+        waterFogStart = waterShader.getUniformLocation(nameof(fogStart));
+        waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
+        waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
+        waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
+
+        // chunk position uniforms for non-UBO path
+        if (!Game.hasInstancedUBO) {
+            uChunkPos = worldShader.getUniformLocation("uChunkPos");
+            dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
+            wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
+        }
     }
 
     public void updateAF() {
         var settings = Settings.instance;
         var anisoLevel = settings.anisotropy;
 
-
         if (currentAnisoLevel != anisoLevel) {
+            worldShader?.Dispose();
             worldShader = createWorldShader();
 
             // re-get uniform locations since we have a new shader
-            blockTexture = worldShader.getUniformLocation("blockTexture");
+            blockTexture = worldShader.getUniformLocation(nameof(blockTexture));
+            lightTexture = worldShader.getUniformLocation(nameof(lightTexture));
             uMVP = worldShader.getUniformLocation(nameof(uMVP));
             uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
             fogStart = worldShader.getUniformLocation(nameof(fogStart));
             fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
-            uSkyDarken = worldShader.getUniformLocation(nameof(uSkyDarken));
+            
+            // re-bind texture units
+            worldShader.setUniform(blockTexture, 0);
+            worldShader.setUniform(lightTexture, 1);
         }
     }
 
@@ -373,8 +396,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader.setUniform(waterFogColour, currentFogColour);
             worldShader.setUniform(horizonColour, currentHorizonColour);
             waterShader.setUniform(waterHorizonColour, currentHorizonColour);
-            worldShader.setUniform(uSkyDarken, currentSkyDarken);
-            waterShader.setUniform(wateruSkyDarken, currentSkyDarken);
         }
     }
 
@@ -476,16 +497,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
         //GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));*/
 
-        var tex = Game.textureManager.blockTexture;
-        var lightTex = Game.textureManager.lightTexture;
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, tex.handle);
-        GL.ActiveTexture(TextureUnit.Texture1);
-        GL.BindTexture(TextureTarget.Texture2D, lightTex.handle);
-
+        var tex = Game.textures.blockTexture;
+        var lightTex = Game.textures.lightTexture;
+        
+        // bind textures
+        Game.graphics.tex(0, tex);
+        Game.graphics.tex(1, lightTex);
+        
+        
         var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
-
 
         var cameraPos = world.player.camera.renderPosition(interp);
         worldShader.setUniform(uMVP, viewProj);
@@ -499,7 +520,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // gather chunks to render
         for (int i = 0; i < chunkList.Length; i++) {
-            Chunk? chunk = chunkList[i];
+            Chunk chunk = chunkList[i];
             var test = noCulling || (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum));
             chunk.isRendered = test;
             if (test) {
@@ -939,8 +960,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.Disable(EnableCap.CullFace);
 
         // render sun
-        Game.GL.ActiveTexture(TextureUnit.Texture0);
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.sunTexture.handle);
+        Game.graphics.tex(0, Game.textures.sunTexture);
 
         mat.rotate(Meth.rad2deg(sunAngle), 1, 0, 0); // rotate around X axis
         idt.setMVP(mat.top * viewProj);
@@ -963,7 +983,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render moon opposite to sun
         const float moonSize = sunSize * 0.75f; // 75% of sun size
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.moonTexture.handle);
+        Game.graphics.tex(0, Game.textures.moonTexture);
 
         mat.push();
 
@@ -1297,7 +1317,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     ];
 
     public Color4 getLightColour(byte blocklight, byte skylight) {
-        var px = Game.textureManager.light(blocklight, skylight);
+        var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
         // apply darken
         var darken = world.getSkyDarkenFloat(world.worldTick) / 16f; // 0 to 1 range
@@ -1311,7 +1331,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         dir = (byte)(dir & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
-        var lightVal = Game.textureManager.light(blocklight, skylight);
+        var lightVal = Game.textures.light(blocklight, skylight);
 
         // apply darken
         //var darken = Game.world.getSkyDarken(Game.world.worldTick);

@@ -11,7 +11,7 @@
 layout(commandBindableNV) uniform;
 #endif
 
-#include "inc/fog.inc.glsl"
+#include "../inc/fog.inc.glsl"
 
 //#if not defined(ANISO_LEVEL)
 //#define ANISO_LEVEL 0
@@ -113,11 +113,11 @@ vec4 textureAF(sampler2D texSampler, vec2 uv) {
 layout(location = 0) out vec4 colour;
 
 centroid in vec2 texCoords;
-flat in float skyDarken;
 in vec4 tint;
 in float vertexDist;
 
 uniform sampler2D blockTexture;
+uniform sampler2D lightTexture;
 
 void main() {
     vec4 blockColour;
@@ -129,12 +129,9 @@ void main() {
     blockColour = textureAF(blockTexture, texCoords);
 #endif
     float ratio = getFog(vertexDist);
-    // extract skylight, 0 to 15
-
-    // apply skyDarken - reduce lighting based on day/night cycle
-    float darkenFactor = 1.0 - (skyDarken / 15.0);
-    vec3 darkenedTint = tint.rgb * darkenFactor;
-    colour = vec4(blockColour.rgb * darkenedTint, blockColour.a);
+    
+    // combine block color with lighting and base tint
+    colour = vec4(blockColour.rgb * tint.rgb, blockColour.a);
 
     if (colour.a <= 0) {
         discard;

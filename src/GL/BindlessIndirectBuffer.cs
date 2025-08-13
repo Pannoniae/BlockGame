@@ -84,7 +84,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
     /// Get the maximum number of commands that can fit in this buffer
     /// </summary>
     public int getMaxCommands() {
-        return capacity / SharedBlockVAO.getStride();
+        return capacity / 72;
     }
 
     public void Dispose() {

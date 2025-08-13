@@ -10,7 +10,7 @@ namespace BlockGame.GL;
 /// <summary>
 /// Keep track of all graphics resources here.
 /// </summary>
-public class Graphics {
+public class Graphics : IDisposable {
     // SpriteBatches
     public readonly SpriteBatch mainBatch;
     public readonly SpriteBatch immediateBatch;
@@ -19,20 +19,20 @@ public class Graphics {
     public readonly InstantShader batchShader;
 
     public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, nameof(instantTextureShader),
-        "shaders/instantVertex.vert", "shaders/instantVertex.frag");
+        "shaders/ui/instantVertex.vert", "shaders/ui/instantVertex.frag");
 
     public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
-        "shaders/instantVertexColour.vert", "shaders/instantVertexColour.frag");
+        "shaders/ui/instantVertexColour.vert", "shaders/ui/instantVertexColour.frag");
 
     // Post-processing shaders
     public readonly Shader fxaaShader =
-        new Shader(Game.GL, nameof(fxaaShader), "shaders/post.vert", "shaders/fxaa_only.frag");
+        new(Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
     
     public readonly Shader ssaaShader =
-        new Shader(Game.GL, nameof(ssaaShader), "shaders/post.vert", "shaders/ssaa.frag");
+        new(Game.GL, nameof(ssaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/ssaa.frag");
     
     public readonly Shader simplePostShader =
-        new Shader(Game.GL, nameof(simplePostShader), "shaders/post.vert", "shaders/simple_post.frag");
+        new(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
 
     public readonly Silk.NET.OpenGL.GL GL;
 
@@ -52,13 +52,18 @@ public class Graphics {
 
     public MatrixStack modelView = new MatrixStack().reversed();
     public MatrixStack projection = new MatrixStack().reversed();
+    
+    /** List of currently bound textures.
+     * TODO make the size dynamic, rn it's just 16
+     */
+    private uint[] textures = new uint[16];
 
     public Graphics() {
         GL = Game.GL;
         mainBatch = new SpriteBatch(GL);
         immediateBatch = new SpriteBatch(GL);
 
-        batchShader = new InstantShader(Game.GL, nameof(batchShader), "shaders/batch.vert", "shaders/batch.frag");
+        batchShader = new InstantShader(Game.GL, nameof(batchShader), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
         mainBatch.setShader(batchShader);
         immediateBatch.setShader(batchShader);
     }
@@ -93,6 +98,36 @@ public class Graphics {
     public void restoreVAO() {
         GL.BindVertexArray((uint)vao);
     }
+    
+    public void tex(uint idx, BTexture2D texture) {
+        if (textures[idx] != texture.handle) {
+            textures[idx] = texture.handle;
+            GL.BindTextureUnit(idx, texture.handle);
+        }
+    }
+    
+    public void tex(uint idx, uint handle) {
+        if (textures[idx] != handle) {
+            textures[idx] = handle;
+            GL.BindTextureUnit(idx, handle);
+        }
+    }
+    
+    public void updateTexMapping(int idx, uint handle) {
+        textures[idx] = handle;
+    }
+
+    /// <summary>
+    /// Invalidate cached texture handle to force rebinding next time.
+    /// Call this when a texture handle is deleted/recreated.
+    /// </summary>
+    public void invalidateTexture(uint handle) {
+        for (int i = 0; i < textures.Length; i++) {
+            if (textures[i] == handle) {
+                textures[i] = 0; // 0 is never a valid GL handle
+            }
+        }
+    }
 
     public void resize(Vector2D<int> size) {
         setViewport(0, 0, size.X, size.Y);
@@ -119,5 +154,29 @@ public class Graphics {
         fixed (byte* ptr = buffer) {
             GL.PushDebugGroup(DebugSource.DebugSourceApplication, 0, (uint)bytesWritten, ptr);
         }
+    }
+
+    private void ReleaseUnmanagedResources() {
+        mainBatch.Dispose();
+        immediateBatch.Dispose();
+        batchShader.Dispose();
+        instantTextureShader.Dispose();
+        instantColourShader.Dispose();
+        fxaaShader.Dispose();
+        ssaaShader.Dispose();
+        simplePostShader.Dispose();
+    }
+
+    private void Dispose(bool disposing) {
+        ReleaseUnmanagedResources();
+    }
+
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~Graphics() {
+        Dispose(false);
     }
 }

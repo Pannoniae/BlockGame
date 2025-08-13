@@ -69,7 +69,7 @@ public partial class Game {
     public static Graphics graphics;
     public static GUI gui;
 
-    public static TextureManager textureManager;
+    public static Textures textures;
     public static Metrics metrics;
     public static Profiler profiler;
 
@@ -102,6 +102,8 @@ public partial class Game {
     /// Stopwatch but keeps running
     /// </summary>
     public static Stopwatch permanentStopwatch = new();
+
+    public static int globalTick = 0;
 
     public double accumTime;
     public static readonly double fixeddt = 1 / 60d;
@@ -335,18 +337,18 @@ public partial class Game {
         hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
         sbl = nvShaderBufferLoad;
         Console.Out.WriteLine($"NV_shader_buffer_load supported: {hasSBL}");
-        hasSBL = false;
+        //hasSBL = false;
         
         // check for NV vertex buffer unified memory support
         hasVBUM = GL.TryGetExtension(out NVVertexBufferUnifiedMemory nvVertexBufferUnifiedMemory);
         vbum = nvVertexBufferUnifiedMemory;
         Console.Out.WriteLine($"NV_vertex_buffer_unified_memory supported: {hasVBUM}");
-        hasVBUM = false;
+        //hasVBUM = false;
         
         // check for NV uniform buffer unified memory support
         hasUBUM = GL.IsExtensionPresent("NV_uniform_buffer_unified_memory");
         Console.Out.WriteLine($"NV_uniform_buffer_unified_memory supported: {hasUBUM}");
-        hasUBUM = false;
+        //hasUBUM = false;
         
         // check for gl_BaseInstance UBO rendering support (OpenGL 4.6)
         var ver = GL.GetStringS(StringName.Version);
@@ -368,7 +370,7 @@ public partial class Game {
         hasBindlessMDI = GL.TryGetExtension(out NVBindlessMultiDrawIndirect nvBindlessMultiDrawIndirect);
         bmdi = nvBindlessMultiDrawIndirect;
         Console.Out.WriteLine($"NV_bindless_multi_draw_indirect supported: {hasBindlessMDI}");
-        hasBindlessMDI = false;
+        //hasBindlessMDI = false;
         
 
         //#if DEBUG
@@ -467,7 +469,7 @@ public partial class Game {
 
         graphics = new Graphics();
 
-        textureManager = new TextureManager(GL);
+        textures = new Textures(GL);
 
         // Initialize FXAA shader uniforms
         g_fxaa_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
@@ -515,6 +517,7 @@ public partial class Game {
         profiler = new Profiler();
         stopwatch.Start();
         permanentStopwatch.Start();
+        globalTick = 0;
 
         snd = new SoundEngine();
 
@@ -782,6 +785,7 @@ public partial class Game {
     }
 
     private void update(double dt) {
+        globalTick++;
         //var before = permanentStopwatch.ElapsedMilliseconds;
         //dt = Math.Min(dt, 0.2);
         /*var vec = new Vector2I(0, 0);
@@ -789,7 +793,7 @@ public partial class Game {
         Console.Out.WriteLine(window.PointToFramebuffer(vec));
         Console.Out.WriteLine(window.PointToScreen(vec));*/
         mousePos = mouse.Position;
-        textureManager.blockTexture.update(dt);
+        textures.update(dt);
         currentScreen.update(dt);
         gui.update(dt);
         //var after = permanentStopwatch.ElapsedMilliseconds;
@@ -899,14 +903,12 @@ public partial class Game {
 
                 // Use resolve texture for post-processing
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, resolveTex);
+                graphics.tex(0, resolveTex);
             }
             else {
                 // Regular framebuffer path
                 GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, FBOtex);
+                graphics.tex(0, FBOtex);
             }
 
             // Restore viewport for final screen rendering

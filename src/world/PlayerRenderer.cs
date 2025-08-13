@@ -51,8 +51,7 @@ public class PlayerRenderer {
         }
         var world = player.world;
         var pos = player.position.toBlockPos();
-        Game.GL.ActiveTexture(TextureUnit.Texture0);
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.handle);
+        Game.graphics.tex(0, Game.textures.blockTexture);
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
         WorldRenderer.meshBlockTinted(Block.get(handItem.block), ref vertices, ref indices, (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)));
         
@@ -91,7 +90,7 @@ public class PlayerRenderer {
 
     private void renderWaterOverlay() {
         // Set the water overlay texture
-        waterOverlayRenderer.setTexture(Game.textureManager.waterOverlay.handle);
+        waterOverlayRenderer.setTexture(Game.textures.waterOverlay);
         
         // Set identity MVP matrix (screen space coordinates)
         var identityMVP = Matrix4x4.Identity;

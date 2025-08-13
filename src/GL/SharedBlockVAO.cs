@@ -101,7 +101,7 @@ public sealed class SharedBlockVAO : VAO {
             // regular format setup
 
             // bind the vertex buffer to the VAO
-            GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
+            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
             // FAKE BINDING FOR THE BUFFER (only to shut up driver validation)
             GL.BindVertexBuffer(1, Game.graphics.fatQuadIndices, 0, 4 * sizeof(float));
 
@@ -110,16 +110,19 @@ public sealed class SharedBlockVAO : VAO {
             GL.EnableVertexAttribArray(1);
             GL.EnableVertexAttribArray(2);
             GL.EnableVertexAttribArray(3);
+            GL.EnableVertexAttribArray(4);
 
             GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
-            GL.VertexAttribFormat(3, 4, VertexAttribType.Float, false, 0);
+            GL.VertexAttribIFormat(3, 1, VertexAttribIType.Byte, 0 + 7 * sizeof(ushort));
+            GL.VertexAttribFormat(4, 4, VertexAttribType.Float, false, 0);
 
             GL.VertexAttribBinding(0, 0);
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
-            GL.VertexAttribBinding(3, 1); // Different binding point for constant attribute
+            GL.VertexAttribBinding(3, 0);
+            GL.VertexAttribBinding(4, 1); // Different binding point for constant attribute!!
 
             GL.VertexBindingDivisor(1,
                 1); // Set divisor for attribute 1 (chunk position) to 1, so it updates per instance (which we only have one of, so a constant!)
@@ -134,20 +137,23 @@ public sealed class SharedBlockVAO : VAO {
         }
         // normal path
         else {
-            GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
+            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
 
             // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
             GL.EnableVertexAttribArray(0);
             GL.EnableVertexAttribArray(1);
             GL.EnableVertexAttribArray(2);
+            GL.EnableVertexAttribArray(3);
 
             GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+            GL.VertexAttribIFormat(3, 1, VertexAttribIType.Byte, 0 + 7 * sizeof(ushort));
 
             GL.VertexAttribBinding(0, 0);
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
+            GL.VertexAttribBinding(3, 0);
         }
     }
 
@@ -169,7 +175,7 @@ public sealed class SharedBlockVAO : VAO {
         }
         else {
             // fallback to regular vertex buffer binding
-            GL.BindVertexBuffer(0, buffer, 0, 7 * sizeof(ushort));
+            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
         }
     }
     
@@ -357,13 +363,6 @@ public sealed class SharedBlockVAO : VAO {
 
         //cmdBuffer.upload();
         //cmdBuffer.drawCommands(PrimitiveType.Triangles, 0);
-    }
-
-    /// <summary>
-    /// Get the size needed for a bindless draw command structure
-    /// </summary>
-    public static unsafe int getStride() {
-        return sizeof(DrawElementsIndirectBindlessCommandNV);
     }
 
     public void Dispose() {

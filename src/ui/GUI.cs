@@ -73,8 +73,10 @@ public class GUI {
         immediatetb = Game.graphics.immediateBatch;
         guiTexture = new BTexture2D("textures/gui.png");
         colourTexture = new BTexture2D("textures/debug.png");
+        guiTexture.reload();
+        colourTexture.reload();
         instance = this;
-        guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/simpleBlock.vert", "shaders/simpleBlock.frag");
+        guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert", "shaders/ui/simpleBlock.frag");
         buffer = new StreamingVAO<BlockVertexTinted>();
         buffer.bind();
         buffer.setSize(Face.MAX_FACES * 4);
@@ -194,7 +196,7 @@ public class GUI {
                 var right = x * size + size;
                 var top = y * size;
                 var bottom = y * size + size;
-                tb.DrawRaw(Game.textureManager.blockTextureGUI,
+                tb.DrawRaw(Game.textures.blockTexture,
                     new VertexColorTexture(new Vector3(left, top, 0), bgGray,
                         new Vector2(texCoords.X, texCoords.Y)),
                     new VertexColorTexture(new Vector3(right, top, 0), bgGray,
@@ -222,7 +224,7 @@ public class GUI {
 
         var texCoords = new Vector2(0, 0);
         var texCoordsMax = new Vector2(xCount, yCount);
-        tb.DrawRaw(Game.textureManager.background,
+        tb.DrawRaw(Game.textures.background,
             new VertexColorTexture(new Vector3(left, top, 0), bgGray, new Vector2(texCoords.X, texCoords.Y)),
             new VertexColorTexture(new Vector3(right, top, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
             new VertexColorTexture(new Vector3(right, bottom, 0), bgGray,
@@ -295,7 +297,7 @@ public class GUI {
                 var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                 var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
 
-                tb.DrawRaw(Game.textureManager.blockTextureGUI,
+                tb.DrawRaw(Game.textures.blockTexture,
                     new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, texCoords),
                     new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
                     new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, texCoordsMax),
@@ -651,8 +653,7 @@ public class GUI {
         guiBlockShader.use();
 
         // bind block texture
-        Game.GL.ActiveTexture(TextureUnit.Texture0);
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTextureGUI.handle);
+        Game.textures.blockTexture.bind();
 
         WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 15);
         

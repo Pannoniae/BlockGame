@@ -6,28 +6,17 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace BlockGame.GL;
 
-public class BTextureAtlas : IDisposable {
-    public uint handle;
+public class BTextureAtlas : BTexture2D, IDisposable {
+    
     public int atlasSize;
-
-    public string path;
-
-    public Silk.NET.OpenGL.GL GL;
-
-    /// <summary>
-    /// Image memory
-    /// </summary>
-    private Image<Rgba32> image;
-    private Memory<Rgba32> memory;
 
     private int i;
     private int ticks;
 
-    public BTextureAtlas(string path, int atlasSize) {
+    public BTextureAtlas(string path, int atlasSize) : base(path) {
         GL = Game.GL;
         this.atlasSize = atlasSize;
         this.path = path;
-        reload();
 
         //var handle2 = GL.GenTexture();
         //GL.ActiveTexture(TextureUnit.Texture0);
@@ -36,7 +25,7 @@ public class BTextureAtlas : IDisposable {
 
     }
 
-    private void generateMipmap(int left, int top, int width, int height, Span<Rgba32> mipmap, Span<Rgba32> prevMipmap) {
+    private static void generateMipmap(int left, int top, int width, int height, Span<Rgba32> mipmap, ReadOnlySpan<Rgba32> prevMipmap) {
         for (int y = top; y < height; y++) {
             for (int x = left; x < width; x++) {
                 int xSrc = x * 2;
@@ -70,7 +59,7 @@ public class BTextureAtlas : IDisposable {
 
     unsafe private void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
         fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
+            GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
             // Generate mipmaps
             // we check against 2 so we never generate a mipmap with less pixels than one per texture
@@ -87,42 +76,32 @@ public class BTextureAtlas : IDisposable {
                 Span<Rgba32> mipmap = new Rgba32[width * height];
                 generateMipmap(0, 0, width, height, mipmap, prevMipmap);
                 fixed (Rgba32* mipmapPixels = mipmap) {
-                    GL.TexImage2D(TextureTarget.Texture2D, lvl, InternalFormat.Rgba8, (uint)width, (uint)height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, mipmapPixels);
+                    GL.TextureSubImage2D(handle, lvl, 0, 0, (uint)width, (uint)height,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, mipmapPixels);
                 }
                 prevMipmap = mipmap;
             }
         }
     }
 
-    unsafe public void updateTexture(int left, int top, int width, int height, int srcX, int srcY) {
-        bind();
-        // get pixels from the image
-        var pixels = new Rgba32[width * height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                pixels[y * width + x] = memory.Span[(srcY + y) * image.Width + srcX + x];
-            }
-        }
-        fixed (Rgba32* pixelsPtr = pixels) {
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
-        }
-    }
-
-    public unsafe void reload() {
+    public override unsafe void reload() {
         GL.DeleteTexture(handle);
-        handle = GL.GenTexture();
-        bind();
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        handle = GL.CreateTexture(TextureTarget.Texture2D);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
+        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
         //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
         image?.Dispose();
         image = Image.Load<Rgba32>(path);
         var maxLevel = Settings.instance.mipmapping;
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, maxLevel);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)image.Width, (uint)image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
-        if (!image.DangerousTryGetSinglePixelMemory(out memory)) {
+        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);
+        
+        // Calculate maximum possible mipmap levels based on texture dimensions
+        var maxPossibleLevels = 5u;
+        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
+        if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
             throw new Exception("Couldn't load the atlas contiguously!");
         }
 
@@ -134,7 +113,7 @@ public class BTextureAtlas : IDisposable {
         //Console.Out.WriteLine("Loading textures the proper way!");
         // Load image
         // Thanks ClassiCube for the idea!
-        generateMipmaps(memory.Span, image.Width, image.Height, maxLevel);
+        generateMipmaps(imageData.Span, image.Width, image.Height, maxLevel);
         
         // generate mipmaps (opengl)
         //GL.GenerateMipmap(TextureTarget.Texture2D);
@@ -143,8 +122,7 @@ public class BTextureAtlas : IDisposable {
 
 
     public void bind() {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, handle);
+        Game.graphics.tex(0, handle);
     }
 
     public void Dispose() {

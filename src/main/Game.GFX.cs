@@ -91,81 +91,72 @@ public partial class Game {
 
         if (samples > 1) {
             // Create MSAA framebuffer
-            fbo = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+            fbo = GL.CreateFramebuffer();
 
             // Create multisampled color texture
             GL.DeleteTexture(FBOtex);
-            FBOtex = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2DMultisample, FBOtex);
-            GL.TexImage2DMultisample(TextureTarget.Texture2DMultisample, (uint)samples, InternalFormat.Rgba8,
+            FBOtex = GL.CreateTexture(TextureTarget.Texture2DMultisample);
+            GL.TextureStorage2DMultisample(FBOtex, (uint)samples, SizedInternalFormat.Rgba8,
                 (uint)ssaaWidth, (uint)ssaaHeight, true);
 
             // Create multisampled depth buffer
             GL.DeleteRenderbuffer(depthBuffer);
-            depthBuffer = GL.GenRenderbuffer();
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorageMultisample(RenderbufferTarget.Renderbuffer, (uint)samples,
+            depthBuffer = GL.CreateRenderbuffer();
+            GL.NamedRenderbufferStorageMultisample(depthBuffer, (uint)samples,
                 InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
 
             // Attach to MSAA framebuffer
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2DMultisample, FBOtex, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
+            GL.NamedFramebufferTexture(fbo, FramebufferAttachment.ColorAttachment0, FBOtex, 0);
+            GL.NamedFramebufferRenderbuffer(fbo, FramebufferAttachment.DepthAttachment,
                 RenderbufferTarget.Renderbuffer, depthBuffer);
 
-            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
+            if (GL.CheckNamedFramebufferStatus(fbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
                 throw new Exception("MSAA Framebuffer is not complete");
             }
 
             // Create resolve framebuffer for post-processing
-            resolveFbo = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, resolveFbo);
+            resolveFbo = GL.CreateFramebuffer();
 
             GL.DeleteTexture(resolveTex);
-            resolveTex = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, resolveTex);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, null);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+            resolveTex = GL.CreateTexture(TextureTarget.Texture2D);
+            GL.TextureStorage2D(resolveTex, 1, SizedInternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureBaseLevel, 0);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureMaxLevel, 0);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2D, resolveTex, 0);
+            GL.NamedFramebufferTexture(resolveFbo, FramebufferAttachment.ColorAttachment0, resolveTex, 0);
 
-            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
+            if (GL.CheckNamedFramebufferStatus(resolveFbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
                 throw new Exception("Resolve Framebuffer is not complete");
             }
         }
         else {
             // Regular framebuffer (no MSAA)
-            fbo = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+            fbo = GL.CreateFramebuffer();
 
             GL.DeleteTexture(FBOtex);
-            FBOtex = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, FBOtex);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, null);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+            FBOtex = GL.CreateTexture(TextureTarget.Texture2D);
+            GL.TextureStorage2D(FBOtex, 1, SizedInternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureBaseLevel, 0);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureMaxLevel, 0);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
             GL.DeleteRenderbuffer(depthBuffer);
-            depthBuffer = GL.GenRenderbuffer();
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthBuffer);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, InternalFormat.DepthComponent, (uint)ssaaWidth,
+            depthBuffer = GL.CreateRenderbuffer();
+            GL.NamedRenderbufferStorage(depthBuffer, InternalFormat.DepthComponent, (uint)ssaaWidth,
                 (uint)ssaaHeight);
 
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
-                TextureTarget.Texture2D, FBOtex, 0);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
+            GL.NamedFramebufferTexture(fbo, FramebufferAttachment.ColorAttachment0, FBOtex, 0);
+            GL.NamedFramebufferRenderbuffer(fbo, FramebufferAttachment.DepthAttachment,
                 RenderbufferTarget.Renderbuffer, depthBuffer);
 
-            if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
+            if (GL.CheckNamedFramebufferStatus(fbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
                 throw new Exception("Framebuffer is not complete");
             }
 

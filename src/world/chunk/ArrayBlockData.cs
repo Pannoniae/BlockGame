@@ -219,7 +219,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     public byte blocklight(int x, int y, int z) {
         var value = !inited ? (byte)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-        return (byte)((value & 0xF0) >> 4);
+        return (byte)((value >> 4) & 0xF);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
@@ -227,7 +227,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             init();
         }
         ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-        var blocklight = (byte)((value & 0xF0) >> 4);
+        var blocklight = (byte)((value >> 4) & 0xF);
         // pack it back inside
         value = (byte)(blocklight << 4 | val);
     }
@@ -247,6 +247,6 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public static byte extractBlocklight(byte value) {
-        return (byte)((value & 0xF0) >> 4);
+        return (byte)((value >> 4) & 0xF);
     }
 }

@@ -11,16 +11,14 @@
 layout (location = 0) in uvec3 vPos;
 layout (location = 1) in uvec2 texCoord;
 layout (location = 2) in vec4 colour;
+layout (location = 3) in uint vLight;
 
-#ifdef INSTANCED_RENDERING
-    #ifdef NV_COMMAND_LIST
-    layout (location = 3) in vec3 aChunkOffset;
-    #endif
+#ifdef NV_COMMAND_LIST
+layout (location = 4) in vec3 aChunkOffset;
 #endif
 
 uniform mat4 uMVP;
 uniform vec3 uCameraPos;
-uniform float uSkyDarken;
 
 #ifndef INSTANCED_RENDERING
 uniform vec3 uChunkPos;
@@ -35,11 +33,13 @@ uniform vec3 uChunkPos;
 #endif
 
 out vec2 texCoords;
-out float skyDarken;
 out vec4 tint;
 out float vertexDist;
 
+uniform sampler2D lightTexture;
+
 const float m = 1 / 256.;
+const float n = 1 / 32768.;
 
 void main() {
     vec3 chunkOffset;
@@ -56,8 +56,15 @@ void main() {
 
     vec3 pos = chunkOffset + ((vPos * m) - 16);
     gl_Position = uMVP * vec4(pos, 1.0);
-    texCoords = texCoord / 32768.;
-    skyDarken = uSkyDarken;
-    tint = colour;
+    texCoords = texCoord * n;
+    
+    uint light = vLight & 0xFFu;
+    
+    // extract skylight and blocklight from packed light data (0-15)
+    ivec2 lightCoords = ivec2((light >> 4) & 0xFu, light & 0xFu);
+    vec4 lightColour = texelFetch(lightTexture, lightCoords, 0);
+    
+    tint = colour * lightColour;
+    
     vertexDist = length(pos - uCameraPos);
 }

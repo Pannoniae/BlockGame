@@ -7,19 +7,16 @@
 
 #extension GL_ARB_shader_draw_parameters : enable
 
+
 layout (location = 0) in uvec3 vPos;
 layout (location = 1) in uvec2 texCoord;
 layout (location = 2) in vec4 colour;
 
-#ifdef INSTANCED_RENDERING
-    #ifdef NV_COMMAND_LIST
-    layout (location = 3) in vec3 aChunkOffset;
-    #endif
+#ifdef NV_COMMAND_LIST
+layout (location = 4) in vec3 aChunkOffset;
 #endif
 
 uniform mat4 uMVP;
-uniform vec3 uCameraPos;
-uniform float uSkyDarken;
 
 #ifndef INSTANCED_RENDERING
 uniform vec3 uChunkPos;
@@ -34,12 +31,8 @@ uniform vec3 uChunkPos;
 #endif
 
 out vec2 texCoords;
-out float skyDarken;
-out vec4 tint;
-out float vertexDist;
 
 const float m = 1 / 256.;
-const float n = 1 / 32768.;
 
 void main() {
     vec3 chunkOffset;
@@ -48,7 +41,7 @@ void main() {
     #ifdef NV_COMMAND_LIST
         chunkOffset = aChunkOffset;
     #else
-    chunkOffset = chunkPos[gl_BaseInstanceARB].xyz;
+        chunkOffset = chunkPos[gl_BaseInstanceARB].xyz;
     #endif
 #else
     chunkOffset = uChunkPos;
@@ -56,8 +49,5 @@ void main() {
 
     vec3 pos = chunkOffset + ((vPos * m) - 16);
     gl_Position = uMVP * vec4(pos, 1.0);
-    texCoords = texCoord * n;
-    skyDarken = uSkyDarken;
-    tint = colour;
-    vertexDist = length(pos - uCameraPos);
+    texCoords = texCoord / 32768.;
 }

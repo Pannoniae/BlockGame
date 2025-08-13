@@ -89,9 +89,7 @@ public class SettingsMenu : Menu {
         mipmapping.topCentre();
         mipmapping.applied += () => {
             settings.mipmapping = (int)mipmapping.value;
-            Game.textureManager.blockTexture.bind();
-            Game.GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, settings.mipmapping != 0 ? (int)GLEnum.NearestMipmapLinear : (int)GLEnum.Nearest);
-            Game.textureManager.blockTexture.reload();
+            Game.textures.blockTexture.reload();
         };
         mipmapping.getText = value => value == 0 ? "Mipmapping: Off" : $"Mipmapping: {value}x";
         mipmapping.tooltip = "Mipmapping reduces the flickering of textures at a distance.";
@@ -105,7 +103,7 @@ public class SettingsMenu : Menu {
         anisotropy.topCentre();
         anisotropy.clicked += _ => {
             settings.anisotropy = anisotropy.getIndex() switch { 0 => 0, 1 => 1, 2 => 2, 3 => 4, 4 => 8, 5 => 16, 6 => 32, 7 => 64, 8 => 128, _ => 8 };
-            Game.textureManager.blockTexture.reload();
+            Game.textures.blockTexture.reload();
             Game.renderer?.updateAF();
         };
         anisotropy.tooltip = "Anisotropic filtering improves texture quality at oblique angles.\nHigher values provide better quality but may impact performance.\nValues above 16x are practically unnoticeable.";

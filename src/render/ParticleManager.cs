@@ -38,8 +38,7 @@ public class ParticleManager {
 
     public void render(double interp) {
         var currentTexture = "textures/blocks.png";
-        Game.GL.ActiveTexture(TextureUnit.Texture0);
-        Game.GL.BindTexture(TextureTarget.Texture2D, Game.textureManager.blockTexture.handle);
+        Game.graphics.tex(0, Game.textures.blockTexture);
         
         drawer.begin(PrimitiveType.Triangles);
 
@@ -48,10 +47,9 @@ public class ParticleManager {
 
         foreach (var particle in particles) {
             if (particle.texture != currentTexture) {
-                Game.textureManager.get(particle.texture);
-                var tex = Game.textureManager.get(particle.texture);
-                Game.GL.ActiveTexture(TextureUnit.Texture0);
-                Game.GL.BindTexture(TextureTarget.Texture2D, tex.handle);
+                Game.textures.get(particle.texture);
+                var tex = Game.textures.get(particle.texture);
+                Game.graphics.tex(0, tex);
             }
             drawer.setMVP(world.player.camera.getViewMatrix(interp) * world.player.camera.getProjectionMatrix());
             // get interp pos

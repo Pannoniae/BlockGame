@@ -48,8 +48,6 @@ public partial class World : IDisposable {
 
 
     public int worldTick;
-    /** how darker it is compared to full daylight */
-    public float skyDarken;
     
     public const int TICKS_PER_DAY = 72000;
 
@@ -343,6 +341,8 @@ public partial class World : IDisposable {
             return getSkyDarken(ticks);
         }
     }
+    
+    
 
 
     /// <summary>

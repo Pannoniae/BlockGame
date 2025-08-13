@@ -4,31 +4,37 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace BlockGame.GL;
 
-public class BTexture2D : IDisposable {
+public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public uint handle;
 
     public Silk.NET.OpenGL.GL GL;
 
-    private readonly Memory<Rgba32> imageData;
-    private readonly Image<Rgba32> image;
+    public string path;
 
-    public unsafe BTexture2D(string path) {
+    protected Memory<Rgba32> imageData;
+    protected Image<Rgba32> image;
+
+    public BTexture2D(string path) {
         GL = Game.GL;
+        this.path = path;
+    }
 
-        handle = GL.GenTexture();
-        bind();
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 0);
+    public virtual unsafe void reload() {
+        GL.DeleteTexture(handle);
+        handle = GL.CreateTexture(TextureTarget.Texture2D);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
+        image?.Dispose();
         image = Image.Load<Rgba32>(path);
-        GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)image.Width, (uint)image.Height, 0,
-            PixelFormat.Rgba, PixelType.UnsignedByte, null);
+        GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
         if (image.DangerousTryGetSinglePixelMemory(out imageData)) {
             //Console.Out.WriteLine("Loading textures the proper way!");
             fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
+                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)image.Width, (uint)image.Height,
                     PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
             }
         }
@@ -36,7 +42,7 @@ public class BTexture2D : IDisposable {
             image.ProcessPixelRows(accessor => {
                 for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
                     fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
-                        GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, rowIndex, (uint)accessor.Width, 1U,
+                        GL.TextureSubImage2D(handle, 0, 0, rowIndex, (uint)accessor.Width, 1U,
                             PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
                     }
                 }
@@ -48,15 +54,15 @@ public class BTexture2D : IDisposable {
         unsafe {
             GL = Game.GL;
 
-            handle = GL.GenTexture();
-            bind();
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+            handle = GL.CreateTexture(TextureTarget.Texture2D);
+            GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+            GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+            GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+            GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+            GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+            GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 1);
             image = new Image<Rgba32>((int)width, (int)height);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, width, height, 0,
-                PixelFormat.Rgba, PixelType.UnsignedByte, null);
+            GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, width, height);
         }
     }
 
@@ -69,21 +75,59 @@ public class BTexture2D : IDisposable {
     public uint height => (uint)image.Height;
 
     public void bind() {
-        GL.ActiveTexture(TextureUnit.Texture0);
-        GL.BindTexture(TextureTarget.Texture2D, handle);
+        Game.graphics.tex(0, handle);
     }
 
     public void Dispose() {
         GL.DeleteTexture(handle);
     }
+    
+    public unsafe void updateTexture(int left, int top, int width, int height, int srcX, int srcY) {
+        // get pixels from the image
+        var pixels = new Rgba32[width * height];
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                pixels[y * width + x] = imageData.Span[(srcY + y) * image.Width + srcX + x];
+            }
+        }
+        //GL.InvalidateTexImage(handle, 0);
+        fixed (Rgba32* pixelsPtr = pixels) {
+            GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
+        }
+    }
 
-    public void SetData<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight) where T : unmanaged {
+    public void updateTexture<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight) where T : unmanaged {
         unsafe {
-            bind();
+            //GL.InvalidateTexImage(handle, 0);
             fixed (T* dataPtr = data) {
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, x, y, boundsWidth, boundsHeight,
+                GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
                     PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
             }
         }
+    }
+
+    public bool Equals(BTexture2D? other) {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return handle == other.handle;
+    }
+
+    public override bool Equals(object? obj) {
+        if (obj is null) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != GetType()) return false;
+        return Equals((BTexture2D)obj);
+    }
+
+    public override int GetHashCode() {
+        return (int)handle;
+    }
+
+    public static bool operator ==(BTexture2D? left, BTexture2D? right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(BTexture2D? left, BTexture2D? right) {
+        return !Equals(left, right);
     }
 }

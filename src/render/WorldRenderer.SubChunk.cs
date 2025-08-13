@@ -16,10 +16,6 @@ namespace BlockGame;
 
 public partial class WorldRenderer {
 
-    private static int uChunkPos;
-    private static int dummyuChunkPos;
-    private static int wateruChunkPos;
-
     private static readonly Func<int, bool> AOtest = bl => bl != -1 && Block.isSolid(bl);
 
     // we cheated GC! there is only one list preallocated
@@ -817,7 +813,8 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec[2];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[1];
-                    vertex.c = Block.packColour((byte)dir, ao.First, light.First);
+                    vertex.c = Block.packColour((byte)dir, ao.First);
+                    vertex.light = light.First;
 
                     vertex = ref tempVertices[1];
                     vertex.x = (ushort)vec[3];
@@ -825,7 +822,8 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec[5];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[3];
-                    vertex.c = Block.packColour((byte)dir, ao.Second, light.Second);
+                    vertex.c = Block.packColour((byte)dir, ao.Second);
+                    vertex.light = light.Second;
 
                     vertex = ref tempVertices[2];
                     vertex.x = (ushort)vec[6];
@@ -833,7 +831,8 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec2[0];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[3];
-                    vertex.c = Block.packColour((byte)dir, ao.Third, light.Third);
+                    vertex.c = Block.packColour((byte)dir, ao.Third);
+                    vertex.light = light.Third;
 
                     vertex = ref tempVertices[3];
                     vertex.x = (ushort)vec2[1];
@@ -841,7 +840,8 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec2[3];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[1];
-                    vertex.c = Block.packColour((byte)dir, ao.Fourth, light.Fourth);
+                    vertex.c = Block.packColour((byte)dir, ao.Fourth);
+                    vertex.light = light.Fourth;
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
                     //ci += 6;

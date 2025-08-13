@@ -15,7 +15,7 @@ public class Image : GUIElement {
     public float realScale => scale / GUI.guiScale;
 
     public Image(Menu menu, string name, string path) : base(menu, name) {
-        texture = Game.textureManager.get(path);
+        texture = Game.textures.get(path);
         guiPosition.Width = (int)texture.width;
         guiPosition.Height = (int)texture.height;
     }

@@ -100,7 +100,9 @@ public class RenderBlock {
         }
 
         data = Block.packColour((byte)direction, (byte)(ao & 0x3), light.First);
-        vertexBuffer.Add(new BlockVertexPacked(pos.X + vx, pos.Y + vy, pos.Z + vz, Block.texU(uv.u), Block.texV(uv.v), data));
+        byte skylight = (byte)(light.First & 0xF);
+        byte blocklight = (byte)((light.First >> 4) & 0xF);
+        vertexBuffer.Add(new BlockVertexPacked(pos.X + vx, pos.Y + vy, pos.Z + vz, Block.texU(uv.u), Block.texV(uv.v), data, skylight, blocklight));
         indexBuffer.Add((ushort)currentIndex);
     }
 }

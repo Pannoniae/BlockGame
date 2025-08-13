@@ -20,7 +20,7 @@ public class TextRenderer3D : IFontStashRenderer {
 
     public TextRenderer3D() {
         _textureManager = new BTexture2DManager();
-        batchShader = new Shader(Game.GL, nameof(batchShader), "shaders/batch.vert", "shaders/batch.frag");
+        batchShader = new Shader(Game.GL, nameof(batchShader), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
         uMVP = batchShader.getUniformLocation("uMVP");
         tb = new SpriteBatch(Game.GL);
         tb.setShader(batchShader);
