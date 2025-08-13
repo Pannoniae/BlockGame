@@ -10,7 +10,7 @@ public class MainMenu : Menu {
         var title = new Image(this, "title", "textures/title.png");
         title.setPosition(new Vector2I(0, -70));
         title.centreContents();
-        title.setScale(2);
+        title.setScale(3);
 
 
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
