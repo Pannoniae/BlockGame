@@ -90,7 +90,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
                 pixels[y * width + x] = imageData.Span[(srcY + y) * image.Width + srcX + x];
             }
         }
-        //GL.InvalidateTexImage(handle, 0);
+        GL.InvalidateTexImage(handle, 0);
         fixed (Rgba32* pixelsPtr = pixels) {
             GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
         }
@@ -98,7 +98,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public void updateTexture<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight) where T : unmanaged {
         unsafe {
-            //GL.InvalidateTexImage(handle, 0);
+            GL.InvalidateTexImage(handle, 0);
             fixed (T* dataPtr = data) {
                 GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
                     PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
