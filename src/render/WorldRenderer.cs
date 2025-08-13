@@ -1137,10 +1137,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         float maxU;
         float maxV;
 
-        Rgba32 data1;
-        Rgba32 data2;
-        Rgba32 data3;
-        Rgba32 data4;
+        Color4b data1;
+        Color4b data2;
+        Color4b data3;
+        Color4b data4;
 
         float offset = 0.0004f;
 
@@ -1215,8 +1215,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
     }
 
-    public static void meshBlockTinted(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices,
-        byte light) {
+    public static void meshBlockTinted(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices, byte light, Color4b tint = default) {
         ushort i = 0;
         const int wx = 0;
         const int wy = 0;
@@ -1287,15 +1286,24 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             y4 = wy + face.y4;
             z4 = wz + face.z4;
 
-            var tint = calculateTint((byte)dir, 0, light);
+            Color4b tintVal;
+            
+            if (tint == default) {
+                // calculate tint based on direction and light
+                tintVal = calculateTint((byte)dir, 0, light);
+            }
+            else {
+                // use provided tint
+                tintVal = tint * calculateTint((byte)dir, 0, light);
+            }
 
 
             // add vertices
 
-            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, maxU, maxV, tint.R, tint.G, tint.B, tint.A);
-            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, tint.R, tint.G, tint.B, tint.A);
+            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
+            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
+            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, maxU, maxV, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
+            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
             vertices.AddRange(tempVertices);
             c += 4;
             tempIndices[0] = i;
@@ -1316,7 +1324,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
     ];
 
-    public Color4 getLightColour(byte blocklight, byte skylight) {
+    public Color4 getLightColourDarken(byte blocklight, byte skylight) {
         var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
         // apply darken
@@ -1326,8 +1334,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         lightVal.A = a; // keep alpha the same
         return lightVal;
     }
+    
+    public static Color4b getLightColour(byte blocklight, byte skylight) {
+        var px = Game.textures.light(blocklight, skylight);
+        var lightVal = new Color4b(px.R, px.G, px.B, px.A);
+        return lightVal;
+    }
 
-    private static Rgba32 calculateTint(byte dir, byte ao, byte light) {
+    public static Color4b calculateTint(byte dir, byte ao, byte light) {
         dir = (byte)(dir & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
@@ -1338,7 +1352,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //lightVal *= 1 - darken;
 
         float tint = a[dir] * aoArray[ao];
-        var ab = new Rgba32(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
+        var ab = new Color4b(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
     }
 

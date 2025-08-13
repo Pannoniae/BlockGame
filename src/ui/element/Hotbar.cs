@@ -17,7 +17,7 @@ public class Hotbar : GUIElement {
     public Rectangle hotbarTexture = new Rectangle(0, 48, SIZE * 10, SIZE);
     public Rectangle selectedTexture = new Rectangle(200, 48, SIZE, SIZE);
 
-    public Hotbar(Menu menu, string name, Vector2I pos, string? text = default) : base(menu, name) {
+    public Hotbar(Menu menu, string name, Vector2I pos, string? text = null) : base(menu, name) {
         setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 10; i++) {
             slots[i] = new ItemSlot(Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
@@ -30,6 +30,10 @@ public class Hotbar : GUIElement {
         var world = Game.world;
         var items = world.player.hotbar.slots;
         var gui = Game.gui;
+
+        var pos = world.player.position.toBlockPos();
+        var light = world.getLight(pos.X, pos.Y, pos.Z);
+        
         Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);
         for (int i = 0; i < items.Length; i++) {
             var selected = world.player.hotbar.selected == i;

@@ -1,4 +1,5 @@
 using BlockGame.GL;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace BlockGame.util;
@@ -9,6 +10,7 @@ public class Textures {
     public BTexture2D background;
     public BTextureAtlas blockTexture;
     public BTexture2D lightTexture;
+    public BTexture2D lightTexture2;
 
     public Dictionary<string, BTexture2D> textures = new();
     public BTexture2D waterOverlay;
@@ -18,9 +20,6 @@ public class Textures {
 
     public const int LIGHTMAP_SIZE = 16;
 
-    /** Lightmap texture data */
-    public byte[] textureData = new byte[LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4];
-
     public readonly Rgba32[] lightmap = new Rgba32[256];
 
     public Textures(Silk.NET.OpenGL.GL GL) {
@@ -29,6 +28,7 @@ public class Textures {
         background = new BTexture2D("textures/bg.png");
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
         lightTexture = new BTexture2D("textures/lightmap.png");
+        lightTexture2 = new BTexture2D("textures/lightmap.png");
         waterOverlay = new BTexture2D("textures/water.png");
         sunTexture = new BTexture2D("textures/sun_03.png");
         moonTexture = new BTexture2D("textures/moon_01.png");
@@ -37,6 +37,7 @@ public class Textures {
         background.reload();
         blockTexture.reload();
         lightTexture.reload();
+        lightTexture2.reload();
         waterOverlay.reload();
         sunTexture.reload();
         moonTexture.reload();
@@ -57,7 +58,7 @@ public class Textures {
     }
 
     public Rgba32 light(int x, int y) {
-        return lightmap[y | (x << 4)];
+        return lightTexture.getPixel(y, x);
     }
 
     /**
@@ -79,43 +80,69 @@ public class Textures {
     }
 
     private unsafe void updateLightmap(float skyDarken) {
-        var tex = lightTexture;
         const int LIGHTMAP_SIZE = 16;
-    
-        Array.Clear(textureData);
-        float skyAtten = skyDarken / 16f;
-    
-        for (int skyLight = 0; skyLight < LIGHTMAP_SIZE; skyLight++) {
-            float skyBrightness = skyLight / 15f;
-            skyBrightness *= 1f - skyAtten * 0.8f;
-            skyBrightness = MathF.Pow(skyBrightness, 2.2f);
-        
-            for (int blockLight = 0; blockLight < LIGHTMAP_SIZE; blockLight++) {
-                float blockBrightness = MathF.Pow(blockLight / 15f, 2.2f);
-            
-                // Blocklight: warm yellow-orange (torch color)
-                float blockR = blockBrightness;
-                float blockG = blockBrightness * 0.9f;
-                float blockB = blockBrightness * 0.7f;
-            
-                // Skylight: white->blue transition
-                float skyR = skyBrightness * (1f - skyAtten * 0.3f);
-                float skyG = skyBrightness * (1f - skyAtten * 0.15f);
-                float skyB = skyBrightness;
-            
-                // Take maximum of each channel separately
-                float r = MathF.Max(blockR, skyR);
-                float g = MathF.Max(blockG, skyG);
-                float b = MathF.Max(blockB, skyB);
-            
-                int idx = (skyLight * LIGHTMAP_SIZE + blockLight) * 4;
-                textureData[idx + 0] = (byte)(r * 255);
-                textureData[idx + 1] = (byte)(g * 255);
-                textureData[idx + 2] = (byte)(b * 255);
-                textureData[idx + 3] = 255;
+
+        const float BASE = 0.04f;
+        const float INVBASE = 1 - BASE;
+
+        float ambientBrightness = 1f - skyDarken / 16f;
+
+        // todo add slider
+        const float userBrightness = 0f;
+
+        fixed (Rgba32* pData = lightmap) {
+            for (int i = 0; i < 256; i++) {
+                int skyLevel = i >> 4; // i / 16
+                int blockLevel = i & 0xF; // i % 16
+                
+                // inv sq law or some shit
+                float sa = skyLevel / 15f;
+                sa = sa * sa;
+                float ba = blockLevel / 15f;
+                ba = ba * ba;
+
+                float skyLight = sa * ambientBrightness;
+                float bl = ba;
+
+
+                float br = bl;
+                float bg = bl * ((bl * Meth.psiF + Meth.rhoF) * Meth.psiF + Meth.rhoF);
+                float bb = bl * (bl * bl * Meth.psiF + Meth.rhoF);
+                
+                // scale red down
+                float sr = skyLight * (ambientBrightness * Meth.psiF + Meth.rhoF);
+                float sg = skyLight * (ambientBrightness * Meth.psiF + Meth.rhoF);
+                float sb = skyLight;
+                
+                
+                float r = (sr + br) * INVBASE + BASE;
+                float g = (sg + bg) * INVBASE + BASE;
+                float b = (sb + bb) * INVBASE + BASE;
+
+                r = float.Pow(float.Clamp(r, 0f, 1f), 1f - userBrightness * 0.5f);
+                g = float.Pow(float.Clamp(g, 0f, 1f), 1f - userBrightness * 0.5f);
+                b = float.Pow(float.Clamp(b, 0f, 1f), 1f - userBrightness * 0.5f);
+
+                // clamp & pack
+                r = float.Clamp(r * INVBASE + BASE, 0f, 1f);
+                g = float.Clamp(g * INVBASE + BASE, 0f, 1f);
+                b = float.Clamp(b * INVBASE + BASE, 0f, 1f);
+
+                pData[i] = new Rgba32((byte)(r * 255), (byte)(g * 255), (byte)(b * 255), 255);
             }
         }
-    
-        tex.updateTexture(textureData, 0, 0, LIGHTMAP_SIZE, LIGHTMAP_SIZE);
+
+        lightTexture.updateTexture(lightmap, 0, 0, LIGHTMAP_SIZE, LIGHTMAP_SIZE);
+    }
+
+    public void dumpLightmap() {
+        using var image = new Image<Rgba32>(LIGHTMAP_SIZE, LIGHTMAP_SIZE);
+        for (int x = 0; x < LIGHTMAP_SIZE; x++) {
+            for (int y = 0; y < LIGHTMAP_SIZE; y++) {
+                image[x, y] = lightmap[x | (y << 4)];
+            }
+        }
+
+        image.Save("lightmap.png");
     }
 }

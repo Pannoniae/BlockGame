@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.id;
 using Molten;
 using Silk.NET.Maths;
@@ -289,6 +290,10 @@ public class Block {
         float tint = WorldRenderer.a[direction] * WorldRenderer.aoArray[ao];
         var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
+    }
+    
+    public static Color4b packColour(RawDirection direction, byte ao, byte light) {
+        return packColour((byte)direction, ao, light).to4b();
     }
     
     public static Color packColour(byte direction, byte ao) {

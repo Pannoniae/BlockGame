@@ -654,8 +654,22 @@ public class GUI {
 
         // bind block texture
         Game.textures.blockTexture.bind();
+        
+        // calculate light level at player
 
-        WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 15);
+        /*var pos = Game.player?.position.toBlockPos();
+
+        byte light;
+
+        if (pos.HasValue) {
+            var posObj = pos.Value;
+            light = Game.world?.getLight(posObj.X, posObj.Y, posObj.Z) ?? 0;
+        }
+        else {
+            light = 15;
+        }*/
+
+        WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 255);
         
         // assemble the matrix using existing matrix stacks from Graphics
         Game.graphics.projection.push();

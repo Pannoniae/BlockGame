@@ -126,6 +126,8 @@ public class Settings {
             frustumCulling = tag.getByte("frustumCulling") != 0;
         } catch (Exception e) {
             Console.WriteLine($"Failed to load settings: {e.Message}");
+            
+            // todo load default settings if loading fails
         }
     }
 }

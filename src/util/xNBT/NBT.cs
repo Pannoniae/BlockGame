@@ -73,7 +73,10 @@ public static class NBT {
 
     public static void writeFile(NBTCompound nbt, string name) {
         // we don't need it to complete immediately anyway....
-        _ = Task.Run(() => saveFileAsync(nbt, name));
+        // todo disable this until saving is fixed
+        //_ = Task.Run(() => saveFileAsync(nbt, name));
+        using var stream = new FileStream(name, FileMode.Create, FileAccess.Write);
+        writeCompressed(nbt, stream);
     }
     
     private static void saveFileAsync(NBTCompound nbt, string name) {

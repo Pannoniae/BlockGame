@@ -22,7 +22,7 @@ public class InventoryMenu : Menu {
     public Vector2I guiPos;
     public Rectangle guiBounds;
 
-    public readonly BTexture2D invTex = new("textures/creative_inventory.png");
+    public readonly BTexture2D invTex;
 
     public override bool isModal() {
         return false;
@@ -30,9 +30,12 @@ public class InventoryMenu : Menu {
 
     public InventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
-        resize(guiPos);
         
+        invTex?.Dispose();
+        invTex = new BTexture2D("textures/creative_inventory.png");
         invTex.reload();
+        
+        resize(guiPos);
     }
 
     public void setup() {

@@ -12,6 +12,16 @@ namespace BlockGame.util;
 /// It's like math but meth ;)
 /// </summary>
 public static partial class Meth {
+    
+    public const double phi = 1.61803398874989484820458683436;
+    public const float phiF = 1.61803398874989484820458683436f;
+    
+    public const double psi = 0.61803398874989484820458683436;
+    public const float psiF = 0.61803398874989484820458683436f;
+    
+    public const double rho = 1 - psi;
+    public const float rhoF = 1 - psiF;
+    
     public static volatile byte[] waste;
 
     public static Vector3D copy(Vector3D input) {

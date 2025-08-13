@@ -364,7 +364,7 @@ public partial class Game {
         hasCMDL = GL.TryGetExtension(out NVCommandList nvCommandList);
         cmdl = nvCommandList;
         Console.Out.WriteLine($"NV_command_list supported: {hasCMDL}");
-        hasCMDL = false;
+        //hasCMDL = false;
         
         // check for NV_bindless_multi_draw_indirect support
         hasBindlessMDI = GL.TryGetExtension(out NVBindlessMultiDrawIndirect nvBindlessMultiDrawIndirect);

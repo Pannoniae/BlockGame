@@ -225,6 +225,24 @@ public class ChatMenu : Menu {
                         addMessage("Usage: /time or /time set <time>");
                     }
                     break;
+                case "debug":
+                    // debug commands
+                    
+                    var subCmd = args.Length > 1 ? args[1] : "";
+                    switch (subCmd) {
+                        case "":
+                            addMessage("Debug commands: /debug lightmap");
+                            break;
+                        case "lightmap":
+                            // dump lightmap to file
+                            Game.textures.dumpLightmap();
+                            addMessage("Lightmap dumped to lightmap.png");
+                            break;
+                        default:
+                            addMessage($"Unknown debug command: {subCmd}");
+                            break;
+                    }
+                    break;
             }
         }
         // if not command, just print with player name
