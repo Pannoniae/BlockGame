@@ -951,7 +951,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         float sunAngle = dayPercent * -MathF.PI * 2; // -π/2 to π/2
 
         const float sunDistance = 64f;
-        const float sunSize = 8f;
+        const float sunSize = 6f;
 
         var mat = Game.graphics.modelView;
         mat.push();
