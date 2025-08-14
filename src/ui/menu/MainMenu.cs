@@ -8,9 +8,9 @@ namespace BlockGame.ui;
 public class MainMenu : Menu {
     public MainMenu() {
         var title = new Image(this, "title", "textures/title.png");
-        title.setPosition(new Vector2I(0, -70));
+        title.setPosition(new Vector2I(0, -75));
         title.centreContents();
-        title.setScale(3);
+        title.setScale(1);
 
 
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
