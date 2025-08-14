@@ -372,6 +372,16 @@ public partial class Game {
         Console.Out.WriteLine($"NV_bindless_multi_draw_indirect supported: {hasBindlessMDI}");
         //hasBindlessMDI = false;
         
+        // check for ARB_shading_language_include support  
+        hasShadingLanguageInclude = GL.TryGetExtension(out ArbShadingLanguageInclude arbShadingLanguageInclude);
+        arbInclude = arbShadingLanguageInclude;
+        Console.Out.WriteLine($"ARB_shading_language_include supported: {hasShadingLanguageInclude}");
+        //hasShadingLanguageInclude = false;
+        
+        if (hasShadingLanguageInclude) {
+            BlockGame.GL.Shader.initializeIncludeFiles();
+        }
+        
 
         //#if DEBUG
         // initialise debug print

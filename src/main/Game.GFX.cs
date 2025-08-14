@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using BlockGame.ui;
 using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Extensions.ARB;
 using Silk.NET.OpenGL.Extensions.NV;
 using Silk.NET.OpenGL.Legacy.Extensions.EXT;
 
@@ -23,12 +24,14 @@ public partial class Game {
     public static bool hasCMDL = false;
     public static bool hasBindlessMDI = false;
     public static bool isNVCard = false;
+    public static bool hasShadingLanguageInclude = false;
     
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;
     public static ExtBindableUniform extbu;
     public static NVCommandList cmdl;
     public static NVBindlessMultiDrawIndirect bmdi;
+    public static ArbShadingLanguageInclude arbInclude;
     
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;

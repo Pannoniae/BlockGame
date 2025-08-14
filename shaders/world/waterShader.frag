@@ -3,7 +3,7 @@
 
 //layout(commandBindableNV) uniform;
 
-#include "../inc/fog.inc.glsl"
+#include "/shaders/inc/fog.inc.glsl"
 
 layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;

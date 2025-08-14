@@ -11,7 +11,7 @@
 layout(commandBindableNV) uniform;
 #endif
 
-#include "../inc/fog.inc.glsl"
+#include "/shaders/inc/fog.inc.glsl"
 
 //#if not defined(ANISO_LEVEL)
 //#define ANISO_LEVEL 0
