@@ -317,7 +317,7 @@ public sealed class SharedBlockVAO : VAO {
             return count;
         }
     }
-
+    
     public uint renderCMDL(uint baseInstance) {
         var cmdBuffer = Game.renderer.chunkCMD;
         /*
@@ -373,8 +373,7 @@ public sealed class SharedBlockVAO : VAO {
     private void ReleaseUnmanagedResources() {
         if (Game.hasVBUM && Game.hasSBL && buffer != 0) {
             // make buffer non-resident before deleting
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-            Game.sbl.MakeBufferNonResident((NV)BufferTargetARB.ArrayBuffer);
+            Game.sbl.MakeNamedBufferNonResident(buffer);
         }
 
         GL.DeleteBuffer(buffer);

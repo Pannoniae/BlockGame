@@ -409,6 +409,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             blocks.Dispose();
         }
 
+        // dispose SubChunk VAOs to prevent memory leaks
+        // (read: you'll suffer)
+        foreach (var subChunk in subChunks) {
+            subChunk.vao?.Dispose();
+            subChunk.watervao?.Dispose();
+        }
+
         heightMap.Dispose();
     }
 

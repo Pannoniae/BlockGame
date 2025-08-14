@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.NV;
 using Buffer = System.Buffer;
@@ -278,7 +279,7 @@ public unsafe class CommandBuffer : IDisposable {
 
         //Buffer.MemoryCopy(null, data, capacity, capacity);
         // clear the OpenGL buffer data
-        //GL.InvalidateBufferData(handle);
+        GL.InvalidateBufferData(handle);
 
         /* bind something to the buffer address? */
         //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, Game.renderer.testidx, 90);
@@ -320,7 +321,7 @@ public unsafe class CommandBuffer : IDisposable {
         uint* states = stackalloc uint[1];
         states[0] = state;
 
-        GL.MemoryBarrier(MemoryBarrierMask.CommandBarrierBit);
+        //GL.MemoryBarrier(MemoryBarrierMask.CommandBarrierBit);
 
         //Console.Out.WriteLine(
         //    $"Drawing commands with mode {mode}, handle {handle}, offsets[0] = {offsets[0]}, sizes[0] = {sizes[0]}");

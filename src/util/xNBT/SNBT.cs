@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace BlockGame.util.xNBT;
 
@@ -49,14 +48,12 @@ public static class SNBT {
     }
 }
 
-public partial class SNBTWriter {
+public class SNBTWriter {
     private readonly StringBuilder sb = new();
     private readonly bool prettyPrint;
     private int indentLevel;
     private const string INDENT = "  ";
     
-    // Regex for valid unquoted strings
-    private static readonly Regex UnquotedPattern = unquoted();
     private static readonly HashSet<string> ReservedSuffixes = ["b", "ub", "s", "us", "u", "L", "uL", "f", "d", "END"];
 
     public SNBTWriter(bool prettyPrint = false) {
@@ -82,10 +79,23 @@ public partial class SNBTWriter {
         }
     }
 
-    private bool canBeUnquoted(string s) {
+    private static bool canBeUnquoted(string s) {
         if (string.IsNullOrEmpty(s)) return false;
         if (ReservedSuffixes.Contains(s)) return false;
-        return UnquotedPattern.IsMatch(s);
+        
+        // First char must be letter or underscore
+        char first = s[0];
+        if (!char.IsLetter(first) && first != '_') return false;
+        
+        // Rest can be alphanumeric, underscore, dot, plus, minus
+        for (int i = 1; i < s.Length; i++) {
+            char c = s[i];
+            if (!char.IsLetterOrDigit(c) && c != '_' && c != '.' && c != '+' && c != '-') {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     private void writeValue(NBTTag tag) {
@@ -126,49 +136,47 @@ public partial class SNBTWriter {
             case NBTCompound t:
                 writeCompound(t);
                 break;
-            case INBTList list and NBTList<NBTTag> genericList:
-                writeList(genericList.list, list.listType);
+            case INBTList list:
+                writeListInterface(list, tag);
                 break;
             case NBTByteArray t:
-                writeArray("B", t, t.data);
+                writeArray("B", t.data);
                 break;
             case NBTShortArray t:
-                writeArray("S", t, t.data);
+                writeArray("S", t.data);
                 break;
             case NBTUShortArray t:
-                writeArray("US", t, t.data);
+                writeArray("US", t.data);
                 break;
             case NBTIntArray t:
-                writeArray("I", t, t.data);
+                writeArray("I", t.data);
                 break;
             case NBTUIntArray t:
-                writeArray("UI", t, t.data);
+                writeArray("UI", t.data);
                 break;
             case NBTLongArray t:
-                writeArray("L", t, t.data);
+                writeArray("L", t.data);
                 break;
             case NBTULongArray t:
-                writeArray("UL", t, t.data);
+                writeArray("UL", t.data);
                 break;
             default:
-                // Handle typed lists
-                if (tag is INBTList listTag) {
-                    var listProp = tag.GetType().GetField("list");
-                    var list = listProp?.GetValue(tag);
-                    if (list is System.Collections.IList items) {
-                        var tagList = new List<NBTTag>();
-                        foreach (var item in items) {
-                            tagList.Add((NBTTag)item);
-                        }
+                throw new ArgumentException($"Unsupported NBTTag type: {tag.GetType().Name}", nameof(tag));
+        }
+    }
 
-                        writeList(tagList, listTag.listType);
-                    }
-                }
-                else {
-                    throw new ArgumentException($"Unsupported NBTTag type: {tag.GetType().Name}", nameof(tag));
-                }
-
-                break;
+    private void writeListInterface(INBTList list, NBTTag tag) {
+        // Extract the list items via reflection (necessary due to generic constraints)
+        var listField = tag.GetType().GetField("list");
+        if (listField?.GetValue(tag) is System.Collections.IList items) {
+            var tagList = new List<NBTTag>(items.Count);
+            foreach (var item in items) {
+                tagList.Add((NBTTag)item);
+            }
+            writeList(tagList, list.listType);
+        } else {
+            // Empty list
+            writeList(new List<NBTTag>(), list.listType);
         }
     }
 
@@ -215,26 +223,8 @@ public partial class SNBTWriter {
             
             if (prettyPrint) writeIndent();
             
-            // Write key (prefer unquoted if possible)
-            if (canBeUnquoted(kvp.Key)) {
-                sb.Append(kvp.Key);
-            } else {
-                sb.Append('"');
-                foreach (char c in kvp.Key) {
-                    switch (c) {
-                        case '"':
-                            sb.Append("\\\"");
-                            break;
-                        case '\\':
-                            sb.Append(@"\\");
-                            break;
-                        default:
-                            sb.Append(c);
-                            break;
-                    }
-                }
-                sb.Append('"');
-            }
+            // Write key
+            writeString(kvp.Key);
             
             sb.Append(": ");
             writeValue(kvp.Value);
@@ -255,7 +245,8 @@ public partial class SNBTWriter {
             sb.Append(NBTTag.getTypeName(listType)).Append(';');
         }
         else {
-            if (prettyPrint && (list.Any(t => t is NBTCompound || t is INBTList))) {
+            bool complexItems = list.Any(t => t is NBTCompound || t is INBTList);
+            if (prettyPrint && complexItems) {
                 writeNewLine();
                 indentLevel++;
             }
@@ -264,7 +255,7 @@ public partial class SNBTWriter {
                 if (i > 0) {
                     sb.Append(',');
                     if (prettyPrint) {
-                        if (list[i] is NBTCompound || list[i] is INBTList) {
+                        if (complexItems) {
                             writeNewLine();
                         } else {
                             sb.Append(' ');
@@ -274,14 +265,14 @@ public partial class SNBTWriter {
                     }
                 }
                 
-                if (prettyPrint && (list[i] is NBTCompound || list[i] is INBTList)) {
+                if (prettyPrint && complexItems) {
                     writeIndent();
                 }
                 
                 writeValue(list[i]);
             }
             
-            if (prettyPrint && (list.Any(t => t is NBTCompound || t is INBTList))) {
+            if (prettyPrint && complexItems) {
                 indentLevel--;
                 writeNewLine();
                 writeIndent();
@@ -291,7 +282,7 @@ public partial class SNBTWriter {
         sb.Append(']');
     }
 
-    private void writeArray<T>(string prefix, NBTTag t, T[] data) {
+    private void writeArray<T>(string prefix, T[] data) {
         sb.Append('[').Append(prefix).Append("; ");
         
         for (int i = 0; i < data.Length; i++) {
@@ -301,9 +292,6 @@ public partial class SNBTWriter {
 
         sb.Append(']');
     }
-
-    [GeneratedRegex(@"^[a-zA-Z_][a-zA-Z0-9_\.\+\-]*$")]
-    private static partial Regex unquoted();
 }
 
 internal class SNBTParser {
@@ -344,29 +332,24 @@ internal class SNBTParser {
         skipWhitespace();
         char c = peek();
 
-        if (c == '{') {
-            return parseCompound(name);
-        }
-        else if (c == '[') {
-            return parseListOrArray(name);
-        }
-        else if (c == '"') {
-            return new NBTString(name, parseQuotedString());
-        }
-        else if (c == '-' || char.IsDigit(c)) {
-            return parseNumber(name);
-        }
-        else if (input.Length - pos >= 3 && input.Substring(pos, 3) == "END") {
-            pos += 3;
-            return new NBTEnd();
-        }
-        else if (char.IsLetter(c) || c == '_') {
-            // Could be unquoted string
-            return parseUnquotedStringOrNumber(name);
-        }
-        else {
-            throw new FormatException($"Unexpected character at position {pos}: {c}");
-        }
+        return c switch {
+            '{' => parseCompound(name),
+            '[' => parseListOrArray(name),
+            '"' => new NBTString(name, parseQuotedString()),
+            '-' or >= '0' and <= '9' => parseNumber(name),
+            _ when isEndToken() => consumeEnd(),
+            _ when char.IsLetter(c) || c == '_' => parseUnquotedValue(name),
+            _ => throw new FormatException($"Unexpected character at position {pos}: {c}")
+        };
+    }
+
+    private bool isEndToken() {
+        return input.Length - pos >= 3 && input.AsSpan(pos, 3).SequenceEqual("END");
+    }
+
+    private NBTEnd consumeEnd() {
+        pos += 3;
+        return new NBTEnd();
     }
 
     private NBTCompound parseCompound(string? name) {
@@ -401,11 +384,7 @@ internal class SNBTParser {
 
     private string parseKey() {
         skipWhitespace();
-        if (peek() == '"') {
-            return parseQuotedString();
-        } else {
-            return parseUnquotedKey();
-        }
+        return peek() == '"' ? parseQuotedString() : parseUnquotedKey();
     }
 
     private string parseUnquotedKey() {
@@ -426,71 +405,84 @@ internal class SNBTParser {
         return input.Substring(start, pos - start);
     }
 
-    private NBTTag parseUnquotedStringOrNumber(string? name) {
-        int start = pos;
+    private NBTTag parseUnquotedValue(string? name) {
+        string token = parseUnquotedKey();
         
-        // Collect the unquoted token
-        while (pos < input.Length) {
-            char c = input[pos];
-            if (char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '+' || c == '-') {
-                pos++;
-            } else {
-                break;
-            }
+        // Try to parse as number with suffix
+        if (tryParseTypedNumber(token, name, out var numberTag)) {
+            return numberTag;
         }
         
-        string token = input.Substring(start, pos - start);
-        
-        // Check for number suffixes
-        if (token.EndsWith('b') && tryParseNumber(token[..^1], out var b)) {
-            return new NBTByte(name, byte.Parse(token[..^1]));
-        }
-        if (token.EndsWith("ub") && tryParseNumber(token[..^2], out var ub)) {
-            return new NBTByte(name, byte.Parse(token[..^2]));
-        }
-        if (token.EndsWith('s') && tryParseNumber(token[..^1], out var s)) {
-            return new NBTShort(name, short.Parse(token[..^1]));
-        }
-        if (token.EndsWith("us") && tryParseNumber(token[..^2], out var us)) {
-            return new NBTUShort(name, ushort.Parse(token[..^2]));
-        }
-        if (token.EndsWith('u') && tryParseNumber(token[..^1], out var u)) {
-            return new NBTUInt(name, uint.Parse(token[..^1]));
-        }
-        if (token.EndsWith('L') && tryParseNumber(token[..^1], out var l)) {
-            return new NBTLong(name, long.Parse(token[..^1]));
-        }
-        if (token.EndsWith("uL") && tryParseNumber(token[..^2], out var ul)) {
-            return new NBTULong(name, ulong.Parse(token[..^2]));
-        }
-        if (token.EndsWith('f') && tryParseFloat(token[..^1], out var f)) {
-            return new NBTFloat(name, float.Parse(token[..^1], CultureInfo.InvariantCulture));
-        }
-        if (token.EndsWith('d') && tryParseFloat(token[..^1], out var d)) {
-            return new NBTDouble(name, double.Parse(token[..^1], CultureInfo.InvariantCulture));
-        }
-        
-        // Not a number, treat as unquoted string
+        // It's an unquoted string
         return new NBTString(name, token);
     }
 
-    private bool tryParseNumber(string s, out object _) {
-        _ = null;
-        return !string.IsNullOrEmpty(s) && s.All(c => char.IsDigit(c) || c == '-');
+    private bool tryParseTypedNumber(string token, string? name, out NBTTag result) {
+        result = null!;
+        
+        // Check suffixes from longest to shortest
+        if (token.EndsWith("ub") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
+            result = new NBTByte(name, byte.Parse(token[..^2]));
+            return true;
+        }
+        if (token.EndsWith("us") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
+            result = new NBTUShort(name, ushort.Parse(token[..^2]));
+            return true;
+        }
+        if (token.EndsWith("uL") && isValidInteger(token.AsSpan(0, token.Length - 2))) {
+            result = new NBTULong(name, ulong.Parse(token[..^2]));
+            return true;
+        }
+        if (token.EndsWith('b') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+            result = new NBTByte(name, byte.Parse(token[..^1]));
+            return true;
+        }
+        if (token.EndsWith('s') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+            result = new NBTShort(name, short.Parse(token[..^1]));
+            return true;
+        }
+        if (token.EndsWith('u') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+            result = new NBTUInt(name, uint.Parse(token[..^1]));
+            return true;
+        }
+        if (token.EndsWith('L') && isValidInteger(token.AsSpan(0, token.Length - 1))) {
+            result = new NBTLong(name, long.Parse(token[..^1]));
+            return true;
+        }
+        if (token.EndsWith('f') && isValidFloat(token.AsSpan(0, token.Length - 1))) {
+            result = new NBTFloat(name, float.Parse(token[..^1], CultureInfo.InvariantCulture));
+            return true;
+        }
+        if (token.EndsWith('d') && isValidFloat(token.AsSpan(0, token.Length - 1))) {
+            result = new NBTDouble(name, double.Parse(token[..^1], CultureInfo.InvariantCulture));
+            return true;
+        }
+        
+        return false;
     }
 
-    private bool tryParseFloat(string s, out object _) {
-        _ = null;
-        if (string.IsNullOrEmpty(s)) return false;
-        int dotCount = 0;
-        for (int i = 0; i < s.Length; i++) {
-            char c = s[i];
-            if (c == '.') {
-                dotCount++;
-                if (dotCount > 1) return false;
-            } else if (c == '-') {
-                if (i != 0) return false;
-            } else if (!char.IsDigit(c)) {
+    private static bool isValidInteger(ReadOnlySpan<char> s) {
+        if (s.Length == 0) return false;
+        int start = s[0] == '-' ? 1 : 0;
+        if (start >= s.Length) return false;
+        
+        for (int i = start; i < s.Length; i++) {
+            if (!char.IsDigit(s[i])) return false;
+        }
+        return true;
+    }
+
+    private static bool isValidFloat(ReadOnlySpan<char> s) {
+        if (s.Length == 0) return false;
+        int start = s[0] == '-' ? 1 : 0;
+        if (start >= s.Length) return false;
+        
+        bool hasDot = false;
+        for (int i = start; i < s.Length; i++) {
+            if (s[i] == '.') {
+                if (hasDot) return false;
+                hasDot = true;
+            } else if (!char.IsDigit(s[i])) {
                 return false;
             }
         }
@@ -501,16 +493,15 @@ internal class SNBTParser {
         next(); // consume '['
         skipWhitespace();
 
-        // Check for array prefix or empty list type
+        // Try array prefix
         int savedPos = pos;
         string? prefix = tryParseArrayPrefix();
 
         if (prefix != null) {
-            // It's an array
             return parseArray(name, prefix);
         }
 
-        // Check for empty list with type
+        // Try empty list with type
         pos = savedPos;
         var emptyListType = tryParseEmptyListType();
         if (emptyListType != null) {
@@ -524,6 +515,8 @@ internal class SNBTParser {
 
     private string? tryParseArrayPrefix() {
         int start = pos;
+        
+        // Collect letters for prefix
         while (pos < input.Length && char.IsLetter(input[pos])) {
             pos++;
         }
@@ -542,6 +535,8 @@ internal class SNBTParser {
 
     private NBTType? tryParseEmptyListType() {
         int start = pos;
+        
+        // Collect type name
         while (pos < input.Length && (char.IsLetter(input[pos]) || input[pos] == '_')) {
             pos++;
         }
@@ -563,47 +558,17 @@ internal class SNBTParser {
         return null;
     }
 
-    private bool isValidArrayPrefix(string prefix) {
-        return prefix switch {
-            "B" or "S" or "US" or "I" or "UI" or "L" or "UL" => true,
-            _ => false
-        };
+    private static bool isValidArrayPrefix(string prefix) {
+        return prefix is "B" or "S" or "US" or "I" or "UI" or "L" or "UL";
     }
 
-    private NBTType? parseTypeName(string name) {
+    private static NBTType? parseTypeName(string name) {
         foreach (NBTType type in Enum.GetValues<NBTType>()) {
             if (NBTTag.getTypeName(type) == name) {
                 return type;
             }
         }
-
         return null;
-    }
-
-    private static NBTTag createEmptyList(NBTType listType, string? name) {
-        return listType switch {
-            NBTType.TAG_End => new NBTList<NBTEnd>(listType, name),
-            NBTType.TAG_Byte => new NBTList<NBTByte>(listType, name),
-            NBTType.TAG_Short => new NBTList<NBTShort>(listType, name),
-            NBTType.TAG_UShort => new NBTList<NBTUShort>(listType, name),
-            NBTType.TAG_Int => new NBTList<NBTInt>(listType, name),
-            NBTType.TAG_UInt => new NBTList<NBTUInt>(listType, name),
-            NBTType.TAG_Long => new NBTList<NBTLong>(listType, name),
-            NBTType.TAG_ULong => new NBTList<NBTULong>(listType, name),
-            NBTType.TAG_Float => new NBTList<NBTFloat>(listType, name),
-            NBTType.TAG_Double => new NBTList<NBTDouble>(listType, name),
-            NBTType.TAG_String => new NBTList<NBTString>(listType, name),
-            NBTType.TAG_List => new NBTList<NBTList<NBTTag>>(listType, name),
-            NBTType.TAG_Compound => new NBTList<NBTCompound>(listType, name),
-            NBTType.TAG_Byte_Array => new NBTList<NBTByteArray>(listType, name),
-            NBTType.TAG_Short_Array => new NBTList<NBTShortArray>(listType, name),
-            NBTType.TAG_UShort_Array => new NBTList<NBTUShortArray>(listType, name),
-            NBTType.TAG_Int_Array => new NBTList<NBTIntArray>(listType, name),
-            NBTType.TAG_UInt_Array => new NBTList<NBTUIntArray>(listType, name),
-            NBTType.TAG_Long_Array => new NBTList<NBTLongArray>(listType, name),
-            NBTType.TAG_ULong_Array => new NBTList<NBTULongArray>(listType, name),
-            _ => throw new ArgumentOutOfRangeException()
-        };
     }
 
     private NBTTag parseArray(string? name, string prefix) {
@@ -641,7 +606,6 @@ internal class SNBTParser {
         while (pos < input.Length && input[pos] != ',' && input[pos] != ']' && !char.IsWhiteSpace(input[pos])) {
             pos++;
         }
-
         return input.Substring(start, pos - start);
     }
 
@@ -663,24 +627,20 @@ internal class SNBTParser {
         next(); // consume ']'
 
         if (items.Count == 0) {
-            // Plain empty list [] without type specification defaults to TAG_End
             return new NBTList<NBTEnd>(NBTType.TAG_End, name);
         }
 
-        // Infer list type from first element
+        // Create typed list based on first element
         NBTType listType = items[0].id;
         var list = NBTTag.createListTag(listType, name);
 
-        // Add items using reflection (ugly but necessary due to generic constraints)
-        // TODO actually fix this lol
-        var listProp = list.GetType().GetField("list");
-        var actualList = listProp?.GetValue(list);
-        if (actualList is System.Collections.IList ilist) {
+        // Add items via reflection (unavoidable due to generic constraints)
+        var listField = list.GetType().GetField("list");
+        if (listField?.GetValue(list) is System.Collections.IList ilist) {
             foreach (var item in items) {
                 if (item.id != listType) {
                     throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
                 }
-
                 ilist.Add(item);
             }
         }
@@ -699,14 +659,21 @@ internal class SNBTParser {
             if (c == '\0') {
                 throw new FormatException("Unterminated string");
             }
-            else if (c == '"') {
+            if (c == '"') {
                 break;
             }
-            else if (c == '\\') {
+            if (c == '\\') {
                 char escaped = next();
-                if (escaped == '"') sb.Append('"');
-                else if (escaped == '\\') sb.Append('\\');
-                else throw new FormatException($"Invalid escape sequence at position {pos - 1}");
+                switch (escaped) {
+                    case '"':
+                        sb.Append('"');
+                        break;
+                    case '\\':
+                        sb.Append('\\');
+                        break;
+                    default:
+                        throw new FormatException($"Invalid escape sequence at position {pos - 1}");
+                }
             }
             else {
                 sb.Append(c);
@@ -718,11 +685,9 @@ internal class SNBTParser {
 
     private NBTTag parseNumber(string? name) {
         int start = pos;
-        bool negative = false;
         bool isFloat = false;
 
         if (peek() == '-') {
-            negative = true;
             next();
         }
 
@@ -743,15 +708,12 @@ internal class SNBTParser {
         string numStr = input.Substring(start, pos - start);
 
         // Check for suffix
-        string suffix = "";
         int suffixStart = pos;
         while (pos < input.Length && char.IsLetter(input[pos])) {
             pos++;
         }
 
-        if (pos > suffixStart) {
-            suffix = input.Substring(suffixStart, pos - suffixStart);
-        }
+        string suffix = pos > suffixStart ? input.Substring(suffixStart, pos - suffixStart) : "";
 
         // Parse based on suffix
         return suffix switch {

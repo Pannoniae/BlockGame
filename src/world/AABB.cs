@@ -138,10 +138,7 @@ public struct AABB {
         //if (false && Avx512F.IsSupported) {
         //    return isFrontTwoEightAvx512(aabbs, p1, p2);
         //}
-        //if (Avx2.IsSupported) {
-        return isFrontTwoEightAvx512(aabbs, p1, p2);
-        //}
-        //return isFrontTwoEightFallback(aabbs, p1, p2);
+        return Avx2.IsSupported ? isFrontTwoEightAvx512(aabbs, p1, p2) : isFrontTwoEightFallback(aabbs, p1, p2);
     }
 
 

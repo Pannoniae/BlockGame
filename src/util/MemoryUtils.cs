@@ -26,7 +26,7 @@ public static class MemoryUtils {
 
         ArrayBlockData.blockPool.trim();
         ArrayBlockData.lightPool.trim();
-        Game.GL.ReleaseShaderCompiler();
+        //Game.GL.ReleaseShaderCompiler();
 
         // query binary formats
 
@@ -46,6 +46,10 @@ public static class MemoryUtils {
         GC.Collect(generation: 2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            // todo this swaps everything out of the working set, so it will be reloaded from disk on next access
+            // 100% ssd usage hello
+            // implement some smarter memory heuristic or something next time so it doesn't swap *everything* because on higher render distance
+            // it takes tens of SECONDS to reload, even from a fast NVMe SSD
             WindowsMemoryUtility.ReleaseUnusedProcessWorkingSetMemory();
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {

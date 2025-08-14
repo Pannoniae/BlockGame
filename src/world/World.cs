@@ -12,10 +12,11 @@ public partial class World : IDisposable {
 
     public string name;
 
-    public readonly Dictionary<ChunkCoord, Chunk> chunks;
+    
     
     public readonly List<WorldListener> listeners = [];
 
+    public readonly Dictionary<ChunkCoord, Chunk> chunks;
     // used for rendering
     public readonly List<Chunk> chunkList;
 

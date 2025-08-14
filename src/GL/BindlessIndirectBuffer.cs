@@ -78,6 +78,9 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         
         Game.bmdi.MultiDrawElementsIndirectBindles(PrimitiveType.Triangles, DrawElementsType.UnsignedShort, 
             (void*)null, (uint)commands, 0, vertexBufferCount);
+        
+        // unbind so it's not tracked anymore!
+        //GL.BindBuffer(BufferTargetARB.DrawIndirectBuffer, 0);
     }
 
     /// <summary>

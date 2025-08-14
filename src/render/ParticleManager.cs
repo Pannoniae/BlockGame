@@ -64,7 +64,7 @@ public class ParticleManager {
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
             
-            var tint = WorldRenderer.getLightColour(skylight, blocklight);
+            var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
