@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Silk.NET.OpenGL;
@@ -22,7 +23,6 @@ public enum ShaderVariant {
 
 public partial class Shader : IDisposable {
     private string name;
-
     private string vertexShader;
     private string fragmentShader;
 
@@ -32,22 +32,20 @@ public partial class Shader : IDisposable {
     private readonly HashSet<string> includes = [];
     
     // Named strings for ARB_shading_language_include
-    private static readonly Dictionary<string, string> namedStrings = new();
-    private static readonly Lock namedStringsLock = new();
+    private static readonly HashSet<string> registeredIncludes = [];
+    private static readonly Lock includesLock = new();
 
     public Shader(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath, string fragmentShaderPath,
         IEnumerable<Definition>? defs = null) {
         this.GL = GL;
         this.name = name;
 
-        // Initialize preprocessor definitions
         if (defs != null) {
             foreach (var def in defs) {
                 this.defs[def.name] = def;
             }
         }
 
-        // Load and preprocess the shaders
         vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
         fragmentShader = preprocess(fragmentShaderPath, File.ReadAllText(fragmentShaderPath));
 
@@ -56,56 +54,17 @@ public partial class Shader : IDisposable {
         link(vert, frag);
     }
 
-    public static Shader createVariant(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath,
-        string? fragmentShaderPath = null, ShaderVariant? variant = null, IEnumerable<Definition>? defs = null) {
-        var definitions = new List<Definition>();
-        
-        // append additional definitions
-        if (defs != null) {
-            definitions.AddRange(defs);
-        }
-
-        // autoselect if null
-        var selectedVariant = variant ?? (Game.hasCMDL ? ShaderVariant.CommandList :
-            Game.hasInstancedUBO ? ShaderVariant.Instanced :
-            ShaderVariant.Normal);
-        
-        if (Game.isNVCard) {
-            definitions.Add(new Definition("NV_EXTENSIONS"));
-        }
-
-        // Add variant-specific defines
-        switch (selectedVariant) {
-            case ShaderVariant.Instanced:
-                definitions.Add(new Definition("INSTANCED_RENDERING"));
-                break;
-            case ShaderVariant.CommandList:
-                definitions.Add(new Definition("INSTANCED_RENDERING"));
-                definitions.Add(new Definition("NV_COMMAND_LIST"));
-                break;
-        }
-
-        return fragmentShaderPath == null
-            ? new Shader(GL, name, vertexShaderPath, definitions)
-            : new Shader(GL, name, vertexShaderPath, fragmentShaderPath, definitions);
-    }
-
-    /// <summary>
-    /// Used for depth pass shaders.
-    /// </summary>
     public Shader(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath,
         IEnumerable<Definition>? customDefinitions = null) {
         this.GL = GL;
         this.name = name;
 
-        // Initialize preprocessor definitions
         if (customDefinitions != null) {
             foreach (var def in customDefinitions) {
                 defs[def.name] = def;
             }
         }
 
-        // Load and preprocess the shader
         vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
         var vert = load(vertexShader, ShaderType.VertexShader);
         link(vert);
@@ -114,10 +73,6 @@ public partial class Shader : IDisposable {
     [GeneratedRegex(@"#include\s+[""<](.+)["">]")]
     private static partial Regex includeRegex();
 
-    [GeneratedRegex(@"#define\s+(\w+)(?:\s+(.*))?")]
-    private static partial Regex defineRegex();
-    
-    // ARB_shading_language_include support
     public static void namedStringARB(string name, string content) {
         if (!Game.hasShadingLanguageInclude) return;
         
@@ -125,17 +80,28 @@ public partial class Shader : IDisposable {
             throw new ArgumentException("Named string path must start with '/'", nameof(name));
         }
         
-        lock (namedStringsLock) {
-            namedStrings[name] = content;
+        lock (includesLock) {
+            registeredIncludes.Add(name);
         }
         
         unsafe {
-            var nameBytes = Encoding.UTF8.GetBytes(name);
-            var contentBytes = Encoding.UTF8.GetBytes(content);
+            var nameBytes = Encoding.UTF8.GetByteCount(name);
+            var contentBytes = Encoding.UTF8.GetByteCount(content);
             
-            fixed (byte* namePtr = nameBytes)
-            fixed (byte* contentPtr = contentBytes) {
-                Game.arbInclude.NamedString(ARB.ShaderIncludeArb, nameBytes.Length, namePtr, contentBytes.Length, contentPtr);
+            var namePtr = NativeMemory.Alloc((nuint)(nameBytes + 1));
+            var contentPtr = NativeMemory.Alloc((nuint)(contentBytes + 1));
+            
+            try {
+                Encoding.UTF8.GetBytes(name, new Span<byte>(namePtr, nameBytes));
+                Encoding.UTF8.GetBytes(content, new Span<byte>(contentPtr, contentBytes));
+                ((byte*)namePtr)[nameBytes] = 0;
+                ((byte*)contentPtr)[contentBytes] = 0;
+                
+                Game.arbInclude.NamedString(ARB.ShaderIncludeArb, nameBytes, (byte*)namePtr, contentBytes, (byte*)contentPtr);
+            }
+            finally {
+                NativeMemory.Free(namePtr);
+                NativeMemory.Free(contentPtr);
             }
         }
     }
@@ -147,14 +113,22 @@ public partial class Shader : IDisposable {
             throw new ArgumentException("Named string path must start with '/'", nameof(name));
         }
         
-        lock (namedStringsLock) {
-            namedStrings.Remove(name);
+        lock (includesLock) {
+            registeredIncludes.Remove(name);
         }
         
         unsafe {
-            var nameBytes = Encoding.UTF8.GetBytes(name);
-            fixed (byte* namePtr = nameBytes) {
-                Game.arbInclude.DeleteNamedString(nameBytes.Length, namePtr);
+            var nameBytes = Encoding.UTF8.GetByteCount(name);
+            var namePtr = NativeMemory.Alloc((nuint)(nameBytes + 1));
+            
+            try {
+                Encoding.UTF8.GetBytes(name, new Span<byte>(namePtr, nameBytes));
+                ((byte*)namePtr)[nameBytes] = 0;
+                
+                Game.arbInclude.DeleteNamedString(nameBytes, (byte*)namePtr);
+            }
+            finally {
+                NativeMemory.Free(namePtr);
             }
         }
     }
@@ -162,20 +136,15 @@ public partial class Shader : IDisposable {
     public static void initializeIncludeFiles() {
         if (!Game.hasShadingLanguageInclude) return;
         
-        // Scan common shader directories for include files
-        var searchDirectories = new[] { "shaders"};
+        var searchDirectories = new[] { "shaders" };
         
         foreach (var dir in searchDirectories) {
             if (!Directory.Exists(dir)) continue;
             
-            // Find all .inc and .inc.glsl files
             var incFiles = Directory.GetFiles(dir, "*.inc*", SearchOption.AllDirectories);
             
             foreach (var filePath in incFiles) {
                 var content = File.ReadAllText(filePath);
-                
-                // Convert filesystem path to named string path
-                // e.g., "shaders/common.inc" -> "/shaders/common.inc"
                 var namedPath = "/" + filePath.Replace('\\', '/');
                 
                 namedStringARB(namedPath, content);
@@ -185,12 +154,10 @@ public partial class Shader : IDisposable {
     }
 
     private string preprocess(string filePath, string source) {
-        // Reset included files for each new preprocessing
         if (Path.GetFullPath(filePath) == filePath) {
             includes.Clear();
         }
 
-        // Add this file to included files to prevent circular includes
         includes.Add(Path.GetFullPath(filePath));
 
         var lines = source.Split(["\r\n", "\n"], StringSplitOptions.None);
@@ -198,16 +165,13 @@ public partial class Shader : IDisposable {
         bool definitionsInjected = false;
 
         foreach (string line in lines) {
-            // Inject definitions after #version directive
             if (!definitionsInjected && line.TrimStart().StartsWith("#version")) {
                 result.AppendLine(line);
                 
-                // append the include extension
                 if (Game.hasShadingLanguageInclude) {
                     result.AppendLine("#extension GL_ARB_shading_language_include : enable");
                 }
                 
-                // Inject constructor-provided definitions after #version
                 foreach (var def in defs) {
                     if (string.IsNullOrEmpty(def.Value.value)) {
                         result.AppendLine($"#define {def.Key}");
@@ -219,80 +183,42 @@ public partial class Shader : IDisposable {
                 continue;
             }
             
-            
-            // Handle #include directives
-            if (line.TrimStart().StartsWith("#include")) {
-                if (!Game.hasShadingLanguageInclude) {
-                    // Manual preprocessing when ARB_shading_language_include is not available
-                    var includeRegex = Shader.includeRegex();
-                    var match = includeRegex.Match(line);
+            // Only process includes manually if ARB extension is not available
+            if (!Game.hasShadingLanguageInclude && line.TrimStart().StartsWith("#include")) {
+                var match = includeRegex().Match(line);
 
-                    if (match.Success) {
-                        var includePath = match.Groups[1].Value;
-                        
-                        string fullPath;
-                        if (includePath.StartsWith('/')) {
-                            // Path relative to project root - remove leading '/' and resolve from current directory
-                            fullPath = Path.GetFullPath(includePath[1..]);
-                        } else {
-                            // Relative path - combine with current file's directory
-                            // this should never happen tho? not sure, needs testing
-                            var baseDir = Path.GetDirectoryName(filePath);
-                            fullPath = Path.GetFullPath(Path.Combine(baseDir ?? "", includePath));
-                        }
+                if (match.Success) {
+                    var includePath = match.Groups[1].Value;
+                    
+                    string fullPath;
+                    if (includePath.StartsWith('/')) {
+                        fullPath = Path.GetFullPath(includePath[1..]);
+                    } else {
+                        var baseDir = Path.GetDirectoryName(filePath);
+                        fullPath = Path.GetFullPath(Path.Combine(baseDir ?? "", includePath));
+                    }
 
-                        // Prevent circular includes
-                        if (!includes.Contains(fullPath)) {
-                            if (File.Exists(fullPath)) {
-                                var includeContent = File.ReadAllText(fullPath);
-                                // Recursively preprocess the included file
-                                var processedInclude = preprocess(fullPath, includeContent);
-                                result.Append(processedInclude);
-                            }
-                            else {
-                                // Add comment showing the include failed
-                                result.AppendLine($"// Failed to include '{includePath}': File not found");
-                                Console.WriteLine($"Failed to include '{includePath}': File not found");
-                                result.AppendLine(line);
-                            }
+                    if (!includes.Contains(fullPath)) {
+                        if (File.Exists(fullPath)) {
+                            var includeContent = File.ReadAllText(fullPath);
+                            var processedInclude = preprocess(fullPath, includeContent);
+                            result.Append(processedInclude);
                         }
                         else {
-                            // Add comment showing circular include was prevented
-                            result.AppendLine($"// Skipped circular include of '{includePath}'");
-                            Console.WriteLine($"Skipped circular include of '{includePath}'");
+                            result.AppendLine($"// Failed to include '{includePath}': File not found");
+                            Console.WriteLine($"Failed to include '{includePath}': File not found");
+                            result.AppendLine(line);
                         }
                     }
                     else {
-                        // Include directive with invalid format
-                        result.AppendLine(line);
+                        result.AppendLine($"// Skipped circular include of '{includePath}'");
+                        Console.WriteLine($"Skipped circular include of '{includePath}'");
                     }
                 }
                 else {
-                    // When ARB_shading_language_include is available, pass #include directives through and don't do shit
                     result.AppendLine(line);
                 }
             }
-            // Handle #define directives
-            else if (line.TrimStart().StartsWith("#define")) {
-                result.AppendLine(line);
-                
-                // this is disabled because we emit defines into the header of the shader instead and let glslc do its job lol
-                // Extract the definition name and value
-                /*var defineRegex = Shader.defineRegex();
-                var match = defineRegex.Match(line);
-
-                if (match.Success) {
-                    var name = match.Groups[1].Value;
-                    var value = match.Groups[2].Success ? match.Groups[2].Value.Trim() : "";
-
-                    // Only store the definition if it doesn't already exist (constructor definitions take precedence)
-                    if (!defs.ContainsKey(name)) {
-                        defs[name] = new Definition(name, value);
-                    }
-                }*/
-            }
-            
-            // Process normal code (OpenGL compiler handles macro expansion)
             else {
                 result.AppendLine(line);
             }
@@ -305,7 +231,6 @@ public partial class Shader : IDisposable {
         var shaderHandle = GL.CreateShader(type);
         GL.ShaderSource(shaderHandle, shader);
         
-        // Use CompileShaderIncludeARB if available, otherwise standard CompileShader
         if (Game.hasShadingLanguageInclude) {
             compileShaderWithInclude(shaderHandle);
         } else {
@@ -321,31 +246,43 @@ public partial class Shader : IDisposable {
     }
     
     private static unsafe void compileShaderWithInclude(uint shaderHandle) {
-        // Get all registered named strings as search paths
-        List<string> searchPaths;
-        lock (namedStringsLock) {
-            searchPaths = namedStrings.Keys.ToList();
+        string[] searchPaths;
+        lock (includesLock) {
+            searchPaths = registeredIncludes.ToArray();
         }
         
-        if (searchPaths.Count == 0) {
-            // fallback to standard CompileShader if no includes are registered
+        if (searchPaths.Length == 0) {
             Game.GL.CompileShader(shaderHandle);
             return;
         }
         
-        // Use stackalloc for the byte arrays and pointers
-        var pathPtrs = stackalloc byte*[searchPaths.Count];
-        
-        // Convert each path to UTF8 bytes directly on the stack
-        for (int i = 0; i < searchPaths.Count; i++) {
-            var path = searchPaths[i];
-            var pathBytes = stackalloc byte[Encoding.UTF8.GetByteCount(path) + 1]; // +1 for null terminator
-            Encoding.UTF8.GetBytes(path, new Span<byte>(pathBytes, Encoding.UTF8.GetByteCount(path)));
-            pathBytes[Encoding.UTF8.GetByteCount(path)] = 0; // null terminator
-            pathPtrs[i] = pathBytes;
+        // Calculate total size needed
+        var totalSize = 0;
+        var sizes = new int[searchPaths.Length];
+        for (int i = 0; i < searchPaths.Length; i++) {
+            sizes[i] = Encoding.UTF8.GetByteCount(searchPaths[i]) + 1; // +1 for null terminator
+            totalSize += sizes[i];
         }
         
-        Game.arbInclude.CompileShaderInclude(shaderHandle, (uint)searchPaths.Count, pathPtrs, null);
+        // Allocate one contiguous block for all strings
+        var allStrings = NativeMemory.Alloc((nuint)totalSize);
+        var pathPtrs = stackalloc byte*[searchPaths.Length];
+        
+        try {
+            var currentPtr = (byte*)allStrings;
+            
+            for (int i = 0; i < searchPaths.Length; i++) {
+                pathPtrs[i] = currentPtr;
+                var written = Encoding.UTF8.GetBytes(searchPaths[i], new Span<byte>(currentPtr, sizes[i] - 1));
+                currentPtr[written] = 0; // null terminator
+                currentPtr += sizes[i];
+            }
+            
+            Game.arbInclude.CompileShaderInclude(shaderHandle, (uint)searchPaths.Length, pathPtrs, null);
+        }
+        finally {
+            NativeMemory.Free(allStrings);
+        }
     }
 
     public void link(uint vert, uint frag) {
@@ -358,7 +295,6 @@ public partial class Shader : IDisposable {
             throw new Exception($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
         }
 
-        // yeah this one is from a tutorial, don't judge me
         GL.DetachShader(programHandle, vert);
         GL.DetachShader(programHandle, frag);
         GL.DeleteShader(vert);
@@ -374,15 +310,44 @@ public partial class Shader : IDisposable {
             throw new Exception($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
         }
 
-        // yeah this one is from a tutorial, don't judge me
         GL.DetachShader(programHandle, vert);
         GL.DeleteShader(vert);
+    }
+
+    public static Shader createVariant(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath,
+        string? fragmentShaderPath = null, ShaderVariant? variant = null, IEnumerable<Definition>? defs = null) {
+        var definitions = new List<Definition>();
+        
+        if (defs != null) {
+            definitions.AddRange(defs);
+        }
+
+        var selectedVariant = variant ?? (Game.hasCMDL ? ShaderVariant.CommandList :
+            Game.hasInstancedUBO ? ShaderVariant.Instanced :
+            ShaderVariant.Normal);
+        
+        if (Game.isNVCard) {
+            definitions.Add(new Definition("NV_EXTENSIONS"));
+        }
+
+        switch (selectedVariant) {
+            case ShaderVariant.Instanced:
+                definitions.Add(new Definition("INSTANCED_RENDERING"));
+                break;
+            case ShaderVariant.CommandList:
+                definitions.Add(new Definition("INSTANCED_RENDERING"));
+                definitions.Add(new Definition("NV_COMMAND_LIST"));
+                break;
+        }
+
+        return fragmentShaderPath == null
+            ? new Shader(GL, name, vertexShaderPath, definitions)
+            : new Shader(GL, name, vertexShaderPath, fragmentShaderPath, definitions);
     }
 
     public void use() {
         GL.UseProgram(programHandle);
     }
-    // uniforms
 
     public int getUniformLocation(string name) {
         int location = GL.GetUniformLocation(programHandle, name);
@@ -417,8 +382,6 @@ public partial class Shader : IDisposable {
         GL.ProgramUniform3(programHandle, loc, 1, (float*)&value);
     }
 
-
-    // If you change this to ProgramUniform3, it's twice as slow... why???
     public void setUniformBound(int loc, float x, float y, float z) {
         GL.Uniform3(loc, x, y, z);
     }
@@ -432,6 +395,10 @@ public partial class Shader : IDisposable {
     }
 
     private void ReleaseUnmanagedResources() {
+        if (programHandle != 0) {
+            GL.DeleteProgram(programHandle);
+            programHandle = 0;
+        }
     }
 
     public void Dispose() {

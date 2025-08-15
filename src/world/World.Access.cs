@@ -117,7 +117,7 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
-            skyLightQueue.Add(new LightNode(x, y, z, chunk));
+            skyLightQueue.Add(new LightNode(blockPos.X, blockPos.Y, blockPos.Z, chunk));
             //processSkyLightQueue();
         }
     }
@@ -131,7 +131,7 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getSkyLight(x, y, z);
-            skyLightRemovalQueue.Add(new LightRemovalNode(x, y, z, value, chunk!));
+            skyLightRemovalQueue.Add(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
@@ -169,7 +169,7 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getBlockLight(x, y, z);
-            blockLightRemovalQueue.Add(new LightRemovalNode(x, y, z, value, chunk!));
+            blockLightRemovalQueue.Add(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
             chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
@@ -411,42 +411,42 @@ public partial class World {
     /// For sections
     /// </summary>
     public static Vector3I toWorldPos(int chunkX, int chunkY, int chunkZ, int x, int y, int z) {
-        return new Vector3I(chunkX * Chunk.CHUNKSIZE + x,
-            chunkY * Chunk.CHUNKSIZE + y,
-            chunkZ * Chunk.CHUNKSIZE + z);
+        return new Vector3I((chunkX << 4) + x,
+            (chunkY << 4) + y,
+            (chunkZ << 4) + z);
     }
 
     public static Vector3I toWorldPos(SubChunkCoord coord, int x, int y, int z) {
-        return new Vector3I(coord.x * Chunk.CHUNKSIZE + x,
-            coord.y * Chunk.CHUNKSIZE + y,
-            coord.z * Chunk.CHUNKSIZE + z);
+        return new Vector3I((coord.x << 4) + x,
+            (coord.y << 4) + y,
+            (coord.z << 4) + z);
     }
 
     public static Vector3I toWorldPos(SubChunkCoord coord, Vector3I c) {
-        return new Vector3I(coord.x * Chunk.CHUNKSIZE + c.X,
-            coord.y * Chunk.CHUNKSIZE + c.Y,
-            coord.z * Chunk.CHUNKSIZE + c.Z);
+        return new Vector3I((coord.x << 4) + c.X,
+            (coord.y << 4) + c.Y,
+            (coord.z << 4) + c.Z);
     }
 
     /// <summary>
     /// For chunks
     /// </summary>
     public static Vector3I toWorldPos(int chunkX, int chunkZ, int x, int y, int z) {
-        return new Vector3I(chunkX * Chunk.CHUNKSIZE + x,
+        return new Vector3I((chunkX << 4) + x,
             y,
-            chunkZ * Chunk.CHUNKSIZE + z);
+            (chunkZ << 4) + z);
     }
 
     public static Vector3I toWorldPos(ChunkCoord coord, int x, int y, int z) {
-        return new Vector3I(coord.x * Chunk.CHUNKSIZE + x,
+        return new Vector3I((coord.x << 4) + x,
             y,
-            coord.z * Chunk.CHUNKSIZE + z);
+            (coord.z << 4) + z);
     }
 
     public static Vector3I toWorldPos(ChunkCoord coord, Vector3I c) {
-        return new Vector3I(coord.x * Chunk.CHUNKSIZE + c.X,
+        return new Vector3I((coord.x << 4) + c.X,
             c.Y,
-            coord.z * Chunk.CHUNKSIZE + c.Z);
+            (coord.z << 4) + c.Z);
     }
 
     public int getHeight(int x, int z) {

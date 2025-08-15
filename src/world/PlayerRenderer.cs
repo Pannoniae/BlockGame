@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Silk.NET.OpenGL;
 using Shader = BlockGame.GL.Shader;

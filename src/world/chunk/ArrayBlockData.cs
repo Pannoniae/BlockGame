@@ -106,7 +106,10 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public ArrayBlockData(Chunk chunk, int yCoord) {
         this.chunk = chunk;
         this.yCoord = yCoord;
-        inited = false;
+        //inited = false;
+        
+        // TODO disabled the empty chunk memory optimisation, because it was fucking up the lighting! this needs to be fixed later
+        init();
     }
     
     // don't inline this, lots of useless code we don't need in the common case.
@@ -116,7 +119,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         light = lightPool.grab();
         Array.Clear(blocks);
         // fill it with empty
-        Array.Fill(light, (byte)0x0F);
+        Array.Fill(light, (byte)0x00);
         inited = true;
 
         // if we are already lighted, we can light the section (don't do it during worldgen - it will light the entire chunk full of ground

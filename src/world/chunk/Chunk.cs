@@ -1,3 +1,4 @@
+using BlockGame.block;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
@@ -22,7 +23,15 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public readonly ChunkCoord coord;
     public SubChunk[] subChunks;
     public ArrayBlockData[] blocks = new ArrayBlockData[CHUNKHEIGHT];
-    
+
+    /** For now, this is fixed-size, we'll cook something better up later */
+    public List<Entity>[] entities = new List<Entity>[CHUNKHEIGHT];
+
+    /** TODO implement crafting tables and stuff
+     * (does that need to be a block entity? maybe? or more like a chest or something
+     */
+    public Dictionary<Vector3I, BlockEntity> blockEntities = new();
+
     public World world;
 
     public AABB box;
@@ -43,7 +52,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         subChunks = new SubChunk[CHUNKHEIGHT];
         coord = new ChunkCoord(chunkX, chunkZ);
         // TODO FIX THIS SHIT
-        
+
         // storage!
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             subChunks[i] = new SubChunk(world, this, chunkX, i, chunkZ);
@@ -71,28 +80,29 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 ushort bl = getBlock(x, y, z);
                 while (!Block.isFullBlock(bl) && y > 0) {
                     // check if chunk is initialised first
-                    if (blocks[y >> 4].inited) {
-                        setSkyLight(x, y, z, 15);
-                    }
+                    //if (blocks[y >> 4].inited) {
+                    setSkyLight(x, y, z, 15);
+                    //}
 
                     y--;
                     bl = getBlock(x, y, z);
                 }
 
                 // add the last item for propagation
-                world.skyLightQueue.Add(new LightNode(worldX + x, y + 1, worldZ + z, this));
+                if (y + 1 < CHUNKSIZE * CHUNKHEIGHT) {
+                    world.skyLightQueue.Add(new LightNode(x, y + 1, z, this));
+                }
 
                 // loop from y down to the bottom of the world
                 for (int yy = y - 1; yy >= 0; yy--) {
                     bl = getBlock(x, yy, z);
                     // if blocklight, propagate
                     if (Block.lightLevel[bl] > 0) {
-                        world.blockLightQueue.Add(new LightNode(worldX + x, yy, worldZ + z, this));
+                        world.blockLightQueue.Add(new LightNode(x, yy, z, this));
                     }
                 }
             }
         }
-
         // second pass: check for horizontal propagation into unlit neighbors
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
@@ -101,9 +111,9 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     if (getSkyLight(x, y, z) == 15) {
                         // check horizontal neighbors
                         for (var i = 0; i < 4; i++) {
-                            int dx;
-                            int dz;
-                            
+                            int dx = 0;
+                            int dz = 0;
+
                             switch (i) {
                                 case 0: // left
                                     dx = -1;
@@ -121,8 +131,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                                     dx = 0;
                                     dz = 1;
                                     break;
-                                default:
-                                    throw new ArgumentOutOfRangeException();
+                                // yes i know the switch isn't exhaustive SHUT UP
                             }
 
                             var nx = x + dx;
@@ -132,10 +141,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
                             // use world coordinates to check neighbors across chunk boundaries
                             //if (world.inWorld(worldnx, y, worldnz)) {
+                            
                             // if neighbor is air and has no skylight, add for propagation
                             if (!Block.isFullBlock(world.getBlock(worldnx, y, worldnz)) &&
-                                world.getSkyLight(worldnx, y, worldnz) == 0) {
-                                world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                                
+                                // if full skylight there, nothing to do....
+                                world.getSkyLight(worldnx, y, worldnz) != 15) {
+                                world.skyLightQueue.Add(new LightNode(x, y, z, this));
                             }
                             //}
                         }
@@ -144,7 +156,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             }
         }
 
-        world.processSkyLightQueue();
+        world.processSkyLightQueueNoUpdate();
         status = ChunkStatus.LIGHTED;
     }
 
@@ -170,7 +182,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 }
                 if (atLeastOnce) {
                     // add the last item for propagation
-                    world.skyLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                    world.skyLightQueue.Add(new LightNode(x, y, z, this));
                 }
 
                 // loop from y down to the bottom of the world
@@ -178,7 +190,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     bl = getBlock(x, yy, z);
                     // if blocklight, propagate
                     if (Block.lightLevel[bl] > 0) {
-                        world.blockLightQueue.Add(new LightNode(worldX + x, y, worldZ + z, this));
+                        world.blockLightQueue.Add(new LightNode(x, yy, z, this));
                     }
                 }
             }
@@ -234,16 +246,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlockRemesh(int x, int y, int z, ushort block) {
-        var sectionY = y >> 4;
-        var yRem = y & 0xF;
-
         // handle empty chunksections
         /*if (section.isEmpty && block != 0) {
             section.blocks = new ArrayBlockData(this);
             section.isEmpty = false;
         }*/
-        var oldBlock = blocks[y >> 4][x, yRem, z];
-        blocks[y >> 4][x, yRem, z] = block;
+        var oldBlock = blocks[y >> 4][x, y & 0xF, z];
+        blocks[y >> 4][x, y & 0xF, z] = block;
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
@@ -251,21 +260,26 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         // if block broken, add sunlight from neighbours
         if (block == 0) {
-            //world.skyLightQueue.Add(new LightNode(wx, y, wz, this));
-            world.skyLightQueue.Add(new LightNode(wx - 1, y, wz, this));
-            world.skyLightQueue.Add(new LightNode(wx + 1, y, wz, this));
-            world.skyLightQueue.Add(new LightNode(wx, y, wz - 1, this));
-            world.skyLightQueue.Add(new LightNode(wx, y, wz + 1, this));
-            world.skyLightQueue.Add(new LightNode(wx, y - 1, wz, this));
-            world.skyLightQueue.Add(new LightNode(wx, y + 1, wz, this));
+            // Queue all 6 neighbors for light propagation
+            // The propagation algorithm will handle cross-chunk boundaries
+            foreach (var dir in Direction.directions) {
+                var neighborPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighborChunk);
+                
+                // is nullcheck needed?
+                //if (neighborChunk != null) {
+                    // Only queue if neighbor has light to propagate
+                    //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
-            // and blocklight too
-            world.blockLightQueue.Add(new LightNode(wx - 1, y, wz, this));
-            world.blockLightQueue.Add(new LightNode(wx + 1, y, wz, this));
-            world.blockLightQueue.Add(new LightNode(wx, y, wz - 1, this));
-            world.blockLightQueue.Add(new LightNode(wx, y, wz + 1, this));
-            world.blockLightQueue.Add(new LightNode(wx, y - 1, wz, this));
-            world.blockLightQueue.Add(new LightNode(wx, y + 1, wz, this));
+                    //if (skyLight > 0) {
+                    world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
+                    //}
+                    //if (blockLight > 0) {
+                    world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        neighborChunk));
+                    //}
+                //}
+            }
         }
         else {
             world.removeSkyLightAndPropagate(wx, y, wz);
@@ -277,7 +291,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // add lightsource
             setBlockLight(x, y, z, Block.lightLevel[block]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
-            world.blockLightQueue.Add(new LightNode(wx, y, wz, this));
+            world.blockLightQueue.Add(new LightNode(x, y, z, this));
         }
 
         // if the old block had light, remove the light
@@ -305,14 +319,15 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setSkyLightRemesh(int x, int y, int z, byte value) {
-        var sectionY = y / CHUNKSIZE;
-        var yRem = y % CHUNKSIZE;
+        var sectionY = y >> 4;
+        var yRem = y & 0xF;
 
         // handle empty chunksections
         blocks[sectionY].setSkylight(x, yRem, z, value);
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
-
+        
+        
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
 
@@ -490,7 +505,7 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
     public readonly int x = x;
     public readonly int y = y;
     public readonly int z = z;
-    
+
     public override int GetHashCode() {
         return XHash.hash(x, y, z);
     }

@@ -1,19 +1,20 @@
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL;
 
 namespace BlockGame;
 
-public class ParticleManager {
+public class Particles {
 
     private readonly World world;
 
     private readonly List<Particle> particles = [];
     private readonly InstantDrawTexture drawer = new InstantDrawTexture(1024);
 
-    public ParticleManager(World world) {
+    public Particles(World world) {
         this.world = world;
         drawer.setup();
     }

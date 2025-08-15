@@ -9,6 +9,22 @@ public partial class World : IDisposable {
     public const int WORLDSIZE = 12;
     public const int REGIONSIZE = 16;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
+    
+    // try to keep 120 FPS at least
+    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
+    public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
+    
+    
+    // when loading the world, we can load chunks faster because fuck cares about a loading screen?
+    public const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 10.0;
+    public const long MAX_LIGHT_FRAMETIME = 5;
+    public const int SPAWNCHUNKS_SIZE = 1;
+    public const int MAX_TICKING_DISTANCE = 128;
+
+    /// <summary>
+    /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
+    /// </summary>
+    public const int numTicks = 1;
 
     public string name;
 
@@ -22,8 +38,11 @@ public partial class World : IDisposable {
 
     public readonly List<Entity> entities;
 
-    public readonly ParticleManager particleManager;
+    public readonly Particles particles;
     //public List<ChunkSection> sortedTransparentChunks = [];
+    
+    
+    
 
     // Queues
     public List<ChunkLoadTicket> chunkLoadQueue = new();
@@ -54,22 +73,6 @@ public partial class World : IDisposable {
 
     public XRandom random;
     private TimerAction saveWorld;
-    
-    // try to keep 120 FPS at least
-    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
-    public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
-    
-    
-    // when loading the world, we can load chunks faster because fuck cares about a loading screen?
-    public const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 20.0;
-    public const long MAX_LIGHT_FRAMETIME = 5;
-    public const int SPAWNCHUNKS_SIZE = 1;
-    public const int MAX_TICKING_DISTANCE = 128;
-
-    /// <summary>
-    /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
-    /// </summary>
-    public const int numTicks = 1;
 
     public World(string name, int seed) {
         this.name = name;
@@ -86,7 +89,9 @@ public partial class World : IDisposable {
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
         chunkList = new List<Chunk>(2048);
-        particleManager = new ParticleManager(this);
+
+        entities = new List<Entity>();
+        particles = new Particles(this);
     }
 
     public void init(bool loadingSave = false) {
@@ -353,7 +358,7 @@ public partial class World : IDisposable {
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var ctr = 0;
         updateChunkloading(start, loading: false, ref ctr);
-        particleManager.update(dt);
+        particles.update(dt);
         
     }
 
@@ -444,9 +449,9 @@ public partial class World : IDisposable {
                     for (int i = 0; i < numTicks; i++) {
                         // I pray this is random
                         var coord = random.Next(16 * 16 * 16);
-                        var x = coord / (16 * 16);
-                        var y = coord / 16 % 16;
-                        var z = coord % 16;
+                        var x = coord >> 8;
+                        var y = coord >> 4 & 0xF;
+                        var z = coord & 0xF;
                         chunksection.tick(this, random, x, y, z);
                     }
                 }
@@ -454,8 +459,22 @@ public partial class World : IDisposable {
         }
     }
 
+    public static void getEntitiesInBox(List<Entity> result, Vector3I min, Vector3I max) {
+        // fill
+    }
+    
+    public List<Entity> getEntitiesInBox(Vector3I min, Vector3I max) {
+        var result = new List<Entity>();
+        getEntitiesInBox(result, min, max);
+        return result;
+    }
+
     public void processSkyLightQueue() {
         processLightQueue(skyLightQueue, true);
+    }
+    
+    public void processSkyLightQueueNoUpdate() {
+        processLightQueue(skyLightQueue, true, true);
     }
 
     public void processSkyLightRemovalQueue() {
@@ -470,45 +489,103 @@ public partial class World : IDisposable {
         processLightRemovalQueue(blockLightRemovalQueue, blockLightQueue, false);
     }
 
-    public void processLightQueue(List<LightNode> queue, bool isSkylight) {
+    /// <summary>
+    /// Gets the chunk and relative position for a neighbor of a block in chunk-relative coordinates
+    /// </summary>
+    public Vector3I getChunkAndRelativePos(Chunk currentChunk, int x, int y, int z, Vector3I direction, out Chunk? chunk) {
+        var neighbourX = x + direction.X;
+        var neighbourY = y + direction.Y;
+        var neighbourZ = z + direction.Z;
+        
+        
+        if (neighbourY is < 0 or >= WORLDHEIGHT) {
+            chunk = null;
+            return Vector3I.Zero;
+        }
+        
+        // Check if neighbor is within current chunk bounds (0-15 for X/Z)
+        if (neighbourX is >= 0 and < 16 && neighbourZ is >= 0 and < 16) {
+            chunk = currentChunk;
+            return new Vector3I(neighbourX, neighbourY, neighbourZ);
+        }
+        
+        
+        // todo this could be way simpler but it was buggy so im leaving the optimisation for later
+        // neighbour crosses XZ boundary - calculate global position and find target chunk
+        var neighbourGlobal = toWorldPos(currentChunk.coord.x, currentChunk.coord.z, neighbourX, neighbourY, neighbourZ);
+        
+        // get target chunk
+        // this assigns directly to the output variable! might be null, FYI
+        if (!getChunkMaybe(neighbourGlobal.X, neighbourGlobal.Z, out var testChunk)) {
+            chunk = null;
+            return Vector3I.Zero; // Chunk not loaded, bail
+        }
+        
+        var relativeX = neighbourGlobal.X - testChunk.worldX;
+        var relativeZ = neighbourGlobal.Z - testChunk.worldZ;
+        chunk = testChunk;
+        return new Vector3I(relativeX, neighbourGlobal.Y, relativeZ);
+    }
+    
+    
+    /**
+     * If noUpdate, we're loading, don't bother invalidating chunks, they'll get remeshed *anyway*
+     */
+    public void processLightQueue(List<LightNode> queue, bool isSkylight, bool noUpdate = false) {
         while (queue.Count > 0) {
             var cnt = queue.Count;
             //Console.Out.WriteLine(cnt);
             var node = queue[cnt - 1];
             queue.RemoveAt(cnt - 1);
 
-            var blockPos = new Vector3I(node.x, node.y, node.z);
-            byte level = isSkylight ? getSkyLight(node.x, node.y, node.z) : getBlockLight(node.x, node.y, node.z);
+            //var blockPos = new Vector3I(node.x, node.y, node.z);
+            byte level = isSkylight ? node.chunk.getSkyLight(node.x, node.y, node.z) : node.chunk.getBlockLight(node.x, node.y, node.z);
 
             // if this is opaque (for skylight), don't bother
-            if (isSkylight && Block.isFullBlock(getBlock(node.x, node.y, node.z))) {
+            if (isSkylight && Block.isFullBlock(node.chunk.getBlock(node.x, node.y, node.z))) {
                 continue;
             }
 
             //Console.Out.WriteLine(blockPos);
 
             foreach (var dir in Direction.directionsLight) {
-                var neighbour = blockPos + dir;
+                // Get neighbor chunk and relative position
+                var neighborRelPos = getChunkAndRelativePos(node.chunk, node.x, node.y, node.z, dir, out var neighborChunk);
+                if (neighborChunk == null) {
+                    continue;
+                }
+
                 // if neighbour is opaque, don't bother either
-                if (Block.isFullBlock(getBlock(neighbour))) {
+                if (Block.isFullBlock(neighborChunk.getBlock(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z))) {
                     continue;
                 }
-                byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
-                // if not in world, forget it
-                if (!inWorldY(neighbour.X, neighbour.Y, neighbour.Z)) {
-                    continue;
-                }
+                
+                byte neighbourLevel = isSkylight ? neighborChunk.getSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z) : neighborChunk.getBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
                 //var neighbourBlock = getBlock(neighbour);
                 var isDown = isSkylight && level == 15 && neighbourLevel != 15 && dir == Direction.DOWN;
+                
                 if (neighbourLevel + 2 <= level || isDown) {
                     byte newLevel = (byte)(isDown ? level : level - 1);
                     if (isSkylight) {
-                        setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+
+                        if (noUpdate) {
+                            neighborChunk.setSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
+                        }
+                        else {
+                            neighborChunk.setSkyLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
+                                newLevel);
+                        }
                     }
                     else {
-                        setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, newLevel);
+                        if (noUpdate) {
+                            neighborChunk.setBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
+                        }
+                        else {
+                            neighborChunk.setBlockLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
+                                newLevel);
+                        }
                     }
-                    queue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
+                    queue.Add(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
                 }
             }
         }
@@ -524,29 +601,30 @@ public partial class World : IDisposable {
             var level = node.value;
 
             foreach (var dir in Direction.directionsLight) {
-                var neighbour = blockPos + dir;
-                // if not in world, forget it
-                if (!inWorldY(neighbour.X, neighbour.Y, neighbour.Z)) {
+                // Get neighbor chunk and relative position
+                var neighborRelPos = getChunkAndRelativePos(node.chunk, node.x, node.y, node.z, dir, out var neighborChunk);
+                if (neighborChunk == null) {
                     continue;
                 }
-                byte neighbourLevel = isSkylight ? getSkyLight(neighbour.X, neighbour.Y, neighbour.Z) : getBlockLight(neighbour.X, neighbour.Y, neighbour.Z);
+
+                byte neighbourLevel = isSkylight ? neighborChunk.getSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z) : neighborChunk.getBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
                 var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
                 if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                     if (isSkylight) {
-                        setSkyLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        neighborChunk.setSkyLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
                     }
                     else {
-                        setBlockLightRemesh(neighbour.X, neighbour.Y, neighbour.Z, 0);
+                        neighborChunk.setBlockLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
                     }
 
                     // Emplace new node to queue. (could use push as well)
-                    queue.Add(new LightRemovalNode(neighbour.X, neighbour.Y, neighbour.Z, neighbourLevel, node.chunk));
+                    queue.Add(new LightRemovalNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighbourLevel, neighborChunk));
                 }
                 else if (neighbourLevel >= level) {
                     // Add it to the update queue, so it can propagate to fill in the gaps
                     // left behind by this removal. We should update the lightBfsQueue after
                     // the lightRemovalBfsQueue is empty.
-                    addQueue.Add(new LightNode(neighbour.X, neighbour.Y, neighbour.Z, node.chunk));
+                    addQueue.Add(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
 
                 }
             }

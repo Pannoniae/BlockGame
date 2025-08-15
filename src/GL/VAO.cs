@@ -1,3 +1,5 @@
+using BlockGame.GL.vertexformats;
+
 namespace BlockGame.GL;
 
 public interface VAO : IDisposable {

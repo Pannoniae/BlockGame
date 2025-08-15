@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.GL.vertexformats;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.NV;
 using Buffer = System.Buffer;

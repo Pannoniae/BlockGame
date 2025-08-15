@@ -867,7 +867,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
-        world.particleManager.render(interp);
+        world.particles.render(interp);
     }
 
     public ulong testidx;

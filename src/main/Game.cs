@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.render;
 using BlockGame.snd;
 using BlockGame.ui;
 using BlockGame.util;

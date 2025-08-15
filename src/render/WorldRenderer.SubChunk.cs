@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.id;
 using BlockGame.ui;
 using BlockGame.util;
@@ -824,6 +825,7 @@ public partial class WorldRenderer {
                     vertex.v = (ushort)tex[3];
                     vertex.c = Block.packColour((byte)dir, ao.Second);
                     vertex.light = light.Second;
+                    
 
                     vertex = ref tempVertices[2];
                     vertex.x = (ushort)vec[6];

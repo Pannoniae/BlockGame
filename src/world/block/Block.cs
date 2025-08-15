@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.block;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.id;
@@ -461,7 +462,7 @@ public class Block {
                         size,
                         1 / 16f * size,
                         ttl);
-                    world.particleManager.add(particle);
+                    world.particles.add(particle);
 
                     particle.velocity = motion.toVec3D();
                 }
@@ -475,7 +476,7 @@ public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uv
 
     public override void update(World world, Vector3I pos) {
         if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
-            world.setBlockRemesh(pos.X, pos.Y, pos.Z, Block.AIR.id);
+            world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR);
         }
     }
 }
@@ -486,10 +487,10 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
         foreach (var dir in Direction.directionsWaterSpread) {
             // queue block updates
             var neighbourBlock = pos + dir;
-            if (world.getBlock(neighbourBlock) == Block.AIR.id) {
+            if (world.getBlock(neighbourBlock) == Blocks.AIR) {
                 world.runLater(neighbourBlock, () => {
-                    if (world.getBlock(neighbourBlock) == Block.AIR.id) {
-                        world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Block.WATER.id);
+                    if (world.getBlock(neighbourBlock) == Blocks.AIR) {
+                        world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER);
                     }
                 }, 10);
                 world.blockUpdate(neighbourBlock, 10);

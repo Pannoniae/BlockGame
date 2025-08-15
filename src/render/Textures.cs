@@ -1,8 +1,9 @@
 using BlockGame.GL;
+using BlockGame.util;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace BlockGame.util;
+namespace BlockGame.render;
 
 public class Textures {
     public Silk.NET.OpenGL.GL GL;
@@ -94,12 +95,18 @@ public class Textures {
             for (int i = 0; i < 256; i++) {
                 int skyLevel = i >> 4; // i / 16
                 int blockLevel = i & 0xF; // i % 16
-                
+
                 // inv sq law or some shit
                 float sa = skyLevel / 15f;
-                sa = sa * sa;
+                //sa = sa * sa;
+                //sa = sa * sa * (3f - 2f * sa);
+                //sa = 0.5f - float.Sin(float.Tan(1.05f - 2.0f * sa) / 3.0f);
+                sa = sa * 0.5f * (1 - sa) + sa * sa;
                 float ba = blockLevel / 15f;
-                ba = ba * ba;
+                //ba = ba * ba;
+                //ba = ba * ba * (3f - 2f * ba);
+                // ba = 0.5f - float.Sin(float.Tan(1.05f - 2.0f * ba) / 3.0f);
+                ba = ba * 0.5f * (1 - ba) + ba * ba;
 
                 float skyLight = sa * ambientBrightness;
                 float bl = ba;
@@ -108,13 +115,13 @@ public class Textures {
                 float br = bl;
                 float bg = bl * ((bl * Meth.psiF + Meth.rhoF) * Meth.psiF + Meth.rhoF);
                 float bb = bl * (bl * bl * Meth.psiF + Meth.rhoF);
-                
+
                 // scale red down
                 float sr = skyLight * (ambientBrightness * Meth.psiF + Meth.rhoF);
                 float sg = skyLight * (ambientBrightness * Meth.psiF + Meth.rhoF);
                 float sb = skyLight;
-                
-                
+
+
                 float r = (sr + br) * INVBASE + BASE;
                 float g = (sg + bg) * INVBASE + BASE;
                 float b = (sb + bb) * INVBASE + BASE;

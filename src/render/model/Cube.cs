@@ -1,4 +1,5 @@
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;

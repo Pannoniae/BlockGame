@@ -3,7 +3,6 @@ using System.Text;
 using BlockGame.GL.vertexformats;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.AMD;
 
 namespace BlockGame.GL;
 
