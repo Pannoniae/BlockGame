@@ -534,7 +534,7 @@ public partial class Game {
 
         cs = new Coroutines();
 
-        var music = snd.playMusic("snd/tests.flac");
+        var music = snd.playMusic("snd/tests.ogg");
         snd.setLoop(music, true);
 
         snd.muteMusic();

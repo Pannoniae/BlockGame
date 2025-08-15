@@ -56,6 +56,7 @@ public class Block {
     public static bool[] selection = new bool[MAXBLOCKS];
     public static bool[] collision = new bool[MAXBLOCKS];
     public static byte[] lightLevel = new byte[MAXBLOCKS];
+    public static byte[] lightAbsorption = new byte[MAXBLOCKS];
     public static AABB?[] AABB = new AABB?[MAXBLOCKS];
     public static AABB?[] selectionAABB = new AABB?[MAXBLOCKS];
     public static RenderType[] renderType = new RenderType[MAXBLOCKS];
@@ -154,7 +155,7 @@ public class Block {
 
     public static Block HEAD = register(new Block(Blocks.HEAD, "Head", BlockModel.makeHalfCube(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
 
-    public static Block WATER = register(new Water(Blocks.WATER, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid());
+    public static Block WATER = register(new Water(Blocks.WATER, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid().setLightAbsorption(1));
 
     public static Block RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore", BlockModel.makeCube(cubeUVs(10, 0))));
     public static Block TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore", BlockModel.makeCube(cubeUVs(11, 0))));
@@ -387,6 +388,11 @@ public class Block {
 
     public Block light(byte amount) {
         lightLevel[id] = amount;
+        return this;
+    }
+    
+    public Block setLightAbsorption(byte amount) {
+        lightAbsorption[id] = amount;
         return this;
     }
 

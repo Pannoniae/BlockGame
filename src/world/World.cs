@@ -512,19 +512,22 @@ public partial class World : IDisposable {
         
         // todo this could be way simpler but it was buggy so im leaving the optimisation for later
         // neighbour crosses XZ boundary - calculate global position and find target chunk
-        var neighbourGlobal = toWorldPos(currentChunk.coord.x, currentChunk.coord.z, neighbourX, neighbourY, neighbourZ);
+        //var neighbourGlobal = toWorldPos(currentChunk.coord.x, currentChunk.coord.z, neighbourX, neighbourY, neighbourZ);
+        
+        // get the chunk world coord by shifting the chunk-relative coordinates "out" of the number
+        var newX = (currentChunk.coord.x << 4) + neighbourX;
+        var newZ = (currentChunk.coord.z << 4) + neighbourZ;
         
         // get target chunk
         // this assigns directly to the output variable! might be null, FYI
-        if (!getChunkMaybe(neighbourGlobal.X, neighbourGlobal.Z, out var testChunk)) {
+        if (!getChunkMaybe(newX, newZ, out var testChunk)) {
             chunk = null;
             return Vector3I.Zero; // Chunk not loaded, bail
         }
         
-        var relativeX = neighbourGlobal.X - testChunk.worldX;
-        var relativeZ = neighbourGlobal.Z - testChunk.worldZ;
+        
         chunk = testChunk;
-        return new Vector3I(relativeX, neighbourGlobal.Y, relativeZ);
+        return new Vector3I(newX & 0xF, neighbourY, newZ & 0xF);
     }
     
     
@@ -565,7 +568,12 @@ public partial class World : IDisposable {
                 var isDown = isSkylight && level == 15 && neighbourLevel != 15 && dir == Direction.DOWN;
                 
                 if (neighbourLevel + 2 <= level || isDown) {
-                    byte newLevel = (byte)(isDown ? level : level - 1);
+                    var neighborBlockId = neighborChunk.getBlock(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+                    var absorption = Block.lightAbsorption[neighborBlockId];
+                    
+                    // apply absorption, or if no absorption: down=no decrease, sideways=decrease by 1
+                    var decrease = absorption > 0 ? absorption : (isDown ? 0 : 1);
+                    byte newLevel = (byte)Math.Max(0, level - decrease);
                     if (isSkylight) {
 
                         if (noUpdate) {

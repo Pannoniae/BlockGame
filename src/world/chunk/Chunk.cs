@@ -78,7 +78,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
                 // loop down until block is solid
                 ushort bl = getBlock(x, y, z);
-                while (!Block.isFullBlock(bl) && y > 0) {
+                while (bl == 0 && y > 0) {
                     // check if chunk is initialised first
                     //if (blocks[y >> 4].inited) {
                     setSkyLight(x, y, z, 15);

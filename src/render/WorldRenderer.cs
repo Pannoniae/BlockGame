@@ -455,7 +455,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthMask(true);
 
         // no blending solid shit!
-        GL.Disable(EnableCap.Blend);
+        //GL.Disable(EnableCap.Blend);
 
         //worldShader.use();
 
@@ -782,7 +782,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // start blending at transparent stuff
-        GL.Enable(EnableCap.Blend);
+        //GL.Enable(EnableCap.Blend);
 
         GL.Disable(EnableCap.CullFace);
 

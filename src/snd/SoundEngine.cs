@@ -1,7 +1,5 @@
 using BlockGame.util;
-using MiniAudioExNET;
-using MiniAudioExNET.Core;
-using MiniAudioExNET.DSP;
+using MiniAudioEx;
 
 namespace BlockGame.snd;
 

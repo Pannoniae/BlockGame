@@ -100,16 +100,28 @@ public class PlayerRenderer {
         
         // Draw a full-screen quad with slightly blue tint
         float alpha = 0.5f;
+        // multiply by lighting
+
+        var world = Game.world;
+        var blockPos = player.position.toBlockPos();
+        
+        var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
+        var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
+        var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
+
+        var r = (byte)(tint.R * 255);
+        var g = (byte)(tint.G * 255);
+        var b = (byte)(tint.B * 255);
         
         waterOverlayRenderer.begin(PrimitiveType.Triangles);
         
-        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, -1, 0, 0f, 0f, 255, 255, 255, (byte)(alpha * 255)));
-        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, 255, 255, 255, (byte)(alpha * 255)));
-        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, 255, 255, 255, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, -1, 0, 0f, 0f, r, g, b, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, r, g, b, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, r, g, b, (byte)(alpha * 255)));
         
-        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, 255, 255, 255, (byte)(alpha * 255)));
-        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, 255, 255, 255, (byte)(alpha * 255)));
-        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, 1, 0, 1f, 1f, 255, 255, 255, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, r, g, b, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, r, g, b, (byte)(alpha * 255)));
+        waterOverlayRenderer.addVertex(new BlockVertexTinted(1, 1, 0, 1f, 1f, r, g, b, (byte)(alpha * 255)));
         
         // Render the overlay
         waterOverlayRenderer.end();
