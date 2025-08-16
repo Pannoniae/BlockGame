@@ -263,7 +263,10 @@ public static partial class Meth {
 /// Doubles as a normal too
 /// </summary>
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct Direction {
+public readonly record struct Direction(int x, int y, int z) {
+    public readonly int x = x;
+    public readonly int y = y;
+    public readonly int z = z;
 
     public static int min = 0;
     public static int max = 6;
@@ -278,6 +281,7 @@ public readonly record struct Direction {
 
     public static readonly Vector3I[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
     public static readonly Vector3I[] directionsLight = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
+    public static readonly Vector3I[] directionsNoDown = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
     public static readonly Vector3I[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
     public static readonly Vector3I[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
     public static readonly Vector3I[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
@@ -330,7 +334,17 @@ public readonly record struct Direction {
         }
         throw new ArgumentException("Invalid direction!");
     }
+    
+    public Vector3I toVec() {
+        return Unsafe.BitCast<Direction, Vector3I>(this);
+    }
+}
 
+public static class DirectionExtensions {
+
+    public static Direction toDir(this Vector3I dir) {
+        return Unsafe.BitCast<Vector3I, Direction>(dir);
+    }
 }
 
 public static class UnsafeListAccessor<T> {

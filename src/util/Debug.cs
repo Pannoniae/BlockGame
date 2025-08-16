@@ -10,63 +10,30 @@ using Shader = BlockGame.GL.Shader;
 namespace BlockGame.util;
 
 public class Debug {
-    private const int MAX_LINE_VERTICES = 512;
-    private const int MAX_POINT_VERTICES = 512;
-
-    private readonly VertexTinted[] lineVertices = new VertexTinted[MAX_LINE_VERTICES];
-    // Replace TrippyGL VertexBuffer with standard GL buffers
-    private uint lineVao;
-    private uint lineVbo;
-    private int currentLine = 0;
+    public readonly InstantDrawColour idc;
     
     public Debug() {
-        unsafe {
-            
-            Game.graphics.saveVAO();
-            
-            // Create and setup VAO/VBO for lines
-            lineVao = Game.GL.CreateVertexArray();
-            lineVbo = Game.GL.CreateBuffer();
-            
-            Game.GL.BindVertexArray(lineVao);
-            Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineVbo);
-            Game.GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(MAX_LINE_VERTICES * sizeof(VertexTinted)),
-                (void*)0, BufferUsageARB.StreamDraw);
-
-            // Set up vertex attributes (position and color)
-            Game.GL.EnableVertexAttribArray(0);
-            Game.GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, (uint)sizeof(VertexTinted),
-                (void*)0);
-            Game.GL.EnableVertexAttribArray(1);
-            Game.GL.VertexAttribPointer(1, 4, VertexAttribPointerType.UnsignedByte, true, (uint)sizeof(VertexTinted),
-                (void*)12); // Offset to color (3 floats = 12 bytes)
-            
-            Game.graphics.restoreVAO();
-        }
+        idc = new InstantDrawColour(8192);
+        idc.setup();
     }
     
     public void renderTick(double interp) {
-        //Game.graphics.instantColourShader.use();
-        
-        // Set projection and view uniforms
+        // Set projection and view uniforms for the instant draw system
         Matrix4x4 projMatrix = Game.world.player.camera.getProjectionMatrix();
         Matrix4x4 viewMatrix = Game.world.player.camera.getViewMatrix(interp);
+        Matrix4x4 mvpMatrix = viewMatrix * projMatrix;
         
-        Game.graphics.instantColourShader.setProjection(projMatrix);
-        Game.graphics.instantColourShader.setView(viewMatrix);
+        idc.setMVP(mvpMatrix);
     }
 
     public void drawLine(Vector3D from, Vector3D to, Color4b colour = default) {
         if (colour == default) {
             colour = Color4b.Red;
         }
-        if (currentLine >= MAX_LINE_VERTICES - 2) {
-            flushLines();
-        }
-        lineVertices[currentLine] = new VertexTinted(from.toVec3(), colour);
-        currentLine++;
-        lineVertices[currentLine] = new VertexTinted(to.toVec3(), colour);
-        currentLine++;
+        
+        idc.addVertex(new VertexTinted(from.toVec3(), colour));
+        idc.addVertex(new VertexTinted(to.toVec3(), colour));
+        
     }
 
     public void drawAABB(AABB aabb, Color4b colour = default) {
@@ -99,23 +66,10 @@ public class Debug {
         drawLine(lnw, unw);
     }
 
-    public void flushLines() {
-        // nothing to do
-        if (currentLine == 0) {
-            return;
-        }
-
-        Game.GL.BindVertexArray(lineVao);
-        Game.GL.BindBuffer(BufferTargetARB.ArrayBuffer, lineVbo);
-        Game.GL.InvalidateBufferData(lineVbo);
-        unsafe {
-            Game.GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
-                (nuint)(currentLine * sizeof(VertexTinted)), lineVertices);
-        }
-
-        Game.graphics.instantColourShader.use();
-        Game.GL.DrawArrays(PrimitiveType.Lines, 0, (uint)currentLine);
-        
-        currentLine = 0;
+    public void drawTranslucentPlane(Vector3D p1, Vector3D p2, Vector3D p3, Vector3D p4, Color4b colour) {
+        idc.addVertex(new VertexTinted(p1.toVec3(), colour));
+        idc.addVertex(new VertexTinted(p2.toVec3(), colour));
+        idc.addVertex(new VertexTinted(p3.toVec3(), colour));
+        idc.addVertex(new VertexTinted(p4.toVec3(), colour));
     }
 }

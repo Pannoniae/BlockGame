@@ -65,15 +65,11 @@ public sealed class SharedBlockVAO : VAO {
             if (Game.hasVBUM) {
                 bufferLength = (nuint)vertexSize;
                 // make buffer resident first, then get its GPU address
-                GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
+                //GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
                 //Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
                 //Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV, out bufferAddress);
                 Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
                 bufferAddress = Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV);
-                // validate buffer address
-                if (bufferAddress == 0) {
-                    throw new Exception($"Failed to get GPU address for vertex buffer {buffer}");
-                }
                 //Console.WriteLine($"SharedBlockVAO: buffer={buffer}, address=0x{bufferAddress:X16}, length={bufferLength}");
             }
         }

@@ -539,4 +539,20 @@ public partial class World {
         return false;
     }
 
+    public static void getBlocksInBox(List<Vector3I> result, Vector3I min, Vector3I max) {
+        result.Clear();
+        for (int x = min.X; x <= max.X; x++) {
+            for (int y = min.Y; y <= max.Y; y++) {
+                for (int z = min.Z; z <= max.Z; z++) {
+                    result.Add(new Vector3I(x, y, z));
+                }
+            }
+        }
+    }
+
+    public static List<Vector3I> getBlocksInBox(Vector3I min, Vector3I max) {
+        var result = new List<Vector3I>();
+        getBlocksInBox(result, min, max);
+        return result;
+    }
 }

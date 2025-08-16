@@ -85,6 +85,15 @@ public partial class Game {
     private unsafe void genFramebuffer() {
         GL.DeleteFramebuffer(fbo);
         GL.DeleteFramebuffer(resolveFbo);
+        
+        // WIDTH CHECK
+        if (width < 24) {
+            width = 24;
+        }
+
+        if (height < 12) {
+            height = 12;
+        }
 
         var ssaaWidth = width * Settings.instance.effectiveScale;
         var ssaaHeight = height * Settings.instance.effectiveScale;

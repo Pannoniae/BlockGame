@@ -84,7 +84,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public static Color4b defaultClearColour = new Color4b(168, 204, 232);
     public static Color4b defaultFogColour = Color4b.White;
 
-    private HashSet<SubChunkCoord> chunksToMesh = [];
+    private readonly HashSet<SubChunkCoord> chunksToMesh = [];
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;

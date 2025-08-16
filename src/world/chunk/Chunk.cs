@@ -1,4 +1,5 @@
 using BlockGame.block;
+using BlockGame.id;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
@@ -87,12 +88,39 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     y--;
                     bl = getBlock(x, y, z);
                 }
-
+                
                 // add the last item for propagation
-                if (y + 1 < CHUNKSIZE * CHUNKHEIGHT) {
+                if (y + 1 >= CHUNKSIZE * CHUNKHEIGHT) {
+                    goto blockLoop;
+                }
+                
+                world.skyLightQueue.Add(new LightNode(x, y + 1, z, this));
+
+                // y + 1 is air
+                // y is water or solid block
+
+                // SPECIAL CASE:
+                // if the block on the bottom is water, DON'T START TO PROPAGATE
+                // it will eat ALL the performance.
+                // instead, what we will do is, we'll fast forward to the bottom of the water, lighting it up as we go (decreasing the light level obviously THEN add that to the propagation)
+
+                var ll = getSkyLight(x, y + 1, z);
+                if (bl == Blocks.WATER) {
+                    // if the block is water, we need to propagate downwards
+                    // but we need to do it manually, because otherwise it will add 7 million entries to the queue
+                    while (y > 0 && bl == Blocks.WATER) {
+                        ll -= Block.lightAbsorption[bl];
+                        if (ll <= 0) break;
+                        y--;
+                        setSkyLight(x, y, z, ll);
+                        bl = getBlock(x, y, z);
+                    }
+
+                    // add it to the queue for propagation
                     world.skyLightQueue.Add(new LightNode(x, y + 1, z, this));
                 }
 
+                blockLoop: ;
                 // loop from y down to the bottom of the world
                 for (int yy = y - 1; yy >= 0; yy--) {
                     bl = getBlock(x, yy, z);
@@ -103,6 +131,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 }
             }
         }
+
+        // we collect, then we propagate!
+        List<LightNode> toPropagate = new();
+
         // second pass: check for horizontal propagation into unlit neighbors
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
@@ -110,6 +142,9 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     // if this position has skylight and is air
                     if (getSkyLight(x, y, z) == 15) {
                         // check horizontal neighbors
+
+                        bool propagateThis = false;
+                        bool propagateBelow = false;
                         for (var i = 0; i < 4; i++) {
                             int dx = 0;
                             int dz = 0;
@@ -139,65 +174,111 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                             var worldnx = worldX + nx;
                             var worldnz = worldZ + nz;
 
-                            // use world coordinates to check neighbors across chunk boundaries
-                            //if (world.inWorld(worldnx, y, worldnz)) {
-                            
                             // if neighbor is air and has no skylight, add for propagation
-                            if (!Block.isFullBlock(world.getBlock(worldnx, y, worldnz)) &&
-                                
-                                // if full skylight there, nothing to do....
-                                world.getSkyLight(worldnx, y, worldnz) != 15) {
-                                world.skyLightQueue.Add(new LightNode(x, y, z, this));
-                            }
+                            //if (!Block.isFullBlock(world.getRelativeBlock(this, x, y, z, new Vector3I(dx, 0, dz))) {
+                            // if full skylight there, nothing to do....
+                            //world.getSkyLight(worldnx, y, worldnz) != 15) {
+                            //world.skyLightQueue.Add(new LightNode(x, y, z, this));
+
+                            // what if we propagated manually? let's find out!
                             //}
+
+
+                            // if at least one neighbour is solid, add this to the propagation and the block below it too! (for overhangs)
+                            var relPos = world.getChunkAndRelativePos(this, x, y, z, new Vector3I(dx, 0, dz),
+                                out var neighborChunk);
+                            var neighborBlock = neighborChunk?.getBlock(relPos.X, relPos.Y, relPos.Z) ?? 0;
+                            if (Block.isFullBlock(neighborBlock)) {
+                                // if the neighbor is solid, we can propagate skylight from this position
+                                propagateThis = true;
+                                // also add the block below it for propagation
+                                if (y > 0) {
+                                    // only add if the block below is not solid
+                                    var belowBlock = neighborChunk?.getBlock(relPos.X, relPos.Y - 1, relPos.Z) ?? 0;
+                                    if (!Block.isFullBlock(belowBlock)) {
+                                        // add the block below for propagation
+                                        propagateBelow = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        // we only propagate *once* per position, so if we found an empty neighbor, we propagate
+                        // we don't propagate inside the loop lol
+                        //if (propagateThis) {
+                            //toPropagate.Add(new LightNode(x, y, z, this));
+                        //}
+
+                        // if we found a block below, we also propagate it
+                        if (propagateBelow) {
+                            toPropagate.Add(new LightNode(x, y - 1, z, this));
                         }
                     }
                 }
             }
         }
 
-        world.processSkyLightQueueNoUpdate();
+        //print length of queue
+
+        //Console.Out.WriteLine($"Found {toPropagate.Count} positions to propagate skylight from");
+        // now we propagate all the skylight
+        foreach (var lightNode in toPropagate) {
+            // manually propagate skylight from this position
+            manuallyPropagate(lightNode.x, lightNode.y, lightNode.z);
+        }
+
+        //world.processSkyLightQueueNoUpdate();
         status = ChunkStatus.LIGHTED;
     }
 
-    /*public void lightSection(SubChunk section) {
+    /**
+     * The task is simple: propagate light under underhangs without adding 7 million entries to the lighting queue (where it will choke).
+     * SO HOW ABOUT DOING IT MANUALLY?
+     * we know that the light level at the given position is 15, and we only need to propagate skylight.
+     * This makes it much easier!
+     */
+    private void manuallyPropagate(int x, int y, int z) {
+        var queue = new Queue<LightNode>();
+        queue.Enqueue(new LightNode(x, y, z, this));
 
-        // set the top of the chunk to 15 if not solid
-        // then propagate down
-        for (int x = 0; x < CHUNKSIZE; x++) {
-            for (int z = 0; z < CHUNKSIZE; z++) {
-                var y = section.worldY + 15;
-                // loop down until block is solid
-                ushort bl = getBlock(x, y, z);
+        while (queue.Count > 0) {
+            var (cx, cy, cz, chunk) = queue.Dequeue();
+            var currentLight = chunk.getSkyLight(cx, cy, cz);
 
-                var atLeastOnce = false;
-                while (!Block.isFullBlock(bl) && y > 0) {
-                    atLeastOnce = true;
-                    // check if chunk is initialised first
-                    if (section.blocks.inited) {
-                        setSkyLight(x, y, z, 15);
-                    }
-                    y--;
-                    bl = getBlock(x, y, z);
-                }
-                if (atLeastOnce) {
-                    // add the last item for propagation
-                    world.skyLightQueue.Add(new LightNode(x, y, z, this));
+            // propagate to all 6 neighbors
+            foreach (var dir in Direction.directions) {
+                var neighborPos = world.getChunkAndRelativePos(chunk, cx, cy, cz, dir, out var neighborChunk);
+                if (neighborChunk == null) {
+                    continue;
                 }
 
-                // loop from y down to the bottom of the world
-                for (int yy = y - 1; yy >= 0; yy--) {
-                    bl = getBlock(x, yy, z);
-                    // if blocklight, propagate
-                    if (Block.lightLevel[bl] > 0) {
-                        world.blockLightQueue.Add(new LightNode(x, yy, z, this));
-                    }
+                var nx = neighborPos.X;
+                var ny = neighborPos.Y;
+                var nz = neighborPos.Z;
+
+                // skip if neighbor is solid
+                if (Block.isFullBlock(neighborChunk.getBlock(nx, ny, nz))) continue;
+
+                var neighborLight = neighborChunk.getSkyLight(nx, ny, nz);
+                byte newLevel;
+
+                // special case for skylight downward propagation
+                if (dir == Direction.DOWN && currentLight == 15) {
+                    newLevel = 15;
+                }
+                else {
+                    newLevel = (byte)(currentLight - 1);
+                }
+
+                // only propagate if we can improve the light level
+                if (newLevel > 0 && newLevel > neighborLight &&
+                    (neighborLight + 2 <= currentLight || dir == Direction.DOWN)) {
+                    neighborChunk.setSkyLight(nx, ny, nz, newLevel);
+                    queue.Enqueue(new LightNode(nx, ny, nz, neighborChunk));
                 }
             }
         }
-        world.processSkyLightQueue();
-        world.processBlockLightQueue();
-    }*/
+    }
 
     /// <summary>
     /// Uses chunk coordinates
@@ -264,20 +345,20 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // The propagation algorithm will handle cross-chunk boundaries
             foreach (var dir in Direction.directions) {
                 var neighborPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighborChunk);
-                
+
                 // is nullcheck needed?
                 //if (neighborChunk != null) {
-                    // Only queue if neighbor has light to propagate
-                    //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
-                    //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                // Only queue if neighbor has light to propagate
+                //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
-                    //if (skyLight > 0) {
-                    world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
-                    //}
-                    //if (blockLight > 0) {
-                    world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                        neighborChunk));
-                    //}
+                //if (skyLight > 0) {
+                world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
+                //}
+                //if (blockLight > 0) {
+                world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                    neighborChunk));
+                //}
                 //}
             }
         }
@@ -326,8 +407,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         blocks[sectionY].setSkylight(x, yRem, z, value);
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
-        
-        
+
+
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
 

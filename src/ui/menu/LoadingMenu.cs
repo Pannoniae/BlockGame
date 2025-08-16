@@ -71,11 +71,10 @@ public class LoadingMenu : Menu, ProgressUpdater {
     }
 
     public override void draw() {
-        
         // we draw BG first! elements after
         Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
         base.draw();
-        
+
         // draw a random vertical line at x = 0
         // draw a rectangle (that's what we can draw)
         // Game.gui.draw(Game.gui.colourTexture, new RectangleF(Game.width / 2f, 0, 1, Game.height), color: Color4b.Red);
@@ -97,38 +96,87 @@ public class LoadingMenu : Menu, ProgressUpdater {
         yield return initTimer;
 
         stage("Generating initial terrain");
-        world.loadAroundPlayer();
-        update(0.15f);
+        world.loadAroundPlayer(ChunkStatus.LIGHTED);
+        update(0.10f);
 
         int totalChunks = world.chunkLoadQueue.Count;
         int processedChunks = 0;
 
         stage("Loading chunks");
+
+        int loops = 0;
         while (world.chunkLoadQueue.Count > 0) {
             world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
                 ref processedChunks);
-            yield return new WaitForNextFrame();
 
             int currentChunks = world.chunkLoadQueue.Count;
             processedChunks = totalChunks - currentChunks;
             float chunkProgress = totalChunks > 0 ? (float)processedChunks / totalChunks : 1f;
-            // we want to start at 0.15 and end at 0.95, so we scale the chunk progress
-            update(0.15f + (chunkProgress * 0.8f));
+            // map chunk progress to 10%-50% of loading bar
+            update(mapProgress(chunkProgress, 0.10f, 0.60f));
 
-            if (processedChunks % 10 == 0) {
-                stage($"Loading chunks ({processedChunks}/{totalChunks})");
-            }
-            
-            // pause 0.1 seconds every 100 chunks to avoid freezing the UI
-            //if (processedChunks % 10 == 0) {
-                // yield return new WaitForSeconds(0.1);
+            loops++;
+            // we update at ~20FPS, this shouldn't be too bad
+            //if (loops % 3 == 0) {
+            stage($"Loading chunks ({processedChunks}/{totalChunks})");
+            yield return new WaitForNextFrame();
             //}
         }
 
-        var finalizeTimer = new WaitForMinimumTime(0.1);
-        stage("Finalizing world");
-        update(0.95f);
-        yield return finalizeTimer;
+        stage("Stabilising the world");
+        // process all lighting updates
+
+        var total = world.skyLightQueue.Count;
+        int processed = 0;
+        while (world.skyLightQueue.Count > 0) {
+            world.processSkyLightQueueLoading(1000);
+            processed++;
+            if (processed % 10000 == 0) {
+                update(mapProgress(processed / (float)total, 0.60f, 0.80f));
+                stage($"Processing sky light ({processed}/{total})");
+                yield return new WaitForNextFrame();
+            }
+            //yield return new WaitForNextFrame();
+        }
+
+        // mesh all chunks after lighting
+        stage("Tesselating");
+        yield return new WaitForNextFrame();
+
+        world.loadAroundPlayer(ChunkStatus.MESHED);
+
+        // mark all chunks dirty for remeshing since lighting was processed with noUpdate=true
+        // idk why this is necessary tho, the following section SHOULD mesh everything but idk
+        foreach (Chunk chunk in world.chunkList) {
+            for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
+                world.dirtyChunk(new SubChunkCoord(chunk.coord.x, i, chunk.coord.z));
+
+                if (i % 20 == 0) {
+                    // update progress every 20 chunks
+                    yield return new WaitForNextFrame();
+                }
+            }
+        }
+
+        totalChunks = world.chunkLoadQueue.Count;
+        processedChunks = 0;
+        while (world.chunkLoadQueue.Count > 0) {
+            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
+                ref processedChunks);
+            yield return new WaitForNextFrame();
+            int currentChunks = world.chunkLoadQueue.Count;
+            processedChunks = totalChunks - currentChunks;
+            float chunkProgress = totalChunks > 0 ? (float)processedChunks / totalChunks : 1f;
+            // mesh generation: 80%-95%
+            update(mapProgress(chunkProgress, 0.80f, 0.95f));
+
+            if (processedChunks % 10 == 0) {
+                stage($"Loading chunks ({processedChunks}/{totalChunks})");
+                yield return new WaitForNextFrame();
+            }
+        }
+
+        //update(0.95f);
 
         var readyTimer = new WaitForMinimumTime(0.05);
         stage("Ready!");
@@ -156,5 +204,16 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public void update(float progress) {
         currentProgress = Math.Clamp(progress, 0f, 1f);
+    }
+
+    /**
+     * Maps progress (0-1) to a specific range of the overall loading bar.
+     * @param progress Current progress from 0.0 to 1.0
+     * @param startPercent Start of range (e.g. 0.15f for 15%)
+     * @param endPercent End of range (e.g. 0.95f for 95%)
+     * @return Mapped progress value
+     */
+    private float mapProgress(float progress, float startPercent, float endPercent) {
+        return startPercent + (progress * (endPercent - startPercent));
     }
 }

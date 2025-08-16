@@ -14,9 +14,6 @@ using Vector3D = Molten.DoublePrecision.Vector3D;
 namespace BlockGame.ui;
 
 public class GameScreen : Screen {
-
-    
-
     public Debug D;
 
     public bool debugScreen = false;
@@ -30,9 +27,9 @@ public class GameScreen : Screen {
 
     private TimerAction updateMemory;
     private TimerAction updateDebugText;
-    
+
     private UpdateMemoryThread umt;
-    
+
     // time acceleration for day/night cycle testing
     private float timeAcceleration = 1.0f;
     private float targetTimeAcceleration = 1.0f;
@@ -74,9 +71,9 @@ public class GameScreen : Screen {
 
         // update current tick
         CHAT.tick++;
-        
+
         var world = Game.world;
-        
+
         // time control for day/night cycle testing
         if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
             // speed up time
@@ -91,36 +88,40 @@ public class GameScreen : Screen {
         else {
             targetTimeAcceleration = 1.0f; // reset to normal speed
         }
-        
+
         // smooth time acceleration transition
         if (Math.Abs(timeAcceleration - targetTimeAcceleration) > 0.01f) {
             timeAcceleration = Meth.lerp(timeAcceleration, targetTimeAcceleration, (float)(dt * 2.0)); // 2x lerp speed
-        } else {
+        }
+        else {
             timeAcceleration = targetTimeAcceleration;
         }
-        
+
         // apply time acceleration (frame-rate independent)
         if (timeAcceleration != 1.0f) {
             int additionalTicks = (int)((timeAcceleration - 1.0f) * dt * 60); // 60 TPS base
             world.worldTick += additionalTicks;
         }
-        
+
         // if user holds down alt + f10 for 5 seconds, crash the game lul
-        if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) && Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
+        if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) &&
+            Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
             MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
         }
 
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
         world.player.inputVector = new Vector3D(0, 0, 0);
-        
+
         if (!world.paused && !Game.lockingMouse) {
             if (currentMenu == INGAME_MENU) {
                 world.player.updateInput(dt);
             }
+
             world.update(dt);
             world.player.update(dt);
         }
+
         world.renderUpdate(dt);
         Game.renderer.update(dt);
 
@@ -147,7 +148,7 @@ public class GameScreen : Screen {
     public override void render(double dt, double interp) {
         base.render(dt, interp);
         Game.metrics.clear();
-        
+
         var world = Game.world;
 
         //world.mesh();
@@ -158,13 +159,14 @@ public class GameScreen : Screen {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
             Game.renderer.drawBlockOutline(interp);
         }
-        
+
         D.renderTick(interp);
         // update here because in the main menu, we don't have a world
         Game.fontLoader.renderer3D.renderTick(interp);
         if (!currentMenu.isModal()) {
             INGAME_MENU.render(dt, interp);
         }
+
         const string text = "THIS IS A LONG TEXT\nmultiple lines!";
         /*Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.WEST, 2f);
         Game.gui.drawStringOnBlock(text, new Vector3I(0, 100, 0), RawDirection.EAST, 2f);
@@ -178,6 +180,7 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal()) {
             INGAME_MENU.postRender(dt, interp);
         }
+
         // render entities
         Game.GL.Disable(EnableCap.DepthTest);
         Game.world.player.render(dt, interp);
@@ -234,7 +237,6 @@ public class GameScreen : Screen {
         var newSelection = Game.player.hotbar.selected + y;
         newSelection = Meth.mod(newSelection, 10);
         Game.player.hotbar.selected = newSelection;
-
     }
 
     public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
@@ -274,7 +276,7 @@ public class GameScreen : Screen {
         if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
             return;
         }
-        
+
         var world = Game.world;
 
         switch (key) {
@@ -282,6 +284,7 @@ public class GameScreen : Screen {
                 if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
                     fpsOnly = !fpsOnly;
                 }
+
                 debugScreen = !debugScreen;
                 break;
             case Key.F4:
@@ -310,6 +313,7 @@ public class GameScreen : Screen {
                     GC.Collect(2, GCCollectionMode.Aggressive, true, true);
                     break;
                 }
+
                 MemoryUtils.cleanGC();
                 //Game.mm();
                 break;
@@ -324,11 +328,14 @@ public class GameScreen : Screen {
                 else {
                     Console.Out.WriteLine($"VRAM usage: {vmem / (1024 * 1024)}MB");
                 }
-                Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks));
-                Console.Out.WriteLine("Alignment of array: " + MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks[0]));
+
+                Console.Out.WriteLine("Alignment of array: " +
+                                      MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks));
+                Console.Out.WriteLine("Alignment of array: " +
+                                      MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks[0]));
                 break;
             }
-            
+
             case Key.E: {
                 if (world.inMenu) {
                     backToGame();
@@ -339,12 +346,15 @@ public class GameScreen : Screen {
                     world.inMenu = true;
                     Game.instance.unlockMouse();
                 }
+
                 break;
             }
             case Key.Space: {
-                if (Game.permanentStopwatch.ElapsedMilliseconds < world.player.spacePress + Constants.flyModeDelay * 1000) {
+                if (Game.permanentStopwatch.ElapsedMilliseconds <
+                    world.player.spacePress + Constants.flyModeDelay * 1000) {
                     world.player.flyMode = !world.player.flyMode;
                 }
+
                 world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
                 break;
             }
@@ -359,6 +369,7 @@ public class GameScreen : Screen {
                     Game.instance.lockMouse();
                     switchToMenu(INGAME_MENU);
                 }
+
                 break;
             }
             case Key.M: {
@@ -370,9 +381,10 @@ public class GameScreen : Screen {
                 else {
                     Game.snd.muteMusic();
                 }
+
                 break;
             }
-            
+
             // time control for day/night cycle testing
             case Key.KeypadMultiply: {
                 // reset time speed
@@ -386,7 +398,6 @@ public class GameScreen : Screen {
                 Console.Out.WriteLine("Time paused");
                 break;
             }
-
         }
 
 
@@ -412,6 +423,7 @@ public class GameScreen : Screen {
                 chunk.status = ChunkStatus.MESHED - 1;
             }
         }
+
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
 
         // free up memory from the block arraypool - we probably don't need that much
@@ -462,17 +474,16 @@ public class GameScreen : Screen {
         }
 
         var gui = Game.gui;
-        
+
         // clear depth buffer so the gui can use it properly
         //Game.GL.Clear(ClearBufferMask.DepthBufferBit);
-        
+
         Game.graphics.batchShader.use();
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 
 
         if (currentMenu == INGAME_MENU || currentMenu == CHAT) {
-
             // Draw crosshair
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
@@ -481,20 +492,22 @@ public class GameScreen : Screen {
 
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness),
-                    new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
+                    new SizeF(Constants.crosshairSize - Constants.crosshairThickness,
+                        Constants.crosshairThickness * 2)),
                 new Color4b(240, 240, 240));
             gui.tb.Draw(gui.colourTexture,
-                new RectangleF(new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
-                    new SizeF(Constants.crosshairSize - Constants.crosshairThickness, Constants.crosshairThickness * 2)),
+                new RectangleF(
+                    new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
+                    new SizeF(Constants.crosshairSize - Constants.crosshairThickness,
+                        Constants.crosshairThickness * 2)),
                 new Color4b(240, 240, 240));
 
             // Draw debug lines
             if (debugScreen && !fpsOnly) {
                 D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
                 D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
-                D.flushLines();
             }
-            
+
             // Draw chunk borders
             if (chunkBorders) {
                 drawChunkBorders();
@@ -518,11 +531,14 @@ public class GameScreen : Screen {
                             a = 1 - remTicks / 20f;
                         }
                     }
+
                     if (a > 0) {
                         var msgHeight = gui.uiHeight - 42 - (8 * i);
 
-                        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 9), color: new Color4b(0, 0, 0, MathF.Min(a, 0.5f)));
-                        gui.drawStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight), new Color4b(1, 1, 1, a));
+                        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 9),
+                            color: new Color4b(0, 0, 0, MathF.Min(a, 0.5f)));
+                        gui.drawStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight),
+                            new Color4b(1, 1, 1, a));
                     }
                 }
             }
@@ -539,43 +555,98 @@ public class GameScreen : Screen {
         var world = Game.world;
 
         // draw chunk borders
-        for (int x = -Settings.instance.renderDistance - 2; x <= Settings.instance.renderDistance + 2; x++) {
-            for (int z = -Settings.instance.renderDistance - 2; z <= Settings.instance.renderDistance + 2; z++) {
-                var playerPos = world.player.position;
-                var playerChunkPos = World.getChunkPos((int)playerPos.X, (int)playerPos.Z);
-                var chunkPos = new ChunkCoord(playerChunkPos.x + x, playerChunkPos.z + z);
-                world.getChunkMaybe(new ChunkCoord(chunkPos.x, chunkPos.z), out var chunk);
-                if (chunk != null) {
-                    var pos = World.toWorldPos(chunkPos, new Vector3I(0, 0, 0));
-                    var size = new Vector3I(Chunk.CHUNKSIZE, Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT, Chunk.CHUNKSIZE);
-                    var min = pos;
-                    var max = pos + size;
-                    var colour = Color4b.Red;
-                    var a = 0.5f;
-                    colour = chunk.status switch {
-                        ChunkStatus.MESHED => Color4b.Blue,
-                        ChunkStatus.LIGHTED => Color4b.Green,
-                        ChunkStatus.POPULATED => Color4b.Yellow,
-                        ChunkStatus.GENERATED => Color4b.Orange,
-                        ChunkStatus.EMPTY => Color4b.Gray,
-                        _ => colour
-                    };
+        var playerPos = world.player.position;
+        var playerChunkPos = World.getChunkPos((int)playerPos.X, (int)playerPos.Z);
+        var chunkPos = new ChunkCoord(playerChunkPos.x, playerChunkPos.z);
+        world.getChunkMaybe(new ChunkCoord(chunkPos.x, chunkPos.z), out var chunk);
+        if (chunk != null) {
+            var chunkWorldPos = World.toWorldPos(chunkPos, new Vector3I(0, 0, 0));
+            var colour = Color4b.Red;
+            colour = chunk.status switch {
+                ChunkStatus.MESHED => Color4b.Blue,
+                ChunkStatus.LIGHTED => Color4b.Green,
+                ChunkStatus.POPULATED => Color4b.Yellow,
+                ChunkStatus.GENERATED => Color4b.Orange,
+                ChunkStatus.EMPTY => Color4b.Gray,
+                _ => colour
+            };
+            
+            // todo when we'll have a proper GL state tracker, we'll "uncomment" these and set them in the tracker
+            // in case the previous code changes
+            // for now, just don't set shit because the GUI code is already setup the same way
+            //Game.GL.Enable(EnableCap.Blend);
+            //Game.GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            //Game.GL.Disable(EnableCap.DepthTest);
+            //Game.GL.Disable(EnableCap.CullFace);
+            
+            // draw translucent planes for chunk borders (north, south, east, west faces)
+            var planeColour = new Color4b(colour.R, colour.G, colour.B, 32);
+            
+            D.idc.begin(PrimitiveType.Quads);
+            // north face
+            D.drawTranslucentPlane(
+                new Vector3D(chunkWorldPos.X, 0, chunkWorldPos.Z),
+                new Vector3D(chunkWorldPos.X, World.WORLDHEIGHT, chunkWorldPos.Z),
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, World.WORLDHEIGHT, chunkWorldPos.Z),
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, 0, chunkWorldPos.Z),
+                planeColour);
 
-                    // draw the chunk borders
-                    D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, min.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(max.X, min.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(max.X, min.Y, min.Z), colour);
-                    D.drawLine(new Vector3D(max.X, min.Y, min.Z), new Vector3D(min.X, min.Y, min.Z), colour);
-                    D.drawLine(new Vector3D(min.X, max.Y, min.Z), new Vector3D(min.X, max.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(min.X, max.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(max.X, max.Y, max.Z), new Vector3D(max.X, max.Y, min.Z), colour);
-                    D.drawLine(new Vector3D(max.X, max.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), colour);
-                    D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), colour);
-                    D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(min.X, max.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(max.X, pos.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), colour);
-                    D.drawLine(new Vector3D(max.X, pos.Y, pos.Z), new Vector3D(max.X, max.Y, pos.Z), colour);
-                }
+            // south face
+            D.drawTranslucentPlane(
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, 0, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, World.WORLDHEIGHT, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                new Vector3D(chunkWorldPos.X, World.WORLDHEIGHT, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                new Vector3D(chunkWorldPos.X, 0, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                planeColour);
+
+            // west face
+            D.drawTranslucentPlane(
+                new Vector3D(chunkWorldPos.X, 0, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                new Vector3D(chunkWorldPos.X, World.WORLDHEIGHT, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                new Vector3D(chunkWorldPos.X, World.WORLDHEIGHT, chunkWorldPos.Z),
+                new Vector3D(chunkWorldPos.X, 0, chunkWorldPos.Z),
+                planeColour);
+
+            // east face
+            D.drawTranslucentPlane(
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, 0, chunkWorldPos.Z),
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, World.WORLDHEIGHT, chunkWorldPos.Z),
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, World.WORLDHEIGHT, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, 0, chunkWorldPos.Z + Chunk.CHUNKSIZE),
+                planeColour);
+            D.idc.end();
+            
+
+            // draw 16x16x16 subchunk wireframes
+            D.idc.begin(PrimitiveType.Lines);
+            for (int sy = 0; sy < Chunk.CHUNKHEIGHT; sy++) {
+                var subChunkWorldPos = new Vector3I(chunkWorldPos.X, sy * Chunk.CHUNKSIZE, chunkWorldPos.Z);
+                var min = subChunkWorldPos;
+                var max = subChunkWorldPos + new Vector3I(Chunk.CHUNKSIZE, Chunk.CHUNKSIZE, Chunk.CHUNKSIZE);
+
+                // use dimmer color for subchunk wireframes
+                var wireColor = new Color4b((byte)(colour.R / 2), (byte)(colour.G / 2), (byte)(colour.B / 2), 255);
+
+                // draw 12 edges of the subchunk wireframe
+                // bottom face edges
+                D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(max.X, min.Y, min.Z), wireColor);
+                D.drawLine(new Vector3D(max.X, min.Y, min.Z), new Vector3D(max.X, min.Y, max.Z), wireColor);
+                D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(min.X, min.Y, max.Z), wireColor);
+                D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(min.X, min.Y, min.Z), wireColor);
+
+                // top face edges
+                D.drawLine(new Vector3D(min.X, max.Y, min.Z), new Vector3D(max.X, max.Y, min.Z), wireColor);
+                D.drawLine(new Vector3D(max.X, max.Y, min.Z), new Vector3D(max.X, max.Y, max.Z), wireColor);
+                D.drawLine(new Vector3D(max.X, max.Y, max.Z), new Vector3D(min.X, max.Y, max.Z), wireColor);
+                D.drawLine(new Vector3D(min.X, max.Y, max.Z), new Vector3D(min.X, max.Y, min.Z), wireColor);
+
+                // vertical edges
+                D.drawLine(new Vector3D(min.X, min.Y, min.Z), new Vector3D(min.X, max.Y, min.Z), wireColor);
+                D.drawLine(new Vector3D(max.X, min.Y, min.Z), new Vector3D(max.X, max.Y, min.Z), wireColor);
+                D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), wireColor);
+                D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(min.X, max.Y, max.Z), wireColor);
             }
+            D.idc.end();
         }
     }
 
@@ -597,6 +668,7 @@ public class GameScreen : Screen {
                 return new string(input);
             }
         }
+
         return new string(input);
     }
 
@@ -615,7 +687,6 @@ public class GameScreen : Screen {
 }
 
 public class UpdateMemoryThread(GameScreen screen) {
-
     private GameScreen screen = screen;
     public volatile bool stopped;
 
@@ -624,10 +695,10 @@ public class UpdateMemoryThread(GameScreen screen) {
             if (stopped) {
                 break;
             }
+
             updateMemoryMethod();
             // sleep 200ms
             Thread.Sleep(200);
-            
         }
     }
 
@@ -637,7 +708,7 @@ public class UpdateMemoryThread(GameScreen screen) {
 
     public void start() {
         stopped = false;
-        
+
         // run thread
         var thread = new Thread(run) {
             IsBackground = true,
@@ -645,7 +716,7 @@ public class UpdateMemoryThread(GameScreen screen) {
         };
         thread.Start();
     }
-    
+
     public void updateMemoryMethod() {
         Game.proc.Refresh();
         screen.INGAME_MENU.workingSet = Game.proc.WorkingSet64;

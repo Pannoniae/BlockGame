@@ -28,6 +28,8 @@ Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI) ALWAYS READ IT! EVER
 
 **Documentation**: Additional design documents are in `docs/` directory, including entity rendering architecture.
 
+Not finding something? We use partial classes HEAVILY, don't just search in the *same* file, search the ENTIRE project!
+
 ### Core Systems
 
 **Entry Point**: `src/main/Program.cs` → `src/main/Game.cs` (singleton pattern)

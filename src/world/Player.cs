@@ -144,6 +144,13 @@ public class Player : Entity {
         world.loadChunksAroundChunk(chunk, renderDistance);
         world.sortChunks();
     }
+    
+    public void loadChunksAroundThePlayer(int renderDistance, ChunkStatus status) {
+        var blockPos = position.toBlockPos();
+        var chunk = World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
+        world.loadChunksAroundChunk(chunk, renderDistance, status);
+        world.sortChunks();
+    }
 
     public override void teleport(Vector3D pos) {
         base.teleport(pos);
