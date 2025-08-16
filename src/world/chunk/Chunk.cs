@@ -347,18 +347,18 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 var neighborPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighborChunk);
 
                 // is nullcheck needed?
-                //if (neighborChunk != null) {
-                // Only queue if neighbor has light to propagate
-                //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
-                //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                if (neighborChunk != null) {
+                    // Only queue if neighbor has light to propagate
+                    //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
-                //if (skyLight > 0) {
-                world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
-                //}
-                //if (blockLight > 0) {
-                world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                    neighborChunk));
-                //}
+                    //if (skyLight > 0) {
+                    world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
+                    //}
+                    //if (blockLight > 0) {
+                    world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        neighborChunk));
+                }
                 //}
             }
         }
