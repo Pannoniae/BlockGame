@@ -38,7 +38,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
                 var c10 = prevMipmap[ySrc * width * 2 + xSrc];
                 var c11 = prevMipmap[y1 * width * 2 + x1];
 
-                mipmap[y * width + x] = avgColour(c00, c01, c10, c11);
+                mipmap[y * width + x] = avgColourWeighted(c00, c01, c10, c11);
             }
         }
     }
@@ -56,6 +56,44 @@ public class BTextureAtlas : BTexture2D, IDisposable {
             (byte)((c0.B + c1.B + c2.B + c3.B) / 4f),
             (byte)((c0.A + c1.A + c2.A + c3.A) / 4f));
     }
+    
+    
+    /**
+     * Same as above, except that it's alpha-weighted by the given colour. i.e. it won't produce black artifacts on alpha because the colour contribution is weighed by the alpha.
+     *
+     * Basically the equivalent of this shader:
+     *
+     * for (float i = something; i &lt; somethingElse; i++) {
+     *   c.rgb += colorSample.rgb * colorSample.a;
+     *   c.a += colorSample.a;
+     * }
+     * c.rgb /= c.a;
+     * c.a /= sampleCount;
+     * 
+     * 
+     */
+    private static Rgba32 avgColourWeighted(Rgba32 c0, Rgba32 c1, Rgba32 c2, Rgba32 c3) {
+        float a0 = c0.A / 255f;
+        float a1 = c1.A / 255f;
+        float a2 = c2.A / 255f;
+        float a3 = c3.A / 255f;
+    
+        float totalAlpha = a0 + a1 + a2 + a3;
+    
+        if (totalAlpha == 0)
+            return new Rgba32(0, 0, 0, 0);
+    
+        float r = (c0.R * a0 + c1.R * a1 + c2.R * a2 + c3.R * a3) / totalAlpha;
+        float g = (c0.G * a0 + c1.G * a1 + c2.G * a2 + c3.G * a3) / totalAlpha;
+        float b = (c0.B * a0 + c1.B * a1 + c2.B * a2 + c3.B * a3) / totalAlpha;
+    
+        return new Rgba32(
+            (byte)(r + 0.5f),
+            (byte)(g + 0.5f),
+            (byte)(b + 0.5f),
+            (byte)(totalAlpha * 63.75f + 0.5f)  // 63.75 = 255/4
+        );
+    }
 
     unsafe private void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
         fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
@@ -68,6 +106,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
             int lvl;
             int width = imageWidth;
             int height = imageHeight;
+            
 
             for (lvl = 1; lvl <= maxLevel; lvl++) {
                 if (width > 1) width /= 2;

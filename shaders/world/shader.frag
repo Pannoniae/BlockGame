@@ -133,7 +133,7 @@ void main() {
     // combine block color with lighting and base tint
     colour = vec4(blockColour.rgb * tint.rgb, blockColour.a);
 
-    if (colour.a <= 0) {
+    if (colour.a <= 0.5) {
         discard;
     }
     // make it always opaque (for mipmapping)

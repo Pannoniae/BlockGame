@@ -115,6 +115,8 @@ public partial class Game {
     /// List of things to do later.
     /// </summary>
     public static List<TimerAction> timerQueue = new();
+    
+    public static WorldThread worldThread;
 
     public static bool focused;
     public static bool firstFrame;
@@ -135,7 +137,7 @@ public partial class Game {
     private readonly string[] splashes;
     private readonly string splash;
 
-    
+
     private static IntPtr hdc;
     public static bool noUpdate;
 
@@ -476,7 +478,9 @@ public partial class Game {
         GL.CullFace(GLEnum.Back);
 
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
-
+        
+        // we load the settings FIRST so our graphics settings get picked up when initialising stuff
+        Settings.instance.load();
 
         graphics = new Graphics();
 
@@ -548,7 +552,6 @@ public partial class Game {
         gui.loadFont(16);
         renderer = new WorldRenderer();
         
-        Settings.instance.load();
         Menu.init();
 
 

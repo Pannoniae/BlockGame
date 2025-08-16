@@ -76,6 +76,10 @@ public class LevelSelectMenu : Menu {
         Game.world?.Dispose();
         Game.world = world;
         
+        // start world thread
+        // todo this shit doesn't work, fix later
+        //Game.worldThread = new WorldThread();
+        
         // set to loading screen
         Game.instance.switchTo(LOADING);
         LOADING.load(world, isLoading);

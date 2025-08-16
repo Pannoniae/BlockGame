@@ -108,6 +108,9 @@ public class GameScreen : Screen {
             Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
             MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
         }
+        
+        // we update input here (shit doesn't work in non-main thread)
+        
 
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
