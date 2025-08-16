@@ -63,7 +63,7 @@ public class Block {
     
     public static UVPair?[] uvs = new UVPair?[6];
 
-    public static readonly int maxBlock = 50;
+    public static readonly int maxBlock = 52;
 
     public static Block register(Block block) {
         return blocks[block.id] = block;
@@ -116,7 +116,7 @@ public class Block {
     public static Block WORLD_BOTTOM = register(new Block(Blocks.WORLD_BOTTOM, "World_Bottom", BlockModel.makeCube(cubeUVs(9, 0))));
     public static Block GLASS = register(new Block(Blocks.GLASS, "Glass", BlockModel.makeCube(cubeUVs(6, 0))).transparency());
 
-    public static Block LANTERN = register(new Block(Blocks.LANTERN, "Lantern", BlockModel.makePartialCube(grassUVs(15, 1, 13, 1, 14, 1))).light(14).partialBlock());
+    public static Block LANTERN = register(new Block(Blocks.LANTERN, "Lantern", BlockModel.makePartialCube(grassUVs(15, 1, 13, 1, 14, 1))).light(15).partialBlock());
 
     public static Block TALL_GRASS = register(new Flower(Blocks.TALL_GRASS, "Tall Grass", BlockModel.makeGrass(crossUVs(9,1)))).transparency().noCollision();
     public static Block SHORT_GRASS = register(new Flower(Blocks.SHORT_GRASS, "Short Grass", BlockModel.makeGrass(crossUVs(8,1)))).transparency().shortGrassAABB().noCollision();
@@ -166,6 +166,9 @@ public class Block {
     public static Block GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore", BlockModel.makeCube(cubeUVs(0, 1))));
     public static Block IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore", BlockModel.makeCube(cubeUVs(1, 1))));
     public static Block COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore", BlockModel.makeCube(cubeUVs(4, 1))));
+    public static Block HELLSTONE_1 = register(new Block(Blocks.HELLSTONE_1, "Hellstone1", BlockModel.makeCube(grassUVs(8, 0, 9,0, 9,0))));
+    public static Block HELLSTONE_2 = register(new Block(Blocks.HELLSTONE_2, "Hellstone2", BlockModel.makeCube(grassUVs(8, 0, 7,1, 7,1))));
+    
 
     //public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
 

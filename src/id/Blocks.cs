@@ -52,5 +52,7 @@ public class Blocks {
     public const ushort TALL_GRASS = 48;
     public const ushort SHORT_GRASS = 49;
     public const ushort WORLD_BOTTOM = 50;
+    public const ushort HELLSTONE_1 = 51;
+    public const ushort HELLSTONE_2 = 52;
     //public const ushort TORCH = 45;
 }
