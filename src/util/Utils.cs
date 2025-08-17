@@ -122,6 +122,23 @@ public static partial class Meth {
     public static float fadeOut(float value, float start, float end) {
         return mapRange(value, start, end, 1f, 0f);
     }
+    
+    
+    /// <summary>
+    /// Fade in from 0 to 1 until half the range, then fade out from 1 to 0 until the end of the range
+    /// For example, fadeInOut(0.75f, 0.5f, 1.0f) returns 1.0
+    /// fadeInOut(0.5f, 0.5f, 1.0f) returns 0.5
+    /// </summary>
+    public static float fadeInOut(float value, float start, float end) {
+        if (value < start) {
+            return start;
+        }
+        if (value > end) {
+            return end;
+        }
+        float mid = (start + end) / 2f;
+        return value < mid ? fadeIn(value, start, mid) : fadeOut(value, mid, end);
+    }
 
     public static Vector3I getRandomCoord(XRandom random, int maxX, int maxY, int maxZ) {
         var randomValue = random.Next(maxX * maxY * maxZ);

@@ -37,6 +37,8 @@ public abstract class InstantDraw<T> where T : unmanaged {
     public int uFogType;      // Added for fog type
     public int uFogDensity;   // Added for exp/exp2 fog
 
+    public virtual bool hasFog => true;
+
     // Fog settings
     protected Vector4 fogColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
     protected float fogStart = 10.0f;
@@ -130,15 +132,18 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
         // Apply current fog settings
         instantShader.use();
-        if (fogEnabled) {
-            instantShader.setUniform(uFogEnabled, true);
-            instantShader.setUniform(uFogColor, fogColor);
-            instantShader.setUniform(uFogStart, fogStart);
-            instantShader.setUniform(uFogEnd, fogEnd);
-            instantShader.setUniform(uFogType, (int)fogType);
-            instantShader.setUniform(uFogDensity, fogDensity);
-        } else {
-            instantShader.setUniform(uFogEnabled, false);
+        if (hasFog) {
+            if (fogEnabled) {
+                instantShader.setUniform(uFogEnabled, true);
+                instantShader.setUniform(uFogColor, fogColor);
+                instantShader.setUniform(uFogStart, fogStart);
+                instantShader.setUniform(uFogEnd, fogEnd);
+                instantShader.setUniform(uFogType, (int)fogType);
+                instantShader.setUniform(uFogDensity, fogDensity);
+            }
+            else {
+                instantShader.setUniform(uFogEnabled, false);
+            }
         }
 
         // Upload buffer
