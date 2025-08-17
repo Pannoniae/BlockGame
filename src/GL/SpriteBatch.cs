@@ -1,4 +1,3 @@
-using System;
 using System.Drawing;
 using System.Numerics;
 using Silk.NET.OpenGL;

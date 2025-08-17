@@ -4,7 +4,6 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Silk.NET.OpenGL;
-using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
 

@@ -1,8 +1,6 @@
 using System.Runtime.InteropServices;
-using JetBrains.Annotations;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.NV;
-using Buffer = System.Buffer;
 
 namespace BlockGame.GL;
 

@@ -68,6 +68,9 @@ public class Entity(World world) {
     public double prevSwingProgress;
     public double swingProgress;
     private readonly List<Vector3I> neighbours = new(26);
+    
+    /** Is it in a valid chunk? */
+    public bool inWorld;
 
     public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();

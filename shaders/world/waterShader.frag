@@ -19,7 +19,7 @@ uniform sampler2D lightTexture;
 void main() {
 
     vec4 blockColour = texture(blockTexture, texCoords);
-    float ratio = getFog(vertexDist);
+    float ratio = calculateFogFactor(vertexDist);
     
     // combine block color with lighting and base tint
     colour = vec4(blockColour.rgb * tint.rgb, blockColour.a);

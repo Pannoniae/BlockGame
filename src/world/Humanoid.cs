@@ -1,5 +1,3 @@
-using Molten.DoublePrecision;
-
 namespace BlockGame;
 
 public class Humanoid : Entity {

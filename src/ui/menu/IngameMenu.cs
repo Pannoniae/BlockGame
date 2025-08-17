@@ -5,7 +5,6 @@ using Cysharp.Text;
 using FontStashSharp.RichText;
 using Molten;
 using Molten.DoublePrecision;
-using Silk.NET.Input;
 using Silk.NET.OpenGL;
 
 

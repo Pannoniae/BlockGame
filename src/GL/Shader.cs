@@ -141,7 +141,7 @@ public partial class Shader : IDisposable {
         foreach (var dir in searchDirectories) {
             if (!Directory.Exists(dir)) continue;
             
-            var incFiles = Directory.GetFiles(dir, "*.inc*", SearchOption.AllDirectories);
+            var incFiles = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
             
             foreach (var filePath in incFiles) {
                 var content = File.ReadAllText(filePath);
@@ -439,6 +439,11 @@ public class InstantShader : Shader {
 
     public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader, string fragmentShader) : base(GL,
         name, vertexShader, fragmentShader) {
+        uMVP = getUniformLocation("uMVP");
+    }
+
+    public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader, string fragmentShader, IEnumerable<Definition> defs) : base(GL,
+        name, vertexShader, fragmentShader, defs) {
         uMVP = getUniformLocation("uMVP");
     }
 

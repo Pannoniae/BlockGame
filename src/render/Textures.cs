@@ -3,7 +3,7 @@ using BlockGame.util;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace BlockGame.render;
+namespace BlockGame;
 
 public class Textures {
     public Silk.NET.OpenGL.GL GL;

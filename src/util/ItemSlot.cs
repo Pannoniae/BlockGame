@@ -1,5 +1,3 @@
-using System.Numerics;
-using BlockGame.ui;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
 

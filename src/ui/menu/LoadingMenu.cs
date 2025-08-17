@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Drawing;
 using System.Numerics;
-using BlockGame.GL.vertexformats;
 using BlockGame.id;
 using BlockGame.ui.element;
 using BlockGame.util;

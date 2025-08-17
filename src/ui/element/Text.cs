@@ -1,5 +1,4 @@
 using System.Numerics;
-using BlockGame.GL.vertexformats;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
 

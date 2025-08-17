@@ -69,6 +69,26 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public bool isVisible(BoundingFrustum frustum) {
         return !frustum.outsideCameraHorizontal(box);
     }
+    
+    public void addEntity(Entity entity) {
+        // check if the entity is in the chunk
+        if (entity.position.X < worldX || entity.position.X >= worldX + CHUNKSIZE ||
+            entity.position.Z < worldZ || entity.position.Z >= worldZ + CHUNKSIZE) {
+            return; // not in this chunk
+        }
+
+        // get the Y coordinate in the chunk
+        int y = (int)entity.position.Y;
+        if (y < 0 || y >= CHUNKHEIGHT * CHUNKSIZE) {
+            return; // out of bounds
+        }
+
+        // add the entity to the list
+        if (entities[y] == null) {
+            entities[y] = new List<Entity>();
+        }
+        entities[y].Add(entity);
+    }
 
     public void lightChunk() {
         // set the top of the chunk to 15 if not solid

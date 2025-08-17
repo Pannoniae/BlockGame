@@ -5,10 +5,8 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
-using Molten.HalfPrecision;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
-using SixLabors.ImageSharp.PixelFormats;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
 using Color = Molten.Color;
 using DepthFunction = Silk.NET.OpenGL.DepthFunction;
@@ -139,7 +137,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         
 
-        outline = new Shader(Game.GL, nameof(outline), "shaders/utility/outline.vert", "shaders/utility/outline.frag");
+        outline = new Shader(Game.GL, nameof(outline), "shaders/world/outline.vert", "shaders/world/outline.frag");
 
         worldShader.setUniform(blockTexture, 0);
         worldShader.setUniform(lightTexture, 1);
@@ -897,7 +895,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // Enable fog for sky rendering
         var currentFogColour = world.getFogColour(world.worldTick);
         idc.enableFog(true);
-        idc.fogColour(horizonColour.toVec4());
+        idc.fogColor(horizonColour.toVec4());
 
         var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
         // cap rd to 12 max

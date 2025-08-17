@@ -1,8 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BlockGame.block;
-using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.id;
 using Molten;

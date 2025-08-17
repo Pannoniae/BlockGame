@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
-using Silk.NET.OpenGL;
 
 namespace BlockGame.util;
 

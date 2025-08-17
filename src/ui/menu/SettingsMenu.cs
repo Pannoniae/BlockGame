@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using BlockGame.GL.vertexformats;
-using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL;

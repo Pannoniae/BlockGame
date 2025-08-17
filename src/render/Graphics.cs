@@ -18,10 +18,10 @@ public class Graphics : IDisposable {
     public readonly InstantShader batchShader;
 
     public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, nameof(instantTextureShader),
-        "shaders/ui/instantVertex.vert", "shaders/ui/instantVertex.frag");
+        "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_TEXTURE")]);
 
     public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
-        "shaders/ui/instantVertexColour.vert", "shaders/ui/instantVertexColour.frag");
+        "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
 
     // Post-processing shaders
     public readonly Shader fxaaShader =

@@ -1,10 +1,7 @@
-using BlockGame.ui;
 using Molten.DoublePrecision;
-using Silk.NET.OpenGL;
 using System.Numerics;
 using BlockGame.GL;
 using Color4b = BlockGame.GL.vertexformats.Color4b;
-using Shader = BlockGame.GL.Shader;
 
 
 namespace BlockGame.util;

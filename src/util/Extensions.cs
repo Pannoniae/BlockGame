@@ -1,10 +1,5 @@
 using System.Numerics;
-using System.Runtime.CompilerServices;
-using BlockGame.GL.vertexformats;
-using Molten;
-using Silk.NET.Maths;
 using Plane = System.Numerics.Plane;
-using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.util;
 

@@ -39,9 +39,6 @@ public partial class World : IDisposable {
     // used for rendering
     public readonly List<Chunk> chunkList;
 
-    public readonly List<Entity> entities;
-
-    public readonly Particles particles;
     //public List<ChunkSection> sortedTransparentChunks = [];
     
     
@@ -64,7 +61,6 @@ public partial class World : IDisposable {
     public bool paused;
     public bool inMenu;
 
-    public Player player;
     public WorldIO worldIO;
 
     public int seed;
@@ -481,16 +477,6 @@ public partial class World : IDisposable {
                 }
             }
         }
-    }
-
-    public static void getEntitiesInBox(List<Entity> result, Vector3I min, Vector3I max) {
-        // fill
-    }
-    
-    public List<Entity> getEntitiesInBox(Vector3I min, Vector3I max) {
-        var result = new List<Entity>();
-        getEntitiesInBox(result, min, max);
-        return result;
     }
 
     public void processSkyLightQueue() {

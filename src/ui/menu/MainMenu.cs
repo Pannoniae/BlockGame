@@ -1,5 +1,4 @@
 using BlockGame.GL.vertexformats;
-using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL;
 

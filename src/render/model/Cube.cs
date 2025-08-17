@@ -4,7 +4,7 @@ using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame.model;
+namespace BlockGame;
 
 /**
  * A cube has 6 faces and 24 verts overall.

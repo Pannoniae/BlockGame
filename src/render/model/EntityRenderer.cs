@@ -1,6 +1,6 @@
 ﻿using BlockGame.entity;
 
-namespace BlockGame.model;
+namespace BlockGame;
 
 /** Renders an entity with its associated model. Optionally applies effects like being hit, etc. */
 public interface EntityRenderer<out T> where T : Entity {

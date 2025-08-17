@@ -1,7 +1,6 @@
 using System.Drawing;
 using BlockGame.GL;
 using FontStashSharp.Interfaces;
-using Silk.NET.OpenGL;
 
 namespace BlockGame.util.font;
 

@@ -1,11 +1,7 @@
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.NV;
-using Buffer = System.Buffer;
-using EnableCap = Silk.NET.OpenGL.Legacy.EnableCap;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
 namespace BlockGame.GL;
@@ -100,7 +96,9 @@ public sealed class SharedBlockVAO : VAO {
             // bind the vertex buffer to the VAO
             GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
             // FAKE BINDING FOR THE BUFFER (only to shut up driver validation)
-            GL.BindVertexBuffer(1, Game.graphics.fatQuadIndices, 0, 4 * sizeof(float));
+            // THE ZERO STRIDE IS IMPORTANT HERE!
+            // you know why? because stride=0 means we don't advance! so it's a constant value lol
+            GL.BindVertexBuffer(1, Game.graphics.fatQuadIndices, 0, 0);
 
             // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
             GL.EnableVertexAttribArray(0);
@@ -121,8 +119,10 @@ public sealed class SharedBlockVAO : VAO {
             GL.VertexAttribBinding(3, 0);
             GL.VertexAttribBinding(4, 1); // Different binding point for constant attribute!!
 
-            GL.VertexBindingDivisor(1,
-                1); // Set divisor for attribute 1 (chunk position) to 1, so it updates per instance (which we only have one of, so a constant!)
+            
+            // we don't need the divisor anymore in fact
+            // GL.VertexBindingDivisor(1,
+            //     1); // Set divisor for attribute 1 (chunk position) to 1, so it updates per instance (which we only have one of, so a constant!)
 
 
             //GL.BindVertexBuffer(1, handle, 3 * sizeof(ushort), 7 * sizeof(ushort));

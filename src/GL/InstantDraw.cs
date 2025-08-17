@@ -1,6 +1,5 @@
 using System.Numerics;
 using BlockGame.GL.vertexformats;
-using Silk.NET.Core.Native;
 using Silk.NET.OpenGL;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
 
@@ -21,29 +20,30 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected readonly T[] vertices;
     protected int currentVertex = 0;
 
-    public readonly Silk.NET.OpenGL.GL GL;
+    protected readonly Silk.NET.OpenGL.GL GL;
     
     protected uint VAO;
     protected uint VBO;
     
     
     protected Shader instantShader;
-    public int uMVP;
-    public int uModelView;
-    public int uFogColor;
-    public int uFogStart;
-    public int uFogEnd;
-    public int uFogEnabled;
-    public int uFogType;      // Added for fog type
-    public int uFogDensity;   // Added for exp/exp2 fog
+    protected int uMVP;
+    protected int uModelView;
+    protected int uFogColour;
+    protected int uFogStart;
+    protected int uFogEnd;
+    protected int uFogEnabled;
+    protected int uFogType;      // Added for fog type
+    protected int uFogDensity;   // Added for exp/exp2 fog
 
     // Fog settings
-    protected Vector4 fogColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+    protected Vector4 fogColour = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
     protected float fogStart = 10.0f;
     protected float fogEnd = 100.0f;
     protected bool fogEnabled = false;  // Disabled by default
     protected FogType fogType = FogType.Linear;
     protected float fogDensity = 0.01f;
+    
 
     public InstantDraw(int maxVertices) {
         vertices = new T[maxVertices];
@@ -72,9 +72,9 @@ public abstract class InstantDraw<T> where T : unmanaged {
         instantShader.setUniform(uFogEnabled, enable);
     }
 
-    public void fogColour(Vector4 color) {
-        fogColor = color;
-        instantShader.setUniform(uFogColor, color);
+    public void fogColor(Vector4 color) {
+        fogColour = color;
+        instantShader.setUniform(uFogColour, color);
     }
 
     public void fogDistance(float start, float end) {
@@ -132,7 +132,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         instantShader.use();
         if (fogEnabled) {
             instantShader.setUniform(uFogEnabled, true);
-            instantShader.setUniform(uFogColor, fogColor);
+            instantShader.setUniform(uFogColour, fogColour);
             instantShader.setUniform(uFogStart, fogStart);
             instantShader.setUniform(uFogEnd, fogEnd);
             instantShader.setUniform(uFogType, (int)fogType);
@@ -173,16 +173,16 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 
     public override void setup() {
         base.setup();
-        instantShader = new Shader(GL, nameof(instantShader), "shaders/ui/instantVertex.vert", "shaders/ui/instantVertex.frag");
+        instantShader = new InstantShader(GL, nameof(instantShader), "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_TEXTURE")]);
         instantTexture = instantShader.getUniformLocation("tex");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
-        uFogColor = instantShader.getUniformLocation("fogColor");
-        uFogStart = instantShader.getUniformLocation("fogStart");
-        uFogEnd = instantShader.getUniformLocation("fogEnd");
-        uFogEnabled = instantShader.getUniformLocation("fogEnabled");
-        uFogType = instantShader.getUniformLocation("fogType");
-        uFogDensity = instantShader.getUniformLocation("fogDensity");
+        uFogColour = instantShader.getUniformLocation(nameof(fogColour));
+        uFogStart = instantShader.getUniformLocation(nameof(fogStart));
+        uFogEnd = instantShader.getUniformLocation(nameof(fogEnd));
+        uFogEnabled = instantShader.getUniformLocation(nameof(fogEnabled));
+        uFogType = instantShader.getUniformLocation(nameof(fogType));
+        uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
         instantShader.setUniform(instantTexture, 0);
         
         // Set default fog type
@@ -215,15 +215,16 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
     public override void setup() {
         base.setup();
-        instantShader = new Shader(GL, nameof(instantShader), "shaders/ui/instantVertexColour.vert", "shaders/ui/instantVertexColour.frag");
+        instantShader = new InstantShader(GL, nameof(instantShader), "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
-        uFogColor = instantShader.getUniformLocation("fogColor");
+        uFogColour = instantShader.getUniformLocation("fogColour");
         uFogStart = instantShader.getUniformLocation("fogStart");
         uFogEnd = instantShader.getUniformLocation("fogEnd");
         uFogEnabled = instantShader.getUniformLocation("fogEnabled");
         uFogType = instantShader.getUniformLocation("fogType");
         uFogDensity = instantShader.getUniformLocation("fogDensity");
+        
 
         // Initialize fog as disabled
         instantShader.setUniform(uFogEnabled, false);
@@ -244,5 +245,61 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
         GL.VertexAttribBinding(1, 0);
 
         GL.BindVertexBuffer(0, VBO, 0, 8 * sizeof(ushort));
+    }
+}
+
+public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxVertices) {
+
+    protected int uLightDir;
+    protected int uLightRatio;
+    
+    protected Vector3 lightDir = new Vector3(0.0f, 1.0f, 0.0f);
+    /** The ratio between direct and ambient light. 1 = only direct, 0 = only ambient
+     *  TODO we don't have ambient light colouring or any of that shit, rn it's just a simple lerp
+     */
+    protected float lightRatio = 1.0f;
+    
+    public override void setup() {
+        base.setup();
+        instantShader = new Shader(GL, nameof(instantShader), "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
+        uMVP = instantShader.getUniformLocation(nameof(uMVP));
+        uModelView = instantShader.getUniformLocation(nameof(uModelView));
+        uFogColour = instantShader.getUniformLocation(nameof(fogColor));
+        uFogStart = instantShader.getUniformLocation(nameof(fogStart));
+        uFogEnd = instantShader.getUniformLocation(nameof(fogEnd));
+        uFogEnabled = instantShader.getUniformLocation(nameof(fogEnabled));
+        uFogType = instantShader.getUniformLocation(nameof(fogType));
+        uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
+        uLightDir = instantShader.getUniformLocation(nameof(lightDir));
+        uLightRatio = instantShader.getUniformLocation(nameof(lightRatio));
+
+        // Initialize fog as disabled
+        instantShader.setUniform(uFogEnabled, false);
+        
+        // Set default fog type
+        instantShader.setUniform(uFogType, (int)FogType.Linear);
+        instantShader.setUniform(uFogDensity, fogDensity);
+        
+        // Set default lighting
+        instantShader.setUniform(uLightDir, lightDir);
+        instantShader.setUniform(uLightRatio, lightRatio);
+    }
+
+    public override void format() {
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
+
+        GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+        GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 8 * sizeof(ushort));
+        GL.VertexAttribFormat(3, 3, VertexAttribType.Int2101010Rev, true, 0 + 10 * sizeof(ushort));
+
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
+        GL.VertexAttribBinding(3, 0);
+
+        GL.BindVertexBuffer(0, VBO, 0, 12 * sizeof(ushort));
     }
 }

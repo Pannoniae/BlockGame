@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using BlockGame.GL;
 using BlockGame.id;
 using BlockGame.util;

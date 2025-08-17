@@ -128,7 +128,7 @@ void main() {
     // use anisotropic filtering
     blockColour = textureAF(blockTexture, texCoords);
 #endif
-    float ratio = getFog(vertexDist);
+    float ratio = calculateFogFactor(vertexDist);
     
     // combine block color with lighting and base tint
     colour = vec4(blockColour.rgb * tint.rgb, blockColour.a);
