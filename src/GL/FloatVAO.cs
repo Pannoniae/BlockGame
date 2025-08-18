@@ -47,7 +47,8 @@ public class FloatVAO {
 
     public void format() {
         unsafe {
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, (void*)0);
+            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexAttribBinding(0, 0);
             GL.EnableVertexAttribArray(0);
         }
     }

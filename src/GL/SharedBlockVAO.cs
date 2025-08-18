@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
+using BlockGame.util;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.NV;
 using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
@@ -74,7 +75,7 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
-        throw new Exception("this doesn't work!");
+        throw new SkillIssueException("this doesn't work!");
     }
 
     public void format() {

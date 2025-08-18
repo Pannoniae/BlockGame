@@ -10,6 +10,8 @@
         <AnalysisLevel>preview-recommended</AnalysisLevel>
         <NoWarn>${NoWarn};CA1707;CA1051;CA2211</NoWarn>
         <InvariantGlobalization>true</InvariantGlobalization>
+        <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <!-- Give .PDBs to the poor players/modders -->
@@ -60,6 +62,13 @@
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
     
+    <!-- Analyzers or something (to detect skill issues) -->
+    <ItemGroup>
+        <ProjectReference Include=".\Analyzers\Analyzers\Analyzers.csproj"
+                          OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+    
+    
     <!-- Files to copy -->
     <ItemGroup>
         <None Update="level/**/*.*">
@@ -95,16 +104,19 @@
         <None Remove="BlockGameTesting\**"/>
         <None Remove="NBTTool\**"/>
         <None Remove="publish\**"/>
+        <None Remove="Analyzers\**"/>
         
         <Compile Remove="lib\**"/>
         <Compile Remove="BlockGameTesting\**"/>
         <Compile Remove="NBTTool\**"/>
         <Compile Remove="publish\**"/>
+        <Compile Remove="Analyzers\**"/>
         
         <EmbeddedResource Remove="lib\**"/>
         <EmbeddedResource Remove="BlockGameTesting\**"/>
         <EmbeddedResource Remove="NBTTool\**"/>
         <EmbeddedResource Remove="publish\**"/>
+        <EmbeddedResource Remove="Analyzers\**"/>
         
         
         <None Update="runtimes\linux-x64\native\libminiaudioex.so">

@@ -671,7 +671,7 @@ public partial class Game {
         if (key == Key.F7 && keyboard.IsKeyPressed(Key.F6)) {
             Console.Out.WriteLine("Crashing game!");
             executeOnMainThread(() =>
-                throw new Exception("Manual crash!")
+                throw new InputException("Manual crash!")
             );
         }
 

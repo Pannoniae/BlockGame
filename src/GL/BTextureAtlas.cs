@@ -1,4 +1,5 @@
 using BlockGame.ui;
+using BlockGame.util;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
@@ -140,7 +141,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         var maxPossibleLevels = 5u;
         GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
         if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
-            throw new Exception("Couldn't load the atlas contiguously!");
+            throw new SkillIssueException("Couldn't load the atlas contiguously!");
         }
 
         /*fixed (Rgba32* pixels = &memory.Span.GetPinnableReference()) {

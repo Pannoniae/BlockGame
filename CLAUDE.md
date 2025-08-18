@@ -17,8 +17,9 @@ Don't congratulate me on my insights or tell me how great I am. I know I'm great
 When generating code, a request may contain `// fill` sections, either marking methods or places inside methods. In that case, insert your generated code in those locations.
 
 ### Building and Running
-Use `dotnet build BlockGame.slnx -c Release` to build the entire solution in Release mode.
-Use `dotnet run --project BlockGame.csproj -c Release` to run the main project in Release mode.
+Use `dotnet build BlockGame.slnx -c Release /property:WarningLevel=0` to build the entire solution in Release mode.
+Use `dotnet run --project BlockGame.csproj -c Release /property:WarningLevel=0` to run the main project in Release mode.
+(This is so the output doesn't get spammed with superfluous warnings.)
 If you want to run tests, do `dotnet test BlockGameTesting\BlockGameTesting.csproj`.
 
 ## Architecture Overview

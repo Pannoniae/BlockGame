@@ -344,7 +344,7 @@ internal class SNBTParser {
     }
 
     private bool isEndToken() {
-        return input.Length - pos >= 3 && input.AsSpan(pos, 3).SequenceEqual("END");
+        return input.Length - pos >= 3 && input.AsSpan(pos, 3) is "END";
     }
 
     private NBTEnd consumeEnd() {

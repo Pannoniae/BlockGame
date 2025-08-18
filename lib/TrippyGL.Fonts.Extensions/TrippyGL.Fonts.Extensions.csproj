@@ -18,6 +18,8 @@ This package provides integration between TrippyGL.Fonts and the main TrippyGL p
     <PackageReleaseNotes>Changelog from 1.2.0:
 - Upgraded all dependencies</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

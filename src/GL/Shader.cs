@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using BlockGame.util;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ARB;
 
@@ -228,21 +229,23 @@ public partial class Shader : IDisposable {
     }
 
     public uint load(string shader, ShaderType type) {
-        var shaderHandle = GL.CreateShader(type);
-        GL.ShaderSource(shaderHandle, shader);
+        unsafe {
+            var shaderHandle = GL.CreateShader(type);
+            GL.ShaderSource(shaderHandle, shader);
         
-        if (Game.hasShadingLanguageInclude) {
-            compileShaderWithInclude(shaderHandle);
-        } else {
-            GL.CompileShader(shaderHandle);
-        }
+            if (Game.hasShadingLanguageInclude) {
+                compileShaderWithInclude(shaderHandle);
+            } else {
+                GL.CompileShader(shaderHandle);
+            }
         
-        string infoLog = GL.GetShaderInfoLog(shaderHandle);
-        if (!string.IsNullOrWhiteSpace(infoLog)) {
-            throw new Exception($"Error compiling shader of type {type}: {infoLog}");
-        }
+            string infoLog = GL.GetShaderInfoLog(shaderHandle);
+            if (!string.IsNullOrWhiteSpace(infoLog)) {
+                throw new InputException($"Error compiling shader of type {type}: {infoLog}");
+            }
 
-        return shaderHandle;
+            return shaderHandle;
+        }
     }
     
     private static unsafe void compileShaderWithInclude(uint shaderHandle) {
@@ -292,7 +295,7 @@ public partial class Shader : IDisposable {
         GL.LinkProgram(programHandle);
         GL.GetProgram(programHandle, GLEnum.LinkStatus, out var status);
         if (status == 0) {
-            throw new Exception($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
+            throw new InputException($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
         }
 
         GL.DetachShader(programHandle, vert);
@@ -307,7 +310,7 @@ public partial class Shader : IDisposable {
         GL.LinkProgram(programHandle);
         GL.GetProgram(programHandle, GLEnum.LinkStatus, out var status);
         if (status == 0) {
-            throw new Exception($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
+            throw new InputException($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
         }
 
         GL.DetachShader(programHandle, vert);
@@ -352,7 +355,7 @@ public partial class Shader : IDisposable {
     public int getUniformLocation(string name) {
         int location = GL.GetUniformLocation(programHandle, name);
         if (location == -1) {
-            throw new Exception($"{name} uniform not found on shader {this.name}.");
+            throw new InputException($"{name} uniform not found on shader {this.name}.");
         }
 
         return location;

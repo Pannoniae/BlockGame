@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.ui;
+using BlockGame.util;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ARB;
 using Silk.NET.OpenGL.Extensions.NV;
@@ -123,7 +124,7 @@ public partial class Game {
                 RenderbufferTarget.Renderbuffer, depthBuffer);
 
             if (GL.CheckNamedFramebufferStatus(fbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
-                throw new Exception("MSAA Framebuffer is not complete");
+                throw new SkillIssueException("MSAA Framebuffer is not complete");
             }
 
             // Create resolve framebuffer for post-processing
@@ -142,7 +143,7 @@ public partial class Game {
             GL.NamedFramebufferTexture(resolveFbo, FramebufferAttachment.ColorAttachment0, resolveTex, 0);
 
             if (GL.CheckNamedFramebufferStatus(resolveFbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
-                throw new Exception("Resolve Framebuffer is not complete");
+                throw new SkillIssueException("Resolve Framebuffer is not complete");
             }
         }
         else {
@@ -169,7 +170,7 @@ public partial class Game {
                 RenderbufferTarget.Renderbuffer, depthBuffer);
 
             if (GL.CheckNamedFramebufferStatus(fbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
-                throw new Exception("Framebuffer is not complete");
+                throw new SkillIssueException("Framebuffer is not complete");
             }
 
             resolveFbo = 0;

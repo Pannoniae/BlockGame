@@ -1,19 +1,86 @@
 <Solution>
-  <Project Path="BlockGame.csproj" />
-  <Project Path="BlockGameTesting/BlockGameTesting.csproj" />
-  <Project Path="lib/FontStashSharp.Base/FontStashSharp.Base.csproj" />
-  <Project Path="lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj" />
-  <Project Path="lib/FontStashSharp.Rasterizers.SixLabors.Fonts/FontStashSharp.Rasterizers.SixLabors.Fonts.csproj" />
-  <Project Path="lib/FontStashSharp.Rasterizers.StbTrueTypeSharp/FontStashSharp.Rasterizers.StbTrueTypeSharp.csproj" />
-  <Project Path="lib/FontStashSharp/FontStashSharp.csproj" />
-  <Project Path="lib/Silk.NET.Input.Common/Silk.NET.Input.Common.csproj" />
-  <Project Path="lib/Silk.NET.Input.Extensions/Silk.NET.Input.Extensions.csproj" />
-  <Project Path="lib/Silk.NET.Input.Glfw/Silk.NET.Input.Glfw.csproj" />
-  <Project Path="lib/Silk.NET.Input/Silk.NET.Input.csproj" />
-  <Project Path="lib/TrippyGL.Fonts.Building/TrippyGL.Fonts.Building.csproj" />
-  <Project Path="lib/TrippyGL.Fonts.Extensions/TrippyGL.Fonts.Extensions.csproj" />
-  <Project Path="lib/TrippyGL.Fonts/TrippyGL.Fonts.csproj" />
-  <Project Path="lib/TrippyGL.ImageSharp/TrippyGL.ImageSharp.csproj" />
-  <Project Path="lib/TrippyGL/TrippyGL.csproj" />
-  <Project Path="NBTTool\NBTTool.csproj" Type="Classic C#" />
+  <Configurations>
+    <BuildType Name="Analyzers (WILL BREAK) Debug" />
+    <BuildType Name="Analyzers (WILL BREAK) Release" />
+    <BuildType Name="Debug" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="Analyzers\Analyzers.Sample\Analyzers.Sample.csproj" Type="Classic C#">
+    <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+    <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="Analyzers\Analyzers\Analyzers.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="BlockGame.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="BlockGameTesting/BlockGameTesting.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/FontStashSharp.Base/FontStashSharp.Base.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/FontStashSharp.Rasterizers.SixLabors.Fonts/FontStashSharp.Rasterizers.SixLabors.Fonts.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/FontStashSharp.Rasterizers.StbTrueTypeSharp/FontStashSharp.Rasterizers.StbTrueTypeSharp.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/FontStashSharp/FontStashSharp.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/Silk.NET.Input.Common/Silk.NET.Input.Common.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/Silk.NET.Input.Extensions/Silk.NET.Input.Extensions.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/Silk.NET.Input.Glfw/Silk.NET.Input.Glfw.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/Silk.NET.Input/Silk.NET.Input.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/TrippyGL.Fonts.Building/TrippyGL.Fonts.Building.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/TrippyGL.Fonts.Extensions/TrippyGL.Fonts.Extensions.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/TrippyGL.Fonts/TrippyGL.Fonts.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/TrippyGL.ImageSharp/TrippyGL.ImageSharp.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib/TrippyGL/TrippyGL.csproj">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="NBTTool\NBTTool.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+  </Project>
 </Solution>

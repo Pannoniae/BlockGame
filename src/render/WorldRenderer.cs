@@ -1028,7 +1028,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 BufferUsageARB.StreamDraw);
 
             outlineCount = 24;
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), (void*)0);
+            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 3 * sizeof(float));
+            GL.VertexAttribBinding(0, 0);
             GL.EnableVertexAttribArray(0);
 
             outline.use();
