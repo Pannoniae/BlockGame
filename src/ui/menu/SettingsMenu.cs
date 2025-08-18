@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using BlockGame.GL.vertexformats;
 using Molten;
 using Silk.NET.Input;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 using Rectangle = System.Drawing.Rectangle;
 

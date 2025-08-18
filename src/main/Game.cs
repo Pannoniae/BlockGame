@@ -13,21 +13,21 @@ using Silk.NET.Core;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.ARB;
-using Silk.NET.OpenGL.Extensions.NV;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.ARB;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using BatcherBeginMode = BlockGame.GL.BatcherBeginMode;
-using DebugSeverity = Silk.NET.OpenGL.DebugSeverity;
-using DebugSource = Silk.NET.OpenGL.DebugSource;
-using DebugType = Silk.NET.OpenGL.DebugType;
+using DebugSeverity = Silk.NET.OpenGL.Legacy.DebugSeverity;
+using DebugSource = Silk.NET.OpenGL.Legacy.DebugSource;
+using DebugType = Silk.NET.OpenGL.Legacy.DebugType;
 using Image = SixLabors.ImageSharp.Image;
 using IWindow = Silk.NET.Windowing.IWindow;
 using Monitor = Silk.NET.Windowing.Monitor;
 using MouseButton = Silk.NET.Input.MouseButton;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 using VideoMode = Silk.NET.Windowing.VideoMode;
 
 namespace BlockGame;
@@ -39,8 +39,7 @@ public partial class Game {
     public static int height;
 
     public static IWindow window;
-    public static Silk.NET.OpenGL.GL GL = null!;
-    public static Silk.NET.OpenGL.Legacy.GL GLL = null!;
+    public static Silk.NET.OpenGL.Legacy.GL GL = null!;
     public static IInputContext input = null!;
     
     //private static WGL wgl;
@@ -318,8 +317,7 @@ public partial class Game {
         //  set icon
         setIconToBlock();
         input = window.CreateInput();
-        GL = window.CreateOpenGL();
-        GLL = Silk.NET.OpenGL.Legacy.GL.GetApi(window);
+        GL = window.CreateLegacyOpenGL();
 
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
         var version = GL.GetStringS(StringName.Version);
@@ -355,7 +353,7 @@ public partial class Game {
         Console.Out.WriteLine($"gl_BaseInstance UBO rendering supported: {hasInstancedUBO}");
         //hasInstancedUBO = false;
         
-        GLL.TryGetExtension(out extbu);
+        GL.TryGetExtension(out extbu);
         
         // check for NV_command_list support
         hasCMDL = GL.TryGetExtension(out NVCommandList nvCommandList);

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame;
 

@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Text;
 using BlockGame.GL.vertexformats;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
 
@@ -33,7 +33,7 @@ public class Graphics : IDisposable {
     public readonly Shader simplePostShader =
         new(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
 
-    public readonly Silk.NET.OpenGL.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
     private readonly int[] viewportParams = new int[4]; // x, y, width, height
     private int currentViewportX, currentViewportY, currentViewportWidth, currentViewportHeight;

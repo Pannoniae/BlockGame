@@ -1,9 +1,10 @@
 using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
-using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.NV;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
 
@@ -20,7 +21,7 @@ public sealed class SharedBlockVAO : VAO {
     public ulong bufferAddress;
     public nuint bufferLength;
 
-    public readonly Silk.NET.OpenGL.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
     public SharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;

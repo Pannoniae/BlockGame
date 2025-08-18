@@ -1,7 +1,8 @@
 using System.Numerics;
 using BlockGame.GL.vertexformats;
-using Silk.NET.OpenGL;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
 
@@ -20,7 +21,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected readonly T[] vertices;
     protected int currentVertex = 0;
 
-    protected readonly Silk.NET.OpenGL.GL GL;
+    protected readonly Silk.NET.OpenGL.Legacy.GL GL;
     
     protected uint VAO;
     protected uint VBO;

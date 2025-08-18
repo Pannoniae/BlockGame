@@ -1,5 +1,6 @@
-using Silk.NET.OpenGL;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
 
@@ -12,7 +13,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public uint ibo;
     public uint count;
 
-    public Silk.NET.OpenGL.GL GL;
+    public Silk.NET.OpenGL.Legacy.GL GL;
 
     public StreamingVAO() {
         GL = Game.GL;

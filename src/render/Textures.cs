@@ -6,7 +6,7 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace BlockGame;
 
 public class Textures {
-    public Silk.NET.OpenGL.GL GL;
+    public Silk.NET.OpenGL.Legacy.GL GL;
 
     public BTexture2D background;
     public BTextureAtlas blockTexture;
@@ -23,7 +23,7 @@ public class Textures {
 
     public readonly Rgba32[] lightmap = new Rgba32[256];
 
-    public Textures(Silk.NET.OpenGL.GL GL) {
+    public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
 
         background = new BTexture2D("textures/bg.png");

@@ -2,7 +2,7 @@ using System.Numerics;
 using BlockGame.GL.vertexformats;
 using Molten;
 using Silk.NET.Input;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 using RectangleF = System.Drawing.RectangleF;
 

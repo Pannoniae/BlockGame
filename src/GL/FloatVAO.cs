@@ -1,4 +1,5 @@
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
 
@@ -9,7 +10,7 @@ public class FloatVAO {
 
     public uint count;
 
-    public Silk.NET.OpenGL.GL GL;
+    public Silk.NET.OpenGL.Legacy.GL GL;
 
     public FloatVAO() {
         GL = Game.GL;

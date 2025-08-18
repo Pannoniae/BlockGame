@@ -2,9 +2,9 @@
 using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
-using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.ARB;
-using Silk.NET.OpenGL.Extensions.NV;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.ARB;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Silk.NET.OpenGL.Legacy.Extensions.EXT;
 
 namespace BlockGame;

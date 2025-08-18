@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
-using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.NV;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 
 namespace BlockGame.GL;
 
@@ -145,7 +145,7 @@ public struct DrawArraysIndirectBindlessCommandNV {
  * </remarks> 
 */
 public unsafe class CommandBuffer : IDisposable {
-    private readonly Silk.NET.OpenGL.GL GL;
+    private readonly Silk.NET.OpenGL.Legacy.GL GL;
     private uint handle;
 
     /** size of the actually written commands */
@@ -216,7 +216,7 @@ public unsafe class CommandBuffer : IDisposable {
         }
     }
 
-    public CommandBuffer(Silk.NET.OpenGL.GL GL, int initialCapacity) {
+    public CommandBuffer(Silk.NET.OpenGL.Legacy.GL GL, int initialCapacity) {
         this.GL = GL;
         capacity = initialCapacity;
         size = 0;

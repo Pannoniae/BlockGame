@@ -3,8 +3,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using BlockGame.util;
-using Silk.NET.OpenGL;
-using Silk.NET.OpenGL.Extensions.ARB;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.ARB;
 
 namespace BlockGame.GL;
 
@@ -27,7 +28,7 @@ public partial class Shader : IDisposable {
     private string vertexShader;
     private string fragmentShader;
 
-    private readonly Silk.NET.OpenGL.GL GL;
+    private readonly Silk.NET.OpenGL.Legacy.GL GL;
     public uint programHandle;
     private Dictionary<string, Definition> defs = new();
     private readonly HashSet<string> includes = [];
@@ -36,7 +37,7 @@ public partial class Shader : IDisposable {
     private static readonly HashSet<string> registeredIncludes = [];
     private static readonly Lock includesLock = new();
 
-    public Shader(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath, string fragmentShaderPath,
+    public Shader(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShaderPath, string fragmentShaderPath,
         IEnumerable<Definition>? defs = null) {
         this.GL = GL;
         this.name = name;
@@ -55,7 +56,7 @@ public partial class Shader : IDisposable {
         link(vert, frag);
     }
 
-    public Shader(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath,
+    public Shader(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShaderPath,
         IEnumerable<Definition>? customDefinitions = null) {
         this.GL = GL;
         this.name = name;
@@ -317,7 +318,7 @@ public partial class Shader : IDisposable {
         GL.DeleteShader(vert);
     }
 
-    public static Shader createVariant(Silk.NET.OpenGL.GL GL, string name, string vertexShaderPath,
+    public static Shader createVariant(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShaderPath,
         string? fragmentShaderPath = null, ShaderVariant? variant = null, IEnumerable<Definition>? defs = null) {
         var definitions = new List<Definition>();
         
@@ -440,17 +441,17 @@ public class InstantShader : Shader {
         setUniform(uMVP, value);
     }
 
-    public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader, string fragmentShader) : base(GL,
+    public InstantShader(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShader, string fragmentShader) : base(GL,
         name, vertexShader, fragmentShader) {
         uMVP = getUniformLocation("uMVP");
     }
 
-    public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader, string fragmentShader, IEnumerable<Definition> defs) : base(GL,
+    public InstantShader(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShader, string fragmentShader, IEnumerable<Definition> defs) : base(GL,
         name, vertexShader, fragmentShader, defs) {
         uMVP = getUniformLocation("uMVP");
     }
 
-    public InstantShader(Silk.NET.OpenGL.GL GL, string name, string vertexShader) : base(GL, name, vertexShader) {
+    public InstantShader(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShader) : base(GL, name, vertexShader) {
         uMVP = getUniformLocation("uMVP");
     }
 

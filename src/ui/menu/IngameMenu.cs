@@ -5,7 +5,7 @@ using Cysharp.Text;
 using FontStashSharp.RichText;
 using Molten;
 using Molten.DoublePrecision;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 
 namespace BlockGame.ui;

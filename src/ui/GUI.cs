@@ -7,7 +7,7 @@ using BlockGame.util.font;
 using FontStashSharp;
 using FontStashSharp.RichText;
 using Molten;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 using Rectangle = System.Drawing.Rectangle;
 using RectangleF = System.Drawing.RectangleF;
 using Color4b = BlockGame.GL.vertexformats.Color4b;
@@ -22,7 +22,7 @@ namespace BlockGame.ui;
 /// Drawing methods ending with "UI" draw on the virtual GUI coordinate system, so they are positioned in the right place when the GUI scale is changed.
 /// </summary>
 public class GUI {
-    public Silk.NET.OpenGL.GL GL;
+    public Silk.NET.OpenGL.Legacy.GL GL;
 
     //public InstantShader shader;
 

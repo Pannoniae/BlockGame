@@ -1,6 +1,6 @@
 using BlockGame.GL.vertexformats;
 using Molten;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.ui;
 

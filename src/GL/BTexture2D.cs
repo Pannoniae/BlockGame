@@ -1,4 +1,4 @@
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -7,7 +7,7 @@ namespace BlockGame.GL;
 public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public uint handle;
 
-    public Silk.NET.OpenGL.GL GL;
+    public Silk.NET.OpenGL.Legacy.GL GL;
 
     public string path;
 

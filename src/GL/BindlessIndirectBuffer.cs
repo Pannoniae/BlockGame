@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
 
@@ -7,7 +8,7 @@ namespace BlockGame.GL;
 /// Buffer for managing bindless multi draw indirect commands
 /// </summary>
 public unsafe class BindlessIndirectBuffer : IDisposable {
-    public readonly Silk.NET.OpenGL.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
     public uint handle;
     public DrawElementsIndirectBindlessCommandNV* data;
     public int commands;
@@ -15,7 +16,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
     public int size;
     public int offset;
 
-    public BindlessIndirectBuffer(Silk.NET.OpenGL.GL gl, int initialCapacity) {
+    public BindlessIndirectBuffer(Silk.NET.OpenGL.Legacy.GL gl, int initialCapacity) {
         GL = gl;
         capacity = initialCapacity;
         
@@ -112,7 +113,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
 /// Buffer for managing bindless multi draw indirect commands
 /// </summary>
 public unsafe class BindlessArraysIndirectBuffer : IDisposable {
-    public readonly Silk.NET.OpenGL.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
     public uint handle;
     public DrawArraysIndirectBindlessCommandNV* data;
     public int commands;
@@ -120,7 +121,7 @@ public unsafe class BindlessArraysIndirectBuffer : IDisposable {
     public int size;
     public int offset;
 
-    public BindlessArraysIndirectBuffer(Silk.NET.OpenGL.GL gl, int initialCapacity) {
+    public BindlessArraysIndirectBuffer(Silk.NET.OpenGL.Legacy.GL gl, int initialCapacity) {
         GL = gl;
         capacity = initialCapacity;
         

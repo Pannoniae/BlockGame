@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.util;
 

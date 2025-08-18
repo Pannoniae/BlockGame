@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
 
@@ -7,13 +8,13 @@ namespace BlockGame.GL;
 /// Uniform Buffer Object for efficiently setting frequently updated uniforms (or something like that idk)
 /// </summary>
 public unsafe class UniformBuffer : IDisposable {
-    private readonly Silk.NET.OpenGL.GL GL;
+    private readonly Silk.NET.OpenGL.Legacy.GL GL;
     private readonly uint handle;
     private readonly uint bindingPoint;
     private readonly int size;
     private void* data;
 
-    public UniformBuffer(Silk.NET.OpenGL.GL GL, int size, uint bindingPoint) {
+    public UniformBuffer(Silk.NET.OpenGL.Legacy.GL GL, int size, uint bindingPoint) {
         this.GL = GL;
         this.size = size;
         this.bindingPoint = bindingPoint;

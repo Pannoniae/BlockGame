@@ -6,7 +6,7 @@ using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.Maths;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 using RectangleF = System.Drawing.RectangleF;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 

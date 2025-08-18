@@ -1,9 +1,10 @@
 using System.Drawing;
 using System.Numerics;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Silk.NET.OpenGL.Legacy;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
 
@@ -40,7 +41,7 @@ public sealed class SpriteBatch : IDisposable {
     private const uint MaxBufferCapacity = 32768 * 16;
 
     // OpenGL resources
-    private readonly Silk.NET.OpenGL.GL GL;
+    private readonly Silk.NET.OpenGL.Legacy.GL GL;
     public readonly uint vao;
     private uint vbo;
     private uint ibo;
@@ -60,7 +61,7 @@ public sealed class SpriteBatch : IDisposable {
     public BatcherBeginMode BeginMode { get; private set; }
     public bool IsDisposed { get; private set; }
 
-    public SpriteBatch(Silk.NET.OpenGL.GL gl, uint initialBatchCapacity = InitialBatchItemsCapacity) {
+    public SpriteBatch(Silk.NET.OpenGL.Legacy.GL gl, uint initialBatchCapacity = InitialBatchItemsCapacity) {
 
         GL = gl;
 

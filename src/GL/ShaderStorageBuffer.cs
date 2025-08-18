@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
 using Buffer = System.Buffer;
 
 namespace BlockGame.GL;
@@ -8,14 +9,14 @@ namespace BlockGame.GL;
 /// Shader Storage Buffer Object for dynamic arrays in shaders
 /// </summary>
 public unsafe class ShaderStorageBuffer : IDisposable {
-    private readonly Silk.NET.OpenGL.GL GL;
+    private readonly Silk.NET.OpenGL.Legacy.GL GL;
     public readonly uint handle;
     private readonly uint bindingPoint;
     private int size;
     private int capacity;
     private void* data;
 
-    public ShaderStorageBuffer(Silk.NET.OpenGL.GL GL, int initialCapacity, uint bindingPoint) {
+    public ShaderStorageBuffer(Silk.NET.OpenGL.Legacy.GL GL, int initialCapacity, uint bindingPoint) {
         this.GL = GL;
         this.bindingPoint = bindingPoint;
         this.capacity = initialCapacity;

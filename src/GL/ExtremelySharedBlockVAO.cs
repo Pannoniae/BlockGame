@@ -2,8 +2,9 @@ using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
-using Silk.NET.OpenGL;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
 
@@ -20,7 +21,7 @@ public sealed class ExtremelySharedBlockVAO : VAO {
     public uint indexOffset;
 
 
-    public readonly Silk.NET.OpenGL.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;

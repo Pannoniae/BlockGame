@@ -5,12 +5,12 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using BoundingFrustum = System.Numerics.BoundingFrustum;
 using Color = Molten.Color;
-using DepthFunction = Silk.NET.OpenGL.DepthFunction;
-using PrimitiveType = Silk.NET.OpenGL.PrimitiveType;
+using DepthFunction = Silk.NET.OpenGL.Legacy.DepthFunction;
+using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame;
@@ -24,7 +24,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public World? world;
     private int currentAnisoLevel = -1;
 
-    public Silk.NET.OpenGL.GL GL;
+    public Silk.NET.OpenGL.Legacy.GL GL;
 
     public Shader worldShader;
     public Shader dummyShader;
@@ -162,8 +162,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // get address of the ssbo
 
         if (Game.hasSBL) {
-            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
-            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV,
+            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)GLEnum.ReadOnly);
+            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Legacy.Extensions.NV.NV.BufferGpuAddressNV,
                 out ssboaddr);
         }
 
@@ -252,10 +252,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // make element buffer resident for unified memory if supported
             if (Game.hasVBUM && Game.hasSBL) {
-                Game.sbl.MakeBufferResident((Silk.NET.OpenGL.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
-                    (Silk.NET.OpenGL.Extensions.NV.NV)GLEnum.ReadOnly);
-                Game.sbl.GetBufferParameter((Silk.NET.OpenGL.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
-                    Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV, out elementAddress);
+                Game.sbl.MakeBufferResident((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
+                    (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)GLEnum.ReadOnly);
+                Game.sbl.GetBufferParameter((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
+                    Silk.NET.OpenGL.Legacy.Extensions.NV.NV.BufferGpuAddressNV, out elementAddress);
                 elementLen = Game.graphics.fatQuadIndicesLen;
             }
         }
@@ -468,13 +468,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
             #pragma warning disable CS0618 // Type or member is obsolete
-            Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
-            Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
-                Game.GLL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
+            Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
+                Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
 
             // set up element array address (shared index buffer)
-            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
                 Game.graphics.fatQuadIndicesLen);
         }
 
@@ -490,9 +490,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // get first vertex buffer
         //var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
         // bind the vertex buffer to the VAO
-        Game.vbum.VertexAttribIFormat(0, 3, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-        Game.vbum.VertexAttribIFormat(1, 2, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-        Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
+        Game.vbum.VertexAttribIFormat(0, 3, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        Game.vbum.VertexAttribIFormat(1, 2, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
         //GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));*/
 
         var tex = Game.textures.blockTexture;
@@ -583,18 +583,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // get first vertex buffer
         //var firstBuffer = chunkList[0].subChunks[0].vao?.buffer ?? throw new InvalidOperationException("No vertex buffer found for chunk rendering");
         // bind the vertex buffer to the VAO
-        //Game.vbum.VertexAttribIFormat(0, 3, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-        //Game.vbum.VertexAttribIFormat(1, 2, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
-        //Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribIFormat(0, 3, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribIFormat(1, 2, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribIType.UnsignedShort, 7 * sizeof(ushort));
+        //Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
         //GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));
 
-        //Game.sbl.GetNamedBufferParameter(firstBuffer, Silk.NET.OpenGL.Extensions.NV.NV.BufferGpuAddressNV, out testidx);
+        //Game.sbl.GetNamedBufferParameter(firstBuffer, Silk.NET.OpenGL.Legacy.Extensions.NV.NV.BufferGpuAddressNV, out testidx);
 
-        //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0, 0, 69);
-        //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0, testidx, 96);
+        //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0, 0, 69);
+        //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0, testidx, 96);
 
         //uint state = Game.cmdl.CreateState();
-        //Game.cmdl.StateCapture(state, (Silk.NET.OpenGL.Extensions.NV.NV)PrimitiveType.Triangles);
+        //Game.cmdl.StateCapture(state, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)PrimitiveType.Triangles);
 
         // OPAQUE PASS
         //worldShader.use();
@@ -609,12 +609,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // status update: probably because the validation happens before the indirect buffer is parsed, so it complains
             // well, this is cheap enough for me to not care! :P
             // status update 2.0: apparently, the error message in the driver refers to the attrib, which *is* hooked onto index 0.... so just select the pointer on index 0 and we're good
-            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0,
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 0,
                 elementAddress, 0);
-            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 1,
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.VertexAttribArrayAddressNV, 1,
                 elementAddress, 0);
 
-            //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
+            //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
             //    elementAddress, 0);
         }
 
@@ -847,9 +847,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // disable unified memory after all chunk rendering passes
         if (Game.hasVBUM && Game.hasSBL) {
             #pragma warning disable CS0618 // Type or member is obsolete
-            Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
-            Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
-            Game.GLL.DisableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GL.DisableClientState((EnableCap)NV.ElementArrayUnifiedNV);
+            Game.GL.DisableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
+            Game.GL.DisableClientState((EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
         }
 

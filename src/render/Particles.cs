@@ -3,7 +3,7 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten.DoublePrecision;
-using Silk.NET.OpenGL;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame;
 
