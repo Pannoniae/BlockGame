@@ -1,4 +1,5 @@
-﻿using Molten;
+﻿using BlockGame.util;
+using Molten;
 
 namespace BlockGame;
 
@@ -23,8 +24,29 @@ public partial class World {
         entities.Add(entity);
     }
 
-    public static void getEntitiesInBox(List<Entity> result, Vector3I min, Vector3I max) {
-        // fill
+    public void getEntitiesInBox(List<Entity> result, Vector3I min, Vector3I max) {
+        var minChunk = getChunkPos(min.X, min.Z);
+        var maxChunk = getChunkPos(max.X, max.Z);
+        
+        for (int chunkX = minChunk.x; chunkX <= maxChunk.x; chunkX++) {
+            for (int chunkZ = minChunk.z; chunkZ <= maxChunk.z; chunkZ++) {
+                if (getChunkMaybe(new ChunkCoord(chunkX, chunkZ), out var chunk)) {
+                    int minY = Math.Max(0, min.Y >> 4);
+                    int maxY = Math.Min(Chunk.CHUNKHEIGHT - 1, max.Y >> 4);
+                    
+                    for (int y = minY; y <= maxY; y++) {
+                        foreach (var entity in chunk!.entities[y]) {
+                            var pos = entity.position.toBlockPos();
+                            if (pos.X >= min.X && pos.X <= max.X &&
+                                pos.Y >= min.Y && pos.Y <= max.Y &&
+                                pos.Z >= min.Z && pos.Z <= max.Z) {
+                                result.Add(entity);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public List<Entity> getEntitiesInBox(Vector3I min, Vector3I max) {

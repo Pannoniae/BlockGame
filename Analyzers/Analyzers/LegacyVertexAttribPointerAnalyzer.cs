@@ -18,8 +18,39 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: "GL.VertexAttribPointer is a piece of shit function because it modifies where the data is SOURCED from too.");
 
+    public static readonly DiagnosticDescriptor LegacyVertexAttribIPointerRule = new DiagnosticDescriptor(
+        "BG0002",
+        "Legacy glVertexAttribIPointer usage detected",
+        "The usage of legacy GL.VertexAttribIPointer is forbidden. Use GL.VertexAttribIFormat with GL.VertexAttribBinding instead.",
+        "Performance",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "GL.VertexAttribIPointer mixes attribute format with binding state.");
+
+    public static readonly DiagnosticDescriptor LegacyVertexAttribLPointerRule = new DiagnosticDescriptor(
+        "BG0003",
+        "Legacy glVertexAttribLPointer usage detected",
+        "The usage of legacy GL.VertexAttribLPointer is forbidden. Use GL.VertexAttribLFormat with GL.VertexAttribBinding instead.",
+        "Performance",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "GL.VertexAttribLPointer mixes attribute format with binding state.");
+
+    public static readonly DiagnosticDescriptor LegacyVertexAttribDivisorRule = new DiagnosticDescriptor(
+        "BG0004",
+        "Legacy glVertexAttribDivisor usage detected",
+        "The usage of legacy GL.VertexAttribDivisor is forbidden. It mixes attribute format with binding state.",
+        "Performance",
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "GL.VertexAttribDivisor is a legacy function that mixes attribute format with binding state. Use separate format/binding calls.");
+
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
-        ImmutableArray.Create(LegacyVertexAttribPointerRule);
+        ImmutableArray.Create(
+            LegacyVertexAttribPointerRule,
+            LegacyVertexAttribIPointerRule,
+            LegacyVertexAttribLPointerRule,
+            LegacyVertexAttribDivisorRule);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -36,8 +67,19 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
         if (invocationExpr.Expression is not MemberAccessExpressionSyntax memberAccess)
             return;
 
-        // Check if the method name is VertexAttribPointer
-        if (memberAccess.Name.Identifier.ValueText != "VertexAttribPointer")
+        var methodName = memberAccess.Name.Identifier.ValueText;
+        
+        // Check for legacy VAO state-mixing functions
+        DiagnosticDescriptor? rule = methodName switch
+        {
+            "VertexAttribPointer" => LegacyVertexAttribPointerRule,
+            "VertexAttribIPointer" => LegacyVertexAttribIPointerRule,
+            "VertexAttribLPointer" => LegacyVertexAttribLPointerRule,
+            "VertexAttribDivisor" => LegacyVertexAttribDivisorRule,
+            _ => null
+        };
+
+        if (rule == null)
             return;
 
         // Get the semantic model to check the type
@@ -53,7 +95,7 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
              typeSymbol.ContainingNamespace?.ToDisplayString() == "Silk.NET.Legacy.OpenGL"))
         {
             var diagnostic = Diagnostic.Create(
-                LegacyVertexAttribPointerRule,
+                rule,
                 invocationExpr.GetLocation(),
                 memberAccess.ToString());
             

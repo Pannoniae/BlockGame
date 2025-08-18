@@ -86,11 +86,11 @@ public class BlockVAO : VAO {
     public void format() {
         unsafe {
             // 18 bytes in total, 3*4 for pos, 2*2 for uv, 2 bytes for data
-            GL.VertexAttribIPointer(0, 3, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)0);
+            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.EnableVertexAttribArray(0);
-            GL.VertexAttribIPointer(1, 2, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 3 * sizeof(ushort)));
+            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.EnableVertexAttribArray(1);
-            GL.VertexAttribIPointer(2, 1, VertexAttribIType.UnsignedShort, 6 * sizeof(ushort), (void*)(0 + 5 * sizeof(ushort)));
+            GL.VertexAttribIFormat(2, 1, VertexAttribIType.UnsignedShort, 0 + 5 * sizeof(ushort));
             GL.EnableVertexAttribArray(2);
         }
     }
