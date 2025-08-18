@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
+        <Platforms>AnyCPU</Platforms>
+        <AssemblyName>snbt2nbt</AssemblyName>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\meth\Meth.csproj"/>
+    </ItemGroup>
+    
+    <Import Project="..\NetBeauty.targets" />
+
+    <PropertyGroup>
+        <PublishDir>../publish/NBT</PublishDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BeautyDir>.</BeautyDir>
+        <BeautyAppHostEntry>NBT/snbt2nbt.dll</BeautyAppHostEntry>
+        <BeautyAppHostDir>..</BeautyAppHostDir>
+    </PropertyGroup>
+
+</Project>

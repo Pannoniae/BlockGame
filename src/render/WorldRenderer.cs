@@ -1028,9 +1028,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 BufferUsageARB.StreamDraw);
 
             outlineCount = 24;
-            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 3 * sizeof(float));
-            GL.VertexAttribBinding(0, 0);
+            GL.BindVertexBuffer(0, outlineVbo, 0, 3 * sizeof(float));
             GL.EnableVertexAttribArray(0);
+            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexAttribBinding(0, 0);
+            
 
             outline.use();
             //outline_uModel = outline.getUniformLocation("uModel");

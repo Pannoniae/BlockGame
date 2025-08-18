@@ -27,7 +27,15 @@ public class SkillIssueException(string message) : Exception(message) {
  * Remember, we respect our users, they don't have skill issues, they make mistakes like the rest of us.
  * As a developer, you should catch these and handle them gracefully, with your sweet warmth and embrace.
  */
-public class InputException(string message) : ArgumentException(message) {
+public class InputException : ArgumentException {
+    
+    
+    public InputException(string message) : base(message) {
+    }
+    
+    public InputException(string message, Exception ex) : base(message, ex) {
+    }
+
     public static void throwNew() {
         throw new InputException("Some of the input is not valid.");
     }

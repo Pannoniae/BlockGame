@@ -47,9 +47,11 @@ public class FloatVAO {
 
     public void format() {
         unsafe {
+            GL.BindVertexBuffer(0, vbo, 0, sizeof(float) * 3);
+            GL.EnableVertexAttribArray(0);
             GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
             GL.VertexAttribBinding(0, 0);
-            GL.EnableVertexAttribArray(0);
+            
         }
     }
 
