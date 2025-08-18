@@ -7,10 +7,10 @@ namespace BlockGame;
 public sealed class ArrayBlockData : BlockData, IDisposable {
 
 
-    public static FixedArrayPool<ushort> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static FixedArrayPool<uint> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
-    public ushort[]? blocks;
+    public uint[]? blocks;
 
     /// <summary>
     /// Skylight is on the lower 4 bits, blocklight is on the upper 4 bits.
@@ -34,14 +34,14 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => !inited ? (ushort)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        get => !inited ? (ushort)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x).getID();
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             if (!inited && value != 0) {
                 init();
             }
             ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
-            var old = blockRef;
+            ushort old = blockRef.getID();
             blockRef = value;
             // if old was air, new is not
             if (old == 0 && value != 0) {
@@ -83,7 +83,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public ushort fastGet(int x, int y, int z) {
-        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x).getID();
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             int x = i & 0xF;
             int z = i >> 4 & 0xF;
             int y = i >> 8;
-            var block = blockArray;
+            var block = blockArray.getID();
             if (block != 0) {
                 blockCount++;
             }

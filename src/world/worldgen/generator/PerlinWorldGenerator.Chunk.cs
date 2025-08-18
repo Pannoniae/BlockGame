@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
-using BlockGame.id;
 using BlockGame.util;
 
 namespace BlockGame;
@@ -125,10 +124,20 @@ public partial class PerlinWorldGenerator {
                     // Reduce the density when too high above 64 and increase it when too low
                     // range: // -0.5 (at y=128) to 0.5 (at y=0)
                     var airBias = (y - WATER_LEVEL) / (float)World.WORLDHEIGHT;
+                    // our SIGNATURE weird terrain
                     airBias *= 0.5f;
+                    // normalish terrain (kinda like old mc?)
+                    //airBias *= 1f;
+                    // fairly normal terrain, but its like a fucking warzone, littered with caves. if we want a normalish/realistic-looking terrain like that,
+                    // we should decrease the cave density in the lowlands because otherwise it will be cancer to traverse/build on
+                    //airBias *= 2f;
 
                     // flatten out low noise
+                    // is this needed?
                     //low -= airBias;
+                    
+                    // todo when making normal terrain, raise the "sealevel" (the midpoint of the terrain) by like ~4 blocks, so there will be actual plains instead of
+                    // just endless beaches and shallow water everywhere  
 
                     // reduce it below ground (is water anyway, useless)
                     if (y < WATER_LEVEL) {

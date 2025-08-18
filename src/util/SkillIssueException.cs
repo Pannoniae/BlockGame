@@ -5,5 +5,11 @@ namespace BlockGame.util;
 /// </summary>
 /// <param name="message">The description of the skill issue.</param>
 public class SkillIssueException(string message) : Exception(message) {
+    public static void throwNew() {
+        throw new SkillIssueException("You have a skill issue.");
+    }
     
+    public static void throwNew(string message) {
+        throw new SkillIssueException(message);
+    }
 }

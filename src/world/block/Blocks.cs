@@ -1,4 +1,4 @@
-namespace BlockGame.id;
+namespace BlockGame;
 
 public class Blocks {
     public const ushort AIR = 0;

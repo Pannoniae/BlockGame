@@ -77,7 +77,7 @@ public class WorldIO {
                 section.addByte("inited", 1);
 
                 // add the arrays
-                section.addUShortArray("blocks", chunk.blocks[sectionY].blocks);
+                section.addUIntArray("blocks", chunk.blocks[sectionY].blocks);
                 section.addByteArray("light", chunk.blocks[sectionY].light);
             }
             else {
@@ -114,7 +114,7 @@ public class WorldIO {
             blocks.loadInit();
 
             // blocks
-            blocks.blocks = section.getUShortArray("blocks");
+            blocks.blocks = section.getUIntArray("blocks");
             blocks.light = section.getByteArray("light");
             blocks.refreshCounts();
         }

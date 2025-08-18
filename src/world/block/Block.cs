@@ -2,13 +2,16 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
-using BlockGame.id;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.util;
 
+
+/**
+ * For now, we'll only have 65536 blocks for typechecking (ushort -> uint), this can be extended later.
+ */
 public class Block {
 
     private const int particleCount = 4;
@@ -16,7 +19,21 @@ public class Block {
     /// <summary>
     /// Block ID
     /// </summary>
-    public ushort id;
+    private uint value;
+    
+    public ushort id {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (ushort)(value & 0xFFFFFF);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => this.value = (this.value & 0xFF000000) | value;
+    }
+    
+    public ushort metadata {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (ushort)(value >> 24);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => this.value = (this.value & 0xFFFFFF) | ((uint)value << 24);
+    }
 
     /// <summary>
     /// Display name
@@ -85,6 +102,26 @@ public class Block {
             }
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort getMetadata() {
+        return (ushort)(value >> 24);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort getID() {
+        return (ushort)(value & 0xFFFFFF);
+    }
+    
+    public ushort setMetadata(ushort metadata) {
+        value = value & 0xFFFFFF | (uint)(metadata << 24);
+        return getID();
+    }
+    
+    public ushort setID(ushort id) {
+        this.value = (this.value & 0xFF000000) | id;
+        return getID();
+    }
 
     public static void postLoad() {
         for (int i = 0; i <= maxBlock; i++) {
@@ -125,7 +162,7 @@ public class Block {
     public static Block PLANKS = register(new Block(Blocks.PLANKS, "Planks", BlockModel.makeCube(cubeUVs(0, 5))));
     public static Block STAIRS = register(new Block(Blocks.STAIRS, "Stairs", BlockModel.makeStairs(cubeUVs(0, 5))).partialBlock());
     public static Block LOG = register(new Block(Blocks.LOG, "Log", BlockModel.makeCube(grassUVs(2, 5, 1, 5, 3, 5))));
-    public static Block LEAVES = register(new Block(Blocks.LEAVES, "Leaves", BlockModel.makeCube(cubeUVs(4, 5))).transparency());
+    public static Block LEAVES = register(new Block(Blocks.LEAVES, "Leaves", BlockModel.makeCube(cubeUVs(4, 5))).transparency().setLightAbsorption(1));
     public static Block MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks", BlockModel.makeCube(cubeUVs(5, 5))));
     public static Block MAPLE_STAIRS = register(new Block(Blocks.MAPLE_STAIRS, "Maple Stairs", BlockModel.makeStairs(cubeUVs(5, 5))).partialBlock());
     public static Block MAPLE_LOG = register(new Block(Blocks.MAPLE_LOG, "Maple Log", BlockModel.makeCube(grassUVs(7, 5, 6, 5, 8, 5))));
@@ -476,7 +513,29 @@ public class Block {
             }
         }
     }
+}
 
+public static class BlockExtensions {
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ushort getID(this uint block) {
+        return (ushort)(block & 0xFFFFFF);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ushort getMetadata(this uint block) {
+        return (ushort)(block >> 24);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint setMetadata(this uint block, ushort metadata) {
+        return (block & 0xFFFFFF) | ((uint)metadata << 24);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint setID(this uint block, ushort id) {
+        return (block & 0xFF000000) | id;
+    }
 }
 
 public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
@@ -518,11 +577,11 @@ public class FallingBlock(ushort id, string name, BlockModel uvs) : Block(id, na
         }
         if (!isSupported) {
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
-            world.setBlockRemesh(pos.X, y + 1, pos.Z, id);
+            world.setBlockRemesh(pos.X, y + 1, pos.Z, getID());
         }
 
         // if sand above, update
-        if (world.getBlock(new Vector3I(pos.X, pos.Y + 1, pos.Z)) == id) {
+        if (world.getBlock(new Vector3I(pos.X, pos.Y + 1, pos.Z)) == getID()) {
             world.blockUpdate(new Vector3I(pos.X, pos.Y + 1, pos.Z));
         }
     }

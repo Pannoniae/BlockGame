@@ -1,5 +1,4 @@
 using BlockGame.block;
-using BlockGame.id;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
@@ -74,7 +73,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // check if the entity is in the chunk
         if (entity.position.X < worldX || entity.position.X >= worldX + CHUNKSIZE ||
             entity.position.Z < worldZ || entity.position.Z >= worldZ + CHUNKSIZE) {
-            return; // not in this chunk
+            SkillIssueException.throwNew($"Entity position is out of chunk bounds: {entity.position} in chunk {coord}");
         }
 
         // get the Y coordinate in the chunk
@@ -84,9 +83,6 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         }
 
         // add the entity to the list
-        if (entities[y] == null) {
-            entities[y] = new List<Entity>();
-        }
         entities[y].Add(entity);
     }
 

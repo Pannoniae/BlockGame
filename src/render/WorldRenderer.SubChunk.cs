@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
-using BlockGame.id;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -28,7 +27,7 @@ public partial class WorldRenderer {
     private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
     // YZX again
-    private static readonly ushort[] neighbours = GC.AllocateArray<ushort>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
+    private static readonly uint[] neighbours = GC.AllocateArray<uint>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
 
     private static readonly byte[]
         neighbourLights = GC.AllocateArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
@@ -143,12 +142,12 @@ public partial class WorldRenderer {
     
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
-    private static bool opaqueBlocks(int b) {
-        return b != 0 && Block.get(b).layer != RenderLayer.TRANSLUCENT;
+    private static bool opaqueBlocks(uint b) {
+        return b != 0 && Block.get(b.getID()).layer != RenderLayer.TRANSLUCENT;
     }
 
-    private static bool notOpaqueBlocks(int b) {
-        return b == 0 || Block.get(b).layer == RenderLayer.TRANSLUCENT;
+    private static bool notOpaqueBlocks(uint b) {
+        return b == 0 || Block.get(b.getID()).layer == RenderLayer.TRANSLUCENT;
     }
 
 
@@ -398,9 +397,9 @@ public partial class WorldRenderer {
         // if the chunk section is an EmptyBlockData, don't bother
         // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
         var blocks = subChunk.blocks;
-        ref ushort sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.blocks);
+        ref uint sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.blocks);
         ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.light);
-        ref ushort blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
+        ref uint blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref byte lightArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
         var world = this.world;
         int y;
@@ -504,7 +503,7 @@ public partial class WorldRenderer {
 
         Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
 
-        Span<ushort> nba = stackalloc ushort[6];
+        Span<uint> nba = stackalloc uint[6];
 
 
         // BYTE OF SETTINGS
@@ -526,7 +525,7 @@ public partial class WorldRenderer {
             return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
-        ref ushort blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
+        ref uint blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
         ref short offsetArray = ref MemoryMarshal.GetReference(offsetTableCompact);
 
         bool test2;
@@ -540,7 +539,7 @@ public partial class WorldRenderer {
 
                     break;
                 case VertexConstructionMode.TRANSLUCENT:
-                    if (Block.notTranslucent(blockArrayRef)) {
+                    if (Block.notTranslucent(blockArrayRef.getID())) {
                         goto increment;
                     }
 
@@ -554,7 +553,7 @@ public partial class WorldRenderer {
 
             var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
             // pre-add index
-            ref ushort neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
+            ref uint neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
             ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
 
             // unrolled world.toWorldPos
@@ -562,7 +561,7 @@ public partial class WorldRenderer {
             //float wy = section.chunkY * Chunk.CHUNKSIZE + y;
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
-            var bl = Block.get(blockArrayRef);
+            var bl = Block.get(blockArrayRef.getID());
 
             /*switch (Block.renderType[bl.id]) {
                 case RenderType.CUBE:
@@ -605,12 +604,12 @@ public partial class WorldRenderer {
             nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
             nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
             nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
-            if (Block.isFullBlock(nba[0]) &&
-                Block.isFullBlock(nba[1]) &&
-                Block.isFullBlock(nba[2]) &&
-                Block.isFullBlock(nba[3]) &&
-                Block.isFullBlock(nba[4]) &&
-                Block.isFullBlock(nba[5])) {
+            if (Block.isFullBlock(nba[0].getID()) &&
+                Block.isFullBlock(nba[1].getID()) &&
+                Block.isFullBlock(nba[2].getID()) &&
+                Block.isFullBlock(nba[3].getID()) &&
+                Block.isFullBlock(nba[4].getID()) &&
+                Block.isFullBlock(nba[5].getID())) {
                 goto increment;
             }
 
@@ -652,17 +651,17 @@ public partial class WorldRenderer {
                 }
                 else {
                     lb = Unsafe.Add(ref lightRef, lightOffsets[(byte)dir]);
-                    ushort nb = nba[(byte)dir];
+                    uint nb = nba[(byte)dir];
                     switch (mode) {
                         case VertexConstructionMode.OPAQUE:
-                            test2 = Block.notSolid(nb) || !Block.isFullBlock(nb);
+                            test2 = Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID());
                             break;
                         case VertexConstructionMode.TRANSLUCENT:
-                            test2 = !Block.isTranslucent(nb) && (Block.notSolid(nb) || !Block.isFullBlock(nb));
+                            test2 = !Block.isTranslucent(nb.getID()) && (Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID()));
                             break;
                     }
 
-                    test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb));
+                    test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb.getID()));
                 }
                 
 
