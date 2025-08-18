@@ -44,9 +44,15 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     public void upload(Span<BlockVertexPacked> data, uint _count) {
+        
+        // If true, we're drawing elements
+        // on the fancy NV rendering modes we just fuck it and draw quads, less effort
+        //bool elementsMode = !(Game.hasCMDL || Game.hasBindlessMDI);
+        
         unsafe {
             GL.DeleteBuffer(buffer);
             buffer = GL.CreateBuffer();
+            //count = (uint)(_count * (elementsMode ? 1.5 : 1)); // 1.5 for elements mode, 1 for arrays mode
             count = (uint)(_count * 1.5);
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
@@ -254,6 +260,7 @@ public sealed class SharedBlockVAO : VAO {
         uint elementLength) {
         // hardcode sizeof(DrawElementsIndirectBindlessCommandNV) for codegen
         const int commandSize = 72;
+        //const int commandSize = 40;
 
         // uncomment this if you want to check for enough space in the indirect buffer
         // i dont think it will ever happen, but it *does* fuck the codegen up so we don't need it
@@ -348,6 +355,7 @@ public sealed class SharedBlockVAO : VAO {
             count = count,
             //instanceCount = 1,
             firstIndex = 0,
+            //first = 0,
             //firstIndex = 0, 
             baseVertex = 0,
             //baseInstance = 0

@@ -4,6 +4,12 @@ using Silk.NET.OpenGL.Extensions.NV;
 
 namespace BlockGame.GL;
 
+public struct DrawArraysCommandNV {
+    public uint header;
+    public uint count;
+    public uint first;
+}
+
 //[StructLayout(LayoutKind.Sequential, Size = 16)]
 public struct DrawElementsCommandNV {
     public uint header;
@@ -80,6 +86,15 @@ public struct DrawElementsIndirectBindlessCommandNV {
     public uint reserved;
     public BindlessPtrNV indexBuffer;
     public BindlessPtrNV vertexBuffer; // only one here!
+}
+
+/// <summary>
+/// Standard DrawElementsIndirectCommand structure  
+/// </summary>
+[StructLayout(LayoutKind.Sequential)]
+public struct DrawArraysIndirectBindlessCommandNV {
+    public DrawArraysIndirectCommand cmd;
+    public BindlessPtrNV vertexBuffer; // only one here!
 };
 
 /** <summary>
@@ -155,6 +170,7 @@ public unsafe class CommandBuffer : IDisposable {
 
     /** actually an instanced drawelements token but shhhh */
     public static readonly uint drawelementsToken;
+    public static readonly uint drawarraysToken;
 
     public static readonly uint drawelementsInstancedToken;
     public static readonly uint attribaddressToken;
@@ -172,6 +188,10 @@ public unsafe class CommandBuffer : IDisposable {
 
             //offsets = new nint[256000];
             //sizes = new uint[256000];
+            
+            // get draw arrays token
+            drawarraysToken = Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawArraysCommandNV, 3 * sizeof(int));
+            Console.Out.WriteLine($"Draw Arrays Token: 0x{drawarraysToken:x8}");
 
             //Console.Out.WriteLine($"0x{drawelementsToken:x8}");
             // print instanced elements token
@@ -386,7 +406,26 @@ public unsafe class CommandBuffer : IDisposable {
             Console.WriteLine($"  Header: 0x{header:X8}");
 
             // identify command type and parse accordingly
-            if (header == drawelementsToken) {
+            
+            if (header == drawarraysToken) {
+                if (pos + sizeof(DrawArraysCommandNV) > size) {
+                    validationErrors.Add($"ERROR: DrawArraysCommandNV at offset {pos} extends beyond buffer");
+                    break;
+                }
+
+                var cmd = *(DrawArraysCommandNV*)(data + pos);
+                Console.WriteLine($"  Type: DrawArraysCommandNV");
+                Console.WriteLine($"  Count: {cmd.count}");
+                Console.WriteLine($"  First: {cmd.first}");
+
+                // validation
+                if (cmd.header != drawarraysToken) {
+                    validationErrors.Add($"WARNING: Header mismatch in DrawArraysCommandNV at offset {pos}");
+                }
+
+                pos += sizeof(DrawArraysCommandNV);
+            }
+            else if (header == drawelementsToken) {
                 if (pos + sizeof(DrawElementsCommandNV) > size) {
                     validationErrors.Add($"ERROR: DrawElementsCommandNV at offset {pos} extends beyond buffer");
                     break;
