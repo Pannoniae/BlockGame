@@ -243,6 +243,17 @@ public class ChatMenu : Menu {
                             break;
                     }
                     break;
+                case "spawn":
+                    /*int eID = args.Length > 1 ? args[1] : -1;
+                    var cow = Game.world.addEntity(e);
+                    if (cow != null) {
+                        addMessage($"Spawned {cow.name} at {Game.player.position}");
+                    }
+                    else {
+                        addMessage("Failed to spawn entity");
+                    }
+                    break;*/
+                    break;
             }
         }
         // if not command, just print with player name

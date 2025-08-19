@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 namespace BlockGame.util;
 
 /**
- * Fast deterministic hashing using xxHash3.
+ * Fast deterministic hashing ~~using xxHash3~~ not anymore! Hey, the quality is trash but at least it's fast.
  * Use this instead of built-in GetHashCode() when you need consistent results.
  */
 public static class XHash {
@@ -13,6 +13,7 @@ public static class XHash {
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int hash(int x) {
+        // we need to cast to uint so the bitwise operations work correctly
         var x_ = (uint)x;
         x_ ^= x_ >> 16;
         x_ *= 0x85ebca6b;

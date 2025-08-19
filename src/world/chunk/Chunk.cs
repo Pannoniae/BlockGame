@@ -59,6 +59,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             blocks[i] = new ArrayBlockData(this, i);
             entities[i] = [];
         }
+        
 
         heightMap = new HeightMap(this);
 

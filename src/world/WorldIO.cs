@@ -16,29 +16,16 @@ public class WorldIO {
 
     public World world;
     
+    private readonly ChunkSaveThread chunkSaveThread;
+    
     // Background saving
-    private readonly ConcurrentQueue<ChunkSaveData> saveQueue = new();
-    private readonly Thread saveThread;
-    private readonly ManualResetEvent shutdownEvent = new(false);
+    public readonly ManualResetEvent shutdownEvent = new(false);
     private volatile bool isDisposed;
-
-    private struct ChunkSaveData {
-        public NBTCompound nbt;
-        public string path;
-        public ulong timestamp;
-        
-        public ChunkSaveData(NBTCompound nbt, string path, ulong timestamp) {
-            this.nbt = nbt;
-            this.path = path;
-            this.timestamp = timestamp;
-        }
-    }
 
     public WorldIO(World world) {
         this.world = world;
-        saveThread = new Thread(saveLoop);
-        saveThread.IsBackground = true;
-        saveThread.Start();
+        chunkSaveThread = new ChunkSaveThread(this);
+        
     }
 
     public void save(World world, string filename, bool saveChunks = true) {
@@ -91,56 +78,15 @@ public class WorldIO {
         var nbt = serialiseChunkIntoNBT(chunk);
         var pathStr = getChunkString(world.name, chunk.coord);
         
-        saveQueue.Enqueue(new ChunkSaveData(nbt, pathStr, chunk.lastSaved));
-    }
-
-    private void saveLoop() {
-        try {
-            while (!shutdownEvent.WaitOne(0)) {
-                if (saveQueue.TryDequeue(out var saveData)) {
-                    try {
-                        // ensure directory is created
-                        Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
-                        NBT.writeFile(saveData.nbt, saveData.path);
-                    }
-                    catch (Exception ex) {
-                        Console.Error.WriteLine($"Failed to save chunk to {saveData.path}: {ex}");
-                    }
-                }
-                else {
-                    // no chunks to save, wait a bit or until shutdown
-                    shutdownEvent.WaitOne(10);
-                }
-            }
-        }
-        catch (Exception ex) {
-            Console.Error.WriteLine($"Background save loop error: {ex}");
-        }
+        chunkSaveThread.add(new ChunkSaveData(nbt, pathStr, chunk.lastSaved));
     }
 
     public void Dispose() {
         if (isDisposed) return;
         isDisposed = true;
         
-        // process remaining saves synchronously
-        while (saveQueue.TryDequeue(out var saveData)) {
-            try {
-                Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
-                NBT.writeFile(saveData.nbt, saveData.path);
-            }
-            catch (Exception ex) {
-                Console.Error.WriteLine($"Failed to save chunk during dispose: {ex.Message}");
-            }
-        }
-        
-        shutdownEvent.Set();
-        try {
-            saveThread.Join(5000); // wait up to 5 seconds
-        }
-        catch (Exception ex) {
-            Console.Error.WriteLine($"Error waiting for save thread to complete: {ex.Message}");
-        }
-        
+        // wait for the save thread to finish
+        chunkSaveThread.Dispose();
         shutdownEvent.Dispose();
     }
 
@@ -148,7 +94,7 @@ public class WorldIO {
         Directory.Delete($"level/{level}", true);
     }
 
-    private NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
+    public static NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
         var chunkTag = new NBTCompound();
         chunkTag.addInt("posX", chunk.coord.x);
         chunkTag.addInt("posZ", chunk.coord.z);
@@ -177,7 +123,7 @@ public class WorldIO {
         return chunkTag;
     }
 
-    private static Chunk loadChunkFromNBT(World world, NBTCompound nbt) {
+    public static Chunk loadChunkFromNBT(World world, NBTCompound nbt) {
         var posX = nbt.getInt("posX");
         var posZ = nbt.getInt("posZ");
         var status = nbt.getByte("status");
@@ -278,5 +224,88 @@ public class WorldIO {
         }
 
         return chunk;
+    }
+}
+
+
+public struct ChunkSaveData(NBTCompound nbt, string path, ulong lastSave) {
+    public readonly NBTCompound nbt = nbt;
+    public readonly string path = path;
+    public ulong lastSave = lastSave;
+}
+
+public class ChunkSaveThread : IDisposable {
+    private readonly WorldIO io;
+    private readonly Thread saveThread;
+    
+    private volatile bool isDisposed;
+    
+    private readonly ConcurrentQueue<ChunkSaveData> saveQueue = new();
+
+    public ChunkSaveThread(WorldIO io) {
+        this.io = io;
+        saveThread = new Thread(saveLoop) {
+            IsBackground = true,
+            Name = "ChunkSaveThread"
+        };
+        saveThread.Start();
+    }
+
+    public void Join() {
+        saveThread.Join();
+    }
+    
+    private void saveLoop() {
+        try {
+            while (!io.shutdownEvent.WaitOne(0)) {
+                if (saveQueue.TryDequeue(out var saveData)) {
+                    try {
+                        // ensure directory is created
+                        Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
+                        NBT.writeFile(saveData.nbt, saveData.path);
+                    }
+                    catch (Exception ex) {
+                        Console.Error.WriteLine($"Failed to save chunk to {saveData.path}: {ex}");
+                    }
+                }
+                else {
+                    // no chunks to save, wait a bit or until shutdown
+                    io.shutdownEvent.WaitOne(10);
+                }
+            }
+        }
+        catch (Exception ex) {
+            Console.Error.WriteLine($"Background save loop error: {ex}");
+        }
+    }
+
+    public void Dispose() {
+        if (isDisposed) return;
+        isDisposed = true;
+        
+        // wait for the thread to finish
+        // we first do this to ensure no new saves are added
+        io.shutdownEvent.Set();
+        try {
+            saveThread.Join(5000); // wait up to 5 seconds
+        }
+        catch (Exception ex) {
+            Console.Error.WriteLine($"Error waiting for save thread to complete: {ex}");
+        }
+        
+        // process remaining saves synchronously
+        while (saveQueue.TryDequeue(out var saveData)) {
+            try {
+                Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
+                NBT.writeFile(saveData.nbt, saveData.path);
+            }
+            catch (Exception ex) {
+                Console.Error.WriteLine($"Failed to save chunk during dispose: {ex}");
+            }
+        }
+    }
+
+    public void add(ChunkSaveData chunk) {
+        saveQueue.Enqueue(chunk);
     }
 }

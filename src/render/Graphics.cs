@@ -69,6 +69,7 @@ public class Graphics : IDisposable {
 
     public void clearColor(Color4b color) {
         GL.ClearColor(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+       // GL.ClearColor(0, 0, 0, 255);
     }
 
     public void setViewport(int x, int y, int width, int height) {

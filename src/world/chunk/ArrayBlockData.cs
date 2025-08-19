@@ -36,13 +36,13 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         
         // TODO removed the inited check, add it back when the unloaded chunk optimisation is implemented properly
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x).getID();
+        get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getID();
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             /*if (!inited && value != 0) {
                 init();
             }*/
-            ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+            ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
             ushort old = blockRef.getID();
             blockRef = value;
             // if old was air, new is not
@@ -65,11 +65,11 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             var oldFullBlock = Block.isFullBlock(old);
             var fullBlock = Block.isFullBlock(value);
             if (!oldFullBlock && fullBlock) {
-                chunk.addToHeightMap(x, yCoord * Chunk.CHUNKSIZE + y, z);
+                chunk.addToHeightMap(x, (yCoord << 4) + y, z);
                 fullBlockCount++;
             }
             else if (oldFullBlock && !fullBlock) {
-                chunk.removeFromHeightMap(x, yCoord * Chunk.CHUNKSIZE + y, z);
+                chunk.removeFromHeightMap(x, (yCoord << 4) + y, z);
                 fullBlockCount--;
             }
 
@@ -85,21 +85,21 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public ushort fastGet(int x, int y, int z) {
-        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x).getID();
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getID();
     }
 
     /// <summary>
     /// Your responsibility to update the counts after a batch of changes.
     /// </summary>
     public void fastSet(int x, int y, int z, ushort value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
     }
     
     /// <summary>
     /// Kind of like <see cref="fastSet"/>, but doesn't check if the block data is initialized. I've warned you.
     /// </summary>
     public void fastSetUnsafe(int x, int y, int z, ushort value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
     }
 
     public ArrayBlockData(Chunk chunk, int yCoord) {
@@ -192,7 +192,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
                 randomTickCount++;
             }
             if (Block.isFullBlock(block)) {
-                chunk.addToHeightMap(x, yCoord * Chunk.CHUNKSIZE + y, z);
+                chunk.addToHeightMap(x, (yCoord << 4) + y, z);
                 fullBlockCount++;
             }
             if (Block.isTranslucent(block)) {
@@ -206,39 +206,33 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
-        return !inited ? (byte)15 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void setLight(int x, int y, int z, byte value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x) = value;
     }
 
     public byte skylight(int x, int y, int z) {
-        var value = !inited ? (byte)15 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        var value = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
-        var value = !inited ? (byte)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        var value = Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
         return (byte)((value >> 4) & 0xF);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
-        if (!inited) {
-            init();
-        }
-        ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
         var blocklight = (byte)((value >> 4) & 0xF);
         // pack it back inside
         value = (byte)(blocklight << 4 | val);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
-        if (!inited) {
-            init();
-        }
-        ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
+        ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
         var skylight = (byte)(value & 0xF);
         // pack it back inside
         value = (byte)(val << 4 | skylight);

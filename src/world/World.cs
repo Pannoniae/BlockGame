@@ -800,6 +800,10 @@ public partial class World : IDisposable {
     }
 
     public void Dispose() {
+        saveWorld.enabled = false;
+        Game.clearInterval(saveWorld);
+        saveWorld = null!;
+        
         // of course, we can save it here since WE call it and not the GC
         worldIO.save(this, name);
         
@@ -810,7 +814,6 @@ public partial class World : IDisposable {
         // dispose worldIO to ensure all pending saves complete
         worldIO.Dispose();
         
-        saveWorld.enabled = false;
         Game.world = null;
         Game.player = null;
         //Game.renderer = null;

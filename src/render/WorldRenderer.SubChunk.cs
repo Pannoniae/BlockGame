@@ -27,10 +27,10 @@ public partial class WorldRenderer {
     private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
     // YZX again
-    private static readonly uint[] neighbours = GC.AllocateArray<uint>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
+    private static readonly uint[] neighbours = GC.AllocateUninitializedArray<uint>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
 
     private static readonly byte[]
-        neighbourLights = GC.AllocateArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX, true);
+        neighbourLights = GC.AllocateUninitializedArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
 
     private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 

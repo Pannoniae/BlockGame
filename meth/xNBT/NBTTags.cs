@@ -415,7 +415,7 @@ public class NBTCompound : NBTTag {
         dict = new Dictionary<string, NBTTag>();
     }
 
-    public NBTCompound() {
+    public NBTCompound() : base() {
         dict = new Dictionary<string, NBTTag>();
     }
 
