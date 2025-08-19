@@ -377,6 +377,8 @@ public partial class Game {
             BlockGame.GL.Shader.initializeIncludeFiles();
         }
         
+        SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
+        
 
         //#if DEBUG
         // initialise debug print

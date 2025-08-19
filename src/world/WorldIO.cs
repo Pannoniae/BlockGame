@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using BlockGame.util;
 using BlockGame.util.xNBT;
@@ -14,9 +15,30 @@ public class WorldIO {
     public static FixedArrayPool<byte> saveLightPool = new(mx * my * mz);
 
     public World world;
+    
+    // Background saving
+    private readonly ConcurrentQueue<ChunkSaveData> saveQueue = new();
+    private readonly Thread saveThread;
+    private readonly ManualResetEvent shutdownEvent = new(false);
+    private volatile bool isDisposed;
+
+    private struct ChunkSaveData {
+        public NBTCompound nbt;
+        public string path;
+        public ulong timestamp;
+        
+        public ChunkSaveData(NBTCompound nbt, string path, ulong timestamp) {
+            this.nbt = nbt;
+            this.path = path;
+            this.timestamp = timestamp;
+        }
+    }
 
     public WorldIO(World world) {
         this.world = world;
+        saveThread = new Thread(saveLoop);
+        saveThread.IsBackground = true;
+        saveThread.Start();
     }
 
     public void save(World world, string filename, bool saveChunks = true) {
@@ -56,6 +78,70 @@ public class WorldIO {
         var pathStr = getChunkString(world.name, chunk.coord);
         Directory.CreateDirectory(Path.GetDirectoryName(pathStr) ?? string.Empty);
         NBT.writeFile(nbt, pathStr);
+    }
+
+    public void saveChunkAsync(World world, Chunk chunk) {
+        if (isDisposed) {
+            // fallback to sync save if disposed
+            saveChunk(world, chunk);
+            return;
+        }
+        
+        chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
+        var nbt = serialiseChunkIntoNBT(chunk);
+        var pathStr = getChunkString(world.name, chunk.coord);
+        
+        saveQueue.Enqueue(new ChunkSaveData(nbt, pathStr, chunk.lastSaved));
+    }
+
+    private void saveLoop() {
+        try {
+            while (!shutdownEvent.WaitOne(0)) {
+                if (saveQueue.TryDequeue(out var saveData)) {
+                    try {
+                        // ensure directory is created
+                        Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
+                        NBT.writeFile(saveData.nbt, saveData.path);
+                    }
+                    catch (Exception ex) {
+                        Console.Error.WriteLine($"Failed to save chunk to {saveData.path}: {ex}");
+                    }
+                }
+                else {
+                    // no chunks to save, wait a bit or until shutdown
+                    shutdownEvent.WaitOne(10);
+                }
+            }
+        }
+        catch (Exception ex) {
+            Console.Error.WriteLine($"Background save loop error: {ex}");
+        }
+    }
+
+    public void Dispose() {
+        if (isDisposed) return;
+        isDisposed = true;
+        
+        // process remaining saves synchronously
+        while (saveQueue.TryDequeue(out var saveData)) {
+            try {
+                Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
+                NBT.writeFile(saveData.nbt, saveData.path);
+            }
+            catch (Exception ex) {
+                Console.Error.WriteLine($"Failed to save chunk during dispose: {ex.Message}");
+            }
+        }
+        
+        shutdownEvent.Set();
+        try {
+            saveThread.Join(5000); // wait up to 5 seconds
+        }
+        catch (Exception ex) {
+            Console.Error.WriteLine($"Error waiting for save thread to complete: {ex.Message}");
+        }
+        
+        shutdownEvent.Dispose();
     }
 
     public static void deleteLevel(string level) {

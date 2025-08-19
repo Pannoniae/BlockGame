@@ -502,8 +502,11 @@ public partial class WorldRenderer {
         chunkVertices.Clear();
 
         Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
-
         Span<uint> nba = stackalloc uint[6];
+        
+        // this is correct!
+        ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
+        ReadOnlySpan<int> flippedOrder = [3, 0, 1, 2];
 
 
         // BYTE OF SETTINGS
@@ -700,6 +703,8 @@ public partial class WorldRenderer {
 
                         // load the vector with the offsets
                         // we need 12 offsets
+                        // TODO convert this to handcode instead of loading offsets and shit
+                        // AIslop code will do, this is a fairly mechanical task (the first time I did it by hand it took me 2 days lol)
                         var offsets = Vector256.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 12));
                         l = Vector128.Create(
                             Unsafe.Add(ref lightRef, offsets[0]),
@@ -806,8 +811,20 @@ public partial class WorldRenderer {
                     vec2 = Vector128.Add(vec2, Vector128.Create(16f));
                     vec2 = Vector128.Multiply(vec2, 256);
 
+                    // determine vertex order to prevent cracks (combine AO and lighting)
+                    // extract skylight values and invert them (15-light = darkness)
+                    var dark1 = 15 - (light.First & 0xF);
+                    var dark2 = 15 - (light.Second & 0xF);
+                    var dark3 = 15 - (light.Third & 0xF);
+                    var dark4 = 15 - (light.Fourth & 0xF);
+                    
+                    ReadOnlySpan<int> order = (ao.First + dark1 + ao.Third + dark3 > 
+                                               ao.Second + dark2 + ao.Fourth + dark4) 
+                        ? flippedOrder
+                        : normalOrder;
+
                     // add vertices
-                    ref var vertex = ref tempVertices[0];
+                    ref var vertex = ref tempVertices[order[0]];
                     vertex.x = (ushort)vec[0];
                     vertex.y = (ushort)vec[1];
                     vertex.z = (ushort)vec[2];
@@ -816,7 +833,7 @@ public partial class WorldRenderer {
                     vertex.c = Block.packColour((byte)dir, ao.First);
                     vertex.light = light.First;
 
-                    vertex = ref tempVertices[1];
+                    vertex = ref tempVertices[order[1]];
                     vertex.x = (ushort)vec[3];
                     vertex.y = (ushort)vec[4];
                     vertex.z = (ushort)vec[5];
@@ -826,7 +843,7 @@ public partial class WorldRenderer {
                     vertex.light = light.Second;
                     
 
-                    vertex = ref tempVertices[2];
+                    vertex = ref tempVertices[order[2]];
                     vertex.x = (ushort)vec[6];
                     vertex.y = (ushort)vec[7];
                     vertex.z = (ushort)vec2[0];
@@ -835,7 +852,7 @@ public partial class WorldRenderer {
                     vertex.c = Block.packColour((byte)dir, ao.Third);
                     vertex.light = light.Third;
 
-                    vertex = ref tempVertices[3];
+                    vertex = ref tempVertices[order[3]];
                     vertex.x = (ushort)vec2[1];
                     vertex.y = (ushort)vec2[2];
                     vertex.z = (ushort)vec2[3];

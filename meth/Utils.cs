@@ -72,6 +72,61 @@ public static partial class Meth {
     public static float dot(this Vector3 a, Vector3 b) {
         return float.MultiplyAddEstimate(a.X, b.X, float.MultiplyAddEstimate(a.Y, b.Y, a.Z * b.Z));
     }
+    
+    /**
+     * float.SinCos is accurate. It's also slow. Sometimes we don't care, but this time we do.
+     * This one gets roughly the right value in roughly the right time!
+     *
+     * NEEDS to be in ±2π! Otherwise it will be fucked.
+     */
+    public static void fsincos(float x, out float sin, out float cos) {
+        // todo move out to meth
+        const float PI = 3.14159265f;
+        const float HALF_PI = 1.57079633f;
+        const float TWO_PI = 6.28318531f;
+        const float INV_TWO_PI = 0.15915494f;
+    
+        // Reduce to [-π, π]
+        x -= MathF.Round(x * INV_TWO_PI) * TWO_PI;
+    
+        // Determine quadrant and reduce to [-π/4, π/4]
+        float absX = MathF.Abs(x);
+        int quad = (int)(absX * 2.0f / PI + 0.5f);
+        float y = absX - quad * HALF_PI;
+    
+        // Apply approximation on reduced range
+        float y2 = y * y;
+        float s = y * (1.0f - y2 * 0.16666667f);
+        float c = 1.0f - y2 * 0.5f;
+        
+        Unsafe.SkipInit(out sin);
+        Unsafe.SkipInit(out cos);
+    
+        // Apply quadrant corrections
+        switch (quad & 3) {
+            case 0:
+                sin = s;
+                cos = c;
+                break;
+            case 1:
+                sin = c;
+                cos = -s;
+                break;
+            case 2:
+                sin = -s;
+                cos = -c;
+                break;
+            case 3:
+                sin = -c;
+                cos = s;
+                break;
+        }
+    
+        // Handle negative input
+        if (x < 0) {
+            sin = -sin;
+        }
+    }
 
     /// <summary>
     /// Correct mod which works with negative numbers. i.e. -1 mod 3 is 2 and -3 mod 3 is 0.

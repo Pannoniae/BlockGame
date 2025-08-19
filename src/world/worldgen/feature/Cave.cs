@@ -223,8 +223,8 @@ public class Cave : OverlayFeature {
 
         // update d vector with the angles
 
-        (float hSin, float hCos) = float.SinCos(hAngle);
-        (float vSin, float vCos) = float.SinCos(vAngle);
+        Meth.fsincos(hAngle, out float hSin, out float hCos);
+        Meth.fsincos(vAngle, out float vSin, out float vCos);
         d.X = hCos * vCos;
         d.Y = vSin;
         d.Z = hSin * vCos;

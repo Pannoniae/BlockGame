@@ -33,13 +33,15 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
+        
+        // TODO removed the inited check, add it back when the unloaded chunk optimisation is implemented properly
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => !inited ? (ushort)0 : Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x).getID();
+        get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x).getID();
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
-            if (!inited && value != 0) {
+            /*if (!inited && value != 0) {
                 init();
-            }
+            }*/
             ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x);
             ushort old = blockRef.getID();
             blockRef = value;
@@ -90,9 +92,6 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     /// Your responsibility to update the counts after a batch of changes.
     /// </summary>
     public void fastSet(int x, int y, int z, ushort value) {
-        if (!inited && value != 0) {
-            init();
-        }
         Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), y * Chunk.CHUNKSIZESQ + z * Chunk.CHUNKSIZE + x) = value;
     }
     

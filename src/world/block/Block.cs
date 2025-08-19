@@ -336,11 +336,12 @@ public class Block {
         return packColour((byte)direction, ao, light).to4b();
     }
     
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Color packColour(byte direction, byte ao) {
-        direction = (byte)(direction & 0b111);
-        float tint = WorldRenderer.a[direction] * WorldRenderer.aoArray[ao];
-        var ab = new Color(tint, tint, tint, 1);
-        return ab;
+        direction &= 0b111;
+        byte tint = (byte)(WorldRenderer.a[direction] * WorldRenderer.aoArray[ao] * 255);
+        return new Color(tint, tint, tint, (byte)255);
+        
     }
 
     public static AABB fullBlockAABB() {
@@ -492,7 +493,9 @@ public class Block {
                         dy * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
                         dz * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f);
 
-                    var speed = (MathF.Pow(Game.clientRandom.NextSingle(), 2) + 1) * 0.8f;
+                    var s = Game.clientRandom.NextSingle();
+                    s *= s;
+                    var speed = (s + 1) * 0.8f;
 
                     motion *= speed;
                     motion.Y += 0.15f;

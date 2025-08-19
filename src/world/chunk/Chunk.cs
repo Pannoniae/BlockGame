@@ -274,7 +274,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 var nz = neighborPos.Z;
 
                 // skip if neighbor is solid
-                if (Block.isFullBlock(neighborChunk.getBlock(nx, ny, nz))) continue;
+                if (Block.fullBlock[neighborChunk.getBlock(nx, ny, nz)]) continue;
 
                 var neighborLight = neighborChunk.getSkyLight(nx, ny, nz);
                 byte newLevel;
@@ -597,6 +597,10 @@ public readonly record struct ChunkCoord(int x, int z) {
     public override int GetHashCode() {
         return XHash.hash(x, z);
     }
+    
+    public bool Equals(ChunkCoord other) {
+        return x == other.x && z == other.z;
+    }
 }
 
 public readonly record struct SubChunkCoord(int x, int y, int z) {
@@ -607,6 +611,10 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
     public override int GetHashCode() {
         return XHash.hash(x, y, z);
     }
+
+    public bool Equals(SubChunkCoord other) {
+        return x == other.x && y == other.y && z == other.z;
+    }
 }
 
 public readonly record struct RegionCoord(int x, int z) {
@@ -615,6 +623,10 @@ public readonly record struct RegionCoord(int x, int z) {
 
     public override int GetHashCode() {
         return XHash.hash(x, z);
+    }
+
+    public bool Equals(RegionCoord other) {
+        return x == other.x && z == other.z;
     }
 }
 

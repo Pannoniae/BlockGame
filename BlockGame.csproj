@@ -51,6 +51,7 @@
         <PackageReference Include="SixLabors.Fonts" Version="2.1.3" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+        <PackageReference Include="SuperluminalPerf" Version="1.3.0" />
         <PackageReference Include="System.IO.Hashing" Version="10.0.0-preview.7.25380.108" />
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>

@@ -200,6 +200,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         chunksToMesh.Add(coord);
     }
 
+    public void onDirtyChunksBatch(ReadOnlySpan<SubChunkCoord> coords) {
+        foreach (var coord in coords) {
+            chunksToMesh.Add(coord);
+        }
+    }
+
     public void onDirtyArea(Vector3I min, Vector3I max) {
         // iterate through all chunks in the area and add them to the meshing
 

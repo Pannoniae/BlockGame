@@ -142,12 +142,12 @@ public partial class World : IDisposable {
         var x = 0;
         foreach (var chunk in chunks.Values) {
             if (chunk.status >= ChunkStatus.MESHED && chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
-                worldIO.saveChunk(this, chunk);
+                worldIO.saveChunkAsync(this, chunk);
                 x++;
             }
         }
         if (x > 0) {
-            Console.Out.WriteLine($"Saved {x} chunks");
+            Console.Out.WriteLine($"Queued {x} chunks for async save");
         }
     }
 
@@ -176,18 +176,35 @@ public partial class World : IDisposable {
         int subY0 = y0 >> 4;
         int subY1 = y1 >> 4;
         
+        // batch dirty chunks to avoid repeated HashSet operations
+        var rangeX = chunkX1 - chunkX0 + 1;
+        var rangeZ = chunkZ1 - chunkZ0 + 1;
+        var rangeY = subY1 - subY0 + 1;
+        var maxCoords = rangeX * rangeZ * rangeY;
+        
+        Span<SubChunkCoord> coords = stackalloc SubChunkCoord[maxCoords];
+        int coordCount = 0;
+        
         for (int chunkX = chunkX0; chunkX <= chunkX1; chunkX++) {
             for (int chunkZ = chunkZ0; chunkZ <= chunkZ1; chunkZ++) {
                 for (int subY = subY0; subY <= subY1; subY++) {
-                    dirtyChunk(new SubChunkCoord(chunkX, subY, chunkZ));
+                    coords[coordCount++] = new SubChunkCoord(chunkX, subY, chunkZ);
                 }
             }
         }
+        
+        dirtyChunksBatch(coords[..coordCount]);
     }
 
     public void dirtyChunk(SubChunkCoord coord) {
         foreach (var l in listeners) {
             l.onDirtyChunk(coord);
+        }
+    }
+
+    public void dirtyChunksBatch(ReadOnlySpan<SubChunkCoord> coords) {
+        foreach (var l in listeners) {
+            l.onDirtyChunksBatch(coords);
         }
     }
     
@@ -403,6 +420,10 @@ public partial class World : IDisposable {
                 break;
             }
         }
+
+        if (!loading) {
+            return;
+        }
         
         // if we're loading, we can also mesh chunks
         // empty the meshing queue
@@ -453,10 +474,12 @@ public partial class World : IDisposable {
         }
 
         // execute lighting updates
+        SuperluminalPerf.BeginEvent("light");
         processSkyLightRemovalQueue();
         processSkyLightQueue();
         processBlockLightRemovalQueue();
         processBlockLightQueue();
+        SuperluminalPerf.EndEvent();
 
         // random block updates!
         foreach (var chunk in chunks) {
@@ -480,7 +503,9 @@ public partial class World : IDisposable {
     }
 
     public void processSkyLightQueue() {
+        //SuperluminalPerf.BeginEvent("skylight");
         processLightQueue(skyLightQueue, true);
+        //SuperluminalPerf.EndEvent();
     }
     
     public void processSkyLightQueueNoUpdate() {
@@ -531,19 +556,17 @@ public partial class World : IDisposable {
     /// Gets the chunk and relative position for a neighbor of a block in chunk-relative coordinates
     /// </summary>
     public Vector3I getChunkAndRelativePos(Chunk currentChunk, int x, int y, int z, Vector3I direction, out Chunk? chunk) {
-        var neighbourX = x + direction.X;
-        var neighbourY = y + direction.Y;
-        var neighbourZ = z + direction.Z;
+        var neighbour = new Vector3I(x, y, z) + direction;
         
-        if (neighbourY is < 0 or >= WORLDHEIGHT) {
+        if (neighbour.Y is < 0 or >= WORLDHEIGHT) {
             chunk = null;
             return Vector3I.Zero;
         }
         
         // Check if neighbor is within current chunk bounds (0-15 for X/Z)
-        if (neighbourX is >= 0 and < 16 && neighbourZ is >= 0 and < 16) {
+        if (neighbour.X is >= 0 and < 16 && neighbour.Z is >= 0 and < 16) {
             chunk = currentChunk;
-            return new Vector3I(neighbourX, neighbourY, neighbourZ);
+            return neighbour;
         }
         
         
@@ -552,8 +575,8 @@ public partial class World : IDisposable {
         //var neighbourGlobal = toWorldPos(currentChunk.coord.x, currentChunk.coord.z, neighbourX, neighbourY, neighbourZ);
         
         // get the chunk world coord by shifting the chunk-relative coordinates "out" of the number
-        var newX = (currentChunk.coord.x << 4) + neighbourX;
-        var newZ = (currentChunk.coord.z << 4) + neighbourZ;
+        var newX = (currentChunk.coord.x << 4) + neighbour.X;
+        var newZ = (currentChunk.coord.z << 4) + neighbour.Z;
         
         // get target chunk
         // this assigns directly to the output variable! might be null, FYI
@@ -564,7 +587,7 @@ public partial class World : IDisposable {
         
         
         chunk = testChunk;
-        return new Vector3I(newX & 0xF, neighbourY, newZ & 0xF);
+        return new Vector3I(newX & 0xF, neighbour.Y, newZ & 0xF);
     }
     
     
@@ -580,7 +603,7 @@ public partial class World : IDisposable {
     }
     
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void processLightQueueOne(List<LightNode> queue, bool isSkylight, bool noUpdate) {
         var cnt = queue.Count;
         //Console.Out.WriteLine(cnt);
@@ -714,14 +737,14 @@ public partial class World : IDisposable {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    addToChunkLoadQueue(coord, ChunkStatus.MESHED);
+                    addToChunkLoadQueue(coord, status);
                 }
             }
         }
-
+        
+        var playerChunk = player.getChunk();
         // unload chunks which are far away
         foreach (var chunk in chunks.Values) {
-            var playerChunk = player.getChunk();
             var coord = chunk.coord;
             // if distance is greater than renderDistance + 3, unload
             if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
@@ -753,8 +776,8 @@ public partial class World : IDisposable {
     }
 
     public void unloadChunk(ChunkCoord coord) {
-        // save chunk first
-        worldIO.saveChunk(this, chunks[coord]);
+        // save chunk asynchronously to prevent lagspikes
+        worldIO.saveChunkAsync(this, chunks[coord]);
         
         foreach (var l in listeners) {
             l.onChunkUnload(coord);
@@ -783,6 +806,9 @@ public partial class World : IDisposable {
         foreach (var l in listeners) {
             l.onWorldUnload();
         }
+        
+        // dispose worldIO to ensure all pending saves complete
+        worldIO.Dispose();
         
         saveWorld.enabled = false;
         Game.world = null;

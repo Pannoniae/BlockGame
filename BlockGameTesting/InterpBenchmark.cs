@@ -1,14 +1,29 @@
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using BlockGame;
+using BlockGame.util;
 
 [assembly: IgnoresAccessChecksTo("BlockGame")]
 
 namespace BlockGameTesting;
 
 public class InterpBenchmark {
-    public PerlinWorldGenerator gen;
+    
+    [Test]
+    public void TestFastSinCos() {
+        float[] testAngles = [0, 0.1f, 0.5f, 1.0f, 1.57f, 3.14f, 4.71f, 6.28f, -1.57f, -3.14f, 13.45f, -13.45f, 110f, -110f];
+    
+        foreach (float angle in testAngles) {
+            Meth.fsincos(angle, out float sin, out float cos);
+            using (Assert.EnterMultipleScope())
+            {
+                Assert.That(sin, Is.EqualTo(MathF.Sin(angle)).Within(0.1f),
+                    $"Sin({angle}) failed");
+                Assert.That(cos, Is.EqualTo(MathF.Cos(angle)).Within(0.1f),
+                    $"Cos({angle}) failed");
+                Assert.That(sin * sin + cos * cos, Is.EqualTo(1.0f).Within(0.2f), 
+                    $"Identity sin²+cos²=1 failed for {angle}");
+            }
+        }
+    }
 
     /*[SetUp]
     public void setup() {

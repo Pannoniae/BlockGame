@@ -20,6 +20,8 @@ public interface WorldListener {
 
     void onDirtyChunk(SubChunkCoord coord);
     
+    void onDirtyChunksBatch(ReadOnlySpan<SubChunkCoord> coords);
+    
     void onDirtyArea(Vector3I min, Vector3I max);
 
 }
