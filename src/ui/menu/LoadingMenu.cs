@@ -78,111 +78,120 @@ public class LoadingMenu : Menu, ProgressUpdater {
     }
 
     private IEnumerator loadWorldCoroutine(bool isLoading) {
-        var setupTimer = new WaitForMinimumTime(0.05);
+        // Stage progress ranges (non-overlapping):
+        // Setup: 0% - 5%
+        // Init: 5% - 10%
+        // Initial terrain: 10% - 15%
+        // Initial chunk loading: 15% - 45%
+        // Skylight processing: 45% - 65%
+        // Marking dirty chunks: 65% - 70%
+        // Meshing: 70% - 95%
+        // Ready: 95% - 100%
+        
         start("Setting up world");
 
         Game.renderer.setWorld(world);
-        update(0.04f);
+        update(0.025f); // 2.5% progress
         yield return new WaitForNextFrame();
-        yield return setupTimer;
+        update(0.05f); // Setup complete: 5%
 
-        var initTimer = new WaitForMinimumTime(0.1);
-        stage("Initializing world");
+        var initTimer = new WaitForMinimumTime(0.05);
+        stage("Loading spawn chunks");
         Game.world.init(isLoading);
-        update(0.08f);
         yield return initTimer;
+        update(0.10f); // Init complete: 10%
 
         stage("Generating initial terrain");
         world.loadAroundPlayer(ChunkStatus.LIGHTED);
-        update(0.10f);
+        update(0.15f); // Initial terrain complete: 15%
 
-        int totalChunks = world.chunkLoadQueue.Count;
-        int processedChunks = 0;
-
+        // Initial chunk loading phase
+        int total = world.chunkLoadQueue.Count;
+        int c = 0;
         stage("Loading chunks");
 
-        int loops = 0;
         while (world.chunkLoadQueue.Count > 0) {
             world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
-                ref processedChunks);
+                ref c);
 
             int currentChunks = world.chunkLoadQueue.Count;
-            processedChunks = totalChunks - currentChunks;
-            float chunkProgress = totalChunks > 0 ? (float)processedChunks / totalChunks : 1f;
-            // map chunk progress to 10%-50% of loading bar
-            update(mapProgress(chunkProgress, 0.10f, 0.60f));
+            c = total - currentChunks;
+            float chunkProgress = total > 0 ? (float)c / total : 1f;
+            // Initial chunk loading: 15%-45%
+            update(mapProgress(chunkProgress, 0.15f, 0.45f));
 
-            loops++;
-            // we update at ~20FPS, this shouldn't be too bad
-            //if (loops % 3 == 0) {
-            stage($"Loading chunks ({processedChunks}/{totalChunks})");
+            stage($"Loading chunks ({c}/{total})");
             yield return new WaitForNextFrame();
-            //}
         }
 
-        stage("Stabilising the world");
         // process all lighting updates
-
-        var total = world.skyLightQueue.Count;
-        int processed = 0;
+        stage("Lighting up");
+        var totalSkyLight = world.skyLightQueue.Count;
+        c = 0;
+        
         while (world.skyLightQueue.Count > 0) {
+            int before = world.skyLightQueue.Count;
             world.processSkyLightQueueLoading(1000);
-            processed++;
-            if (processed % 10000 == 0) {
-                update(mapProgress(processed / (float)total, 0.60f, 0.80f));
-                stage($"Processing sky light ({processed}/{total})");
+            int after = world.skyLightQueue.Count;
+            // it hits hard
+            c += (before - after);
+            
+            if (c % 1000 == 0 || world.skyLightQueue.Count == 0) {
+                float skyLightProgress = totalSkyLight > 0 ? (float)c / totalSkyLight : 1f;
+                update(mapProgress(skyLightProgress, 0.45f, 0.65f));
+                stage($"Processing skylight ({c}/{totalSkyLight})");
                 yield return new WaitForNextFrame();
             }
-            //yield return new WaitForNextFrame();
         }
 
         // mesh all chunks after lighting
-        stage("Tesselating");
-        yield return new WaitForNextFrame();
-
+        stage("Spreading dirt");
         world.loadAroundPlayer(ChunkStatus.MESHED);
-
+        
         // mark all chunks dirty for remeshing since lighting was processed with noUpdate=true
         // idk why this is necessary tho, the following section SHOULD mesh everything but idk
+        int totalSubChunks = world.chunkList.Count * Chunk.CHUNKHEIGHT;
+        c = 0;
+        
         foreach (Chunk chunk in world.chunkList) {
             for (int i = 0; i < Chunk.CHUNKHEIGHT; i++) {
                 world.dirtyChunk(new SubChunkCoord(chunk.coord.x, i, chunk.coord.z));
+                c++;
 
-                if (i % 20 == 0) {
-                    // update progress every 20 chunks
+                if (c % 50 == 0) {
+                    float dirtyProgress = totalSubChunks > 0 ? (float)c / totalSubChunks : 1f;
+                    update(mapProgress(dirtyProgress, 0.65f, 0.70f));
                     yield return new WaitForNextFrame();
                 }
             }
         }
+        update(0.70f); // Marking dirty complete: 70%
 
-        totalChunks = world.chunkLoadQueue.Count;
-        processedChunks = 0;
+        // Meshing phase
+        stage("Tesselating");
+        total = world.chunkLoadQueue.Count;
+        c = 0;
+        
         while (world.chunkLoadQueue.Count > 0) {
             world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
-                ref processedChunks);
-            yield return new WaitForNextFrame();
+                ref c);
+            
             int currentChunks = world.chunkLoadQueue.Count;
-            processedChunks = totalChunks - currentChunks;
-            float chunkProgress = totalChunks > 0 ? (float)processedChunks / totalChunks : 1f;
-            // mesh generation: 80%-95%
-            update(mapProgress(chunkProgress, 0.80f, 0.95f));
+            c = total - currentChunks;
+            float meshProgress = total > 0 ? (float)c / total : 1f;
+            // Meshing: 70%-95%
+            update(mapProgress(meshProgress, 0.70f, 0.95f));
 
-            if (processedChunks % 10 == 0) {
-                stage($"Loading chunks ({processedChunks}/{totalChunks})");
-                yield return new WaitForNextFrame();
+            if (c % 5 == 0) {
+                stage($"Tesselating ({c}/{total})");
             }
+            yield return new WaitForNextFrame();
         }
-
-        //update(0.95f);
 
         var readyTimer = new WaitForMinimumTime(0.05);
         stage("Ready!");
-        update(1.0f);
+        update(1.0f); // Complete: 100%
         yield return readyTimer;
-    }
-
-    public void sleep() {
-        Task.Delay(2000).Wait();
     }
 
     public void start(string stage) {

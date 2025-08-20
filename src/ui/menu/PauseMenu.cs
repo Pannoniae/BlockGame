@@ -21,13 +21,15 @@ namespace BlockGame.ui {
         }
 
         public static void returnToMainMenu(GUIElement guiElement) {
-            // save world
-            Game.world.worldIO.save(Game.world, Game.world.name);
-            
-            // dispose world
-            Game.world.Dispose();
-
-            Game.instance.executeOnMainThread(() => Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN));
+            Game.instance.executeOnMainThread(() => {
+                
+                // save world
+                Game.world.worldIO.save(Game.world, Game.world.name);
+                
+                // dispose world
+                Game.world.Dispose();
+                Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
+            });
         }
 
         public override void update(double dt) {

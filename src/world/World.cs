@@ -3,6 +3,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame;
 
@@ -102,10 +103,8 @@ public partial class World : IDisposable {
             // after loading spawn chunks, load everything else immediately
             isLoading = true;
 
-            // teleport player to top block
-            while (getBlock(player.position.toBlockPos()) != 0) {
-                player.position.Y += 1;
-            }
+            // find safe spawn position with proper AABB clearance
+            ensurePlayerSpawnClearance();
         }
 
         // After everything is done, SAVE THE WORLD
@@ -225,6 +224,47 @@ public partial class World : IDisposable {
     private void loadSpawnChunks() {
         loadChunksAroundChunkImmediately(new ChunkCoord(0, 0), SPAWNCHUNKS_SIZE);
         //sortChunks();
+    }
+
+    private void ensurePlayerSpawnClearance() {
+        var pos = player.position;
+        
+        // move up until we find a position with proper clearance
+        while (!hasPlayerAABBClearance(pos) || pos.Y > WORLDHEIGHT - Player.height) {
+            pos.Y += 1;
+        }
+        
+        player.position = pos;
+    }
+    
+    private bool hasPlayerAABBClearance(Vector3D pos) {
+        const double sizehalf = Player.width / 2;
+        var playerAABB = new AABB(
+            new Vector3D(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
+            new Vector3D(pos.X + sizehalf, pos.Y + Player.height, pos.Z + sizehalf)
+        );
+        
+        // check all blocks that could potentially intersect with player AABB
+        var min = playerAABB.min.toBlockPos();
+        var max = playerAABB.max.toBlockPos();
+        
+        for (int x = min.X; x <= max.X; x++) {
+            for (int y = min.Y; y <= max.Y; y++) {
+                for (int z = min.Z; z <= max.Z; z++) {
+                    var bl = getBlock(x, y, z);
+                    if (bl == Blocks.AIR) {
+                        continue;
+                    }
+
+                    var blockAABB = getAABB(x, y, z, bl);
+                    if (blockAABB != null && AABB.isCollision(playerAABB, blockAABB.Value)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        
+        return true;
     }
 
     public void sortChunks() {
@@ -800,24 +840,29 @@ public partial class World : IDisposable {
     }
 
     public void Dispose() {
-        saveWorld.enabled = false;
-        Game.clearInterval(saveWorld);
-        saveWorld = null!;
-        
-        // of course, we can save it here since WE call it and not the GC
-        worldIO.save(this, name);
         
         foreach (var l in listeners) {
             l.onWorldUnload();
         }
         
-        // dispose worldIO to ensure all pending saves complete
+        // stop automatic saves
+        saveWorld.enabled = false;
+        Game.clearInterval(saveWorld);
+        saveWorld = null!;
+        
+        // stop the chunksave queue and save pending chunks
         worldIO.Dispose();
+        
+        // of course, we can save it here since WE call it and not the GC
+        // save the whole thing
+        worldIO.save(this, name);
+        
+        
+        ReleaseUnmanagedResources();
         
         Game.world = null;
         Game.player = null;
         //Game.renderer = null;
-        ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }
 

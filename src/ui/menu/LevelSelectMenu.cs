@@ -89,6 +89,7 @@ public class LevelSelectMenu : Menu {
 
     // when activated, refresh the button states/texts
     public override void activate() {
+        
         for (int i = 0; i < NUM_LEVELS; i++) {
             var levelIndex = i + 1;
             worldExists[i] = WorldIO.worldExists($"level{levelIndex}");
