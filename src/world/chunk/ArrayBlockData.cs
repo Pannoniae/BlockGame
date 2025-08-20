@@ -182,7 +182,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         ref var blockArray = ref MemoryMarshal.GetArrayDataReference(blocks);
         for (int i = 0; i < blocks.Length; i++) {
             int x = i & 0xF;
-            int z = i >> 4 & 0xF;
+            int z = (i >> 4) & 0xF;
             int y = i >> 8;
             var block = blockArray.getID();
             if (block != 0) {
@@ -228,14 +228,14 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
         var blocklight = (byte)((value >> 4) & 0xF);
         // pack it back inside
-        value = (byte)(blocklight << 4 | val);
+        value = (byte)((blocklight << 4) | val);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
         ref var value = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x);
         var skylight = (byte)(value & 0xF);
         // pack it back inside
-        value = (byte)(val << 4 | skylight);
+        value = (byte)((val << 4) | skylight);
     }
 
     public static byte extractSkylight(byte value) {

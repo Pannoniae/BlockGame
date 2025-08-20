@@ -230,7 +230,7 @@ public partial class World : IDisposable {
         var pos = player.position;
         
         // move up until we find a position with proper clearance
-        while (!hasPlayerAABBClearance(pos) || pos.Y > WORLDHEIGHT - Player.height) {
+        while (pos.Y > WORLDHEIGHT - Player.height || !hasPlayerAABBClearance(pos)) {
             pos.Y += 1;
         }
         
@@ -532,8 +532,8 @@ public partial class World : IDisposable {
                     for (int i = 0; i < numTicks; i++) {
                         // I pray this is random
                         var coord = random.Next(16 * 16 * 16);
-                        var x = coord >> 8;
-                        var y = coord >> 4 & 0xF;
+                        var x = (coord >> 8);
+                        var y = (coord >> 4) & 0xF;
                         var z = coord & 0xF;
                         chunksection.tick(this, random, x, y, z);
                     }

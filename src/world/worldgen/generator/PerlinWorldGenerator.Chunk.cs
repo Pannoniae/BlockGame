@@ -123,7 +123,7 @@ public partial class PerlinWorldGenerator {
 
                     // Reduce the density when too high above 64 and increase it when too low
                     // range: // -0.5 (at y=128) to 0.5 (at y=0)
-                    var airBias = (y - WATER_LEVEL) / (float)World.WORLDHEIGHT;
+                    var airBias = (y - WATER_LEVEL - 4) / (float)World.WORLDHEIGHT;
                     // our SIGNATURE weird terrain
                     airBias *= 0.5f;
                     // normalish terrain (kinda like old mc?)

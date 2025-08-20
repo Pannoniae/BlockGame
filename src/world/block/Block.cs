@@ -32,7 +32,7 @@ public class Block {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ushort)(value >> 24);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => this.value = (this.value & 0xFFFFFF) | ((uint)value << 24);
+        set => this.value = (this.value & 0xFFFFFF) | ((uint)(value << 24));
     }
 
     /// <summary>

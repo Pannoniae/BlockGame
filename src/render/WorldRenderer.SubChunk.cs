@@ -205,19 +205,6 @@ public partial class WorldRenderer {
         }
     }
 
-    /*private void setUniformPosUBO(SubChunkCoord coord, Vector3D cameraPos) {
-        var chunkUniforms = new ChunkUniforms(
-            new Vector3(
-                (float)(coord.x * 16 - cameraPos.X),
-                (float)(coord.y * 16 - cameraPos.Y),
-                (float)(coord.z * 16 - cameraPos.Z)
-            )
-        );
-
-        chunkUBO.updateData(in chunkUniforms);
-        chunkUBO.upload();
-    }*/
-
     private void setUniformPos(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
         s.setUniformBound(uChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y),
             (float)(coord.z * 16 - cameraPos.Z));
@@ -332,36 +319,6 @@ public partial class WorldRenderer {
         }
     }
 
-    /// <summary>
-    /// Populate 3x3x3 local cache around a specific block position for smooth lighting optimization.
-    /// This reduces redundant memory access when sampling neighbors for lighting calculations.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void populateLocalCache3x3x3(int blockX, int blockY, int blockZ) {
-        // Convert to 18x18x18 cache coordinates (add 1 for border)
-        int baseX = blockX + 1;
-        int baseY = blockY + 1; 
-        int baseZ = blockZ + 1;
-        
-        ref uint neighboursRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
-        ref byte lightsRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
-        
-        // Copy 3x3x3 area from 18x18x18 cache to local 3x3x3 cache
-        for (int dy = -1; dy <= 1; dy++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    // Source index in 18x18x18 cache
-                    int sourceIdx = (baseY + dy) * Chunk.CHUNKSIZEEXSQ + (baseZ + dz) * Chunk.CHUNKSIZEEX + (baseX + dx);
-                    // Destination index in 3x3x3 cache
-                    int destIdx = (dy + 1) * LOCALCACHESIZE_SQ + (dz + 1) * LOCALCACHESIZE + (dx + 1);
-                    
-                    localBlockCache[destIdx] = Unsafe.Add(ref neighboursRef, sourceIdx);
-                    localLightCache[destIdx] = Unsafe.Add(ref lightsRef, sourceIdx);
-                }
-            }
-        }
-    }
-
     [SkipLocalsInit]
     private void setupNeighbours(SubChunk subChunk) {
         //var sw = new Stopwatch();
@@ -436,7 +393,7 @@ public partial class WorldRenderer {
                     var bl = nn
                         ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.blocks),
                             offset)
-                        : (ushort)0;
+                        : 0;
 
 
                     // if below world, pretend it's dirt (so it won't get meshed)
@@ -486,8 +443,8 @@ public partial class WorldRenderer {
         Span<byte> lightCache = stackalloc byte[27];
 
         // this is correct!
-        ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
-        ReadOnlySpan<int> flippedOrder = [3, 0, 1, 2];
+        //ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
+        //ReadOnlySpan<int> flippedOrder = [3, 0, 1, 2];
 
 
         // BYTE OF SETTINGS
@@ -498,23 +455,12 @@ public partial class WorldRenderer {
         //ushort cv = 0;
         //ushort ci = 0;
 
-        // helper function to get blocks from cache
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ushort getBlockFromCacheUnsafe(ref ushort arrayBase, int x, int y, int z) {
-            return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static byte getLightFromCacheUnsafe(ref byte arrayBase, int x, int y, int z) {
-            return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
-        }
-
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             
             // index for array accesses
             int x = idx & 0xF;
-            int z = idx >> 4 & 0xF;
+            int z = (idx >> 4) & 0xF;
             int y = idx >> 8;
 
             var index = (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1);
@@ -705,7 +651,7 @@ public partial class WorldRenderer {
                     const float factor = Block.atlasRatio * 32768f;
                     tex = Vector128.Multiply(tex, factor);
 
-                    Vector256<float> vec = Vector256.Create(
+                    /*Vector256<float> vec = Vector256.Create(
                         x + facesRef.x1,
                         y + facesRef.y1,
                         z + facesRef.z1,
@@ -713,34 +659,46 @@ public partial class WorldRenderer {
                         y + facesRef.y2,
                         z + facesRef.z2,
                         x + facesRef.x3,
-                        y + facesRef.y3);
+                        y + facesRef.y3);*/
+                    // OR WE CAN JUST LOAD DIRECTLY!
+                    Vector256<float> vec = Vector256.LoadUnsafe(ref Unsafe.As<Face, float>(ref facesRef));
+                    // then add all this shit!
+                    vec = Vector256.Add(vec, Vector256.Create((float)x, y, z, x, y, z, x, y));
 
                     vec = Vector256.Add(vec, Vector256.Create(16f));
                     vec = Vector256.Multiply(vec, 256);
 
-                    Vector128<float> vec2 = Vector128.Create(
+                    /*Vector128<float> vec2 = Vector128.Create(
                         z + facesRef.z3,
                         x + facesRef.x4,
                         y + facesRef.y4,
-                        z + facesRef.z4);
+                        z + facesRef.z4);*/
+                    
+                    
+                    Vector128<float> vec2 = Vector128.LoadUnsafe(in Unsafe.AsRef(in facesRef.z3));
+
+                    vec2 = Vector128.Add(vec2, Vector128.Create((float)z, x, y, z));
 
                     vec2 = Vector128.Add(vec2, Vector128.Create(16f));
                     vec2 = Vector128.Multiply(vec2, 256);
 
                     // determine vertex order to prevent cracks (combine AO and lighting)
                     // extract skylight values and invert them (15-light = darkness)
-                    var dark1 = 15 - (light.First & 0xF);
-                    var dark2 = 15 - (light.Second & 0xF);
-                    var dark3 = 15 - (light.Third & 0xF);
-                    var dark4 = 15 - (light.Fourth & 0xF);
+                    var dark1 = (~light.First & 0xF);
+                    var dark2 = (~light.Second & 0xF);
+                    var dark3 = (~light.Third & 0xF);
+                    var dark4 = (~light.Fourth & 0xF);
 
-                    ReadOnlySpan<int> order = (ao.First + dark1 + ao.Third + dark3 >
+                    /*ReadOnlySpan<int> order = (ao.First + dark1 + ao.Third + dark3 >
                                                ao.Second + dark2 + ao.Fourth + dark4)
                         ? flippedOrder
-                        : normalOrder;
+                        : normalOrder;*/
+                    // OR we just shift the index by one and loop it around
+                    var shift = (ao.First + dark1 + ao.Third + dark3 >
+                                               ao.Second + dark2 + ao.Fourth + dark4).toByte();
 
                     // add vertices
-                    ref var vertex = ref tempVertices[order[0]];
+                    ref var vertex = ref tempVertices[(0 + shift) & 3];
                     vertex.x = (ushort)vec[0];
                     vertex.y = (ushort)vec[1];
                     vertex.z = (ushort)vec[2];
@@ -749,7 +707,7 @@ public partial class WorldRenderer {
                     vertex.cu = Block.packColourB((byte)dir, ao.First);
                     vertex.light = light.First;
 
-                    vertex = ref tempVertices[order[1]];
+                    vertex = ref tempVertices[(1 + shift) & 3];
                     vertex.x = (ushort)vec[3];
                     vertex.y = (ushort)vec[4];
                     vertex.z = (ushort)vec[5];
@@ -759,7 +717,7 @@ public partial class WorldRenderer {
                     vertex.light = light.Second;
 
 
-                    vertex = ref tempVertices[order[2]];
+                    vertex = ref tempVertices[(2 + shift) & 3];
                     vertex.x = (ushort)vec[6];
                     vertex.y = (ushort)vec[7];
                     vertex.z = (ushort)vec2[0];
@@ -768,7 +726,7 @@ public partial class WorldRenderer {
                     vertex.cu = Block.packColourB((byte)dir, ao.Third);
                     vertex.light = light.Third;
 
-                    vertex = ref tempVertices[order[3]];
+                    vertex = ref tempVertices[(3 + shift) & 3];
                     vertex.x = (ushort)vec2[1];
                     vertex.y = (ushort)vec2[2];
                     vertex.z = (ushort)vec2[3];
@@ -889,17 +847,17 @@ public partial class WorldRenderer {
         Debug.Assert(popcnt > 0);
         Debug.Assert(popcnt <= 4);
         var sky = (byte)(((lightNibble & 0xF) * (inv & 1) +
-                          (lightNibble >> 8 & 0xF) * ((inv & 2) >> 1) +
-                          (lightNibble >> 16 & 0xF) * ((inv & 4) >> 2) +
-                          (lightNibble >> 24 & 0xF))
+                          ((lightNibble >> 8) & 0xF) * ((inv & 2) >> 1) +
+                          ((lightNibble >> 16) & 0xF) * ((inv & 4) >> 2) +
+                          ((lightNibble >> 24) & 0xF))
                          / popcnt);
 
-        var block = (byte)(((lightNibble >> 4 & 0xF) * (inv & 1) +
-                            (lightNibble >> 12 & 0xF) * ((inv & 2) >> 1) +
-                            (lightNibble >> 20 & 0xF) * ((inv & 4) >> 2) +
-                            (lightNibble >> 28 & 0xF))
+        var block = (byte)((((lightNibble >> 4) & 0xF) * (inv & 1) +
+                            ((lightNibble >> 12) & 0xF) * ((inv & 2) >> 1) +
+                            ((lightNibble >> 20) & 0xF) * ((inv & 4) >> 2) +
+                            ((lightNibble >> 28) & 0xF))
                            / popcnt);
-        return (byte)(sky | block << 4);
+        return (byte)(sky | (block << 4));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -943,9 +901,9 @@ public partial class WorldRenderer {
                                  (Unsafe.Add(ref lightRef, offset2) << 16) | 
                                  lb << 24);
         
-        opacity = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset0).getID()]) |
-                        Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset1).getID()]) << 1 |
-                        Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset2).getID()]) << 2);
+        opacity = (byte)((Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset0).getID()])) |
+                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset1).getID()]) << 1) |
+                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset2).getID()]) << 2));
         
         return average2(lightValue, opacity);
     }
