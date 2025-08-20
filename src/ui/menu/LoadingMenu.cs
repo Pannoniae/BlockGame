@@ -213,13 +213,13 @@ public class LoadingMenu : Menu, ProgressUpdater {
     }
 
     /**
-     * Maps progress (0-1) to a specific range of the overall loading bar.
+     * Maps progress (0-1) to a specific range of the overall loading bar. (yes I know this exists in Meth, shut up)
      * @param progress Current progress from 0.0 to 1.0
      * @param startPercent Start of range (e.g. 0.15f for 15%)
      * @param endPercent End of range (e.g. 0.95f for 95%)
      * @return Mapped progress value
      */
-    private float mapProgress(float progress, float startPercent, float endPercent) {
+    private static float mapProgress(float progress, float startPercent, float endPercent) {
         return startPercent + (progress * (endPercent - startPercent));
     }
 }

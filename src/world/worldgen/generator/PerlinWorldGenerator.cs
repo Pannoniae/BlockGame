@@ -32,7 +32,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         //highNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         selectorNoise = new FastNoiseLite(random.Next(seed));
         selectorNoise.SetFrequency(1f);
-        
+
 
         // DONT UNCOMMENT THIS
         // yes the selector is broken, trying to use the valuecubic interpolation with opensimplex noise
@@ -57,13 +57,8 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
     // 2D
     public float getNoise2D(FastNoiseLite noise, double x, double z, int octaves, float falloff) {
-        if (falloff <= 0.0f) {
-            throw new ArgumentException("Falloff must be positive");
-        }
-
-        if (octaves <= 0) {
-            throw new ArgumentException("Octaves must be at least 1");
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(falloff, "Falloff must be positive");
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(octaves, "Octaves must be at least 1");
 
         float result;
         float frequency;
@@ -165,9 +160,9 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     /// Run getNoise3D on the entire chunk. This is more efficient in theory:tm:
     /// The size determines the buffer's size and the scale determines the scale of the noise. (bigger = bigger terrain features)
     /// </summary>
-    public void getNoise3DRegion(float[] buffer, FastNoiseLite noise, ChunkCoord coord, double xScale, double yScale, double zScale, int octaves,
+    public void getNoise3DRegion(float[] buffer, FastNoiseLite noise, ChunkCoord coord, double xScale, double yScale,
+        double zScale, int octaves,
         float falloff) {
-
         // Precalculate world position offsets
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;
@@ -194,9 +189,9 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         }
     }
 
-    public void getNoise2DRegion(float[] buffer, FastNoiseLite noise, ChunkCoord coord, double xScale, double zScale, double frequency, int octaves,
+    public void getNoise2DRegion(float[] buffer, FastNoiseLite noise, ChunkCoord coord, double xScale, double zScale,
+        double frequency, int octaves,
         float falloff) {
-
         // Precalculate world position offsets
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;

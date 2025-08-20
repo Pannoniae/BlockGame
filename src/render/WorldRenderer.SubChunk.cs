@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.ui;
@@ -15,7 +16,6 @@ using Debug = System.Diagnostics.Debug;
 namespace BlockGame;
 
 public partial class WorldRenderer {
-
     private static readonly Func<int, bool> AOtest = bl => bl != -1 && Block.isSolid(bl);
 
     // we cheated GC! there is only one list preallocated
@@ -27,10 +27,12 @@ public partial class WorldRenderer {
     private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
     // YZX again
-    private static readonly uint[] neighbours = GC.AllocateUninitializedArray<uint>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
+    private static readonly uint[] neighbours =
+        GC.AllocateUninitializedArray<uint>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
 
     private static readonly byte[]
-        neighbourLights = GC.AllocateUninitializedArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
+        neighbourLights =
+            GC.AllocateUninitializedArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
 
     private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
@@ -139,7 +141,7 @@ public partial class WorldRenderer {
         0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
         1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
-    
+
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
     private static bool opaqueBlocks(uint b) {
@@ -177,7 +179,7 @@ public partial class WorldRenderer {
         // first we render everything which is NOT translucent
         //lock (meshingLock) {
         setupNeighbours(subChunk);
-        
+
 
         // if chunk is full, don't mesh either
         // status update: this is actually bullshit and causes rendering bugs with *weird* worlds such as "all stone until building height". So this won't work anymore
@@ -237,7 +239,7 @@ public partial class WorldRenderer {
     public bool isVisible(SubChunk subChunk, BoundingFrustum frustum) {
         return !frustum.outsideCameraUpDown(subChunk.box);
     }
-    
+
     /// <summary>
     /// Batched visibility check for 8 subchunks at once. Updates the isRendered field for each subchunk based on visibility.
     /// </summary>
@@ -247,10 +249,10 @@ public partial class WorldRenderer {
         for (int i = 0; i < 8; i++) {
             aabbs[i] = subChunks[i].box;
         }
-        
+
         // Get visibility mask (1 bit = outside/not visible, 0 bit = visible)
         byte outsideMask = frustum.outsideCameraUpDownEight(aabbs);
-        
+
         // Update isRendered for each subchunk
         for (int i = 0; i < 8; i++) {
             subChunks[i].isRendered = (outsideMask & (1 << i)) == 0;
@@ -265,11 +267,11 @@ public partial class WorldRenderer {
                 (float)(coord.z * 16 - cameraPos.Z)
             )
         );
-        
+
         chunkUBO.updateData(in chunkUniforms);
         chunkUBO.upload();
     }*/
-    
+
     private void setUniformPos(SubChunkCoord coord, Shader s, Vector3D cameraPos) {
         s.setUniformBound(uChunkPos, (float)(coord.x * 16 - cameraPos.X), (float)(coord.y * 16 - cameraPos.Y),
             (float)(coord.z * 16 - cameraPos.Z));
@@ -319,13 +321,13 @@ public partial class WorldRenderer {
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
-    
+
     public void drawOpaqueUBO(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
         if (subChunk.hasRenderOpaque) {
             vao.bind();
-            
+
             uint renderedVerts = vao.renderBaseInstance(idx);
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -337,18 +339,18 @@ public partial class WorldRenderer {
         var watervao = subChunk.watervao;
         if (subChunk.hasRenderTranslucent) {
             watervao.bind();
-            
+
             uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
-    
+
     public void drawOpaqueCMDL(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
         if (subChunk.hasRenderOpaque) {
             vao.addCMDLCommand();
-            
+
             uint renderedVerts = vao.renderCMDL(idx);
             Game.metrics.renderedVerts += (int)renderedVerts;
             Game.metrics.renderedSubChunks += 1;
@@ -360,7 +362,7 @@ public partial class WorldRenderer {
         var watervao = subChunk.watervao;
         if (subChunk.hasRenderTranslucent) {
             watervao.addCMDLCommand();
-            
+
             uint renderedTransparentVerts = watervao.renderCMDL(idx);
             Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
@@ -459,7 +461,7 @@ public partial class WorldRenderer {
                         ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.blocks),
                             offset)
                         : (ushort)0;
-                    
+
 
                     // if below world, pretend it's dirt (so it won't get meshed)
                     if (subChunk.coord.y == 0 && y == -1) {
@@ -503,7 +505,7 @@ public partial class WorldRenderer {
 
         Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
         Span<uint> nba = stackalloc uint[6];
-        
+
         // this is correct!
         ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
         ReadOnlySpan<int> flippedOrder = [3, 0, 1, 2];
@@ -529,11 +531,9 @@ public partial class WorldRenderer {
         }
 
         ref uint blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
-        ref short offsetArray = ref MemoryMarshal.GetReference(offsetTableCompact);
 
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
-            
             switch (mode) {
                 case VertexConstructionMode.OPAQUE:
                     if (notOpaqueBlocks(blockArrayRef)) {
@@ -548,7 +548,7 @@ public partial class WorldRenderer {
 
                     break;
             }
-            
+
             // index for array accesses
             int x = idx & 0xF;
             int z = idx >> 4 & 0xF;
@@ -582,7 +582,7 @@ public partial class WorldRenderer {
                     throw new ArgumentOutOfRangeException();
             }*/
 
-            model:;
+            model: ;
 
             // calculate texcoords
             Vector128<float> tex;
@@ -631,8 +631,8 @@ public partial class WorldRenderer {
 
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;
-                
-                
+
+
                 // if dir = 0, add -1
                 // if dir = 1, add +1
                 // if dir = 2, add -Chunk.CHUNKSIZEEX
@@ -660,13 +660,14 @@ public partial class WorldRenderer {
                             test2 = Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID());
                             break;
                         case VertexConstructionMode.TRANSLUCENT:
-                            test2 = !Block.isTranslucent(nb.getID()) && (Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID()));
+                            test2 = !Block.isTranslucent(nb.getID()) &&
+                                    (Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID()));
                             break;
                     }
 
                     test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb.getID()));
                 }
-                
+
 
                 // either neighbour test passes, or neighbour is not air + face is not full
                 if (test2) {
@@ -689,10 +690,6 @@ public partial class WorldRenderer {
                     if (smoothLighting || AO) {
                         // ox, oy, oz
                         FourBytes o;
-                        // need to store 9 sbytes so it's a 16-element vector
-                        // lx, ly, lz, lo
-                        // we need 12 bytes
-                        Vector128<byte> l;
 
                         ao.Whole = 0;
 
@@ -701,57 +698,7 @@ public partial class WorldRenderer {
                         //mult = dirIdx * 36 + j * 9 + vert * 3;
                         // premultiply cuz its faster that way
 
-                        // load the vector with the offsets
-                        // we need 12 offsets
-                        // TODO convert this to handcode instead of loading offsets and shit
-                        // AIslop code will do, this is a fairly mechanical task (the first time I did it by hand it took me 2 days lol)
-                        var offsets = Vector256.LoadUnsafe(ref Unsafe.Add(ref offsetArray, (int)dir * 12));
-                        l = Vector128.Create(
-                            Unsafe.Add(ref lightRef, offsets[0]),
-                            Unsafe.Add(ref lightRef, offsets[1]),
-                            Unsafe.Add(ref lightRef, offsets[2]),
-                            lb,
-                            Unsafe.Add(ref lightRef, offsets[3]),
-                            Unsafe.Add(ref lightRef, offsets[4]),
-                            Unsafe.Add(ref lightRef, offsets[5]),
-                            lb,
-                            Unsafe.Add(ref lightRef, offsets[6]),
-                            Unsafe.Add(ref lightRef, offsets[7]),
-                            Unsafe.Add(ref lightRef, offsets[8]),
-                            lb,
-                            Unsafe.Add(ref lightRef, offsets[9]),
-                            Unsafe.Add(ref lightRef, offsets[10]),
-                            Unsafe.Add(ref lightRef, offsets[11]),
-                            lb);
-                        
-
-                        o.First = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                             Unsafe.Add(ref neighbourRef, offsets[0])]) |
-                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                             Unsafe.Add(ref neighbourRef, offsets[1])]) << 1 |
-                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                             Unsafe.Add(ref neighbourRef, offsets[2])]) << 2);
-
-                        o.Second = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                              Unsafe.Add(ref neighbourRef, offsets[3])]) |
-                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                              Unsafe.Add(ref neighbourRef, offsets[4])]) << 1 |
-                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                              Unsafe.Add(ref neighbourRef, offsets[5])]) << 2);
-
-                        o.Third = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                             Unsafe.Add(ref neighbourRef, offsets[6])]) |
-                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                             Unsafe.Add(ref neighbourRef, offsets[7])]) << 1 |
-                                         Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                             Unsafe.Add(ref neighbourRef, offsets[8])]) << 2);
-
-                        o.Fourth = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                              Unsafe.Add(ref neighbourRef, offsets[9])]) |
-                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                              Unsafe.Add(ref neighbourRef, offsets[10])]) << 1 |
-                                          Unsafe.BitCast<bool, byte>(Block.fullBlock[
-                                              Unsafe.Add(ref neighbourRef, offsets[11])]) << 2);
+                        getDirectionOffsetsAndData(dir, ref lightRef, ref neighbourRef, lb, out light, out o);
 
                         // only apply AO if enabled
                         if (AO && !facesRef.noAO) {
@@ -759,20 +706,6 @@ public partial class WorldRenderer {
                             ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount(o.Second));
                             ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount(o.Third));
                             ao.Fourth = (byte)((o.Fourth & 3) == 3 ? 3 : byte.PopCount(o.Fourth));
-                        }
-
-                        // if face is noAO, don't average....
-                        if (smoothLighting) {
-                            // if smooth lighting enabled, average light from neighbour face + the 3 other ones
-                            // calculate average
-
-
-                            var n = l.AsUInt32();
-                            // split light and reassemble it again
-                            light.First = average2(n[0], o.First);
-                            light.Second = average2(n[1], o.Second);
-                            light.Third = average2(n[2], o.Third);
-                            light.Fourth = average2(n[3], o.Fourth);
                         }
                         //}
                     }
@@ -817,9 +750,9 @@ public partial class WorldRenderer {
                     var dark2 = 15 - (light.Second & 0xF);
                     var dark3 = 15 - (light.Third & 0xF);
                     var dark4 = 15 - (light.Fourth & 0xF);
-                    
-                    ReadOnlySpan<int> order = (ao.First + dark1 + ao.Third + dark3 > 
-                                               ao.Second + dark2 + ao.Fourth + dark4) 
+
+                    ReadOnlySpan<int> order = (ao.First + dark1 + ao.Third + dark3 >
+                                               ao.Second + dark2 + ao.Fourth + dark4)
                         ? flippedOrder
                         : normalOrder;
 
@@ -841,7 +774,7 @@ public partial class WorldRenderer {
                     vertex.v = (ushort)tex[3];
                     vertex.c = Block.packColour((byte)dir, ao.Second);
                     vertex.light = light.Second;
-                    
+
 
                     vertex = ref tempVertices[order[2]];
                     vertex.x = (ushort)vec[6];
@@ -1008,6 +941,68 @@ public partial class WorldRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte calculateVertexLightAndAO(ref byte lightRef, ref uint neighbourRef, int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2, int z2, byte lb, out byte opacity) {
+        int offset0 = x0 + y0 * Chunk.CHUNKSIZEEXSQ + z0 * Chunk.CHUNKSIZEEX;
+        int offset1 = x1 + y1 * Chunk.CHUNKSIZEEXSQ + z1 * Chunk.CHUNKSIZEEX;
+        int offset2 = x2 + y2 * Chunk.CHUNKSIZEEXSQ + z2 * Chunk.CHUNKSIZEEX;
+        
+        uint lightValue = (uint)(Unsafe.Add(ref lightRef, offset0) |
+                                 (Unsafe.Add(ref lightRef, offset1) << 8) |
+                                 (Unsafe.Add(ref lightRef, offset2) << 16) | 
+                                 lb << 24);
+        
+        opacity = (byte)(Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset0).getID()]) |
+                        Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset1).getID()]) << 1 |
+                        Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset2).getID()]) << 2);
+        
+        return average2(lightValue, opacity);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void getDirectionOffsetsAndData(RawDirection dir, ref byte lightRef, ref uint neighbourRef, byte lb, out FourBytes light, out FourBytes o) {
+        Unsafe.SkipInit(out o);
+        Unsafe.SkipInit(out light);
+        switch (dir) {
+            case RawDirection.WEST:
+                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, -1, -1, 0, -1, -1, 1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, -1, 1, 0, -1, 1, -1, lb, out o.Fourth);
+                break;
+            case RawDirection.EAST:
+                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 1, 1, 0, 1, 1, -1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 1, -1, 0, 1, -1, 1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
+                break;
+            case RawDirection.SOUTH:
+                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, 0, 1, -1, -1, 1, -1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, 0, -1, -1, -1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 0, -1, -1, 1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 0, 1, -1, 1, 1, -1, lb, out o.Fourth);
+                break;
+            case RawDirection.NORTH:
+                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 0, 1, 1, 1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 0, -1, 1, 1, -1, 1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, 0, -1, 1, -1, -1, 1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, 0, 1, 1, -1, 1, 1, lb, out o.Fourth);
+                break;
+            case RawDirection.DOWN:
+                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, 1, 1, -1, 0, 1, -1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, 1, -1, -1, 0, -1, -1, 1, lb, out o.Fourth);
+                break;
+            case RawDirection.UP:
+                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, -1, -1, 1, 0, -1, 1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, -1, 1, 1, 0, 1, 1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
+                break;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int toInt(bool b) {
         return Unsafe.As<bool, int>(ref b);
     }
@@ -1015,60 +1010,6 @@ public partial class WorldRenderer {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte toByte(bool b) {
         return Unsafe.As<bool, byte>(ref b);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T access<T>(T[] arr, int index) {
-        ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
-        return Unsafe.Add(ref arrayRef, index);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void access<T>(T[] arr, int index, T value) {
-        ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
-        Unsafe.Add(ref arrayRef, index) = value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T access<T>(Span<T> arr, int index) {
-        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
-        return Unsafe.Add(ref arrayRef, index);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void access<T>(Span<T> arr, int index, T value) {
-        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
-        Unsafe.Add(ref arrayRef, index) = value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T access<T>(ReadOnlySpan<T> arr, int index) {
-        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
-        return Unsafe.Add(ref arrayRef, index);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void access<T>(ReadOnlySpan<T> arr, int index, T value) {
-        ref T arrayRef = ref MemoryMarshal.GetReference(arr);
-        Unsafe.Add(ref arrayRef, index) = value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ref T accessRef<T>(ref T arr, int index) {
-        return ref Unsafe.Add(ref arr, index);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void accessRef<T>(ref T arr, int index, T value) {
-        Unsafe.Add(ref arr, index) = value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void setRange<T>(T[] arr, int index, T[] values) {
-        ref T arrayRef = ref MemoryMarshal.GetArrayDataReference(arr);
-        for (int i = 0; i < values.Length; i++) {
-            Unsafe.Add(ref arrayRef, index + i) = values[i];
-        }
     }
 }
 
@@ -1104,20 +1045,4 @@ public struct FourBytes {
     public FourBytes(uint whole) {
         Whole = whole;
     }
-}
-
-[StructLayout(LayoutKind.Explicit)]
-public struct FourSBytes {
-    [FieldOffset(0)] public int Whole;
-    [FieldOffset(0)] public sbyte First;
-    [FieldOffset(1)] public sbyte Second;
-    [FieldOffset(2)] public sbyte Third;
-    [FieldOffset(3)] public sbyte Fourth;
-}
-
-[StructLayout(LayoutKind.Explicit)]
-public struct TwoFloats {
-    [FieldOffset(0)] public ulong Whole;
-    [FieldOffset(0)] public float First;
-    [FieldOffset(4)] public float Second;
 }
