@@ -10,7 +10,12 @@ public struct BlockVertexPacked {
     [FieldOffset(4)] public ushort z;
     [FieldOffset(6)] public ushort u;
     [FieldOffset(8)] public ushort v;
+    
+    /** We're overlapping here so you can set the colour using whatever format you already have it in
+     * Colour is RGBA order
+     */
     [FieldOffset(10)] public Color c;
+    [FieldOffset(10)] public uint cu;
     [FieldOffset(10)] public byte r;
     [FieldOffset(11)] public byte g;
     [FieldOffset(12)] public byte b;
@@ -29,7 +34,16 @@ public struct BlockVertexPacked {
         this.b = b;
         this.a = a;
         this.light = 0;
-        this.unused = 0;
+    }
+    
+    public BlockVertexPacked(float x, float y, float z, float u, float v, uint c) {
+        this.x = (ushort)((x + 16) * 256);
+        this.y = (ushort)((y + 16) * 256);
+        this.z = (ushort)((z + 16) * 256);
+        this.u = (ushort)(u * 32768);
+        this.v = (ushort)(v * 32768);
+        this.cu = c;
+        this.light = 0;
     }
 
     public BlockVertexPacked(float x, float y, float z, float u, float v, Color c) {
@@ -38,12 +52,8 @@ public struct BlockVertexPacked {
         this.z = (ushort)((z + 16) * 256);
         this.u = (ushort)(u * 32768);
         this.v = (ushort)(v * 32768);
-        r = c.R;
-        g = c.G;
-        b = c.B;
-        a = c.A;
+        this.c = c;
         this.light = 0;
-        this.unused = 0;
     }
 
     public BlockVertexPacked(ushort x, ushort y, ushort z, ushort u, ushort v, Color c) {
@@ -53,6 +63,7 @@ public struct BlockVertexPacked {
         this.u = u;
         this.v = v;
         this.c = c;
+        this.light = 0;
     }
 
     public BlockVertexPacked(float x, float y, float z, float u, float v, Color c, byte skylight, byte blocklight) {
@@ -61,11 +72,7 @@ public struct BlockVertexPacked {
         this.z = (ushort)((z + 16) * 256);
         this.u = (ushort)(u * 32768);
         this.v = (ushort)(v * 32768);
-        r = c.R;
-        g = c.G;
-        b = c.B;
-        a = c.A;
+        this.c = c;
         this.light = (byte)((skylight & 0xF) | ((blocklight & 0xF) << 4));
-        this.unused = 0;
     }
 }

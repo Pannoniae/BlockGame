@@ -323,11 +323,15 @@ public class Block {
     // float lColor = a[direction]
     // tint = texelFetch(lightTexture, lightCoords, 0) * a[direction] * aoArray[aoValue];
     public static Color packColour(byte direction, byte ao, byte light) {
+        
+        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
+        
         direction = (byte)(direction & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
         var lightVal = Game.textures.light(blocklight, skylight);
-        float tint = WorldRenderer.a[direction] * WorldRenderer.aoArray[ao];
+        float tint = a[direction] * aoArray[ao];
         var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
     }
@@ -338,10 +342,25 @@ public class Block {
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Color packColour(byte direction, byte ao) {
-        direction &= 0b111;
-        byte tint = (byte)(WorldRenderer.a[direction] * WorldRenderer.aoArray[ao] * 255);
-        return new Color(tint, tint, tint, (byte)255);
+        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
         
+        direction &= 0b111;
+        byte tint = (byte)(a[direction] * aoArray[ao] * 255);
+        return new Color(tint, tint, tint, (byte)255);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint packColourB(byte direction, byte ao) {
+        // can we just inline the array?
+        
+        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
+        
+        
+        direction &= 0b111;
+        byte tint = (byte)(a[direction] * aoArray[ao] * 255);
+        return (uint)(tint | (tint << 8) | (tint << 16) | (255 << 24));
     }
 
     public static AABB fullBlockAABB() {

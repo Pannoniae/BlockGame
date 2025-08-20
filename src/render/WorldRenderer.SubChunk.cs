@@ -34,6 +34,14 @@ public partial class WorldRenderer {
         neighbourLights =
             GC.AllocateUninitializedArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
 
+    // 3x3x3 local cache for smooth lighting optimization
+    public const int LOCALCACHESIZE = 3;
+    public const int LOCALCACHESIZE_SQ = 9;
+    public const int LOCALCACHESIZE_CUBE = 27;
+    
+    private static readonly uint[] localBlockCache = new uint[LOCALCACHESIZE_CUBE];
+    private static readonly byte[] localLightCache = new byte[LOCALCACHESIZE_CUBE];
+
     private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
 
     private static Stopwatch sw = new Stopwatch();
@@ -78,68 +86,6 @@ public partial class WorldRenderer {
         0, 1, -1, -1, 1, 0, -1, 1, -1,
         0, 1, -1, 1, 1, 0, 1, 1, -1,
         0, 1, 1, 1, 1, 0, 1, 1, 1,
-    ];
-
-    public static ReadOnlySpan<short> offsetTableCompact => [
-        // west
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-
-        // east
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 - 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-
-        // south
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-
-        // north
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 0 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-
-        // down
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + -1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + -1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + -1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-
-        // up
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, -1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        -1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + 1 * Chunk.CHUNKSIZEEXSQ + -1 * Chunk.CHUNKSIZEEX,
-        0 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX, 1 + 1 * Chunk.CHUNKSIZEEXSQ + 0 * Chunk.CHUNKSIZEEX,
-        1 + 1 * Chunk.CHUNKSIZEEXSQ + 1 * Chunk.CHUNKSIZEEX,
     ];
 
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
@@ -386,6 +332,36 @@ public partial class WorldRenderer {
         }
     }
 
+    /// <summary>
+    /// Populate 3x3x3 local cache around a specific block position for smooth lighting optimization.
+    /// This reduces redundant memory access when sampling neighbors for lighting calculations.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void populateLocalCache3x3x3(int blockX, int blockY, int blockZ) {
+        // Convert to 18x18x18 cache coordinates (add 1 for border)
+        int baseX = blockX + 1;
+        int baseY = blockY + 1; 
+        int baseZ = blockZ + 1;
+        
+        ref uint neighboursRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
+        ref byte lightsRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
+        
+        // Copy 3x3x3 area from 18x18x18 cache to local 3x3x3 cache
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    // Source index in 18x18x18 cache
+                    int sourceIdx = (baseY + dy) * Chunk.CHUNKSIZEEXSQ + (baseZ + dz) * Chunk.CHUNKSIZEEX + (baseX + dx);
+                    // Destination index in 3x3x3 cache
+                    int destIdx = (dy + 1) * LOCALCACHESIZE_SQ + (dz + 1) * LOCALCACHESIZE + (dx + 1);
+                    
+                    localBlockCache[destIdx] = Unsafe.Add(ref neighboursRef, sourceIdx);
+                    localLightCache[destIdx] = Unsafe.Add(ref lightsRef, sourceIdx);
+                }
+            }
+        }
+    }
+
     [SkipLocalsInit]
     private void setupNeighbours(SubChunk subChunk) {
         //var sw = new Stopwatch();
@@ -506,6 +482,9 @@ public partial class WorldRenderer {
         Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
         Span<uint> nba = stackalloc uint[6];
 
+        Span<uint> blockCache = stackalloc uint[27];
+        Span<byte> lightCache = stackalloc byte[27];
+
         // this is correct!
         ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
         ReadOnlySpan<int> flippedOrder = [3, 0, 1, 2];
@@ -530,25 +509,9 @@ public partial class WorldRenderer {
             return Unsafe.Add(ref arrayBase, (y + 1) * Chunk.CHUNKSIZEEXSQ + (z + 1) * Chunk.CHUNKSIZEEX + (x + 1));
         }
 
-        ref uint blockArrayRef = ref MemoryMarshal.GetArrayDataReference(subChunk.blocks.blocks);
-
         bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
-            switch (mode) {
-                case VertexConstructionMode.OPAQUE:
-                    if (notOpaqueBlocks(blockArrayRef)) {
-                        goto increment;
-                    }
-
-                    break;
-                case VertexConstructionMode.TRANSLUCENT:
-                    if (Block.notTranslucent(blockArrayRef.getID())) {
-                        goto increment;
-                    }
-
-                    break;
-            }
-
+            
             // index for array accesses
             int x = idx & 0xF;
             int z = idx >> 4 & 0xF;
@@ -558,13 +521,28 @@ public partial class WorldRenderer {
             // pre-add index
             ref uint neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
             ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
+            
+            switch (mode) {
+                case VertexConstructionMode.OPAQUE:
+                    if (notOpaqueBlocks(neighbourRef)) {
+                        goto increment;
+                    }
+
+                    break;
+                case VertexConstructionMode.TRANSLUCENT:
+                    if (Block.notTranslucent(neighbourRef.getID())) {
+                        goto increment;
+                    }
+
+                    break;
+            }
 
             // unrolled world.toWorldPos
             //float wx = section.chunkX * Chunk.CHUNKSIZE + x;
             //float wy = section.chunkY * Chunk.CHUNKSIZE + y;
             //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
 
-            var bl = Block.get(blockArrayRef.getID());
+            var bl = Block.get(neighbourRef.getID());
 
             /*switch (Block.renderType[bl.id]) {
                 case RenderType.CUBE:
@@ -607,12 +585,12 @@ public partial class WorldRenderer {
             nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
             nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
             nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
-            if (Block.isFullBlock(nba[0].getID()) &&
-                Block.isFullBlock(nba[1].getID()) &&
-                Block.isFullBlock(nba[2].getID()) &&
-                Block.isFullBlock(nba[3].getID()) &&
-                Block.isFullBlock(nba[4].getID()) &&
-                Block.isFullBlock(nba[5].getID())) {
+            if (Block.fullBlock[nba[0].getID()] &&
+                Block.fullBlock[nba[1].getID()] &&
+                Block.fullBlock[nba[2].getID()] &&
+                Block.fullBlock[nba[3].getID()] &&
+                Block.fullBlock[nba[4].getID()] &&
+                Block.fullBlock[nba[5].getID()]) {
                 goto increment;
             }
 
@@ -628,6 +606,11 @@ public partial class WorldRenderer {
 
 
             ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
+            
+            // if smooth lighting, fill cache
+            if (smoothLighting) {
+                fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
+            }
 
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;
@@ -688,8 +671,8 @@ public partial class WorldRenderer {
 
                     // AO requires smooth lighting. Otherwise don't need to deal with sampling any of this
                     if (smoothLighting || AO) {
+                        
                         // ox, oy, oz
-                        FourBytes o;
 
                         ao.Whole = 0;
 
@@ -698,7 +681,7 @@ public partial class WorldRenderer {
                         //mult = dirIdx * 36 + j * 9 + vert * 3;
                         // premultiply cuz its faster that way
 
-                        getDirectionOffsetsAndData(dir, ref lightRef, ref neighbourRef, lb, out light, out o);
+                        getDirectionOffsetsAndData(dir, ref MemoryMarshal.GetReference(blockCache), ref MemoryMarshal.GetReference(lightCache), lb, out light, out FourBytes o);
 
                         // only apply AO if enabled
                         if (AO && !facesRef.noAO) {
@@ -763,7 +746,7 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec[2];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[1];
-                    vertex.c = Block.packColour((byte)dir, ao.First);
+                    vertex.cu = Block.packColourB((byte)dir, ao.First);
                     vertex.light = light.First;
 
                     vertex = ref tempVertices[order[1]];
@@ -772,7 +755,7 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec[5];
                     vertex.u = (ushort)tex[0];
                     vertex.v = (ushort)tex[3];
-                    vertex.c = Block.packColour((byte)dir, ao.Second);
+                    vertex.cu = Block.packColourB((byte)dir, ao.Second);
                     vertex.light = light.Second;
 
 
@@ -782,7 +765,7 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec2[0];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[3];
-                    vertex.c = Block.packColour((byte)dir, ao.Third);
+                    vertex.cu = Block.packColourB((byte)dir, ao.Third);
                     vertex.light = light.Third;
 
                     vertex = ref tempVertices[order[3]];
@@ -791,7 +774,7 @@ public partial class WorldRenderer {
                     vertex.z = (ushort)vec2[3];
                     vertex.u = (ushort)tex[2];
                     vertex.v = (ushort)tex[1];
-                    vertex.c = Block.packColour((byte)dir, ao.Fourth);
+                    vertex.cu = Block.packColourB((byte)dir, ao.Fourth);
                     vertex.light = light.Fourth;
                     chunkVertices.AddRange(tempVertices);
                     //cv += 4;
@@ -803,10 +786,42 @@ public partial class WorldRenderer {
             }
 
             // increment the array pointer
-            increment:
-            blockArrayRef = ref Unsafe.Add(ref blockArrayRef, 1);
+            increment: ;
         }
         //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
+    }
+
+
+    /**
+     * Fills the 3x3x3 local cache with blocks and light values.
+     */
+    private static void fillCache(Span<uint> blockCache, Span<byte> lightCache, ref uint neighbourRef, ref byte lightRef) {
+        // it used to look like this:
+        // nba[0] = Unsafe.Add(ref neighbourRef, -1);
+        // nba[1] = Unsafe.Add(ref neighbourRef, +1);
+        // nba[2] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEX);
+        // nba[3] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEX);
+        // nba[4] = Unsafe.Add(ref neighbourRef, -Chunk.CHUNKSIZEEXSQ);
+        // nba[5] = Unsafe.Add(ref neighbourRef, +Chunk.CHUNKSIZEEXSQ);
+        
+        // we need to fill the blocks into the cache.
+        // indices are -1, 0, 1 for x, y, z
+        for (int y = 0; y < LOCALCACHESIZE; y++) {
+            for (int z = 0; z < LOCALCACHESIZE; z++) {
+                for (int x = 0; x < LOCALCACHESIZE; x++) {
+                    // calculate the index in the cache
+                    int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
+                    // calculate the neighbour index
+                    int nx = x - 1;
+                    int ny = y - 1;
+                    int nz = z - 1;
+
+                    // get the block and light value from the neighbour array
+                    blockCache[index] = Unsafe.Add(ref neighbourRef, ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
+                    lightCache[index] = Unsafe.Add(ref lightRef,  ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
+                }
+            }
+        }
     }
 
     // this averages the four light values. If the block is opaque, it ignores the light value.
@@ -888,34 +903,6 @@ public partial class WorldRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void addAO(int x, int y, int z, int x1, int y1, int z1, out int x2, out int y2, out int z2) {
-        x2 = x + x1;
-        y2 = y + y1;
-        z2 = z + z1;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Vector3I addAO(int x, int y, int z, int x1, int y1, int z1) {
-        return new(x + x1, y + y1, z + z1);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getOffset(ref int arr, int index, out int x, out int y, out int z) {
-        // array has 6 directions, 4 indices which each contain 3 AOs of 3 ints each
-        // 36 = 3 * 3 * 4
-        // 9 = 3 * 3
-        x = Unsafe.Add(ref arr, index);
-        y = Unsafe.Add(ref arr, index + 1);
-        z = Unsafe.Add(ref arr, index + 2);
-    }
-
-    public static void alignBlock(ref int x, ref int y, ref int z) {
-        x = (x + 16) % 16;
-        y = (y + 16) % 16;
-        z = (z + 16) % 16;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static byte calculateAO(int side1, int side2, int corner) {
         if (!Settings.instance.AO) {
             return 0;
@@ -942,9 +929,14 @@ public partial class WorldRenderer {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static byte calculateVertexLightAndAO(ref byte lightRef, ref uint neighbourRef, int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2, int z2, byte lb, out byte opacity) {
-        int offset0 = x0 + y0 * Chunk.CHUNKSIZEEXSQ + z0 * Chunk.CHUNKSIZEEX;
-        int offset1 = x1 + y1 * Chunk.CHUNKSIZEEXSQ + z1 * Chunk.CHUNKSIZEEX;
-        int offset2 = x2 + y2 * Chunk.CHUNKSIZEEXSQ + z2 * Chunk.CHUNKSIZEEX;
+        
+        // since we're using a cache now, we're getting the offsets from the cache which is 3x3x3
+        // so +1 is +3, -1 is -3, etc.
+        
+        // calculate the offsets in the local cache
+        int offset0 =  (y0 + 1) * LOCALCACHESIZE_SQ + (z0 + 1) * LOCALCACHESIZE + (x0 + 1);
+        int offset1 =  (y1 + 1) * LOCALCACHESIZE_SQ + (z1 + 1) * LOCALCACHESIZE + (x1 + 1);
+        int offset2 =  (y2 + 1) * LOCALCACHESIZE_SQ + (z2 + 1) * LOCALCACHESIZE + (x2 + 1);
         
         uint lightValue = (uint)(Unsafe.Add(ref lightRef, offset0) |
                                  (Unsafe.Add(ref lightRef, offset1) << 8) |
@@ -959,7 +951,7 @@ public partial class WorldRenderer {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getDirectionOffsetsAndData(RawDirection dir, ref byte lightRef, ref uint neighbourRef, byte lb, out FourBytes light, out FourBytes o) {
+    private static void getDirectionOffsetsAndData(RawDirection dir, ref uint neighbourRef, ref byte lightRef, byte lb, out FourBytes light, out FourBytes o) {
         Unsafe.SkipInit(out o);
         Unsafe.SkipInit(out light);
         switch (dir) {
