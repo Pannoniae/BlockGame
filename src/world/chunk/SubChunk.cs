@@ -48,7 +48,8 @@ public class SubChunk {
         if (block == Blocks.GRASS) {
             if (y < 127 && Block.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
                 blocks[x, y, z] = Block.DIRT.id;
-                Game.renderer.meshChunk(this);
+                // dirty block
+                world.setBlockNeighboursDirty(worldPos);
             }
             // spread grass to nearby dirt blocks
             // in a 3x3x3 area
@@ -60,7 +61,8 @@ public class SubChunk {
             // if dirt + air above
             if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Blocks.DIRT && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
                 world.setBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3, Blocks.GRASS);
-                Game.renderer.meshChunk(this);
+                // dirty this chunk
+                world.dirtyChunk(this.coord);
             }
         }
     }

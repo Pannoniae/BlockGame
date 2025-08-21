@@ -62,6 +62,7 @@ public partial class Game {
 
     public static Graphics graphics;
     public static GUI gui;
+    public static BlockRenderer blockRenderer;
 
     public static Textures textures;
     public static Metrics metrics;
@@ -546,6 +547,8 @@ public partial class Game {
         gui.loadFont(16);
         renderer = new WorldRenderer();
         
+        blockRenderer = new BlockRenderer();
+        
         Menu.init();
 
 
@@ -611,6 +614,24 @@ public partial class Game {
         screen.centre = screen.size / 2;
         screen.activate();
         screen.resize(new Vector2I(width, height));
+    }
+    
+    /**
+     * Sets up a new world.
+     * Also ensures the dependencies aren't messed up.
+     */
+    public static void setWorld(World world) {
+        
+        // dispose of everything before
+        renderer.Dispose();
+        
+        Game.world?.Dispose();
+        Game.world = world;
+        
+        
+        // setup auxiliary
+        renderer.setWorld(world);
+        blockRenderer.world = world;
     }
 
     public static Coroutine startCoroutine(IEnumerator coroutine) {
@@ -740,72 +761,12 @@ public partial class Game {
         mainThreadQueue.Add(action);
     }
 
-    public void setFullscreen(bool fullscreen) {
-        if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
-            Console.Out.WriteLine("Already in desired state, returning");
-            return;
-        }
-
-        var windowMonitor = window.Monitor;
-        if (windowMonitor == null) {
-            Console.Out.WriteLine("Failed to switch to fullscreen: window isn't on any monitor!");
-            return;
-        }
-
-        // temporarily remove resize handler to prevent issues during switch
-        window.FramebufferResize -= resize;
-
-        if (fullscreen) {
-            var screenSize = windowMonitor.VideoMode.Resolution ?? windowMonitor.Bounds.Size;
-            preFullscreenSize = window.Size;
-            preFullscreenPosition = window.Position;
-            preFullscreenState = window.WindowState;
-
-            // Force Normal state first, then Fullscreen
-            if (window.WindowState != WindowState.Normal) {
-                window.WindowState = WindowState.Normal;
-            }
-
-            window.WindowState = WindowState.Fullscreen;
-            window.Size = screenSize;
-        }
-        else {
-            Console.Out.WriteLine("Exiting fullscreen");
-            if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
-                preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
-                preFullscreenPosition = windowMonitor.Bounds.Origin + new Vector2D<int>(50);
-                preFullscreenState = WindowState.Normal;
-                Console.Out.WriteLine("Using fallback window settings");
-            }
-
-            // Always go to Normal first, then to the desired state
-            window.WindowState = WindowState.Normal;
-            window.Size = preFullscreenSize;
-            window.Position = preFullscreenPosition;
-            if (preFullscreenState != WindowState.Normal) {
-                window.WindowState = preFullscreenState;
-            }
-        }
-
-        // restore resize handler and trigger resize
-        window.FramebufferResize += resize;
-        resize(window.FramebufferSize);
-    }
-
     private void update(double dt) {
         globalTick++;
-        //var before = permanentStopwatch.ElapsedMilliseconds;
-        //dt = Math.Min(dt, 0.2);
-        /*var vec = new Vector2I(0, 0);
-        Console.Out.WriteLine(window.PointToClient(vec));
-        Console.Out.WriteLine(window.PointToFramebuffer(vec));
-        Console.Out.WriteLine(window.PointToScreen(vec));*/
         mousePos = mouse.Position;
         textures.update(dt);
         currentScreen.update(dt);
         gui.update(dt);
-        //var after = permanentStopwatch.ElapsedMilliseconds;
-        //Console.Out.WriteLine(after - before);
     }
 
     /// <summary>

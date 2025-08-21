@@ -73,8 +73,8 @@ public class LevelSelectMenu : Menu {
             world = new World($"level{levelSelect.levelIndex}", seed);
             isLoading = false;
         }
-        Game.world?.Dispose();
-        Game.world = world;
+
+        Game.setWorld(world);
         
         // start world thread
         // todo this shit doesn't work, fix later

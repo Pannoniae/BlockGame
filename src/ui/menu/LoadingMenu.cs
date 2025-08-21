@@ -89,8 +89,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         // Ready: 95% - 100%
         
         start("Setting up world");
-
-        Game.renderer.setWorld(world);
+        
         update(0.025f); // 2.5% progress
         yield return new WaitForNextFrame();
         update(0.05f); // Setup complete: 5%

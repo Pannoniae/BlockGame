@@ -508,7 +508,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public void meshChunk() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            Game.renderer.meshChunk(subChunks[i]);
+            Game.blockRenderer.meshChunk(subChunks[i]);
         }
 
         status = ChunkStatus.MESHED;

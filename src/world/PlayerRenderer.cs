@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
+using Molten;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame;
@@ -53,7 +54,9 @@ public class PlayerRenderer {
         var pos = player.position.toBlockPos();
         Game.graphics.tex(0, Game.textures.blockTexture);
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
-        WorldRenderer.meshBlockTinted(Block.get(handItem.block), ref vertices, ref indices, (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)));
+        Game.blockRenderer.setupStandalone();
+        Game.blockRenderer.renderBlock(Block.get(handItem.block), Vector3I.Zero, vertices, indices, 
+            lightOverride: (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)), cullFaces: false);
         
         vao.bind();
         vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));

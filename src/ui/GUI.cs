@@ -670,7 +670,9 @@ public class GUI {
             light = 15;
         }*/
 
-        WorldRenderer.meshBlockTinted(block, ref guiBlock, ref guiBlockI, 255);
+        Game.blockRenderer.setupStandalone();
+        Game.blockRenderer.renderBlock(block, Vector3I.Zero, guiBlock, guiBlockI, 
+            lightOverride: 255, cullFaces: false);
         
         // assemble the matrix using existing matrix stacks from Graphics
         Game.graphics.projection.push();

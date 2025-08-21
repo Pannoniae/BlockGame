@@ -2,10 +2,12 @@
 using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ARB;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Silk.NET.OpenGL.Legacy.Extensions.EXT;
+using Silk.NET.Windowing;
 
 namespace BlockGame;
 
@@ -14,10 +16,10 @@ public partial class Game {
     public uint FBOtex;
     public uint throwawayVAO;
     public uint depthBuffer;
-    
+
     public static bool sampleShadingSupported = false;
     private static bool sampleShadingEnabled = false;
-    
+
     public static bool hasSBL = false;
     public static bool hasVBUM = false;
     public static bool hasUBUM = false;
@@ -26,18 +28,18 @@ public partial class Game {
     public static bool hasBindlessMDI = false;
     public static bool isNVCard = false;
     public static bool hasShadingLanguageInclude = false;
-    
+
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;
     public static ExtBindableUniform extbu;
     public static NVCommandList cmdl;
     public static NVBindlessMultiDrawIndirect bmdi;
     public static ArbShadingLanguageInclude arbInclude;
-    
+
     // MSAA resolve framebuffer (for MSAA -> regular texture)
     private uint resolveFbo;
     private uint resolveTex;
-    
+
     // FXAA shader uniforms
     private int g_fxaa_texelStepLocation;
     private int g_fxaa_showEdgesLocation;
@@ -45,7 +47,7 @@ public partial class Game {
     private int g_fxaa_mulReduceLocation;
     private int g_fxaa_minReduceLocation;
     private int g_fxaa_maxSpanLocation;
-    
+
     // SSAA shader uniforms
     private int g_ssaa_texelStepLocation;
     private int g_ssaa_factorLocation;
@@ -86,7 +88,7 @@ public partial class Game {
     private unsafe void genFramebuffer() {
         GL.DeleteFramebuffer(fbo);
         GL.DeleteFramebuffer(resolveFbo);
-        
+
         // WIDTH CHECK
         if (width < 24) {
             width = 24;
@@ -142,7 +144,8 @@ public partial class Game {
 
             GL.NamedFramebufferTexture(resolveFbo, FramebufferAttachment.ColorAttachment0, resolveTex, 0);
 
-            if (GL.CheckNamedFramebufferStatus(resolveFbo, FramebufferTarget.Framebuffer) != GLEnum.FramebufferComplete) {
+            if (GL.CheckNamedFramebufferStatus(resolveFbo, FramebufferTarget.Framebuffer) !=
+                GLEnum.FramebufferComplete) {
                 throw new SkillIssueException("Resolve Framebuffer is not complete");
             }
         }
@@ -210,7 +213,7 @@ public partial class Game {
         GL.DeleteTexture(resolveTex);
         GL.DeleteVertexArray(throwawayVAO);
     }
-    
+
     public partial class NV1 {
         [LibraryImport("nvapi.dll", EntryPoint = "nvapi_QueryInterface")]
         internal static partial int NvAPI_Initialize();
@@ -261,4 +264,56 @@ public partial class Game {
         }
     }
     #endif
+    
+    public void setFullscreen(bool fullscreen) {
+        if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
+            Console.Out.WriteLine("Already in desired state, returning");
+            return;
+        }
+
+        var windowMonitor = window.Monitor;
+        if (windowMonitor == null) {
+            Console.Out.WriteLine("Failed to switch to fullscreen: window isn't on any monitor!");
+            return;
+        }
+
+        // temporarily remove resize handler to prevent issues during switch
+        window.FramebufferResize -= resize;
+
+        if (fullscreen) {
+            var screenSize = windowMonitor.VideoMode.Resolution ?? windowMonitor.Bounds.Size;
+            preFullscreenSize = window.Size;
+            preFullscreenPosition = window.Position;
+            preFullscreenState = window.WindowState;
+
+            // Force Normal state first, then Fullscreen
+            if (window.WindowState != WindowState.Normal) {
+                window.WindowState = WindowState.Normal;
+            }
+
+            window.WindowState = WindowState.Fullscreen;
+            window.Size = screenSize;
+        }
+        else {
+            Console.Out.WriteLine("Exiting fullscreen");
+            if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
+                preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
+                preFullscreenPosition = windowMonitor.Bounds.Origin + new Vector2D<int>(50);
+                preFullscreenState = WindowState.Normal;
+                Console.Out.WriteLine("Using fallback window settings");
+            }
+
+            // Always go to Normal first, then to the desired state
+            window.WindowState = WindowState.Normal;
+            window.Size = preFullscreenSize;
+            window.Position = preFullscreenPosition;
+            if (preFullscreenState != WindowState.Normal) {
+                window.WindowState = preFullscreenState;
+            }
+        }
+
+        // restore resize handler and trigger resize
+        window.FramebufferResize += resize;
+        resize(window.FramebufferSize);
+    }
 }

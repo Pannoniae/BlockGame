@@ -475,7 +475,7 @@ public partial class World : IDisposable {
             }
             
             var section = getSubChunk(sectionCoord);
-            Game.renderer.meshChunk(section);
+            Game.blockRenderer.meshChunk(section);
         }  
         
         // debug

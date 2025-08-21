@@ -436,7 +436,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             }
 
             var section = world.getSubChunk(sectionCoord);
-            meshChunk(section);
+            Game.blockRenderer.meshChunk(section);
         }
     }
 
@@ -1041,209 +1041,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
     }
 
-    public static void meshBlock(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices) {
-        ushort i = 0;
-        const int wx = 0;
-        const int wy = 0;
-        const int wz = 0;
-
-        int c = 0;
-        int ci = 0;
-
-        vertices.Clear();
-        indices.Clear();
-
-
-        Block b = block;
-        Face face;
-
-        UVPair texCoords;
-        UVPair texCoordsMax;
-        Vector2F tex;
-        Vector2F texMax;
-        float u;
-        float v;
-        float maxU;
-        float maxV;
-
-        Color4b data1;
-        Color4b data2;
-        Color4b data3;
-        Color4b data4;
-
-        float x1;
-        float y1;
-        float z1;
-        float x2;
-        float y2;
-        float z2;
-        float x3;
-        float y3;
-        float z3;
-        float x4;
-        float y4;
-        float z4;
-
-        Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
-        Span<ushort> tempIndices = stackalloc ushort[6];
-
-        var faces = b.model.faces;
-
-        for (int d = 0; d < faces.Length; d++) {
-            face = faces[d];
-            var dir = face.direction;
-
-            texCoords = face.min;
-            texCoordsMax = face.max;
-            tex = Block.texCoords(texCoords);
-            texMax = Block.texCoords(texCoordsMax);
-            u = tex.X;
-            v = tex.Y;
-            maxU = texMax.X;
-            maxV = texMax.Y;
-
-            x1 = wx + face.x1;
-            y1 = wy + face.y1;
-            z1 = wz + face.z1;
-            x2 = wx + face.x2;
-            y2 = wy + face.y2;
-            z2 = wz + face.z2;
-            x3 = wx + face.x3;
-            y3 = wy + face.y3;
-            z3 = wz + face.z3;
-            x4 = wx + face.x4;
-            y4 = wy + face.y4;
-            z4 = wz + face.z4;
-
-            data1 = calculateTint((byte)dir, 0, 15);
-            data2 = calculateTint((byte)dir, 0, 15);
-            data3 = calculateTint((byte)dir, 0, 15);
-            data4 = calculateTint((byte)dir, 0, 15);
-
-
-            // add vertices
-
-            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, new Color(data1.R, data1.G, data1.B, data1.A));
-            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, new Color(data2.R, data2.G, data2.B, data2.A));
-            tempVertices[2] =
-                new BlockVertexTinted(x3, y3, z3, maxU, maxV, new Color(data3.R, data3.G, data3.B, data3.A));
-            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, new Color(data4.R, data4.G, data4.B, data4.A));
-            vertices.AddRange(tempVertices);
-            c += 4;
-            tempIndices[0] = i;
-            tempIndices[1] = (ushort)(i + 1);
-            tempIndices[2] = (ushort)(i + 2);
-            tempIndices[3] = (ushort)(i + 0);
-            tempIndices[4] = (ushort)(i + 2);
-            tempIndices[5] = (ushort)(i + 3);
-            indices.AddRange(tempIndices);
-            i += 4;
-            ci += 6;
-        }
-    }
-
-    public static void meshBlockTinted(Block block, ref List<BlockVertexTinted> vertices, ref List<ushort> indices, byte light, Color4b tint = default) {
-        ushort i = 0;
-        const int wx = 0;
-        const int wy = 0;
-        const int wz = 0;
-
-        int c = 0;
-        int ci = 0;
-
-        vertices.Clear();
-        indices.Clear();
-
-
-        Block b = block;
-        Face face;
-
-        UVPair texCoords;
-        UVPair texCoordsMax;
-        Vector2F tex;
-        Vector2F texMax;
-        float u;
-        float v;
-        float maxU;
-        float maxV;
-
-        float offset = 0.0004f;
-
-        float x1;
-        float y1;
-        float z1;
-        float x2;
-        float y2;
-        float z2;
-        float x3;
-        float y3;
-        float z3;
-        float x4;
-        float y4;
-        float z4;
-
-        Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
-        Span<ushort> tempIndices = stackalloc ushort[6];
-
-        var faces = b.model.faces;
-
-        for (int d = 0; d < faces.Length; d++) {
-            face = faces[d];
-            var dir = face.direction;
-
-            texCoords = face.min;
-            texCoordsMax = face.max;
-            tex = Block.texCoords(texCoords);
-            texMax = Block.texCoords(texCoordsMax);
-            u = tex.X;
-            v = tex.Y;
-            maxU = texMax.X;
-            maxV = texMax.Y;
-
-            x1 = wx + face.x1;
-            y1 = wy + face.y1;
-            z1 = wz + face.z1;
-            x2 = wx + face.x2;
-            y2 = wy + face.y2;
-            z2 = wz + face.z2;
-            x3 = wx + face.x3;
-            y3 = wy + face.y3;
-            z3 = wz + face.z3;
-            x4 = wx + face.x4;
-            y4 = wy + face.y4;
-            z4 = wz + face.z4;
-
-            Color4b tintVal;
-            
-            if (tint == default) {
-                // calculate tint based on direction and light
-                tintVal = calculateTint((byte)dir, 0, light);
-            }
-            else {
-                // use provided tint
-                tintVal = tint * calculateTint((byte)dir, 0, light);
-            }
-
-
-            // add vertices
-
-            tempVertices[0] = new BlockVertexTinted(x1, y1, z1, u, v, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
-            tempVertices[1] = new BlockVertexTinted(x2, y2, z2, u, maxV, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
-            tempVertices[2] = new BlockVertexTinted(x3, y3, z3, maxU, maxV, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
-            tempVertices[3] = new BlockVertexTinted(x4, y4, z4, maxU, v, tintVal.R, tintVal.G, tintVal.B, tintVal.A);
-            vertices.AddRange(tempVertices);
-            c += 4;
-            tempIndices[0] = i;
-            tempIndices[1] = (ushort)(i + 1);
-            tempIndices[2] = (ushort)(i + 2);
-            tempIndices[3] = (ushort)(i + 0);
-            tempIndices[4] = (ushort)(i + 2);
-            tempIndices[5] = (ushort)(i + 3);
-            indices.AddRange(tempIndices);
-            i += 4;
-            ci += 6;
-        }
-    }
 
     public static readonly float[] aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
 
@@ -1309,7 +1106,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader = null!;
         }
 
-        //chunkUBO?.Dispose();
+        chunkUBO?.Dispose();
         bindlessBuffer?.Dispose();
     }
 
