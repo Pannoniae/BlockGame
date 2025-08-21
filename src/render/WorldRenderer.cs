@@ -874,7 +874,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         float dayPercent = world.getDayPercentage(world.worldTick);
 
 
-        float sunAngle = dayPercent * -MathF.PI * 2; // -π/2 to π/2
+        float sunAngle = dayPercent * MathF.PI * 2; // -π/2 to π/2
 
         const float sunDistance = 64f;
         const float sunSize = 6f;
@@ -888,17 +888,17 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // render sun
         Game.graphics.tex(0, Game.textures.sunTexture);
 
-        mat.rotate(Meth.rad2deg(sunAngle), 1, 0, 0); // rotate around X axis
+        mat.rotate(Meth.rad2deg(sunAngle), 0, 0, 1); // rotate around Z axis
         idt.setMVP(mat.top * viewProj);
         idt.setMV(mat.top * modelView);
 
         idt.begin(PrimitiveType.Quads);
 
         // create billboard quad vertices that always face the camera
-        var v1 = new Vector3(-sunSize, -sunSize, sunDistance);
-        var v2 = new Vector3(sunSize, -sunSize, sunDistance);
-        var v3 = new Vector3(sunSize, sunSize, sunDistance);
-        var v4 = new Vector3(-sunSize, sunSize, sunDistance);
+        var v1 = new Vector3(sunDistance, -sunSize, -sunSize);
+        var v2 = new Vector3(sunDistance, sunSize, -sunSize);
+        var v3 = new Vector3(sunDistance, sunSize, sunSize);
+        var v4 = new Vector3(sunDistance, -sunSize, sunSize);
 
         idt.addVertex(new BlockVertexTinted(v1.X, v1.Y, v1.Z, 0f, 0f));
         idt.addVertex(new BlockVertexTinted(v2.X, v2.Y, v2.Z, 0f, 1f));
@@ -913,16 +913,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         mat.push();
 
-        mat.rotate(Meth.rad2deg(MathF.PI), 1, 0, 0); // rotate 180 degrees more
+        mat.rotate(Meth.rad2deg(MathF.PI), 0, 0, 1); // rotate 180 degrees more
         idt.setMVP(mat.top * viewProj);
         idt.setMV(mat.top * modelView);
 
         idt.begin(PrimitiveType.Quads);
 
-        var mv1 = new Vector3(-moonSize, -moonSize, sunDistance);
-        var mv2 = new Vector3(moonSize, -moonSize, sunDistance);
-        var mv3 = new Vector3(moonSize, moonSize, sunDistance);
-        var mv4 = new Vector3(-moonSize, moonSize, sunDistance);
+        var mv1 = new Vector3(sunDistance, -moonSize, -moonSize);
+        var mv2 = new Vector3(sunDistance, moonSize, -moonSize);
+        var mv3 = new Vector3(sunDistance, moonSize, moonSize);
+        var mv4 = new Vector3(sunDistance, -moonSize, moonSize);
 
         idt.addVertex(new BlockVertexTinted(mv1.X, mv1.Y, mv1.Z, 0f, 0f));
         idt.addVertex(new BlockVertexTinted(mv2.X, mv2.Y, mv2.Z, 0f, 1f));
