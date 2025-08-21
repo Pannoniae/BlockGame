@@ -257,7 +257,7 @@ public class GUI {
         float offsetX = backgroundScrollOffset.X % blockSize;
         float offsetY = backgroundScrollOffset.Y % blockSize;
 
-        Span<ushort> ores = [Block.AMBER_ORE.id, Block.RED_ORE.id, Block.EMERALD_ORE.id, Block.DIAMOND_ORE.id, Block.TITANIUM_ORE.id, Block.AMETHYST_ORE.id];
+        Span<ushort> ores = [Blocks.AMBER_ORE, Blocks.RED_ORE, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE, Blocks.AMETHYST_ORE];
 
         // Draw layered background
         for (int x = 0; x < xCount; x++) {
@@ -315,12 +315,12 @@ public class GUI {
     private ushort getBlockTypeForDepth(int worldX, int worldY) {
         // air above surface (y < 0)
         if (worldY < 0) {
-            return Block.AIR.id;
+            return Blocks.AIR;
         }
         
         // surface layer (y = 0) is grass
         if (worldY == 0) {
-            return Block.GRASS.id;
+            return Blocks.GRASS;
         }
         
         // dirt percentage increases linearly from depth 1 to 7
@@ -330,12 +330,12 @@ public class GUI {
             float randomValue = XHash.hashFloat(worldX, worldY);
             
             if (randomValue < dirtPercentage) {
-                return Block.DIRT.id;
+                return Blocks.DIRT;
             }
         }
         
         // what isn't dirt is stone
-        return Block.STONE.id;
+        return Blocks.STONE;
     }
 
 

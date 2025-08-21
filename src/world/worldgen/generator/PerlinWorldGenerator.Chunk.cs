@@ -477,7 +477,7 @@ public partial class PerlinWorldGenerator {
                     getNoise2D(auxNoise, -xs * HELLSTONE_FREQUENCY, -zs * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
-                    chunk.setBlockFast(x, y, z, Block.HELLSTONE.id);
+                    chunk.setBlockFast(x, y, z, Blocks.HELLSTONE);
                     chunk.setBlockLight(x, y, z, 15);
                 }
             }
@@ -530,7 +530,7 @@ public partial class PerlinWorldGenerator {
         }
 
         // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
+        if (chunk.getBlock(x, y, z) != Blocks.GRASS) {
             return;
         }
 
@@ -541,7 +541,7 @@ public partial class PerlinWorldGenerator {
         for (int yd = 1; yd < 8; yd++) {
             for (int zd = -2; zd <= 2; zd++) {
                 for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) != Blocks.AIR) {
                         return;
                     }
                 }
@@ -554,7 +554,7 @@ public partial class PerlinWorldGenerator {
     public void placeOakTree(XRandom random, int x, int y, int z) {
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
-            world.setBlock(x, y + i, z, Block.LOG.id);
+            world.setBlock(x, y + i, z, Blocks.LOG);
             // leaves, thick
             for (int x1 = -2; x1 <= 2; x1++) {
                 for (int z1 = -2; z1 <= 2; z1++) {
@@ -564,7 +564,7 @@ public partial class PerlinWorldGenerator {
                     }
 
                     for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
+                        world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES);
                     }
                 }
             }
@@ -573,7 +573,7 @@ public partial class PerlinWorldGenerator {
             for (int x1 = -1; x1 <= 1; x1++) {
                 for (int z1 = -1; z1 <= 1; z1++) {
                     for (int y1 = randomNumber; y1 <= randomNumber + 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Block.LEAVES.id);
+                        world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES);
                     }
                 }
             }

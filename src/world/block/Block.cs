@@ -13,6 +13,13 @@ namespace BlockGame.util;
  * For now, we'll only have 65536 blocks for typechecking (ushort -> uint), this can be extended later.
  */
 public class Block {
+    
+    /**
+     * The maximum block ID we have. This ID is one past the end!
+     * If you want to loop, do for (int i = 0; i &lt;= currentID; i++) { ... }
+     * so you won't overread.
+     */
+    public static int currentID;
 
     private const int particleCount = 4;
 
@@ -25,14 +32,14 @@ public class Block {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ushort)(value & 0xFFFFFF);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => this.value = (this.value & 0xFF000000) | value;
+        private set => this.value = (this.value & 0xFF000000) | value;
     }
     
     public ushort metadata {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ushort)(value >> 24);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => this.value = (this.value & 0xFFFFFF) | ((uint)(value << 24));
+        private set => this.value = (this.value & 0xFFFFFF) | ((uint)(value << 24));
     }
 
     /// <summary>
@@ -45,7 +52,6 @@ public class Block {
     /// Is translucent? (partially transparent blocks like water)
     /// </summary>
     public RenderLayer layer = RenderLayer.SOLID;
-    public RenderType type = RenderType.MODEL;
 
     public BlockModel? model;
 
@@ -59,28 +65,31 @@ public class Block {
     private const int MAXBLOCKS = 128;
     public static Block?[] blocks = new Block[MAXBLOCKS];
 
-    /// <summary>
-    /// Stores whether the block is a full block or not.
-    /// </summary>
+    /**
+     * Stores whether the block is a full, opaque block or not.
+     */
     public static bool[] fullBlock = new bool[MAXBLOCKS];
     
     public static bool[] translucent = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
     public static bool[] randomTick = new bool[MAXBLOCKS];
     public static bool[] liquid = new bool[MAXBLOCKS];
+    public static bool[] customCulling = new bool[MAXBLOCKS];
+    
     public static bool[] selection = new bool[MAXBLOCKS];
     public static bool[] collision = new bool[MAXBLOCKS];
     public static byte[] lightLevel = new byte[MAXBLOCKS];
     public static byte[] lightAbsorption = new byte[MAXBLOCKS];
+    
     public static AABB?[] AABB = new AABB?[MAXBLOCKS];
     public static AABB?[] selectionAABB = new AABB?[MAXBLOCKS];
     public static RenderType[] renderType = new RenderType[MAXBLOCKS];
     
     public static UVPair?[] uvs = new UVPair?[6];
 
-    public static readonly int maxBlock = 52;
-
     public static Block register(Block block) {
+        // update maxid
+        currentID = Math.Max(currentID, block.id);
         return blocks[block.id] = block;
     }
 
@@ -97,7 +106,8 @@ public class Block {
 
     public static void preLoad() {
         for (int i = 0; i < blocks.Length; i++) {
-            if (blocks[i] != null) {
+            if (blocks[i] != null && renderType[i] == RenderType.CUBE) {
+                // todo fix
                 renderType[i] = RenderType.MODEL;
             }
         }
@@ -124,7 +134,7 @@ public class Block {
     }
 
     public static void postLoad() {
-        for (int i = 0; i <= maxBlock; i++) {
+        for (int i = 0; i < currentID; i++) {
             translucent[blocks[i].id] = blocks[i].layer == RenderLayer.TRANSLUCENT;
         }
         inventoryBlacklist[Blocks.WATER] = true;
@@ -190,7 +200,7 @@ public class Block {
 
     public static Block HEAD = register(new Block(Blocks.HEAD, "Head", BlockModel.makeHalfCube(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3))).partialBlock());
 
-    public static Block WATER = register(new Water(Blocks.WATER, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid().setLightAbsorption(1));
+    public static Block WATER = register(new Water(Blocks.WATER, "Water", BlockModel.makeLiquid(cubeUVs(0, 4))).makeLiquid());
 
     public static Block RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore", BlockModel.makeCube(cubeUVs(10, 0))));
     public static Block TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore", BlockModel.makeCube(cubeUVs(11, 0))));
@@ -216,7 +226,7 @@ public class Block {
     }
 
     public static bool isTransparent(int block) {
-        return block != 0 && get(block).layer == RenderLayer.TRANSPARENT;
+        return block != 0 && !fullBlock[block];
     }
 
     public static bool isTranslucent(int block) {
@@ -240,7 +250,7 @@ public class Block {
     }
 
     public static bool isTransparent(Block block) {
-        return block.id != 0 && block.layer == RenderLayer.TRANSPARENT;
+        return block.id != 0 && !fullBlock[block.id];
     }
 
     public static bool isTranslucent(Block block) {
@@ -395,6 +405,7 @@ public class Block {
         selection[id] = true;
         collision[id] = true;
         liquid[id] = false;
+        customCulling[id] = false;
         randomTick[id] = false;
 
         AABB[id] = fullBlockAABB();
@@ -402,7 +413,6 @@ public class Block {
     }
 
     public Block transparency() {
-        layer = RenderLayer.TRANSPARENT;
         fullBlock[id] = false;
         return this;
     }
@@ -458,10 +468,10 @@ public class Block {
     public virtual void update(World world, Vector3I pos) {
 
     }
-
+    
     [ClientOnly]
-    public virtual ushort render(World world, Vector3I pos, List<BlockVertexPacked> vertexBuffer) {
-        return 0;
+    public virtual void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+        
     }
 
     public Block air() {
@@ -535,6 +545,17 @@ public class Block {
             }
         }
     }
+    
+    /**
+     * Returns whether a face should be rendered.
+     */
+    public virtual bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
+        var direction = Direction.getDirection(dir);
+        var neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        
+        // if it's not a full block, we render the face
+        return !fullBlock[neighbourBlock];
+    }
 }
 
 public static class BlockExtensions {
@@ -569,7 +590,12 @@ public class Flower(ushort id, string name, BlockModel uvs) : Block(id, name, uv
     }
 }
 
-public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs) {
+public class Water : Block {
+    public Water(ushort id, string name, BlockModel uvs) : base(id, name, uvs) {
+        lightAbsorption[id] = 1;
+        renderType[id] = RenderType.CUSTOM;
+        customCulling[id] = true;
+    }
 
     public override void update(World world, Vector3I pos) {
         foreach (var dir in Direction.directionsWaterSpread) {
@@ -583,6 +609,98 @@ public class Water(ushort id, string name, BlockModel uvs) : Block(id, name, uvs
                 }, 10);
                 world.blockUpdate(neighbourBlock, 10);
             }
+        }
+    }
+    
+    /** Water doesn't get rendered next to water, but always gets rendered on the top face */
+    public override bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
+        var direction = Direction.getDirection(dir);
+        var same = br.getBlockCached(direction.X, direction.Y, direction.Z).getID() == br.getBlock().getID();
+        if (same) {
+            return false;
+        }
+        return dir == RawDirection.UP || base.cullFace(br, x, y, z, dir);
+    }
+
+    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+        // Water geometry - similar to makeLiquid but manually created
+        const float height = 15f / 16f; // Water level is slightly below full height
+        const float offset = 0f; // No z-fighting offset needed for water
+        
+        // Get texture coordinates for water
+        var waterTexture = this.model.faces[0]; // Use the first face's texture
+        var tex = Block.texCoords(waterTexture.min);
+        var texMax = Block.texCoords(waterTexture.max);
+        
+        // Get light value for this block position
+        byte light = br.getLight();
+        
+        // Create a temporary array for 4 vertices per face
+        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
+        
+        // Check each direction for culling
+        for (int dir = 0; dir < 6; dir++) {
+            var direction = (RawDirection)dir;
+            
+            // Use custom culling logic for water
+            if (!cullFace(br, x, y, z, direction)) {
+                continue; // Skip this face if it should be culled
+            }
+            
+            // Calculate color/tint for this direction
+            uint colorPacked = Block.packColourB((byte)dir, 0); // No AO for water
+            
+            switch (direction) {
+                case RawDirection.WEST: // -X face
+                    tempVertices[0] = new BlockVertexPacked(x + offset, y + 1 - offset, z + 1 - offset, tex.X, tex.Y, colorPacked);
+                    tempVertices[1] = new BlockVertexPacked(x + offset, y + offset, z + 1 - offset, tex.X, texMax.Y, colorPacked);
+                    tempVertices[2] = new BlockVertexPacked(x + offset, y + offset, z + offset, texMax.X, texMax.Y, colorPacked);
+                    tempVertices[3] = new BlockVertexPacked(x + offset, y + 1 - offset, z + offset, texMax.X, tex.Y, colorPacked);
+                    break;
+                    
+                case RawDirection.EAST: // +X face
+                    tempVertices[0] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + offset, tex.X, tex.Y, colorPacked);
+                    tempVertices[1] = new BlockVertexPacked(x + 1 - offset, y + offset, z + offset, tex.X, texMax.Y, colorPacked);
+                    tempVertices[2] = new BlockVertexPacked(x + 1 - offset, y + offset, z + 1 - offset, texMax.X, texMax.Y, colorPacked);
+                    tempVertices[3] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + 1 - offset, texMax.X, tex.Y, colorPacked);
+                    break;
+                    
+                case RawDirection.SOUTH: // -Z face
+                    tempVertices[0] = new BlockVertexPacked(x + offset, y + 1 - offset, z + offset, tex.X, tex.Y, colorPacked);
+                    tempVertices[1] = new BlockVertexPacked(x + offset, y + offset, z + offset, tex.X, texMax.Y, colorPacked);
+                    tempVertices[2] = new BlockVertexPacked(x + 1 - offset, y + offset, z + offset, texMax.X, texMax.Y, colorPacked);
+                    tempVertices[3] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + offset, texMax.X, tex.Y, colorPacked);
+                    break;
+                    
+                case RawDirection.NORTH: // +Z face
+                    tempVertices[0] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + 1 - offset, tex.X, tex.Y, colorPacked);
+                    tempVertices[1] = new BlockVertexPacked(x + 1 - offset, y + offset, z + 1 - offset, tex.X, texMax.Y, colorPacked);
+                    tempVertices[2] = new BlockVertexPacked(x + offset, y + offset, z + 1 - offset, texMax.X, texMax.Y, colorPacked);
+                    tempVertices[3] = new BlockVertexPacked(x + offset, y + 1 - offset, z + 1 - offset, texMax.X, tex.Y, colorPacked);
+                    break;
+                    
+                case RawDirection.DOWN: // -Y face (bottom)
+                    tempVertices[0] = new BlockVertexPacked(x + 1 - offset, y + offset, z + 1 - offset, tex.X, tex.Y, colorPacked);
+                    tempVertices[1] = new BlockVertexPacked(x + 1 - offset, y + offset, z + offset, tex.X, texMax.Y, colorPacked);
+                    tempVertices[2] = new BlockVertexPacked(x + offset, y + offset, z + offset, texMax.X, texMax.Y, colorPacked);
+                    tempVertices[3] = new BlockVertexPacked(x + offset, y + offset, z + 1 - offset, texMax.X, tex.Y, colorPacked);
+                    break;
+                    
+                case RawDirection.UP: // +Y face (top) - at reduced height
+                    tempVertices[0] = new BlockVertexPacked(x + offset, y + height, z + 1 - offset, tex.X, tex.Y, colorPacked);
+                    tempVertices[1] = new BlockVertexPacked(x + offset, y + height, z + offset, tex.X, texMax.Y, colorPacked);
+                    tempVertices[2] = new BlockVertexPacked(x + 1 - offset, y + height, z + offset, texMax.X, texMax.Y, colorPacked);
+                    tempVertices[3] = new BlockVertexPacked(x + 1 - offset, y + height, z + 1 - offset, texMax.X, tex.Y, colorPacked);
+                    break;
+            }
+            
+            // Set light values for all vertices
+            for (int i = 0; i < 4; i++) {
+                tempVertices[i].light = light;
+            }
+            
+            // Add the vertices to the list
+            vertices.AddRange(tempVertices);
         }
     }
 }
@@ -677,7 +795,6 @@ public enum FaceFlags : byte {
 /// </summary>
 public enum RenderLayer : byte {
     SOLID,
-    TRANSPARENT,
     TRANSLUCENT
 }
 

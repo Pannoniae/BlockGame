@@ -623,7 +623,6 @@ public partial class Game {
     public static void setWorld(World world) {
         
         // dispose of everything before
-        renderer.Dispose();
         
         Game.world?.Dispose();
         Game.world = world;

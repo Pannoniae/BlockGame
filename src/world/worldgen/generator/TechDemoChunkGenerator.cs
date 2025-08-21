@@ -12,9 +12,9 @@ public partial class TechDemoWorldGenerator {
                 // transform to the range 10 - 30
                 var height = noise.GetNoise(worldPos.X, worldPos.Z) * 20 + 20;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlock(x, y, z, Block.DIRT.id);
+                    chunk.setBlock(x, y, z, Blocks.DIRT);
                 }
-                chunk.setBlock(x, (int)height, z, Block.GRASS.id);
+                chunk.setBlock(x, (int)height, z, Blocks.GRASS);
             }
         }
         chunk.status = ChunkStatus.GENERATED;

@@ -47,7 +47,7 @@ public class SubChunk {
 
         if (block == Blocks.GRASS) {
             if (y < 127 && Block.isFullBlock(world.getBlock(worldPos.X, worldPos.Y + 1, worldPos.Z))) {
-                blocks[x, y, z] = Block.DIRT.id;
+                blocks[x, y, z] = Blocks.DIRT;
                 // dirty block
                 world.setBlockNeighboursDirty(worldPos);
             }

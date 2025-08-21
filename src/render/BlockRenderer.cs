@@ -25,7 +25,7 @@ namespace BlockGame;
 public class BlockRenderer {
     
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of these and it will still be in the ballpark of 10MB
-    private static readonly List<BlockVertexPacked> chunkVertices = new(2048);
+    public static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
     // YZX again
     private static readonly uint[] neighbours =
@@ -45,15 +45,17 @@ public class BlockRenderer {
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
     public World? world;
-    /** Always 27 elements! */
+    /** Always 27 elements!
+     * You need to initialise the array first before calling fillCache or any of the variants.
+     * This is so you can set it up however you want in a modular way without a hardcoded stackalloc, but this requires semi-manual setup.
+     * Just copy the existing code and you'll be fine.
+     */
     private unsafe uint* blockCache;
     /** Always 27 elements! */
     private unsafe byte* lightCache;
     private bool smoothLighting;
     private bool AO;
     private bool isRenderingWorld;
-    
-    private uint chunkVAO;
 
     public BlockRenderer() {
 
@@ -77,6 +79,34 @@ public class BlockRenderer {
         isRenderingWorld = false;
     }
 
+    public uint getBlock() {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return blockCache[13];
+        }
+    }
+    
+    public byte getLight() {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return lightCache[13];
+        }
+    }
+    
+    public uint getBlockCached(int x, int y, int z) {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
+    }
+    
+    public byte getLightCached(int x, int y, int z) {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
+    }
+
     /// <summary>
     /// Core block rendering method that handles both world and GUI stuff.
     /// </summary>
@@ -89,6 +119,9 @@ public class BlockRenderer {
         indices.Clear();
         
         if (isRenderingWorld) {
+            Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
+            Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
+            fillCache(blockCache, lightCache, ref MemoryMarshal.GetReference(neighbours), ref MemoryMarshal.GetReference(neighbourLights));
             renderBlockWorld(block, worldPos, vertices, indices, mode, cullFaces);
         } else {
             renderBlockStandalone(block, worldPos, vertices, indices, lightOverride, tintOverride);
@@ -110,7 +143,13 @@ public class BlockRenderer {
             var dir = face.direction;
             
             if (cullFaces && dir != RawDirection.NONE) {
-                // todo properly cull without the cache, for now we don't bother
+                // get neighbour from cache
+                var vec = Direction.getDirection(dir);
+                uint neighbourBlock = getBlockCached(vec.X, vec.Y, vec.Z);
+                // if neighbour is solid, skip rendering this face
+                if (Block.fullBlock[neighbourBlock.getID()]) {
+                    continue;
+                }
             }
             
             // texcoords
@@ -224,10 +263,6 @@ public class BlockRenderer {
             vertexIndex += 4;
         }
     }
-
-    private static bool notOpaqueBlocks(uint b) {
-        return b == 0 || Block.get(b.getID()).layer == RenderLayer.TRANSLUCENT;
-    }
     
     
     public void meshChunk(SubChunk subChunk) {
@@ -265,7 +300,7 @@ public class BlockRenderer {
                 MeasureProfiler.StartCollectingData();
             }*/
         //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
-        constructVertices(subChunk, VertexConstructionMode.OPAQUE);
+        constructVertices(subChunk, RenderLayer.SOLID, chunkVertices);
         /*if (World.glob) {
                 MeasureProfiler.SaveData();
             }*/
@@ -285,7 +320,7 @@ public class BlockRenderer {
         //lock (meshingLock) {
         if (subChunk.blocks.hasTranslucentBlocks()) {
             // then we render everything which is translucent (water for now)
-            constructVertices(subChunk, VertexConstructionMode.TRANSLUCENT);
+            constructVertices(subChunk, RenderLayer.TRANSLUCENT, chunkVertices);
             //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             if (chunkVertices.Count > 0) {
                 subChunk.hasRenderTranslucent = true;
@@ -311,11 +346,7 @@ public class BlockRenderer {
 
     [SkipLocalsInit]
     private void setupNeighbours(SubChunk subChunk) {
-        //var sw = new Stopwatch();
-        //sw.Start();
-
-        //Console.Out.WriteLine($"vert1: {sw.Elapsed.TotalMicroseconds}us");
-
+        
         // cache blocks
         // we need a 18x18 area
         // we load the 16x16 from the section itself then get the world for the rest
@@ -350,7 +381,6 @@ public class BlockRenderer {
         for (y = -1; y < Chunk.CHUNKSIZE + 1; y++) {
             for (z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
                 for (x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
-                    //Console.Out.WriteLine($"{i} {x} {y} {z}");
 
                     // if inside the chunk, load from section
                     if (x is >= 0 and < Chunk.CHUNKSIZE &&
@@ -412,17 +442,12 @@ public class BlockRenderer {
         if (Game.graphics.fullbright) {
             neighbourLights.AsSpan().Fill(15);
         }
-
-        //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
     }
 
     // sorry for this mess
     [SkipLocalsInit]
     //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private unsafe void constructVertices(SubChunk subChunk, VertexConstructionMode mode) {
-        //sw.Start();
-        //Console.Out.WriteLine($"vert3: {sw.Elapsed.TotalMicroseconds}us");
-
+    private unsafe void constructVertices(SubChunk subChunk, RenderLayer layer, List<BlockVertexPacked> vertices) {
         // clear arrays before starting
         chunkVertices.Clear();
 
@@ -445,7 +470,6 @@ public class BlockRenderer {
         //ushort cv = 0;
         //ushort ci = 0;
 
-        bool test2;
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             
             // index for array accesses
@@ -457,46 +481,13 @@ public class BlockRenderer {
             // pre-add index
             ref uint neighbourRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbours), index);
             ref byte lightRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourLights), index);
-            
-            switch (mode) {
-                case VertexConstructionMode.OPAQUE:
-                    if (notOpaqueBlocks(neighbourRef)) {
-                        goto increment;
-                    }
 
-                    break;
-                case VertexConstructionMode.TRANSLUCENT:
-                    if (Block.notTranslucent(neighbourRef.getID())) {
-                        goto increment;
-                    }
+            var blockID = neighbourRef.getID();
+            var bl = Block.get(blockID);
 
-                    break;
+            if (blockID == 0 || bl.layer != layer) {
+                continue;
             }
-
-            // unrolled world.toWorldPos
-            //float wx = section.chunkX * Chunk.CHUNKSIZE + x;
-            //float wy = section.chunkY * Chunk.CHUNKSIZE + y;
-            //float wz = section.chunkZ * Chunk.CHUNKSIZE + z;
-
-            var bl = Block.get(neighbourRef.getID());
-
-            /*switch (Block.renderType[bl.id]) {
-                case RenderType.CUBE:
-                    // get UVs from block
-                    break;
-                case RenderType.CROSS:
-                    break;
-                case RenderType.MODEL:
-                    goto model;
-                    break;
-                case RenderType.CUSTOM:
-                    bl.render(world, new Vector3I(x, y, z), chunkVertices);
-                    goto increment;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }*/
-
-            model: ;
 
             // calculate texcoords
             Vector128<float> tex;
@@ -527,7 +518,7 @@ public class BlockRenderer {
                 Block.fullBlock[nba[3].getID()] &&
                 Block.fullBlock[nba[4].getID()] &&
                 Block.fullBlock[nba[5].getID()]) {
-                goto increment;
+                continue;
             }
 
             FourBytes light;
@@ -547,44 +538,50 @@ public class BlockRenderer {
             if (smoothLighting) {
                 fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
             }
+            
+            switch (Block.renderType[blockID]) {
+                case RenderType.CUBE:
+                    // get UVs from block
+                    // todo
+                    break;
+                case RenderType.CROSS:
+                    // todo
+                    break;
+                case RenderType.MODEL:
+                    goto model;
+                case RenderType.CUSTOM:
+                    bl.render(this, x, y, z, vertices);
+                    continue;
+            }
+
+            model:;
 
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;
+                
+                bool test2;
+                
+                
+                
+                byte lb = dir == RawDirection.NONE ? lightRef : Unsafe.Add(ref lightRef, lightOffsets[(byte)dir]);
 
-
-                // if dir = 0, add -1
-                // if dir = 1, add +1
-                // if dir = 2, add -Chunk.CHUNKSIZEEX
-                // if dir = 3, add +Chunk.CHUNKSIZEEX
-                // if dir = 4, add -Chunk.CHUNKSIZEEXSQ
-                // if dir = 5, add +Chunk.CHUNKSIZEEXSQ
-                byte lb;
-
-                test2 = false;
-
-                if (dir == RawDirection.NONE) {
-                    // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
-                    lb = lightRef;
-                    test2 = true;
-                    light.First = lightRef;
-                    light.Second = lightRef;
-                    light.Third = lightRef;
-                    light.Fourth = lightRef;
+                // check for custom culling
+                if (Block.customCulling[blockID]) {
+                    test2 = bl.cullFace(this, x, y, z, dir);
                 }
                 else {
-                    lb = Unsafe.Add(ref lightRef, lightOffsets[(byte)dir]);
-                    uint nb = nba[(byte)dir];
-                    switch (mode) {
-                        case VertexConstructionMode.OPAQUE:
-                            test2 = Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID());
-                            break;
-                        case VertexConstructionMode.TRANSLUCENT:
-                            test2 = !Block.isTranslucent(nb.getID()) &&
-                                    (Block.notSolid(nb.getID()) || !Block.isFullBlock(nb.getID()));
-                            break;
+                    if (dir == RawDirection.NONE) {
+                        // if it's not a diagonal face, don't even bother checking neighbour because we have to render it anyway
+                        test2 = true;
+                        light.First = lightRef;
+                        light.Second = lightRef;
+                        light.Third = lightRef;
+                        light.Fourth = lightRef;
                     }
-
-                    test2 = test2 || (facesRef.nonFullFace && !Block.isTranslucent(nb.getID()));
+                    else {
+                        int nb = nba[(byte)dir].getID();
+                        test2 = Block.notSolid(nb) || !Block.isFullBlock(nb) || facesRef.nonFullFace;
+                    }
                 }
 
 
@@ -724,17 +721,12 @@ public class BlockRenderer {
                     vertex.v = (ushort)tex[1];
                     vertex.cu = Block.packColourB((byte)dir, ao.Fourth);
                     vertex.light = light.Fourth;
-                    chunkVertices.AddRange(tempVertices);
+                    vertices.AddRange(tempVertices);
                     //cv += 4;
                     //ci += 6;
                 }
-
-                increment2:
                 facesRef = ref Unsafe.Add(ref facesRef, 1);
             }
-
-            // increment the array pointer
-            increment: ;
         }
         //Console.Out.WriteLine($"vert4: {sw.Elapsed.TotalMicroseconds}us");
     }
@@ -743,7 +735,7 @@ public class BlockRenderer {
     /**
      * Fills the 3x3x3 local cache with blocks and light values.
      */
-    private static void fillCache(Span<uint> blockCache, Span<byte> lightCache, ref uint neighbourRef, ref byte lightRef) {
+    public unsafe void fillCache(Span<uint> blockCache, Span<byte> lightCache, ref uint neighbourRef, ref byte lightRef) {
         // it used to look like this:
         // nba[0] = Unsafe.Add(ref neighbourRef, -1);
         // nba[1] = Unsafe.Add(ref neighbourRef, +1);
@@ -770,6 +762,29 @@ public class BlockRenderer {
                 }
             }
         }
+        
+        // set pointers to the cache
+        this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
+        this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
+    }
+    
+    public unsafe void fillCacheEmpty(Span<uint> blockCache, Span<byte> lightCache) {
+        // fill the cache with empty blocks
+        for (int y = 0; y < LOCALCACHESIZE; y++) {
+            for (int z = 0; z < LOCALCACHESIZE; z++) {
+                for (int x = 0; x < LOCALCACHESIZE; x++) {
+                    // calculate the index in the cache
+                    int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
+                    // set the block and light value to empty
+                    blockCache[index] = 0;
+                    lightCache[index] = 15;
+                }
+            }
+        }
+        
+        // set pointers to the cache
+        this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
+        this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
     }
 
     // this averages the four light values. If the block is opaque, it ignores the light value.
@@ -792,29 +807,6 @@ public class BlockRenderer {
                        lightNibble.Second * ((inv & 2) >> 1) +
                        lightNibble.Third * ((inv & 4) >> 2) +
                        lightNibble.Fourth)
-                      / (BitOperations.PopCount((byte)(inv & 0x7)) + 1));
-    }
-
-    // this averages the four light values. If the block is opaque, it ignores the light value.
-    // oFlags are opacity of side1, side2 and corner
-    // (1 == opaque, 0 == transparent)
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte average(uint lightNibble, byte oFlags) {
-        // if both sides are blocked, don't check the corner, won't be visible anyway
-        // if corner == 0 && side1 and side2 aren't both true, then corner is visible
-        //if ((oFlags & 4) == 0 && oFlags != 3) {
-        if (oFlags < 3) {
-            // set the 4 bit of oFlags to 0 because it is visible then
-            oFlags &= 3;
-        }
-
-        // (byte.PopCount((byte)(~oFlags & 0x7)) is "inverse popcount" - count the number of 0s in the byte
-        // (~oFlags & 1) is 1 if the first bit is 0, 0 otherwise
-        var inv = ~oFlags;
-        return (byte)(((lightNibble & 0xFF) * (inv & 1) +
-                          ((lightNibble >> 8) & 0xFF) * ((inv & 2) >> 1) +
-                          ((lightNibble >> 16) & 0xFF) * ((inv & 4) >> 2) +
-                          (lightNibble >> 24) & 0xFF)
                       / (BitOperations.PopCount((byte)(inv & 0x7)) + 1));
     }
 
@@ -927,16 +919,6 @@ public class BlockRenderer {
                 light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
                 break;
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int toInt(bool b) {
-        return Unsafe.As<bool, int>(ref b);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte toByte(bool b) {
-        return Unsafe.As<bool, byte>(ref b);
     }
 }
 

@@ -364,7 +364,7 @@ public readonly record struct Direction(int x, int y, int z) {
             RawDirection.NORTH => NORTH,
             RawDirection.DOWN => DOWN,
             RawDirection.UP => UP,
-            _ => throw new ArgumentOutOfRangeException(nameof(dir), dir, null)
+            _ => SELF
         };
     }
 
@@ -387,7 +387,8 @@ public readonly record struct Direction(int x, int y, int z) {
         if (dir == UP) {
             return RawDirection.UP;
         }
-        throw new ArgumentException("Invalid direction!");
+
+        return RawDirection.NONE;
     }
     
     public Vector3I toVec() {

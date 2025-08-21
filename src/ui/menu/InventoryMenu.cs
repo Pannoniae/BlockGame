@@ -46,7 +46,7 @@ public class InventoryMenu : Menu {
                     i++;
                 }
 
-                int item = i > Block.maxBlock ? 0 : i;
+                int item = i >= Block.currentID ? 0 : i;
 
                 int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
                 int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
