@@ -7,7 +7,13 @@ public class FixedArrayPool<T> {
     // how many items the pool can hold before it gets trimmed
     private const int MAX_ITEMS_BEFORE_TRIM = 1024;
 
-    private readonly ConcurrentBag<T[]> _objects;
+    /**
+     * IDK how to do thread-safety here but fear not, we have an overkill solution!
+     * Are we just locking everything? Yes. Do I care? no, because the chunkmuncher might come back again and I don't stand for that
+     */
+    private readonly Queue<T[]> _objects;
+    
+    private Lock _objectLock = new Lock();
 
     public readonly int arrayLength;
 
@@ -16,31 +22,41 @@ public class FixedArrayPool<T> {
 
     public FixedArrayPool(int arrayLength) {
         this.arrayLength = arrayLength;
-        _objects = new ConcurrentBag<T[]>();
+        _objects = new Queue<T[]>();
     }
 
     public T[] grab() {
-        grabCtr++;
-        //Console.Out.WriteLine("diff: " + (grabCtr - putBackCtr));
-        return _objects.TryTake(out var item) ? item : GC.AllocateUninitializedArray<T>(arrayLength);
+        lock (_objectLock) {
+            grabCtr++;
+            //Console.Out.WriteLine("diff: " + (grabCtr - putBackCtr));
+            return _objects.TryDequeue(out var item) ? item : GC.AllocateUninitializedArray<T>(arrayLength);
+        }
     }
 
     public void putBack(T[] item) {
-        putBackCtr++;
-        _objects.Add(item);
+        lock (_objectLock) {
+            putBackCtr++;
+            _objects.Enqueue(item);
+        }
     }
 
     public void trim() {
-        if (_objects.Count > MAX_ITEMS_BEFORE_TRIM) {
-            // nuke all the old objects
-            _objects.Clear();
+        lock (_objectLock) {
+            if (_objects.Count > MAX_ITEMS_BEFORE_TRIM) {
+                // nuke all the old objects
+                // AND TRIM THE ARRAY
+                _objects.Clear();
+                _objects.TrimExcess(_objects.Count);
+            }
         }
     }
 
     public void clear() {
-        // clear the pool
-        _objects.Clear();
-        grabCtr = 0;
-        putBackCtr = 0;
+        lock (_objectLock) {
+            // clear the pool
+            _objects.Clear();
+            grabCtr = 0;
+            putBackCtr = 0;
+        }
     }
 }

@@ -7,6 +7,11 @@ namespace BlockGame;
 
 public class WorldIO {
     //public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
+    
+    // for saving
+    
+    public static readonly FixedArrayPool<uint> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     private const int my = Chunk.CHUNKSIZE;
     private const int mx = Chunk.CHUNKSIZE;
@@ -107,8 +112,13 @@ public class WorldIO {
                 section.addByte("inited", 1);
 
                 // add the arrays
-                section.addUIntArray("blocks", chunk.blocks[sectionY].blocks);
-                section.addByteArray("light", chunk.blocks[sectionY].light);
+                // get a new array from the pool and copy into that
+                var freshBlocks = saveBlockPool.grab();
+                var freshLight = saveLightPool.grab();
+                chunk.blocks[sectionY].blocks.CopyTo(freshBlocks);
+                chunk.blocks[sectionY].light.CopyTo(freshLight);
+                section.addUIntArray("blocks", freshBlocks);
+                section.addByteArray("light", freshLight);
             }
             else {
                 section.addByte("inited", 0);
@@ -261,6 +271,14 @@ public class ChunkSaveThread : IDisposable {
                         // ensure directory is created
                         Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
                         NBT.writeFile(saveData.nbt, saveData.path);
+
+                        // if we're being polite, we can put the arrays back after it's done
+                        var sections = saveData.nbt.getListTag<NBTCompound>("sections");
+                        foreach (var section in sections.list) {
+                            // put back the arrays into the pool
+                            WorldIO.saveBlockPool.putBack(section.getUIntArray("blocks"));
+                            WorldIO.saveLightPool.putBack(section.getByteArray("light"));
+                        }
                     }
                     catch (Exception ex) {
                         Console.Error.WriteLine($"Failed to save chunk to {saveData.path}: {ex}");

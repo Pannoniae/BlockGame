@@ -843,6 +843,7 @@ public partial class World : IDisposable {
             l.onChunkUnload(coord);
         }
         
+        // ONLY DO THIS WHEN IT'S ALREADY SAVED
         chunkList.Remove(chunks[coord]);
         chunks[coord].destroyChunk();
         chunks.Remove(coord);
