@@ -838,6 +838,152 @@ public class BlockRenderer {
             neighbourLights.AsSpan().Fill(15);
         }
     }
+    
+    /**
+     * All-in-one chungus cube renderer. Claude helped me a bit with it so it's not very great but hey, if you don't need anything fancy, it's alright.
+     * (Assumptions: the lighting is what you'd expect from the faces, you need a properly culled cube, you don't need extra tint, your texture maps 1:1 with world pixels)
+     */
+    [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
+    public static void renderCuboid(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+        float x1, float y1, float z1, float x2, float y2, float z2,
+        float baseUMin, float baseVMin, float baseUMax, float baseVMax) {
+        
+        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
+        Span<Vector4> colourCache = stackalloc Vector4[4];
+        Span<byte> lightColourCache = stackalloc byte[4];
+
+        var cuboidWidth = x2 - x1;
+        var cuboidHeight = y2 - y1;
+        var cuboidDepth = z2 - z1;
+        var uRange = baseUMax - baseUMin;
+        var vRange = baseVMax - baseVMin;
+
+        // WEST face
+        var westUMin = baseUMin;
+        var westUMax = baseUMin + uRange * cuboidDepth;
+        var westVMin = baseVMin + vRange * (1f - cuboidHeight);
+        var westVMax = baseVMax;
+        var direction = Direction.getDirection(RawDirection.WEST);
+        var neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        
+        bool isOnBoundary = x1 == 0f;
+        bool shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        
+        if (shouldRender) {
+            br.applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + x1, y + y2, z + z2, westUMin, westVMin);
+            br.vertex(x + x1, y + y1, z + z2, westUMin, westVMax);
+            br.vertex(x + x1, y + y1, z + z1, westUMax, westVMax);
+            br.vertex(x + x1, y + y2, z + z1, westUMax, westVMin);
+            br.end(vertices);
+        }
+
+        // EAST face
+        var eastUMin = baseUMin;
+        var eastUMax = baseUMin + uRange * cuboidDepth;
+        var eastVMin = baseVMin + vRange * (1f - cuboidHeight);
+        var eastVMax = baseVMax;
+        direction = Direction.getDirection(RawDirection.EAST);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        isOnBoundary = x2 == 1f;
+        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+
+        if (shouldRender) {
+            br.applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + x2, y + y2, z + z1, eastUMin, eastVMin);
+            br.vertex(x + x2, y + y1, z + z1, eastUMin, eastVMax);
+            br.vertex(x + x2, y + y1, z + z2, eastUMax, eastVMax);
+            br.vertex(x + x2, y + y2, z + z2, eastUMax, eastVMin);
+            br.end(vertices);
+        }
+
+        // SOUTH face
+        var southUMin = baseUMin;
+        var southUMax = baseUMin + uRange * cuboidWidth;
+        var southVMin = baseVMin + vRange * (1f - cuboidHeight);
+        var southVMax = baseVMax;
+        direction = Direction.getDirection(RawDirection.SOUTH);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        isOnBoundary = z1 == 0f;
+        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+
+        if (shouldRender) {
+            br.applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + x1, y + y2, z + z1, southUMin, southVMin);
+            br.vertex(x + x1, y + y1, z + z1, southUMin, southVMax);
+            br.vertex(x + x2, y + y1, z + z1, southUMax, southVMax);
+            br.vertex(x + x2, y + y2, z + z1, southUMax, southVMin);
+            br.end(vertices);
+        }
+
+        // NORTH face
+        var northUMin = baseUMin;
+        var northUMax = baseUMin + uRange * cuboidWidth;
+        var northVMin = baseVMin + vRange * (1f - cuboidHeight);
+        var northVMax = baseVMax;
+        direction = Direction.getDirection(RawDirection.NORTH);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        
+        isOnBoundary = z2 == 1f;
+        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        
+        if (shouldRender) {
+            br.applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + x2, y + y2, z + z2, northUMin, northVMin);
+            br.vertex(x + x2, y + y1, z + z2, northUMin, northVMax);
+            br.vertex(x + x1, y + y1, z + z2, northUMax, northVMax);
+            br.vertex(x + x1, y + y2, z + z2, northUMax, northVMin);
+            br.end(vertices);
+        }
+
+        // DOWN face
+        var downUMin = baseUMin;
+        var downUMax = baseUMin + uRange * cuboidWidth;
+        var downVMin = baseVMin;
+        var downVMax = baseVMin + vRange * cuboidDepth;
+        direction = Direction.getDirection(RawDirection.DOWN);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        isOnBoundary = y1 == 0f;
+        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+
+        if (shouldRender) {
+            br.applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + x2, y + y1, z + z2, downUMin, downVMin);
+            br.vertex(x + x2, y + y1, z + z1, downUMin, downVMax);
+            br.vertex(x + x1, y + y1, z + z1, downUMax, downVMax);
+            br.vertex(x + x1, y + y1, z + z2, downUMax, downVMin);
+            br.end(vertices);
+        }
+
+        // UP face  
+        var upUMin = baseUMin;
+        var upUMax = baseUMin + uRange * cuboidWidth;
+        var upVMin = baseVMin;
+        var upVMax = baseVMin + vRange * cuboidDepth;
+        direction = Direction.getDirection(RawDirection.UP);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+            
+        isOnBoundary = y2 == 1f;
+        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+
+        if (shouldRender) {
+            br.applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + x1, y + y2, z + z2, upUMin, upVMin);
+            br.vertex(x + x1, y + y2, z + z1, upUMin, upVMax);
+            br.vertex(x + x2, y + y2, z + z1, upUMax, upVMax);
+            br.vertex(x + x2, y + y2, z + z2, upUMax, upVMin);
+            br.end(vertices);
+        }
+    }
 
     // sorry for this mess
     [SkipLocalsInit]
