@@ -36,4 +36,11 @@ public class FixedArrayPool<T> {
             _objects.Clear();
         }
     }
+
+    public void clear() {
+        // clear the pool
+        _objects.Clear();
+        grabCtr = 0;
+        putBackCtr = 0;
+    }
 }

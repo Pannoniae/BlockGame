@@ -22,6 +22,9 @@ public class Graphics : IDisposable {
 
     public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
         "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
+    
+    public readonly InstantShader instantEntityShader = new InstantShader(Game.GL, nameof(instantEntityShader),
+        "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
 
     // Post-processing shaders
     public readonly Shader fxaaShader =
@@ -162,6 +165,7 @@ public class Graphics : IDisposable {
         batchShader.Dispose();
         instantTextureShader.Dispose();
         instantColourShader.Dispose();
+        instantEntityShader.Dispose();
         fxaaShader.Dispose();
         ssaaShader.Dispose();
         simplePostShader.Dispose();

@@ -9,6 +9,7 @@ public class LevelSelectMenu : Menu {
     public const int NUM_LEVELS = 5;
 
     public bool[] worldExists = new bool[NUM_LEVELS];
+    private bool load;
 
     public LevelSelectMenu() {
         // create level buttons
@@ -54,6 +55,13 @@ public class LevelSelectMenu : Menu {
     }
 
     private void loadLevel(GUIElement element) {
+
+        if (load) {
+            return;
+        }
+        
+        load = true;
+        
         var levelSelect = (LevelSelectButton)element;
 
         // if exists, load
@@ -89,7 +97,7 @@ public class LevelSelectMenu : Menu {
 
     // when activated, refresh the button states/texts
     public override void activate() {
-        
+        load = false;
         for (int i = 0; i < NUM_LEVELS; i++) {
             var levelIndex = i + 1;
             worldExists[i] = WorldIO.worldExists($"level{levelIndex}");
@@ -104,6 +112,11 @@ public class LevelSelectMenu : Menu {
             }
 
         }
+    }
+
+    public override void deactivate() {
+        base.deactivate();
+        load = false;
     }
 
     public override void draw() {

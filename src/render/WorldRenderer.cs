@@ -226,10 +226,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
     }
 
-    public void setWorld(World world) {
+    public void setWorld(World? world) {
         this.world?.unlisten(this);
         this.world = world;
-        this.world.listen(this);
+        this.world?.listen(this);
     }
 
     private void genFatQuadIndices() {

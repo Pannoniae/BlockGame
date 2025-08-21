@@ -9,9 +9,9 @@ using Silk.NET.OpenGL.Legacy.Extensions.ARB;
 
 namespace BlockGame.GL;
 
-public class Definition(string name, string value = "") {
-    public string name { get; set; } = name;
-    public string value { get; set; } = value;
+public record class Definition(string name, string value = "") {
+    public string name = name;
+    public string value = value;
 }
 
 public enum ShaderVariant {
@@ -411,7 +411,10 @@ public partial class Shader : IDisposable {
     }
 
     ~Shader() {
-        ReleaseUnmanagedResources();
+        // Instead of releasing the resources in the finalizer, we throw a SkillIssueException (stuff can't be deleted from a non-main thread so this wouldn't work!)
+        if (programHandle != 0) {
+            SkillIssueException.throwNew($"Shader {name} was not disposed properly. Please ensure to call Dispose() on all shaders when they are no longer needed.");
+        }
     }
 }
 

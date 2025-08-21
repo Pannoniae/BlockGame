@@ -1,6 +1,12 @@
 namespace BlockGame.util;
 
-public sealed record TimerAction(Action action, double lastCalled, bool repeating, long interval) {
+public sealed record TimerAction(int id, Action action, double lastCalled, bool repeating, long interval) {
+
+    /**
+     * I'm not *entirely* sure why equality is weird, but I'll give them an ID just in case
+     */
+    public readonly int id = id;
+    
     public readonly Action action = action;
     public double lastCalled = lastCalled;
     public bool repeating = repeating;
@@ -15,10 +21,10 @@ public sealed record TimerAction(Action action, double lastCalled, bool repeatin
     public bool enabled = true;
 
     public bool Equals(TimerAction? other) {
-        return ReferenceEquals(this, other);
+        return id == other?.id;
     }
 
     public override int GetHashCode() {
-        return action.GetHashCode();
+        return id.GetHashCode();
     }
 }

@@ -43,7 +43,10 @@ public class Slider : GUIElement {
     }
 
     public override void onMouseUp(MouseButton button) {
-        apply();
+        if (menu.pressedElement == this && button == MouseButton.Left) {
+            apply();
+        }
+
     }
 
     /// <summary>

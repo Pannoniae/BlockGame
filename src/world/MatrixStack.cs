@@ -33,7 +33,7 @@ public class MatrixStack {
             stack.Pop();
         }
         else {
-            throw new SkillIssueException("Cannot pop the last matrix from the stack.");
+            SkillIssueException.throwNew("Cannot pop the last matrix from the stack.");
         }
     }
     

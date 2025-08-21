@@ -11,8 +11,6 @@ public class WorldIO {
     private const int my = Chunk.CHUNKSIZE;
     private const int mx = Chunk.CHUNKSIZE;
     private const int mz = Chunk.CHUNKSIZE;
-    public static FixedArrayPool<ushort> saveBlockPool = new(mx * my * mz);
-    public static FixedArrayPool<byte> saveLightPool = new(mx * my * mz);
 
     public World world;
     

@@ -58,6 +58,11 @@ public partial class World : IDisposable {
     public WorldGenerator generator;
 
     public bool isLoading;
+    
+    /**
+     * True if the world has actually been initialized, false if the init method hasn't been called yet.
+     */
+    public bool inited;
 
     public bool paused;
     public bool inMenu;
@@ -76,6 +81,7 @@ public partial class World : IDisposable {
 
     public World(string name, int seed) {
         this.name = name;
+        inited = false;
         worldIO = new WorldIO(this);
         generator = new PerlinWorldGenerator(this);
         player = new Player(this, 6, 20, 6);
@@ -92,6 +98,17 @@ public partial class World : IDisposable {
 
         entities = new List<Entity>();
         particles = new Particles(this);
+        
+        // setup world saving every 5 seconds
+        // NOTE: this used to memory leak the ENTIRE WORLD because it was capturing the world reference in the method in Main.timerQueue.
+        // to avoid that, ALWAYS MAKE SURE methods aren't overwritten!
+        
+        // SAFETY CHECK
+        if (saveWorld != null) {
+            Game.clearInterval(saveWorld);
+        }
+        
+        saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
     }
 
     public void init(bool loadingSave = false) {
@@ -111,17 +128,20 @@ public partial class World : IDisposable {
         // if we don't save the world, some of the chunks might get saved but no level.xnbt
         // so the world is corrupted and we have horrible chunkglitches
         worldIO.save(this, name, false);
-
-
-        // setup world saving every 5 seconds
-        saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
+        
         
         foreach (var l in listeners) {
             l.onWorldLoad();
         }
+        
+        inited = true;
     }
 
     private void saveWorldMethod() {
+        if (!inited) {
+            // don't save the world if it hasn't been initialized yet
+            return;
+        }
         autoSaveChunks();
         worldIO.saveWorldData();
     }

@@ -148,10 +148,12 @@ public class GUIElement {
     public void doClick() {
         clicked?.Invoke(this);
     }
-
+    
+    /** The element *always* gets these events, you need to check whether this element is focused! */
     public virtual void onMouseMove() {
     }
-
+    
+    /** The element *always* gets these events, you need to check whether this element is focused! */
     public virtual void onMouseUp(MouseButton button) {
     }
 

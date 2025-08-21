@@ -48,6 +48,8 @@ public partial class Game {
     
     public static Process proc;
 
+    private static int timerID;
+
     /// <summary>
     /// Stop logspam
     /// </summary>
@@ -73,7 +75,7 @@ public partial class Game {
 
     public static World? world;
     public static Player? player;
-    public static WorldRenderer? renderer;
+    public static WorldRenderer renderer = null!;
 
     private static Coroutines cs;
 
@@ -619,18 +621,28 @@ public partial class Game {
     /**
      * Sets up a new world.
      * Also ensures the dependencies aren't messed up.
+     *
+     * Optionally, unloads everything if you pass null.
      */
-    public static void setWorld(World world) {
+    public static void setWorld(World? world) {
         
         // dispose of everything before
         
         Game.world?.Dispose();
-        Game.world = world;
+        renderer.setWorld(null);
+        blockRenderer.setWorld(null);
         
-        
-        // setup auxiliary
-        renderer.setWorld(world);
-        blockRenderer.world = world;
+        // clear up the chunk cache!
+        ArrayBlockData.blockPool.clear();
+        ArrayBlockData.lightPool.clear();
+
+        if (world != null) {
+            Game.world = world;
+
+            // setup auxiliary
+            renderer.setWorld(world);
+            blockRenderer.world = world;
+        }
     }
 
     public static Coroutine startCoroutine(IEnumerator coroutine) {
@@ -931,20 +943,24 @@ public partial class Game {
 
     public static TimerAction setInterval(long interval, Action action) {
         var now = permanentStopwatch.ElapsedMilliseconds;
-        var ta = new TimerAction(action, now, true, interval);
+        var ta = new TimerAction(timerID++, action, now, true, interval);
         timerQueue.Add(ta);
         return ta;
     }
 
     public static TimerAction setTimeout(long timeout, Action action) {
         var now = permanentStopwatch.ElapsedMilliseconds;
-        var ta = new TimerAction(action, now, false, timeout);
+        var ta = new TimerAction(timerID++, action, now, false, timeout);
         timerQueue.Add(ta);
         return ta;
     }
 
     public static void clearInterval(TimerAction action) {
         timerQueue.Remove(action);
+    }
+    
+    public static void clearInterval(int id) {
+        timerQueue.RemoveAll(ta => ta.id == id);
     }
 
     private static void handleTimers() {

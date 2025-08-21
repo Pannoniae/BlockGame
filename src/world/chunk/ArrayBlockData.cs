@@ -7,8 +7,8 @@ namespace BlockGame;
 public sealed class ArrayBlockData : BlockData, IDisposable {
 
 
-    public static FixedArrayPool<uint> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
-    public static FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static readonly FixedArrayPool<uint> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static readonly FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     public uint[]? blocks;
 

@@ -27,7 +27,7 @@ namespace BlockGame.ui {
                 Game.world.worldIO.save(Game.world, Game.world.name);
                 
                 // dispose world
-                Game.world.Dispose();
+                Game.setWorld(null);
                 Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
             });
         }

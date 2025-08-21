@@ -174,7 +174,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 
     public override void setup() {
         base.setup();
-        instantShader = new InstantShader(GL, nameof(instantShader), "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_TEXTURE")]);
+        instantShader = Game.graphics.instantTextureShader;
         instantTexture = instantShader.getUniformLocation("tex");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
@@ -216,7 +216,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
     public override void setup() {
         base.setup();
-        instantShader = new InstantShader(GL, nameof(instantShader), "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
+        instantShader = Game.graphics.instantColourShader;
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
         uFogColour = instantShader.getUniformLocation("fogColour");
@@ -262,7 +262,7 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
     
     public override void setup() {
         base.setup();
-        instantShader = new Shader(GL, nameof(instantShader), "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
+        instantShader = Game.graphics.instantEntityShader;
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
         uFogColour = instantShader.getUniformLocation(nameof(fogColor));

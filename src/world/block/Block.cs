@@ -266,32 +266,32 @@ public class Block {
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoordsH(int x, int y) {
-        return new Vector2D<Half>((Half)(x * 16f / atlasSize), (Half)(y * 16f / atlasSize));
+        return new Vector2D<Half>((Half)(x * atlasRatio), (Half)(y * atlasRatio));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoordsH(UVPair uv) {
-        return new Vector2D<Half>((Half)(uv.u * 16f / atlasSize), (Half)(uv.v * 16f / atlasSize));
+        return new Vector2D<Half>((Half)(uv.u * atlasRatio), (Half)(uv.v * atlasRatio));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2F texCoords(float x, float y) {
-        return new Vector2F(x * 16f / atlasSize, y * 16f / atlasSize);
+    public static Vector2 texCoords(float x, float y) {
+        return new Vector2(x * atlasRatio, y * atlasRatio);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2F texCoords(UVPair uv) {
-        return new Vector2F(uv.u * 16f / atlasSize, uv.v * 16f / atlasSize);
+    public static Vector2 texCoords(UVPair uv) {
+        return new Vector2(uv.u * atlasRatio, uv.v * atlasRatio);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float texU(float u) {
-        return u * 16f / atlasSize;
+        return u * atlasRatio;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float texV(float v) {
-        return v * 16f / atlasSize;
+        return v * atlasRatio;
     }
 
 
@@ -471,7 +471,8 @@ public class Block {
     
     [ClientOnly]
     public virtual void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
-        
+        // setup
+        br.setupWorld();
     }
 
     public Block air() {
@@ -623,84 +624,80 @@ public class Water : Block {
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
-        // Water geometry - similar to makeLiquid but manually created
+        base.render(br, x, y, z, vertices);
+        
         const float height = 15f / 16f; // Water level is slightly below full height
-        const float offset = 0f; // No z-fighting offset needed for water
         
         // Get texture coordinates for water
-        var waterTexture = this.model.faces[0]; // Use the first face's texture
-        var tex = Block.texCoords(waterTexture.min);
-        var texMax = Block.texCoords(waterTexture.max);
+        var waterTexture = model.faces[0];
+        var min = texCoords(waterTexture.min.u, waterTexture.min.v);
+        var max = texCoords(waterTexture.max.u, waterTexture.max.v);
         
-        // Get light value for this block position
-        byte light = br.getLight();
+        var uMin = min.X;
+        var vMin = min.Y;
+        var uMax = max.X;
+        var vMax = max.Y;
         
-        // Create a temporary array for 4 vertices per face
-        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
-        
-        // Check each direction for culling
-        for (int dir = 0; dir < 6; dir++) {
-            var direction = (RawDirection)dir;
+        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
+        Span<Vector4> colourCache = stackalloc Vector4[4];
+        Span<byte> lightColourCache = stackalloc byte[4];
+
+        for (RawDirection d = 0; d < RawDirection.MAX; d++) {
             
-            // Use custom culling logic for water
-            if (!cullFace(br, x, y, z, direction)) {
-                continue; // Skip this face if it should be culled
+            if (cullFace(br, x, y, z, d)) {
+                br.applyFaceLighting(d, colourCache, lightColourCache);
+                switch (d) {
+                    case RawDirection.WEST:
+                        br.begin(cache);
+                        br.vertex(x + 0, y + 1, z + 1, uMin, vMin);
+                        br.vertex(x + 0, y + 0, z + 1, uMin, vMax);
+                        br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
+                        br.vertex(x + 0, y + 1, z + 0, uMax, vMin);
+                        br.end(vertices);
+                        break;
+                    case RawDirection.EAST:
+                        br.begin(cache);
+                        br.vertex(x + 1, y + 1, z + 0, uMin, vMin);
+                        br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
+                        br.vertex(x + 1, y + 0, z + 1, uMax, vMax);
+                        br.vertex(x + 1, y + 1, z + 1, uMax, vMin);
+                        br.end(vertices);
+                        break;
+                    case RawDirection.SOUTH:
+                        br.begin(cache);
+                        br.vertex(x + 0, y + 1, z + 0, uMin, vMin);
+                        br.vertex(x + 0, y + 0, z + 0, uMin, vMax);
+                        br.vertex(x + 1, y + 0, z + 0, uMax, vMax);
+                        br.vertex(x + 1, y + 1, z + 0, uMax, vMin);
+                        br.end(vertices);
+                        break;
+                    case RawDirection.NORTH:
+                        br.begin(cache);
+                        br.vertex(x + 1, y + 1, z + 1, uMin, vMin);
+                        br.vertex(x + 1, y + 0, z + 1, uMin, vMax);
+                        br.vertex(x + 0, y + 0, z + 1, uMax, vMax);
+                        br.vertex(x + 0, y + 1, z + 1, uMax, vMin);
+                        br.end(vertices);
+                        break;
+                    case RawDirection.DOWN:
+                        br.begin(cache);
+                        br.vertex(x + 1, y + 0, z + 1, uMin, vMin);
+                        br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
+                        br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
+                        br.vertex(x + 0, y + 0, z + 1, uMax, vMin);
+                        br.end(vertices);
+                        break;
+                    case RawDirection.UP:
+                        br.begin(cache);
+                        br.vertex(x + 0, y + height, z + 1, uMin, vMin);
+                        br.vertex(x + 0, y + height, z + 0, uMin, vMax);
+                        br.vertex(x + 1, y + height, z + 0, uMax, vMax);
+                        br.vertex(x + 1, y + height, z + 1, uMax, vMin);
+                        br.end(vertices);
+                        break;
+                }
+                
             }
-            
-            // Calculate color/tint for this direction
-            uint colorPacked = Block.packColourB((byte)dir, 0); // No AO for water
-            
-            switch (direction) {
-                case RawDirection.WEST: // -X face
-                    tempVertices[0] = new BlockVertexPacked(x + offset, y + 1 - offset, z + 1 - offset, tex.X, tex.Y, colorPacked);
-                    tempVertices[1] = new BlockVertexPacked(x + offset, y + offset, z + 1 - offset, tex.X, texMax.Y, colorPacked);
-                    tempVertices[2] = new BlockVertexPacked(x + offset, y + offset, z + offset, texMax.X, texMax.Y, colorPacked);
-                    tempVertices[3] = new BlockVertexPacked(x + offset, y + 1 - offset, z + offset, texMax.X, tex.Y, colorPacked);
-                    break;
-                    
-                case RawDirection.EAST: // +X face
-                    tempVertices[0] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + offset, tex.X, tex.Y, colorPacked);
-                    tempVertices[1] = new BlockVertexPacked(x + 1 - offset, y + offset, z + offset, tex.X, texMax.Y, colorPacked);
-                    tempVertices[2] = new BlockVertexPacked(x + 1 - offset, y + offset, z + 1 - offset, texMax.X, texMax.Y, colorPacked);
-                    tempVertices[3] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + 1 - offset, texMax.X, tex.Y, colorPacked);
-                    break;
-                    
-                case RawDirection.SOUTH: // -Z face
-                    tempVertices[0] = new BlockVertexPacked(x + offset, y + 1 - offset, z + offset, tex.X, tex.Y, colorPacked);
-                    tempVertices[1] = new BlockVertexPacked(x + offset, y + offset, z + offset, tex.X, texMax.Y, colorPacked);
-                    tempVertices[2] = new BlockVertexPacked(x + 1 - offset, y + offset, z + offset, texMax.X, texMax.Y, colorPacked);
-                    tempVertices[3] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + offset, texMax.X, tex.Y, colorPacked);
-                    break;
-                    
-                case RawDirection.NORTH: // +Z face
-                    tempVertices[0] = new BlockVertexPacked(x + 1 - offset, y + 1 - offset, z + 1 - offset, tex.X, tex.Y, colorPacked);
-                    tempVertices[1] = new BlockVertexPacked(x + 1 - offset, y + offset, z + 1 - offset, tex.X, texMax.Y, colorPacked);
-                    tempVertices[2] = new BlockVertexPacked(x + offset, y + offset, z + 1 - offset, texMax.X, texMax.Y, colorPacked);
-                    tempVertices[3] = new BlockVertexPacked(x + offset, y + 1 - offset, z + 1 - offset, texMax.X, tex.Y, colorPacked);
-                    break;
-                    
-                case RawDirection.DOWN: // -Y face (bottom)
-                    tempVertices[0] = new BlockVertexPacked(x + 1 - offset, y + offset, z + 1 - offset, tex.X, tex.Y, colorPacked);
-                    tempVertices[1] = new BlockVertexPacked(x + 1 - offset, y + offset, z + offset, tex.X, texMax.Y, colorPacked);
-                    tempVertices[2] = new BlockVertexPacked(x + offset, y + offset, z + offset, texMax.X, texMax.Y, colorPacked);
-                    tempVertices[3] = new BlockVertexPacked(x + offset, y + offset, z + 1 - offset, texMax.X, tex.Y, colorPacked);
-                    break;
-                    
-                case RawDirection.UP: // +Y face (top) - at reduced height
-                    tempVertices[0] = new BlockVertexPacked(x + offset, y + height, z + 1 - offset, tex.X, tex.Y, colorPacked);
-                    tempVertices[1] = new BlockVertexPacked(x + offset, y + height, z + offset, tex.X, texMax.Y, colorPacked);
-                    tempVertices[2] = new BlockVertexPacked(x + 1 - offset, y + height, z + offset, texMax.X, texMax.Y, colorPacked);
-                    tempVertices[3] = new BlockVertexPacked(x + 1 - offset, y + height, z + 1 - offset, texMax.X, tex.Y, colorPacked);
-                    break;
-            }
-            
-            // Set light values for all vertices
-            for (int i = 0; i < 4; i++) {
-                tempVertices[i].light = light;
-            }
-            
-            // Add the vertices to the list
-            vertices.AddRange(tempVertices);
         }
     }
 }

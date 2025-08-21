@@ -54,11 +54,10 @@ public class GameScreen : Screen {
 
     public override void deactivate() {
         base.deactivate();
-        Game.world?.Dispose();
-        Game.world = null;
         //Game.renderer = null;
         //updateMemory.enabled = false;
         updateDebugText.enabled = false;
+        Game.clearInterval(updateDebugText);
     }
 
 
@@ -417,6 +416,11 @@ public class GameScreen : Screen {
     public void remeshWorld(int oldRenderDist) {
         var world = Game.world;
         Console.Out.WriteLine("remeshed!");
+        
+        // free up memory from the block arraypool - we probably don't need that much
+        ArrayBlockData.blockPool.trim();
+        ArrayBlockData.lightPool.trim();
+        
         Game.renderer.setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
@@ -427,10 +431,6 @@ public class GameScreen : Screen {
         }
 
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
-
-        // free up memory from the block arraypool - we probably don't need that much
-        ArrayBlockData.blockPool.trim();
-        ArrayBlockData.lightPool.trim();
     }
 
     public void pause() {

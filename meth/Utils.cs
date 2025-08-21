@@ -23,6 +23,37 @@ public static partial class Meth {
     public const float rhoF = 1 - psiF;
     
     public static volatile byte[] waste;
+    
+    /**
+     * I'm not entirely sure in the maths but this seems to work okay so she's a keeper
+     */
+    public static uint f2b(Vector4 c) {
+        var max = new Vector4(255);
+        c *= max; // Scale to [0, 255]
+        c += new Vector4(0.5f); // Add 0.5 for rounding
+        // Clamp the values to the range [0, 255]
+        c = Vector4.Min(Vector4.Max(c, Vector4.Zero), max);
+        
+        // Convert to uint
+        byte r = (byte)c.X;
+        byte g = (byte)c.Y;
+        byte b = (byte)c.Z;
+        byte a = (byte)c.W;
+    
+        return (uint)(r | (g << 8) | (b << 16) | (a << 24));
+    }
+
+    public static Vector4 b2f(uint rgba)
+    {
+        const float inv255 = 1f / 255f;
+        var vec = new Vector4(
+            (rgba & 0xFF),
+            ((rgba >> 8) & 0xFF),
+            ((rgba >> 16) & 0xFF),
+            ((rgba >> 24) & 0xFF)
+        );
+        return vec * inv255;
+    }
 
     public static Vector3D copy(Vector3D input) {
         return new Vector3D(input.X, input.Y, input.Z);
@@ -419,5 +450,7 @@ public enum RawDirection : byte {
     NORTH = 3,
     DOWN = 4,
     UP = 5,
+    /** NOT A REAL DIRECTION, just a loop terminator */
+    MAX = 6,
     NONE = 13 // 13 is 5 with the 4th bit set to 1
 }

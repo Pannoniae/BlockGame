@@ -191,6 +191,9 @@ public class LoadingMenu : Menu, ProgressUpdater {
         stage("Ready!");
         update(1.0f); // Complete: 100%
         yield return readyTimer;
+
+        // we don't need it anymore
+        world = null!;
     }
 
     public void start(string stage) {

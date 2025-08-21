@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -7,6 +8,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
+using SixLabors.ImageSharp.PixelFormats;
 using Debug = System.Diagnostics.Debug;
 
 namespace BlockGame;
@@ -53,8 +55,27 @@ public class BlockRenderer {
     private unsafe uint* blockCache;
     /** Always 27 elements! */
     private unsafe byte* lightCache;
+
+    private unsafe BlockVertexPacked* vertexCache;
+    
+    /**
+     * Stores the baked colours for each vertex, including lighting, AO and shading.
+     * Filled by <see cref="getDirectionOffsetsAndData"/>.
+     * Has 4 elements (RGBA * 4 vertices)
+     */
+    private unsafe Vector4* colourCache;
+    
+    /** Store the averaged block light values. (same as <see cref="colourCache"/> except without AO and tint)*/
+    private unsafe byte* lightColourCache;
+    private int vertexCount;
+    
+    
+    // flags to enable/disable various vertex colouring features
     private bool smoothLighting;
     private bool AO;
+    private bool tinting;
+    
+    
     private bool isRenderingWorld;
 
     public BlockRenderer() {
@@ -63,12 +84,10 @@ public class BlockRenderer {
 
     // setup for world context
     // do we need this?
-    public unsafe void setupWorld(World world, uint* blockCache, byte* lightCache, bool smoothLighting = true, bool AO = true) {
-        this.world = world;
-        this.blockCache = blockCache;
-        this.lightCache = lightCache;
-        this.smoothLighting = smoothLighting;
-        this.AO = AO;
+    public unsafe void setupWorld(bool smoothLighting = true, bool AO = true) {
+        setWorld(world);
+        this.smoothLighting = smoothLighting && Settings.instance.smoothLighting;
+        this.AO = AO && Settings.instance.AO;
         isRenderingWorld = true;
     }
 
@@ -77,6 +96,13 @@ public class BlockRenderer {
         smoothLighting = false;
         AO = false;
         isRenderingWorld = false;
+    }
+
+    public void setWorld(World? world) {
+        // clean all the previous stuff
+        Array.Clear(neighbourSections);
+        
+        this.world = world;
     }
 
     public uint getBlock() {
@@ -104,6 +130,349 @@ public class BlockRenderer {
         unsafe {
             // this is unsafe but we know the cache is always 27 elements
             return lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte calculateVertexLightAndAO(ref uint blockCache, ref byte lightCache, int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2, int z2, byte lb, out byte opacity) {
+        
+        // since we're using a cache now, we're getting the offsets from the cache which is 3x3x3
+        // so +1 is +3, -1 is -3, etc.
+        
+        // calculate the offsets in the local cache
+        int offset0 =  (y0 + 1) * LOCALCACHESIZE_SQ + (z0 + 1) * LOCALCACHESIZE + (x0 + 1);
+        int offset1 =  (y1 + 1) * LOCALCACHESIZE_SQ + (z1 + 1) * LOCALCACHESIZE + (x1 + 1);
+        int offset2 =  (y2 + 1) * LOCALCACHESIZE_SQ + (z2 + 1) * LOCALCACHESIZE + (x2 + 1);
+        
+        uint lightValue = (uint)(Unsafe.Add(ref lightCache, offset0) |
+                                 (Unsafe.Add(ref lightCache, offset1) << 8) |
+                                 (Unsafe.Add(ref lightCache, offset2) << 16) | 
+                                 lb << 24);
+        
+        opacity = (byte)((Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref blockCache, offset0).getID()])) |
+                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref blockCache, offset1).getID()]) << 1) |
+                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref blockCache, offset2).getID()]) << 2));
+        
+        return average2(lightValue, opacity);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void getDirectionOffsetsAndData(RawDirection dir, ref uint blockCache, ref byte lightCache, byte lb, out FourBytes light, out FourBytes o) {
+        Unsafe.SkipInit(out o);
+        Unsafe.SkipInit(out light);
+        switch (dir) {
+            case RawDirection.WEST:
+                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, -1, -1, 0, -1, -1, 1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, -1, 1, 0, -1, 1, -1, lb, out o.Fourth);
+                break;
+            case RawDirection.EAST:
+                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 1, 1, 0, 1, 1, -1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 1, -1, 0, 1, -1, 1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
+                break;
+            case RawDirection.SOUTH:
+                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, 0, 1, -1, -1, 1, -1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, 0, -1, -1, -1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 0, -1, -1, 1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 0, 1, -1, 1, 1, -1, lb, out o.Fourth);
+                break;
+            case RawDirection.NORTH:
+                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 0, 1, 1, 1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 0, -1, 1, 1, -1, 1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, 0, -1, 1, -1, -1, 1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, 0, 1, 1, -1, 1, 1, lb, out o.Fourth);
+                break;
+            case RawDirection.DOWN:
+                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, 1, 1, -1, 0, 1, -1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, 1, -1, -1, 0, -1, -1, 1, lb, out o.Fourth);
+                break;
+            case RawDirection.UP:
+                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, -1, -1, 1, 0, -1, 1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, -1, 1, 1, 0, 1, 1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
+                break;
+        }
+    }
+
+    // Helper methods for custom blocks
+
+    /// <summary>
+    /// Standard face culling logic - checks if neighbor is solid and full.
+    /// Custom blocks can override Block.cullFace instead of using this.
+    /// </summary>
+    public bool shouldCullFace(RawDirection dir) {
+        if (dir == RawDirection.NONE) {
+            return false; // never cull non-directional faces
+        }
+        
+        var vec = Direction.getDirection(dir);
+        uint neighbourBlock = getBlockCached(vec.X, vec.Y, vec.Z);
+        return Block.fullBlock[neighbourBlock.getID()];
+    }
+
+    /// <summary>
+    /// Calculate lighting and AO for a face's 4 vertices.
+    /// Handles both smooth lighting and simple lighting automatically.
+    /// </summary>
+    public void calculateFaceLighting(RawDirection dir, out FourBytes light, out FourBytes ao) {
+        Unsafe.SkipInit(out light);
+        Unsafe.SkipInit(out ao);
+
+        unsafe {
+            var theLight = getLightCached(0, 0, 0);
+            var d = Direction.getDirection(dir);
+            var neighbourLight = getLightCached(d.X, d.Y, d.Z);
+            byte lb = dir == RawDirection.NONE ? theLight : neighbourLight;
+            
+            if (!smoothLighting && !AO) {
+                // simple lighting - uniform for all vertices
+                light = new FourBytes(lb, lb, lb, lb);
+                ao = new FourBytes(0, 0, 0, 0);
+            }
+            
+            else {
+                getDirectionOffsetsAndData(dir, ref Unsafe.AsRef<uint>(blockCache), ref Unsafe.AsRef<byte>(lightCache), lb, out light, out FourBytes o);
+                
+                if (AO) {
+                    ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount(o.First));
+                    ao.Second = (byte)((o.Second & 3) == 3 ? 3 : byte.PopCount(o.Second));
+                    ao.Third = (byte)((o.Third & 3) == 3 ? 3 : byte.PopCount(o.Third));
+                    ao.Fourth = (byte)((o.Fourth & 3) == 3 ? 3 : byte.PopCount(o.Fourth));
+                } else {
+                    ao = new FourBytes(0, 0, 0, 0);
+                }
+            }
+        }
+    }
+
+
+    public unsafe void applyFaceLighting(RawDirection dir, Span<Vector4> colourCache, Span<byte> lightColourCache) {
+        
+        // set the colourCache and lightCache for the 4 vertices based on the direction and lighting
+        this.colourCache = (Vector4*)Unsafe.AsPointer(ref colourCache.GetPinnableReference());
+        this.lightColourCache = (byte*)Unsafe.AsPointer(ref lightColourCache.GetPinnableReference());
+        
+        calculateFaceLighting(dir, out FourBytes light, out FourBytes ao);
+        
+        Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
+
+
+        for (int i = 0; i < 4; i++) {
+            var blocklight = (byte)(light.bytes[i] >> 4);
+            var skylight = (byte)(light.bytes[i] & 0xF);
+            var lightVal = Meth.b2f(Unsafe.BitCast<Rgba32, uint>(Game.textures.light(blocklight, skylight)));
+            float tint = a[(byte)dir] * aoArray[ao.bytes[i]];
+
+            //var res = (tint);
+            // set alpha to 1!
+            // todo do we really need this? user can fuck it up for himself whatever
+            //res.W = 1;
+            colourCache[i] = new Vector4(tint);
+            lightColourCache[i] = light.bytes[i];
+        }
+    }
+
+
+    /// <summary>
+    /// Convert texture UV coordinates to atlas coordinates.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Vector128<float> getAtlasCoords(float uMin, float vMin, float uMax, float vMax) {
+        var tex = Vector128.Create(uMin, vMin, uMax, vMax);
+        const float factor = Block.atlasRatio * 32768f;
+        return Vector128.Multiply(tex, factor);
+    }
+
+    /// <summary>
+    /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
+    /// Positions are in local block coordinates (0-1 range typically).
+    /// </summary>
+    public void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+                          float x1, float y1, float z1, float x2, float y2, float z2,
+                          float x3, float y3, float z3, float x4, float y4, float z4,
+                          float uMin, float vMin, float uMax, float vMax) {
+        
+        // check culling
+        ushort blockID = getBlock().getID();
+        bool shouldRender;
+        
+        if (Block.customCulling[blockID]) {
+            var block = Block.get(blockID);
+            shouldRender = block.cullFace(this, x, y, z, dir);
+        } else {
+            shouldRender = !shouldCullFace(dir);
+        }
+        
+        if (!shouldRender) {
+            return;
+        }
+        
+        // calculate lighting and AO
+        calculateFaceLighting(dir, out FourBytes light, out FourBytes ao);
+        
+        // get texture coordinates
+        var tex = getAtlasCoords(uMin, vMin, uMax, vMax);
+        
+        // convert to world coordinates and apply transformations
+        var vec = Vector256.Create(
+            x + x1, y + y1, z + z1,  // vertex 1
+            x + x2, y + y2, z + z2,  // vertex 2
+            x + x3, y + y3);         // vertex 3 partial
+        var vec2 = Vector128.Create(z + z3, x + x4, y + y4, z + z4); // vertex 3 z + vertex 4
+        
+        vec = Vector256.Add(vec, Vector256.Create(16f));
+        vec = Vector256.Multiply(vec, 256);
+        vec2 = Vector128.Add(vec2, Vector128.Create(16f));
+        vec2 = Vector128.Multiply(vec2, 256);
+        
+        // determine vertex order to prevent cracks
+        var dark1 = (~light.First & 0xF);
+        var dark2 = (~light.Second & 0xF);
+        var dark3 = (~light.Third & 0xF);
+        var dark4 = (~light.Fourth & 0xF);
+        
+        var shift = (ao.First + dark1 + ao.Third + dark3 > ao.Second + dark2 + ao.Fourth + dark4).toByte();
+        
+        // create vertices
+        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
+        
+        ref var vertex = ref tempVertices[(0 + shift) & 3];
+        vertex.x = (ushort)vec[0];
+        vertex.y = (ushort)vec[1]; 
+        vertex.z = (ushort)vec[2];
+        vertex.u = (ushort)tex[0];
+        vertex.v = (ushort)tex[1];
+        vertex.cu = Block.packColourB((byte)dir, ao.First);
+        vertex.light = light.First;
+        
+        vertex = ref tempVertices[(1 + shift) & 3];
+        vertex.x = (ushort)vec[3];
+        vertex.y = (ushort)vec[4];
+        vertex.z = (ushort)vec[5];
+        vertex.u = (ushort)tex[0];
+        vertex.v = (ushort)tex[3];
+        vertex.cu = Block.packColourB((byte)dir, ao.Second);
+        vertex.light = light.Second;
+        
+        vertex = ref tempVertices[(2 + shift) & 3];
+        vertex.x = (ushort)vec[6];
+        vertex.y = (ushort)vec[7];
+        vertex.z = (ushort)vec2[0];
+        vertex.u = (ushort)tex[2];
+        vertex.v = (ushort)tex[3];
+        vertex.cu = Block.packColourB((byte)dir, ao.Third);
+        vertex.light = light.Third;
+        
+        vertex = ref tempVertices[(3 + shift) & 3];
+        vertex.x = (ushort)vec2[1];
+        vertex.y = (ushort)vec2[2];
+        vertex.z = (ushort)vec2[3];
+        vertex.u = (ushort)tex[2];
+        vertex.v = (ushort)tex[1];
+        vertex.cu = Block.packColourB((byte)dir, ao.Fourth);
+        vertex.light = light.Fourth;
+        
+        vertices.AddRange(tempVertices);
+    }
+
+    // Immediate-mode vertex building API
+
+    /// <summary>
+    /// Start building a face. Caller must provide a vertex cache (typically stackalloc BlockVertexPacked[4]).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void begin(Span<BlockVertexPacked> cache) {
+        vertexCount = 0;
+        vertexCache = (BlockVertexPacked*)Unsafe.AsPointer(ref cache.GetPinnableReference());
+    }
+    
+    /// <summary>
+    /// Add a vertex to the current face being built.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void vertex(float x, float y, float z, float u, float v, byte light, Vector4 tint) {
+        
+        // multiply tint by the stored colour
+        var c = tint * colourCache[vertexCount];
+
+        var col = Meth.f2b(c);
+        
+        ref var vert = ref vertexCache[vertexCount];
+        vert.x = (ushort)((x + 16f) * 256f);
+        vert.y = (ushort)((y + 16f) * 256f);
+        vert.z = (ushort)((z + 16f) * 256f);
+        vert.u = (ushort)(u * 32768);
+        vert.v = (ushort)(v * 32768);
+        vert.light = light;
+        vert.cu = col;
+        vertexCount++;
+    }
+    
+    /// <summary>
+    /// Add a vertex to the current face being built.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void vertex(float x, float y, float z, float u, float v, byte light) {
+        
+        // multiply tint by the stored colour
+        // there is no tint though!
+        var c = colourCache[vertexCount];
+
+        var col = Meth.f2b(c);
+        
+        ref var vert = ref vertexCache[vertexCount];
+        vert.x = (ushort)((x + 16f) * 256f);
+        vert.y = (ushort)((y + 16f) * 256f);
+        vert.z = (ushort)((z + 16f) * 256f);
+        vert.u = (ushort)(u * 32768);
+        vert.v = (ushort)(v * 32768);
+        vert.light = light;
+        vert.cu = col;
+        vertexCount++;
+    }
+    
+    /// <summary>
+    /// Add a vertex to the current face being built.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void vertex(float x, float y, float z, float u, float v) {
+        
+        // multiply tint by the stored colour
+        // there is no tint though!
+        var c = colourCache[vertexCount];
+
+        var col = Meth.f2b(c);
+        
+        ref var vert = ref vertexCache[vertexCount];
+        vert.x = (ushort)((x + 16f) * 256f);
+        vert.y = (ushort)((y + 16f) * 256f);
+        vert.z = (ushort)((z + 16f) * 256f);
+        vert.u = (ushort)(u * 32768);
+        vert.v = (ushort)(v * 32768);
+        vert.light = lightColourCache[vertexCount];
+        vert.cu = col;
+        vertexCount++;
+    }
+    
+    
+    /// <summary>
+    /// Finish building the current face and add vertices to the output list.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    // i have no idea why it complains about redundant span creation (it's very much not redundant) but now it won't!
+    [SuppressMessage("ReSharper", "RedundantExplicitParamsArrayCreation")]
+    public void end(List<BlockVertexPacked> vertices) {
+        unsafe {
+            // add the vertices to the list
+            vertices.AddRange(new ReadOnlySpan<BlockVertexPacked>(vertexCache, vertexCount));
+            vertexCount = 0; // reset
         }
     }
 
@@ -853,73 +1222,6 @@ public class BlockRenderer {
         // which is conveniently already stored!
         return (flags & 3) == 3 ? (byte)3 : byte.PopCount(flags);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte calculateVertexLightAndAO(ref byte lightRef, ref uint neighbourRef, int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2, int z2, byte lb, out byte opacity) {
-        
-        // since we're using a cache now, we're getting the offsets from the cache which is 3x3x3
-        // so +1 is +3, -1 is -3, etc.
-        
-        // calculate the offsets in the local cache
-        int offset0 =  (y0 + 1) * LOCALCACHESIZE_SQ + (z0 + 1) * LOCALCACHESIZE + (x0 + 1);
-        int offset1 =  (y1 + 1) * LOCALCACHESIZE_SQ + (z1 + 1) * LOCALCACHESIZE + (x1 + 1);
-        int offset2 =  (y2 + 1) * LOCALCACHESIZE_SQ + (z2 + 1) * LOCALCACHESIZE + (x2 + 1);
-        
-        uint lightValue = (uint)(Unsafe.Add(ref lightRef, offset0) |
-                                 (Unsafe.Add(ref lightRef, offset1) << 8) |
-                                 (Unsafe.Add(ref lightRef, offset2) << 16) | 
-                                 lb << 24);
-        
-        opacity = (byte)((Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset0).getID()])) |
-                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset1).getID()]) << 1) |
-                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref neighbourRef, offset2).getID()]) << 2));
-        
-        return average2(lightValue, opacity);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getDirectionOffsetsAndData(RawDirection dir, ref uint neighbourRef, ref byte lightRef, byte lb, out FourBytes light, out FourBytes o) {
-        Unsafe.SkipInit(out o);
-        Unsafe.SkipInit(out light);
-        switch (dir) {
-            case RawDirection.WEST:
-                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, -1, -1, 0, -1, -1, 1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, -1, 1, 0, -1, 1, -1, lb, out o.Fourth);
-                break;
-            case RawDirection.EAST:
-                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 1, 1, 0, 1, 1, -1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 1, -1, 0, 1, -1, 1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
-                break;
-            case RawDirection.SOUTH:
-                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, 0, 1, -1, -1, 1, -1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, -1, 0, -1, -1, -1, -1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 0, -1, -1, 1, -1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, -1, 0, 1, -1, 1, 1, -1, lb, out o.Fourth);
-                break;
-            case RawDirection.NORTH:
-                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 0, 1, 1, 1, 1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 1, 0, 1, 0, -1, 1, 1, -1, 1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, 0, -1, 1, -1, -1, 1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, -1, 0, 1, 0, 1, 1, -1, 1, 1, lb, out o.Fourth);
-                break;
-            case RawDirection.DOWN:
-                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, 1, 1, -1, 0, 1, -1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, -1, 1, -1, -1, 0, -1, -1, 1, lb, out o.Fourth);
-                break;
-            case RawDirection.UP:
-                light.First = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, -1, -1, 1, 0, -1, 1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, -1, 1, 1, 0, 1, 1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref lightRef, ref neighbourRef, 0, 1, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
-                break;
-        }
-    }
 }
 
 public enum VertexConstructionMode {
@@ -929,6 +1231,10 @@ public enum VertexConstructionMode {
 
 [StructLayout(LayoutKind.Explicit)]
 public struct FourShorts {
+    
+    // for overlap
+    [FieldOffset(0)] public unsafe fixed ushort ushorts[4];
+    
     [FieldOffset(0)] public ulong Whole;
     [FieldOffset(0)] public ushort First;
     [FieldOffset(2)] public ushort Second;
@@ -938,6 +1244,10 @@ public struct FourShorts {
 
 [StructLayout(LayoutKind.Explicit)]
 public struct FourBytes {
+    
+    // for overlap
+    [FieldOffset(0)] public unsafe fixed byte bytes[4];
+    
     [FieldOffset(0)] public uint Whole;
     [FieldOffset(0)] public byte First;
     [FieldOffset(1)] public byte Second;
