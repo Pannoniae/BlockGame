@@ -2,6 +2,10 @@ namespace BlockGame;
 
 public interface BlockData {
     public ushort this[int x, int y, int z] { get; set; }
+    
+    public byte getMetadata(int x, int y, int z);
+    
+    public void setMetadata(int x, int y, int z, byte val);
 
     public byte getLight(int x, int y, int z);
 

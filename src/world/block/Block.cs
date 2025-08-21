@@ -60,6 +60,7 @@ public class Block {
 
 
     public const float atlasRatio = textureSize / (float)atlasSize;
+    public const float atlasRatioInv = 1 / atlasRatio;
     
     
     private const int MAXBLOCKS = 128;
@@ -170,11 +171,11 @@ public class Block {
 
 
     public static Block PLANKS = register(new Block(Blocks.PLANKS, "Planks", BlockModel.makeCube(cubeUVs(0, 5))));
-    public static Block STAIRS = register(new Block(Blocks.STAIRS, "Stairs", BlockModel.makeStairs(cubeUVs(0, 5))).partialBlock());
+    public static Block STAIRS = register(new Stairs(Blocks.STAIRS, "Stairs", BlockModel.makeCube(cubeUVs(0, 5))).partialBlock());
     public static Block LOG = register(new Block(Blocks.LOG, "Log", BlockModel.makeCube(grassUVs(2, 5, 1, 5, 3, 5))));
     public static Block LEAVES = register(new Block(Blocks.LEAVES, "Leaves", BlockModel.makeCube(cubeUVs(4, 5))).transparency().setLightAbsorption(1));
     public static Block MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks", BlockModel.makeCube(cubeUVs(5, 5))));
-    public static Block MAPLE_STAIRS = register(new Block(Blocks.MAPLE_STAIRS, "Maple Stairs", BlockModel.makeStairs(cubeUVs(5, 5))).partialBlock());
+    public static Block MAPLE_STAIRS = register(new Stairs(Blocks.MAPLE_STAIRS, "Maple Stairs", BlockModel.makeCube(cubeUVs(5, 5))).partialBlock());
     public static Block MAPLE_LOG = register(new Block(Blocks.MAPLE_LOG, "Maple Log", BlockModel.makeCube(grassUVs(7, 5, 6, 5, 8, 5))));
     public static Block MAPLE_LEAVES = register(new Block(Blocks.MAPLE_LEAVES, "Maple Leaves", BlockModel.makeCube(cubeUVs(9, 5))).transparency());
     //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
@@ -557,6 +558,11 @@ public class Block {
         // if it's not a full block, we render the face
         return !fullBlock[neighbourBlock];
     }
+
+    public virtual void place(World world, int x, int y, int z, RawDirection dir) {
+        world.setBlockMetadataRemesh(x, y, z, id);
+        world.blockUpdateWithNeighbours(new Vector3I(x, y, z));
+    }
 }
 
 public static class BlockExtensions {
@@ -567,12 +573,12 @@ public static class BlockExtensions {
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort getMetadata(this uint block) {
-        return (ushort)(block >> 24);
+    public static byte getMetadata(this uint block) {
+        return (byte)(block >> 24);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint setMetadata(this uint block, ushort metadata) {
+    public static uint setMetadata(this uint block, byte metadata) {
         return (block & 0xFFFFFF) | ((uint)metadata << 24);
     }
     
@@ -646,58 +652,325 @@ public class Water : Block {
             
             if (cullFace(br, x, y, z, d)) {
                 br.applyFaceLighting(d, colourCache, lightColourCache);
+                br.begin(cache);
                 switch (d) {
                     case RawDirection.WEST:
-                        br.begin(cache);
                         br.vertex(x + 0, y + 1, z + 1, uMin, vMin);
                         br.vertex(x + 0, y + 0, z + 1, uMin, vMax);
                         br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
                         br.vertex(x + 0, y + 1, z + 0, uMax, vMin);
-                        br.end(vertices);
                         break;
                     case RawDirection.EAST:
-                        br.begin(cache);
                         br.vertex(x + 1, y + 1, z + 0, uMin, vMin);
                         br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
                         br.vertex(x + 1, y + 0, z + 1, uMax, vMax);
                         br.vertex(x + 1, y + 1, z + 1, uMax, vMin);
-                        br.end(vertices);
                         break;
                     case RawDirection.SOUTH:
-                        br.begin(cache);
                         br.vertex(x + 0, y + 1, z + 0, uMin, vMin);
                         br.vertex(x + 0, y + 0, z + 0, uMin, vMax);
                         br.vertex(x + 1, y + 0, z + 0, uMax, vMax);
                         br.vertex(x + 1, y + 1, z + 0, uMax, vMin);
-                        br.end(vertices);
                         break;
                     case RawDirection.NORTH:
-                        br.begin(cache);
                         br.vertex(x + 1, y + 1, z + 1, uMin, vMin);
                         br.vertex(x + 1, y + 0, z + 1, uMin, vMax);
                         br.vertex(x + 0, y + 0, z + 1, uMax, vMax);
                         br.vertex(x + 0, y + 1, z + 1, uMax, vMin);
-                        br.end(vertices);
                         break;
                     case RawDirection.DOWN:
-                        br.begin(cache);
                         br.vertex(x + 1, y + 0, z + 1, uMin, vMin);
                         br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
                         br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
                         br.vertex(x + 0, y + 0, z + 1, uMax, vMin);
-                        br.end(vertices);
                         break;
                     case RawDirection.UP:
-                        br.begin(cache);
                         br.vertex(x + 0, y + height, z + 1, uMin, vMin);
                         br.vertex(x + 0, y + height, z + 0, uMin, vMax);
                         br.vertex(x + 1, y + height, z + 0, uMax, vMax);
                         br.vertex(x + 1, y + height, z + 1, uMax, vMin);
-                        br.end(vertices);
                         break;
                 }
-                
+                br.end(vertices);
             }
+        }
+    }
+}
+
+public class Stairs : Block {
+    public Stairs(ushort id, string name, BlockModel model) : base(id, name, model) {
+        renderType[id] = RenderType.CUSTOM;
+        customCulling[id] = true;
+    }
+
+    /**
+     * Metadata encoding for stairs:
+     * Bits 0-1: Horizontal facing direction (0=WEST, 1=EAST, 2=SOUTH, 3=NORTH)
+     * Bit 2: Upside-down (0=normal/bottom-half, 1=upside-down/top-half) (NOT USED YET)
+     * Bits 3-7: Reserved
+     */
+    public static byte getFacing(byte metadata) => (byte)(metadata & 0b11);
+    public static bool isUpsideDown(byte metadata) => (metadata & 0b100) != 0;
+    public static byte setFacing(byte metadata, byte facing) => (byte)((metadata & ~0b11) | (facing & 0b11));
+    public static byte setUpsideDown(byte metadata, bool upsideDown) => (byte)((metadata & ~0b100) | (upsideDown ? 0b100 : 0));
+    
+    private uint calculateMetadata(ushort blockId, RawDirection dir) {
+        
+        // we need to place in the opposite direction the player is facing
+        var opposite = Direction.getOpposite(dir);
+        
+        // Create metadata
+        byte metadata = 0;
+        metadata = setFacing(metadata, (byte)opposite);
+        metadata = setUpsideDown(metadata, false);
+        
+        // Create full block value with metadata
+        uint blockValue = blockId;
+        blockValue = blockValue.setMetadata(metadata);
+        
+        return blockValue;
+    }
+
+
+    public override void place(World world, int x, int y, int z, RawDirection dir) {
+        
+        var stair = calculateMetadata(id, dir);
+        world.setBlockMetadataRemesh(x, y, z, stair);
+        world.blockUpdateWithNeighbours(new Vector3I(x, y, z));
+        
+    }
+
+    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+        base.render(br, x, y, z, vertices);
+        
+        var block = br.getBlock();
+        var metadata = block.getMetadata();
+        var facing = getFacing(metadata);
+
+        var texture = model.faces[0];
+        var baseUMin = texU(texture.min.u);
+        var baseVMin = texV(texture.min.v);
+        var baseUMax = texU(texture.max.u);
+        var baseVMax = texV(texture.max.v);
+        
+        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
+        Span<Vector4> colourCache = stackalloc Vector4[4];
+        Span<byte> lightColourCache = stackalloc byte[4];
+
+        // bottom step: full width/depth, half height
+        const float bx1 = 0f;
+        const float by1 = 0f;
+        const float bz1 = 0f;
+        const float bx2 = 1f;
+        const float by2 = 0.5f;
+        const float bz2 = 1f;
+
+        // top step: half width/depth in facing direction, half height
+        float tx1, tz1, tx2, tz2;
+        const float ty1 = 0.5f;
+        const float ty2 = 1f;
+        
+        switch (facing) {
+            case 0: tx1 = 0.5f; tx2 = 1f; tz1 = 0f; tz2 = 1f; break; // WEST
+            case 1: tx1 = 0f; tx2 = 0.5f; tz1 = 0f; tz2 = 1f; break; // EAST
+            case 2: tx1 = 0f; tx2 = 1f; tz1 = 0.5f; tz2 = 1f; break; // SOUTH
+            default: tx1 = 0f; tx2 = 1f; tz1 = 0f; tz2 = 0.5f; break; // NORTH
+        }
+
+        // render both steps
+        var uRange = baseUMax - baseUMin;
+        var vRange = baseVMax - baseVMin;
+
+        // WEST face
+        var westVMin = baseVMin + vRange * 0.5f;
+        var direction = Direction.getDirection(RawDirection.WEST);
+        var neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + bx1, y + by2, z + bz2, baseUMin, westVMin);
+            br.vertex(x + bx1, y + by1, z + bz2, baseUMin, baseVMax);
+            br.vertex(x + bx1, y + by1, z + bz1, baseUMax, baseVMax);
+            br.vertex(x + bx1, y + by2, z + bz1, baseUMax, westVMin);
+            br.end(vertices);
+        }
+
+        // EAST face
+        var eastVMin = baseVMin + vRange * 0.5f;
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + bx2, y + by2, z + bz1, baseUMin, eastVMin);
+            br.vertex(x + bx2, y + by1, z + bz1, baseUMin, baseVMax);
+            br.vertex(x + bx2, y + by1, z + bz2, baseUMax, baseVMax);
+            br.vertex(x + bx2, y + by2, z + bz2, baseUMax, eastVMin);
+            br.end(vertices);
+        }
+
+        // SOUTH face
+        var southVMin = baseVMin + vRange * 0.5f;
+        direction = Direction.getDirection(RawDirection.SOUTH);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + bx1, y + by2, z + bz1, baseUMin, southVMin);
+            br.vertex(x + bx1, y + by1, z + bz1, baseUMin, baseVMax);
+            br.vertex(x + bx2, y + by1, z + bz1, baseUMax, baseVMax);
+            br.vertex(x + bx2, y + by2, z + bz1, baseUMax, southVMin);
+            br.end(vertices);
+        }
+
+        // NORTH face
+        var northVMin = baseVMin + vRange * 0.5f;
+         direction = Direction.getDirection(RawDirection.NORTH);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + bx2, y + by2, z + bz2, baseUMin, northVMin);
+            br.vertex(x + bx2, y + by1, z + bz2, baseUMin, baseVMax);
+            br.vertex(x + bx1, y + by1, z + bz2, baseUMax, baseVMax);
+            br.vertex(x + bx1, y + by2, z + bz2, baseUMax, northVMin);
+            br.end(vertices);
+        }
+
+        // DOWN face
+        direction = Direction.getDirection(RawDirection.DOWN);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + bx2, y + by1, z + bz2, baseUMin, baseVMin);
+            br.vertex(x + bx2, y + by1, z + bz1, baseUMin, baseVMax);
+            br.vertex(x + bx1, y + by1, z + bz1, baseUMax, baseVMax);
+            br.vertex(x + bx1, y + by1, z + bz2, baseUMax, baseVMin);
+            br.end(vertices);
+        }
+
+        // UP face  
+        direction = Direction.getDirection(RawDirection.UP);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+            
+        bool shouldRender5 = !fullBlock[neighbourBlock] || true;
+
+        if (shouldRender5) {
+            br.applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + bx1, y + by2, z + bz2, baseUMin, baseVMin);
+            br.vertex(x + bx1, y + by2, z + bz1, baseUMin, baseVMax);
+            br.vertex(x + bx2, y + by2, z + bz1, baseUMax, baseVMax);
+            br.vertex(x + bx2, y + by2, z + bz2, baseUMax, baseVMin);
+            br.end(vertices);
+        }
+
+        // WEST face
+        var westUMin1 = tx1 > 0f ? baseUMin + uRange * tz1 : baseUMin;
+        var westUMax1 = tx1 > 0f ? baseUMin + uRange * tz2 : baseUMax;
+        var westVMin1 = baseVMin + vRange * 0.5f;
+        direction = Direction.getDirection(RawDirection.WEST);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + tx1, y + ty2, z + tz2, westUMin1, westVMin1);
+            br.vertex(x + tx1, y + ty1, z + tz2, westUMin1, baseVMax);
+            br.vertex(x + tx1, y + ty1, z + tz1, westUMax1, baseVMax);
+            br.vertex(x + tx1, y + ty2, z + tz1, westUMax1, westVMin1);
+            br.end(vertices);
+        }
+
+        // EAST face
+        var eastUMin1 = tx2 < 1f ? baseUMin + uRange * tz1 : baseUMin;
+        var eastUMax1 = tx2 < 1f ? baseUMin + uRange * tz2 : baseUMax;
+        var eastVMin1 = baseVMin + vRange * 0.5f;
+        direction = Direction.getDirection(RawDirection.EAST);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + tx2, y + ty2, z + tz1, eastUMin1, eastVMin1);
+            br.vertex(x + tx2, y + ty1, z + tz1, eastUMin1, baseVMax);
+            br.vertex(x + tx2, y + ty1, z + tz2, eastUMax1, baseVMax);
+            br.vertex(x + tx2, y + ty2, z + tz2, eastUMax1, eastVMin1);
+            br.end(vertices);
+        }
+
+        // SOUTH face
+        var southUMin1 = tz1 > 0f ? baseUMin + uRange * tx1 : baseUMin;
+        var southUMax1 = tz1 > 0f ? baseUMin + uRange * tx2 : baseUMax;
+        var southVMin1 = baseVMin + vRange * 0.5f;
+        direction = Direction.getDirection(RawDirection.SOUTH);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + tx1, y + ty2, z + tz1, southUMin1, southVMin1);
+            br.vertex(x + tx1, y + ty1, z + tz1, southUMin1, baseVMax);
+            br.vertex(x + tx2, y + ty1, z + tz1, southUMax1, baseVMax);
+            br.vertex(x + tx2, y + ty2, z + tz1, southUMax1, southVMin1);
+            br.end(vertices);
+        }
+
+        // NORTH face
+        var northUMin1 = tz2 < 1f ? baseUMin + uRange * tx1 : baseUMin;
+        var northUMax1 = tz2 < 1f ? baseUMin + uRange * tx2 : baseUMax;
+        var northVMin1 = baseVMin + vRange * 0.5f;
+        direction = Direction.getDirection(RawDirection.NORTH);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + tx2, y + ty2, z + tz2, northUMin1, northVMin1);
+            br.vertex(x + tx2, y + ty1, z + tz2, northUMin1, baseVMax);
+            br.vertex(x + tx1, y + ty1, z + tz2, northUMax1, baseVMax);
+            br.vertex(x + tx1, y + ty2, z + tz2, northUMax1, northVMin1);
+            br.end(vertices);
+        }
+
+        // DOWN face
+        var downUMin1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseUMin + uRange * tx1 : baseUMin;
+        var downUMax1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseUMin + uRange * tx2 : baseUMax;
+        var downVMin1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseVMin + vRange * tz1 : baseVMin;
+        var downVMax1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseVMin + vRange * tz2 : baseVMax;
+        direction = Direction.getDirection(RawDirection.DOWN);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + tx2, y + ty1, z + tz2, downUMin1, downVMin1);
+            br.vertex(x + tx2, y + ty1, z + tz1, downUMin1, downVMax1);
+            br.vertex(x + tx1, y + ty1, z + tz1, downUMax1, downVMax1);
+            br.vertex(x + tx1, y + ty1, z + tz2, downUMax1, downVMin1);
+            br.end(vertices);
+        }
+
+        // UP face  
+        var upUMin1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseUMin + uRange * tx1 : baseUMin;
+        var upUMax1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseUMin + uRange * tx2 : baseUMax;
+        var upVMin1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseVMin + vRange * tz1 : baseVMin;
+        var upVMax1 = (tx2 - tx1 < 1f || tz2 - tz1 < 1f) ? baseVMin + vRange * tz2 : baseVMax;
+        direction = Direction.getDirection(RawDirection.UP);
+        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        if (!fullBlock[neighbourBlock]) {
+            br.applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
+            br.begin(cache);
+            br.vertex(x + tx1, y + ty2, z + tz2, upUMin1, upVMin1);
+            br.vertex(x + tx1, y + ty2, z + tz1, upUMin1, upVMax1);
+            br.vertex(x + tx2, y + ty2, z + tz1, upUMax1, upVMax1);
+            br.vertex(x + tx2, y + ty2, z + tz2, upUMax1, upVMin1);
+            br.end(vertices);
         }
     }
 }

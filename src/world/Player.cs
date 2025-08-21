@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using System.Numerics;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -414,16 +415,66 @@ public class Player : Entity {
             setSwinging(true);
             var pos = Game.instance.previousPos.Value;
             var bl = hotbar.getSelected().block;
+            
             // don't intersect the player
             var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
             if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {
-                world.setBlockRemesh(pos.X, pos.Y, pos.Z, bl);
-                world.blockUpdateWithNeighbours(pos);
+                var block = Block.get(bl);
+                RawDirection dir = getFacing();
+                block.place(world, pos.X, pos.Y, pos.Z, dir);
                 lastPlace = world.worldTick;
             }
         }
         else {
             setSwinging(false);
+        }
+    }
+
+    /*
+     * public static string cameraFacing(Vector3D direction) {
+        // Check for up/down first
+        double verticalThreshold = Math.Cos(45);
+        if (direction.Y > verticalThreshold) {
+            return "Facing up";
+        }
+
+        if (direction.Y < -verticalThreshold) {
+            return "Facing down";
+        }
+
+        // If not facing strongly up or down, determine horizontal direction
+        double absX = Math.Abs(direction.X);
+        double absZ = Math.Abs(direction.Z);
+
+        if (absX > absZ) {
+            return direction.X > 0 ? "Facing east" : "Facing west";
+        }
+        else {
+            return direction.Z > 0 ? "Facing north" : "Facing south";
+        }
+    }
+     */
+    
+    public RawDirection getFacing() {
+        // Get the forward vector from the camera
+        Vector3 forward = camera.CalculateForwardVector();
+        
+        double verticalThreshold = Math.Cos(Math.PI / 4f); // 45 degrees in radians
+        
+        // Check for up/down first
+        if (forward.Y > verticalThreshold) {
+            return RawDirection.UP;
+        }
+        if (forward.Y < -verticalThreshold) {
+            return RawDirection.DOWN;
+        }
+        
+        // Determine the facing direction based on the forward vector
+        if (Math.Abs(forward.X) > Math.Abs(forward.Z)) {
+            return forward.X > 0 ? RawDirection.EAST : RawDirection.WEST;
+        }
+        else {
+            return forward.Z > 0 ? RawDirection.NORTH : RawDirection.SOUTH;
         }
     }
 

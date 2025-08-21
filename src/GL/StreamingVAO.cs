@@ -10,7 +10,6 @@ namespace BlockGame.GL;
 public class StreamingVAO<T> where T : unmanaged {
     public uint VAOHandle;
     public uint vbo;
-    public uint ibo;
     public uint count;
 
     public Silk.NET.OpenGL.Legacy.GL GL;
@@ -26,28 +25,17 @@ public class StreamingVAO<T> where T : unmanaged {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(size * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
-
-            ibo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-            GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(size * 1.5 * sizeof(ushort)), (void*)0,
-                BufferStorageMask.DynamicStorageBit);
         }
         format();
     }
 
-    public void upload(Span<T> data, Span<ushort> indices) {
+    public void upload(Span<T> data) {
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             Game.GL.InvalidateBufferData(vbo);
-            count = (uint)indices.Length;
+            count = (uint)data.Length;
             fixed (T* d = data) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(data.Length * sizeof(T)), d);
-            }
-
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-            Game.GL.InvalidateBufferData(ibo);
-            fixed (ushort* d = indices) {
-                GL.BufferSubData(BufferTargetARB.ElementArrayBuffer, 0, (uint)(indices.Length * sizeof(ushort)), d);
             }
         }
 
@@ -77,7 +65,7 @@ public class StreamingVAO<T> where T : unmanaged {
 
     public uint render() {
         unsafe {
-            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
+            GL.DrawElements(PrimitiveType.Triangles, (uint)(count * 1.5), DrawElementsType.UnsignedShort, (void*)0);
             return count;
         }
     }

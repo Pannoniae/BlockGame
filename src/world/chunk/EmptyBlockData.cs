@@ -10,6 +10,13 @@ public class EmptyBlockData : BlockData {
         set { }
     }
 
+    public byte getMetadata(int x, int y, int z) {
+        return 0;
+    }
+
+    public void setMetadata(int x, int y, int z, byte val) {
+    }
+
     public byte getLight(int x, int y, int z) {
         // only skylight, zero blocklight
         return 15;

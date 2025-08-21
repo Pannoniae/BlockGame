@@ -55,11 +55,12 @@ public class PlayerRenderer {
         Game.graphics.tex(0, Game.textures.blockTexture);
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
         Game.blockRenderer.setupStandalone();
-        Game.blockRenderer.renderBlock(Block.get(handItem.block), Vector3I.Zero, vertices, indices, 
+        Game.blockRenderer.renderBlock(Block.get(handItem.block), Vector3I.Zero, vertices, 
             lightOverride: (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)), cullFaces: false);
         
         vao.bind();
-        vao.upload(CollectionsMarshal.AsSpan(vertices), CollectionsMarshal.AsSpan(indices));
+        Game.renderer.bindQuad();
+        vao.upload(CollectionsMarshal.AsSpan(vertices));
 
         var swingProgress = player.getSwingProgress(interp);
         // thx classicube? the description is bs with the matrices but it gives some ideas for the maths

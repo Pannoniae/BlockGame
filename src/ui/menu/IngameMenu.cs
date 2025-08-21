@@ -357,7 +357,7 @@ public class IngameMenu : Menu, IDisposable {
 
     public static string cameraFacing(Vector3D direction) {
         // Check for up/down first
-        double verticalThreshold = Math.Cos(45);
+        double verticalThreshold = Math.Cos(Math.PI / 4f);
         if (direction.Y > verticalThreshold) {
             return "Facing up";
         }

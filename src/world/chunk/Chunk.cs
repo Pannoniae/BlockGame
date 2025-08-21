@@ -402,6 +402,62 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // set neighbours dirty
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
+    
+    public void setBlockMetadataRemesh(int x, int y, int z, uint block) {
+        var oldBlock = blocks[y >> 4][x, y & 0xF, z];
+        blocks[y >> 4].setRaw(x, y & 0xF, z, block);
+        var wx = coord.x * CHUNKSIZE + x;
+        var wz = coord.z * CHUNKSIZE + z;
+
+        var id = block.getID();
+
+        // From there on, ONLY REMESHING STUFF
+
+        // if block broken, add sunlight from neighbours
+        if (id == 0) {
+            // Queue all 6 neighbors for light propagation
+            // The propagation algorithm will handle cross-chunk boundaries
+            foreach (var dir in Direction.directions) {
+                var neighborPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighborChunk);
+
+                // is nullcheck needed?
+                if (neighborChunk != null) {
+                    // Only queue if neighbor has light to propagate
+                    //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+
+                    //if (skyLight > 0) {
+                    world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
+                    //}
+                    //if (blockLight > 0) {
+                    world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        neighborChunk));
+                }
+                //}
+            }
+        }
+        else {
+            world.removeSkyLightAndPropagate(wx, y, wz);
+            world.removeBlockLightAndPropagate(wx, y, wz);
+        }
+
+        // if the new block has light, add the light
+        if (Block.lightLevel[id] > 0) {
+            // add lightsource
+            setBlockLight(x, y, z, Block.lightLevel[id]);
+            //Console.Out.WriteLine(Block.get(block).lightLevel);
+            world.blockLightQueue.Add(new LightNode(x, y, z, this));
+        }
+
+        // if the old block had light, remove the light
+        if (id == 0 && Block.lightLevel[oldBlock] > 0) {
+            // remove lightsource
+            world.removeBlockLightAndPropagate(wx, y, wz);
+        }
+
+        // set neighbours dirty
+        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
+    }
 
     /// <summary>
     /// Uses chunk coordinates

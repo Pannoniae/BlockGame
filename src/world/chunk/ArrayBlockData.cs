@@ -84,6 +84,22 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
     }
 
+    public byte getMetadata(int x, int y, int z) {
+            return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getMetadata();
+        }
+    public void setMetadata(int x, int y, int z, byte val) {
+        ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
+        blockRef.setMetadata(val);
+    }
+    
+    public uint getRaw(int x, int y, int z) {
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
+    }
+    
+    public void setRaw(int x, int y, int z, uint value) {
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
+    }
+
     public ushort fastGet(int x, int y, int z) {
         return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getID();
     }
@@ -91,15 +107,15 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     /// <summary>
     /// Your responsibility to update the counts after a batch of changes.
     /// </summary>
-    public void fastSet(int x, int y, int z, ushort value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
+    public void fastSet(int x, int y, int z, ushort val) {
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = val;
     }
     
     /// <summary>
     /// Kind of like <see cref="fastSet"/>, but doesn't check if the block data is initialized. I've warned you.
     /// </summary>
-    public void fastSetUnsafe(int x, int y, int z, ushort value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
+    public void fastSetUnsafe(int x, int y, int z, ushort val) {
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = val;
     }
 
     public ArrayBlockData(Chunk chunk, int yCoord) {
@@ -210,8 +226,8 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void setLight(int x, int y, int z, byte value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x) = value;
+    public void setLight(int x, int y, int z, byte val) {
+        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(light), (y << 8) + (z << 4) + x) = val;
     }
 
     public byte skylight(int x, int y, int z) {

@@ -54,7 +54,6 @@ public class GUI {
     private Matrix4x4 ortho;
 
     private List<BlockVertexTinted> guiBlock;
-    private List<ushort> guiBlockI;
     private int uMVP;
     private int blockTexture = 0;
 
@@ -83,7 +82,6 @@ public class GUI {
         buffer.setSize(Face.MAX_FACES * 4);
         // GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw
         guiBlock = new List<BlockVertexTinted>();
-        guiBlockI = new List<ushort>();
 
         uMVP = guiBlockShader.getUniformLocation("uMVP");
         blockTexture = guiBlockShader.getUniformLocation("blockTexture");
@@ -651,6 +649,7 @@ public class GUI {
 
 
         buffer.bind();
+        Game.renderer.bindQuad();
         guiBlockShader.use();
 
         // bind block texture
@@ -671,7 +670,7 @@ public class GUI {
         }*/
 
         Game.blockRenderer.setupStandalone();
-        Game.blockRenderer.renderBlock(block, Vector3I.Zero, guiBlock, guiBlockI, 
+        Game.blockRenderer.renderBlock(block, Vector3I.Zero, guiBlock, 
             lightOverride: 255, cullFaces: false);
         
         // assemble the matrix using existing matrix stacks from Graphics
@@ -704,8 +703,7 @@ public class GUI {
         guiBlockShader.setUniform(uMVP, mat);
         guiBlockShader.setUniform(blockTexture, 0);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
-        var spI = CollectionsMarshal.AsSpan(guiBlockI);
-        buffer.upload(sp, spI);
+        buffer.upload(sp);
         var sSize = size * guiScale;
         Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
@@ -713,7 +711,7 @@ public class GUI {
         // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
         //GL.BindVertexArray(buffer.VertexArray.Handle);
         unsafe {
-            Game.GL.DrawElements(PrimitiveType.Triangles, (uint)spI.Length, DrawElementsType.UnsignedShort, (void*)0);
+            Game.GL.DrawElements(PrimitiveType.Triangles, (uint)(sp.Length * 1.5), DrawElementsType.UnsignedShort, (void*)0);
         }
 
         // restore

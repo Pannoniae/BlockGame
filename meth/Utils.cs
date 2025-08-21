@@ -398,6 +398,18 @@ public readonly record struct Direction(int x, int y, int z) {
             _ => SELF
         };
     }
+    
+    public static RawDirection getOpposite(RawDirection dir) {
+        return dir switch {
+            RawDirection.WEST => RawDirection.EAST,
+            RawDirection.EAST => RawDirection.WEST,
+            RawDirection.SOUTH => RawDirection.NORTH,
+            RawDirection.NORTH => RawDirection.SOUTH,
+            RawDirection.DOWN => RawDirection.UP,
+            RawDirection.UP => RawDirection.DOWN,
+            _ => RawDirection.NONE
+        };
+    }
 
     public static RawDirection getRawDirection(Vector3I dir) {
         if (dir == WEST) {

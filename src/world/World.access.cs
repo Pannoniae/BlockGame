@@ -248,6 +248,16 @@ public partial class World {
         var chunk = getChunk(x, z);
         chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
+    
+    public void setBlockMetadataRemesh(int x, int y, int z, uint block) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setBlockMetadataRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+    }
 
     /// <summary>
     /// This checks whether it's at least generated.

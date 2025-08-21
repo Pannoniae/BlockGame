@@ -68,6 +68,10 @@ public class BlockRenderer {
     /** Store the averaged block light values. (same as <see cref="colourCache"/> except without AO and tint)*/
     private unsafe byte* lightColourCache;
     private int vertexCount;
+
+
+    /** Hack to convert between vertices. */
+    private readonly List<BlockVertexPacked> _listHack = new(24);
     
     
     // flags to enable/disable various vertex colouring features
@@ -479,33 +483,30 @@ public class BlockRenderer {
     /// <summary>
     /// Core block rendering method that handles both world and GUI stuff.
     /// </summary>
-    public void renderBlock(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, List<ushort> indices, VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
+    public void renderBlock(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
                            byte lightOverride = 255,
                            Color4b tintOverride = default,
                            bool cullFaces = true) {
         
         vertices.Clear();
-        indices.Clear();
         
         if (isRenderingWorld) {
             Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
             Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
             fillCache(blockCache, lightCache, ref MemoryMarshal.GetReference(neighbours), ref MemoryMarshal.GetReference(neighbourLights));
-            renderBlockWorld(block, worldPos, vertices, indices, mode, cullFaces);
+            renderBlockWorld(block, worldPos, vertices, mode, cullFaces);
         } else {
-            renderBlockStandalone(block, worldPos, vertices, indices, lightOverride, tintOverride);
+            renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride);
         }
     }
 
     [SkipLocalsInit]
-    private unsafe void renderBlockWorld(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, List<ushort> indices, VertexConstructionMode mode, bool cullFaces) {
+    private unsafe void renderBlockWorld(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode, bool cullFaces) {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
-        
+
         ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(block.model.faces);
-        
-        ushort vertexIndex = 0;
         
         for (int d = 0; d < block.model.faces.Length; d++) {
             var face = Unsafe.Add(ref facesRef, d);
@@ -555,27 +556,63 @@ public class BlockRenderer {
             tempVertices[3] = new BlockVertexTinted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
             
             vertices.AddRange(tempVertices);
-            
-            // create indices
-            tempIndices[0] = vertexIndex;
-            tempIndices[1] = (ushort)(vertexIndex + 1);
-            tempIndices[2] = (ushort)(vertexIndex + 2);
-            tempIndices[3] = vertexIndex;
-            tempIndices[4] = (ushort)(vertexIndex + 2);
-            tempIndices[5] = (ushort)(vertexIndex + 3);
-            
-            indices.AddRange(tempIndices);
-            vertexIndex += 4;
         }
     }
 
     [SkipLocalsInit]
-    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, List<ushort> indices, byte lightOverride, Color4b tintOverride) {
+    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride, Color4b tintOverride) {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
         
-        ushort vertexIndex = 0;
+        var blockID = block.getID();
+        
+        switch (Block.renderType[blockID]) {
+            case RenderType.CUBE:
+                // get UVs from block
+                // todo
+                break;
+            case RenderType.CROSS:
+                // todo
+                break;
+            case RenderType.MODEL:
+                goto model;
+            case RenderType.CUSTOM:
+                // we render to a temp list
+                _listHack.Clear();
+                
+                Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
+                Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
+                
+                // setup (fake) cache
+                fillCacheEmpty(blockCache, lightCache);
+                // place the block in it
+                blockCache[13] = blockID;
+                lightCache[13] = lightOverride;
+                
+                block.render(this, 0, 0, 0, _listHack);
+                
+                // now we convert it to the REAL vertices
+                foreach (var vertex in _listHack) {
+                    // convert to tinted vertex
+                    // we need to restore the UVs (so multiply by inverse atlas)
+                    // and we need to uncompress the positions
+                    var tintedVertex = new BlockVertexTinted();
+                    tintedVertex.x = (vertex.x / 256f) - 16f;
+                    tintedVertex.y = (vertex.y / 256f) - 16f;
+                    tintedVertex.z = (vertex.z / 256f) - 16f;
+                    tintedVertex.u = (Half)(vertex.u / 32768f);
+                    tintedVertex.v = (Half)(vertex.v / 32768f);
+                    tintedVertex.cu = vertex.cu;
+                    
+                    vertices.Add(tintedVertex);
+                }
+                return;
+        }
+        
+        
+        model: ;
+
         var faces = block.model.faces;
         
         for (int d = 0; d < faces.Length; d++) {
@@ -619,17 +656,6 @@ public class BlockRenderer {
             tempVertices[3] = new BlockVertexTinted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
             
             vertices.AddRange(tempVertices);
-            
-            // create indices
-            tempIndices[0] = vertexIndex;
-            tempIndices[1] = (ushort)(vertexIndex + 1);
-            tempIndices[2] = (ushort)(vertexIndex + 2);
-            tempIndices[3] = vertexIndex;
-            tempIndices[4] = (ushort)(vertexIndex + 2);
-            tempIndices[5] = (ushort)(vertexIndex + 3);
-            
-            indices.AddRange(tempIndices);
-            vertexIndex += 4;
         }
     }
     

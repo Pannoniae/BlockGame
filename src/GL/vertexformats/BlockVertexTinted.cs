@@ -12,11 +12,13 @@ public struct BlockVertexTinted {
     [FieldOffset(12)] public Half u;
     [FieldOffset(14)] public Half v;
     
+    [FieldOffset(16)] public uint cu;
+    [FieldOffset(16)] public Color c;
     [FieldOffset(16)] public byte r;
     [FieldOffset(17)] public byte g;
     [FieldOffset(18)] public byte b;
     [FieldOffset(19)] public byte a;
-    [FieldOffset(16)] public Color c;
+    
 
 
     public BlockVertexTinted(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
