@@ -237,6 +237,38 @@ public partial class World {
         result.Add(new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
             new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ)));
     }
+    
+    public List<AABB> getAABBsCollision(int x, int y, int z) {
+        var result = new List<AABB>();
+        getAABBs(result, x, y, z);
+        return result;
+    }
+
+    public void getAABBsCollision(List<AABB> result, int x, int y, int z) {
+        
+        var b = getBlockRaw(x, y, z);
+        var id = b.getID();
+        var metadata = b.getMetadata();
+        
+        result.Clear();
+        
+        if (!Block.collision[id]) {
+            return;
+        }
+
+        if (Block.customAABB[id]) {
+            Block.get(id).getAABBs(this, x, y, z, metadata, result);
+            return;
+        }
+        
+        var aabb = Block.AABB[id];
+        if (aabb == null) {
+            return;
+        }
+
+        result.Add(new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
+            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ)));
+    }
 
     public void setBlock(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {

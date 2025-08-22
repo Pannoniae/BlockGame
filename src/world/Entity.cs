@@ -115,7 +115,7 @@ public class Entity(World world) {
             foreach (Vector3I target in targets) {
                 // first, collide with the block the player is in
                 var blockPos2 = feetPosition.toBlockPos();
-                world.getAABBs(AABBList, blockPos2.X, blockPos2.Y, blockPos2.Z);
+                world.getAABBsCollision(AABBList, blockPos2.X, blockPos2.Y, blockPos2.Z);
 
                 // for each AABB of the block the player is in
                 foreach (AABB aabb in AABBList) {
@@ -128,7 +128,7 @@ public class Entity(World world) {
                 // for each neighbour block
                 foreach (var neighbour in neighbours) {
                     var block = world.getBlock(neighbour);
-                    world.getAABBs(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
+                    world.getAABBsCollision(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
                     foreach (AABB aabb in AABBList) {
                         collisionTargets.Add(aabb);
                     }

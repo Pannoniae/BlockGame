@@ -91,7 +91,7 @@ public class Particle {
             blockPos + new Vector3I(1, 1, 1));
         foreach (var neighbour in collisionTargetsList) {
             var block = world.getBlock(neighbour);
-            world.getAABBs(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
+            world.getAABBsCollision(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
 
             foreach (AABB aabb in AABBList) {
                 collisionTargets.Add(aabb);

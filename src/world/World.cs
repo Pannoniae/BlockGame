@@ -279,7 +279,7 @@ public partial class World : IDisposable {
                     }
                     
                     
-                    getAABBs(listAABB, x, y, z);
+                    getAABBsCollision(listAABB, x, y, z);
                     foreach (var aabb in listAABB) {
                         if (AABB.isCollision(playerAABB, aabb)) {
                             return false;

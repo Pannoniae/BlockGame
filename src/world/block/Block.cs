@@ -92,7 +92,6 @@ public class Block {
     public static byte[] lightAbsorption = new byte[MAXBLOCKS];
     
     public static AABB?[] AABB = new AABB?[MAXBLOCKS];
-    public static bool[] noCollide = new bool[MAXBLOCKS];
     public static bool[] customAABB = new bool[MAXBLOCKS];
     
     public static RenderType[] renderType = new RenderType[MAXBLOCKS];
@@ -447,52 +446,15 @@ public class Block {
     public static bool isBlacklisted(int block) {
         return inventoryBlacklist[block];
     }
-    
 
     //public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());
-
-    public static bool isSolid(int block) {
-        return block != 0 && get(block).layer == RenderLayer.SOLID;
-    }
 
     public static bool notSolid(int block) {
         return block == 0 || get(block).layer != RenderLayer.SOLID;
     }
 
-    public static bool isTransparent(int block) {
-        return block != 0 && !fullBlock[block];
-    }
-
     public static bool isTranslucent(int block) {
         return translucent[block];
-    }
-
-    public static bool notTranslucent(int block) {
-        return !translucent[block];
-    }
-
-    public static bool hasCollision(int block) {
-        return block != 0 && collision[block];
-    }
-
-    public static bool isSolid(Block block) {
-        return block.id != 0 && block.layer == RenderLayer.SOLID;
-    }
-
-    public static bool notSolid(Block block) {
-        return block.id == 0 || block.layer != RenderLayer.SOLID;
-    }
-
-    public static bool isTransparent(Block block) {
-        return block.id != 0 && !fullBlock[block.id];
-    }
-
-    public static bool isTranslucent(Block block) {
-        return block.id != 0 && block.layer == RenderLayer.TRANSLUCENT;
-    }
-
-    public static bool hasCollision(Block block) {
-        return block.id != 0 && collision[block.id];
     }
 
     /// <summary>
@@ -668,13 +630,12 @@ public class Block {
 
     public Block noCollision() {
         collision[id] = false;
-        AABB[id] = null;
+        //AABB[id] = null;
         return this;
     }
 
     public Block noSelection() {
         selection[id] = false;
-        noCollide[id] = true;
         return this;
     }
 
