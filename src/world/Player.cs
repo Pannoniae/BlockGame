@@ -420,7 +420,7 @@ public class Player : Entity {
             var bl = hotbar.getSelected().block;
 
             // don't intersect the player
-            world.getAABBs(AABBList, pos.X, pos.Y, pos.Z);
+            world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
             bool collision = false;
             foreach (AABB aabb in AABBList) {
                 if (AABB.isCollision(aabb, aabb)) {
