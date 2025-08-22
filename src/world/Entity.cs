@@ -169,19 +169,43 @@ public class Entity(World world) {
             var sneakaabbX = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbX, blockAABB)) {
                 collisionXThisFrame = true;
-                // left side
-                if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
-                    var diff = blockAABB.minX - aabbX.maxX;
-                    //if (diff < velocity.X) {
-                    position.X += diff;
-                    //}
+                
+                // try stepping up before blocking movement
+                bool canStepUp = false;
+                if (onGround && !sneaking && velocity.X != 0) {
+                    // check if we can step up by trying positions up to stepHeight
+                    // todo this is the worst piece of shit code ever, there must SURELY be a better mathsy way of not just having a for loop here lol
+                    for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += Constants.epsilon) {
+                        var stepAABB = calcAABB(new Vector3D(position.X, position.Y + stepY, position.Z));
+                        bool hasCollisionAtStep = false;
+                        
+                        // check if this step position has any collisions
+                        foreach (var testAABB in collisionTargets) {
+                            if (AABB.isCollision(stepAABB, testAABB)) {
+                                hasCollisionAtStep = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!hasCollisionAtStep) {
+                            // found a valid step position
+                            position.Y += stepY;
+                            canStepUp = true;
+                            break;
+                        }
+                    }
                 }
-
-                else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
-                    var diff = blockAABB.maxX - aabbX.minX;
-                    //if (diff > velocity.X) {
-                    position.X += diff;
-                    //}
+                
+                if (!canStepUp) {
+                    // normal collision resolution
+                    if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
+                        var diff = blockAABB.minX - aabbX.maxX;
+                        position.X += diff;
+                    }
+                    else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
+                        var diff = blockAABB.maxX - aabbX.minX;
+                        position.X += diff;
+                    }
                 }
             }
 
@@ -203,18 +227,42 @@ public class Entity(World world) {
             var sneakaabbZ = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabbZ, blockAABB)) {
                 collisionZThisFrame = true;
-                if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
-                    var diff = blockAABB.minZ - aabbZ.maxZ;
-                    //if (diff < velocity.Z) {
-                    position.Z += diff;
-                    //}
+                
+                // try stepping up before blocking movement
+                bool canStepUp = false;
+                if (onGround && !sneaking && velocity.Z != 0) {
+                    // check if we can step up by trying positions up to stepHeight
+                    for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += Constants.epsilon) {
+                        var stepAABB = calcAABB(new Vector3D(position.X, position.Y + stepY, position.Z));
+                        bool hasCollisionAtStep = false;
+                        
+                        // check if this step position has any collisions
+                        foreach (var testAABB in collisionTargets) {
+                            if (AABB.isCollision(stepAABB, testAABB)) {
+                                hasCollisionAtStep = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!hasCollisionAtStep) {
+                            // found a valid step position
+                            position.Y += stepY;
+                            canStepUp = true;
+                            break;
+                        }
+                    }
                 }
-
-                else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
-                    var diff = blockAABB.maxZ - aabbZ.minZ;
-                    //if (diff > velocity.Z) {
-                    position.Z += diff;
-                    //}
+                
+                if (!canStepUp) {
+                    // normal collision resolution
+                    if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
+                        var diff = blockAABB.minZ - aabbZ.maxZ;
+                        position.Z += diff;
+                    }
+                    else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
+                        var diff = blockAABB.maxZ - aabbZ.minZ;
+                        position.Z += diff;
+                    }
                 }
             }
 

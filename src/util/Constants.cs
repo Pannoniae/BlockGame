@@ -28,6 +28,7 @@ public static class Constants {
     public const double airFlySpeed = 1.25;
     public const double liquidMoveSpeed = 0.45;
     public const double sneakFactor = 0.28;
+    public const double stepHeight = 0.6; // max height entity can step up
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 6f;
     public const double breakDelay = 16;
