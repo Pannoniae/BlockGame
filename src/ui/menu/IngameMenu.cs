@@ -275,9 +275,10 @@ public class IngameMenu : Menu, IDisposable {
         if (screen.debugScreen && !screen.fpsOnly) {
             var gui = Game.gui;
             var i = Game.instance;
-            var p = Game.player;
+            var p = Game.player!;
             var c = p.camera;
             var m = Game.metrics;
+            var w = Game.world!;
             var loadedChunks = Game.world.chunks.Count;
             var pos = p.position.toBlockPos();
             // current block
@@ -311,8 +312,10 @@ public class IngameMenu : Menu, IDisposable {
                 debugStr.AppendFormat("sl:{0}, bl:{1}, i:{2}\n", sl, bl, inited);
                 debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
                 if (i.targetedPos.HasValue) {
-                    debugStr.AppendFormat("{0}, {1}, {2} {3}, {4}, {5}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y,
-                        i.targetedPos.Value.Z, i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z);
+                    debugStr.AppendFormat("{0} {1} {2}, {3} {4} {5} {6} {7}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, 
+                        i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z, 
+                        w.getBlock(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z), 
+                        w.getBlockMetadata(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z));
                 }
                 else
                     debugStr.Append("No target\n");

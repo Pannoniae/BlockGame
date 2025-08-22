@@ -28,6 +28,7 @@ public class Menu {
     public Screen screen;
 
     public static LoadingMenu LOADING;
+    public static StartupLoadingMenu STARTUP_LOADING;
     public static MainMenu MAIN_MENU;
     public static LevelSelectMenu LEVEL_SELECT;
     public static SettingsMenu SETTINGS;
@@ -51,6 +52,8 @@ public class Menu {
 
     public static void init() {
         LOADING = new LoadingMenu();
+        // NOT HERE! initialised manually
+        //STARTUP_LOADING = new StartupLoadingMenu();
         MAIN_MENU = new MainMenu();
         LEVEL_SELECT = new LevelSelectMenu();
         SETTINGS = new SettingsMenu();

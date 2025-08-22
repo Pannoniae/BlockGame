@@ -316,10 +316,49 @@ public partial class Game {
         }
     }
 
+    /// <summary>
+    /// Renders a single frame during startup to show loading progress
+    /// </summary>
+    private void renderStartupFrame() {
+        window.DoEvents();
+        
+        // update the menu with a small dt to trigger animations
+        currentScreen.update(0.016);
+        
+        // minimal rendering for startup screen
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+        GL.Viewport(0, 0, (uint)width, (uint)height);
+        
+        // clear and render current screen
+        currentScreen.clear(0.016, 0);
+        
+        GL.Disable(EnableCap.DepthTest);
+        
+        // bind default texture for GUI rendering
+        graphics.tex(0, gui.colourTexture);
+        
+        // render GUI
+        graphics.mainBatch.Begin();
+        graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
+        
+        currentScreen.draw();
+        if (GUI.WIREFRAME) {
+            foreach (var element in currentScreen.currentMenu.elements.Values) {
+                gui.drawWireframe(element.bounds, Color4b.Red);
+            }
+        }
+        currentScreen.postDraw();
+        
+        graphics.mainBatch.End();
+        graphics.immediateBatch.End();
+        
+        GL.Enable(EnableCap.DepthTest);
+        
+        // swap buffers to display
+        window.SwapBuffers();
+    }
+
     private void init() {
-        //  set icon
-        setIconToBlock();
-        input = window.CreateInput();
         GL = window.CreateLegacyOpenGL();
 
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
@@ -415,52 +454,6 @@ public partial class Game {
             Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
         }
 
-        // get nv internalformat_sample_query
-
-        var _e = GL.TryGetExtension(out NVInternalformatSampleQuery nvInternalformatSampleQuery);
-
-        if (_e) {
-            Console.Out.WriteLine("NVInternalformatSampleQuery extension is available.");
-
-            // Implement the NV sample query functionality
-            unsafe {
-                const InternalFormat ifmt = InternalFormat.Rgba8;
-                const TextureTarget target = TextureTarget.Texture2DMultisample;
-
-                // Obtain supported sample count for a format
-                long numSampleCounts = 0;
-                GL.GetInternalformat(target, ifmt, InternalFormatPName.NumSampleCounts, 1u, &numSampleCounts);
-
-                if (numSampleCounts > 0) {
-                    // Get the list of supported samples for this format
-                    int* samples = stackalloc int[(int)numSampleCounts];
-                    GL.GetInternalformat(target, ifmt, InternalFormatPName.Samples, (uint)numSampleCounts, samples);
-
-                    // Loop over the supported formats and get per-sample properties
-                    for (int i = 0; i < numSampleCounts; i++) {
-                        int multisample = 0;
-                        int ssScaleX = 0, ssScaleY = 0;
-                        int conformant = 0;
-
-                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
-                            NV.MultisamplesNV, 1, &multisample);
-                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
-                            NV.SupersampleScaleXNV, 1, &ssScaleX);
-                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
-                            NV.SupersampleScaleYNV, 1, &ssScaleY);
-                        nvInternalformatSampleQuery.GetInternalformatSample(target, ifmt, (uint)samples[i],
-                            NV.ConformantNV, 1, &conformant);
-
-                        Console.Out.WriteLine($"Sample {i}: samples={samples[i]}, multisample={multisample}, " +
-                                              $"ss_scale_x={ssScaleX}, ss_scale_y={ssScaleY}, conformant={conformant}");
-                    }
-                }
-            }
-        }
-        else {
-            Console.Out.WriteLine("NVInternalformatSampleQuery extension is NOT available.");
-        }
-
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
         GL.Enable(EnableCap.Blend);
@@ -480,8 +473,11 @@ public partial class Game {
         Settings.instance.load();
 
         graphics = new Graphics();
-
-        textures = new Textures(GL);
+        
+        // initialize viewport and projection for GUI rendering
+        width = window.FramebufferSize.X;
+        height = window.FramebufferSize.Y;
+        graphics.resize(new Vector2D<int>(width, height));
 
         // Initialize FXAA shader uniforms
         g_fxaa_texelStepLocation = graphics.fxaaShader.getUniformLocation("u_texelStep");
@@ -507,23 +503,8 @@ public partial class Game {
         #if !DEBUG && LAPTOP_SUPPORT
             initDirectX();
         #endif
-
-        mouse = input.Mice[0];
-        mouse.MouseMove += onMouseMove;
-        mouse.MouseDown += onMouseDown;
-        mouse.MouseUp += onMouseUp;
-        mouse.Scroll += onMouseScroll;
-        mouse.Cursor.CursorMode = CursorMode.Normal;
         
-        keyboard = input.Keyboards[0];
-        keyboard.KeyDown += onKeyDown;
-        keyboard.KeyRepeat += onKeyRepeat;
-        keyboard.KeyUp += onKeyUp;
-        keyboard.KeyChar += onKeyChar;
         focused = true;
-
-        width = window.FramebufferSize.X;
-        height = window.FramebufferSize.Y;
 
         metrics = new Metrics();
         profiler = new Profiler();
@@ -540,29 +521,61 @@ public partial class Game {
 
         snd.muteMusic();
 
-        // Keep the console application running until playback finishes
-        Console.Out.WriteLine("played?");
-
+        // initialize the GUI first
         fontLoader = new FontLoader("fonts/BmPlus_IBM_VGA_9x16.otb", "fonts/BmPlus_IBM_VGA_9x16.otb");
-
         gui = new GUI();
         gui.loadFont(16);
+
+        // NOW we can show the startup loading screen
+        currentScreen = new MainMenuScreen();
+        Menu.STARTUP_LOADING = new StartupLoadingMenu();
+        setMenu(Menu.STARTUP_LOADING);
+        renderStartupFrame();
+        
+        //  set icon
+        Menu.STARTUP_LOADING.updateProgress(0.1f, "Loading joy");
+        setIconToBlock();
+        input = window.CreateInput();
+        
+        mouse = input.Mice[0];
+        mouse.MouseMove += onMouseMove;
+        mouse.MouseDown += onMouseDown;
+        mouse.MouseUp += onMouseUp;
+        mouse.Scroll += onMouseScroll;
+        mouse.Cursor.CursorMode = CursorMode.Normal;
+        
+        keyboard = input.Keyboards[0];
+        keyboard.KeyDown += onKeyDown;
+        keyboard.KeyRepeat += onKeyRepeat;
+        keyboard.KeyUp += onKeyUp;
+        keyboard.KeyChar += onKeyChar;
+        
+        Menu.STARTUP_LOADING.updateProgress(0.3f, "Loading textures");
+        textures = new Textures(GL);
+        Menu.init();
+        
+        Menu.STARTUP_LOADING.updateProgress(0.4f, "Loading fonts");
+        renderStartupFrame();
+
+        Menu.STARTUP_LOADING.updateProgress(0.5f, "Setting up renderer");
+        //Thread.Sleep(1000);
+        renderStartupFrame();
         renderer = new WorldRenderer();
         
+        Menu.STARTUP_LOADING.updateProgress(0.7f, "Initializing block renderer");
+        renderStartupFrame();
         blockRenderer = new BlockRenderer();
-        
-        Menu.init();
 
-
-        currentScreen = new MainMenuScreen();
-        setMenu(Menu.LOADING);
-
-
+        Menu.STARTUP_LOADING.updateProgress(0.8f, "Loading blocks");
+        renderStartupFrame();
         Block.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
-
+        
+        renderStartupFrame();
         Console.Out.WriteLine("Loaded ASCII font.");
+        Menu.STARTUP_LOADING.updateProgress(1.0f, "loaded!");
+        renderStartupFrame();
         switchTo(Menu.MAIN_MENU);
         Block.postLoad();
         resize(new Vector2D<int>(width, height));

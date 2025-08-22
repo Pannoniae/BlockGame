@@ -32,6 +32,8 @@ public class Text : GUIElement {
             // since unscaledSize = true, we need to store the size without guiScale applied
             guiPosition.Width = (int)(textSize.X);
             guiPosition.Height = (int)(textSize.Y);
+            
+            // we should update the x/y too, since the size changed
         }
     }
 
@@ -42,7 +44,7 @@ public class Text : GUIElement {
         var bounds = Game.gui.measureStringUI(text);
         //Console.Out.WriteLine("Text bounds: " + bounds);
         var guitext = new Text(menu, name, text);
-        guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(pos.X + bounds.X), (int)(pos.Y + bounds.Y)));
+        guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(bounds.X), (int)(bounds.Y)));
         return guitext;
     }
 
