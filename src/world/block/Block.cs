@@ -127,7 +127,7 @@ public class Block {
     //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
     //public static Block MAHOGANY_LEAVES = register(new Block(20, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
 
-    public static Block METAL_CUBE_BLUE;
+    public static Block OAK_SLAB;
     public static Block CANDY_LIGHT_BLUE;
     public static Block CANDY_CYAN;
     public static Block CANDY_TURQUOISE;
@@ -286,9 +286,9 @@ public class Block {
         MAPLE_LEAVES.setModel(BlockModel.makeCube(MAPLE_LEAVES));
         MAPLE_LEAVES.transparency();
         
-        METAL_CUBE_BLUE = register(new Block(Blocks.METAL_CUBE_BLUE, "Blue Metal Block"));
-        METAL_CUBE_BLUE.setTex(cubeUVs(12, 1));
-        METAL_CUBE_BLUE.setModel(BlockModel.makeCube(METAL_CUBE_BLUE));
+        OAK_SLAB = register(new Block(Blocks.OAK_SLAB, "Oak Slab"));
+        OAK_SLAB.setTex(cubeUVs(0,5));
+        OAK_SLAB.setModel(BlockModel.makeSlab(OAK_SLAB));
         
         CANDY_LIGHT_BLUE = register(new Block(Blocks.CANDY_LIGHT_BLUE, "Light Blue Candy"));
         CANDY_LIGHT_BLUE.setTex(cubeUVs(0, 2));

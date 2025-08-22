@@ -132,6 +132,27 @@ public class BlockModel {
         return model;
 
     }
+    
+    //make slab
+    public static BlockModel makeSlab(Block bl) {
+        var uvs = bl.uvs;
+        var model = new BlockModel();
+        model.faces = new Face[6];
+        // west
+        model.faces[0] = new(0, 0.5f, 1, 0, 0, 1, 0, 0, 0, 0, 0.5f, 0, uvs[0], uvs[0] + 0.5f, RawDirection.WEST, true, true);
+        // east
+        model.faces[1] = new(1, 0.5f, 0, 1, 0, 0, 1, 0, 1, 1, 0.5f, 1, uvs[0], uvs[0] + 0.5f, RawDirection.EAST, true, true);
+        // south
+        model.faces[2] = new(0, 0.5f, 0, 0, 0, 0, 1 ,0, 0, 1, 0.5f, 0, uvs[0], uvs[0] + 0.5f, RawDirection.SOUTH, true, true);
+        // north
+        model.faces[3] = new(1, 0.5f, 1, 1, 0, 1, 0, 0, 1, 0, 0.5f, 1, uvs[0], uvs[0] + 0.5f, RawDirection.NORTH, true, true);
+        // down
+        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[0], uvs[0] + 0.5f, RawDirection.DOWN, true, true);
+        // up
+        model.faces[5] = new(0, 0.5f, 1, 0, 0.5f, 0, 1, 0.5f, 0, 1, 0.5f, 1, uvs[0], uvs[0] + 0.5f, RawDirection.UP, true, true);
+        return model;
+
+    }
 
     //make a 12x14 pixel partial cube
     public static BlockModel makePartialCube(Block bl) {

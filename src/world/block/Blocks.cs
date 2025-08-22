@@ -21,7 +21,7 @@ public class Blocks {
     public const ushort MAPLE_STAIRS = 17;
     public const ushort MAPLE_LOG = 18;
     public const ushort MAPLE_LEAVES = 19;
-    public const ushort METAL_CUBE_BLUE = 20;
+    public const ushort OAK_SLAB = 20;
     public const ushort CANDY_LIGHT_BLUE = 21;
     public const ushort CANDY_CYAN = 22;
     public const ushort CANDY_TURQUOISE = 23;
