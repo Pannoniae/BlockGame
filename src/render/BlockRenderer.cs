@@ -269,9 +269,6 @@ public class BlockRenderer {
 
 
         for (int i = 0; i < 4; i++) {
-            var blocklight = (byte)(light.bytes[i] >> 4);
-            var skylight = (byte)(light.bytes[i] & 0xF);
-            var lightVal = Meth.b2f(Unsafe.BitCast<Rgba32, uint>(Game.textures.light(blocklight, skylight)));
             float tint = a[(byte)dir] * aoArray[ao.bytes[i]];
 
             //var res = (tint);
@@ -298,7 +295,7 @@ public class BlockRenderer {
     /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
     /// Positions are in local block coordinates (0-1 range typically).
     /// </summary>
-    public void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public unsafe void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
                           float x1, float y1, float z1, float x2, float y2, float z2,
                           float x3, float y3, float z3, float x4, float y4, float z4,
                           float uMin, float vMin, float uMax, float vMax) {
@@ -318,72 +315,20 @@ public class BlockRenderer {
             return;
         }
         
+        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
+        Span<Vector4> colourCache = stackalloc Vector4[4];
+        Span<byte> lightColourCache = stackalloc byte[4];
+        
+        
         // calculate lighting and AO
-        calculateFaceLighting(dir, out FourBytes light, out FourBytes ao);
+        applyFaceLighting(dir, colourCache, lightColourCache);
         
-        // get texture coordinates
-        var tex = getAtlasCoords(uMin, vMin, uMax, vMax);
-        
-        // convert to world coordinates and apply transformations
-        var vec = Vector256.Create(
-            x + x1, y + y1, z + z1,  // vertex 1
-            x + x2, y + y2, z + z2,  // vertex 2
-            x + x3, y + y3);         // vertex 3 partial
-        var vec2 = Vector128.Create(z + z3, x + x4, y + y4, z + z4); // vertex 3 z + vertex 4
-        
-        vec = Vector256.Add(vec, Vector256.Create(16f));
-        vec = Vector256.Multiply(vec, 256);
-        vec2 = Vector128.Add(vec2, Vector128.Create(16f));
-        vec2 = Vector128.Multiply(vec2, 256);
-        
-        // determine vertex order to prevent cracks
-        var dark1 = (~light.First & 0xF);
-        var dark2 = (~light.Second & 0xF);
-        var dark3 = (~light.Third & 0xF);
-        var dark4 = (~light.Fourth & 0xF);
-        
-        var shift = (ao.First + dark1 + ao.Third + dark3 > ao.Second + dark2 + ao.Fourth + dark4).toByte();
-        
-        // create vertices
-        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
-        
-        ref var vertex = ref tempVertices[(0 + shift) & 3];
-        vertex.x = (ushort)vec[0];
-        vertex.y = (ushort)vec[1]; 
-        vertex.z = (ushort)vec[2];
-        vertex.u = (ushort)tex[0];
-        vertex.v = (ushort)tex[1];
-        vertex.cu = Block.packColourB((byte)dir, ao.First);
-        vertex.light = light.First;
-        
-        vertex = ref tempVertices[(1 + shift) & 3];
-        vertex.x = (ushort)vec[3];
-        vertex.y = (ushort)vec[4];
-        vertex.z = (ushort)vec[5];
-        vertex.u = (ushort)tex[0];
-        vertex.v = (ushort)tex[3];
-        vertex.cu = Block.packColourB((byte)dir, ao.Second);
-        vertex.light = light.Second;
-        
-        vertex = ref tempVertices[(2 + shift) & 3];
-        vertex.x = (ushort)vec[6];
-        vertex.y = (ushort)vec[7];
-        vertex.z = (ushort)vec2[0];
-        vertex.u = (ushort)tex[2];
-        vertex.v = (ushort)tex[3];
-        vertex.cu = Block.packColourB((byte)dir, ao.Third);
-        vertex.light = light.Third;
-        
-        vertex = ref tempVertices[(3 + shift) & 3];
-        vertex.x = (ushort)vec2[1];
-        vertex.y = (ushort)vec2[2];
-        vertex.z = (ushort)vec2[3];
-        vertex.u = (ushort)tex[2];
-        vertex.v = (ushort)tex[1];
-        vertex.cu = Block.packColourB((byte)dir, ao.Fourth);
-        vertex.light = light.Fourth;
-        
-        vertices.AddRange(tempVertices);
+        begin(cache);
+        vertex(x + x1, y + y1, z + z1, uMin, vMin);
+        vertex(x + x2, y + y2, z + z2, uMin, vMax);
+        vertex(x + x3, y + y3, z + z3, uMax, vMax);
+        vertex(x + x4, y + y4, z + z4, uMax, vMin);
+        end(vertices);
     }
 
     // Immediate-mode vertex building API
@@ -844,143 +789,131 @@ public class BlockRenderer {
      * (Assumptions: the lighting is what you'd expect from the faces, you need a properly culled cube, you don't need extra tint, your texture maps 1:1 with world pixels)
      */
     [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
-    public static void renderCuboid(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
-        float x1, float y1, float z1, float x2, float y2, float z2,
-        float baseUMin, float baseVMin, float baseUMax, float baseVMax) {
+    public static void renderCube(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+        float x0, float y0, float z0, float x1, float y1, float z1,
+        float u0, float v0, float u1, float v1) {
         
         Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
         Span<Vector4> colourCache = stackalloc Vector4[4];
         Span<byte> lightColourCache = stackalloc byte[4];
 
-        var cuboidWidth = x2 - x1;
-        var cuboidHeight = y2 - y1;
-        var cuboidDepth = z2 - z1;
-        var uRange = baseUMax - baseUMin;
-        var vRange = baseVMax - baseVMin;
+        var xe = x1 - x0;
+        var ye = y1 - y0;
+        var ze = z1 - z0;
+        var ue = u1 - u0;
+        var ve = v1 - v0;
 
         // WEST face
-        var westUMin = baseUMin;
-        var westUMax = baseUMin + uRange * cuboidDepth;
-        var westVMin = baseVMin + vRange * (1f - cuboidHeight);
-        var westVMax = baseVMax;
-        var direction = Direction.getDirection(RawDirection.WEST);
-        var neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        var westUMax = u0 + ue * ze;
+        var westVMin = v0 + ve * (1f - ye);
+        var vec = Direction.getDirection(RawDirection.WEST);
+        var nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
         
-        bool isOnBoundary = x1 == 0f;
-        bool shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        bool edge = x0 == 0f;
+        bool render = !Block.fullBlock[nb] || !edge;
         
-        if (shouldRender) {
+        if (render) {
             br.applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
             br.begin(cache);
-            br.vertex(x + x1, y + y2, z + z2, westUMin, westVMin);
-            br.vertex(x + x1, y + y1, z + z2, westUMin, westVMax);
-            br.vertex(x + x1, y + y1, z + z1, westUMax, westVMax);
-            br.vertex(x + x1, y + y2, z + z1, westUMax, westVMin);
+            br.vertex(x + x0, y + y1, z + z1, u0, westVMin);
+            br.vertex(x + x0, y + y0, z + z1, u0, v1);
+            br.vertex(x + x0, y + y0, z + z0, westUMax, v1);
+            br.vertex(x + x0, y + y1, z + z0, westUMax, westVMin);
             br.end(vertices);
         }
 
         // EAST face
-        var eastUMin = baseUMin;
-        var eastUMax = baseUMin + uRange * cuboidDepth;
-        var eastVMin = baseVMin + vRange * (1f - cuboidHeight);
-        var eastVMax = baseVMax;
-        direction = Direction.getDirection(RawDirection.EAST);
-        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        var eastUMax = u0 + ue * ze;
+        var eastVMin = v0 + ve * (1f - ye);
+        vec = Direction.getDirection(RawDirection.EAST);
+        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
-        isOnBoundary = x2 == 1f;
-        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        edge = x1 == 1f;
+        render = !Block.fullBlock[nb] || !edge;
 
-        if (shouldRender) {
+        if (render) {
             br.applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
             br.begin(cache);
-            br.vertex(x + x2, y + y2, z + z1, eastUMin, eastVMin);
-            br.vertex(x + x2, y + y1, z + z1, eastUMin, eastVMax);
-            br.vertex(x + x2, y + y1, z + z2, eastUMax, eastVMax);
-            br.vertex(x + x2, y + y2, z + z2, eastUMax, eastVMin);
+            br.vertex(x + x1, y + y1, z + z0, u0, eastVMin);
+            br.vertex(x + x1, y + y0, z + z0, u0, v1);
+            br.vertex(x + x1, y + y0, z + z1, eastUMax, v1);
+            br.vertex(x + x1, y + y1, z + z1, eastUMax, eastVMin);
             br.end(vertices);
         }
 
         // SOUTH face
-        var southUMin = baseUMin;
-        var southUMax = baseUMin + uRange * cuboidWidth;
-        var southVMin = baseVMin + vRange * (1f - cuboidHeight);
-        var southVMax = baseVMax;
-        direction = Direction.getDirection(RawDirection.SOUTH);
-        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        var southUMax = u0 + ue * xe;
+        var southVMin = v0 + ve * (1f - ye);
+        vec = Direction.getDirection(RawDirection.SOUTH);
+        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
-        isOnBoundary = z1 == 0f;
-        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        edge = z0 == 0f;
+        render = !Block.fullBlock[nb] || !edge;
 
-        if (shouldRender) {
+        if (render) {
             br.applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
             br.begin(cache);
-            br.vertex(x + x1, y + y2, z + z1, southUMin, southVMin);
-            br.vertex(x + x1, y + y1, z + z1, southUMin, southVMax);
-            br.vertex(x + x2, y + y1, z + z1, southUMax, southVMax);
-            br.vertex(x + x2, y + y2, z + z1, southUMax, southVMin);
+            br.vertex(x + x0, y + y1, z + z0, u0, southVMin);
+            br.vertex(x + x0, y + y0, z + z0, u0, v1);
+            br.vertex(x + x1, y + y0, z + z0, southUMax, v1);
+            br.vertex(x + x1, y + y1, z + z0, southUMax, southVMin);
             br.end(vertices);
         }
 
         // NORTH face
-        var northUMin = baseUMin;
-        var northUMax = baseUMin + uRange * cuboidWidth;
-        var northVMin = baseVMin + vRange * (1f - cuboidHeight);
-        var northVMax = baseVMax;
-        direction = Direction.getDirection(RawDirection.NORTH);
-        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        var northUMax = u0 + ue * xe;
+        var northVMin = v0 + ve * (1f - ye);
+        vec = Direction.getDirection(RawDirection.NORTH);
+        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
         
-        isOnBoundary = z2 == 1f;
-        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        edge = z1 == 1f;
+        render = !Block.fullBlock[nb] || !edge;
         
-        if (shouldRender) {
+        if (render) {
             br.applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
             br.begin(cache);
-            br.vertex(x + x2, y + y2, z + z2, northUMin, northVMin);
-            br.vertex(x + x2, y + y1, z + z2, northUMin, northVMax);
-            br.vertex(x + x1, y + y1, z + z2, northUMax, northVMax);
-            br.vertex(x + x1, y + y2, z + z2, northUMax, northVMin);
+            br.vertex(x + x1, y + y1, z + z1, u0, northVMin);
+            br.vertex(x + x1, y + y0, z + z1, u0, v1);
+            br.vertex(x + x0, y + y0, z + z1, northUMax, v1);
+            br.vertex(x + x0, y + y1, z + z1, northUMax, northVMin);
             br.end(vertices);
         }
 
         // DOWN face
-        var downUMin = baseUMin;
-        var downUMax = baseUMin + uRange * cuboidWidth;
-        var downVMin = baseVMin;
-        var downVMax = baseVMin + vRange * cuboidDepth;
-        direction = Direction.getDirection(RawDirection.DOWN);
-        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        var downUMax = u0 + ue * xe;
+        var downVMax = v0 + ve * ze;
+        vec = Direction.getDirection(RawDirection.DOWN);
+        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
-        isOnBoundary = y1 == 0f;
-        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        edge = y0 == 0f;
+        render = !Block.fullBlock[nb] || !edge;
 
-        if (shouldRender) {
+        if (render) {
             br.applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
             br.begin(cache);
-            br.vertex(x + x2, y + y1, z + z2, downUMin, downVMin);
-            br.vertex(x + x2, y + y1, z + z1, downUMin, downVMax);
-            br.vertex(x + x1, y + y1, z + z1, downUMax, downVMax);
-            br.vertex(x + x1, y + y1, z + z2, downUMax, downVMin);
+            br.vertex(x + x1, y + y0, z + z1, u0, v0);
+            br.vertex(x + x1, y + y0, z + z0, u0, downVMax);
+            br.vertex(x + x0, y + y0, z + z0, downUMax, downVMax);
+            br.vertex(x + x0, y + y0, z + z1, downUMax, v0);
             br.end(vertices);
         }
 
         // UP face  
-        var upUMin = baseUMin;
-        var upUMax = baseUMin + uRange * cuboidWidth;
-        var upVMin = baseVMin;
-        var upVMax = baseVMin + vRange * cuboidDepth;
-        direction = Direction.getDirection(RawDirection.UP);
-        neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+        var upUMax = u0 + ue * xe;
+        var upVMax = v0 + ve * ze;
+        vec = Direction.getDirection(RawDirection.UP);
+        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
             
-        isOnBoundary = y2 == 1f;
-        shouldRender = !Block.fullBlock[neighbourBlock] || !isOnBoundary;
+        edge = y1 == 1f;
+        render = !Block.fullBlock[nb] || !edge;
 
-        if (shouldRender) {
+        if (render) {
             br.applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
             br.begin(cache);
-            br.vertex(x + x1, y + y2, z + z2, upUMin, upVMin);
-            br.vertex(x + x1, y + y2, z + z1, upUMin, upVMax);
-            br.vertex(x + x2, y + y2, z + z1, upUMax, upVMax);
-            br.vertex(x + x2, y + y2, z + z2, upUMax, upVMin);
+            br.vertex(x + x0, y + y1, z + z1, u0, v0);
+            br.vertex(x + x0, y + y1, z + z0, u0, upVMax);
+            br.vertex(x + x1, y + y1, z + z0, upUMax, upVMax);
+            br.vertex(x + x1, y + y1, z + z1, upUMax, v0);
             br.end(vertices);
         }
     }
@@ -1076,9 +1009,8 @@ public class BlockRenderer {
             ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
             
             // if smooth lighting, fill cache
-            if (smoothLighting) {
-                fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
-            }
+            // status update: we fill it regardless otherwise we crash lol
+            fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
             
             switch (Block.renderType[blockID]) {
                 case RenderType.CUBE:

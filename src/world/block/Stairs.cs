@@ -71,9 +71,9 @@ public class Stairs : Block {
         }
 
         // render bottom cuboid (full width, half height)
-        BlockRenderer.renderCuboid(br, x, y, z, vertices, 0f, 0f, 0f, 1f, 0.5f, 1f, u0, v0, u1, v1);
+        BlockRenderer.renderCube(br, x, y, z, vertices, 0f, 0f, 0f, 1f, 0.5f, 1f, u0, v0, u1, v1);
         
         // render top cuboid (variable size based on facing)
-        BlockRenderer.renderCuboid(br, x, y, z, vertices, tx1, 0.5f, tz1, tx2, 1f, tz2, u0, v0, u1, v1);
+        BlockRenderer.renderCube(br, x, y, z, vertices, tx1, 0.5f, tz1, tx2, 1f, tz2, u0, v0, u1, v1);
     }
 }
