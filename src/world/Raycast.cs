@@ -6,6 +6,8 @@ using Molten.DoublePrecision;
 namespace BlockGame;
 
 public class Raycast {
+    private static readonly List<AABB> AABBList = [];
+
     /// <summary>
     /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
     /// </summary>
@@ -26,44 +28,47 @@ public class Raycast {
             dist += (cameraForward * Constants.RAYCASTSTEP).Length();
             currentPos += cameraForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();
-            var block = Block.get(world.getBlock(blockPos));
             if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
                 // we also need to check if it's inside the selection of the block
-                if (AABB.isCollision(world.getSelectionAABB(blockPos.X, blockPos.Y, blockPos.Z, block) ?? AABB.empty, currentPos)) {
-                    //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
-                    // the hit face is the one where the change is the greatest
-                    var dx = blockPos.X - previous.X;
-                    var dy = blockPos.Y - previous.Y;
-                    var dz = blockPos.Z - previous.Z;
-                    var adx = Math.Abs(dx);
-                    var ady = Math.Abs(dy);
-                    var adz = Math.Abs(dz);
-                    RawDirection f;
-                    if (adx > ady) {
-                        if (adx > adz) {
-                            f = dx > 0 ? RawDirection.WEST : RawDirection.EAST;
+                world.getAABBs(AABBList, blockPos.X, blockPos.Y, blockPos.Z);
+                foreach (AABB aabb in AABBList) {
+                    if (AABB.isCollision(aabb, currentPos)) {
+                        //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
+                        // the hit face is the one where the change is the greatest
+                        var dx = blockPos.X - previous.X;
+                        var dy = blockPos.Y - previous.Y;
+                        var dz = blockPos.Z - previous.Z;
+                        var adx = Math.Abs(dx);
+                        var ady = Math.Abs(dy);
+                        var adz = Math.Abs(dz);
+                        RawDirection f;
+                        if (adx > ady) {
+                            if (adx > adz) {
+                                f = dx > 0 ? RawDirection.WEST : RawDirection.EAST;
+                            }
+                            else {
+                                f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
+                            }
                         }
                         else {
-                            f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
+                            if (ady > adz) {
+                                f = dy > 0 ? RawDirection.DOWN : RawDirection.UP;
+                            }
+                            else {
+                                f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
+                            }
                         }
+
+                        var col = new RayCollision {
+                            point = currentPos,
+                            previous = previous,
+                            block = blockPos,
+                            hit = true,
+                            distance = dist,
+                            face = f
+                        };
+                        return col;
                     }
-                    else {
-                        if (ady > adz) {
-                            f = dy > 0 ? RawDirection.DOWN : RawDirection.UP;
-                        }
-                        else {
-                            f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
-                        }
-                    }
-                    var col = new RayCollision {
-                        point = currentPos,
-                        previous = previous,
-                        block = blockPos,
-                        hit = true,
-                        distance = dist,
-                        face = f
-                    };
-                    return col;
                 }
             }
 

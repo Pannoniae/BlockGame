@@ -5,8 +5,6 @@ using BlockGame.util;
 namespace BlockGame;
 
 public sealed class ArrayBlockData : BlockData, IDisposable {
-
-
     public static readonly FixedArrayPool<uint> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static readonly FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
@@ -33,7 +31,6 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
-        
         // TODO removed the inited check, add it back when the unloaded chunk optimisation is implemented properly
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getID();
@@ -85,17 +82,18 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     }
 
     public byte getMetadata(int x, int y, int z) {
-            return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getMetadata();
-        }
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getMetadata();
+    }
+
     public void setMetadata(int x, int y, int z, byte val) {
         ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
         blockRef.setMetadata(val);
     }
-    
+
     public uint getRaw(int x, int y, int z) {
         return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
     }
-    
+
     public void setRaw(int x, int y, int z, uint value) {
         Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
     }
@@ -110,7 +108,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public void fastSet(int x, int y, int z, ushort val) {
         Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = val;
     }
-    
+
     /// <summary>
     /// Kind of like <see cref="fastSet"/>, but doesn't check if the block data is initialized. I've warned you.
     /// </summary>
@@ -122,11 +120,11 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         this.chunk = chunk;
         this.yCoord = yCoord;
         //inited = false;
-        
+
         // TODO disabled the empty chunk memory optimisation, because it was fucking up the lighting! this needs to be fixed later
         init();
     }
-    
+
     // don't inline this, lots of useless code we don't need in the common case.
     //[MethodImpl(MethodImplOptions.NoInlining)]
     public void init() {
@@ -170,14 +168,17 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         if (blocks != null) {
             blockPool.putBack(blocks);
         }
+
         if (light != null) {
             lightPool.putBack(light);
         }
     }
+
     public void Dispose() {
         ReleaseUnmanagedResources();
         GC.SuppressFinalize(this);
     }
+
     ~ArrayBlockData() {
         ReleaseUnmanagedResources();
     }
@@ -190,6 +191,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         if (!inited) {
             return;
         }
+
         blockCount = 0;
         translucentCount = 0;
         fullBlockCount = 0;
@@ -204,20 +206,23 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             if (block != 0) {
                 blockCount++;
             }
+
             if (Block.randomTick[block]) {
                 randomTickCount++;
             }
+
             if (Block.isFullBlock(block)) {
                 chunk.addToHeightMap(x, (yCoord << 4) + y, z);
                 fullBlockCount++;
             }
+
             if (Block.isTranslucent(block)) {
                 translucentCount++;
             }
+
             blockArray = ref Unsafe.Add(ref blockArray, 1);
         }
     }
-
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

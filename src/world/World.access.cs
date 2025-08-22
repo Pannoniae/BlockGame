@@ -52,6 +52,26 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : (ushort)0;
     }
+    
+    public byte getBlockMetadata(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return 0;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getMetadata(blockPos.X, y, blockPos.Z) : (byte)0;
+    }
+    
+    public uint getBlockRaw(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return 0;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getBlockRaw(blockPos.X, y, blockPos.Z) : 0;
+    }
 
     public byte getLight(int x, int y, int z) {
         if (y is < 0 or >= WORLDHEIGHT) {
@@ -190,42 +210,32 @@ public partial class World {
         return getBlock(pos.X, pos.Y, pos.Z);
     }
 
-    public AABB? getAABB(int x, int y, int z, Block block) {
-        var aabb = Block.AABB[block.id];
+    public List<AABB> getAABBs(int x, int y, int z) {
+        var result = new List<AABB>();
+        getAABBs(result, x, y, z);
+        return result;
+    }
+
+    public void getAABBs(List<AABB> result, int x, int y, int z) {
+        
+        var b = getBlockRaw(x, y, z);
+        var id = b.getID();
+        var metadata = b.getMetadata();
+        
+        result.Clear();
+
+        if (Block.customAABB[id]) {
+            Block.get(id).getAABBs(this, x, y, z, metadata, result);
+            return;
+        }
+        
+        var aabb = Block.AABB[id];
         if (aabb == null) {
-            return null;
+            return;
         }
 
-        return new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
-            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
-    }
-
-    public AABB? getAABB(int x, int y, int z, ushort id) {
-        if (id == 0) {
-            return null;
-        }
-
-        var block = Block.get(id);
-        return getAABB(x, y, z, block);
-    }
-
-    public AABB? getSelectionAABB(int x, int y, int z, ushort id) {
-        if (id == 0) {
-            return null;
-        }
-
-        var block = Block.get(id);
-        return getSelectionAABB(x, y, z, block);
-    }
-
-    public AABB? getSelectionAABB(int x, int y, int z, Block block) {
-        var aabb = Block.selectionAABB[block.id];
-        if (aabb == null) {
-            return null;
-        }
-
-        return new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
-            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ));
+        result.Add(new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
+            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ)));
     }
 
     public void setBlock(int x, int y, int z, ushort block) {

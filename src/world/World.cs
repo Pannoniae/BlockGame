@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.ui;
@@ -78,6 +79,7 @@ public partial class World : IDisposable {
 
     public XRandom random;
     private TimerAction saveWorld;
+    private static readonly List<AABB> listAABB = [];
 
     public World(string name, int seed) {
         this.name = name;
@@ -275,10 +277,13 @@ public partial class World : IDisposable {
                     if (bl == Blocks.AIR) {
                         continue;
                     }
-
-                    var blockAABB = getAABB(x, y, z, bl);
-                    if (blockAABB != null && AABB.isCollision(playerAABB, blockAABB.Value)) {
-                        return false;
+                    
+                    
+                    getAABBs(listAABB, x, y, z);
+                    foreach (var aabb in listAABB) {
+                        if (AABB.isCollision(playerAABB, aabb)) {
+                            return false;
+                        }
                     }
                 }
             }

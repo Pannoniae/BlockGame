@@ -3,7 +3,8 @@ namespace BlockGame.util;
 public class BlockModel {
     public Face[] faces;
 
-    public static BlockModel makeCube(UVPair[] uvs) {
+    public static BlockModel makeCube(Block bl) {
+        var uvs = bl.uvs;
         var model = new BlockModel();
         model.faces = new Face[6];
         // west
@@ -24,7 +25,8 @@ public class BlockModel {
     /// <summary>
     /// Liquids are cubes but only the bottom 7/8th of the block is drawn
     /// </summary>
-    public static BlockModel makeLiquid(UVPair[] uvs) {
+    public static BlockModel makeLiquid(Block bl) {
+        var uvs = bl.uvs;
         // make it slightly smaller to avoid zfighting
         var model = new BlockModel();
         model.faces = new Face[6];
@@ -55,7 +57,8 @@ public class BlockModel {
     }
 
     // make a nice X
-    public static BlockModel makeGrass(UVPair[] uvs) {
+    public static BlockModel makeGrass(Block bl) {
+        var uvs = bl.uvs;
         var model = new BlockModel();
         model.faces = new Face[4];
 
@@ -81,7 +84,8 @@ public class BlockModel {
         return 0;
     }
 
-    public static BlockModel makeStairs(UVPair[] uvs) {
+    public static BlockModel makeStairs(Block bl) {
+        var uvs = bl.uvs;
         var model = new BlockModel();
         model.faces = new Face[10];
 
@@ -109,7 +113,8 @@ public class BlockModel {
     }
 
     //make a 8x8 pixel half cube
-    public static BlockModel makeHalfCube(UVPair[] uvs) {
+    public static BlockModel makeHalfCube(Block bl) {
+        var uvs = bl.uvs;
         var model = new BlockModel();
         model.faces = new Face[6];
         // west
@@ -129,7 +134,8 @@ public class BlockModel {
     }
 
     //make a 12x14 pixel partial cube
-    public static BlockModel makePartialCube(UVPair[] uvs) {
+    public static BlockModel makePartialCube(Block bl) {
+        var uvs = bl.uvs;
         var model = new BlockModel();
         var offset = 2 / 16f;
         var offset1 = 6 / 16f;
@@ -157,7 +163,8 @@ public class BlockModel {
     }
 
     //makeTorch
-    public static BlockModel makeTorch(UVPair[] uvs) {
+    public static BlockModel makeTorch(Block bl) {
+        var uvs = bl.uvs;
         var model = new BlockModel();
         model.faces = new Face[10];
         //bottom

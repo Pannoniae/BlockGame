@@ -140,10 +140,6 @@ public class GameScreen : Screen {
             Game.instance.previousPos = null;
         }
 
-        bool meshOutline = col.hit && prevTargetedPos != Game.instance.targetedPos;
-        if (meshOutline) {
-            Game.renderer.meshBlockOutline();
-        }
     }
 
     public override void render(double dt, double interp) {

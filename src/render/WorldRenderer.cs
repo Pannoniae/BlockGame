@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
@@ -30,15 +31,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public Shader dummyShader;
     public Shader waterShader;
 
-    public Shader outline;
-    private uint outlineVao;
-    private uint outlineVbo;
-
-    private uint outlineCount;
-
-    //private int outline_uModel;
-    private int outline_uView;
-    private int outline_uProjection;
 
     //public int uColor;
     public int blockTexture;
@@ -137,7 +129,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         
 
-        outline = new Shader(Game.GL, nameof(outline), "shaders/world/outline.vert", "shaders/world/outline.frag");
 
         worldShader.setUniform(blockTexture, 0);
         worldShader.setUniform(lightTexture, 1);
@@ -153,7 +144,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterFogColour, defaultFogColour);
         waterShader.setUniform(waterHorizonColour, defaultClearColour);
 
-        initBlockOutline();
 
         // initialize chunk UBO (16 bytes: vec3 + padding)
         //chunkUBO = new UniformBuffer(GL, 256, 0);
@@ -802,6 +792,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     /** Stores the chunk positions! */
     private readonly List<Vector4> chunkData;
 
+    private static readonly List<AABB> AABBList = [];
+
     private void renderSky(double interp) {
         // if <= 4 chunks, don't render sky
         if (Settings.instance.renderDistance <= 4) {
@@ -940,105 +932,72 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.Enable(EnableCap.CullFace);
     }
 
-    public void initBlockOutline() {
-        unsafe {
-            var GL = Game.GL;
 
-            GL.DeleteVertexArray(outlineVao);
-            outlineVao = GL.GenVertexArray();
-            GL.BindVertexArray(outlineVao);
-
-            // 24 verts of 3 floats
-            GL.DeleteBuffer(outlineVbo);
-            outlineVbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
-            GL.BufferData(BufferTargetARB.ArrayBuffer, 24 * 3 * sizeof(float), 0,
-                BufferUsageARB.StreamDraw);
-
-            outlineCount = 24;
-            GL.BindVertexBuffer(0, outlineVbo, 0, 3 * sizeof(float));
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
-            GL.VertexAttribBinding(0, 0);
-            
-
-            outline.use();
-            //outline_uModel = outline.getUniformLocation("uModel");
-            outline_uView = outline.getUniformLocation("uView");
-            outline_uProjection = outline.getUniformLocation("uProjection");
-        }
-    }
-
-    public void meshBlockOutline() {
-        unsafe {
-            var GL = Game.GL;
-            var pos = Game.instance.targetedPos!.Value;
-            var block = world.getBlock(pos);
-            var s = world.getSelectionAABB(pos.X, pos.Y, pos.Z, block)!;
-            if (!s.HasValue) {
-                return;
-            }
-
-            var sel = s.Value;
-            const float OFFSET = 0.005f;
-            var minX = (float)sel.min.X - OFFSET;
-            var minY = (float)sel.min.Y - OFFSET;
-            var minZ = (float)sel.min.Z - OFFSET;
-            var maxX = (float)sel.max.X + OFFSET;
-            var maxY = (float)sel.max.Y + OFFSET;
-            var maxZ = (float)sel.max.Z + OFFSET;
-
-            GL.BindVertexArray(outlineVao);
-
-
-            Span<float> vertices = [
-                // bottom
-                minX, minY, minZ,
-                minX, minY, maxZ,
-                minX, minY, maxZ,
-                maxX, minY, maxZ,
-                maxX, minY, maxZ,
-                maxX, minY, minZ,
-                maxX, minY, minZ,
-                minX, minY, minZ,
-
-                // top
-                minX, maxY, minZ,
-                minX, maxY, maxZ,
-                minX, maxY, maxZ,
-                maxX, maxY, maxZ,
-                maxX, maxY, maxZ,
-                maxX, maxY, minZ,
-                maxX, maxY, minZ,
-                minX, maxY, minZ,
-
-                // sides
-                minX, minY, minZ,
-                minX, maxY, minZ,
-                maxX, minY, minZ,
-                maxX, maxY, minZ,
-                minX, minY, maxZ,
-                minX, maxY, maxZ,
-                maxX, minY, maxZ,
-                maxX, maxY, maxZ
-            ];
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, outlineVbo);
-            GL.InvalidateBufferData(outlineVbo);
-            fixed (float* data = vertices) {
-                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(vertices.Length * sizeof(float)), data);
-            }
-        }
-    }
 
     public void drawBlockOutline(double interp) {
-        var GL = Game.GL;
-        //var block = Game.instance.targetedPos!.Value;
-        GL.BindVertexArray(outlineVao);
-        outline.use();
-        //outline.setUniform(outline_uModel, Matrix4x4.CreateTranslation(block.X, block.Y, block.Z));
-        outline.setUniform(outline_uView, world.player.camera.getViewMatrix(interp));
-        outline.setUniform(outline_uProjection, world.player.camera.getProjectionMatrix());
-        GL.DrawArrays(PrimitiveType.Lines, 0, outlineCount);
+        var pos = Game.instance.targetedPos;
+        if (pos == null) return;
+        
+        var targetPos = pos.Value;
+        world.getAABBs(AABBList, targetPos.X, targetPos.Y, targetPos.Z);
+
+        if (AABBList.Count == 0) {
+            return;
+        }
+        
+        // disable fog for outline rendering
+        idc.enableFog(false);
+
+        var view = world.player.camera.getViewMatrix(interp);
+        var viewProj = view * world.player.camera.getProjectionMatrix();
+        
+        idc.setMV(view);
+        idc.setMVP(viewProj);
+        idc.begin(PrimitiveType.Lines);
+        
+        var outlineColor = new Color(0, 0, 0, 255);
+        
+        foreach (var aabb in AABBList) {
+            const float OFFSET = 0.005f;
+            var minX = (float)aabb.min.X - OFFSET;
+            var minY = (float)aabb.min.Y - OFFSET;
+            var minZ = (float)aabb.min.Z - OFFSET;
+            var maxX = (float)aabb.max.X + OFFSET;
+            var maxY = (float)aabb.max.Y + OFFSET;
+            var maxZ = (float)aabb.max.Z + OFFSET;
+            
+            // bottom face
+            idc.addVertex(new VertexTinted(minX, minY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, minY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, minY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, minY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, minY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, minY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, minY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, minY, minZ, outlineColor));
+            
+            // top face
+            idc.addVertex(new VertexTinted(minX, maxY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, maxY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, maxY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, maxY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, maxY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, maxY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, maxY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, maxY, minZ, outlineColor));
+            
+            // vertical edges
+            idc.addVertex(new VertexTinted(minX, minY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, maxY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, minY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, maxY, minZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, minY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(minX, maxY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, minY, maxZ, outlineColor));
+            idc.addVertex(new VertexTinted(maxX, maxY, maxZ, outlineColor));
+        }
+        
+        idc.end();
     }
 
 
@@ -1086,15 +1045,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             chunkVAO = 0;
         }
 
-        if (outlineVao != 0) {
-            Game.GL.DeleteVertexArray(outlineVao);
-            outlineVao = 0;
-        }
-
-        if (outlineVbo != 0) {
-            Game.GL.DeleteBuffer(outlineVbo);
-            outlineVbo = 0;
-        }
 
         if (worldShader != null!) {
             worldShader.Dispose();

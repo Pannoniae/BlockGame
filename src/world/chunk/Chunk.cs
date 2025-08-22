@@ -541,6 +541,14 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public ushort getBlock(int x, int y, int z) {
         return blocks[y >> 4][x, y & 0xF, z];
     }
+    
+    public byte getMetadata(int x, int y, int z) {
+        return blocks[y >> 4].getMetadata(x, y & 0xF, z);
+    }
+    
+    public uint getBlockRaw(int x, int y, int z) {
+        return blocks[y >> 4].getRaw(x, y & 0xF, z);
+    }
 
     public ushort getBlockFast(int x, int y, int z) {
         return blocks[y >> 4].fastGet(x, y & 0xF, z);

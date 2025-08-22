@@ -33,6 +33,11 @@ public struct AABB {
         this.max = max;
     }
 
+    public AABB(float x0, float y0, float z0, float x1, float y1, float z1) {
+        min = new Vector3D(x0, y0, z0);
+        max = new Vector3D(x1, y1, z1);
+    }
+
     public static AABB fromSize(Vector3D min, Vector3D size) {
         return new AABB(min, min + size);
     }

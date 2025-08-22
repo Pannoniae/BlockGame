@@ -295,7 +295,7 @@ public class BlockRenderer {
     /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
     /// Positions are in local block coordinates (0-1 range typically).
     /// </summary>
-    public unsafe void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public unsafe void renderQuadCull(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
                           float x1, float y1, float z1, float x2, float y2, float z2,
                           float x3, float y3, float z3, float x4, float y4, float z4,
                           float uMin, float vMin, float uMax, float vMax) {
@@ -314,6 +314,32 @@ public class BlockRenderer {
         if (!shouldRender) {
             return;
         }
+        
+        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
+        Span<Vector4> colourCache = stackalloc Vector4[4];
+        Span<byte> lightColourCache = stackalloc byte[4];
+        
+        
+        // calculate lighting and AO
+        applyFaceLighting(dir, colourCache, lightColourCache);
+        
+        begin(cache);
+        vertex(x + x1, y + y1, z + z1, uMin, vMin);
+        vertex(x + x2, y + y2, z + z2, uMin, vMax);
+        vertex(x + x3, y + y3, z + z3, uMax, vMax);
+        vertex(x + x4, y + y4, z + z4, uMax, vMin);
+        end(vertices);
+    }
+    
+    
+    /// <summary>
+    /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
+    /// Positions are in local block coordinates (0-1 range typically).
+    /// </summary>
+    public unsafe void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+        float x1, float y1, float z1, float x2, float y2, float z2,
+        float x3, float y3, float z3, float x4, float y4, float z4,
+        float uMin, float vMin, float uMax, float vMax) {
         
         Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
         Span<Vector4> colourCache = stackalloc Vector4[4];
@@ -1006,7 +1032,7 @@ public class BlockRenderer {
             // get light data too
 
 
-            ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
+            
             
             // if smooth lighting, fill cache
             // status update: we fill it regardless otherwise we crash lol
@@ -1028,6 +1054,9 @@ public class BlockRenderer {
             }
 
             model:;
+            
+            // if you get the faces BEFORE checking it's a model, it will crash on custom blocks
+            ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(bl.model.faces);
 
             for (int d = 0; d < bl.model.faces.Length; d++) {
                 var dir = facesRef.direction;

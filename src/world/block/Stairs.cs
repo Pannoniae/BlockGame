@@ -8,6 +8,7 @@ public class Stairs : Block {
     public Stairs(ushort id, string name) : base(id, name) {
         renderType[id] = RenderType.CUSTOM;
         customCulling[id] = true;
+        customAABB[id] = true;
     }
 
     /**
@@ -21,7 +22,7 @@ public class Stairs : Block {
     public static byte setFacing(byte metadata, byte facing) => (byte)((metadata & ~0b11) | (facing & 0b11));
     public static byte setUpsideDown(byte metadata, bool upsideDown) => (byte)((metadata & ~0b100) | (upsideDown ? 0b100 : 0));
     
-    private uint calculateMetadata(ushort blockId, RawDirection dir) {
+    private static uint calculateMetadata(ushort blockId, RawDirection dir) {
         
         // we need to place in the opposite direction the player is facing
         var opposite = Direction.getOpposite(dir);
@@ -54,11 +55,12 @@ public class Stairs : Block {
         var metadata = block.getMetadata();
         var facing = getFacing(metadata);
 
-        var texture = model.faces[0];
-        var u0 = texU(texture.min.u);
-        var v0 = texV(texture.min.v);
-        var u1 = texU(texture.max.u);
-        var v1 = texV(texture.max.v);
+        var min = uvs[0];
+        var max = uvs[0] + 1;
+        var u0 = texU(min.u);
+        var v0 = texV(min.v);
+        var u1 = texU(max.u);
+        var v1 = texV(max.v);
 
         // top step: half width/depth in facing direction, half height
         float tx1, tz1, tx2, tz2;
@@ -70,10 +72,33 @@ public class Stairs : Block {
             default: tx1 = 0f; tx2 = 1f; tz1 = 0f; tz2 = 0.5f; break; // NORTH
         }
 
-        // render bottom cuboid (full width, half height)
+        // render bottom
         BlockRenderer.renderCube(br, x, y, z, vertices, 0f, 0f, 0f, 1f, 0.5f, 1f, u0, v0, u1, v1);
         
-        // render top cuboid (variable size based on facing)
+        // render top
         BlockRenderer.renderCube(br, x, y, z, vertices, tx1, 0.5f, tz1, tx2, 1f, tz2, u0, v0, u1, v1);
+    }
+
+    public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
+        var facing = getFacing(metadata);
+
+        // bottom half
+        aabbs.Add(new AABB(x + 0f, y + 0f, z + 0f, x + 1f, y + 0.5f, z + 1f));
+        
+        // top half
+        switch (facing) {
+            case 0: // WEST
+                aabbs.Add(new AABB(x + 0.5f, y + 0.5f, z + 0f, x + 1f, y + 1f, z + 1f));
+                break;
+            case 1: // EAST
+                aabbs.Add(new AABB(x + 0f, y + 0.5f, z + 0f, x + 0.5f, y + 1f, z + 1f));
+                break;
+            case 2: // SOUTH
+                aabbs.Add(new AABB(x + 0f, y + 0.5f, z + 0.5f, x + 1f, y + 1f, z + 1f));
+                break;
+            case 3: // NORTH
+                aabbs.Add(new AABB(x + 0f, y + 0.5f, z + 0f, x + 1f, y + 1f,z +  0.5f));
+                break;
+        }
     }
 }

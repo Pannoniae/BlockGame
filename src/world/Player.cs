@@ -133,6 +133,7 @@ public class Player : Entity {
         prevSwingProgress = swingProgress;
         renderer.prevLower = renderer.lower;
     }
+
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
         setPrevVars();
@@ -145,7 +146,7 @@ public class Player : Entity {
         world.loadChunksAroundChunk(chunk, renderDistance);
         world.sortChunks();
     }
-    
+
     public void loadChunksAroundThePlayer(int renderDistance, ChunkStatus status) {
         var blockPos = position.toBlockPos();
         var chunk = World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
@@ -211,6 +212,7 @@ public class Player : Entity {
             velocity.Y *= f;
             return;
         }
+
         // ground friction
         if (!inLiquid) {
             var f2 = Constants.verticalFriction;
@@ -243,6 +245,7 @@ public class Player : Entity {
         if (jumping && !wasInLiquid && inLiquid) {
             velocity.Y -= 1.4;
         }
+
         //Console.Out.WriteLine(level);
         if (jumping && (onGround || inLiquid)) {
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
@@ -251,6 +254,7 @@ public class Player : Entity {
             if (inLiquid && (collisionXThisFrame || collisionZThisFrame)) {
                 velocity.Y += Constants.liquidSurfaceBoost;
             }
+
             onGround = false;
             jumping = false;
         }
@@ -287,13 +291,12 @@ public class Player : Entity {
                 strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
 
                 Vector3D moveVector = strafeVector.Z * forward +
-                                              strafeVector.X *
-                                              Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward));
+                                      strafeVector.X *
+                                      Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward));
 
 
                 moveVector.Y = 0;
                 inputVector = new Vector3D(moveVector.X, 0, moveVector.Z);
-
             }
         }
         else {
@@ -303,18 +306,17 @@ public class Player : Entity {
 
                 // first, normalise (v / v.length) then multiply with movespeed
                 strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
-                
+
                 if (fastMode) {
                     strafeVector *= 5;
                 }
 
                 Vector3D moveVector = strafeVector.Z * forward +
-                                              strafeVector.X *
-                                              Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward)) +
-                                              strafeVector.Y * Vector3D.UnitY;
+                                      strafeVector.X *
+                                      Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward)) +
+                                      strafeVector.Y * Vector3D.UnitY;
 
                 inputVector = new Vector3D(moveVector.X, moveVector.Y, moveVector.Z);
-
             }
         }
     }
@@ -392,13 +394,14 @@ public class Player : Entity {
                 jumping = true;
                 pressedMovementKey = true;
             }
+
             if (flyMode) {
                 strafeVector.Y += 0.8;
             }
         }
-        
+
         fastMode = keyboard.IsKeyPressed(Key.ControlLeft);
-        
+
         // TODO this horribly breaks when you speed time up, you become a terminator and be able to break/place blocks instantly
         // oh no it's a debug feature anyway but yk
         if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTick - lastBreak > Constants.breakDelay) {
@@ -415,10 +418,17 @@ public class Player : Entity {
             setSwinging(true);
             var pos = Game.instance.previousPos.Value;
             var bl = hotbar.getSelected().block;
-            
+
             // don't intersect the player
-            var blockAABB = world.getAABB(pos.X, pos.Y, pos.Z, bl);
-            if (blockAABB == null || !AABB.isCollision(aabb, blockAABB.Value)) {
+            world.getAABBs(AABBList, pos.X, pos.Y, pos.Z);
+            bool collision = false;
+            foreach (AABB aabb in AABBList) {
+                if (AABB.isCollision(aabb, aabb)) {
+                    collision = true;
+                }
+            }
+
+            if (!collision) {
                 var block = Block.get(bl);
                 RawDirection dir = getFacing();
                 block.place(world, pos.X, pos.Y, pos.Z, dir);
@@ -454,21 +464,22 @@ public class Player : Entity {
         }
     }
      */
-    
+
     public RawDirection getFacing() {
         // Get the forward vector from the camera
         Vector3 forward = camera.CalculateForwardVector();
-        
+
         double verticalThreshold = Math.Cos(Math.PI / 4f); // 45 degrees in radians
-        
+
         // Check for up/down first
         if (forward.Y > verticalThreshold) {
             return RawDirection.UP;
         }
+
         if (forward.Y < -verticalThreshold) {
             return RawDirection.DOWN;
         }
-        
+
         // Determine the facing direction based on the forward vector
         if (Math.Abs(forward.X) > Math.Abs(forward.Z)) {
             return forward.X > 0 ? RawDirection.EAST : RawDirection.WEST;
@@ -489,7 +500,7 @@ public class Player : Entity {
             world.blockUpdateWithNeighbours(pos);
             // place water if adjacent
             lastBreak = world.worldTick;
-            
+
             Game.snd.playBlockHit();
         }
         else {
@@ -502,15 +513,15 @@ public class Player : Entity {
         if (!inLiquid) {
             //return false;
         }
-        
+
         // Calculate eye position based on sneaking state
         double currentEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
         Vector3D eyePosition = new Vector3D(position.X, position.Y + currentEyeHeight, position.Z);
-        
+
         // Check if the block at eye position is liquid
         Vector3I eyeBlockPos = eyePosition.toBlockPos();
         ushort blockAtEyes = world.getBlock(eyeBlockPos);
-        
+
         // Return true if eyes are in liquid
         return Block.liquid[blockAtEyes];
     }

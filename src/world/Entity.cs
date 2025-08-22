@@ -6,7 +6,6 @@ using Molten.DoublePrecision;
 namespace BlockGame;
 
 public class Entity(World world) {
-    
     public const int MAX_SWING_TICKS = 16;
     public const int AIR_HIT_CD = 20;
 
@@ -50,6 +49,7 @@ public class Entity(World world) {
     /// This number is lying to you.
     /// </summary>
     public double totalTraveled;
+
     public double prevTotalTraveled;
 
     public World world = world;
@@ -66,11 +66,14 @@ public class Entity(World world) {
 
     /// 0 to 1
     public double prevSwingProgress;
+
     public double swingProgress;
     private readonly List<Vector3I> neighbours = new(26);
-    
+
     /** Is it in a valid chunk? */
     public bool inWorld;
+
+    protected static readonly List<AABB> AABBList = [];
 
     public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();
@@ -86,9 +89,6 @@ public class Entity(World world) {
     [Pure]
     protected virtual AABB calcAABB(Vector3D pos) {
         return AABB.empty;
-        
-        
-        
     }
 
     public virtual void teleport(Vector3D pos) {
@@ -97,37 +97,41 @@ public class Entity(World world) {
         velocity = Vector3D.Zero;
     }
 
+    /**
+     * This one is a real mess!
+     */
     protected void collisionAndSneaking(double dt) {
         var oldPos = position;
         var blockPos = position.toBlockPos();
         // collect potential collision targets
         collisionTargets.Clear();
 
+        // if we aren't noclipping
         if (!noClip) {
-
             ReadOnlySpan<Vector3I> targets = [
                 blockPos, new Vector3I(blockPos.X, blockPos.Y + 1, blockPos.Z)
             ];
+            // for each block we might collide with
             foreach (Vector3I target in targets) {
                 // first, collide with the block the player is in
                 var blockPos2 = feetPosition.toBlockPos();
-                var currentAABB = world.getAABB(blockPos2.X, blockPos2.Y, blockPos2.Z,
-                    world.getBlock(feetPosition.toBlockPos()));
-                if (currentAABB != null) {
-                    collisionTargets.Add(currentAABB.Value);
+                world.getAABBs(AABBList, blockPos2.X, blockPos2.Y, blockPos2.Z);
+
+                // for each AABB of the block the player is in
+                foreach (AABB aabb in AABBList) {
+                    collisionTargets.Add(aabb);
                 }
 
-
+                // gather neighbouring blocks
                 World.getBlocksInBox(neighbours, target + new Vector3I(-1, -1, -1),
                     target + new Vector3I(1, 1, 1));
+                // for each neighbour block
                 foreach (var neighbour in neighbours) {
                     var block = world.getBlock(neighbour);
-                    var blockAABB = world.getAABB(neighbour.X, neighbour.Y, neighbour.Z, block);
-                    if (blockAABB == null) {
-                        continue;
+                    world.getAABBs(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
+                    foreach (AABB aabb in AABBList) {
+                        collisionTargets.Add(aabb);
                     }
-
-                    collisionTargets.Add(blockAABB.Value);
                 }
             }
         }
@@ -180,10 +184,12 @@ public class Entity(World world) {
                     //}
                 }
             }
+
             if (sneaking && AABB.isCollision(sneakaabbX, blockAABB)) {
                 hasAtLeastOneCollision = true;
             }
         }
+
         // don't fall off while sneaking
         if (sneaking && onGround && !hasAtLeastOneCollision) {
             // revert movement
@@ -211,10 +217,12 @@ public class Entity(World world) {
                     //}
                 }
             }
+
             if (sneaking && AABB.isCollision(sneakaabbZ, blockAABB)) {
                 hasAtLeastOneCollision = true;
             }
         }
+
         // don't fall off while sneaking
         if (sneaking && onGround && !hasAtLeastOneCollision) {
             // revert movement
@@ -238,6 +246,7 @@ public class Entity(World world) {
         if (prevSwingProgress != 0 && swingProgress == 0) {
             value = double.Lerp(prevSwingProgress, 1, dt);
         }
+
         return value;
     }
 
@@ -253,6 +262,7 @@ public class Entity(World world) {
         else {
             swingTicks = 0;
         }
+
         if (airHitCD > 0) {
             airHitCD--;
         }
