@@ -172,10 +172,10 @@ public class Entity(World world) {
                 
                 // try stepping up before blocking movement
                 bool canStepUp = false;
-                if (onGround && !sneaking && velocity.X != 0) {
+                if (onGround && velocity.X != 0) {
                     // check if we can step up by trying positions up to stepHeight
                     // todo this is the worst piece of shit code ever, there must SURELY be a better mathsy way of not just having a for loop here lol
-                    for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += Constants.epsilon) {
+                    for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += 0.1) {
                         var stepAABB = calcAABB(new Vector3D(position.X, position.Y + stepY, position.Z));
                         bool hasCollisionAtStep = false;
                         
@@ -230,9 +230,9 @@ public class Entity(World world) {
                 
                 // try stepping up before blocking movement
                 bool canStepUp = false;
-                if (onGround && !sneaking && velocity.Z != 0) {
+                if (onGround && velocity.Z != 0) {
                     // check if we can step up by trying positions up to stepHeight
-                    for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += Constants.epsilon) {
+                    for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += 0.1) {
                         var stepAABB = calcAABB(new Vector3D(position.X, position.Y + stepY, position.Z));
                         bool hasCollisionAtStep = false;
                         
