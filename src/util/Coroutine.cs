@@ -338,6 +338,14 @@ public class Coroutines {
 
             if (coroutine.currentYield == null || coroutine.currentYield.isComplete) {
                 if (!coroutine.MoveNext()) {
+                    
+                    // check for exceptions again! why? I dunno, but it seems to improve things! (not silently swallowing exceptions
+                    // and just early-exiting/corrupting state is nice)
+                    if (coroutine.ex != null) {
+                        Console.WriteLine($"Coroutine exception: {coroutine.ex}");
+                        throw coroutine.ex;
+                    }
+                    
                     // Coroutine is completely finished
                     activeCoroutines.RemoveAt(i);
                 }

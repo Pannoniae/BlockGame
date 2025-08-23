@@ -858,14 +858,14 @@ public partial class World : IDisposable {
         }
 
         // unload chunks which are far away
-        foreach (var chunk in chunks.Values) {
+        /*foreach (var chunk in chunks.Values) {
             var playerChunk = player.getChunk();
             var coord = chunk.coord;
             // if distance is greater than renderDistance + 3, unload
             if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
                 unloadChunk(coord);
             }
-        }
+        }*/
     }
 
     public void unloadChunk(ChunkCoord coord) {
