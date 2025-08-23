@@ -321,6 +321,12 @@ public class Coroutines {
     private void updateCoroutines(double dt) {
         for (int i = activeCoroutines.Count - 1; i >= 0; i--) {
             var coroutine = activeCoroutines[i];
+            
+            // print exceptions
+            if (coroutine.ex != null) {
+                Console.WriteLine($"Coroutine exception: {coroutine.ex}");
+                throw coroutine.ex;
+            }
 
             if (!coroutine.isRunning) {
                 activeCoroutines.RemoveAt(i);
@@ -332,6 +338,7 @@ public class Coroutines {
 
             if (coroutine.currentYield == null || coroutine.currentYield.isComplete) {
                 if (!coroutine.MoveNext()) {
+                    // Coroutine is completely finished
                     activeCoroutines.RemoveAt(i);
                 }
             }

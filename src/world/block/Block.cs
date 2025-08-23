@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
+using BlockGame.src.world.block;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
@@ -64,6 +65,8 @@ public class Block {
      */
     public UVPair[]? uvs;
 
+    protected static readonly List<AABB> AABBList = [];
+
     public const int atlasSize = 256;
     public const int textureSize = 16;
 
@@ -118,6 +121,9 @@ public class Block {
 
     public static Block PLANKS;
     public static Block STAIRS;
+    public static Block STONE_SLAB;
+    public static Block PLANKS_SLAB;
+    public static Block MAPLE_PLANKS_SLAB;
     public static Block LOG;
     public static Block LEAVES;
     public static Block MAPLE_PLANKS;
@@ -258,6 +264,15 @@ public class Block {
         STAIRS = register(new Stairs(Blocks.STAIRS, "Stairs"));
         STAIRS.setTex(cubeUVs(0, 5));
         STAIRS.partialBlock();
+
+        STONE_SLAB = register(new Slabs(Blocks.STONE_SLAB, "Stone Slab"));
+        STONE_SLAB.setTex(cubeUVs(5, 0));
+
+        PLANKS_SLAB = register(new Slabs(Blocks.PLANKS_SLAB, "Planks Slab"));
+        PLANKS_SLAB.setTex(cubeUVs(0, 5));
+
+        MAPLE_PLANKS_SLAB = register(new Slabs(Blocks.MAPLE_PLANKS_SLAB, "Maple Planks Slab"));
+        MAPLE_PLANKS_SLAB.setTex(cubeUVs(5, 5));
 
         LOG = register(new Block(Blocks.LOG, "Log"));
         LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
@@ -773,7 +788,39 @@ public class Block {
     }
     
     public virtual void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
-        
+        aabbs.Clear();
+        if (!collision[id] || AABB[id] == null) {
+            return;
+        }
+        aabbs.Add(new AABB((float)(x + AABB[id].Value.min.X), (float)(y + AABB[id].Value.min.Y), (float)(z + AABB[id].Value.min.Z), 
+                           (float)(x + AABB[id].Value.max.X), (float)(y + AABB[id].Value.max.Y), (float)(z + AABB[id].Value.max.Z)));
+    }
+    
+    /**
+     * Check if this block can be placed at the given position without colliding with entities.
+     * By default, only handles default metadata (0).
+     */
+    public virtual bool canPlace(World world, int x, int y, int z, RawDirection dir) {
+        if (!collision[id]) {
+            return true;
+        }
+
+        getAABBs(world, x, y, z, 0, AABBList);
+        foreach (var aabb in AABBList) {
+
+            var entities = new List<Entity>();
+            world.getEntitiesInBox(entities, aabb.min.toBlockPos(),
+                aabb.max.toBlockPos() + 1);
+
+            
+            foreach (var entity in entities) {
+                if (BlockGame.AABB.isCollision(aabb, entity.aabb)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
 

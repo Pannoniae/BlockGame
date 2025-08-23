@@ -54,5 +54,8 @@ public class Blocks {
     public const ushort WORLD_BOTTOM = 50;
     public const ushort HELLSTONE_1 = 51;
     public const ushort HELLSTONE_2 = 52;
+    public const ushort STONE_SLAB = 53;
+    public const ushort PLANKS_SLAB = 54;
+    public const ushort MAPLE_PLANKS_SLAB = 55;
     //public const ushort TORCH = 45;
 }

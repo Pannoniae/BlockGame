@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.xNBT;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -79,6 +80,7 @@ public partial class World : IDisposable {
 
     public XRandom random;
     private TimerAction saveWorld;
+    public NBTCompound toBeLoadedNBT;
     private static readonly List<AABB> listAABB = [];
 
     public World(string name, int seed) {
@@ -86,8 +88,6 @@ public partial class World : IDisposable {
         inited = false;
         worldIO = new WorldIO(this);
         generator = new PerlinWorldGenerator(this);
-        player = new Player(this, 6, 20, 6);
-        Game.player = player;
 
         random = new XRandom(seed);
         worldTick = 0;
@@ -113,7 +113,7 @@ public partial class World : IDisposable {
         saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
     }
 
-    public void init(bool loadingSave = false) {
+    public void preInit(bool loadingSave = false) {
         // load a minimal amount of chunks so the world can get started
         if (!loadingSave) {
             loadSpawnChunks();
@@ -121,9 +121,31 @@ public partial class World : IDisposable {
 
             // after loading spawn chunks, load everything else immediately
             isLoading = true;
+        }
+    }
 
+    public void init(bool loadingSave = false) {
+        player = new Player(this, 6, 20, 6);
+        addEntity(player);
+        Game.player = player;
+
+        if (!loadingSave) {
             // find safe spawn position with proper AABB clearance
             ensurePlayerSpawnClearance();
+        }
+        
+        // if loading, actually load
+        if (loadingSave) {
+            var tag = toBeLoadedNBT;
+            Console.Out.WriteLine(tag.getDouble("posX"));
+            Console.Out.WriteLine(tag.getDouble("posY"));
+            Console.Out.WriteLine(tag.getDouble("posZ"));
+            player.position.X = tag.getDouble("posX");
+            player.position.Y = tag.getDouble("posY");
+            player.position.Z = tag.getDouble("posZ");
+            worldTick = tag.has("time") ? tag.getInt("time") : 0;
+
+            player.prevPosition = player.position;
         }
 
         // After everything is done, SAVE THE WORLD
@@ -137,6 +159,12 @@ public partial class World : IDisposable {
         }
         
         inited = true;
+    }
+    
+    public void postInit(bool loadingSave = false) {
+        
+        // notify all entities of the chunks they're actually in
+        // handled in loadChunk!
     }
 
     private void saveWorldMethod() {
@@ -969,6 +997,10 @@ public partial class World : IDisposable {
             loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1), ChunkStatus.LIGHTED);
             chunks[chunkCoord].meshChunk();
         }
+        
+        // reassign any entities waiting for this chunk
+        loadEntitiesIntoChunk(chunkCoord);
+        
         return chunks[chunkCoord];
     }
     

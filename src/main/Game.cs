@@ -319,7 +319,7 @@ public partial class Game {
     /// <summary>
     /// Renders a single frame during startup to show loading progress
     /// </summary>
-    private void renderStartupFrame() {
+    private void jankyFrame() {
         window.DoEvents();
         
         // update the menu with a small dt to trigger animations
@@ -530,7 +530,7 @@ public partial class Game {
         currentScreen = new MainMenuScreen();
         Menu.STARTUP_LOADING = new StartupLoadingMenu();
         setMenu(Menu.STARTUP_LOADING);
-        renderStartupFrame();
+        jankyFrame();
         
         //  set icon
         Menu.STARTUP_LOADING.updateProgress(0.1f, "Loading joy");
@@ -555,27 +555,27 @@ public partial class Game {
         Menu.init();
         
         Menu.STARTUP_LOADING.updateProgress(0.4f, "Loading fonts");
-        renderStartupFrame();
+        jankyFrame();
 
         Menu.STARTUP_LOADING.updateProgress(0.5f, "Setting up renderer");
         //Thread.Sleep(1000);
-        renderStartupFrame();
+        jankyFrame();
         renderer = new WorldRenderer();
         
         Menu.STARTUP_LOADING.updateProgress(0.7f, "Initializing block renderer");
-        renderStartupFrame();
+        jankyFrame();
         blockRenderer = new BlockRenderer();
 
         Menu.STARTUP_LOADING.updateProgress(0.8f, "Loading blocks");
-        renderStartupFrame();
+        jankyFrame();
         Block.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
         
-        renderStartupFrame();
+        jankyFrame();
         Console.Out.WriteLine("Loaded ASCII font.");
         Menu.STARTUP_LOADING.updateProgress(1.0f, "loaded!");
-        renderStartupFrame();
+        jankyFrame();
         switchTo(Menu.MAIN_MENU);
         Block.postLoad();
         resize(new Vector2D<int>(width, height));

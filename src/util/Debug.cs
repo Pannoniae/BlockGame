@@ -36,14 +36,14 @@ public class Debug {
     public void drawAABB(AABB aabb, Color4b colour = default) {
         // corners
         var lsw = aabb.min;
-        var lse = new Vector3D(aabb.maxX, aabb.minY, aabb.minZ);
-        var lnw = new Vector3D(aabb.minX, aabb.minY, aabb.maxZ);
-        var lne = new Vector3D(aabb.maxX, aabb.minY, aabb.maxZ);
+        var lse = new Vector3D(aabb.x1, aabb.y0, aabb.z0);
+        var lnw = new Vector3D(aabb.x0, aabb.y0, aabb.z1);
+        var lne = new Vector3D(aabb.x1, aabb.y0, aabb.z1);
 
-        var usw = new Vector3D(aabb.minX, aabb.maxY, aabb.minZ);
-        var use = new Vector3D(aabb.maxX, aabb.maxY, aabb.minZ);
-        var unw = new Vector3D(aabb.minX, aabb.maxY, aabb.maxZ);
-        var une = new Vector3D(aabb.maxX, aabb.maxY, aabb.maxZ);
+        var usw = new Vector3D(aabb.x0, aabb.y1, aabb.z0);
+        var use = new Vector3D(aabb.x1, aabb.y1, aabb.z0);
+        var unw = new Vector3D(aabb.x0, aabb.y1, aabb.z1);
+        var une = new Vector3D(aabb.x1, aabb.y1, aabb.z1);
 
         // join them with lines
         drawLine(lsw, lse);

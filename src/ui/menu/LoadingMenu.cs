@@ -96,9 +96,12 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
         var initTimer = new WaitForMinimumTime(0.05);
         stage("Loading spawn chunks");
-        Game.world.init(isLoading);
+        Game.world.preInit(isLoading);
         yield return initTimer;
         update(0.10f); // Init complete: 10%
+        
+        yield return new WaitForNextFrame();
+        world.init(isLoading);
 
         stage("Generating initial terrain");
         world.loadAroundPlayer(ChunkStatus.LIGHTED);
@@ -186,7 +189,9 @@ public class LoadingMenu : Menu, ProgressUpdater {
             }
             yield return new WaitForNextFrame();
         }
-
+        
+        world.postInit(isLoading);
+        
         var readyTimer = new WaitForMinimumTime(0.05);
         stage("Ready!");
         update(1.0f); // Complete: 100%

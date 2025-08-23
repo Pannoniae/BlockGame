@@ -103,12 +103,12 @@ public class Particle {
         foreach (var blockAABB in collisionTargets) {
             var aabb = calcAABB(position);
             if (AABB.isCollision(aabb, blockAABB)) {
-                if (velocity.Y > 0 && aabb.maxY >= blockAABB.minY) {
-                    position.Y += blockAABB.minY - aabb.maxY;
+                if (velocity.Y > 0 && aabb.y1 >= blockAABB.y0) {
+                    position.Y += blockAABB.y0 - aabb.y1;
                     velocity.Y = 0;
                 }
-                else if (velocity.Y < 0 && aabb.minY <= blockAABB.maxY) {
-                    position.Y += blockAABB.maxY - aabb.minY;
+                else if (velocity.Y < 0 && aabb.y0 <= blockAABB.y1) {
+                    position.Y += blockAABB.y1 - aabb.y0;
                     velocity.Y = 0;
                 }
             }
@@ -119,11 +119,11 @@ public class Particle {
         foreach (var blockAABB in collisionTargets) {
             var aabb = calcAABB(position);
             if (AABB.isCollision(aabb, blockAABB)) {
-                if (velocity.X > 0 && aabb.maxX >= blockAABB.minX) {
-                    position.X += blockAABB.minX - aabb.maxX;
+                if (velocity.X > 0 && aabb.x1 >= blockAABB.x0) {
+                    position.X += blockAABB.x0 - aabb.x1;
                 }
-                else if (velocity.X < 0 && aabb.minX <= blockAABB.maxX) {
-                    position.X += blockAABB.maxX - aabb.minX;
+                else if (velocity.X < 0 && aabb.x0 <= blockAABB.x1) {
+                    position.X += blockAABB.x1 - aabb.x0;
                 }
                 velocity.X = 0;
             }
@@ -134,11 +134,11 @@ public class Particle {
         foreach (var blockAABB in collisionTargets) {
             var aabb = calcAABB(position);
             if (AABB.isCollision(aabb, blockAABB)) {
-                if (velocity.Z > 0 && aabb.maxZ >= blockAABB.minZ) {
-                    position.Z += blockAABB.minZ - aabb.maxZ;
+                if (velocity.Z > 0 && aabb.z1 >= blockAABB.z0) {
+                    position.Z += blockAABB.z0 - aabb.z1;
                 }
-                else if (velocity.Z < 0 && aabb.minZ <= blockAABB.maxZ) {
-                    position.Z += blockAABB.maxZ - aabb.minZ;
+                else if (velocity.Z < 0 && aabb.z0 <= blockAABB.z1) {
+                    position.Z += blockAABB.z1 - aabb.z0;
                 }
                 velocity.Z = 0;
             }

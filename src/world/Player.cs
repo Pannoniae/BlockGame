@@ -159,7 +159,8 @@ public class Player : Entity {
         onChunkChanged();
     }
 
-    public void onChunkChanged() {
+    public override void onChunkChanged() {
+        base.onChunkChanged();
         //Console.Out.WriteLine("chunk changed");
         loadChunksAroundThePlayer(Settings.instance.renderDistance);
     }
@@ -414,25 +415,32 @@ public class Player : Entity {
     }
 
     public void placeBlock() {
+        lastPlace = world.worldTick;
         if (Game.instance.previousPos.HasValue) {
-            setSwinging(true);
             var pos = Game.instance.previousPos.Value;
             var bl = hotbar.getSelected().block;
+            var block = Block.get(bl);
+            RawDirection dir = getFacing();
 
-            // don't intersect the player
+            // don't intersect the player...
+            // ...with already placed block
             world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
             bool collision = false;
             foreach (AABB aabb in AABBList) {
-                if (AABB.isCollision(aabb, aabb)) {
+                if (AABB.isCollision(aabb, this.aabb)) {
                     collision = true;
+                    break;
                 }
             }
-
-            if (!collision) {
-                var block = Block.get(bl);
-                RawDirection dir = getFacing();
+            
+            // check if block can be placed without colliding
+            if (!collision && block.canPlace(world, pos.X, pos.Y, pos.Z, dir)) {
+                //Console.Out.WriteLine("canPlace: " + block.canPlace(world, pos.X, pos.Y, pos.Z, dir));
                 block.place(world, pos.X, pos.Y, pos.Z, dir);
-                lastPlace = world.worldTick;
+                setSwinging(true);
+            }
+            else {
+                setSwinging(false);
             }
         }
         else {

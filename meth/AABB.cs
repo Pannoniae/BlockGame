@@ -18,12 +18,12 @@ public struct AABB {
     public Vector3D min;
     public Vector3D max;
 
-    public double minX => min.X;
-    public double minY => min.Y;
-    public double minZ => min.Z;
-    public double maxX => max.X;
-    public double maxY => max.Y;
-    public double maxZ => max.Z;
+    public double x0 => min.X;
+    public double y0 => min.Y;
+    public double z0 => min.Z;
+    public double x1 => max.X;
+    public double y1 => max.Y;
+    public double z1 => max.Z;
 
     public Vector3D centre => (max + min) * 0.5f; // Compute AABB center
     public Vector3D extents => max - centre; // Compute positive extents
@@ -337,40 +337,48 @@ public struct AABB {
     }
 
     public static bool isCollision(AABB box1, AABB box2) {
-        return box1.maxX > box2.minX &&
-               box1.minX < box2.maxX &&
-               box1.maxY > box2.minY &&
-               box1.minY < box2.maxY &&
-               box1.maxZ > box2.minZ &&
-               box1.minZ < box2.maxZ;
+        return box1.x1 > box2.x0 &&
+               box1.x0 < box2.x1 &&
+               box1.y1 > box2.y0 &&
+               box1.y0 < box2.y1 &&
+               box1.z1 > box2.z0 &&
+               box1.z0 < box2.z1;
     }
 
     public static bool isCollision(AABB box, Vector3D point) {
-        return point.X > box.minX &&
-               point.X < box.maxX &&
-               point.Y > box.minY &&
-               point.Y < box.maxY &&
-               point.Z > box.minZ &&
-               point.Z < box.maxZ;
+        return point.X > box.x0 &&
+               point.X < box.x1 &&
+               point.Y > box.y0 &&
+               point.Y < box.y1 &&
+               point.Z > box.z0 &&
+               point.Z < box.z1;
     }
 
     public static bool isCollisionX(AABB box1, AABB box2) {
-        return box1.maxX > box2.minX &&
-               box1.minX < box2.maxX;
+        return box1.x1 > box2.x0 &&
+               box1.x0 < box2.x1;
     }
 
     public static bool isCollisionY(AABB box1, AABB box2) {
-        return box1.maxY > box2.minY &&
-               box1.minY < box2.maxY;
+        return box1.y1 > box2.y0 &&
+               box1.y0 < box2.y1;
     }
 
     public static bool isCollisionZ(AABB box1, AABB box2) {
-        return box1.maxZ > box2.minZ &&
-               box1.minZ < box2.maxZ;
+        return box1.z1 > box2.z0 &&
+               box1.z0 < box2.z1;
+    }
+    
+    public static AABB operator+(AABB a, Vector3D b) {
+        return new AABB(a.min + b, a.max + b);
+    }
+    
+    public static AABB operator-(AABB a, Vector3D b) {
+        return new AABB(a.min - b, a.max - b);
     }
 
     public override string ToString() {
-        return $"{minX}, {minY}, {minZ}, {maxX}, {maxY}, {maxZ}";
+        return $"{x0}, {y0}, {z0}, {x1}, {y1}, {z1}";
     }
 
     public bool intersects(Plane plane) {

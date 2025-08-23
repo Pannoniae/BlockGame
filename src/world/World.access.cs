@@ -234,8 +234,8 @@ public partial class World {
             return;
         }
 
-        result.Add(new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
-            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ)));
+        result.Add(new AABB(new Vector3D(x + aabb.Value.x0, y + aabb.Value.y0, z + aabb.Value.z0),
+            new Vector3D(x + aabb.Value.x1, y + aabb.Value.y1, z + aabb.Value.z1)));
     }
     
     public List<AABB> getAABBsCollision(int x, int y, int z) {
@@ -266,8 +266,8 @@ public partial class World {
             return;
         }
 
-        result.Add(new AABB(new Vector3D(x + aabb.Value.minX, y + aabb.Value.minY, z + aabb.Value.minZ),
-            new Vector3D(x + aabb.Value.maxX, y + aabb.Value.maxY, z + aabb.Value.maxZ)));
+        result.Add(new AABB(new Vector3D(x + aabb.Value.x0, y + aabb.Value.y0, z + aabb.Value.z0),
+            new Vector3D(x + aabb.Value.x1, y + aabb.Value.y1, z + aabb.Value.z1)));
     }
 
     public void setBlock(int x, int y, int z, ushort block) {

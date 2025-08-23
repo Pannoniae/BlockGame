@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using BlockGame.GL.vertexformats;
 using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame.util;
 
@@ -22,8 +23,7 @@ public class Stairs : Block {
     public static byte setFacing(byte metadata, byte facing) => (byte)((metadata & ~0b11) | (facing & 0b11));
     public static byte setUpsideDown(byte metadata, bool upsideDown) => (byte)((metadata & ~0b100) | (upsideDown ? 0b100 : 0));
     
-    private static uint calculateMetadata(ushort blockId, RawDirection dir) {
-        
+    private byte calculatePlacementMetadata(RawDirection dir) {
         // we need to place in the opposite direction the player is facing
         var opposite = Direction.getOpposite(dir);
         
@@ -32,20 +32,17 @@ public class Stairs : Block {
         metadata = setFacing(metadata, (byte)opposite);
         metadata = setUpsideDown(metadata, false);
         
-        // Create full block value with metadata
-        uint blockValue = blockId;
-        blockValue = blockValue.setMetadata(metadata);
-        
-        return blockValue;
+        return metadata;
     }
 
 
     public override void place(World world, int x, int y, int z, RawDirection dir) {
+        var metadata = calculatePlacementMetadata(dir);
+        uint blockValue = id;
+        blockValue = blockValue.setMetadata(metadata);
         
-        var stair = calculateMetadata(id, dir);
-        world.setBlockMetadataRemesh(x, y, z, stair);
+        world.setBlockMetadataRemesh(x, y, z, blockValue);
         world.blockUpdateWithNeighbours(new Vector3I(x, y, z));
-        
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
@@ -80,6 +77,7 @@ public class Stairs : Block {
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
+        aabbs.Clear();
         var facing = getFacing(metadata);
 
         // bottom half
@@ -100,5 +98,33 @@ public class Stairs : Block {
                 aabbs.Add(new AABB(x + 0f, y + 0.5f, z + 0f, x + 1f, y + 1f,z +  0.5f));
                 break;
         }
+    }
+    
+    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
+        var metadata = calculatePlacementMetadata(dir);
+        
+        getAABBs(world, x, y, z, metadata, AABBList);
+        
+        var entities = new List<Entity>();
+        foreach (var aabb in AABBList) {
+            world.getEntitiesInBox(entities, aabb.min.toBlockPos(),
+                aabb.max.toBlockPos() + 1);
+            
+            //Console.Out.WriteLine("e: " + entities.Count);
+            //Console.Out.WriteLine("e2: " + world.entities.Count);
+
+            //foreach (Entity entity in world.entities) {
+                //Console.Out.WriteLine($"{entity.GetType()},{entity.position}");
+            //}
+            
+            foreach (var entity in entities) {
+                //Console.Out.WriteLine($"aabb: {aabb}, entity.aabb: {entity.aabb}");
+                if (BlockGame.AABB.isCollision(aabb, entity.aabb)) {
+                    return false;
+                }
+            }
+            entities.Clear();
+        }
+        return true;
     }
 }

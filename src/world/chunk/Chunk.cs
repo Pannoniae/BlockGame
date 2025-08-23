@@ -71,21 +71,41 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         return !frustum.outsideCameraHorizontal(box);
     }
     
-    public void addEntity(Entity entity) {
+    /** Don't call these, they won't update the world! */
+    internal void addEntity(Entity entity) {
         // check if the entity is in the chunk
         if (entity.position.X < worldX || entity.position.X >= worldX + CHUNKSIZE ||
             entity.position.Z < worldZ || entity.position.Z >= worldZ + CHUNKSIZE) {
             SkillIssueException.throwNew($"Entity position is out of chunk bounds: {entity.position} in chunk {coord}");
         }
 
-        // get the Y coordinate in the chunk
-        int y = (int)entity.position.Y;
-        if (y < 0 || y >= CHUNKHEIGHT * CHUNKSIZE) {
+        // get the subchunk Y coordinate
+        int worldY = (int)entity.position.Y;
+        if (worldY is < 0 or >= CHUNKHEIGHT * CHUNKSIZE) {
             return; // out of bounds
         }
 
-        // add the entity to the list
-        entities[y].Add(entity);
+        int subChunkY = worldY >> 4; // divide by 16 to get subchunk coordinate
+        entities[subChunkY].Add(entity);
+    }
+    
+    /** Don't call these, they won't update the world! */
+    internal void removeEntity(Entity entity) {
+        // check if the entity is in the chunk
+        if (entity.prevPosition.X < worldX || entity.prevPosition.X >= worldX + CHUNKSIZE ||
+            entity.prevPosition.Z < worldZ || entity.prevPosition.Z >= worldZ + CHUNKSIZE) {
+            SkillIssueException.throwNew($"Entity position is out of chunk bounds: {entity.prevPosition} in chunk {coord}");
+        }
+
+        // get the subchunk Y coordinate
+        int worldY = (int)entity.prevPosition.Y;
+        int subChunkY = worldY >> 4; // divide by 16 to get subchunk coordinate
+        if (subChunkY is < 0 or >= CHUNKHEIGHT) {
+            return; // out of bounds
+        }
+
+        
+        entities[subChunkY].Remove(entity);
     }
 
     public void lightChunk() {

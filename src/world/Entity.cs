@@ -97,6 +97,45 @@ public class Entity(World world) {
         velocity = Vector3D.Zero;
     }
 
+    public virtual void update(double dt) {
+        // after movement applied, check the chunk the player is in
+        var prevChunk = getChunk(prevPosition);
+        var thisChunk = getChunk(position);
+        if (prevChunk != thisChunk) {
+            onChunkChanged();
+        }
+    }
+
+    public virtual void onChunkChanged() {
+        // remove from old chunk, add to new chunk
+        if (inWorld) {
+            var pp = World.getChunkPos(prevPosition.toBlockPos().X , prevPosition.toBlockPos().Z);
+            world.getChunkMaybe(pp, out var oldChunk);
+            oldChunk?.removeEntity(this);
+            
+            var cp = World.getChunkPos(position.toBlockPos().X , position.toBlockPos().Z);
+            world.getChunkMaybe(cp, out var newChunk);
+            if (newChunk != null && position.Y is >= 0 and < World.WORLDHEIGHT) {
+                newChunk.addEntity(this);
+                inWorld = true;
+            }
+            else {
+                inWorld = false;
+            }
+        }
+        else {
+            var cp = World.getChunkPos(position.toBlockPos().X , position.toBlockPos().Z);
+            world.getChunkMaybe(cp, out var newChunk);
+            if (newChunk != null && position.Y is >= 0 and < World.WORLDHEIGHT) {
+                newChunk.addEntity(this);
+                inWorld = true;
+            }
+            else {
+                inWorld = false;
+            }
+        }
+    }
+
     /**
      * This one is a real mess!
      */
@@ -142,16 +181,16 @@ public class Entity(World world) {
             var aabbY = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             if (AABB.isCollision(aabbY, blockAABB)) {
                 // left side
-                if (velocity.Y > 0 && aabbY.maxY >= blockAABB.minY) {
-                    var diff = blockAABB.minY - aabbY.maxY;
+                if (velocity.Y > 0 && aabbY.y1 >= blockAABB.y0) {
+                    var diff = blockAABB.y0 - aabbY.y1;
                     //if (diff < velocity.Y) {
                     position.Y += diff;
                     velocity.Y = 0;
                     //}
                 }
 
-                else if (velocity.Y < 0 && aabbY.minY <= blockAABB.maxY) {
-                    var diff = blockAABB.maxY - aabbY.minY;
+                else if (velocity.Y < 0 && aabbY.y0 <= blockAABB.y1) {
+                    var diff = blockAABB.y1 - aabbY.y0;
                     //if (diff > velocity.Y) {
                     position.Y += diff;
                     velocity.Y = 0;
@@ -198,12 +237,12 @@ public class Entity(World world) {
                 
                 if (!canStepUp) {
                     // normal collision resolution
-                    if (velocity.X > 0 && aabbX.maxX >= blockAABB.minX) {
-                        var diff = blockAABB.minX - aabbX.maxX;
+                    if (velocity.X > 0 && aabbX.x1 >= blockAABB.x0) {
+                        var diff = blockAABB.x0 - aabbX.x1;
                         position.X += diff;
                     }
-                    else if (velocity.X < 0 && aabbX.minX <= blockAABB.maxX) {
-                        var diff = blockAABB.maxX - aabbX.minX;
+                    else if (velocity.X < 0 && aabbX.x0 <= blockAABB.x1) {
+                        var diff = blockAABB.x1 - aabbX.x0;
                         position.X += diff;
                     }
                 }
@@ -255,12 +294,12 @@ public class Entity(World world) {
                 
                 if (!canStepUp) {
                     // normal collision resolution
-                    if (velocity.Z > 0 && aabbZ.maxZ >= blockAABB.minZ) {
-                        var diff = blockAABB.minZ - aabbZ.maxZ;
+                    if (velocity.Z > 0 && aabbZ.z1 >= blockAABB.z0) {
+                        var diff = blockAABB.z0 - aabbZ.z1;
                         position.Z += diff;
                     }
-                    else if (velocity.Z < 0 && aabbZ.minZ <= blockAABB.maxZ) {
-                        var diff = blockAABB.maxZ - aabbZ.minZ;
+                    else if (velocity.Z < 0 && aabbZ.z0 <= blockAABB.z1) {
+                        var diff = blockAABB.z1 - aabbZ.z0;
                         position.Z += diff;
                     }
                 }
