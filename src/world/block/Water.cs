@@ -5,10 +5,11 @@ using Molten;
 namespace BlockGame.util;
 
 public class Water : Block {
-    public Water(ushort id, string name) : base(id, name) {
+    public Water(ushort id, string name, byte tickRate) : base(id, name) {
         lightAbsorption[id] = 1;
         renderType[id] = RenderType.CUSTOM;
         customCulling[id] = true;
+        updateDelay[id] = tickRate;
     }
     
     /**
@@ -173,7 +174,7 @@ public class Water : Block {
         
         // unstable if can still spread to new areas  
         var isFallingWater = isFalling(metadata);
-        foreach(var dir in Direction.directionsWaterSpread) {
+        foreach (var dir in Direction.directionsWaterSpread) {
             if (canFlowTo(world, pos + dir, currentLevel, isFallingWater)) return true;
         }
         
@@ -204,6 +205,9 @@ public class Water : Block {
                 // wake up static water
                 var dynamicMetadata = setDynamic(metadata, true);
                 world.setBlockMetadataRemesh(pos.X, pos.Y, pos.Z, ((uint)Blocks.WATER).setMetadata(dynamicMetadata));
+                world.scheduleBlockUpdate(pos);
+            } else if (world.blockUpdateQueue.All(u => u.position != pos)) {
+                // already dynamic but not scheduled
                 world.scheduleBlockUpdate(pos);
             }
         }
@@ -297,8 +301,8 @@ public class Water : Block {
         var h11 = getWaterHeightAt(world, blockPos, 1, 1); // northeast
         
         // Get texture coordinates for water
-        var texMin = uvs[0];
-        var texMax = uvs[0] + 1;
+        var texMin = level > 0 ? uvs[1] : uvs[0]; // flowing texture for levels > 0, still texture for source
+        var texMax = texMin + 1;
         var min = texCoords(texMin.u, texMin.v);
         var max = texCoords(texMax.u, texMax.v);
         

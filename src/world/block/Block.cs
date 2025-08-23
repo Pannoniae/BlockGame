@@ -379,9 +379,10 @@ public class Block {
         HEAD.setModel(BlockModel.makeHalfCube(HEAD));
         HEAD.partialBlock();
         
-        WATER = register(new Water(Blocks.WATER, "Water"));
-        WATER.setTex(cubeUVs(0, 4));
+        WATER = register(new Water(Blocks.WATER, "Water", 15));
+        WATER.setTex([new UVPair(0, 4), new UVPair(0, 6)]);
         WATER.makeLiquid();
+        
         
         RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore"));
         RED_ORE.setTex(cubeUVs(10, 0));
@@ -455,9 +456,6 @@ public class Block {
         }
         inventoryBlacklist[Blocks.WATER] = true;
         //inventoryBlacklist[7] = true;
-        
-        // set update delays
-        updateDelay[Blocks.WATER] = 15;
     }
 
 
@@ -636,6 +634,11 @@ public class Block {
     
     public Block setTex(UVPair[] uvs) {
         this.uvs = uvs;
+        return this;
+    }
+    
+    public Block setTex(ReadOnlySpan<UVPair> uvs) {
+        this.uvs = uvs.ToArray();
         return this;
     }
 

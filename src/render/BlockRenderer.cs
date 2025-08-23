@@ -79,6 +79,8 @@ public class BlockRenderer {
     private bool AO;
     private bool tinting;
     
+    // AO flip state
+    private bool shouldFlipVertices;
     
     private bool isRenderingWorld;
 
@@ -264,6 +266,18 @@ public class BlockRenderer {
         
         calculateFaceLighting(dir, out FourBytes light, out FourBytes ao);
         
+        // calculate AO flip decision based on same logic as constructVertices
+        if (AO && smoothLighting) {
+            var dark0 = (~light.First & 0xF);
+            var dark1 = (~light.Second & 0xF);
+            var dark2 = (~light.Third & 0xF);
+            var dark3 = (~light.Fourth & 0xF);
+            
+            shouldFlipVertices = ao.First + dark0 + ao.Third + dark2 > ao.Second + dark1 + ao.Fourth + dark3;
+        } else {
+            shouldFlipVertices = false;
+        }
+        
         Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
 
@@ -445,6 +459,25 @@ public class BlockRenderer {
     [SuppressMessage("ReSharper", "RedundantExplicitParamsArrayCreation")]
     public void end(List<BlockVertexPacked> vertices) {
         unsafe {
+            if (shouldFlipVertices) {
+                // apply AO flip - reorder vertices: 0,1,2,3 -> 3,0,1,2
+                
+                // how about NOT copying shit all over the place? so slopcode begin
+                // we'll have only ONE temp
+                var v0 = vertexCache[0];
+                //var v1 = vertexCache[1];
+                //var v2 = vertexCache[2];
+                //var v3 = vertexCache[3];
+
+                vertexCache[0] = vertexCache[3];
+                //vertexCache[0] = v3;
+                vertexCache[3] = vertexCache[2];
+                vertexCache[2] = vertexCache[1];
+                vertexCache[1] = v0;
+                
+                
+            }
+            
             // add the vertices to the list
             vertices.AddRange(new ReadOnlySpan<BlockVertexPacked>(vertexCache, vertexCount));
             vertexCount = 0; // reset
