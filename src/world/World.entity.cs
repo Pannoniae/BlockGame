@@ -73,7 +73,7 @@ public partial class World {
         // check all entities not currently in world to see if they belong in this newly loaded chunk
         foreach (var entity in entities) {
             if (!entity.inWorld) {
-                var entityChunkCoord = getChunkPos((int)entity.position.X, (int)entity.position.Z);
+                var entityChunkCoord = getChunkPos(entity.position.X.toBlockPos(), entity.position.Z.toBlockPos());
                 if (entityChunkCoord.Equals(chunkCoord) && entity.position.Y is >= 0 and < WORLDHEIGHT) {
                     var chunk = chunks[chunkCoord];
                     chunk.addEntity(entity);

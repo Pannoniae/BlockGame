@@ -94,6 +94,11 @@ public class Block {
     public static byte[] lightLevel = new byte[MAXBLOCKS];
     public static byte[] lightAbsorption = new byte[MAXBLOCKS];
     
+    /**
+     Block update delay in ticks. 0 = normal immediate block updates
+    */
+    public static byte[] updateDelay = new byte[MAXBLOCKS];
+    
     public static AABB?[] AABB = new AABB?[MAXBLOCKS];
     public static bool[] customAABB = new bool[MAXBLOCKS];
     
@@ -376,7 +381,6 @@ public class Block {
         
         WATER = register(new Water(Blocks.WATER, "Water"));
         WATER.setTex(cubeUVs(0, 4));
-        WATER.setModel(BlockModel.makeLiquid(WATER));
         WATER.makeLiquid();
         
         RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore"));
@@ -451,6 +455,9 @@ public class Block {
         }
         inventoryBlacklist[Blocks.WATER] = true;
         //inventoryBlacklist[7] = true;
+        
+        // set update delays
+        updateDelay[Blocks.WATER] = 15;
     }
 
 
@@ -860,106 +867,6 @@ public class Flower(ushort id, string name) : Block(id, name) {
     public override void update(World world, Vector3I pos) {
         if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
             world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR);
-        }
-    }
-}
-
-public class Water : Block {
-    public Water(ushort id, string name) : base(id, name) {
-        lightAbsorption[id] = 1;
-        renderType[id] = RenderType.CUSTOM;
-        customCulling[id] = true;
-    }
-
-    public override void update(World world, Vector3I pos) {
-        foreach (var dir in Direction.directionsWaterSpread) {
-            // queue block updates
-            var neighbourBlock = pos + dir;
-            if (world.getBlock(neighbourBlock) == Blocks.AIR) {
-                world.runLater(neighbourBlock, () => {
-                    if (world.getBlock(neighbourBlock) == Blocks.AIR) {
-                        world.setBlockRemesh(neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z, Blocks.WATER);
-                    }
-                }, 10);
-                world.blockUpdate(neighbourBlock, 10);
-            }
-        }
-    }
-    
-    /** Water doesn't get rendered next to water, but always gets rendered on the top face */
-    public override bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
-        var direction = Direction.getDirection(dir);
-        var same = br.getBlockCached(direction.X, direction.Y, direction.Z).getID() == br.getBlock().getID();
-        if (same) {
-            return false;
-        }
-        return dir == RawDirection.UP || base.cullFace(br, x, y, z, dir);
-    }
-
-    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
-        base.render(br, x, y, z, vertices);
-        
-        const float height = 15f / 16f; // Water level is slightly below full height
-        
-        // Get texture coordinates for water
-        var waterTexture = model.faces[0];
-        var min = texCoords(waterTexture.min.u, waterTexture.min.v);
-        var max = texCoords(waterTexture.max.u, waterTexture.max.v);
-        
-        var uMin = min.X;
-        var vMin = min.Y;
-        var uMax = max.X;
-        var vMax = max.Y;
-        
-        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
-        Span<Vector4> colourCache = stackalloc Vector4[4];
-        Span<byte> lightColourCache = stackalloc byte[4];
-
-        for (RawDirection d = 0; d < RawDirection.MAX; d++) {
-            
-            if (cullFace(br, x, y, z, d)) {
-                br.applyFaceLighting(d, colourCache, lightColourCache);
-                br.begin(cache);
-                switch (d) {
-                    case RawDirection.WEST:
-                        br.vertex(x + 0, y + 1, z + 1, uMin, vMin);
-                        br.vertex(x + 0, y + 0, z + 1, uMin, vMax);
-                        br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
-                        br.vertex(x + 0, y + 1, z + 0, uMax, vMin);
-                        break;
-                    case RawDirection.EAST:
-                        br.vertex(x + 1, y + 1, z + 0, uMin, vMin);
-                        br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
-                        br.vertex(x + 1, y + 0, z + 1, uMax, vMax);
-                        br.vertex(x + 1, y + 1, z + 1, uMax, vMin);
-                        break;
-                    case RawDirection.SOUTH:
-                        br.vertex(x + 0, y + 1, z + 0, uMin, vMin);
-                        br.vertex(x + 0, y + 0, z + 0, uMin, vMax);
-                        br.vertex(x + 1, y + 0, z + 0, uMax, vMax);
-                        br.vertex(x + 1, y + 1, z + 0, uMax, vMin);
-                        break;
-                    case RawDirection.NORTH:
-                        br.vertex(x + 1, y + 1, z + 1, uMin, vMin);
-                        br.vertex(x + 1, y + 0, z + 1, uMin, vMax);
-                        br.vertex(x + 0, y + 0, z + 1, uMax, vMax);
-                        br.vertex(x + 0, y + 1, z + 1, uMax, vMin);
-                        break;
-                    case RawDirection.DOWN:
-                        br.vertex(x + 1, y + 0, z + 1, uMin, vMin);
-                        br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
-                        br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
-                        br.vertex(x + 0, y + 0, z + 1, uMax, vMin);
-                        break;
-                    case RawDirection.UP:
-                        br.vertex(x + 0, y + height, z + 1, uMin, vMin);
-                        br.vertex(x + 0, y + height, z + 0, uMin, vMax);
-                        br.vertex(x + 1, y + height, z + 0, uMax, vMax);
-                        br.vertex(x + 1, y + height, z + 1, uMax, vMin);
-                        break;
-                }
-                br.end(vertices);
-            }
         }
     }
 }

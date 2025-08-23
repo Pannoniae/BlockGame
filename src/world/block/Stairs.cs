@@ -48,6 +48,10 @@ public class Stairs : Block {
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
         
+        x &= 15;
+        y &= 15;
+        z &= 15;
+        
         var block = br.getBlock();
         var metadata = block.getMetadata();
         var facing = getFacing(metadata);

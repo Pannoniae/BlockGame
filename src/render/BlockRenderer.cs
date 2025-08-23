@@ -1049,7 +1049,10 @@ public class BlockRenderer {
                 case RenderType.MODEL:
                     goto model;
                 case RenderType.CUSTOM:
-                    bl.render(this, x, y, z, vertices);
+                    // convert to world pos
+                    var wp = World.toWorldPos(subChunk.coord, x, y, z);
+                    
+                    bl.render(this, wp.X, wp.Y, wp.Z, vertices);
                     continue;
             }
 

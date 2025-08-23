@@ -1004,13 +1004,6 @@ public partial class World : IDisposable {
         return chunks[chunkCoord];
     }
     
-    public void runLater(Vector3I pos, Action action, int tick) {
-        var tickAction = new TickAction(pos, action, worldTick + tick);
-        if (!actionQueue.Contains(tickAction)) {
-            actionQueue.Add(tickAction);
-        }
-    }
-
     public void blockUpdateWithNeighbours(Vector3I pos) {
         Block.get(getBlock(pos)).update(this, pos);
         foreach (var dir in Direction.directions) {
@@ -1023,10 +1016,11 @@ public partial class World : IDisposable {
         Block.get(getBlock(pos)).update(this, pos);
     }
 
-    public void blockUpdate(Vector3I pos, int tick) {
-        var update = new BlockUpdate(pos, worldTick + tick);
-        if (!blockUpdateQueue.Contains(update)) {
-            blockUpdateQueue.Add(update);
+    public void scheduleBlockUpdate(Vector3I pos, int delay = -1) {
+        var blockId = getBlockRaw(pos).getID();
+        var actualDelay = delay != -1 ? delay : Block.updateDelay[blockId];
+        if (actualDelay > 0 && blockUpdateQueue.All(u => u.position != pos)) {
+            blockUpdateQueue.Add(new BlockUpdate(pos, worldTick + actualDelay));
         }
     }
 }

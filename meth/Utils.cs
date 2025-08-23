@@ -368,7 +368,7 @@ public readonly record struct Direction(int x, int y, int z) {
     public static readonly Vector3I[] directions = [WEST, EAST, SOUTH, NORTH, DOWN, UP];
     public static readonly Vector3I[] directionsLight = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
     public static readonly Vector3I[] directionsNoDown = [DOWN, UP, WEST, EAST, SOUTH, NORTH];
-    public static readonly Vector3I[] directionsWaterSpread = [WEST, EAST, SOUTH, NORTH, DOWN];
+    public static readonly Vector3I[] directionsWaterSpread = [DOWN, WEST, EAST, SOUTH, NORTH];
     public static readonly Vector3I[] directionsHorizontal = [WEST, EAST, SOUTH, NORTH];
     public static readonly Vector3I[] directionsDiag = [WEST, EAST, SOUTH, NORTH, DOWN, UP, WEST + SOUTH, WEST + NORTH, EAST + SOUTH, EAST + NORTH];
     public static readonly Vector3I[] directionsAll = new Vector3I[27];

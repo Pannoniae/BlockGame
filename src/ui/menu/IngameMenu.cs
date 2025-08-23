@@ -303,6 +303,11 @@ public class IngameMenu : Menu, IDisposable {
                 // calculate facing
                 var facing = cameraFacing(c.forward);
 
+                var ww = w.getBlockRaw(Raycast.raycast(w, true).block);
+                var wwb = ww.getID();
+                var wwm = ww.getMetadata();
+                
+
                 debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
                 debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X,
                     p.velocity.Y, p.velocity.Z, p.velocity.Length());
@@ -312,10 +317,12 @@ public class IngameMenu : Menu, IDisposable {
                 debugStr.AppendFormat("sl:{0}, bl:{1}, i:{2}\n", sl, bl, inited);
                 debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
                 if (i.targetedPos.HasValue) {
-                    debugStr.AppendFormat("{0} {1} {2}, {3} {4} {5} {6} {7}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, 
+                    debugStr.AppendFormat("{0} {1} {2}, {3} {4} {5} {6} {7} {8} {9}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, 
                         i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z, 
                         w.getBlock(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z), 
-                        w.getBlockMetadata(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z));
+                        w.getBlockMetadata(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z),
+                        wwb,
+                        wwm);
                 }
                 else
                     debugStr.Append("No target\n");

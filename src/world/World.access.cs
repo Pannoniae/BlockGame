@@ -52,6 +52,10 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : (ushort)0;
     }
+
+    public ushort getBlock(Vector3I pos) {
+        return getBlock(pos.X, pos.Y, pos.Z);
+    }
     
     public byte getBlockMetadata(int x, int y, int z) {
         if (y is < 0 or >= WORLDHEIGHT) {
@@ -63,6 +67,10 @@ public partial class World {
         return success ? chunk!.getMetadata(blockPos.X, y, blockPos.Z) : (byte)0;
     }
     
+    public byte getBlockMetadata(Vector3I pos) {
+        return getBlockMetadata(pos.X, pos.Y, pos.Z);
+    }
+    
     public uint getBlockRaw(int x, int y, int z) {
         if (y is < 0 or >= WORLDHEIGHT) {
             return 0;
@@ -71,6 +79,10 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getBlockRaw(blockPos.X, y, blockPos.Z) : 0;
+    }
+    
+    public uint getBlockRaw(Vector3I pos) {
+        return getBlockRaw(pos.X, pos.Y, pos.Z);
     }
 
     public byte getLight(int x, int y, int z) {
@@ -82,6 +94,10 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
     }
+    
+    public byte getLight(Vector3I pos) {
+        return getLight(pos.X, pos.Y, pos.Z);
+    }
 
     public byte getSkyLight(int x, int y, int z) {
         if (y is < 0 or >= WORLDHEIGHT) {
@@ -92,6 +108,10 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
     }
+    
+    public byte getSkyLight(Vector3I pos) {
+        return getSkyLight(pos.X, pos.Y, pos.Z);
+    }
 
     public byte getBlockLight(int x, int y, int z) {
         if (y is < 0 or >= WORLDHEIGHT) {
@@ -101,6 +121,10 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
+    }
+    
+    public byte getBlockLight(Vector3I pos) {
+        return getBlockLight(pos.X, pos.Y, pos.Z);
     }
 
     public void setSkyLight(int x, int y, int z, byte level) {
@@ -204,10 +228,6 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getBlock(blockPos.X, y, blockPos.Z) : -1;
-    }
-
-    public ushort getBlock(Vector3I pos) {
-        return getBlock(pos.X, pos.Y, pos.Z);
     }
 
     public List<AABB> getAABBs(int x, int y, int z) {

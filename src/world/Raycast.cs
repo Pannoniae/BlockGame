@@ -12,7 +12,7 @@ public class Raycast {
     /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
     /// </summary>
     /// <returns></returns>
-    public static RayCollision raycast(World world) {
+    public static RayCollision raycast(World world, bool liquids = false) {
         // raycast
         var cameraPos = world.player.camera.position;
         var forward = world.player.camera.forward;
@@ -28,7 +28,7 @@ public class Raycast {
             dist += (cameraForward * Constants.RAYCASTSTEP).Length();
             currentPos += cameraForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();
-            if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z)) {
+            if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z) || (liquids && Block.liquid[world.getBlock(blockPos.X, blockPos.Y, blockPos.Z)])) {
                 // we also need to check if it's inside the selection of the block
                 world.getAABBs(AABBList, blockPos.X, blockPos.Y, blockPos.Z);
                 foreach (AABB aabb in AABBList) {
