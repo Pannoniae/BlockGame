@@ -187,6 +187,17 @@ public class SettingsMenu : Menu {
         settingElements.Add(frustumCulling);
         addElement(frustumCulling);
         
+        var crtEffect = new ToggleButton(this, "crtEffect", false, settings.crtEffect ? 1 : 0,
+            "CRT Effect: OFF", "CRT Effect: ON");
+        crtEffect.topCentre();
+        crtEffect.clicked += _ => {
+            settings.crtEffect = crtEffect.getIndex() == 1;
+            Game.instance.updateFramebuffers();
+        };
+        crtEffect.tooltip = "CRT Effect adds retro CRT monitor simulation with scanlines and phosphor mask.\nProvides authentic vintage computing experience.";
+        settingElements.Add(crtEffect);
+        addElement(crtEffect);
+        
 
         var back = new Button(this, "back", false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,

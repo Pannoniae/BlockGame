@@ -52,6 +52,18 @@ public partial class Game {
     private int g_ssaa_texelStepLocation;
     private int g_ssaa_factorLocation;
     private int g_ssaa_modeLocation;
+    
+    // CRT shader uniforms
+    private int g_crt_maskTypeLocation;
+    private int g_crt_curveLocation;
+    private int g_crt_sharpnessLocation;
+    private int g_crt_colorOffsetLocation;
+    private int g_crt_brightnessLocation;
+    private int g_crt_aspectLocation;
+    private int g_crt_minScanlineThicknessLocation;
+    private int g_crt_wobbleStrengthLocation;
+    private int g_crt_timeLocation;
+    private int g_crt_scanlineResLocation;
 
     private const float g_lumaThreshold = 0.5f;
     private const float g_mulReduceReciprocal = 8.0f;

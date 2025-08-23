@@ -36,6 +36,7 @@ public class GameScreen : Screen {
 
     private bool disposed;
     private long altF10Press;
+    private long f3Press = -1;
 
     public override void activate() {
         D = new Debug();
@@ -105,6 +106,21 @@ public class GameScreen : Screen {
         if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) &&
             Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
             MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
+        }
+        
+        // check for F3 release behavior
+        if (f3Press != -1 && !Game.keyboard.IsKeyPressed(Key.F3)) {
+            // F3 was released - check if it was a short press
+            var pressDuration = Game.permanentStopwatch.ElapsedMilliseconds - f3Press;
+            if (pressDuration < 400) {
+                // short press - toggle debug screen or fps mode
+                if (Game.keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                    fpsOnly = !fpsOnly;
+                } else {
+                    debugScreen = !debugScreen;
+                }
+            }
+            f3Press = -1;
         }
         
         // we update input here (shit doesn't work in non-main thread)
@@ -277,12 +293,17 @@ public class GameScreen : Screen {
         var world = Game.world;
 
         switch (key) {
-            case Key.F3 when keyboard.GetPressedKeys().Count == 1:
-                if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
-                    fpsOnly = !fpsOnly;
+            case Key.F3:
+                // cancel any pending F3 toggle if other keys besides Shift are pressed
+                var pressedKeys = keyboard.GetPressedKeys().Count;
+                var hasShift = keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
+                
+                if (pressedKeys > (hasShift ? 2 : 1)) {
+                    f3Press = -1;
+                } else {
+                    // start F3 timeout window
+                    f3Press = Game.permanentStopwatch.ElapsedMilliseconds;
                 }
-
-                debugScreen = !debugScreen;
                 break;
             case Key.F4:
                 INGAME_MENU.ToggleSegmentedMode();

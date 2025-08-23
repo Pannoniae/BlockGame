@@ -497,6 +497,18 @@ public partial class Game {
         g_ssaa_texelStepLocation = graphics.ssaaShader.getUniformLocation("u_texelStep");
         g_ssaa_factorLocation = graphics.ssaaShader.getUniformLocation("u_ssaaFactor");
         g_ssaa_modeLocation = graphics.ssaaShader.getUniformLocation("u_ssaaMode");
+        
+        // Initialize CRT shader uniforms
+        g_crt_maskTypeLocation = graphics.crtShader.getUniformLocation("u_maskType");
+        g_crt_curveLocation = graphics.crtShader.getUniformLocation("u_curve");
+        g_crt_sharpnessLocation = graphics.crtShader.getUniformLocation("u_sharpness");
+        g_crt_colorOffsetLocation = graphics.crtShader.getUniformLocation("u_colorOffset");
+        g_crt_brightnessLocation = graphics.crtShader.getUniformLocation("u_brightness");
+        g_crt_aspectLocation = graphics.crtShader.getUniformLocation("u_aspect");
+        g_crt_minScanlineThicknessLocation = graphics.crtShader.getUniformLocation("u_minScanlineThickness");
+        g_crt_wobbleStrengthLocation = graphics.crtShader.getUniformLocation("u_wobbleStrength");
+        g_crt_timeLocation = graphics.crtShader.getUniformLocation("u_time");
+        g_crt_scanlineResLocation = graphics.crtShader.getUniformLocation("u_scanlineRes");
 
 
         // needed for stupid laptop GPUs
@@ -911,7 +923,21 @@ public partial class Game {
 
         if (Settings.instance.framebufferEffects) {
             // Select the appropriate post-processing shader
-            if (Settings.instance.fxaa) {
+            if (Settings.instance.crtEffect) {
+                graphics.crtShader.use();
+                
+                // Set CRT shader uniforms
+                graphics.crtShader.setUniform(g_crt_maskTypeLocation, 3); // Wide Grille by default
+                graphics.crtShader.setUniform(g_crt_curveLocation, 0.1f); // Reduced from 0.5f for normal curvature
+                graphics.crtShader.setUniform(g_crt_sharpnessLocation, 0.6666666f);
+                graphics.crtShader.setUniform(g_crt_colorOffsetLocation, 0.0f);
+                graphics.crtShader.setUniform(g_crt_brightnessLocation, 1.0f);
+                graphics.crtShader.setUniform(g_crt_aspectLocation, (float)height / width);
+                graphics.crtShader.setUniform(g_crt_minScanlineThicknessLocation, 0.5f);
+                graphics.crtShader.setUniform(g_crt_wobbleStrengthLocation, 0.0f);
+                graphics.crtShader.setUniform(g_crt_timeLocation, (float)(permanentStopwatch.ElapsedMilliseconds / 1000.0));
+                graphics.crtShader.setUniform(g_crt_scanlineResLocation, height <= 1080 ? 240.0f : 480.0f); // 240 lines for 1080p, 480 for 4K+
+            } else if (Settings.instance.fxaa) {
                 graphics.fxaaShader.use();
             } else if (Settings.instance.ssaa > 1) {
                 graphics.ssaaShader.use();

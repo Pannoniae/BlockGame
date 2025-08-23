@@ -35,6 +35,9 @@ public class Graphics : IDisposable {
     
     public readonly Shader simplePostShader =
         new(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
+    
+    public readonly Shader crtShader =
+        new(Game.GL, nameof(crtShader), "shaders/postprocess/post.vert", "shaders/postprocess/crt.frag");
 
     public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
@@ -169,6 +172,7 @@ public class Graphics : IDisposable {
         fxaaShader.Dispose();
         ssaaShader.Dispose();
         simplePostShader.Dispose();
+        crtShader.Dispose();
     }
 
     private void Dispose(bool disposing) {

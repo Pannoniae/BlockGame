@@ -16,13 +16,14 @@ public class Settings {
     public bool fullscreen = false;
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
     public bool frustumCulling = true;
+    public bool crtEffect = false;
 
     public static readonly Settings instance = new();
 
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => antiAliasing > 0 || Game.hasCMDL;
+    public bool framebufferEffects => antiAliasing > 0 || Game.hasCMDL || crtEffect;
     
     /// <summary>
     /// Whether FXAA is enabled.
@@ -102,6 +103,7 @@ public class Settings {
         tag.addByte("fullscreen", (byte)(fullscreen ? 1 : 0));
         tag.addByte("smoothDayNight", (byte)(smoothDayNight ? 1 : 0));
         tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
+        tag.addByte("crtEffect", (byte)(crtEffect ? 1 : 0));
         
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
@@ -124,6 +126,7 @@ public class Settings {
             fullscreen = tag.getByte("fullscreen") != 0;
             smoothDayNight = tag.getByte("smoothDayNight") != 0;
             frustumCulling = tag.getByte("frustumCulling") != 0;
+            crtEffect = tag.getByte("crtEffect") != 0;
         } catch (Exception e) {
             Console.WriteLine($"Failed to load settings: {e.Message}");
             
