@@ -166,4 +166,9 @@ public class Slabs : Block {
         }
         return true;
     }
+    
+    public override byte maxValidMetadata() {
+        // bit 0: bottom(0)/top(1), bit 1: single(0)/double(1) -> values 0,1,2,3
+        return 3;
+    }
 }

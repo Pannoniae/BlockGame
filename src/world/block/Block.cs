@@ -822,6 +822,14 @@ public class Block {
 
         return true;
     }
+    
+    /**
+     * Returns the maximum valid metadata value for this block type.
+     * Default implementation returns 0 (no metadata variants).
+     */
+    public virtual byte maxValidMetadata() {
+        return 0;
+    }
 }
 
 public static class BlockExtensions {

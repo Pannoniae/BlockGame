@@ -32,6 +32,20 @@ namespace Silk.NET.Input.Glfw
 
         public unsafe bool IsKeyPressed
             (Key key) => GlfwProvider.GLFW.Value.GetKey(_handle, ConvertKey(key)) == (int) InputAction.Press;
+        
+        public unsafe List<Key> GetPressedKeys()
+        {
+            var pressed = new List<Key>();
+            foreach (var key in _keys)
+            {
+                var code = ConvertKey(key);
+                if (GlfwProvider.GLFW.Value.GetKey(_handle, code) == (int) InputAction.Press)
+                {
+                    pressed.Add(key);
+                }
+            }
+            return pressed;
+        }
 
         public unsafe bool IsScancodePressed(int scancode) => _scancodesDown.Contains(scancode);
 

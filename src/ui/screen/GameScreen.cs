@@ -277,7 +277,7 @@ public class GameScreen : Screen {
         var world = Game.world;
 
         switch (key) {
-            case Key.F3:
+            case Key.F3 when keyboard.GetPressedKeys().Count == 1:
                 if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
                     fpsOnly = !fpsOnly;
                 }
@@ -393,6 +393,12 @@ public class GameScreen : Screen {
                 // pause time
                 targetTimeAcceleration = 0.0f;
                 Console.Out.WriteLine("Time paused");
+                break;
+            }
+            
+            case Key.B when keyboard.IsKeyPressed(Key.F3): {
+                // cycle metadata of targeted block
+                cycleBlockMetadata();
                 break;
             }
         }
@@ -681,6 +687,33 @@ public class GameScreen : Screen {
     public void openSettings() {
         Menu.SETTINGS.prevMenu = PAUSE_MENU;
         switchToMenu(Menu.SETTINGS);
+    }
+    
+    private void cycleBlockMetadata() {
+        if (!Game.instance.targetedPos.HasValue) {
+            return;
+        }
+
+        var pos = Game.instance.targetedPos.Value;
+        var world = Game.world;
+        var blockValue = world.getBlockRaw(pos.X, pos.Y, pos.Z);
+        var blockId = blockValue.getID();
+        var currentMeta = blockValue.getMetadata();
+        
+        if (blockId == 0 || !Block.tryGet(blockId, out var block)) {
+            return;
+        }
+
+        var maxMeta = block.maxValidMetadata();
+        if (maxMeta == 0) {
+            return;
+        }
+
+        // cycle to next metadata value
+        var newMeta = (byte)((currentMeta + 1) % (maxMeta + 1));
+        var newBlockValue = blockValue.setMetadata(newMeta);
+        
+        world.setBlockMetadataRemesh(pos.X, pos.Y, pos.Z, newBlockValue);
     }
 }
 

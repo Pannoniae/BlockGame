@@ -127,4 +127,9 @@ public class Stairs : Block {
         }
         return true;
     }
+    
+    public override byte maxValidMetadata() {
+        // 4 facing directions (0-3), upside-down not implemented yet
+        return 3;
+    }
 }

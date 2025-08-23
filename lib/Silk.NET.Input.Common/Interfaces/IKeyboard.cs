@@ -34,6 +34,8 @@ namespace Silk.NET.Input
         /// <param name="scancode">The scancode to check.</param>
         /// <returns>Whether or not the scancode is pressed.</returns>
         bool IsScancodePressed(int scancode);
+        
+        List<Key> GetPressedKeys();
 
         /// <summary>
         /// Called when a key is pressed.
