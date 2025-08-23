@@ -17,14 +17,13 @@ uniform float u_wobbleStrength; // Horizontal shake strength
 uniform float u_time; // Time for animations
 uniform float u_scanlineRes; // Target scanline resolution (e.g. 240, 480)
 
-#define u_maskType 1
+#define u_maskType 3
 
 centroid in vec2 v_texCoord;
 
 out vec4 fragColor;
 
-vec2 warp(vec2 uv, float _aspect, float _curve)
-{
+vec2 warp(vec2 uv, float _aspect, float _curve) {
     // Centralizes coordinates (0 is in the middle)
     uv -= 0.5;
     
@@ -47,8 +46,7 @@ vec2 warp(vec2 uv, float _aspect, float _curve)
     return uv;
 }
 
-vec3 linear_to_srgb(vec3 col)
-{
+vec3 linear_to_srgb(vec3 col) {
     return mix(
         (pow(col, vec3(1.0 / 2.4)) * 1.055) - 0.055,
         col * 12.92,
@@ -56,8 +54,7 @@ vec3 linear_to_srgb(vec3 col)
     );
 }
 
-vec3 srgb_to_linear(vec3 col)
-{
+vec3 srgb_to_linear(vec3 col) {
     return mix(
         pow((col + 0.055) / 1.055, vec3(2.4)),
         col / 12.92,
@@ -66,8 +63,7 @@ vec3 srgb_to_linear(vec3 col)
 }
 
 // Get scanlines from coordinates (returns in linear color)
-vec3 scanlines(vec2 uv)
-{
+vec3 scanlines(vec2 uv) {
     // Use texture width for horizontal, but scanline resolution for vertical
     vec2 texSize = vec2(textureSize(u_colorTexture, 0));
     vec2 scaledUV = vec2(uv.x * texSize.x, uv.y * u_scanlineRes);
@@ -230,8 +226,7 @@ vec4 generate_mask(vec2 fragcoord) {
 }
 
 // Add phosphor mask/grill
-vec3 mask(vec3 linear_color, vec2 fragcoord)
-{
+vec3 mask(vec3 linear_color, vec2 fragcoord) {
     // Get the pattern for the mask. Mask.w equals avg. mask brightness
     vec4 mask = generate_mask(fragcoord);
     
@@ -256,8 +251,7 @@ vec3 mask(vec3 linear_color, vec2 fragcoord)
     return primary_col;
 }
 
-void main()
-{
+void main() {
     // Warp UV coordinates
     vec2 warped_coords = warp(v_texCoord, u_aspect, u_curve * 0.5);
     

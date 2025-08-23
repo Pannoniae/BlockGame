@@ -54,15 +54,6 @@ public class Slabs : Block {
 
     public override void place(World world, int x, int y, int z, RawDirection dir) {
         var meta = calculatePlacement(world, x, y, z, dir);
-        var isDoubleSlab = isDouble(meta);
-        
-        // if trying to place on existing double slab, do nothing
-        if (!isDoubleSlab && meta == 0) {
-            var existingBlock = world.getBlockRaw(x, y, z);
-            if (existingBlock.getID() == id && isDouble(existingBlock.getMetadata())) {
-                return;
-            }
-        }
         
         uint blockValue = id;
         blockValue = blockValue.setMetadata(meta);
@@ -113,14 +104,21 @@ public class Slabs : Block {
         var u1 = texU(max.u);
         var v1 = texV(max.v);
 
+        float y0;
+        float y1;
+
         if (doubleSlab) {
-            // full block
-            BlockRenderer.renderCube(br, x, y, z, vertices, 0f, 0f, 0f, 1f, 1f, 1f, u0, v0, u1, v1);
+            y0 = 0f;
+            y1 = 1f;
         } else if (top) {
-            BlockRenderer.renderCube(br, x, y, z, vertices, 0f, 0.5f, 0f, 1f, 1f, 1f, u0, v0, u1, v1);
+            y0 = 0.5f;
+            y1 = 1f;
         } else {
-            BlockRenderer.renderCube(br, x, y, z, vertices, 0f, 0f, 0f, 1f, 0.5f, 1f, u0, v0, u1, v1);
+            y0 = 0f;
+            y1 = 0.5f;
         }
+        
+        BlockRenderer.renderCube(br, x, y, z, vertices, 0f, y0, 0f, 1f, y1, 1f, u0, v0, u1, v1);
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {

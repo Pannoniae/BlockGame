@@ -1093,6 +1093,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     private void renderStars(float dayPercent, Matrix4x4 viewProj, Matrix4x4 modelView) {
+        
         float starAlpha = 0f;
 
         if (dayPercent >= 0.65f && dayPercent <= 0.9f) {
