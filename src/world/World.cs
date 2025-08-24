@@ -49,7 +49,11 @@ public partial class World : IDisposable {
 
     // Queues
     public List<ChunkLoadTicket> chunkLoadQueue = new();
+    
     public List<BlockUpdate> blockUpdateQueue = new();
+    public HashSet<BlockUpdate> blockUpdateQueueSet = new();
+    
+    
     public List<TickAction> actionQueue = new();
 
     public List<LightNode> skyLightQueue = new();
@@ -563,6 +567,7 @@ public partial class World : IDisposable {
             if (update.tick <= worldTick) {
                 blockUpdate(update.position);
                 blockUpdateQueue.RemoveAt(i);
+                blockUpdateQueueSet.Remove(update);
             }
         }
 
@@ -1019,8 +1024,10 @@ public partial class World : IDisposable {
     public void scheduleBlockUpdate(Vector3I pos, int delay = -1) {
         var blockId = getBlockRaw(pos).getID();
         var actualDelay = delay != -1 ? delay : Block.updateDelay[blockId];
-        if (actualDelay > 0 && blockUpdateQueue.All(u => u.position != pos)) {
-            blockUpdateQueue.Add(new BlockUpdate(pos, worldTick + actualDelay));
+        var update = new BlockUpdate(pos, worldTick + actualDelay);
+        if (actualDelay > 0 && !blockUpdateQueue.Contains(update)) {
+            blockUpdateQueue.Add(update);
+            blockUpdateQueueSet.Add(update);
         }
     }
 }

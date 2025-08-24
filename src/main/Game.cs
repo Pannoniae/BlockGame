@@ -86,6 +86,8 @@ public partial class Game {
     public Vector2 lastMousePos;
     public Vector3I? targetedPos;
     public Vector3I? previousPos;
+    
+    public static RayCollision raycast;
 
     public int fps;
     public double ft;

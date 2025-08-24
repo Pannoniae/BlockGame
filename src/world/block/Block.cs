@@ -454,7 +454,7 @@ public class Block {
         for (int i = 0; i < currentID; i++) {
             translucent[blocks[i].id] = blocks[i].layer == RenderLayer.TRANSLUCENT;
         }
-        inventoryBlacklist[Blocks.WATER] = true;
+        //inventoryBlacklist[Blocks.WATER] = true;
         //inventoryBlacklist[7] = true;
     }
 

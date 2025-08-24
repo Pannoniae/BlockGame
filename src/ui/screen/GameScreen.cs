@@ -146,6 +146,8 @@ public class GameScreen : Screen {
         //Utils.wasteMemory(dt, 200);
         var prevTargetedPos = Game.instance.targetedPos;
         var col = Raycast.raycast(world);
+
+        Game.raycast = col;
         // previous pos
         if (col.hit) {
             Game.instance.targetedPos = col.block;
