@@ -44,7 +44,7 @@ public partial class Game {
     
     //private static WGL wgl;
     private static Glfw glfw;
-    private static bool windows = OperatingSystem.IsWindows();
+    private static readonly bool windows = OperatingSystem.IsWindows();
     
     public static Process proc;
 
@@ -132,12 +132,15 @@ public partial class Game {
     private Vector2D<int> preFullscreenPosition;
     private WindowState preFullscreenState;
 
-    private readonly string[] splashes;
-    private readonly string splash;
+    private readonly string[] titles;
+    private readonly string title;
 
 
     private static IntPtr hdc;
     public static bool noUpdate;
+    
+    /** debug flag for showing noise information in F3 screen */
+    public static bool debugShowNoise = false;
 
 
     #if DEBUG
@@ -157,14 +160,14 @@ public partial class Game {
         regNativeLib();
         sigHandler();
 
-        // load splashes
-        splashes = File.ReadAllLines("assets/splashes.txt");
+        // load titles
+        titles = File.ReadAllLines("assets/titles.txt");
 
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
         //windowOptions.UpdatesPerSecond = 6000;
         windowOptions.VSync = false;
-        splash = getRandomSplash();
+        title = getRandomSplash();
 
 
         IMonitor mainMonitor = Monitor.GetMainMonitor(null);
@@ -210,7 +213,7 @@ public partial class Game {
         #endif
         window = Window.Create(windowOptions);
 
-        setTitle("BlockGame", splash, "");
+        setTitle("BlockGame", title, "");
         window.Load += init;
         window.FocusChanged += focus;
         //window.Update += update;
@@ -278,7 +281,7 @@ public partial class Game {
 
 
     private string getRandomSplash() {
-        return splashes[clientRandom.Next(splashes.Length)];
+        return titles[clientRandom.Next(titles.Length)];
     }
 
     public static void setTitle(string baseTitle, string splash, string addition) {
@@ -331,13 +334,13 @@ public partial class Game {
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         GL.Viewport(0, 0, (uint)width, (uint)height);
         
+        // bind default texture for GUI rendering
+        graphics.tex(0, gui.colourTexture);
+        
         // clear and render current screen
         currentScreen.clear(0.016, 0);
         
         GL.Disable(EnableCap.DepthTest);
-        
-        // bind default texture for GUI rendering
-        graphics.tex(0, gui.colourTexture);
         
         // render GUI
         graphics.mainBatch.Begin();
@@ -422,13 +425,12 @@ public partial class Game {
         }
         
         SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
-        
 
         //#if DEBUG
         // initialise debug print
         unsafe {
             GL.Enable(EnableCap.DebugOutput);
-            //GL.Enable(EnableCap.DebugOutputSynchronous);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
             GL.DebugMessageCallback(GLDebug, 0);
             #if DEBUG
             GL.Enable(EnableCap.DebugOutputSynchronous);
@@ -544,7 +546,7 @@ public partial class Game {
         currentScreen = new MainMenuScreen();
         Menu.STARTUP_LOADING = new StartupLoadingMenu();
         setMenu(Menu.STARTUP_LOADING);
-        jankyFrame();
+        //jankyFrame();
         
         //  set icon
         Menu.STARTUP_LOADING.updateProgress(0.1f, "Loading joy");
@@ -859,7 +861,7 @@ public partial class Game {
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);
-            setTitle("BlockGame", splash, $"{fps} ({ft * 1000:0.##}ms)");
+            setTitle("BlockGame", title, $"{fps} ({ft * 1000:0.##}ms)");
             stopwatch.Restart();
         }
         else {

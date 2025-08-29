@@ -231,12 +231,17 @@ public class ChatMenu : Menu {
                     var subCmd = args.Length > 1 ? args[1] : "";
                     switch (subCmd) {
                         case "":
-                            addMessage("Debug commands: /debug lightmap");
+                            addMessage("Debug commands: /debug lightmap, /debug noise");
                             break;
                         case "lightmap":
                             // dump lightmap to file
                             Game.textures.dumpLightmap();
                             addMessage("Lightmap dumped to lightmap.png");
+                            break;
+                        case "noise":
+                            // toggle noise debug display
+                            Game.debugShowNoise = !Game.debugShowNoise;
+                            addMessage($"Noise debug display: {(Game.debugShowNoise ? "enabled" : "disabled")}");
                             break;
                         default:
                             addMessage($"Unknown debug command: {subCmd}");

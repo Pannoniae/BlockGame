@@ -108,7 +108,7 @@ public class Textures {
                 // ba = 0.5f - float.Sin(float.Tan(1.05f - 2.0f * ba) / 3.0f);
                 ba = ba * 0.5f * (1 - ba) + ba * ba;
 
-                float skyLight = sa * ambientBrightness;
+                float sl = sa * ambientBrightness;
                 float bl = ba;
 
 
@@ -117,9 +117,9 @@ public class Textures {
                 float bb = bl * (bl * bl * Meth.psiF + Meth.rhoF);
 
                 // scale red down
-                float sr = skyLight * (ambientBrightness * Meth.psiF + Meth.rhoF);
-                float sg = skyLight * (ambientBrightness * Meth.psiF + Meth.rhoF);
-                float sb = skyLight;
+                float sr = sl * (ambientBrightness * Meth.psiF + Meth.rhoF);
+                float sg = sl * (ambientBrightness * Meth.psiF + Meth.rhoF);
+                float sb = sl;
 
 
                 float r = (sr + br) * INVBASE + BASE;

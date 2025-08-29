@@ -161,7 +161,10 @@ public class BlockRenderer {
         
         return average2(lightValue, opacity);
     }
-
+    
+    /**
+     * TODO there could be a 4x version of this, which does all 4 vertices at once for a face.... and average2 could have an average2x4 version too which does 128 bits at once and writes an entire opacity uint at once
+     */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void getDirectionOffsetsAndData(RawDirection dir, ref uint blockCache, ref byte lightCache, byte lb, out FourBytes light, out FourBytes o) {
         Unsafe.SkipInit(out o);

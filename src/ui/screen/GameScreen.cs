@@ -736,7 +736,7 @@ public class GameScreen : Screen {
         var newMeta = (byte)((currentMeta + 1) % (maxMeta + 1));
         var newBlockValue = blockValue.setMetadata(newMeta);
         
-        world.setBlockMetadataRemesh(pos.X, pos.Y, pos.Z, newBlockValue);
+        world.setBlockMetadata(pos.X, pos.Y, pos.Z, newBlockValue);
     }
 }
 

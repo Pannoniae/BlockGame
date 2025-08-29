@@ -4,7 +4,6 @@ using BlockGame.util;
 namespace BlockGame;
 
 public class Ravine : OverlayFeature {
-
     public override int radius => 4;
 
     // Current ravine head position
@@ -12,28 +11,22 @@ public class Ravine : OverlayFeature {
     public double hAngle;
     public double baseWidth;
     public int depth;
-    
+
     // Number of ledges to create
     public int numLedges;
     public int[] ledges = new int[4];
 
     public override void generate(World world, XRandom rand, ChunkCoord coord, ChunkCoord origin) {
-        // 1 in 15 chance for a ravine
-        if (rand.Next(15) != 0) {
+        // 1 in 20 chance for a ravine (orig was 1/15, WAY TOO COMMON, shit should be special)
+        if (rand.Next(20) != 0) {
             return;
         }
+        
+        var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
+        var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
+        var y = rand.Next(10, World.WORLDHEIGHT - 20);
 
-        // Generate 1-2 ravines
-        var count = rand.ApproxGaussian(1, 1.5);
-        count = double.Clamp(count, 1, 4); // Clamp to 1-2 ravines
-
-        for (int i = 0; i < count; i++) {
-            var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
-            var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
-            var y = rand.Next(10, World.WORLDHEIGHT - 20);
-
-            genRavine(world, rand, x, y, z, origin);
-        }
+        genRavine(world, rand, x, y, z, origin);
     }
 
     private void genRavine(World world, XRandom rand, int x, int y, int z, ChunkCoord origin) {
@@ -107,11 +100,11 @@ public class Ravine : OverlayFeature {
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
             goto cleanup;
         }
-        
+
         // Carve from top down
         var topY = (int)cy;
         var bottomY = Math.Max(2, topY - depth);
-        
+
         // if the area has water, bail
         if (world.anyWater((int)xMin, bottomY, (int)zMin, (int)xMax, topY, (int)zMax)) {
             return;
@@ -129,7 +122,6 @@ public class Ravine : OverlayFeature {
 
                 // Carve from top to bottom
                 for (int yy = Math.Min(topY, World.WORLDHEIGHT - 1); yy >= bottomY; yy--) {
-                    
                     // Calculate ledge width at this depth
                     double ledgeWidth = baseWidth * widthMultiplier;
                     for (int ledgeIndex = 0; ledgeIndex < numLedges; ledgeIndex++) {
@@ -168,11 +160,11 @@ public class Ravine : OverlayFeature {
                         }
 
                         if (Block.fullBlock[block]) {
-                            world.setBlock(xx, yy, zz, Blocks.AIR);
+                            world.setBlockDumb(xx, yy, zz, Blocks.AIR);
 
                             // Replace exposed dirt with grass
                             if (hasGrass && world.getBlock(xx, yy - 1, zz) == Blocks.DIRT) {
-                                world.setBlock(xx, yy - 1, zz, Blocks.GRASS);
+                                world.setBlockDumb(xx, yy - 1, zz, Blocks.GRASS);
                             }
                         }
                     }

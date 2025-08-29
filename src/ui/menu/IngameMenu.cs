@@ -323,6 +323,21 @@ public class IngameMenu : Menu, IDisposable {
                         w.getBlockMetadata(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z),
                         wwb,
                         wwm);
+                    
+                    // noise debug info if enabled
+                    if (Game.debugShowNoise) {
+                        var targetedPos = i.targetedPos.Value;
+                        if (w.generator is PerlinWorldGenerator pwg) {
+                            var noiseInfo = pwg.getNoiseInfoAtBlock(targetedPos.X, targetedPos.Y, targetedPos.Z);
+                            debugStr.Append("Noise:\n");
+                            foreach (var kvp in noiseInfo) {
+                                debugStr.AppendFormat("  {0}: {1:0.000}\n", kvp.Key, kvp.Value);
+                            }
+                        }
+                        else {
+                            debugStr.Append("Noise: N/A (not PerlinWorldGenerator)\n");
+                        }
+                    }
                 }
                 else
                     debugStr.Append("No target\n");

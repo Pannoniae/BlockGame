@@ -447,31 +447,25 @@ public class Player : Entity {
             setSwinging(false);
         }
     }
+    
+    public void breakBlock() {
+        if (Game.instance.targetedPos.HasValue) {
+            var pos = Game.instance.targetedPos.Value;
+            var bl = Block.get(world.getBlock(pos));
+            bl.crack(world, pos.X, pos.Y, pos.Z);
+            world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
+            // we don't set it to anything, we just propagate from neighbours
+            world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+            // place water if adjacent
+            lastBreak = world.worldTick;
 
-    /*
-     * public static string cameraFacing(Vector3D direction) {
-        // Check for up/down first
-        double verticalThreshold = Math.Cos(45);
-        if (direction.Y > verticalThreshold) {
-            return "Facing up";
-        }
-
-        if (direction.Y < -verticalThreshold) {
-            return "Facing down";
-        }
-
-        // If not facing strongly up or down, determine horizontal direction
-        double absX = Math.Abs(direction.X);
-        double absZ = Math.Abs(direction.Z);
-
-        if (absX > absZ) {
-            return direction.X > 0 ? "Facing east" : "Facing west";
+            Game.snd.playBlockHit();
+            setSwinging(true);
         }
         else {
-            return direction.Z > 0 ? "Facing north" : "Facing south";
+            setSwinging(false);
         }
     }
-     */
 
     public RawDirection getFacing() {
         // Get the forward vector from the camera
@@ -494,25 +488,6 @@ public class Player : Entity {
         }
         else {
             return forward.Z > 0 ? RawDirection.NORTH : RawDirection.SOUTH;
-        }
-    }
-
-    public void breakBlock() {
-        if (Game.instance.targetedPos.HasValue) {
-            setSwinging(true);
-            var pos = Game.instance.targetedPos.Value;
-            var bl = Block.get(world.getBlock(pos));
-            bl.crack(world, pos.X, pos.Y, pos.Z);
-            world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
-            // we don't set it to anything, we just propagate from neighbours
-            world.blockUpdateWithNeighbours(pos);
-            // place water if adjacent
-            lastBreak = world.worldTick;
-
-            Game.snd.playBlockHit();
-        }
-        else {
-            setSwinging(false);
         }
     }
 

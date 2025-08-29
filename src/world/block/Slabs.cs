@@ -58,8 +58,8 @@ public class Slabs : Block {
         uint blockValue = id;
         blockValue = blockValue.setMetadata(meta);
         
-        world.setBlockMetadataRemesh(x, y, z, blockValue);
-        world.blockUpdateWithNeighbours(new Vector3I(x, y, z));
+        world.setBlockMetadata(x, y, z, blockValue);
+        world.blockUpdateNeighbours(x, y, z);
     }
 
     private bool determinePlacement(World world, int x, int y, int z, RawDirection hitFace) {

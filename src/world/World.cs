@@ -565,7 +565,7 @@ public partial class World : IDisposable {
         for (int i = blockUpdateQueue.Count - 1; i >= 0; i--) {
             var update = blockUpdateQueue[i];
             if (update.tick <= worldTick) {
-                blockUpdate(update.position);
+                blockScheduledUpdate(update.position.X, update.position.Y, update.position.Z);
                 blockUpdateQueue.RemoveAt(i);
                 blockUpdateQueueSet.Remove(update);
             }
@@ -956,7 +956,13 @@ public partial class World : IDisposable {
             }
             catch (EndOfStreamException e) {
                 // corrupted chunk file!
-                Console.Error.WriteLine($"Corrupted chunk file for {chunkCoord}: {e.Message}");
+                Console.Error.WriteLine($"Corrupted chunk file for {chunkCoord}: {e}");
+                hasChunk = false;
+                chunkAdded = false;
+            }
+            catch (IOException e) {
+                // corrupted chunk file! or can't read it for some reason
+                Console.Error.WriteLine($"IO error loading chunk file for {chunkCoord}: {e}");
                 hasChunk = false;
                 chunkAdded = false;
             }
@@ -1009,16 +1015,30 @@ public partial class World : IDisposable {
         return chunks[chunkCoord];
     }
     
-    public void blockUpdateWithNeighbours(Vector3I pos) {
-        Block.get(getBlock(pos)).update(this, pos);
+    // MAKE IT SO ONLY THE ORIGINAL BLOCK IS UPDATED
+    // and the neighbours are notifiyed of this update
+    // and they can decide what to do, THEY ARE NOT UPDATED THEMSELVES
+    
+    /**
+     * ID is the new 
+     */
+    public void blockScheduledUpdate(int x, int y, int z) {
+        Block.get(getBlock(x, y, z)).scheduledUpdate(this, x, y, z);
+    }
+    
+    public void blockUpdateNeighbours(int x, int y, int z) {
+        Block.get(getBlock(x, y, z)).update(this, x, y, z);
         foreach (var dir in Direction.directions) {
-            var neighbourBlock = pos + dir;
-            Block.get(getBlock(neighbourBlock)).update(this, neighbourBlock);
+            var neighbourBlock = new Vector3I(x, y, z) + dir;
+            Block.get(getBlock(neighbourBlock)).update(this, neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z);
         }
     }
-
-    public void blockUpdate(Vector3I pos) {
-        Block.get(getBlock(pos)).update(this, pos);
+    
+    public void blockUpdateNeighboursOnly(int x, int y, int z) {
+        foreach (var dir in Direction.directions) {
+            var neighbourBlock = new Vector3I(x, y, z) + dir;
+            Block.get(getBlock(neighbourBlock)).update(this, neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z);
+        }
     }
 
     public void scheduleBlockUpdate(Vector3I pos, int delay = -1) {

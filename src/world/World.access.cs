@@ -290,7 +290,7 @@ public partial class World {
             new Vector3D(x + aabb.Value.x1, y + aabb.Value.y1, z + aabb.Value.z1)));
     }
 
-    public void setBlock(int x, int y, int z, ushort block) {
+    public void setBlockDumb(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
             //Console.Out.WriteLine($"was? {x} {y} {z} {getChunkPos(x, z)} {chunks[getChunkPos(x, z)]}");
             return;
@@ -301,7 +301,7 @@ public partial class World {
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
 
-    public void setBlockRemesh(int x, int y, int z, ushort block) {
+    public void setBlockRemeshSilent(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
             return;
         }
@@ -311,7 +311,20 @@ public partial class World {
         chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
     
-    public void setBlockMetadataRemesh(int x, int y, int z, uint block) {
+    public void setBlockRemesh(int x, int y, int z, ushort block) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+        
+        // update neighbours
+        blockUpdateNeighboursOnly(x, y, z);
+    }
+    
+    public void setBlockMetadataSilent(int x, int y, int z, uint block) {
         if (!inWorld(x, y, z)) {
             return;
         }
@@ -319,6 +332,19 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlockMetadataRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+    }
+    
+    public void setBlockMetadata(int x, int y, int z, uint block) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setBlockMetadataRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+        
+        // update neighbours
+        blockUpdateNeighboursOnly(x, y, z);
     }
 
     /// <summary>

@@ -12,6 +12,9 @@ namespace BlockGame.util;
 /// It's like math but meth ;)
 /// </summary>
 public static partial class Meth {
+
+    public const double eta = phiF + psiF;
+    public const float etaF = phiF + psiF;
     
     public const double phi = 1.61803398874989484820458683436;
     public const float phiF = 1.61803398874989484820458683436f;

@@ -80,6 +80,55 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             }
         }
     }
+    
+    public uint getRaw(int x, int y, int z) {
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
+    }
+
+    public void setRaw(int x, int y, int z, uint value) {
+        ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
+        ushort old = blockRef.getID();
+        blockRef = value;
+        
+        // only take the block and not the metadata!
+        ushort id = value.getID();
+        // if old was air, new is not
+        if (old == 0 && id != 0) {
+            blockCount++;
+        }
+        else if (old != 0 && id == 0) {
+            blockCount--;
+        }
+
+        var oldTick = Block.randomTick[old];
+        var tick = Block.randomTick[id];
+        if (!oldTick && tick) {
+            randomTickCount++;
+        }
+        else if (oldTick && !tick) {
+            randomTickCount--;
+        }
+
+        var oldFullBlock = Block.isFullBlock(old);
+        var fullBlock = Block.isFullBlock(id);
+        if (!oldFullBlock && fullBlock) {
+            chunk.addToHeightMap(x, (yCoord << 4) + y, z);
+            fullBlockCount++;
+        }
+        else if (oldFullBlock && !fullBlock) {
+            chunk.removeFromHeightMap(x, (yCoord << 4) + y, z);
+            fullBlockCount--;
+        }
+
+        var oldTranslucent = Block.isTranslucent(old);
+        var translucent = Block.isTranslucent(id);
+        if (!oldTranslucent && translucent) {
+            translucentCount++;
+        }
+        else if (oldTranslucent && !translucent) {
+            translucentCount--;
+        }
+    }
 
     public byte getMetadata(int x, int y, int z) {
         return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x).getMetadata();
@@ -88,14 +137,6 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public void setMetadata(int x, int y, int z, byte val) {
         ref var blockRef = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
         blockRef.setMetadata(val);
-    }
-
-    public uint getRaw(int x, int y, int z) {
-        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x);
-    }
-
-    public void setRaw(int x, int y, int z, uint value) {
-        Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(blocks), (y << 8) + (z << 4) + x) = value;
     }
 
     public ushort fastGet(int x, int y, int z) {

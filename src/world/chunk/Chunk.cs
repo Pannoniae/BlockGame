@@ -265,7 +265,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             manuallyPropagate(lightNode.x, lightNode.y, lightNode.z);
         }
 
-        //world.processSkyLightQueueNoUpdate();
+        world.processSkyLightQueueNoUpdate();
         status = ChunkStatus.LIGHTED;
     }
 

@@ -9,7 +9,7 @@
         <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) == 'True'">../libs</BeautyLibsDir>
         <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) != 'True'">./libs</BeautyLibsDir>
         <!-- dlls that you don't want to be moved or can not be moved -->
-        <BeautyExcludes>glfw3.dll;</BeautyExcludes>
+        <BeautyExcludes>glfw3.dll;freetype.dll;</BeautyExcludes>
         <!-- dlls that end users never needed, so hide them -->
         <!-- <BeautyHiddens>hostfxr;hostpolicy;*.deps.json;*.runtimeconfig*.json</BeautyHiddens> -->
         <!-- set to True if you want to disable -->

@@ -39,17 +39,20 @@ public partial class PerlinWorldGenerator {
     private float[] foliageBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
     private float[] temperatureBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
     private float[] humidityBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] weirdnessBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
     private readonly OreFeature ironOre = new(Blocks.RED_ORE, 6, 12);
     private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
 
-    public const float LOW_FREQUENCY = 1 / 292f;
+    public const float LOW_FREQUENCY = 1 / 367f;
     public const float HIGH_FREQUENCY = 1 / 135f;
     public const float SELECTOR_FREQUENCY = 1 / 490f;
+    
+    public const float WEIRDNESS_FREQUENCY = 1 / 590f;
 
-    public const float Y_DIVIDER = 1 / 16f;
+    public const float Y_DIVIDER = 1;
     public const float Y_DIVIDER_INV = 16f;
 
     public const float BLOCK_VARIATION_FREQUENCY = 1 / 412f;
@@ -75,7 +78,12 @@ public partial class PerlinWorldGenerator {
         getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
             LOW_FREQUENCY, 8, 2f);
         getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
-            HIGH_FREQUENCY, 8, 2f);
+            HIGH_FREQUENCY, 8, Meth.phiF);
+        
+        // get weirdness
+        // only low octaves for this one, it's a glorified selector
+        getNoise3DRegion(weirdnessBuffer, weirdnessNoise, coord, WEIRDNESS_FREQUENCY, WEIRDNESS_FREQUENCY,
+            WEIRDNESS_FREQUENCY, 2, Meth.phiF);
 
 
         // todo the selector could be sampled less frequently because it doesn't need to be as precise
@@ -85,7 +93,7 @@ public partial class PerlinWorldGenerator {
         // basically it should be mostly 0 (flat) or 1 (quirky shit) with transitions inbetween
         // im sure we can cook something up mr white
         getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
-            SELECTOR_FREQUENCY, 2, 2f);
+            SELECTOR_FREQUENCY, 2, Meth.etaF);
 
         for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
@@ -101,76 +109,99 @@ public partial class PerlinWorldGenerator {
                     float high = highBuffer[getIndex(nx, ny, nz)];
                     // sample selectorNoise
                     float selector = selectorBuffer[getIndex(nx, ny, nz)];
-                    // make it more radical
-                    // can't sqrt a negative number so sign(abs(x))
-                    selector = float.Abs(selector);
-
-                    // sin it
-                    //selector = 0.5 * float.SinPi(selector - 0.5) + 0.5;
-
-                    selector *= 2;
-                    //high *= 2;
-                    selector = float.Clamp(selector, 0, 1);
-
-                    //Console.Out.WriteLine("b: " + selector);
-
-                    // we only want mountains when selector is high
-
-                    // squish selector towards zero - more flat areas, less mountains
-                    //selector *= selector;
-
-                    // squish the high noise towards zero when the selector is low - more flat areas, less mountains
-
-                    // Reduce the density when too high above 64 and increase it when too low
-                    // range: // -0.5 (at y=128) to 0.5 (at y=0)
-                    var airBias = (y - WATER_LEVEL - 4) / (float)World.WORLDHEIGHT;
-                    // our SIGNATURE weird terrain
-                    airBias *= 0.5f;
-                    // normalish terrain (kinda like old mc?)
-                    //airBias *= 1f;
-                    // fairly normal terrain, but its like a fucking warzone, littered with caves. if we want a normalish/realistic-looking terrain like that,
-                    // we should decrease the cave density in the lowlands because otherwise it will be cancer to traverse/build on
-                    //airBias *= 2f;
-
-                    // flatten out low noise
-                    // is this needed?
-                    //low -= airBias;
                     
-                    // todo when making normal terrain, raise the "sealevel" (the midpoint of the terrain) by like ~4 blocks, so there will be actual plains instead of
-                    // just endless beaches and shallow water everywhere  
-
-                    // reduce it below ground (is water anyway, useless)
-                    if (y < WATER_LEVEL) {
-                        airBias *= 4;
-                    }
-                    
-                    // border
-                    if (y is < 44 and > 36) {
-                        // make it more extreme
-                        airBias *= int.Max(44 - y, y - 36) - 2;
-                    }
-                    
-                    // under y=40
-                    var caveDepth = float.Max(0, float.Min(y - 6, 36 - y));
-                    airBias += caveDepth * 0.036f;
-
-                    // between y=120-128, taper it off to -1
-                    // at max should be 0.5
-                    // ^2 to have a better taper
-                    var t = float.Max((y - 120), 0) / 16f;
-                    airBias += t * t;
-
-                    // only sample if actually required
-
-                    // combine the two with the ratio selector
-                    float density = lerp(low, high, selector);
-                    density -= airBias;
+                    float weirdness = weirdnessBuffer[getIndex(nx, ny, nz)];
 
                     // store the value in the buffer
-                    buffer[getIndex(nx, ny, nz)] = density;
+                    buffer[getIndex(nx, ny, nz)] = calculateDensity(low, high, selector, weirdness, y);
                 }
             }
         }
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float calculateAirBias(float low, float high, float weirdness, int y) {
+        // Reduce the density when too high above 64 and increase it when too low
+        // range: // -0.5 (at y=128) to 0.5 (at y=0)
+        var airBias = (y - WATER_LEVEL - 4) / (float)World.WORLDHEIGHT;
+        // our SIGNATURE weird terrain
+        //airBias *= 0.5f;
+        // normalish terrain (kinda like old mc?)
+        //airBias *= 1f;
+        // fairly normal terrain, but its like a fucking warzone, littered with caves. if we want a normalish/realistic-looking terrain like that,
+        // we should decrease the cave density in the lowlands because otherwise it will be cancer to traverse/build on
+        //airBias *= 2f;
+
+        // flatten out low noise
+        // is this needed?
+        //low -= airBias;
+        
+        // todo when making normal terrain, raise the "sealevel" (the midpoint of the terrain) by like ~4 blocks, so there will be actual plains instead of
+        // just endless beaches and shallow water everywhere  
+
+        // reduce it below ground (is water anyway, useless)
+        if (y < WATER_LEVEL + 4) {
+            airBias *= 4;
+        }
+        
+        // border
+        if (y is < 44 and > 36) {
+            // make it more extreme
+            airBias *= int.Max(44 - y, y - 36) - 2;
+        }
+        
+        // under y=40
+        var caveDepth = float.Max(0, float.Min(y - 6, 36 - y));
+        
+        // combine weirdness with highnoise so the actual cave isnt just slop
+        var cw = weirdness + 0.45f * high;
+        
+        // if weirdness noise is high enough (>0.5), multiply the caveDepth bias by the remainder * 3
+        var factor = float.Abs(cw) > 0.5f ? ((float.Abs(cw) - 0.5f) * 6f) + 1f : 0f;
+        airBias += (caveDepth * 0.036f) * factor;
+        
+        
+
+        // between y=120-128, taper it off to -1
+        // at max should be 0.5
+        // ^2 to have a better taper
+        var t = float.Max((y - 120), 0) / 16f;
+        airBias += t * t;
+        
+        return airBias;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float calculateDensity(float low, float high, float selector, float weirdness, int y) {
+        low = float.Tanh(low);
+        high = float.Tanh(high);
+        
+        // make it more radical
+        // can't sqrt a negative number so sign(abs(x))
+        selector = float.Abs(selector);
+
+        // sin it
+        //selector = 0.5 * float.SinPi(selector - 0.5) + 0.5;
+
+        selector *= 2;
+        //high *= 2;
+        selector = float.Clamp(selector, 0, 1);
+
+        //Console.Out.WriteLine("b: " + selector);
+
+        // we only want mountains when selector is high
+
+        // squish selector towards zero - more flat areas, less mountains
+        //selector *= selector;
+
+        // squish the high noise towards zero when the selector is low - more flat areas, less mountains
+        var bias = calculateAirBias(low, high, weirdness, y);
+        low -= bias;
+        // combine the two with the ratio selector
+        float density = lerp(low, high, selector);
+        density -= calculateAirBias(low, high, weirdness, y);
+
+        return density;
     }
 
     private void interpolate(float[] buffer, ChunkCoord coord) {
@@ -277,79 +308,6 @@ public partial class PerlinWorldGenerator {
         }
     }
 
-    private void interpolateSIMD(float[] buffer, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-
-        // we do this so we don't check "is chunk initialised" every single time we set a block.
-        // this cuts our asm code size by half lol from all that inlining and shit
-        // TODO it doesnt work properly, I'll fix it later
-        // Span<bool> initialised = stackalloc bool[Chunk.CHUNKHEIGHT];
-
-        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-            var y0 = y >> NOISE_PER_Y_SHIFT;
-            var y1 = y0 + 1;
-            float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
-
-            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var z0 = z >> NOISE_PER_Z_SHIFT;
-                var z1 = z0 + 1;
-                float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
-
-                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    // the grid cell that contains the point
-                    var x0 = x >> NOISE_PER_X_SHIFT;
-                    var x1 = x0 + 1;
-
-                    // the lerp (between 0 and 1)
-                    // float xd = (x % NOISE_PER_X) / (float)NOISE_PER_X;
-                    float xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
-                    //var ys = y >> 4;
-
-                    // load the eight corner values from the buffer into a vector
-                    var c000 = buffer[getIndex(x0, y0, z0)];
-                    var c001 = buffer[getIndex(x0, y0, z1)];
-                    var c010 = buffer[getIndex(x0, y1, z0)];
-                    var c011 = buffer[getIndex(x0, y1, z1)];
-                    var c100 = buffer[getIndex(x1, y0, z0)];
-                    var c101 = buffer[getIndex(x1, y0, z1)];
-                    var c110 = buffer[getIndex(x1, y1, z0)];
-                    var c111 = buffer[getIndex(x1, y1, z1)];
-
-
-                    var values1 = Vector128.Create(c000, c001, c010, c011);
-                    var values2 = Vector128.Create(c100, c101, c110, c111);
-
-                    // the two vectors contain the two halves of the cube to be interpolated.
-                    // We need to interpolate element-wise.
-                    var interp = lerp4(values1, values2, Vector128.Create(xd));
-
-                    // now the vector contains the 4 interpolated values. interpolate narrower (2x2)
-                    var low = interp.GetLower();
-                    var high = interp.GetUpper();
-                    var interp2 = lerp2(low, high, Vector64.Create(yd));
-
-                    // now the vector contains the 2 interpolated values. interpolate again (1x2)
-                    var lower = interp2.GetElement(0);
-                    var higher = interp2.GetElement(1);
-                    var value = lerp(lower, higher, zd);
-
-                    // if we haven't initialised the chunk yet, do so
-                    // if below sea level, water
-                    if (value > 0) {
-                        chunk.setBlockFast(x, y, z, Blocks.STONE);
-                        chunk.addToHeightMap(x, y, z);
-                    }
-                    else {
-                        if (y < WATER_LEVEL) {
-                            chunk.setBlockFast(x, y, z, Blocks.WATER);
-                            chunk.addToHeightMap(x, y, z);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public void generateSurface(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
@@ -415,7 +373,6 @@ public partial class PerlinWorldGenerator {
             }
         }
     }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int getIndex(int x, int y, int z) {
@@ -554,7 +511,7 @@ public partial class PerlinWorldGenerator {
     public void placeOakTree(XRandom random, int x, int y, int z) {
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
-            world.setBlock(x, y + i, z, Blocks.LOG);
+            world.setBlockDumb(x, y + i, z, Blocks.LOG);
             // leaves, thick
             for (int x1 = -2; x1 <= 2; x1++) {
                 for (int z1 = -2; z1 <= 2; z1++) {
@@ -564,7 +521,7 @@ public partial class PerlinWorldGenerator {
                     }
 
                     for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES);
+                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
                     }
                 }
             }
@@ -573,7 +530,7 @@ public partial class PerlinWorldGenerator {
             for (int x1 = -1; x1 <= 1; x1++) {
                 for (int z1 = -1; z1 <= 1; z1++) {
                     for (int y1 = randomNumber; y1 <= randomNumber + 1; y1++) {
-                        world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES);
+                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
                     }
                 }
             }

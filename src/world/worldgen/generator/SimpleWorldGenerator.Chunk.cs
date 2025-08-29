@@ -64,7 +64,7 @@ public partial class SimpleWorldGenerator {
     private void placeTree(int x, int y, int z) {
         // tree
         for (int i = 0; i < 7; i++) {
-            world.setBlock(x, y + i, z, Blocks.LOG);
+            world.setBlockDumb(x, y + i, z, Blocks.LOG);
         }
         // leaves, thick
         for (int x1 = -2; x1 <= 2; x1++) {
@@ -74,7 +74,7 @@ public partial class SimpleWorldGenerator {
                     continue;
                 }
                 for (int y1 = 4; y1 < 6; y1++) {
-                    world.setBlock(x + x1, y + y1, z + z1, Blocks.LEAVES);
+                    world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
                 }
             }
         }
@@ -86,7 +86,7 @@ public partial class SimpleWorldGenerator {
                     if (x2 == 0 && z2 == 0 && y2 == 6) {
                         continue;
                     }
-                    world.setBlock(x + x2, y + y2, z + z2, Blocks.LEAVES);
+                    world.setBlockDumb(x + x2, y + y2, z + z2, Blocks.LEAVES);
                 }
             }
         }

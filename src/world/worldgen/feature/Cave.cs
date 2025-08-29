@@ -6,7 +6,6 @@ using Molten.DoublePrecision;
 namespace BlockGame;
 
 public class Cave : OverlayFeature {
-
     public override int radius => 8;
 
     /// <summary>
@@ -54,7 +53,11 @@ public class Cave : OverlayFeature {
         }
 
         // decide how many to generate (totally randomly, trust)
-        var count = rand.Next(10, 50);
+        var count = rand.Next(1, 50);
+        count = rand.Next(1, count);
+        // if you copypaste this line, you'll get avg fewer caves, with a small chance of a lot of caves
+        // is there a better method for this? idk
+        count = rand.Next(1, count);
 
         //Console.Out.WriteLine("Cave count: " + count);
 
@@ -67,7 +70,10 @@ public class Cave : OverlayFeature {
             // get random position to start with
             var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
             var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
+            //var y = rand.Next(8, 96);
             var y = rand.Next(8, 96);
+            // do the same thing again! so the surface won't be fucking spammed by caves
+            y = rand.Next(8, y);
 
             // if above the terrain heightmap, skip
             // TODO this completely fucks cavegen. Why? TIME TO FIND OUT
@@ -85,7 +91,6 @@ public class Cave : OverlayFeature {
     /// This should ALWAYS be capped to the original chunk because otherwise we just waste time carving out the same blocks again and again lol
     /// </summary>
     private void genCave(World world, XRandom rand, int x, int y, int z, ChunkCoord origin) {
-
         width = rand.NextSingle() * 2 + 1.5f; // random width between 1 and 3
         var steps = rand.Next(32, World.WORLDHEIGHT); // yesn't
         steps -= rand.Next((int)(World.WORLDHEIGHT / 4d));
@@ -259,7 +264,7 @@ public class Cave : OverlayFeature {
             zMin > (origin.z + 1) * Chunk.CHUNKSIZE) {
             goto cleanup;
         }
-        
+
         // if the area has water, bail
         if (world.anyWaterInArea(xMin, yMin, zMin, xMax, yMax, zMax)) {
             return;
@@ -278,13 +283,12 @@ public class Cave : OverlayFeature {
         float ccz = (float)(cz - origin.z * Chunk.CHUNKSIZE);
 
         double widthSq = width * width;
-
-        for (int xx = xMin; xx < xMax; xx++) {
-            var cxx = xx & 0xF;
-            for (int zz = zMin; zz < zMax; zz++) {
-                var czz = zz & 0xF;
+        for (int zz = zMin; zz < zMax; zz++) {
+            var czz = zz & 0xF;
+            for (int xx = xMin; xx < xMax; xx++) {
+                var cxx = xx & 0xF;
                 bool hasGrass = false;
-                
+
                 // this is needed so we don't set (grass) blocks over and over.
                 // we store the last set block (which we have set to air) then we set the block below it to grass
                 int lastSetBlock = 0;
@@ -292,7 +296,6 @@ public class Cave : OverlayFeature {
                 // IMPORTANT do it upside down because the whole grass replacing stuff
                 // if you do it the right way around we won't know whether we've ruined terrain or not
                 for (int yy = yMax - 1; yy >= yMin; yy--) {
-                    
                     // distance check
 
                     if (!isRoom) {
@@ -337,6 +340,7 @@ public class Cave : OverlayFeature {
                     }
                     // 1750 27 -131
                 }
+
                 // if we have grass, set the block below it to grass
                 if (hasGrass && chunk.getBlock(cxx, lastSetBlock - 1, czz) == Blocks.DIRT) {
                     chunk.setBlock(cxx, lastSetBlock - 1, czz, Blocks.GRASS);

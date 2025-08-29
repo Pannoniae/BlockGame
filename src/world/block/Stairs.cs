@@ -41,8 +41,8 @@ public class Stairs : Block {
         uint blockValue = id;
         blockValue = blockValue.setMetadata(metadata);
         
-        world.setBlockMetadataRemesh(x, y, z, blockValue);
-        world.blockUpdateWithNeighbours(new Vector3I(x, y, z));
+        world.setBlockMetadata(x, y, z, blockValue);
+        world.blockUpdateNeighbours(x, y, z);
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
@@ -113,13 +113,6 @@ public class Stairs : Block {
         foreach (var aabb in AABBList) {
             world.getEntitiesInBox(entities, aabb.min.toBlockPos(),
                 aabb.max.toBlockPos() + 1);
-            
-            //Console.Out.WriteLine("e: " + entities.Count);
-            //Console.Out.WriteLine("e2: " + world.entities.Count);
-
-            //foreach (Entity entity in world.entities) {
-                //Console.Out.WriteLine($"{entity.GetType()},{entity.position}");
-            //}
             
             foreach (var entity in entities) {
                 //Console.Out.WriteLine($"aabb: {aabb}, entity.aabb: {entity.aabb}");

@@ -379,7 +379,7 @@ public class Block {
         HEAD.setModel(BlockModel.makeHalfCube(HEAD));
         HEAD.partialBlock();
         
-        WATER = register(new Water(Blocks.WATER, "Water", 15));
+        WATER = register(new Water(Blocks.WATER, "Water", 15, 8));
         WATER.setTex([new UVPair(0, 4), new UVPair(0, 6)]);
         WATER.makeLiquid();
         
@@ -708,7 +708,13 @@ public class Block {
     // CUSTOM BEHAVIOURS
     
     
-    public virtual void update(World world, Vector3I pos) {
+    /** Coords are for the updated block.*/
+    public virtual void update(World world, int x, int y, int z) {
+
+    }
+    
+    /** Only called when this is a delayed update! */
+    public virtual void scheduledUpdate(World world, int x, int y, int z) {
 
     }
     
@@ -793,8 +799,8 @@ public class Block {
     }
 
     public virtual void place(World world, int x, int y, int z, RawDirection dir) {
-        world.setBlockMetadataRemesh(x, y, z, id);
-        world.blockUpdateWithNeighbours(new Vector3I(x, y, z));
+        world.setBlockMetadata(x, y, z, id);
+        world.blockUpdateNeighbours(x, y, z);
     }
     
     public virtual void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
@@ -867,32 +873,38 @@ public static class BlockExtensions {
 
 public class Flower(ushort id, string name) : Block(id, name) {
 
-    public override void update(World world, Vector3I pos) {
-        if (world.inWorld(pos.X, pos.Y - 1, pos.Z) && world.getBlock(pos.X, pos.Y - 1, pos.Z) == 0) {
-            world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR);
+    public override void update(World world, int x, int y, int z) {
+        if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
+            world.setBlockRemesh(x, y, z, Blocks.AIR);
         }
     }
 }
 
 public class FallingBlock(ushort id, string name) : Block(id, name) {
-    public override void update(World world, Vector3I pos) {
-        var y = pos.Y - 1;
+    public override void update(World world, int x, int y, int z) {
+        var ym = y - 1;
         bool isSupported = true;
         // if not supported, set flag
-        while (world.getBlock(new Vector3I(pos.X, y, pos.Z)) == 0) {
+        while (world.getBlock(new Vector3I(x, ym, z)) == 0) {
             // decrement Y
             isSupported = false;
-            y--;
+            ym--;
         }
         if (!isSupported) {
-            world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
-            world.setBlockRemesh(pos.X, y + 1, pos.Z, getID());
+            world.setBlockRemesh(x, y, z, 0);
+            world.setBlockRemesh(x, ym + 1,z, getID());
         }
 
         // if sand above, update
-        if (world.getBlock(new Vector3I(pos.X, pos.Y + 1, pos.Z)) == getID()) {
-            world.blockUpdate(new Vector3I(pos.X, pos.Y + 1, pos.Z));
+        if (world.getBlock(new Vector3I(x, y + 1, z)) == getID()) {
+            // if you do an update immediately, it will cause a stack overflow lol
+            world.scheduleBlockUpdate(new Vector3I(x, y + 1, z), 1);
         }
+    }
+
+    public override void scheduledUpdate(World world, int x, int y, int z) {
+        // run a normal update
+        update(world, x, y, z);
     }
 }
 

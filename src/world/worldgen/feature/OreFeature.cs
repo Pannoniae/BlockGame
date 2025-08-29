@@ -41,7 +41,7 @@ public class OreFeature : Feature {
                 continue;
             }
             if (world.getBlock(x1, y1, z1) == Block.STONE.id) {
-                world.setBlock(x1, y1, z1, block);
+                world.setBlockDumb(x1, y1, z1, block);
             }
         }*/
         
@@ -54,7 +54,7 @@ public class OreFeature : Feature {
         }
 
         // Place first ore block at origin point
-        world.setBlock(x, y, z, block);
+        world.setBlockDumb(x, y, z, block);
         
         Queue<Vector3I> expansionQueue = new(count * 2);
         expansionQueue.Enqueue(new Vector3I(x, y, z));
@@ -84,7 +84,7 @@ public class OreFeature : Feature {
 
                 if (random.NextSingle() < chance) {
                     // Place ore (may place over existing ore, but we don't care)
-                    world.setBlock(newPos.X, newPos.Y, newPos.Z, block);
+                    world.setBlockDumb(newPos.X, newPos.Y, newPos.Z, block);
                     placedCount++;
 
                     // Add to expansion queue

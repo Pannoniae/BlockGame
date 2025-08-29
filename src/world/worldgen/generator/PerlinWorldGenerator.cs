@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BlockGame.util;
 
 namespace BlockGame;
@@ -13,6 +14,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     public FastNoiseLite foliageNoise;
     public FastNoiseLite temperatureNoise;
     public FastNoiseLite humidityNoise;
+    public FastNoiseLite weirdnessNoise;
 
     public XRandom random;
 
@@ -23,7 +25,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     public void setup(int seed) {
         random = new XRandom(seed);
         lowNoise = new FastNoiseLite(seed);
-        lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        //lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         lowNoise.SetFrequency(1f);
         highNoise = new FastNoiseLite(random.Next(seed));
         highNoise.SetFrequency(1f);
@@ -53,6 +55,10 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         humidityNoise = new FastNoiseLite(random.Next(seed));
         //humidityNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
         humidityNoise.SetFrequency(1f);
+        
+        weirdnessNoise = new FastNoiseLite(random.Next(seed));
+        weirdnessNoise.SetFrequency(1f);
+        //weirdnessNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
     }
 
     // 2D
@@ -115,6 +121,10 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     public float getNoise3D(FastNoiseLite noise, double x, double y, double z, int octaves, float falloff) {
         float result;
         float frequency;
+        
+        var ampl = 1f / falloff;
+        // we're given a number like 2, which means each octave has half the influence of the previous
+        //falloff = 1f / falloff;
 
         // Special case when falloff = 1 (all octaves have equal weight)
         if (Math.Abs(falloff - 1.0f) < 0.0001f) {
@@ -146,10 +156,10 @@ public partial class PerlinWorldGenerator : WorldGenerator {
                 (float)(z * frequency));
 
             // Each successive octave has influence 1/f of the previous
-            amplitude /= falloff;
+            amplitude *= ampl;
 
             // Each octave doubles the frequency (halves the period)
-            frequency *= 2.0f;
+            frequency *= falloff;
         }
 
         return result;
@@ -208,5 +218,33 @@ public partial class PerlinWorldGenerator : WorldGenerator {
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// get noise information for debugging at a specific world position
+    /// </summary>
+    public Dictionary<string, float> getNoiseInfoAtBlock(int x, int y, int z) {
+        var info = new Dictionary<string, float> {
+            // sample all noises at this position using the same parameters as worldgen
+            ["lowNoise"] = getNoise3D(lowNoise, x * LOW_FREQUENCY, y * LOW_FREQUENCY * Y_DIVIDER, z * LOW_FREQUENCY, 8, Meth.phiF),
+            ["highNoise"] = getNoise3D(highNoise, x * HIGH_FREQUENCY, y * HIGH_FREQUENCY, z * HIGH_FREQUENCY, 8, 2f),
+            ["selectorNoise"] = getNoise3D(selectorNoise, x * SELECTOR_FREQUENCY, y * SELECTOR_FREQUENCY, z * SELECTOR_FREQUENCY, 2, 2f),
+            ["weirdnessNoise"] = getNoise3D(weirdnessNoise, x * WEIRDNESS_FREQUENCY, y * WEIRDNESS_FREQUENCY, z * WEIRDNESS_FREQUENCY, 2, Meth.phiF),
+            ["auxNoise"] = getNoise3D(auxNoise, x * BLOCK_VARIATION_FREQUENCY, 128, z * BLOCK_VARIATION_FREQUENCY, 1, 1),
+            ["foliageNoise"] = getNoise2D(foliageNoise, x * FOLIAGE_FREQUENCY, z * FOLIAGE_FREQUENCY, 2, 2),
+            ["temperatureNoise"] = temperatureNoise.GetNoise(x, z),
+            ["humidityNoise"] = humidityNoise.GetNoise(x, z)
+        };
+
+        // calculate final density using the same method as worldgen
+        float low = info["lowNoise"];
+        float high = info["highNoise"];
+        float selector = info["selectorNoise"];
+        float weirdness = info["weirdnessNoise"];
+        
+        info["airBias"] = calculateAirBias(low, high, weirdness, y);
+        info["finalDensity"] = calculateDensity(low, high, selector, weirdness, y);
+        
+        return info;
     }
 }
