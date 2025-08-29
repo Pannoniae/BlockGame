@@ -12,6 +12,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     public int atlasSize;
 
     private int i;
+    private int i2;
     private int ticks;
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
@@ -171,8 +172,15 @@ public class BTextureAtlas : BTexture2D, IDisposable {
 
     public void update(double dt) {
         if (ticks % 16 == 0) {
+            // still water
             updateTexture(0, 4 * 16, 16, 16, (i % 16) * 16, 4 * 16);
             i++;
+        }
+        
+        if (ticks % 4 == 0) {
+            // flowing water
+            updateTexture(0, 6 * 16, 16, 16, (i2 % 16) * 16, 6 * 16);
+            i2++;
         }
         ticks++;
     }
