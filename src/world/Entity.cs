@@ -106,6 +106,23 @@ public class Entity(World world) {
         }
     }
 
+    /**
+     * Handle interactions with the block the entity is standing in.
+     */
+    public virtual void interactBlock() {
+        // get blocks in aabb
+        var min = aabb.min.toBlockPos();
+        var max = aabb.max.toBlockPos();
+        World.getBlocksInBox(neighbours, min, max);
+        
+        // check if any of them are liquid
+        inLiquid = false;
+        foreach (var pos in neighbours) {
+            var block = world.getBlock(pos);
+            Block.blocks[block]!.interact(world, pos.X, pos.Y, pos.Z, this);
+        }
+    }
+
     public virtual void onChunkChanged() {
         // remove from old chunk, add to new chunk
         if (inWorld) {

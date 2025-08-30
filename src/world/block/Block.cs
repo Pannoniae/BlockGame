@@ -83,6 +83,11 @@ public class Block {
      */
     public static bool[] fullBlock = new bool[MAXBLOCKS];
     
+    /**
+     * Is this block transparent? (glass, leaves, etc.)
+     */
+    public static bool[] transparent = new bool[MAXBLOCKS];
+    
     public static bool[] translucent = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
     public static bool[] randomTick = new bool[MAXBLOCKS];
@@ -643,12 +648,14 @@ public class Block {
     }
 
     public Block transparency() {
+        transparent[id] = true;
         fullBlock[id] = false;
         return this;
     }
 
     public Block translucency() {
         layer = RenderLayer.TRANSLUCENT;
+        translucent[id] = true;
         fullBlock[id] = false;
         return this;
     }
@@ -716,6 +723,10 @@ public class Block {
     /** Only called when this is a delayed update! */
     public virtual void scheduledUpdate(World world, int x, int y, int z) {
 
+    }
+    
+    public virtual void interact(World world, int x, int y, int z, Entity e) {
+        
     }
     
     [ClientOnly]

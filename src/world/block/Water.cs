@@ -302,6 +302,9 @@ public class Water : Block {
 
         data = getWaterLevel(data);
         // if full, return 15/16
+        if (data == 0) {
+            return 15 / 16f;
+        }
 
         return 1.0f - data * 0.125f;
     }
@@ -355,9 +358,70 @@ public class Water : Block {
         return 0.0f;
     }
 
+    public override void interact(World world, int x, int y, int z, Entity e) {
+        
+        e.inLiquid = true;
+        // push entity in flow direction
+        var flow = getFlow(world, x, y, z);
+        if (flow != Vector3.Zero) {
+            flow = Vector3.Normalize(flow) * 0.04f; // tweak strength here?
+            e.velocity += flow.toVec3D(); // small push
+        }
+    }
+
+    /**
+     * Get the flow vector for this water block.
+     * This is used for rendering flow direction and for pushing entities.
+     */
     public Vector3 getFlow(World world, int x, int y, int z) {
-        // TODO
-        return default;
+        var block = world.getBlock(x, y, z);
+        if (block != Blocks.WATER) {
+            return Vector3.Zero;
+        }
+    
+        var metadata = world.getBlockMetadata(x, y, z);
+        var currentHeight = getHeight(metadata);
+        var flow = Vector3.Zero;
+    
+        // Check all 6 directions for height differences
+        // Down
+        var blockBelow = world.getBlock(x, y - 1, z);
+        if (blockBelow == Blocks.AIR || (blockBelow == Blocks.WATER && getRenderWater(world, x, y - 1, z) > 0)) {
+            flow.Y -= 1.0f; // Strong downward flow
+        }
+    
+        // Horizontal directions
+        Vector3I[] horizontalDirs = [
+            new Vector3I(-1, 0, 0), new Vector3I(1, 0, 0),
+            new Vector3I(0, 0, -1), new Vector3I(0, 0, 1)
+        ];
+    
+        foreach (var dir in horizontalDirs) {
+            var neighborBlock = world.getBlock(x + dir.X, y + dir.Y, z + dir.Z);
+        
+            if (neighborBlock == Blocks.AIR) {
+                // Flow toward empty space
+                flow += new Vector3(dir.X * 0.5f, dir.Y * 0.5f, dir.Z * 0.5f);
+            }
+            else if (neighborBlock == Blocks.WATER) {
+                var neighborWater = getRenderWater(world, x + dir.X, y + dir.Y, z + dir.Z);
+                if (neighborWater > 0) {
+                    var neighborHeight = 1.0f - neighborWater * 0.125f;
+                    var heightDiff = currentHeight - neighborHeight;
+                    if (heightDiff > 0) {
+                        // Flow from high to low
+                        flow += new Vector3(dir.X * heightDiff, 0, dir.Z * heightDiff);
+                    }
+                }
+            }
+        }
+    
+        // Check if water above is pushing down
+        if (world.getBlock(x, y + 1, z) == Blocks.WATER) {
+            flow.Y -= 0.5f;
+        }
+    
+        return flow;
     }
 
     public bool canSpread(World world, int x, int y, int z) {
@@ -407,8 +471,10 @@ public class Water : Block {
         if (same) {
             return false;
         }
+        
+        var notTransparent = !transparent[br.getBlockCached(direction.X, direction.Y, direction.Z)];
 
-        return dir == RawDirection.UP || base.cullFace(br, x, y, z, dir);
+        return dir == RawDirection.UP || (notTransparent && base.cullFace(br, x, y, z, dir));
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
