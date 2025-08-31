@@ -235,8 +235,8 @@ public class Block {
         GLASS.transparency();
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
-        LANTERN.setTex(grassUVs(15, 1, 13, 1, 14, 1));
-        LANTERN.setModel(BlockModel.makePartialCube(LANTERN));
+        LANTERN.setTex(new(13, 1), new(14, 1), new(15, 1));
+        LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
         
@@ -642,7 +642,7 @@ public class Block {
         return this;
     }
     
-    public Block setTex(ReadOnlySpan<UVPair> uvs) {
+    public Block setTex(params ReadOnlySpan<UVPair> uvs) {
         this.uvs = uvs.ToArray();
         return this;
     }
