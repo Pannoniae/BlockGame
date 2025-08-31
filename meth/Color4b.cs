@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace BlockGame.GL.vertexformats;
+namespace BlockGame.util;
 
 /// <summary>
 /// A color with 4 unsigned byte components (R, G, B, A).

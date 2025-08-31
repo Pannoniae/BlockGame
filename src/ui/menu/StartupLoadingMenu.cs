@@ -1,5 +1,4 @@
 using System.Numerics;
-using BlockGame.GL.vertexformats;
 using BlockGame.ui.element;
 using BlockGame.util;
 using Molten;

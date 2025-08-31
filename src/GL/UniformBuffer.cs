@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL.Legacy;
-using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
 

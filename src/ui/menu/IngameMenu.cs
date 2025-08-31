@@ -1,5 +1,4 @@
 using System.Numerics;
-using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Cysharp.Text;
 using FontStashSharp.RichText;

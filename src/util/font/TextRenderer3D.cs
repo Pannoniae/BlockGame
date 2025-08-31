@@ -3,7 +3,6 @@ using BlockGame.GL;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Molten;
-using Color4b = BlockGame.GL.vertexformats.Color4b;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.util.font;

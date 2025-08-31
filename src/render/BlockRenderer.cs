@@ -8,7 +8,6 @@ using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
-using SixLabors.ImageSharp.PixelFormats;
 using Debug = System.Diagnostics.Debug;
 
 namespace BlockGame;

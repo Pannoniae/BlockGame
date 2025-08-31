@@ -1,7 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BlockGame.GL.vertexformats;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;

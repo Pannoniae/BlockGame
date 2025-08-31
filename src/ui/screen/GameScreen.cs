@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Numerics;
 using System.Runtime;
-using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;

@@ -1,6 +1,5 @@
 using BlockGame.GL.vertexformats;
 using Silk.NET.OpenGL.Legacy;
-using Silk.NET.OpenGL.Legacy;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;

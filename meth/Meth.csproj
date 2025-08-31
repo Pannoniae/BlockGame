@@ -4,7 +4,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>BlockGame</RootNamespace>
+        <RootNamespace>BlockGame.util</RootNamespace>
         <UserSecretsId>8b00dbfb-001f-450f-84c9-afe1850983a6</UserSecretsId>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>

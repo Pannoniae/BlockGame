@@ -1,8 +1,5 @@
-﻿using System.Numerics;
-using BlockGame.GL.vertexformats;
+﻿using BlockGame.GL.vertexformats;
 using BlockGame.util;
-using Molten;
-using Molten.DoublePrecision;
 
 namespace BlockGame.src.world.block;
 
@@ -160,7 +157,7 @@ public class Slabs : Block {
                 aabb.max.toBlockPos() + 1);
             
             foreach (var entity in entities) {
-                if (BlockGame.AABB.isCollision(aabb, entity.aabb)) {
+                if (util.AABB.isCollision(aabb, entity.aabb)) {
                     return false;
                 }
             }

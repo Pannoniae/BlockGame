@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Runtime.CompilerServices;
-using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.xNBT;

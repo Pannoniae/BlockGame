@@ -1,6 +1,6 @@
 using System.Numerics;
 using System.Text;
-using BlockGame.GL.vertexformats;
+using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
 

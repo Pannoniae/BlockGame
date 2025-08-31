@@ -10,7 +10,6 @@ using Molten;
 using Silk.NET.OpenGL.Legacy;
 using Rectangle = System.Drawing.Rectangle;
 using RectangleF = System.Drawing.RectangleF;
-using Color4b = BlockGame.GL.vertexformats.Color4b;
 using Shader = BlockGame.GL.Shader;
 using VertexColorTexture = BlockGame.GL.VertexColorTexture;
 
@@ -22,9 +21,6 @@ namespace BlockGame.ui;
 /// Drawing methods ending with "UI" draw on the virtual GUI coordinate system, so they are positioned in the right place when the GUI scale is changed.
 /// </summary>
 public class GUI {
-    public Silk.NET.OpenGL.Legacy.GL GL;
-
-    //public InstantShader shader;
 
     public static int guiScale = 4;
 
@@ -67,7 +63,6 @@ public class GUI {
     private const float SCROLL_SPEED = 32.0f; 
 
     public GUI() {
-        GL = Game.GL;
         //shader = new InstantShader(GL, "shaders/batch.vert", "shaders/batch.frag");
         tb = Game.graphics.mainBatch;
         immediatetb = Game.graphics.immediateBatch;

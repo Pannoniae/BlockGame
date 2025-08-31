@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
@@ -8,7 +7,7 @@ using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
-using BoundingFrustum = System.Numerics.BoundingFrustum;
+using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 using Color = Molten.Color;
 using DepthFunction = Silk.NET.OpenGL.Legacy.DepthFunction;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;

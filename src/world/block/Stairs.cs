@@ -1,7 +1,4 @@
-﻿using System.Numerics;
-using BlockGame.GL.vertexformats;
-using Molten;
-using Molten.DoublePrecision;
+﻿using BlockGame.GL.vertexformats;
 
 namespace BlockGame.util;
 
@@ -116,7 +113,7 @@ public class Stairs : Block {
             
             foreach (var entity in entities) {
                 //Console.Out.WriteLine($"aabb: {aabb}, entity.aabb: {entity.aabb}");
-                if (BlockGame.AABB.isCollision(aabb, entity.aabb)) {
+                if (util.AABB.isCollision(aabb, entity.aabb)) {
                     return false;
                 }
             }

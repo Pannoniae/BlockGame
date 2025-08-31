@@ -2,8 +2,7 @@ using System.Drawing;
 using System.Numerics;
 using Silk.NET.OpenGL.Legacy;
 using System.Runtime.InteropServices;
-using BlockGame.GL.vertexformats;
-using Silk.NET.OpenGL.Legacy;
+using BlockGame.util;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;

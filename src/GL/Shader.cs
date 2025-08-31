@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
-using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ARB;
 
 namespace BlockGame.GL;

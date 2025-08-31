@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using BlockGame.GL.vertexformats;
 
 namespace BlockGame.util;
 

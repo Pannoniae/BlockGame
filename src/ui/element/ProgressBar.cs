@@ -1,5 +1,5 @@
 using System.Drawing;
-using BlockGame.GL.vertexformats;
+using BlockGame.util;
 
 namespace BlockGame.ui.element;
 

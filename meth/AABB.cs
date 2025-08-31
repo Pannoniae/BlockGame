@@ -3,12 +3,11 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
 using Plane = System.Numerics.Plane;
 
-namespace BlockGame;
+namespace BlockGame.util;
 
 // mutable
 [StructLayout(LayoutKind.Auto)]

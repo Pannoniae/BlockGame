@@ -2,7 +2,7 @@ using BlockGame.block;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
-using BoundingFrustum = System.Numerics.BoundingFrustum;
+using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 
 namespace BlockGame;
 

@@ -1,7 +1,6 @@
 using Molten.DoublePrecision;
 using System.Numerics;
 using BlockGame.GL;
-using Color4b = BlockGame.GL.vertexformats.Color4b;
 
 
 namespace BlockGame.util;

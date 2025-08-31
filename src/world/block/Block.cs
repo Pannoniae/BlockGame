@@ -841,7 +841,7 @@ public class Block {
 
             
             foreach (var entity in entities) {
-                if (BlockGame.AABB.isCollision(aabb, entity.aabb)) {
+                if (util.AABB.isCollision(aabb, entity.aabb)) {
                     return false;
                 }
             }

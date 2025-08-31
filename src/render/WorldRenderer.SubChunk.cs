@@ -1,8 +1,7 @@
-using System.Numerics;
 using BlockGame.GL;
 using BlockGame.util;
 using Molten.DoublePrecision;
-using BoundingFrustum = System.Numerics.BoundingFrustum;
+using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 
 namespace BlockGame;
 

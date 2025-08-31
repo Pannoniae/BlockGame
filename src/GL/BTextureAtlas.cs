@@ -2,7 +2,6 @@ using BlockGame.src.render;
 using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
-using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
 

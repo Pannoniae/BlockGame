@@ -546,9 +546,9 @@ public class Water : Block {
             br.applyFaceLighting(d, colourCache, lightColourCache);
             
             // debug tint for dynamic water
-            if (isDynamic(metadata)) {
-                colourCache.Fill(new Vector4(1f, 0.5f, 0.5f, 1f));
-            }
+            //if (isDynamic(metadata)) {
+            //    colourCache.Fill(new Vector4(1f, 0.5f, 0.5f, 1f));
+            //}
 
             br.begin(cache);
 
