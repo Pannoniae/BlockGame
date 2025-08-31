@@ -434,7 +434,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public void render(double interp) {
         //Game.GD.ResetStates();
 
-        frustum = Game.player.camera.frustum;
+        frustum = Game.camera.frustum;
 
 
         var usingCMDL = Game.hasCMDL;
@@ -499,10 +499,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.graphics.tex(1, lightTex);
         
         
-        var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
+        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
 
-        var cameraPos = world.player.camera.renderPosition(interp);
+        var cameraPos = Game.camera.renderPosition(interp);
         worldShader.setUniform(uMVP, viewProj);
         worldShader.setUniform(uCameraPos, new Vector3(0));
 
@@ -801,8 +801,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // render a flat plane at y = 16
-        var viewProj = world.player.camera.getStaticViewMatrix(interp) * world.player.camera.getProjectionMatrix();
-        var modelView = world.player.camera.getStaticViewMatrix(interp);
+        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
+        var modelView = Game.camera.getStaticViewMatrix(interp);
         var sky = new Vector3(0, 4, 0);
         const int skySize = 512;
 
@@ -948,8 +948,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // disable fog for outline rendering
         idc.enableFog(false);
 
-        var view = world.player.camera.getViewMatrix(interp);
-        var viewProj = view * world.player.camera.getProjectionMatrix();
+        var view = Game.camera.getViewMatrix(interp);
+        var viewProj = view * Game.camera.getProjectionMatrix();
         
         idc.setMV(view);
         idc.setMVP(viewProj);

@@ -167,7 +167,7 @@ public class GameScreen : Screen {
         var world = Game.world;
 
         //world.mesh();
-        world.player.camera.calculateFrustum(interp);
+        Game.camera.calculateFrustum(interp);
         //Console.Out.WriteLine(world.player.camera.frustum);
         Game.renderer.render(interp);
         if (Game.instance.targetedPos.HasValue) {
@@ -240,7 +240,7 @@ public class GameScreen : Screen {
                 var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
                 Game.instance.lastMousePos = pos;
 
-                Game.player.camera.ModifyDirection(xOffset, yOffset);
+                Game.camera.ModifyDirection(xOffset, yOffset);
             }
         }
 
@@ -309,6 +309,9 @@ public class GameScreen : Screen {
                 break;
             case Key.F4:
                 INGAME_MENU.ToggleSegmentedMode();
+                break;
+            case Key.F5:
+                Game.camera.cycleMode();
                 break;
             // reload chunks
             case Key.A when keyboard.IsKeyPressed(Key.F3):
@@ -491,7 +494,7 @@ public class GameScreen : Screen {
 
     public override void resize(Vector2I size) {
         base.resize(size);
-        Game.world.player.camera.setViewport(size.X, size.Y);
+        Game.camera.setViewport(size.X, size.Y);
     }
 
     public override void draw() {

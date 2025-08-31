@@ -5,12 +5,19 @@ using Molten.DoublePrecision;
 
 namespace BlockGame;
 
-public class PlayerCamera {
-    private Player player;
+public enum CameraMode {
+    FirstPerson,
+    ThirdPersonBehind,
+    ThirdPersonFront
+}
+
+public class Camera {
+    private Entity? player;
 
     public Vector3D prevPosition;
     public Vector3D position;
     public Vector3D forward;
+    public Vector3D prevForward;
 
     public Vector3D renderPosition(double interp) => Vector3D.Lerp(prevPosition, position, interp);
 
@@ -37,8 +44,26 @@ public class PlayerCamera {
     private float aspectRatio;
 
     public BoundingFrustum frustum;
+    
+    public CameraMode mode = CameraMode.FirstPerson;
+    private const double THIRD_PERSON_DISTANCE = 4.0;
+    
+    public Camera(float viewportWidth, float viewportHeight) {
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
+        aspectRatio = this.viewportWidth / this.viewportHeight;
+        
+        currentFov = normalFov;
+        targetFov = normalFov;
+        
+        var view = getViewMatrix(1);
+        var proj = getProjectionMatrix();
+        var mat = view * proj;
+        frustum = new BoundingFrustum(mat);
+        calculateFrustum(1);
+    }
 
-    public PlayerCamera(Player player, Vector3D position, Vector3D forward, Vector3D up, float viewportWidth, float viewportHeight) {
+    public Camera(Player player, Vector3D position, Vector3D forward, Vector3D up, float viewportWidth, float viewportHeight) {
         this.player = player;
         prevPosition = position;
         this.position = position;
@@ -46,6 +71,7 @@ public class PlayerCamera {
         this.viewportHeight = viewportHeight;
         aspectRatio = this.viewportWidth / this.viewportHeight;
         this.forward = forward;
+        prevForward = forward;
         this.up = up;
         
         currentFov = normalFov;
@@ -58,6 +84,70 @@ public class PlayerCamera {
         calculateFrustum(1);
 
         
+    }
+    
+    public void setPlayer(Entity player) {
+        this.player = player;
+    }
+    
+    public void setPosition(Vector3D newPos) {
+        prevPosition = position;
+        position = newPos;
+    }
+    
+    public void cycleMode() {
+        mode = mode switch {
+            CameraMode.FirstPerson => CameraMode.ThirdPersonBehind,
+            CameraMode.ThirdPersonBehind => CameraMode.ThirdPersonFront,
+            CameraMode.ThirdPersonFront => CameraMode.FirstPerson,
+            _ => CameraMode.FirstPerson
+        };
+    }
+    
+    /**
+     * TODO the huge fucking problem with this method is that we're mixing up per-frame data (forward/pitch/yaw) with per-update data (position/prevPosition which is interpolated in rendering)
+     * i.e. it jitters like hell in non-first-person modes when you f5
+     * to be fixed but idk how yet
+     */
+    public void updatePosition(double dt) {
+        if (player is not Player p) return;
+        
+        var trueEyeHeight = p.sneaking ? Player.sneakingEyeHeight : Player.eyeHeight;
+        var basePos = new Vector3D(p.position.X, p.position.Y + trueEyeHeight, p.position.Z);
+        var basePrevPos = new Vector3D(p.prevPosition.X, p.prevPosition.Y + trueEyeHeight, p.prevPosition.Z);
+        
+        switch (mode) {
+            case CameraMode.FirstPerson:
+                position = basePos;
+                prevPosition = basePrevPos;
+                break;
+                
+            case CameraMode.ThirdPersonBehind:
+                var backwardOffset = forward * -THIRD_PERSON_DISTANCE;
+                var prevBackwardOffset = prevForward * -THIRD_PERSON_DISTANCE;
+                position = basePos + backwardOffset;
+                prevPosition = basePrevPos + prevBackwardOffset;
+                // TODO: Add collision detection to prevent camera clipping through blocks
+                break;
+                
+            case CameraMode.ThirdPersonFront:
+                var forwardOffset = (forward) * THIRD_PERSON_DISTANCE;
+                var prevForwardOffset = (prevForward) * THIRD_PERSON_DISTANCE;
+                position = basePos + forwardOffset;
+                prevPosition = basePrevPos + prevForwardOffset;
+                
+                // TODO: Add collision detection to prevent camera clipping through blocks
+                break;
+        }
+        
+        // Update bob
+        if (Math.Abs(p.velocity.withoutY().Length()) > 0.0001 && p.onGround) {
+            bob = Math.Clamp((float)(p.velocity.Length() / 4), 0, 1);
+        } else {
+            bob *= 0.935f;
+        }
+        
+        prevBob = bob;
     }
 
     public void setViewport(float width, float height) {
@@ -87,6 +177,15 @@ public class PlayerCamera {
     }
 
     public void ModifyDirection(float xOffset, float yOffset) {
+        // Store previous forward before updating
+        prevForward = forward;
+        
+        // if third person front, invert
+        if (mode == CameraMode.ThirdPersonFront) {
+            //xOffset = -xOffset;
+            yOffset = -yOffset;
+        }
+        
         yaw -= xOffset;
         pitch -= yOffset;
 
@@ -99,8 +198,14 @@ public class PlayerCamera {
         cameraDirection.Y = MathF.Sin(Meth.deg2rad(pitch));
         cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw)) *
                             MathF.Cos(Meth.deg2rad(pitch));
+        
+        // if third person front, invert
+        if (mode == CameraMode.ThirdPersonFront) {
+            cameraDirection = -cameraDirection;
+        }
 
         forward = Vector3D.Normalize(cameraDirection);
+        
         up = Vector3D.Normalize(Vector3D.Cross(Vector3D.Cross(forward, Vector3D.UnitY), forward));
     }
 
@@ -122,7 +227,10 @@ public class PlayerCamera {
     public Matrix4x4 getViewMatrix(double interp) {
         var interpPos = renderPosition(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var tt = 0f;
+        if (player is Player p) {
+            tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
+        }
         var factor = 0.4f;
         var factor2 = 0.15f;
         return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), interpPos.toVec3() + forward.toVec3(), up.toVec3())
@@ -137,7 +245,10 @@ public class PlayerCamera {
     public Matrix4x4 getStaticViewMatrix(double interp) {
         var interpPos = Vector3.Zero;
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var tt = 0f;
+        if (player is Player p) {
+            tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
+        }
         var factor = 0.4f;
         var factor2 = 0.15f;
         return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward.toVec3(), up.toVec3())
@@ -149,7 +260,10 @@ public class PlayerCamera {
     public Matrix4x4 getViewMatrixRH(double interp) {
         var interpPos = renderPosition(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var tt = (float)double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var tt = 0f;
+        if (player is Player p) {
+            tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
+        }
         var factor = 0.4f;
         var factor2 = 0.15f;
         return Matrix4x4.CreateLookAt(interpPos.toVec3(), interpPos.toVec3() + forward.toVec3(), up.toVec3())
@@ -164,7 +278,10 @@ public class PlayerCamera {
     /// </summary>
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var tt = double.Lerp(player.prevTotalTraveled, player.totalTraveled, interp);
+        var tt = 0.0;
+        if (player is Player p) {
+            tt = double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
+        }
         var factor = 2f;
         //var axisZ = new Vector3(1f, 0, 1f);
         //var axisX = new Vector3(1f, 0, -1f);

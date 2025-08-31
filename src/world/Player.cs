@@ -15,8 +15,6 @@ public class Player : Entity {
     public const double sneakingEyeHeight = 1.45;
     public const double feetCheckHeight = 0.05;
 
-    public PlayerCamera camera;
-
     public Vector3D inputVector;
 
     public PlayerRenderer renderer;
@@ -45,13 +43,10 @@ public class Player : Entity {
         position = new Vector3D(x, y, z);
         prevPosition = position;
         hotbar = new Inventory();
-        camera = new PlayerCamera(this, new Vector3D(x, (float)(y + eyeHeight), z), Vector3D.UnitZ * 1, Vector3D.UnitY,
-            Constants.initialWidth, Constants.initialHeight);
         renderer = new PlayerRenderer(this);
 
         this.world = world;
-        var f = camera.CalculateForwardVector();
-        forward = new Vector3D(f.X, f.Y, f.Z);
+        rotation.Y = Game.camera.yaw;
         calcAABB(ref aabb, position);
 
         swingProgress = 0;
@@ -59,7 +54,7 @@ public class Player : Entity {
     }
 
     public void render(double dt, double interp) {
-        camera.updateFOV(isUnderWater(), dt);
+        Game.camera.updateFOV(isUnderWater(), dt);
         renderer.render(dt, interp);
     }
 
@@ -111,24 +106,18 @@ public class Player : Entity {
 
         feetPosition = new Vector3D(position.X, position.Y + feetCheckHeight, position.Z);
 
-        var trueEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
-        camera.position = new Vector3D(position.X, (position.Y + trueEyeHeight), position.Z);
-        camera.prevPosition = new Vector3D(prevPosition.X, (prevPosition.Y + trueEyeHeight),
-            prevPosition.Z);
-        var f = camera.CalculateForwardVector();
-        forward = new Vector3D(f.X, f.Y, f.Z);
+        // Update the camera system
+        Game.camera.updatePosition(dt);
+        
+        // Sync rotation with camera
+        rotation.Y = Game.camera.yaw;
+        rotation.X = Game.camera.pitch;
         calcAABB(ref aabb, position);
-        if (Math.Abs(velocity.withoutY().Length()) > 0.0001 && onGround) {
-            camera.bob = Math.Clamp((float)(velocity.Length() / 4), 0, 1);
-        }
-        else {
-            camera.bob *= 0.935f;
-        }
     }
 
     public void setPrevVars() {
         prevPosition = position;
-        camera.prevBob = camera.bob;
+        Game.camera.prevBob = Game.camera.bob;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
         prevSwingProgress = swingProgress;
@@ -138,7 +127,7 @@ public class Player : Entity {
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
         setPrevVars();
-        camera.prevPosition = camera.position;
+        Game.camera.prevPosition = Game.camera.position;
     }
 
     public void loadChunksAroundThePlayer(int renderDistance) {
@@ -470,7 +459,7 @@ public class Player : Entity {
 
     public RawDirection getFacing() {
         // Get the forward vector from the camera
-        Vector3 forward = camera.CalculateForwardVector();
+        Vector3 forward = Game.camera.CalculateForwardVector();
 
         double verticalThreshold = Math.Cos(Math.PI / 4f); // 45 degrees in radians
 

@@ -276,7 +276,7 @@ public class IngameMenu : Menu, IDisposable {
             var gui = Game.gui;
             var i = Game.instance;
             var p = Game.player!;
-            var c = p.camera;
+            var c = Game.camera;
             var m = Game.metrics;
             var w = Game.world!;
             var loadedChunks = Game.world.chunks.Count;

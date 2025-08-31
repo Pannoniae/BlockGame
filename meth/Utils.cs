@@ -344,6 +344,13 @@ public static partial class Meth {
     }
 }
 
+/** yesn't */
+public enum TriState : byte {
+    FALSE = 0,
+    TRUE = 1,
+    FILE_NOT_FOUND = 2
+}
+
 /// <summary>
 /// North = +Z
 /// South = -Z

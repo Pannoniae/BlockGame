@@ -132,6 +132,8 @@ public partial class World : IDisposable {
         player = new Player(this, 6, 20, 6);
         addEntity(player);
         Game.player = player;
+        Game.camera.setPlayer(player);
+        Game.camera.setPosition(player.position);
 
         if (!loadingSave) {
             // find safe spawn position with proper AABB clearance

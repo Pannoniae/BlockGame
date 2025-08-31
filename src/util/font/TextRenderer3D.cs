@@ -37,8 +37,8 @@ public class TextRenderer3D : IFontStashRenderer {
         //shaderProgram.Projection = Game.world.player.camera.getProjectionMatrix();
 
         // set combined VP matrix
-        var mat = Game.world.player.camera.getViewMatrix(interp)
-                  * Game.world.player.camera.getProjectionMatrix();
+        var mat = Game.camera.getViewMatrix(interp)
+                  * Game.camera.getProjectionMatrix();
         batchShader.setUniform(uMVP, mat);
     }
 

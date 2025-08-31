@@ -292,7 +292,7 @@ public class BlockRenderer {
             // set alpha to 1!
             // todo do we really need this? user can fuck it up for himself whatever
             //res.W = 1;
-            colourCache[i] = new Vector4(tint);
+            colourCache[i] = new Vector4(tint, tint, tint, 1);
             lightColourCache[i] = light.bytes[i];
         }
     }

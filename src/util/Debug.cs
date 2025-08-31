@@ -16,8 +16,8 @@ public class Debug {
     
     public void renderTick(double interp) {
         // Set projection and view uniforms for the instant draw system
-        Matrix4x4 projMatrix = Game.world.player.camera.getProjectionMatrix();
-        Matrix4x4 viewMatrix = Game.world.player.camera.getViewMatrix(interp);
+        Matrix4x4 projMatrix = Game.camera.getProjectionMatrix();
+        Matrix4x4 viewMatrix = Game.camera.getViewMatrix(interp);
         Matrix4x4 mvpMatrix = viewMatrix * projMatrix;
         
         idc.setMVP(mvpMatrix);

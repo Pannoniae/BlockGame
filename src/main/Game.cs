@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
@@ -477,6 +478,8 @@ public partial class Game {
         Settings.instance.load();
 
         graphics = new Graphics();
+
+        camera = new Camera(Constants.initialWidth, Constants.initialHeight);
         
         // initialize viewport and projection for GUI rendering
         width = window.FramebufferSize.X;

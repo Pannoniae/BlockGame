@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.util;
 using JetBrains.Annotations;
 using Molten;
@@ -9,19 +10,24 @@ public class Entity(World world) {
     public const int MAX_SWING_TICKS = 16;
     public const int AIR_HIT_CD = 20;
 
-    // is player walking on (colling with) ground
+    /** is player walking on (colling with) ground */
     public bool onGround;
 
-    // is the player in the process of jumping
+    /** is the player in the process of jumping */
     public bool jumping;
 
     public bool sneaking;
 
-    // entity positions are at feet
+    /** entity positions are at feet */
     public Vector3D prevPosition;
     public Vector3D position;
     public Vector3D velocity;
     public Vector3D accel;
+    
+    /** X Y Z */
+    public Vector3 rotation;
+
+    public Vector3 prevRotation;
 
     // slightly above so it doesn't think it's under the player
     public Vector3D feetPosition;
@@ -31,7 +37,16 @@ public class Entity(World world) {
     /// Which direction the entity faces (horizontally)
     /// TODO also store pitch/yaw for head without camera
     /// </summary>
-    public Vector3D forward;
+    public virtual Vector3D forward {
+        get {
+            var cameraDirection = Vector3.Zero;
+            cameraDirection.X = MathF.Cos(Meth.deg2rad(rotation.Y));
+            cameraDirection.Y = 0;
+            cameraDirection.Z = MathF.Sin(Meth.deg2rad(rotation.Y));
+            var v = Vector3.Normalize(cameraDirection);
+            return new Vector3D(v.X, v.Y, v.Z);
+        }
+    }
 
     public AABB aabb;
 

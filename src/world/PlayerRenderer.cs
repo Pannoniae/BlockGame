@@ -82,7 +82,7 @@ public class PlayerRenderer {
                   // swing translation
                   Matrix4x4.CreateTranslation((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
         Game.graphics.instantTextureShader.use();
-        Game.graphics.instantTextureShader.setUniform(uMVP, mat * player.camera.getHandViewMatrix(interp) * player.camera.getFixedProjectionMatrix());
+        Game.graphics.instantTextureShader.setUniform(uMVP, mat * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
         Game.graphics.instantTextureShader.setUniform(tex, 0);
         vao.render();
         
