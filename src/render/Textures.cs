@@ -1,5 +1,6 @@
 using BlockGame.GL;
 using BlockGame.util;
+using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -151,5 +152,18 @@ public class Textures {
         }
 
         image.Save("lightmap.png");
+    }
+
+    public unsafe void dumpAtlas() {
+        var width = (int)blockTexture.width;
+        var height = (int)blockTexture.height;
+        var pixels = new Rgba32[width * height];
+        
+        fixed (Rgba32* pixelPtr = pixels) {
+            GL.GetTextureImage(blockTexture.handle, 0, PixelFormat.Rgba, PixelType.UnsignedByte, (uint)(width * height * 4), pixelPtr);
+        }
+        
+        using var image = Image.WrapMemory<Rgba32>(pixels, width, height);
+        image.Save("atlas.png");
     }
 }

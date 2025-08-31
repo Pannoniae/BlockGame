@@ -1,3 +1,4 @@
+using BlockGame.src.render;
 using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
@@ -10,10 +11,8 @@ namespace BlockGame.GL;
 public class BTextureAtlas : BTexture2D, IDisposable {
     
     public int atlasSize;
-
-    private int i;
-    private int i2;
-    private int ticks;
+    
+    public List<DynamicTexture> dtextures = [];
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
         GL = Game.GL;
@@ -24,7 +23,14 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         //GL.ActiveTexture(TextureUnit.Texture0);
         //GL.BindTexture(TextureTarget.Texture2DArray, handle2);
         //GL.TexImage3D(TextureTarget.Texture2DArray, 0, InternalFormat.Rgba8, 16, 16, 2048, 0, PixelFormat.Rgba, PixelType.Byte, null);
-
+    }
+    
+    public void addDynamicTexture(DynamicTexture dt) {
+        dtextures.Add(dt);
+    }
+    
+    public void updateTexture(int x, int y, int width, int height, Rgba32[] pixels) {
+        updateTexture(pixels, x, y, (uint)width, (uint)height);
     }
 
     private static void generateMipmap(int left, int top, int width, int height, Span<Rgba32> mipmap, ReadOnlySpan<Rgba32> prevMipmap) {
@@ -140,7 +146,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);
         
         // Calculate maximum possible mipmap levels based on texture dimensions
-        var maxPossibleLevels = 5u;
+        const uint maxPossibleLevels = 5u;
         GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
         if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
             throw new SkillIssueException("Couldn't load the atlas contiguously!");
@@ -156,8 +162,9 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         // Thanks ClassiCube for the idea!
         generateMipmaps(imageData.Span, image.Width, image.Height, maxLevel);
         
-        // generate mipmaps (opengl)
-        //GL.GenerateMipmap(TextureTarget.Texture2D);
+        
+        addDynamicTexture(new StillWaterTexture(this));
+        addDynamicTexture(new FlowingWaterTexture(this));
     }
 
 
@@ -171,17 +178,8 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     }
 
     public void update(double dt) {
-        if (ticks % 16 == 0) {
-            // still water
-            updateTexture(0, 4 * 16, 16, 16, (i % 16) * 16, 4 * 16);
-            i++;
+        foreach (var dtexture in dtextures) {
+            dtexture.tick();
         }
-        
-        if (ticks % 4 == 0) {
-            // flowing water
-            updateTexture(0, 6 * 16, 16, 16, (i2 % 16) * 16, 6 * 16);
-            i2++;
-        }
-        ticks++;
     }
 }

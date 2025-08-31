@@ -11,8 +11,8 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public string path;
 
-    protected Memory<Rgba32> imageData;
-    protected Image<Rgba32> image;
+    public Memory<Rgba32> imageData;
+    public Image<Rgba32> image;
 
     public BTexture2D(string path) {
         GL = Game.GL;

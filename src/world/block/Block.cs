@@ -385,7 +385,7 @@ public class Block {
         HEAD.partialBlock();
         
         WATER = register(new Water(Blocks.WATER, "Water", 15, 8));
-        WATER.setTex([new UVPair(0, 4), new UVPair(0, 6)]);
+        WATER.setTex([new UVPair(0, 4), new UVPair(0, 8)]);
         WATER.makeLiquid();
         
         
