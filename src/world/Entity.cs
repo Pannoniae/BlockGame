@@ -1,12 +1,13 @@
 using System.Numerics;
 using BlockGame.util;
+using BlockGame.util.xNBT;
 using JetBrains.Annotations;
 using Molten;
 using Molten.DoublePrecision;
 
 namespace BlockGame;
 
-public class Entity(World world) {
+public class Entity(World world) : Persistent {
     public const int MAX_SWING_TICKS = 16;
     public const int AIR_HIT_CD = 20;
 
@@ -110,6 +111,40 @@ public class Entity(World world) {
         position = pos;
         prevPosition = pos;
         velocity = Vector3D.Zero;
+    }
+    
+    // todo unfinished shit below
+    public void read(NBTCompound data) {
+        position = new Vector3D(
+            data.getDouble("posX"),
+            data.getDouble("posY"),
+            data.getDouble("posZ")
+        );
+        prevPosition = position;
+        rotation = new Vector3(
+            data.getFloat("rotX"),
+            data.getFloat("rotY"),
+            data.getFloat("rotZ")
+        );
+        prevRotation = rotation;
+        velocity = new Vector3D(
+            data.getDouble("velX"),
+            data.getDouble("velY"),
+            data.getDouble("velZ")
+        );
+        accel = Vector3D.Zero;
+    }
+
+    public void write(NBTCompound data) {
+        data.addDouble("posX", position.X);
+        data.addDouble("posY", position.Y);
+        data.addDouble("posZ", position.Z);
+        data.addFloat("rotX", rotation.X);
+        data.addFloat("rotY", rotation.Y);
+        data.addFloat("rotZ", rotation.Z);
+        data.addDouble("velX", velocity.X);
+        data.addDouble("velY", velocity.Y);
+        data.addDouble("velZ", velocity.Z);
     }
 
     public virtual void update(double dt) {

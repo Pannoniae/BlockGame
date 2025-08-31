@@ -474,6 +474,13 @@ public class Water : Block {
         return dir == RawDirection.UP || (notTransparent && base.cullFace(br, x, y, z, dir));
     }
 
+    
+    /**
+     * Don't ask me how this shit works, I've blended it through at least 4 rounds of LLMslop because the side texture kept fucking disappearing or turning into hellstone
+     * so I did the add functionality -> fix functionality -> cleanup loop until the maths was actual mathsing
+     *
+     * The drawback is that now no one understands this code except God himself! but oh well, if you don't touch it, it can't hurt you
+     */
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
 
@@ -481,129 +488,110 @@ public class Water : Block {
         var metadata = block.getMetadata();
         var level = getWaterLevel(metadata);
         var falling = isFalling(metadata);
-
-        // Calculate corner heights for sloped rendering
         var world = br.world;
-        var h00 = getRenderHeight(world, x, y, z, -1, -1); // southwest
-        var h10 = getRenderHeight(world, x, y, z, 1, -1); // southeast
-        var h01 = getRenderHeight(world, x, y, z, -1, 1); // northwest
-        var h11 = getRenderHeight(world, x, y, z, 1, 1); // northeast
 
-        // Calculate flow direction for UV rotation
-        var flow = getFlow(world, x, y, z);
-        float flowAngle = 0;
-        if (flow.X != 0 || flow.Z != 0) {
-            flowAngle = MathF.Atan2(flow.Z, flow.X);
-        }
-
-        float flowCos = MathF.Cos(flowAngle);
-        // why negative? because UV Y axis is inverted
-        float flowSin = -MathF.Sin(flowAngle);
-
-        // Use center 16x16 of the 32x32 flowing texture
-        var flowingUV = uvs[1] + 0.25f; // offset to center 16x16
-        const float flowingUVSize = 1f;
-
-        // Get texture coordinates for water
-        var texMin = (level > 0 || falling) ? flowingUV : uvs[0];
-        var texMax = (level > 0 || falling) ? flowingUV + flowingUVSize : uvs[0] + 1;
-        var min = texCoords(texMin.u, texMin.v);
-        var max = texCoords(texMax.u, texMax.v);
-
-        var uMin = min.X;
-        var vMin = min.Y;
-        var uMax = max.X;
-        var vMax = max.Y;
+        // corner heights
+        var h00 = getRenderHeight(world, x, y, z, -1, -1); // sw
+        var h10 = getRenderHeight(world, x, y, z, 1, -1);  // se
+        var h01 = getRenderHeight(world, x, y, z, -1, 1);  // nw
+        var h11 = getRenderHeight(world, x, y, z, 1, 1);   // ne
         
-        // Cache v range for interpolation
-        var vRange = vMax - vMin;
+        var flow = getFlow(world, x, y, z);
+        // todo if this shit ever gets slow / you notice it on the profiler, time to create a Meth version of atan2 which mostly calculates the right value most of the time (but its fast)
+        var flowAngle = (flow.X != 0 || flow.Z != 0) ? MathF.Atan2(flow.Z, flow.X) : 0f;
+        var flowCos = MathF.Cos(flowAngle);
+        var flowSin = -MathF.Sin(flowAngle); // negative: UV Y inverted
+
+        // texture selection
+        var isFlowing = level > 0 || falling;
+        var texBase = isFlowing ? uvs[1] + 0.5f : uvs[0]; // center 16x16 for flowing
+        const float texSize = 1f;
+        var texMin = texCoords(texBase.u, texBase.v);
+        var texMax = texCoords((texBase + texSize).u, (texBase + texSize).v);
+
+        var uMin = texMin.X;
+        var vMin = texMin.Y;
+        var uMax = texMax.X;
+        var vMax = texMax.Y;
+        var uMid = (uMin + uMax) * 0.5f;
+        var vMid = (vMin + vMax) * 0.5f;
+        var uRel = (uMax - uMin) * 0.5f;
+        var vRel = (vMax - vMin) * 0.5f;
+
+        // top face UVs: rotate around centre
+        var uv00 = rotateUV(-uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        var uv01 = rotateUV(-uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        var uv10 = rotateUV(uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        var uv11 = rotateUV(uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+
+        // side faces: 90° rotation with proper centering
+        // ??? mass confucion
+        var uo = uMid - vMid; // U offset for centering after rotation  
+        var vo = uMid + vMid; // V offset for centering after rotation
+        var vMinO = -uMin + vo; // transformed V coordinates
+        var vMaxO = -uMax + vo;
 
         Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
         Span<Vector4> colourCache = stackalloc Vector4[4];
         Span<byte> lightColourCache = stackalloc byte[4];
 
-        x &= 15;
-        y &= 15;
-        z &= 15;
-
-        // Calculate UVs relative to center for rotation
-        float uCenter = (uMin + uMax) * 0.5f;
-        float vCenter = (vMin + vMax) * 0.5f;
-
-        // --- Top Face UV Rotation ---
-        float u0 = uMin - uCenter;
-        float u1 = uMax - uCenter;
-        float v0 = vMin - vCenter;
-        float v1 = vMax - vCenter;
-        
-        var uv00 = rotateUV(u0, v1, flowCos, flowSin) + new Vector2(uCenter, vCenter);
-        var uv01 = rotateUV(u0, v0, flowCos, flowSin) + new Vector2(uCenter, vCenter);
-        var uv10 = rotateUV(u1, v0, flowCos, flowSin) + new Vector2(uCenter, vCenter);
-        var uv11 = rotateUV(u1, v1, flowCos, flowSin) + new Vector2(uCenter, vCenter);
-
-        // --- Side Face UV Rotation (-90 degrees) ---
-        // Transformation: T(u,v) = (v - vCenter + uCenter, -u + uCenter + vCenter)
-        float uNewSideOffset = uCenter - vCenter;
-        float vNewSideOffset = uCenter + vCenter;
-        
-        float vNewSideUMin = -uMin + vNewSideOffset;
-        float vNewSideUMax = -uMax + vNewSideOffset;
+        // local coords
+        int lx = x & 15;
+        int ly = y & 15;
+        int lz = z & 15;
 
         for (RawDirection d = 0; d < RawDirection.MAX; d++) {
-            if (cullFace(br, x, y, z, d)) {
-                br.applyFaceLighting(d, colourCache, lightColourCache);
-
-                // if dynamic, tint red (debug)
-                if (isDynamic(metadata)) {
-                    for (int i = 0; i < 4; i++) {
-                        colourCache[i] = new Vector4(1.0f, 0.5f, 0.5f, 1.0f);
-                    }
-                }
-
-                br.begin(cache);
-
-                switch (d) {
-                    case RawDirection.WEST:
-                        br.vertex(x + 0, y + h01, z + 1, (vMax - vRange * h01) + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 0, y + 0, z + 1, vMax + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 0, y + 0, z + 0, vMax + uNewSideOffset, vNewSideUMax);
-                        br.vertex(x + 0, y + h00, z + 0, (vMax - vRange * h00) + uNewSideOffset, vNewSideUMax);
-                        break;
-                    case RawDirection.EAST:
-                        br.vertex(x + 1, y + h10, z + 0, (vMax - vRange * h10) + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 1, y + 0, z + 0, vMax + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 1, y + 0, z + 1, vMax + uNewSideOffset, vNewSideUMax);
-                        br.vertex(x + 1, y + h11, z + 1, (vMax - vRange * h11) + uNewSideOffset, vNewSideUMax);
-                        break;
-                    case RawDirection.SOUTH:
-                        br.vertex(x + 0, y + h00, z + 0, (vMax - vRange * h00) + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 0, y + 0, z + 0, vMax + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 1, y + 0, z + 0, vMax + uNewSideOffset, vNewSideUMax);
-                        br.vertex(x + 1, y + h10, z + 0, (vMax - vRange * h10) + uNewSideOffset, vNewSideUMax);
-                        break;
-                    case RawDirection.NORTH:
-                        br.vertex(x + 1, y + h11, z + 1, (vMax - vRange * h11) + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 1, y + 0, z + 1, vMax + uNewSideOffset, vNewSideUMin);
-                        br.vertex(x + 0, y + 0, z + 1, vMax + uNewSideOffset, vNewSideUMax);
-                        br.vertex(x + 0, y + h01, z + 1, (vMax - vRange * h01) + uNewSideOffset, vNewSideUMax);
-                        break;
-                    case RawDirection.DOWN:
-                        br.vertex(x + 1, y + 0, z + 1, uMin, vMin);
-                        br.vertex(x + 1, y + 0, z + 0, uMin, vMax);
-                        br.vertex(x + 0, y + 0, z + 0, uMax, vMax);
-                        br.vertex(x + 0, y + 0, z + 1, uMax, vMin);
-                        break;
-                    case RawDirection.UP:
-                        br.vertex(x + 0, y + h01, z + 1, uv00.X, uv00.Y);
-                        br.vertex(x + 0, y + h00, z + 0, uv01.X, uv01.Y);
-                        br.vertex(x + 1, y + h10, z + 0, uv10.X, uv10.Y);
-                        br.vertex(x + 1, y + h11, z + 1, uv11.X, uv11.Y);
-
-                        break;
-                }
-
-                br.end(vertices);
+            if (!cullFace(br, lx, ly, lz, d)) continue;
+            
+            br.applyFaceLighting(d, colourCache, lightColourCache);
+            
+            // debug tint for dynamic water
+            if (isDynamic(metadata)) {
+                colourCache.Fill(new Vector4(1f, 0.5f, 0.5f, 1f));
             }
+
+            br.begin(cache);
+
+            switch (d) {
+                case RawDirection.WEST:
+                    br.vertex(lx, ly + h01, lz + 1, vMax - vRel * 2 * h01 + uo, vMinO);
+                    br.vertex(lx, ly, lz + 1, vMax + uo, vMinO);
+                    br.vertex(lx, ly, lz, vMax + uo, vMaxO);
+                    br.vertex(lx, ly + h00, lz, vMax - vRel * 2 * h00 + uo, vMaxO);
+                    break;
+                case RawDirection.EAST:
+                    br.vertex(lx + 1, ly + h10, lz, vMax - vRel * 2 * h10 + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz, vMax + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz + 1, vMax + uo, vMaxO);
+                    br.vertex(lx + 1, ly + h11, lz + 1, vMax - vRel * 2 * h11 + uo, vMaxO);
+                    break;
+                case RawDirection.SOUTH:
+                    br.vertex(lx, ly + h00, lz, vMax - vRel * 2 * h00 + uo, vMinO);
+                    br.vertex(lx, ly, lz, vMax + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz, vMax + uo, vMaxO);
+                    br.vertex(lx + 1, ly + h10, lz, vMax - vRel * 2 * h10 + uo, vMaxO);
+                    break;
+                case RawDirection.NORTH:
+                    br.vertex(lx + 1, ly + h11, lz + 1, vMax - vRel * 2 * h11 + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz + 1, vMax + uo, vMinO);
+                    br.vertex(lx, ly, lz + 1, vMax + uo, vMaxO);
+                    br.vertex(lx, ly + h01, lz + 1, vMax - vRel * 2 * h01 + uo, vMaxO);
+                    break;
+                case RawDirection.DOWN:
+                    br.vertex(lx + 1, ly, lz + 1, uMin, vMin);
+                    br.vertex(lx + 1, ly, lz, uMin, vMax);
+                    br.vertex(lx, ly, lz, uMax, vMax);
+                    br.vertex(lx, ly, lz + 1, uMax, vMin);
+                    break;
+                case RawDirection.UP:
+                    br.vertex(lx, ly + h01, lz + 1, uv00.X, uv00.Y);
+                    br.vertex(lx, ly + h00, lz, uv01.X, uv01.Y);
+                    br.vertex(lx + 1, ly + h10, lz, uv10.X, uv10.Y);
+                    br.vertex(lx + 1, ly + h11, lz + 1, uv11.X, uv11.Y);
+                    break;
+            }
+
+            br.end(vertices);
         }
     }
 
