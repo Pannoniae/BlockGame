@@ -49,7 +49,7 @@ public class Slabs : Block {
         return newMetadata;
     }
 
-    public override void place(World world, int x, int y, int z, RawDirection dir) {
+    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
         var meta = calculatePlacement(world, x, y, z, dir);
         
         uint blockValue = id;
@@ -139,30 +139,15 @@ public class Slabs : Block {
     
     public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
         var meta = calculatePlacement(world, x, y, z, dir);
-        var isDoubleSlab = isDouble(meta);
         
         // if trying to place on existing double slab, can't place
-        if (!isDoubleSlab && meta == 0) {
+        if (meta == 0) {
             var existingBlock = world.getBlockRaw(x, y, z);
             if (existingBlock.getID() == id && isDouble(existingBlock.getMetadata())) {
                 return false;
             }
         }
         
-        getAABBs(world, x, y, z, meta, AABBList);
-        
-        var entities = new List<Entity>();
-        foreach (var aabb in AABBList) {
-            world.getEntitiesInBox(entities, aabb.min.toBlockPos(),
-                aabb.max.toBlockPos() + 1);
-            
-            foreach (var entity in entities) {
-                if (util.AABB.isCollision(aabb, entity.aabb)) {
-                    return false;
-                }
-            }
-            entities.Clear();
-        }
         return true;
     }
     

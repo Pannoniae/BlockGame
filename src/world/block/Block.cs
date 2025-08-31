@@ -2,7 +2,9 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
+using BlockGame.item;
 using BlockGame.src.world.block;
+using BlockGame.world.block;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
@@ -36,12 +38,12 @@ public class Block {
         private set => this.value = (this.value & 0xFF000000) | value;
     }
     
-    public ushort metadata {
+    /*public ushort metadata {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ushort)(value >> 24);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private set => this.value = (this.value & 0xFFFFFF) | ((uint)(value << 24));
-    }
+    }*/
 
     /// <summary>
     /// Display name
@@ -132,7 +134,7 @@ public class Block {
     public static Block PLANKS;
     public static Block STAIRS;
     public static Block STONE_SLAB;
-    public static Block PLANKS_SLAB;
+    public static Block OAK_SLAB;
     public static Block MAPLE_PLANKS_SLAB;
     public static Block LOG;
     public static Block LEAVES;
@@ -142,24 +144,8 @@ public class Block {
     public static Block MAPLE_LEAVES;
     //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
     //public static Block MAHOGANY_LEAVES = register(new Block(20, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
-
-    public static Block OAK_SLAB;
-    public static Block CANDY_LIGHT_BLUE;
-    public static Block CANDY_CYAN;
-    public static Block CANDY_TURQUOISE;
-    public static Block CANDY_DARK_GREEN;
-    public static Block CANDY_LIGHT_GREEN;
-    public static Block CANDY_ORANGE;
-    public static Block CANDY_YELLOW;
-    public static Block CANDY_LIGHT_RED;
-    public static Block CANDY_PINK;
-    public static Block CANDY_PURPLE;
-    public static Block VIOLET;
-    public static Block CANDY_RED;
-    public static Block CANDY_DARK_BLUE;
-    public static Block CANDY_WHITE;
-    public static Block CANDY_GREY;
-    public static Block CANDY_BLACK;
+    
+    public static Block CANDY;
 
     public static Block HEAD;
 
@@ -176,10 +162,11 @@ public class Block {
     public static Block COAL_ORE;
     public static Block HELLSTONE_1;
     public static Block HELLSTONE_2;
+    public static Block TORCH;
 
     public static Block register(Block block) {
         // update maxid
-        currentID = Math.Max(currentID, block.id);
+        currentID = Math.Max(currentID, block.id) + 1;
         return blocks[block.id] = block;
     }
 
@@ -278,8 +265,8 @@ public class Block {
         STONE_SLAB = register(new Slabs(Blocks.STONE_SLAB, "Stone Slab"));
         STONE_SLAB.setTex(cubeUVs(5, 0));
 
-        PLANKS_SLAB = register(new Slabs(Blocks.PLANKS_SLAB, "Planks Slab"));
-        PLANKS_SLAB.setTex(cubeUVs(0, 5));
+        OAK_SLAB = register(new Slabs(Blocks.OAK_SLAB, "Planks Slab"));
+        OAK_SLAB.setTex(cubeUVs(0, 5));
 
         MAPLE_PLANKS_SLAB = register(new Slabs(Blocks.MAPLE_PLANKS_SLAB, "Maple Planks Slab"));
         MAPLE_PLANKS_SLAB.setTex(cubeUVs(5, 5));
@@ -311,73 +298,7 @@ public class Block {
         MAPLE_LEAVES.setModel(BlockModel.makeCube(MAPLE_LEAVES));
         MAPLE_LEAVES.transparency();
         
-        OAK_SLAB = register(new Block(Blocks.OAK_SLAB, "Oak Slab"));
-        OAK_SLAB.setTex(cubeUVs(0,5));
-        OAK_SLAB.setModel(BlockModel.makeSlab(OAK_SLAB));
-        
-        CANDY_LIGHT_BLUE = register(new Block(Blocks.CANDY_LIGHT_BLUE, "Light Blue Candy"));
-        CANDY_LIGHT_BLUE.setTex(cubeUVs(0, 2));
-        CANDY_LIGHT_BLUE.setModel(BlockModel.makeCube(CANDY_LIGHT_BLUE));
-        
-        CANDY_CYAN = register(new Block(Blocks.CANDY_CYAN, "Cyan Candy"));
-        CANDY_CYAN.setTex(cubeUVs(1, 2));
-        CANDY_CYAN.setModel(BlockModel.makeCube(CANDY_CYAN));
-        
-        CANDY_TURQUOISE = register(new Block(Blocks.CANDY_TURQUOISE, "Turquoise Candy"));
-        CANDY_TURQUOISE.setTex(cubeUVs(2, 2));
-        CANDY_TURQUOISE.setModel(BlockModel.makeCube(CANDY_TURQUOISE));
-        
-        CANDY_DARK_GREEN = register(new Block(Blocks.CANDY_DARK_GREEN, "Dark Green Candy"));
-        CANDY_DARK_GREEN.setTex(cubeUVs(3, 2));
-        CANDY_DARK_GREEN.setModel(BlockModel.makeCube(CANDY_DARK_GREEN));
-        
-        CANDY_LIGHT_GREEN = register(new Block(Blocks.CANDY_LIGHT_GREEN, "Light Green Candy"));
-        CANDY_LIGHT_GREEN.setTex(cubeUVs(4, 2));
-        CANDY_LIGHT_GREEN.setModel(BlockModel.makeCube(CANDY_LIGHT_GREEN));
-        
-        CANDY_ORANGE = register(new Block(Blocks.CANDY_ORANGE, "Orange Candy"));
-        CANDY_ORANGE.setTex(cubeUVs(5, 2));
-        CANDY_ORANGE.setModel(BlockModel.makeCube(CANDY_ORANGE));
-        
-        CANDY_YELLOW = register(new Block(Blocks.CANDY_YELLOW, "Yellow Candy"));
-        CANDY_YELLOW.setTex(cubeUVs(6, 2));
-        CANDY_YELLOW.setModel(BlockModel.makeCube(CANDY_YELLOW));
-        
-        CANDY_LIGHT_RED = register(new Block(Blocks.CANDY_LIGHT_RED, "Light Red Candy"));
-        CANDY_LIGHT_RED.setTex(cubeUVs(7, 2));
-        CANDY_LIGHT_RED.setModel(BlockModel.makeCube(CANDY_LIGHT_RED));
-        
-        CANDY_PINK = register(new Block(Blocks.CANDY_PINK, "Pink Candy"));
-        CANDY_PINK.setTex(cubeUVs(8, 2));
-        CANDY_PINK.setModel(BlockModel.makeCube(CANDY_PINK));
-        
-        CANDY_PURPLE = register(new Block(Blocks.CANDY_PURPLE, "Purple Candy"));
-        CANDY_PURPLE.setTex(cubeUVs(9, 2));
-        CANDY_PURPLE.setModel(BlockModel.makeCube(CANDY_PURPLE));
-        
-        VIOLET = register(new Block(Blocks.VIOLET, "Violet Candy"));
-        VIOLET.setTex(cubeUVs(10, 2));
-        VIOLET.setModel(BlockModel.makeCube(VIOLET));
-        
-        CANDY_RED = register(new Block(Blocks.CANDY_RED, "Red Candy"));
-        CANDY_RED.setTex(cubeUVs(11, 2));
-        CANDY_RED.setModel(BlockModel.makeCube(CANDY_RED));
-        
-        CANDY_DARK_BLUE = register(new Block(Blocks.CANDY_DARK_BLUE, "Dark Blue Candy"));
-        CANDY_DARK_BLUE.setTex(cubeUVs(12, 2));
-        CANDY_DARK_BLUE.setModel(BlockModel.makeCube(CANDY_DARK_BLUE));
-        
-        CANDY_WHITE = register(new Block(Blocks.CANDY_WHITE, "White Candy"));
-        CANDY_WHITE.setTex(cubeUVs(13, 2));
-        CANDY_WHITE.setModel(BlockModel.makeCube(CANDY_WHITE));
-        
-        CANDY_GREY = register(new Block(Blocks.CANDY_GREY, "Grey Candy"));
-        CANDY_GREY.setTex(cubeUVs(14, 2));
-        CANDY_GREY.setModel(BlockModel.makeCube(CANDY_GREY));
-        
-        CANDY_BLACK = register(new Block(Blocks.CANDY_BLACK, "Black Candy"));
-        CANDY_BLACK.setTex(cubeUVs(15, 2));
-        CANDY_BLACK.setModel(BlockModel.makeCube(CANDY_BLACK));
+        CANDY = register(new CandyBlock(Blocks.CANDY, "Candy"));
         
         HEAD = register(new Block(Blocks.HEAD, "Head"));
         HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
@@ -432,6 +353,19 @@ public class Block {
         HELLSTONE_2 = register(new Block(Blocks.HELLSTONE_2, "Hellstone2"));
         HELLSTONE_2.setTex(grassUVs(8, 0, 7, 1, 7, 1));
         HELLSTONE_2.setModel(BlockModel.makeCube(HELLSTONE_2));
+        
+        TORCH = register(new Torch(Blocks.TORCH, "Torch"));
+        TORCH.setTex(cubeUVs(0, 9));
+        
+        // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
+        Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
+        
+        // register items for all blocks
+        for (int i = 0; i < currentID; i++) {
+            if (blocks[i] != null && Item.get(-i) == null) {
+                Item.register(new BlockItem(i, blocks[i].name));
+            }
+        }
     }
     
     // I've removed this because realistically it will always be null / 0 and it would mislead the API caller
@@ -457,7 +391,9 @@ public class Block {
 
     public static void postLoad() {
         for (int i = 0; i < currentID; i++) {
-            translucent[blocks[i].id] = blocks[i].layer == RenderLayer.TRANSLUCENT;
+            if (blocks[i] != null) {
+                translucent[blocks[i].id] = blocks[i].layer == RenderLayer.TRANSLUCENT;
+            }
         }
         //inventoryBlacklist[Blocks.WATER] = true;
         //inventoryBlacklist[7] = true;
@@ -736,11 +672,17 @@ public class Block {
     }
 
     public virtual void crack(World world, int x, int y, int z) {
+
+        UVPair uv;
+        
         if (model == null || model.faces.Length == 0) {
             // no model, no particles
 
             // unless there's textures!
-            if (uvs == null || uvs.Length == 0) {
+            
+            // UNLESS it's custom texture
+            var custom = renderType[id] == RenderType.CUSTOM || renderType[id] == RenderType.CUBE_DYNTEXTURE;
+            if (!custom && (uvs == null || uvs.Length == 0)) {
                 return;
             }
         }
@@ -757,10 +699,24 @@ public class Block {
                     var size = Game.clientRandom.NextSingle() * 0.1f + 0.05f;
                     var ttl = (int)(3f / (Game.clientRandom.NextSingle() + 0.05f));
 
-                    var randFace = uvs[Game.clientRandom.Next(0, uvs.Length)];
+                    switch (renderType[id]) {
+                        // if custom texture, get that
+                        case RenderType.CUBE_DYNTEXTURE:
+                        case RenderType.CUSTOM:
+                            var meta = world.getBlockMetadata(x, y, z);
+                            uv = getTexture(0, meta);
+                            break;
+                        case RenderType.MODEL:
+                            uv = uvs[Game.clientRandom.Next(0, uvs.Length)];
+                            break;
+                        default:
+                            // no model, just textures
+                            uv = uvs[0];
+                            break;
+                    }
 
-                    float u = texU(randFace.u + Game.clientRandom.NextSingle() * 0.75f); 
-                    float v = texV(randFace.v + Game.clientRandom.NextSingle() * 0.75f);
+                    float u = texU(uv.u + Game.clientRandom.NextSingle() * 0.75f); 
+                    float v = texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
 
                     // the closer to the centre, the less the motion
                     // dx gives a number between -0.5 and 0.5 -> remap to between 0.5 and 3
@@ -809,8 +765,8 @@ public class Block {
         return !fullBlock[neighbourBlock];
     }
 
-    public virtual void place(World world, int x, int y, int z, RawDirection dir) {
-        world.setBlockMetadata(x, y, z, id);
+    public virtual void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(metadata));
         world.blockUpdateNeighbours(x, y, z);
     }
     
@@ -824,29 +780,11 @@ public class Block {
     }
     
     /**
-     * Check if this block can be placed at the given position without colliding with entities.
-     * By default, only handles default metadata (0).
+     * Check if this block can be placed at the given position.
+     * Entity collision checking is handled by the placement method.
+     * Override for block-specific placement rules.
      */
     public virtual bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        if (!collision[id]) {
-            return true;
-        }
-
-        getAABBs(world, x, y, z, 0, AABBList);
-        foreach (var aabb in AABBList) {
-
-            var entities = new List<Entity>();
-            world.getEntitiesInBox(entities, aabb.min.toBlockPos(),
-                aabb.max.toBlockPos() + 1);
-
-            
-            foreach (var entity in entities) {
-                if (util.AABB.isCollision(aabb, entity.aabb)) {
-                    return false;
-                }
-            }
-        }
-
         return true;
     }
     
@@ -856,6 +794,15 @@ public class Block {
      */
     public virtual byte maxValidMetadata() {
         return 0;
+    }
+    
+    /**
+     * Returns the texture for a specific face index and metadata.
+     * Default implementation returns the static texture.
+     * Override for dynamic texture selection based on metadata.
+     */
+    public virtual UVPair getTexture(int faceIdx, int metadata) {
+        return uvs?[Math.Min(faceIdx, uvs.Length - 1)] ?? new UVPair(0, 0);
     }
 }
 
@@ -994,5 +941,6 @@ public enum RenderType : byte {
     CUBE,
     MODEL,
     CROSS,
-    CUSTOM
+    CUSTOM,
+    CUBE_DYNTEXTURE
 }

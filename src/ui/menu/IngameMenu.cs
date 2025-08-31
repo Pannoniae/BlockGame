@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.item;
 using BlockGame.util;
 using Cysharp.Text;
 using FontStashSharp.RichText;
@@ -258,7 +259,8 @@ public class IngameMenu : Menu, IDisposable {
         
 
         // Draw block display
-        var blockStr = Block.get(Game.world.player.hotbar.getSelected().block).name;
+        var stack = Game.player.hotbar.getSelected();
+        var blockStr = Item.get(stack.id).getName(stack);
         Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
             Color4b.White);
     }

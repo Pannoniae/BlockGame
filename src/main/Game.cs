@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
+using BlockGame.item;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.font;
@@ -60,6 +61,8 @@ public partial class Game {
     public Screen currentScreen;
 
     public static bool devMode;
+
+    public static InputTracker inputs;
 
     public static Graphics graphics;
     public static GUI gui;
@@ -567,6 +570,8 @@ public partial class Game {
         keyboard.KeyUp += onKeyUp;
         keyboard.KeyChar += onKeyChar;
         
+        inputs = new InputTracker();
+        
         Menu.STARTUP_LOADING.updateProgress(0.3f, "Loading textures");
         textures = new Textures(GL);
         Menu.init();
@@ -586,6 +591,7 @@ public partial class Game {
         Menu.STARTUP_LOADING.updateProgress(0.8f, "Loading blocks");
         jankyFrame();
         Block.preLoad();
+        Item.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
         
@@ -808,6 +814,9 @@ public partial class Game {
         textures.update(dt);
         currentScreen.update(dt);
         gui.update(dt);
+        
+        // reset events
+        inputs.reset();
     }
 
     /// <summary>

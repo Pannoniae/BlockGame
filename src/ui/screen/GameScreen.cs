@@ -209,13 +209,16 @@ public class GameScreen : Screen {
 
         switch (button) {
             case MouseButton.Left:
-                Game.world.player.breakBlock();
+                Game.inputs.left = true;
+                //Game.player.breakBlock();
                 break;
             case MouseButton.Right:
-                Game.world.player.placeBlock();
+                Game.inputs.right = true;
+                //Game.player.placeBlock();
                 break;
             case MouseButton.Middle:
-                Game.world.player.pickBlock();
+                Game.inputs.middle = true;
+                //Game.player.pickBlock();
                 break;
         }
     }

@@ -301,7 +301,7 @@ public class BlockRenderer {
     /// Convert texture UV coordinates to atlas coordinates.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Vector128<float> getAtlasCoords(float uMin, float vMin, float uMax, float vMax) {
+    public static Vector128<float> getAtlasCoords(float uMin, float vMin, float uMax, float vMax) {
         var tex = Vector128.Create(uMin, vMin, uMax, vMax);
         const float factor = Block.atlasRatio * 32768f;
         return Vector128.Multiply(tex, factor);
@@ -492,7 +492,8 @@ public class BlockRenderer {
     public void renderBlock(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
                            byte lightOverride = 255,
                            Color4b tintOverride = default,
-                           bool cullFaces = true) {
+                           bool cullFaces = true,
+                           byte metadata = 0) {
         
         vertices.Clear();
         
@@ -502,7 +503,7 @@ public class BlockRenderer {
             fillCache(blockCache, lightCache, ref MemoryMarshal.GetReference(neighbours), ref MemoryMarshal.GetReference(neighbourLights));
             renderBlockWorld(block, worldPos, vertices, mode, cullFaces);
         } else {
-            renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride);
+            renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride, metadata);
         }
     }
 
@@ -566,58 +567,46 @@ public class BlockRenderer {
     }
 
     [SkipLocalsInit]
-    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride, Color4b tintOverride) {
+    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride, Color4b tintOverride, byte metadata = 0) {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
         Span<ushort> tempIndices = stackalloc ushort[6];
         
         var blockID = block.getID();
+        var bl = Block.get(blockID);
         
-        switch (Block.renderType[blockID]) {
-            case RenderType.CUBE:
-                // get UVs from block
-                // todo
-                break;
-            case RenderType.CROSS:
-                // todo
-                break;
-            case RenderType.MODEL:
-                goto model;
-            case RenderType.CUSTOM:
-                // we render to a temp list
-                _listHack.Clear();
+        // we render to a temp list
+        _listHack.Clear();
                 
-                Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
-                Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
+        Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
+        Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
                 
-                // setup (fake) cache
-                fillCacheEmpty(blockCache, lightCache);
-                // place the block in it
-                blockCache[13] = blockID;
-                lightCache[13] = lightOverride;
-                
-                block.render(this, 0, 0, 0, _listHack);
-                
-                // now we convert it to the REAL vertices
-                foreach (var vertex in _listHack) {
-                    // convert to tinted vertex
-                    // we need to restore the UVs (so multiply by inverse atlas)
-                    // and we need to uncompress the positions
-                    var tintedVertex = new BlockVertexTinted();
-                    tintedVertex.x = (vertex.x / 256f) - 16f;
-                    tintedVertex.y = (vertex.y / 256f) - 16f;
-                    tintedVertex.z = (vertex.z / 256f) - 16f;
-                    tintedVertex.u = (Half)(vertex.u / 32768f);
-                    tintedVertex.v = (Half)(vertex.v / 32768f);
-                    tintedVertex.cu = vertex.cu;
-                    
-                    vertices.Add(tintedVertex);
-                }
-                return;
+        // setup (fake) cache
+        fillCacheEmpty(blockCache, lightCache);
+        // place the block in it
+        blockCache[13] = blockID;
+        lightCache[13] = lightOverride;
+        
+        renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
+
+        if (Block.renderType[blockID] != RenderType.MODEL) {
+            // now we convert it to the REAL vertices
+            foreach (var vertex in _listHack) {
+                // convert to tinted vertex
+                // we need to restore the UVs (so multiply by inverse atlas)
+                // and we need to uncompress the positions
+                var tintedVertex = new BlockVertexTinted();
+                tintedVertex.x = (vertex.x / 256f) - 16f;
+                tintedVertex.y = (vertex.y / 256f) - 16f;
+                tintedVertex.z = (vertex.z / 256f) - 16f;
+                tintedVertex.u = (Half)(vertex.u / 32768f);
+                tintedVertex.v = (Half)(vertex.v / 32768f);
+                tintedVertex.cu = vertex.cu;
+                vertices.Add(tintedVertex);
+            }
+
+            return;
         }
-        
-        
-        model: ;
 
         var faces = block.model.faces;
         
@@ -664,8 +653,40 @@ public class BlockRenderer {
             vertices.AddRange(tempVertices);
         }
     }
-    
-    
+
+    private void renderBlockSwitch(Block bl, int x, int y, int z, byte metadata, List<BlockVertexPacked> vertices) {
+        switch (Block.renderType[bl.getID()]) {
+            case RenderType.CUBE:
+                // standard cube using static texture
+                var uvs = bl.uvs;
+                if (uvs != null && uvs.Length > 0) {
+                    var tx = uvs[0]; // use first texture for all faces
+                    var txm = tx + 1;
+                    var uvx = Block.texCoords(tx);
+                    var uvxm = Block.texCoords(txm);
+                    renderCube(this, x, y, z, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X + 1, uvxm.Y);
+                }
+                break;
+            case RenderType.CUBE_DYNTEXTURE:
+                // cube using metadata-based dynamic texture
+                var dynTex = bl.getTexture(0, metadata);
+                var dynTexm = dynTex + 1;
+                var uvd = Block.texCoords(dynTex);
+                var uvdm = Block.texCoords(dynTexm);
+                renderCube(this, x, y, z, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
+                break;
+            case RenderType.CROSS:
+                // todo
+                break;
+            case RenderType.MODEL:
+                break;
+            case RenderType.CUSTOM:
+                bl.render(this, x, y, z, vertices);
+                break;
+        }
+    }
+
+
     public void meshChunk(SubChunk subChunk) {
         //sw.Restart();
         subChunk.vao?.Dispose();
@@ -1073,22 +1094,10 @@ public class BlockRenderer {
             // status update: we fill it regardless otherwise we crash lol
             fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
             
-            switch (Block.renderType[blockID]) {
-                case RenderType.CUBE:
-                    // get UVs from block
-                    // todo
-                    break;
-                case RenderType.CROSS:
-                    // todo
-                    break;
-                case RenderType.MODEL:
-                    goto model;
-                case RenderType.CUSTOM:
-                    // convert to world pos
-                    var wp = World.toWorldPos(subChunk.coord, x, y, z);
-                    
-                    bl.render(this, wp.X, wp.Y, wp.Z, vertices);
-                    continue;
+            renderBlockSwitch(bl, x, y, z, neighbourRef.getMetadata(), vertices);
+            
+            if (Block.renderType[blockID] != RenderType.MODEL) {
+                continue;
             }
 
             model:;

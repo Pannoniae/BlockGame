@@ -7,6 +7,7 @@ public class Stairs : Block {
         renderType[id] = RenderType.CUSTOM;
         customCulling[id] = true;
         customAABB[id] = true;
+        partialBlock();
     }
 
     /**
@@ -33,10 +34,10 @@ public class Stairs : Block {
     }
 
 
-    public override void place(World world, int x, int y, int z, RawDirection dir) {
-        var metadata = calculatePlacementMetadata(dir);
+    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+        var meta = calculatePlacementMetadata(dir);
         uint blockValue = id;
-        blockValue = blockValue.setMetadata(metadata);
+        blockValue = blockValue.setMetadata(meta);
         
         world.setBlockMetadata(x, y, z, blockValue);
         world.blockUpdateNeighbours(x, y, z);
@@ -102,26 +103,17 @@ public class Stairs : Block {
     }
     
     public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        var metadata = calculatePlacementMetadata(dir);
+        var existingBlock = world.getBlockRaw(x, y, z);
+        var existingId = existingBlock.getID();
         
-        getAABBs(world, x, y, z, metadata, AABBList);
-        
-        var entities = new List<Entity>();
-        foreach (var aabb in AABBList) {
-            world.getEntitiesInBox(entities, aabb.min.toBlockPos(),
-                aabb.max.toBlockPos() + 1);
-            
-            foreach (var entity in entities) {
-                //Console.Out.WriteLine($"aabb: {aabb}, entity.aabb: {entity.aabb}");
-                if (util.AABB.isCollision(aabb, entity.aabb)) {
-                    return false;
-                }
-            }
-            entities.Clear();
+        // prevent placing stairs into existing stairs
+        if (existingId == id || existingId == Block.MAPLE_STAIRS.id) {
+            return false;
         }
+        
         return true;
     }
-    
+
     public override byte maxValidMetadata() {
         // 4 facing directions (0-3), upside-down not implemented yet
         return 3;

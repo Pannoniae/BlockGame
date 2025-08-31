@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.item;
 using BlockGame.util;
 using Molten;
 using Silk.NET.OpenGL.Legacy;
@@ -55,9 +56,12 @@ public class PlayerRenderer {
         Game.graphics.tex(0, Game.textures.blockTexture);
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
         Game.blockRenderer.setupStandalone();
-        Game.blockRenderer.renderBlock(Block.get(handItem.block), Vector3I.Zero, vertices, 
-            lightOverride: (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)), cullFaces: false);
-        
+
+        if (handItem.getItem().isBlock()) {
+            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), Vector3I.Zero, vertices,
+                lightOverride: (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)), cullFaces: false);
+        }
+
         vao.bind();
         Game.renderer.bindQuad();
         vao.upload(CollectionsMarshal.AsSpan(vertices));

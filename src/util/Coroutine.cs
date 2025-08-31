@@ -119,6 +119,7 @@ public class Coroutine : Coroutineish {
             return true;
         }
         catch (Exception ex) {
+            throw;
             this.ex = ex;
             isRunning = false;
             isCompleted = true;
@@ -166,7 +167,8 @@ public class Coroutine<T> : Coroutine, Coroutineish<T> {
             return true;
         }
         catch (Exception ex) {
-            base.ex = ex;
+            throw;
+            this.ex = ex;
             isRunning = false;
             isCompleted = true;
             return false;
@@ -203,7 +205,7 @@ public class TypedCoroutine<R> : Coroutine, Coroutineish<R> {
 
             // Check if it's a yield return value (not a YieldInstruction)
             if (typedEnumerator.Current is not YieldInstruction && typedEnumerator.Current != null) {
-                result = (R)(object)typedEnumerator.Current; // Cast to R
+                result = (R)typedEnumerator.Current; // Cast to R
                 isRunning = false;
                 isCompleted = true;
                 return false;
@@ -213,7 +215,8 @@ public class TypedCoroutine<R> : Coroutine, Coroutineish<R> {
             return true;
         }
         catch (Exception ex) {
-            base.ex = ex;
+            throw;
+            this.ex = ex;
             isRunning = false;
             isCompleted = true;
             return false;

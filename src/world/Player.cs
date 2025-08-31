@@ -1,5 +1,6 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
+using BlockGame.item;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -329,7 +330,7 @@ public class Player : Entity {
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
             hotbar.selected = (ushort)(key - Key.Number0 - 1);
-            if (!Block.tryGet(hotbar.getSelected().block, out _)) {
+            if (!Block.tryGet(hotbar.getSelected().id, out _)) {
                 hotbar.selected = 1;
             }
         }
@@ -343,6 +344,20 @@ public class Player : Entity {
         pressedMovementKey = false;
         var keyboard = Game.keyboard;
         var mouse = Game.mouse;
+        
+        // handle mouse buttons
+
+        if (Game.inputs.left) {
+            breakBlock();
+        }
+        
+        if (Game.inputs.right) {
+            placeBlock();
+        }
+        
+        if (Game.inputs.middle) {
+            pickBlock();
+        }
 
 
         if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
@@ -409,29 +424,64 @@ public class Player : Entity {
         lastPlace = world.worldTick;
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
-            var bl = hotbar.getSelected().block;
-            var block = Block.get(bl);
-            RawDirection dir = getFacing();
-
-            // don't intersect the player...
-            // ...with already placed block
-            world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
-            bool collision = false;
-            foreach (AABB aabb in AABBList) {
-                if (AABB.isCollision(aabb, this.aabb)) {
-                    collision = true;
-                    break;
-                }
-            }
+            var stack = hotbar.getSelected();
             
-            // check if block can be placed without colliding
-            if (!collision && block.canPlace(world, pos.X, pos.Y, pos.Z, dir)) {
-                //Console.Out.WriteLine("canPlace: " + block.canPlace(world, pos.X, pos.Y, pos.Z, dir));
-                block.place(world, pos.X, pos.Y, pos.Z, dir);
-                setSwinging(true);
-            }
-            else {
-                setSwinging(false);
+            var metadata = (byte)stack.metadata;
+            
+            // if item, fire the hook (WHICH DOESN'T EXIST YET LOL)
+            stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, getFacing());
+            
+            // if block, place it
+            if (stack.getItem().isBlock()) {
+                var block = Block.get(stack.getItem().getBlockID());
+                
+                RawDirection dir = getFacing();
+
+                // check block-specific placement rules first
+                if (!block.canPlace(world, pos.X, pos.Y, pos.Z, dir)) {
+                    setSwinging(false);
+                    return;
+                }
+
+                // check entity collisions with the proposed block placement
+                bool hasCollisions = false;
+                
+                // don't intersect the player with already placed block
+                world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
+                foreach (AABB aabb in AABBList) {
+                    if (AABB.isCollision(aabb, this.aabb)) {
+                        hasCollisions = true;
+                        break;
+                    }
+                }
+                
+                // check entity collisions with the new block's bounding boxes
+                if (!hasCollisions && Block.collision[block.id]) {
+                    var entities = new List<Entity>();
+                    block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
+                    
+                    foreach (var aabb in AABBList) {
+                        entities.Clear();
+                        world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
+                        
+                        foreach (var entity in entities) {
+                            if (util.AABB.isCollision(aabb, entity.aabb)) {
+                                hasCollisions = true;
+                                break;
+                            }
+                        }
+                        
+                        if (hasCollisions) break;
+                    }
+                }
+
+                if (!hasCollisions) {
+                    block.place(world, pos.X, pos.Y, pos.Z, metadata, dir);
+                    setSwinging(true);
+                }
+                else {
+                    setSwinging(false);
+                }
             }
         }
         else {
@@ -505,7 +555,7 @@ public class Player : Entity {
             var pos = Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             if (bl != null) {
-                hotbar.slots[hotbar.selected] = new ItemStack(bl.id, 1);
+                hotbar.slots[hotbar.selected] = new ItemStack(Item.getBlockItemID(bl.id), 1);
             }
         }
     }

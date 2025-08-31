@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.item;
 using BlockGame.util;
 using BlockGame.util.font;
 using FontStashSharp;
@@ -150,23 +151,38 @@ public class GUI {
 
     public void drawItem(ItemSlot slot, ItemStack stack, InventoryMenu inventory) {
         var itemPos = slot.itemPos;
-        Game.gui.drawBlockUI(Block.get(stack.block), inventory.guiBounds.X + itemPos.X, inventory.guiBounds.Y + itemPos.Y, ItemSlot.ITEMSIZE);
-        // draw amount text
-        if (stack.quantity > 1) {
-            var s = stack.quantity.ToString();
-            Game.gui.drawStringUIThin(s, new Vector2(inventory.guiBounds.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / ui.GUI.guiScale,
-                inventory.guiBounds.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / GUI.guiScale - ItemSlot.PADDING));
+        
+        // if block
+        var item = Item.get(stack.id);
+        if (item.isBlock()) {
+            Game.gui.drawBlockUI(item.getBlock(), inventory.guiBounds.X + itemPos.X, inventory.guiBounds.Y + itemPos.Y,
+                ItemSlot.ITEMSIZE, (byte)stack.metadata);
+            // draw amount text
+            if (stack.quantity > 1) {
+                var s = stack.quantity.ToString();
+                Game.gui.drawStringUIThin(s,
+                    new Vector2(
+                        inventory.guiBounds.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
+                        s.Length * 6f / ui.GUI.guiScale,
+                        inventory.guiBounds.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / GUI.guiScale - ItemSlot.PADDING));
+            }
         }
     }
 
     public void drawItemWithoutInv(ItemSlot slot) {
         var stack = slot.stack;
         var itemPos = slot.itemPos;
-        Game.gui.drawBlockUI(Block.get(stack.block), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE);
-        if (stack.quantity > 1) {
-            var s = stack.quantity.ToString();
-            Game.gui.drawStringUIThin(s, new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / ui.GUI.guiScale,
-                itemPos.Y + ItemSlot.ITEMSIZE - 13f / GUI.guiScale - ItemSlot.PADDING));
+        
+        var item = Item.get(stack.id);
+        if (item.isBlock()) {
+
+            Game.gui.drawBlockUI(item.getBlock(), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE, (byte)stack.metadata);
+            if (stack.quantity > 1) {
+                var s = stack.quantity.ToString();
+                Game.gui.drawStringUIThin(s,
+                    new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / ui.GUI.guiScale,
+                        itemPos.Y + ItemSlot.ITEMSIZE - 13f / GUI.guiScale - ItemSlot.PADDING));
+            }
         }
     }
 
@@ -636,7 +652,7 @@ public class GUI {
             new VertexColorTexture(new Vector3(bounds.X, bounds.Y + bounds.Height, 0), col, new Vector2(0, 1)));
     }
 
-    public void drawBlock(Block block, int x, int y, int size) {
+    public void drawBlock(Block block, int x, int y, int size, byte metadata = 0) {
         //GD.Clear(ClearBuffers.Color);
         Game.graphics.saveViewport();
         //var dt = GD.DepthTestingEnabled;
@@ -666,7 +682,7 @@ public class GUI {
 
         Game.blockRenderer.setupStandalone();
         Game.blockRenderer.renderBlock(block, Vector3I.Zero, guiBlock, 
-            lightOverride: 255, cullFaces: false);
+            lightOverride: 255, cullFaces: false, metadata: metadata);
         
         // assemble the matrix using existing matrix stacks from Graphics
         Game.graphics.projection.push();
@@ -714,7 +730,7 @@ public class GUI {
         Game.graphics.restoreViewport();
     }
 
-    public void drawBlockUI(Block block, int x, int y, int size) {
-        drawBlock(block, x * guiScale, y * guiScale, size);
+    public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0) {
+        drawBlock(block, x * guiScale, y * guiScale, size, metadata);
     }
 }
