@@ -334,6 +334,8 @@ public class Water : Block {
             return 0; // no water or air found, solid blocks only
         }
 
+        //Console.Out.WriteLine("Samples: " + samples + " TotalHeight: " + totalHeight + " Final: " + (totalHeight / samples));
+
         return totalHeight / samples;
     }
 
@@ -463,13 +465,19 @@ public class Water : Block {
 
     /** Water doesn't get rendered next to water, but always gets rendered on the top face */
     public override bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
+        
+        // if none, always render
+        if (dir == RawDirection.NONE) {
+            return true;
+        }
+        
         var direction = Direction.getDirection(dir);
         var same = br.getBlockCached(direction.X, direction.Y, direction.Z).getID() == br.getBlock().getID();
         if (same) {
             return false;
         }
 
-        var notTransparent = !transparent[br.getBlockCached(direction.X, direction.Y, direction.Z)];
+        var notTransparent = !transparent[br.getBlockCached(direction.X, direction.Y, direction.Z).getID()];
 
         return dir == RawDirection.UP || (notTransparent && base.cullFace(br, x, y, z, dir));
     }

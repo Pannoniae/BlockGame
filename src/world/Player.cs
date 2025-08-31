@@ -99,7 +99,6 @@ public class Player : Entity {
         // Play footstep sounds when moving on ground
         if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
             if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
-                Console.Out.WriteLine(totalTraveled - lastFootstepDistance);
                 Game.snd.playFootstep();
                 lastFootstepDistance = totalTraveled;
             }

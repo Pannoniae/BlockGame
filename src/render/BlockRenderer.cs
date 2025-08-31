@@ -659,13 +659,11 @@ public class BlockRenderer {
             case RenderType.CUBE:
                 // standard cube using static texture
                 var uvs = bl.uvs;
-                if (uvs != null && uvs.Length > 0) {
-                    var tx = uvs[0]; // use first texture for all faces
-                    var txm = tx + 1;
-                    var uvx = Block.texCoords(tx);
-                    var uvxm = Block.texCoords(txm);
-                    renderCube(this, x, y, z, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X + 1, uvxm.Y);
-                }
+                var tx = uvs[0]; // use first texture for all faces
+                var txm = tx + 1;
+                var uvx = Block.texCoords(tx);
+                var uvxm = Block.texCoords(txm);
+                renderCube(this, x, y, z, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X + 1, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
                 // cube using metadata-based dynamic texture
@@ -1094,7 +1092,9 @@ public class BlockRenderer {
             // status update: we fill it regardless otherwise we crash lol
             fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
             
-            renderBlockSwitch(bl, x, y, z, neighbourRef.getMetadata(), vertices);
+            var wp = World.toWorldPos(subChunk.coord, x, y, z);
+            
+            renderBlockSwitch(bl, wp.X, wp.Y, wp.Z, neighbourRef.getMetadata(), vertices);
             
             if (Block.renderType[blockID] != RenderType.MODEL) {
                 continue;

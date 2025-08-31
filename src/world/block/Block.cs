@@ -758,6 +758,12 @@ public class Block {
      * Returns whether a face should be rendered.
      */
     public virtual bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
+        
+        // if none, always render
+        if (dir == RawDirection.NONE) {
+            return true;
+        }
+        
         var direction = Direction.getDirection(dir);
         var neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
         
