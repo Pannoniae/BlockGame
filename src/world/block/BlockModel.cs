@@ -158,29 +158,29 @@ public class BlockModel {
     public static BlockModel makeLantern(Block bl) {
         var uvs = bl.uvs;
         var model = new BlockModel();
-        var offsetH = 1 / 16f;
-        var offset = 2 / 16f;
-        var offset1 = 6 / 16f;
+        const float offsetH = 1 / 16f;
+        const float offset = 2 / 16f;
+        const float offset1 = 7 / 16f;
 
         model.faces = new Face[11];
         // west
-        model.faces[0] = new(0 + offset, 1 - offsetH, 1 - offset, 0 + offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1 - offsetH, 0 + offset, uvs[0] + offset, uvs[0] + new UVPair(1 - offset, 1), RawDirection.WEST, true, true);
+        model.faces[0] = new(0 + offset, 1 - offsetH, 1 - offset, 0 + offset, 0, 1 - offset, 0 + offset, 0, 0 + offset, 0 + offset, 1 - offsetH, 0 + offset, uvs[0] + new UVPair(offset,offsetH), uvs[0] + new UVPair(1 - offset, 1), RawDirection.WEST, true, true);
         // east
-        model.faces[1] = new(1 - offset, 1 - offsetH, 0 + offset, 1 - offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1 - offsetH, 1 - offset, uvs[0] + offset, uvs[0] + new UVPair(1 - offset, 1), RawDirection.EAST, true, true);
+        model.faces[1] = new(1 - offset, 1 - offsetH, 0 + offset, 1 - offset, 0, 0 + offset, 1 - offset, 0, 1 - offset, 1 - offset, 1 - offsetH, 1 - offset, uvs[0] + new UVPair(offset,offsetH), uvs[0] + new UVPair(1 - offset, 1), RawDirection.EAST, true, true);
         // south
-        model.faces[2] = new(0 + offset, 1 - offsetH, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 0 + offset, 1 - offset, 1 - offsetH, 0 + offset, uvs[0] + offset, uvs[0] + new UVPair(1 - offset, 1), RawDirection.SOUTH, true, true);
+        model.faces[2] = new(0 + offset, 1 - offsetH, 0 + offset, 0 + offset, 0, 0 + offset, 1 - offset, 0, 0 + offset, 1 - offset, 1 - offsetH, 0 + offset, uvs[0] + new UVPair(offset,offsetH), uvs[0] + new UVPair(1 - offset, 1), RawDirection.SOUTH, true, true);
         // north
-        model.faces[3] = new(1 - offset, 1 - offsetH, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 1 - offset, 0 + offset, 1 - offsetH, 1 - offset, uvs[0] + offset, uvs[0] + new UVPair(1 - offset, 1), RawDirection.NORTH, true, true);
+        model.faces[3] = new(1 - offset, 1 - offsetH, 1 - offset, 1 - offset, 0, 1 - offset, 0 + offset, 0, 1 - offset, 0 + offset, 1 - offsetH, 1 - offset, uvs[0] + new UVPair(offset,offsetH), uvs[0] + new UVPair(1 - offset, 1), RawDirection.NORTH, true, true);
         // down
-        model.faces[4] = new(1 - offset, 0, 1 - offsetH, 1 - offset, 0, 0 + offset, 0 + offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, uvs[1] + offset, uvs[1] + (1 - offset), RawDirection.DOWN, true, true);
+        model.faces[4] = new(1 - offset, 0, 1 - offset, 1 - offset, 0, 0 + offset, 0 + offset, 0, 0 + offset, 0 + offset, 0, 1 - offset, uvs[1] + offset, uvs[1] + (1 - offset), RawDirection.DOWN, true, true);
         // up
         model.faces[5] = new(0 + offset, 1 - offsetH, 1 - offset, 0 + offset, 1 - offsetH, 0 + offset, 1 - offset, 1 - offsetH, 0 + offset, 1 - offset, 1 - offsetH, 1 - offset, uvs[2] + offset, uvs[2] + (1 - offset), RawDirection.UP, true, true);
 
-        model.faces[6] = new(0 + offset1, 1, 1 - offset1, 0 + offset1, 1 - offsetH, 1 - offset1, 0 + offset1, 1 - offsetH, 0 + offset1, 0 + offset1, 1, 0 + offset1, uvs[1] + new UVPair(offset1, 0), uvs[1] + new UVPair(1 - offset1, offset), RawDirection.WEST, true, true);
-        model.faces[7] = new(1 - offset1, 1, 0 + offset1, 1 - offset1, 1 - offsetH, 0 + offset1, 1 - offset1, 1 - offsetH, 1 - offset1, 1 - offset1, 1, 1 - offset1, uvs[1] + new UVPair(offset1, 0), uvs[1] + new UVPair(1 - offset1, offset), RawDirection.EAST, true, true);
-        model.faces[8] = new(0 + offset1, 1, 0 + offset1, 0 + offset1, 1 - offsetH, 0 + offset1, 1 - offset1, 1 - offsetH, 0 + offset1, 1 - offset1, 1, 0 + offset1, uvs[1] + new UVPair(offset1, 0), uvs[1] + new UVPair(1 - offset1, offset), RawDirection.SOUTH, true, true);
-        model.faces[9] = new(1 - offset1, 1, 1 - offset1, 1 - offset1, 1 - offsetH, 1 - offset1, 0 + offset1, 1 - offsetH, 1 - offset1, 0 + offset1, 1, 1 - offset1, uvs[1] + new UVPair(offset1, 0), uvs[1] + new UVPair(1 - offset1, offset), RawDirection.NORTH, true, true);
-        model.faces[10] = new(0 + offset1, 1, 1 - offset1, 0 + offset1, 1, 0 + offset1, 1 - offset1, 1, 0 + offset1, 1 - offset1, 1, 1 - offset1, uvs[1] + new UVPair(offset1, offset1), uvs[1] + new UVPair(1 - offset1, 1 - offset1), RawDirection.UP, true, true);
+        model.faces[6] = new(0 + offset1, 1, 1 - offset1, 0 + offset1, 1 - offsetH, 1 - offset1, 0 + offset1, 1 - offsetH, 0 + offset1, 0 + offset1, 1, 0 + offset1, uvs[1] + new UVPair(offset, offset), uvs[1] + new UVPair(1-2*offset, 1-2*offset), RawDirection.WEST, true, true);
+        model.faces[7] = new(1 - offset1, 1, 0 + offset1, 1 - offset1, 1 - offsetH, 0 + offset1, 1 - offset1, 1 - offsetH, 1 - offset1, 1 - offset1, 1, 1 - offset1, uvs[1] + new UVPair(offset, offset), uvs[1] + new UVPair(1-2*offset, 1-2*offset), RawDirection.EAST, true, true);
+        model.faces[8] = new(0 + offset1, 1, 0 + offset1, 0 + offset1, 1 - offsetH, 0 + offset1, 1 - offset1, 1 - offsetH, 0 + offset1, 1 - offset1, 1, 0 + offset1, uvs[1] + new UVPair(offset, offset), uvs[1] + new UVPair(1-2*offset, 1-2*offset), RawDirection.SOUTH, true, true);
+        model.faces[9] = new(1 - offset1, 1, 1 - offset1, 1 - offset1, 1 - offsetH, 1 - offset1, 0 + offset1, 1 - offsetH, 1 - offset1, 0 + offset1, 1, 1 - offset1, uvs[1] + new UVPair(offset, offset), uvs[1] + new UVPair(1-2*offset, 1-2*offset), RawDirection.NORTH, true, true);
+        model.faces[10] = new(0 + offset1, 1, 1 - offset1, 0 + offset1, 1, 0 + offset1, 1 - offset1, 1, 0 + offset1, 1 - offset1, 1, 1 - offset1, uvs[1] + new UVPair(offset, offset), uvs[1] + new UVPair(1-2*offset, 1-2*offset), RawDirection.UP, true, true);
         return model;
     }
 
