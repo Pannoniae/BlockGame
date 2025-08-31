@@ -355,7 +355,7 @@ public class Block {
         HELLSTONE_2.setModel(BlockModel.makeCube(HELLSTONE_2));
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
-        TORCH.setTex(cubeUVs(0, 9));
+        TORCH.setTex(cubeUVs(0, 6));
         
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));

@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 
@@ -29,14 +30,15 @@ public class Torch : Block {
     public const byte NORTH_WALL = 4;
 
     private byte calculatePlacementMetadata(World world, int x, int y, int z, RawDirection dir) {
-        // check if we can place on the target surface
+        // dir is the face we clicked on, which indicates where the supporting block is
         if (canAttachTo(world, x, y, z, dir)) {
             byte attachment = dir switch {
-                RawDirection.UP => GROUND,
-                RawDirection.WEST => WEST_WALL,
-                RawDirection.EAST => EAST_WALL,
-                RawDirection.SOUTH => SOUTH_WALL,
-                RawDirection.NORTH => NORTH_WALL,
+                RawDirection.DOWN => GROUND,      // clicking bottom face = torch on ground
+                RawDirection.WEST => WEST_WALL,   // clicking west face = torch on west wall
+                RawDirection.EAST => EAST_WALL,   // clicking east face = torch on east wall  
+                RawDirection.NORTH => NORTH_WALL, // clicking north face = torch on north wall
+                RawDirection.SOUTH => SOUTH_WALL, // clicking south face = torch on south wall
+                RawDirection.UP => GROUND,        // clicking top face = fallback to ground
                 _ => GROUND
             };
             
@@ -45,12 +47,12 @@ public class Torch : Block {
             return metadata;
         }
         
-        // fallback: try to place on ground
-        if (canAttachTo(world, x, y, z, RawDirection.UP)) {
+        // fallback: try to place on ground if there's a block below
+        if (canAttachTo(world, x, y, z, RawDirection.DOWN)) {
             return setAttachment(0, GROUND);
         }
         
-        return 0; // can't place
+        return 255; // can't place
     }
 
     private bool canAttachTo(World world, int x, int y, int z, RawDirection dir) {
@@ -64,14 +66,16 @@ public class Torch : Block {
         
         if (supportBlockId == Blocks.AIR) return false;
         
-        var support = Block.get(supportBlockId);
-        return support != null && !Block.translucent[supportBlockId];
+        var support = get(supportBlockId);
+        return support != null && !translucent[supportBlockId];
     }
 
     public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
         var meta = calculatePlacementMetadata(world, x, y, z, dir);
-        if (meta == 0) return; // can't place
-        
+        if (meta == 255) {
+            return; // can't place
+        }
+
         uint blockValue = id;
         blockValue = blockValue.setMetadata(meta);
         
@@ -90,72 +94,20 @@ public class Torch : Block {
         var metadata = block.getMetadata();
         var attachment = getAttachment(metadata);
 
-        var min = uvs[0];
-        var max = uvs[0] + 1;
-        var u0 = texU(min.u);
-        var v0 = texV(min.v);
-        var u1 = texU(max.u);
-        var v1 = texV(max.v);
-
-        const float torchWidth = 2f/16f;  // 2 pixels wide
-        const float torchHeight = 10f/16f; // 10 pixels tall
-        const float torchDepth = 2f/16f;   // 2 pixels deep
-        
-        switch (attachment) {
-            case GROUND:
-                renderGroundTorch(br, x, y, z, vertices, torchWidth, torchHeight, torchDepth, u0, v0, u1, v1);
-                break;
-            case WEST_WALL:
-                renderWallTorch(br, x, y, z, vertices, torchWidth, torchHeight, torchDepth, u0, v0, u1, v1, -0.4f, 0f);
-                break;
-            case EAST_WALL:
-                renderWallTorch(br, x, y, z, vertices, torchWidth, torchHeight, torchDepth, u0, v0, u1, v1, 0.4f, 0f);
-                break;
-            case SOUTH_WALL:
-                renderWallTorch(br, x, y, z, vertices, torchWidth, torchHeight, torchDepth, u0, v0, u1, v1, 0f, 0.4f);
-                break;
-            case NORTH_WALL:
-                renderWallTorch(br, x, y, z, vertices, torchWidth, torchHeight, torchDepth, u0, v0, u1, v1, 0f, -0.4f);
-                break;
-        }
-    }
-
-    private void renderGroundTorch(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices, 
-        float width, float height, float depth, float u0, float v0, float u1, float v1) {
-        
-        float centerX = 0.5f;
-        float centerZ = 0.5f;
-        float x1 = centerX - width / 2;
-        float x2 = centerX + width / 2;
-        float z1 = centerZ - depth / 2;
-        float z2 = centerZ + depth / 2;
-        
-        BlockRenderer.renderCube(br, x, y, z, vertices, x1, 0f, z1, x2, height, z2, u0, v0, u1, v1);
-    }
-
-    private void renderWallTorch(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
-        float width, float height, float depth, float u0, float v0, float u1, float v1, 
-        float offsetX, float offsetZ) {
-        
-        float centerX = 0.5f + offsetX;
-        float centerZ = 0.5f + offsetZ;
-        float baseY = 0.2f; // slightly raised from ground
-        
-        float x1 = centerX - width / 2;
-        float x2 = centerX + width / 2;
-        float z1 = centerZ - depth / 2;
-        float z2 = centerZ + depth / 2;
-        
-        BlockRenderer.renderCube(br, x, y, z, vertices, x1, baseY, z1, x2, baseY + height, z2, u0, v0, u1, v1);
+        var uv = uvs[0];
+        // TODO
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         aabbs.Clear();
-        // torches have no collision
+        var attachment = getAttachment(metadata);
+        
+        // TODO
+        aabbs.Add(new AABB(x + 0.4f, y + 0.0f, z + 0.4f, x + 0.6f, y + 0.6f, z + 0.6f)); // placeholder
     }
     
     public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        return calculatePlacementMetadata(world, x, y, z, dir) != 0;
+        return calculatePlacementMetadata(world, x, y, z, dir) != 255;
     }
     
     public override byte maxValidMetadata() {
