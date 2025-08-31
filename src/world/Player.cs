@@ -118,6 +118,7 @@ public class Player : Entity {
     public void setPrevVars() {
         prevPosition = position;
         Game.camera.prevBob = Game.camera.bob;
+        Game.camera.prevpForward = Game.camera.pForward;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
         prevSwingProgress = swingProgress;

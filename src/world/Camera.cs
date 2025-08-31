@@ -17,7 +17,10 @@ public class Camera {
     public Vector3D prevPosition;
     public Vector3D position;
     public Vector3D forward;
-    public Vector3D prevForward;
+    
+    
+    public Vector3D pForward;
+    public Vector3D prevpForward;
 
     public Vector3D renderPosition(double interp) => Vector3D.Lerp(prevPosition, position, interp);
 
@@ -71,7 +74,8 @@ public class Camera {
         this.viewportHeight = viewportHeight;
         aspectRatio = this.viewportWidth / this.viewportHeight;
         this.forward = forward;
-        prevForward = forward;
+        pForward = forward;
+        prevpForward = forward;
         this.up = up;
         
         currentFov = normalFov;
@@ -112,6 +116,21 @@ public class Camera {
     public void updatePosition(double dt) {
         if (player is not Player p) return;
         
+        var cameraDirection = Vector3D.Zero;
+        cameraDirection.X = MathF.Cos(Meth.deg2rad(yaw)) *
+                            MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.Y = MathF.Sin(Meth.deg2rad(pitch));
+        cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw)) *
+                            MathF.Cos(Meth.deg2rad(pitch));
+        
+        // if third person front, invert
+        if (mode == CameraMode.ThirdPersonFront) {
+            cameraDirection = -cameraDirection;
+        }
+
+        pForward = Vector3D.Normalize(cameraDirection);
+        
+        
         var trueEyeHeight = p.sneaking ? Player.sneakingEyeHeight : Player.eyeHeight;
         var basePos = new Vector3D(p.position.X, p.position.Y + trueEyeHeight, p.position.Z);
         var basePrevPos = new Vector3D(p.prevPosition.X, p.prevPosition.Y + trueEyeHeight, p.prevPosition.Z);
@@ -123,16 +142,16 @@ public class Camera {
                 break;
                 
             case CameraMode.ThirdPersonBehind:
-                var backwardOffset = forward * -THIRD_PERSON_DISTANCE;
-                var prevBackwardOffset = prevForward * -THIRD_PERSON_DISTANCE;
+                var backwardOffset = pForward * -THIRD_PERSON_DISTANCE;
+                var prevBackwardOffset = prevpForward * -THIRD_PERSON_DISTANCE;
                 position = basePos + backwardOffset;
                 prevPosition = basePrevPos + prevBackwardOffset;
                 // TODO: Add collision detection to prevent camera clipping through blocks
                 break;
                 
             case CameraMode.ThirdPersonFront:
-                var forwardOffset = (forward) * THIRD_PERSON_DISTANCE;
-                var prevForwardOffset = (prevForward) * THIRD_PERSON_DISTANCE;
+                var forwardOffset = (pForward) * THIRD_PERSON_DISTANCE;
+                var prevForwardOffset = (prevpForward) * THIRD_PERSON_DISTANCE;
                 position = basePos + forwardOffset;
                 prevPosition = basePrevPos + prevForwardOffset;
                 
@@ -146,8 +165,6 @@ public class Camera {
         } else {
             bob *= 0.935f;
         }
-        
-        prevBob = bob;
     }
 
     public void setViewport(float width, float height) {
@@ -177,8 +194,6 @@ public class Camera {
     }
 
     public void ModifyDirection(float xOffset, float yOffset) {
-        // Store previous forward before updating
-        prevForward = forward;
         
         // if third person front, invert
         if (mode == CameraMode.ThirdPersonFront) {
@@ -226,6 +241,7 @@ public class Camera {
     /// </summary>
     public Matrix4x4 getViewMatrix(double interp) {
         var interpPos = renderPosition(interp);
+        var interpForward = mode != CameraMode.FirstPerson ? Vector3D.Lerp(prevpForward, pForward, interp) : forward;
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = 0f;
         if (player is Player p) {
@@ -233,7 +249,7 @@ public class Camera {
         }
         var factor = 0.4f;
         var factor2 = 0.15f;
-        return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), interpPos.toVec3() + forward.toVec3(), up.toVec3())
+        return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), interpPos.toVec3() + interpForward.toVec3(), up.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
@@ -244,6 +260,7 @@ public class Camera {
     /// </summary>
     public Matrix4x4 getStaticViewMatrix(double interp) {
         var interpPos = Vector3.Zero;
+        var interpForward = mode != CameraMode.FirstPerson ? Vector3D.Lerp(prevpForward, pForward, interp) : forward;
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = 0f;
         if (player is Player p) {
@@ -251,7 +268,7 @@ public class Camera {
         }
         var factor = 0.4f;
         var factor2 = 0.15f;
-        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + forward.toVec3(), up.toVec3())
+        return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + interpForward.toVec3(), up.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
@@ -259,6 +276,7 @@ public class Camera {
 
     public Matrix4x4 getViewMatrixRH(double interp) {
         var interpPos = renderPosition(interp);
+        var interpForward = mode != CameraMode.FirstPerson ? Vector3D.Lerp(prevpForward, pForward, interp) : forward;
         var iBob = float.DegreesToRadians(renderBob(interp));
         var tt = 0f;
         if (player is Player p) {
@@ -266,7 +284,7 @@ public class Camera {
         }
         var factor = 0.4f;
         var factor2 = 0.15f;
-        return Matrix4x4.CreateLookAt(interpPos.toVec3(), interpPos.toVec3() + forward.toVec3(), up.toVec3())
+        return Matrix4x4.CreateLookAt(interpPos.toVec3(), interpPos.toVec3() + interpForward.toVec3(), up.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor)
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
