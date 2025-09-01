@@ -429,6 +429,12 @@ public class GameScreen : Screen {
                 cycleBlockMetadata();
                 break;
             }
+            case Key.C when keyboard.IsKeyPressed(Key.F3): {
+                // toggle frustum freeze
+                Game.camera.frustumFrozen = !Game.camera.frustumFrozen;
+                Console.Out.WriteLine("Frustum freeze: " + (Game.camera.frustumFrozen ? "ON" : "OFF"));
+                break;
+            }
         }
 
 

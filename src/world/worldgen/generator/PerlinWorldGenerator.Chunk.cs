@@ -76,14 +76,14 @@ public partial class PerlinWorldGenerator {
         var chunk = world.getChunk(coord);
         // get the noise
         getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
-            LOW_FREQUENCY, 8, 2f);
+            LOW_FREQUENCY, 12, 2f);
         getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
-            HIGH_FREQUENCY, 8, Meth.phiF);
+            HIGH_FREQUENCY, 12, Meth.phiF);
         
         // get weirdness
         // only low octaves for this one, it's a glorified selector
         getNoise3DRegion(weirdnessBuffer, weirdnessNoise, coord, WEIRDNESS_FREQUENCY, WEIRDNESS_FREQUENCY,
-            WEIRDNESS_FREQUENCY, 2, Meth.phiF);
+            WEIRDNESS_FREQUENCY, 4, Meth.phiF);
 
 
         // todo the selector could be sampled less frequently because it doesn't need to be as precise
@@ -93,7 +93,7 @@ public partial class PerlinWorldGenerator {
         // basically it should be mostly 0 (flat) or 1 (quirky shit) with transitions inbetween
         // im sure we can cook something up mr white
         getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
-            SELECTOR_FREQUENCY, 2, Meth.etaF);
+            SELECTOR_FREQUENCY, 4, Meth.etaF);
 
         for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
@@ -173,8 +173,8 @@ public partial class PerlinWorldGenerator {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float calculateDensity(float low, float high, float selector, float weirdness, int y) {
-        low = float.Tanh(low);
-        high = float.Tanh(high);
+        low = float.Tan(low);
+        high = float.Tan(high);
         
         // make it more radical
         // can't sqrt a negative number so sign(abs(x))

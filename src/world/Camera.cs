@@ -48,6 +48,7 @@ public class Camera {
     private float aspectRatio;
 
     public BoundingFrustum frustum;
+    public bool frustumFrozen = false;
     
     public CameraMode mode = CameraMode.FirstPerson;
     private const double THIRD_PERSON_DISTANCE = 4.0;
@@ -175,10 +176,12 @@ public class Camera {
     }
 
     public void calculateFrustum(double interp) {
-        var view = getViewMatrix(interp);
-        var proj = getProjectionMatrix();
-        var mat = view * proj;
-        frustum.Matrix = mat;
+        if (!frustumFrozen) {
+            var view = getViewMatrix(interp);
+            var proj = getProjectionMatrix();
+            var mat = view * proj;
+            frustum.Matrix = mat;
+        }
     }
 
     public void updateFOV(bool isUnderwater, double dt) {
