@@ -10,7 +10,6 @@ using Silk.NET.OpenGL.Legacy;
 namespace BlockGame;
 
 public class PlayerRenderer {
-
     public Player player;
     public StreamingVAO<BlockVertexTinted> vao;
     private List<BlockVertexTinted> vertices = new();
@@ -21,11 +20,12 @@ public class PlayerRenderer {
 
     /// Lower block when switching
     public double prevLower;
+
     public double lower;
 
     private int uMVP;
     private int tex;
-    
+
     // Water overlay renderer
     private InstantDrawTexture waterOverlayRenderer;
 
@@ -37,7 +37,7 @@ public class PlayerRenderer {
         vao.setSize(Face.MAX_FACES * 4);
         uMVP = Game.graphics.instantTextureShader.getUniformLocation("uMVP");
         tex = Game.graphics.instantTextureShader.getUniformLocation("tex");
-        
+
         // Initialize water overlay renderer
         waterOverlayRenderer = new InstantDrawTexture(60);
         waterOverlayRenderer.setup();
@@ -51,6 +51,7 @@ public class PlayerRenderer {
         if (handItem == null) {
             return;
         }
+
         var world = player.world;
         var pos = player.position.toBlockPos();
         Game.graphics.tex(0, Game.textures.blockTexture);
@@ -73,23 +74,27 @@ public class PlayerRenderer {
         // we need something like a circle?
         var circleishThing = Math.Sin(Math.Sqrt(swingProgress) * Math.PI * 2);
 
-        // rotate 45 degrees
-        var mat = Matrix4x4.CreateRotationY(Meth.deg2rad(45), new Vector3(0.5f, 0.5f, 0.5f)) *
-                  // swing block rotation
-                  Matrix4x4.CreateRotationY((float)(-sinSwing * Meth.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
-                  Matrix4x4.CreateRotationZ((float)(sinSwingSqrt * Meth.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
-                  Matrix4x4.CreateRotationX((float)(sinSwingSqrt * Meth.deg2rad(20)), new Vector3(0.5f, 0.5f, 0.5f)) *
-                  // scale down
-                  Matrix4x4.CreateScale(0.6f, new Vector3(0.5f, 0.5f, 0.5f)) *
-                  // translate into place
-                  Matrix4x4.CreateTranslation(new Vector3(0.75f, (float)(-1.45f - (getLower(interp) * 0.35f)), 1f)) *
-                  // swing translation
-                  Matrix4x4.CreateTranslation((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
+        var mat = new MatrixStack();
+        var pivot = new Vector3(0.5f, 0.5f, 0.5f);
+        
+        mat.rotate(45, 0, 1, 0, pivot);
+        
+        mat.rotate((float)(-sinSwing * 20), 0, 1, 0, pivot);
+        mat.rotate((float)(sinSwingSqrt * 20), 0, 0, 1, pivot);
+        mat.rotate((float)(sinSwingSqrt * 20), 1, 0, 0, pivot);
+        
+        mat.scale(0.6f, pivot);
+        
+        mat.translate(0.75f, (float)(-1.45f - (getLower(interp) * 0.35f)), 1f);
+        
+        mat.translate((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
+        
         Game.graphics.instantTextureShader.use();
-        Game.graphics.instantTextureShader.setUniform(uMVP, mat * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
+        Game.graphics.instantTextureShader.setUniform(uMVP,
+            mat.top * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
         Game.graphics.instantTextureShader.setUniform(tex, 0);
         vao.render();
-        
+
         // Render water overlay if player is underwater
         if (player.isUnderWater()) {
             renderWaterOverlay();
@@ -99,19 +104,19 @@ public class PlayerRenderer {
     private void renderWaterOverlay() {
         // Set the water overlay texture
         waterOverlayRenderer.setTexture(Game.textures.waterOverlay);
-        
+
         // Set identity MVP matrix (screen space coordinates)
         var identityMVP = Matrix4x4.Identity;
         waterOverlayRenderer.setMVP(identityMVP);
-        
-        
+
+
         // Draw a full-screen quad with slightly blue tint
         float alpha = 0.5f;
         // multiply by lighting
 
         var world = Game.world;
         var blockPos = player.position.toBlockPos();
-        
+
         var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
         var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
         var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
@@ -119,17 +124,17 @@ public class PlayerRenderer {
         var r = (byte)(tint.R * 255);
         var g = (byte)(tint.G * 255);
         var b = (byte)(tint.B * 255);
-        
+
         waterOverlayRenderer.begin(PrimitiveType.Triangles);
-        
+
         waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, -1, 0, 0f, 0f, r, g, b, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, r, g, b, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, r, g, b, (byte)(alpha * 255)));
-        
+
         waterOverlayRenderer.addVertex(new BlockVertexTinted(-1, 1, 0, 0f, 1f, r, g, b, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(1, -1, 0, 1f, 0f, r, g, b, (byte)(alpha * 255)));
         waterOverlayRenderer.addVertex(new BlockVertexTinted(1, 1, 0, 1f, 1f, r, g, b, (byte)(alpha * 255)));
-        
+
         // Render the overlay
         waterOverlayRenderer.end();
     }
@@ -146,12 +151,14 @@ public class PlayerRenderer {
         else {
             target = 1;
         }
+
         if (lower < target) {
             lower += d;
         }
         else {
             lower -= d;
         }
+
         lower = Math.Clamp(lower, 0, 1);
 
         // lowering shit

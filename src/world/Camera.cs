@@ -94,11 +94,28 @@ public class Camera {
     
     public void setPlayer(Entity player) {
         this.player = player;
+
+        forward = player.forward;
+        pForward = player.forward;
+        prevpForward = player.forward;
+        up = Vector3D.UnitY;
+        position = player.position;
+        prevPosition = player.position;
+        yaw = player.rotation.Y;
+        pitch = player.rotation.X;
+        
+        // update forward vector!
+        var view = getViewMatrix(1);
+        var proj = getProjectionMatrix();
+        var mat = view * proj;
+        frustum = new BoundingFrustum(mat);
+        calculateFrustum(1);
     }
     
     public void setPosition(Vector3D newPos) {
         prevPosition = position;
         position = newPos;
+        
     }
     
     public void cycleMode() {

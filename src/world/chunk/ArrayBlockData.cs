@@ -20,6 +20,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public int translucentCount;
     public int fullBlockCount;
     public int randomTickCount;
+    public int renderTickCount;
 
     /// <summary>
     /// Has the block storage been initialized?
@@ -57,6 +58,15 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             }
             else if (oldTick && !tick) {
                 randomTickCount--;
+            }
+            
+            var oldRenderTick = Block.renderTick[old];
+            var renderTick = Block.renderTick[value];
+            if (!oldRenderTick && renderTick) {
+                renderTickCount++;
+            }
+            else if (oldRenderTick && !renderTick) {
+                renderTickCount--;
             }
 
             var oldFullBlock = Block.isFullBlock(old);
@@ -107,6 +117,15 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         }
         else if (oldTick && !tick) {
             randomTickCount--;
+        }
+        
+        var oldRenderTick = Block.renderTick[old];
+        var renderTick = Block.renderTick[id];
+        if (!oldRenderTick && renderTick) {
+            renderTickCount++;
+        }
+        else if (oldRenderTick && !renderTick) {
+            renderTickCount--;
         }
 
         var oldFullBlock = Block.isFullBlock(old);
@@ -196,6 +215,10 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         return randomTickCount > 0;
     }
 
+    public bool hasRenderTickingBlocks() {
+        return renderTickCount > 0;
+    }
+
     public bool isFull() {
         return fullBlockCount == Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE;
     }
@@ -251,7 +274,11 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
             if (Block.randomTick[block]) {
                 randomTickCount++;
             }
-
+            
+            if (Block.renderTick[block]) {
+                renderTickCount++;
+            }
+            
             if (Block.isFullBlock(block)) {
                 chunk.addToHeightMap(x, (yCoord << 4) + y, z);
                 fullBlockCount++;

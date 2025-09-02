@@ -484,6 +484,8 @@ public class Player : Entity {
             }
         }
         else {
+            var stack = hotbar.getSelected();
+            stack.getItem().use(stack, world, this);
             setSwinging(false);
         }
     }

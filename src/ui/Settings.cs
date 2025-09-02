@@ -60,7 +60,7 @@ public class Settings {
             };
             
             // per-sample mode requires MSAA, force it on if not already enabled
-            if (ssaaMode == 2 && factor == 1) {
+            if (ssaaMode == 2 && factor == 1 && antiAliasing > 1) {
                 factor = 4; // default to 4x MSAA for per-sample mode
             }
             

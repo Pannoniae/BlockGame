@@ -3,6 +3,22 @@ using BlockGame.util;
 
 namespace BlockGame;
 
+/**
+ * A matrix transformation stack that can operate in two modes.
+ * 
+ * <b>Normal mode</b> (default):
+ * - Operations are applied in the order you call them
+ * - First call = first transformation applied to vertices
+ * - Use when converting from matrix multiplication chains: A * B * C becomes stack.A(); stack.B(); stack.C();
+ * 
+ * <b>Reversed mode</b> (.reversed()):
+ * - Operations are applied in reverse order of calls  
+ * - First call = last transformation applied to vertices
+ * - Matches OpenGL fixed-function matrix stack behavior
+ * - Use when building transformations hierarchically (global transforms first, local transforms last)
+ * 
+ * Matrix multiplication reminder: In A * B * C, C is applied first to vertices, then B, then A.
+ */
 public class MatrixStack {
     private Stack<Matrix4x4> stack = new();
     
@@ -105,6 +121,45 @@ public class MatrixStack {
         var current = stack.Pop();
         var a = current;
         var b = matrix;
+        swapIf(ref a, ref b);
+    }
+
+    // Pivot-based transformations
+    public void scale(float sc, Vector3 pivot) {
+        var current = stack.Pop();
+        var a = current;
+        var b = Matrix4x4.CreateTranslation(-pivot) *
+                Matrix4x4.CreateScale(sc) *
+                Matrix4x4.CreateTranslation(pivot);
+        swapIf(ref a, ref b);
+    }
+
+    public void scale(float x, float y, float z, Vector3 pivot) {
+        var current = stack.Pop();
+        var a = current;
+        var b = Matrix4x4.CreateTranslation(-pivot) *
+                Matrix4x4.CreateScale(x, y, z) *
+                Matrix4x4.CreateTranslation(pivot);
+        swapIf(ref a, ref b);
+    }
+
+    public void rotate(float angle, int x, int y, int z, Vector3 pivot) {
+        var current = stack.Pop();
+        var axis = Vector3.Normalize(new Vector3(x, y, z));
+        var a = current;
+        var b = Matrix4x4.CreateTranslation(-pivot) *
+                Matrix4x4.CreateFromAxisAngle(axis, Meth.deg2rad(angle)) *
+                Matrix4x4.CreateTranslation(pivot);
+        swapIf(ref a, ref b);
+    }
+
+    public void rotate(float angle, float x, float y, float z, Vector3 pivot) {
+        var current = stack.Pop();
+        var axis = Vector3.Normalize(new Vector3(x, y, z));
+        var a = current;
+        var b = Matrix4x4.CreateTranslation(-pivot) *
+                Matrix4x4.CreateFromAxisAngle(axis, Meth.deg2rad(angle)) *
+                Matrix4x4.CreateTranslation(pivot);
         swapIf(ref a, ref b);
     }
 }

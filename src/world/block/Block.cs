@@ -93,6 +93,7 @@ public class Block {
     public static bool[] translucent = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
     public static bool[] randomTick = new bool[MAXBLOCKS];
+    public static bool[] renderTick = new bool[MAXBLOCKS];
     public static bool[] liquid = new bool[MAXBLOCKS];
     public static bool[] customCulling = new bool[MAXBLOCKS];
     
@@ -650,14 +651,41 @@ public class Block {
     
     // CUSTOM BEHAVIOURS
     
+    /**
+     * This is a fucking mess but the alternative is making an even worse mess. There are 4 distinct update types -
+     * for (neighbour) updates, for scheduled updates (delayed), for random updates (if randomTick is true and player is close enough), and for render updates (if renderTick is true and the player is nearby).
+     *
+     * If you don't want to copypaste code, I'd recommend making a custom method and calling that from the relevant update methods, maybe with some bool parameters.
+     * The alternative would have been to have a single update method with a flag enum, but that would have been a nightmare to use and EVEN MORE SPAGHETTI
+     */
     
-    /** Coords are for the updated block.*/
+    /**
+     * Coords are for the updated block.
+     */
     public virtual void update(World world, int x, int y, int z) {
 
     }
     
-    /** Only called when this is a delayed update! */
+    /**
+     * Only called when this is a delayed update!
+     */
     public virtual void scheduledUpdate(World world, int x, int y, int z) {
+
+    }
+    
+    /**
+     * Only called when you don't want it! (i.e. randomly)
+     */
+    public virtual void randomUpdate(World world, int x, int y, int z) {
+
+    }
+    
+    /**
+     * This should have been called renderTick but that name already existed, oh well
+     * Called around the player frequently for blocks that need it (if you want to do particle effects or some fancy shit)
+     */
+    [ClientOnly]
+    public virtual void renderUpdate(World world, int x, int y, int z) {
 
     }
     
