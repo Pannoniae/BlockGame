@@ -334,7 +334,7 @@ public class Cave : OverlayFeature {
 
                         // if it's a solid block, remove it
                         if (Block.fullBlock[block]) {
-                            chunk.setBlock(cxx, yy, czz, Blocks.AIR);
+                            chunk.setBlockDumb(cxx, yy, czz, Blocks.AIR);
                             lastSetBlock = yy; // remember the last set block
                         }
                     }
@@ -343,7 +343,7 @@ public class Cave : OverlayFeature {
 
                 // if we have grass, set the block below it to grass
                 if (hasGrass && chunk.getBlock(cxx, lastSetBlock - 1, czz) == Blocks.DIRT) {
-                    chunk.setBlock(cxx, lastSetBlock - 1, czz, Blocks.GRASS);
+                    chunk.setBlockDumb(cxx, lastSetBlock - 1, czz, Blocks.GRASS);
                 }
             }
         }

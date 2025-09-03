@@ -495,7 +495,7 @@ public class Player : Entity {
             var pos = Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             bl.crack(world, pos.X, pos.Y, pos.Z);
-            world.setBlockRemesh(pos.X, pos.Y, pos.Z, 0);
+            world.setBlock(pos.X, pos.Y, pos.Z, 0);
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
             // place water if adjacent
@@ -556,7 +556,7 @@ public class Player : Entity {
             var pos = Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             if (bl != null) {
-                hotbar.slots[hotbar.selected] = new ItemStack(Item.getBlockItemID(bl.id), 1);
+                hotbar.slots[hotbar.selected] = new ItemStack(Item.blockID(bl.id), 1);
             }
         }
     }

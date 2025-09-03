@@ -1,7 +1,7 @@
 ﻿namespace BlockGame.item;
 
 public class Items {
-    public const ushort AIR = 0;
-    public const ushort WOOD_PICKAXE = 1;
-    public const ushort CANDY = 2;
+    public const int AIR = 0;
+    public const int WOOD_PICKAXE = 1;
+    public const int CANDY = 2;
 }

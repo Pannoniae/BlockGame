@@ -745,19 +745,19 @@ public partial class World : IDisposable {
                 byte newLevel = (byte)Math.Max(0, level - decrease);
                 if (isSkylight) {
                     if (noUpdate) {
-                        neighborChunk.setSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
+                        neighborChunk.setSkyLightDumb(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
                     }
                     else {
-                        neighborChunk.setSkyLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
+                        neighborChunk.setSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
                             newLevel);
                     }
                 }
                 else {
                     if (noUpdate) {
-                        neighborChunk.setBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
+                        neighborChunk.setBlockLightDumb(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
                     }
                     else {
-                        neighborChunk.setBlockLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
+                        neighborChunk.setBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
                             newLevel);
                     }
                 }
@@ -795,10 +795,10 @@ public partial class World : IDisposable {
             var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
             if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                 if (isSkylight) {
-                    neighborChunk.setSkyLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
+                    neighborChunk.setSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
                 }
                 else {
-                    neighborChunk.setBlockLightRemesh(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
+                    neighborChunk.setBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
                 }
 
                 // Emplace new node to queue. (could use push as well)

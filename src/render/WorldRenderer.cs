@@ -408,6 +408,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         foreach (var subChunk in chunksToMesh) {
             if (!meshingQueue.Contains(subChunk)) {
                 meshingQueue.Enqueue(subChunk);
+                Game.metrics.chunksUpdated++;
             }
         }
 

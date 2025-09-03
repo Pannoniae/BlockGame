@@ -135,7 +135,7 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
-            chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
     }
 
@@ -147,7 +147,7 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
-            chunk!.setSkyLightRemesh(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
     }
 
@@ -159,7 +159,7 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
-            chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
             skyLightQueue.Add(new LightNode(blockPos.X, blockPos.Y, blockPos.Z, chunk));
             //processSkyLightQueue();
         }
@@ -175,7 +175,7 @@ public partial class World {
         if (success) {
             var value = getSkyLight(x, y, z);
             skyLightRemovalQueue.Add(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
-            chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, 0);
+            chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
 
@@ -187,7 +187,7 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
-            chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
     }
 
@@ -199,7 +199,7 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
-            chunk!.setBlockLightRemesh(blockPos.X, blockPos.Y, blockPos.Z, level);
+            chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
     }
 
@@ -213,7 +213,7 @@ public partial class World {
         if (success) {
             var value = getBlockLight(x, y, z);
             blockLightRemovalQueue.Add(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
-            chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, 0);
+            chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
 
@@ -298,27 +298,27 @@ public partial class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
+        chunk.setBlockDumb(blockPos.X, blockPos.Y, blockPos.Z, block);
+    }
+
+    public void setBlockSilent(int x, int y, int z, ushort block) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
-
-    public void setBlockRemeshSilent(int x, int y, int z, ushort block) {
-        if (!inWorld(x, y, z)) {
-            return;
-        }
-
-        var blockPos = getPosInChunk(x, y, z);
-        var chunk = getChunk(x, z);
-        chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
-    }
     
-    public void setBlockRemesh(int x, int y, int z, ushort block) {
+    public void setBlock(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
             return;
         }
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        chunk.setBlockRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+        chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
         
         // update neighbours
         blockUpdateNeighboursOnly(x, y, z);
@@ -331,7 +331,7 @@ public partial class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        chunk.setBlockMetadataRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+        chunk.setBlockMetadata(blockPos.X, blockPos.Y, blockPos.Z, block);
     }
     
     public void setBlockMetadata(int x, int y, int z, uint block) {
@@ -341,7 +341,7 @@ public partial class World {
 
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
-        chunk.setBlockMetadataRemesh(blockPos.X, blockPos.Y, blockPos.Z, block);
+        chunk.setBlockMetadata(blockPos.X, blockPos.Y, blockPos.Z, block);
         
         // update neighbours
         blockUpdateNeighboursOnly(x, y, z);

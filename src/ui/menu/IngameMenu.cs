@@ -349,6 +349,9 @@ public class IngameMenu : Menu, IDisposable {
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
+            debugStr.AppendFormat("Chunk updates: {0}\n", m.chunksUpdated);
+            // clear chunk updates after displaying for next measurement period
+            m.clearChunkUpdates();
 
             // show FB info
             if (Settings.instance.framebufferEffects) {

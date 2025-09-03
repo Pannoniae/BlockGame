@@ -59,7 +59,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             blocks[i] = new ArrayBlockData(this, i);
             entities[i] = [];
         }
-        
+
 
         heightMap = new HeightMap(this);
 
@@ -70,7 +70,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public bool isVisible(BoundingFrustum frustum) {
         return !frustum.outsideCameraHorizontal(box);
     }
-    
+
     /** Don't call these, they won't update the world! */
     internal void addEntity(Entity entity) {
         // check if the entity is in the chunk
@@ -88,13 +88,14 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         int subChunkY = worldY >> 4; // divide by 16 to get subchunk coordinate
         entities[subChunkY].Add(entity);
     }
-    
+
     /** Don't call these, they won't update the world! */
     internal void removeEntity(Entity entity) {
         // check if the entity is in the chunk
         if (entity.prevPosition.X < worldX || entity.prevPosition.X >= worldX + CHUNKSIZE ||
             entity.prevPosition.Z < worldZ || entity.prevPosition.Z >= worldZ + CHUNKSIZE) {
-            SkillIssueException.throwNew($"Entity position is out of chunk bounds: {entity.prevPosition} in chunk {coord}");
+            SkillIssueException.throwNew(
+                $"Entity position is out of chunk bounds: {entity.prevPosition} in chunk {coord}");
         }
 
         // get the subchunk Y coordinate
@@ -104,7 +105,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             return; // out of bounds
         }
 
-        
+
         entities[subChunkY].Remove(entity);
     }
 
@@ -120,18 +121,18 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 while (bl == 0 && y > 0) {
                     // check if chunk is initialised first
                     //if (blocks[y >> 4].inited) {
-                    setSkyLight(x, y, z, 15);
+                    setSkyLightDumb(x, y, z, 15);
                     //}
 
                     y--;
                     bl = getBlock(x, y, z);
                 }
-                
+
                 // add the last item for propagation
                 if (y + 1 >= CHUNKSIZE * CHUNKHEIGHT) {
                     goto blockLoop;
                 }
-                
+
                 world.skyLightQueue.Add(new LightNode(x, y + 1, z, this));
 
                 // y + 1 is air
@@ -150,7 +151,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                         ll -= Block.lightAbsorption[bl];
                         if (ll <= 0) break;
                         y--;
-                        setSkyLight(x, y, z, ll);
+                        setSkyLightDumb(x, y, z, ll);
                         bl = getBlock(x, y, z);
                     }
 
@@ -244,7 +245,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                         // we only propagate *once* per position, so if we found an empty neighbor, we propagate
                         // we don't propagate inside the loop lol
                         //if (propagateThis) {
-                            //toPropagate.Add(new LightNode(x, y, z, this));
+                        //toPropagate.Add(new LightNode(x, y, z, this));
                         //}
 
                         // if we found a block below, we also propagate it
@@ -311,7 +312,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // only propagate if we can improve the light level
                 if (newLevel > 0 && newLevel > neighborLight &&
                     (neighborLight + 2 <= currentLight || dir == Direction.DOWN)) {
-                    neighborChunk.setSkyLight(nx, ny, nz, newLevel);
+                    neighborChunk.setSkyLightDumb(nx, ny, nz, newLevel);
                     queue.Enqueue(new LightNode(nx, ny, nz, neighborChunk));
                 }
             }
@@ -321,7 +322,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setBlock(int x, int y, int z, ushort block) {
+    public void setBlockDumb(int x, int y, int z, ushort block) {
         blocks[y >> 4][x, y & 0xF, z] = block;
         if (Block.fullBlock[block]) {
             blocks[y >> 4].setSkylight(x, y & 0xF, z, 0);
@@ -341,19 +342,6 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         //}
     }
 
-    /// <summary>
-    /// It's like setBlockFast but doesn't check if the chunk is initialised.
-    /// </summary>
-    public void setBlockFastUnsafe(int x, int y, int z, ushort block) {
-        blocks[y >> 4].fastSetUnsafe(x, y & 0xF, z, block);
-        if (Block.fullBlock[block]) {
-            blocks[y >> 4].setSkylight(x, y & 0xF, z, 0);
-        }
-        //else {
-        //    subChunks[y >> 4].blocks.setSkylight(x, y & 0xF, z, 15);
-        //}
-    }
-
     public void recalc() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             blocks[i].refreshCounts();
@@ -364,18 +352,16 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         blocks[i].refreshCounts();
     }
 
-    public void setBlockRemesh(int x, int y, int z, ushort block) {
-        // handle empty chunksections
-        /*if (section.isEmpty && block != 0) {
-            section.blocks = new ArrayBlockData(this);
-            section.isEmpty = false;
-        }*/
+    public void setBlock(int x, int y, int z, ushort block) {
         var oldBlock = blocks[y >> 4][x, y & 0xF, z];
         blocks[y >> 4][x, y & 0xF, z] = block;
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
-        // From there on, ONLY REMESHING STUFF
+        // call onBreak callback for old block if being replaced
+        if (oldBlock != 0 && oldBlock != block) {
+            Block.get(oldBlock).onBreak(world, wx, y, wz, 0);
+        }
 
         // if block broken, add sunlight from neighbours
         if (block == 0) {
@@ -387,17 +373,19 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // is nullcheck needed?
                 if (neighborChunk != null) {
                     // Only queue if neighbor has light to propagate
-                    //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
-                    //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
-                    //if (skyLight > 0) {
-                    world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
-                    //}
-                    //if (blockLight > 0) {
-                    world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                        neighborChunk));
+                    if (skyLight > 0) {
+                        world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                            neighborChunk));
+                    }
+
+                    if (blockLight > 0) {
+                        world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                            neighborChunk));
+                    }
                 }
-                //}
             }
         }
         else {
@@ -408,7 +396,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // if the new block has light, add the light
         if (Block.lightLevel[block] > 0) {
             // add lightsource
-            setBlockLight(x, y, z, Block.lightLevel[block]);
+            setBlockLightDumb(x, y, z, Block.lightLevel[block]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
             world.blockLightQueue.Add(new LightNode(x, y, z, this));
         }
@@ -418,21 +406,30 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // remove lightsource
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
+        
+        // call onPlace callback for new block if being placed
+        if (block != 0 && oldBlock != block) {
+            Block.get(block).onPlace(world, wx, y, wz, 0);
+        }
 
         // set neighbours dirty
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
-    
-    public void setBlockMetadataRemesh(int x, int y, int z, uint block) {
+
+    public void setBlockMetadata(int x, int y, int z, uint block) {
         var oldBlock = blocks[y >> 4][x, y & 0xF, z];
         blocks[y >> 4].setRaw(x, y & 0xF, z, block);
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
         var id = block.getID();
-
-        // From there on, ONLY REMESHING STUFF
-
+        var oldMetadata = block.getMetadata();
+        
+        // call onBreak callback for old block if being replaced
+        if (oldBlock != 0 && oldBlock != id) {
+            Block.get(oldBlock).onBreak(world, wx, y, wz, 0);
+        }
+        
         // if block broken, add sunlight from neighbours
         if (id == 0) {
             // Queue all 6 neighbors for light propagation
@@ -443,17 +440,19 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // is nullcheck needed?
                 if (neighborChunk != null) {
                     // Only queue if neighbor has light to propagate
-                    //var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
-                    //var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                    var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
-                    //if (skyLight > 0) {
-                    world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z, neighborChunk));
-                    //}
-                    //if (blockLight > 0) {
-                    world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                        neighborChunk));
+                    if (skyLight > 0) {
+                        world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                            neighborChunk));
+                    }
+
+                    if (blockLight > 0) {
+                        world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                            neighborChunk));
+                    }
                 }
-                //}
             }
         }
         else {
@@ -464,7 +463,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // if the new block has light, add the light
         if (Block.lightLevel[id] > 0) {
             // add lightsource
-            setBlockLight(x, y, z, Block.lightLevel[id]);
+            setBlockLightDumb(x, y, z, Block.lightLevel[id]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
             world.blockLightQueue.Add(new LightNode(x, y, z, this));
         }
@@ -473,6 +472,11 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         if (id == 0 && Block.lightLevel[oldBlock] > 0) {
             // remove lightsource
             world.removeBlockLightAndPropagate(wx, y, wz);
+        }
+        
+        // call onPlace callback for new block if being placed
+        if (id != 0 && oldBlock != id) {
+            Block.get(id).onPlace(world, wx, y, wz, oldMetadata);
         }
 
         // set neighbours dirty
@@ -489,11 +493,11 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setSkyLight(int x, int y, int z, byte value) {
+    public void setSkyLightDumb(int x, int y, int z, byte value) {
         blocks[y >> 4].setSkylight(x, y & 0xF, z, value);
     }
 
-    public void setSkyLightRemesh(int x, int y, int z, byte value) {
+    public void setSkyLight(int x, int y, int z, byte value) {
         var sectionY = y >> 4;
         var yRem = y & 0xF;
 
@@ -509,12 +513,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     /// <summary>
     /// Uses chunk coordinates
     /// </summary>
-    public void setBlockLight(int x, int y, int z, byte value) {
+    public void setBlockLightDumb(int x, int y, int z, byte value) {
         // handle empty chunksections
         blocks[y >> 4].setBlocklight(x, y & 0xF, z, value);
     }
 
-    public void setBlockLightRemesh(int x, int y, int z, byte value) {
+    public void setBlockLight(int x, int y, int z, byte value) {
         // handle empty chunksections
         blocks[y >> 4].setBlocklight(x, y & 0xF, z, value);
 
@@ -561,11 +565,11 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public ushort getBlock(int x, int y, int z) {
         return blocks[y >> 4][x, y & 0xF, z];
     }
-    
+
     public byte getMetadata(int x, int y, int z) {
         return blocks[y >> 4].getMetadata(x, y & 0xF, z);
     }
-    
+
     public uint getBlockRaw(int x, int y, int z) {
         return blocks[y >> 4].getRaw(x, y & 0xF, z);
     }
@@ -682,7 +686,7 @@ public readonly record struct ChunkCoord(int x, int z) {
     public override int GetHashCode() {
         return XHash.hash(x, z);
     }
-    
+
     public bool Equals(ChunkCoord other) {
         return x == other.x && z == other.z;
     }

@@ -698,6 +698,20 @@ public class Block {
         // setup
         br.setupWorld();
     }
+    
+    /**
+     * Called after the block has been set in the world.
+     */
+    public virtual void onPlace(World world, int x, int y, int z, byte metadata) {
+        
+    }
+    
+    /**
+    * Called after the block is removed from the world.
+     */
+    public virtual void onBreak(World world, int x, int y, int z, byte metadata) {
+        
+    }
 
     public virtual void crack(World world, int x, int y, int z) {
 
@@ -867,7 +881,7 @@ public class Flower(ushort id, string name) : Block(id, name) {
 
     public override void update(World world, int x, int y, int z) {
         if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
-            world.setBlockRemesh(x, y, z, Blocks.AIR);
+            world.setBlock(x, y, z, Blocks.AIR);
         }
     }
 }
@@ -883,8 +897,8 @@ public class FallingBlock(ushort id, string name) : Block(id, name) {
             ym--;
         }
         if (!isSupported) {
-            world.setBlockRemesh(x, y, z, 0);
-            world.setBlockRemesh(x, ym + 1,z, getID());
+            world.setBlock(x, y, z, 0);
+            world.setBlock(x, ym + 1,z, getID());
         }
 
         // if sand above, update

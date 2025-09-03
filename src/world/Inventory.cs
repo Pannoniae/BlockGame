@@ -12,7 +12,7 @@ public class Inventory {
 
     public Inventory() {
         for (int i = 0; i < slots.Length; i++) {
-            slots[i] = new ItemStack(Item.getBlockItemID(i + 1), Random.Shared.Next(15));
+            slots[i] = new ItemStack(Item.blockID(i + 1), Random.Shared.Next(15));
         }
         // replace water with something useful
         //slots[Block.WATER.id - 1] = new ItemStack(Block.LEAVES.id, 1);

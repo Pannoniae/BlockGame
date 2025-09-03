@@ -55,11 +55,11 @@ public class Item {
         return items[getIdx(i)];
     }
     
-    public static Item getBlockItem(int blockID) {
+    public static Item block(int blockID) {
         return get(-blockID);
     }
     
-    public static int getBlockItemID(int blockID) {
+    public static int blockID(int blockID) {
         return -blockID;
     }
     

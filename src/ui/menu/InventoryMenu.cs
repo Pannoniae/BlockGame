@@ -73,7 +73,7 @@ public class InventoryMenu : Menu {
                     int currentY = invOffsetY + (slotIndex / rows) * ItemSlot.SLOTSIZE;
 
                     slots[slotIndex] = new ItemSlot(currentX, currentY) {
-                        stack = new ItemStack(Item.getBlockItemID(item), 1, metadata),
+                        stack = new ItemStack(Item.blockID(item), 1, metadata),
                     };
                     slotIndex++;
                 }
@@ -83,7 +83,7 @@ public class InventoryMenu : Menu {
             }
             else {
                 slots[slotIndex] = new ItemSlot(slotX, slotY) {
-                    stack = new ItemStack(Item.getBlockItemID(item), 1),
+                    stack = new ItemStack(Item.blockID(item), 1),
                 };
                 slotIndex++;
             }

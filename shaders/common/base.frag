@@ -14,8 +14,10 @@ in vec4 viewPosition;
 #ifdef HAS_NORMALS
 in vec3 normal;
 uniform vec3 lightDir;
+uniform vec3 lightDir2;
 // ratio of light between direct (is that how it's called?) and ambient
 uniform float lightRatio;
+uniform float lightRatio2;
 #endif
 
 #ifdef HAS_TEXTURE
@@ -37,10 +39,13 @@ void main() {
 #endif
     
 #ifdef HAS_NORMALS
-    // Apply lighting
-    float light = max(0.0, dot(lightDir, normal));
-    float combined = clamp(light * lightRatio + (1 - lightRatio), 0.0, 1.0);
-    finalColour = vec4(finalColour.rgb * combined, finalColour.a);
+    // Apply lighting from both sources
+    float light1 = max(0.0, dot(lightDir, normal));
+    float light2 = max(0.0, dot(lightDir2, normal));
+    float combined1 = clamp(light1 * lightRatio + (1 - lightRatio), 0.0, 1.0);
+    float combined2 = clamp(light2 * lightRatio2 + (1 - lightRatio2), 0.0, 1.0);
+    float totalLight = min(1.0, combined1 + combined2);
+    finalColour = vec4(finalColour.rgb * totalLight, finalColour.a);
 #endif
     
     // Apply fog

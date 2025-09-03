@@ -154,7 +154,7 @@ public class Water : Block {
                 currentLevel = newLevel;
                 // if newLevel is -1, remove
                 if (newLevel == -1) {
-                    world.setBlockRemesh(pos.X, pos.Y, pos.Z, Blocks.AIR);
+                    world.setBlock(pos.X, pos.Y, pos.Z, Blocks.AIR);
                 }
                 else {
                     data = setWaterLevel(data, (byte)newLevel);
