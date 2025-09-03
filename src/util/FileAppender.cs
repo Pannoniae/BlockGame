@@ -36,7 +36,7 @@ public class FileAppender : IDisposable {
                 // format: [12:34:56] [Thread-5/INFO] [WorldGen]: Generating chunk at 0,0
                 var timeStr = logEvent.timestamp.ToString("HH:mm:ss");
                 var levelStr = logEvent.level.getShortName();
-                var threadStr = $"Thread-{logEvent.threadId}";
+                var threadStr = logEvent.threadID;
                 
                 if (logEvent.category != null) {
                     writer.WriteLine($"[{timeStr}] [{threadStr}/{levelStr}] [{logEvent.category}]: {logEvent.message}");

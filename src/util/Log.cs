@@ -235,7 +235,7 @@ public static class Log {
         var logEvent = new LogEvent(
             DateTime.Now,
             level,
-            Thread.CurrentThread.Name ?? Environment.CurrentManagedThreadId.ToString(),
+            Thread.CurrentThread.Name ?? $"Thread-{Environment.CurrentManagedThreadId.ToString()}",
             message,
             category
         );
@@ -249,14 +249,14 @@ public static class Log {
 public readonly struct LogEvent {
     public readonly DateTime timestamp;
     public readonly LogLevel level;
-    public readonly string threadId;
+    public readonly string threadID;
     public readonly string message;
     public readonly string? category;
     
     public LogEvent(DateTime timestamp, LogLevel level, string threadId, string message, string? category) {
         this.timestamp = timestamp;
         this.level = level;
-        this.threadId = threadId;
+        this.threadID = threadId;
         this.message = message;
         this.category = category;
     }
