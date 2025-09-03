@@ -230,8 +230,10 @@ public static class Log {
     
     // core logging method
     public static void log(LogLevel level, string? category, string message) {
-        if (!initialized) return;
-        
+        if (!initialized) {
+            return;
+        }
+
         var logEvent = new LogEvent(
             DateTime.Now,
             level,
