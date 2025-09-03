@@ -18,9 +18,13 @@ public class Program {
         Console.Out.WriteLine(Vector512<int>.IsSupported);
         Console.Out.WriteLine(Vector256.IsHardwareAccelerated);
         Console.Out.WriteLine(Vector512.IsHardwareAccelerated);
+        
+        // name the thread
+        Thread.CurrentThread.Name = "Main";
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
         Game.initDedicatedGraphics();
+        Game.cc();
 
         _ = new Game(devMode);
     }

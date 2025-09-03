@@ -428,6 +428,9 @@ public partial class Game {
         
         SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
 
+        Log.init();
+        Log.log(LogLevel.INFO, "Game", "Starting game!");
+
         //#if DEBUG
         // initialise debug print
         unsafe {
@@ -1038,6 +1041,7 @@ public partial class Game {
     }
 
     private void close() {
+        Log.shutdown();
         ///dev?.Dispose();
         //buffer?.Dispose();
     }

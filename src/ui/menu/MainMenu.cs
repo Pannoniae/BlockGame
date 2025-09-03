@@ -45,7 +45,7 @@ public class MainMenu : Menu {
     }
 
     public override void clear(double dt, double interp) {
-        Game.graphics.clearColor(Color4b.SlateGray);
+        Game.graphics.clearColor(Color4b.Black);
         Game.GL.ClearDepth(1f);
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
