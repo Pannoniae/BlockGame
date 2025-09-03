@@ -1,11 +1,14 @@
 using System.Text;
-using K4os.Compression.LZ4.Streams;
+using System.IO.Compression;
 
 namespace BlockGame.util;
 
 /**
  * Writes logs to files with automatic rotation.
- * Creates latest.log and rotates to yyyy-MM-dd-N.log.lz4 when needed.
+ * Creates latest.log and rotates to yyyy-MM-dd-N.log.gz when needed.
+ *
+ * I've tried using LZ4 and ZLib before, but fucking 7-zip or nothing seems to be able to open the files.
+ * Trust me I've tried so time for the basic bitch solution...
  */
 public class FileAppender : IDisposable {
     private readonly string logDir;
@@ -76,18 +79,18 @@ public class FileAppender : IDisposable {
         var index = 1;
         string rotatedPath;
         
-        // find next available index: 2024-01-15-1.log.lz4, 2024-01-15-2.log.lz4, etc
+        // find next available index: 2024-01-15-1.log.gz, 2024-01-15-2.log.gz, etc
         do {
-            rotatedPath = Path.Combine(logDir, $"{today}-{index}.log.lz4");
+            rotatedPath = Path.Combine(logDir, $"{today}-{index}.log.gz");
             index++;
         } while (File.Exists(rotatedPath));
         
         try {
-            // compress and move the old log using LZ4
+            // compress and move the old log using gzip
             using var input = File.OpenRead(latestLogPath);
             using var output = File.Create(rotatedPath);
-            using var lz4 = LZ4Stream.Encode(output, leaveOpen: false);
-            input.CopyTo(lz4);
+            using var gzip = new GZipStream(output, CompressionMode.Compress, leaveOpen: false);
+            input.CopyTo(gzip);
             
             // delete original after successful compression
             input.Close();
