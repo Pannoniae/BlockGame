@@ -5,8 +5,7 @@
 
         <!-- YES THIS HAS TO BE DUPLICATED OTHERWISE IT DONT WORK -->
         <windowsSettings>
-            <consoleAllocationPolicy xmlns="http://schemas.microsoft.com/SMI/2024/WindowsSettings">detached
-            </consoleAllocationPolicy>
+            <consoleAllocationPolicy xmlns="http://schemas.microsoft.com/SMI/2024/WindowsSettings">detached</consoleAllocationPolicy>
         </windowsSettings>
         <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2020/WindowsSettings">
             <heapType>SegmentHeap</heapType>

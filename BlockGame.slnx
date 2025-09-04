@@ -79,6 +79,10 @@
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>
+  <Project Path="meth\Meth.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
   <Project Path="NBT2SNBT\NBT2SNBT.csproj" Type="Classic C#">
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
@@ -87,7 +91,7 @@
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="meth\Meth.csproj" Type="Classic C#">
+  <Project Path="win10fix\win10fix.csproj" Type="Classic C#">
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
   </Project>

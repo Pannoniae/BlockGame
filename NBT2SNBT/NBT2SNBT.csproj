@@ -17,12 +17,17 @@
     <Import Project="..\NetBeauty.targets" />
 
     <PropertyGroup>
-        <PublishDir>../publish/NBT</PublishDir>
+        <PublishDir>../publish/libs</PublishDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) == 'True'">../libs</BeautyLibsDir>
+        <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) != 'True'">../libs</BeautyLibsDir>
     </PropertyGroup>
 
     <PropertyGroup>
         <BeautyDir>.</BeautyDir>
-        <BeautyAppHostEntry>NBT/nbt2snbt.dll</BeautyAppHostEntry>
+        <BeautyAppHostEntry>libs/nbt2snbt.dll</BeautyAppHostEntry>
         <BeautyAppHostDir>..</BeautyAppHostDir>
     </PropertyGroup>
 

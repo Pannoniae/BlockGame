@@ -23,6 +23,11 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Spectre.Console" Version="0.50.1-preview.0.26" />
+        <PackageReference Include="Spectre.Console.Analyzer" Version="1.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.10" />
         <PackageReference Include="JetBrains.Profiler.SelfApi" Version="2.5.14" />

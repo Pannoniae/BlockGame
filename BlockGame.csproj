@@ -104,6 +104,8 @@
         <None Remove="BlockGameTesting\**"/>
         <None Remove="SNBT2NBT\**"/>
         <None Remove="NBT2SNBT\**"/>
+        <None Remove="win10fix\**"/>
+        
         <None Remove="publish\**"/>
         <None Remove="Analyzers\**"/>
         <None Remove="meth\**"/>
@@ -112,6 +114,8 @@
         <Compile Remove="BlockGameTesting\**"/>
         <Compile Remove="SNBT2NBT\**"/>
         <Compile Remove="NBT2SNBT\**"/>
+        <Compile Remove="win10fix\**"/>
+        
         <Compile Remove="publish\**"/>
         <Compile Remove="Analyzers\**"/>
         <Compile Remove="meth\**"/>
@@ -120,6 +124,8 @@
         <EmbeddedResource Remove="BlockGameTesting\**"/>
         <EmbeddedResource Remove="SNBT2NBT\**"/>
         <EmbeddedResource Remove="NBT2SNBT\**"/>
+        <EmbeddedResource Remove="win10fix\**"/>
+        
         <EmbeddedResource Remove="publish\**"/>
         <EmbeddedResource Remove="Analyzers\**"/>
         <EmbeddedResource Remove="meth\**"/>

@@ -7,13 +7,12 @@
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <AssemblyName>snbt2nbt</AssemblyName>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <ProjectReference Include="..\meth\Meth.csproj"/>
     </ItemGroup>
-    
+
     <Import Project="..\NetBeauty.targets" />
 
     <PropertyGroup>
@@ -27,7 +26,7 @@
 
     <PropertyGroup>
         <BeautyDir>.</BeautyDir>
-        <BeautyAppHostEntry>libs/snbt2nbt.dll</BeautyAppHostEntry>
+        <BeautyAppHostEntry>libs/win10fix.dll</BeautyAppHostEntry>
         <BeautyAppHostDir>..</BeautyAppHostDir>
     </PropertyGroup>
 
