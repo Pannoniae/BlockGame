@@ -44,27 +44,52 @@ class Program {
         var osVersion = Environment.OSVersion;
         Log.info($"OS Version: {osVersion}");
 
-        // Windows 10 = version 10.0, Windows 11 = version 10.0 with build >= 22000
-        // Windows 11 24H2 = build 26100+
-        if (osVersion.Version.Major == 10 && osVersion.Version.Minor == 0) {
-            int buildNumber = osVersion.Version.Build;
-            Log.info($"Build number: {buildNumber}");
+        var major = osVersion.Version.Major;
+        var minor = osVersion.Version.Minor;
+        int buildNumber = osVersion.Version.Build;
 
-            switch (buildNumber) {
-                case < 22000:
-                    Log.info("Windows 10 detected");
-                    return true; // Win10 needs the fix
-                case < 26100:
-                    Log.info("Windows 11 (pre-24H2) detected");
-                    return true; // Win11 before 24H2 needs the fix
-                default:
-                    Log.info("Windows 11 24H2+ detected");
-                    return false; // Win11 24H2+ doesn't need the fix
-            }
+        Log.info($"Version: {major}.{minor}, Build: {buildNumber}");
+
+        // Windows version mapping:
+        // 5.1 = XP, 5.2 = Server 2003/XP x64
+        // 6.0 = Vista/Server 2008  
+        // 6.1 = 7/Server 2008 R2
+        // 6.2 = 8/Server 2012
+        // 6.3 = 8.1/Server 2012 R2
+        // 10.0 = 10/11/Server 2016+
+        
+        // I'm aware of the fact that modern dotnet doesn't even *run* on half of these but oh well, if someone wants to make it work, it will work
+
+        switch (major) {
+            case < 6:
+                Log.info("Windows XP/Server 2003 or older detected");
+                return true; // Very old Windows needs the fix
+            case 6:
+                string winName = minor switch {
+                    0 => "Vista/Server 2008",
+                    1 => "7/Server 2008 R2", 
+                    2 => "8/Server 2012",
+                    3 => "8.1/Server 2012 R2",
+                    _ => $"Unknown 6.{minor}"
+                };
+                Log.info($"Windows {winName} detected");
+                return true; // All Windows 6.x needs the fix
+            case 10:
+                switch (buildNumber) {
+                    case < 22000:
+                        Log.info("Windows 10 detected");
+                        return true; // Win10 needs the fix
+                    case < 26100:
+                        Log.info("Windows 11 (pre-24H2) detected");
+                        return true; // Win11 before 24H2 needs the fix
+                    default:
+                        Log.info("Windows 11 24H2+ detected");
+                        return false; // Win11 24H2+ doesn't need the fix
+                }
+            default:
+                Log.warn($"Unknown Windows version: {major}.{minor}");
+                return true; // Unknown version, assume it needs the fix
         }
-
-        Log.warn("Unknown Windows version");
-        return false;
     }
 
     public static bool patchPESubsystem(string exePath) {
@@ -101,12 +126,12 @@ class Program {
             ushort magic = BitConverter.ToUInt16(peData, optionalHeaderOffset);
             int subsystemOffset;
 
-            if (magic == 0x10b) // PE32
-            {
+            // PE32
+            if (magic == 0x10b) {
                 subsystemOffset = optionalHeaderOffset + 68;
             }
-            else if (magic == 0x20b) // PE32+
-            {
+            // PE32+
+            else if (magic == 0x20b) {
                 subsystemOffset = optionalHeaderOffset + 68;
             }
             else {
@@ -160,7 +185,7 @@ class Program {
         }
     }
 
-    static void showHelp() {
+    public static void showHelp() {
         Console.WriteLine("win10fix - Windows 10/11 console window fix");
         Console.WriteLine();
         Console.WriteLine("USAGE:");
