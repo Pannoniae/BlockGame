@@ -101,20 +101,20 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         initializeShaders();
         
         
-        // todo do proper buffer sizing instead of just hardcoding a large enough value
+        // start with reasonable initial sizes, buffers will dynamically resize as needed
         if (Game.hasInstancedUBO) {
-            // allocate SSBO for chunk positions (32MB)
-            chunkSSBO = new ShaderStorageBuffer(GL, 32 * 1024 * 1024, 0);
+            // allocate SSBO for chunk positions (2MB initial, grows as needed)
+            chunkSSBO = new ShaderStorageBuffer(GL, 2 * 1024 * 1024, 0);
             
             if (Game.hasCMDL) {
-                // allocate command buffer for chunk rendering
-                chunkCMD = new CommandBuffer(GL, 64 * 1024 * 1024);
+                // allocate command buffer for chunk rendering (1MB initial, grows as needed)
+                chunkCMD = new CommandBuffer(GL, 1024 * 1024);
             }
 
             // allocate bindless indirect buffer if supported
             if (Game.hasBindlessMDI) {
-                // 8MB buffer should be enough for thousands of chunks
-                bindlessBuffer = new BindlessIndirectBuffer(GL, 8 * 1024 * 1024);
+                // 512KB initial (~7K commands), grows as needed
+                bindlessBuffer = new BindlessIndirectBuffer(GL, 512 * 1024);
             }
         }
 

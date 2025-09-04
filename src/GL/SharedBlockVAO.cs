@@ -258,20 +258,10 @@ public sealed class SharedBlockVAO : VAO {
     [SkipLocalsInit]
     public unsafe void addChunkCommand(BindlessIndirectBuffer indirect, uint baseInstance, ulong elementAddress,
         uint elementLength) {
-        // hardcode sizeof(DrawElementsIndirectBindlessCommandNV) for codegen
-        const int commandSize = 72;
-        //const int commandSize = 40;
-
-        // uncomment this if you want to check for enough space in the indirect buffer
-        // i dont think it will ever happen, but it *does* fuck the codegen up so we don't need it
-        #if DEBUG
-        if (indirect.offset + commandSize > indirect.capacity) {
-            throw new InvalidOperationException($"Not enough space in indirect buffer. Need {commandSize} bytes, have {indirect.capacity - indirect.offset} remaining");
-        }
-        #endif
-
-        DrawElementsIndirectBindlessCommandNV* commandBuffer =
-            (DrawElementsIndirectBindlessCommandNV*)((byte*)indirect.data + indirect.offset);
+        
+        
+        DrawElementsIndirectBindlessCommandNV* commandBuffer = indirect.addCommand();
+        
         // Create the complete bindless command structure and just write it in one step
         *commandBuffer = new DrawElementsIndirectBindlessCommandNV {
             cmd = new DrawElementsIndirectCommand {
@@ -295,13 +285,6 @@ public sealed class SharedBlockVAO : VAO {
                 length = bufferLength
             }
         };
-
-        indirect.offset += commandSize;
-        if (indirect.offset > indirect.size) {
-            indirect.size = indirect.offset;
-        }
-
-        indirect.commands++;
 
         // game metrics
         Game.metrics.renderedVerts += (int)count;

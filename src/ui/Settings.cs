@@ -1,3 +1,4 @@
+using BlockGame.util;
 using BlockGame.util.xNBT;
 
 namespace BlockGame.ui;
@@ -110,8 +111,10 @@ public class Settings {
 
     public void load() {
         try {
-            if (!File.Exists("settings.snbt")) return;
-            
+            if (!File.Exists("settings.snbt")) {
+                return;
+            }
+
             var tag = (NBTCompound)SNBT.readFromFile("settings.snbt");
             vSync = tag.getByte("vSync") != 0;
             guiScale = tag.getInt("guiScale");
@@ -128,7 +131,7 @@ public class Settings {
             frustumCulling = tag.getByte("frustumCulling") != 0;
             crtEffect = tag.getByte("crtEffect") != 0;
         } catch (Exception e) {
-            Console.WriteLine($"Failed to load settings: {e.Message}");
+            Log.warn($"Failed to load settings: {e.Message}");
             
             // todo load default settings if loading fails
         }

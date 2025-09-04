@@ -41,8 +41,6 @@ public class InventoryMenu : Menu {
     public void setup() {
         int slotIndex = 0;
 
-        Console.Out.WriteLine("Heyyy!");
-
         for (int i = 1; i <= rows * cols; i++) {
             
             int x = slotIndex % rows;
@@ -104,7 +102,7 @@ public class InventoryMenu : Menu {
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
             if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && slot.stack.id != Blocks.AIR) {
-                Console.Out.WriteLine("clicked!");
+                Log.debug("clicked!");
                 // swap it to the hotbar for now
                 var player = Game.world.player;
                 player.hotbar.slots[player.hotbar.selected] = slot.stack.copy();

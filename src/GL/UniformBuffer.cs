@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
@@ -32,7 +33,7 @@ public unsafe class UniformBuffer : IDisposable {
         data = NativeMemory.AlignedAlloc((nuint)size, 16);
         
         // Print buffer size
-        Console.Out.WriteLine($"UniformBuffer created with size {size} bytes and binding point {bindingPoint}");
+        Log.info($"UniformBuffer created with size {size} bytes and binding point {bindingPoint}");
         
     }
 

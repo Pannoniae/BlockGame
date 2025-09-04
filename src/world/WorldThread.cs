@@ -1,4 +1,6 @@
-﻿namespace BlockGame;
+﻿using BlockGame.util;
+
+namespace BlockGame;
 
 /**
  * TODO make this stuff actually work. Probably won't happen anytime soon but oh well
@@ -25,7 +27,7 @@ public class WorldThread {
                 update(dt);
             }
             catch (Exception e) {
-                Console.WriteLine("Error in world thread: " + e);
+                Log.error("Error in world thread", e);
             }
         }
     }

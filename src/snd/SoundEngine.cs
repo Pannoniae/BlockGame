@@ -59,7 +59,7 @@ public class SoundEngine : IDisposable {
 
     public AudioClip? load(string filepath) {
         if (!File.Exists(filepath)) {
-            Console.WriteLine($"SFX {filepath} does not exist!");
+            Log.warn($"SFX {filepath} does not exist!");
             throw new SoundException($"SFX {filepath} does not exist!");
         }
 

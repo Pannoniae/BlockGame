@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.util;
 
 namespace BlockGame;
 
@@ -99,7 +100,7 @@ public partial class Game {
         // Try to load the library if it exists
         if (File.Exists(libraryPath)) {
             if (!shutUp) {
-                Console.WriteLine($"Loading native library: {libraryName} {libraryPath}");
+                Log.info($"Loading native library: {libraryName} {libraryPath}");
             }
 
             shutUp = true;
@@ -107,7 +108,7 @@ public partial class Game {
         }
 
         // Fallback to default resolution
-        Console.WriteLine($"Couldn't find native library {libraryName}, falling back to default resolution");
+        Log.warn($"Couldn't find native library {libraryName}, falling back to default resolution");
         return IntPtr.Zero;
     }
 }

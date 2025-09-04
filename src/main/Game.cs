@@ -158,6 +158,15 @@ public partial class Game {
     public Game(bool devMode) {
         Game.devMode = devMode;
         instance = this;
+        
+        SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
+
+        #if DEBUG
+        Log.init(minLevel: LogLevel.DEBUG);
+        #else
+        Log.init(minLevel: LogLevel.INFO);
+        #endif
+        Log.log(LogLevel.INFO, "Game", "Starting game!");
 
         regNativeLib();
         sigHandler();
@@ -235,7 +244,7 @@ public partial class Game {
         }
         
         // GLFW get version
-        Console.Out.WriteLine(glfw.GetVersionString());
+        Log.info($"GLFW version: {glfw.GetVersionString()}");
         
         window.Run(runCallback);
 
@@ -311,15 +320,23 @@ public partial class Game {
         var type = (DebugType)_type;
         var severity = (DebugSeverity)_severity;
         
+        var logLevel = severity switch {
+            DebugSeverity.DebugSeverityHigh => LogLevel.ERROR,
+            DebugSeverity.DebugSeverityMedium => LogLevel.WARNING,
+            DebugSeverity.DebugSeverityLow => LogLevel.INFO,
+            DebugSeverity.DebugSeverityNotification => LogLevel.DEBUG,
+            _ => LogLevel.DEBUG
+        };
+        
         string msg = Marshal.PtrToStringAnsi(message, length)!;
-        Console.Out.WriteLine($"{source} [{type}] [{severity}] ({id}): , {msg}");
+        Log.log(logLevel, $"{source} [{type}] [{severity}] ({id}): {msg}");
         // Dump stacktrace
         //Console.Out.WriteLine(Environment.StackTrace);
         
         // sort by severity
         if (type is DebugType.DebugTypeError or DebugType.DebugTypeOther or DebugType.DebugTypePortability && 
             severity is DebugSeverity.DebugSeverityHigh or DebugSeverity.DebugSeverityMedium) {
-            Console.Out.WriteLine(Environment.StackTrace);
+            Log.log(LogLevel.INFO, Environment.StackTrace);
         }
     }
 
@@ -375,23 +392,23 @@ public partial class Game {
         // check if this is an NVIDIA card
         var vendor = GL.GetStringS(StringName.Vendor);
         isNVCard = vendor.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase);
-        Console.Out.WriteLine($"GPU Vendor: {vendor} (NVIDIA: {isNVCard})");
+        Log.info($"GPU Vendor: {vendor} (NVIDIA: {isNVCard})");
         
         // check for NV shader buffer load support
         hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
         sbl = nvShaderBufferLoad;
-        Console.Out.WriteLine($"NV_shader_buffer_load supported: {hasSBL}");
+        Log.info($"NV_shader_buffer_load supported: {hasSBL}");
         //hasSBL = false;
         
         // check for NV vertex buffer unified memory support
         hasVBUM = GL.TryGetExtension(out NVVertexBufferUnifiedMemory nvVertexBufferUnifiedMemory);
         vbum = nvVertexBufferUnifiedMemory;
-        Console.Out.WriteLine($"NV_vertex_buffer_unified_memory supported: {hasVBUM}");
+        Log.info($"NV_vertex_buffer_unified_memory supported: {hasVBUM}");
         //hasVBUM = false;
         
         // check for NV uniform buffer unified memory support
         hasUBUM = GL.IsExtensionPresent("NV_uniform_buffer_unified_memory");
-        Console.Out.WriteLine($"NV_uniform_buffer_unified_memory supported: {hasUBUM}");
+        Log.info($"NV_uniform_buffer_unified_memory supported: {hasUBUM}");
         //hasUBUM = false;
         
         // check for gl_BaseInstance UBO rendering support (OpenGL 4.6)
@@ -399,7 +416,7 @@ public partial class Game {
         var majorVersion = int.Parse(ver.Split('.')[0]);
         var minorVersion = int.Parse(ver.Split('.')[1].Split(' ')[0]);
         hasInstancedUBO = (majorVersion > 4) || (majorVersion == 4 && minorVersion >= 6);
-        Console.Out.WriteLine($"gl_BaseInstance UBO rendering supported: {hasInstancedUBO}");
+        Log.info($"gl_BaseInstance UBO rendering supported: {hasInstancedUBO}");
         //hasInstancedUBO = false;
         
         GL.TryGetExtension(out extbu);
@@ -407,29 +424,24 @@ public partial class Game {
         // check for NV_command_list support
         hasCMDL = GL.TryGetExtension(out NVCommandList nvCommandList);
         cmdl = nvCommandList;
-        Console.Out.WriteLine($"NV_command_list supported: {hasCMDL}");
+        Log.info($"NV_command_list supported: {hasCMDL}");
         //hasCMDL = false;
         
         // check for NV_bindless_multi_draw_indirect support
         hasBindlessMDI = GL.TryGetExtension(out NVBindlessMultiDrawIndirect nvBindlessMultiDrawIndirect);
         bmdi = nvBindlessMultiDrawIndirect;
-        Console.Out.WriteLine($"NV_bindless_multi_draw_indirect supported: {hasBindlessMDI}");
+        Log.info($"NV_bindless_multi_draw_indirect supported: {hasBindlessMDI}");
         //hasBindlessMDI = false;
         
         // check for ARB_shading_language_include support  
         hasShadingLanguageInclude = GL.TryGetExtension(out ArbShadingLanguageInclude arbShadingLanguageInclude);
         arbInclude = arbShadingLanguageInclude;
-        Console.Out.WriteLine($"ARB_shading_language_include supported: {hasShadingLanguageInclude}");
+        Log.info($"ARB_shading_language_include supported: {hasShadingLanguageInclude}");
         //hasShadingLanguageInclude = false;
         
         if (hasShadingLanguageInclude) {
             BlockGame.GL.Shader.initializeIncludeFiles();
         }
-        
-        SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
-
-        Log.init();
-        Log.log(LogLevel.INFO, "Game", "Starting game!");
 
         //#if DEBUG
         // initialise debug print
@@ -457,10 +469,10 @@ public partial class Game {
             #endif
 
             GL.GetInteger(GetPName.ContextFlags, out int noErrors);
-            Console.Out.WriteLine($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
+            Log.info($"GL no error: {(noErrors & (int)GLEnum.ContextFlagNoErrorBit) != 0}");
 
             GL.GetInteger(GetPName.ContextFlags, out int robust);
-            Console.Out.WriteLine($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
+            Log.info($"GL robust: {robust} {(robust & (int)GLEnum.ContextFlagRobustAccessBit) != 0}");
         }
 
         Configuration.Default.PreferContiguousImageBuffers = true;
@@ -599,7 +611,6 @@ public partial class Game {
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
         
         jankyFrame();
-        Console.Out.WriteLine("Loaded ASCII font.");
         Menu.STARTUP_LOADING.updateProgress(1.0f, "loaded!");
         jankyFrame();
         switchTo(Menu.MAIN_MENU);
@@ -617,7 +628,7 @@ public partial class Game {
         using var logo = Image.Load<Rgba32>("logo.png");
         var success = logo.DangerousTryGetSinglePixelMemory(out var imgData);
         if (!success) {
-            Console.Out.WriteLine("Couldn't set window logo!");
+            Log.warn("Couldn't set window logo!");
         }
 
         // yes, this is a piece of shit code copying the pixels all over the place
@@ -740,7 +751,7 @@ public partial class Game {
 
     private void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.F7 && keyboard.IsKeyPressed(Key.F6)) {
-            Console.Out.WriteLine("Crashing game!");
+            Log.error("Crashing game!");
             executeOnMainThread(() =>
                 throw new InputException("Manual crash!")
             );
@@ -797,7 +808,7 @@ public partial class Game {
         
         // if resized, debug print
         if (guiScaleTarget != GUI.guiScale) {
-            Console.Out.WriteLine($"GUI scale changed from {GUI.guiScale} to {guiScaleTarget}");
+            Log.info($"GUI scale changed from {GUI.guiScale} to {guiScaleTarget}");
         }
 
         GUI.guiScale = guiScaleTarget;

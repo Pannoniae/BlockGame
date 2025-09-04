@@ -20,7 +20,7 @@ public class MainMenu : Menu {
             // so we don't destroy the menu which we are clicking right now.
             Game.instance.executeOnMainThread(() => { Game.instance.switchTo(LEVEL_SELECT); });
         };
-        Console.Out.WriteLine("sp:" + sp.bounds);
+        Log.debug("sp:" + sp.bounds);
         var button2 = new Button(this, "multiplayer", true, "Multiplayer (soon)");
         button2.setPosition(new Vector2I(0, -8));
         button2.centreContents();

@@ -58,7 +58,7 @@ public class WorldIO {
         tag.addDouble("posZ", world.player.position.Z);
         tag.addInt("time", world.worldTick);
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
-        Console.Out.WriteLine($"Saved world data to level/{world.name}/level.xnbt");
+        Log.info($"Saved world data to level/{world.name}/level.xnbt");
     }
 
     public void saveChunk(World world, Chunk chunk) {
@@ -169,7 +169,7 @@ public class WorldIO {
     }
 
     public static World load(string filename) {
-        Console.Out.WriteLine($"Loaded data from level/{filename}/level.xnbt");
+        Log.info($"Loaded data from level/{filename}/level.xnbt");
         var tag = NBT.readFile($"level/{filename}/level.xnbt");
         var seed = tag.getInt("seed");
         var world = new World(filename, seed);
@@ -272,7 +272,7 @@ public class ChunkSaveThread : IDisposable {
                         }
                     }
                     catch (Exception ex) {
-                        Console.Error.WriteLine($"Failed to save chunk to {saveData.path}: {ex}");
+                        Log.warn($"Failed to save chunk to {saveData.path}:", ex);
                     }
                 }
                 else {
@@ -282,7 +282,7 @@ public class ChunkSaveThread : IDisposable {
             }
         }
         catch (Exception ex) {
-            Console.Error.WriteLine($"Background save loop error: {ex}");
+            Log.error("Background save loop error", ex);
         }
     }
 
@@ -297,7 +297,7 @@ public class ChunkSaveThread : IDisposable {
             saveThread.Join(5000); // wait up to 5 seconds
         }
         catch (Exception ex) {
-            Console.Error.WriteLine($"Error waiting for save thread to complete: {ex}");
+            Log.error("Error waiting for save thread to complete", ex);
         }
         
         // process remaining saves synchronously
@@ -307,7 +307,7 @@ public class ChunkSaveThread : IDisposable {
                 NBT.writeFile(saveData.nbt, saveData.path);
             }
             catch (Exception ex) {
-                Console.Error.WriteLine($"Failed to save chunk during dispose: {ex}");
+                Log.error("Failed to save chunk during dispose", ex);
             }
         }
     }

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame;
+using BlockGame.util;
 
 public class Program {
     public static void Main(string[] args) {
@@ -31,7 +32,7 @@ public class Program {
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
 
-        Console.Out.WriteLine("Your game crashed! Here are some relevant details:");
+        Log.info("Your game crashed! Here are some relevant details:");
         if (!Game.devMode) {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
                 // call glxinfo
@@ -45,8 +46,8 @@ public class Program {
                 };
                 // read its output
                 process.Start();
-                Console.Out.WriteLine("OpenGL info:");
-                Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
+                Log.info("OpenGL info:");
+                Log.info(process.StandardOutput.ReadToEnd());
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 // call wglinfo
@@ -60,10 +61,10 @@ public class Program {
                 };
                 // read its output
                 process.Start();
-                Console.Out.WriteLine("OpenGL info:");
-                Console.Out.WriteLine(process.StandardOutput.ReadToEnd());
+                Log.info("OpenGL info:");
+                Log.info(process.StandardOutput.ReadToEnd());
             }
-            Console.WriteLine(e.ToString());
+            Log.error(e);
         }
     }
 

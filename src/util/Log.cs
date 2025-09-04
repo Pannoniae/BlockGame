@@ -16,9 +16,8 @@ namespace BlockGame.util;
  * Log.error("Connection failed");
  * Log.debug("Movement", "Player position updated");
  *
- * // formatted - no boxing
- * Log.info("Player {0} joined with ID {1}", playerName, playerId);
- * Log.warn("Memory", "Low memory: {0}MB free", freeMemory);
+ * // "one-shot" object logging
+ * Log.info(player);
  *
  * // zero-alloc interpolated strings (C# 10+)  
  * Log.debug("WorldGen", $"Chunk loaded at {x},{z} in {elapsed}ms");
@@ -90,12 +89,30 @@ public static class Log {
         if (isDebugEnabled()) log(LogLevel.DEBUG, category, msg);
     }
     
+    // generic object logging
+    public static void debug<T>(T obj) {
+        if (isDebugEnabled()) log(LogLevel.DEBUG, null, obj?.ToString() ?? "null");
+    }
+    
+    public static void debug<T>(string category, T obj) {
+        if (isDebugEnabled()) log(LogLevel.DEBUG, category, obj?.ToString() ?? "null");
+    }
+    
     public static void info(string msg) {
         if (isInfoEnabled()) log(LogLevel.INFO, null, msg);
     }
     
     public static void info(string category, string msg) {
         if (isInfoEnabled()) log(LogLevel.INFO, category, msg);
+    }
+    
+    // generic object logging
+    public static void info<T>(T obj) {
+        if (isInfoEnabled()) log(LogLevel.INFO, null, obj?.ToString() ?? "null");
+    }
+    
+    public static void info<T>(string category, T obj) {
+        if (isInfoEnabled()) log(LogLevel.INFO, category, obj?.ToString() ?? "null");
     }
     
     public static void warn(string msg) {
@@ -106,6 +123,23 @@ public static class Log {
         if (isWarnEnabled()) log(LogLevel.WARNING, category, msg);
     }
     
+    // generic object logging
+    public static void warn<T>(T obj) {
+        if (isWarnEnabled()) log(LogLevel.WARNING, null, obj?.ToString() ?? "null");
+    }
+    
+    public static void warn(Exception ex) {
+        if (isErrorEnabled()) log(LogLevel.WARNING, null, $"{ex}");
+    }
+    
+    public static void warn(string msg, Exception ex) {
+        if (isErrorEnabled()) log(LogLevel.WARNING, null, $"{msg}: {ex}");
+    }
+    
+    public static void warn(Exception ex, string category, string msg) {
+        if (isErrorEnabled()) log(LogLevel.WARNING, category, $"{msg}: {ex}");
+    }
+    
     public static void error(string msg) {
         if (isErrorEnabled()) log(LogLevel.ERROR, null, msg);
     }
@@ -114,118 +148,75 @@ public static class Log {
         if (isErrorEnabled()) log(LogLevel.ERROR, category, msg);
     }
     
-    public static void error(Exception ex, string msg) {
+    // generic object logging
+    public static void error<T>(T obj) {
+        if (isErrorEnabled()) log(LogLevel.ERROR, null, obj?.ToString() ?? "null");
+    }
+    
+    public static void error(Exception ex) {
+        if (isErrorEnabled()) log(LogLevel.ERROR, null, $"{ex}");
+    }
+    
+    public static void error(string msg, Exception ex) {
         if (isErrorEnabled()) log(LogLevel.ERROR, null, $"{msg}: {ex}");
     }
     
-    public static void error(string category, Exception ex, string msg) {
+    public static void error(string category, string msg, Exception ex) {
         if (isErrorEnabled()) log(LogLevel.ERROR, category, $"{msg}: {ex}");
     }
     
-    // formatted logging - no boxing with generics
-    public static void debug<T>(string format, T arg) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, null, string.Format(format, arg));
-    }
-    
-    public static void debug<T>(string category, string format, T arg) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, category, string.Format(format, arg));
-    }
-    
-    public static void debug<T1, T2>(string format, T1 arg1, T2 arg2) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, null, string.Format(format, arg1, arg2));
-    }
-    
-    public static void debug<T1, T2>(string category, string format, T1 arg1, T2 arg2) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, category, string.Format(format, arg1, arg2));
-    }
-    
-    public static void debug<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, null, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void debug<T1, T2, T3>(string category, string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isDebugEnabled()) log(LogLevel.DEBUG, category, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void info<T>(string format, T arg) {
-        if (isInfoEnabled()) log(LogLevel.INFO, null, string.Format(format, arg));
-    }
-    
-    public static void info<T>(string category, string format, T arg) {
-        if (isInfoEnabled()) log(LogLevel.INFO, category, string.Format(format, arg));
-    }
-    
-    public static void info<T1, T2>(string format, T1 arg1, T2 arg2) {
-        if (isInfoEnabled()) log(LogLevel.INFO, null, string.Format(format, arg1, arg2));
-    }
-    
-    public static void info<T1, T2>(string category, string format, T1 arg1, T2 arg2) {
-        if (isInfoEnabled()) log(LogLevel.INFO, category, string.Format(format, arg1, arg2));
-    }
-    
-    public static void info<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isInfoEnabled()) log(LogLevel.INFO, null, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void info<T1, T2, T3>(string category, string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isInfoEnabled()) log(LogLevel.INFO, category, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void warn<T>(string format, T arg) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, null, string.Format(format, arg));
-    }
-    
-    public static void warn<T>(string category, string format, T arg) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, category, string.Format(format, arg));
-    }
-    
-    public static void warn<T1, T2>(string format, T1 arg1, T2 arg2) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, null, string.Format(format, arg1, arg2));
-    }
-    
-    public static void warn<T1, T2>(string category, string format, T1 arg1, T2 arg2) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, category, string.Format(format, arg1, arg2));
-    }
-    
-    public static void warn<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, null, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void warn<T1, T2, T3>(string category, string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isWarnEnabled()) log(LogLevel.WARNING, category, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void error<T>(string format, T arg) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, string.Format(format, arg));
-    }
-    
-    public static void error<T>(string category, string format, T arg) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category, string.Format(format, arg));
-    }
-    
-    public static void error<T1, T2>(string format, T1 arg1, T2 arg2) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, string.Format(format, arg1, arg2));
-    }
-    
-    public static void error<T1, T2>(string category, string format, T1 arg1, T2 arg2) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category,string.Format(format, arg1, arg2));
-    }
-    
-    public static void error<T1, T2, T3>(string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, null, string.Format(format, arg1, arg2, arg3));
-    }
-    
-    public static void error<T1, T2, T3>(string category, string format, T1 arg1, T2 arg2, T3 arg3) {
-        if (isErrorEnabled()) log(LogLevel.ERROR, category, string.Format(format, arg1, arg2, arg3));
-    }
-    
     // zero-alloc interpolated string logging
+    
+    public static void debug(ref DebugLogInterpolatedStringHandler handler) {
+        if (isDebugEnabled()) log(LogLevel.DEBUG, null, handler.GetFormattedText());
+    }
+    
+    public static void debug(string category, ref DebugLogInterpolatedStringHandler handler) {
+        if (isDebugEnabled()) log(LogLevel.DEBUG, category, handler.GetFormattedText());
+    }
+    
+    public static void info(ref InfoLogInterpolatedStringHandler handler) {
+        if (isInfoEnabled()) log(LogLevel.INFO, null, handler.GetFormattedText());
+    }
+    
+    public static void info(string category, ref InfoLogInterpolatedStringHandler handler) {
+        if (isInfoEnabled()) log(LogLevel.INFO, category, handler.GetFormattedText());
+    }
+    
+    public static void warn(ref WarnLogInterpolatedStringHandler handler) {
+        if (isWarnEnabled()) log(LogLevel.WARNING, null, handler.GetFormattedText());
+    }
+    
+    public static void warn(string category, ref WarnLogInterpolatedStringHandler handler) {
+        if (isWarnEnabled()) log(LogLevel.WARNING, category, handler.GetFormattedText());
+    }
+    
+    public static void error(ref ErrorLogInterpolatedStringHandler handler) {
+        if (isErrorEnabled()) log(LogLevel.ERROR, null, handler.GetFormattedText());
+    }
+    
+    public static void error(string category, ref ErrorLogInterpolatedStringHandler handler) {
+        if (isErrorEnabled()) log(LogLevel.ERROR, category, handler.GetFormattedText());
+    }
+    
+    public static void error(ref ErrorLogInterpolatedStringHandler handler, Exception ex) {
+        if (isErrorEnabled()) log(LogLevel.ERROR, null, $"{handler.GetFormattedText()}: {ex}");
+    }
+    
+    public static void error(string category, ref ErrorLogInterpolatedStringHandler handler, Exception ex) {
+        if (isErrorEnabled()) log(LogLevel.ERROR, category, $"{handler.GetFormattedText()}: {ex}");
+    }
+    
     public static void log(LogLevel level, string category, [InterpolatedStringHandlerArgument("level")] ref LogInterpolatedStringHandler handler) {
         log(level, category, handler.GetFormattedText());
     }
     
     public static void log(LogLevel level, [InterpolatedStringHandlerArgument("level")] ref LogInterpolatedStringHandler handler) {
         log(level, null, handler.GetFormattedText());
+    }
+    
+    public static void log(LogLevel level, string message) {
+        log(level, null, message);
     }
     
     // core logging method

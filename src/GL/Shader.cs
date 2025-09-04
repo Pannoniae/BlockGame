@@ -149,7 +149,7 @@ public partial class Shader : IDisposable {
                 var namedPath = "/" + filePath.Replace('\\', '/');
                 
                 namedStringARB(namedPath, content);
-                Console.WriteLine($"Registered shader include: {namedPath}");
+                Log.info($"Registered shader include: {namedPath}");
             }
         }
     }
@@ -207,13 +207,13 @@ public partial class Shader : IDisposable {
                         }
                         else {
                             result.AppendLine($"// Failed to include '{includePath}': File not found");
-                            Console.WriteLine($"Failed to include '{includePath}': File not found");
+                            Log.error($"Failed to include '{includePath}': File not found");
                             result.AppendLine(line);
                         }
                     }
                     else {
                         result.AppendLine($"// Skipped circular include of '{includePath}'");
-                        Console.WriteLine($"Skipped circular include of '{includePath}'");
+                        Log.warn($"Skipped circular include of '{includePath}'");
                     }
                 }
                 else {

@@ -4,7 +4,9 @@
       "Bash(dotnet build)",
       "Bash(find:*)",
       "Bash(rg:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Read(../**)",
+      "Read(/D:\\dev\\cs\\BlockGame/**)"
     ],
     "deny": []
   }

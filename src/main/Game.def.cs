@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using BlockGame.util;
 
 namespace BlockGame;
 
@@ -20,15 +21,15 @@ public partial class Game {
             if (process != null) {
                 process.WaitForExit(10000);
                 if (process.ExitCode == 0) {
-                    Console.Out.WriteLine($"Added Windows Defender exclusion: {appDir}");
+                    Log.info($"Added Windows Defender exclusion: {appDir}");
                 }
                 else {
-                    Console.Out.WriteLine($"Failed to add Defender exclusion: exit code {process.ExitCode}");
+                    Log.warn($"Failed to add Defender exclusion: exit code {process.ExitCode}");
                 }
             }
         }
         catch (Exception ex) {
-            Console.Out.WriteLine($"Failed to add Defender exclusion: {ex}");
+            Log.warn($"Failed to add Defender exclusion: {ex}");
         }
     }
 
@@ -53,14 +54,16 @@ public partial class Game {
     const uint EnableVirtualTerminalProcessingMode = 4;
     const long InvalidHandleValue = -1;
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern IntPtr GetStdHandle(int handleId);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial IntPtr GetStdHandle(int handleId);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern bool GetConsoleMode(IntPtr handle, out uint mode);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetConsoleMode(IntPtr handle, out uint mode);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern bool SetConsoleMode(IntPtr handle, uint mode);
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool SetConsoleMode(IntPtr handle, uint mode);
     
     [LibraryImport("kernel32.dll")]
     private static partial IntPtr GetConsoleWindow();

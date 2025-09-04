@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
+using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
+using Buffer = System.Buffer;
 
 namespace BlockGame.GL;
 
@@ -191,28 +193,28 @@ public unsafe class CommandBuffer : IDisposable {
             
             // get draw arrays token
             drawarraysToken = Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawArraysCommandNV, 3 * sizeof(int));
-            Console.Out.WriteLine($"Draw Arrays Token: 0x{drawarraysToken:x8}");
+            Log.log(LogLevel.INFO, $"Draw Arrays Token: 0x{drawarraysToken:x8}");
 
-            //Console.Out.WriteLine($"0x{drawelementsToken:x8}");
+            //Log.info($"0x{drawelementsToken:x8}");
             // print instanced elements token
             drawelementsToken =
                 Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsCommandNV, 4 * sizeof(int));
-            Console.Out.WriteLine($"Draw Elements Token: 0x{drawelementsToken:x8}");
+            Log.info($"Draw Elements Token: 0x{drawelementsToken:x8}");
             //drawelementsToken = instancedElementsToken;
 
             drawelementsInstancedToken =
                 Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsInstancedCommandNV, 7 * sizeof(int));
-            Console.Out.WriteLine($"Draw Elements Instanced Token: 0x{drawelementsInstancedToken:x8}");
+            Log.info($"Draw Elements Instanced Token: 0x{drawelementsInstancedToken:x8}");
 
             // get attribute address token
             attribaddressToken =
                 Game.cmdl.GetCommandHeader(CommandOpcodesNV.AttributeAddressCommandNV, 4 * sizeof(int));
-            Console.Out.WriteLine($"Attribute Address Token: 0x{attribaddressToken:x8}");
+            Log.info($"Attribute Address Token: 0x{attribaddressToken:x8}");
 
             // get element address token
             elementAddressToken =
                 Game.cmdl.GetCommandHeader(CommandOpcodesNV.ElementAddressCommandNV, 4 * sizeof(int));
-            Console.Out.WriteLine($"Element Address Token: 0x{elementAddressToken:x8}");
+            Log.info($"Element Address Token: 0x{elementAddressToken:x8}");
         }
     }
 
@@ -232,7 +234,7 @@ public unsafe class CommandBuffer : IDisposable {
         // allocate managed memory for staging data
         data = (byte*)NativeMemory.AlignedAlloc((nuint)capacity, 16);
 
-        Console.Out.WriteLine($"CommandBuffer created with capacity {capacity} bytes");
+        Log.info($"CommandBuffer created with capacity {capacity} bytes");
     }
 
     public void putData<T>(T src) where T : unmanaged {
@@ -241,33 +243,9 @@ public unsafe class CommandBuffer : IDisposable {
 
     public void putData<T>(int offset, T src) where T : unmanaged {
         
-        // again comment this for codegen, THIS SHOULD NOT HAPPEN
-        #if DEBUG
         if (offset + sizeof(T) > capacity) {
-            throw new ArgumentOutOfRangeException(nameof(src), "Not enough space in command buffer");
-            /*
-            Console.Out.WriteLine("HELP!!!");
-            // first, upload / execute
-            upload();
-            drawCommands(PrimitiveType.Triangles);
-
-            //throw new ArgumentOutOfRangeException(nameof(src), "Not enough space in command buffer");
-            // resize the buffer
-            int newCapacity = capacity * 2;
-            Console.Out.WriteLine($"Resizing command buffer from {capacity} to {newCapacity} bytes");
-            capacity = newCapacity;
-
-            GL.DeleteBuffer(handle);
-            handle = GL.CreateBuffer();
-            // allocate new storage
-            GL.NamedBufferStorage(handle, (nuint)capacity, null, BufferStorageMask.DynamicStorageBit);
-            // reallocate managed memory
-            NativeMemory.AlignedFree(data);
-            data = NativeMemory.AlignedAlloc((nuint)capacity, 16);
-            size = 0; // reset size to 0, we will upload the data again
-            offset = 0; // reset offset to 0, we will write from the start*/
+            resize(Math.Max(capacity * 2, offset + sizeof(T)));
         }
-        #endif
 
         // copy data to the staging buffer
         //Buffer.MemoryCopy(&src, data + offset, capacity - offset, sizeof(T));
@@ -359,6 +337,32 @@ public unsafe class CommandBuffer : IDisposable {
         //GL.Finish();
     }
 
+    private void resize(int newCapacity) {
+        Log.debug($"CommandBuffer resizing from {capacity} to {newCapacity} bytes");
+        
+        // allocate new GPU buffer
+        var oldHandle = handle;
+        handle = GL.CreateBuffer();
+        GL.NamedBufferData(handle, (uint)newCapacity, null, VertexBufferObjectUsage.StaticDraw);
+        
+        // allocate new staging memory
+        var oldData = data;
+        data = (byte*)NativeMemory.AlignedAlloc((nuint)newCapacity, 16);
+        
+        // copy existing data if any
+        if (size > 0 && oldData != null) {
+            Buffer.MemoryCopy(oldData, data, newCapacity, size);
+        }
+        
+        // cleanup old resources
+        GL.DeleteBuffer(oldHandle);
+        if (oldData != null) {
+            NativeMemory.AlignedFree(oldData);
+        }
+        
+        capacity = newCapacity;
+    }
+
     public void Dispose() {
         if (data != null) {
             NativeMemory.AlignedFree(data);
@@ -382,12 +386,12 @@ public unsafe class CommandBuffer : IDisposable {
     /// </summary>
     public void dumpCommands() {
         if (size == 0) {
-            Console.WriteLine("CommandBuffer is empty (size = 0)");
+            Log.info("CommandBuffer is empty (size = 0)");
             return;
         }
 
-        Console.WriteLine($"CommandBuffer Dump (size: {size} bytes, capacity: {capacity} bytes)");
-        Console.WriteLine("=" + new string('=', 60));
+        Log.info($"CommandBuffer Dump (size: {size} bytes, capacity: {capacity} bytes)");
+        Log.info("=" + new string('=', 60));
 
         int pos = 0;
         int cmdIndex = 0;
@@ -402,8 +406,8 @@ public unsafe class CommandBuffer : IDisposable {
             // read the header token
             uint header = *(uint*)(data + pos);
             
-            Console.WriteLine($"Command #{cmdIndex} at offset {pos:X4} (0x{pos:X8}):");
-            Console.WriteLine($"  Header: 0x{header:X8}");
+            Log.info($"Command #{cmdIndex} at offset {pos:X4} (0x{pos:X8}):");
+            Log.info($"  Header: 0x{header:X8}");
 
             // identify command type and parse accordingly
             
@@ -414,9 +418,9 @@ public unsafe class CommandBuffer : IDisposable {
                 }
 
                 var cmd = *(DrawArraysCommandNV*)(data + pos);
-                Console.WriteLine($"  Type: DrawArraysCommandNV");
-                Console.WriteLine($"  Count: {cmd.count}");
-                Console.WriteLine($"  First: {cmd.first}");
+                Log.info($"  Type: DrawArraysCommandNV");
+                Log.info($"  Count: {cmd.count}");
+                Log.info($"  First: {cmd.first}");
 
                 // validation
                 if (cmd.header != drawarraysToken) {
@@ -432,10 +436,10 @@ public unsafe class CommandBuffer : IDisposable {
                 }
 
                 var cmd = *(DrawElementsCommandNV*)(data + pos);
-                Console.WriteLine($"  Type: DrawElementsCommandNV");
-                Console.WriteLine($"  Count: {cmd.count}");
-                Console.WriteLine($"  FirstIndex: {cmd.firstIndex}");
-                Console.WriteLine($"  BaseVertex: {cmd.baseVertex}");
+                Log.info($"  Type: DrawElementsCommandNV");
+                Log.info($"  Count: {cmd.count}");
+                Log.info($"  FirstIndex: {cmd.firstIndex}");
+                Log.info($"  BaseVertex: {cmd.baseVertex}");
                 
                 // validation
                 if (cmd.header != drawelementsToken) {
@@ -451,13 +455,13 @@ public unsafe class CommandBuffer : IDisposable {
                 }
 
                 var cmd = *(DrawElementsInstancedCommandNV*)(data + pos);
-                Console.WriteLine($"  Type: DrawElementsInstancedCommandNV");
-                Console.WriteLine($"  Mode: {cmd.mode}");
-                Console.WriteLine($"  Count: {cmd.count}");
-                Console.WriteLine($"  InstanceCount: {cmd.instanceCount}");
-                Console.WriteLine($"  First: {cmd.firstIndex}");
-                Console.WriteLine($"  BaseVertex: {cmd.baseVertex}");
-                Console.WriteLine($"  BaseInstance: {cmd.baseInstance}");
+                Log.info($"  Type: DrawElementsInstancedCommandNV");
+                Log.info($"  Mode: {cmd.mode}");
+                Log.info($"  Count: {cmd.count}");
+                Log.info($"  InstanceCount: {cmd.instanceCount}");
+                Log.info($"  First: {cmd.firstIndex}");
+                Log.info($"  BaseVertex: {cmd.baseVertex}");
+                Log.info($"  BaseInstance: {cmd.baseInstance}");
 
                 // validation
                 if (cmd.header != drawelementsInstancedToken) {
@@ -473,9 +477,9 @@ public unsafe class CommandBuffer : IDisposable {
                 }
 
                 var cmd = *(AttributeAddressCommandNV*)(data + pos);
-                Console.WriteLine($"  Type: AttributeAddressCommandNV");
-                Console.WriteLine($"  Index: {cmd.index}");
-                Console.WriteLine($"  Address: 0x{((ulong)cmd.addressHi << 32 | cmd.addressLo):X16}");
+                Log.info($"  Type: AttributeAddressCommandNV");
+                Log.info($"  Index: {cmd.index}");
+                Log.info($"  Address: 0x{((ulong)cmd.addressHi << 32 | cmd.addressLo):X16}");
 
                 // validation
                 if (cmd.header != attribaddressToken) {
@@ -491,9 +495,9 @@ public unsafe class CommandBuffer : IDisposable {
                 }
 
                 var cmd = *(ElementAddressCommandNV*)(data + pos);
-                Console.WriteLine($"  Type: ElementAddressCommandNV");
-                Console.WriteLine($"  Address: 0x{((ulong)cmd.addressHi << 32 | cmd.addressLo):X16}");
-                Console.WriteLine($"  TypeSizeInByte: {cmd.typeSizeInByte}");
+                Log.info($"  Type: ElementAddressCommandNV");
+                Log.info($"  Address: 0x{((ulong)cmd.addressHi << 32 | cmd.addressLo):X16}");
+                Log.info($"  TypeSizeInByte: {cmd.typeSizeInByte}");
 
                 // validation
                 if (cmd.header != elementAddressToken) {
@@ -505,13 +509,13 @@ public unsafe class CommandBuffer : IDisposable {
             else {
                 // unknown command
                 validationErrors.Add($"ERROR: Unknown command header 0x{header:X8} at offset {pos}");
-                Console.WriteLine($"  Type: UNKNOWN (0x{header:X8})");
+                Log.info($"  Type: UNKNOWN (0x{header:X8})");
                 
                 // try to advance by 4 bytes to potentially recover
                 pos += sizeof(uint);
             }
 
-            Console.WriteLine();
+            Log.info("\n");
             cmdIndex++;
 
             // safety check to prevent infinite loops
@@ -521,20 +525,20 @@ public unsafe class CommandBuffer : IDisposable {
             }
         }
 
-        Console.WriteLine($"Total commands parsed: {cmdIndex}");
-        Console.WriteLine($"Final position: {pos} / {size} bytes");
+        Log.info($"Total commands parsed: {cmdIndex}");
+        Log.info($"Final position: {pos} / {size} bytes");
 
         // print validation results
         if (validationErrors.Count > 0) {
-            Console.WriteLine("\nValidation Issues:");
-            Console.WriteLine("-" + new string('-', 30));
+            Log.info("\nValidation Issues:");
+            Log.info("-" + new string('-', 30));
             foreach (var error in validationErrors) {
-                Console.WriteLine($"  {error}");
+                Log.info($"  {error}");
             }
         } else {
-            Console.WriteLine("\nValidation: All commands appear to be valid ✓");
+            Log.info("\nValidation: All commands appear to be valid ✓");
         }
 
-        Console.WriteLine("=" + new string('=', 60));
+        Log.info("=" + new string('=', 60));
     }
 }

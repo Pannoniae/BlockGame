@@ -18,7 +18,7 @@ public static class MemoryUtils {
     }
     
     public static unsafe void crash(string exceptionMessage) {
-        Console.WriteLine("MANUAL CRASH: " + exceptionMessage);
+        Log.info("MANUAL CRASH: " + exceptionMessage);
         *(int*)0 = 42;
     }
 
@@ -26,18 +26,8 @@ public static class MemoryUtils {
 
         ArrayBlockData.blockPool.trim();
         ArrayBlockData.lightPool.trim();
-        //Game.GL.ReleaseShaderCompiler();
-
-        // query binary formats
-
-        var gl = Game.GL;
-        gl.GetInteger(GetPName.NumProgramBinaryFormats, out int numFormats);
-        Span<int> formats = stackalloc int[numFormats];
-        gl.GetInteger(GetPName.ProgramBinaryFormats, formats);
-        Console.WriteLine($"Num program binary formats: {numFormats}");
-        for (int i = 0; i < numFormats; i++) {
-            Console.WriteLine($"Program binary format {i}: {formats[i]}");
-        }
+        // probably a noop
+        Game.GL.ReleaseShaderCompiler();
 
 
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");
@@ -58,7 +48,7 @@ public static class MemoryUtils {
             LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_PAGEOUT();
         }
 
-        Console.WriteLine($"Released memory in {sw.Elapsed.TotalMilliseconds} ms");
+        Log.info($"Released memory in {sw.Elapsed.TotalMilliseconds} ms");
     }
 
     public class LinuxMemoryUtility {
@@ -90,7 +80,7 @@ public static class MemoryUtils {
                 //}
             }
             catch (Exception exc) {
-                Console.WriteLine(exc);
+                Log.error(exc);
             }
         }
 
@@ -113,7 +103,7 @@ public static class MemoryUtils {
                 //}
             }
             catch (Exception exc) {
-                Console.WriteLine(exc);
+                Log.error(exc);
             }
         }
 
@@ -132,11 +122,11 @@ public static class MemoryUtils {
                 // released back to the system, or 0 if it was not possible to
                 // release any memory.
                 if (result != 1) {
-                    Console.WriteLine($"malloc_trim errno: {Marshal.GetLastSystemError()}");
+                    Log.error($"malloc_trim errno: {Marshal.GetLastSystemError()}");
                 }
             }
             catch (Exception exc) {
-                Console.WriteLine(exc);
+                Log.error(exc);
             }
         }
     }

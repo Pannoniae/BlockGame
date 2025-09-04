@@ -84,7 +84,7 @@ public partial class Game {
         }
         catch (Exception e) {
             // nothing!
-            Console.Out.WriteLine("Well, apparently there is no nVidia");
+            Console.WriteLine("Well, apparently there is no nVidia");
         }
     }
 
@@ -283,13 +283,11 @@ public partial class Game {
     
     public void setFullscreen(bool fullscreen) {
         if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
-            Console.Out.WriteLine("Already in desired state, returning");
             return;
         }
 
         var windowMonitor = window.Monitor;
         if (windowMonitor == null) {
-            Console.Out.WriteLine("Failed to switch to fullscreen: window isn't on any monitor!");
             return;
         }
 
@@ -311,12 +309,10 @@ public partial class Game {
             window.Size = screenSize;
         }
         else {
-            Console.Out.WriteLine("Exiting fullscreen");
             if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
                 preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
                 preFullscreenPosition = windowMonitor.Bounds.Origin + new Vector2D<int>(50);
                 preFullscreenState = WindowState.Normal;
-                Console.Out.WriteLine("Using fallback window settings");
             }
 
             // Always go to Normal first, then to the desired state

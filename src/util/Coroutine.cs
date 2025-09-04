@@ -327,7 +327,7 @@ public class Coroutines {
             
             // print exceptions
             if (coroutine.ex != null) {
-                Console.WriteLine($"Coroutine exception: {coroutine.ex}");
+                Log.error("Coroutine exception", coroutine.ex);
                 throw coroutine.ex;
             }
 
@@ -345,7 +345,7 @@ public class Coroutines {
                     // check for exceptions again! why? I dunno, but it seems to improve things! (not silently swallowing exceptions
                     // and just early-exiting/corrupting state is nice)
                     if (coroutine.ex != null) {
-                        Console.WriteLine($"Coroutine exception: {coroutine.ex}");
+                        Log.error("Coroutine exception", coroutine.ex);
                         throw coroutine.ex;
                     }
                     

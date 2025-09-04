@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
+using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
+using Buffer = System.Buffer;
 
 namespace BlockGame.GL;
 
@@ -28,9 +30,9 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         data = (DrawElementsIndirectBindlessCommandNV*)NativeMemory.AlignedAlloc((nuint)capacity, 16);
         
         // sizeof
-        Console.WriteLine("Size of structure: " + sizeof(DrawElementsIndirectBindlessCommandNV));
+        Log.debug("Size of structure: " + sizeof(DrawElementsIndirectBindlessCommandNV));
         
-        Console.WriteLine($"BindlessIndirectBuffer created with capacity {capacity} bytes");
+        Log.info($"BindlessIndirectBuffer created with capacity {capacity} bytes");
     }
 
     /// <summary>
@@ -89,6 +91,53 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         return capacity / 72;
     }
 
+    /// <summary>
+    /// Add a command to the buffer, resizing if necessary
+    /// </summary>
+    public unsafe DrawElementsIndirectBindlessCommandNV* addCommand() {
+        const int commandSize = 72; // sizeof(DrawElementsIndirectBindlessCommandNV)
+        
+        if (offset + commandSize > capacity) {
+            resize(Math.Max(capacity * 2, offset + commandSize));
+        }
+        
+        DrawElementsIndirectBindlessCommandNV* commandPtr = 
+            (DrawElementsIndirectBindlessCommandNV*)((byte*)data + offset);
+        
+        offset += commandSize;
+        size = Math.Max(size, offset);
+        commands++;
+        
+        return commandPtr;
+    }
+
+    private void resize(int newCapacity) {
+        Log.debug($"BindlessIndirectBuffer resizing from {capacity} to {newCapacity} bytes");
+        
+        // allocate new GPU buffer
+        var oldHandle = handle;
+        handle = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.DrawIndirectBuffer, handle);
+        GL.BufferData(BufferTargetARB.DrawIndirectBuffer, (nuint)newCapacity, null, BufferUsageARB.DynamicDraw);
+        
+        // allocate new staging memory
+        var oldData = data;
+        data = (DrawElementsIndirectBindlessCommandNV*)NativeMemory.AlignedAlloc((nuint)newCapacity, 16);
+        
+        // copy existing data if any
+        if (size > 0 && oldData != null) {
+            Buffer.MemoryCopy(oldData, data, newCapacity, size);
+        }
+        
+        // cleanup old resources
+        GL.DeleteBuffer(oldHandle);
+        if (oldData != null) {
+            NativeMemory.AlignedFree(oldData);
+        }
+        
+        capacity = newCapacity;
+    }
+
     public void Dispose() {
         if (data != null) {
             NativeMemory.AlignedFree(data);
@@ -133,9 +182,9 @@ public unsafe class BindlessArraysIndirectBuffer : IDisposable {
         data = (DrawArraysIndirectBindlessCommandNV*)NativeMemory.AlignedAlloc((nuint)capacity, 16);
         
         // sizeof
-        Console.WriteLine("Size of structure: " + sizeof(DrawArraysIndirectBindlessCommandNV));
+        Log.debug($"Size of structure: {sizeof(DrawArraysIndirectBindlessCommandNV)}");
         
-        Console.WriteLine($"BindlessIndirectBuffer created with capacity {capacity} bytes");
+        Log.info($"BindlessIndirectBuffer created with capacity {capacity} bytes");
     }
 
     /// <summary>
@@ -191,6 +240,53 @@ public unsafe class BindlessArraysIndirectBuffer : IDisposable {
     /// </summary>
     public int getMaxCommands() {
         return capacity / 72;
+    }
+
+    /// <summary>
+    /// Add a command to the buffer, resizing if necessary
+    /// </summary>
+    public unsafe DrawArraysIndirectBindlessCommandNV* addCommand() {
+        const int commandSize = 32; // sizeof(DrawArraysIndirectBindlessCommandNV)
+        
+        if (offset + commandSize > capacity) {
+            resize(Math.Max(capacity * 2, offset + commandSize));
+        }
+        
+        DrawArraysIndirectBindlessCommandNV* commandPtr = 
+            (DrawArraysIndirectBindlessCommandNV*)((byte*)data + offset);
+        
+        offset += commandSize;
+        size = Math.Max(size, offset);
+        commands++;
+        
+        return commandPtr;
+    }
+
+    private void resize(int newCapacity) {
+        Log.debug($"BindlessArraysIndirectBuffer resizing from {capacity} to {newCapacity} bytes");
+        
+        // allocate new GPU buffer
+        var oldHandle = handle;
+        handle = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.DrawIndirectBuffer, handle);
+        GL.BufferData(BufferTargetARB.DrawIndirectBuffer, (nuint)newCapacity, null, BufferUsageARB.DynamicDraw);
+        
+        // allocate new staging memory
+        var oldData = data;
+        data = (DrawArraysIndirectBindlessCommandNV*)NativeMemory.AlignedAlloc((nuint)newCapacity, 16);
+        
+        // copy existing data if any
+        if (size > 0 && oldData != null) {
+            Buffer.MemoryCopy(oldData, data, newCapacity, size);
+        }
+        
+        // cleanup old resources
+        GL.DeleteBuffer(oldHandle);
+        if (oldData != null) {
+            NativeMemory.AlignedFree(oldData);
+        }
+        
+        capacity = newCapacity;
     }
 
     public void Dispose() {

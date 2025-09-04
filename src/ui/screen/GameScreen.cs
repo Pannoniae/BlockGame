@@ -333,7 +333,7 @@ public class GameScreen : Screen {
             case Key.F9:
                 // on shift, just clean GC
                 if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
-                    Console.Out.WriteLine("Cleaning GC");
+                    Log.info("Cleaning GC");
                     GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
                     GC.Collect(2, GCCollectionMode.Aggressive, true, true);
                     break;
@@ -348,16 +348,16 @@ public class GameScreen : Screen {
                 // print vmem
                 var vmem = MemoryUtils.getVRAMUsage(out _);
                 if (vmem == -1) {
-                    Console.Out.WriteLine("Can't get VRAM usage");
+                    Log.warn("Can't get VRAM usage");
                 }
                 else {
-                    Console.Out.WriteLine($"VRAM usage: {vmem / (1024 * 1024)}MB");
+                    Log.info($"VRAM usage: {vmem / (1024 * 1024)}MB");
                 }
 
-                Console.Out.WriteLine("Alignment of array: " +
-                                      MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks));
-                Console.Out.WriteLine("Alignment of array: " +
-                                      MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks[0]));
+                Log.info("Alignment of array: " +
+                         MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks));
+                Log.info("Alignment of array: " +
+                         MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks[0]));
                 break;
             }
 
@@ -414,13 +414,13 @@ public class GameScreen : Screen {
             case Key.KeypadMultiply: {
                 // reset time speed
                 targetTimeAcceleration = 1.0f;
-                Console.Out.WriteLine("Time acceleration: 1x (normal)");
+                Log.info("Time acceleration: 1x (normal)");
                 break;
             }
             case Key.KeypadDivide: {
                 // pause time
                 targetTimeAcceleration = 0.0f;
-                Console.Out.WriteLine("Time paused");
+                Log.info("Time paused");
                 break;
             }
             
@@ -432,7 +432,7 @@ public class GameScreen : Screen {
             case Key.C when keyboard.IsKeyPressed(Key.F3): {
                 // toggle frustum freeze
                 Game.camera.frustumFrozen = !Game.camera.frustumFrozen;
-                Console.Out.WriteLine("Frustum freeze: " + (Game.camera.frustumFrozen ? "ON" : "OFF"));
+                Log.info("Frustum freeze: " + (Game.camera.frustumFrozen ? "ON" : "OFF"));
                 break;
             }
         }
@@ -451,7 +451,6 @@ public class GameScreen : Screen {
 
     public void remeshWorld(int oldRenderDist) {
         var world = Game.world;
-        Console.Out.WriteLine("remeshed!");
         
         // free up memory from the block arraypool - we probably don't need that much
         ArrayBlockData.blockPool.trim();
@@ -487,7 +486,7 @@ public class GameScreen : Screen {
 
     private void backToMainMenu() {
         Game.instance.executeOnMainThread(() => {
-            Console.Out.WriteLine("back");
+            Log.debug("back");
             Game.instance.switchToScreen(MAIN_MENU_SCREEN);
         });
     }

@@ -139,9 +139,9 @@ public partial class World : IDisposable {
         // if loading, actually load
         if (loadingSave) {
             var tag = toBeLoadedNBT;
-            Console.Out.WriteLine(tag.getDouble("posX"));
-            Console.Out.WriteLine(tag.getDouble("posY"));
-            Console.Out.WriteLine(tag.getDouble("posZ"));
+            Log.debug(tag.getDouble("posX"));
+            Log.debug(tag.getDouble("posY"));
+            Log.debug(tag.getDouble("posZ"));
             player.position.X = tag.getDouble("posX");
             player.position.Y = tag.getDouble("posY");
             player.position.Z = tag.getDouble("posZ");
@@ -198,7 +198,7 @@ public partial class World : IDisposable {
             }
         }
         if (x > 0) {
-            Console.Out.WriteLine($"Queued {x} chunks for async save");
+            Log.info($"Queued {x} chunks for async save");
         }
     }
 
@@ -954,13 +954,13 @@ public partial class World : IDisposable {
             }
             catch (EndOfStreamException e) {
                 // corrupted chunk file!
-                Console.Error.WriteLine($"Corrupted chunk file for {chunkCoord}: {e}");
+                Log.error($"Corrupted chunk file for {chunkCoord}", e);
                 hasChunk = false;
                 chunkAdded = false;
             }
             catch (IOException e) {
                 // corrupted chunk file! or can't read it for some reason
-                Console.Error.WriteLine($"IO error loading chunk file for {chunkCoord}: {e}");
+                Log.error($"IO error loading chunk file for {chunkCoord}", e);
                 hasChunk = false;
                 chunkAdded = false;
             }

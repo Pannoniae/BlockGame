@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using Buffer = System.Buffer;
 
@@ -9,7 +10,7 @@ namespace BlockGame.GL;
 /// </summary>
 public unsafe class ShaderStorageBuffer : IDisposable {
     private readonly Silk.NET.OpenGL.Legacy.GL GL;
-    public readonly uint handle;
+    public uint handle;
     private readonly uint bindingPoint;
     private int size;
     private int capacity;
@@ -34,14 +35,14 @@ public unsafe class ShaderStorageBuffer : IDisposable {
         // allocate managed memory for staging data
         data = NativeMemory.AlignedAlloc((nuint)capacity, 16);
         
-        Console.Out.WriteLine($"ShaderStorageBuffer created with capacity {capacity} bytes and binding point {bindingPoint}");
+        Log.info($"ShaderStorageBuffer created with capacity {capacity} bytes and binding point {bindingPoint}");
     }
 
     public void updateData<T>(ReadOnlySpan<T> values) where T : unmanaged {
         int requiredSize = values.Length * sizeof(T);
         
         if (requiredSize > capacity) {
-            throw new ArgumentException($"Data size {requiredSize} exceeds buffer capacity {capacity}");
+            resize(Math.Max(requiredSize, capacity * 2));
         }
 
         // copy to staging memory
@@ -50,6 +51,34 @@ public unsafe class ShaderStorageBuffer : IDisposable {
         }
         
         size = requiredSize;
+    }
+
+    private void resize(int newCapacity) {
+        Log.debug($"ShaderStorageBuffer resizing from {capacity} to {newCapacity} bytes");
+        
+        // allocate new GPU buffer
+        var oldHandle = handle;
+        handle = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.ShaderStorageBuffer, handle);
+        GL.BufferStorage(BufferStorageTarget.ShaderStorageBuffer, (nuint)newCapacity, null, BufferStorageMask.DynamicStorageBit);
+        GL.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, bindingPoint, handle);
+        
+        // allocate new staging memory
+        var oldData = data;
+        data = NativeMemory.AlignedAlloc((nuint)newCapacity, 16);
+        
+        // copy existing data if any
+        if (size > 0 && oldData != null) {
+            Buffer.MemoryCopy(oldData, data, newCapacity, size);
+        }
+        
+        // cleanup old resources
+        GL.DeleteBuffer(oldHandle);
+        if (oldData != null) {
+            NativeMemory.AlignedFree(oldData);
+        }
+        
+        capacity = newCapacity;
     }
 
     public void bind() {

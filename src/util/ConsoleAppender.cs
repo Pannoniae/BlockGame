@@ -13,7 +13,7 @@ public class ConsoleAppender {
     public void append(LogEvent logEvent) {
         var timeStr = logEvent.timestamp.ToString("HH:mm:ss");
         var levelStr = logEvent.level.getShortName();
-        var threadStr = $"Thread-{logEvent.threadID}";
+        var threadStr = logEvent.threadID;
         var color = logEvent.level.getLevelColor();
         
         string message;
