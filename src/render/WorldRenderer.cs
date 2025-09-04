@@ -84,7 +84,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public ShaderStorageBuffer chunkSSBO;
     public CommandBuffer chunkCMD;
     public BindlessIndirectBuffer bindlessBuffer;
-    
+
 
     public WorldRenderer() {
         GL = Game.GL;
@@ -99,13 +99,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // initialize shaders
         initializeShaders();
-        
-        
+
+
         // start with reasonable initial sizes, buffers will dynamically resize as needed
         if (Game.hasInstancedUBO) {
             // allocate SSBO for chunk positions (2MB initial, grows as needed)
             chunkSSBO = new ShaderStorageBuffer(GL, 2 * 1024 * 1024, 0);
-            
+
             if (Game.hasCMDL) {
                 // allocate command buffer for chunk rendering (1MB initial, grows as needed)
                 chunkCMD = new CommandBuffer(GL, 1024 * 1024);
@@ -126,7 +126,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         else {
             chunkData = null!;
         }
-        
 
 
         worldShader.setUniform(blockTexture, 0);
@@ -151,8 +150,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // get address of the ssbo
 
         if (Game.hasSBL) {
-            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)GLEnum.ReadOnly);
-            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, Silk.NET.OpenGL.Legacy.Extensions.NV.NV.BufferGpuAddressNV,
+            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (NV)GLEnum.ReadOnly);
+            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
                 out ssboaddr);
         }
 
@@ -271,17 +270,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         };
 
         // Add variant-specific defines
-        var variant = Game.hasCMDL ? ShaderVariant.CommandList : 
-                     Game.hasInstancedUBO ? ShaderVariant.Instanced : 
-                     ShaderVariant.Normal;
+        var variant = Game.hasCMDL ? ShaderVariant.CommandList :
+            Game.hasInstancedUBO ? ShaderVariant.Instanced :
+            ShaderVariant.Normal;
 
-        return Shader.createVariant(GL, nameof(worldShader), "shaders/world/shader.vert", "shaders/world/shader.frag", variant, defs);
+        return Shader.createVariant(GL, nameof(worldShader), "shaders/world/shader.vert", "shaders/world/shader.frag",
+            variant, defs);
     }
 
     private void initializeShaders() {
         worldShader = createWorldShader();
         dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert");
-        waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/world/waterShader.vert", "shaders/world/waterShader.frag");
+        waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/world/waterShader.vert",
+            "shaders/world/waterShader.frag");
     }
 
     private void initializeUniforms() {
@@ -333,7 +334,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
-            
+
             // re-bind texture units
             worldShader.setUniform(blockTexture, 0);
             worldShader.setUniform(lightTexture, 1);
@@ -379,10 +380,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader.setUniform(waterFogStart, 24f);
         }
         else {
-            // use time-based colors
+            // use time-based colours
             var currentFogColour = world.getFogColour(world.worldTick);
-            var currentSkyColour = world.getSkyColour(world.worldTick);
-            var currentSkyDarken = world.getSkyDarkenFloat(world.worldTick);
             var currentHorizonColour = world.getHorizonColour(world.worldTick);
 
             worldShader.setUniform(fogColour, currentFogColour);
@@ -466,11 +465,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             #pragma warning disable CS0618 // Type or member is obsolete
             Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
             Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
-                Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
 
             // set up element array address (shared index buffer)
-            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.ElementArrayAddressNV, 0, elementAddress,
+            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.ElementArrayAddressNV, 0,
+                elementAddress,
                 Game.graphics.fatQuadIndicesLen);
         }
 
@@ -493,12 +493,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var tex = Game.textures.blockTexture;
         var lightTex = Game.textures.lightTexture;
-        
+
         // bind textures
         Game.graphics.tex(0, tex);
         Game.graphics.tex(1, lightTex);
-        
-        
+
+
         var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
 
@@ -567,6 +567,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // unbind ssbo
             //GL.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, 0);
         }
+
         if (Game.hasVBUM && Game.hasSBL) {
             // why is this necessary?? otherwise it just says
             // DebugSourceApi [DebugTypeOther] [DebugSeverityMedium] (65537): ,  BufferAddressRange (address=0x0000000000000000, length=0x0000000000000000) for attrib 0 is not contained in a resident buffer. This may not be fatal depending on which addresses are actually referenced.
@@ -583,7 +584,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
             //    elementAddress, 0);
         }
-        
+
         cd = 0;
 
         if (usingCMDL) {
@@ -628,13 +629,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             //Console.WriteLine($"Executing {bindlessBuffer.getCommandCount()} opaque bindless draw commands");
             bindlessBuffer.executeDrawCommands();
         }
-        
+
         if (usingCMDL) {
             chunkCMD.upload();
-            
+
             // dump validity
             //chunkCMD.dumpCommands();
-            
+
             chunkCMD.drawCommands(PrimitiveType.Triangles, 0);
 
             chunkCMD.clear();
@@ -667,7 +668,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-                
+
                 if (usingCMDL) {
                     drawTransparentCMDL(subChunk, (uint)cd++);
                 }
@@ -731,7 +732,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 if (!subChunk.isRendered) {
                     continue;
                 }
-                
+
                 if (usingCMDL) {
                     drawTransparentCMDL(subChunk, (uint)cd++);
                 }
@@ -795,98 +796,123 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     private static readonly List<AABB> AABBList = [];
 
     private void renderSky(double interp) {
-        // if <= 4 chunks, don't render sky
         if (Settings.instance.renderDistance <= 4) {
             return;
         }
-
-        // render a flat plane at y = 16
-        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
-        var modelView = Game.camera.getStaticViewMatrix(interp);
-        var sky = new Vector3(0, 4, 0);
-        const int skySize = 512;
-
-        // get time-based colors
-        var horizonColour = world.getHorizonColour(world.worldTick).toColor();
-        var skyColour = world.getSkyColour(world.worldTick).toColor();
-        // slightly darker for undersky
-        var underSkyColour = new Color(skyColour.R / 255f * 0.8f, skyColour.G / 255f * 0.8f, skyColour.B / 255f * 0.8f);
-
-        // Enable fog for sky rendering
-        var currentFogColour = world.getFogColour(world.worldTick);
-        idc.enableFog(true);
-        idc.fogColor(horizonColour.toVec4());
-
-        var rd = Settings.instance.renderDistance * Chunk.CHUNKSIZE;
-        // cap rd to 12 max
-        if (rd > 8 * Chunk.CHUNKSIZE) {
-            rd = 8 * Chunk.CHUNKSIZE;
-        }
-
-        //idc.fogDistance(rd * 0.005f, rd);
-        idc.setFogType(FogType.Exp2);
-        idc.setFogDensity(0.05f);
-
-        //idc.instantShader.use();
-        idc.setMVP(viewProj);
-        idc.setMV(modelView);
-
-        idc.begin(PrimitiveType.Quads);
-
-        // add 6 vertices for the quad
-        idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z - skySize, skyColour));
-        idc.addVertex(new VertexTinted(sky.X - skySize, sky.Y, sky.Z + skySize, skyColour));
-        idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z + skySize, skyColour));
-        idc.addVertex(new VertexTinted(sky.X + skySize, sky.Y, sky.Z - skySize, skyColour));
-        idc.end();
-
-        idc.setFogType(FogType.Linear);
-
-
-        var underSky = new Vector3(0, -32, 0);
-
-
-        idc.begin(PrimitiveType.Quads);
-        idc.fogDistance(float.Max(rd * 0.005f, 4 * Chunk.CHUNKSIZE),
-            float.Min(8 * Chunk.CHUNKSIZE, Settings.instance.renderDistance * Chunk.CHUNKSIZE));
-
-        // render the "undersky" - the darker shit below so it doesn't look stupid (BUT WE DONT NEED THIS RN - add when theres actually star rendering n shit)
-        idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z - skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X + skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
-        idc.addVertex(new VertexTinted(underSky.X - skySize, underSky.Y, underSky.Z + skySize, underSkyColour));
-
-        idc.end();
-
-        // Disable fog after rendering sky
-        idc.enableFog(false);
-        //GL.Enable(EnableCap.CullFace);
-
-        // Render sun
-        float dayPercent = world.getDayPercentage(world.worldTick);
-
-
-        float sunAngle = dayPercent * MathF.PI * 2; // -π/2 to π/2
-
-        const float sunDistance = 64f;
-        const float sunSize = 6f;
-
-        var mat = Game.graphics.modelView;
-        mat.push();
-
+        
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
-        // render sun
-        Game.graphics.tex(0, Game.textures.sunTexture);
+        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
+        var modelView = Game.camera.getStaticViewMatrix(interp);
 
-        mat.rotate(Meth.rad2deg(sunAngle), 0, 0, 1); // rotate around Z axis
+        float dayPercent = world.getDayPercentage(world.worldTick);
+        
+        float sunAngle = world.getSunAngle(world.worldTick);
+        
+        var horizonColour = world.getHorizonColour(world.worldTick).toColor();
+        var skyColour = world.getSkyColour(world.worldTick).toColor();
+        var underSkyColour = new Color(skyColour.R / 255f * 0.3f, skyColour.G / 255f * 0.3f, skyColour.B / 255f * 0.4f);
+
+        // Setup fog
+        //idc.enableFog(true);
+        //idc.fogColor(horizonColor.toVec4());
+        //idc.setFogType(FogType.Exp2);
+        //idc.setFogDensity(0.02f);
+        idc.enableFog(true);
+        idc.fogColor(horizonColour.toVec4());
+        idc.setFogType(FogType.Linear);
+        //idc.setFogDensity(0.002f);
+        idc.fogDistance(0f, 128f);
+
+        var mat = Game.graphics.modelView;
+        mat.push();
+        
+        float tiltAngle = MathF.Sin(sunAngle) * 15f; // ±15
+        mat.rotate(tiltAngle, 0, 0, 1);
+        
+        
+
+        idc.setMVP(mat.top * viewProj);
+        idc.setMV(mat.top * modelView);
+        
+        renderSkyDome(horizonColour, skyColour, underSkyColour);
+
+        mat.pop();
+        
+        idc.enableFog(false);
+
+        // Render sun and moon
+        renderSunnyMoony(dayPercent, sunAngle, viewProj, modelView);
+
+        // Render stars
+        renderStars(dayPercent, viewProj, modelView);
+
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.CullFace);
+    }
+
+    private void renderSkyDome(Color horizonColour, Color skyColour, Color underSkyColour) {
+        const float radius = 128f;
+        const float topHeight = 16f;
+        const float bottomHeight = -48f;
+        const int segments = 24;
+
+        idc.begin(PrimitiveType.Triangles);
+
+        // top cone
+        for (int i = 0; i < segments; i++) {
+            float v = (MathF.PI * 2f / segments) * i;
+            float vn = (MathF.PI * 2f / segments) * (i + 1);
+
+            var v1 = new Vector3(MathF.Sin(v) * radius, 0, MathF.Cos(v) * radius);
+            var v2 = new Vector3(0, topHeight, 0);
+            var v3 = new Vector3(MathF.Sin(vn) * radius, 0, MathF.Cos(vn) * radius);
+            
+            idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, horizonColour));
+            idc.addVertex(new VertexTinted(v2.X, v2.Y, v2.Z, skyColour));
+            idc.addVertex(new VertexTinted(v3.X, v3.Y, v3.Z, horizonColour));
+        }
+
+        // bottom cone
+        for (int i = 0; i < segments; i++) {
+            float v = (MathF.PI * 2f / segments) * i;
+            float vn = (MathF.PI * 2f / segments) * (i + 1);
+
+            var v1 = new Vector3(0, bottomHeight, 0);
+            var v2 = new Vector3(MathF.Sin(v) * radius, 0, MathF.Cos(v) * radius);
+            var v3 = new Vector3(MathF.Sin(vn) * radius, 0, MathF.Cos(vn) * radius);
+
+            idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, underSkyColour));
+            idc.addVertex(new VertexTinted(v2.X, v2.Y, v2.Z, horizonColour));
+            idc.addVertex(new VertexTinted(v3.X, v3.Y, v3.Z, horizonColour));
+        }
+
+        idc.end();
+    }
+
+    private void renderSunnyMoony(float dayPercent, float sunAngle, Matrix4x4 viewProj, Matrix4x4 modelView) {
+        const float sunDistance = 96f;
+        const float sunSize = 8f;
+        const float moonSize = sunSize * 0.75f;
+
+        var mat = Game.graphics.modelView;
+        mat.push();
+        
+        float sunElevation = world.getSunElevation(world.worldTick);
+        float sunIntensity = MathF.Max(0, (sunElevation + (MathF.PI / 6f)) / (MathF.PI / 6f));
+        float moonIntensity = MathF.Max(0, -(sunElevation - (MathF.PI / 6f)) / (MathF.PI / 6f));
+        
+        // Sunny
+        Game.graphics.tex(0, Game.textures.sunTexture);
+        mat.rotate(Meth.rad2deg(sunAngle), 0, 0, 1);
+
         idt.setMVP(mat.top * viewProj);
         idt.setMV(mat.top * modelView);
+        idt.setColour(new Color(sunIntensity, sunIntensity, sunIntensity * 0.9f, sunIntensity));
 
         idt.begin(PrimitiveType.Quads);
 
-        // create billboard quad vertices that always face the camera
         var v1 = new Vector3(sunDistance, -sunSize, -sunSize);
         var v2 = new Vector3(sunDistance, sunSize, -sunSize);
         var v3 = new Vector3(sunDistance, sunSize, sunSize);
@@ -898,65 +924,56 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.addVertex(new BlockVertexTinted(v4.X, v4.Y, v4.Z, 1f, 0f));
         idt.end();
 
-
-        // render moon opposite to sun
-        const float moonSize = sunSize * 0.75f; // 75% of sun size
+        // Moony
         Game.graphics.tex(0, Game.textures.moonTexture);
 
         mat.push();
-
-        mat.rotate(Meth.rad2deg(MathF.PI), 0, 0, 1); // rotate 180 degrees more
+        mat.rotate(180f, 0, 0, 1);
         idt.setMVP(mat.top * viewProj);
         idt.setMV(mat.top * modelView);
+        idt.setColour(new Color(moonIntensity * 0.9f, moonIntensity * 0.9f, moonIntensity, moonIntensity));
 
         idt.begin(PrimitiveType.Quads);
 
-        var mv1 = new Vector3(sunDistance, -moonSize, -moonSize);
-        var mv2 = new Vector3(sunDistance, moonSize, -moonSize);
-        var mv3 = new Vector3(sunDistance, moonSize, moonSize);
-        var mv4 = new Vector3(sunDistance, -moonSize, moonSize);
+        v1 = new Vector3(sunDistance, -moonSize, -moonSize);
+        v2 = new Vector3(sunDistance, moonSize, -moonSize);
+        v3 = new Vector3(sunDistance, moonSize, moonSize);
+        v4 = new Vector3(sunDistance, -moonSize, moonSize);
 
-        idt.addVertex(new BlockVertexTinted(mv1.X, mv1.Y, mv1.Z, 0f, 0f));
-        idt.addVertex(new BlockVertexTinted(mv2.X, mv2.Y, mv2.Z, 0f, 1f));
-        idt.addVertex(new BlockVertexTinted(mv3.X, mv3.Y, mv3.Z, 1f, 1f));
-        idt.addVertex(new BlockVertexTinted(mv4.X, mv4.Y, mv4.Z, 1f, 0f));
+        idt.addVertex(new BlockVertexTinted(v1.X, v1.Y, v1.Z, 0f, 0f));
+        idt.addVertex(new BlockVertexTinted(v2.X, v2.Y, v2.Z, 0f, 1f));
+        idt.addVertex(new BlockVertexTinted(v3.X, v3.Y, v3.Z, 1f, 1f));
+        idt.addVertex(new BlockVertexTinted(v4.X, v4.Y, v4.Z, 1f, 0f));
         idt.end();
 
         mat.pop();
         mat.pop();
-
-        // render stars at night
-        renderStars(dayPercent, viewProj, modelView);
-
-        GL.Enable(EnableCap.DepthTest);
-        GL.Enable(EnableCap.CullFace);
     }
-
 
 
     public void drawBlockOutline(double interp) {
         var pos = Game.instance.targetedPos;
         if (pos == null) return;
-        
+
         var targetPos = pos.Value;
         world.getAABBs(AABBList, targetPos.X, targetPos.Y, targetPos.Z);
 
         if (AABBList.Count == 0) {
             return;
         }
-        
+
         // disable fog for outline rendering
         idc.enableFog(false);
 
         var view = Game.camera.getViewMatrix(interp);
         var viewProj = view * Game.camera.getProjectionMatrix();
-        
+
         idc.setMV(view);
         idc.setMVP(viewProj);
         idc.begin(PrimitiveType.Lines);
-        
+
         var outlineColor = new Color(0, 0, 0, 255);
-        
+
         foreach (var aabb in AABBList) {
             const float OFFSET = 0.005f;
             var minX = (float)aabb.min.X - OFFSET;
@@ -965,7 +982,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             var maxX = (float)aabb.max.X + OFFSET;
             var maxY = (float)aabb.max.Y + OFFSET;
             var maxZ = (float)aabb.max.Z + OFFSET;
-            
+
             // bottom face
             idc.addVertex(new VertexTinted(minX, minY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(minX, minY, maxZ, outlineColor));
@@ -975,7 +992,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             idc.addVertex(new VertexTinted(maxX, minY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(maxX, minY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(minX, minY, minZ, outlineColor));
-            
+
             // top face
             idc.addVertex(new VertexTinted(minX, maxY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(minX, maxY, maxZ, outlineColor));
@@ -985,7 +1002,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             idc.addVertex(new VertexTinted(maxX, maxY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(maxX, maxY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(minX, maxY, minZ, outlineColor));
-            
+
             // vertical edges
             idc.addVertex(new VertexTinted(minX, minY, minZ, outlineColor));
             idc.addVertex(new VertexTinted(minX, maxY, minZ, outlineColor));
@@ -996,7 +1013,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             idc.addVertex(new VertexTinted(maxX, minY, maxZ, outlineColor));
             idc.addVertex(new VertexTinted(maxX, maxY, maxZ, outlineColor));
         }
-        
+
         idc.end();
     }
 
@@ -1017,7 +1034,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         lightVal.A = a; // keep alpha the same
         return lightVal;
     }
-    
+
     public static Color4b getLightColour(byte blocklight, byte skylight) {
         var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4b(px.R, px.G, px.B, px.A);
@@ -1093,32 +1110,33 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     private void renderStars(float dayPercent, Matrix4x4 viewProj, Matrix4x4 modelView) {
-        
         float starAlpha = 0f;
 
         if (dayPercent >= 0.65f && dayPercent <= 0.9f) {
-            // deep night
+            //night
             starAlpha = 1.0f;
         }
         else if (dayPercent >= 0.5f && dayPercent < 0.65f) {
-            // evening transition - fade in
+            // evening
             starAlpha = Meth.fadeIn(dayPercent, 0.5f, 0.65f);
         }
         else if (dayPercent >= 0.9f) {
-            // morning transition - fade out
+            // morning
             starAlpha = Meth.fadeOut(dayPercent, 0.9f, 1.0f);
         }
 
         if (starAlpha <= 0.0f) {
-            return; // no stars during day
+            return; // day
         }
 
         var starColour = new Color(1f, 1f, 1f, starAlpha);
         const float starSize = 0.15f;
 
         float continuousTime = dayPercent * 360;
-        var mat = new MatrixStack();
-        mat.reversed();
+        var mat = Game.graphics.modelView;
+
+        mat.push();
+
         mat.rotate(continuousTime, 0.7f, 1f, 0.1f); // tilted celestial axis
 
         idc.setMVP(mat.top * viewProj);
@@ -1174,6 +1192,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         idc.end();
+
+        mat.pop();
     }
 }
 

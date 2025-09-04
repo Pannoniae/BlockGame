@@ -60,7 +60,7 @@ public class PlayerRenderer {
 
         if (handItem.getItem().isBlock()) {
             Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), Vector3I.Zero, vertices,
-                lightOverride: (byte)world.getBrightness(light, world.getSkyDarken(world.worldTick)), cullFaces: false);
+                lightOverride: (byte)world.getBrightness(light, (byte)world.getSkyDarkenFloat(world.worldTick)), cullFaces: false);
         }
 
         vao.bind();
@@ -74,7 +74,11 @@ public class PlayerRenderer {
         // we need something like a circle?
         var circleishThing = Math.Sin(Math.Sqrt(swingProgress) * Math.PI * 2);
 
-        var mat = new MatrixStack();
+        var mat = Game.graphics.modelView.reversed();
+        mat.push();
+        mat.loadIdentity();
+        
+        
         var pivot = new Vector3(0.5f, 0.5f, 0.5f);
         
         mat.rotate(45, 0, 1, 0, pivot);
@@ -94,6 +98,8 @@ public class PlayerRenderer {
             mat.top * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
         Game.graphics.instantTextureShader.setUniform(tex, 0);
         vao.render();
+        
+        mat.reversed().pop();
 
         // Render water overlay if player is underwater
         if (player.isUnderWater()) {

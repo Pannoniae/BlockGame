@@ -6,23 +6,23 @@ using Molten;
 namespace BlockGame.GL;
 
 [StructLayout(LayoutKind.Explicit, Size = 16)]
-public readonly struct VertexTinted {
+public struct VertexTinted {
     [FieldOffset(0)]
-    public readonly float x;
+    public float x;
     [FieldOffset(4)]
-    public readonly float y;
+    public float y;
     [FieldOffset(8)]
-    public readonly float z;
+    public float z;
     [FieldOffset(12)]
-    public readonly byte r;
+    public byte r;
     [FieldOffset(13)]
-    public readonly byte g;
+    public byte g;
     [FieldOffset(14)]
-    public readonly byte b;
+    public byte b;
     [FieldOffset(15)]
-    public readonly byte a;
+    public byte a;
     [FieldOffset(12)]
-    public readonly Color c;
+    public Color c;
 
 
     public VertexTinted(float x, float y, float z, byte r, byte g, byte b, byte a) {

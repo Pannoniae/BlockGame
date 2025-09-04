@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.GL.vertexformats;
 using Silk.NET.OpenGL.Legacy;
+using Color = Molten.Color;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
@@ -43,6 +44,9 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected bool fogEnabled = false;  // Disabled by default
     protected FogType fogType = FogType.Linear;
     protected float fogDensity = 0.01f;
+    
+    // vertex tint
+    protected Color tint = Color.White;
     
 
     public InstantDraw(int maxVertices) {
@@ -95,6 +99,10 @@ public abstract class InstantDraw<T> where T : unmanaged {
         instantShader.setUniform(uFogDensity, density);
     }
     
+    public void setColour(Color c) {
+        tint = c;
+    }
+    
     public void setMV(Matrix4x4 modelView) {
         instantShader.setUniform(uModelView, modelView);
     }
@@ -112,7 +120,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         vertexType = type;
     }
 
-    public void addVertex(T vertex) {
+    public virtual void addVertex(T vertex) {
         if (currentVertex >= maxVertices - 1) {
             end();
         }
@@ -210,6 +218,21 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
         instantShader.use();
         Game.graphics.tex(0, texture);
     }
+
+    public override void addVertex(BlockVertexTinted vertex) {
+        if (currentVertex >= maxVertices - 1) {
+            end();
+        }
+        
+        // apply tint
+        vertex.r = (byte)((vertex.r * tint.R) / 255);
+        vertex.g = (byte)((vertex.g * tint.G) / 255);
+        vertex.b = (byte)((vertex.b * tint.B) / 255);
+        vertex.a = (byte)((vertex.a * tint.A) / 255);
+        
+        vertices[currentVertex] = vertex;
+        currentVertex++;
+    }
 }
 
 public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
@@ -245,6 +268,21 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
         GL.VertexAttribBinding(1, 0);
 
         GL.BindVertexBuffer(0, VBO, 0, 8 * sizeof(ushort));
+    }
+    
+    public override void addVertex(VertexTinted vertex) {
+        if (currentVertex >= maxVertices - 1) {
+            end();
+        }
+        
+        // apply tint
+        vertex.r = (byte)((vertex.r * tint.R) / 255);
+        vertex.g = (byte)((vertex.g * tint.G) / 255);
+        vertex.b = (byte)((vertex.b * tint.B) / 255);
+        vertex.a = (byte)((vertex.a * tint.A) / 255);
+        
+        vertices[currentVertex] = vertex;
+        currentVertex++;
     }
 }
 

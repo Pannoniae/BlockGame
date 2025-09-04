@@ -349,8 +349,7 @@ public sealed class SpriteBatch : IDisposable {
         Vector2 scale, float rotation, Vector2 origin = default, float depth = 0) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
@@ -372,8 +371,7 @@ public sealed class SpriteBatch : IDisposable {
     public void Draw(BTexture2D texture, RectangleF destination, Rectangle? source, Color4b color, float depth = 0) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)

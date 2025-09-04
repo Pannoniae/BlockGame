@@ -10,15 +10,15 @@ public partial class World : IDisposable {
     public const int WORLDSIZE = 12;
     public const int REGIONSIZE = 16;
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
-    
+
     // try to keep 120 FPS at least
     public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
     public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
-    
-    
+
+
     // when loading the world, we can load chunks faster because fuck cares about a loading screen?
     public const double MAX_CHUNKLOAD_FRAMETIME_FAST = 1000 / 10.0;
-    
+
     // this applies to the queues *separately* so it's lower
     public const double MAX_LIGHT_FRAMETIME = 1000 / 480.0;
     public const int SPAWNCHUNKS_SIZE = 1;
@@ -31,37 +31,35 @@ public partial class World : IDisposable {
 
     public string name;
 
-    
-    
+
     public readonly List<WorldListener> listeners = [];
 
     public readonly Dictionary<ChunkCoord, Chunk> chunks;
+
     // used for rendering
     public readonly List<Chunk> chunkList;
 
     //public List<ChunkSection> sortedTransparentChunks = [];
-    
-    
-    
+
 
     // Queues
     public List<ChunkLoadTicket> chunkLoadQueue = new();
-    
+
     public List<BlockUpdate> blockUpdateQueue = new();
     public HashSet<BlockUpdate> blockUpdateQueueSet = new();
-    
-    
+
+
     public List<TickAction> actionQueue = new();
 
     public List<LightNode> skyLightQueue = new();
     public List<LightRemovalNode> skyLightRemovalQueue = new();
     public List<LightNode> blockLightQueue = new();
     public List<LightRemovalNode> blockLightRemovalQueue = new();
-    
+
     public WorldGenerator generator;
 
     public bool isLoading;
-    
+
     /**
      * True if the world has actually been initialized, false if the init method hasn't been called yet.
      */
@@ -76,7 +74,7 @@ public partial class World : IDisposable {
 
 
     public int worldTick;
-    
+
     public const int TICKS_PER_DAY = 72000;
 
     public XRandom random;
@@ -101,16 +99,16 @@ public partial class World : IDisposable {
 
         entities = new List<Entity>();
         particles = new Particles(this);
-        
+
         // setup world saving every 5 seconds
         // NOTE: this used to memory leak the ENTIRE WORLD because it was capturing the world reference in the method in Main.timerQueue.
         // to avoid that, ALWAYS MAKE SURE methods aren't overwritten!
-        
+
         // SAFETY CHECK
         if (saveWorld != null) {
             Game.clearInterval(saveWorld);
         }
-        
+
         saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
     }
 
@@ -135,7 +133,7 @@ public partial class World : IDisposable {
             // find safe spawn position with proper AABB clearance
             ensurePlayerSpawnClearance();
         }
-        
+
         // if loading, actually load
         if (loadingSave) {
             var tag = toBeLoadedNBT;
@@ -154,17 +152,16 @@ public partial class World : IDisposable {
         // if we don't save the world, some of the chunks might get saved but no level.xnbt
         // so the world is corrupted and we have horrible chunkglitches
         worldIO.save(this, name, false);
-        
-        
+
+
         foreach (var l in listeners) {
             l.onWorldLoad();
         }
-        
+
         inited = true;
     }
-    
+
     public void postInit(bool loadingSave = false) {
-        
         // notify all entities of the chunks they're actually in
         // handled in loadChunk!
     }
@@ -174,29 +171,32 @@ public partial class World : IDisposable {
             // don't save the world if it hasn't been initialized yet
             return;
         }
+
         autoSaveChunks();
         worldIO.saveWorldData();
     }
-    
+
     public void listen(WorldListener listener) {
         listeners.Add(listener);
     }
-    
+
     public void unlisten(WorldListener listener) {
         listeners.Remove(listener);
     }
-    
+
     /// <summary>
     /// Autosave any chunks which haven't been saved in more than a minute.
     /// </summary>
     private void autoSaveChunks() {
         var x = 0;
         foreach (var chunk in chunks.Values) {
-            if (chunk.status >= ChunkStatus.MESHED && chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+            if (chunk.status >= ChunkStatus.MESHED &&
+                chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
                 worldIO.saveChunkAsync(this, chunk);
                 x++;
             }
         }
+
         if (x > 0) {
             Log.info($"Queued {x} chunks for async save");
         }
@@ -209,33 +209,33 @@ public partial class World : IDisposable {
             }
         }
     }
-    
+
     public void setBlockNeighboursDirty(Vector3I block) {
         var x = block.X;
         var y = block.Y;
         var z = block.Z;
-        
+
         // calculate affected chunk range (chunks containing block +/- 1 in each direction)
         int chunkX0 = (x - 1) >> 4;
         int chunkX1 = (x + 1) >> 4;
         int chunkZ0 = (z - 1) >> 4;
         int chunkZ1 = (z + 1) >> 4;
-        
+
         // cap Y to valid world height
         int y0 = Math.Max(0, y - 1);
         int y1 = Math.Min(WORLDHEIGHT - 1, y + 1);
         int subY0 = y0 >> 4;
         int subY1 = y1 >> 4;
-        
+
         // batch dirty chunks to avoid repeated HashSet operations
         var rangeX = chunkX1 - chunkX0 + 1;
         var rangeZ = chunkZ1 - chunkZ0 + 1;
         var rangeY = subY1 - subY0 + 1;
         var maxCoords = rangeX * rangeZ * rangeY;
-        
+
         Span<SubChunkCoord> coords = stackalloc SubChunkCoord[maxCoords];
         int coordCount = 0;
-        
+
         for (int chunkX = chunkX0; chunkX <= chunkX1; chunkX++) {
             for (int chunkZ = chunkZ0; chunkZ <= chunkZ1; chunkZ++) {
                 for (int subY = subY0; subY <= subY1; subY++) {
@@ -243,7 +243,7 @@ public partial class World : IDisposable {
                 }
             }
         }
-        
+
         dirtyChunksBatch(coords[..coordCount]);
     }
 
@@ -258,7 +258,7 @@ public partial class World : IDisposable {
             l.onDirtyChunksBatch(coords);
         }
     }
-    
+
     public void dirtyArea(Vector3I min, Vector3I max) {
         foreach (var l in listeners) {
             l.onDirtyArea(min, max);
@@ -280,26 +280,26 @@ public partial class World : IDisposable {
 
     private void ensurePlayerSpawnClearance() {
         var pos = player.position;
-        
+
         // move up until we find a position with proper clearance
         while (pos.Y > WORLDHEIGHT - Player.height || !hasPlayerAABBClearance(pos)) {
             pos.Y += 1;
         }
-        
+
         player.position = pos;
     }
-    
+
     private bool hasPlayerAABBClearance(Vector3D pos) {
         const double sizehalf = Player.width / 2;
         var playerAABB = new AABB(
             new Vector3D(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
             new Vector3D(pos.X + sizehalf, pos.Y + Player.height, pos.Z + sizehalf)
         );
-        
+
         // check all blocks that could potentially intersect with player AABB
         var min = playerAABB.min.toBlockPos();
         var max = playerAABB.max.toBlockPos();
-        
+
         for (int x = min.X; x <= max.X; x++) {
             for (int y = min.Y; y <= max.Y; y++) {
                 for (int z = min.Z; z <= max.Z; z++) {
@@ -307,8 +307,8 @@ public partial class World : IDisposable {
                     if (bl == Blocks.AIR) {
                         continue;
                     }
-                    
-                    
+
+
                     getAABBsCollision(listAABB, x, y, z);
                     foreach (var aabb in listAABB) {
                         if (AABB.isCollision(playerAABB, aabb)) {
@@ -318,7 +318,7 @@ public partial class World : IDisposable {
                 }
             }
         }
-        
+
         return true;
     }
 
@@ -336,151 +336,159 @@ public partial class World : IDisposable {
         // separate loop so all data is there
         player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
     }
-    
+
     public void loadAroundPlayer(ChunkStatus status) {
         player.loadChunksAroundThePlayer(Settings.instance.renderDistance, status);
     }
 
     public int getBrightness(byte skylight, byte skyDarken) {
         // apply sky darkening to skylight only
-        return  Math.Max(0, skylight - skyDarken);
+        return Math.Max(0, skylight - skyDarken);
     }
 
     public float getDayPercentage(int ticks) {
         return (ticks % TICKS_PER_DAY) / (float)TICKS_PER_DAY;
     }
 
-    public Color4b getHorizonColour(int ticks) {
+    private const float TWILIGHT_ANGLE = -12f * MathF.PI / 180f; // -6 degrees WHICH WE DON'T HAVE
+    private const float SUNRISE_ANGLE = 0f;
+    private const float SOLAR_NOON_ANGLE = MathF.PI / 2f;
+    private const float SUNSET_ANGLE = MathF.PI;
+
+    public float getSunAngle(int ticks) {
         float dayPercent = getDayPercentage(ticks);
+        // Maps 0-1 to 0-2π (full rotation)
+        return dayPercent * MathF.PI * 2f;
+    }
+
+    public float getSunElevation(int ticks) {
+        float angle = getSunAngle(ticks);
+        return MathF.Sin(angle);
+    }
+
+    public Color4b getSkyColour(int ticks) {
+        float e = getSunElevation(ticks);
+        float angle = getSunAngle(ticks);
         
-        // 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
-        if (dayPercent < 0.1f) {
-            // sunrise
-            float t = dayPercent / 0.1f;
-            return Color4b.Lerp(new Color4b(15, 15, 40), new Color4b(135, 206, 235), t); // dark blue to day blue
+        var nightSky = new Color4b(5, 5, 15);
+        var daySky = new Color4b(100, 180, 255);
+
+        if (e < TWILIGHT_ANGLE) {
+            // night
+            return nightSky;
         }
-        else if (dayPercent < 0.5f) {
-            // day
-            return new Color4b(135, 206, 235); // sky blue
+        else if (e < SUNRISE_ANGLE) {
+            // civil twilight
+            float t = (e - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
+            return Color4b.Lerp(nightSky, new Color4b(20, 35, 80), t);
         }
-        else if (dayPercent < 0.6f) {
-            // sunset
-            float t = (dayPercent - 0.5f) / 0.1f;
-            return Color4b.Lerp(new Color4b(135, 206, 235), new Color4b(15, 15, 40), t); // sky blue to night
+        else if (e < MathF.PI / 12f) {
+            // 15 deg, sunrise/sunset
+            float t = e / (MathF.PI / 12f);
+            return Color4b.Lerp(new Color4b(20, 35, 80), daySky, t);
         }
         else {
+            // Full day
+            return daySky;
+        }
+    }
+
+    public Color4b getHorizonColour(int ticks) {
+        float e = getSunElevation(ticks);
+        float angle = getSunAngle(ticks);
+
+        var nightHorizon = new Color4b(15, 15, 40);
+        var dayHorizon = new Color4b(135, 206, 235);
+        
+        const float NIGHT_START = -18f * MathF.PI / 180f;
+        const float TWILIGHT_START = -12f * MathF.PI / 180f;
+        const float GOLDEN_START = -0f * MathF.PI / 180f;
+        const float GOLDEN_END = 10f * MathF.PI / 180f;
+        const float DAY_START = 30f * MathF.PI / 180f;
+
+        // Smooth blend between sunrise/sunset colors based on time of day
+        float isSunset;
+        switch (angle) {
+            // morning
+            case < MathF.PI / 2f:
+                isSunset = angle / (MathF.PI / 2f) * 0.5f;
+                break;
+            // evening
+            case < MathF.PI:
+                isSunset = 0.5f + (angle - MathF.PI / 2f) / (MathF.PI / 2f) * 0.5f;
+                break;
             // night
-            return new Color4b(15, 15, 40); // dark blue
+            case < 3f * MathF.PI / 2f:
+                isSunset = 1f - (angle - MathF.PI) / (MathF.PI / 2f) * 0.5f;
+                break;
+            // sunrise
+            default:
+                isSunset = 0.5f - (angle - 3f * MathF.PI / 2f) / (MathF.PI / 2f) * 0.5f;
+                break;
+        }
+        
+        var twilightColor = Color4b.Lerp(
+            new Color4b(80, 40, 100), // dawn purple
+            new Color4b(120, 50, 90), // sunset purple=pink
+            isSunset);
+
+        var goldenColor = Color4b.Lerp(
+            new Color4b(255, 140, 80),   // dawn orange
+            new Color4b(255, 80, 50),    // sunset red-orange-ish thingie
+            isSunset);
+
+        switch (e) {
+            case <= NIGHT_START:
+                return nightHorizon;
+            case <= TWILIGHT_START: {
+                float t = (e - NIGHT_START) / (TWILIGHT_START - NIGHT_START);
+                return Color4b.Lerp(nightHorizon, twilightColor, t);
+            }
+            case <= GOLDEN_START: {
+                float t = (e - TWILIGHT_START) / (GOLDEN_START - TWILIGHT_START);
+                return Color4b.Lerp(twilightColor, goldenColor, t);
+            }
+            case <= GOLDEN_END: {
+                float t = (e - GOLDEN_START) / (GOLDEN_END - GOLDEN_START);
+                // ???
+                return goldenColor;
+            }
+            case <= DAY_START: {
+                float t = (e - GOLDEN_END) / (DAY_START - GOLDEN_END);
+                return Color4b.Lerp(goldenColor, dayHorizon, t);
+            }
+            default:
+                return dayHorizon;
         }
     }
 
     public Color4b getFogColour(int ticks) {
-        float dayPercent = getDayPercentage(ticks);
-        
-        // 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
-        if (dayPercent < 0.1f) {
-            // sunrise fog
-            float t = dayPercent / 0.1f;
-            return Color4b.Lerp(new Color4b(10, 10, 25), new Color4b(255, 255, 255), t);
-        }
-        else if (dayPercent < 0.5f) {
-            // day fog - light
-            return new Color4b(255, 255, 255);
-        }
-        else if (dayPercent < 0.6f) {
-            // sunset fog
-            float t = (dayPercent - 0.5f) / 0.1f;
-            return Color4b.Lerp(new Color4b(255, 255, 255), new Color4b(10, 10, 25), t);
-        }
-        else {
-            // night fog
-            return new Color4b(10, 10, 25);
-        }
+        var horizon = getHorizonColour(ticks);
+        var gray = new Color4b(180, 180, 180);
+        return Color4b.Lerp(horizon, gray, 0.3f);
     }
 
-    public Color4b getSkyColour(int ticks) {
-        float dayPercent = getDayPercentage(ticks);
-        
-        // 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
-        if (dayPercent < 0.1f) {
-            // sunrise sky
-            float t = dayPercent / 0.1f;
-            return Color4b.Lerp(new Color4b(5, 5, 15), new Color4b(100, 180, 255), t);
-        }
-        else if (dayPercent < 0.5f) {
-            // day sky - bright blue
-            return new Color4b(100, 180, 255);
-        }
-        else if (dayPercent < 0.6f) {
-            // sunset sky
-            float t = (dayPercent - 0.5f) / 0.1f;
-            return Color4b.Lerp(new Color4b(100, 180, 255), new Color4b(5, 5, 15), t);
-        }
-        else {
-            // night sky
-            return new Color4b(5, 5, 15);
-        }
-    }
-
-    /** effective skylight */
-    public byte getSkyDarken(int ticks) {
-        float dayPercent = getDayPercentage(ticks);
-        
-        // remapped: 0.0-0.1: sunrise, 0.1-0.5: day, 0.5-0.6: sunset, 0.6-1.0: night
-        if (dayPercent < 0.1f) {
-            // sunrise - gradually getting brighter
-            float t = dayPercent / 0.1f;
-            return (byte)(11 * (1 - t)); // 11 to 0
-        }
-        else if (dayPercent < 0.5f) {
-            // day - full brightness
-            return 0;
-        }
-        else if (dayPercent < 0.6f) {
-            // sunset - gradually getting darker
-            float t = (dayPercent - 0.5f) / 0.1f;
-            return (byte)(11 * t); // 0 to 11
-        }
-        else {
-            // night - maximum darkness (11 levels down from 15)
-            return 11;
-        }
-    }
-
-    /** effective skylight (float version for rendering)
-     * 0 = daylight, 11 = night
-     * 16 = black
-     */
     public float getSkyDarkenFloat(int ticks) {
-        float dayPercent = getDayPercentage(ticks);
+        float elevation = getSunElevation(ticks);
+
+        float darken;
+
+        switch (elevation) {
+            case > SUNRISE_ANGLE:
+                darken = 0f;
+                break;
+            case > TWILIGHT_ANGLE: {
+                float t = (elevation - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
+                darken = 11f * (1f - t);
+                break;
+            }
+            default:
+                darken = 11f;
+                break;
+        }
         
-        if (Settings.instance.smoothDayNight) {
-            if (dayPercent < 0.1f) {
-                // sunrise - gradually getting brighter
-                float t = dayPercent / 0.1f;
-                return 11f * (1f - t); // 11 to 0
-            }
-            else if (dayPercent < 0.5f) {
-                // day - full brightness
-                return 0f;
-            }
-            else if (dayPercent < 0.6f) {
-                // sunset - gradually getting darker
-                float t = (dayPercent - 0.5f) / 0.1f;
-                return 11f * t; // 0 to 11
-            }
-            else {
-                // night - maximum darkness (11 levels down from 15)
-                return 11f;
-            }
-        }
-        else {
-            // classic mode
-            return getSkyDarken(ticks);
-        }
+        return !Settings.instance.smoothDayNight ? (float)Math.Round(darken) : darken;
     }
-    
-    
 
 
     /// <summary>
@@ -491,7 +499,6 @@ public partial class World : IDisposable {
         var ctr = 0;
         updateChunkloading(start, loading: false, ref ctr);
         particles.update(dt);
-        
     }
 
     /** This is separate so this can be called from the outside without updating the whole (still nonexistent) world. */
@@ -519,7 +526,7 @@ public partial class World : IDisposable {
         if (!loading) {
             return;
         }
-        
+
         // if we're loading, we can also mesh chunks
         // empty the meshing queue
         while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
@@ -528,11 +535,11 @@ public partial class World : IDisposable {
             if (!isChunkSectionInWorld(sectionCoord)) {
                 continue;
             }
-            
+
             var section = getSubChunk(sectionCoord);
             Game.blockRenderer.meshChunk(section);
-        }  
-        
+        }
+
         // debug
         /*Console.Out.WriteLine("---BEGIN---");
         foreach (var chunk in chunkLoadQueue) {
@@ -580,11 +587,14 @@ public partial class World : IDisposable {
         // random block updates!
         foreach (var chunk in chunks) {
             // distance check
-            if (Vector2I.DistanceSquared(chunk.Value.centrePos, new Vector2I((int)player.position.X, (int)player.position.Z)) < MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
+            if (Vector2I.DistanceSquared(chunk.Value.centrePos,
+                    new Vector2I((int)player.position.X, (int)player.position.Z)) <
+                MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
                 foreach (var chunksection in chunk.Value.subChunks) {
                     if (!chunksection.blocks.hasRandomTickingBlocks()) {
                         continue;
                     }
+
                     for (int i = 0; i < numTicks; i++) {
                         // I pray this is random
                         var coord = random.Next(16 * 16 * 16);
@@ -603,16 +613,16 @@ public partial class World : IDisposable {
         processLightQueue(skyLightQueue, true);
         //SuperluminalPerf.EndEvent();
     }
-    
+
     public void processSkyLightQueueNoUpdate() {
         processLightQueue(skyLightQueue, true, true);
     }
-    
+
     public void processSkyLightQueueLoading() {
         // this is used when loading the world, so we don't remesh the chunks, we only process one at a time!
         processLightQueueOne(skyLightQueue, true, true);
     }
-    
+
     public void processSkyLightQueueLoading(int count) {
         // this is used when loading the world, so we don't remesh the chunks, we only process one at a time!
 
@@ -620,6 +630,7 @@ public partial class World : IDisposable {
             if (skyLightQueue.Count == 0) {
                 break; // no more nodes to process
             }
+
             processLightQueueOne(skyLightQueue, true, true);
         }
     }
@@ -635,15 +646,15 @@ public partial class World : IDisposable {
     public void processBlockLightRemovalQueue() {
         processLightRemovalQueue(blockLightRemovalQueue, blockLightQueue, false);
     }
-    
-    /** Uses <see cref="getChunkAndRelativePos"/> to make lookups faster! since it's probably in the chunk */ 
+
+    /** Uses <see cref="getChunkAndRelativePos"/> to make lookups faster! since it's probably in the chunk */
     public ushort getRelativeBlock(Chunk currentChunk, int x, int y, int z, Vector3I direction) {
         // get the neighbor chunk and relative position
         var neighbourPos = getChunkAndRelativePos(currentChunk, x, y, z, direction, out var neighbourChunk);
         if (neighbourChunk == null) {
             return 0; // no chunk loaded
         }
-        
+
         // return the block at the neighbour position
         return neighbourChunk.getBlock(neighbourPos.X, neighbourPos.Y, neighbourPos.Z);
     }
@@ -651,54 +662,54 @@ public partial class World : IDisposable {
     /// <summary>
     /// Gets the chunk and relative position for a neighbor of a block in chunk-relative coordinates
     /// </summary>
-    public Vector3I getChunkAndRelativePos(Chunk currentChunk, int x, int y, int z, Vector3I direction, out Chunk? chunk) {
+    public Vector3I getChunkAndRelativePos(Chunk currentChunk, int x, int y, int z, Vector3I direction,
+        out Chunk? chunk) {
         var neighbour = new Vector3I(x, y, z) + direction;
-        
+
         if (neighbour.Y is < 0 or >= WORLDHEIGHT) {
             chunk = null;
             return Vector3I.Zero;
         }
-        
+
         // Check if neighbor is within current chunk bounds (0-15 for X/Z)
         if (neighbour.X is >= 0 and < 16 && neighbour.Z is >= 0 and < 16) {
             chunk = currentChunk;
             return neighbour;
         }
-        
-        
+
+
         // todo this could be way simpler but it was buggy so im leaving the optimisation for later
         // neighbour crosses XZ boundary - calculate global position and find target chunk
         //var neighbourGlobal = toWorldPos(currentChunk.coord.x, currentChunk.coord.z, neighbourX, neighbourY, neighbourZ);
-        
+
         // get the chunk world coord by shifting the chunk-relative coordinates "out" of the number
         var newX = (currentChunk.coord.x << 4) + neighbour.X;
         var newZ = (currentChunk.coord.z << 4) + neighbour.Z;
-        
+
         // get target chunk
         // this assigns directly to the output variable! might be null, FYI
         if (!getChunkMaybe(newX, newZ, out var testChunk)) {
             chunk = null;
             return Vector3I.Zero; // Chunk not loaded, bail
         }
-        
-        
+
+
         chunk = testChunk;
         return new Vector3I(newX & 0xF, neighbour.Y, newZ & 0xF);
     }
-    
-    
+
+
     /**
      * If noUpdate, we're loading, don't bother invalidating chunks, they'll get remeshed *anyway*
      */
     public void processLightQueue(List<LightNode> queue, bool isSkylight, bool noUpdate = false) {
-        
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
             processLightQueueOne(queue, isSkylight, noUpdate);
         }
     }
-    
-    
+
+
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void processLightQueueOne(List<LightNode> queue, bool isSkylight, bool noUpdate) {
         var cnt = queue.Count;
@@ -768,8 +779,6 @@ public partial class World : IDisposable {
     }
 
     public void processLightRemovalQueue(List<LightRemovalNode> queue, List<LightNode> addQueue, bool isSkylight) {
-        
-        
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
             processLightRemovalQueueOne(queue, addQueue, isSkylight);
@@ -791,7 +800,9 @@ public partial class World : IDisposable {
                 continue;
             }
 
-            byte neighbourLevel = isSkylight ? neighborChunk.getSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z) : neighborChunk.getBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            byte neighbourLevel = isSkylight
+                ? neighborChunk.getSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z)
+                : neighborChunk.getBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
             var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
             if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                 if (isSkylight) {
@@ -802,14 +813,14 @@ public partial class World : IDisposable {
                 }
 
                 // Emplace new node to queue. (could use push as well)
-                queue.Add(new LightRemovalNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighbourLevel, neighborChunk));
+                queue.Add(new LightRemovalNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighbourLevel,
+                    neighborChunk));
             }
             else if (neighbourLevel >= level) {
                 // Add it to the update queue, so it can propagate to fill in the gaps
                 // left behind by this removal. We should update the lightBfsQueue after
                 // the lightRemovalBfsQueue is empty.
                 addQueue.Add(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
-
             }
         }
     }
@@ -826,7 +837,7 @@ public partial class World : IDisposable {
     public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance) {
         loadChunksAroundChunk(chunkCoord, renderDistance, ChunkStatus.MESHED);
     }
-    
+
     public void loadChunksAroundChunk(ChunkCoord chunkCoord, int renderDistance, ChunkStatus status) {
         // finally, mesh around renderDistance
         for (int x = chunkCoord.x - renderDistance; x <= chunkCoord.x + renderDistance; x++) {
@@ -837,7 +848,7 @@ public partial class World : IDisposable {
                 }
             }
         }
-        
+
         var playerChunk = player.getChunk();
         // unload chunks which are far away
         foreach (var chunk in chunks.Values) {
@@ -874,11 +885,11 @@ public partial class World : IDisposable {
     public void unloadChunk(ChunkCoord coord) {
         // save chunk asynchronously to prevent lagspikes
         worldIO.saveChunkAsync(this, chunks[coord]);
-        
+
         foreach (var l in listeners) {
             l.onChunkUnload(coord);
         }
-        
+
         // ONLY DO THIS WHEN IT'S ALREADY SAVED
         chunkList.Remove(chunks[coord]);
         chunks[coord].destroyChunk();
@@ -897,26 +908,25 @@ public partial class World : IDisposable {
     }
 
     public void Dispose() {
-        
         foreach (var l in listeners) {
             l.onWorldUnload();
         }
-        
+
         // stop automatic saves
         saveWorld.enabled = false;
         Game.clearInterval(saveWorld);
         saveWorld = null!;
-        
+
         // stop the chunksave queue and save pending chunks
         worldIO.Dispose();
-        
+
         // of course, we can save it here since WE call it and not the GC
         // save the whole thing
         worldIO.save(this, name);
-        
-        
+
+
         ReleaseUnmanagedResources();
-        
+
         Game.world = null;
         Game.player = null;
         //Game.renderer = null;
@@ -968,14 +978,18 @@ public partial class World : IDisposable {
 
         // right now we only generate, not load
         // if it's already generated, don't do it again
-        if (status >= ChunkStatus.GENERATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
+        if (status >= ChunkStatus.GENERATED &&
+            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
             if (!chunkAdded) {
                 c = new Chunk(this, chunkCoord.x, chunkCoord.z);
                 addChunk(chunkCoord, c);
             }
+
             generator.generate(chunkCoord);
         }
-        if (status >= ChunkStatus.POPULATED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
+
+        if (status >= ChunkStatus.POPULATED &&
+            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
             // load adjacent first
             loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z), ChunkStatus.GENERATED);
             loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.GENERATED);
@@ -990,10 +1004,14 @@ public partial class World : IDisposable {
 
             generator.populate(chunkCoord);
         }
-        if (status >= ChunkStatus.LIGHTED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
+
+        if (status >= ChunkStatus.LIGHTED &&
+            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
             chunks[chunkCoord].lightChunk();
         }
-        if (status >= ChunkStatus.MESHED && (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
+
+        if (status >= ChunkStatus.MESHED &&
+            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
             // load adjacent first
             loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z), ChunkStatus.LIGHTED);
             loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.LIGHTED);
@@ -1006,24 +1024,24 @@ public partial class World : IDisposable {
             loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1), ChunkStatus.LIGHTED);
             chunks[chunkCoord].meshChunk();
         }
-        
+
         // reassign any entities waiting for this chunk
         loadEntitiesIntoChunk(chunkCoord);
-        
+
         return chunks[chunkCoord];
     }
-    
+
     // MAKE IT SO ONLY THE ORIGINAL BLOCK IS UPDATED
     // and the neighbours are notifiyed of this update
     // and they can decide what to do, THEY ARE NOT UPDATED THEMSELVES
-    
+
     /**
-     * ID is the new 
+     * ID is the new
      */
     public void blockScheduledUpdate(int x, int y, int z) {
         Block.get(getBlock(x, y, z)).scheduledUpdate(this, x, y, z);
     }
-    
+
     public void blockUpdateNeighbours(int x, int y, int z) {
         Block.get(getBlock(x, y, z)).update(this, x, y, z);
         foreach (var dir in Direction.directions) {
@@ -1031,7 +1049,7 @@ public partial class World : IDisposable {
             Block.get(getBlock(neighbourBlock)).update(this, neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z);
         }
     }
-    
+
     public void blockUpdateNeighboursOnly(int x, int y, int z) {
         foreach (var dir in Direction.directions) {
             var neighbourBlock = new Vector3I(x, y, z) + dir;

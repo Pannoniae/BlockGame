@@ -59,7 +59,7 @@ public class SubChunk {
             var y1 = coord.Y;
             var z1 = coord.Z;
             // if dirt + air above
-            if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Blocks.DIRT && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == 0) {
+            if (world.getBlock(x + x1 - 3, y + y1 - 3, z + z1 - 3) == Blocks.DIRT && world.getBlock(x + x1 - 3, y + y1 - 2, z + z1 - 3) == Blocks.AIR) {
                 world.setBlockDumb(x + x1 - 3, y + y1 - 3, z + z1 - 3, Blocks.GRASS);
                 // dirty this chunk
                 world.dirtyChunk(this.coord);

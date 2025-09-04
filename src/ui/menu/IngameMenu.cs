@@ -102,8 +102,8 @@ public class IngameMenu : Menu, IDisposable {
                 new Color4b(0, 255, 0));
                 
             // Draw mode indicator
-            string modeText = segmentedMode ? "Segmented" : "Simple";
-            gui.drawStringThin($"[F4] {modeText}",
+            string modeText = segmentedMode ? "[F4] Segmented" : "[F4] Simple";
+            gui.drawStringThin(modeText,
                 new Vector2(graphX + GRAPH_WIDTH - 80, graphY - 40),
                 new Color4b(200, 200, 200));
 
@@ -348,8 +348,7 @@ public class IngameMenu : Menu, IDisposable {
                 m.renderedVerts / 1000);
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
-            debugStr.AppendFormat("FPS:{0} (ft:{1:0.##}ms)\n", i.fps, i.ft * 1000);
-            debugStr.AppendFormat("Chunk updates: {0}\n", m.chunksUpdated);
+            debugStr.AppendFormat("FPS:{0} Chunk updates: {1}\n", i.fps, m.chunksUpdated);
             // clear chunk updates after displaying for next measurement period
             m.clearChunkUpdates();
 
