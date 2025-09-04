@@ -329,9 +329,6 @@ public class Player : Entity {
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
             hotbar.selected = (ushort)(key - Key.Number0 - 1);
-            if (!Block.tryGet(hotbar.getSelected().id, out _)) {
-                hotbar.selected = 1;
-            }
         }
     }
 
