@@ -11,6 +11,8 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     
     public int atlasSize;
     
+    public bool firstLoad = true;
+    
     public List<DynamicTexture> dtextures = [];
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
@@ -160,10 +162,13 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         // Load image
         // Thanks ClassiCube for the idea!
         generateMipmaps(imageData.Span, image.Width, image.Height, maxLevel);
-        
-        
-        addDynamicTexture(new StillWaterTexture(this));
-        addDynamicTexture(new FlowingWaterTexture(this));
+
+        if (firstLoad) {
+            addDynamicTexture(new StillWaterTexture(this));
+            addDynamicTexture(new FlowingWaterTexture(this));
+        }
+
+        firstLoad = false;
     }
 
 
@@ -179,6 +184,10 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     public void update(double dt) {
         foreach (var dtexture in dtextures) {
             dtexture.tick();
+        }
+        // update mipmaps
+        if (Settings.instance.mipmapping > 0) {
+            generateMipmaps(imageData.Span, image.Width, image.Height, Settings.instance.mipmapping);
         }
     }
 }

@@ -203,14 +203,13 @@ public partial class Game {
             GL.Enable(EnableCap.SampleShading);
             GL.MinSampleShading(1.0f); // force per-sample shading
             sampleShadingEnabled = true;
-            // Enable A2C
-            GL.Enable(EnableCap.SampleAlphaToCoverage);
         }
         else if (sampleShadingSupported) {
             GL.Disable(EnableCap.SampleShading);
             sampleShadingEnabled = false;
-            GL.Disable(EnableCap.SampleAlphaToCoverage);
         }
+        
+        
 
         throwawayVAO = GL.CreateVertexArray();
     }
@@ -219,7 +218,6 @@ public partial class Game {
         if (sampleShadingSupported) {
             GL.Disable(EnableCap.SampleShading); // disable per-sample shading
             sampleShadingEnabled = false;
-            GL.Disable(EnableCap.SampleAlphaToCoverage);
         }
 
         GL.DeleteFramebuffer(fbo);

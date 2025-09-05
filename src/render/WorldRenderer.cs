@@ -23,6 +23,7 @@ public readonly record struct ChunkUniforms(Vector3 uChunkPos) {
 public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public World? world;
     private int currentAnisoLevel = -1;
+    private int currentMSAA = -1;
 
     public Silk.NET.OpenGL.Legacy.GL GL;
 
@@ -266,7 +267,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var defs = new List<Definition> {
             new("ANISO_LEVEL", anisoLevel.ToString()),
-            new("DEBUG_ANISO", "0")
+            new("DEBUG_ANISO", "0"),
+            new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 ? "1" : "0")
         };
 
         // Add variant-specific defines
@@ -320,10 +322,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public void updateAF() {
         var settings = Settings.instance;
         var anisoLevel = settings.anisotropy;
+        var msaa = settings.msaa;
 
-        if (currentAnisoLevel != anisoLevel) {
+        if (currentAnisoLevel != anisoLevel || currentMSAA != msaa) {
             worldShader?.Dispose();
             worldShader = createWorldShader();
+
+            currentAnisoLevel = anisoLevel;
+            currentMSAA = msaa;
 
             // re-get uniform locations since we have a new shader
             blockTexture = worldShader.getUniformLocation(nameof(blockTexture));
@@ -334,6 +340,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
+            
 
             // re-bind texture units
             worldShader.setUniform(blockTexture, 0);
@@ -441,14 +448,25 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
         setUniforms();
+        
+        // if not a2c, blend
         GL.Enable(EnableCap.Blend);
         GL.DepthMask(false);
         // render sky
+        
         renderSky(interp);
         GL.DepthMask(true);
 
         // no blending solid shit!
-        //GL.Disable(EnableCap.Blend);
+        GL.Disable(EnableCap.Blend);
+        
+        // Enable A2C whenever MSAA is active for alpha-tested geometry (leaves)
+        if (Settings.instance.msaa > 1) {
+            GL.Enable(EnableCap.SampleAlphaToCoverage);
+        }
+        else {
+            GL.Disable(EnableCap.SampleAlphaToCoverage);
+        }
 
         //worldShader.use();
 
@@ -463,13 +481,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // enable unified memory for chunk rendering
         if (Game.hasVBUM && Game.hasSBL) {
             #pragma warning disable CS0618 // Type or member is obsolete
-            Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.VertexAttribArrayUnifiedNV);
-            Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.ElementArrayUnifiedNV);
-            Game.GL.EnableClientState((Silk.NET.OpenGL.Legacy.EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GL.EnableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
+            Game.GL.EnableClientState((EnableCap)NV.ElementArrayUnifiedNV);
+            Game.GL.EnableClientState((EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
 
             // set up element array address (shared index buffer)
-            Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.ElementArrayAddressNV, 0,
+            Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0,
                 elementAddress,
                 Game.graphics.fatQuadIndicesLen);
         }
@@ -699,7 +717,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // start blending at transparent stuff
-        //GL.Enable(EnableCap.Blend);
+        GL.Enable(EnableCap.Blend);
+        GL.Disable(EnableCap.SampleAlphaToCoverage);
 
         GL.Disable(EnableCap.CullFace);
 

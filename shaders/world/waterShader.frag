@@ -17,8 +17,15 @@ uniform sampler2D lightTexture;
 
 
 void main() {
-
-    vec4 blockColour = texture(blockTexture, texCoords);
+    
+    vec4 blockColour;
+    #if ANISO_LEVEL == 0
+        // no anisotropic filtering, use regular texture lookup
+        blockColour = texture(blockTexture, texCoords);
+    #else
+        // use anisotropic filtering
+        blockColour = textureAF(blockTexture, texCoords);
+    #endif
     float ratio = calculateFogFactor(vertexDist);
     
     // combine block color with lighting and base tint
