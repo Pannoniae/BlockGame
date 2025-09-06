@@ -694,7 +694,7 @@ public partial class Game {
 
             // setup auxiliary
             renderer.setWorld(world);
-            blockRenderer.world = world;
+            blockRenderer.setWorld(world);
         }
     }
 

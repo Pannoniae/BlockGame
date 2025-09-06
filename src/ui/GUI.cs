@@ -681,8 +681,8 @@ public class GUI {
         }*/
 
         Game.blockRenderer.setupStandalone();
-        Game.blockRenderer.renderBlock(block, Vector3I.Zero, guiBlock, 
-            lightOverride: 255, cullFaces: false, metadata: metadata);
+        Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock, 
+            lightOverride: 255, cullFaces: false);
         
         // assemble the matrix using existing matrix stacks from Graphics
         Game.graphics.projection.push();

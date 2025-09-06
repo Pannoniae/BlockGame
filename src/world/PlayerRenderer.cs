@@ -59,7 +59,7 @@ public class PlayerRenderer {
         Game.blockRenderer.setupStandalone();
 
         if (handItem.getItem().isBlock()) {
-            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), Vector3I.Zero, vertices,
+            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero, vertices,
                 lightOverride: (byte)world.getBrightness(light, (byte)world.getSkyDarkenFloat(world.worldTick)), cullFaces: false);
         }
 

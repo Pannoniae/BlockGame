@@ -90,7 +90,6 @@ public class BlockRenderer {
     // setup for world context
     // do we need this?
     public unsafe void setupWorld(bool smoothLighting = true, bool AO = true) {
-        setWorld(world);
         this.smoothLighting = smoothLighting && Settings.instance.smoothLighting;
         this.AO = AO && Settings.instance.AO;
         isRenderingWorld = true;
@@ -108,6 +107,10 @@ public class BlockRenderer {
         Array.Clear(neighbourSections);
         
         this.world = world;
+        
+        smoothLighting = smoothLighting && Settings.instance.smoothLighting;
+        AO = AO && Settings.instance.AO;
+        isRenderingWorld = true;
     }
 
     public uint getBlock() {
@@ -489,11 +492,10 @@ public class BlockRenderer {
     /// <summary>
     /// Core block rendering method that handles both world and GUI stuff.
     /// </summary>
-    public void renderBlock(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
+    public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
                            byte lightOverride = 255,
                            Color4b tintOverride = default,
-                           bool cullFaces = true,
-                           byte metadata = 0) {
+                           bool cullFaces = true) {
         
         vertices.Clear();
         
@@ -511,7 +513,6 @@ public class BlockRenderer {
     private unsafe void renderBlockWorld(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode, bool cullFaces) {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
-        Span<ushort> tempIndices = stackalloc ushort[6];
 
         ref Face facesRef = ref MemoryMarshal.GetArrayDataReference(block.model.faces);
         
@@ -570,7 +571,6 @@ public class BlockRenderer {
     private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride, Color4b tintOverride, byte metadata = 0) {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
-        Span<ushort> tempIndices = stackalloc ushort[6];
         
         var blockID = block.getID();
         var bl = Block.get(blockID);
@@ -663,7 +663,7 @@ public class BlockRenderer {
                 var txm = tx + 1;
                 var uvx = Block.texCoords(tx);
                 var uvxm = Block.texCoords(txm);
-                renderCube(this, x, y, z, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X + 1, uvxm.Y);
+                renderCube(this, x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
                 // cube using metadata-based dynamic texture
@@ -671,7 +671,10 @@ public class BlockRenderer {
                 var dynTexm = dynTex + 1;
                 var uvd = Block.texCoords(dynTex);
                 var uvdm = Block.texCoords(dynTexm);
-                renderCube(this, x, y, z, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
+                
+                // USE LOCAL COORDS
+                renderCube(this, x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
+
                 break;
             case RenderType.CROSS:
                 // todo
@@ -1023,6 +1026,9 @@ public class BlockRenderer {
         var AO = Settings.instance.AO;
         //ushort cv = 0;
         //ushort ci = 0;
+        
+        // setup blockrenderer
+        setupWorld(smoothLighting, AO);
 
         for (int idx = 0; idx < Chunk.MAXINDEX; idx++) {
             
