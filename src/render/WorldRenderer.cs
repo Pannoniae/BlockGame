@@ -282,7 +282,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     private void initializeShaders() {
         worldShader = createWorldShader();
-        dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert");
+        
+        // some integrated AMD cards shit themselves when they see a vertex shader-only program. IDK which ones (it works on my dedicated AMD card)
+        // but for safety, I'll just make it render fragments too on any non-NV card
+
+        if (Game.isNVCard) {
+            dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert");
+        }
+        else {
+            dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert",
+                "shaders/world/dummyShader.frag");
+        }
+
         waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/world/waterShader.vert",
             "shaders/world/waterShader.frag");
     }
@@ -526,7 +537,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // chunkData index
         int cd = 0;
-        chunkData.Clear();
+        if (Game.hasInstancedUBO) {
+            chunkData.Clear();
+        }
 
         var noCulling = !Settings.instance.frustumCulling;
 
@@ -662,8 +675,17 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //goto skip;
 
         // TRANSLUCENT DEPTH PRE-PASS
-        dummyShader.use();
-        dummyShader.setUniform(dummyuMVP, viewProj);
+        
+        // if integrated shit, don't do depth pre-pass
+        if (Game.isAMDIntegratedCard || Game.isIntelIntegratedCard) {
+            waterShader.use();
+            waterShader.setUniform(wateruMVP, viewProj);
+            waterShader.setUniform(wateruCameraPos, new Vector3(0));
+        }
+        else {
+            dummyShader.use();
+            dummyShader.setUniform(dummyuMVP, viewProj);
+        }
 
         GL.ColorMask(false, false, false, false);
 
@@ -698,7 +720,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
-                    drawTransparentDummy(subChunk, cameraPos);
+                    if (Game.isAMDIntegratedCard || Game.isIntelIntegratedCard) {
+                        drawTransparent(subChunk, cameraPos);
+                    }
+                    else {
+                        drawTransparentDummy(subChunk, cameraPos);
+                    }
                 }
             }
         }
@@ -729,8 +756,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(wateruCameraPos, new Vector3(0));
 
         GL.ColorMask(true, true, true, true);
-        GL.DepthMask(false);
-        GL.DepthFunc(DepthFunction.Lequal);
+        //GL.DepthMask(false);
+        Game.graphics.setDepthFunction();
 
         cd = 0;
         if (usingCMDL) {
@@ -801,7 +828,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, 0);
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, 0);*/
 
-        GL.DepthMask(true);
+        //GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
         world.particles.render(interp);
     }

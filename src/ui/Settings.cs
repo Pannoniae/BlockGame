@@ -20,6 +20,7 @@ public class Settings {
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
     public bool frustumCulling = true;
     public bool crtEffect = false;
+    public bool reverseZ = false; // reverse-Z depth buffer for improved precision
 
     public static readonly Settings instance = new();
 
@@ -104,6 +105,7 @@ public class Settings {
         tag.addByte("smoothDayNight", (byte)(smoothDayNight ? 1 : 0));
         tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
         tag.addByte("crtEffect", (byte)(crtEffect ? 1 : 0));
+        tag.addByte("reverseZ", (byte)(reverseZ ? 1 : 0));
         
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
@@ -131,6 +133,7 @@ public class Settings {
             smoothDayNight = tag.getByte("smoothDayNight") != 0;
             frustumCulling = tag.getByte("frustumCulling") != 0;
             crtEffect = tag.getByte("crtEffect") != 0;
+            reverseZ = tag.getByte("reverseZ") != 0;
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);
             

@@ -713,7 +713,7 @@ public class GameScreen : Screen {
         var world = Game.world;
         var clearColour = world?.getHorizonColour(world.worldTick) ?? WorldRenderer.defaultClearColour;
         Game.graphics.clearColor(clearColour);
-        Game.GL.ClearDepth(1f);
+        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

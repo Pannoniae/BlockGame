@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
@@ -76,6 +77,42 @@ public class Graphics : IDisposable {
     public void clearColor(Color4b color) {
         GL.ClearColor(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
        // GL.ClearColor(0, 0, 0, 255);
+    }
+
+    /// <summary>
+    /// Sets up depth testing with correct function and clear value based on reverse-Z setting.
+    /// </summary>
+    public void setupDepthTesting() {
+        GL.Enable(EnableCap.DepthTest);
+        if (Settings.instance.reverseZ) {
+            GL.DepthFunc(DepthFunction.Gequal);
+            GL.ClearDepth(0.0);
+        } else {
+            GL.DepthFunc(DepthFunction.Lequal);
+            GL.ClearDepth(1.0);
+        }
+    }
+
+    /// <summary>
+    /// Clears depth buffer with correct clear value for current depth mode.
+    /// </summary>
+    public void clearDepth() {
+        if (Settings.instance.reverseZ) {
+            GL.ClearDepth(0.0);
+        } else {
+            GL.ClearDepth(1.0);
+        }
+    }
+
+    /// <summary>
+    /// Sets the depth function based on current depth mode (reverse-Z or normal).
+    /// </summary>
+    public void setDepthFunction() {
+        if (Settings.instance.reverseZ) {
+            GL.DepthFunc(DepthFunction.Gequal);
+        } else {
+            GL.DepthFunc(DepthFunction.Lequal);
+        }
     }
 
     public void setViewport(int x, int y, int width, int height) {

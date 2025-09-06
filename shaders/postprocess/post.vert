@@ -1,6 +1,6 @@
 #version 430 core
 
-out vec2 v_texCoord;
+centroid out vec2 v_texCoord;
 
 // we only draw 1 triangle. this is the shortest vtx shader i could come up with lol
 

@@ -117,7 +117,7 @@ public sealed class SharedBlockVAO : VAO {
             GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
-            GL.VertexAttribIFormat(3, 1, VertexAttribIType.Byte, 0 + 7 * sizeof(ushort));
+            GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 7 * sizeof(ushort));
             GL.VertexAttribFormat(4, 4, VertexAttribType.Float, false, 0);
 
             GL.VertexAttribBinding(0, 0);
@@ -141,7 +141,6 @@ public sealed class SharedBlockVAO : VAO {
         }
         // normal path
         else {
-            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
 
             // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
             GL.EnableVertexAttribArray(0);
@@ -152,12 +151,14 @@ public sealed class SharedBlockVAO : VAO {
             GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
             GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
             GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
-            GL.VertexAttribIFormat(3, 1, VertexAttribIType.Byte, 0 + 7 * sizeof(ushort));
+            GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 7 * sizeof(ushort));
 
             GL.VertexAttribBinding(0, 0);
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
             GL.VertexAttribBinding(3, 0);
+            
+            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
         }
     }
 

@@ -2,16 +2,21 @@
 
 #ifdef NV_EXTENSIONS
 #extension GL_NV_gpu_shader5 : enable
+#endif
+
+#ifdef NV_COMMAND_LIST
 #extension GL_NV_command_list : enable
 #endif
 
+#ifdef INSTANCED_RENDERING
 #extension GL_ARB_shader_draw_parameters : enable
+#endif
 
 
 layout (location = 0) in uvec3 vPos;
 layout (location = 1) in uvec2 texCoord;
 layout (location = 2) in vec4 colour;
-layout (location = 3) in uint vLight;
+layout (location = 3) in uvec2 vLight;
 
 #ifdef NV_COMMAND_LIST
 layout (location = 4) in vec3 aChunkOffset;
@@ -58,7 +63,7 @@ void main() {
     gl_Position = uMVP * vec4(pos, 1.0);
     texCoords = texCoord * n;
     
-    uint light = vLight & 0xFFu;
+    uint light = vLight.x & 0xFFu;
     
     // extract skylight and blocklight from packed light data (0-15)
     ivec2 lightCoords = ivec2((light >> 4) & 0xFu, light & 0xFu);

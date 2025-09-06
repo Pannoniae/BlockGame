@@ -9,7 +9,7 @@ layout (location = 3) in vec4 vNormal;
 #endif
 
 // Common vertex outputs
-out vec2 texCoords;
+centroid out vec2 texCoords;
 out vec4 colour;
 out vec4 viewPosition;
 

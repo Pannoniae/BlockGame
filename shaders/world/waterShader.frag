@@ -1,5 +1,7 @@
 ﻿#version 440
+#ifdef NV_COMMAND_LIST
 #extension GL_NV_command_list : enable
+#endif
 
 //layout(commandBindableNV) uniform;
 

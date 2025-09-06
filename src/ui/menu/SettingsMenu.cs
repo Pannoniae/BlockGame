@@ -240,6 +240,19 @@ public class SettingsMenu : Menu {
         settingElements.Add(crtEffect);
         addElement(crtEffect);
 
+        var reverseZ = new ToggleButton(this, "reverseZ", false, settings.reverseZ ? 1 : 0,
+            "Reverse-Z: OFF", "Reverse-Z: ON");
+        reverseZ.topCentre();
+        reverseZ.clicked += _ => {
+            settings.reverseZ = reverseZ.getIndex() == 1;
+            Game.instance.updateFramebuffers();
+            // Depth state will be updated on next frame
+        };
+        reverseZ.tooltip =
+            "Reverse-Z depth buffer provides much better depth precision.\nReduces Z-fighting and allows infinite view distances.\nRequires graphics restart to take effect.";
+        settingElements.Add(reverseZ);
+        addElement(reverseZ);
+
         // Windows Defender exclusion (Windows only)
         if (OperatingSystem.IsWindows()) {
             var defenderExclusion = new Button(this, "defenderExclusion", false, "Add Defender Exclusion");
@@ -309,7 +322,7 @@ public class SettingsMenu : Menu {
 
     public override void clear(double dt, double interp) {
         Game.graphics.clearColor(Color4b.SlateGray);
-        Game.GL.ClearDepth(1f);
+        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

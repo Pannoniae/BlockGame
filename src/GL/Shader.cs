@@ -231,6 +231,11 @@ public partial class Shader : IDisposable {
     public uint load(string shader, ShaderType type) {
         unsafe {
             var shaderHandle = GL.CreateShader(type);
+            
+            // set debug name
+            var debugName = $"{name}_{type}";
+            GL.ObjectLabel(GLEnum.Shader, shaderHandle, (uint)debugName.Length, debugName);
+            
             GL.ShaderSource(shaderHandle, shader);
         
             if (Game.hasShadingLanguageInclude) {
@@ -290,6 +295,10 @@ public partial class Shader : IDisposable {
 
     public void link(uint vert, uint frag) {
         programHandle = GL.CreateProgram();
+        
+        // set debug name for program
+        GL.ObjectLabel(GLEnum.Program, programHandle, (uint)name.Length, name);
+        
         GL.AttachShader(programHandle, vert);
         GL.AttachShader(programHandle, frag);
         GL.LinkProgram(programHandle);
@@ -306,6 +315,10 @@ public partial class Shader : IDisposable {
 
     private void link(uint vert) {
         programHandle = GL.CreateProgram();
+        
+        // set debug name for program
+        GL.ObjectLabel(GLEnum.Program, programHandle, (uint)name.Length, name);
+        
         GL.AttachShader(programHandle, vert);
         GL.LinkProgram(programHandle);
         GL.GetProgram(programHandle, GLEnum.LinkStatus, out var status);

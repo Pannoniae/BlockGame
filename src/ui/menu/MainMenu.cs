@@ -9,7 +9,7 @@ public class MainMenu : Menu {
         var title = new Image(this, "title", "textures/title.png");
         title.setPosition(new Vector2I(0, -75));
         title.centreContents();
-        title.setScale(1.5f);
+        title.setScale(2f);
 
 
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
@@ -46,7 +46,7 @@ public class MainMenu : Menu {
 
     public override void clear(double dt, double interp) {
         Game.graphics.clearColor(Color4b.Black);
-        Game.GL.ClearDepth(1f);
+        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

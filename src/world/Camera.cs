@@ -337,15 +337,63 @@ public class Camera {
     public Matrix4x4 getProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance * 2) * Chunk.CHUNKSIZE);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(currentFov), aspectRatio, 0.1f, maxPlane);
+        const float nearPlane = 0.1f;
+        
+        if (Settings.instance.reverseZ) {
+            // reverse-Z: swap near and far, use infinite far plane
+            return createReverseZProjectionMatrix(Meth.deg2rad(currentFov), aspectRatio, nearPlane, maxPlane);
+        }
+        
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(currentFov), aspectRatio, nearPlane, maxPlane);
     }
 
     public Matrix4x4 getFixedProjectionMatrix() {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance * 2) * Chunk.CHUNKSIZE);
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(normalFov), aspectRatio, 0.1f, maxPlane);
+        const float nearPlane = 0.1f;
+        
+        if (Settings.instance.reverseZ) {
+            // reverse-Z: swap near and far, use infinite far plane
+            return createReverseZProjectionMatrix(Meth.deg2rad(normalFov), aspectRatio, nearPlane, maxPlane);
+        }
+        
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(normalFov), aspectRatio, nearPlane, maxPlane);
     }
 
+
+    /// <summary>
+    /// Creates a reverse-Z projection matrix with infinite far plane for optimal depth precision or something. "Try the numbers until it works" -pannie
+    /// Help from https://github.com/Qendolin/farz-poc/blob/main/src/client/java/com/qendolin/farz/Util.java:
+    /// </summary>
+    private static Matrix4x4 createReverseZProjectionMatrix(float fov, float aspectRatio, float nearPlane, int maxPlane) {
+        var f = 1.0f / MathF.Tan(fov * 0.5f);
+        /*return new Matrix4x4(
+            f / aspectRatio, 0, 0, 0,
+            0, f, 0, 0,
+            0, 0, 0, 1,
+            0, 0, nearPlane, 0 // reverse-Z: Z maps [near, inf] -> [1, 0]
+        );*/
+        
+        float C, D;
+        
+            // Reverse-Z, [0, 1] Range (Infinite Far)
+            // Near maps to 1, Far (infinity) maps to 0
+            C = 0.0f;
+            D = nearPlane;
+
+        var mat = new Matrix4x4();
+
+        mat.M11 = f / aspectRatio;
+        mat.M22 = f;
+        mat.M33 = C;
+        mat.M34 = 1.0f; // Maps eye-space Z into W component
+        mat.M43 = D; // Maps near plane correctly
+        mat.M44 = 0.0f;
+
+        //mat = Matrix4x4.Transpose(mat);
+
+        return mat;
+    }
 
     /// <summary>
     /// Converts horizontal FOV to vertical FOV.

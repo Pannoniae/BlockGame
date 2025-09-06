@@ -391,8 +391,42 @@ public partial class Game {
         
         // check if this is an NVIDIA card
         var vendor = GL.GetStringS(StringName.Vendor);
+        var rendererS = GL.GetStringS(StringName.Renderer);
         isNVCard = vendor.Contains("NVIDIA", StringComparison.OrdinalIgnoreCase);
-        Log.info($"GPU Vendor: {vendor} (NVIDIA: {isNVCard})");
+        
+        Log.info($"GPU vendor: {vendor}");
+        
+        Log.info($"(NVIDIA: {isNVCard})");
+        //isNVCard = false;
+        
+        // check if this is an AMD card
+        isAMDCard = vendor.Contains("AMD", StringComparison.OrdinalIgnoreCase) ||
+                    vendor.Contains("ATI");
+        
+        Log.info($"(AMD: {isAMDCard})");
+        
+        //isAMDCard = true;
+        
+        // check for AMD integrated graphics
+        isAMDIntegratedCard = isAMDCard && (vendor.Contains("Radeon Vega", StringComparison.OrdinalIgnoreCase) ||
+                                           vendor.Contains("Radeon Graphics", StringComparison.OrdinalIgnoreCase) ||
+                                           vendor.Contains("Radeon(TM) Graphics", StringComparison.OrdinalIgnoreCase)
+                                           || rendererS.Contains("Radeon Vega", StringComparison.OrdinalIgnoreCase) ||
+                                             rendererS.Contains("Radeon Graphics", StringComparison.OrdinalIgnoreCase) ||
+                                           rendererS.Contains("Radeon(TM) Graphics", StringComparison.OrdinalIgnoreCase) ||
+                                           (rendererS.Contains("Radeon", StringComparison.OrdinalIgnoreCase) && rendererS.Contains("Graphics", StringComparison.OrdinalIgnoreCase)));
+        
+        Log.info($"(AMD integrated: {isAMDIntegratedCard})");
+
+        //isAMDIntegratedCard = true;
+        
+        // check if this is an Intel iGPU
+        isIntelIntegratedCard = vendor.Contains("Intel", StringComparison.OrdinalIgnoreCase) &&
+                                 (vendor.Contains("UHD", StringComparison.OrdinalIgnoreCase) ||
+                                  vendor.Contains("Iris", StringComparison.OrdinalIgnoreCase) ||
+                                  vendor.Contains("HD Graphics", StringComparison.OrdinalIgnoreCase));
+        
+        Log.info($"(Intel integrated: {isIntelIntegratedCard})");
         
         // check for NV shader buffer load support
         hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
@@ -419,6 +453,12 @@ public partial class Game {
         Log.info($"gl_BaseInstance UBO rendering supported: {hasInstancedUBO}");
         //hasInstancedUBO = false;
         
+        // if AMD integrated, disable it too because it doesn't work
+        if (isIntelIntegratedCard) {
+            Log.info("Disabling gl_BaseInstance UBO rendering on integrated GPUs!");
+            hasInstancedUBO = false;
+        }
+        
         GL.TryGetExtension(out extbu);
         
         // check for NV_command_list support
@@ -437,7 +477,13 @@ public partial class Game {
         hasShadingLanguageInclude = GL.TryGetExtension(out ArbShadingLanguageInclude arbShadingLanguageInclude);
         arbInclude = arbShadingLanguageInclude;
         Log.info($"ARB_shading_language_include supported: {hasShadingLanguageInclude}");
-        //hasShadingLanguageInclude = false;
+        hasShadingLanguageInclude = false;
+        
+        // check for ARB_shader_draw_parameters support (OpenGL 4.6)
+        hasShaderDrawParameters = (majorVersion > 4) || (majorVersion == 4 && minorVersion >= 6) ||
+                                  GL.IsExtensionPresent("ARB_shader_draw_parameters");
+        Log.info($"ARB_shader_draw_parameters supported: {hasShaderDrawParameters}");
+        //hasShaderDrawParameters = false;
         
         // print all valid anti-aliasing modes
         printAntiAliasingModes();
@@ -484,9 +530,6 @@ public partial class Game {
         GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        GL.Enable(EnableCap.DepthTest);
-        GL.DepthFunc(DepthFunction.Lequal);
-
         //GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.CullFace(GLEnum.Back);
@@ -497,6 +540,9 @@ public partial class Game {
         Settings.instance.load();
 
         graphics = new Graphics();
+        
+        // setup depth testing with reverse-Z support
+        graphics.setupDepthTesting();
 
         camera = new Camera(Constants.initialWidth, Constants.initialHeight);
         

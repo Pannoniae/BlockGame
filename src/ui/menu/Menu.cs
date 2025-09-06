@@ -146,7 +146,7 @@ public class Menu {
 
     public virtual void clear(double dt, double interp) {
         Game.graphics.clearColor(WorldRenderer.defaultClearColour);
-        Game.GL.ClearDepth(1f);
+        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

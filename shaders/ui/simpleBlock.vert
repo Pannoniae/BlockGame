@@ -7,7 +7,7 @@ layout (location = 2) in vec4 tintValue;
 uniform mat4 uMVP;
 
 
-out vec2 texCoords;
+centroid out vec2 texCoords;
 out vec4 tint;
 
 out vec3 vertexPos;

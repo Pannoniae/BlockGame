@@ -27,7 +27,15 @@ public partial class Game {
     public static bool hasCMDL = false;
     public static bool hasBindlessMDI = false;
     public static bool isNVCard = false;
+    public static bool isAMDCard = false;
+    
+    // time for the shitware
+    public static bool isIntegratedCard = false;
+    public static bool isAMDIntegratedCard = false;
+    public static bool isIntelIntegratedCard = false;
+    
     public static bool hasShadingLanguageInclude = false;
+    public static bool hasShaderDrawParameters = false;
     
     public static long[] supportedMSAASamples = [];
     public static int maxMSAASamples = 1;
@@ -132,8 +140,9 @@ public partial class Game {
             // Create multisampled depth buffer
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.CreateRenderbuffer();
+            var depthFormat = Settings.instance.reverseZ ? InternalFormat.DepthComponent32f : InternalFormat.DepthComponent24;
             GL.NamedRenderbufferStorageMultisample(depthBuffer, (uint)samples,
-                InternalFormat.DepthComponent, (uint)ssaaWidth, (uint)ssaaHeight);
+                depthFormat, (uint)ssaaWidth, (uint)ssaaHeight);
 
             // Attach to MSAA framebuffer
             GL.NamedFramebufferTexture(fbo, FramebufferAttachment.ColorAttachment0, FBOtex, 0);
@@ -180,7 +189,8 @@ public partial class Game {
 
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.CreateRenderbuffer();
-            GL.NamedRenderbufferStorage(depthBuffer, InternalFormat.DepthComponent, (uint)ssaaWidth,
+            var depthFormat = Settings.instance.reverseZ ? InternalFormat.DepthComponent32f : InternalFormat.DepthComponent24;
+            GL.NamedRenderbufferStorage(depthBuffer, depthFormat, (uint)ssaaWidth,
                 (uint)ssaaHeight);
 
             GL.NamedFramebufferTexture(fbo, FramebufferAttachment.ColorAttachment0, FBOtex, 0);
