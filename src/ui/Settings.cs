@@ -12,7 +12,9 @@ public class Settings {
     public float FOV = 75;
     public int mipmapping = 0;
     public int anisotropy = 0; // 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
-    public int antiAliasing = 0; // 0=Off, 1=FXAA, 2=2xMSAA, 3=4xMSAA, 4=2xSSAA, 5=4xSSAA, 6=2xMSAA+2xSSAA, 7=4xMSAA+2xSSAA, 8=4xMSAA+4xSSAA
+    public bool fxaaEnabled = false;
+    public int msaaSamples = 1; // 1, 2, 4, 8, 16, 32
+    public int ssaaScale = 1; // 1, 2 (2x2), 4 (4x4)
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public bool fullscreen = false;
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
@@ -24,48 +26,48 @@ public class Settings {
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => antiAliasing > 0 || Game.hasCMDL || crtEffect;
+    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || Game.hasCMDL || crtEffect;
     
     /// <summary>
     /// Whether FXAA is enabled.
     /// </summary>
-    public bool fxaa => antiAliasing == 1;
+    public bool fxaa => fxaaEnabled;
     
     /// <summary>
     /// SSAA multiplier (1, 2, or 4).
     /// </summary>
     public int ssaa {
         get {
-            var factor = antiAliasing switch {
-                4 or 6 or 7 => 2, // 2xSSAA, 2xMSAA+2xSSAA, 4xMSAA+2xSSAA
-                5 or 8 => 4, // 4xSSAA, 4xMSAA+4xSSAA
-                _ => 1
-            };
-            
             // per-sample mode doesn't use traditional SSAA scaling
             if (ssaaMode == 2) return 1;
             
-            return factor;
+            return ssaaScale;
         }
     }
 
     /// <summary>
-    /// MSAA sample count (1, 2, 4, or 8).
+    /// MSAA sample count (1, 2, 4, 8, 16, 32).
     /// </summary>
     public int msaa {
         get {
-            var factor = antiAliasing switch {
-                2 or 6 => 2, // 2xMSAA, 2xMSAA+2xSSAA
-                3 or 7 or 8 => 4, // 4xMSAA, 4xMSAA+2xSSAA, 4xMSAA+4xSSAA
-                _ => 1
-            };
-            
             // per-sample mode requires MSAA, force it on if not already enabled
-            if (ssaaMode == 2 && factor == 1 && antiAliasing > 1) {
-                factor = 4; // default to 4x MSAA for per-sample mode
+            if (ssaaMode == 2 && msaaSamples == 1) {
+                return 4; // default to 4x MSAA for per-sample mode
             }
             
-            return factor;
+            // validate against hardware support
+            if (Game.supportedMSAASamples.Contains(msaaSamples)) {
+                return msaaSamples;
+            }
+            
+            // fallback1
+            for (int i = Game.supportedMSAASamples.Length - 1; i >= 0; i--) {
+                if (Game.supportedMSAASamples[i] <= msaaSamples) {
+                    return (int)Game.supportedMSAASamples[i];
+                }
+            }
+            // fallback2
+            return 1; // fallback to no MSAA
         }
     }
 
@@ -75,18 +77,13 @@ public class Settings {
     public int effectiveScale => ssaaMode == 2 ? 1 : ssaa;
 
     public string getAAText() {
-        return antiAliasing switch {
-            0 => "Off",
-            1 => "FXAA",
-            2 => "2x MSAA",
-            3 => "4x MSAA",
-            4 => "2x SSAA",
-            5 => "4x SSAA",
-            6 => "2x MSAA + 2x SSAA",
-            7 => "4x MSAA + 2x SSAA",
-            8 => "4x MSAA + 4x SSAA",
-            _ => "Unknown AA"
-        };
+        var parts = new List<string>();
+        
+        if (fxaaEnabled) parts.Add("FXAA");
+        if (msaaSamples > 1) parts.Add($"{msaaSamples}x MSAA");
+        if (ssaaScale > 1) parts.Add($"{ssaaScale}x SSAA");
+        
+        return parts.Count > 0 ? string.Join(" + ", parts) : "Off";
     }
 
     public void save() {
@@ -99,7 +96,9 @@ public class Settings {
         tag.addFloat("FOV", FOV);
         tag.addInt("mipmapping", mipmapping);
         tag.addInt("anisotropy", anisotropy);
-        tag.addInt("antiAliasing", antiAliasing);
+        tag.addByte("fxaaEnabled", (byte)(fxaaEnabled ? 1 : 0));
+        tag.addInt("msaaSamples", msaaSamples);
+        tag.addInt("ssaaScale", ssaaScale);
         tag.addInt("ssaaMode", ssaaMode);
         tag.addByte("fullscreen", (byte)(fullscreen ? 1 : 0));
         tag.addByte("smoothDayNight", (byte)(smoothDayNight ? 1 : 0));
@@ -124,14 +123,16 @@ public class Settings {
             FOV = tag.getFloat("FOV");
             mipmapping = tag.getInt("mipmapping");
             anisotropy = tag.getInt("anisotropy");
-            antiAliasing = tag.getInt("antiAliasing");
+            fxaaEnabled = tag.getByte("fxaaEnabled") != 0;
+            msaaSamples = tag.getInt("msaaSamples");
+            ssaaScale = tag.getInt("ssaaScale");
             ssaaMode = tag.getInt("ssaaMode");
             fullscreen = tag.getByte("fullscreen") != 0;
             smoothDayNight = tag.getByte("smoothDayNight") != 0;
             frustumCulling = tag.getByte("frustumCulling") != 0;
             crtEffect = tag.getByte("crtEffect") != 0;
         } catch (Exception e) {
-            Log.warn($"Failed to load settings: {e.Message}");
+            Log.warn("Failed to load settings", e);
             
             // todo load default settings if loading fails
         }

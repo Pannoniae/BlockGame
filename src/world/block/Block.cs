@@ -91,6 +91,12 @@ public class Block {
     public static bool[] transparent = new bool[MAXBLOCKS];
     
     public static bool[] translucent = new bool[MAXBLOCKS];
+    
+    /**
+     * If false, water can break this block (like tall grass, flowers, etc.)
+     * If true, water cannot break this block (like stone, dirt, stairs, etc.)
+     */
+    public static bool[] waterSolid = new bool[MAXBLOCKS];
     public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
     public static bool[] randomTick = new bool[MAXBLOCKS];
     public static bool[] renderTick = new bool[MAXBLOCKS];
@@ -233,6 +239,7 @@ public class Block {
         TALL_GRASS.setModel(BlockModel.makeGrass(TALL_GRASS));
         TALL_GRASS.transparency();
         TALL_GRASS.noCollision();
+        TALL_GRASS.waterTransparent();
         
         SHORT_GRASS = register(new Flower(Blocks.SHORT_GRASS, "Short Grass"));
         SHORT_GRASS.setTex(crossUVs(8, 1));
@@ -240,6 +247,7 @@ public class Block {
         SHORT_GRASS.transparency();
         SHORT_GRASS.shortGrassAABB();
         SHORT_GRASS.noCollision();
+        SHORT_GRASS.waterTransparent();
         
         YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(10, 1));
@@ -247,6 +255,7 @@ public class Block {
         YELLOW_FLOWER.transparency();
         YELLOW_FLOWER.flowerAABB();
         YELLOW_FLOWER.noCollision();
+        YELLOW_FLOWER.waterTransparent();
         
         RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
         RED_FLOWER.setTex(crossUVs(11, 1));
@@ -254,6 +263,7 @@ public class Block {
         RED_FLOWER.transparency();
         RED_FLOWER.flowerAABB();
         RED_FLOWER.noCollision();
+        RED_FLOWER.waterTransparent();
         
         PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
         PLANKS.setTex(cubeUVs(0, 5));
@@ -559,6 +569,7 @@ public class Block {
         this.name = name;
         
         fullBlock[id] = true;
+        waterSolid[id] = true;
         selection[id] = true;
         collision[id] = true;
         liquid[id] = false;
@@ -596,6 +607,11 @@ public class Block {
         fullBlock[id] = false;
         return this;
     }
+    
+    public Block waterTransparent() {
+        waterSolid[id] = false;
+        return this;
+    }
 
     public Block noCollision() {
         collision[id] = false;
@@ -617,6 +633,7 @@ public class Block {
         translucency();
         noCollision();
         noSelection();
+        waterTransparent();
         liquid[id] = true;
         fullBlock[id] = false;
         return this;

@@ -28,6 +28,9 @@ public partial class Game {
     public static bool hasBindlessMDI = false;
     public static bool isNVCard = false;
     public static bool hasShadingLanguageInclude = false;
+    
+    public static long[] supportedMSAASamples = [];
+    public static int maxMSAASamples = 1;
 
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;
@@ -279,6 +282,100 @@ public partial class Game {
     }
     #endif
     
+    private unsafe void printAntiAliasingModes() {
+        Log.info("Enumerating supported MSAA modes and extensions:");
+        
+        // Check for internal format query extensions
+        var hasInternalFormatQuery = GL.IsExtensionPresent("GL_ARB_internalformat_query");
+        var hasNVSampleQuery = GL.IsExtensionPresent("GL_NV_internalformat_sample_query");
+        
+        Log.info("Internal format query extensions:");
+        Log.info($"  GL_ARB_internalformat_query: {hasInternalFormatQuery}");
+        Log.info($"  GL_NV_internalformat_sample_query: {hasNVSampleQuery}");
+        
+        // Query supported sample counts for RGBA8 format using glGetInternalformativ
+        GL.GetInternalformat(TextureTarget.Texture2DMultisample, InternalFormat.Rgba8, InternalFormatPName.NumSampleCounts, 1, out int numSampleCounts);
+        
+        if (numSampleCounts > 0) {
+            var supportedSamples = new long[numSampleCounts];
+            fixed (long* ptr = supportedSamples) {
+                GL.GetInternalformat(TextureTarget.Texture2DMultisample, InternalFormat.Rgba8, InternalFormatPName.Samples, (uint)numSampleCounts, ptr);
+            }
+            
+            Log.info($"  Supported MSAA sample counts for RGBA8: [{string.Join(", ", supportedSamples)}]");
+            
+            // Store supported samples for validation
+            supportedMSAASamples = supportedSamples;
+            
+            // sort them
+            Array.Sort(supportedMSAASamples);
+            
+            maxMSAASamples = (int)supportedSamples[^1];
+            
+            // If NVIDIA sample query extension is available, get detailed per-sample info
+            if (hasNVSampleQuery) {
+                GL.TryGetExtension<NVInternalformatSampleQuery>(out var nvSampleQuery);
+                Log.info("Detailed per-sample analysis (NV_internalformat_sample_query):");
+                
+                for (int i = 0; i < numSampleCounts; i++) {
+                    var samples = (uint)supportedSamples[i];
+                    
+                    // Query NVIDIA-specific properties for this sample count
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.MultisamplesNV, 1, out int actualMultisamples); // MULTISAMPLES_NV
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.SupersampleScaleXNV, 1, out int scaleX); // SUPERSAMPLE_SCALE_X_NV
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.SupersampleScaleYNV, 1, out int scaleY); // SUPERSAMPLE_SCALE_Y_NV
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.ConformantNV, 1, out int conformant); // CONFORMANT_NV
+                    
+                    var conformStr = conformant != 0 ? "CONFORMANT" : "NON-CONFORMANT";
+                    var typeStr = samples == actualMultisamples ? "MSAA" : "hybrid MSAA+SSAA";
+                    
+                    if (scaleX > 1 || scaleY > 1) {
+                        Log.info($"    {samples}x: {actualMultisamples} HW samples + {scaleX}x{scaleY} supersample ({typeStr}, {conformStr})");
+                    } else {
+                        Log.info($"    {samples}x: {actualMultisamples} HW samples ({typeStr}, {conformStr})");
+                    }
+                }
+            }
+        } else {
+            Log.info("  Could not query supported sample counts - falling back to GL_MAX_SAMPLES");
+            GL.GetInteger(GetPName.MaxFramebufferSamples, out int maxSamples);
+            Log.info($"  Hardware max MSAA samples: {maxSamples}");
+        }
+        
+        // Check for NVIDIA CSAA extensions and actually query supported modes
+        var hasCSAA = GL.IsExtensionPresent("GL_NV_multisample_coverage");
+        var hasCSAAFBO = GL.IsExtensionPresent("GL_NV_framebuffer_multisample_coverage");
+        
+        if (hasCSAAFBO) {
+            Log.info("NVIDIA CSAA detected:");
+        }
+        
+        // Query additional extension capabilities
+        var hasExplicitMS = GL.IsExtensionPresent("GL_NV_explicit_multisample");
+        var hasSampleLocations = GL.IsExtensionPresent("GL_ARB_sample_locations");
+        var hasTextureMS = GL.IsExtensionPresent("GL_ARB_texture_multisample");
+        
+        Log.info("Additional MSAA extensions:");
+        Log.info($"  GL_NV_explicit_multisample: {hasExplicitMS}");
+        Log.info($"  GL_ARB_sample_locations: {hasSampleLocations}");
+        Log.info($"  GL_ARB_texture_multisample: {hasTextureMS}");
+        Log.info($"  GL_ARB_sample_shading: {sampleShadingSupported}");
+        
+
+        GL.GetInteger(GetPName.MaxColorTextureSamples, out int maxColorSamples);
+        GL.GetInteger(GetPName.MaxDepthTextureSamples, out int maxDepthSamples);
+        GL.GetInteger(GetPName.MaxIntegerSamples, out int maxIntSamples);
+        
+        Log.info("Hardware limits:");
+        Log.info($"  Max color texture samples: {maxColorSamples}");
+        Log.info($"  Max depth texture samples: {maxDepthSamples}");
+        Log.info($"  Max integer samples: {maxIntSamples}");
+    }
+
     public void setFullscreen(bool fullscreen) {
         if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
             return;

@@ -439,6 +439,9 @@ public partial class Game {
         Log.info($"ARB_shading_language_include supported: {hasShadingLanguageInclude}");
         //hasShadingLanguageInclude = false;
         
+        // print all valid anti-aliasing modes
+        printAntiAliasingModes();
+        
         if (hasShadingLanguageInclude) {
             BlockGame.GL.Shader.initializeIncludeFiles();
         }

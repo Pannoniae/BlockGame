@@ -197,7 +197,7 @@ public class Water : Block {
 
             // only do the sides if this is either a source or there's something under it (if it can flow down, then do that instead of going to the sides lol)
             // if it's NOT solid below, don't even bother (otherwise the fucking waterfalls will go off to the side endlessly because there's water below)
-            var isSolid = fullBlock[world.getBlock(x, y - 1, z)];
+            var isSolid = waterSolid[world.getBlock(x, y - 1, z)];
             if (currentLevel == 0 || (isSolid && !canSpread(world, x, y - 1, z))) {
                 // if it's falling, it should be at least level 1 when spreading sideways
                 // todo is this really necessary?
@@ -435,7 +435,7 @@ public class Water : Block {
             return false;
         }
 
-        return !fullBlock[block]; // other non-full blocks
+        return !waterSolid[block]; // other non-full blocks
     }
 
     public void spread(World world, int x, int y, int z, byte level, bool falling) {
@@ -465,12 +465,11 @@ public class Water : Block {
 
     /** Water doesn't get rendered next to water, but always gets rendered on the top face */
     public override bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
-        
         // if none, always render
         if (dir == RawDirection.NONE) {
             return true;
         }
-        
+
         var direction = Direction.getDirection(dir);
         var same = br.getBlockCached(direction.X, direction.Y, direction.Z).getID() == br.getBlock().getID();
         if (same) {
@@ -482,7 +481,7 @@ public class Water : Block {
         return dir == RawDirection.UP || (notTransparent && base.cullFace(br, x, y, z, dir));
     }
 
-    
+
     /**
      * Don't ask me how this shit works, I've blended it through at least 4 rounds of LLMslop because the side texture kept fucking disappearing or turning into hellstone
      * so I did the add functionality -> fix functionality -> cleanup loop until the maths was actual mathsing
@@ -500,10 +499,10 @@ public class Water : Block {
 
         // corner heights
         var h00 = getRenderHeight(world, x, y, z, -1, -1); // sw
-        var h10 = getRenderHeight(world, x, y, z, 1, -1);  // se
-        var h01 = getRenderHeight(world, x, y, z, -1, 1);  // nw
-        var h11 = getRenderHeight(world, x, y, z, 1, 1);   // ne
-        
+        var h10 = getRenderHeight(world, x, y, z, 1, -1); // se
+        var h01 = getRenderHeight(world, x, y, z, -1, 1); // nw
+        var h11 = getRenderHeight(world, x, y, z, 1, 1); // ne
+
         var flow = getFlow(world, x, y, z);
         // todo if this shit ever gets slow / you notice it on the profiler, time to create a Meth version of atan2 which mostly calculates the right value most of the time (but its fast)
         var flowAngle = (flow.X != 0 || flow.Z != 0) ? MathF.Atan2(flow.Z, flow.X) : 0f;
@@ -511,7 +510,7 @@ public class Water : Block {
         var flowSin = -MathF.Sin(flowAngle); // negative: UV Y inverted
 
         // texture selection
-        var isFlowing = level > 0 || falling;
+        var isFlowing = (flow.X != 0 || flow.Z != 0) || falling || level > 0;
         var texBase = isFlowing ? uvs[1] + 0.5f : uvs[0]; // center 16x16 for flowing
         const float texSize = 1f;
         var texMin = texCoords(texBase.u, texBase.v);
@@ -526,11 +525,16 @@ public class Water : Block {
         var uRel = (uMax - uMin) * 0.5f;
         var vRel = (vMax - vMin) * 0.5f;
 
+        Vector2 uv00;
+        Vector2 uv01;
+        Vector2 uv10;
+        Vector2 uv11;
+
         // top face UVs: rotate around centre
-        var uv00 = rotateUV(-uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
-        var uv01 = rotateUV(-uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
-        var uv10 = rotateUV(uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
-        var uv11 = rotateUV(uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        uv00 = rotateUV(-uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        uv01 = rotateUV(-uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        uv10 = rotateUV(uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        uv11 = rotateUV(uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
 
         // side faces: 90° rotation with proper centering
         // ??? mass confucion
@@ -550,9 +554,9 @@ public class Water : Block {
 
         for (RawDirection d = 0; d < RawDirection.MAX; d++) {
             if (!cullFace(br, lx, ly, lz, d)) continue;
-            
+
             br.applyFaceLighting(d, colourCache, lightColourCache);
-            
+
             // debug tint for dynamic water
             //if (isDynamic(metadata)) {
             //    colourCache.Fill(new Vector4(1f, 0.5f, 0.5f, 1f));

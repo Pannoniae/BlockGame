@@ -23,7 +23,7 @@ public class SettingsMenu : Menu {
             settings.vSync = vsync.getIndex() == 1;
             Game.window.VSync = settings.vSync;
         };
-        vsync.tooltip = "Turns on vertical synchronisation.";
+        vsync.tooltip = "VSync locks your framerate to your monitor's refresh rate to prevent screen tearing.";
         settingElements.Add(vsync);
         addElement(vsync);
 
@@ -67,7 +67,7 @@ public class SettingsMenu : Menu {
             settings.smoothLighting = smoothLighting.getIndex() == 1;
             remeshIfRequired(settings.renderDistance);
         };
-        smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between Block.";
+        smoothLighting.tooltip = "Smooth Lighting improves the game's look by smoothing the lighting between blocks.";
         settingElements.Add(smoothLighting);
         addElement(smoothLighting);
 
@@ -109,25 +109,59 @@ public class SettingsMenu : Menu {
             Game.renderer?.updateAF();
         };
         anisotropy.tooltip =
-            "Anisotropic filtering improves texture quality at oblique angles.\nHigher values provide better quality but may impact performance.\nValues above 16x are practically unnoticeable.";
+            "Anisotropic filtering improves texture quality at oblique angles.\nHigher values provide better quality but may impact performance.\nAlso helps to reduce aliasing on transparent objects like foliage.\nValues above 16x are practically unnoticeable.";
         settingElements.Add(anisotropy);
         addElement(anisotropy);
 
-        var antiAliasing = new ToggleButton(this, "antiAliasing", false, settings.antiAliasing,
-            "Anti-Aliasing: Off", "Anti-Aliasing: FXAA", "Anti-Aliasing: 2x MSAA", "Anti-Aliasing: 4x MSAA",
-            "Anti-Aliasing: 2x SSAA", "Anti-Aliasing: 4x SSAA", "Anti-Aliasing: 2x MSAA + 2x SSAA",
-            "Anti-Aliasing: 4x MSAA + 2x SSAA", "Anti-Aliasing: 4x MSAA + 4x SSAA");
-        antiAliasing.topCentre();
-        antiAliasing.clicked += _ => {
-            var index = antiAliasing.getIndex();
-
-            settings.antiAliasing = index;
+        var fxaa = new ToggleButton(this, "fxaa", false, settings.fxaaEnabled ? 1 : 0,
+            "FXAA: OFF", "FXAA: ON");
+        fxaa.topCentre();
+        fxaa.clicked += _ => {
+            settings.fxaaEnabled = fxaa.getIndex() == 1;
             Game.instance.updateFramebuffers();
         };
-        antiAliasing.tooltip =
-            "Anti-Aliasing techniques smooth jagged edges.\nFXAA is fast, MSAA provides good quality with moderate performance impact,\nSSAA provides best quality but impacts performance significantly.\nIt will kill your RTX 5090, I warned you!";
-        settingElements.Add(antiAliasing);
-        addElement(antiAliasing);
+        fxaa.tooltip = "Fast Approximate Anti-Aliasing smooths jagged edges with minimal performance impact.";
+        settingElements.Add(fxaa);
+        addElement(fxaa);
+
+        // build MSAA options based on hardware support
+        var msaaOptions = new List<string> { "MSAA: OFF" };
+        var msaaSampleValues = new List<int> { 1 };
+        
+        foreach (var sample in Game.supportedMSAASamples) { // skip 1 (OFF)
+            msaaOptions.Add($"MSAA: {sample}x");
+            msaaSampleValues.Add((int)sample);
+        }
+        
+        var currentMsaaIndex = msaaSampleValues.IndexOf(settings.msaaSamples);
+        if (currentMsaaIndex == -1) {
+            currentMsaaIndex = 0; // fallback to OFF
+        }
+
+        var msaa = new ToggleButton(this, "msaa", false, currentMsaaIndex, msaaOptions.ToArray());
+        msaa.topCentre();
+        msaa.clicked += _ => {
+            var index = msaa.getIndex();
+            settings.msaaSamples = index < msaaSampleValues.Count ? msaaSampleValues[index] : 1;
+            Game.instance.updateFramebuffers();
+        };
+        msaa.tooltip = "Multi-Sample Anti-Aliasing uses hardware multisampling to reduce aliasing and jaggies.\nThe options shown are hardware-validated for your GPU.";
+        settingElements.Add(msaa);
+        addElement(msaa);
+
+        var ssaa = new ToggleButton(this, "ssaa", false,
+            settings.ssaaScale switch { 1 => 0, 2 => 1, 4 => 2, _ => 0 },
+            "SSAA: OFF", "SSAA: 2x", "SSAA: 4x");
+        ssaa.topCentre();
+        ssaa.clicked += _ => {
+            settings.ssaaScale = ssaa.getIndex() switch {
+                0 => 1, 1 => 2, 2 => 4, _ => 1
+            };
+            Game.instance.updateFramebuffers();
+        };
+        ssaa.tooltip = "Super-Sample Anti-Aliasing renders the game at a higher resolution then downscales.\nProvides excellent quality but severely impacts performance.\nThis option stacked with MSAA is deadly.";
+        settingElements.Add(ssaa);
+        addElement(ssaa);
 
         var ssaaModeOptions = new List<string> { "SSAA Mode: Normal", "SSAA Mode: Weighted" };
         var ssaaModeTooltip =
@@ -190,7 +224,7 @@ public class SettingsMenu : Menu {
         frustumCulling.topCentre();
         frustumCulling.clicked += _ => { settings.frustumCulling = frustumCulling.getIndex() == 1; };
         frustumCulling.tooltip =
-            "Frustum Culling skips rendering blocks outside the camera's view.\nThis can improve performance in large worlds.";
+            "Frustum Culling skips rendering blocks outside the camera's view.\nThis usually improves performance. Consider turning it off if blocks are invisible.";
         settingElements.Add(frustumCulling);
         addElement(frustumCulling);
 
@@ -202,7 +236,7 @@ public class SettingsMenu : Menu {
             Game.instance.updateFramebuffers();
         };
         crtEffect.tooltip =
-            "CRT Effect adds retro CRT monitor simulation with scanlines and phosphor mask.\nProvides authentic vintage computing experience.";
+            "CRT Effect adds a retro CRT monitor effect with scanlines.\nProvides an authentic vintage computing experience or something.";
         settingElements.Add(crtEffect);
         addElement(crtEffect);
 
