@@ -843,7 +843,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     private void renderSky(double interp) {
         if (Settings.instance.renderDistance <= 4) {
-            return;
+            //return;
         }
         
         GL.Disable(EnableCap.DepthTest);
@@ -874,7 +874,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var mat = Game.graphics.modelView;
         mat.push();
         
-        float tiltAngle = MathF.Sin(sunAngle) * 15f; // ±15
+        // tilt should be 1 at sunrise (0)
+        // 1 at sunset (pi)
+        float tiltAngle = MathF.Cos(sunAngle) * 15f; // ±15
         mat.rotate(tiltAngle, 0, 0, 1);
         
         
@@ -901,7 +903,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     private void renderSkyDome(Color horizonColour, Color skyColour, Color underSkyColour) {
         const float radius = 128f;
         const float topHeight = 16f;
-        const float bottomHeight = -48f;
+        const float bottomHeight = -64f;
         const int segments = 24;
 
         idc.begin(PrimitiveType.Triangles);

@@ -15,8 +15,8 @@ public class FixedArrayPool<T> {
 
     public readonly int arrayLength;
 
-    private int grabCtr;
-    private int putBackCtr;
+    public int grabCtr;
+    public int putBackCtr;
 
     public FixedArrayPool(int arrayLength) {
         this.arrayLength = arrayLength;

@@ -716,6 +716,11 @@ public partial class World : IDisposable {
         //Console.Out.WriteLine(cnt);
         var node = queue[cnt - 1];
         queue.RemoveAt(cnt - 1);
+        
+        // if null, chunk got unloaded meanwhile
+        if (node.chunk == null!) {
+            return;
+        }
 
         //var blockPos = new Vector3I(node.x, node.y, node.z);
         byte level = isSkylight
@@ -792,6 +797,11 @@ public partial class World : IDisposable {
 
         //var blockPos = new Vector3I(node.x, node.y, node.z);
         var level = node.value;
+        
+        // if null, chunk got unloaded meanwhile
+        if (node.chunk == null!) {
+            return;
+        }
 
         foreach (var dir in Direction.directionsLight) {
             // Get neighbor chunk and relative position

@@ -24,11 +24,11 @@ public static class MemoryUtils {
 
     public static void cleanGC() {
 
-        ArrayBlockData.blockPool.trim();
-        ArrayBlockData.lightPool.trim();
-        WorldIO.saveBlockPool.trim();
-        WorldIO.saveLightPool.trim();
-        HeightMap.heightPool.trim();
+        ArrayBlockData.blockPool.clear();
+        ArrayBlockData.lightPool.clear();
+        WorldIO.saveBlockPool.clear();
+        WorldIO.saveLightPool.clear();
+        HeightMap.heightPool.clear();
         // probably a noop
         Game.GL.ReleaseShaderCompiler();
 

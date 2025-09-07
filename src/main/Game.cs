@@ -944,10 +944,12 @@ public partial class Game {
         
         //currentScreen.clear(dt, interp);
 
-        if (Settings.instance.framebufferEffects) {
+        /*if (Settings.instance.framebufferEffects) {
             // clear 0 as well
+            // todo this fucks up with msaa and has blue fringing? need to investigate..
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             currentScreen.clear(dt, interp);
-        }
+        }*/
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
         // clear AFTER binding the framebuffer
