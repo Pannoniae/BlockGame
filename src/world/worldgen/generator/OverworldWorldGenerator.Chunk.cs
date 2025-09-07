@@ -32,9 +32,9 @@ public partial class OverworldWorldGenerator {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var flatNoise = densityMap[x, z];
 
-                chunk.setBlockFast(x, 0, z, Blocks.HELLSTONE);
+                chunk.setBlockFast(x, 0, z, Blocks.HELLROCK);
                 // hack until we can propagate them properly AND cheaply
-                chunk.setBlockLightDumb(x, 0, z, Block.lightLevel[Blocks.HELLSTONE]);
+                chunk.setBlockLightDumb(x, 0, z, Block.lightLevel[Blocks.HELLROCK]);
 
                 for (int y = 1; y < World.WORLDHEIGHT; y++) {
                     if (y < flatNoise) {

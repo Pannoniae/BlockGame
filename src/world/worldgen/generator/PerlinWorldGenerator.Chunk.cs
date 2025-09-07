@@ -56,7 +56,7 @@ public partial class PerlinWorldGenerator {
     public const float Y_DIVIDER_INV = 16f;
 
     public const float BLOCK_VARIATION_FREQUENCY = 1 / 412f;
-    public const float HELLSTONE_FREQUENCY = 1 / 1.5f;
+    public const float HELLROCK_FREQUENCY = 1 / 1.5f;
 
     public const float FOLIAGE_FREQUENCY = 1 / 69f;
 
@@ -423,7 +423,7 @@ public partial class PerlinWorldGenerator {
         var xChunk = coord.x * Chunk.CHUNKSIZE;
         var zChunk = coord.z * Chunk.CHUNKSIZE;
 
-        // place hellstone on bottom of the world
+        // place hellrock on bottom of the world
         // height should be between 1 and 4
         for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
             for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
@@ -431,11 +431,11 @@ public partial class PerlinWorldGenerator {
                 var zs = zWorld + z;
 
                 var height =
-                    getNoise2D(auxNoise, -xs * HELLSTONE_FREQUENCY, -zs * HELLSTONE_FREQUENCY, 1, 1) * 4 + 2;
+                    getNoise2D(auxNoise, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
-                    chunk.setBlockFast(x, y, z, Blocks.HELLSTONE);
-                    chunk.setBlockLightDumb(x, y, z, 15);
+                    chunk.setBlockFast(x, y, z, Blocks.HELLROCK);
+                    chunk.setBlockLightDumb(x, y, z, 0);
                 }
             }
         }

@@ -127,7 +127,7 @@ public class Block {
     public static Block STONE;
     public static Block GRAVEL;
     public static Block HELLSTONE;
-    public static Block WORLD_BOTTOM;
+    public static Block HELLROCK;
     public static Block GLASS;
 
     public static Block LANTERN;
@@ -167,8 +167,6 @@ public class Block {
     public static Block GOLD_ORE;
     public static Block IRON_ORE;
     public static Block COAL_ORE;
-    public static Block HELLSTONE_1;
-    public static Block HELLSTONE_2;
     public static Block TORCH;
 
     public static Block register(Block block) {
@@ -219,9 +217,9 @@ public class Block {
         HELLSTONE.setModel(BlockModel.makeCube(HELLSTONE));
         HELLSTONE.light(15);
         
-        WORLD_BOTTOM = register(new Block(Blocks.WORLD_BOTTOM, "World_Bottom"));
-        WORLD_BOTTOM.setTex(cubeUVs(9, 0));
-        WORLD_BOTTOM.setModel(BlockModel.makeCube(WORLD_BOTTOM));
+        HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
+        HELLROCK.setTex(cubeUVs(9, 0));
+        HELLROCK.setModel(BlockModel.makeCube(HELLROCK));
         
         GLASS = register(new Block(Blocks.GLASS, "Glass"));
         GLASS.setTex(cubeUVs(6, 0));
@@ -356,14 +354,6 @@ public class Block {
         COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
         COAL_ORE.setModel(BlockModel.makeCube(COAL_ORE));
-        
-        HELLSTONE_1 = register(new Block(Blocks.HELLSTONE_1, "Hellstone1"));
-        HELLSTONE_1.setTex(grassUVs(8, 0, 9, 0, 9, 0));
-        HELLSTONE_1.setModel(BlockModel.makeCube(HELLSTONE_1));
-        
-        HELLSTONE_2 = register(new Block(Blocks.HELLSTONE_2, "Hellstone2"));
-        HELLSTONE_2.setTex(grassUVs(8, 0, 7, 1, 7, 1));
-        HELLSTONE_2.setModel(BlockModel.makeCube(HELLSTONE_2));
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
         TORCH.setTex(cubeUVs(0, 6));
