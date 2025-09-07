@@ -3,8 +3,7 @@ using BlockGame.util;
 namespace BlockGame;
 
 public class HeightMap : IDisposable {
-
-    private static readonly FixedArrayPool<byte> heightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static readonly FixedArrayPool<byte> heightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     public byte[] height;
     public Chunk chunk;

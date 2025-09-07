@@ -26,6 +26,9 @@ public static class MemoryUtils {
 
         ArrayBlockData.blockPool.trim();
         ArrayBlockData.lightPool.trim();
+        WorldIO.saveBlockPool.trim();
+        WorldIO.saveLightPool.trim();
+        HeightMap.heightPool.trim();
         // probably a noop
         Game.GL.ReleaseShaderCompiler();
 

@@ -25,7 +25,7 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     /// <summary>
     /// Has the block storage been initialized?
     /// </summary>
-    public bool inited;
+    public bool inited { get; set; }
 
     public Chunk chunk;
     public int yCoord;
@@ -333,5 +333,20 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
 
     public static byte extractBlocklight(byte value) {
         return (byte)((value >> 4) & 0xF);
+    }
+
+    // methods for serialization compatibility with WorldIO
+    public uint[] getSerializationBlocks() {
+        return blocks;
+    }
+
+    public byte[] getSerializationLight() {
+        return light;
+    }
+
+    public void setSerializationData(uint[] blocksData, byte[] lightData) {
+        blocks = blocksData;
+        light = lightData;
+        refreshCounts();
     }
 }

@@ -41,7 +41,7 @@ public class BlockRenderer {
     public const int LOCALCACHESIZE_SQ = 9;
     public const int LOCALCACHESIZE_CUBE = 27;
 
-    private static readonly ArrayBlockData?[] neighbourSections = new ArrayBlockData?[27];
+    private static readonly BlockData?[] neighbourSections = new BlockData?[27];
 
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
@@ -773,11 +773,7 @@ public class BlockRenderer {
         // cache blocks
         // we need a 18x18 area
         // we load the 16x16 from the section itself then get the world for the rest
-        // if the chunk section is an EmptyBlockData, don't bother
-        // it will always be ArrayBlockData so we can access directly without those pesky BOUNDS CHECKS
         var blocks = subChunk.blocks;
-        ref uint sourceBlockArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.blocks);
-        ref byte sourceLightArrayRef = ref MemoryMarshal.GetArrayDataReference(blocks.light);
         ref uint blocksArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbours);
         ref byte lightArrayRef = ref MemoryMarshal.GetArrayDataReference(neighbourLights);
         var world = this.world;
@@ -805,16 +801,12 @@ public class BlockRenderer {
             for (z = -1; z < Chunk.CHUNKSIZE + 1; z++) {
                 for (x = -1; x < Chunk.CHUNKSIZE + 1; x++) {
 
-                    // if inside the chunk, load from section
+                    // if inside the chunk, load from section using proper method calls
                     if (x is >= 0 and < Chunk.CHUNKSIZE &&
                         z is >= 0 and < Chunk.CHUNKSIZE &&
                         y is >= 0 and < Chunk.CHUNKSIZE) {
-                        blocksArrayRef = sourceBlockArrayRef;
-                        lightArrayRef = sourceLightArrayRef;
-
-                        // increment
-                        sourceBlockArrayRef = ref Unsafe.Add(ref sourceBlockArrayRef, 1);
-                        sourceLightArrayRef = ref Unsafe.Add(ref sourceLightArrayRef, 1);
+                        blocksArrayRef = blocks.getRaw(x, y, z);
+                        lightArrayRef = blocks.getLight(x, y, z);
 
                         goto increment;
                     }
@@ -834,8 +826,7 @@ public class BlockRenderer {
                         Unsafe.Add(ref neighbourSectionsArray, ((y >> 4) + 1) * 9 + ((z >> 4) + 1) * 3 + (x >> 4) + 1);
                     var nn = neighbourSection?.inited == true;
                     var bl = nn
-                        ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.blocks),
-                            offset)
+                        ? neighbourSection!.getRaw((x & 0xF), (y & 0xF), (z & 0xF))
                         : 0;
 
 
@@ -849,8 +840,7 @@ public class BlockRenderer {
 
                     // set light array element to light
                     lightArrayRef = nn
-                        ? Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(neighbourSection!.light),
-                            offset)
+                        ? neighbourSection!.getLight((x & 0xF), (y & 0xF), (z & 0xF))
                         : (byte)15;
 
                     // increment

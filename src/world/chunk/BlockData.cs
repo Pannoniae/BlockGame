@@ -6,6 +6,8 @@ public interface BlockData {
     public byte getMetadata(int x, int y, int z);
     
     public void setMetadata(int x, int y, int z, byte val);
+    
+    public uint getRaw(int x, int y, int z);
 
     public byte getLight(int x, int y, int z);
 
@@ -16,4 +18,6 @@ public interface BlockData {
     public void setSkylight(int x, int y, int z, byte val);
 
     public void setBlocklight(int x, int y, int z, byte val);
+
+    public bool inited { get; }
 }
