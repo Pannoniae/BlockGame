@@ -125,7 +125,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
                 if (width > 1) width /= 2;
                 if (height > 1) height /= 2;
 
-                Span<Rgba32> mipmap = new Rgba32[width * height];
+                Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
                 generateMipmap(0, 0, width, height, mipmap, prevMipmap);
                 fixed (Rgba32* mipmapPixels = mipmap) {
                     GL.TextureSubImage2D(handle, lvl, 0, 0, (uint)width, (uint)height,
@@ -162,7 +162,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
         }*/
 
-        //mipmap = new Rgba32[width * height];
+        mipmap = new Rgba32[width * height];
 
         //Console.Out.WriteLine("Loading textures the proper way!");
         // Load image

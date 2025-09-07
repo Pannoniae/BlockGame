@@ -697,7 +697,9 @@ public class NBTShortArray : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        data = MemoryMarshal.Cast<byte, short>(stream.ReadBytes(length * sizeof(short))).ToArray();
+        data = new short[length];
+        var span = MemoryMarshal.AsBytes<short>(data);
+        stream.ReadExactly(span);
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(data, data);
         }
@@ -732,7 +734,9 @@ public class NBTUShortArray : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        data = MemoryMarshal.Cast<byte, ushort>(stream.ReadBytes(length * sizeof(ushort))).ToArray();
+        data = new ushort[length];
+        var span = MemoryMarshal.AsBytes<ushort>(data);
+        stream.ReadExactly(span);
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(data, data);
         }
@@ -767,7 +771,9 @@ public class NBTIntArray : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        data = MemoryMarshal.Cast<byte, int>(stream.ReadBytes(length * sizeof(int))).ToArray();
+        data = new int[length];
+        var span = MemoryMarshal.AsBytes<int>(data);
+        stream.ReadExactly(span);
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(data, data);
         }
@@ -802,7 +808,9 @@ public class NBTUIntArray : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        data = MemoryMarshal.Cast<byte, uint>(stream.ReadBytes(length * sizeof(uint))).ToArray();
+        data = new uint[length];
+        var span = MemoryMarshal.AsBytes<uint>(data);
+        stream.ReadExactly(span);
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(data, data);
         }
@@ -837,7 +845,9 @@ public class NBTLongArray : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        data = MemoryMarshal.Cast<byte, long>(stream.ReadBytes(length * sizeof(long))).ToArray();
+        data = new long[length];
+        var span = MemoryMarshal.AsBytes<long>(data);
+        stream.ReadExactly(span);
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(data, data);
         }
@@ -872,7 +882,9 @@ public class NBTULongArray : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        data = MemoryMarshal.Cast<byte, ulong>(stream.ReadBytes(length * sizeof(ulong))).ToArray();
+        data = new ulong[length];
+        var span = MemoryMarshal.AsBytes<ulong>(data);
+        stream.ReadExactly(span);
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(data, data);
         }

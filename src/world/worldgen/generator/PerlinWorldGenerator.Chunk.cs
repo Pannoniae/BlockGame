@@ -435,7 +435,6 @@ public partial class PerlinWorldGenerator {
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
                     chunk.setBlockFast(x, y, z, Blocks.HELLROCK);
-                    chunk.setBlockLightDumb(x, y, z, 0);
                 }
             }
         }

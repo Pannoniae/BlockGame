@@ -1,30 +1,31 @@
 using System.Buffers;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BlockGame.util;
 
 namespace BlockGame;
 
 public sealed class PaletteBlockData : BlockData, IDisposable {
-    private static readonly ArrayPool<byte> arrayPool = ArrayPool<byte>.Shared;
+    private static readonly VariableArrayPool<byte> arrayPool = new();
+    private static readonly VariableArrayPool<ushort> arrayPoolUS = new();
+    private static readonly VariableArrayPool<uint> arrayPoolU = new();
 
-    private uint[] palette;
-    private ushort[] refCounts; // reference count for each palette entry
-    private byte[]? indices;
-    private int indicesLength; // actual allocated size for returning to pool
-    private int paletteSize;
-    private int paletteCapacity;
-    private int bitsPerIndex;
+    private uint[] vertices;
+    private ushort[] blockRefs;
+    private byte[] indices;
+    private int count;
+    private int vertCount;
+    private int vertCapacity;
+    private int density;
     
-    // light palette
-    private byte[] lightPalette;
-    private ushort[] lightRefCounts;
-    private byte[]? lightIndices;
-    private int lightIndicesLength; // actual allocated size for returning to pool
-    private int lightPaletteSize;
-    private int lightPaletteCapacity;
-    private int lightBitsPerIndex;
+    // light vertices
+    private byte[] lightVertices;
+    private ushort[] lightRefs;
+    private byte[] lightIndices;
+    private int lightCount;
+    private int lightVertCount;
+    private int lightVertCapacity;
+    private int lightDensity;
 
     public int blockCount;
     public int translucentCount;
@@ -41,96 +42,81 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     public int yCoord;
 
     private const int TOTAL_BLOCKS = Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE;
-    private const int INITIAL_PALETTE_SIZE = 16;
-    private const int MAX_DIRECT_PALETTE_SIZE = 16; // if more than this, switch to global indices
-    private const int INITIAL_LIGHT_PALETTE_SIZE = 16;
+    private const int INITIAL_SIZE = 2;
+    private const int SMALL_ARRAY = 16;
+    private const int INITIAL_LIGHT_SIZE = 2;
 
     // YZX because the internet said so
     public ushort this[int x, int y, int z] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             var index = getIndex(x, y, z);
-            return palette[index].getID();
+            return vertices[index].getID();
         }
         set {
             var coord = (y << 8) + (z << 4) + x;
-            var oldIndex = getIndexRaw(coord);
-            var oldValue = palette[oldIndex];
+            var oldIdx = getIndexRaw(coord);
+            var oldValue = vertices[oldIdx];
             var oldID = oldValue.getID();
             
-            // find or add new value to palette
-            var newValue = value;
-            var newIndex = findOrAddToPalette(newValue);
+            var newBlock = value;
+            var newIdx = get(newBlock);
             
-            // update reference counts
-            decrementRefCount(oldIndex);
-            incrementRefCount(newIndex);
+            decrefcount(blockRefs, oldIdx);
+            increfcount(blockRefs, newIdx);
             
-            // update the index
-            setIndexRaw(coord, newIndex);
+            setIndexRaw(coord, newIdx);
             
-            // update counts
             updateCounts(oldID, value, x, y, z);
             
-            // try to shrink palette if we have unused entries
-            tryCompactPalette();
+            tryCompact();
         }
     }
 
     public uint getRaw(int x, int y, int z) {
         var index = getIndex(x, y, z);
-        return palette[index];
+        return vertices[index];
     }
 
     public void setRaw(int x, int y, int z, uint value) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getIndexRaw(coord);
-        var oldValue = palette[oldIndex];
+        var oldValue = vertices[oldIndex];
         var oldID = oldValue.getID();
         
-        // find or add new value to palette
-        var newIndex = findOrAddToPalette(value);
+        var newIndex = get(value);
         
-        // update reference counts
-        decrementRefCount(oldIndex);
-        incrementRefCount(newIndex);
+        decrefcount(blockRefs, oldIndex);
+        increfcount(blockRefs, newIndex);
         
-        // update the index
         setIndexRaw(coord, newIndex);
         
-        // update counts
         var newID = value.getID();
         updateCounts(oldID, newID, x, y, z);
         
-        // try to shrink palette if we have unused entries
-        tryCompactPalette();
+        tryCompact();
     }
 
     public byte getMetadata(int x, int y, int z) {
         var index = getIndex(x, y, z);
-        return palette[index].getMetadata();
+        return vertices[index].getMetadata();
     }
 
     public void setMetadata(int x, int y, int z, byte val) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getIndexRaw(coord);
-        var oldValue = palette[oldIndex];
+        var oldValue = vertices[oldIndex];
         
-        // create new value with updated metadata
         var newValue = oldValue.setMetadata(val);
         
-        // find or add to palette
-        var newIndex = findOrAddToPalette(newValue);
+        var newIdx = get(newValue);
         
-        // update reference counts
-        decrementRefCount(oldIndex);
-        incrementRefCount(newIndex);
+        decrefcount(blockRefs, oldIndex);
+        increfcount(blockRefs, newIdx);
         
-        // update the index
-        setIndexRaw(coord, newIndex);
+        setIndexRaw(coord, newIdx);
         
-        // try to shrink palette if we have unused entries
-        tryCompactPalette();
+        tryCompact();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -139,142 +125,226 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int getIndexRaw(int blockCoord) {
-        if (bitsPerIndex == 0) return 0; // single block type
+    private int getIndexRaw(int coord) {
+        return getIndexRaw(coord, indices, density);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void setIndexRaw(int coord, int index) {
+        setIndexRaw(coord, index, indices, density);
+    }
+    
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int getLightIndexRaw(int blockCoord) {
+        return getIndexRaw(blockCoord, lightIndices, lightDensity);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void setLightIndexRaw(int blockCoord, int index) {
+        setIndexRaw(blockCoord, index, lightIndices, lightDensity);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int getIndexRaw(int coord, byte[]? src, int bits) {
+        switch (bits) {
+            case 0:
+                return 0;
+            case 1:
+                return (src![coord >> 3] >> (coord & 7)) & 1;
+            case 2:
+                return (src![coord >> 2] >> ((coord & 3) << 1)) & 3;
+            case 4:
+                return (src![coord >> 1] >> ((coord & 1) << 2)) & 15;
+            case 8:
+                return src![coord];
+        }
+
+        var bitIndex = coord * bits;
+        var i = bitIndex >> 3;
+        var bitOffset = bitIndex & 7;
         
-        var bitIndex = blockCoord * bitsPerIndex;
-        var byteIndex = bitIndex >> 3; // div 8
-        var bitOffset = bitIndex & 7; // mod 8
-        
-        // handle crossing byte boundaries
         var result = 0;
-        var bitsRemaining = bitsPerIndex;
+        var rem = bits;
         
-        while (bitsRemaining > 0) {
-            var bitsInThisByte = Math.Min(8 - bitOffset, bitsRemaining);
-            var mask = (1 << bitsInThisByte) - 1;
-            var value = (indices![byteIndex] >> bitOffset) & mask;
+        while (rem > 0) {
+            var theseBits = Math.Min(8 - bitOffset, rem);
+            var mask = (1 << theseBits) - 1;
+            var val = (src![i] >> bitOffset) & mask;
             
-            result |= value << (bitsPerIndex - bitsRemaining);
+            result |= val << (bits - rem);
             
-            bitsRemaining -= bitsInThisByte;
+            rem -= theseBits;
             bitOffset = 0;
-            byteIndex++;
+            i++;
         }
         
         return result;
     }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void setIndexRaw(int blockCoord, int index) {
-        if (bitsPerIndex == 0) return; // single block type, nothing to store
+    private static void setIndexRaw(int coord, int index, byte[] dest, int bits) {
+        switch (bits) {
+            case 0: 
+                return;
+            case 1: 
+                dest[coord >> 3] = (byte)((dest[coord >> 3] & ~(1 << (coord & 7))) | ((index & 1) << (coord & 7))); 
+                return;
+            case 2: 
+                dest[coord >> 2] = (byte)((dest[coord >> 2] & ~(3 << ((coord & 3) << 1))) | ((index & 3) << ((coord & 3) << 1))); 
+                return;
+            case 4: 
+                dest[coord >> 1] = (byte)((dest[coord >> 1] & ~(15 << ((coord & 1) << 2))) | ((index & 15) << ((coord & 1) << 2)));
+                return;
+            case 8: 
+                dest[coord] = (byte)index; 
+                return;
+        }
         
-        var bitIndex = blockCoord * bitsPerIndex;
-        var byteIndex = bitIndex >> 3; // div 8
-        var bitOffset = bitIndex & 7; // mod 8
+        var bitIndex = coord * bits;
+        var i = bitIndex >> 3;
+        var bitOffset = bitIndex & 7;
         
-        // handle crossing byte boundaries
-        var bitsRemaining = bitsPerIndex;
+        var rem = bits;
         
-        while (bitsRemaining > 0) {
-            var bitsInThisByte = Math.Min(8 - bitOffset, bitsRemaining);
-            var mask = (1 << bitsInThisByte) - 1;
-            var value = (index >> (bitsPerIndex - bitsRemaining)) & mask;
+        while (rem > 0) {
+            var theseBits = Math.Min(8 - bitOffset, rem);
+            var mask = (1 << theseBits) - 1;
+            var val = (index >> (bits - rem)) & mask;
             
-            // clear the bits we're about to write
-            indices![byteIndex] = (byte)(indices[byteIndex] & ~(mask << bitOffset));
-            // write the new bits
-            indices[byteIndex] = (byte)(indices[byteIndex] | (value << bitOffset));
+            dest[i] = (byte)((dest[i] & ~(mask << bitOffset)) | (val << bitOffset));
             
-            bitsRemaining -= bitsInThisByte;
+            rem -= theseBits;
             bitOffset = 0;
-            byteIndex++;
+            i++;
         }
     }
 
-    private int findOrAddToPalette(uint blockValue) {
-        // linear search for now - could optimize with dictionary if needed
-        for (int i = 0; i < paletteSize; i++) {
-            if (palette[i] == blockValue) {
+    private int get(uint blockValue) {
+        // todo maybe use a dict for this? we just search linearly for now
+        for (int i = 0; i < vertCount; i++) {
+            if (vertices[i] == blockValue) {
                 return i;
             }
         }
         
-        // need to add to palette - grow if necessary
-        if (paletteSize >= paletteCapacity) {
-            growPalette();
+        // too big, grow
+        if (vertCount >= vertCapacity) {
+            grow();
         }
         
-        palette[paletteSize] = blockValue;
-        refCounts[paletteSize] = 0; // will be incremented by caller
-        paletteSize++;
+        vertices[vertCount] = blockValue;
+        blockRefs[vertCount] = 0; // will be incremented by the caller!
+        vertCount++;
         
-        // check if we need to increase bits per index
-        var newBitsPerIndex = calculateBitsPerIndex(paletteSize);
-        if (newBitsPerIndex != bitsPerIndex) {
-            resizeIndices(newBitsPerIndex);
+        // check if we need to resize
+        var newBits = bitsPerIdx(vertCount);
+        if (newBits != density) {
+            resizeIndices(newBits, ref indices, ref count, ref density);
         }
         
-        return paletteSize - 1;
+        return vertCount - 1;
     }
-
-    private void growPalette() {
-        var newCapacity = paletteCapacity * 2;
-        var newPalette = GC.AllocateUninitializedArray<uint>(newCapacity);
-        var newRefCounts = GC.AllocateUninitializedArray<ushort>(newCapacity);
-        
-        Array.Copy(palette, newPalette, paletteSize);
-        Array.Copy(refCounts, newRefCounts, paletteSize);
-        
-        palette = newPalette;
-        refCounts = newRefCounts;
-        paletteCapacity = newCapacity;
-    }
-
-    private void incrementRefCount(int paletteIndex) {
-        if (refCounts[paletteIndex] < ushort.MaxValue) {
-            refCounts[paletteIndex]++;
-        }
-    }
-
-    private void decrementRefCount(int paletteIndex) {
-        if (refCounts[paletteIndex] > 0) {
-            refCounts[paletteIndex]--;
-        }
-    }
-
-    private void tryCompactPalette() {
-        // only compact if we have unused entries and palette is getting large
-        if (paletteSize <= MAX_DIRECT_PALETTE_SIZE) return;
-        
-        var unusedCount = 0;
-        for (int i = 0; i < paletteSize; i++) {
-            if (refCounts[i] == 0) {
-                unusedCount++;
+    
+    private int getLight(byte lightValue) {
+        for (int i = 0; i < lightVertCount; i++) {
+            if (lightVertices[i] == lightValue) {
+                return i;
             }
         }
         
-        // only compact if we have significant unused entries (>25% waste)
-        if (unusedCount < paletteSize / 4) return;
+        if (lightVertCount >= lightVertCapacity) {
+            growLight();
+        }
         
-        compactPalette();
+        lightVertices[lightVertCount] = lightValue;
+        lightRefs[lightVertCount] = 0; // will be incremented by caller!
+        lightVertCount++;
+        
+        // check if we need to resize
+        var newBits = bitsPerIdx(lightVertCount);
+        if (newBits != lightDensity) {
+            resizeIndices(newBits, ref lightIndices, ref lightCount, ref lightDensity);
+        }
+        
+        return lightVertCount - 1;
     }
 
-    private void compactPalette() {
-        // use stack allocation for small palettes, heap for large ones
-        Span<int> remapping = paletteSize <= 1024 
-            ? stackalloc int[paletteSize] 
-            : GC.AllocateUninitializedArray<int>(paletteSize);
+    private void grow() {
+        growPalette(arrayPoolU, ref vertices, ref blockRefs, ref vertCapacity, vertCount);
+    }
+    
+    private void growLight() {
+        growPalette(arrayPool, ref lightVertices, ref lightRefs, ref lightVertCapacity, lightVertCount);
+    }
+    
+    private static void growPalette<T>(VariableArrayPool<T> pool, ref T[] verticesArray, ref ushort[] refsArray, 
+                               ref int capacity, int count) {
+        var newCapacity = capacity * 2;
+        var newVertices = pool.grab(newCapacity);
+        var newRefCounts = arrayPoolUS.grab(newCapacity);
+        
+        Array.Copy(verticesArray, newVertices, count);
+        Array.Copy(refsArray, newRefCounts, count);
+        
+        if (verticesArray != null) {
+            pool.putBack(verticesArray);
+        }
+        
+        if (refsArray != null) {
+            arrayPoolUS.putBack(refsArray);
+        }
+        
+        verticesArray = newVertices;
+        refsArray = newRefCounts;
+        capacity = newCapacity;
+    }
+
+
+    private void tryCompact(bool isLight = false) {
+        var count = isLight ? lightVertCount : vertCount;
+        var refs = isLight ? lightRefs : blockRefs;
+        
+        if (count <= SMALL_ARRAY) {
+            return;
+        }
+
+        var unused = 0;
+        for (int i = 0; i < count; i++) {
+            if (refs[i] == 0) {
+                unused++;
+            }
+        }
+        
+        if (unused >= count / 4) {
+            if (isLight) compactLight(); else compact();
+        }
+    }
+
+    private void compact() {
+        compact(vertices, blockRefs, ref vertCount, ref indices, ref count, ref density, "vertices");
+    }
+    
+    private void compactLight() {
+        compact(lightVertices, lightRefs, ref lightVertCount, ref lightIndices, ref lightCount, ref lightDensity, "light vertices");
+    }
+    
+    private static void compact<T>(T[] verticesArray, ushort[] refsArray, ref int count, 
+                                  ref byte[]? indicesArray, ref int indicesLength, ref int bits, 
+                                  string errorName) {
+        Span<int> remapping = count <= 1024 
+            ? stackalloc int[count] 
+            : GC.AllocateUninitializedArray<int>(count);
             
         var newSize = 0;
         
         // build remapping table
-        for (int i = 0; i < paletteSize; i++) {
-            if (refCounts[i] > 0) {
+        for (int i = 0; i < count; i++) {
+            if (refsArray[i] > 0) {
                 remapping[i] = newSize;
                 if (newSize != i) {
-                    palette[newSize] = palette[i];
-                    refCounts[newSize] = refCounts[i];
+                    verticesArray[newSize] = verticesArray[i];
+                    refsArray[newSize] = refsArray[i];
                 }
                 newSize++;
             } else {
@@ -282,288 +352,101 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             }
         }
         
-        if (newSize == paletteSize) return; // nothing to compact
-        
-        paletteSize = newSize;
+        if (newSize == count) {
+            return; // nothing to compact
+        }
+
+        count = newSize;
         
         // update all indices in the chunk
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
-            var oldIndex = getIndexRaw(i);
+            var oldIndex = getIndexRaw(i, indicesArray, bits);
             var newIndex = remapping[oldIndex];
             if (newIndex == -1) {
-                throw new InvalidOperationException("Found reference to unused palette entry");
+                SkillIssueException.throwNew($"Found reference to unused {errorName} entry");
             }
-            setIndexRaw(i, newIndex);
+            setIndexRaw(i, newIndex, indicesArray, bits);
         }
         
         // check if we can reduce bits per index
-        var newBitsPerIndex = calculateBitsPerIndex(paletteSize);
-        if (newBitsPerIndex < bitsPerIndex) {
-            resizeIndices(newBitsPerIndex);
+        var newBits = bitsPerIdx(newSize);
+        if (newBits < bits) {
+            resizeIndices(newBits, ref indicesArray, ref indicesLength, ref bits);
         }
     }
 
-    private void resizeIndices(int newBitsPerIndex) {
-        if (newBitsPerIndex == bitsPerIndex) return;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int bitsPerIdx(int size) {
+        return size <= 1 ? 0 : 32 - BitOperations.LeadingZeroCount((uint)(size - 1));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int getIndicesSize(int bits) {
+        return bits == 0 ? 0 : (TOTAL_BLOCKS * bits + 7) >> 3; // ceiling division by 8
+    }
+
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void increfcount(ushort[] refCounts, int index) {
+        if (refCounts[index] < ushort.MaxValue) {
+            refCounts[index]++;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void decrefcount(ushort[] refCounts, int index) {
+        if (refCounts[index] > 0) {
+            refCounts[index]--;
+        }
+    }
+
+    
+    private static void resizeIndices(int newBits, ref byte[]? indices, ref int indicesLength, ref int bits) {
+        if (newBits == bits) return;
         
-        var oldBitsPerIndex = bitsPerIndex;
-        bitsPerIndex = newBitsPerIndex;
+        var oldBits = bits;
         
         // if growing from 0 bits, allocate indices array
-        if (oldBitsPerIndex == 0) {
-            indicesLength = calculateIndicesSize(newBitsPerIndex);
-            indices = arrayPool.Rent(indicesLength);
+        if (oldBits == 0) {
+            indicesLength = getIndicesSize(newBits);
+            indices = arrayPool.grab(indicesLength);
             Array.Clear(indices, 0, indicesLength);
+            bits = newBits;
             return;
         }
         
         // if shrinking to 0 bits, deallocate indices array
-        if (newBitsPerIndex == 0) {
+        if (newBits == 0) {
             if (indices != null) {
-                arrayPool.Return(indices);
+                arrayPool.putBack(indices);
                 indices = null;
                 indicesLength = 0;
             }
+            bits = newBits;
             return;
         }
         
-        // put back old indices and grab new ones first to avoid peak memory usage
+        // repack indices
         var oldIndices = indices;
         var oldIndicesLength = indicesLength;
-        indicesLength = calculateIndicesSize(newBitsPerIndex);
-        indices = arrayPool.Rent(indicesLength);
+        indicesLength = getIndicesSize(newBits);
+        indices = arrayPool.grab(indicesLength);
         Array.Clear(indices, 0, indicesLength);
         
-        // copy all indices to new format directly into the pooled array
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
-            var oldIndex = getIndexRaw(i, oldIndices, oldBitsPerIndex);
-            setIndexRaw(i, oldIndex);
-        }
-        
-        // put back old indices
-        if (oldIndices != null) {
-            arrayPool.Return(oldIndices);
-        }
-        
-        bitsPerIndex = newBitsPerIndex;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int getIndexRaw(int blockCoord, byte[] sourceArray, int sourceBitsPerIndex) {
-        if (sourceBitsPerIndex == 0) return 0;
-        
-        var bitIndex = blockCoord * sourceBitsPerIndex;
-        var byteIndex = bitIndex >> 3;
-        var bitOffset = bitIndex & 7;
-        
-        var result = 0;
-        var bitsRemaining = sourceBitsPerIndex;
-        
-        while (bitsRemaining > 0) {
-            var bitsInThisByte = Math.Min(8 - bitOffset, bitsRemaining);
-            var mask = (1 << bitsInThisByte) - 1;
-            var value = (sourceArray[byteIndex] >> bitOffset) & mask;
-            
-            result |= value << (sourceBitsPerIndex - bitsRemaining);
-            
-            bitsRemaining -= bitsInThisByte;
-            bitOffset = 0;
-            byteIndex++;
-        }
-        
-        return result;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int calculateBitsPerIndex(int paletteSize) {
-        return paletteSize <= 1 ? 0 : 32 - BitOperations.LeadingZeroCount((uint)(paletteSize - 1));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int calculateIndicesSize(int bitsPerIndex) {
-        return bitsPerIndex == 0 ? 0 : (TOTAL_BLOCKS * bitsPerIndex + 7) >> 3; // ceiling division by 8
-    }
-
-    // Light palette methods
-    private void initLightPalette() {
-        lightPaletteCapacity = INITIAL_LIGHT_PALETTE_SIZE;
-        lightPalette = GC.AllocateUninitializedArray<byte>(lightPaletteCapacity);
-        lightRefCounts = GC.AllocateUninitializedArray<ushort>(lightPaletteCapacity);
-        
-        // initialize with 0x00 (no light)
-        lightPalette[0] = 0x00;
-        lightRefCounts[0] = (ushort)TOTAL_BLOCKS; // all start as no light
-        lightPaletteSize = 1;
-        lightBitsPerIndex = 0; // single light value needs 0 bits
-    }
-
-    private int findOrAddToLightPalette(byte lightValue) {
-        // linear search for light values (small palette)
-        for (int i = 0; i < lightPaletteSize; i++) {
-            if (lightPalette[i] == lightValue) {
-                return i;
-            }
-        }
-        
-        // need to add to light palette
-        if (lightPaletteSize >= lightPaletteCapacity) {
-            growLightPalette();
-        }
-        
-        lightPalette[lightPaletteSize] = lightValue;
-        lightRefCounts[lightPaletteSize] = 0; // will be incremented by caller
-        lightPaletteSize++;
-        
-        // check if we need to increase bits per index
-        var newBitsPerIndex = calculateBitsPerIndex(lightPaletteSize);
-        if (newBitsPerIndex != lightBitsPerIndex) {
-            resizeLightIndices(newBitsPerIndex);
-        }
-        
-        return lightPaletteSize - 1;
-    }
-
-    private void growLightPalette() {
-        var newCapacity = lightPaletteCapacity * 2;
-        var newPalette = GC.AllocateUninitializedArray<byte>(newCapacity);
-        var newRefCounts = GC.AllocateUninitializedArray<ushort>(newCapacity);
-        
-        Array.Copy(lightPalette, newPalette, lightPaletteSize);
-        Array.Copy(lightRefCounts, newRefCounts, lightPaletteSize);
-        
-        lightPalette = newPalette;
-        lightRefCounts = newRefCounts;
-        lightPaletteCapacity = newCapacity;
-    }
-
-    private void incrementLightRefCount(int paletteIndex) {
-        if (lightRefCounts[paletteIndex] < ushort.MaxValue) {
-            lightRefCounts[paletteIndex]++;
-        }
-    }
-
-    private void decrementLightRefCount(int paletteIndex) {
-        if (lightRefCounts[paletteIndex] > 0) {
-            lightRefCounts[paletteIndex]--;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int getLightIndexRaw(int blockCoord) {
-        if (lightBitsPerIndex == 0) return 0; // single light value
-        
-        var bitIndex = blockCoord * lightBitsPerIndex;
-        var byteIndex = bitIndex >> 3;
-        var bitOffset = bitIndex & 7;
-        
-        var result = 0;
-        var bitsRemaining = lightBitsPerIndex;
-        
-        while (bitsRemaining > 0) {
-            var bitsInThisByte = Math.Min(8 - bitOffset, bitsRemaining);
-            var mask = (1 << bitsInThisByte) - 1;
-            var value = (lightIndices![byteIndex] >> bitOffset) & mask;
-            
-            result |= value << (lightBitsPerIndex - bitsRemaining);
-            
-            bitsRemaining -= bitsInThisByte;
-            bitOffset = 0;
-            byteIndex++;
-        }
-        
-        return result;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void setLightIndexRaw(int blockCoord, int index) {
-        if (lightBitsPerIndex == 0) return; // single light value, nothing to store
-        
-        var bitIndex = blockCoord * lightBitsPerIndex;
-        var byteIndex = bitIndex >> 3;
-        var bitOffset = bitIndex & 7;
-        
-        var bitsRemaining = lightBitsPerIndex;
-        
-        while (bitsRemaining > 0) {
-            var bitsInThisByte = Math.Min(8 - bitOffset, bitsRemaining);
-            var mask = (1 << bitsInThisByte) - 1;
-            var value = (index >> (lightBitsPerIndex - bitsRemaining)) & mask;
-            
-            lightIndices![byteIndex] = (byte)(lightIndices[byteIndex] & ~(mask << bitOffset));
-            lightIndices[byteIndex] = (byte)(lightIndices[byteIndex] | (value << bitOffset));
-            
-            bitsRemaining -= bitsInThisByte;
-            bitOffset = 0;
-            byteIndex++;
-        }
-    }
-
-    private void resizeLightIndices(int newBitsPerIndex) {
-        if (newBitsPerIndex == lightBitsPerIndex) return;
-        
-        var oldBitsPerIndex = lightBitsPerIndex;
-        lightBitsPerIndex = newBitsPerIndex;
-        
-        // if growing from 0 bits, allocate indices array
-        if (oldBitsPerIndex == 0) {
-            lightIndicesLength = calculateIndicesSize(newBitsPerIndex);
-            lightIndices = arrayPool.Rent(lightIndicesLength);
-            Array.Clear(lightIndices, 0, lightIndicesLength);
-            return;
-        }
-        
-        // if shrinking to 0 bits, deallocate indices array
-        if (newBitsPerIndex == 0) {
-            if (lightIndices != null) {
-                arrayPool.Return(lightIndices);
-                lightIndices = null;
-                lightIndicesLength = 0;
-            }
-            return;
-        }
-        
-        // repack light indices
-        var oldIndices = lightIndices;
-        var oldLightIndicesLength = lightIndicesLength;
-        lightIndicesLength = calculateIndicesSize(newBitsPerIndex);
-        lightIndices = arrayPool.Rent(lightIndicesLength);
-        Array.Clear(lightIndices, 0, lightIndicesLength);
-        
-        for (int i = 0; i < TOTAL_BLOCKS; i++) {
-            var oldIndex = getLightIndexRaw(i, oldIndices, oldBitsPerIndex);
-            setLightIndexRaw(i, oldIndex);
+            var oldIndex = getIndexRaw(i, oldIndices, oldBits);
+            setIndexRaw(i, oldIndex, indices, newBits);
         }
         
         if (oldIndices != null) {
-            arrayPool.Return(oldIndices);
+            arrayPool.putBack(oldIndices);
         }
+        
+        bits = newBits;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int getLightIndexRaw(int blockCoord, byte[] sourceArray, int sourceBitsPerIndex) {
-        if (sourceBitsPerIndex == 0) return 0;
-        
-        var bitIndex = blockCoord * sourceBitsPerIndex;
-        var byteIndex = bitIndex >> 3;
-        var bitOffset = bitIndex & 7;
-        
-        var result = 0;
-        var bitsRemaining = sourceBitsPerIndex;
-        
-        while (bitsRemaining > 0) {
-            var bitsInThisByte = Math.Min(8 - bitOffset, bitsRemaining);
-            var mask = (1 << bitsInThisByte) - 1;
-            var value = (sourceArray[byteIndex] >> bitOffset) & mask;
-            
-            result |= value << (sourceBitsPerIndex - bitsRemaining);
-            
-            bitsRemaining -= bitsInThisByte;
-            bitOffset = 0;
-            byteIndex++;
-        }
-        
-        return result;
-    }
+    
 
     private void updateCounts(ushort oldID, ushort newID) {
         // if old was air, new is not
@@ -627,7 +510,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
 
     public ushort fastGet(int x, int y, int z) {
         var index = getIndex(x, y, z);
-        return palette[index].getID();
+        return vertices[index].getID();
     }
 
     /// <summary>
@@ -636,10 +519,10 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     public void fastSet(int x, int y, int z, ushort val) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getIndexRaw(coord);
-        var newIndex = findOrAddToPalette(val);
+        var newIndex = get(val);
         
-        decrementRefCount(oldIndex);
-        incrementRefCount(newIndex);
+        decrefcount(blockRefs, oldIndex);
+        increfcount(blockRefs, newIndex);
         
         setIndexRaw(coord, newIndex);
     }
@@ -650,10 +533,10 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     public void fastSetUnsafe(int x, int y, int z, ushort val) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getIndexRaw(coord);
-        var newIndex = findOrAddToPalette(val);
+        var newIndex = get(val);
         
-        decrementRefCount(oldIndex);
-        incrementRefCount(newIndex);
+        decrefcount(blockRefs, oldIndex);
+        increfcount(blockRefs, newIndex);
         
         setIndexRaw(coord, newIndex);
     }
@@ -666,18 +549,25 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
     public void init() {
-        paletteCapacity = INITIAL_PALETTE_SIZE;
-        palette = GC.AllocateUninitializedArray<uint>(paletteCapacity);
-        refCounts = GC.AllocateUninitializedArray<ushort>(paletteCapacity);
+        vertCapacity = INITIAL_SIZE;
+        vertices = arrayPoolU.grab(vertCapacity);
+        blockRefs = arrayPoolUS.grab(vertCapacity);
         
-        // initialize block palette
-        palette[0] = 0;
-        refCounts[0] = (ushort)TOTAL_BLOCKS; // all blocks start as air
-        paletteSize = 1;
-        bitsPerIndex = 0; // single block type needs 0 bits
         
-        // initialize light palette
-        initLightPalette();
+        vertices[0] = 0;
+        blockRefs[0] = TOTAL_BLOCKS; // all blocks start as air
+        vertCount = 1;
+        density = 0;
+        
+        // initialize light vertices
+        lightVertCapacity = INITIAL_LIGHT_SIZE;
+        lightVertices = arrayPool.grab(lightVertCapacity);
+        lightRefs = arrayPoolUS.grab(lightVertCapacity);
+        
+        lightVertices[0] = 0;
+        lightRefs[0] = TOTAL_BLOCKS; // all start as no light
+        lightVertCount = 1;
+        lightDensity = 0;
         
         inited = true;
     }
@@ -717,7 +607,8 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         renderTickCount = 0;
 
         // rebuild reference counts
-        Array.Clear(refCounts, 0, paletteSize);
+        Array.Clear(blockRefs, 0, vertCount);
+        Array.Clear(lightRefs, 0, lightVertCount);
 
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
             int x = i & 0xF;
@@ -725,9 +616,12 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             int y = i >> 8;
             
             var index = getIndexRaw(i);
-            var blockID = palette[index].getID();
+            var blockID = vertices[index].getID();
             
-            refCounts[index]++;
+            blockRefs[index]++;
+            
+            var lightIndex = getLightIndexRaw(i);
+            lightRefs[lightIndex]++;
             
             if (blockID != 0) {
                 blockCount++;
@@ -751,65 +645,70 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             }
         }
     }
-
-    // Light methods - using palette
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public byte getLight(int x, int y, int z) {
         var coord = (y << 8) + (z << 4) + x;
         var lightIndex = getLightIndexRaw(coord);
-        return lightPalette[lightIndex];
+        return lightVertices[lightIndex];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void setLight(int x, int y, int z, byte val) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getLightIndexRaw(coord);
-        var newIndex = findOrAddToLightPalette(val);
+        var newIndex = getLight(val);
         
-        decrementLightRefCount(oldIndex);
-        incrementLightRefCount(newIndex);
+        decrefcount(lightRefs, oldIndex);
+        increfcount(lightRefs, newIndex);
         
         setLightIndexRaw(coord, newIndex);
+        
+        tryCompact(true);
     }
 
     public byte skylight(int x, int y, int z) {
         var coord = (y << 8) + (z << 4) + x;
         var lightIndex = getLightIndexRaw(coord);
-        var value = lightPalette[lightIndex];
+        var value = lightVertices[lightIndex];
         return (byte)(value & 0xF);
     }
 
     public byte blocklight(int x, int y, int z) {
         var coord = (y << 8) + (z << 4) + x;
         var lightIndex = getLightIndexRaw(coord);
-        var value = lightPalette[lightIndex];
+        var value = lightVertices[lightIndex];
         return (byte)((value >> 4) & 0xF);
     }
 
     public void setSkylight(int x, int y, int z, byte val) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getLightIndexRaw(coord);
-        var oldValue = lightPalette[oldIndex];
+        var oldValue = lightVertices[oldIndex];
         var blocklight = (byte)((oldValue >> 4) & 0xF);
         var newValue = (byte)((blocklight << 4) | val);
         
-        var newIndex = findOrAddToLightPalette(newValue);
-        decrementLightRefCount(oldIndex);
-        incrementLightRefCount(newIndex);
+        var newIndex = getLight(newValue);
+        decrefcount(lightRefs, oldIndex);
+        increfcount(lightRefs, newIndex);
         setLightIndexRaw(coord, newIndex);
+        
+        tryCompact(true);
     }
 
     public void setBlocklight(int x, int y, int z, byte val) {
         var coord = (y << 8) + (z << 4) + x;
         var oldIndex = getLightIndexRaw(coord);
-        var oldValue = lightPalette[oldIndex];
+        var oldValue = lightVertices[oldIndex];
         var skylight = (byte)(oldValue & 0xF);
         var newValue = (byte)((val << 4) | skylight);
         
-        var newIndex = findOrAddToLightPalette(newValue);
-        decrementLightRefCount(oldIndex);
-        incrementLightRefCount(newIndex);
+        var newIndex = getLight(newValue);
+        decrefcount(lightRefs, oldIndex);
+        increfcount(lightRefs, newIndex);
         setLightIndexRaw(coord, newIndex);
+        
+        tryCompact(true);
     }
 
     public static byte extractSkylight(byte value) {
@@ -822,10 +721,9 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
 
     // methods for serialization compatibility with WorldIO
     public void getSerializationBlocks(uint[] blocks) {
-        // decompress palette data back to raw format
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
             var index = getIndexRaw(i);
-            blocks[i] = palette[index];
+            blocks[i] = vertices[index];
         }
     }
     
@@ -833,63 +731,106 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
      * Need a 4096 length byte array to write into!
      */
     public void getSerializationLight(byte[] light) {
-        // decompress light palette back to raw format for serialization
         for (int i = 0; i < TOTAL_BLOCKS; i++) {
             var lightIndex = getLightIndexRaw(i);
-            light[i] = lightPalette[lightIndex];
+            light[i] = lightVertices[lightIndex];
         }
     }
 
     public void setSerializationData(uint[] blocks, byte[] lightData) {
-        // initialize block palette
-        paletteCapacity = INITIAL_PALETTE_SIZE;
-        palette = GC.AllocateUninitializedArray<uint>(paletteCapacity);
-        refCounts = GC.AllocateUninitializedArray<ushort>(paletteCapacity);
         
-        // initialize light palette
-        initLightPalette();
+        // if old ones exist, dispose
+        ReleaseUnmanagedResources();
         
-        // convert raw light data to light palette
+        // initialize arrays
+        vertCapacity = INITIAL_SIZE;
+        vertices = arrayPoolU.grab(vertCapacity);
+        blockRefs = arrayPoolUS.grab(vertCapacity);
+        
+        lightVertCapacity = INITIAL_LIGHT_SIZE;
+        lightVertices = arrayPool.grab(lightVertCapacity);
+        lightRefs = arrayPoolUS.grab(lightVertCapacity);
+        
+        // reset counters
+        vertices[0] = 0; // air block
+        blockRefs[0] = 0; // will be set correctly by palette loading
+        vertCount = 1;
+        density = 0;
+        
+        lightVertices[0] = 0x00; // no light
+        lightRefs[0] = 0; // will be set correctly by palette loading
+        lightVertCount = 1;
+        lightDensity = 0;
+        
+        // allocate initial indices
+        count = getIndicesSize(density);
+        if (count > 0) {
+            indices = arrayPool.grab(count);
+            Array.Clear(indices, 0, count);
+        }
+        else {
+            indices = null;
+        }
+        
+        // allocate initial light indices
+        lightCount = getIndicesSize(lightDensity);
+        if (lightCount > 0) {
+            lightIndices = arrayPool.grab(lightCount);
+            Array.Clear(lightIndices, 0, lightCount);
+        }
+        else {
+            lightIndices = null;
+        }
+
+
+        // load block data
+        for (int i = 0; i < blocks.Length; i++) {
+            var index = get(blocks[i]);
+            setIndexRaw(i, index);
+        }
+        
+        // load light data
         for (int i = 0; i < lightData.Length && i < TOTAL_BLOCKS; i++) {
-            var lightValue = lightData[i];
-            var lightIndex = findOrAddToLightPalette(lightValue);
-            incrementLightRefCount(lightIndex);
+            var lightIndex = getLight(lightData[i]);
             setLightIndexRaw(i, lightIndex);
         }
         
-        // start with air in palette
-        palette[0] = 0;
-        refCounts[0] = 0;
-        paletteSize = 1;
-        bitsPerIndex = 0;
-        
-        indicesLength = calculateIndicesSize(bitsPerIndex);
-        indices = arrayPool.Rent(indicesLength);
-        Array.Clear(indices, 0, indicesLength);
-        
-        for (int i = 0; i < blocks.Length; i++) {
-            var value = blocks[i];
-            var index = findOrAddToPalette(value);
-            setIndexRaw(i, index);
-        }
         inited = true;
-        
         refreshCounts();
     }
 
     // cleanup
     private void ReleaseUnmanagedResources() {
         if (indices != null) {
-            arrayPool.Return(indices);
+            arrayPool.putBack(indices);
             indices = null;
         }
 
         if (lightIndices != null) {
-            arrayPool.Return(lightIndices);
+            arrayPool.putBack(lightIndices);
             lightIndices = null;
         }
         
-        // palettes and refCounts are not pooled - they're dynamically allocated
+        if (vertices != null) {
+            arrayPoolU.putBack(vertices);
+            vertices = null;
+        }
+        
+        if (blockRefs != null) {
+            arrayPoolUS.putBack(blockRefs);
+            blockRefs = null;
+        }
+        
+        if (lightVertices != null) {
+            arrayPool.putBack(lightVertices);
+            lightVertices = null;
+        }
+        
+        if (lightRefs != null) {
+            arrayPoolUS.putBack(lightRefs);
+            lightRefs = null;
+        }
+        
     }
 
     public void Dispose() {

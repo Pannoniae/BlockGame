@@ -215,7 +215,7 @@ public class Block {
         HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone"));
         HELLSTONE.setTex(cubeUVs(8, 0));
         HELLSTONE.setModel(BlockModel.makeCube(HELLSTONE));
-        HELLSTONE.light(15);
+        //HELLSTONE.light(15);
         
         HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
         HELLROCK.setTex(cubeUVs(9, 0));
