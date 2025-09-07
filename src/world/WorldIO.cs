@@ -115,8 +115,8 @@ public class WorldIO {
                 // get a new array from the pool and copy into that
                 var freshBlocks = saveBlockPool.grab();
                 var freshLight = saveLightPool.grab();
-                chunk.blocks[sectionY].blocks.CopyTo(freshBlocks);
-                chunk.blocks[sectionY].light.CopyTo(freshLight);
+                chunk.blocks[sectionY].getSerializationBlocks(freshBlocks);
+                chunk.blocks[sectionY].getSerializationLight(freshLight);
                 section.addUIntArray("blocks", freshBlocks);
                 section.addByteArray("light", freshLight);
             }
@@ -154,9 +154,7 @@ public class WorldIO {
             blocks.loadInit();
 
             // blocks
-            blocks.blocks = section.getUIntArray("blocks");
-            blocks.light = section.getByteArray("light");
-            blocks.refreshCounts();
+            blocks.setSerializationData(section.getUIntArray("blocks"), section.getByteArray("light"));
         }
 
         /*var file = "chunk.xnbt";
@@ -266,9 +264,15 @@ public class ChunkSaveThread : IDisposable {
                         // if we're being polite, we can put the arrays back after it's done
                         var sections = saveData.nbt.getListTag<NBTCompound>("sections");
                         foreach (var section in sections.list) {
-                            // put back the arrays into the pool
-                            WorldIO.saveBlockPool.putBack(section.getUIntArray("blocks"));
-                            WorldIO.saveLightPool.putBack(section.getByteArray("light"));
+                            //print what it has
+                            
+                            //Log.info($"Saved chunk section, inited: {section.getByte("inited")}, blocks length: {section.getUIntArray("blocks")?.Length}, light length: {section.getByteArray("light")?.Length}");
+                            
+                            // put back the arrays into the pool, but only if they exist (i.e. section was inited)
+                            if (section.getByte("inited") != 0) {
+                                WorldIO.saveBlockPool.putBack(section.getUIntArray("blocks"));
+                                WorldIO.saveLightPool.putBack(section.getByteArray("light"));
+                            }
                         }
                     }
                     catch (Exception ex) {

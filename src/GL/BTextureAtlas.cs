@@ -14,6 +14,8 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     public bool firstLoad = true;
     
     public List<DynamicTexture> dtextures = [];
+    
+    public Rgba32[] mipmap;
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
         GL = Game.GL;
@@ -116,7 +118,9 @@ public class BTextureAtlas : BTexture2D, IDisposable {
             int width = imageWidth;
             int height = imageHeight;
             
-
+            
+            // no need to clear, we overwrite anyway!
+            //Array.Clear(mipmap);
             for (lvl = 1; lvl <= maxLevel; lvl++) {
                 if (width > 1) width /= 2;
                 if (height > 1) height /= 2;
@@ -157,6 +161,8 @@ public class BTextureAtlas : BTexture2D, IDisposable {
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
         }*/
+
+        //mipmap = new Rgba32[width * height];
 
         //Console.Out.WriteLine("Loading textures the proper way!");
         // Load image

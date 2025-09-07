@@ -22,7 +22,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public HeightMap heightMap;
     public readonly ChunkCoord coord;
     public SubChunk[] subChunks;
-    public ArrayBlockData[] blocks = new ArrayBlockData[CHUNKHEIGHT];
+    public PaletteBlockData[] blocks = new PaletteBlockData[CHUNKHEIGHT];
 
     /** For now, this is fixed-size, we'll cook something better up later */
     public List<Entity>[] entities = new List<Entity>[CHUNKHEIGHT];
@@ -56,7 +56,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // storage!
         for (int i = 0; i < CHUNKHEIGHT; i++) {
             subChunks[i] = new SubChunk(world, this, chunkX, i, chunkZ);
-            blocks[i] = new ArrayBlockData(this, i);
+            blocks[i] = new PaletteBlockData(this, i);
             entities[i] = [];
         }
 
@@ -172,7 +172,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         }
 
         // we collect, then we propagate!
-        List<LightNode> toPropagate = new();
+        List<LightNode> toPropagate = [];
 
         // second pass: check for horizontal propagation into unlit neighbors
         for (int x = 0; x < CHUNKSIZE; x++) {

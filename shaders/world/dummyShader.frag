@@ -7,7 +7,7 @@ layout(location = 0) out vec4 colour;
 uniform sampler2D blockTexture;
 uniform sampler2D lightTexture;
 
-in vec2 texCoords;
+centroid in vec2 texCoords;
 in vec4 tint;
 
 void main() {

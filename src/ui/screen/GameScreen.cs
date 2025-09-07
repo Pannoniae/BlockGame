@@ -354,10 +354,6 @@ public class GameScreen : Screen {
                     Log.info($"VRAM usage: {vmem / (1024 * 1024)}MB");
                 }
 
-                Log.info("Alignment of array: " +
-                         MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks));
-                Log.info("Alignment of array: " +
-                         MemoryUtils.getAlignment(Game.world.chunkList[0].blocks[0].blocks[0]));
                 break;
             }
 

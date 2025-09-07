@@ -17,6 +17,10 @@ public class EmptyBlockData : BlockData {
     public void setMetadata(int x, int y, int z, byte val) {
     }
 
+    public uint getRaw(int x, int y, int z) {
+        return 0;
+    }
+
     public byte getLight(int x, int y, int z) {
         // only skylight, zero blocklight
         return 15;
@@ -33,6 +37,11 @@ public class EmptyBlockData : BlockData {
     public void setSkylight(int x, int y, int z, byte val) {
     }
 
+    public void setLight(int x, int y, int z, byte val) {
+    }
+
     public void setBlocklight(int x, int y, int z, byte val) {
     }
+
+    public bool inited => true;
 }

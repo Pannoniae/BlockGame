@@ -247,10 +247,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // make element buffer resident for unified memory if supported
             if (Game.hasVBUM && Game.hasSBL) {
-                Game.sbl.MakeBufferResident((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
-                    (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)GLEnum.ReadOnly);
-                Game.sbl.GetBufferParameter((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)BufferTargetARB.ElementArrayBuffer,
-                    Silk.NET.OpenGL.Legacy.Extensions.NV.NV.BufferGpuAddressNV, out elementAddress);
+                Game.sbl.MakeBufferResident((NV)BufferTargetARB.ElementArrayBuffer,
+                    (NV)GLEnum.ReadOnly);
+                Game.sbl.GetBufferParameter((NV)BufferTargetARB.ElementArrayBuffer,
+                    NV.BufferGpuAddressNV, out elementAddress);
                 elementLen = Game.graphics.fatQuadIndicesLen;
             }
         }

@@ -8,7 +8,7 @@ namespace BlockGame;
 public class SubChunk {
 
     public Chunk chunk;
-    public ArrayBlockData blocks => chunk.blocks[coord.y];
+    public PaletteBlockData blocks => chunk.blocks[coord.y];
     public SubChunkCoord coord;
     public AABB box;
     

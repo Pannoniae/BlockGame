@@ -944,6 +944,11 @@ public partial class Game {
         
         //currentScreen.clear(dt, interp);
 
+        if (Settings.instance.framebufferEffects) {
+            // clear 0 as well
+            currentScreen.clear(dt, interp);
+        }
+
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
         // clear AFTER binding the framebuffer
         // otherwise it won't clean shit

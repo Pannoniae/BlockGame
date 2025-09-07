@@ -35,7 +35,7 @@ uniform vec3 uChunkPos;
     #endif
 #endif
 
-out vec2 texCoords;
+centroid out vec2 texCoords;
 out vec4 tint;
 
 const float m = 1 / 256.;
