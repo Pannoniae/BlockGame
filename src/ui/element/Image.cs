@@ -19,8 +19,8 @@ public class Image : GUIElement {
 
     public Image(Menu menu, string name, string path) : base(menu, name) {
         texture = Game.textures.get(path);
-        guiPosition.Width = (int)texture.width;
-        guiPosition.Height = (int)texture.height;
+        guiPosition.Width = (int)(texture.width * realScale);
+        guiPosition.Height = (int)(texture.height * realScale);
     }
 
     public void setPosition(Vector2I pos) {
@@ -30,13 +30,15 @@ public class Image : GUIElement {
     
     public void setScale(float sc) {
         scale = sc;
+        Console.WriteLine($"Setting scale to {sc}, realScale = {realScale}");
         guiPosition.Width = (int)(texture.width * realScale);
         guiPosition.Height = (int)(texture.height * realScale);
+        Console.WriteLine($"New dimensions: {guiPosition.Width} x {guiPosition.Height}");
     }
 
     public override void draw() {
         Rectangle tex;
-        Game.gui.draw(texture, new Vector2(bounds.X, bounds.Y), 1 / 2f);
-        var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
+        Game.gui.draw(texture, new Vector2(bounds.X, bounds.Y), realScale);
+        var centre = new Vector2(bounds.X + bounds.Width / realScale, bounds.Y + bounds.Height / realScale);
     }
 }
