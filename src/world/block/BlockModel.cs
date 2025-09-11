@@ -158,7 +158,7 @@ public class BlockModel {
     public static BlockModel makeLantern(Block bl) {
         var uvs = bl.uvs;
         var model = new BlockModel(); 
-        const float offsetH = 2 / 16f;
+        const float offsetH = 1 / 16f;
         const float offset = 2 / 16f;
         const float offset1 = 7 / 16f;
 
