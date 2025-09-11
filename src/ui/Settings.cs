@@ -130,7 +130,7 @@ public class Settings {
                                        RendererMode.Plain,
             RendererMode.Instanced => Game.hasInstancedUBO ? RendererMode.Instanced : RendererMode.Plain,
             RendererMode.Plain => RendererMode.Plain,
-            _ => RendererMode.Auto
+            _ => RendererMode.Plain
         };
     }
 

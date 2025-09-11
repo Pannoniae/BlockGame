@@ -93,7 +93,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idc.setup();
         idt.setup();
         
-        var mode = Settings.instance.getActualRendererMode();
+        var mode = Settings.instance.rendererMode;
         
         reloadRenderer(mode, mode);
     }
@@ -308,7 +308,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         
         // CMDLIST FIX: clear default FBO because we don't do it normally! :P
-        if (oldm == RendererMode.CommandList || newm == RendererMode.CommandList) {
+        var isActualCMDL = newm == RendererMode.Auto && Game.hasCMDL;
+        if (oldm == RendererMode.CommandList || newm == RendererMode.CommandList || isActualCMDL) {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.ClearColor(defaultClearColour.R / 255f, defaultClearColour.G / 255f,
                 defaultClearColour.B / 255f, 1f);
