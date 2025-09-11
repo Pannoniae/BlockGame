@@ -136,6 +136,7 @@ public class Block {
     public static Block SHORT_GRASS;
     public static Block YELLOW_FLOWER;
     public static Block RED_FLOWER;
+    public static Block THISTLE;
 
 
     public static Block PLANKS;
@@ -262,6 +263,13 @@ public class Block {
         RED_FLOWER.flowerAABB();
         RED_FLOWER.noCollision();
         RED_FLOWER.waterTransparent();
+        
+        THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
+        THISTLE.setTex(crossUVs(12, 1));
+        THISTLE.setModel(BlockModel.makeGrass(THISTLE));
+        THISTLE.transparency();
+        THISTLE.flowerAABB();
+        THISTLE.waterTransparent();
         
         PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
         PLANKS.setTex(cubeUVs(0, 5));
