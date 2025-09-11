@@ -101,6 +101,7 @@ public partial class Game {
 
     public void updateFramebuffers() {
         if (Settings.instance.framebufferEffects) {
+            deleteFramebuffer();
             genFramebuffer();
         }
         else {

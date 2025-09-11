@@ -1153,13 +1153,25 @@ public class BlockRenderer {
                         // ox, oy, oz
 
                         ao.Whole = 0;
+                        
+                        //192.168.100.1
 
 
                         //for (int j = 0; j < 4; j++) {
                         //mult = dirIdx * 36 + j * 9 + vert * 3;
                         // premultiply cuz its faster that way
+                        
+                        
 
-                        getDirectionOffsetsAndData(dir, ref MemoryMarshal.GetReference(blockCache), ref MemoryMarshal.GetReference(lightCache), lb, out light, out FourBytes o);
+                        FourBytes o;
+                        getDirectionOffsetsAndData(dir, ref MemoryMarshal.GetReference(blockCache),
+                            ref MemoryMarshal.GetReference(lightCache), lb, out light, out o);
+                        
+                        // if no smooth lighting, leave it be! we've just calculated a bunch of useless stuff but i dont wanna create another vaguely similar function lol
+                        if (!smoothLighting) {
+                            // simple lighting - uniform for all vertices
+                            light = new FourBytes(lb, lb, lb, lb);
+                        }
 
                         // only apply AO if enabled
                         if (AO && !facesRef.noAO) {

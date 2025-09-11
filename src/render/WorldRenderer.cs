@@ -90,73 +90,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public WorldRenderer() {
         GL = Game.GL;
 
-        chunkVAO = GL.GenVertexArray();
-
-        genFatQuadIndices();
-
         idc.setup();
         idt.setup();
-
-
-        // initialize shaders
-        initializeShaders();
-
-
-        // start with reasonable initial sizes, buffers will dynamically resize as needed
-        if (Game.hasInstancedUBO) {
-            // allocate SSBO for chunk positions (2MB initial, grows as needed)
-            chunkSSBO = new ShaderStorageBuffer(GL, 2 * 1024 * 1024, 0);
-
-            if (Game.hasCMDL) {
-                // allocate command buffer for chunk rendering (1MB initial, grows as needed)
-                chunkCMD = new CommandBuffer(GL, 1024 * 1024);
-            }
-
-            // allocate bindless indirect buffer if supported
-            if (Game.hasBindlessMDI) {
-                // 512KB initial (~7K commands), grows as needed
-                bindlessBuffer = new BindlessIndirectBuffer(GL, 512 * 1024);
-            }
-        }
-
-        initializeUniforms();
-
-        if (Game.hasInstancedUBO) {
-            chunkData = new List<Vector4>(8192 * Chunk.CHUNKHEIGHT);
-        }
-        else {
-            chunkData = null!;
-        }
-
-
-        worldShader.setUniform(blockTexture, 0);
-        worldShader.setUniform(lightTexture, 1);
-        //shader.setUniform(drawDistance, dd);
-
-        worldShader.setUniform(fogColour, defaultFogColour);
-        worldShader.setUniform(horizonColour, defaultClearColour);
-
-        waterShader.setUniform(waterBlockTexture, 0);
-        waterShader.setUniform(waterLightTexture, 1);
-        //shader.setUniform(drawDistance, dd);
-
-        waterShader.setUniform(waterFogColour, defaultFogColour);
-        waterShader.setUniform(waterHorizonColour, defaultClearColour);
-
-
-        // initialize chunk UBO (16 bytes: vec3 + padding)
-        //chunkUBO = new UniformBuffer(GL, 256, 0);
-
-        // make resident
-        // get address of the ssbo
-
-        if (Game.hasSBL) {
-            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (NV)GLEnum.ReadOnly);
-            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
-                out ssboaddr);
-        }
-
-        //setUniforms();
+        
+        var mode = Settings.instance.getActualRendererMode();
+        
+        reloadRenderer(mode, mode);
     }
 
     public void onWorldLoad() {
@@ -232,7 +171,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             indices[i * 6 + 4] = (ushort)(i * 4 + 2);
             indices[i * 6 + 5] = (ushort)(i * 4 + 3);
         }
-
+        
+        // delete old buffer if any
+        GL.DeleteBuffer(Game.graphics.fatQuadIndices);
+        Game.graphics.fatQuadIndices = 0;
+        Game.graphics.fatQuadIndicesLen = 0;
         Game.graphics.fatQuadIndices = GL.GenBuffer();
         GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
         unsafe {
@@ -246,7 +189,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             Game.graphics.fatQuadIndicesLen = (uint)(indices.Length * sizeof(ushort));
 
             // make element buffer resident for unified memory if supported
-            if (Game.hasVBUM && Game.hasSBL) {
+            if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
                 Game.sbl.MakeBufferResident((NV)BufferTargetARB.ElementArrayBuffer,
                     (NV)GLEnum.ReadOnly);
                 Game.sbl.GetBufferParameter((NV)BufferTargetARB.ElementArrayBuffer,
@@ -271,10 +214,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 ? "1" : "0")
         };
 
-        // Add variant-specific defines
-        var variant = Game.hasCMDL ? ShaderVariant.CommandList :
-            Game.hasInstancedUBO ? ShaderVariant.Instanced :
-            ShaderVariant.Normal;
+        // Add variant-specific defines based on renderer mode setting
+        var effectiveMode = settings.getActualRendererMode();
+        var variant = effectiveMode switch {
+            RendererMode.CommandList => ShaderVariant.CommandList,
+            RendererMode.BindlessMDI => ShaderVariant.Instanced, // BindlessMDI uses same shaders as instanced
+            RendererMode.Instanced => ShaderVariant.Instanced,
+            RendererMode.Plain => ShaderVariant.Normal,
+            _ => ShaderVariant.Normal
+        };
 
         return Shader.createVariant(GL, nameof(worldShader), "shaders/world/shader.vert", "shaders/world/shader.frag",
             variant, defs);
@@ -323,11 +271,120 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
 
         // chunk position uniforms for non-UBO path
-        if (!Game.hasInstancedUBO) {
+        if (Settings.instance.getActualRendererMode() < RendererMode.Instanced) {
             uChunkPos = worldShader.getUniformLocation("uChunkPos");
             dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
             wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
         }
+    }
+
+    /// <summary>
+    /// Reloads shaders and reinitializes renderer based on current settings.
+    /// Call this when renderer mode changes in settings.
+    /// </summary>
+    /// <param name="old"></param>
+    public void reloadRenderer(RendererMode oldm, RendererMode newm) {
+        // dispose existing shaders
+        worldShader?.Dispose();
+        dummyShader?.Dispose();
+        waterShader?.Dispose();
+        
+        // dispose mode-specific resources
+        chunkCMD?.Dispose();
+        chunkCMD = null;
+        bindlessBuffer?.Dispose();
+        bindlessBuffer = null;
+        chunkSSBO?.Dispose();
+        chunkSSBO = null;
+        
+        // destroy all sharedchunkVAOs
+        foreach (var chunk in world?.chunkList ?? []) {
+            foreach (var subChunk in chunk.subChunks) {
+                subChunk.vao?.Dispose();
+                subChunk.watervao?.Dispose();
+                subChunk.vao = null;
+                subChunk.watervao = null;
+            }
+        }
+        
+        // CMDLIST FIX: clear default FBO because we don't do it normally! :P
+        if (oldm == RendererMode.CommandList || newm == RendererMode.CommandList) {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.ClearColor(defaultClearColour.R / 255f, defaultClearColour.G / 255f,
+                defaultClearColour.B / 255f, 1f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        }
+        
+        // switch to new
+        Settings.instance.rendererMode = newm;
+        
+        var effectiveMode = Settings.instance.getActualRendererMode();
+        
+        // create shared chunk VAO
+        GL.DeleteVertexArray(chunkVAO);
+        chunkVAO = GL.GenVertexArray();
+        
+        // initialize shaders
+        initializeShaders();
+        
+        if (effectiveMode >= RendererMode.Instanced) {
+            // allocate SSBO for chunk positions (2MB initial, grows as needed)
+            chunkSSBO = new ShaderStorageBuffer(GL, 2 * 1024 * 1024, 0);
+
+            if (effectiveMode == RendererMode.CommandList) {
+                // allocate command buffer for chunk rendering (1MB initial, grows as needed)
+                chunkCMD = new CommandBuffer(GL, 1024 * 1024);
+            }
+
+            // allocate bindless indirect buffer if supported
+            if (effectiveMode == RendererMode.BindlessMDI) {
+                // 512KB initial (~7K commands), grows as needed
+                bindlessBuffer = new BindlessIndirectBuffer(GL, 512 * 1024);
+            }
+        }
+
+        initializeUniforms();
+
+        if (effectiveMode >= RendererMode.Instanced) {
+            chunkData = new List<Vector4>(8192 * Chunk.CHUNKHEIGHT);
+        }
+        else {
+            chunkData = null!;
+        }
+
+
+        worldShader.setUniform(blockTexture, 0);
+        worldShader.setUniform(lightTexture, 1);
+        //shader.setUniform(drawDistance, dd);
+
+        worldShader.setUniform(fogColour, defaultFogColour);
+        worldShader.setUniform(horizonColour, defaultClearColour);
+
+        waterShader.setUniform(waterBlockTexture, 0);
+        waterShader.setUniform(waterLightTexture, 1);
+        //shader.setUniform(drawDistance, dd);
+
+        waterShader.setUniform(waterFogColour, defaultFogColour);
+        waterShader.setUniform(waterHorizonColour, defaultClearColour);
+
+
+        // initialize chunk UBO (16 bytes: vec3 + padding)
+        //chunkUBO = new UniformBuffer(GL, 256, 0);
+
+        // make resident
+        // get address of the ssbo
+
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
+            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (NV)GLEnum.ReadOnly);
+            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
+                out ssboaddr);
+        }
+        
+        currentAnisoLevel = -1;
+        currentMSAA = -1;
+        
+        // regen shared quad indices for unified memory
+        genFatQuadIndices();
     }
 
     public void updateAF() {
@@ -454,8 +511,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         frustum = Game.camera.frustum;
 
 
-        var usingCMDL = Game.hasCMDL;
-        var usingBindlessMDI = Game.hasBindlessMDI && !usingCMDL;
+        // determine rendering path based on settings
+        var effectiveMode = Settings.instance.getActualRendererMode();
+        var usingCMDL = effectiveMode == RendererMode.CommandList;
+        var usingBindlessMDI = effectiveMode == RendererMode.BindlessMDI;
 
 
         setUniforms();
@@ -490,7 +549,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         worldShader.use();
 
         // enable unified memory for chunk rendering
-        if (Game.hasVBUM && Game.hasSBL) {
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             #pragma warning disable CS0618 // Type or member is obsolete
             Game.GL.EnableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
             Game.GL.EnableClientState((EnableCap)NV.ElementArrayUnifiedNV);
@@ -537,7 +596,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // chunkData index
         int cd = 0;
-        if (Game.hasInstancedUBO) {
+        if (effectiveMode >= RendererMode.Instanced) {
             chunkData.Clear();
         }
 
@@ -561,7 +620,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 }
 
                 // if using the UBO path, upload to UBO
-                if (Game.hasInstancedUBO) {
+                if (effectiveMode >= RendererMode.Instanced) {
                     for (int sc = 0; sc < Chunk.CHUNKHEIGHT; sc++) {
                         var subChunk = chunk.subChunks[sc];
                         if (subChunk.isRendered) {
@@ -577,7 +636,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //chunksToRender.Sort(new ChunkComparer(world.player));
 
         // upload chunkdata to ssbo
-        if (Game.hasCMDL || Game.hasInstancedUBO) {
+        if (effectiveMode >= RendererMode.Instanced) {
             // upload to SSBO
             chunkSSBO.bind();
             chunkSSBO.updateData(CollectionsMarshal.AsSpan(chunkData));
@@ -598,8 +657,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // unbind ssbo
             //GL.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, 0);
         }
-
-        if (Game.hasVBUM && Game.hasSBL) {
+        
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             // why is this necessary?? otherwise it just says
             // DebugSourceApi [DebugTypeOther] [DebugSeverityMedium] (65537): ,  BufferAddressRange (address=0x0000000000000000, length=0x0000000000000000) for attrib 0 is not contained in a resident buffer. This may not be fatal depending on which addresses are actually referenced.
             // wtf
@@ -646,7 +705,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 else if (usingBindlessMDI) {
                     addOpaqueToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (Game.hasInstancedUBO) {
+                else if (effectiveMode >= RendererMode.Instanced) {
                     drawOpaqueUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -716,7 +775,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     // use bindless multi draw indirect for batch rendering
                     addTransparentToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (usingCMDL || Game.hasInstancedUBO) {
+                else if (effectiveMode >= RendererMode.Instanced) {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -786,7 +845,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     // use bindless multi draw indirect for batch rendering
                     addTransparentToBindlessBuffer(subChunk, (uint)cd++);
                 }
-                else if (usingCMDL || Game.hasInstancedUBO) {
+                else if (effectiveMode >= RendererMode.Instanced) {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
@@ -810,7 +869,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.Enable(EnableCap.Blend);
 
         // disable unified memory after all chunk rendering passes
-        if (Game.hasVBUM && Game.hasSBL) {
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             #pragma warning disable CS0618 // Type or member is obsolete
             Game.GL.DisableClientState((EnableCap)NV.ElementArrayUnifiedNV);
             Game.GL.DisableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
@@ -837,7 +896,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public ulong ssboaddr;
 
     /** Stores the chunk positions! */
-    private readonly List<Vector4> chunkData;
+    private List<Vector4> chunkData;
 
     private static readonly List<AABB> AABBList = [];
 

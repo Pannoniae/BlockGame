@@ -253,6 +253,26 @@ public class SettingsMenu : Menu {
         settingElements.Add(reverseZ);
         addElement(reverseZ);
 
+        var rendererMode = new ToggleButton(this, "rendererMode", false, (int)settings.rendererMode,
+            "Renderer: Auto", "Renderer: Plain", "Renderer: Instanced", "Renderer: Bindless MDI", "Renderer: Command List");
+        rendererMode.topCentre();
+        rendererMode.clicked += _ => {
+            var old = settings.rendererMode;
+            var newm = (RendererMode)rendererMode.getIndex();
+            Game.renderer?.reloadRenderer(old, newm);
+            Game.instance.updateFramebuffers();
+            // REMESH THE ENTIRE WORLD
+            Screen.GAME_SCREEN.remeshWorld(Settings.instance.renderDistance);
+        };
+        rendererMode.tooltip = "World rendering backend:\n" +
+            "Auto: The test one available for your hardware\n" +
+            "Command List: NVIDIA NV_command_list (fastest on RTX)\n" +
+            "Bindless MDI: NVIDIA Multi-draw indirect\n" +
+            "Instanced: Instanced rendering /w uniform buffers\n" +
+            "Plain: Straightforward renderer (maximum compatibility)";
+        settingElements.Add(rendererMode);
+        addElement(rendererMode);
+
         // Windows Defender exclusion (Windows only)
         if (OperatingSystem.IsWindows()) {
             var defenderExclusion = new Button(this, "defenderExclusion", false, "Add Defender Exclusion");

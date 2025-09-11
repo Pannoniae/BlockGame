@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ARB;
@@ -338,9 +339,13 @@ public partial class Shader : IDisposable {
             definitions.AddRange(defs);
         }
 
-        var selectedVariant = variant ?? (Game.hasCMDL ? ShaderVariant.CommandList :
-            Game.hasInstancedUBO ? ShaderVariant.Instanced :
-            ShaderVariant.Normal);
+        var selectedVariant = variant ?? Settings.instance.getActualRendererMode() switch {
+            RendererMode.CommandList => ShaderVariant.CommandList,
+            RendererMode.BindlessMDI => ShaderVariant.Instanced, // BindlessMDI uses same shaders as instanced
+            RendererMode.Instanced => ShaderVariant.Instanced,
+            RendererMode.Plain => ShaderVariant.Normal,
+            _ => ShaderVariant.Normal
+        };
         
         if (Game.isNVCard) {
             definitions.Add(new Definition("NV_EXTENSIONS"));

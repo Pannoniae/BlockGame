@@ -12,7 +12,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
 
     private uint[] vertices;
     private ushort[] blockRefs;
-    private byte[] indices;
+    private byte[]? indices;
     private int count;
     private int vertCount;
     private int vertCapacity;
@@ -21,7 +21,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     // light vertices
     private byte[] lightVertices;
     private ushort[] lightRefs;
-    private byte[] lightIndices;
+    private byte[]? lightIndices;
     private int lightCount;
     private int lightVertCount;
     private int lightVertCapacity;
@@ -271,14 +271,14 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
     private void grow() {
-        growPalette(arrayPoolU, ref vertices, ref blockRefs, ref vertCapacity, vertCount);
+        grow(arrayPoolU, ref vertices, ref blockRefs, ref vertCapacity, vertCount);
     }
     
     private void growLight() {
-        growPalette(arrayPool, ref lightVertices, ref lightRefs, ref lightVertCapacity, lightVertCount);
+        grow(arrayPool, ref lightVertices, ref lightRefs, ref lightVertCapacity, lightVertCount);
     }
     
-    private static void growPalette<T>(VariableArrayPool<T> pool, ref T[] verticesArray, ref ushort[] refsArray, 
+    private static void grow<T>(VariableArrayPool<T> pool, ref T[] verticesArray, ref ushort[] refsArray, 
                                ref int capacity, int count) {
         var newCapacity = capacity * 2;
         var newVertices = pool.grab(newCapacity);

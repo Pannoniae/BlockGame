@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
+using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
@@ -65,7 +66,7 @@ public sealed class SharedBlockVAO : VAO {
             GL.ObjectLabel(ObjectIdentifier.Buffer, buffer, uint.MaxValue, "SharedBlockVAO Buffer");
 
             // check for unified memory support and get buffer address
-            if (Game.hasVBUM) {
+            if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
                 bufferLength = (nuint)vertexSize;
                 // make buffer resident first, then get its GPU address
                 //GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
@@ -97,7 +98,7 @@ public sealed class SharedBlockVAO : VAO {
         
         
         // cmdlist path
-        if (Game.hasCMDL) {
+        if (Settings.instance.getActualRendererMode() == RendererMode.CommandList) {
             // regular format setup
 
             // bind the vertex buffer to the VAO
@@ -168,7 +169,7 @@ public sealed class SharedBlockVAO : VAO {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void bind() {
-        if (Game.hasVBUM) {
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             // use unified memory path - set vertex attrib addresses directly
             //var addr0 = bufferAddress;
             //var addr1 = bufferAddress + (ulong)(3 * sizeof(ushort));
@@ -361,7 +362,7 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     private void ReleaseUnmanagedResources() {
-        if (Game.hasVBUM && Game.hasSBL && buffer != 0) {
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI && buffer != 0) {
             // make buffer non-resident before deleting
             Game.sbl.MakeNamedBufferNonResident(buffer);
         }

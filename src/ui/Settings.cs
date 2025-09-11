@@ -3,11 +3,32 @@ using BlockGame.util.xNBT;
 
 namespace BlockGame.ui;
 
+public enum RendererMode {
+    Auto = 0,
+    Plain = 1,
+    Instanced = 2,
+    BindlessMDI = 3,
+    CommandList = 4
+}
+
+public static class RendererModeExt {
+    public static string yes(this RendererMode mode) {
+        return mode switch {
+            RendererMode.Auto => "A",
+            RendererMode.Plain => "GL",
+            RendererMode.Instanced => "IUBO",
+            RendererMode.BindlessMDI => "BMDI",
+            RendererMode.CommandList => "CMDL",
+            _ => "???"
+        };
+    }
+}
+
 public class Settings {
     public bool vSync = false;
     public int guiScale = 4;
     public bool AO = true;
-    public bool smoothLighting = true;
+    public bool smoothLighting = false;
     public int renderDistance = 8;
     public float FOV = 75;
     public int mipmapping = 0;
@@ -20,14 +41,18 @@ public class Settings {
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
     public bool frustumCulling = true;
     public bool crtEffect = false;
-    public bool reverseZ = false; // reverse-Z depth buffer for improved precision
+    public bool reverseZ = true; // reverse-Z depth buffer for improved precision
+    /**
+     * Don't use this! Use getActualRendererMode() instead.
+     */
+    internal RendererMode rendererMode = RendererMode.Auto;
 
     public static readonly Settings instance = new();
 
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || Game.hasCMDL || crtEffect;
+    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || getActualRendererMode() == RendererMode.CommandList || crtEffect;
     
     /// <summary>
     /// Whether FXAA is enabled.
@@ -87,6 +112,28 @@ public class Settings {
         return parts.Count > 0 ? string.Join(" + ", parts) : "Off";
     }
 
+    /**
+     * Gets the actual renderer mode, falling back to supported alternatives if needed.
+     */
+    public RendererMode getActualRendererMode() {
+        return rendererMode switch {
+            RendererMode.Auto => Game.hasCMDL ? RendererMode.CommandList :
+                                Game.hasBindlessMDI ? RendererMode.BindlessMDI :
+                                Game.hasInstancedUBO ? RendererMode.Instanced :
+                                RendererMode.Plain,
+            RendererMode.CommandList => Game.hasCMDL ? RendererMode.CommandList :
+                                       Game.hasBindlessMDI ? RendererMode.BindlessMDI :
+                                       Game.hasInstancedUBO ? RendererMode.Instanced :
+                                       RendererMode.Plain,
+            RendererMode.BindlessMDI => Game.hasBindlessMDI ? RendererMode.BindlessMDI :
+                                       Game.hasInstancedUBO ? RendererMode.Instanced :
+                                       RendererMode.Plain,
+            RendererMode.Instanced => Game.hasInstancedUBO ? RendererMode.Instanced : RendererMode.Plain,
+            RendererMode.Plain => RendererMode.Plain,
+            _ => RendererMode.Auto
+        };
+    }
+
     public void save() {
         var tag = new NBTCompound("");
         tag.addByte("vSync", (byte)(vSync ? 1 : 0));
@@ -106,6 +153,7 @@ public class Settings {
         tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
         tag.addByte("crtEffect", (byte)(crtEffect ? 1 : 0));
         tag.addByte("reverseZ", (byte)(reverseZ ? 1 : 0));
+        tag.addInt("rendererMode", (int)rendererMode);
         
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
@@ -134,6 +182,10 @@ public class Settings {
             frustumCulling = tag.getByte("frustumCulling") != 0;
             crtEffect = tag.getByte("crtEffect") != 0;
             reverseZ = tag.getByte("reverseZ") != 0;
+            
+            if (tag.has("rendererMode")) {
+                rendererMode = (RendererMode)tag.getInt("rendererMode");
+            }
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);
             

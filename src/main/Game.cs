@@ -496,7 +496,7 @@ public partial class Game {
         // initialise debug print
         unsafe {
             GL.Enable(EnableCap.DebugOutput);
-            //GL.Enable(EnableCap.DebugOutputSynchronous);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
             GL.DebugMessageCallback(GLDebug, 0);
             #if DEBUG
             GL.Enable(EnableCap.DebugOutputSynchronous);
