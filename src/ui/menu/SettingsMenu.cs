@@ -265,7 +265,7 @@ public class SettingsMenu : Menu {
             Screen.GAME_SCREEN.remeshWorld(Settings.instance.renderDistance);
         };
         rendererMode.tooltip = "World rendering backend:\n" +
-            "Auto: The test one available for your hardware\n" +
+            "Auto: The best one available for your hardware\n" +
             "Command List: NVIDIA NV_command_list (fastest on RTX)\n" +
             "Bindless MDI: NVIDIA Multi-draw indirect\n" +
             "Instanced: Instanced rendering /w uniform buffers\n" +
