@@ -156,6 +156,7 @@ public class GameScreen : Screen {
 
         world.renderUpdate(dt);
         Game.renderer.update(dt);
+        Game.renderer.updateRandom(dt);
     }
 
     public override void render(double dt, double interp) {

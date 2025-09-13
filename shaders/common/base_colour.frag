@@ -21,8 +21,7 @@ void main() {
     finalColour = applyFog(finalColour, viewPosition);
     
     // Apply dithering to reduce banding
-    float ditherValue = dither(gl_FragCoord.xy);
-    finalColour.rgb += ditherValue;
+    finalColour.rgb += gradientDither(finalColour.rgb);
     
     outColour = finalColour;
 }

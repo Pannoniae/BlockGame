@@ -1,13 +1,17 @@
-#version 430 core
+#version 440 core
+
+#include "/shaders/inc/dither.inc.glsl"
 
 layout (binding = 0) uniform sampler2D u_colorTexture;
 
 centroid in vec2 v_texCoord;
 
-out vec4 fragColor;
+out vec4 fragColour;
 
 void main(void)
 {
     // Simple pass-through for no antialiasing
-    fragColor = texture(u_colorTexture, v_texCoord);
+    fragColour = texture(u_colorTexture, v_texCoord);
+    
+    fragColour.rgb += gradientDither(fragColour.rgb);
 }

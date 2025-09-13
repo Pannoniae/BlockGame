@@ -1,4 +1,6 @@
-#version 430 core
+#version 440 core
+
+#include "/shaders/inc/dither.inc.glsl"
 
 layout (binding = 0) uniform sampler2D u_colorTexture;
 
@@ -12,7 +14,7 @@ uniform float u_maxSpan;
 
 centroid in vec2 v_texCoord;
 
-out vec4 fragColor;
+out vec4 fragColour;
 
 // see FXAA
 // http://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
@@ -47,7 +49,7 @@ void main(void)
     if (lumaMax - lumaMin <= lumaMax * u_lumaThreshold)
     {
         // ... do no AA and return.
-        fragColor = vec4(rgbM, 1.0);
+        fragColour = vec4(rgbM, 1.0);
 
         return;
     }
@@ -86,17 +88,19 @@ void main(void)
     if (lumaFourTab < lumaMin || lumaFourTab > lumaMax)
     {
         // ... yes, so use only two samples.
-        fragColor = vec4(rgbTwoTab, 1.0);
+        fragColour = vec4(rgbTwoTab, 1.0);
     }
     else
     {
         // ... no, so use four samples.
-        fragColor = vec4(rgbFourTab, 1.0);
+        fragColour = vec4(rgbFourTab, 1.0);
     }
 
     // Show edges for debug purposes.
     if (u_showEdges != 0)
     {
-        fragColor.r = 1.0;
+        fragColour.r = 1.0;
     }
+    
+    fragColour.rgb += gradientDither(fragColour.rgb);
 }

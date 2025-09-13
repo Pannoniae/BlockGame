@@ -40,6 +40,7 @@ public class Particle {
 
     /** texture size on particle (UV scale) */
     public double uvsize;
+    
 
     /** collision detection cache */
     private readonly List<AABB> collisionTargets = [];
@@ -157,6 +158,11 @@ public class Particle {
 public class FlameParticle : Particle {
     public FlameParticle(World world, Vector3D position, Vector3D velocity)
         : base(world, position) {
-        
+        texture = "textures/blocks.png";
+        u = 0;
+        v = 0;
+        size = 1;
+        uvsize = 1 / 16f * size;
+        ttl = 4;
     }
 }

@@ -1,4 +1,6 @@
-#version 430 core
+#version 440 core
+
+#include "/shaders/inc/dither.inc.glsl"
 
 layout (binding = 0) uniform sampler2D u_colorTexture;
 
@@ -8,7 +10,7 @@ uniform int u_ssaaMode;
 
 centroid in vec2 v_texCoord;
 
-out vec4 fragColor;
+out vec4 fragColour;
 
 vec4 ssaa(sampler2D screenTex, int samples, vec2 uv) {
     vec4 avg = vec4(0);
@@ -71,15 +73,22 @@ void main(void)
     if (u_ssaaFactor == 0)
     {
         // No SSAA, just return the color.
-        fragColor = texture(u_colorTexture, v_texCoord);
+        fragColour = texture(u_colorTexture, v_texCoord);
+        fragColour.rgb += gradientDither(fragColour.rgb);
         return;
     }
     
-    if (u_ssaaMode == 1) {
-        fragColor = wgssaa(u_colorTexture, u_ssaaFactor, v_texCoord);
-    } else if (u_ssaaMode == 2) {
-        fragColor = psssaa(u_colorTexture, v_texCoord);
-    } else {
-        fragColor = ssaa(u_colorTexture, u_ssaaFactor, v_texCoord);
+    switch (u_ssaaMode) {
+        case 0:
+            fragColour = ssaa(u_colorTexture, u_ssaaFactor, v_texCoord);
+            break;
+        case 1:
+            fragColour = wgssaa(u_colorTexture, u_ssaaFactor, v_texCoord);
+            break;
+        case 2:
+            fragColour = psssaa(u_colorTexture, v_texCoord);
+            break;
     }
+    
+    fragColour.rgb += gradientDither(fragColour.rgb);
 }

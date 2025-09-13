@@ -6,6 +6,7 @@
 //layout(commandBindableNV) uniform;
 
 #include "/shaders/inc/fog.inc.glsl"
+#include "/shaders/inc/dither.inc.glsl"
 
 layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
@@ -40,4 +41,6 @@ void main() {
     vec4 mixedFogColour = mix(fogColour, horizonColour, ratio);
     // mix fog
     colour = mix(colour, mixedFogColour, ratio);
+    
+    colour.rgb += gradientDither(colour.rgb);
 }

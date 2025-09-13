@@ -117,6 +117,7 @@ public partial class Game {
         if (width < 24) {
             width = 24;
         }
+        
 
         if (height < 12) {
             height = 12;

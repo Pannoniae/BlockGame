@@ -99,11 +99,14 @@ public class Torch : Block {
             world.setBlock(x, y, z, 0);
         }
     }
+    
+    
 
     public override void renderUpdate(World world, int x, int y, int z) {
         // add some flames
         var particlePos = new Vector3D(x + 0.5f, y + 0.7f, z + 0.5f);
         Game.world.particles.add(new FlameParticle(world, particlePos, Vector3D.Zero));
+        Console.Out.WriteLine(Game.world.particles.particles.Count);
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {

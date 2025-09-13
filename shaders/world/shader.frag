@@ -12,6 +12,7 @@ layout(commandBindableNV) uniform;
 #endif
 
 #include "/shaders/inc/fog.inc.glsl"
+#include "/shaders/inc/dither.inc.glsl"
 #include "/shaders/inc/af.inc.glsl"
 
 //#if not defined(ANISO_LEVEL)
@@ -66,5 +67,7 @@ void main() {
     // mix the fog colour between it and the sky
     vec4 mixedFogColour = mix(fogColour, horizonColour, ratio);
     colour = mix(colour, mixedFogColour, ratio);
+    
+    colour.rgb += gradientDither(colour.rgb);
 #endif
 }

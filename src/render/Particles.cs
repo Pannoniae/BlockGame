@@ -11,7 +11,7 @@ public class Particles {
 
     private readonly World world;
 
-    private readonly List<Particle> particles = [];
+    public readonly List<Particle> particles = [];
     private readonly InstantDrawTexture drawer = new InstantDrawTexture(1024);
 
     public Particles(World world) {

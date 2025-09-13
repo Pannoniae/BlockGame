@@ -77,8 +77,8 @@ public class Settings {
     public int msaa {
         get {
             // per-sample mode requires MSAA, force it on if not already enabled
-            if (ssaaMode == 2 && msaaSamples == 1) {
-                return 4; // default to 4x MSAA for per-sample mode
+            if (ssaaMode == 2) {
+                return ssaaScale;
             }
             
             // validate against hardware support

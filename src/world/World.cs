@@ -498,6 +498,7 @@ public partial class World : IDisposable {
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var ctr = 0;
         updateChunkloading(start, loading: false, ref ctr);
+        
         particles.update(dt);
     }
 

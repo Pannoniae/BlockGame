@@ -1,7 +1,9 @@
-#version 430 core
+#version 440 core
 
 // CRT Shader by Harrison Allen (Public Domain)
 // V3
+
+#include "/shaders/inc/dither.inc.glsl"
 
 layout (binding = 0) uniform sampler2D u_colorTexture;
 
@@ -21,7 +23,7 @@ uniform float u_scanlineRes; // Target scanline resolution (e.g. 240, 480)
 
 centroid in vec2 v_texCoord;
 
-out vec4 fragColor;
+out vec4 fragColour;
 
 vec2 warp(vec2 uv, float _aspect, float _curve) {
     // Centralizes coordinates (0 is in the middle)
@@ -268,5 +270,7 @@ void main() {
     // Convert back to srgb
     col = linear_to_srgb(col);
     
-    fragColor = vec4(col, 1.0);
+    fragColour = vec4(col, 1.0);
+    
+    fragColour.rgb += gradientDither(fragColour.rgb);
 }

@@ -1,4 +1,4 @@
-#version 430 core
+#version 440 core
 
 centroid out vec2 v_texCoord;
 
