@@ -150,12 +150,12 @@ public class SettingsMenu : Menu {
         addElement(msaa);
 
         var ssaa = new ToggleButton(this, "ssaa", false,
-            settings.ssaaScale switch { 1 => 0, 2 => 1, 4 => 2, _ => 0 },
-            "SSAA: OFF", "SSAA: 2x", "SSAA: 4x");
+            settings.ssaaScale switch { 1 => 0, 2 => 1, 4 => 2, 8 => 3, _ => 0 },
+            "SSAA: OFF", "SSAA: 2x", "SSAA: 4x", "SSAA: 8x");
         ssaa.topCentre();
         ssaa.clicked += _ => {
             settings.ssaaScale = ssaa.getIndex() switch {
-                0 => 1, 1 => 2, 2 => 4, _ => 1
+                0 => 1, 1 => 2, 2 => 4, 3 => 8, _ => 1
             };
             Game.instance.updateFramebuffers();
         };

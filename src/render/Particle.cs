@@ -46,16 +46,10 @@ public class Particle {
     private readonly List<Vector3I> collisionTargetsList = [];
     private static readonly List<AABB> AABBList = [];
 
-    public Particle(World world, Vector3D position, string texture, float u, float v, double size, double uvsize, int ttl) {
+    public Particle(World world, Vector3D position) {
         this.world = world;
         this.position = position;
         this.prevPosition = position;
-        this.texture = texture;
-        this.u = u;
-        this.v = v;
-        this.size = size;
-        this.uvsize = uvsize;
-        this.ttl = ttl;
         active = true;
         velocity = Vector3D.Zero;
     }
@@ -157,5 +151,12 @@ public class Particle {
 
     public void reset() {
         active = false;
+    }
+}
+
+public class FlameParticle : Particle {
+    public FlameParticle(World world, Vector3D position, Vector3D velocity)
+        : base(world, position) {
+        
     }
 }

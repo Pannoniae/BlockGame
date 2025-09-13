@@ -66,11 +66,27 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal()) {
             INGAME_MENU.update(dt);
         }
+        
+        var world = Game.world;
+        
+        // turn on for stress testing:)
+        //Utils.wasteMemory(dt, 200);
+        var prevTargetedPos = Game.instance.targetedPos;
+        var col = Raycast.raycast(world);
+
+        Game.raycast = col;
+        // previous pos
+        if (col.hit) {
+            Game.instance.targetedPos = col.block;
+            Game.instance.previousPos = col.previous;
+        }
+        else {
+            Game.instance.targetedPos = null;
+            Game.instance.previousPos = null;
+        }
 
         // update current tick
         CHAT.tick++;
-
-        var world = Game.world;
 
         // time control for day/night cycle testing
         if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
@@ -140,23 +156,6 @@ public class GameScreen : Screen {
 
         world.renderUpdate(dt);
         Game.renderer.update(dt);
-
-        // turn on for stress testing:)
-        //Utils.wasteMemory(dt, 200);
-        var prevTargetedPos = Game.instance.targetedPos;
-        var col = Raycast.raycast(world);
-
-        Game.raycast = col;
-        // previous pos
-        if (col.hit) {
-            Game.instance.targetedPos = col.block;
-            Game.instance.previousPos = col.previous;
-        }
-        else {
-            Game.instance.targetedPos = null;
-            Game.instance.previousPos = null;
-        }
-
     }
 
     public override void render(double dt, double interp) {

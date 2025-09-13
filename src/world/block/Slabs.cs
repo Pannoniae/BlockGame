@@ -119,7 +119,7 @@ public class Slabs : Block {
             y1 = 0.5f;
         }
         
-        BlockRenderer.renderCube(br, x, y, z, vertices, 0f, y0, 0f, 1f, y1, 1f, u0, v0, u1, v1);
+        br.renderCube(x, y, z, vertices, 0f, y0, 0f, 1f, y1, 1f, u0, v0, u1, v1);
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {

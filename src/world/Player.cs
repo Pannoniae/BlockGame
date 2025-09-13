@@ -461,7 +461,7 @@ public class Player : Entity {
                         world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
                         
                         foreach (var entity in entities) {
-                            if (util.AABB.isCollision(aabb, entity.aabb)) {
+                            if (AABB.isCollision(aabb, entity.aabb)) {
                                 hasCollisions = true;
                                 break;
                             }

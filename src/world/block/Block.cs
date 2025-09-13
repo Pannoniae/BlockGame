@@ -364,7 +364,7 @@ public class Block {
         COAL_ORE.setModel(BlockModel.makeCube(COAL_ORE));
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
-        TORCH.setTex(cubeUVs(0, 6));
+        TORCH.setTex(cubeUVs(0, 5));
         
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
@@ -796,13 +796,13 @@ public class Block {
 
                     var particle = new Particle(
                         world,
-                        particlePosition,
-                        "textures/blocks.png",
-                        u,
-                        v,
-                        size,
-                        1 / 16f * size,
-                        ttl);
+                        particlePosition);
+                    particle.texture = "textures/blocks.png";
+                    particle.u = u;
+                    particle.v = v;
+                    particle.size = size;
+                    particle.uvsize = 1 / 16f * size;
+                    particle.ttl = ttl;
                     world.particles.add(particle);
 
                     particle.velocity = motion.toVec3D();

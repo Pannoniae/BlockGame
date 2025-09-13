@@ -75,8 +75,11 @@ public class Graphics : IDisposable {
     }
 
     public void clearColor(Color4b color) {
-        GL.ClearColor(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
-       // GL.ClearColor(0, 0, 0, 255);
+        //GL.ClearColor(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+        // we cheat! this is faster maybe?, IF YOU DRAW EVERYTHING OVER.
+        // if you don't, we're fucked
+        GL.ClearColor(255, 255, 255, 255);
+        
     }
 
     /// <summary>

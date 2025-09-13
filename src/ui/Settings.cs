@@ -35,7 +35,7 @@ public class Settings {
     public int anisotropy = 0; // 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024
     public bool fxaaEnabled = false;
     public int msaaSamples = 1; // 1, 2, 4, 8, 16, 32
-    public int ssaaScale = 1; // 1, 2 (2x2), 4 (4x4)
+    public int ssaaScale = 1; // 1, 2 (2x2), 4 (4x4), 8 (8x8)
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public bool fullscreen = false;
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth

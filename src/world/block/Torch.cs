@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
+using Molten.DoublePrecision;
 
 namespace BlockGame.world.block;
 
@@ -30,47 +31,43 @@ public class Torch : Block {
     public const byte NORTH_WALL = 4;
 
     private byte calculatePlacementMetadata(World world, int x, int y, int z, RawDirection dir) {
-        // dir is the face we clicked on, which indicates where the supporting block is
         if (canAttachTo(world, x, y, z, dir)) {
             byte attachment = dir switch {
-                RawDirection.DOWN => GROUND,      // clicking bottom face = torch on ground
-                RawDirection.WEST => WEST_WALL,   // clicking west face = torch on west wall
-                RawDirection.EAST => EAST_WALL,   // clicking east face = torch on east wall  
-                RawDirection.NORTH => NORTH_WALL, // clicking north face = torch on north wall
-                RawDirection.SOUTH => SOUTH_WALL, // clicking south face = torch on south wall
-                RawDirection.UP => GROUND,        // clicking top face = fallback to ground
+                RawDirection.DOWN => GROUND,
+                RawDirection.WEST => EAST_WALL,
+                RawDirection.EAST => WEST_WALL,
+                RawDirection.NORTH => SOUTH_WALL,
+                RawDirection.SOUTH => NORTH_WALL,
+                RawDirection.UP => GROUND,
                 _ => GROUND
             };
             
             byte metadata = 0;
             metadata = setAttachment(metadata, attachment);
-            return metadata;
-        }
-        
-        // fallback: try to place on ground if there's a block below
-        if (canAttachTo(world, x, y, z, RawDirection.DOWN)) {
-            return setAttachment(0, GROUND);
+            if (canAttachTo(world, x, y, z, dir)) {
+                return metadata;
+            }
         }
         
         return 255; // can't place
     }
 
     private bool canAttachTo(World world, int x, int y, int z, RawDirection dir) {
+
+        dir = dir.opposite();
         var offset = Direction.getDirection(dir);
         var supportX = x + offset.X;
         var supportY = y + offset.Y;
         var supportZ = z + offset.Z;
         
-        var supportBlock = world.getBlockRaw(supportX, supportY, supportZ);
-        var supportBlockId = supportBlock.getID();
+        var supportBlock = world.getBlock(supportX, supportY, supportZ);
         
-        if (supportBlockId == Blocks.AIR) return false;
-        
-        var support = get(supportBlockId);
-        return support != null && !translucent[supportBlockId];
+        return fullBlock[supportBlock];
     }
 
     public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+
+        dir = Game.raycast.face;
         var meta = calculatePlacementMetadata(world, x, y, z, dir);
         if (meta == 255) {
             return; // can't place
@@ -81,6 +78,32 @@ public class Torch : Block {
         
         world.setBlockMetadata(x, y, z, blockValue);
         world.blockUpdateNeighbours(x, y, z);
+    }
+
+    public override void update(World world, int x, int y, int z) {
+        // check if still attached to a valid block
+        var block = world.getBlockRaw(x, y, z);
+        var metadata = block.getMetadata();
+        var attachment = getAttachment(metadata);
+        
+        RawDirection dir = attachment switch {
+            GROUND => RawDirection.DOWN,
+            WEST_WALL => RawDirection.EAST,
+            EAST_WALL => RawDirection.WEST,
+            SOUTH_WALL => RawDirection.NORTH,
+            NORTH_WALL => RawDirection.SOUTH,
+            _ => RawDirection.DOWN
+        };
+        
+        if (!canAttachTo(world, x, y, z, dir)) {
+            world.setBlock(x, y, z, 0);
+        }
+    }
+
+    public override void renderUpdate(World world, int x, int y, int z) {
+        // add some flames
+        var particlePos = new Vector3D(x + 0.5f, y + 0.7f, z + 0.5f);
+        Game.world.particles.add(new FlameParticle(world, particlePos, Vector3D.Zero));
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
@@ -94,19 +117,87 @@ public class Torch : Block {
         var metadata = block.getMetadata();
         var attachment = getAttachment(metadata);
 
-        var uv = uvs[0];
-        // TODO
+        var min = uvs[0];
+        var max = uvs[0] + 1;
+        var u0 = texU(min.u);
+        var v0 = texV(min.v);
+        var u1 = texU(max.u);
+        var v1 = texV(max.v);
+        
+        // we don't need AO
+        var AO = br.AO;
+        br.AO = false;
+
+        switch (attachment) {
+            case GROUND:
+                // bottom part: 7/16 to 9/16, height 0 to 0.5
+                br.renderCube(x, y, z, vertices, 7/16f, 0f, 7/16f, 9/16f, 0.5f, 9/16f, u0, v0, u1, v1);
+                // top part: 6/16 to 10/16, height 0.5 to 15/16
+                br.renderCube(x, y, z, vertices, 6/16f, 0.5f, 6/16f, 10/16f, 15/16f, 10/16f, u0, v0, u1, v1);
+                break;
+                
+            case WEST_WALL: // attached to west wall, torch points east
+                // bottom: against west wall
+                br.renderCube(x, y, z, vertices, 0f, 0f, 7/16f, 2/16f, 0.5f, 9/16f, u0, v0, u1, v1);
+                // top: angled toward east
+                br.renderCube(x, y, z, vertices, 2/16f, 0.5f, 6/16f, 6/16f, 15/16f, 10/16f, u0, v0, u1, v1);
+                break;
+                
+            case EAST_WALL: // attached to east wall, torch points west  
+                // bottom: against east wall
+                br.renderCube(x, y, z, vertices, 14/16f, 0f, 7/16f, 1f, 0.5f, 9/16f, u0, v0, u1, v1);
+                // top: angled toward west
+                br.renderCube(x, y, z, vertices, 10/16f, 0.5f, 6/16f, 14/16f, 15/16f, 10/16f, u0, v0, u1, v1);
+                break;
+            
+            case SOUTH_WALL:
+                // bottom: against north wall  
+                br.renderCube(x, y, z, vertices, 7/16f, 0f, 0f, 9/16f, 0.5f, 2/16f, u0, v0, u1, v1);
+                // top: angled toward south
+                br.renderCube(x, y, z, vertices, 6/16f, 0.5f, 2/16f, 10/16f, 15/16f, 6/16f, u0, v0, u1, v1);
+                break;
+                
+            case NORTH_WALL:
+                // bottom: against south wall
+                br.renderCube(x, y, z, vertices, 7/16f, 0f, 14/16f, 9/16f, 0.5f, 1f, u0, v0, u1, v1);
+                // top: angled toward north
+                br.renderCube(x, y, z, vertices, 6/16f, 0.5f, 10/16f, 10/16f, 15/16f, 14/16f, u0, v0, u1, v1);
+                break;
+        }
+        
+        br.AO = AO;
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         aabbs.Clear();
         var attachment = getAttachment(metadata);
         
-        // TODO
-        aabbs.Add(new AABB(x + 0.4f, y + 0.0f, z + 0.4f, x + 0.6f, y + 0.6f, z + 0.6f)); // placeholder
+        switch (attachment) {
+            case GROUND:
+                // encompass both bottom and top parts
+                aabbs.Add(new AABB(x + 6/16f, y + 0f, z + 6/16f, x + 10/16f, y + 15/16f, z + 10/16f));
+                break;
+                
+            case WEST_WALL: // attached to west wall, extends east
+                aabbs.Add(new AABB(x + 0f, y + 0f, z + 6/16f, x + 6/16f, y + 15/16f, z + 10/16f));
+                break;
+                
+            case EAST_WALL: // attached to east wall, extends west
+                aabbs.Add(new AABB(x + 10/16f, y + 0f, z + 6/16f, x + 1f, y + 15/16f, z + 10/16f));
+                break;
+                
+            case NORTH_WALL:
+                aabbs.Add(new AABB(x + 6/16f, y + 0f, z + 10/16f, x + 10/16f, y + 15/16f, z + 1f));
+                break;
+                
+            case SOUTH_WALL:
+                aabbs.Add(new AABB(x + 6/16f, y + 0f, z + 0f, x + 10/16f, y + 15/16f, z + 6/16f));
+                break;
+        }
     }
     
     public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
+        dir = Game.raycast.face;
         return calculatePlacementMetadata(world, x, y, z, dir) != 255;
     }
     

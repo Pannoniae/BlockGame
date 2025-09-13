@@ -456,6 +456,10 @@ public static class DirectionExtensions {
     public static Direction toDir(this Vector3I dir) {
         return Unsafe.BitCast<Vector3I, Direction>(dir);
     }
+    
+    public static RawDirection opposite(this RawDirection dir) {
+        return Direction.getOpposite(dir);
+    }
 }
 
 public static class UnsafeListAccessor<T> {

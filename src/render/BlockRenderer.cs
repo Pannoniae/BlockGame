@@ -74,9 +74,9 @@ public class BlockRenderer {
     
     
     // flags to enable/disable various vertex colouring features
-    private bool smoothLighting;
-    private bool AO;
-    private bool tinting;
+    public bool smoothLighting;
+    public bool AO;
+    public bool tinting;
     
     // AO flip state
     private bool shouldFlipVertices;
@@ -663,7 +663,7 @@ public class BlockRenderer {
                 var txm = tx + 1;
                 var uvx = Block.texCoords(tx);
                 var uvxm = Block.texCoords(txm);
-                renderCube(this, x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
+                renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
                 // cube using metadata-based dynamic texture
@@ -673,7 +673,7 @@ public class BlockRenderer {
                 var uvdm = Block.texCoords(dynTexm);
                 
                 // USE LOCAL COORDS
-                renderCube(this, x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
+                renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
 
                 break;
             case RenderType.CROSS:
@@ -862,7 +862,7 @@ public class BlockRenderer {
      * (Assumptions: the lighting is what you'd expect from the faces, you need a properly culled cube, you don't need extra tint, your texture maps 1:1 with world pixels)
      */
     [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")]
-    public static void renderCube(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
+    public void renderCube(int x, int y, int z, List<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float u0, float v0, float u1, float v1) {
         
@@ -880,114 +880,114 @@ public class BlockRenderer {
         var westUMax = u0 + ue * ze;
         var westVMin = v0 + ve * (1f - ye);
         var vec = Direction.getDirection(RawDirection.WEST);
-        var nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
+        var nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
         
         bool edge = x0 == 0f;
         bool render = !Block.fullBlock[nb] || !edge;
         
         if (render) {
-            br.applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
-            br.begin(cache);
-            br.vertex(x + x0, y + y1, z + z1, u0, westVMin);
-            br.vertex(x + x0, y + y0, z + z1, u0, v1);
-            br.vertex(x + x0, y + y0, z + z0, westUMax, v1);
-            br.vertex(x + x0, y + y1, z + z0, westUMax, westVMin);
-            br.end(vertices);
+            applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
+            begin(cache);
+            vertex(x + x0, y + y1, z + z1, u0, westVMin);
+            vertex(x + x0, y + y0, z + z1, u0, v1);
+            vertex(x + x0, y + y0, z + z0, westUMax, v1);
+            vertex(x + x0, y + y1, z + z0, westUMax, westVMin);
+            end(vertices);
         }
 
         // EAST face
         var eastUMax = u0 + ue * ze;
         var eastVMin = v0 + ve * (1f - ye);
         vec = Direction.getDirection(RawDirection.EAST);
-        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
+        nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
         edge = x1 == 1f;
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            br.applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
-            br.begin(cache);
-            br.vertex(x + x1, y + y1, z + z0, u0, eastVMin);
-            br.vertex(x + x1, y + y0, z + z0, u0, v1);
-            br.vertex(x + x1, y + y0, z + z1, eastUMax, v1);
-            br.vertex(x + x1, y + y1, z + z1, eastUMax, eastVMin);
-            br.end(vertices);
+            applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
+            begin(cache);
+            vertex(x + x1, y + y1, z + z0, u0, eastVMin);
+            vertex(x + x1, y + y0, z + z0, u0, v1);
+            vertex(x + x1, y + y0, z + z1, eastUMax, v1);
+            vertex(x + x1, y + y1, z + z1, eastUMax, eastVMin);
+            end(vertices);
         }
 
         // SOUTH face
         var southUMax = u0 + ue * xe;
         var southVMin = v0 + ve * (1f - ye);
         vec = Direction.getDirection(RawDirection.SOUTH);
-        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
+        nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
         edge = z0 == 0f;
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            br.applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
-            br.begin(cache);
-            br.vertex(x + x0, y + y1, z + z0, u0, southVMin);
-            br.vertex(x + x0, y + y0, z + z0, u0, v1);
-            br.vertex(x + x1, y + y0, z + z0, southUMax, v1);
-            br.vertex(x + x1, y + y1, z + z0, southUMax, southVMin);
-            br.end(vertices);
+            applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
+            begin(cache);
+            vertex(x + x0, y + y1, z + z0, u0, southVMin);
+            vertex(x + x0, y + y0, z + z0, u0, v1);
+            vertex(x + x1, y + y0, z + z0, southUMax, v1);
+            vertex(x + x1, y + y1, z + z0, southUMax, southVMin);
+            end(vertices);
         }
 
         // NORTH face
         var northUMax = u0 + ue * xe;
         var northVMin = v0 + ve * (1f - ye);
         vec = Direction.getDirection(RawDirection.NORTH);
-        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
+        nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
         
         edge = z1 == 1f;
         render = !Block.fullBlock[nb] || !edge;
         
         if (render) {
-            br.applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
-            br.begin(cache);
-            br.vertex(x + x1, y + y1, z + z1, u0, northVMin);
-            br.vertex(x + x1, y + y0, z + z1, u0, v1);
-            br.vertex(x + x0, y + y0, z + z1, northUMax, v1);
-            br.vertex(x + x0, y + y1, z + z1, northUMax, northVMin);
-            br.end(vertices);
+            applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
+            begin(cache);
+            vertex(x + x1, y + y1, z + z1, u0, northVMin);
+            vertex(x + x1, y + y0, z + z1, u0, v1);
+            vertex(x + x0, y + y0, z + z1, northUMax, v1);
+            vertex(x + x0, y + y1, z + z1, northUMax, northVMin);
+            end(vertices);
         }
 
         // DOWN face
         var downUMax = u0 + ue * xe;
         var downVMax = v0 + ve * ze;
         vec = Direction.getDirection(RawDirection.DOWN);
-        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
+        nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
         edge = y0 == 0f;
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            br.applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
-            br.begin(cache);
-            br.vertex(x + x1, y + y0, z + z1, u0, v0);
-            br.vertex(x + x1, y + y0, z + z0, u0, downVMax);
-            br.vertex(x + x0, y + y0, z + z0, downUMax, downVMax);
-            br.vertex(x + x0, y + y0, z + z1, downUMax, v0);
-            br.end(vertices);
+            applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
+            begin(cache);
+            vertex(x + x1, y + y0, z + z1, u0, v0);
+            vertex(x + x1, y + y0, z + z0, u0, downVMax);
+            vertex(x + x0, y + y0, z + z0, downUMax, downVMax);
+            vertex(x + x0, y + y0, z + z1, downUMax, v0);
+            end(vertices);
         }
 
         // UP face  
         var upUMax = u0 + ue * xe;
         var upVMax = v0 + ve * ze;
         vec = Direction.getDirection(RawDirection.UP);
-        nb = br.getBlockCached(vec.X, vec.Y, vec.Z).getID();
+        nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
             
         edge = y1 == 1f;
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            br.applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
-            br.begin(cache);
-            br.vertex(x + x0, y + y1, z + z1, u0, v0);
-            br.vertex(x + x0, y + y1, z + z0, u0, upVMax);
-            br.vertex(x + x1, y + y1, z + z0, upUMax, upVMax);
-            br.vertex(x + x1, y + y1, z + z1, upUMax, v0);
-            br.end(vertices);
+            applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
+            begin(cache);
+            vertex(x + x0, y + y1, z + z1, u0, v0);
+            vertex(x + x0, y + y1, z + z0, u0, upVMax);
+            vertex(x + x1, y + y1, z + z0, upUMax, upVMax);
+            vertex(x + x1, y + y1, z + z1, upUMax, v0);
+            end(vertices);
         }
     }
 
