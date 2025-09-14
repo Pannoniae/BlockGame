@@ -110,19 +110,19 @@ public class Torch : Block {
         var dir = world.getBlockMetadata(x, y, z);
         switch (dir) {
             case GROUND:
-                particlePos = new Vector3D(x + 0.5, y + 0.7, z + 0.5);
+                particlePos = new Vector3D(x + 0.5, y + 0.8, z + 0.5);
                 break;
             case WEST_WALL:
-                particlePos = new Vector3D(x + 0.3, y + 0.8, z + 0.5);
+                particlePos = new Vector3D(x + 0.3, y + 0.9, z + 0.5);
                 break;
             case EAST_WALL:
-                particlePos = new Vector3D(x + 0.7, y + 0.8, z + 0.5);
+                particlePos = new Vector3D(x + 0.7, y + 0.9, z + 0.5);
                 break;
             case SOUTH_WALL:
-                particlePos = new Vector3D(x + 0.5, y + 0.8, z + 0.3);
+                particlePos = new Vector3D(x + 0.5, y + 0.9, z + 0.3);
                 break;
             case NORTH_WALL:
-                particlePos = new Vector3D(x + 0.5, y + 0.8, z + 0.7);
+                particlePos = new Vector3D(x + 0.5, y + 0.9, z + 0.7);
                 break;
         }
         

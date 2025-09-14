@@ -784,8 +784,8 @@ public class Block {
                     particle.texture = "textures/blocks.png";
                     particle.u = u;
                     particle.v = v;
-                    particle.size = size;
-                    particle.uvsize = 1 / 16f * size;
+                    particle.size = new Vector2(size);
+                    particle.uvsize = new Vector2(1 / 16f * size);
                     particle.maxAge = ttl;
                     world.particles.add(particle);
 

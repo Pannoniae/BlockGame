@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
@@ -39,10 +40,10 @@ public class Particle {
     public float v;
 
     /** particle size in world units */
-    public double size;
+    public Vector2 size;
 
     /** texture size on particle (UV scale) */
-    public double uvsize;
+    public Vector2 uvsize;
     
     public bool noGravity;
     
@@ -60,7 +61,7 @@ public class Particle {
     }
 
     private AABB calcAABB(Vector3D pos) {
-        return new AABB(pos - new Vector3D(size / 2), pos + new Vector3D(size / 2));
+        return new AABB(pos - new Vector3D(size.X / 2), pos + new Vector3D(size.Y / 2));
     }
 
     public virtual void update(double dt) {
@@ -159,11 +160,11 @@ public class Particle {
 
 public class FlameParticle : Particle {
 
-    private double ssize;
+    private Vector2 ssize;
     
     public FlameParticle(World world, Vector3D position)
         : base(world, position) {
-        size = 0.2;
+        size = new Vector2(0.2f, 0.4f);
         ssize = size;
         maxAge = (int)(12f / (Game.clientRandom.NextSingle() + 0.25f) + 5f) * 4;
         noGravity = true;
@@ -171,10 +172,10 @@ public class FlameParticle : Particle {
         
         // texture maths
         texture = "textures/particle.png";
-        u = UVPair.texCoords(Game.textures.particleTex, 0, 12).X;
-        v = UVPair.texCoords(Game.textures.particleTex, 0, 12).Y;
+        u = UVPair.texCoords(Game.textures.particleTex, 0, 10).X;
+        v = UVPair.texCoords(Game.textures.particleTex, 0, 10).Y;
 
-        uvsize = UVPair.texU(Game.textures.particleTex, 3);
+        uvsize = UVPair.texCoords(Game.textures.particleTex, 3, 6);
     }
 
     public override void update(double dt) {
@@ -185,7 +186,7 @@ public class FlameParticle : Particle {
         
         // change texture frame
         int frame = (int)(age / (double)maxAge * 4);
-        u = UVPair.texCoords(Game.textures.particleTex, frame * 4, 12).X;
-        v = UVPair.texCoords(Game.textures.particleTex, frame * 4, 12).Y;
+        u = UVPair.texCoords(Game.textures.particleTex, frame * 4, 10).X;
+        v = UVPair.texCoords(Game.textures.particleTex, frame * 4, 10).Y;
     }
 }
