@@ -164,7 +164,7 @@ public class FlameParticle : Particle {
     
     public FlameParticle(World world, Vector3D position)
         : base(world, position) {
-        size = new Vector2(0.2f, 0.4f);
+        size = new Vector2(3 / 24f, 6 / 24f);
         ssize = size;
         maxAge = (int)(12f / (Game.clientRandom.NextSingle() + 0.25f) + 5f) * 4;
         noGravity = true;
@@ -180,9 +180,9 @@ public class FlameParticle : Particle {
 
     public override void update(double dt) {
         // shrink
-        const double f = 0.16;
+        const float f = 0.16f;
         // TODO COMMENT THIS BACK IN WHEN READY
-        //size = ssize * (1 - (age / (double)maxAge) * f);
+        size = ssize * (1 - (age / (float)maxAge) * f);
         
         // change texture frame
         int frame = (int)(age / (double)maxAge * 4);

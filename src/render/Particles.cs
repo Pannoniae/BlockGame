@@ -68,10 +68,10 @@ public class Particles {
             var blockPos = pos.toBlockPos();
             var right = Vector3.Cross(Game.camera.up.toVec3(), Game.camera.forward.toVec3());
             var up = Game.camera.up.toVec3();
-            var ul = pos.toVec3() - right * (float)particle.size.X / 2 + up * (float)particle.size.Y / 2;
-            var ll = pos.toVec3() - right * (float)particle.size.X / 2 - up * (float)particle.size.Y / 2;
-            var lr = pos.toVec3() + right * (float)particle.size.X / 2 - up * (float)particle.size.Y / 2;
-            var ur = pos.toVec3() + right * (float)particle.size.X / 2 + up * (float)particle.size.Y / 2;
+            var ul = pos.toVec3() - right * particle.size.X / 2 + up * particle.size.Y / 2;
+            var ll = pos.toVec3() - right * particle.size.X / 2 - up * particle.size.Y / 2;
+            var lr = pos.toVec3() + right * particle.size.X / 2 - up * particle.size.Y / 2;
+            var ur = pos.toVec3() + right * particle.size.X / 2 + up * particle.size.Y / 2;
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
             
