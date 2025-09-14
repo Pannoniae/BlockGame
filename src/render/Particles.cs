@@ -47,18 +47,22 @@ public class Particles {
     public void render(double interp) {
         var currentTexture = "textures/blocks.png";
         Game.graphics.tex(0, Game.textures.blockTexture);
-        
+
         drawer.begin(PrimitiveType.Triangles);
+        drawer.setMVP(Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix());
 
         var world = this.world;
 
         foreach (var particle in particles) {
             if (particle.texture != currentTexture) {
-                Game.textures.get(particle.texture);
+                // draw everything!
+                drawer.end();
+
+                drawer.begin(PrimitiveType.Triangles);
+                currentTexture = particle.texture;
                 var tex = Game.textures.get(particle.texture);
                 Game.graphics.tex(0, tex);
             }
-            drawer.setMVP(Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix());
             // get interp pos
             var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
             var blockPos = pos.toBlockPos();
@@ -70,8 +74,12 @@ public class Particles {
             var ur = pos.toVec3() + right * (float)particle.size / 2 + up * (float)particle.size / 2;
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
+
+            Console.Out.WriteLine($"sl {skylight} bl {blocklight}");
             
             var tint = WorldRenderer.getLightColour(skylight, blocklight);
+
+            Console.Out.WriteLine(tint);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);

@@ -57,7 +57,7 @@ public class Textures {
     }
 
     public Rgba32 light(int x, int y) {
-        return lightTexture.getPixel(y, x);
+        return lightmap[y | (x << 4)];
     }
 
     /**

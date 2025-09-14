@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using Silk.NET.OpenGL.Legacy;
 using Color = Molten.Color;
@@ -17,8 +18,8 @@ public abstract class InstantDraw<T> where T : unmanaged {
     
     protected PrimitiveType vertexType;
     
-    protected readonly int maxVertices;
-    protected readonly T[] vertices;
+    protected int maxVertices;
+    protected readonly List<T> vertices;
     protected int currentVertex = 0;
 
     protected readonly Silk.NET.OpenGL.Legacy.GL GL;
@@ -50,11 +51,9 @@ public abstract class InstantDraw<T> where T : unmanaged {
     
 
     public InstantDraw(int maxVertices) {
-        vertices = new T[maxVertices];
+        vertices = new List<T>(maxVertices);
         this.maxVertices = maxVertices;
-        unsafe {
-            GL = Game.GL;
-        }
+        GL = Game.GL;
     }
 
     public virtual void setup() {
@@ -69,6 +68,24 @@ public abstract class InstantDraw<T> where T : unmanaged {
     }
     
     public abstract void format();
+
+    protected void resizeStorage() {
+        var newMaxVertices = maxVertices * 2;
+
+        unsafe {
+            // delete old buffer
+            GL.DeleteBuffer(VBO);
+
+            // create new buffer with double capacity
+            VBO = GL.CreateBuffer();
+            GL.BindVertexArray(VAO);
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(newMaxVertices * sizeof(T)), (void*)0, BufferStorageMask.DynamicStorageBit);
+
+            maxVertices = newMaxVertices;
+            format();
+        }
+    }
     
     // Fog control methods
     public void enableFog(bool enable) {
@@ -117,15 +134,17 @@ public abstract class InstantDraw<T> where T : unmanaged {
     /// </summary>
     public void begin(PrimitiveType type) {
         currentVertex = 0;
+        vertices.Clear();
         vertexType = type;
     }
 
     public virtual void addVertex(T vertex) {
-        if (currentVertex >= maxVertices - 1) {
-            end();
+        // resize VBO before adding if needed
+        if (currentVertex >= maxVertices) {
+            resizeStorage();
         }
-        //Console.Out.WriteLine(currentLine);
-        vertices[currentVertex] = vertex;
+
+        vertices.Add(vertex);
         currentVertex++;
     }
     
@@ -153,7 +172,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
             Game.GL.InvalidateBufferData(VBO);
-            fixed (T* v = vertices) {
+            fixed (T* v = CollectionsMarshal.AsSpan(vertices)) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(T)), v);
             }
         }
@@ -170,7 +189,8 @@ public abstract class InstantDraw<T> where T : unmanaged {
         else {
             GL.DrawArrays(effectiveMode, 0, (uint)currentVertex);
         }
-
+        
+        vertices.Clear();
         currentVertex = 0;
     }
 }
@@ -220,17 +240,18 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
     }
 
     public override void addVertex(BlockVertexTinted vertex) {
+        // resize VBO before adding if needed
         if (currentVertex >= maxVertices - 1) {
-            end();
+            resizeStorage();
         }
-        
+
         // apply tint
         vertex.r = (byte)((vertex.r * tint.R) / 255);
         vertex.g = (byte)((vertex.g * tint.G) / 255);
         vertex.b = (byte)((vertex.b * tint.B) / 255);
         vertex.a = (byte)((vertex.a * tint.A) / 255);
-        
-        vertices[currentVertex] = vertex;
+
+        vertices.Add(vertex);
         currentVertex++;
     }
 }
@@ -271,17 +292,18 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
     }
     
     public override void addVertex(VertexTinted vertex) {
+        // resize VBO before adding if needed
         if (currentVertex >= maxVertices - 1) {
-            end();
+            resizeStorage();
         }
-        
+
         // apply tint
         vertex.r = (byte)((vertex.r * tint.R) / 255);
         vertex.g = (byte)((vertex.g * tint.G) / 255);
         vertex.b = (byte)((vertex.b * tint.B) / 255);
         vertex.a = (byte)((vertex.a * tint.A) / 255);
-        
-        vertices[currentVertex] = vertex;
+
+        vertices.Add(vertex);
         currentVertex++;
     }
 }
