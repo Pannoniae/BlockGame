@@ -27,9 +27,16 @@ public class Particles {
         //Console.Out.WriteLine(particles[0].position);
         for (var i = 0; i < particles.Count; i++) {
             var particle = particles[i];
+            
+            if (!particle.active) {
+                particles.RemoveAt(i);
+                i--;
+                continue;
+            }
             particle.update(dt);
+            particle.age++;
 
-            if (!particle.active || particle.ttl <= 0) {
+            if (particle.age >= particle.maxAge) {
                 particles.RemoveAt(i);
                 // don't skip the next particle
                 i--;
@@ -64,7 +71,7 @@ public class Particles {
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
             
-            var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
+            var tint = WorldRenderer.getLightColour(skylight, blocklight);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);

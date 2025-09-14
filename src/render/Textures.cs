@@ -19,6 +19,8 @@ public class Textures {
 
     public BTexture2D sunTexture;
     public BTexture2D moonTexture;
+    
+    public BTexture2D particleTex;
 
     public const int LIGHTMAP_SIZE = 16;
 
@@ -27,22 +29,17 @@ public class Textures {
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
 
-        background = new BTexture2D("textures/bg.png");
+        background = get("textures/bg.png");
+        lightTexture = get("textures/lightmap.png");
+        lightTexture2 = get("textures/lightmap.png");
+        waterOverlay = get("textures/water.png");
+        sunTexture = get("textures/sun_03.png");
+        moonTexture = get("textures/moon_01.png");
+        
+        particleTex = get("textures/particle.png");
+        
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
-        lightTexture = new BTexture2D("textures/lightmap.png");
-        lightTexture2 = new BTexture2D("textures/lightmap.png");
-        waterOverlay = new BTexture2D("textures/water.png");
-        sunTexture = new BTexture2D("textures/sun_03.png");
-        moonTexture = new BTexture2D("textures/moon_01.png");
-
-        // reload textures
-        background.reload();
         blockTexture.reload();
-        lightTexture.reload();
-        lightTexture2.reload();
-        waterOverlay.reload();
-        sunTexture.reload();
-        moonTexture.reload();
 
         // init lightmap
         for (int i = 0; i < 256; i++) {

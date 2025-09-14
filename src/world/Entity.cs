@@ -159,17 +159,41 @@ public class Entity(World world) : Persistent {
     /**
      * Handle interactions with the block the entity is standing in.
      */
-    public virtual void interactBlock() {
+    public virtual void interactBlock(double dt) {
         // get blocks in aabb
         var min = aabb.min.toBlockPos();
         var max = aabb.max.toBlockPos();
         World.getBlocksInBox(neighbours, min, max);
         
-        // check if any of them are liquid
+        // check if any of them are liquid and accumulate push forces
         inLiquid = false;
+        Vector3D push = Vector3D.Zero;
+        int liquid = 0;
+        
         foreach (var pos in neighbours) {
             var block = world.getBlock(pos);
-            Block.blocks[block]!.interact(world, pos.X, pos.Y, pos.Z, this);
+            var blockInstance = Block.blocks[block]!;
+            
+            // handle regular interactions (non-push effects)
+            blockInstance.interact(world, pos.X, pos.Y, pos.Z, this);
+            
+            // accumulate push forces for liquids
+            if (Block.liquid[block]) {
+                var pushForce = blockInstance.push(world, pos.X, pos.Y, pos.Z, this);
+                if (pushForce != Vector3D.Zero) {
+                    push += pushForce;
+                    liquid++;
+                }
+            }
+        }
+        
+        // apply accumulated push force with smart normalization
+        if (liquid > 0 && push != Vector3D.Zero) {
+            // limit maximum push strength to prevent entity getting stuck
+            const double maxPushStrength = 7.2;
+            push = Vector3D.Normalize(push) * maxPushStrength;
+            
+            velocity += push * dt;
         }
     }
 

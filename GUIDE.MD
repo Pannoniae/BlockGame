@@ -14,6 +14,13 @@
 - **ChunkCoord**: A 2D coordinate for a chunk, with x, z coordinates.
 - **SubChunkCoord**: A 3D coordinate for a subchunk, with x, y, z coordinates.
 
+## COORDINATE SYSTEM (CRITICAL - READ EVERY TIME)
+**-X = West, +X = East**
+**-Y = Down, +Y = Up**
+**+Z = North, -Z = South**
+
+This is NOT fucking minecraft! South is -Z, North is +Z.
+
 
 ## Code style/guidelines/conventions
 

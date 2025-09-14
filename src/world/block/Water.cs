@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using BlockGame.GL.vertexformats;
 using Molten;
+using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.util;
 
@@ -360,12 +361,14 @@ public class Water : Block {
 
     public override void interact(World world, int x, int y, int z, Entity e) {
         e.inLiquid = true;
-        // push entity in flow direction
+    }
+    
+    public override Vector3D push(World world, int x, int y, int z, Entity e) {
         var flow = getFlow(world, x, y, z);
         if (flow != Vector3.Zero) {
-            flow = Vector3.Normalize(flow) * 0.04f; // tweak strength here?
-            e.velocity += flow.toVec3D(); // small push
+            return flow.toVec3D() * 0.05;
         }
+        return Vector3D.Zero;
     }
 
     /**
@@ -513,8 +516,8 @@ public class Water : Block {
         var isFlowing = (flow.X != 0 || flow.Z != 0) || falling || level > 0;
         var texBase = isFlowing ? uvs[1] + 0.5f : uvs[0]; // center 16x16 for flowing
         const float texSize = 1f;
-        var texMin = texCoords(texBase.u, texBase.v);
-        var texMax = texCoords((texBase + texSize).u, (texBase + texSize).v);
+        var texMin = UVPair.texCoords(texBase.u, texBase.v);
+        var texMax = UVPair.texCoords((texBase + texSize).u, (texBase + texSize).v);
 
         var uMin = texMin.X;
         var vMin = texMin.Y;

@@ -182,6 +182,10 @@ public static partial class Meth {
     public static float deg2rad(float degrees) {
         return float.Pi / 180f * degrees;
     }
+    
+    public const float d2r = MathF.PI / 180f;
+    public const float r2d = 180f / MathF.PI;
+    
     public static float rad2deg(float radians) {
         return 180f / float.Pi * radians;
     }
@@ -343,6 +347,22 @@ public static partial class Meth {
 
     public static Vector3I withoutY(this Vector3I vec) {
         return new Vector3I(vec.X, 0, vec.Z);
+    }
+
+    public static Vector3 transformVertex(float vx, float vy, float vz, bool brot, Vector3 pivot, float angle, Vector3 ax) {
+        if (!brot) {
+            return new Vector3(vx, vy, vz);
+        }
+
+        var point = new Vector3(vx, vy, vz) - pivot;
+        var cos = MathF.Cos(angle);
+        var sin = MathF.Sin(angle);
+            
+        Vector3 rotated = ax.X != 0 ? new Vector3(point.X, point.Y * cos - point.Z * sin, point.Y * sin + point.Z * cos) :
+            ax.Y != 0 ? new Vector3(point.X * cos + point.Z * sin, point.Y, -point.X * sin + point.Z * cos) :
+            ax.Z != 0 ? new Vector3(point.X * cos - point.Y * sin, point.X * sin + point.Y * cos, point.Z) : point;
+
+        return rotated + pivot;
     }
 }
 

@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.item;
 using BlockGame.src.world.block;
@@ -365,7 +366,7 @@ public class Block {
         COAL_ORE.setModel(BlockModel.makeCube(COAL_ORE));
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
-        TORCH.setTex(cubeUVs(0, 5));
+        TORCH.setTex(cubeUVs(0, 6));
         
         CRAFTING_TABLE = register(new Block(Blocks.CRAFTING_TABLE, "Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4,3, 3,3, 2, 3, 5,3));
@@ -430,39 +431,6 @@ public class Block {
 
     public static bool isTranslucent(int block) {
         return translucent[block];
-    }
-
-    /// <summary>
-    /// 0 = 0, 65535 = 1
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2D<Half> texCoordsH(int x, int y) {
-        return new Vector2D<Half>((Half)(x * atlasRatio), (Half)(y * atlasRatio));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2D<Half> texCoordsH(UVPair uv) {
-        return new Vector2D<Half>((Half)(uv.u * atlasRatio), (Half)(uv.v * atlasRatio));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 texCoords(float x, float y) {
-        return new Vector2(x * atlasRatio, y * atlasRatio);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 texCoords(UVPair uv) {
-        return new Vector2(uv.u * atlasRatio, uv.v * atlasRatio);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float texU(float u) {
-        return u * atlasRatio;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float texV(float v) {
-        return v * atlasRatio;
     }
 
 
@@ -720,6 +688,10 @@ public class Block {
         
     }
     
+    public virtual Vector3D push(World world, int x, int y, int z, Entity e) {
+        return Vector3D.Zero;
+    }
+    
     [ClientOnly]
     public virtual void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         // setup
@@ -784,8 +756,8 @@ public class Block {
                             break;
                     }
 
-                    float u = texU(uv.u + Game.clientRandom.NextSingle() * 0.75f); 
-                    float v = texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
+                    float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f); 
+                    float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
 
                     // the closer to the centre, the less the motion
                     // dx gives a number between -0.5 and 0.5 -> remap to between 0.5 and 3
@@ -814,7 +786,7 @@ public class Block {
                     particle.v = v;
                     particle.size = size;
                     particle.uvsize = 1 / 16f * size;
-                    particle.ttl = ttl;
+                    particle.maxAge = ttl;
                     world.particles.add(particle);
 
                     particle.velocity = motion.toVec3D();
@@ -860,7 +832,7 @@ public class Block {
      * Override for block-specific placement rules.
      */
     public virtual bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        return true;
+        return world.getBlock(x, y, z) == Blocks.AIR;
     }
     
     /**
@@ -960,6 +932,55 @@ public readonly record struct UVPair(float u, float v) {
 
     public static UVPair operator +(UVPair uv, UVPair other) {
         return new UVPair(uv.u + other.u, uv.v + other.v);
+    }
+
+    /// <summary>
+    /// 0 = 0, 65535 = 1
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2D<Half> texCoordsH(int x, int y) {
+        return new Vector2D<Half>((Half)(x * Block.atlasRatio), (Half)(y * Block.atlasRatio));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2D<Half> texCoordsH(UVPair uv) {
+        return new Vector2D<Half>((Half)(uv.u * Block.atlasRatio), (Half)(uv.v * Block.atlasRatio));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 texCoords(float x, float y) {
+        return new Vector2(x * Block.atlasRatio, y * Block.atlasRatio);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 texCoords(UVPair uv) {
+        return new Vector2(uv.u * Block.atlasRatio, uv.v * Block.atlasRatio);
+    }
+    
+    public static Vector2 texCoords(BTexture2D tex, float x, float y) {
+        return new Vector2(x / tex.width, y / tex.height);
+    }
+    
+    public static Vector2 texCoords(BTexture2D tex, UVPair uv) {
+        return new Vector2(uv.u / tex.width, uv.v / tex.height);
+    }
+    
+    public static float texU(BTexture2D tex, float u) {
+        return u / tex.width;
+    }
+    
+    public static float texV(BTexture2D tex, float v) {
+        return v / tex.height;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float texU(float u) {
+        return u * Block.atlasRatio;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float texV(float v) {
+        return v * Block.atlasRatio;
     }
 }
 

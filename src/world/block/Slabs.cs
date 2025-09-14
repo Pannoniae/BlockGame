@@ -100,10 +100,10 @@ public class Slabs : Block {
 
         var min = uvs[0];
         var max = uvs[0] + 1;
-        var u0 = texU(min.u);
-        var v0 = texV(min.v);
-        var u1 = texU(max.u);
-        var v1 = texV(max.v);
+        var u0 = UVPair.texU(min.u);
+        var v0 = UVPair.texV(min.v);
+        var u1 = UVPair.texU(max.u);
+        var v1 = UVPair.texV(max.v);
 
         float y0;
         float y1;

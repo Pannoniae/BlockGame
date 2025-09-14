@@ -77,7 +77,7 @@ public class Player : Entity {
 
         blockAtFeet = world.getBlock(feetPosition.toBlockPos());
         //inLiquid = Block.liquid[blockAtFeet];
-        interactBlock();
+        interactBlock(dt);
 
         collisionAndSneaking(dt);
         applyInputMovement(dt);

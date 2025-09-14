@@ -21,10 +21,13 @@ public class Particle {
     public bool onGround;
 
     /** whether particle is alive */
-    public bool active;
+    public bool active = true;
 
-    /** time-to-live in ticks */
-    public int ttl;
+    /** elapsed time this particle lived */
+    public int age;
+    
+    /** maximum age in ticks */
+    public int maxAge;
 
     /** texture path */
     public string texture;
@@ -41,6 +44,8 @@ public class Particle {
     /** texture size on particle (UV scale) */
     public double uvsize;
     
+    public bool noGravity;
+    
 
     /** collision detection cache */
     private readonly List<AABB> collisionTargets = [];
@@ -51,7 +56,6 @@ public class Particle {
         this.world = world;
         this.position = position;
         this.prevPosition = position;
-        active = true;
         velocity = Vector3D.Zero;
     }
 
@@ -59,15 +63,13 @@ public class Particle {
         return new AABB(pos - new Vector3D(size / 2), pos + new Vector3D(size / 2));
     }
 
-    public void update(double dt) {
+    public virtual void update(double dt) {
         prevPosition = position;
-        if (!active) {
-            return;
-        }
 
         // gravity
-        velocity.Y -= 6 * dt;
-        ttl -= 1;
+        if (!noGravity) {
+            velocity.Y -= 6 * dt;
+        }
 
         // apply friction
         velocity.X *= Constants.verticalFriction;
@@ -156,13 +158,33 @@ public class Particle {
 }
 
 public class FlameParticle : Particle {
-    public FlameParticle(World world, Vector3D position, Vector3D velocity)
+
+    private double ssize;
+    
+    public FlameParticle(World world, Vector3D position)
         : base(world, position) {
-        texture = "textures/blocks.png";
-        u = 0;
-        v = 0;
-        size = 1;
-        uvsize = 1 / 16f * size;
-        ttl = 4;
+        size = 0.2;
+        ssize = size;
+        maxAge = (int)(12f / (Game.clientRandom.NextSingle() + 0.25f) + 5f) * 4;
+        noGravity = true;
+        
+        
+        // texture maths
+        texture = "textures/particle.png";
+        u = UVPair.texCoords(Game.textures.particleTex, 0, 12).X;
+        v = UVPair.texCoords(Game.textures.particleTex, 0, 12).Y;
+
+        uvsize = UVPair.texU(Game.textures.particleTex, 4);
+    }
+
+    public override void update(double dt) {
+        // shrink
+        const double f = 0.16;
+        size = ssize * (1 - (age / (double)maxAge) * f);
+        
+        // change texture frame
+        int frame = (int)(age / (double)maxAge * 4);
+        u = UVPair.texCoords(Game.textures.particleTex, frame * 4, 12).X;
+        v = UVPair.texCoords(Game.textures.particleTex, frame * 4, 12).Y;
     }
 }

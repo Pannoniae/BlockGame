@@ -264,8 +264,6 @@ public class BlockRenderer {
 
 
     public unsafe void applyFaceLighting(RawDirection dir, Span<Vector4> colourCache, Span<byte> lightColourCache) {
-        
-        // set the colourCache and lightCache for the 4 vertices based on the direction and lighting
         this.colourCache = (Vector4*)Unsafe.AsPointer(ref colourCache.GetPinnableReference());
         this.lightColourCache = (byte*)Unsafe.AsPointer(ref lightColourCache.GetPinnableReference());
         
@@ -296,6 +294,28 @@ public class BlockRenderer {
             //res.W = 1;
             colourCache[i] = new Vector4(tint, tint, tint, 1);
             lightColourCache[i] = light.bytes[i];
+        }
+    }
+
+    /// <summary>
+    /// Apply simple uniform lighting without AO for faces like torch rendering.
+    /// Uses the current block's light level, not neighbor light.
+    /// </summary>
+    public unsafe void applySimpleLighting(RawDirection dir, Span<Vector4> colourCache, Span<byte> lightColourCache) {
+        this.colourCache = (Vector4*)Unsafe.AsPointer(ref colourCache.GetPinnableReference());
+        this.lightColourCache = (byte*)Unsafe.AsPointer(ref lightColourCache.GetPinnableReference());
+
+        shouldFlipVertices = false;
+        
+        var blockLight = getLightCached(0, 0, 0);
+
+        // uniform lighting for all 4 vertices
+        Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
+        float tint = a[(byte)dir]; // no AO!
+
+        for (int i = 0; i < 4; i++) {
+            colourCache[i] = new Vector4(tint, tint, tint, 1);
+            lightColourCache[i] = blockLight;
         }
     }
 
@@ -533,8 +553,8 @@ public class BlockRenderer {
             // texcoords
             var texCoords = face.min;
             var texCoordsMax = face.max;
-            var tex = Block.texCoords(texCoords);
-            var texMax = Block.texCoords(texCoordsMax);
+            var tex = UVPair.texCoords(texCoords);
+            var texMax = UVPair.texCoords(texCoordsMax);
             
             // vertex positions
             float x1 = worldPos.X + face.x1;
@@ -617,8 +637,8 @@ public class BlockRenderer {
             // texture coordinates
             var texCoords = face.min;
             var texCoordsMax = face.max;
-            var tex = Block.texCoords(texCoords);
-            var texMax = Block.texCoords(texCoordsMax);
+            var tex = UVPair.texCoords(texCoords);
+            var texMax = UVPair.texCoords(texCoordsMax);
             
             // vertex positions
             float x1 = worldPos.X + face.x1;
@@ -661,16 +681,16 @@ public class BlockRenderer {
                 var uvs = bl.uvs;
                 var tx = uvs[0]; // use first texture for all faces
                 var txm = tx + 1;
-                var uvx = Block.texCoords(tx);
-                var uvxm = Block.texCoords(txm);
+                var uvx = UVPair.texCoords(tx);
+                var uvxm = UVPair.texCoords(txm);
                 renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
                 // cube using metadata-based dynamic texture
                 var dynTex = bl.getTexture(0, metadata);
                 var dynTexm = dynTex + 1;
-                var uvd = Block.texCoords(dynTex);
-                var uvdm = Block.texCoords(dynTexm);
+                var uvd = UVPair.texCoords(dynTex);
+                var uvdm = UVPair.texCoords(dynTexm);
                 
                 // USE LOCAL COORDS
                 renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
