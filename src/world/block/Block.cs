@@ -169,6 +169,7 @@ public class Block {
     public static Block IRON_ORE;
     public static Block COAL_ORE;
     public static Block TORCH;
+    public static Block CRAFTING_TABLE;
 
     public static Block register(Block block) {
         // update maxid
@@ -216,7 +217,7 @@ public class Block {
         HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone"));
         HELLSTONE.setTex(cubeUVs(8, 0));
         HELLSTONE.setModel(BlockModel.makeCube(HELLSTONE));
-        //HELLSTONE.light(15);
+        HELLSTONE.light(10);
         
         HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
         HELLROCK.setTex(cubeUVs(9, 0));
@@ -366,6 +367,10 @@ public class Block {
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
         TORCH.setTex(cubeUVs(0, 5));
         
+        CRAFTING_TABLE = register(new Block(Blocks.CRAFTING_TABLE, "Crafting Table"));
+        CRAFTING_TABLE.setTex(CTUVs(4,3, 3,3, 2, 3, 5,3));
+        CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
+        
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
         
@@ -468,6 +473,13 @@ public class Block {
     public static UVPair[] grassUVs(int topX, int topY, int sideX, int sideY, int bottomX, int bottomY) {
         return [
             new(sideX, sideY), new(sideX, sideY), new(sideX, sideY), new(sideX, sideY), new(bottomX, bottomY),
+            new(topX, topY)
+        ];
+    }
+    
+    public static UVPair[] CTUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
+        return [
+            new(xx, xy),new(xx, xy),  new(zx, zy), new(zx, zy), new(bottomX, bottomY),
             new(topX, topY)
         ];
     }

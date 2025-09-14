@@ -41,4 +41,5 @@ public class Blocks {
     public const ushort MAPLE_PLANKS_SLAB = 53;
     public const ushort TORCH = 54;
     public const ushort THISTLE = 55;
+    public const ushort CRAFTING_TABLE = 56;
 }
