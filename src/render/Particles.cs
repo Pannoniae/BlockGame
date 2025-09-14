@@ -78,8 +78,6 @@ public class Particles {
             
             var tint = WorldRenderer.getLightColour(skylight, blocklight);
 
-            Console.Out.WriteLine(tint);
-
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);
             drawer.addVertex(vert);
