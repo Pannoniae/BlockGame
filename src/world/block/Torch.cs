@@ -215,7 +215,7 @@ public class Torch : Block {
 
 
         for (RawDirection i = 0; i < RawDirection.MAX; i++) {
-            br.applySimpleLighting(RawDirection.WEST, colourCache, lightColourCache);
+            br.applySimpleLighting(RawDirection.NONE, colourCache, lightColourCache);
             
             
             Vector3 v0 = default;

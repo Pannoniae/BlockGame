@@ -306,12 +306,15 @@ public class BlockRenderer {
         this.lightColourCache = (byte*)Unsafe.AsPointer(ref lightColourCache.GetPinnableReference());
 
         shouldFlipVertices = false;
-        
+
         var blockLight = getLightCached(0, 0, 0);
 
         // uniform lighting for all 4 vertices
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-        float tint = a[(byte)dir]; // no AO!
+
+        float tint;
+        tint = dir == RawDirection.NONE ? 1f : // no shading for non-directional faces
+            a[(byte)dir]; // no AO!
 
         for (int i = 0; i < 4; i++) {
             colourCache[i] = new Vector4(tint, tint, tint, 1);
