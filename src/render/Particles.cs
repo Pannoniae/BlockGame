@@ -74,8 +74,7 @@ public class Particles {
             var ur = pos.toVec3() + right * (float)particle.size / 2 + up * (float)particle.size / 2;
             var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
-
-            Console.Out.WriteLine($"sl {skylight} bl {blocklight}");
+            
             
             var tint = WorldRenderer.getLightColour(skylight, blocklight);
 

@@ -891,7 +891,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         //GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
+        
+        // no depth writes!
+        GL.DepthMask(false);
         world.particles.render(interp);
+        GL.DepthMask(true);
     }
 
     public ulong testidx;

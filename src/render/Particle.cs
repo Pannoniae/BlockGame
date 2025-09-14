@@ -174,13 +174,14 @@ public class FlameParticle : Particle {
         u = UVPair.texCoords(Game.textures.particleTex, 0, 12).X;
         v = UVPair.texCoords(Game.textures.particleTex, 0, 12).Y;
 
-        uvsize = UVPair.texU(Game.textures.particleTex, 4);
+        uvsize = UVPair.texU(Game.textures.particleTex, 3);
     }
 
     public override void update(double dt) {
         // shrink
         const double f = 0.16;
-        size = ssize * (1 - (age / (double)maxAge) * f);
+        // TODO COMMENT THIS BACK IN WHEN READY
+        //size = ssize * (1 - (age / (double)maxAge) * f);
         
         // change texture frame
         int frame = (int)(age / (double)maxAge * 4);
