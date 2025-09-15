@@ -25,11 +25,13 @@ public class InventoryMenu : Menu {
     public const int BUTTONW = 8;
     public const int BUTTONH = 6;
 
-    public ItemSlot[] slots = new ItemSlot[ITEMS_PER_PAGE];
+    public List<ItemSlot> slots = [];
     public List<ItemStack> allItems = new();
 
     public int currentPage = 0;
     public int totalPages = 0;
+
+    private readonly CreativeInventory creativeInventory = new();
 
     public Vector2I guiPos;
     public Rectangle guiBounds;
@@ -101,24 +103,32 @@ public class InventoryMenu : Menu {
             int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
             int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
 
-            slots[i] = new ItemSlot(slotX, slotY);
+            slots.Add(new ItemSlot(creativeInventory, i, slotX, slotY));
         }
 
         updateCurrentPage();
+        
+        // add the slots for the hotbar
+        
+        var player = Game.world.player;
+        for (int i = 0; i < player.hotbar.slots.Length; i++) {
+            var hotbarSlot = new ItemSlot(player.hotbar, i, invOffsetX + i * ItemSlot.SLOTSIZE,
+                invOffsetY + rows * ItemSlot.SLOTSIZE + PADDING);
+            slots.Add(hotbarSlot);
+        }
+
     }
 
     private void updateCurrentPage() {
-        // clear all slots
-        for (int i = 0; i < ITEMS_PER_PAGE; i++) {
-            slots[i].stack = new ItemStack(Blocks.AIR, 1);
-        }
+        // clear all slots in backing inventory
+        creativeInventory.clearAll();
 
-        // fill slots with current page items
+        // fill backing inventory with current page items
         int startIdx = currentPage * ITEMS_PER_PAGE;
         int endIdx = Math.Min(startIdx + ITEMS_PER_PAGE, allItems.Count);
 
         for (int i = startIdx; i < endIdx; i++) {
-            slots[i - startIdx].stack = allItems[i].copy();
+            creativeInventory.setStack(i - startIdx, allItems[i].copy());
         }
     }
 
@@ -130,7 +140,7 @@ public class InventoryMenu : Menu {
         Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
 
         foreach (var slot in slots) {
-            Game.gui.drawItem(slot, slot.stack, this);
+            Game.gui.drawItem(slot, this);
         }
         
         // draw the two arrows
@@ -148,11 +158,12 @@ public class InventoryMenu : Menu {
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && slot.stack.id != Blocks.AIR) {
+            var stack = slot.getStack();
+            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && stack != null && stack.id != Items.AIR) {
                 Log.debug("clicked!");
                 // swap it to the hotbar for now
                 var player = Game.world.player;
-                player.hotbar.slots[player.hotbar.selected] = slot.stack.copy();
+                player.hotbar.slots[player.hotbar.selected] = stack.copy();
             }
         }
     }

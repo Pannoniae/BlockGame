@@ -1,12 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BlockGame" type="DotNetProject" factoryName=".NET Project">
-    <option name="EXE_PATH" value="$PROJECT_DIR$/bin/Release/net10.0/BlockGame.exe" />
+    <option name="EXE_PATH" value="$PROJECT_DIR$/src/bin/Release/net10.0/BlockGame.exe" />
     <option name="PROGRAM_PARAMETERS" value="--dev" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/bin/Release/net10.0" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/bin/Release/net10.0" />
     <option name="PASS_PARENT_ENVS" value="1" />
-    <envs>
-      <env name="DOTNET_EnableWriteXorExecute" value="0" />
-    </envs>
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
     <option name="ENV_FILE_PATHS" value="" />
     <option name="REDIRECT_INPUT_PATH" value="" />
@@ -15,7 +12,7 @@
     <option name="USE_MONO" value="0" />
     <option name="RUNTIME_ARGUMENTS" value="" />
     <option name="AUTO_ATTACH_CHILDREN" value="0" />
-    <option name="PROJECT_PATH" value="$PROJECT_DIR$/BlockGame.csproj" />
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/src/BlockGame.csproj" />
     <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
     <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
     <option name="PROJECT_WORKING_DIRECTORY_TRACKING" value="1" />

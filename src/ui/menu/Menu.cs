@@ -76,6 +76,14 @@ public class Menu {
     public GUIElement getElement(string name) {
         return elements[name];
     }
+    
+    public bool hasElement(string name) {
+        return elements.ContainsKey(name);
+    }
+    
+    public void removeElement(string name) {
+        elements.Remove(name);
+    }
 
     public virtual void draw() {
         

@@ -24,7 +24,7 @@ public class Player : Entity {
     private double lastFootstepDistance = 0;
     private const double FOOTSTEP_DISTANCE = 3.0; // Distance between footstep sounds
 
-    public Inventory hotbar;
+    public Hotbar hotbar;
 
     public Vector3D strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
@@ -43,7 +43,7 @@ public class Player : Entity {
     public Player(World world, int x, int y, int z) : base(world) {
         position = new Vector3D(x, y, z);
         prevPosition = position;
-        hotbar = new Inventory();
+        hotbar = new Hotbar();
         renderer = new PlayerRenderer(this);
 
         this.world = world;

@@ -28,7 +28,7 @@
         </PackageReference>
         <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
-        <ProjectReference Include="..\BlockGame.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\src\BlockGame.csproj" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>

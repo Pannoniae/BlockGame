@@ -12,7 +12,8 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationManifest>..\app.manifest</ApplicationManifest>
+        <BaseOutputPath>..\bin\$(Configuration)\</BaseOutputPath>
     </PropertyGroup>
 
     <!-- Give .PDBs to the poor players/modders -->
@@ -34,8 +35,8 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.2.0" />
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.0" />
+        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.4.0" />
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.10" />
         <PackageReference Include="JetBrains.Profiler.SelfApi" Version="2.5.14" />
         <PackageReference Include="K4os.Compression.LZ4.Streams" Version="1.3.8"/>
@@ -52,47 +53,52 @@
         <PackageReference Include="SixLabors.Fonts" Version="2.1.3" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
-        <PackageReference Include="Spectre.Console" Version="0.50.1-preview.0.26" />
+        <PackageReference Include="Spectre.Console" Version="0.51.2-preview.0.1" />
         <PackageReference Include="Spectre.Console.Analyzer" Version="1.0.0">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="SuperluminalPerf" Version="1.3.0" />
-        <PackageReference Include="System.IO.Hashing" Version="10.0.0-preview.7.25380.108" />
+        <PackageReference Include="System.IO.Hashing" Version="10.0.0-rc.1.25451.107" />
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
     
     <!-- Analyzers or something (to detect skill issues) -->
     <ItemGroup>
-        <ProjectReference Include=".\Analyzers\Analyzers\Analyzers.csproj"
+        <ProjectReference Include="..\Analyzers\Analyzers\Analyzers.csproj"
                           OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
     
     
     <!-- Files to copy -->
     <ItemGroup>
-        <None Update="level/**/*.*">
+        
+        <None Include="../**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="shaders/**/*.*">
+        
+        <None Update="../level/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="textures/**/*.*">
+        <None Update="../shaders/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="fonts/**/*.*">
+        <None Update="../textures/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="snd\**">
+        <None Update="../fonts/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="wglinfo64.exe">
+        <None Update="../snd/**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="logo.png">
+        <None Update="../wglinfo64.exe">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="../logo.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="assets\**">
+        <None Update="../assets/**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         
@@ -100,64 +106,64 @@
         <!-- Folders to NEVER copy -->
         <!-- This is either libraries (compiled separately), or separate dll's -->
         <!-- If you add a new project, ALWAYS exclude it here from the main project, otherwise it will have duplicate files and crash -->
-        <None Remove="lib\**"/>
-        <None Remove="BlockGameTesting\**"/>
-        <None Remove="SNBT2NBT\**"/>
-        <None Remove="NBT2SNBT\**"/>
-        <None Remove="win10fix\**"/>
+        <None Remove="..\lib\**"/>
+        <None Remove="..\BlockGameTesting\**"/>
+        <None Remove="..\SNBT2NBT\**"/>
+        <None Remove="..\NBT2SNBT\**"/>
+        <None Remove="..\win10fix\**"/>
         
-        <None Remove="publish\**"/>
-        <None Remove="Analyzers\**"/>
-        <None Remove="meth\**"/>
+        <None Remove="..\publish\**"/>
+        <None Remove="..\Analyzers\**"/>
+        <None Remove="..\meth\**"/>
         
-        <Compile Remove="lib\**"/>
-        <Compile Remove="BlockGameTesting\**"/>
-        <Compile Remove="SNBT2NBT\**"/>
-        <Compile Remove="NBT2SNBT\**"/>
-        <Compile Remove="win10fix\**"/>
+        <Compile Remove="..\lib\**"/>
+        <Compile Remove="..\BlockGameTesting\**"/>
+        <Compile Remove="..\SNBT2NBT\**"/>
+        <Compile Remove="..\NBT2SNBT\**"/>
+        <Compile Remove="..\win10fix\**"/>
         
-        <Compile Remove="publish\**"/>
-        <Compile Remove="Analyzers\**"/>
-        <Compile Remove="meth\**"/>
+        <Compile Remove="..\publish\**"/>
+        <Compile Remove="..\Analyzers\**"/>
+        <Compile Remove="..\meth\**"/>
         
-        <EmbeddedResource Remove="lib\**"/>
-        <EmbeddedResource Remove="BlockGameTesting\**"/>
-        <EmbeddedResource Remove="SNBT2NBT\**"/>
-        <EmbeddedResource Remove="NBT2SNBT\**"/>
-        <EmbeddedResource Remove="win10fix\**"/>
+        <EmbeddedResource Remove="..\lib\**"/>
+        <EmbeddedResource Remove="..\BlockGameTesting\**"/>
+        <EmbeddedResource Remove="..\SNBT2NBT\**"/>
+        <EmbeddedResource Remove="..\NBT2SNBT\**"/>
+        <EmbeddedResource Remove="..\win10fix\**"/>
         
-        <EmbeddedResource Remove="publish\**"/>
-        <EmbeddedResource Remove="Analyzers\**"/>
-        <EmbeddedResource Remove="meth\**"/>
+        <EmbeddedResource Remove="..\publish\**"/>
+        <EmbeddedResource Remove="..\Analyzers\**"/>
+        <EmbeddedResource Remove="..\meth\**"/>
         
         
-        <None Update="runtimes\linux-x64\native\libminiaudioex.so">
+        <None Update="..\runtimes\linux-x64\native\libminiaudioex.so">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="glfw3.dll">
+        <None Update="..\glfw3.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="lib\FastNoiseLite.cs"/>
+        <Compile Include="../lib/FastNoiseLite.cs"/>
     </ItemGroup>
 
     <!-- These are the NATIVE libs 
     IDK how to do proper RID-specific inclusion. So we just copy all of them lol
     -->
     <ItemGroup>
-        <Content Include="libs\**">
+        <Content Include="..\libs\**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
-        <ProjectReference Include="lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
-        <ProjectReference Include="lib\FontStashSharp\FontStashSharp.csproj"/>
-        <ProjectReference Include="lib\Silk.NET.Input\Silk.NET.Input.csproj"/>
-        <ProjectReference Include="meth\Meth.csproj"/>
+        <ProjectReference Include="..\lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
+        <ProjectReference Include="..\lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
+        <ProjectReference Include="..\lib\FontStashSharp\FontStashSharp.csproj"/>
+        <ProjectReference Include="../lib/Silk.NET.Input/Silk.NET.Input.csproj"/>
+        <ProjectReference Include="..\meth\Meth.csproj"/>
     </ItemGroup>
     
     
@@ -166,16 +172,16 @@
         <Message Text="Runtime Identifier: $(RuntimeIdentifier)" Importance="high" />
     </Target>
 
-    <Import Project="NetBeauty.targets" />
+    <Import Project="../NetBeauty.targets" />
 
     <PropertyGroup>
-        <PublishDir>./publish</PublishDir>
+        <PublishDir>../publish</PublishDir>
     </PropertyGroup>
 
     <PropertyGroup>
-        <BeautyDir>.</BeautyDir>
+        <BeautyDir>..</BeautyDir>
         <BeautyAppHostEntry>BlockGame.dll</BeautyAppHostEntry>
-        <BeautyAppHostDir>.</BeautyAppHostDir>
+        <BeautyAppHostDir>..</BeautyAppHostDir>
     </PropertyGroup>
 
 

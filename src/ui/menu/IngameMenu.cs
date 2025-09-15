@@ -45,11 +45,6 @@ public class IngameMenu : Menu, IDisposable {
         var version = Text.createText(this, "version", new Vector2I(2, 2), Game.VERSION);
         version.shadowed = true;
         addElement(version);
-        var hotbar = new Hotbar(this, "hotbar", new Vector2I(0, -20)) {
-            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
-            verticalAnchor = VerticalAnchor.BOTTOM
-        };
-        addElement(hotbar);
         rendererText = new RichTextLayout {
             Font = Game.gui.guiFontThin,
             Text = "",
@@ -61,6 +56,22 @@ public class IngameMenu : Menu, IDisposable {
             frametimeHistory[i] = 0f;
             profileHistory[i] = new ProfileData();
         }
+    }
+
+    public override void activate() {
+        
+        // only add if it doesn't exist!
+
+        if (!hasElement("hotbar")) {
+            var hotbar = new HotbarGUI(this, "hotbar", new Vector2I(0, -20)) {
+                horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
+                verticalAnchor = VerticalAnchor.BOTTOM
+            };
+            addElement(hotbar);
+        }
+    }
+
+    public override void deactivate() {
     }
 
     public override void render(double dt, double interp) {

@@ -15,7 +15,7 @@
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="BlockGame.csproj">
+  <Project Path="src/BlockGame.csproj">
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>

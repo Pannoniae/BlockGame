@@ -27,7 +27,7 @@ public class Screen {
     }
 
     public void switchToMenu(Menu menu) {
-        //currentMenu?.deactivate();
+        currentMenu?.deactivate();
         currentMenu = menu;
         menu.size = new Vector2I(Game.width, Game.height);
         menu.centre = menu.size / 2;

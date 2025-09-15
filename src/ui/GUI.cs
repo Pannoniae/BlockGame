@@ -149,7 +149,13 @@ public class GUI {
         return new Vector2(pos.X * guiScale, pos.Y * guiScale);
     }
 
-    public void drawItem(ItemSlot slot, ItemStack stack, InventoryMenu inventory) {
+    public void drawItem(ItemSlot slot, InventoryMenu inventory) {
+        var stack = slot.getStack();
+        
+        if (stack == null || stack.id == Items.AIR) {
+            return;
+        }
+        
         var itemPos = slot.itemPos;
         
         // if block
@@ -170,7 +176,7 @@ public class GUI {
     }
 
     public void drawItemWithoutInv(ItemSlot slot) {
-        var stack = slot.stack;
+        var stack = slot.getStack();
         var itemPos = slot.itemPos;
         
         var item = Item.get(stack.id);

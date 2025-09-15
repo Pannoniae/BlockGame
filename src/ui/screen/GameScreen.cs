@@ -39,10 +39,8 @@ public class GameScreen : Screen {
 
     public override void activate() {
         D = new Debug();
-
-        switchToMenu(INGAME_MENU);
         
-        // lock mouse
+        // lock mouse & activate ingame menu
         backToGame();
 
         umt?.stop();
