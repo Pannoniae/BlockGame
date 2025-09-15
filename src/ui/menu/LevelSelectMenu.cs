@@ -74,7 +74,7 @@ public class LevelSelectMenu : Menu {
         }
         else {
             var seed = Game.random.Next();
-            if (Game.keyboard.IsKeyPressed(Key.ShiftLeft)) {
+            if (Game.inputs.shift.down()) {
                 // if shift is pressed, use the seed from the level select button
                 seed = 674414719;
             }

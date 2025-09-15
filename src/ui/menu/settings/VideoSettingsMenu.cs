@@ -7,10 +7,10 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui;
 
-public class SettingsMenu : Menu {
+public class VideoSettingsMenu : Menu {
     private readonly SettingsScreen parentScreen;
 
-    public SettingsMenu(SettingsScreen parentScreen) {
+    public VideoSettingsMenu(SettingsScreen parentScreen) {
         this.parentScreen = parentScreen;
         initializeSettings();
     }
@@ -299,7 +299,9 @@ public class SettingsMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         back.setPosition(new Vector2I(2, -18));
-        back.clicked += _ => parentScreen.returnToPrevScreen();
+        back.clicked += _ => {
+            parentScreen.returnToPrevScreen();
+        };
         addElement(back);
 
         layoutSettingsTwoCols(settingElements, new Vector2I(0, 16), vsync.GUIbounds.Width);
@@ -308,35 +310,6 @@ public class SettingsMenu : Menu {
     private void remeshIfRequired(int oldRenderDist) {
         if (Game.instance.currentScreen == Screen.GAME_SCREEN) {
             Screen.GAME_SCREEN.remeshWorld(oldRenderDist);
-        }
-    }
-
-    public void layoutSettingsTwoCols(List<GUIElement> elements, Vector2I startPos, int buttonWidth) {
-        // to the left/right
-        var offset = buttonWidth / 2 + 8;
-        var pos = startPos;
-        for (int i = 0; i < elements.Count; i++) {
-            var element = elements[i];
-            int o;
-            if (i % 2 == 0) {
-                o = -offset;
-            }
-            else {
-                o = offset;
-            }
-
-            element.setPosition(new Rectangle(pos.X + o, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));
-            if (i % 2 == 1) {
-                pos.Y += 18;
-            }
-        }
-    }
-
-    public void layoutSettings(List<GUIElement> elements, Vector2I startPos) {
-        var pos = startPos;
-        foreach (var element in elements) {
-            element.setPosition(new Rectangle(pos.X, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));
-            pos.Y += 18;
         }
     }
 

@@ -40,7 +40,8 @@ public partial class Game {
 
     public static IWindow window;
     public static Silk.NET.OpenGL.Legacy.GL GL = null!;
-    public static IInputContext input = null!;
+    private static IInputContext input = null!;
+    
     
     //private static WGL wgl;
     private static Glfw glfw;
@@ -874,12 +875,13 @@ public partial class Game {
     private void update(double dt) {
         globalTick++;
         mousePos = mouse.Position;
-        textures.update(dt);
-        currentScreen.update(dt);
-        gui.update(dt);
         
         // reset events
         inputs.reset();
+        
+        textures.update(dt);
+        currentScreen.update(dt);
+        gui.update(dt);
     }
 
     /// <summary>

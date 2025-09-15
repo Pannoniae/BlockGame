@@ -3,14 +3,18 @@ namespace BlockGame.ui;
 public class SettingsScreen : Screen {
 
     public Screen? prevScreen;
-    private readonly SettingsMenu settingsMenu;
+    public static VideoSettingsMenu VIDEO_SETTINGS_MENU;
+    public static SettingsMenu SETTINGS_MENU;
+    public static ControlsMenu CONTROLS_MENU;
 
     public SettingsScreen() {
-        settingsMenu = new SettingsMenu(this);
+        VIDEO_SETTINGS_MENU = new VideoSettingsMenu(this);
+        SETTINGS_MENU = new SettingsMenu(this);
+        CONTROLS_MENU = new ControlsMenu(this);
     }
 
     public override void activate() {
-        switchToMenu(settingsMenu);
+        switchToMenu(SETTINGS_MENU);
     }
 
     public void returnToPrevScreen() {
@@ -18,7 +22,7 @@ public class SettingsScreen : Screen {
             Game.instance.switchToScreen(prevScreen);
         } else {
             // fallback to main menu screen if no previous screen
-            Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
+            Game.instance.switchToScreen(MAIN_MENU_SCREEN);
         }
     }
 }

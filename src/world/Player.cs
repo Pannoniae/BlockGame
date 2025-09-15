@@ -338,25 +338,8 @@ public class Player : Entity {
         }
 
         pressedMovementKey = false;
-        var keyboard = Game.keyboard;
-        var mouse = Game.mouse;
-        
-        // handle mouse buttons
 
-        if (Game.inputs.left) {
-            breakBlock();
-        }
-        
-        if (Game.inputs.right) {
-            placeBlock();
-        }
-        
-        if (Game.inputs.middle) {
-            pickBlock();
-        }
-
-
-        if (keyboard.IsKeyPressed(Key.ShiftLeft)) {
+        if (Game.inputs.shift.down()) {
             if (flyMode) {
                 strafeVector.Y -= 0.8;
             }
@@ -368,31 +351,31 @@ public class Player : Entity {
             sneaking = false;
         }
 
-        if (keyboard.IsKeyPressed(Key.W)) {
+        if (Game.inputs.w.down()) {
             // Move forwards
             strafeVector.Z += 1;
             pressedMovementKey = true;
         }
 
-        if (keyboard.IsKeyPressed(Key.S)) {
+        if (Game.inputs.s.down()) {
             //Move backwards
             strafeVector.Z -= 1;
             pressedMovementKey = true;
         }
 
-        if (keyboard.IsKeyPressed(Key.A)) {
+        if (Game.inputs.a.down()) {
             //Move left
             strafeVector.X -= 1;
             pressedMovementKey = true;
         }
 
-        if (keyboard.IsKeyPressed(Key.D)) {
+        if (Game.inputs.d.down()) {
             //Move right
             strafeVector.X += 1;
             pressedMovementKey = true;
         }
 
-        if (keyboard.IsKeyPressed(Key.Space)) {
+        if (Game.inputs.space.down()) {
             if ((onGround || inLiquid) && !flyMode) {
                 jumping = true;
                 pressedMovementKey = true;
@@ -403,16 +386,33 @@ public class Player : Entity {
             }
         }
 
-        fastMode = keyboard.IsKeyPressed(Key.ControlLeft);
+        fastMode = Game.inputs.ctrl.down();
 
         // TODO this horribly breaks when you speed time up, you become a terminator and be able to break/place blocks instantly
         // oh no it's a debug feature anyway but yk
-        if (mouse.IsButtonPressed(MouseButton.Left) && world.worldTick - lastBreak > Constants.breakDelay) {
+        // repeated action while held (with delay to prevent spam)
+        if (Game.inputs.left.pressed()) {
             breakBlock();
         }
+        else {
+            if (Game.inputs.left.down() && world.worldTick - lastBreak > Constants.breakDelay) {
+                breakBlock();
+            }
+        }
 
-        if (mouse.IsButtonPressed(MouseButton.Right) && world.worldTick - lastPlace > Constants.placeDelay) {
+
+        if (Game.inputs.right.pressed()) {
             placeBlock();
+        }
+        else {
+            if (Game.inputs.right.down() && world.worldTick - lastPlace > Constants.placeDelay) {
+                placeBlock();
+            }
+        }
+
+
+        if (Game.inputs.middle.pressed()) {
+            pickBlock();
         }
     }
 

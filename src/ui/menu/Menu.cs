@@ -3,7 +3,7 @@ using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
-
+using Rectangle = System.Drawing.Rectangle;
 using RectangleF = System.Drawing.RectangleF;
 
 namespace BlockGame.ui;
@@ -137,7 +137,7 @@ public class Menu {
     public virtual void update(double dt) {
         // update hover status
         foreach (var element in elements.Values) {
-            element.pressed = element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.mouse.IsButtonPressed(MouseButton.Left);
+            element.pressed = element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.inputs.left.down();
             element.update();
         }
     }
@@ -223,5 +223,34 @@ public class Menu {
     public virtual void resize(Vector2I newSize) {
         size = newSize;
         centre = size / 2;
+    }
+
+    public static void layoutSettingsTwoCols(List<GUIElement> elements, Vector2I startPos, int buttonWidth) {
+        // to the left/right
+        var offset = buttonWidth / 2 + 8;
+        var pos = startPos;
+        for (int i = 0; i < elements.Count; i++) {
+            var element = elements[i];
+            int o;
+            if (i % 2 == 0) {
+                o = -offset;
+            }
+            else {
+                o = offset;
+            }
+
+            element.setPosition(new Rectangle(pos.X + o, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));
+            if (i % 2 == 1) {
+                pos.Y += 18;
+            }
+        }
+    }
+
+    public static void layoutSettings(List<GUIElement> elements, Vector2I startPos) {
+        var pos = startPos;
+        foreach (var element in elements) {
+            element.setPosition(new Rectangle(pos.X, pos.Y, element.GUIbounds.Width, element.GUIbounds.Height));
+            pos.Y += 18;
+        }
     }
 }

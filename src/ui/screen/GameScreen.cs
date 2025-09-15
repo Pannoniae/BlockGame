@@ -41,6 +41,9 @@ public class GameScreen : Screen {
         D = new Debug();
 
         switchToMenu(INGAME_MENU);
+        
+        // lock mouse
+        backToGame();
 
         umt?.stop();
         umt = new UpdateMemoryThread(this);
@@ -205,21 +208,6 @@ public class GameScreen : Screen {
         base.onMouseDown(mouse, button);
         if (Game.world.inMenu || currentMenu != INGAME_MENU) {
             return;
-        }
-
-        switch (button) {
-            case MouseButton.Left:
-                Game.inputs.left = true;
-                //Game.player.breakBlock();
-                break;
-            case MouseButton.Right:
-                Game.inputs.right = true;
-                //Game.player.placeBlock();
-                break;
-            case MouseButton.Middle:
-                Game.inputs.middle = true;
-                //Game.player.pickBlock();
-                break;
         }
     }
 
