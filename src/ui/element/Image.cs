@@ -30,15 +30,11 @@ public class Image : GUIElement {
     
     public void setScale(float sc) {
         scale = sc;
-        Console.WriteLine($"Setting scale to {sc}, realScale = {realScale}");
         guiPosition.Width = (int)(texture.width * realScale);
         guiPosition.Height = (int)(texture.height * realScale);
-        Console.WriteLine($"New dimensions: {guiPosition.Width} x {guiPosition.Height}");
     }
 
     public override void draw() {
-        Rectangle tex;
         Game.gui.draw(texture, new Vector2(bounds.X, bounds.Y), realScale);
-        var centre = new Vector2(bounds.X + bounds.Width / realScale, bounds.Y + bounds.Height / realScale);
     }
 }

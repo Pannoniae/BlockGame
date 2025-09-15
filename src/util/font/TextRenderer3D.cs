@@ -10,7 +10,7 @@ namespace BlockGame.util.font;
 public class TextRenderer3D : IFontStashRenderer {
     private readonly SpriteBatch tb;
     private readonly BTexture2DManager _textureManager;
-    private readonly Shader batchShader;
+    private readonly Shader batchShader3D;
 
     private readonly int uMVP;
 
@@ -18,10 +18,10 @@ public class TextRenderer3D : IFontStashRenderer {
 
     public TextRenderer3D() {
         _textureManager = new BTexture2DManager();
-        batchShader = new Shader(Game.GL, nameof(batchShader), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
-        uMVP = batchShader.getUniformLocation("uMVP");
+        batchShader3D = new Shader(Game.GL, nameof(batchShader3D), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
+        uMVP = batchShader3D.getUniformLocation("uMVP");
         tb = new SpriteBatch(Game.GL);
-        tb.setShader(batchShader);
+        tb.setShader(batchShader3D);
     }
 
     public void OnViewportChanged(Vector2I size) {
@@ -38,7 +38,7 @@ public class TextRenderer3D : IFontStashRenderer {
         // set combined VP matrix
         var mat = Game.camera.getViewMatrix(interp)
                   * Game.camera.getProjectionMatrix();
-        batchShader.setUniform(uMVP, mat);
+        batchShader3D.setUniform(uMVP, mat);
     }
 
     public void begin() {
