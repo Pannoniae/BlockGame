@@ -12,6 +12,7 @@ public class Screen {
 
     public static MainMenuScreen MAIN_MENU_SCREEN = new();
     public static GameScreen GAME_SCREEN = new();
+    public static SettingsScreen SETTINGS_SCREEN = new();
 
     /// <summary>
     /// The current game menu which is shown.

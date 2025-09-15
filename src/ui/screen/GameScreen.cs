@@ -284,7 +284,7 @@ public class GameScreen : Screen {
             else if (!Game.world.inMenu && !Game.world.paused) {
                 pause();
             }
-            else if (currentMenu != Menu.SETTINGS) {
+            else {
                 backToGame();
             }
         }
@@ -714,8 +714,8 @@ public class GameScreen : Screen {
     }
 
     public void openSettings() {
-        Menu.SETTINGS.prevMenu = PAUSE_MENU;
-        switchToMenu(Menu.SETTINGS);
+        Screen.SETTINGS_SCREEN.prevScreen = Screen.GAME_SCREEN;
+        Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
     }
     
     private void cycleBlockMetadata() {

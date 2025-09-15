@@ -31,7 +31,6 @@ public class Menu {
     public static StartupLoadingMenu STARTUP_LOADING;
     public static MainMenu MAIN_MENU;
     public static LevelSelectMenu LEVEL_SELECT;
-    public static SettingsMenu SETTINGS;
 
 
     /// <summary>
@@ -56,7 +55,6 @@ public class Menu {
         //STARTUP_LOADING = new StartupLoadingMenu();
         MAIN_MENU = new MainMenu();
         LEVEL_SELECT = new LevelSelectMenu();
-        SETTINGS = new SettingsMenu();
     }
 
     // there is no activate/deactivate here to manage elements here because multiple menus can exist (there no generic system for that; it's on a case-by-case basis)

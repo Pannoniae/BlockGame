@@ -29,8 +29,8 @@ public class MainMenu : Menu {
         settings.centreContents();
         settings.clicked += _ => {
             Game.instance.executeOnMainThread(() => {
-                SETTINGS.prevMenu = MAIN_MENU;
-                Game.instance.switchTo(SETTINGS);
+                Screen.SETTINGS_SCREEN.prevScreen = Screen.MAIN_MENU_SCREEN;
+                Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
             });
         };
         var button4 = new Button(this, "quit", true, "Quit");

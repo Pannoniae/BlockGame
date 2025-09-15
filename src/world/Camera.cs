@@ -367,28 +367,18 @@ public class Camera {
     /// </summary>
     private static Matrix4x4 createReverseZProjectionMatrix(float fov, float aspectRatio, float nearPlane, int maxPlane) {
         var f = 1.0f / MathF.Tan(fov * 0.5f);
-        /*return new Matrix4x4(
-            f / aspectRatio, 0, 0, 0,
-            0, f, 0, 0,
-            0, 0, 0, 1,
-            0, 0, nearPlane, 0 // reverse-Z: Z maps [near, inf] -> [1, 0]
-        );*/
-        
-        float C, D;
-        
-            // Reverse-Z, [0, 1] Range (Infinite Far)
-            // Near maps to 1, Far (infinity) maps to 0
-            C = 0.0f;
-            D = nearPlane;
 
-        var mat = new Matrix4x4();
+        // Reverse-Z, [0, 1] Range (Infinite Far)
+        // Near maps to 1, Far (infinity) maps to 0
 
-        mat.M11 = f / aspectRatio;
-        mat.M22 = f;
-        mat.M33 = C;
-        mat.M34 = 1.0f; // Maps eye-space Z into W component
-        mat.M43 = D; // Maps near plane correctly
-        mat.M44 = 0.0f;
+        var mat = new Matrix4x4 {
+            M11 = f / aspectRatio,
+            M22 = f,
+            M33 = 0.0f,
+            M34 = 1.0f, // Maps eye-space Z into W component
+            M43 = nearPlane,
+            M44 = 0.0f
+        };
 
         //mat = Matrix4x4.Transpose(mat);
 

@@ -8,9 +8,14 @@ using Rectangle = System.Drawing.Rectangle;
 namespace BlockGame.ui;
 
 public class SettingsMenu : Menu {
-    public Menu prevMenu;
+    private readonly SettingsScreen parentScreen;
 
-    public SettingsMenu() {
+    public SettingsMenu(SettingsScreen parentScreen) {
+        this.parentScreen = parentScreen;
+        initializeSettings();
+    }
+
+    private void initializeSettings() {
         // load settings (later)
         var settings = Settings.instance;
 
@@ -127,12 +132,12 @@ public class SettingsMenu : Menu {
         // build MSAA options based on hardware support
         var msaaOptions = new List<string> { "MSAA: OFF" };
         var msaaSampleValues = new List<int> { 1 };
-        
+
         foreach (var sample in Game.supportedMSAASamples) { // skip 1 (OFF)
             msaaOptions.Add($"MSAA: {sample}x");
             msaaSampleValues.Add((int)sample);
         }
-        
+
         var currentMsaaIndex = msaaSampleValues.IndexOf(settings.msaaSamples);
         if (currentMsaaIndex == -1) {
             currentMsaaIndex = 0; // fallback to OFF
@@ -294,7 +299,7 @@ public class SettingsMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         back.setPosition(new Vector2I(2, -18));
-        back.clicked += returnToPrevMenu;
+        back.clicked += _ => parentScreen.returnToPrevScreen();
         addElement(back);
 
         layoutSettingsTwoCols(settingElements, new Vector2I(0, 16), vsync.GUIbounds.Width);
@@ -348,12 +353,8 @@ public class SettingsMenu : Menu {
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {
-            returnToPrevMenu(null);
+            parentScreen.returnToPrevScreen();
         }
-    }
-
-    public void returnToPrevMenu(GUIElement guiElement) {
-        Game.instance.executeOnMainThread(() => Game.instance.switchTo(prevMenu));
     }
 
     public override void draw() {
