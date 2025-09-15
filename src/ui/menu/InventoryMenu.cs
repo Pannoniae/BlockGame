@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.item;
+using BlockGame.src.ui.element;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
@@ -10,19 +11,32 @@ namespace BlockGame.ui;
 
 public class InventoryMenu : Menu {
 
-    public const int rows = 10;
+    public const int rows = 4;
     public const int cols = 10;
+    public const int ITEMS_PER_PAGE = rows * cols;
 
     public const int invOffsetY = 20;
-    public const int textOffsetY = 2;
-    public const int invOffsetX = 4;
+    public const int textOffsetX = 6;
+    public const int textOffsetY = 8;
+    public const int invOffsetX = 5;
 
-    public ItemSlot[] slots = new ItemSlot[rows * cols];
+    public const int PADDING = 2;
+    public const int BUTTONPADDING = 6;
+    public const int BUTTONSIZE = 6;
+
+    public ItemSlot[] slots = new ItemSlot[ITEMS_PER_PAGE];
+    public List<ItemStack> allItems = new();
+
+    public int currentPage = 0;
+    public int totalPages = 0;
 
     public Vector2I guiPos;
     public Rectangle guiBounds;
 
     public readonly BTexture2D invTex;
+    
+    public Rectangle upArrow = new Rectangle(199, 0, BUTTONSIZE, BUTTONSIZE);
+    public Rectangle downArrow = new Rectangle(199, 14, BUTTONSIZE, BUTTONSIZE);
 
     public override bool isModal() {
         return false;
@@ -38,66 +52,98 @@ public class InventoryMenu : Menu {
         resize(guiPos);
     }
 
+    public override void activate() {
+        base.activate();
+        var upButton = new HiddenButton(this, "upArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING,
+            guiBounds.Y + invOffsetY), BUTTONSIZE, BUTTONSIZE);
+        upButton.clicked += _ => {
+            previousPage();
+        };
+        addElement(upButton);
+        
+        var downButton = new HiddenButton(this, "downArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING,
+            guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONSIZE), BUTTONSIZE, BUTTONSIZE);
+        downButton.clicked += _ => {
+            nextPage();
+        };
+        addElement(downButton);
+    }
+
     public void setup() {
-        int slotIndex = 0;
+        // collect all available items
+        allItems.Clear();
 
-        for (int i = 1; i <= rows * cols; i++) {
-            
-            int x = slotIndex % rows;
-            int y = slotIndex / rows;
-
-            int item = i > Block.currentID || Block.blocks[i] == null ? 0 : i;
-            
-            int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
-            int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
-            
-            if (Block.isBlacklisted(item)) {
-                // add empty slot
-                slots[slotIndex] = new ItemSlot(slotX, slotY) {
-                    stack = new ItemStack(Blocks.AIR, 1),
-                };
-                slotIndex++;
+        for (int i = 1; i <= Block.currentID; i++) {
+            if (Block.blocks[i] == null || Block.isBlacklisted(i)) {
                 continue;
             }
 
             // special handling for candy block - add all 16 variants
-            if (item == Blocks.CANDY) {
+            if (i == Blocks.CANDY) {
                 for (byte metadata = 0; metadata < 16; metadata++) {
-                    if (slotIndex >= slots.Length) {
-                        break;
-                    }
-
-                    int currentX = invOffsetX + (slotIndex % rows) * ItemSlot.SLOTSIZE;
-                    int currentY = invOffsetY + (slotIndex / rows) * ItemSlot.SLOTSIZE;
-
-                    slots[slotIndex] = new ItemSlot(currentX, currentY) {
-                        stack = new ItemStack(Item.blockID(item), 1, metadata),
-                    };
-                    slotIndex++;
+                    allItems.Add(new ItemStack(Item.blockID(i), 1, metadata));
                 }
-                // We used one item ID but filled 16 slots, so we need to adjust i
-                // to account for the extra slots we've effectively skipped over.
-                i += 15;
             }
             else {
-                slots[slotIndex] = new ItemSlot(slotX, slotY) {
-                    stack = new ItemStack(Item.blockID(item), 1),
-                };
-                slotIndex++;
+                allItems.Add(new ItemStack(Item.blockID(i), 1));
             }
+        }
+
+        // calculate total pages
+        totalPages = (allItems.Count + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
+
+        // initialize slots layout
+        for (int i = 0; i < ITEMS_PER_PAGE; i++) {
+            int x = i % cols;
+            int y = i / cols;
+
+            int slotX = invOffsetX + x * ItemSlot.SLOTSIZE;
+            int slotY = invOffsetY + y * ItemSlot.SLOTSIZE;
+
+            slots[i] = new ItemSlot(slotX, slotY);
+        }
+
+        updateCurrentPage();
+    }
+
+    private void updateCurrentPage() {
+        // clear all slots
+        for (int i = 0; i < ITEMS_PER_PAGE; i++) {
+            slots[i].stack = new ItemStack(Blocks.AIR, 1);
+        }
+
+        // fill slots with current page items
+        int startIdx = currentPage * ITEMS_PER_PAGE;
+        int endIdx = Math.Min(startIdx + ITEMS_PER_PAGE, allItems.Count);
+
+        for (int i = startIdx; i < endIdx; i++) {
+            slots[i - startIdx].stack = allItems[i].copy();
         }
     }
 
     public override void draw() {
+        base.draw();
         Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
-        // draw inventory text
-        Game.gui.drawStringUI("Inventory", new Vector2(guiBounds.X + invOffsetX, guiBounds.Y + textOffsetY), Color4b.White, new Vector2(2, 2));
+        // draw inventory text with page info
+        string title = totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
+        Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
+
         foreach (var slot in slots) {
             Game.gui.drawItem(slot, slot.stack, this);
+        }
+        
+        // draw the two arrows
+        if (totalPages > 1) {
+            var upPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING, guiBounds.Y + invOffsetY);
+            var downPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING,
+                guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONSIZE);
+            Game.gui.drawUIImmediate(Game.gui.guiTexture, upPos, upArrow);
+            Game.gui.drawUIImmediate(Game.gui.guiTexture, downPos, downArrow);
         }
     }
 
     public override void onMouseUp(Vector2 pos, MouseButton button) {
+        base.onMouseUp(pos, button);
         var guiPos = GUI.s2u(pos);
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
@@ -107,6 +153,45 @@ public class InventoryMenu : Menu {
                 var player = Game.world.player;
                 player.hotbar.slots[player.hotbar.selected] = slot.stack.copy();
             }
+        }
+    }
+
+    public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyDown(keyboard, key, scancode);
+        switch (key) {
+            case Key.PageUp:
+                previousPage();
+                break;
+            case Key.PageDown:
+                nextPage();
+                break;
+        }
+    }
+
+    public override void scroll(IMouse mouse, ScrollWheel scroll) {
+        base.scroll(mouse, scroll);
+        if (totalPages <= 1) {
+            return;
+        }
+
+        if (scroll.Y > 0) {
+            previousPage();
+        } else if (scroll.Y < 0) {
+            nextPage();
+        }
+    }
+
+    private void nextPage() {
+        if (currentPage < totalPages - 1) {
+            currentPage++;
+            updateCurrentPage();
+        }
+    }
+
+    private void previousPage() {
+        if (currentPage > 0) {
+            currentPage--;
+            updateCurrentPage();
         }
     }
 

@@ -238,10 +238,7 @@ public class GameScreen : Screen {
     }
 
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
-        int y = (int)Math.Clamp(-scroll.Y, -1, 1);
-        var newSelection = Game.player.hotbar.selected + y;
-        newSelection = Meth.mod(newSelection, 10);
-        Game.player.hotbar.selected = newSelection;
+        base.scroll(mouse, scroll);
     }
 
     public override void onKeyUp(IKeyboard keyboard, Key key, int scancode) {

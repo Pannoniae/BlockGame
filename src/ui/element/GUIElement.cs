@@ -154,6 +154,10 @@ public class GUIElement {
     }
     
     /** The element *always* gets these events, you need to check whether this element is focused! */
+    public virtual void onMouseDown(MouseButton button) {
+    }
+    
+    /** The element *always* gets these events, you need to check whether this element is focused! */
     public virtual void onMouseUp(MouseButton button) {
     }
 

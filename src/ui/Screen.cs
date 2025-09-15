@@ -10,14 +10,21 @@ public class Screen {
     public Vector2I size;
     public Vector2I centre;
 
-    public static MainMenuScreen MAIN_MENU_SCREEN = new();
-    public static GameScreen GAME_SCREEN = new();
-    public static SettingsScreen SETTINGS_SCREEN = new();
+    public static MainMenuScreen MAIN_MENU_SCREEN;
+    public static GameScreen GAME_SCREEN;
+    public static SettingsScreen SETTINGS_SCREEN;
 
     /// <summary>
     /// The current game menu which is shown.
     /// </summary>
     public Menu currentMenu;
+
+
+    public static void init() {
+        MAIN_MENU_SCREEN = new MainMenuScreen();
+        GAME_SCREEN = new GameScreen();
+        SETTINGS_SCREEN = new SettingsScreen();
+    }
 
     public void switchToMenu(Menu menu) {
         //currentMenu?.deactivate();

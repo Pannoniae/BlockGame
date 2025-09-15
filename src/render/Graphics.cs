@@ -183,6 +183,23 @@ public class Graphics : IDisposable {
         batchShader.View = Matrix4x4.Identity;
         batchShader.Projection = ortho;
     }
+    
+    public void scissor(int x, int y, int w, int h) {
+        GL.Enable(EnableCap.ScissorTest);
+        GL.Scissor(x, y, (uint)w, (uint)h);
+    }
+    
+    /**
+     * Takes UI coords!
+     */
+    public void scissorUI(int x, int y, int w, int h) {
+        var scale = GUI.guiScale;
+        scissor(x * scale, Game.gui.uiHeight * scale - (y + h) * scale, w * scale, h * scale);
+    }
+
+    public void noScissor() {
+        GL.Disable(EnableCap.ScissorTest);
+    }
 
     public void popGroup() {
         if (groupCount <= 0) {

@@ -634,11 +634,14 @@ public partial class Game {
         keyboard.KeyRepeat += onKeyRepeat;
         keyboard.KeyUp += onKeyUp;
         keyboard.KeyChar += onKeyChar;
-        
+
+
+        var a = InputTracker.DUMMY;
         inputs = new InputTracker();
         
         Menu.STARTUP_LOADING.updateProgress(0.3f, "Loading textures");
         textures = new Textures(GL);
+        Screen.init();
         Menu.init();
         
         Menu.STARTUP_LOADING.updateProgress(0.4f, "Loading fonts");
@@ -1060,6 +1063,15 @@ public partial class Game {
         graphics.immediateBatch.End();
         //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);
         //GD.BlendingEnabled = false;
+        
+        if (GUI.WIREFRAME) {
+            graphics.mainBatch.Begin();
+            foreach (var element in currentScreen.currentMenu.elements.Values) {
+                gui.drawWireframe(element.bounds, Color4b.Red);
+            }
+            graphics.mainBatch.End();
+        }
+        
         GL.Enable(EnableCap.DepthTest);
 
         //GL.Finish();

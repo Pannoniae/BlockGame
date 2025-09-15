@@ -5,6 +5,7 @@ using Cysharp.Text;
 using FontStashSharp.RichText;
 using Molten;
 using Molten.DoublePrecision;
+using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
 
 
@@ -65,6 +66,14 @@ public class IngameMenu : Menu, IDisposable {
     public override void render(double dt, double interp) {
         base.render(dt, interp);
         UpdateFrametimeHistory((float)Game.instance.ft * 1000f);
+    }
+
+    public override void scroll(IMouse mouse, ScrollWheel scroll) {
+        var s = -scroll.Y;
+        int y = (int)Math.Clamp(s, -1, 1);
+        var newSelection = Game.player.hotbar.selected + y;
+        newSelection = Meth.mod(newSelection, 10);
+        Game.player.hotbar.selected = newSelection;
     }
 
     // No longer needed - we're using fixed thresholds

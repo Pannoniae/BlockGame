@@ -163,8 +163,8 @@ public class GUI {
                 Game.gui.drawStringUIThin(s,
                     new Vector2(
                         inventory.guiBounds.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
-                        s.Length * 6f / ui.GUI.guiScale,
-                        inventory.guiBounds.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / GUI.guiScale - ItemSlot.PADDING));
+                        s.Length * 6f / guiScale,
+                        inventory.guiBounds.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
             }
         }
     }
@@ -180,8 +180,8 @@ public class GUI {
             if (stack.quantity > 1) {
                 var s = stack.quantity.ToString();
                 Game.gui.drawStringUIThin(s,
-                    new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / ui.GUI.guiScale,
-                        itemPos.Y + ItemSlot.ITEMSIZE - 13f / GUI.guiScale - ItemSlot.PADDING));
+                    new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
+                        itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
             }
         }
     }

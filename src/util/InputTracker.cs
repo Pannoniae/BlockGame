@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Silk.NET.Input;
 
 namespace BlockGame.util;
@@ -9,7 +8,7 @@ namespace BlockGame.util;
  *
  * We use the same negative mapping trick, where mouse buttons are negative numbers, to distinguish from keyboard keys. I'm lazy, OK?
  *
- * This works for both mouse & kb!
+ * This works for both mouse and kb!
  * Will do controller stuff later.
  */
 public class InputTracker {
@@ -24,6 +23,10 @@ public class InputTracker {
     public Input left;
     public Input right;
     public Input middle;
+    
+    public static Input DUMMYINPUT;
+
+    public static List<Input> all = [];
 
     public static int DUMMY = -999;
 
@@ -32,6 +35,7 @@ public class InputTracker {
     private static Dictionary<int, bool> previousFrameKeys = new();
 
     public InputTracker() {
+        
         w = new Input("Forward", (int)Key.W);
         a = new Input("Left", (int)Key.A);
         s = new Input("Backward", (int)Key.S);
@@ -43,6 +47,8 @@ public class InputTracker {
         left = new Input("Attack", -(int)MouseButton.Left);
         right = new Input("Use", -(int)MouseButton.Right);
         middle = new Input("Pick Block", -(int)MouseButton.Middle);
+        
+        DUMMYINPUT = new Input("Unbound", DUMMY);
     }
 
     public static bool pressed(int key) {
@@ -118,5 +124,15 @@ public class InputTracker {
 
             previousFrameKeys[buttonInt] = currentlyDown;
         }
+    }
+
+    public static Input get(Key key) {
+        foreach (var input in all) {
+            if (input.key == (int)key) {
+                return input;
+            }
+        }
+
+        return DUMMYINPUT;
     }
 }

@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.src.ui.element;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
@@ -158,6 +159,8 @@ public class Menu {
 
     public virtual void onMouseDown(IMouse mouse, MouseButton button) {
         foreach (var element in elements.Values) {
+            element.onMouseDown(button);
+            
             if (button == MouseButton.Left && element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
                 pressedElement = element;
             }
@@ -216,7 +219,7 @@ public class Menu {
 
     }
 
-    public virtual void scroll(IMouse mouse, ScrollWheel scrollWheel) {
+    public virtual void scroll(IMouse mouse, ScrollWheel scroll) {
 
     }
 
