@@ -21,8 +21,9 @@ public class InventoryMenu : Menu {
     public const int invOffsetX = 5;
 
     public const int PADDING = 2;
-    public const int BUTTONPADDING = 6;
-    public const int BUTTONSIZE = 6;
+    public const int BUTTONPADDING = 5;
+    public const int BUTTONW = 8;
+    public const int BUTTONH = 6;
 
     public ItemSlot[] slots = new ItemSlot[ITEMS_PER_PAGE];
     public List<ItemStack> allItems = new();
@@ -35,8 +36,8 @@ public class InventoryMenu : Menu {
 
     public readonly BTexture2D invTex;
     
-    public Rectangle upArrow = new Rectangle(199, 0, BUTTONSIZE, BUTTONSIZE);
-    public Rectangle downArrow = new Rectangle(199, 14, BUTTONSIZE, BUTTONSIZE);
+    public Rectangle upArrow = new Rectangle(205, 0, BUTTONW, BUTTONH);
+    public Rectangle downArrow = new Rectangle(205, 6, BUTTONW, BUTTONH);
 
     public override bool isModal() {
         return false;
@@ -54,15 +55,15 @@ public class InventoryMenu : Menu {
 
     public override void activate() {
         base.activate();
-        var upButton = new HiddenButton(this, "upArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING,
-            guiBounds.Y + invOffsetY), BUTTONSIZE, BUTTONSIZE);
+        var upButton = new HiddenButton(this, "upArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
+            guiBounds.Y + invOffsetY), BUTTONW, BUTTONH);
         upButton.clicked += _ => {
             previousPage();
         };
         addElement(upButton);
         
-        var downButton = new HiddenButton(this, "downArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING,
-            guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONSIZE), BUTTONSIZE, BUTTONSIZE);
+        var downButton = new HiddenButton(this, "downArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
+            guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONH), BUTTONW, BUTTONH);
         downButton.clicked += _ => {
             nextPage();
         };
@@ -134,9 +135,9 @@ public class InventoryMenu : Menu {
         
         // draw the two arrows
         if (totalPages > 1) {
-            var upPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING, guiBounds.Y + invOffsetY);
-            var downPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONSIZE - BUTTONPADDING,
-                guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONSIZE);
+            var upPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING, guiBounds.Y + invOffsetY);
+            var downPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
+                guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONH);
             Game.gui.drawUIImmediate(Game.gui.guiTexture, upPos, upArrow);
             Game.gui.drawUIImmediate(Game.gui.guiTexture, downPos, downArrow);
         }
