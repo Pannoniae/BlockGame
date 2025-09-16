@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -20,7 +21,7 @@ public class MainMenu : Menu {
         sp.clicked += _ => {
             // we are *already* on the main thread; this is just needed so it executes a frame later
             // so we don't destroy the menu which we are clicking right now.
-            main.Game.instance.executeOnMainThread(() => { main.Game.instance.switchTo(LEVEL_SELECT); });
+            Game.instance.executeOnMainThread(() => { Game.instance.switchTo(LEVEL_SELECT); });
         };
         Log.debug("sp:" + sp.bounds);
         var button2 = new Button(this, "multiplayer", true, "Multiplayer (soon)");
@@ -30,9 +31,9 @@ public class MainMenu : Menu {
         settings.setPosition(new Vector2I(0, 18));
         settings.centreContents();
         settings.clicked += _ => {
-            main.Game.instance.executeOnMainThread(() => {
+            Game.instance.executeOnMainThread(() => {
                 Screen.SETTINGS_SCREEN.prevScreen = Screen.MAIN_MENU_SCREEN;
-                main.Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
+                Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
             });
         };
         var button4 = new Button(this, "quit", true, "Quit");
@@ -47,13 +48,13 @@ public class MainMenu : Menu {
     }
 
     public override void clear(double dt, double interp) {
-        main.Game.graphics.clearColor(Color4b.Black);
-        main.Game.graphics.clearDepth();
-        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        Game.graphics.clearColor(Color4b.Black);
+        Game.graphics.clearDepth();
+        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public override void draw() {
-        main.Game.gui.drawScrollingBG(16);
+        Game.gui.drawScrollingBG(16);
         base.draw();
     }
 }

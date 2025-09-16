@@ -1,4 +1,5 @@
-﻿using BlockGame.util.log;
+﻿using BlockGame.main;
+using BlockGame.util.log;
 
 namespace BlockGame.world;
 
@@ -23,7 +24,7 @@ public class WorldThread {
     public void doRun() {
         while (!stopped) {
             try {
-                double dt = main.Game.fixeddt;
+                double dt = Game.fixeddt;
                 update(dt);
             }
             catch (Exception e) {
@@ -33,7 +34,7 @@ public class WorldThread {
     }
 
     public void update(double dt) {
-        if (!world.paused && !main.Game.lockingMouse) {
+        if (!world.paused && !Game.lockingMouse) {
             world.update(dt);
         }
 

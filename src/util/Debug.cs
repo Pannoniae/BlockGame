@@ -2,6 +2,7 @@ using Molten.DoublePrecision;
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 
 
 namespace BlockGame.util;
@@ -16,8 +17,8 @@ public class Debug {
     
     public void renderTick(double interp) {
         // Set projection and view uniforms for the instant draw system
-        Matrix4x4 projMatrix = main.Game.camera.getProjectionMatrix();
-        Matrix4x4 viewMatrix = main.Game.camera.getViewMatrix(interp);
+        Matrix4x4 projMatrix = Game.camera.getProjectionMatrix();
+        Matrix4x4 viewMatrix = Game.camera.getViewMatrix(interp);
         Matrix4x4 mvpMatrix = viewMatrix * projMatrix;
         
         idc.setMVP(mvpMatrix);

@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using Molten;
@@ -17,8 +18,8 @@ public sealed partial class WorldRenderer {
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
-        var viewProj = main.Game.camera.getStaticViewMatrix(interp) * main.Game.camera.getProjectionMatrix();
-        var modelView = main.Game.camera.getStaticViewMatrix(interp);
+        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
+        var modelView = Game.camera.getStaticViewMatrix(interp);
 
         float dayPercent = world.getDayPercentage(world.worldTick);
 
@@ -39,7 +40,7 @@ public sealed partial class WorldRenderer {
         //idc.setFogDensity(0.002f);
         idc.fogDistance(0f, 128f);
 
-        var mat = main.Game.graphics.modelView;
+        var mat = Game.graphics.modelView;
         mat.push();
 
         // tilt should be 1 at sunrise (0)
@@ -111,7 +112,7 @@ public sealed partial class WorldRenderer {
         const float sunSize = 8f;
         const float moonSize = sunSize * 0.75f;
 
-        var mat = main.Game.graphics.modelView;
+        var mat = Game.graphics.modelView;
         mat.push();
 
         float sunElevation = world.getSunElevation(world.worldTick);
@@ -119,7 +120,7 @@ public sealed partial class WorldRenderer {
         float moonIntensity = MathF.Max(0, -(sunElevation - (MathF.PI / 6f)) / (MathF.PI / 6f));
 
         // Sunny
-        main.Game.graphics.tex(0, main.Game.textures.sunTexture);
+        Game.graphics.tex(0, Game.textures.sunTexture);
         mat.rotate(Meth.rad2deg(sunAngle), 0, 0, 1);
 
         idt.setMVP(mat.top * viewProj);
@@ -140,7 +141,7 @@ public sealed partial class WorldRenderer {
         idt.end();
 
         // Moony
-        main.Game.graphics.tex(0, main.Game.textures.moonTexture);
+        Game.graphics.tex(0, Game.textures.moonTexture);
 
         mat.push();
         mat.rotate(180f, 0, 0, 1);
@@ -212,7 +213,7 @@ public sealed partial class WorldRenderer {
         const float starSize = 0.15f;
 
         float continuousTime = dayPercent * 360;
-        var mat = main.Game.graphics.modelView;
+        var mat = Game.graphics.modelView;
 
         mat.push();
 

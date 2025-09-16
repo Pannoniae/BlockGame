@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
@@ -83,14 +84,14 @@ public class Settings {
             }
             
             // validate against hardware support
-            if (main.Game.supportedMSAASamples.Contains(msaaSamples)) {
+            if (Game.supportedMSAASamples.Contains(msaaSamples)) {
                 return msaaSamples;
             }
             
             // fallback1
-            for (int i = main.Game.supportedMSAASamples.Length - 1; i >= 0; i--) {
-                if (main.Game.supportedMSAASamples[i] <= msaaSamples) {
-                    return (int)main.Game.supportedMSAASamples[i];
+            for (int i = Game.supportedMSAASamples.Length - 1; i >= 0; i--) {
+                if (Game.supportedMSAASamples[i] <= msaaSamples) {
+                    return (int)Game.supportedMSAASamples[i];
                 }
             }
             // fallback2
@@ -118,18 +119,18 @@ public class Settings {
      */
     public RendererMode getActualRendererMode() {
         return rendererMode switch {
-            RendererMode.Auto => main.Game.hasCMDL ? RendererMode.CommandList :
-                                main.Game.hasBindlessMDI ? RendererMode.BindlessMDI :
-                                main.Game.hasInstancedUBO ? RendererMode.Instanced :
+            RendererMode.Auto => Game.hasCMDL ? RendererMode.CommandList :
+                                Game.hasBindlessMDI ? RendererMode.BindlessMDI :
+                                Game.hasInstancedUBO ? RendererMode.Instanced :
                                 RendererMode.Plain,
-            RendererMode.CommandList => main.Game.hasCMDL ? RendererMode.CommandList :
-                                       main.Game.hasBindlessMDI ? RendererMode.BindlessMDI :
-                                       main.Game.hasInstancedUBO ? RendererMode.Instanced :
+            RendererMode.CommandList => Game.hasCMDL ? RendererMode.CommandList :
+                                       Game.hasBindlessMDI ? RendererMode.BindlessMDI :
+                                       Game.hasInstancedUBO ? RendererMode.Instanced :
                                        RendererMode.Plain,
-            RendererMode.BindlessMDI => main.Game.hasBindlessMDI ? RendererMode.BindlessMDI :
-                                       main.Game.hasInstancedUBO ? RendererMode.Instanced :
+            RendererMode.BindlessMDI => Game.hasBindlessMDI ? RendererMode.BindlessMDI :
+                                       Game.hasInstancedUBO ? RendererMode.Instanced :
                                        RendererMode.Plain,
-            RendererMode.Instanced => main.Game.hasInstancedUBO ? RendererMode.Instanced : RendererMode.Plain,
+            RendererMode.Instanced => Game.hasInstancedUBO ? RendererMode.Instanced : RendererMode.Plain,
             RendererMode.Plain => RendererMode.Plain,
             _ => RendererMode.Plain
         };

@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.font;
@@ -67,14 +68,14 @@ public class GUI {
 
     public GUI() {
         //shader = new InstantShader(GL, "shaders/batch.vert", "shaders/batch.frag");
-        tb = main.Game.graphics.mainBatch;
-        immediatetb = main.Game.graphics.immediateBatch;
+        tb = Game.graphics.mainBatch;
+        immediatetb = Game.graphics.immediateBatch;
         guiTexture = new BTexture2D("textures/gui.png");
         colourTexture = new BTexture2D("textures/debug.png");
         guiTexture.reload();
         colourTexture.reload();
         instance = this;
-        guiBlockShader = new Shader(main.Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert", "shaders/ui/simpleBlock.frag");
+        guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert", "shaders/ui/simpleBlock.frag");
         buffer = new StreamingVAO<BlockVertexTinted>();
         buffer.bind();
         buffer.setSize(Face.MAX_FACES * 4);
@@ -86,8 +87,8 @@ public class GUI {
     }
 
     public void loadFont(int size) {
-        guiFont = main.Game.fontLoader.fontSystem.GetFont(size);
-        guiFontThin = main.Game.fontLoader.fontSystemThin.GetFont(size);
+        guiFont = Game.fontLoader.fontSystem.GetFont(size);
+        guiFontThin = Game.fontLoader.fontSystemThin.GetFont(size);
     }
 
 
@@ -107,8 +108,8 @@ public class GUI {
         blockSize *= guiScale * 2;
 
         // if one block is a given size, how many blocks can we fit on the screen?
-        var xCount = (int)Math.Ceiling(main.Game.width / blockSize);
-        var yCount = (int)Math.Ceiling(main.Game.height / blockSize);
+        var xCount = (int)Math.Ceiling(Game.width / blockSize);
+        var yCount = (int)Math.Ceiling(Game.height / blockSize);
     }
 
     public void update(double dt) {
@@ -163,12 +164,12 @@ public class GUI {
         // if block
         var item = Item.get(stack.id);
         if (item.isBlock()) {
-            main.Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
+            Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
                 ItemSlot.ITEMSIZE, (byte)stack.metadata);
             // draw amount text
             if (stack.quantity > 1) {
                 var s = stack.quantity.ToString();
-                main.Game.gui.drawStringUIThin(s,
+                Game.gui.drawStringUIThin(s,
                     new Vector2(
                         pos.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
                         s.Length * 6f / guiScale,
@@ -184,10 +185,10 @@ public class GUI {
         var item = Item.get(stack.id);
         if (item.isBlock()) {
 
-            main.Game.gui.drawBlockUI(item.getBlock(), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE, (byte)stack.metadata);
+            Game.gui.drawBlockUI(item.getBlock(), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE, (byte)stack.metadata);
             if (stack.quantity > 1) {
                 var s = stack.quantity.ToString();
-                main.Game.gui.drawStringUIThin(s,
+                Game.gui.drawStringUIThin(s,
                     new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
                         itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
             }
@@ -206,12 +207,12 @@ public class GUI {
             var drawX = pos.X - ItemSlot.ITEMSIZE / 2;
             var drawY = pos.Y - ItemSlot.ITEMSIZE / 2;
 
-            main.Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata);
+            Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata);
 
             // draw quantity if > 1
             if (cursorItem.quantity > 1) {
                 var s = cursorItem.quantity.ToString();
-                main.Game.gui.drawStringUIThin(s,
+                Game.gui.drawStringUIThin(s,
                     new Vector2(drawX + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
                         drawY + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
             }
@@ -229,8 +230,8 @@ public class GUI {
         size *= guiScale * 2;
 
         // if one block is a given size, how many blocks can we fit on the screen?
-        var xCount = (int)Math.Ceiling(main.Game.width / size);
-        var yCount = (int)Math.Ceiling(main.Game.height / size);
+        var xCount = (int)Math.Ceiling(Game.width / size);
+        var yCount = (int)Math.Ceiling(Game.height / size);
 
         for (int x = 0; x < xCount; x++) {
             for (int y = 0; y < yCount; y++) {
@@ -238,7 +239,7 @@ public class GUI {
                 var right = x * size + size;
                 var top = y * size;
                 var bottom = y * size + size;
-                tb.DrawRaw(main.Game.textures.blockTexture,
+                tb.DrawRaw(Game.textures.blockTexture,
                     new VertexColorTexture(new Vector3(left, top, 0), bgGray,
                         new Vector2(texCoords.X, texCoords.Y)),
                     new VertexColorTexture(new Vector3(right, top, 0), bgGray,
@@ -253,20 +254,20 @@ public class GUI {
 
     public void drawBG(float size) {
         var left = 0;
-        var right = main.Game.width;
+        var right = Game.width;
         var top = 0;
-        var bottom = main.Game.height;
+        var bottom = Game.height;
 
         // handle guiscale
         size *= guiScale * 2;
 
         // if one block is a given size, how many blocks can we fit on the screen?
-        var xCount = main.Game.width / size;
-        var yCount = main.Game.height / size;
+        var xCount = Game.width / size;
+        var yCount = Game.height / size;
 
         var texCoords = new Vector2(0, 0);
         var texCoordsMax = new Vector2(xCount, yCount);
-        tb.DrawRaw(main.Game.textures.background,
+        tb.DrawRaw(Game.textures.background,
             new VertexColorTexture(new Vector3(left, top, 0), bgGray, new Vector2(texCoords.X, texCoords.Y)),
             new VertexColorTexture(new Vector3(right, top, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
             new VertexColorTexture(new Vector3(right, bottom, 0), bgGray,
@@ -278,16 +279,16 @@ public class GUI {
 
     public void drawScrollingBG(float size) {
         var left = 0;
-        var right = main.Game.width;
+        var right = Game.width;
         var top = 0;
-        var bottom = main.Game.height;
+        var bottom = Game.height;
 
         // Handle guiscale
         float blockSize = size * guiScale * 2;
 
         // Calculate visible area in blocks
-        var xCount = (int)Math.Ceiling(main.Game.width / blockSize) + 2; // +2 for smooth scrolling
-        var yCount = (int)Math.Ceiling(main.Game.height / blockSize) + 2;
+        var xCount = (int)Math.Ceiling(Game.width / blockSize) + 2; // +2 for smooth scrolling
+        var yCount = (int)Math.Ceiling(Game.height / blockSize) + 2;
 
         // Get starting world coordinates
         // Start 3 blocks above the grass layer so grass is visible at top of screen
@@ -339,7 +340,7 @@ public class GUI {
                 var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                 var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
 
-                tb.DrawRaw(main.Game.textures.blockTexture,
+                tb.DrawRaw(Game.textures.blockTexture,
                     new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, texCoords),
                     new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
                     new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, texCoordsMax),
@@ -485,7 +486,7 @@ public class GUI {
         flip.M22 = -1;
         var rot = Matrix4x4.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
         var mat = flip * rot * Matrix4x4.CreateScale(1 / 256f * scale) * Matrix4x4.CreateTranslation(position);
-        guiFontThin.DrawText(main.Game.fontLoader.renderer3D, text, new Vector2(0, 0),
+        guiFontThin.DrawText(Game.fontLoader.renderer3D, text, new Vector2(0, 0),
             colour == default ? FSColor.White : colour.toFS(), ref mat);
     }
 
@@ -580,31 +581,31 @@ public class GUI {
     }
 
     protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour) {
-        guiFont.DrawText(main.Game.fontLoader.renderer, text, position, colour.toFS());
+        guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS());
     }
 
     protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale,
         Vector2 offset) {
-        guiFont.DrawText(main.Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
+        guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
     }
 
     protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, float rotation,
         Vector2 offset) {
-        guiFont.DrawText(main.Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
+        guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
     }
 
     protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
-        var aspectScale = new Vector2(scale.X * main.Game.fontLoader.thinFontAspectRatio, scale.Y);
-        guiFontThin.DrawText(main.Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
+        var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
+        guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
     }
 
     protected void DrawRString(RichTextLayout layout, Vector2 position, Color4b colour, Vector2 scale, TextHorizontalAlignment alignment) {
         if (layout.Font == guiFontThin) {
             // If the layout uses the thin font, we need to adjust the scale for the aspect ratio
-            scale = new Vector2(scale.X * main.Game.fontLoader.thinFontAspectRatio, scale.Y);
+            scale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
         }
         
-        layout.Draw(main.Game.fontLoader.renderer, position, colour.toFS(), 0, new Vector2(0), scale, 0f, alignment);
+        layout.Draw(Game.fontLoader.renderer, position, colour.toFS(), 0, new Vector2(0), scale, 0f, alignment);
     }
     
     // selector versions
@@ -635,20 +636,20 @@ public class GUI {
 
     public Vector2 measureStringThin(ReadOnlySpan<char> text) {
         var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
-        return new Vector2(measurement.X * main.Game.fontLoader.thinFontAspectRatio, measurement.Y);
+        return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
     
     public Vector2 measureString(ReadOnlySpan<char> text, bool thin) {
         if (thin) {
             var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
-            return new Vector2(measurement.X * main.Game.fontLoader.thinFontAspectRatio, measurement.Y);
+            return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
         }
         return guiFont.MeasureString(text, TEXTSCALEV);
     }
 
     public Vector2 measureStringSmall(ReadOnlySpan<char> text) {
         var measurement = guiFontThin.MeasureString(text, TEXTSCALEV / 2f);
-        return new Vector2(measurement.X * main.Game.fontLoader.thinFontAspectRatio, measurement.Y);
+        return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
     
     public Vector2 measureStringUI(ReadOnlySpan<char> text) {
@@ -658,7 +659,7 @@ public class GUI {
     
     public Vector2 measureStringUIThin(ReadOnlySpan<char> text) {
         var measurement = guiFontThin.MeasureString(text);
-        return new Vector2(measurement.X * main.Game.fontLoader.thinFontAspectRatio, measurement.Y);
+        return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
     
     public Vector2 measureStringUICentred(ReadOnlySpan<char> text) {
@@ -668,7 +669,7 @@ public class GUI {
     public Vector2 measureStringUI(ReadOnlySpan<char> text, bool thin) {
         if (thin) {
             var measurement = guiFontThin.MeasureString(text);
-            return new Vector2(measurement.X * main.Game.fontLoader.thinFontAspectRatio, measurement.Y);
+            return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
         }
         return guiFont.MeasureString(text);
     }
@@ -686,17 +687,17 @@ public class GUI {
 
     public void drawBlock(Block block, int x, int y, int size, byte metadata = 0) {
         //GD.Clear(ClearBuffers.Color);
-        main.Game.graphics.saveViewport();
+        Game.graphics.saveViewport();
         //var dt = GD.DepthTestingEnabled;
         //GD.DepthTestingEnabled = true;
 
 
         buffer.bind();
-        main.Game.renderer.bindQuad();
+        Game.renderer.bindQuad();
         guiBlockShader.use();
 
         // bind block texture
-        main.Game.textures.blockTexture.bind();
+        Game.textures.blockTexture.bind();
         
         // calculate light level at player
 
@@ -712,35 +713,35 @@ public class GUI {
             light = 15;
         }*/
 
-        main.Game.blockRenderer.setupStandalone();
-        main.Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock, 
+        Game.blockRenderer.setupStandalone();
+        Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock, 
             lightOverride: 255, cullFaces: false);
         
         // assemble the matrix using existing matrix stacks from Graphics
-        main.Game.graphics.projection.push();
-        main.Game.graphics.projection.loadIdentity();
+        Game.graphics.projection.push();
+        Game.graphics.projection.loadIdentity();
         var projMatrix = Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
-        main.Game.graphics.projection.multiply(projMatrix);
+        Game.graphics.projection.multiply(projMatrix);
         
-        main.Game.graphics.modelView.push();
-        main.Game.graphics.modelView.loadIdentity();
+        Game.graphics.modelView.push();
+        Game.graphics.modelView.loadIdentity();
         
         
         // view transformation - camera position
         var camPos = new Vector3(1, 2 / 3f, 1);
         var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-        main.Game.graphics.modelView.multiply(viewMatrix);
+        Game.graphics.modelView.multiply(viewMatrix);
         
         // model transformations
-        main.Game.graphics.modelView.translate(0, 5 / 6f, 0);
-        main.Game.graphics.modelView.scale(1, -1, 1);
+        Game.graphics.modelView.translate(0, 5 / 6f, 0);
+        Game.graphics.modelView.scale(1, -1, 1);
         
         // combine matrices
-        var mat = main.Game.graphics.modelView.top * main.Game.graphics.projection.top;
+        var mat = Game.graphics.modelView.top * Game.graphics.projection.top;
         
         // restore matrix stacks
-        main.Game.graphics.modelView.pop();
-        main.Game.graphics.projection.pop();
+        Game.graphics.modelView.pop();
+        Game.graphics.projection.pop();
         //Matrix4x4.CreateTranslation(0, 0, 0);
         //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.setUniform(uMVP, mat);
@@ -748,18 +749,18 @@ public class GUI {
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         buffer.upload(sp);
         var sSize = size * guiScale;
-        main.Game.graphics.setViewport(x, main.Game.height - y - sSize, sSize, sSize);
+        Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
         // status update: it doesn't segfault anymore because we hacked the trippygl layer to reset their expectations!
         // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
         //GL.BindVertexArray(buffer.VertexArray.Handle);
         unsafe {
-            main.Game.GL.DrawElements(PrimitiveType.Triangles, (uint)(sp.Length * 1.5), DrawElementsType.UnsignedShort, (void*)0);
+            Game.GL.DrawElements(PrimitiveType.Triangles, (uint)(sp.Length * 1.5), DrawElementsType.UnsignedShort, (void*)0);
         }
 
         // restore
         //GD.DepthTestingEnabled = dt;
-        main.Game.graphics.restoreViewport();
+        Game.graphics.restoreViewport();
     }
 
     public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0) {

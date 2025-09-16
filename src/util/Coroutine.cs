@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using BlockGame.main;
 using BlockGame.util.log;
 
 namespace BlockGame.util;
@@ -42,10 +43,10 @@ public sealed class WaitForSeconds : YieldInstruction {
     private readonly long targetTime;
 
     public WaitForSeconds(double seconds) {
-        targetTime = main.Game.permanentStopwatch.ElapsedMilliseconds + (long)(seconds * 1000);
+        targetTime = Game.permanentStopwatch.ElapsedMilliseconds + (long)(seconds * 1000);
     }
 
-    public override bool isComplete => main.Game.permanentStopwatch.ElapsedMilliseconds >= targetTime;
+    public override bool isComplete => Game.permanentStopwatch.ElapsedMilliseconds >= targetTime;
 }
 
 public sealed class WaitForNextFrame : YieldInstruction {
@@ -63,12 +64,12 @@ public sealed class WaitForMinimumTime : YieldInstruction {
     private readonly long minimumDurationMs;
     
     public WaitForMinimumTime(double minimumSeconds) {
-        startTime = main.Game.permanentStopwatch.ElapsedMilliseconds;
+        startTime = Game.permanentStopwatch.ElapsedMilliseconds;
         minimumDurationMs = (long)(minimumSeconds * 1000);
     }
     
     public override bool isComplete => 
-        main.Game.permanentStopwatch.ElapsedMilliseconds - startTime >= minimumDurationMs;
+        Game.permanentStopwatch.ElapsedMilliseconds - startTime >= minimumDurationMs;
 }
 
 // Coroutine interfaces
@@ -379,9 +380,9 @@ public class Coroutines {
 
     private void example() {
         // Usage
-        var fade = main.Game.startCoroutine(FadeInEffect());
+        var fade = Game.startCoroutine(FadeInEffect());
 
-        var check = main.Game.startCoroutine<bool>(CheckSomethingAsync());
+        var check = Game.startCoroutine<bool>(CheckSomethingAsync());
 
         // Later...
         if (check.isCompleted && check.result) {

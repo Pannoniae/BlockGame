@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.block;
@@ -168,16 +169,16 @@ public class FlameParticle : Particle {
         : base(world, position) {
         size = new Vector2(3 / 24f, 6 / 24f);
         ssize = size;
-        maxAge = (int)(12f / (main.Game.clientRandom.NextSingle() + 0.25f) + 5f) * 4;
+        maxAge = (int)(12f / (Game.clientRandom.NextSingle() + 0.25f) + 5f) * 4;
         noGravity = true;
         
         
         // texture maths
         texture = "textures/particle.png";
-        u = UVPair.texCoords(main.Game.textures.particleTex, 0, 10).X;
-        v = UVPair.texCoords(main.Game.textures.particleTex, 0, 10).Y;
+        u = UVPair.texCoords(Game.textures.particleTex, 0, 10).X;
+        v = UVPair.texCoords(Game.textures.particleTex, 0, 10).Y;
 
-        uvsize = UVPair.texCoords(main.Game.textures.particleTex, 3, 6);
+        uvsize = UVPair.texCoords(Game.textures.particleTex, 3, 6);
     }
 
     public override void update(double dt) {
@@ -188,7 +189,7 @@ public class FlameParticle : Particle {
         
         // change texture frame
         int frame = (int)(age / (double)maxAge * 4);
-        u = UVPair.texCoords(main.Game.textures.particleTex, frame * 4, 10).X;
-        v = UVPair.texCoords(main.Game.textures.particleTex, frame * 4, 10).Y;
+        u = UVPair.texCoords(Game.textures.particleTex, frame * 4, 10).X;
+        v = UVPair.texCoords(Game.textures.particleTex, frame * 4, 10).Y;
     }
 }

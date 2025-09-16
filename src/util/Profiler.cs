@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using BlockGame.main;
 
 namespace BlockGame.util;
 
@@ -82,7 +83,7 @@ public class Profiler {
         var now = (float)stopwatch.Elapsed.TotalMilliseconds;
         
         // pop previous group
-        main.Game.graphics.popGroup();
+        Game.graphics.popGroup();
 
         // Add time spent in previous section
         if (currentSection != section) {
@@ -92,7 +93,7 @@ public class Profiler {
             currentSection = section;
         }
         
-        main.Game.graphics.pushGroup(getSectionName(section), ProfileData.getColour(section));
+        Game.graphics.pushGroup(getSectionName(section), ProfileData.getColour(section));
         
         // add debug marker
         //Game.GL.DebugMessageInsert(DebugSource.DebugSourceApplication, DebugType.DebugTypeMarker, 0, DebugSeverity.DebugSeverityNotification, uint.MaxValue, $"Section: {getSectionName(section)}");
@@ -105,7 +106,7 @@ public class Profiler {
         var elapsed = now - sectionStartTime;
         currentFrame.setTime(currentSection, currentFrame.getTime(currentSection) + elapsed);
         
-        main.Game.graphics.popGroup();
+        Game.graphics.popGroup();
 
         return currentFrame;
     }

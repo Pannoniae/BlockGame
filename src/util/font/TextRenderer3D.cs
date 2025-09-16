@@ -1,5 +1,6 @@
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.main;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Molten;
@@ -18,9 +19,9 @@ public class TextRenderer3D : IFontStashRenderer {
 
     public TextRenderer3D() {
         _textureManager = new BTexture2DManager();
-        batchShader3D = new Shader(main.Game.GL, nameof(batchShader3D), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
+        batchShader3D = new Shader(Game.GL, nameof(batchShader3D), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
         uMVP = batchShader3D.getUniformLocation("uMVP");
-        tb = new SpriteBatch(main.Game.GL);
+        tb = new SpriteBatch(Game.GL);
         tb.setShader(batchShader3D);
     }
 
@@ -36,8 +37,8 @@ public class TextRenderer3D : IFontStashRenderer {
         //shaderProgram.Projection = Game.world.player.camera.getProjectionMatrix();
 
         // set combined VP matrix
-        var mat = main.Game.camera.getViewMatrix(interp)
-                  * main.Game.camera.getProjectionMatrix();
+        var mat = Game.camera.getViewMatrix(interp)
+                  * Game.camera.getProjectionMatrix();
         batchShader3D.setUniform(uMVP, mat);
     }
 

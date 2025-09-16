@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
 using Silk.NET.OpenGL.Legacy;
@@ -76,9 +77,9 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         //Console.WriteLine($"Executing {drawCount} bindless draw commands, stride={stride}, vertexBufferCount={vertexBufferCount}");
         
         // update metrics
-        main.Game.metrics.renderedSubChunks = commands;
+        Game.metrics.renderedSubChunks = commands;
         
-        main.Game.bmdi.MultiDrawElementsIndirectBindles(PrimitiveType.Triangles, DrawElementsType.UnsignedShort, 
+        Game.bmdi.MultiDrawElementsIndirectBindles(PrimitiveType.Triangles, DrawElementsType.UnsignedShort, 
             null, (uint)commands, 0, vertexBufferCount);
         
         // unbind so it's not tracked anymore!
@@ -228,9 +229,9 @@ public unsafe class BindlessArraysIndirectBuffer : IDisposable {
         //Console.WriteLine($"Executing {drawCount} bindless draw commands, stride={stride}, vertexBufferCount={vertexBufferCount}");
         
         // update metrics
-        main.Game.metrics.renderedSubChunks = commands;
+        Game.metrics.renderedSubChunks = commands;
         
-        main.Game.bmdi.MultiDrawArraysIndirectBindles(PrimitiveType.Quads, (void*)null, (uint)commands, 0, vertexBufferCount);
+        Game.bmdi.MultiDrawArraysIndirectBindles(PrimitiveType.Quads, (void*)null, (uint)commands, 0, vertexBufferCount);
         
         // unbind so it's not tracked anymore!
         //GL.BindBuffer(BufferTargetARB.DrawIndirectBuffer, 0);

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world.item;
@@ -486,7 +487,7 @@ public class Block {
         direction = (byte)(direction & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
-        var lightVal = main.Game.textures.light(blocklight, skylight);
+        var lightVal = Game.textures.light(blocklight, skylight);
         float tint = a[direction] * aoArray[ao];
         var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
@@ -732,13 +733,13 @@ public class Block {
         for (var x1 = 0; x1 < particleCount; x1++) {
             for (var y1 = 0; y1 < particleCount; y1++) {
                 for (var z1 = 0; z1 < particleCount; z1++) {
-                    var particleX = x + (x1 + 0.5f) * factor + (main.Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
-                    var particleY = y + (y1 + 0.5f) * factor + (main.Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
-                    var particleZ = z + (z1 + 0.5f) * factor + (main.Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
+                    var particleX = x + (x1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
+                    var particleY = y + (y1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
+                    var particleZ = z + (z1 + 0.5f) * factor + (Game.clientRandom.NextSingle() - 0.5f) * 0.15f;
                     var particlePosition = new Vector3D(particleX, particleY, particleZ);
 
-                    var size = main.Game.clientRandom.NextSingle() * 0.1f + 0.05f;
-                    var ttl = (int)(3f / (main.Game.clientRandom.NextSingle() + 0.05f));
+                    var size = Game.clientRandom.NextSingle() * 0.1f + 0.05f;
+                    var ttl = (int)(3f / (Game.clientRandom.NextSingle() + 0.05f));
 
                     switch (renderType[id]) {
                         // if custom texture, get that
@@ -748,7 +749,7 @@ public class Block {
                             uv = getTexture(0, meta);
                             break;
                         case RenderType.MODEL:
-                            uv = uvs[main.Game.clientRandom.Next(0, uvs.Length)];
+                            uv = uvs[Game.clientRandom.Next(0, uvs.Length)];
                             break;
                         default:
                             // no model, just textures
@@ -756,8 +757,8 @@ public class Block {
                             break;
                     }
 
-                    float u = UVPair.texU(uv.u + main.Game.clientRandom.NextSingle() * 0.75f); 
-                    float v = UVPair.texV(uv.v + main.Game.clientRandom.NextSingle() * 0.75f);
+                    float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f); 
+                    float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
 
                     // the closer to the centre, the less the motion
                     // dx gives a number between -0.5 and 0.5 -> remap to between 0.5 and 3
@@ -767,11 +768,11 @@ public class Block {
 
 
                     // between -0.7 and 0.7
-                    var motion = new Vector3(dx * 3 + (main.Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
-                        dy * 3 + (main.Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
-                        dz * 3 + (main.Game.clientRandom.NextSingle() - 0.5f) * 0.2f);
+                    var motion = new Vector3(dx * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
+                        dy * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
+                        dz * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f);
 
-                    var s = main.Game.clientRandom.NextSingle();
+                    var s = Game.clientRandom.NextSingle();
                     s *= s;
                     var speed = (s + 1) * 0.8f;
 

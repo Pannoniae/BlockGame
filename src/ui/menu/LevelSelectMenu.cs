@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.world;
@@ -51,7 +52,7 @@ public class LevelSelectMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         backButton.setPosition(new Vector2I(2, -18));
-        backButton.clicked += _ => { main.Game.instance.switchTo(MAIN_MENU); };
+        backButton.clicked += _ => { Game.instance.switchTo(MAIN_MENU); };
 
         addElement(backButton);
     }
@@ -75,8 +76,8 @@ public class LevelSelectMenu : Menu {
             isLoading = true;
         }
         else {
-            var seed = main.Game.random.Next();
-            if (main.Game.inputs.shift.down()) {
+            var seed = Game.random.Next();
+            if (Game.inputs.shift.down()) {
                 // if shift is pressed, use the seed from the level select button
                 seed = 674414719;
             }
@@ -84,14 +85,14 @@ public class LevelSelectMenu : Menu {
             isLoading = false;
         }
 
-        main.Game.setWorld(world);
+        Game.setWorld(world);
         
         // start world thread
         // todo this shit doesn't work, fix later
         //Game.worldThread = new WorldThread();
         
         // set to loading screen
-        main.Game.instance.switchTo(LOADING);
+        Game.instance.switchTo(LOADING);
         LOADING.load(world, isLoading);
         
         // logic continues in the loading screen
@@ -122,7 +123,7 @@ public class LevelSelectMenu : Menu {
     }
 
     public override void draw() {
-        main.Game.gui.drawBG(16);
+        Game.gui.drawBG(16);
         base.draw();
     }
 

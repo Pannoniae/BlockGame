@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world;
@@ -90,7 +91,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
     public WorldRenderer() {
-        GL = main.Game.GL;
+        GL = Game.GL;
 
         idc.setup();
         idt.setup();
@@ -175,34 +176,34 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         
         // delete old buffer if any
-        GL.DeleteBuffer(main.Game.graphics.fatQuadIndices);
-        main.Game.graphics.fatQuadIndices = 0;
-        main.Game.graphics.fatQuadIndicesLen = 0;
-        main.Game.graphics.fatQuadIndices = GL.GenBuffer();
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, main.Game.graphics.fatQuadIndices);
+        GL.DeleteBuffer(Game.graphics.fatQuadIndices);
+        Game.graphics.fatQuadIndices = 0;
+        Game.graphics.fatQuadIndicesLen = 0;
+        Game.graphics.fatQuadIndices = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
         unsafe {
             fixed (ushort* pIndices = indices) {
                 GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)),
                     pIndices, BufferStorageMask.None);
-                GL.ObjectLabel(ObjectIdentifier.Buffer, main.Game.graphics.fatQuadIndices, uint.MaxValue,
+                GL.ObjectLabel(ObjectIdentifier.Buffer, Game.graphics.fatQuadIndices, uint.MaxValue,
                     "Shared quad indices");
             }
 
-            main.Game.graphics.fatQuadIndicesLen = (uint)(indices.Length * sizeof(ushort));
+            Game.graphics.fatQuadIndicesLen = (uint)(indices.Length * sizeof(ushort));
 
             // make element buffer resident for unified memory if supported
             if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
-                main.Game.sbl.MakeBufferResident((NV)BufferTargetARB.ElementArrayBuffer,
+                Game.sbl.MakeBufferResident((NV)BufferTargetARB.ElementArrayBuffer,
                     (NV)GLEnum.ReadOnly);
-                main.Game.sbl.GetBufferParameter((NV)BufferTargetARB.ElementArrayBuffer,
+                Game.sbl.GetBufferParameter((NV)BufferTargetARB.ElementArrayBuffer,
                     NV.BufferGpuAddressNV, out elementAddress);
-                elementLen = main.Game.graphics.fatQuadIndicesLen;
+                elementLen = Game.graphics.fatQuadIndicesLen;
             }
         }
     }
 
     public void bindQuad() {
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, main.Game.graphics.fatQuadIndices);
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
     }
 
     private Shader createWorldShader() {
@@ -236,7 +237,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // some integrated AMD cards shit themselves when they see a vertex shader-only program. IDK which ones (it works on my dedicated AMD card)
         // but for safety, I'll just make it render fragments too on any non-NV card
 
-        if (main.Game.isNVCard) {
+        if (Game.isNVCard) {
             dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert");
         }
         else {
@@ -310,7 +311,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         
         // CMDLIST FIX: clear default FBO because we don't do it normally! :P
-        var isActualCMDL = newm == RendererMode.Auto && main.Game.hasCMDL;
+        var isActualCMDL = newm == RendererMode.Auto && Game.hasCMDL;
         if (oldm == RendererMode.CommandList || newm == RendererMode.CommandList || isActualCMDL) {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.ClearColor(defaultClearColour.R / 255f, defaultClearColour.G / 255f,
@@ -378,8 +379,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // get address of the ssbo
 
         if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
-            main.Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (NV)GLEnum.ReadOnly);
-            main.Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
+            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (NV)GLEnum.ReadOnly);
+            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
                 out ssboaddr);
         }
         
@@ -485,16 +486,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         foreach (var subChunk in chunksToMesh) {
             if (!meshingQueue.Contains(subChunk)) {
                 meshingQueue.Enqueue(subChunk);
-                main.Game.metrics.chunksUpdated++;
+                Game.metrics.chunksUpdated++;
             }
         }
 
         chunksToMesh.Clear();
 
-        var startTime = main.Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+        var startTime = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var limit = World.MAX_CHUNKLOAD_FRAMETIME;
         // empty the meshing queue
-        while (main.Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit &&
+        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit &&
                meshingQueue.TryDequeue(out var sectionCoord)) {
             // if this chunk doesn't exist anymore (because we unloaded it)
             // then don't mesh! otherwise we'll fucking crash
@@ -503,7 +504,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             }
 
             var section = world.getSubChunk(sectionCoord);
-            main.Game.blockRenderer.meshChunk(section);
+            Game.blockRenderer.meshChunk(section);
         }
     }
 
@@ -511,7 +512,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public void render(double interp) {
         //Game.GD.ResetStates();
 
-        frustum = main.Game.camera.frustum;
+        frustum = Game.camera.frustum;
 
 
         // determine rendering path based on settings
@@ -554,15 +555,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // enable unified memory for chunk rendering
         if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             #pragma warning disable CS0618 // Type or member is obsolete
-            main.Game.GL.EnableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
-            main.Game.GL.EnableClientState((EnableCap)NV.ElementArrayUnifiedNV);
-            main.Game.GL.EnableClientState((EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GL.EnableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
+            Game.GL.EnableClientState((EnableCap)NV.ElementArrayUnifiedNV);
+            Game.GL.EnableClientState((EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
 
             // set up element array address (shared index buffer)
-            main.Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0,
+            Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0,
                 elementAddress,
-                main.Game.graphics.fatQuadIndicesLen);
+                Game.graphics.fatQuadIndicesLen);
         }
 
         // format it again
@@ -582,18 +583,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.vbum.VertexAttribFormat(2, 4, (Silk.NET.OpenGL.Legacy.Extensions.NV.NV)VertexAttribType.UnsignedByte, true, 7 * sizeof(ushort));
         //GL.BindVertexBuffer(0, firstBuffer, 0, 7 * sizeof(ushort));*/
 
-        var tex = main.Game.textures.blockTexture;
-        var lightTex = main.Game.textures.lightTexture;
+        var tex = Game.textures.blockTexture;
+        var lightTex = Game.textures.lightTexture;
 
         // bind textures
-        main.Game.graphics.tex(0, tex);
-        main.Game.graphics.tex(1, lightTex);
+        Game.graphics.tex(0, tex);
+        Game.graphics.tex(1, lightTex);
 
 
-        var viewProj = main.Game.camera.getStaticViewMatrix(interp) * main.Game.camera.getProjectionMatrix();
+        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
         var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
 
-        var cameraPos = main.Game.camera.renderPosition(interp);
+        var cameraPos = Game.camera.renderPosition(interp);
         worldShader.setUniform(uMVP, viewProj);
         worldShader.setUniform(uCameraPos, new Vector3(0));
 
@@ -669,9 +670,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // status update: probably because the validation happens before the indirect buffer is parsed, so it complains
             // well, this is cheap enough for me to not care! :P
             // status update 2.0: apparently, the error message in the driver refers to the attrib, which *is* hooked onto index 0.... so just select the pointer on index 0 and we're good
-            main.Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0,
+            Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0,
                 elementAddress, 0);
-            main.Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 1,
+            Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 1,
                 elementAddress, 0);
 
             //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
@@ -695,7 +696,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 continue;
             }
 
-            main.Game.metrics.renderedChunks += 1;
+            Game.metrics.renderedChunks += 1;
             for (int j = 0; j < Chunk.CHUNKHEIGHT; j++) {
                 var subChunk = chunk.subChunks[j];
                 if (!subChunk.isRendered) {
@@ -739,7 +740,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // TRANSLUCENT DEPTH PRE-PASS
         
         // if integrated shit, don't do depth pre-pass
-        if (main.Game.isAMDIntegratedCard || main.Game.isIntelIntegratedCard) {
+        if (Game.isAMDIntegratedCard || Game.isIntelIntegratedCard) {
             waterShader.use();
             waterShader.setUniform(wateruMVP, viewProj);
             waterShader.setUniform(wateruCameraPos, new Vector3(0));
@@ -782,7 +783,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     drawTransparentUBO(subChunk, (uint)cd++);
                 }
                 else {
-                    if (main.Game.isAMDIntegratedCard || main.Game.isIntelIntegratedCard) {
+                    if (Game.isAMDIntegratedCard || Game.isIntelIntegratedCard) {
                         drawTransparent(subChunk, cameraPos);
                     }
                     else {
@@ -819,7 +820,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
-        main.Game.graphics.setDepthFunction();
+        Game.graphics.setDepthFunction();
 
         cd = 0;
         if (usingCMDL) {
@@ -874,9 +875,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // disable unified memory after all chunk rendering passes
         if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             #pragma warning disable CS0618 // Type or member is obsolete
-            main.Game.GL.DisableClientState((EnableCap)NV.ElementArrayUnifiedNV);
-            main.Game.GL.DisableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
-            main.Game.GL.DisableClientState((EnableCap)NV.UniformBufferUnifiedNV);
+            Game.GL.DisableClientState((EnableCap)NV.ElementArrayUnifiedNV);
+            Game.GL.DisableClientState((EnableCap)NV.VertexAttribArrayUnifiedNV);
+            Game.GL.DisableClientState((EnableCap)NV.UniformBufferUnifiedNV);
             #pragma warning restore CS0618 // Type or member is obsolete
         }
 
@@ -908,14 +909,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     private static readonly List<AABB> AABBList = [];
     
     public void updateRandom(double dt) {
-        var player = main.Game.player;
+        var player = Game.player;
         var r = 16;
 
         var n = 2048;
         for (int i = 0; i < n; i++) {
-            var x = player.position.X + main.Game.clientRandom.Next(-r, r);
-            var y = player.position.Y + main.Game.clientRandom.Next(-r, r);
-            var z = player.position.Z + main.Game.clientRandom.Next(-r, r);
+            var x = player.position.X + Game.clientRandom.Next(-r, r);
+            var y = player.position.Y + Game.clientRandom.Next(-r, r);
+            var z = player.position.Z + Game.clientRandom.Next(-r, r);
 
             var block = Block.get(world.getBlock((int)Math.Floor(x), (int)Math.Floor(y), (int)Math.Floor(z)));
             block?.renderUpdate(world, (int)Math.Floor(x), (int)Math.Floor(y), (int)Math.Floor(z));
@@ -924,7 +925,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
     public void drawBlockOutline(double interp) {
-        var pos = main.Game.instance.targetedPos;
+        var pos = Game.instance.targetedPos;
         if (pos == null) return;
 
         var targetPos = pos.Value;
@@ -937,8 +938,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // disable fog for outline rendering
         idc.enableFog(false);
 
-        var view = main.Game.camera.getViewMatrix(interp);
-        var viewProj = view * main.Game.camera.getProjectionMatrix();
+        var view = Game.camera.getViewMatrix(interp);
+        var viewProj = view * Game.camera.getProjectionMatrix();
 
         idc.setMV(view);
         idc.setMVP(viewProj);
@@ -997,7 +998,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     ];
 
     public Color4 getLightColourDarken(byte blocklight, byte skylight) {
-        var px = main.Game.textures.light(blocklight, skylight);
+        var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
         // apply darken
         var darken = world.getSkyDarkenFloat(world.worldTick) / 16f; // 0 to 1 range
@@ -1008,7 +1009,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     public static Color4b getLightColour(byte blocklight, byte skylight) {
-        var px = main.Game.textures.light(blocklight, skylight);
+        var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4b(px.R, px.G, px.B, px.A);
         return lightVal;
     }
@@ -1017,7 +1018,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         dir = (byte)(dir & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
-        var lightVal = main.Game.textures.light(blocklight, skylight);
+        var lightVal = Game.textures.light(blocklight, skylight);
 
         // apply darken
         //var darken = Game.world.getSkyDarken(Game.world.worldTick);
@@ -1030,7 +1031,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     private void ReleaseUnmanagedResources() {
         if (chunkVAO != 0) {
-            main.Game.GL.DeleteVertexArray(chunkVAO);
+            Game.GL.DeleteVertexArray(chunkVAO);
             chunkVAO = 0;
         }
 

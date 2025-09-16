@@ -1,3 +1,4 @@
+using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.GL;
@@ -12,7 +13,7 @@ public class FloatVAO {
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public FloatVAO() {
-        GL = main.Game.GL;
+        GL = Game.GL;
         handle = GL.GenVertexArray();
         GL.BindVertexArray(handle);
     }

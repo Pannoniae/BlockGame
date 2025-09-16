@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -77,7 +78,7 @@ public partial class Shader : IDisposable {
     private static partial Regex includeRegex();
 
     public static void namedStringARB(string name, string content) {
-        if (!main.Game.hasShadingLanguageInclude) return;
+        if (!Game.hasShadingLanguageInclude) return;
         
         if (!name.StartsWith('/')) {
             throw new ArgumentException("Named string path must start with '/'", nameof(name));
@@ -100,7 +101,7 @@ public partial class Shader : IDisposable {
                 ((byte*)namePtr)[nameBytes] = 0;
                 ((byte*)contentPtr)[contentBytes] = 0;
                 
-                main.Game.arbInclude.NamedString(ARB.ShaderIncludeArb, nameBytes, (byte*)namePtr, contentBytes, (byte*)contentPtr);
+                Game.arbInclude.NamedString(ARB.ShaderIncludeArb, nameBytes, (byte*)namePtr, contentBytes, (byte*)contentPtr);
             }
             finally {
                 NativeMemory.Free(namePtr);
@@ -110,7 +111,7 @@ public partial class Shader : IDisposable {
     }
     
     public static void deleteNamedStringARB(string name) {
-        if (!main.Game.hasShadingLanguageInclude) return;
+        if (!Game.hasShadingLanguageInclude) return;
         
         if (!name.StartsWith('/')) {
             throw new ArgumentException("Named string path must start with '/'", nameof(name));
@@ -128,7 +129,7 @@ public partial class Shader : IDisposable {
                 Encoding.UTF8.GetBytes(name, new Span<byte>(namePtr, nameBytes));
                 ((byte*)namePtr)[nameBytes] = 0;
                 
-                main.Game.arbInclude.DeleteNamedString(nameBytes, (byte*)namePtr);
+                Game.arbInclude.DeleteNamedString(nameBytes, (byte*)namePtr);
             }
             finally {
                 NativeMemory.Free(namePtr);
@@ -137,7 +138,7 @@ public partial class Shader : IDisposable {
     }
     
     public static void initializeIncludeFiles() {
-        if (!main.Game.hasShadingLanguageInclude) return;
+        if (!Game.hasShadingLanguageInclude) return;
         
         var searchDirectories = new[] { "shaders" };
         
@@ -171,7 +172,7 @@ public partial class Shader : IDisposable {
             if (!definitionsInjected && line.TrimStart().StartsWith("#version")) {
                 result.AppendLine(line);
                 
-                if (main.Game.hasShadingLanguageInclude) {
+                if (Game.hasShadingLanguageInclude) {
                     result.AppendLine("#extension GL_ARB_shading_language_include : enable");
                 }
                 
@@ -187,7 +188,7 @@ public partial class Shader : IDisposable {
             }
             
             // Only process includes manually if ARB extension is not available
-            if (!main.Game.hasShadingLanguageInclude && line.TrimStart().StartsWith("#include")) {
+            if (!Game.hasShadingLanguageInclude && line.TrimStart().StartsWith("#include")) {
                 var match = includeRegex().Match(line);
 
                 if (match.Success) {
@@ -240,7 +241,7 @@ public partial class Shader : IDisposable {
             
             GL.ShaderSource(shaderHandle, shader);
         
-            if (main.Game.hasShadingLanguageInclude) {
+            if (Game.hasShadingLanguageInclude) {
                 compileShaderWithInclude(shaderHandle);
             } else {
                 GL.CompileShader(shaderHandle);
@@ -262,7 +263,7 @@ public partial class Shader : IDisposable {
         }
         
         if (searchPaths.Length == 0) {
-            main.Game.GL.CompileShader(shaderHandle);
+            Game.GL.CompileShader(shaderHandle);
             return;
         }
         
@@ -288,7 +289,7 @@ public partial class Shader : IDisposable {
                 currentPtr += sizes[i];
             }
             
-            main.Game.arbInclude.CompileShaderInclude(shaderHandle, (uint)searchPaths.Length, pathPtrs, null);
+            Game.arbInclude.CompileShaderInclude(shaderHandle, (uint)searchPaths.Length, pathPtrs, null);
         }
         finally {
             NativeMemory.Free(allStrings);
@@ -348,7 +349,7 @@ public partial class Shader : IDisposable {
             _ => ShaderVariant.Normal
         };
         
-        if (main.Game.isNVCard) {
+        if (Game.isNVCard) {
             definitions.Add(new Definition("NV_EXTENSIONS"));
         }
 
@@ -393,7 +394,7 @@ public partial class Shader : IDisposable {
     }
 
     public void setUniform(int loc, ulong value) {
-        main.Game.sbl.ProgramUniform(programHandle, loc, value);
+        Game.sbl.ProgramUniform(programHandle, loc, value);
     }
 
     public unsafe void setUniform(int loc, Vector2 value) {

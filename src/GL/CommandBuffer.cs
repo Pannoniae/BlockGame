@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
 using Silk.NET.OpenGL.Legacy;
@@ -181,7 +182,7 @@ public unsafe class CommandBuffer : IDisposable {
 
     static CommandBuffer() {
         // initialize the static CMDL buffer if we have the extension
-        if (main.Game.hasCMDL) {
+        if (Game.hasCMDL) {
             // get draw elements token
             //drawelementsToken = Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsCommandNV, 4 * sizeof(int)) -
             //                    16;
@@ -193,28 +194,28 @@ public unsafe class CommandBuffer : IDisposable {
             //sizes = new uint[256000];
             
             // get draw arrays token
-            drawarraysToken = main.Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawArraysCommandNV, 3 * sizeof(int));
+            drawarraysToken = Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawArraysCommandNV, 3 * sizeof(int));
             Log.log(LogLevel.INFO, $"Draw Arrays Token: 0x{drawarraysToken:x8}");
 
             //Log.info($"0x{drawelementsToken:x8}");
             // print instanced elements token
             drawelementsToken =
-                main.Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsCommandNV, 4 * sizeof(int));
+                Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsCommandNV, 4 * sizeof(int));
             Log.info($"Draw Elements Token: 0x{drawelementsToken:x8}");
             //drawelementsToken = instancedElementsToken;
 
             drawelementsInstancedToken =
-                main.Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsInstancedCommandNV, 7 * sizeof(int));
+                Game.cmdl.GetCommandHeader(CommandOpcodesNV.DrawElementsInstancedCommandNV, 7 * sizeof(int));
             Log.info($"Draw Elements Instanced Token: 0x{drawelementsInstancedToken:x8}");
 
             // get attribute address token
             attribaddressToken =
-                main.Game.cmdl.GetCommandHeader(CommandOpcodesNV.AttributeAddressCommandNV, 4 * sizeof(int));
+                Game.cmdl.GetCommandHeader(CommandOpcodesNV.AttributeAddressCommandNV, 4 * sizeof(int));
             Log.info($"Attribute Address Token: 0x{attribaddressToken:x8}");
 
             // get element address token
             elementAddressToken =
-                main.Game.cmdl.GetCommandHeader(CommandOpcodesNV.ElementAddressCommandNV, 4 * sizeof(int));
+                Game.cmdl.GetCommandHeader(CommandOpcodesNV.ElementAddressCommandNV, 4 * sizeof(int));
             Log.info($"Element Address Token: 0x{elementAddressToken:x8}");
         }
     }
@@ -224,8 +225,8 @@ public unsafe class CommandBuffer : IDisposable {
         capacity = initialCapacity;
         size = 0;
 
-        main.Game.GL.DeleteBuffer(handle);
-        handle = main.Game.GL.CreateBuffer();
+        Game.GL.DeleteBuffer(handle);
+        handle = Game.GL.CreateBuffer();
         // initialize to 1024
         size = 0;
 
@@ -325,7 +326,7 @@ public unsafe class CommandBuffer : IDisposable {
         if (size > 0) {
             //fixed (nint* offsetsPtr = offsets) {
                 //fixed (uint* sizesPtr = sizes) {
-                    main.Game.cmdl.DrawCommands((NV)mode, handle, offsets, sizes, 1);
+                    Game.cmdl.DrawCommands((NV)mode, handle, offsets, sizes, 1);
                     //triggered = true;
                 //}
             //}

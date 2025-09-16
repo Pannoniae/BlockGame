@@ -1,3 +1,4 @@
+using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -15,7 +16,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public Image<Rgba32> image;
 
     public BTexture2D(string path) {
-        GL = main.Game.GL;
+        GL = Game.GL;
         this.path = path;
     }
 
@@ -52,7 +53,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public BTexture2D(uint width, uint height) {
         unsafe {
-            GL = main.Game.GL;
+            GL = Game.GL;
 
             handle = GL.CreateTexture(TextureTarget.Texture2D);
             GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
@@ -75,7 +76,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public uint height => (uint)image.Height;
 
     public void bind() {
-        main.Game.graphics.tex(0, handle);
+        Game.graphics.tex(0, handle);
     }
 
     public void Dispose() {

@@ -114,7 +114,7 @@ public class InventoryMenu : Menu {
         
         // add the slots for the hotbar
         
-        var player = main.Game.world.player;
+        var player = Game.world.player;
         for (int i = 0; i < player.survivalInventory.slots.Length; i++) {
             var hotbarSlot = new ItemSlot(player.survivalInventory, i, invOffsetX + i * ItemSlot.SLOTSIZE,
                 invOffsetY + rows * ItemSlot.SLOTSIZE + PADDING);
@@ -167,7 +167,7 @@ public class InventoryMenu : Menu {
     public override void onMouseUp(Vector2 pos, MouseButton button) {
         base.onMouseUp(pos, button);
         var guiPos = GUI.s2u(pos);
-        var player = main.Game.world.player;
+        var player = Game.world.player;
 
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);

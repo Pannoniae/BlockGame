@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using BlockGame.main;
 using BlockGame.util.log;
 using BlockGame.world;
 using BlockGame.world.chunk;
@@ -33,7 +34,7 @@ public static class MemoryUtils {
         WorldIO.saveLightPool.clear();
         HeightMap.heightPool.clear();
         // probably a noop
-        main.Game.GL.ReleaseShaderCompiler();
+        Game.GL.ReleaseShaderCompiler();
 
 
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");
@@ -139,7 +140,7 @@ public static class MemoryUtils {
 
     /// Get VRAM usage in bytes. Returns -1 if not supported.
     public static long getVRAMUsage(out int stat) {
-        var gl = main.Game.GL;
+        var gl = Game.GL;
         if (gl.IsExtensionPresent("GL_NVX_gpu_memory_info")) {
             // Hell yeah, NVidia card
             const uint NVX_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX = 0x9047;

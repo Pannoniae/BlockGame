@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.ui.screen;
 using BlockGame.util;
 using BlockGame.world;
@@ -69,7 +70,7 @@ public class ChatMenu : Menu {
                 doChat(message);
                 historyIndex = -1;
                 cursorPos = 0;
-                main.Game.instance.executeOnMainThread(closeChat);
+                Game.instance.executeOnMainThread(closeChat);
                 break;
             case Key.Backspace when message.Length > 0:
                 message = message.Remove(cursorPos - 1, 1);
@@ -125,14 +126,14 @@ public class ChatMenu : Menu {
 
                         if (int.TryParse(args[1], out x) && int.TryParse(args[2], out y) &&
                             int.TryParse(args[3], out z)) {
-                            main.Game.player.teleport(new Vector3D(x, y, z));
+                            Game.player.teleport(new Vector3D(x, y, z));
                             addMessage($"Teleported to {x}, {y}, {z}!");
                             break;
                         }
 
                         // relative coords?
                         if (args[1][0] == '~') {
-                            x = (int)main.Game.player.position.X;
+                            x = (int)Game.player.position.X;
                         }
                         else {
                             bool success = int.TryParse(args[1], out x);
@@ -143,7 +144,7 @@ public class ChatMenu : Menu {
                         }
 
                         if (args[2][0] == '~') {
-                            y = (int)main.Game.player.position.Y;
+                            y = (int)Game.player.position.Y;
                         }
                         else {
                             bool success = int.TryParse(args[2], out y);
@@ -154,7 +155,7 @@ public class ChatMenu : Menu {
                         }
 
                         if (args[3][0] == '~') {
-                            z = (int)main.Game.player.position.Z;
+                            z = (int)Game.player.position.Z;
                         }
                         else {
                             bool success = int.TryParse(args[3], out z);
@@ -164,7 +165,7 @@ public class ChatMenu : Menu {
                             }
                         }
 
-                        main.Game.player.teleport(new Vector3D(x, y, z));
+                        Game.player.teleport(new Vector3D(x, y, z));
                         addMessage($"Teleported to {x}, {y}, {z}!");
                     }
                     else {
@@ -185,34 +186,34 @@ public class ChatMenu : Menu {
                     break;
                 case "fb":
                     // enable fullbright
-                    if (main.Game.graphics.fullbright) {
-                        main.Game.graphics.fullbright = false;
+                    if (Game.graphics.fullbright) {
+                        Game.graphics.fullbright = false;
                         addMessage("Fullbright disabled");
                     }
                     else {
-                        main.Game.graphics.fullbright = true;
+                        Game.graphics.fullbright = true;
                         addMessage("Fullbright enabled");
                     }
 
                     // remesh everything to update lighting
-                    main.Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
+                    Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
                     break;
                 case "fly":
-                    main.Game.player.noClip = !main.Game.player.noClip;
-                    addMessage("Noclip " + (main.Game.player.noClip ? "enabled" : "disabled"));
+                    Game.player.noClip = !Game.player.noClip;
+                    addMessage("Noclip " + (Game.player.noClip ? "enabled" : "disabled"));
                     break;
                 case "time":
                     if (args.Length == 1) {
                         // display current time
-                        var currentTick = main.Game.world.worldTick;
-                        var dayPercent = main.Game.world.getDayPercentage(currentTick);
+                        var currentTick = Game.world.worldTick;
+                        var dayPercent = Game.world.getDayPercentage(currentTick);
                         var timeOfDay = (int)(dayPercent * World.TICKS_PER_DAY);
                         addMessage($"The time is {timeOfDay} (day {currentTick / World.TICKS_PER_DAY})");
                     }
                     else if (args.Length == 3 && args[1] == "set") {
                         // set time
                         if (int.TryParse(args[2], out int newTime)) {
-                            main.Game.world.worldTick = newTime;
+                            Game.world.worldTick = newTime;
                             addMessage($"Set time to {newTime}");
                             
                             // remesh world
@@ -236,17 +237,17 @@ public class ChatMenu : Menu {
                             break;
                         case "lightmap":
                             // dump lightmap to file
-                            main.Game.textures.dumpLightmap();
+                            Game.textures.dumpLightmap();
                             addMessage("Lightmap dumped to lightmap.png");
                             break;
                         case "noise":
                             // toggle noise debug display
-                            main.Game.debugShowNoise = !main.Game.debugShowNoise;
-                            addMessage($"Noise debug display: {(main.Game.debugShowNoise ? "enabled" : "disabled")}");
+                            Game.debugShowNoise = !Game.debugShowNoise;
+                            addMessage($"Noise debug display: {(Game.debugShowNoise ? "enabled" : "disabled")}");
                             break;
                         case "atlas":
                             // dump texture atlas to file
-                            main.Game.textures.dumpAtlas();
+                            Game.textures.dumpAtlas();
                             addMessage("Texture atlas dumped to atlas.png");
                             break;
                         default:
@@ -308,14 +309,14 @@ public class ChatMenu : Menu {
 
     public void closeChat() {
         message = "";
-        main.Game.instance.lockMouse();
+        Game.instance.lockMouse();
         screen.switchToMenu(((GameScreen)screen).INGAME_MENU);
     }
 
     public override void draw() {
         base.draw();
-        var gui = main.Game.gui;
-        var cursor = main.Game.permanentStopwatch.ElapsedMilliseconds % 1000 < 500 ? "|" : " ";
+        var gui = Game.gui;
+        var cursor = Game.permanentStopwatch.ElapsedMilliseconds % 1000 < 500 ? "|" : " ";
 
 
         string msgWithCursor;
@@ -328,7 +329,7 @@ public class ChatMenu : Menu {
 
         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4),
             color: new Color4b(0, 0, 0, 128));
-        gui.drawStringUIThin("> " + msgWithCursor, new Vector2(6, main.Game.gui.uiHeight - 14));
+        gui.drawStringUIThin("> " + msgWithCursor, new Vector2(6, Game.gui.uiHeight - 14));
     }
 }
 

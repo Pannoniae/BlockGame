@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.ui.menu;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
@@ -29,7 +30,7 @@ public class Text : GUIElement {
     
     public void updateLayout() {
         if (!string.IsNullOrEmpty(_text)) {
-            var textSize = main.Game.gui.measureStringUI(_text, thin);
+            var textSize = Game.gui.measureStringUI(_text, thin);
             // since unscaledSize = true, we need to store the size without guiScale applied
             guiPosition.Width = (int)(textSize.X);
             guiPosition.Height = (int)(textSize.Y);
@@ -42,7 +43,7 @@ public class Text : GUIElement {
      * <param name="pos">UI pos!</param>
      */
     public static Text createText(Menu menu, string name, Vector2I pos, string text) {
-        var bounds = main.Game.gui.measureStringUI(text);
+        var bounds = Game.gui.measureStringUI(text);
         //Console.Out.WriteLine("Text bounds: " + bounds);
         var guitext = new Text(menu, name, text);
         guitext.setPosition(new Rectangle(pos.X, pos.Y, (int)(bounds.X), (int)(bounds.Y)));
@@ -56,10 +57,10 @@ public class Text : GUIElement {
         //Game.gui.draw(Game.gui.colourTexture, bounds, color: Color4b.Red);
         
         if (shadowed) {
-            main.Game.gui.drawStringShadowed(_text, new Vector2(bounds.X, bounds.Y), thin);
+            Game.gui.drawStringShadowed(_text, new Vector2(bounds.X, bounds.Y), thin);
         }
         else {
-            main.Game.gui.drawString(_text, new Vector2(bounds.X, bounds.Y), thin);
+            Game.gui.drawString(_text, new Vector2(bounds.X, bounds.Y), thin);
         }
     }
 }

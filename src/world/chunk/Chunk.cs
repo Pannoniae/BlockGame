@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using Molten;
@@ -596,7 +597,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public void meshChunk() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            main.Game.blockRenderer.meshChunk(subChunks[i]);
+            Game.blockRenderer.meshChunk(subChunks[i]);
         }
 
         status = ChunkStatus.MESHED;

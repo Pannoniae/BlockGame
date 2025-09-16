@@ -1,5 +1,6 @@
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.main;
 using BlockGame.ui.menu;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
@@ -19,7 +20,7 @@ public class Image : GUIElement {
     public float realScale => scale / GUI.guiScale;
 
     public Image(Menu menu, string name, string path) : base(menu, name) {
-        texture = main.Game.textures.get(path);
+        texture = Game.textures.get(path);
         guiPosition.Width = (int)(texture.width * realScale);
         guiPosition.Height = (int)(texture.height * realScale);
     }
@@ -36,6 +37,6 @@ public class Image : GUIElement {
     }
 
     public override void draw() {
-        main.Game.gui.draw(texture, new Vector2(bounds.X, bounds.Y), realScale);
+        Game.gui.draw(texture, new Vector2(bounds.X, bounds.Y), realScale);
     }
 }

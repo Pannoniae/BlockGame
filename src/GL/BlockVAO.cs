@@ -1,4 +1,5 @@
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
@@ -13,7 +14,7 @@ public class BlockVAO : VAO {
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public BlockVAO() {
-        GL = main.Game.GL;
+        GL = Game.GL;
         handle = GL.GenVertexArray();
         vbo = GL.GenBuffer();
         ibo = GL.GenBuffer();

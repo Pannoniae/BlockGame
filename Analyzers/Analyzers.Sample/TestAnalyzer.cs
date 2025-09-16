@@ -1,5 +1,5 @@
+using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
-using Game = BlockGame.main.Game;
 
 namespace Analyzers.Sample;
 

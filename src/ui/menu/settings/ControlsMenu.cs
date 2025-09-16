@@ -1,4 +1,5 @@
-﻿using BlockGame.ui.element;
+﻿using BlockGame.main;
+using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
 using Molten;
@@ -30,9 +31,9 @@ public class ControlsMenu : Menu {
     }
     
     public override void clear(double dt, double interp) {
-        main.Game.graphics.clearColor(Color4b.SlateGray);
-        main.Game.graphics.clearDepth();
-        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        Game.graphics.clearColor(Color4b.SlateGray);
+        Game.graphics.clearDepth();
+        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -67,7 +68,7 @@ public class ControlsMenu : Menu {
     }
 
     public override void draw() {
-        main.Game.gui.drawBG(16);
+        Game.gui.drawBG(16);
         base.draw();
     }
 }

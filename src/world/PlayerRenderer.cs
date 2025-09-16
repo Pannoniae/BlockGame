@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.item;
@@ -36,8 +37,8 @@ public class PlayerRenderer {
         vao = new StreamingVAO<BlockVertexTinted>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
-        uMVP = main.Game.graphics.instantTextureShader.getUniformLocation("uMVP");
-        tex = main.Game.graphics.instantTextureShader.getUniformLocation("tex");
+        uMVP = Game.graphics.instantTextureShader.getUniformLocation("uMVP");
+        tex = Game.graphics.instantTextureShader.getUniformLocation("tex");
 
         // Initialize water overlay renderer
         waterOverlayRenderer = new InstantDrawTexture(60);
@@ -55,17 +56,17 @@ public class PlayerRenderer {
 
         var world = player.world;
         var pos = player.position.toBlockPos();
-        main.Game.graphics.tex(0, main.Game.textures.blockTexture);
+        Game.graphics.tex(0, Game.textures.blockTexture);
         var light = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
-        main.Game.blockRenderer.setupStandalone();
+        Game.blockRenderer.setupStandalone();
 
         if (handItem.getItem().isBlock()) {
-            main.Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero, vertices,
+            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero, vertices,
                 lightOverride: (byte)world.getBrightness(light, (byte)world.getSkyDarkenFloat(world.worldTick)), cullFaces: false);
         }
 
         vao.bind();
-        main.Game.renderer.bindQuad();
+        Game.renderer.bindQuad();
         vao.upload(CollectionsMarshal.AsSpan(vertices));
 
         var swingProgress = player.getSwingProgress(interp);
@@ -75,7 +76,7 @@ public class PlayerRenderer {
         // we need something like a circle?
         var circleishThing = Math.Sin(Math.Sqrt(swingProgress) * Math.PI * 2);
 
-        var mat = main.Game.graphics.modelView.reversed();
+        var mat = Game.graphics.modelView.reversed();
         mat.push();
         mat.loadIdentity();
         
@@ -94,10 +95,10 @@ public class PlayerRenderer {
         
         mat.translate((float)(sinSwingSqrt * -0.7f), (float)(circleishThing * 0.35f), (float)(sinSwing * 0.6f));
         
-        main.Game.graphics.instantTextureShader.use();
-        main.Game.graphics.instantTextureShader.setUniform(uMVP,
-            mat.top * main.Game.camera.getHandViewMatrix(interp) * main.Game.camera.getFixedProjectionMatrix());
-        main.Game.graphics.instantTextureShader.setUniform(tex, 0);
+        Game.graphics.instantTextureShader.use();
+        Game.graphics.instantTextureShader.setUniform(uMVP,
+            mat.top * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
+        Game.graphics.instantTextureShader.setUniform(tex, 0);
         vao.render();
         
         mat.reversed().pop();
@@ -110,7 +111,7 @@ public class PlayerRenderer {
 
     private void renderWaterOverlay() {
         // Set the water overlay texture
-        waterOverlayRenderer.setTexture(main.Game.textures.waterOverlay);
+        waterOverlayRenderer.setTexture(Game.textures.waterOverlay);
 
         // Set identity MVP matrix (screen space coordinates)
         var identityMVP = Matrix4x4.Identity;
@@ -121,12 +122,12 @@ public class PlayerRenderer {
         float alpha = 0.5f;
         // multiply by lighting
 
-        var world = main.Game.world;
+        var world = Game.world;
         var blockPos = player.position.toBlockPos();
 
         var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
         var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
-        var tint = main.Game.renderer.getLightColourDarken(skylight, blocklight);
+        var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
 
         var r = (byte)(tint.R * 255);
         var g = (byte)(tint.G * 255);

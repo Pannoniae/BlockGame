@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.ui.element;
 using Molten;
 
@@ -22,21 +23,21 @@ namespace BlockGame.ui.menu {
         }
 
         public static void returnToMainMenu(GUIElement guiElement) {
-            main.Game.instance.executeOnMainThread(() => {
+            Game.instance.executeOnMainThread(() => {
                 
                 // save world
-                main.Game.world.worldIO.save(main.Game.world, main.Game.world.name);
+                Game.world.worldIO.save(Game.world, Game.world.name);
                 
                 // dispose world
-                main.Game.setWorld(null);
-                main.Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
+                Game.setWorld(null);
+                Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
             });
         }
 
         public override void update(double dt) {
             base.update(dt);
             // update ingame too!
-            if (!main.Game.world.paused) {
+            if (!Game.world.paused) {
                 Screen.GAME_SCREEN.INGAME_MENU.update(dt);
             }
         }

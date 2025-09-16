@@ -1,5 +1,6 @@
 using System.Numerics;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
 using Molten.DoublePrecision;
@@ -69,7 +70,7 @@ public class Torch : Block {
 
     public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
 
-        dir = main.Game.raycast.face;
+        dir = Game.raycast.face;
         var meta = calculatePlacementMetadata(world, x, y, z, dir);
         if (meta == 255) {
             return; // can't place
@@ -129,8 +130,8 @@ public class Torch : Block {
         
         // only 50%!
 
-        if (main.Game.clientRandom.NextSingle() > 0.5) {
-            main.Game.world.particles.add(new FlameParticle(world, particlePos));
+        if (Game.clientRandom.NextSingle() > 0.5) {
+            Game.world.particles.add(new FlameParticle(world, particlePos));
         }
     }
 
@@ -328,7 +329,7 @@ public class Torch : Block {
     }
     
     public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        dir = main.Game.raycast.face;
+        dir = Game.raycast.face;
         return base.canPlace(world, x, y, z, dir) && calculatePlacementMetadata(world, x, y, z, dir) != 255;
     }
     

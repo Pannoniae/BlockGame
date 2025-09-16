@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.ui.menu;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
@@ -49,7 +50,7 @@ public class Button : GUIElement {
             tex = hovered ? hoveredButton : button;
             tex = pressed ? pressedButton : tex;
         }
-        main.Game.gui.draw(main.Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: tex);
+        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: tex);
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
         
         // shift centre down by 1 gui px
@@ -57,10 +58,10 @@ public class Button : GUIElement {
         
         if (text != null) {
             if (shadowed) {
-                main.Game.gui.drawStringCentredShadowed(text, centre);
+                Game.gui.drawStringCentredShadowed(text, centre);
             }
             else {
-                main.Game.gui.drawStringCentred(text, centre);
+                Game.gui.drawStringCentred(text, centre);
             }
         }
     }

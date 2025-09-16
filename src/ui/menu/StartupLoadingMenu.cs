@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using Molten;
@@ -62,8 +63,8 @@ public class StartupLoadingMenu : Menu {
 
     public override void draw() {
         // draw gradient background
-        main.Game.gui.drawGradientVertical(main.Game.gui.colourTexture, 
-            new System.Drawing.RectangleF(0, 0, main.Game.width, main.Game.height),
+        Game.gui.drawGradientVertical(Game.gui.colourTexture, 
+            new System.Drawing.RectangleF(0, 0, Game.width, Game.height),
             Color4b.CornflowerBlue,
             Color4b.MediumPurple);
         

@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
 using Color = Molten.Color;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
@@ -53,7 +54,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     public InstantDraw(int maxVertices) {
         vertices = new List<T>(maxVertices);
         this.maxVertices = maxVertices;
-        GL = main.Game.GL;
+        GL = Game.GL;
     }
 
     public virtual void setup() {
@@ -171,7 +172,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         // Upload buffer
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            main.Game.GL.InvalidateBufferData(VBO);
+            Game.GL.InvalidateBufferData(VBO);
             fixed (T* v = CollectionsMarshal.AsSpan(vertices)) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(T)), v);
             }
@@ -182,7 +183,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         if (vertexType == PrimitiveType.Quads) {
             unsafe {
                 effectiveMode = PrimitiveType.Triangles;
-                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, main.Game.graphics.fatQuadIndices);
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
                 GL.DrawElements(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedShort, (void*)0);
             }
         }
@@ -201,7 +202,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 
     public override void setup() {
         base.setup();
-        instantShader = main.Game.graphics.instantTextureShader;
+        instantShader = Game.graphics.instantTextureShader;
         instantTexture = instantShader.getUniformLocation("tex");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
@@ -236,7 +237,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 
     public void setTexture(BTexture2D texture) {
         instantShader.use();
-        main.Game.graphics.tex(0, texture);
+        Game.graphics.tex(0, texture);
     }
 
     public override void addVertex(BlockVertexTinted vertex) {
@@ -259,7 +260,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
 public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
     public override void setup() {
         base.setup();
-        instantShader = main.Game.graphics.instantColourShader;
+        instantShader = Game.graphics.instantColourShader;
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
         uFogColour = instantShader.getUniformLocation("fogColour");
@@ -321,7 +322,7 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
     
     public override void setup() {
         base.setup();
-        instantShader = main.Game.graphics.instantEntityShader;
+        instantShader = Game.graphics.instantEntityShader;
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
         uFogColour = instantShader.getUniformLocation(nameof(fogColor));

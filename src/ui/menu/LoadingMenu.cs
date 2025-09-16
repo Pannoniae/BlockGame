@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.world;
@@ -45,15 +46,15 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public void load(World world, bool isLoading) {
         this.world = world;
-        loadingCoroutine = main.Game.startCoroutine(loadWorldCoroutine(isLoading));
+        loadingCoroutine = Game.startCoroutine(loadWorldCoroutine(isLoading));
     }
 
 
     public override void update(double dt) {
         base.update(dt);
         if (loadingCoroutine.isCompleted) {
-            main.Game.instance.switchToScreen(Screen.GAME_SCREEN);
-            main.Game.instance.lockMouse();
+            Game.instance.switchToScreen(Screen.GAME_SCREEN);
+            Game.instance.lockMouse();
         }
     }
 
@@ -72,7 +73,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public override void draw() {
         // we draw BG first! elements after
-        main.Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
+        Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
         base.draw();
 
         // draw a random vertical line at x = 0
@@ -99,7 +100,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
         var initTimer = new WaitForMinimumTime(0.05);
         stage("Loading spawn chunks");
-        main.Game.world.preInit(isLoading);
+        Game.world.preInit(isLoading);
         yield return initTimer;
         update(0.10f); // Init complete: 10%
         
@@ -116,7 +117,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         stage("Loading chunks");
 
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(main.Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
+            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
                 ref c);
 
             int currentChunks = world.chunkLoadQueue.Count;
@@ -178,7 +179,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         c = 0;
         
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(main.Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
+            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
                 ref c);
             
             int currentChunks = world.chunkLoadQueue.Count;

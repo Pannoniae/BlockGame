@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
@@ -64,7 +65,7 @@ public class WorldIO {
     }
 
     public void saveChunk(World world, Chunk chunk) {
-        chunk.lastSaved = (ulong)main.Game.permanentStopwatch.ElapsedMilliseconds;
+        chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
         // ensure directory is created
         var pathStr = getChunkString(world.name, chunk.coord);
@@ -79,7 +80,7 @@ public class WorldIO {
             return;
         }
         
-        chunk.lastSaved = (ulong)main.Game.permanentStopwatch.ElapsedMilliseconds;
+        chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
         var pathStr = getChunkString(world.name, chunk.coord);
         

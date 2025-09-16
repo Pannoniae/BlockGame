@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
@@ -25,7 +26,7 @@ public sealed class SharedBlockVAO : VAO {
 
     public SharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
-        GL = main.Game.GL;
+        GL = Game.GL;
     }
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
@@ -72,8 +73,8 @@ public sealed class SharedBlockVAO : VAO {
                 //GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
                 //Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
                 //Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV, out bufferAddress);
-                main.Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
-                bufferAddress = main.Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV);
+                Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
+                bufferAddress = Game.sbl.GetNamedBufferParameter(buffer, NV.BufferGpuAddressNV);
                 //Console.WriteLine($"SharedBlockVAO: buffer={buffer}, address=0x{bufferAddress:X16}, length={bufferLength}");
             }
         }
@@ -86,7 +87,7 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     public void format() {
-        var GL = main.Game.GL;
+        var GL = Game.GL;
 
         // NOTE: THE NV_vertex_buffer_unified_memory extension specs are LYING TO YOU!
         // (probably by accident, to be fair, but still...)
@@ -106,7 +107,7 @@ public sealed class SharedBlockVAO : VAO {
             // FAKE BINDING FOR THE BUFFER (only to shut up driver validation)
             // THE ZERO STRIDE IS IMPORTANT HERE!
             // you know why? because stride=0 means we don't advance! so it's a constant value lol
-            GL.BindVertexBuffer(1, main.Game.graphics.fatQuadIndices, 0, 0);
+            GL.BindVertexBuffer(1, Game.graphics.fatQuadIndices, 0, 0);
 
             // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
             GL.EnableVertexAttribArray(0);
@@ -175,7 +176,7 @@ public sealed class SharedBlockVAO : VAO {
             //var addr1 = bufferAddress + (ulong)(3 * sizeof(ushort));
             //var addr2 = bufferAddress + (ulong)(5 * sizeof(ushort));
             //Console.WriteLine($"Setting vertex attrib addresses: 0=0x{addr0:X16}, 1=0x{addr1:X16}, 2=0x{addr2:X16}");
-            main.Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, bufferAddress, bufferLength);
+            Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, bufferAddress, bufferLength);
             //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 1, addr1, bufferLength - (3 * sizeof(ushort)));
             //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 2, addr2, bufferLength - (5 * sizeof(ushort)));
         }
@@ -186,7 +187,7 @@ public sealed class SharedBlockVAO : VAO {
     }
     
     public void addCMDLCommand() {
-        var cmdBuffer = main.Game.renderer.chunkCMD;
+        var cmdBuffer = Game.renderer.chunkCMD;
         // set the vertex buffer address range for the VAO
         //var addr = bufferAddress;
         //Console.Out.WriteLine($"Setting vertex buffer address: 0x{addr:X16}, length={bufferLength} bytes");
@@ -289,7 +290,7 @@ public sealed class SharedBlockVAO : VAO {
         };
 
         // game metrics
-        main.Game.metrics.renderedVerts += (int)count;
+        Game.metrics.renderedVerts += (int)count;
     }
 
     public uint render() {
@@ -309,7 +310,7 @@ public sealed class SharedBlockVAO : VAO {
     }
     
     public uint renderCMDL(uint baseInstance) {
-        var cmdBuffer = main.Game.renderer.chunkCMD;
+        var cmdBuffer = Game.renderer.chunkCMD;
         /*
          * From the NV_command_list spec:
          * Interactions with ARB_shader_draw_parameters
@@ -321,7 +322,7 @@ public sealed class SharedBlockVAO : VAO {
          * i.e. this shit doesn't work
          */
 
-        ulong baseAddress = main.Game.renderer.ssboaddr;
+        ulong baseAddress = Game.renderer.ssboaddr;
         ulong chunkPosAddress = baseAddress + (baseInstance * 16); // Each Vector4 is 16 bytes
 
         // Set attribute 3 to point to the chunk position in SSBO
@@ -364,7 +365,7 @@ public sealed class SharedBlockVAO : VAO {
     private void ReleaseUnmanagedResources() {
         if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI && buffer != 0) {
             // make buffer non-resident before deleting
-            main.Game.sbl.MakeNamedBufferNonResident(buffer);
+            Game.sbl.MakeNamedBufferNonResident(buffer);
         }
 
         GL.DeleteBuffer(buffer);

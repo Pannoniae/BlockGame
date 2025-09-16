@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
+using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world;
@@ -717,9 +718,9 @@ public class BlockRenderer {
     public void meshChunk(SubChunk subChunk) {
         //sw.Restart();
         subChunk.vao?.Dispose();
-        subChunk.vao = new SharedBlockVAO(main.Game.renderer.chunkVAO);
+        subChunk.vao = new SharedBlockVAO(Game.renderer.chunkVAO);
         subChunk.watervao?.Dispose();
-        subChunk.watervao = new SharedBlockVAO(main.Game.renderer.chunkVAO);
+        subChunk.watervao = new SharedBlockVAO(Game.renderer.chunkVAO);
 
         var currentVAO = subChunk.vao;
         var currentWaterVAO = subChunk.watervao;
@@ -878,7 +879,7 @@ public class BlockRenderer {
         }
 
         // if fullbright, just overwrite all lights to 15
-        if (main.Game.graphics.fullbright) {
+        if (Game.graphics.fullbright) {
             neighbourLights.AsSpan().Fill(15);
         }
     }

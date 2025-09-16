@@ -1,3 +1,4 @@
+using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
@@ -14,7 +15,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public StreamingVAO() {
-        GL = main.Game.GL;
+        GL = Game.GL;
         VAOHandle = GL.GenVertexArray();
     }
 
@@ -31,7 +32,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public void upload(Span<T> data) {
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            main.Game.GL.InvalidateBufferData(vbo);
+            Game.GL.InvalidateBufferData(vbo);
             count = (uint)data.Length;
             fixed (T* d = data) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(data.Length * sizeof(T)), d);

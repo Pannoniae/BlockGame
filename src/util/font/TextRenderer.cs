@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.main;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Rectangle = System.Drawing.Rectangle;
@@ -15,7 +16,7 @@ public class TextRenderer : IFontStashRenderer {
 
     public TextRenderer() {
         _textureManager = new BTexture2DManager();
-        tb = main.Game.graphics.mainBatch;
+        tb = Game.graphics.mainBatch;
     }
 
     public void Draw(object texture, Vector2 pos, ref Matrix4x4 worldMatrix, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {

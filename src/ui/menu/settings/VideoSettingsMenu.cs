@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
@@ -29,7 +30,7 @@ public class VideoSettingsMenu : Menu {
         vsync.topCentre();
         vsync.clicked += _ => {
             settings.vSync = vsync.getIndex() == 1;
-            main.Game.window.VSync = settings.vSync;
+            Game.window.VSync = settings.vSync;
         };
         vsync.tooltip = "VSync locks your framerate to your monitor's refresh rate to prevent screen tearing.";
         settingElements.Add(vsync);
@@ -40,7 +41,7 @@ public class VideoSettingsMenu : Menu {
         fullscreen.topCentre();
         fullscreen.clicked += _ => {
             settings.fullscreen = fullscreen.getIndex() == 1;
-            main.Game.instance.setFullscreen(settings.fullscreen);
+            Game.instance.setFullscreen(settings.fullscreen);
         };
         fullscreen.tooltip = "Toggles fullscreen mode.";
         settingElements.Add(fullscreen);
@@ -52,7 +53,7 @@ public class VideoSettingsMenu : Menu {
         guiScale.clicked += _ => {
             settings.guiScale = guiScale.getIndex() == 1 ? 4 : 2;
             GUI.guiScale = settings.guiScale;
-            main.Game.instance.resize();
+            Game.instance.resize();
         };
         settingElements.Add(guiScale);
         addElement(guiScale);
@@ -93,7 +94,7 @@ public class VideoSettingsMenu : Menu {
         mipmapping.topCentre();
         mipmapping.applied += () => {
             settings.mipmapping = (int)mipmapping.value;
-            main.Game.textures.blockTexture.reload();
+            Game.textures.blockTexture.reload();
         };
         mipmapping.getText = value => value == 0 ? "Mipmapping: Off" : $"Mipmapping: {value}x";
         mipmapping.tooltip = "Mipmapping reduces the flickering of textures at a distance.";
@@ -113,8 +114,8 @@ public class VideoSettingsMenu : Menu {
             settings.anisotropy = anisotropy.getIndex() switch {
                 0 => 0, 1 => 1, 2 => 2, 3 => 4, 4 => 8, 5 => 16, 6 => 32, 7 => 64, 8 => 128, _ => 8
             };
-            main.Game.textures.blockTexture.reload();
-            main.Game.renderer?.updateAF();
+            Game.textures.blockTexture.reload();
+            Game.renderer?.updateAF();
         };
         anisotropy.tooltip =
             "Anisotropic filtering improves texture quality at oblique angles.\nHigher values provide better quality but may impact performance.\nAlso helps to reduce aliasing on transparent objects like foliage.\nValues above 16x are practically unnoticeable.";
@@ -126,7 +127,7 @@ public class VideoSettingsMenu : Menu {
         fxaa.topCentre();
         fxaa.clicked += _ => {
             settings.fxaaEnabled = fxaa.getIndex() == 1;
-            main.Game.instance.updateFramebuffers();
+            Game.instance.updateFramebuffers();
         };
         fxaa.tooltip = "Fast Approximate Anti-Aliasing smooths jagged edges with minimal performance impact.";
         settingElements.Add(fxaa);
@@ -136,7 +137,7 @@ public class VideoSettingsMenu : Menu {
         var msaaOptions = new List<string> { "MSAA: OFF" };
         var msaaSampleValues = new List<int> { 1 };
 
-        foreach (var sample in main.Game.supportedMSAASamples) { // skip 1 (OFF)
+        foreach (var sample in Game.supportedMSAASamples) { // skip 1 (OFF)
             msaaOptions.Add($"MSAA: {sample}x");
             msaaSampleValues.Add((int)sample);
         }
@@ -151,7 +152,7 @@ public class VideoSettingsMenu : Menu {
         msaa.clicked += _ => {
             var index = msaa.getIndex();
             settings.msaaSamples = index < msaaSampleValues.Count ? msaaSampleValues[index] : 1;
-            main.Game.instance.updateFramebuffers();
+            Game.instance.updateFramebuffers();
         };
         msaa.tooltip = "Multi-Sample Anti-Aliasing uses hardware multisampling to reduce aliasing and jaggies.\nThe options shown are hardware-validated for your GPU.";
         settingElements.Add(msaa);
@@ -165,7 +166,7 @@ public class VideoSettingsMenu : Menu {
             settings.ssaaScale = ssaa.getIndex() switch {
                 0 => 1, 1 => 2, 2 => 4, 3 => 8, _ => 1
             };
-            main.Game.instance.updateFramebuffers();
+            Game.instance.updateFramebuffers();
         };
         ssaa.tooltip = "Super-Sample Anti-Aliasing renders the game at a higher resolution then downscales.\nProvides excellent quality but severely impacts performance.\nThis option stacked with MSAA is deadly.";
         settingElements.Add(ssaa);
@@ -176,7 +177,7 @@ public class VideoSettingsMenu : Menu {
             "SSAA sampling mode.\nNormal: uniform sampling\nWeighted: center-biased sampling for less blur";
 
         // Add per-sample option if supported
-        if (main.Game.sampleShadingSupported) {
+        if (Game.sampleShadingSupported) {
             ssaaModeOptions.Add("SSAA Mode: Per-Sample");
             ssaaModeTooltip += "\nPer-Sample: hardware-accelerated per-sample shading";
         }
@@ -189,7 +190,7 @@ public class VideoSettingsMenu : Menu {
         ssaaMode.topCentre();
         ssaaMode.clicked += _ => {
             settings.ssaaMode = ssaaMode.getIndex();
-            main.Game.instance.updateFramebuffers();
+            Game.instance.updateFramebuffers();
         };
         ssaaMode.tooltip = ssaaModeTooltip;
         settingElements.Add(ssaaMode);
@@ -241,7 +242,7 @@ public class VideoSettingsMenu : Menu {
         crtEffect.topCentre();
         crtEffect.clicked += _ => {
             settings.crtEffect = crtEffect.getIndex() == 1;
-            main.Game.instance.updateFramebuffers();
+            Game.instance.updateFramebuffers();
         };
         crtEffect.tooltip =
             "CRT Effect adds a retro CRT monitor effect with scanlines.\nProvides an authentic vintage computing experience or something.";
@@ -253,7 +254,7 @@ public class VideoSettingsMenu : Menu {
         reverseZ.topCentre();
         reverseZ.clicked += _ => {
             settings.reverseZ = reverseZ.getIndex() == 1;
-            main.Game.instance.updateFramebuffers();
+            Game.instance.updateFramebuffers();
             // Depth state will be updated on next frame
         };
         reverseZ.tooltip =
@@ -267,8 +268,8 @@ public class VideoSettingsMenu : Menu {
         rendererMode.clicked += _ => {
             var old = settings.rendererMode;
             var newm = (RendererMode)rendererMode.getIndex();
-            main.Game.renderer?.reloadRenderer(old, newm);
-            main.Game.instance.updateFramebuffers();
+            Game.renderer?.reloadRenderer(old, newm);
+            Game.instance.updateFramebuffers();
             // REMESH THE ENTIRE WORLD
             Screen.GAME_SCREEN.remeshWorld(Settings.instance.renderDistance);
         };
@@ -286,7 +287,7 @@ public class VideoSettingsMenu : Menu {
             var defenderExclusion = new Button(this, "defenderExclusion", false, "Add Defender Exclusion");
             defenderExclusion.topCentre();
             defenderExclusion.clicked += _ => {
-                main.Game.addDefenderExclusion();
+                Game.addDefenderExclusion();
                 // refresh button text after adding
                 defenderExclusion.text = "Defender Exclusion: Added";
             };
@@ -314,7 +315,7 @@ public class VideoSettingsMenu : Menu {
         // only remesh if we're in the game, NOT on the main menu
         // we have a dedicated screen now so can't just check the screen
         // quick hack!
-        if (main.Game.world != null && main.Game.renderer != null) {
+        if (Game.world != null && Game.renderer != null) {
             Screen.GAME_SCREEN.remeshWorld(oldRenderDist);
         }
     }
@@ -325,9 +326,9 @@ public class VideoSettingsMenu : Menu {
     }
 
     public override void clear(double dt, double interp) {
-        main.Game.graphics.clearColor(Color4b.SlateGray);
-        main.Game.graphics.clearDepth();
-        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        Game.graphics.clearColor(Color4b.SlateGray);
+        Game.graphics.clearDepth();
+        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -337,7 +338,7 @@ public class VideoSettingsMenu : Menu {
     }
 
     public override void draw() {
-        main.Game.gui.drawBG(16);
+        Game.gui.drawBG(16);
         base.draw();
     }
 }
