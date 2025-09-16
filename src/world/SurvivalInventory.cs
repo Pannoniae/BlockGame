@@ -4,15 +4,18 @@ using BlockGame.world.item.inventory;
 
 namespace BlockGame.world;
 
-public class Hotbar : Inventory {
-    public ItemStack?[] slots = new ItemStack[10];
+public class SurvivalInventory : Inventory {
+    public ItemStack?[] slots = new ItemStack[50];
+    
+    public ItemStack? cursor = null;
+    
     /// <summary>
     /// Selected index
     /// </summary>
     public int selected;
 
-    public Hotbar() {
-        for (int i = 0; i < slots.Length; i++) {
+    public SurvivalInventory() {
+        for (int i = 0; i < 10; i++) {
             slots[i] = new ItemStack(Item.blockID(i + 1), Random.Shared.Next(15));
         }
         // replace water with something useful

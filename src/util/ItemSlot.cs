@@ -15,8 +15,8 @@ public class ItemSlot {
     public const int PADDING = 2;
     public const int ITEMSIZE = 16;
     public const int ITEMSIZEHALF = 8;
-    
-    private readonly Inventory inv;
+
+    public readonly Inventory inv;
     
     public int index = -1; // index in inventory, -1 = none
     

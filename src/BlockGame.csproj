@@ -8,7 +8,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>preview</LangVersion>
         <AnalysisLevel>preview-recommended</AnalysisLevel>
-        <NoWarn>${NoWarn};CA1707;CA1051;CA2211</NoWarn>
+        <NoWarn>${NoWarn};CA1707;CA1051;CA2211;CA1711</NoWarn>
         <InvariantGlobalization>true</InvariantGlobalization>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>

@@ -151,7 +151,7 @@ public class GUI {
         return new Vector2(pos.X * guiScale, pos.Y * guiScale);
     }
 
-    public void drawItem(ItemSlot slot, InventoryMenu inventory) {
+    public void drawItem(ItemSlot slot, Vector2 pos) {
         var stack = slot.getStack();
         
         if (stack == null || stack.id == Items.AIR) {
@@ -163,16 +163,16 @@ public class GUI {
         // if block
         var item = Item.get(stack.id);
         if (item.isBlock()) {
-            main.Game.gui.drawBlockUI(item.getBlock(), inventory.guiBounds.X + itemPos.X, inventory.guiBounds.Y + itemPos.Y,
+            main.Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
                 ItemSlot.ITEMSIZE, (byte)stack.metadata);
             // draw amount text
             if (stack.quantity > 1) {
                 var s = stack.quantity.ToString();
                 main.Game.gui.drawStringUIThin(s,
                     new Vector2(
-                        inventory.guiBounds.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
+                        pos.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
                         s.Length * 6f / guiScale,
-                        inventory.guiBounds.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+                        pos.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
             }
         }
     }
@@ -190,6 +190,30 @@ public class GUI {
                 main.Game.gui.drawStringUIThin(s,
                     new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
                         itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+            }
+        }
+    }
+
+    public void drawCursorItem(ItemStack? cursorItem, Vector2 mousePos) {
+        if (cursorItem == null || cursorItem.id == Items.AIR) {
+            return;
+        }
+
+        var item = Item.get(cursorItem.id);
+        if (item.isBlock()) {
+            var pos = s2u(mousePos);
+            // offset by half item size so it's centered on cursor
+            var drawX = pos.X - ItemSlot.ITEMSIZE / 2;
+            var drawY = pos.Y - ItemSlot.ITEMSIZE / 2;
+
+            main.Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata);
+
+            // draw quantity if > 1
+            if (cursorItem.quantity > 1) {
+                var s = cursorItem.quantity.ToString();
+                main.Game.gui.drawStringUIThin(s,
+                    new Vector2(drawX + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
+                        drawY + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
             }
         }
     }

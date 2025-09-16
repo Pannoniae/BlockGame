@@ -87,9 +87,9 @@ public class IngameMenu : Menu, IDisposable {
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         var s = -scroll.Y;
         int y = (int)Math.Clamp(s, -1, 1);
-        var newSelection = main.Game.player.hotbar.selected + y;
+        var newSelection = main.Game.player.survivalInventory.selected + y;
         newSelection = Meth.mod(newSelection, 10);
-        main.Game.player.hotbar.selected = newSelection;
+        main.Game.player.survivalInventory.selected = newSelection;
     }
 
     // No longer needed - we're using fixed thresholds
@@ -284,7 +284,7 @@ public class IngameMenu : Menu, IDisposable {
         
 
         // Draw block display
-        var stack = main.Game.player.hotbar.getSelected();
+        var stack = main.Game.player.survivalInventory.getSelected();
         var blockStr = Item.get(stack.id).getName(stack);
         main.Game.gui.drawStringCentredUI(blockStr, new Vector2(main.Game.gui.uiCentreX, main.Game.gui.uiHeight - 30),
             Color4b.White);

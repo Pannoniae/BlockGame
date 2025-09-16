@@ -1,8 +1,10 @@
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.util.log;
+using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.item;
 using Molten;
@@ -113,8 +115,8 @@ public class InventoryMenu : Menu {
         // add the slots for the hotbar
         
         var player = main.Game.world.player;
-        for (int i = 0; i < player.hotbar.slots.Length; i++) {
-            var hotbarSlot = new ItemSlot(player.hotbar, i, invOffsetX + i * ItemSlot.SLOTSIZE,
+        for (int i = 0; i < player.survivalInventory.slots.Length; i++) {
+            var hotbarSlot = new ItemSlot(player.survivalInventory, i, invOffsetX + i * ItemSlot.SLOTSIZE,
                 invOffsetY + rows * ItemSlot.SLOTSIZE + PADDING);
             slots.Add(hotbarSlot);
         }
@@ -136,13 +138,13 @@ public class InventoryMenu : Menu {
 
     public override void draw() {
         base.draw();
-        main.Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
+        Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
         // draw inventory text with page info
         string title = totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
-        main.Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
+        Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
 
         foreach (var slot in slots) {
-            main.Game.gui.drawItem(slot, this);
+            Game.gui.drawItem(slot, new Vector2(guiBounds.X, guiBounds.Y));
         }
         
         // draw the two arrows
@@ -150,22 +152,100 @@ public class InventoryMenu : Menu {
             var upPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING, guiBounds.Y + invOffsetY);
             var downPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
                 guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONH);
-            main.Game.gui.drawUIImmediate(main.Game.gui.guiTexture, upPos, upArrow);
-            main.Game.gui.drawUIImmediate(main.Game.gui.guiTexture, downPos, downArrow);
+            Game.gui.drawUIImmediate(Game.gui.guiTexture, upPos, upArrow);
+            Game.gui.drawUIImmediate(Game.gui.guiTexture, downPos, downArrow);
+        }
+
+        // draw cursor item
+        var player = Game.world.player;
+        if (player?.survivalInventory?.cursor != null) {
+            var mousePos = Game.mousePos;
+            Game.gui.drawCursorItem(player.survivalInventory.cursor, mousePos);
         }
     }
 
     public override void onMouseUp(Vector2 pos, MouseButton button) {
         base.onMouseUp(pos, button);
         var guiPos = GUI.s2u(pos);
+        var player = main.Game.world.player;
+
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            var stack = slot.getStack();
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && stack != null && stack.id != Items.AIR) {
-                Log.debug("clicked!");
-                // swap it to the hotbar for now
-                var player = main.Game.world.player;
-                player.hotbar.slots[player.hotbar.selected] = stack.copy();
+            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
+                handleSlotClick(slot, button, player);
+                return;
+            }
+        }
+    }
+
+    private void handleSlotClick(ItemSlot slot, MouseButton button, Player player) {
+        var slotStack = slot.getStack();
+        var cursor = player.survivalInventory.cursor;
+
+        if (button == MouseButton.Left) {
+            // left click behavior
+            if (cursor == null) {
+                // cursor empty, pick up entire stack
+                if (slotStack != null && slotStack.id != Items.AIR) {
+                    player.survivalInventory.cursor = slotStack.copy();
+                    slot.inv.setStack(slot.index, null);
+                }
+            } else {
+                // cursor has items
+                if (slotStack == null || slotStack.id == Items.AIR) {
+                    // slot empty, place entire cursor stack
+                    slot.inv.setStack(slot.index, cursor.copy());
+                    player.survivalInventory.cursor = null;
+                } else if (slotStack.id == cursor.id && slotStack.metadata == cursor.metadata) {
+                    // same item type, try to merge
+                    var totalQuantity = slotStack.quantity + cursor.quantity;
+                    if (totalQuantity <= 99) { // assuming max stack size is 99
+                        slotStack.quantity = totalQuantity;
+                        player.survivalInventory.cursor = null;
+                    } else {
+                        slotStack.quantity = 99;
+                        cursor.quantity = totalQuantity - 99;
+                    }
+                } else {
+                    // different items, swap them
+                    var temp = slotStack.copy();
+                    slot.inv.setStack(slot.index, cursor.copy());
+                    player.survivalInventory.cursor = temp;
+                }
+            }
+        } else if (button == MouseButton.Right) {
+            // right click behavior
+            if (cursor == null) {
+                // cursor empty, pick up half of stack (rounded up)
+                if (slotStack != null && slotStack.id != Items.AIR) {
+                    var halfQuantity = (slotStack.quantity + 1) / 2;
+                    player.survivalInventory.cursor = new ItemStack(slotStack.id, halfQuantity, slotStack.metadata);
+
+                    slotStack.quantity -= halfQuantity;
+                    if (slotStack.quantity <= 0) {
+                        slot.inv.setStack(slot.index, null);
+                    }
+                }
+            } else {
+                // cursor has items
+                if (slotStack == null || slotStack.id == Items.AIR) {
+                    // slot empty, place one item from cursor
+                    slot.inv.setStack(slot.index, new ItemStack(cursor.id, 1, cursor.metadata));
+                    cursor.quantity--;
+                    if (cursor.quantity <= 0) {
+                        player.survivalInventory.cursor = null;
+                    }
+                } else if (slotStack.id == cursor.id && slotStack.metadata == cursor.metadata) {
+                    // same item, place one item from cursor
+                    if (slotStack.quantity < 99) {
+                        slotStack.quantity++;
+                        cursor.quantity--;
+                        if (cursor.quantity <= 0) {
+                            player.survivalInventory.cursor = null;
+                        }
+                    }
+                }
+                // if different items, do nothing on right click
             }
         }
     }

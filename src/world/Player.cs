@@ -26,7 +26,7 @@ public class Player : Entity {
     private double lastFootstepDistance = 0;
     private const double FOOTSTEP_DISTANCE = 3.0; // Distance between footstep sounds
 
-    public Hotbar hotbar;
+    public SurvivalInventory survivalInventory;
 
     public Vector3D strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
@@ -45,7 +45,7 @@ public class Player : Entity {
     public Player(World world, int x, int y, int z) : base(world) {
         position = new Vector3D(x, y, z);
         prevPosition = position;
-        hotbar = new Hotbar();
+        survivalInventory = new SurvivalInventory();
         renderer = new PlayerRenderer(this);
 
         this.world = world;
@@ -330,7 +330,7 @@ public class Player : Entity {
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
-            hotbar.selected = (ushort)(key - Key.Number0 - 1);
+            survivalInventory.selected = (ushort)(key - Key.Number0 - 1);
         }
     }
 
@@ -422,7 +422,7 @@ public class Player : Entity {
         lastPlace = world.worldTick;
         if (main.Game.instance.previousPos.HasValue) {
             var pos = main.Game.instance.previousPos.Value;
-            var stack = hotbar.getSelected();
+            var stack = survivalInventory.getSelected();
             
             var metadata = (byte)stack.metadata;
             
@@ -483,7 +483,7 @@ public class Player : Entity {
             }
         }
         else {
-            var stack = hotbar.getSelected();
+            var stack = survivalInventory.getSelected();
             stack.getItem().use(stack, world, this);
             setSwinging(false);
         }
@@ -555,7 +555,7 @@ public class Player : Entity {
             var pos = main.Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             if (bl != null) {
-                hotbar.slots[hotbar.selected] = new ItemStack(Item.blockID(bl.id), 1);
+                survivalInventory.slots[survivalInventory.selected] = new ItemStack(Item.blockID(bl.id), 1);
             }
         }
     }
