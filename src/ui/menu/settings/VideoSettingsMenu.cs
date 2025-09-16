@@ -308,7 +308,10 @@ public class VideoSettingsMenu : Menu {
     }
 
     private void remeshIfRequired(int oldRenderDist) {
-        if (Game.instance.currentScreen == Screen.GAME_SCREEN) {
+        // only remesh if we're in the game, NOT on the main menu
+        // we have a dedicated screen now so can't just check the screen
+        // quick hack!
+        if (Game.world != null && Game.renderer != null) {
             Screen.GAME_SCREEN.remeshWorld(oldRenderDist);
         }
     }

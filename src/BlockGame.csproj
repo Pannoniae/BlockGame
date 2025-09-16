@@ -13,7 +13,7 @@
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
         <ApplicationManifest>..\app.manifest</ApplicationManifest>
-        <BaseOutputPath>..\bin\$(Configuration)\</BaseOutputPath>
+        <OutputPath>..\bin</OutputPath>
     </PropertyGroup>
 
     <!-- Give .PDBs to the poor players/modders -->
@@ -72,33 +72,28 @@
     
     <!-- Files to copy -->
     <ItemGroup>
-        
-        <None Include="../**/*.*">
+        <None Update="level/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        
-        <None Update="../level/**/*.*">
+        <None Update="shaders/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="../shaders/**/*.*">
+        <None Update="textures/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="../textures/**/*.*">
+        <None Update="fonts/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="../fonts/**/*.*">
+        <None Update="snd/**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="../snd/**">
+        <None Update="wglinfo64.exe">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="../wglinfo64.exe">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="../logo.png">
+        <None Update="logo.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="../assets/**">
+        <None Update="assets/**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
         
@@ -106,34 +101,34 @@
         <!-- Folders to NEVER copy -->
         <!-- This is either libraries (compiled separately), or separate dll's -->
         <!-- If you add a new project, ALWAYS exclude it here from the main project, otherwise it will have duplicate files and crash -->
-        <None Remove="..\lib\**"/>
-        <None Remove="..\BlockGameTesting\**"/>
-        <None Remove="..\SNBT2NBT\**"/>
-        <None Remove="..\NBT2SNBT\**"/>
-        <None Remove="..\win10fix\**"/>
+        <None Remove="lib\**"/>
+        <None Remove="BlockGameTesting\**"/>
+        <None Remove="SNBT2NBT\**"/>
+        <None Remove="NBT2SNBT\**"/>
+        <None Remove="win10fix\**"/>
         
-        <None Remove="..\publish\**"/>
-        <None Remove="..\Analyzers\**"/>
+        <None Remove="publish\**"/>
+        <None Remove="Analyzers\**"/>
         <None Remove="..\meth\**"/>
         
-        <Compile Remove="..\lib\**"/>
-        <Compile Remove="..\BlockGameTesting\**"/>
-        <Compile Remove="..\SNBT2NBT\**"/>
-        <Compile Remove="..\NBT2SNBT\**"/>
-        <Compile Remove="..\win10fix\**"/>
+        <Compile Remove="lib\**"/>
+        <Compile Remove="BlockGameTesting\**"/>
+        <Compile Remove="SNBT2NBT\**"/>
+        <Compile Remove="NBT2SNBT\**"/>
+        <Compile Remove="win10fix\**"/>
         
-        <Compile Remove="..\publish\**"/>
-        <Compile Remove="..\Analyzers\**"/>
+        <Compile Remove="publish\**"/>
+        <Compile Remove="Analyzers\**"/>
         <Compile Remove="..\meth\**"/>
         
-        <EmbeddedResource Remove="..\lib\**"/>
-        <EmbeddedResource Remove="..\BlockGameTesting\**"/>
-        <EmbeddedResource Remove="..\SNBT2NBT\**"/>
-        <EmbeddedResource Remove="..\NBT2SNBT\**"/>
-        <EmbeddedResource Remove="..\win10fix\**"/>
+        <EmbeddedResource Remove="lib\**"/>
+        <EmbeddedResource Remove="BlockGameTesting\**"/>
+        <EmbeddedResource Remove="SNBT2NBT\**"/>
+        <EmbeddedResource Remove="NBT2SNBT\**"/>
+        <EmbeddedResource Remove="win10fix\**"/>
         
-        <EmbeddedResource Remove="..\publish\**"/>
-        <EmbeddedResource Remove="..\Analyzers\**"/>
+        <EmbeddedResource Remove="publish\**"/>
+        <EmbeddedResource Remove="Analyzers\**"/>
         <EmbeddedResource Remove="..\meth\**"/>
         
         
@@ -179,9 +174,9 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <BeautyDir>..</BeautyDir>
+        <BeautyDir>.</BeautyDir>
         <BeautyAppHostEntry>BlockGame.dll</BeautyAppHostEntry>
-        <BeautyAppHostDir>..</BeautyAppHostDir>
+        <BeautyAppHostDir>.</BeautyAppHostDir>
     </PropertyGroup>
 
 
