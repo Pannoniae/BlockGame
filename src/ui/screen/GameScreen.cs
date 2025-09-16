@@ -42,6 +42,7 @@ public class GameScreen : Screen {
 
     private bool disposed;
     private long altF10Press;
+    private long altF7Press;
     private long f3Press = -1;
 
     public override void activate() {
@@ -128,7 +129,13 @@ public class GameScreen : Screen {
         // if user holds down alt + f10 for 5 seconds, crash the game lul
         if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) &&
             Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
-            MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
+            Game.instance.executeOnMainThread(() => MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!"));
+        }
+        
+        // same for f7 but managed crash
+        if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F7) &&
+            Game.permanentStopwatch.ElapsedMilliseconds > altF7Press + 5000) {
+            Game.instance.executeOnMainThread(() => SkillIssueException.throwNew("Alt + F7 pressed for 5 seconds, SKILL ISSUE BITCH!"));
         }
         
         // check for F3 release behavior
@@ -344,6 +351,11 @@ public class GameScreen : Screen {
                     Log.info($"VRAM usage: {vmem / (1024 * 1024)}MB");
                 }
 
+                break;
+            }
+
+            case Key.F7: {
+                altF7Press = Game.permanentStopwatch.ElapsedMilliseconds;
                 break;
             }
 

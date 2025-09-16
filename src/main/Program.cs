@@ -6,10 +6,14 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using BlockGame.util.log;
+using Silk.NET.GLFW;
 
 namespace BlockGame.main;
 
 public class Program {
+
+    public static Game game;
+    
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
 
@@ -28,44 +32,56 @@ public class Program {
         Game.initDedicatedGraphics();
         Game.cc();
 
-        _ = new Game(devMode);
+        game = new Game(devMode);
     }
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
-        var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
+        unsafe {
+            var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
 
-        Log.info("Your game crashed! Here are some relevant details:");
-        if (!Game.devMode) {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-                // call glxinfo
-                using var process = new Process {
-                    StartInfo = new ProcessStartInfo {
-                        FileName = "glxinfo",
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-                // read its output
-                process.Start();
-                Log.info("OpenGL info:");
-                Log.info(process.StandardOutput.ReadToEnd());
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                // call wglinfo
-                using var process = new Process {
-                    StartInfo = new ProcessStartInfo {
-                        FileName = "wglinfo64.exe",
-                        RedirectStandardOutput = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-                // read its output
-                process.Start();
-                Log.info("OpenGL info:");
-                Log.info(process.StandardOutput.ReadToEnd());
+            Log.info("Your game crashed! Here are some relevant details:");
+            if (!Game.devMode) {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                    // call glxinfo
+                    using var process = new Process {
+                        StartInfo = new ProcessStartInfo {
+                            FileName = "glxinfo",
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        }
+                    };
+                    // read its output
+                    process.Start();
+                    Log.info("OpenGL info:");
+                    Log.info(process.StandardOutput.ReadToEnd());
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                    // call wglinfo
+                    using var process = new Process {
+                        StartInfo = new ProcessStartInfo {
+                            FileName = "wglinfo64.exe",
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        }
+                    };
+                    // read its output
+                    process.Start();
+                    Log.info("OpenGL info:");
+                    Log.info(process.StandardOutput.ReadToEnd());
+                }
             }
             Log.error(e);
+            
+            Console.WriteLine("Exiting...");
+            Console.Out.Flush();
+        
+            // kill everything off
+            Game.window.Close();
+            Game.window.Dispose();
+        
+            
+            Environment.Exit(1);
         }
     }
 

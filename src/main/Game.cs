@@ -51,7 +51,7 @@ public partial class Game {
     
     
     //private static WGL wgl;
-    private static Glfw glfw;
+    public static Glfw glfw;
     private static readonly bool windows = OperatingSystem.IsWindows();
     
     public static Process proc;
