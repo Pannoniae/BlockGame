@@ -1,8 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.util;
+using BlockGame.world.block;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public sealed class ArrayBlockData : BlockData, IDisposable {
     public static readonly FixedArrayPool<uint> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);

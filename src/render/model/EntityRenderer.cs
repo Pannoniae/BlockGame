@@ -1,6 +1,7 @@
-﻿using BlockGame.entity;
+﻿using BlockGame.world;
+using BlockGame.world.entity;
 
-namespace BlockGame;
+namespace BlockGame.render.model;
 
 /** Renders an entity with its associated model. Optionally applies effects like being hit, etc. */
 public interface EntityRenderer<out T> where T : Entity {

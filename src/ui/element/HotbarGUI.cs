@@ -1,9 +1,10 @@
 using System.Numerics;
+using BlockGame.ui.menu;
 using BlockGame.util;
 using Molten;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.element;
 
 public class HotbarGUI : GUIElement {
 
@@ -20,31 +21,31 @@ public class HotbarGUI : GUIElement {
     public HotbarGUI(Menu menu, string name, Vector2I pos, string? text = null) : base(menu, name) {
         setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 10; i++) {
-            slots[i] = new ItemSlot(Game.player.hotbar,i, Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
+            slots[i] = new ItemSlot(main.Game.player.hotbar,i, main.Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
                 GUI.instance.uiHeight - (BLOCKSIZE + 2));
         }
     }
 
     public override void postDraw() {
         // draw hotbar
-        var world = Game.world;
+        var world = main.Game.world;
         var items = world.player.hotbar.slots;
-        var gui = Game.gui;
+        var gui = main.Game.gui;
 
         var pos = world.player.position.toBlockPos();
         var light = world.getLight(pos.X, pos.Y, pos.Z);
         
-        Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);
+        main.Game.gui.drawUIImmediate(main.Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);
         for (int i = 0; i < items.Length; i++) {
             var selected = world.player.hotbar.selected == i;
             // if we draw in the middle, then we'll start in the middle of the 5th slot.... need to offset by half a slot
-            slots[i].itemPos = new Vector2I(Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
+            slots[i].itemPos = new Vector2I(main.Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
                 GUI.instance.uiHeight - (BLOCKSIZE + 2));
-            Game.gui.drawItemWithoutInv(slots[i]);
+            main.Game.gui.drawItemWithoutInv(slots[i]);
             if (selected) {
                 // todo make actual fucking gui coord converter so I can lay this out in purely GUI coordinates,
                 // not a mix of GUI/screen coords for UI positions and texture drawing like now.....
-                Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(gui.uiCentreX + (i - 5) * SIZE, GUIbounds.Y),
+                main.Game.gui.drawUIImmediate(main.Game.gui.guiTexture, new Vector2(gui.uiCentreX + (i - 5) * SIZE, GUIbounds.Y),
                     selectedTexture);
             }
         }

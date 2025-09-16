@@ -1,5 +1,7 @@
 ﻿using System.Runtime.InteropServices;
-using BlockGame.util;
+using BlockGame.util.log;
+
+namespace win10fix;
 
 class Program {
     static void Main(string[] args) {

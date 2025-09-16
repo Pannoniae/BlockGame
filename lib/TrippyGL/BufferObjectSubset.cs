@@ -1,4 +1,5 @@
 using System;
+using TrippyGL.Enums;
 
 namespace TrippyGL
 {
@@ -13,7 +14,7 @@ namespace TrippyGL
         /// <summary>The handle of the <see cref="BufferObject"/> that owns this subset.</summary>
         public readonly uint BufferHandle;
 
-        /// <summary>The <see cref="TrippyGL.BufferTarget"/> to which this subset always binds to.</summary>
+        /// <summary>The <see cref="Enums.BufferTarget"/> to which this subset always binds to.</summary>
         public readonly BufferTarget BufferTarget;
 
         /// <summary>The offset into this <see cref="Buffer"/>'s storage at which this subset starts, measured in bytes.</summary>

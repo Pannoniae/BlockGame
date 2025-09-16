@@ -1,8 +1,10 @@
+using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.util.log;
 using Molten;
 using Silk.NET.OpenGL.Legacy;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class MainMenu : Menu {
     public MainMenu() {
@@ -18,7 +20,7 @@ public class MainMenu : Menu {
         sp.clicked += _ => {
             // we are *already* on the main thread; this is just needed so it executes a frame later
             // so we don't destroy the menu which we are clicking right now.
-            Game.instance.executeOnMainThread(() => { Game.instance.switchTo(LEVEL_SELECT); });
+            main.Game.instance.executeOnMainThread(() => { main.Game.instance.switchTo(LEVEL_SELECT); });
         };
         Log.debug("sp:" + sp.bounds);
         var button2 = new Button(this, "multiplayer", true, "Multiplayer (soon)");
@@ -28,9 +30,9 @@ public class MainMenu : Menu {
         settings.setPosition(new Vector2I(0, 18));
         settings.centreContents();
         settings.clicked += _ => {
-            Game.instance.executeOnMainThread(() => {
+            main.Game.instance.executeOnMainThread(() => {
                 Screen.SETTINGS_SCREEN.prevScreen = Screen.MAIN_MENU_SCREEN;
-                Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
+                main.Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
             });
         };
         var button4 = new Button(this, "quit", true, "Quit");
@@ -45,13 +47,13 @@ public class MainMenu : Menu {
     }
 
     public override void clear(double dt, double interp) {
-        Game.graphics.clearColor(Color4b.Black);
-        Game.graphics.clearDepth();
-        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        main.Game.graphics.clearColor(Color4b.Black);
+        main.Game.graphics.clearDepth();
+        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public override void draw() {
-        Game.gui.drawScrollingBG(16);
+        main.Game.gui.drawScrollingBG(16);
         base.draw();
     }
 }

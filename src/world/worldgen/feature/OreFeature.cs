@@ -1,8 +1,9 @@
 using System.Numerics;
 using BlockGame.util;
+using BlockGame.world.block;
 using Molten;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.feature;
 
 public class OreFeature : Feature {
 

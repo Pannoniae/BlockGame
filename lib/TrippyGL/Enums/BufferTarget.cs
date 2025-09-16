@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies the buffer binding points at which a <see cref="BufferObject"/> can be bound.

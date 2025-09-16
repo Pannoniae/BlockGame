@@ -1,13 +1,15 @@
 using System.Numerics;
 using BlockGame.GL;
-using BlockGame.item;
-using BlockGame.src.ui.element;
+using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.util.log;
+using BlockGame.world.block;
+using BlockGame.world.item;
 using Molten;
 using Silk.NET.Input;
 using Rectangle = System.Drawing.Rectangle;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class InventoryMenu : Menu {
 
@@ -110,7 +112,7 @@ public class InventoryMenu : Menu {
         
         // add the slots for the hotbar
         
-        var player = Game.world.player;
+        var player = main.Game.world.player;
         for (int i = 0; i < player.hotbar.slots.Length; i++) {
             var hotbarSlot = new ItemSlot(player.hotbar, i, invOffsetX + i * ItemSlot.SLOTSIZE,
                 invOffsetY + rows * ItemSlot.SLOTSIZE + PADDING);
@@ -134,13 +136,13 @@ public class InventoryMenu : Menu {
 
     public override void draw() {
         base.draw();
-        Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
+        main.Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
         // draw inventory text with page info
         string title = totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
-        Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
+        main.Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
 
         foreach (var slot in slots) {
-            Game.gui.drawItem(slot, this);
+            main.Game.gui.drawItem(slot, this);
         }
         
         // draw the two arrows
@@ -148,8 +150,8 @@ public class InventoryMenu : Menu {
             var upPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING, guiBounds.Y + invOffsetY);
             var downPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
                 guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONH);
-            Game.gui.drawUIImmediate(Game.gui.guiTexture, upPos, upArrow);
-            Game.gui.drawUIImmediate(Game.gui.guiTexture, downPos, downArrow);
+            main.Game.gui.drawUIImmediate(main.Game.gui.guiTexture, upPos, upArrow);
+            main.Game.gui.drawUIImmediate(main.Game.gui.guiTexture, downPos, downArrow);
         }
     }
 
@@ -162,7 +164,7 @@ public class InventoryMenu : Menu {
             if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y) && stack != null && stack.id != Items.AIR) {
                 Log.debug("clicked!");
                 // swap it to the hotbar for now
-                var player = Game.world.player;
+                var player = main.Game.world.player;
                 player.hotbar.slots[player.hotbar.selected] = stack.copy();
             }
         }

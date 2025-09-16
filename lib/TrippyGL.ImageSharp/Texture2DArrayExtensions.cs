@@ -3,6 +3,7 @@ using System.IO;
 using Silk.NET.OpenGL;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using TrippyGL.Enums;
 
 namespace TrippyGL.ImageSharp
 {

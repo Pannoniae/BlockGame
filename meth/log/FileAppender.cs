@@ -1,7 +1,7 @@
-using System.Text;
 using System.IO.Compression;
+using System.Text;
 
-namespace BlockGame.util;
+namespace BlockGame.util.log;
 
 /**
  * Writes logs to files with automatic rotation.

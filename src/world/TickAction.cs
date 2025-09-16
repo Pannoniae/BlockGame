@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Molten;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct TickAction(Vector3I pos, Action action, int tick) {

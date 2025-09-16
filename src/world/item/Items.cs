@@ -1,4 +1,4 @@
-﻿namespace BlockGame.item;
+﻿namespace BlockGame.world.item;
 
 public class Items {
     public const int AIR = 0;

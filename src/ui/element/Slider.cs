@@ -1,8 +1,9 @@
 using System.Drawing;
 using System.Numerics;
+using BlockGame.ui.menu;
 using Silk.NET.Input;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.element;
 
 public class Slider : GUIElement {
 
@@ -34,7 +35,7 @@ public class Slider : GUIElement {
     public override void update() {
         if (menu.pressedElement == this) {
             // in UI coords
-            float mouseX = GUI.s2u(Game.mousePos).X;
+            float mouseX = GUI.s2u(main.Game.mousePos).X;
             float ratio = (mouseX - GUIbounds.X - leftPadding) / (GUIbounds.Width - leftPadding - rightPadding);
             value = min + ratio * (max - min);
             value = Math.Clamp(value, min, max);
@@ -58,19 +59,19 @@ public class Slider : GUIElement {
 
     public override void draw() {
         var tex = pressed ? pressedSlider : slider;
-        Game.gui.drawUI(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), tex);
+        main.Game.gui.drawUI(main.Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), tex);
 
         // draw the thing on it
         //float mouseX = GUI.s2u(Game.mousePos).X;
         float ratio = (value - min) / (max - min);
         float knobX = GUIbounds.X + leftPadding + ratio * (GUIbounds.Width - leftPadding - rightPadding) - knobWidth / 2f;
         float knobY = GUIbounds.Y - 1f;
-        Game.gui.drawUI(Game.gui.guiTexture, new Vector2(knobX, knobY), knob);
+        main.Game.gui.drawUI(main.Game.gui.guiTexture, new Vector2(knobX, knobY), knob);
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
         // shift centre down by 1 gui px
         //centre.Y += (int)(GUI.u2s(1) / 2f);
         
-        Game.gui.drawStringCentred(getText(value), centre);
+        main.Game.gui.drawStringCentred(getText(value), centre);
     }
 
     public Func<float, string> getText;

@@ -1,6 +1,7 @@
-﻿using Molten;
+﻿using BlockGame.world.chunk;
+using Molten;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 
 /** https://stackoverflow.com/questions/550785/c-events-or-an-observer-interface-pros-cons */

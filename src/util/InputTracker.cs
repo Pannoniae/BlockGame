@@ -58,10 +58,10 @@ public class InputTracker {
     public static bool down(int key) {
         if (key <= 0) {
             var mouseButton = (MouseButton)(-key);
-            return Game.mouse.IsButtonPressed(mouseButton);
+            return main.Game.mouse.IsButtonPressed(mouseButton);
         }
         
-        return Game.keyboard.IsKeyPressed((Key)key);
+        return main.Game.keyboard.IsKeyPressed((Key)key);
     }
 
     public static bool released(int key) {
@@ -91,7 +91,7 @@ public class InputTracker {
             }
 
             var keyInt = (int)key;
-            var currentlyDown = Game.keyboard.IsKeyPressed(key);
+            var currentlyDown = main.Game.keyboard.IsKeyPressed(key);
             var wasDown = previousFrameKeys.GetValueOrDefault(keyInt, false);
 
             if (currentlyDown && !wasDown) {
@@ -112,7 +112,7 @@ public class InputTracker {
             }
             
             var buttonInt = -(int)button;
-            var currentlyDown = Game.mouse.IsButtonPressed(button);
+            var currentlyDown = main.Game.mouse.IsButtonPressed(button);
             var wasDown = previousFrameKeys.GetValueOrDefault(buttonInt, false);
 
             if (currentlyDown && !wasDown) {

@@ -1,4 +1,4 @@
-using BlockGame.src.render;
+using BlockGame.render;
 using BlockGame.ui;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
@@ -18,7 +18,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     public Rgba32[] mipmap;
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
-        GL = Game.GL;
+        GL = main.Game.GL;
         this.atlasSize = atlasSize;
         this.path = path;
 
@@ -180,7 +180,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
 
 
     public void bind() {
-        Game.graphics.tex(0, handle);
+        main.Game.graphics.tex(0, handle);
     }
 
     public void Dispose() {

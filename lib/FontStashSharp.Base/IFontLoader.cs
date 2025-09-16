@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FontStashSharp.Interfaces
+namespace FontStashSharp.Base
 {
 	public interface IFontSource: IDisposable
 	{

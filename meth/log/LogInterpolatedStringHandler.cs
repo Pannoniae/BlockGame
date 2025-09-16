@@ -1,8 +1,7 @@
 using System.Runtime.CompilerServices;
-using System.Text;
 using Cysharp.Text;
 
-namespace BlockGame.util;
+namespace BlockGame.util.log;
 
 /**
  * Zero-allocation interpolated string handler for logging.

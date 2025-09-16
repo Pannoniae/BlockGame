@@ -1,6 +1,6 @@
 using BlockGame.util;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.generator;
 
 public partial class SimpleWorldGenerator : WorldGenerator {
 

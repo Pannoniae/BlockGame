@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies the minifying filters that can be used when sampling a texture.

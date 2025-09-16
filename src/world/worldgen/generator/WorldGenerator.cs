@@ -1,4 +1,6 @@
-namespace BlockGame;
+using BlockGame.world.chunk;
+
+namespace BlockGame.world.worldgen.generator;
 
 public interface WorldGenerator {
     public void setup(int seed);

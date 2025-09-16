@@ -1,6 +1,6 @@
 ﻿using Molten;
 
-namespace BlockGame.block;
+namespace BlockGame.world.block;
 
 public class BlockEntity {
     public Vector3I pos;

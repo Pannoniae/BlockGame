@@ -1,8 +1,8 @@
-﻿using FontStashSharp.Interfaces;
-using FreeTypeSharp;
+﻿using FreeTypeSharp;
 using FreeTypeSharp;
 using System;
 using System.Runtime.InteropServices;
+using FontStashSharp.Base;
 
 namespace FontStashSharp.Rasterizers.FreeType {
     internal unsafe class FreeTypeSource : IFontSource {

@@ -3,11 +3,18 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using BlockGame.GL;
-using BlockGame.item;
+using BlockGame.render;
+using BlockGame.snd;
 using BlockGame.ui;
+using BlockGame.ui.menu;
+using BlockGame.ui.screen;
 using BlockGame.util;
 using BlockGame.util.font;
+using BlockGame.util.log;
+using BlockGame.world;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
+using BlockGame.world.item;
 using Molten;
 using Silk.NET.Core;
 using Silk.NET.GLFW;
@@ -30,7 +37,7 @@ using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 using VideoMode = Silk.NET.Windowing.VideoMode;
 
-namespace BlockGame;
+namespace BlockGame.main;
 
 public partial class Game {
     public static Game instance;

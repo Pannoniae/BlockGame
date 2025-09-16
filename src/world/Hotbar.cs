@@ -1,8 +1,8 @@
-using BlockGame.item;
-using BlockGame.item.inventory;
 using BlockGame.util;
+using BlockGame.world.item;
+using BlockGame.world.item.inventory;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public class Hotbar : Inventory {
     public ItemStack?[] slots = new ItemStack[10];

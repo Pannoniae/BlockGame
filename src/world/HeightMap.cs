@@ -1,6 +1,7 @@
 using BlockGame.util;
+using BlockGame.world.chunk;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public class HeightMap : IDisposable {
     public static readonly FixedArrayPool<byte> heightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);

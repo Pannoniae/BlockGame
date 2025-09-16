@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies the modes in which texture coordinate wrapping can be handled.

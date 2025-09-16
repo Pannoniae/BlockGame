@@ -1,8 +1,10 @@
+using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.world;
 using Molten;
-using Silk.NET.Input;
+using Button = BlockGame.ui.element.Button;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class LevelSelectMenu : Menu {
 
@@ -49,7 +51,7 @@ public class LevelSelectMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         backButton.setPosition(new Vector2I(2, -18));
-        backButton.clicked += _ => { Game.instance.switchTo(MAIN_MENU); };
+        backButton.clicked += _ => { main.Game.instance.switchTo(MAIN_MENU); };
 
         addElement(backButton);
     }
@@ -73,8 +75,8 @@ public class LevelSelectMenu : Menu {
             isLoading = true;
         }
         else {
-            var seed = Game.random.Next();
-            if (Game.inputs.shift.down()) {
+            var seed = main.Game.random.Next();
+            if (main.Game.inputs.shift.down()) {
                 // if shift is pressed, use the seed from the level select button
                 seed = 674414719;
             }
@@ -82,14 +84,14 @@ public class LevelSelectMenu : Menu {
             isLoading = false;
         }
 
-        Game.setWorld(world);
+        main.Game.setWorld(world);
         
         // start world thread
         // todo this shit doesn't work, fix later
         //Game.worldThread = new WorldThread();
         
         // set to loading screen
-        Game.instance.switchTo(LOADING);
+        main.Game.instance.switchTo(LOADING);
         LOADING.load(world, isLoading);
         
         // logic continues in the loading screen
@@ -120,7 +122,7 @@ public class LevelSelectMenu : Menu {
     }
 
     public override void draw() {
-        Game.gui.drawBG(16);
+        main.Game.gui.drawBG(16);
         base.draw();
     }
 

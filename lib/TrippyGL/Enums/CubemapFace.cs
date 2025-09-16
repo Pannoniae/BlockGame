@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies the faces of a <see cref="TextureCubemap"/>.

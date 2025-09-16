@@ -1,4 +1,4 @@
-﻿namespace BlockGame.src.logic;
+﻿namespace BlockGame.logic;
 
 public class Gamemode {
     

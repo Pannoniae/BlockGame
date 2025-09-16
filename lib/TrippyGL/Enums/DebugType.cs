@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     public enum DebugType
     {

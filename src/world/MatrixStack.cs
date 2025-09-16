@@ -1,7 +1,7 @@
 using System.Numerics;
 using BlockGame.util;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 /**
  * A matrix transformation stack that can operate in two modes.

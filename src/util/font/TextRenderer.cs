@@ -15,7 +15,7 @@ public class TextRenderer : IFontStashRenderer {
 
     public TextRenderer() {
         _textureManager = new BTexture2DManager();
-        tb = Game.graphics.mainBatch;
+        tb = main.Game.graphics.mainBatch;
     }
 
     public void Draw(object texture, Vector2 pos, ref Matrix4x4 worldMatrix, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {

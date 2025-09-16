@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies the interpolation filters that can be used when blitting framebuffers.

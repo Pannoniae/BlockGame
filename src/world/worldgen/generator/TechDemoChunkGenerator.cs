@@ -1,4 +1,7 @@
-namespace BlockGame;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
+
+namespace BlockGame.world.worldgen.generator;
 
 public partial class TechDemoWorldGenerator {
     public void generate(ChunkCoord coord) {

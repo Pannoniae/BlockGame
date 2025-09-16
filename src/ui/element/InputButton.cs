@@ -1,9 +1,9 @@
-﻿using BlockGame.ui;
+﻿using BlockGame.ui.menu;
+using BlockGame.ui.screen;
 using BlockGame.util;
 using Silk.NET.Input;
-using Button = BlockGame.ui.Button;
 
-namespace BlockGame.src.ui.element;
+namespace BlockGame.ui.element;
 
 public class InputButton : Button {
     public Input input;
@@ -21,13 +21,13 @@ public class InputButton : Button {
             return;
         }
         
-        pressed = pressed || (bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.inputs.left.down());
+        pressed = pressed || (bounds.Contains((int)main.Game.mousePos.X, (int)main.Game.mousePos.Y) && main.Game.inputs.left.down());
     }
     
     public override void onMouseDown(MouseButton button) {
         
         // only handle if inside bounds!!!
-        if (!bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
+        if (!bounds.Contains((int)main.Game.mousePos.X, (int)main.Game.mousePos.Y)) {
             return;
         }
         

@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace BlockGame.util;
+namespace BlockGame.util.log;
 
 /**
  * Outputs formatted log messages to console with colors using Spectre.Console.

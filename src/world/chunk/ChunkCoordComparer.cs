@@ -1,7 +1,7 @@
 using Molten;
 using Silk.NET.Maths;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public class ChunkCoordComparer : IComparer<ChunkCoord> {
     public Molten.DoublePrecision.Vector3D position;

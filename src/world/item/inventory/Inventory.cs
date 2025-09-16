@@ -1,6 +1,6 @@
 ﻿using BlockGame.util;
 
-namespace BlockGame.item.inventory;
+namespace BlockGame.world.item.inventory;
 
 public interface Inventory {
     public int size();

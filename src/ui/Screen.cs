@@ -1,4 +1,6 @@
 using System.Numerics;
+using BlockGame.ui.menu;
+using BlockGame.ui.screen;
 using Molten;
 using Silk.NET.Input;
 
@@ -29,11 +31,11 @@ public class Screen {
     public void switchToMenu(Menu menu) {
         currentMenu?.deactivate();
         currentMenu = menu;
-        menu.size = new Vector2I(Game.width, Game.height);
+        menu.size = new Vector2I(main.Game.width, main.Game.height);
         menu.centre = menu.size / 2;
         menu.screen = this;
         menu.activate();
-        menu.resize(new Vector2I(Game.width, Game.height));
+        menu.resize(new Vector2I(main.Game.width, main.Game.height));
     }
 
     public virtual void activate() {

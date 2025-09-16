@@ -1,10 +1,10 @@
-using BlockGame.block;
 using BlockGame.util;
+using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public class Chunk : IDisposable, IEquatable<Chunk> {
     public const int CHUNKHEIGHT = 8;
@@ -596,7 +596,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public void meshChunk() {
         for (int i = 0; i < CHUNKHEIGHT; i++) {
-            Game.blockRenderer.meshChunk(subChunks[i]);
+            main.Game.blockRenderer.meshChunk(subChunks[i]);
         }
 
         status = ChunkStatus.MESHED;

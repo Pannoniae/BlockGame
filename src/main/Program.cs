@@ -5,8 +5,9 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using BlockGame;
-using BlockGame.util;
+using BlockGame.util.log;
+
+namespace BlockGame.main;
 
 public class Program {
     public static void Main(string[] args) {

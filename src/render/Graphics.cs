@@ -1,11 +1,14 @@
 using System.Numerics;
 using System.Text;
+using BlockGame.GL;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.world;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
+using Shader = BlockGame.GL.Shader;
 
-namespace BlockGame.GL;
+namespace BlockGame.render;
 
 /// <summary>
 /// Keep track of all graphics resources here.
@@ -18,27 +21,27 @@ public class Graphics : IDisposable {
     // Shaders
     public readonly InstantShader batchShader;
 
-    public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, nameof(instantTextureShader),
+    public readonly InstantShader instantTextureShader = new InstantShader(main.Game.GL, nameof(instantTextureShader),
         "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_TEXTURE")]);
 
-    public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
+    public readonly InstantShader instantColourShader = new InstantShader(main.Game.GL, nameof(instantColourShader),
         "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
     
-    public readonly InstantShader instantEntityShader = new InstantShader(Game.GL, nameof(instantEntityShader),
+    public readonly InstantShader instantEntityShader = new InstantShader(main.Game.GL, nameof(instantEntityShader),
         "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
 
     // Post-processing shaders
     public readonly Shader fxaaShader =
-        new(Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
+        new(main.Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
     
     public readonly Shader ssaaShader =
-        new(Game.GL, nameof(ssaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/ssaa.frag");
+        new(main.Game.GL, nameof(ssaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/ssaa.frag");
     
     public readonly Shader simplePostShader =
-        new(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
+        new(main.Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
     
     public readonly Shader crtShader =
-        new(Game.GL, nameof(crtShader), "shaders/postprocess/post.vert", "shaders/postprocess/crt.frag");
+        new(main.Game.GL, nameof(crtShader), "shaders/postprocess/post.vert", "shaders/postprocess/crt.frag");
 
     public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
@@ -65,11 +68,11 @@ public class Graphics : IDisposable {
     private uint[] textures = new uint[16];
 
     public Graphics() {
-        GL = Game.GL;
+        GL = main.Game.GL;
         mainBatch = new SpriteBatch(GL);
         immediateBatch = new SpriteBatch(GL);
 
-        batchShader = new InstantShader(Game.GL, nameof(batchShader), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
+        batchShader = new InstantShader(main.Game.GL, nameof(batchShader), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
         mainBatch.setShader(batchShader);
         immediateBatch.setShader(batchShader);
     }
@@ -194,7 +197,7 @@ public class Graphics : IDisposable {
      */
     public void scissorUI(int x, int y, int w, int h) {
         var scale = GUI.guiScale;
-        scissor(x * scale, Game.gui.uiHeight * scale - (y + h) * scale, w * scale, h * scale);
+        scissor(x * scale, main.Game.gui.uiHeight * scale - (y + h) * scale, w * scale, h * scale);
     }
 
     public void noScissor() {

@@ -1,6 +1,7 @@
+using BlockGame.ui.menu;
 using Silk.NET.Input;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.element;
 
 public class ToggleButton : Button {
 
@@ -16,7 +17,7 @@ public class ToggleButton : Button {
     public override void update() {
         base.update();
         pressed = pressed || 
-                  (bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.inputs.right.down());
+                  (bounds.Contains((int)main.Game.mousePos.X, (int)main.Game.mousePos.Y) && main.Game.inputs.right.down());
     }
 
     public override void click(MouseButton button) {

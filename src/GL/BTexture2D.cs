@@ -15,7 +15,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public Image<Rgba32> image;
 
     public BTexture2D(string path) {
-        GL = Game.GL;
+        GL = main.Game.GL;
         this.path = path;
     }
 
@@ -52,7 +52,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public BTexture2D(uint width, uint height) {
         unsafe {
-            GL = Game.GL;
+            GL = main.Game.GL;
 
             handle = GL.CreateTexture(TextureTarget.Texture2D);
             GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
@@ -75,7 +75,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public uint height => (uint)image.Height;
 
     public void bind() {
-        Game.graphics.tex(0, handle);
+        main.Game.graphics.tex(0, handle);
     }
 
     public void Dispose() {

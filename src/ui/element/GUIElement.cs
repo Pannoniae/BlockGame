@@ -1,8 +1,9 @@
 using System.Drawing;
 using System.Numerics;
+using BlockGame.ui.menu;
 using Silk.NET.Input;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.element;
 
 public class GUIElement {
     public Menu menu;
@@ -63,8 +64,8 @@ public class GUIElement {
     }
 
     public static Rectangle resolveAnchors(Rectangle absolutePos, HorizontalAnchor horizontalAnchor, VerticalAnchor verticalAnchor, Menu menu, bool uiSpace = true) {
-        var sizeX = uiSpace ? Game.gui.uiWidth : menu.size.X;
-        var sizeY = uiSpace ? Game.gui.uiHeight : menu.size.Y;
+        var sizeX = uiSpace ? main.Game.gui.uiWidth : menu.size.X;
+        var sizeY = uiSpace ? main.Game.gui.uiHeight : menu.size.Y;
         switch (horizontalAnchor) {
             case HorizontalAnchor.LEFT:
                 //absolutePos.X -= menu.width / 2;

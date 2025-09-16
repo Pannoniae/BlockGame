@@ -1,8 +1,11 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using BlockGame.util;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
+using BlockGame.world.worldgen.feature;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.generator;
 
 public partial class PerlinWorldGenerator {
     // The noise is sampled every X blocks

@@ -1,7 +1,7 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 
-namespace FontStashSharp.Samples.SixLabors
+namespace FontStashSharp.Rasterizers.SixLabors.Fonts
 {
 	internal class GlyphPath
 	{

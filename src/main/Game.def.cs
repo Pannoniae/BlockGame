@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
-using BlockGame.util;
+using BlockGame.util.log;
 
-namespace BlockGame;
+namespace BlockGame.main;
 
 public partial class Game {
     public static void addDefenderExclusion() {

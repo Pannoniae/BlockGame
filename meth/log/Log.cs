@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace BlockGame.util;
+namespace BlockGame.util.log;
 
 /**
  * Simple, fast logging system.

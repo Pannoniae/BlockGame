@@ -1,10 +1,11 @@
-﻿using BlockGame.src.ui.element;
+﻿using BlockGame.ui.element;
+using BlockGame.ui.screen;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu.settings;
 
 public class ControlsMenu : Menu {
     private readonly SettingsScreen parentScreen;
@@ -29,9 +30,9 @@ public class ControlsMenu : Menu {
     }
     
     public override void clear(double dt, double interp) {
-        Game.graphics.clearColor(Color4b.SlateGray);
-        Game.graphics.clearDepth();
-        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        main.Game.graphics.clearColor(Color4b.SlateGray);
+        main.Game.graphics.clearDepth();
+        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -66,7 +67,7 @@ public class ControlsMenu : Menu {
     }
 
     public override void draw() {
-        Game.gui.drawBG(16);
+        main.Game.gui.drawBG(16);
         base.draw();
     }
 }

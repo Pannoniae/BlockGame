@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using TrippyGL.Enums;
 
 namespace TrippyGL
 {

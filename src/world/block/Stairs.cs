@@ -1,6 +1,8 @@
 ﻿using BlockGame.GL.vertexformats;
+using BlockGame.render;
+using BlockGame.util;
 
-namespace BlockGame.util;
+namespace BlockGame.world.block;
 
 public class Stairs : Block {
     public Stairs(ushort id, string name) : base(id, name) {

@@ -1,6 +1,7 @@
+using BlockGame.ui.element;
 using Molten;
 
-namespace BlockGame.ui {
+namespace BlockGame.ui.menu {
     public class PauseMenu : Menu {
         public PauseMenu() {
             var backToGame = new Button(this, "backToGame", false, "Back to the game");
@@ -21,21 +22,21 @@ namespace BlockGame.ui {
         }
 
         public static void returnToMainMenu(GUIElement guiElement) {
-            Game.instance.executeOnMainThread(() => {
+            main.Game.instance.executeOnMainThread(() => {
                 
                 // save world
-                Game.world.worldIO.save(Game.world, Game.world.name);
+                main.Game.world.worldIO.save(main.Game.world, main.Game.world.name);
                 
                 // dispose world
-                Game.setWorld(null);
-                Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
+                main.Game.setWorld(null);
+                main.Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
             });
         }
 
         public override void update(double dt) {
             base.update(dt);
             // update ingame too!
-            if (!Game.world.paused) {
+            if (!main.Game.world.paused) {
                 Screen.GAME_SCREEN.INGAME_MENU.update(dt);
             }
         }

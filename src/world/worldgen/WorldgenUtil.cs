@@ -1,4 +1,4 @@
-namespace BlockGame;
+namespace BlockGame.world.worldgen;
 
 public class WorldgenUtil {
     

@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace BlockGame.util;
+namespace BlockGame.util.log;
 
 public enum LogLevel : byte {
     DEBUG = 0,

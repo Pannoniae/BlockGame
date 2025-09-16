@@ -1,6 +1,6 @@
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public class ChunkComparer : IComparer<Chunk> {
     public Player player;

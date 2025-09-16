@@ -1,6 +1,6 @@
-using BlockGame.util;
+using BlockGame.ui.menu.settings;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.screen;
 
 public class SettingsScreen : Screen {
 
@@ -21,11 +21,11 @@ public class SettingsScreen : Screen {
 
     public void returnToPrevScreen() {
         if (prevScreen != null) {
-            Game.instance.switchToScreen(prevScreen);
+            main.Game.instance.switchToScreen(prevScreen);
         }
         else {
             // fallback to main menu screen if no previous screen
-            Game.instance.switchToScreen(MAIN_MENU_SCREEN);
+            main.Game.instance.switchToScreen(MAIN_MENU_SCREEN);
         }
     }
 }

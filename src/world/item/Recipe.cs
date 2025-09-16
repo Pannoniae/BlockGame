@@ -1,4 +1,6 @@
-﻿namespace BlockGame.item;
+﻿using BlockGame.world.block;
+
+namespace BlockGame.world.item;
 
 public class Recipe {
     public static Recipe WOOD_PICKAXE;

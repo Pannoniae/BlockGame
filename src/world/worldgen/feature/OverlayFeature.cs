@@ -1,6 +1,7 @@
 using BlockGame.util;
+using BlockGame.world.chunk;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.feature;
 
 /// <summary>
 /// A worldgen feature which checks itself in a grid around the populated chunk.

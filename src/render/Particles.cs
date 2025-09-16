@@ -2,10 +2,11 @@ using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
+using BlockGame.world;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 
-namespace BlockGame;
+namespace BlockGame.render;
 
 public class Particles {
 
@@ -46,10 +47,10 @@ public class Particles {
 
     public void render(double interp) {
         var currentTexture = "textures/blocks.png";
-        Game.graphics.tex(0, Game.textures.blockTexture);
+        main.Game.graphics.tex(0, main.Game.textures.blockTexture);
 
         drawer.begin(PrimitiveType.Triangles);
-        drawer.setMVP(Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix());
+        drawer.setMVP(main.Game.camera.getViewMatrix(interp) * main.Game.camera.getProjectionMatrix());
 
         var world = this.world;
 
@@ -60,14 +61,14 @@ public class Particles {
 
                 drawer.begin(PrimitiveType.Triangles);
                 currentTexture = particle.texture;
-                var tex = Game.textures.get(particle.texture);
-                Game.graphics.tex(0, tex);
+                var tex = main.Game.textures.get(particle.texture);
+                main.Game.graphics.tex(0, tex);
             }
             // get interp pos
             var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
             var blockPos = pos.toBlockPos();
-            var right = Vector3.Cross(Game.camera.up.toVec3(), Game.camera.forward.toVec3());
-            var up = Game.camera.up.toVec3();
+            var right = Vector3.Cross(main.Game.camera.up.toVec3(), main.Game.camera.forward.toVec3());
+            var up = main.Game.camera.up.toVec3();
             var ul = pos.toVec3() - right * particle.size.X / 2 + up * particle.size.Y / 2;
             var ll = pos.toVec3() - right * particle.size.X / 2 - up * particle.size.Y / 2;
             var lr = pos.toVec3() + right * particle.size.X / 2 - up * particle.size.Y / 2;

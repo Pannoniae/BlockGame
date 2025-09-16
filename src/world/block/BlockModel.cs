@@ -1,4 +1,6 @@
-namespace BlockGame.util;
+using BlockGame.util;
+
+namespace BlockGame.world.block;
 
 public class BlockModel {
     public Face[] faces;

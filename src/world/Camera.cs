@@ -2,9 +2,10 @@ using System.Numerics;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.meth;
+using BlockGame.world.chunk;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public enum CameraMode {
     FirstPerson,

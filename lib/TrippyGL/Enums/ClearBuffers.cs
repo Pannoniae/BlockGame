@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TrippyGL
+namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies the buffers that can be targeted by a clear operation.

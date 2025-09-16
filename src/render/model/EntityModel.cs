@@ -1,4 +1,4 @@
-﻿namespace BlockGame;
+﻿namespace BlockGame.render.model;
 
 /** The geometry of an entity. */
 public abstract class EntityModel {

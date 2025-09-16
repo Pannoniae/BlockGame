@@ -24,7 +24,7 @@ public sealed class ExtremelySharedBlockVAO : VAO {
 
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
-        GL = Game.GL;
+        GL = main.Game.GL;
         buffer = GL.GenBuffer();
     }
 

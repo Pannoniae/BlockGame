@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public class EmptyBlockData : BlockData {
 

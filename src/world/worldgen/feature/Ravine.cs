@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using BlockGame.util;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.feature;
 
 public class Ravine : OverlayFeature {
     public override int radius => 4;

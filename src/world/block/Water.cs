@@ -1,9 +1,11 @@
 ﻿using System.Numerics;
 using BlockGame.GL.vertexformats;
+using BlockGame.render;
+using BlockGame.util;
 using Molten;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
-namespace BlockGame.util;
+namespace BlockGame.world.block;
 
 /**
  * TODO this will be generic liquid later or something, we'll have other liquids like lava too!

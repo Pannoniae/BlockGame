@@ -1,6 +1,8 @@
 using BlockGame.util;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.generator;
 
 public partial class OverworldWorldGenerator {
 

@@ -1,6 +1,9 @@
 using System;
 using Silk.NET.OpenGL;
+using TrippyGL.Enums;
 using TrippyGL.Utils;
+using TextureMagFilter = TrippyGL.Enums.TextureMagFilter;
+using TextureMinFilter = TrippyGL.Enums.TextureMinFilter;
 
 namespace TrippyGL
 {

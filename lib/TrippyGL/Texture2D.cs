@@ -1,5 +1,7 @@
 using System;
 using Silk.NET.OpenGL;
+using TrippyGL.Enums;
+using TextureWrapMode = TrippyGL.Enums.TextureWrapMode;
 
 namespace TrippyGL
 {

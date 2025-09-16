@@ -1,7 +1,7 @@
 ﻿using BlockGame.util;
 using BlockGame.util.xNBT;
 
-namespace NBTTool;
+namespace NBT2SNBT;
 
 public class Program {
     public static void Main(string[] args) {

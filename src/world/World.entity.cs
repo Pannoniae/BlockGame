@@ -1,8 +1,10 @@
-﻿using BlockGame.util;
+﻿using BlockGame.render;
+using BlockGame.util;
+using BlockGame.world.chunk;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public partial class World {
     public readonly List<Entity> entities;

@@ -1,8 +1,7 @@
-using BlockGame.item;
-using BlockGame.item.inventory;
 using BlockGame.util;
+using BlockGame.world.item.inventory;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class CreativeInventory : Inventory {
     private readonly ItemStack?[] slots = new ItemStack[InventoryMenu.ITEMS_PER_PAGE];

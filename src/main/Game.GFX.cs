@@ -2,14 +2,15 @@
 using System.Runtime.InteropServices;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.log;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ARB;
-using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Silk.NET.OpenGL.Legacy.Extensions.EXT;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Silk.NET.Windowing;
 
-namespace BlockGame;
+namespace BlockGame.main;
 
 public partial class Game {
     public uint fbo;

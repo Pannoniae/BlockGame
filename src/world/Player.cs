@@ -1,13 +1,15 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
-using BlockGame.item;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
+using BlockGame.world.item;
 using Molten;
-using Silk.NET.Input;
 using Molten.DoublePrecision;
+using Silk.NET.Input;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public class Player : Entity {
     public const double height = 1.75;
@@ -47,7 +49,7 @@ public class Player : Entity {
         renderer = new PlayerRenderer(this);
 
         this.world = world;
-        rotation.Y = Game.camera.yaw;
+        rotation.Y = main.Game.camera.yaw;
         calcAABB(ref aabb, position);
 
         swingProgress = 0;
@@ -55,7 +57,7 @@ public class Player : Entity {
     }
 
     public void render(double dt, double interp) {
-        Game.camera.updateFOV(isUnderWater(), dt);
+        main.Game.camera.updateFOV(isUnderWater(), dt);
         renderer.render(dt, interp);
     }
 
@@ -99,7 +101,7 @@ public class Player : Entity {
         // Play footstep sounds when moving on ground
         if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
             if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
-                Game.snd.playFootstep();
+                main.Game.snd.playFootstep();
                 lastFootstepDistance = totalTraveled;
             }
         }
@@ -107,18 +109,18 @@ public class Player : Entity {
         feetPosition = new Vector3D(position.X, position.Y + feetCheckHeight, position.Z);
 
         // Update the camera system
-        Game.camera.updatePosition(dt);
+        main.Game.camera.updatePosition(dt);
         
         // Sync rotation with camera
-        rotation.Y = Game.camera.yaw;
-        rotation.X = Game.camera.pitch;
+        rotation.Y = main.Game.camera.yaw;
+        rotation.X = main.Game.camera.pitch;
         calcAABB(ref aabb, position);
     }
 
     public void setPrevVars() {
         prevPosition = position;
-        Game.camera.prevBob = Game.camera.bob;
-        Game.camera.prevpForward = Game.camera.pForward;
+        main.Game.camera.prevBob = main.Game.camera.bob;
+        main.Game.camera.prevpForward = main.Game.camera.pForward;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
         prevSwingProgress = swingProgress;
@@ -128,7 +130,7 @@ public class Player : Entity {
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
         setPrevVars();
-        Game.camera.prevPosition = Game.camera.position;
+        main.Game.camera.prevPosition = main.Game.camera.position;
     }
 
     public void loadChunksAroundThePlayer(int renderDistance) {
@@ -339,7 +341,7 @@ public class Player : Entity {
 
         pressedMovementKey = false;
 
-        if (Game.inputs.shift.down()) {
+        if (main.Game.inputs.shift.down()) {
             if (flyMode) {
                 strafeVector.Y -= 0.8;
             }
@@ -351,31 +353,31 @@ public class Player : Entity {
             sneaking = false;
         }
 
-        if (Game.inputs.w.down()) {
+        if (main.Game.inputs.w.down()) {
             // Move forwards
             strafeVector.Z += 1;
             pressedMovementKey = true;
         }
 
-        if (Game.inputs.s.down()) {
+        if (main.Game.inputs.s.down()) {
             //Move backwards
             strafeVector.Z -= 1;
             pressedMovementKey = true;
         }
 
-        if (Game.inputs.a.down()) {
+        if (main.Game.inputs.a.down()) {
             //Move left
             strafeVector.X -= 1;
             pressedMovementKey = true;
         }
 
-        if (Game.inputs.d.down()) {
+        if (main.Game.inputs.d.down()) {
             //Move right
             strafeVector.X += 1;
             pressedMovementKey = true;
         }
 
-        if (Game.inputs.space.down()) {
+        if (main.Game.inputs.space.down()) {
             if ((onGround || inLiquid) && !flyMode) {
                 jumping = true;
                 pressedMovementKey = true;
@@ -386,40 +388,40 @@ public class Player : Entity {
             }
         }
 
-        fastMode = Game.inputs.ctrl.down();
+        fastMode = main.Game.inputs.ctrl.down();
 
         // TODO this horribly breaks when you speed time up, you become a terminator and be able to break/place blocks instantly
         // oh no it's a debug feature anyway but yk
         // repeated action while held (with delay to prevent spam)
-        if (Game.inputs.left.pressed()) {
+        if (main.Game.inputs.left.pressed()) {
             breakBlock();
         }
         else {
-            if (Game.inputs.left.down() && world.worldTick - lastBreak > Constants.breakDelay) {
+            if (main.Game.inputs.left.down() && world.worldTick - lastBreak > Constants.breakDelay) {
                 breakBlock();
             }
         }
 
 
-        if (Game.inputs.right.pressed()) {
+        if (main.Game.inputs.right.pressed()) {
             placeBlock();
         }
         else {
-            if (Game.inputs.right.down() && world.worldTick - lastPlace > Constants.placeDelay) {
+            if (main.Game.inputs.right.down() && world.worldTick - lastPlace > Constants.placeDelay) {
                 placeBlock();
             }
         }
 
 
-        if (Game.inputs.middle.pressed()) {
+        if (main.Game.inputs.middle.pressed()) {
             pickBlock();
         }
     }
 
     public void placeBlock() {
         lastPlace = world.worldTick;
-        if (Game.instance.previousPos.HasValue) {
-            var pos = Game.instance.previousPos.Value;
+        if (main.Game.instance.previousPos.HasValue) {
+            var pos = main.Game.instance.previousPos.Value;
             var stack = hotbar.getSelected();
             
             var metadata = (byte)stack.metadata;
@@ -488,8 +490,8 @@ public class Player : Entity {
     }
     
     public void breakBlock() {
-        if (Game.instance.targetedPos.HasValue) {
-            var pos = Game.instance.targetedPos.Value;
+        if (main.Game.instance.targetedPos.HasValue) {
+            var pos = main.Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             bl.crack(world, pos.X, pos.Y, pos.Z);
             world.setBlock(pos.X, pos.Y, pos.Z, 0);
@@ -498,7 +500,7 @@ public class Player : Entity {
             // place water if adjacent
             lastBreak = world.worldTick;
 
-            Game.snd.playBlockHit();
+            main.Game.snd.playBlockHit();
             setSwinging(true);
         }
         else {
@@ -508,7 +510,7 @@ public class Player : Entity {
 
     public RawDirection getFacing() {
         // Get the forward vector from the camera
-        Vector3 forward = Game.camera.CalculateForwardVector();
+        Vector3 forward = main.Game.camera.CalculateForwardVector();
 
         double verticalThreshold = Math.Cos(Math.PI / 4f); // 45 degrees in radians
 
@@ -549,8 +551,8 @@ public class Player : Entity {
     }
 
     public void pickBlock() {
-        if (Game.instance.targetedPos.HasValue) {
-            var pos = Game.instance.targetedPos.Value;
+        if (main.Game.instance.targetedPos.HasValue) {
+            var pos = main.Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             if (bl != null) {
                 hotbar.slots[hotbar.selected] = new ItemStack(Item.blockID(bl.id), 1);

@@ -1,7 +1,8 @@
 using BlockGame.util;
+using BlockGame.util.log;
 using MiniAudioEx;
 
-namespace BlockGame;
+namespace BlockGame.snd;
 
 public class SoundEngine : IDisposable {
     

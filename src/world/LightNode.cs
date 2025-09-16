@@ -1,4 +1,6 @@
-namespace BlockGame;
+using BlockGame.world.chunk;
+
+namespace BlockGame.world;
 
 public readonly record struct LightNode(int x, int y, int z, Chunk chunk) {
     public readonly int x = x;

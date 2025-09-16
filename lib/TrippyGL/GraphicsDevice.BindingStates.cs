@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Silk.NET.OpenGL;
+using TrippyGL.Enums;
 
 namespace TrippyGL
 {

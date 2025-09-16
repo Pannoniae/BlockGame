@@ -1,6 +1,12 @@
 using System.Numerics;
-using BlockGame.item;
+using BlockGame.ui.element;
+using BlockGame.ui.screen;
 using BlockGame.util;
+using BlockGame.world;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
+using BlockGame.world.item;
+using BlockGame.world.worldgen.generator;
 using Cysharp.Text;
 using FontStashSharp.RichText;
 using Molten;
@@ -8,8 +14,7 @@ using Molten.DoublePrecision;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
 
-
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class IngameMenu : Menu, IDisposable {
     public RichTextLayout rendererText;
@@ -42,11 +47,11 @@ public class IngameMenu : Menu, IDisposable {
         debugStrG.Dispose();
         debugStrG = ZString.CreateStringBuilder();
         // then add the GUI
-        var version = Text.createText(this, "version", new Vector2I(2, 2), Game.VERSION);
+        var version = Text.createText(this, "version", new Vector2I(2, 2), main.Game.VERSION);
         version.shadowed = true;
         addElement(version);
         rendererText = new RichTextLayout {
-            Font = Game.gui.guiFontThin,
+            Font = main.Game.gui.guiFontThin,
             Text = "",
             Width = 150 * GUI.guiScale
         };
@@ -76,15 +81,15 @@ public class IngameMenu : Menu, IDisposable {
 
     public override void render(double dt, double interp) {
         base.render(dt, interp);
-        UpdateFrametimeHistory((float)Game.instance.ft * 1000f);
+        UpdateFrametimeHistory((float)main.Game.instance.ft * 1000f);
     }
 
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         var s = -scroll.Y;
         int y = (int)Math.Clamp(s, -1, 1);
-        var newSelection = Game.player.hotbar.selected + y;
+        var newSelection = main.Game.player.hotbar.selected + y;
         newSelection = Meth.mod(newSelection, 10);
-        Game.player.hotbar.selected = newSelection;
+        main.Game.player.hotbar.selected = newSelection;
     }
 
     // No longer needed - we're using fixed thresholds
@@ -94,11 +99,11 @@ public class IngameMenu : Menu, IDisposable {
 
         // Only draw when debug screen is enabled
         if (screen.debugScreen || screen.fpsOnly) {
-            var gui = Game.gui;
+            var gui = main.Game.gui;
 
             // Fixed size and position in bottom-left
             int graphX = GRAPH_PADDING;
-            int graphY = Game.height - GRAPH_HEIGHT - GRAPH_PADDING;
+            int graphY = main.Game.height - GRAPH_HEIGHT - GRAPH_PADDING;
 
             // Background rectangle with transparency
             gui.tb.Draw(gui.colourTexture,
@@ -266,10 +271,10 @@ public class IngameMenu : Menu, IDisposable {
         var screen = (GameScreen)this.screen;
         if (screen.debugScreen && !screen.fpsOnly) {
             var ver = getElement("version");
-            Game.gui.drawStringThin(debugStr.AsSpan(),
+            main.Game.gui.drawStringThin(debugStr.AsSpan(),
                 new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
-            Game.gui.drawRString(rendererText,
-                new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
+            main.Game.gui.drawRString(rendererText,
+                new Vector2(main.Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
         }
 
         // Draw frametime graph if enabled
@@ -279,9 +284,9 @@ public class IngameMenu : Menu, IDisposable {
         
 
         // Draw block display
-        var stack = Game.player.hotbar.getSelected();
+        var stack = main.Game.player.hotbar.getSelected();
         var blockStr = Item.get(stack.id).getName(stack);
-        Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
+        main.Game.gui.drawStringCentredUI(blockStr, new Vector2(main.Game.gui.uiCentreX, main.Game.gui.uiHeight - 30),
             Color4b.White);
     }
 
@@ -294,19 +299,19 @@ public class IngameMenu : Menu, IDisposable {
     public void updateDebugTextMethod() {
         var screen = Screen.GAME_SCREEN;
         if (screen.debugScreen && !screen.fpsOnly) {
-            var gui = Game.gui;
-            var i = Game.instance;
-            var p = Game.player!;
-            var c = Game.camera;
-            var m = Game.metrics;
-            var w = Game.world!;
-            var loadedChunks = Game.world.chunks.Count;
+            var gui = main.Game.gui;
+            var i = main.Game.instance;
+            var p = main.Game.player!;
+            var c = main.Game.camera;
+            var m = main.Game.metrics;
+            var w = main.Game.world!;
+            var loadedChunks = main.Game.world.chunks.Count;
             var pos = p.position.toBlockPos();
             // current block
             //var cb = world.getBlock(pos);
-            var sl = Game.world.getSkyLight(pos.X, pos.Y, pos.Z);
-            var bl = Game.world.getBlockLight(pos.X, pos.Y, pos.Z);
-            Game.world.getChunkMaybe(World.getChunkPos(new Vector2I(pos.X, pos.Z)), out var chunk);
+            var sl = main.Game.world.getSkyLight(pos.X, pos.Y, pos.Z);
+            var bl = main.Game.world.getBlockLight(pos.X, pos.Y, pos.Z);
+            main.Game.world.getChunkMaybe(World.getChunkPos(new Vector2I(pos.X, pos.Z)), out var chunk);
 
             bool inited;
             // if outside, don't bother
@@ -320,7 +325,7 @@ public class IngameMenu : Menu, IDisposable {
 
             debugStr.Clear();
             debugStrG.Clear();
-            if (Game.devMode) {
+            if (main.Game.devMode) {
                 // calculate facing
                 var facing = cameraFacing(c.forward);
 
@@ -346,7 +351,7 @@ public class IngameMenu : Menu, IDisposable {
                         wwm);
                     
                     // noise debug info if enabled
-                    if (Game.debugShowNoise) {
+                    if (main.Game.debugShowNoise) {
                         var targetedPos = i.targetedPos.Value;
                         if (w.generator is PerlinWorldGenerator pwg) {
                             var noiseInfo = pwg.getNoiseInfoAtBlock(targetedPos.X, targetedPos.Y, targetedPos.Z);
@@ -374,26 +379,26 @@ public class IngameMenu : Menu, IDisposable {
 
             // show FB info
             if (Settings.instance.framebufferEffects) {
-                var fbw = Game.width * Settings.instance.ssaa;
-                var fbh = Game.height * Settings.instance.ssaa;
+                var fbw = main.Game.width * Settings.instance.ssaa;
+                var fbh = main.Game.height * Settings.instance.ssaa;
                 debugStr.AppendFormat("FB:{0}x{1} ({2})\n", fbw, fbh, Settings.instance.getAAText());
             }
             else {
-                debugStr.AppendFormat("FB:{0}x{1} (0fx)\n", Game.width, Game.height);
+                debugStr.AppendFormat("FB:{0}x{1} (0fx)\n", main.Game.width, main.Game.height);
             }
 
-            if (Game.devMode) {
-                debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
+            if (main.Game.devMode) {
+                debugStr.AppendFormat("Seed: {0}\n", main.Game.world.seed);
             }
 
             long vmem = MemoryUtils.getVRAMUsage(out var stat);
-            debugStrG.AppendFormat("Renderer: {0}/{1}\n", Game.GL.GetStringS(StringName.Renderer),
-                Game.GL.GetStringS(StringName.Vendor));
-            debugStrG.AppendFormat("OpenGL version: {0}\n", Game.GL.GetStringS(StringName.Version));
+            debugStrG.AppendFormat("Renderer: {0}/{1}\n", main.Game.GL.GetStringS(StringName.Renderer),
+                main.Game.GL.GetStringS(StringName.Vendor));
+            debugStrG.AppendFormat("OpenGL version: {0}\n", main.Game.GL.GetStringS(StringName.Version));
             debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})\n",
                 GCMemory / Constants.MEGABYTES,
                 workingSet / Constants.MEGABYTES, vmem / Constants.MEGABYTES, stat);
-            debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2} IUBO:{3} BMDI:{4} CMDL:{5} rZ:{6} r:{7}", Game.hasSBL.yes(), Game.hasVBUM.yes(), Game.hasUBUM.yes(), Game.hasInstancedUBO.yes(), Game.hasBindlessMDI.yes(), Game.hasCMDL.yes(), Settings.instance.reverseZ.yes(), Settings.instance.rendererMode.yes()); 
+            debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2} IUBO:{3} BMDI:{4} CMDL:{5} rZ:{6} r:{7}", main.Game.hasSBL.yes(), main.Game.hasVBUM.yes(), main.Game.hasUBUM.yes(), main.Game.hasInstancedUBO.yes(), main.Game.hasBindlessMDI.yes(), main.Game.hasCMDL.yes(), Settings.instance.reverseZ.yes(), Settings.instance.rendererMode.yes()); 
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,

@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Numerics;
 using System.Text;
+using TrippyGL.Enums;
 using TrippyGL.Utils;
 
 namespace TrippyGL

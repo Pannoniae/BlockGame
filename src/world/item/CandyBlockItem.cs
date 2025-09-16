@@ -1,6 +1,7 @@
 ﻿using BlockGame.util;
+using BlockGame.world.block;
 
-namespace BlockGame.item;
+namespace BlockGame.world.item;
 
 public class CandyBlockItem : BlockItem {
     public CandyBlockItem(int id, string name) : base(id, name) {

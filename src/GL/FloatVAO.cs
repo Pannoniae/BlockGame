@@ -12,7 +12,7 @@ public class FloatVAO {
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public FloatVAO() {
-        GL = Game.GL;
+        GL = main.Game.GL;
         handle = GL.GenVertexArray();
         GL.BindVertexArray(handle);
     }

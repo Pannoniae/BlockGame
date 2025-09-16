@@ -1,5 +1,6 @@
 using System.Numerics;
-using BlockGame.src.ui.element;
+using BlockGame.render;
+using BlockGame.ui.element;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
@@ -7,7 +8,7 @@ using Silk.NET.OpenGL.Legacy;
 using Rectangle = System.Drawing.Rectangle;
 using RectangleF = System.Drawing.RectangleF;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class Menu {
 
@@ -104,13 +105,13 @@ public class Menu {
         // draw tooltip for active element
         var tooltip = hoveredElement?.tooltip;
         if (!string.IsNullOrEmpty(tooltip)) {
-            var pos = Game.mousePos + new Vector2(MOUSEPOSPADDING) - new Vector2(2);
-            var posExt = Game.gui.measureStringThin(tooltip) + new Vector2(4);
-            var textPos = Game.mousePos + new Vector2(MOUSEPOSPADDING);
+            var pos = main.Game.mousePos + new Vector2(MOUSEPOSPADDING) - new Vector2(2);
+            var posExt = main.Game.gui.measureStringThin(tooltip) + new Vector2(4);
+            var textPos = main.Game.mousePos + new Vector2(MOUSEPOSPADDING);
             
             // clamp tooltip to screen bounds
-            var screenWidth = Game.window.Size.X;
-            var screenHeight = Game.window.Size.Y;
+            var screenWidth = main.Game.window.Size.X;
+            var screenHeight = main.Game.window.Size.Y;
             
             var borderSize = GUI.guiScale;
             
@@ -132,29 +133,29 @@ public class Menu {
             // draw border with gradient (vibrant purple to deep blue)
             var borderColorTop = new Color4b(147, 51, 234, 255);    // bright purple
             var borderColorBottom = new Color4b(59, 130, 246, 255); // bright blue
-            Game.gui.drawGradientVertical(Game.gui.colourTexture, borderRect, borderColorTop, borderColorBottom);
+            main.Game.gui.drawGradientVertical(main.Game.gui.colourTexture, borderRect, borderColorTop, borderColorBottom);
             
             // draw background with gradient (dark purple to dark blue)  
             var bgColorTop = new Color4b(30, 15, 45, 240);    // dark purple
             var bgColorBottom = new Color4b(15, 25, 45, 240); // dark blue
-            Game.gui.drawGradientVertical(Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
+            main.Game.gui.drawGradientVertical(main.Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
             
-            Game.gui.drawStringThin(tooltip, textPos);
+            main.Game.gui.drawStringThin(tooltip, textPos);
         }
     }
 
     public virtual void update(double dt) {
         // update hover status
         foreach (var element in elements.Values) {
-            element.pressed = element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.inputs.left.down();
+            element.pressed = element.bounds.Contains((int)main.Game.mousePos.X, (int)main.Game.mousePos.Y) && main.Game.inputs.left.down();
             element.update();
         }
     }
 
     public virtual void clear(double dt, double interp) {
-        Game.graphics.clearColor(WorldRenderer.defaultClearColour);
-        Game.graphics.clearDepth();
-        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        main.Game.graphics.clearColor(WorldRenderer.defaultClearColour);
+        main.Game.graphics.clearDepth();
+        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public virtual void render(double dt, double interp) {
@@ -169,7 +170,7 @@ public class Menu {
         foreach (var element in elements.Values) {
             element.onMouseDown(button);
             
-            if (button == MouseButton.Left && element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
+            if (button == MouseButton.Left && element.active && element.bounds.Contains((int)main.Game.mousePos.X, (int)main.Game.mousePos.Y)) {
                 pressedElement = element;
             }
         }

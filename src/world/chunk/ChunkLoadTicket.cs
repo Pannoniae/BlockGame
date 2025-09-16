@@ -1,4 +1,4 @@
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public readonly record struct ChunkLoadTicket(ChunkCoord chunkCoord, ChunkStatus level) {
     public readonly ChunkCoord chunkCoord = chunkCoord;

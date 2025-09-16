@@ -1,6 +1,7 @@
 using System.Numerics;
+using BlockGame.ui.menu;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.element;
 
 public class TextBox : GUIElement {
 
@@ -13,7 +14,7 @@ public class TextBox : GUIElement {
 
 
     public override void draw() {
-        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: Game.gui.grayButtonRect);
-        Game.gui.drawString(input, new Vector2(bounds.X + padding, bounds.Y + padding));
+        main.Game.gui.draw(main.Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: main.Game.gui.grayButtonRect);
+        main.Game.gui.drawString(input, new Vector2(bounds.X + padding, bounds.Y + padding));
     }
 }

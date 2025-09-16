@@ -1,11 +1,13 @@
 using System.Numerics;
 using BlockGame.util;
 using BlockGame.util.xNBT;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 using JetBrains.Annotations;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public class Entity(World world) : Persistent {
     public const int MAX_SWING_TICKS = 16;

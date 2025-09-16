@@ -4,7 +4,7 @@ using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace BlockGame;
+namespace BlockGame.render;
 
 public class Textures {
     public Silk.NET.OpenGL.Legacy.GL GL;
@@ -71,8 +71,8 @@ public class Textures {
         // update lightmap every 5 ticks
         // or don't, this doesn't eat our performance yet
         //if (Game.globalTick % 5 == 0) {
-        if (Game.world != null) {
-            float skyDarken = Game.world.getSkyDarkenFloat(Game.world.worldTick);
+        if (main.Game.world != null) {
+            float skyDarken = main.Game.world.getSkyDarkenFloat(main.Game.world.worldTick);
             updateLightmap(skyDarken);
         }
         //}

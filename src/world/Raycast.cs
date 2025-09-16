@@ -1,9 +1,10 @@
 using System.Runtime.InteropServices;
 using BlockGame.util;
+using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public class Raycast {
     private static readonly List<AABB> AABBList = [];
@@ -14,8 +15,8 @@ public class Raycast {
     /// <returns></returns>
     public static RayCollision raycast(World world, bool liquids = false) {
         // raycast
-        var cameraPos = Game.camera.position;
-        var forward = Game.camera.forward;
+        var cameraPos = main.Game.camera.position;
+        var forward = main.Game.camera.forward;
         var cameraForward = new Vector3D(forward.X, forward.Y, forward.Z);
         var currentPos = new Vector3D(cameraPos.X, cameraPos.Y, cameraPos.Z);
 

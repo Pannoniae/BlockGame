@@ -2,9 +2,12 @@ using System.Collections;
 using System.Numerics;
 using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.world;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 using Molten;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.menu;
 
 public class LoadingMenu : Menu, ProgressUpdater {
     public double counter;
@@ -42,15 +45,15 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public void load(World world, bool isLoading) {
         this.world = world;
-        loadingCoroutine = Game.startCoroutine(loadWorldCoroutine(isLoading));
+        loadingCoroutine = main.Game.startCoroutine(loadWorldCoroutine(isLoading));
     }
 
 
     public override void update(double dt) {
         base.update(dt);
         if (loadingCoroutine.isCompleted) {
-            Game.instance.switchToScreen(Screen.GAME_SCREEN);
-            Game.instance.lockMouse();
+            main.Game.instance.switchToScreen(Screen.GAME_SCREEN);
+            main.Game.instance.lockMouse();
         }
     }
 
@@ -69,7 +72,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public override void draw() {
         // we draw BG first! elements after
-        Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
+        main.Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
         base.draw();
 
         // draw a random vertical line at x = 0
@@ -96,7 +99,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
         var initTimer = new WaitForMinimumTime(0.05);
         stage("Loading spawn chunks");
-        Game.world.preInit(isLoading);
+        main.Game.world.preInit(isLoading);
         yield return initTimer;
         update(0.10f); // Init complete: 10%
         
@@ -113,7 +116,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         stage("Loading chunks");
 
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
+            world.updateChunkloading(main.Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
                 ref c);
 
             int currentChunks = world.chunkLoadQueue.Count;
@@ -175,7 +178,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
         c = 0;
         
         while (world.chunkLoadQueue.Count > 0) {
-            world.updateChunkloading(Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
+            world.updateChunkloading(main.Game.permanentStopwatch.Elapsed.TotalMilliseconds, loading: true,
                 ref c);
             
             int currentChunks = world.chunkLoadQueue.Count;

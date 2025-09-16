@@ -13,7 +13,7 @@ public class BlockVAO : VAO {
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public BlockVAO() {
-        GL = Game.GL;
+        GL = main.Game.GL;
         handle = GL.GenVertexArray();
         vbo = GL.GenBuffer();
         ibo = GL.GenBuffer();

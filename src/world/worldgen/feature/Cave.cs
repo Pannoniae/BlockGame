@@ -1,9 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using BlockGame.util;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.feature;
 
 public class Cave : OverlayFeature {
     public override int radius => 8;

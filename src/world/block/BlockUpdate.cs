@@ -1,6 +1,6 @@
 using Molten;
 
-namespace BlockGame;
+namespace BlockGame.world.block;
 
 public readonly record struct BlockUpdate(Vector3I position, int tick) {
     public readonly Vector3I position = position;

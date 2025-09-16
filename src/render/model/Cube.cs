@@ -1,10 +1,10 @@
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
-using BlockGame.util;
+using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.render.model;
 
 /**
  * A cube has 6 faces and 24 verts overall.

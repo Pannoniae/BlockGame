@@ -1,9 +1,9 @@
-using System.Buffers;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using BlockGame.util;
+using BlockGame.world.block;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public sealed class PaletteBlockData : BlockData, IDisposable {
     private static readonly VariableArrayPool<byte> arrayPool = new();

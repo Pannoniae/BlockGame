@@ -1,4 +1,6 @@
-namespace BlockGame.ui;
+using BlockGame.ui.menu;
+
+namespace BlockGame.ui.screen;
 
 public class MainMenuScreen : Screen {
 

@@ -1,4 +1,4 @@
-namespace BlockGame;
+namespace BlockGame.world.block;
 
 public class Blocks {
     public const ushort AIR = 0;

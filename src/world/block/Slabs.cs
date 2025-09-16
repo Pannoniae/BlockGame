@@ -1,7 +1,8 @@
 ﻿using BlockGame.GL.vertexformats;
+using BlockGame.render;
 using BlockGame.util;
 
-namespace BlockGame.src.world.block;
+namespace BlockGame.world.block;
 
 public class Slabs : Block {
     public Slabs(ushort id, string name) : base(id, name) {

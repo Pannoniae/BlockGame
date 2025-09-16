@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using TrippyGL.Enums;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable
 

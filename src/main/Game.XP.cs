@@ -1,9 +1,9 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BlockGame.util;
+using BlockGame.util.log;
 
-namespace BlockGame;
+namespace BlockGame.main;
 
 /* Random experiments in this class */
 public partial class Game {

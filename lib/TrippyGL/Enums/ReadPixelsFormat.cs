@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies formats for a read pixels operation on a <see cref="FramebufferObject"/>.

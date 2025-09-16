@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
-using BlockGame.ui;
+using BlockGame.ui.menu;
 
-namespace BlockGame.src.ui.element;
+namespace BlockGame.ui.element;
 
 /**
  * Not an *actual* button, but it can be used for registering clicks (if you're lazy)

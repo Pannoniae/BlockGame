@@ -1,5 +1,6 @@
 ﻿using System;
 using Silk.NET.OpenGL;
+using PrimitiveType = TrippyGL.Enums.PrimitiveType;
 
 namespace TrippyGL
 {

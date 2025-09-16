@@ -1,4 +1,4 @@
-﻿namespace BlockGame.util;
+﻿namespace BlockGame.world.block;
 
 public class CandyBlock : Block {
     public CandyBlock(ushort id, string name) : base(id, name) {

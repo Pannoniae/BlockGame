@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using BlockGame.util;
 using Molten;
 
-namespace BlockGame.GL;
+namespace BlockGame.GL.vertexformats;
 
 [StructLayout(LayoutKind.Explicit, Size = 16)]
 public struct VertexTinted {

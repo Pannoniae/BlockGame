@@ -1,10 +1,15 @@
+using BlockGame.render;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.util.xNBT;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
+using BlockGame.world.worldgen.generator;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world;
 
 public partial class World : IDisposable {
     public const int WORLDSIZE = 12;
@@ -106,10 +111,10 @@ public partial class World : IDisposable {
 
         // SAFETY CHECK
         if (saveWorld != null) {
-            Game.clearInterval(saveWorld);
+            main.Game.clearInterval(saveWorld);
         }
 
-        saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
+        saveWorld = main.Game.setInterval(5 * 1000, saveWorldMethod);
     }
 
     public void preInit(bool loadingSave = false) {
@@ -126,8 +131,8 @@ public partial class World : IDisposable {
     public void init(bool loadingSave = false) {
         player = new Player(this, 6, 20, 6);
         addEntity(player);
-        Game.player = player;
-        Game.camera.setPlayer(player);
+        main.Game.player = player;
+        main.Game.camera.setPlayer(player);
 
         if (!loadingSave) {
             // find safe spawn position with proper AABB clearance
@@ -191,7 +196,7 @@ public partial class World : IDisposable {
         var x = 0;
         foreach (var chunk in chunks.Values) {
             if (chunk.status >= ChunkStatus.MESHED &&
-                chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+                chunk.lastSaved + 60 * 1000 < (ulong)main.Game.permanentStopwatch.ElapsedMilliseconds) {
                 worldIO.saveChunkAsync(this, chunk);
                 x++;
             }
@@ -495,7 +500,7 @@ public partial class World : IDisposable {
     /// Chunkloading and friends.
     /// </summary>
     public void renderUpdate(double dt) {
-        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+        var start = main.Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var ctr = 0;
         updateChunkloading(start, loading: false, ref ctr);
         
@@ -510,7 +515,7 @@ public partial class World : IDisposable {
         // otherwise don't wait for nothing
         // yes I was an idiot
         var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
-        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
+        while (main.Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
                 chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
@@ -530,7 +535,7 @@ public partial class World : IDisposable {
 
         // if we're loading, we can also mesh chunks
         // empty the meshing queue
-        while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
+        while (main.Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
             // if this chunk doesn't exist anymore (because we unloaded it)
             // then don't mesh! otherwise we'll fucking crash
             if (!isChunkSectionInWorld(sectionCoord)) {
@@ -538,7 +543,7 @@ public partial class World : IDisposable {
             }
 
             var section = getSubChunk(sectionCoord);
-            Game.blockRenderer.meshChunk(section);
+            main.Game.blockRenderer.meshChunk(section);
         }
 
         // debug
@@ -704,8 +709,8 @@ public partial class World : IDisposable {
      * If noUpdate, we're loading, don't bother invalidating chunks, they'll get remeshed *anyway*
      */
     public void processLightQueue(List<LightNode> queue, bool isSkylight, bool noUpdate = false) {
-        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
-        while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
+        var start = main.Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+        while (queue.Count > 0 && main.Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
             processLightQueueOne(queue, isSkylight, noUpdate);
         }
     }
@@ -785,8 +790,8 @@ public partial class World : IDisposable {
     }
 
     public void processLightRemovalQueue(List<LightRemovalNode> queue, List<LightNode> addQueue, bool isSkylight) {
-        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
-        while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
+        var start = main.Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+        while (queue.Count > 0 && main.Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
             processLightRemovalQueueOne(queue, addQueue, isSkylight);
         }
     }
@@ -925,7 +930,7 @@ public partial class World : IDisposable {
 
         // stop automatic saves
         saveWorld.enabled = false;
-        Game.clearInterval(saveWorld);
+        main.Game.clearInterval(saveWorld);
         saveWorld = null!;
 
         // stop the chunksave queue and save pending chunks
@@ -938,8 +943,8 @@ public partial class World : IDisposable {
 
         ReleaseUnmanagedResources();
 
-        Game.world = null;
-        Game.player = null;
+        main.Game.world = null;
+        main.Game.player = null;
         //Game.renderer = null;
         GC.SuppressFinalize(this);
     }

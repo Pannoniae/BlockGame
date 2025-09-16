@@ -1,4 +1,4 @@
-﻿namespace BlockGame.item;
+﻿namespace BlockGame.world.item;
 
 /**
  * An item which is a "wrapper" for a block.

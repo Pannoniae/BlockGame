@@ -1,4 +1,5 @@
 ﻿using System;
+using FontStashSharp.Base;
 using FontStashSharp.Interfaces;
 
 namespace FontStashSharp

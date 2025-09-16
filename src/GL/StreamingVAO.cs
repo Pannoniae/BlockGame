@@ -14,7 +14,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public StreamingVAO() {
-        GL = Game.GL;
+        GL = main.Game.GL;
         VAOHandle = GL.GenVertexArray();
     }
 
@@ -31,7 +31,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public void upload(Span<T> data) {
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            Game.GL.InvalidateBufferData(vbo);
+            main.Game.GL.InvalidateBufferData(vbo);
             count = (uint)data.Length;
             fixed (T* d = data) {
                 GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(data.Length * sizeof(T)), d);

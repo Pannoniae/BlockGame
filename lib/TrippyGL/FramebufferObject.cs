@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Silk.NET.OpenGL;
+using TrippyGL.Enums;
 using TrippyGL.Utils;
 
 namespace TrippyGL

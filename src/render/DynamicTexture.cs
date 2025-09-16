@@ -1,7 +1,7 @@
 ﻿using BlockGame.GL;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace BlockGame.src.render;
+namespace BlockGame.render;
 
 public abstract class DynamicTexture {
     public BTextureAtlas parent;

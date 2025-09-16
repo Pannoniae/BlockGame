@@ -7,10 +7,13 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.world;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 using Molten;
 using Debug = System.Diagnostics.Debug;
 
-namespace BlockGame;
+namespace BlockGame.render;
 
 /// <summary>
 /// Unified block rendering system that handles both world rendering (with caches, AO, smooth lighting)
@@ -714,9 +717,9 @@ public class BlockRenderer {
     public void meshChunk(SubChunk subChunk) {
         //sw.Restart();
         subChunk.vao?.Dispose();
-        subChunk.vao = new SharedBlockVAO(Game.renderer.chunkVAO);
+        subChunk.vao = new SharedBlockVAO(main.Game.renderer.chunkVAO);
         subChunk.watervao?.Dispose();
-        subChunk.watervao = new SharedBlockVAO(Game.renderer.chunkVAO);
+        subChunk.watervao = new SharedBlockVAO(main.Game.renderer.chunkVAO);
 
         var currentVAO = subChunk.vao;
         var currentWaterVAO = subChunk.watervao;
@@ -875,7 +878,7 @@ public class BlockRenderer {
         }
 
         // if fullbright, just overwrite all lights to 15
-        if (Game.graphics.fullbright) {
+        if (main.Game.graphics.fullbright) {
             neighbourLights.AsSpan().Fill(15);
         }
     }

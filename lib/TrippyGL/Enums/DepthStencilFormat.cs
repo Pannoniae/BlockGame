@@ -1,4 +1,4 @@
-﻿namespace TrippyGL
+﻿namespace TrippyGL.Enums
 {
     /// <summary>
     /// Specifies depth and/or stencil formats a <see cref="FramebufferObject"/> can have.

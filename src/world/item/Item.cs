@@ -1,6 +1,7 @@
 ﻿using BlockGame.util;
+using BlockGame.world.block;
 
-namespace BlockGame.item;
+namespace BlockGame.world.item;
 
 /**
  * Items have IDs from 1 and up,

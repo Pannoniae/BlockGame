@@ -1,4 +1,4 @@
-﻿namespace BlockGame;
+﻿namespace BlockGame.world;
 
 /**
  * Sadly can't do this like blocks because if you init an entity, it should exist in the world, etc.

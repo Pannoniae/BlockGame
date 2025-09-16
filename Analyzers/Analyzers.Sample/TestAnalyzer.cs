@@ -1,6 +1,7 @@
 using Silk.NET.OpenGL.Legacy;
+using Game = BlockGame.main.Game;
 
-using BlockGame;
+namespace Analyzers.Sample;
 
 public class TestAnalyzer {
     public void TestMethod() {

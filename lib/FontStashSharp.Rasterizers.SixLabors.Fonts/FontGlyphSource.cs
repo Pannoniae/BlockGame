@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using FontStashSharp.Samples.SixLabors;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
@@ -9,7 +8,7 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
-namespace TrippyGL.Fonts.Building
+namespace FontStashSharp.Rasterizers.SixLabors.Fonts
 {
 	/// <summary>
 	/// An implementation of <see cref="IGlyphSource"/> that sources it's glyphs from

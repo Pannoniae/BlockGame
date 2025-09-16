@@ -1,7 +1,13 @@
 using System.Drawing;
 using System.Numerics;
 using System.Runtime;
+using BlockGame.render;
+using BlockGame.ui.menu;
 using BlockGame.util;
+using BlockGame.util.log;
+using BlockGame.world;
+using BlockGame.world.block;
+using BlockGame.world.chunk;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -9,7 +15,7 @@ using Silk.NET.OpenGL.Legacy;
 using RectangleF = System.Drawing.RectangleF;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
-namespace BlockGame.ui;
+namespace BlockGame.ui.screen;
 
 public class GameScreen : Screen {
     public Debug D;
@@ -49,7 +55,7 @@ public class GameScreen : Screen {
         umt.start();
 
         //updateMemory = Game.setInterval(200, updateMemoryMethod);
-        updateDebugText = Game.setInterval(100, INGAME_MENU.updateDebugTextMethod);
+        updateDebugText = main.Game.setInterval(100, INGAME_MENU.updateDebugTextMethod);
     }
 
 
@@ -58,7 +64,7 @@ public class GameScreen : Screen {
         //Game.renderer = null;
         //updateMemory.enabled = false;
         updateDebugText.enabled = false;
-        Game.clearInterval(updateDebugText);
+        main.Game.clearInterval(updateDebugText);
     }
 
 
@@ -68,34 +74,34 @@ public class GameScreen : Screen {
             INGAME_MENU.update(dt);
         }
         
-        var world = Game.world;
+        var world = main.Game.world;
         
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
-        var prevTargetedPos = Game.instance.targetedPos;
+        var prevTargetedPos = main.Game.instance.targetedPos;
         var col = Raycast.raycast(world);
 
-        Game.raycast = col;
+        main.Game.raycast = col;
         // previous pos
         if (col.hit) {
-            Game.instance.targetedPos = col.block;
-            Game.instance.previousPos = col.previous;
+            main.Game.instance.targetedPos = col.block;
+            main.Game.instance.previousPos = col.previous;
         }
         else {
-            Game.instance.targetedPos = null;
-            Game.instance.previousPos = null;
+            main.Game.instance.targetedPos = null;
+            main.Game.instance.previousPos = null;
         }
 
         // update current tick
         CHAT.tick++;
 
         // time control for day/night cycle testing
-        if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
+        if (main.Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
             // speed up time
             targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 64.0f);
             //Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
         }
-        else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
+        else if (main.Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
             // slow down time
             targetTimeAcceleration = Math.Max(targetTimeAcceleration / 2.0f, 0.25f);
             //Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
@@ -119,18 +125,18 @@ public class GameScreen : Screen {
         }
 
         // if user holds down alt + f10 for 5 seconds, crash the game lul
-        if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) &&
-            Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
+        if (main.Game.keyboard.IsKeyPressed(Key.AltLeft) && main.Game.keyboard.IsKeyPressed(Key.F10) &&
+            main.Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
             MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!");
         }
         
         // check for F3 release behavior
-        if (f3Press != -1 && !Game.keyboard.IsKeyPressed(Key.F3)) {
+        if (f3Press != -1 && !main.Game.keyboard.IsKeyPressed(Key.F3)) {
             // F3 was released - check if it was a short press
-            var pressDuration = Game.permanentStopwatch.ElapsedMilliseconds - f3Press;
+            var pressDuration = main.Game.permanentStopwatch.ElapsedMilliseconds - f3Press;
             if (pressDuration < 400) {
                 // short press - toggle debug screen or fps mode
-                if (Game.keyboard.IsKeyPressed(Key.ShiftLeft)) {
+                if (main.Game.keyboard.IsKeyPressed(Key.ShiftLeft)) {
                     fpsOnly = !fpsOnly;
                 } else {
                     debugScreen = !debugScreen;
@@ -146,7 +152,7 @@ public class GameScreen : Screen {
         world.player.strafeVector = new Vector3D(0, 0, 0);
         world.player.inputVector = new Vector3D(0, 0, 0);
 
-        if (!world.paused && !Game.lockingMouse) {
+        if (!world.paused && !main.Game.lockingMouse) {
             if (currentMenu == INGAME_MENU) {
                 world.player.updateInput(dt);
             }
@@ -156,28 +162,28 @@ public class GameScreen : Screen {
         }
 
         world.renderUpdate(dt);
-        Game.renderer.update(dt);
-        Game.renderer.updateRandom(dt);
+        main.Game.renderer.update(dt);
+        main.Game.renderer.updateRandom(dt);
     }
 
     public override void render(double dt, double interp) {
         base.render(dt, interp);
-        Game.metrics.clear();
+        main.Game.metrics.clear();
 
-        var world = Game.world;
+        var world = main.Game.world;
 
         //world.mesh();
-        Game.camera.calculateFrustum(interp);
+        main.Game.camera.calculateFrustum(interp);
         //Console.Out.WriteLine(world.player.camera.frustum);
-        Game.renderer.render(interp);
-        if (Game.instance.targetedPos.HasValue) {
+        main.Game.renderer.render(interp);
+        if (main.Game.instance.targetedPos.HasValue) {
             //Console.Out.WriteLine(Game.instance.targetedPos.Value);
-            Game.renderer.drawBlockOutline(interp);
+            main.Game.renderer.drawBlockOutline(interp);
         }
 
         D.renderTick(interp);
         // update here because in the main menu, we don't have a world
-        Game.fontLoader.renderer3D.renderTick(interp);
+        main.Game.fontLoader.renderer3D.renderTick(interp);
         if (!currentMenu.isModal()) {
             INGAME_MENU.render(dt, interp);
         }
@@ -197,42 +203,42 @@ public class GameScreen : Screen {
         }
 
         // render entities
-        Game.GL.Disable(EnableCap.DepthTest);
-        Game.world.player.render(dt, interp);
-        Game.GL.Enable(EnableCap.DepthTest);
+        main.Game.GL.Disable(EnableCap.DepthTest);
+        main.Game.world.player.render(dt, interp);
+        main.Game.GL.Enable(EnableCap.DepthTest);
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
         base.onMouseDown(mouse, button);
-        if (Game.world.inMenu || currentMenu != INGAME_MENU) {
+        if (main.Game.world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
         base.onMouseMove(mouse, pos);
-        if (!Game.focused || Game.world.inMenu || currentMenu != INGAME_MENU) {
+        if (!main.Game.focused || main.Game.world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
 
-        if (Game.firstFrame) {
-            Game.instance.lastMousePos = pos;
+        if (main.Game.firstFrame) {
+            main.Game.instance.lastMousePos = pos;
         }
         else {
             const float lookSensitivity = 0.1f;
-            if (Game.instance.lastMousePos == default) {
-                Game.instance.lastMousePos = pos;
+            if (main.Game.instance.lastMousePos == default) {
+                main.Game.instance.lastMousePos = pos;
             }
             else {
-                var xOffset = (pos.X - Game.instance.lastMousePos.X) * lookSensitivity;
-                var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
-                Game.instance.lastMousePos = pos;
+                var xOffset = (pos.X - main.Game.instance.lastMousePos.X) * lookSensitivity;
+                var yOffset = (pos.Y - main.Game.instance.lastMousePos.Y) * lookSensitivity;
+                main.Game.instance.lastMousePos = pos;
 
-                Game.camera.ModifyDirection(xOffset, yOffset);
+                main.Game.camera.ModifyDirection(xOffset, yOffset);
             }
         }
 
-        Game.firstFrame = false;
+        main.Game.firstFrame = false;
     }
 
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
@@ -264,7 +270,7 @@ public class GameScreen : Screen {
             }
 
             // hack for back to main menu
-            else if (!Game.world.inMenu && !Game.world.paused) {
+            else if (!main.Game.world.inMenu && !main.Game.world.paused) {
                 pause();
             }
             else {
@@ -277,7 +283,7 @@ public class GameScreen : Screen {
             return;
         }
 
-        var world = Game.world;
+        var world = main.Game.world;
 
         switch (key) {
             case Key.F3:
@@ -289,14 +295,14 @@ public class GameScreen : Screen {
                     f3Press = -1;
                 } else {
                     // start F3 timeout window
-                    f3Press = Game.permanentStopwatch.ElapsedMilliseconds;
+                    f3Press = main.Game.permanentStopwatch.ElapsedMilliseconds;
                 }
                 break;
             case Key.F4:
                 INGAME_MENU.ToggleSegmentedMode();
                 break;
             case Key.F5:
-                Game.camera.cycleMode();
+                main.Game.camera.cycleMode();
                 break;
             // reload chunks
             case Key.A when keyboard.IsKeyPressed(Key.F3):
@@ -308,10 +314,10 @@ public class GameScreen : Screen {
             case Key.G:
                 world?.Dispose();
                 world = WorldIO.load("level1");
-                Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
+                main.Game.instance.resize(new Vector2D<int>(main.Game.width, main.Game.height));
                 break;
             case Key.F8:
-                Game.noUpdate = !Game.noUpdate;
+                main.Game.noUpdate = !main.Game.noUpdate;
                 break;
             case Key.F9:
                 // on shift, just clean GC
@@ -326,7 +332,7 @@ public class GameScreen : Screen {
                 //Game.mm();
                 break;
             case Key.F10: {
-                altF10Press = Game.permanentStopwatch.ElapsedMilliseconds;
+                altF10Press = main.Game.permanentStopwatch.ElapsedMilliseconds;
 
                 // print vmem
                 var vmem = MemoryUtils.getVRAMUsage(out _);
@@ -348,29 +354,29 @@ public class GameScreen : Screen {
                     switchToMenu(new InventoryMenu(new Vector2I(0, 32)));
                     ((InventoryMenu)currentMenu!).setup();
                     world.inMenu = true;
-                    Game.instance.unlockMouse();
+                    main.Game.instance.unlockMouse();
                 }
 
                 break;
             }
             case Key.Space: {
-                if (Game.permanentStopwatch.ElapsedMilliseconds <
+                if (main.Game.permanentStopwatch.ElapsedMilliseconds <
                     world.player.spacePress + Constants.flyModeDelay * 1000) {
                     world.player.flyMode = !world.player.flyMode;
                 }
 
-                world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
+                world.player.spacePress = main.Game.permanentStopwatch.ElapsedMilliseconds;
                 break;
             }
             case Key.T: {
                 if (currentMenu == INGAME_MENU) {
-                    Game.instance.executeOnMainThread(() => {
-                        Game.instance.unlockMouse();
+                    main.Game.instance.executeOnMainThread(() => {
+                        main.Game.instance.unlockMouse();
                         switchToMenu(CHAT);
                     });
                 }
                 else if (currentMenu == CHAT) {
-                    Game.instance.lockMouse();
+                    main.Game.instance.lockMouse();
                     switchToMenu(INGAME_MENU);
                 }
 
@@ -380,10 +386,10 @@ public class GameScreen : Screen {
                 // toggle music
                 music = !music;
                 if (music) {
-                    Game.snd.unmuteMusic();
+                    main.Game.snd.unmuteMusic();
                 }
                 else {
-                    Game.snd.muteMusic();
+                    main.Game.snd.muteMusic();
                 }
 
                 break;
@@ -410,8 +416,8 @@ public class GameScreen : Screen {
             }
             case Key.C when keyboard.IsKeyPressed(Key.F3): {
                 // toggle frustum freeze
-                Game.camera.frustumFrozen = !Game.camera.frustumFrozen;
-                Log.info("Frustum freeze: " + (Game.camera.frustumFrozen ? "ON" : "OFF"));
+                main.Game.camera.frustumFrozen = !main.Game.camera.frustumFrozen;
+                Log.info("Frustum freeze: " + (main.Game.camera.frustumFrozen ? "ON" : "OFF"));
                 break;
             }
         }
@@ -429,13 +435,13 @@ public class GameScreen : Screen {
     }
 
     public void remeshWorld(int oldRenderDist) {
-        var world = Game.world;
+        var world = main.Game.world;
         
         // free up memory from the block arraypool - we probably don't need that much
         ArrayBlockData.blockPool.trim();
         ArrayBlockData.lightPool.trim();
         
-        Game.renderer.setUniforms();
+        main.Game.renderer.setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.MESHED) {
@@ -449,38 +455,38 @@ public class GameScreen : Screen {
 
     public void pause() {
         switchToMenu(PAUSE_MENU);
-        Game.world.inMenu = true;
-        Game.world.paused = true;
-        Game.instance.unlockMouse();
-        Game.world.player.catchUpOnPrevVars();
+        main.Game.world.inMenu = true;
+        main.Game.world.paused = true;
+        main.Game.instance.unlockMouse();
+        main.Game.world.player.catchUpOnPrevVars();
     }
 
     public void backToGame() {
         switchToMenu(INGAME_MENU);
-        Game.world.inMenu = false;
-        Game.world.paused = false;
-        Game.instance.lockMouse();
+        main.Game.world.inMenu = false;
+        main.Game.world.paused = false;
+        main.Game.instance.lockMouse();
         //Game.lockingMouse = true;
     }
 
     private void backToMainMenu() {
-        Game.instance.executeOnMainThread(() => {
+        main.Game.instance.executeOnMainThread(() => {
             Log.debug("back");
-            Game.instance.switchToScreen(MAIN_MENU_SCREEN);
+            main.Game.instance.switchToScreen(MAIN_MENU_SCREEN);
         });
     }
 
     public override void onMouseUp(Vector2 pos, MouseButton button) {
         base.onMouseUp(pos, button);
         // if no longer holding, the player isn't clicking into the window anymore
-        if (Game.focused && Game.lockingMouse) {
-            Game.lockingMouse = false;
+        if (main.Game.focused && main.Game.lockingMouse) {
+            main.Game.lockingMouse = false;
         }
     }
 
     public override void resize(Vector2I size) {
         base.resize(size);
-        Game.camera.setViewport(size.X, size.Y);
+        main.Game.camera.setViewport(size.X, size.Y);
     }
 
     public override void draw() {
@@ -489,13 +495,13 @@ public class GameScreen : Screen {
             INGAME_MENU.draw();
         }
 
-        var gui = Game.gui;
+        var gui = main.Game.gui;
 
         // clear depth buffer so the gui can use it properly
         //Game.GL.Clear(ClearBufferMask.DepthBufferBit);
         
-        var centreX = Game.centreX;
-        var centreY = Game.centreY;
+        var centreX = main.Game.centreX;
+        var centreY = main.Game.centreY;
 
 
         if (currentMenu == INGAME_MENU || currentMenu == CHAT) {
@@ -559,15 +565,15 @@ public class GameScreen : Screen {
             }
         }
 
-        if (Game.world.paused && currentMenu == PAUSE_MENU) {
+        if (main.Game.world.paused && currentMenu == PAUSE_MENU) {
             var pauseText = "-PAUSED-";
-            gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
+            gui.drawStringCentred(pauseText, new Vector2(main.Game.centreX, main.Game.centreY - 16 * GUI.guiScale),
                 Color4b.OrangeRed);
         }
     }
 
     private void drawChunkBorders() {
-        var world = Game.world;
+        var world = main.Game.world;
 
         // draw chunk borders
         var playerPos = world.player.position;
@@ -688,25 +694,25 @@ public class GameScreen : Screen {
     }
 
     public override void clear(double dt, double interp) {
-        var world = Game.world;
+        var world = main.Game.world;
         var clearColour = world?.getHorizonColour(world.worldTick) ?? WorldRenderer.defaultClearColour;
-        Game.graphics.clearColor(clearColour);
-        Game.graphics.clearDepth();
-        Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+        main.Game.graphics.clearColor(clearColour);
+        main.Game.graphics.clearDepth();
+        main.Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 
     public void openSettings() {
         Screen.SETTINGS_SCREEN.prevScreen = Screen.GAME_SCREEN;
-        Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
+        main.Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
     }
     
     private void cycleBlockMetadata() {
-        if (!Game.instance.targetedPos.HasValue) {
+        if (!main.Game.instance.targetedPos.HasValue) {
             return;
         }
 
-        var pos = Game.instance.targetedPos.Value;
-        var world = Game.world;
+        var pos = main.Game.instance.targetedPos.Value;
+        var world = main.Game.world;
         var blockValue = world.getBlockRaw(pos.X, pos.Y, pos.Z);
         var blockId = blockValue.getID();
         var currentMeta = blockValue.getMetadata();
@@ -760,8 +766,8 @@ public class UpdateMemoryThread(GameScreen screen) {
     }
 
     public void updateMemoryMethod() {
-        Game.proc.Refresh();
-        screen.INGAME_MENU.workingSet = Game.proc.WorkingSet64;
+        main.Game.proc.Refresh();
+        screen.INGAME_MENU.workingSet = main.Game.proc.WorkingSet64;
         screen.INGAME_MENU.GCMemory = GC.GetTotalMemory(false);
     }
 }

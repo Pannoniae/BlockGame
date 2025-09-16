@@ -1,9 +1,8 @@
-﻿using FontStashSharp.Interfaces;
-using SixLabors.Fonts;
+﻿using SixLabors.Fonts;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.IO;
-using TrippyGL.Fonts.Building;
+using FontStashSharp.Base;
 
 namespace FontStashSharp.Rasterizers.SixLabors.Fonts
 {

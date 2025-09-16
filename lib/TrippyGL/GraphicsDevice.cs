@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Silk.NET.OpenGL;
+using TrippyGL.Enums;
+using BlitFramebufferFilter = TrippyGL.Enums.BlitFramebufferFilter;
+using DebugSeverity = TrippyGL.Enums.DebugSeverity;
+using DebugSource = TrippyGL.Enums.DebugSource;
+using DebugType = TrippyGL.Enums.DebugType;
+using PrimitiveType = TrippyGL.Enums.PrimitiveType;
 
 namespace TrippyGL {
     public delegate void ShaderCompiledHandler(GraphicsDevice sender, in ShaderProgramBuilder programBuilder, bool success);

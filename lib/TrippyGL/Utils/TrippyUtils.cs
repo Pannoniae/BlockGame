@@ -1,5 +1,8 @@
 using System;
 using Silk.NET.OpenGL;
+using TrippyGL.Enums;
+using AttributeType = TrippyGL.Enums.AttributeType;
+using UniformType = TrippyGL.Enums.UniformType;
 
 namespace TrippyGL.Utils
 {

@@ -1,9 +1,10 @@
 using BlockGame.GL;
 using BlockGame.util;
+using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame;
+namespace BlockGame.world.chunk;
 
 public class SubChunk {
 

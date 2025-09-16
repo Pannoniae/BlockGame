@@ -1,4 +1,5 @@
 using System.Drawing;
+using BlockGame.ui.menu;
 using BlockGame.util;
 
 namespace BlockGame.ui.element;
@@ -20,11 +21,11 @@ public class ProgressBar : GUIElement {
     public override void draw() {
         var bg = bounds;
         
-        Game.gui.draw(Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, bg.Width, bg.Height), null, backgroundColor);
+        main.Game.gui.draw(main.Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, bg.Width, bg.Height), null, backgroundColor);
         
         if (progress > 0f) {
             var progressWidth = (int)(bg.Width * progress);
-            Game.gui.draw(Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, progressWidth, bg.Height), null, foregroundColor);
+            main.Game.gui.draw(main.Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, progressWidth, bg.Height), null, foregroundColor);
         }
     }
 }

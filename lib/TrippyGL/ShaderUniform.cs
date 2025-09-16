@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using Silk.NET.OpenGL;
 using TrippyGL.Utils;
+using UniformType = TrippyGL.Enums.UniformType;
 
 namespace TrippyGL
 {

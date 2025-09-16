@@ -1,4 +1,4 @@
-namespace BlockGame;
+namespace BlockGame.world.worldgen.generator;
 
 public partial class TechDemoWorldGenerator : WorldGenerator {
 

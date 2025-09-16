@@ -1,9 +1,10 @@
 using BlockGame.GL;
 using BlockGame.util;
+using BlockGame.world.chunk;
 using Molten.DoublePrecision;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 
-namespace BlockGame;
+namespace BlockGame.render;
 
 public partial class WorldRenderer {
     public bool isVisible(SubChunk subChunk, BoundingFrustum frustum) {
@@ -52,8 +53,8 @@ public partial class WorldRenderer {
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
             setUniformPos(coord, worldShader, cameraPos);
             uint renderedVerts = vao.render();
-            Game.metrics.renderedVerts += (int)renderedVerts;
-            Game.metrics.renderedSubChunks += 1;
+            main.Game.metrics.renderedVerts += (int)renderedVerts;
+            main.Game.metrics.renderedSubChunks += 1;
         }
     }
 
@@ -64,7 +65,7 @@ public partial class WorldRenderer {
             watervao.bind();
             setUniformPosWater(coord, waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
-            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+            main.Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
@@ -75,7 +76,7 @@ public partial class WorldRenderer {
             watervao.bind();
             setUniformPosDummy(coord, dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
-            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+            main.Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
@@ -86,8 +87,8 @@ public partial class WorldRenderer {
             vao.bind();
 
             uint renderedVerts = vao.renderBaseInstance(idx);
-            Game.metrics.renderedVerts += (int)renderedVerts;
-            Game.metrics.renderedSubChunks += 1;
+            main.Game.metrics.renderedVerts += (int)renderedVerts;
+            main.Game.metrics.renderedSubChunks += 1;
         }
     }
 
@@ -98,7 +99,7 @@ public partial class WorldRenderer {
             watervao.bind();
 
             uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
-            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+            main.Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 
@@ -109,8 +110,8 @@ public partial class WorldRenderer {
             vao.addCMDLCommand();
 
             uint renderedVerts = vao.renderCMDL(idx);
-            Game.metrics.renderedVerts += (int)renderedVerts;
-            Game.metrics.renderedSubChunks += 1;
+            main.Game.metrics.renderedVerts += (int)renderedVerts;
+            main.Game.metrics.renderedSubChunks += 1;
         }
     }
 
@@ -121,7 +122,7 @@ public partial class WorldRenderer {
             watervao.addCMDLCommand();
 
             uint renderedTransparentVerts = watervao.renderCMDL(idx);
-            Game.metrics.renderedVerts += (int)renderedTransparentVerts;
+            main.Game.metrics.renderedVerts += (int)renderedTransparentVerts;
         }
     }
 

@@ -1,7 +1,8 @@
 using BlockGame.util;
 using BlockGame.util.meth.noise;
+using BlockGame.world.chunk;
 
-namespace BlockGame;
+namespace BlockGame.world.worldgen.generator;
 
 public partial class PerlinWorldGenerator : WorldGenerator {
     public World world;
