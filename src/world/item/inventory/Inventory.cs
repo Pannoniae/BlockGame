@@ -3,6 +3,10 @@
 namespace BlockGame.world.item.inventory;
 
 public interface Inventory {
+
+    public const int MAX_STACK_SIZE = 256;
+    public const int MAX_STACK_SIZE_FOOD = 8;
+
     public int size();
     
     /**

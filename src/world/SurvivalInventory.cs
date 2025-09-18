@@ -9,9 +9,9 @@ public class SurvivalInventory : Inventory {
     
     public ItemStack? cursor = null;
     
-    /// <summary>
-    /// Selected index
-    /// </summary>
+    /**
+     * The index of the selected item.
+     */
     public int selected;
 
     public SurvivalInventory() {
@@ -39,19 +39,41 @@ public class SurvivalInventory : Inventory {
     }
 
     public ItemStack? removeStack(int index, int count) {
-        throw new NotImplementedException();
+        if (index < 0 || index >= slots.Length) return null;
+        var stack = slots[index];
+        if (stack == null || count <= 0) return null;
+
+        var removeAmount = Math.Min(count, stack.quantity);
+        var removed = new ItemStack(stack.id, removeAmount, stack.metadata);
+
+        stack.quantity -= removeAmount;
+        if (stack.quantity <= 0) {
+            slots[index] = null;
+        }
+
+        return removed;
     }
 
     public ItemStack? clear(int index) {
-        throw new NotImplementedException();
+        if (index < 0 || index >= slots.Length) return null;
+        var stack = slots[index];
+        slots[index] = null;
+        return stack;
     }
 
     public void clearAll() {
-        throw new NotImplementedException();
+        for (int i = 0; i < slots.Length; i++) {
+            slots[i] = null;
+        }
     }
 
     public bool add(int index, int count) {
-        throw new NotImplementedException();
+        if (index < 0 || index >= slots.Length || count <= 0) return false;
+        var stack = slots[index];
+        if (stack == null) return false;
+
+        stack.quantity += count;
+        return true;
     }
 
     public bool isEmpty() {
@@ -64,7 +86,7 @@ public class SurvivalInventory : Inventory {
     }
 
     public string name() {
-        return "Hotbar";
+        return "Inventory";
     }
 
     public void setDirty(bool dirty) {

@@ -244,7 +244,7 @@ public class Water : Block {
     /**
      * Get the water level for this block. -1 if no water :(
      */
-    public int getWater(World world, int x, int y, int z, ref bool hasFalling) {
+    public static int getWater(World world, int x, int y, int z, ref bool hasFalling) {
         var block = world.getBlock(x, y, z);
         if (block == Blocks.WATER) {
             var data = world.getBlockMetadata(x, y, z);
@@ -271,7 +271,7 @@ public class Water : Block {
      * Why is this necessary to be separate? I DON'T KNOW
      * however, this is only used by the rendering! otherwise falling water is treated as source which is no good.
      */
-    public int getRenderWater(World world, int x, int y, int z) {
+    public static int getRenderWater(World world, int x, int y, int z) {
         var block = world.getBlock(x, y, z);
         if (block == Blocks.WATER) {
             var data = world.getBlockMetadata(x, y, z);
@@ -292,7 +292,7 @@ public class Water : Block {
         return -1;
     }
 
-    public float getRenderHeight(World world, int x, int y, int z) {
+    public static float getRenderHeight(World world, int x, int y, int z) {
         // if there's no water here, return 0
         var block = world.getBlock(x, y, z);
         if (block != Blocks.WATER) {
@@ -305,7 +305,7 @@ public class Water : Block {
     /**
      * Get how much liquid this water block has.
      */
-    public float getHeight(byte data) {
+    public static float getHeight(byte data) {
         // if falling water, always full height
         if (isFalling(data)) {
             return 1.0f;
@@ -325,7 +325,7 @@ public class Water : Block {
      * x = -1..1 (corner x)
      * z = -1..1 (corner z)
      */
-    public float getRenderHeight(World world, int x, int y, int z, sbyte ox, sbyte oz) {
+    public static float getRenderHeight(World world, int x, int y, int z, sbyte ox, sbyte oz) {
         // if there's water above ANY of the 4 corner blocks, return full height
         if (getRenderWater(world, x, y + 1, z) >= 0 ||
             getRenderWater(world, x + ox, y + 1, z) >= 0 ||
@@ -352,7 +352,7 @@ public class Water : Block {
         return totalHeight / samples;
     }
 
-    private float sampleBlockHeight(World world, int x, int y, int z, ref int samples) {
+    private static float sampleBlockHeight(World world, int x, int y, int z, ref int samples) {
         var block = world.getBlock(x, y, z);
         if (block == Blocks.WATER) {
             var data = world.getBlockMetadata(x, y, z);
@@ -422,7 +422,7 @@ public class Water : Block {
         return flow.LengthSquared() > 0 ? Vector3.Normalize(flow) : Vector3.Zero;
     }
 
-    public bool canSpread(World world, int x, int y, int z) {
+    public static bool canSpread(World world, int x, int y, int z) {
         var block = world.getBlock(x, y, z);
 
         if (block == Blocks.AIR) {
@@ -437,7 +437,7 @@ public class Water : Block {
         return !waterSolid[block]; // other non-full blocks
     }
 
-    public void spread(World world, int x, int y, int z, byte level, bool falling) {
+    public static void spread(World world, int x, int y, int z, byte level, bool falling) {
         // actually do it!
         var metadata = setWaterLevel(0, level);
         metadata = setFalling(metadata, falling);
@@ -448,7 +448,7 @@ public class Water : Block {
         world.scheduleBlockUpdate(new Vector3I(x, y, z));
     }
 
-    public void wakeUpWater(World world, Vector3I pos) {
+    public static void wakeUpWater(World world, Vector3I pos) {
         if (world.getBlock(pos) == Blocks.WATER) {
             var metadata = world.getBlockMetadata(pos);
             // wake up static water
@@ -537,7 +537,7 @@ public class Water : Block {
 
         // side faces: 90° rotation with proper centering
         // ??? mass confucion
-        var uo = uMid - vMid; // U offset for centering after rotation  
+        var uo = uMid - vMid; // U offset for centering after rotation
         var vo = uMid + vMid; // V offset for centering after rotation
         var vMinO = -uMin + vo; // transformed V coordinates
         var vMaxO = -uMax + vo;

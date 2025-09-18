@@ -910,9 +910,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     
     public void updateRandom(double dt) {
         var player = Game.player;
-        var r = 16;
+        const int r = 16;
 
-        var n = 2048;
+        const int n = 2048;
         for (int i = 0; i < n; i++) {
             var x = player.position.X + Game.clientRandom.Next(-r, r);
             var y = player.position.Y + Game.clientRandom.Next(-r, r);
