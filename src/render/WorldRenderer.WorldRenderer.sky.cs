@@ -169,7 +169,7 @@ public sealed partial class WorldRenderer {
     private static Vector3[] generateStarPositions() {
         var random = new XRandom(12345); // fixed seed for consistent stars
         var stars = new Vector3[1200];
-        var starDistance = 100f;
+        const float starDistance = 100f;
 
         for (int i = 0; i < stars.Length; i++) {
             // generate random point on sphere using proper spherical coordinates

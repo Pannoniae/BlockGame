@@ -181,6 +181,7 @@ public class Entity(World world) : Persistent {
             
             // accumulate push forces for liquids
             if (Block.liquid[block]) {
+                inLiquid = true;
                 var pushForce = blockInstance.push(world, pos.X, pos.Y, pos.Z, this);
                 if (pushForce != Vector3D.Zero) {
                     push += pushForce;
@@ -192,9 +193,10 @@ public class Entity(World world) : Persistent {
         // apply accumulated push force with smart normalization
         if (liquid > 0 && push != Vector3D.Zero) {
             // limit maximum push strength to prevent entity getting stuck
-            const double maxPushStrength = 7.2;
+            const double maxPushStrength = 5.6;
             push = Vector3D.Normalize(push) * maxPushStrength;
-            
+
+
             velocity += push * dt;
         }
     }

@@ -31,8 +31,15 @@ public class ItemSlot {
         itemPos = new Vector2I(rect.X + PADDING, rect.Y + PADDING);
     }
     
-    public ItemStack? getStack() {
+    public virtual ItemStack? getStack() {
         if (index == -1) return null;
         return inv.getStack(index);
+    }
+    public virtual bool accept() {
+        return true;
+    }
+
+    public virtual bool take() {
+        return true;
     }
 }

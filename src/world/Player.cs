@@ -73,18 +73,24 @@ public class Player : Entity {
         renderer.update(dt);
         updateSwing();
 
+        interactBlock(dt);
+
         updateInputVelocity(dt);
+        applyInputMovement(dt);
+
+        //Console.Out.WriteLine(inLiquid);
+
+        updateGravity(dt);
+
         velocity += accel * dt;
         //position += velocity * dt;
         clamp(dt);
 
         blockAtFeet = world.getBlock(feetPosition.toBlockPos());
         //inLiquid = Block.liquid[blockAtFeet];
-        interactBlock(dt);
 
         collisionAndSneaking(dt);
-        applyInputMovement(dt);
-        updateGravity(dt);
+
         applyFriction();
         clamp(dt);
 
@@ -97,7 +103,7 @@ public class Player : Entity {
 
 
         // don't increment if flying
-        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
+        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 1.5f : 0;
 
         // Play footstep sounds when moving on ground
         if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
@@ -234,11 +240,12 @@ public class Player : Entity {
         if (inLiquid) {
             velocity.X *= Constants.liquidFriction;
             velocity.Z *= Constants.liquidFriction;
-            velocity.Y *= Constants.liquidFriction + 0.05;
+            velocity.Y *= Constants.liquidFriction;
+            velocity.Y -= 0.25;
         }
 
         if (jumping && !wasInLiquid && inLiquid) {
-            velocity.Y -= 1.4;
+            velocity.Y -= 2.5;
         }
 
         //Console.Out.WriteLine(level);
@@ -256,6 +263,13 @@ public class Player : Entity {
     }
 
     private void updateGravity(double dt) {
+
+        // if in liquid, don't apply gravity
+        if (inLiquid) {
+            accel.Y = 0;
+            return;
+        }
+
         if (!onGround && !flyMode) {
             accel.Y = -Constants.gravity;
         }
