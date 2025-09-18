@@ -2,47 +2,80 @@
 
 ## This guide is suitable for both humans and AIs.
 
-## Terminology
-(note, half of this is wrong in the code rn, this is more like an aspiration lol)
-
-- **World**: A world folder with multiple dimensions.
-- **Dimension**: A 3D world with blocks, entities, etc.
-- **Chunk**: A 2D chunk, 16x16x128 blocks.
-- **SubChunk**: A 3D chunk, 16x16x16 blocks.
-- **Block**: A single block in the world.
-- **Entity**: A single entity in the world.
-- **ChunkCoord**: A 2D coordinate for a chunk, with x, z coordinates.
-- **SubChunkCoord**: A 3D coordinate for a subchunk, with x, y, z coordinates.
-
-## COORDINATE SYSTEM (CRITICAL - READ EVERY TIME)
+## COORDINATE SYSTEM (READ THIS EVERY TIME)
 **-X = West, +X = East**
 **-Y = Down, +Y = Up**
 **+Z = North, -Z = South**
 
 This is NOT fucking minecraft! South is -Z, North is +Z.
 
+## Terminology
+- **Level**: World folder with multiple dimensions
+- **World**: 3D dimension with blocks/entities
+- **Chunk**: 2D chunk column, 16x16x128 blocks
+- **SubChunk**: 3D chunk section, 16x16x16 blocks
+- **ChunkCoord**: 2D chunk position (x, z)
+- **SubChunkCoord**: 3D subchunk position (x, y, z)
+
 
 ## Code style/guidelines/conventions
 
-- If possible, don't refer back to stuff! It creates a mess. For example, if you have a `Slot`, don't create an `Inventory` field for it. 
-Or if you have an `Entity`, don't create a `World` field for it. Methods which require *both* should live in the parent. (e.g. in `World`).
+- If possible, don't refer back to stuff! It creates a mess. If you have an `Entity`, don't create a `World` field for it. Methods which require *both* should live in the parent. (e.g. in `World`).
 
   This avoids a huge spaghetti mess of references.
-- Java-style naming conventions (PascalCase for types, camelCase for variables)
+- Java-style naming conventions (PascalCase for types, camelCase for variables, no IInterface). I WON'T ACCEPT C#-STYLED SLOP. This is to ensure quality control. I warned you.
 - Generally short names and abbreviations, prefer brevity to expressivity, e.g. `pos`, `xx`, `xp`, `c00`, `sp`, `title`. This is so the code doesn't get cluttered. You can leave a comment to explain it fully.
 - Comment the "why" and the "how", not the "what" - leave the tutorial-level comments out of the codebase. Prefer starting with lowercase for one-line comments.
-- Use /** (Java)-style doc comments instead of ///.
+- Use /** (Java)-style doc comments instead of ///. You *can* use XML tags, but NEVER use ///-styled comments. If you find one, fix it.
 - When designing features, aim for simplicity, minimalism and performance. When they conflict, prefer performance.
 
+### NO ENTERPRISE SLOP
 
-## Footguns/noobtraps
-- NEVER use the built-in `Random` class. The no-arg constructor is good but you can't control the seed -
-the seeded constructor has backwards compatibility bullshit, so it's doggone slow. Use `XRandom` instead.
-- NEVER use built-in hashcodes, especially in worldgen/where you want consistent results. IT IS LITERALLY RANDOM ON PURPOSE.
-Shitty-ass design. Use `XHash` instead for deterministic hashing.
-- Silk.NET is a walking skill issue, it's so full of footguns. More specifically:
-- Avoid generic (`<T0>`) overloads in Silk.NET. They DO NOT DO WHAT YOU EXPECT and WILL SEGFAULT EVERYTHING. I warned you.
-- When an API requires shit like (void*)0, DO NOT SKIP THE CAST. It will use the IntPtr overload, which is... guess what, segfaulting again, trying to access 0x0000.
-- The only correct option to use 99% of the time are the raw overloads taking pointers. If you don't know how to use pointers, ask me.
-- Similarly, NEVER use the string overloads either. This one is violated a few times in the code (tell me if you find them lol), but they allocate the string on the native heap every single time, so they are shit.
-Especially in render code.
+This is game dev, not corporate CRUD. We have ZERO external consumers, ZERO backwards compatibility requirements, and ZERO team members who need "clean" interfaces. **Just write direct, fast code.**
+
+**BANNED:**
+- `IFooService`, `IBarManager`, `IThingProvider` - interfaces with single implementations are mental illness. You need to do 10 pushups for every interface you add.
+- `SomethingContext`, `FooFactory`, `BarHandler` - enterprise naming cancer
+- Layers for the sake of layers - data should flow obviously, not through 7 abstraction levels
+- Generic everything `ConfigurableDoer<T, K, V>` - make specific classes for specific jobs
+- Future-proofing bullshit - we can modify the code, that's the point
+- Design patterns as goals instead of tools - Strategy/Factory/Observer are means, not ends
+
+**DO:**
+- Concrete classes doing concrete things
+- Inheritance only when behavior genuinely differs (not for "extensibility")
+- Short, direct names: `Renderer` not `IRenderingServiceProvider`
+- Obvious call chains: `player.inv.getStack(0)` not `contextProvider.getInventoryService().querySlot(request)`
+- Performance-first design - this runs at 180fps AT LEAST, not once per fucking HTTP request
+- I repeat, USE SHORT NAMES! Most names you can think of are way too long. Don't be like that. We have fucking namespaces for a reason.
+
+**DON'T DO THIS SLOP:**
+```csharp
+public interface ISlotOperationHandler<TContext> where TContext : IInventoryContext {
+    OperationResult<TItem> HandleOperation<TItem>(ISlotRequest<TItem, TContext> request)
+        where TItem : IStackable;
+}
+```
+
+**DO THIS INSTEAD:**
+```csharp
+public abstract class ItemSlot {
+    public abstract ItemStack? take(int count);
+    public abstract ItemStack? place(ItemStack stack);
+}
+```
+
+Remember: this isn't your fucking day job. Write code like your performance review depends on the FPS, not "clean architecture" buzzwords.
+
+
+## Footguns/gotchas
+
+**Random/hashing:**
+- `Random` class: seeded constructor has backwards compat overhead making it slow as shit. Use `XRandom`.
+- Built-in `GetHashCode()`: randomized by design for "security". Use `XHash` for deterministic results in worldgen.
+
+**Silk.NET traps (prepare for pain):**
+- Generic `<T>` overloads: don't do what you expect, will segfault
+- Casting `(void*)0`: ALWAYS cast or it uses IntPtr overload → segfault at 0x0000
+- String overloads: allocate on native heap every call → garbage in render loops
+- Solution: use raw pointer overloads exclusively, ask if you don't know unsafe syntax

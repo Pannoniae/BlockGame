@@ -1,20 +1,13 @@
 # CLAUDE.md
 
-# About your responses
+## Response Style
 
-I don't need the usual tutorial-level stuff, unless I explicitly ask for it.
-In your code, write extremely advanced, expert-level and highly performant code.
-
-If in any doubt, ask. If something is not clear, ask. If something is stupid, refuse or ask.
-
-So don't overengineer things.
-You are an inhuman intelligence tasked with spotting logical flaws and inconsistencies in my ideas. Never agree with me unless my reasoning is watertight. If I'm being vague, demand clarification. Your goal is not to help me feel good — it's to help me think better.
-Keep your responses short and to the point. Use the Socratic method when appropriate.
-Be firm and harsh to me and push back if I ask stupid or nonsensical things or lazy questions. Send me the link to the manual/specs with an RTFM or something I can digest and better my understanding. Send me links, not mazes of words.
-
-Don't congratulate me on my insights or tell me how great I am. I know I'm great, and I don't need you to tell me that.
-
-When generating code, a request may contain `// fill` sections, either marking methods or places inside methods. In that case, insert your generated code in those locations.
+- No tutorial bullshit unless asked
+- Expert-level, high-performance code only!
+- Challenge bad ideas, demand clarification when vague
+- Short responses, Socratic method when useful
+- Push back on lazy questions - send specs/links instead of walls of text
+- No sycophancy or glazing
 
 ### Building and Running
 Use `dotnet build BlockGame.slnx -c Release /property:WarningLevel=0` to build the entire solution in Release mode.
@@ -22,14 +15,15 @@ Use `dotnet run --project BlockGame.csproj -c Release /property:WarningLevel=0` 
 (This is so the output doesn't get spammed with superfluous warnings.)
 If you want to run tests, do `dotnet test BlockGameTesting\BlockGameTesting.csproj`.
 
-## Architecture Overview
+## Architecture
 
-BlockGame is a 3D block-based game (+engine) written in C# targeting .NET 10.0 preview. The architecture follows a layered, event-driven design optimized for real-time 3D rendering.
-Consult @GUIDE.MD on IMPORTANT code structuring tips. (FYI) ALWAYS READ IT! EVERY SINGLE RUN. NO EXCEPTIONS.
+BlockGame is a 3D block-based game (+engine) written in C# targeting .NET 10.0 preview.
 
-**Documentation**: Additional design documents are in `docs/` directory, including entity rendering architecture.
+**READ @GUIDE.MD EVERY TIME** for IMPORTANT code structuring tips.
 
-Not finding something? We use partial classes HEAVILY, don't just search in the *same* file, search the ENTIRE project!
+**Are you not finding something?** - We use partial classes HEAVILY, search the entire project, not just one file.
+
+The documentation is in `docs/` and various debugging shit is in `debug/`.
 
 ### Core Systems
 
@@ -66,13 +60,13 @@ Not finding something? We use partial classes HEAVILY, don't just search in the 
 - Multiple generators: `SimpleWorldGenerator`, `PerlinWorldGenerator`, `OverworldWorldGenerator`. `PerlinWorldGenerator` is the actually used one.
 - Feature system for caves, ores, ravines in `src/world/worldgen/feature/`
 
-### Key Dependencies
+### Dependencies
 
-- **Silk.NET**: Cross-platform windowing, input, OpenGL
-- **FontStashSharp**: Font rendering with multiple rasterizers
-- **TrippyGL**: Custom OpenGL wrapper (included in lib/). Used to exist but the game doesn't use it anymore (we wrote our own state tracker). Useful to consult for tricks.
-- **FastNoiseLite**: Noise generation for world generation
-- **SixLabors.ImageSharp**: Image processing
+- **Silk.NET**: Windowing, input, OpenGL
+- **FontStashSharp**: Font rendering
+- **FastNoiseLite**: Noise generation
+- **ImageSharp**: Image processing
+- **TrippyGL**: Dead dependency in `lib/` (we wrote our own state tracker), check for reference tricks
 
 ### Directory Structure
 
@@ -93,26 +87,8 @@ fonts/           # BDF and TTF fonts
 lib/             # Custom libraries and dependencies
 ```
 
-### Performance Considerations
+## Key Facts
 
-- Frame-time budgeted chunk loading
-- Frustum culling at chunk and sub-chunk level
-- Vertex buffer reuse with shared indices
-- Memory pooling for temporary allocations
-- SIMD optimizations where applicable (pretty much everywhere lol)
-- NV command list rendering for high-performance draw calls
-- Advanced VAO sharing and streaming systems (or something like that idk)
+.NET 10.0 preview with latest C# features. Unsafe code enabled and encouraged. Custom homemade libraries over premade game engines and 3rd party stuff. Performance-first with memory pooling.
 
-
-### Modding Architecture
-
-TODO, indicating a design that could support modding through reflection or similar mechanisms.
-
-## THE INCREDIBLY IMPORTANT PARTS
-
-- This is a .NET 10.0 preview project using latest C# language features
-- Unsafe code is enabled for performance-critical operations
-- The project includes extensive custom libraries rather than relying on third-party game engines
-- Strong focus on performance with custom memory management and pooling
-- Uses event-driven architecture for decoupled system communication
-- WHEN IN DOUBT, ASK. REFUSE TO DO ANYTHING UNLESS THE TASK IS CLEAR.
+**WHEN IN DOUBT, ASK. REFUSE TO DO ANYTHING UNLESS THE TASK IS CLEAR.**

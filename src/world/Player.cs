@@ -89,7 +89,7 @@ public class Player : Entity {
         blockAtFeet = world.getBlock(feetPosition.toBlockPos());
         //inLiquid = Block.liquid[blockAtFeet];
 
-        collisionAndSneaking(dt);
+        collide(dt);
 
         applyFriction();
         clamp(dt);

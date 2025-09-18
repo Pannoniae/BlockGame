@@ -3,7 +3,11 @@ using BlockGame.world.item;
 
 namespace BlockGame.util;
 
+/**
+ * We don't have IEquatable&lt;ItemStack&gt; or a hashcode here! This is because it's mutable so you'll fuck it up anyway.
+ */
 public class ItemStack {
+
     public int id;
     /**
      * Item metadata is a signed integer! So you can use it for durability or other fancy stuff. Is this confusing? Probably. Do I have a better idea atm? No.
@@ -35,5 +39,9 @@ public class ItemStack {
     
     public Item getItem() {
         return Item.get(id);
+    }
+
+    public bool same(ItemStack? stack) {
+        return stack != null && stack.id == id && stack.metadata == metadata;
     }
 }

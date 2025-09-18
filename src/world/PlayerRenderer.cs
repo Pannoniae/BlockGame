@@ -119,7 +119,7 @@ public class PlayerRenderer {
 
 
         // Draw a full-screen quad with slightly blue tint
-        float alpha = 0.5f;
+        const float alpha = 0.5f;
         // multiply by lighting
 
         var world = Game.world;

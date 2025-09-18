@@ -28,12 +28,14 @@ public abstract class InventoryContext {
                 if (taken != null && taken.id != Items.AIR) {
                     player.survivalInventory.cursor = taken;
                 }
-            } else {
+            }
+            else {
                 // try to place in slot
                 var remaining = slot.place(cursor);
                 player.survivalInventory.cursor = remaining;
             }
-        } else if (click == ClickType.RIGHT) {
+        }
+        else if (click == ClickType.RIGHT) {
             if (cursor == null) {
                 // try to take half
                 var currentStack = slot.getStack();
@@ -44,15 +46,23 @@ public abstract class InventoryContext {
                         player.survivalInventory.cursor = taken;
                     }
                 }
-            } else {
+            }
+            else {
                 // try to place one item
                 var singleItem = new ItemStack(cursor.id, 1, cursor.metadata);
                 var remaining = slot.place(singleItem);
+
                 if (remaining == null) {
+                    // Successfully placed 1 item through merging or into empty slot
                     cursor.quantity--;
                     if (cursor.quantity <= 0) {
                         player.survivalInventory.cursor = null;
                     }
+                }
+                else {
+                    // Swap occurred - either different item type or same type but slot was full
+                    // The slot now contains our 1 item, cursor should become what was returned
+                    player.survivalInventory.cursor = remaining;
                 }
             }
         }

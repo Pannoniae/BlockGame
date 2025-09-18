@@ -87,22 +87,23 @@ public class ItemSlot {
             return null;
         }
 
-        if (current.id == stack.id && current.metadata == stack.metadata) {
+        if (current.same(stack)) {
             // same item type, try to merge
             var canAdd = Inventory.MAX_STACK_SIZE - current.quantity;
             var addAmount = Math.Min(canAdd, stack.quantity);
 
             if (addAmount > 0) {
                 current.quantity += addAmount;
-                stack.quantity -= addAmount;
 
-                if (stack.quantity <= 0) {
+                if (stack.quantity <= addAmount) {
                     return null; // all items placed
+                } else {
+                    // return remainder - don't modify the input!
+                    return new ItemStack(stack.id, stack.quantity - addAmount, stack.metadata);
                 }
             }
-
-            // if we still have items left, the current stack is full - swap instead
-            if (stack.quantity > 0) {
+            else {
+                // slot is full, can't merge - swap instead
                 inventory.setStack(index, stack.copy());
                 return current;
             }
