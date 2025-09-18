@@ -135,7 +135,7 @@
         <None Update="..\runtimes\linux-x64\native\libminiaudioex.so">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-        <None Update="..\glfw3.dll">
+        <None Include="..\glfw3.dll">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

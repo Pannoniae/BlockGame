@@ -23,6 +23,9 @@ public static partial class Meth {
     
     public const double rho = 1 - psi;
     public const float rhoF = 1 - psiF;
+
+    public const double kappa = 1 + rho;
+    public const float kappaF = 1 + rhoF;
     
     public const double sqrt2 = 1.4142135623730951; 
     public const float sqrt2F = 1.4142135623730951f; 

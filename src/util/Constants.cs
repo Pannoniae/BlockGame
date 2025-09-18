@@ -15,8 +15,8 @@ public static class Constants {
     public const double liquidSwimUpSpeed = 0.45;
     public const double liquidSurfaceBoost = 0.2;
     public const double maxVSpeed = 200;
-    public const double friction = 0.81;
-    public const double airFriction = 0.81;
+    public const double friction = 0.80;
+    public const double airFriction = 0.80;
     public const double flyFriction = 0.85;
     public const double verticalFriction = 0.99;
     public const double liquidFriction = 0.92;
@@ -25,7 +25,7 @@ public static class Constants {
 
     public static double moveSpeed = 1.25;
     public const double groundMoveSpeed = 1;
-    public const double airMoveSpeed = 0.75;
+    public const double airMoveSpeed = 0.5;
     public const double airFlySpeed = 1.75;
     // idk why this has to be so low??? otherwise it feels super fast
     // not anymore!

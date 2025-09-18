@@ -83,11 +83,14 @@ public class Textures {
         const int LIGHTMAP_SIZE = 16;
 
         const float BASE = 0.04f;
+        const float BASE2 = 0.16f;
         const float INVBASE = 1 - BASE;
+        const float INVBASE2 = 1 - BASE2;
 
         float ambientBrightness = 1f - skyDarken / 16f;
 
         // todo add slider
+        // todo add this later
         const float userBrightness = 0f;
 
         fixed (Rgba32* pData = lightmap) {
@@ -105,7 +108,7 @@ public class Textures {
                 //ba = ba * ba;
                 //ba = ba * ba * (3f - 2f * ba);
                 // ba = 0.5f - float.Sin(float.Tan(1.05f - 2.0f * ba) / 3.0f);
-                ba = ba * 0.5f * (1 - ba) + ba * ba;
+                ba = ba * Meth.rhoF * (1 - ba) + ba * ba * 1.17f;
 
                 float sl = sa * ambientBrightness;
                 float bl = ba;
@@ -120,19 +123,15 @@ public class Textures {
                 float sg = sl * (ambientBrightness * Meth.psiF + Meth.rhoF);
                 float sb = sl;
 
-
-                float r = (sr + br) * INVBASE + BASE;
-                float g = (sg + bg) * INVBASE + BASE;
-                float b = (sb + bb) * INVBASE + BASE;
-
-                r = float.Pow(float.Clamp(r, 0f, 1f), 1f - userBrightness * 0.5f);
-                g = float.Pow(float.Clamp(g, 0f, 1f), 1f - userBrightness * 0.5f);
-                b = float.Pow(float.Clamp(b, 0f, 1f), 1f - userBrightness * 0.5f);
+                // screen blend
+                float r = (1f - (1f - sr) * (1f - br)) * INVBASE + BASE;
+                float g = (1f - (1f - sg) * (1f - bg)) * INVBASE + BASE;
+                float b = (1f - (1f - sb) * (1f - bb)) * INVBASE + BASE;
 
                 // clamp & pack
-                r = float.Clamp(r * INVBASE + BASE, 0f, 1f);
-                g = float.Clamp(g * INVBASE + BASE, 0f, 1f);
-                b = float.Clamp(b * INVBASE + BASE, 0f, 1f);
+                r = float.Clamp(r, 0f, 1f);
+                g = float.Clamp(g, 0f, 1f);
+                b = float.Clamp(b, 0f, 1f);
 
                 pData[i] = new Rgba32((byte)(r * 255), (byte)(g * 255), (byte)(b * 255), 255);
             }
