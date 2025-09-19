@@ -104,7 +104,8 @@ public class Block {
     public static bool[] renderTick = new bool[MAXBLOCKS];
     public static bool[] liquid = new bool[MAXBLOCKS];
     public static bool[] customCulling = new bool[MAXBLOCKS];
-    
+    public static bool[] renderItemLike = new bool[MAXBLOCKS];
+
     public static bool[] selection = new bool[MAXBLOCKS];
     public static bool[] collision = new bool[MAXBLOCKS];
     public static byte[] lightLevel = new byte[MAXBLOCKS];
@@ -258,7 +259,8 @@ public class Block {
         YELLOW_FLOWER.flowerAABB();
         YELLOW_FLOWER.noCollision();
         YELLOW_FLOWER.waterTransparent();
-        
+        YELLOW_FLOWER.itemLike();
+
         RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
         RED_FLOWER.setTex(crossUVs(11, 1));
         RED_FLOWER.setModel(BlockModel.makeGrass(RED_FLOWER));
@@ -266,13 +268,15 @@ public class Block {
         RED_FLOWER.flowerAABB();
         RED_FLOWER.noCollision();
         RED_FLOWER.waterTransparent();
-        
+        RED_FLOWER.itemLike();
+
         THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
         THISTLE.setTex(crossUVs(12, 1));
         THISTLE.setModel(BlockModel.makeGrass(THISTLE));
         THISTLE.transparency();
         THISTLE.flowerAABB();
         THISTLE.waterTransparent();
+        THISTLE.itemLike();
         
         PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
         PLANKS.setTex(cubeUVs(0, 5));
@@ -368,6 +372,7 @@ public class Block {
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
         TORCH.setTex(cubeUVs(0, 6));
+        TORCH.itemLike();
         
         CRAFTING_TABLE = register(new Block(Blocks.CRAFTING_TABLE, "Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4,3, 3,3, 2, 3, 5,3));
@@ -642,6 +647,11 @@ public class Block {
 
     public Block tick() {
         randomTick[id] = true;
+        return this;
+    }
+
+    public Block itemLike() {
+        renderItemLike[id] = true;
         return this;
     }
     

@@ -26,6 +26,7 @@ public class CreativeInventoryContext : InventoryContext {
     private void collectAllItems() {
         allItems.Clear();
 
+        // add all blocks
         for (int i = 1; i <= Block.currentID; i++) {
             if (Block.blocks[i] == null || Block.isBlacklisted(i)) {
                 continue;
@@ -39,6 +40,14 @@ public class CreativeInventoryContext : InventoryContext {
             }
             else {
                 allItems.Add(new ItemStack(Item.blockID(i), 1));
+            }
+        }
+
+        // add all items
+        for (int i = 1; i <= Item.currentID; i++) {
+            var item = Item.get(i);
+            if (item != null && item.isItem()) {
+                allItems.Add(new ItemStack(i, 1));
             }
         }
     }
@@ -63,7 +72,7 @@ public class CreativeInventoryContext : InventoryContext {
                 slots.Add(new CreativeSlot(allItems[itemIndex], slotX, slotY));
             } else {
                 // empty slot for pages that don't fill completely
-                slots.Add(new CreativeSlot(new ItemStack(Items.AIR, 0), slotX, slotY));
+                slots.Add(new CreativeSlot(ItemStack.EMPTY, slotX, slotY));
             }
         }
 
@@ -103,7 +112,7 @@ public class CreativeInventoryContext : InventoryContext {
                 int slotX = 5 + x * ItemSlot.SLOTSIZE;
                 int slotY = 20 + y * ItemSlot.SLOTSIZE;
 
-                slots[i] = new CreativeSlot(new ItemStack(Items.AIR, 0), slotX, slotY);
+                slots[i] = new CreativeSlot(ItemStack.EMPTY, slotX, slotY);
             }
         }
     }

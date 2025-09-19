@@ -8,6 +8,8 @@ namespace BlockGame.util;
  */
 public class ItemStack {
 
+    public static readonly ItemStack EMPTY = new ItemStack(0, 0);
+
     public int id;
     /**
      * Item metadata is a signed integer! So you can use it for durability or other fancy stuff. Is this confusing? Probably. Do I have a better idea atm? No.
@@ -41,7 +43,16 @@ public class ItemStack {
         return Item.get(id);
     }
 
-    public bool same(ItemStack? stack) {
-        return stack != null && stack.id == id && stack.metadata == metadata;
+    public bool same(ItemStack stack) {
+        return stack != EMPTY && stack.id == id && stack.metadata == metadata;
+    }
+}
+
+public static class ItemStackArrayExtensions {
+    public static ItemStack[] fill(this ItemStack[] array) {
+        for (int i = 0; i < array.Length; i++) {
+            array[i] = ItemStack.EMPTY;
+        }
+        return array;
     }
 }

@@ -164,34 +164,44 @@ public class GUI {
         // if block
         var item = Item.get(stack.id);
         if (item.isBlock()) {
-            Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
-                ItemSlot.ITEMSIZE, (byte)stack.metadata);
-            // draw amount text
-            if (stack.quantity > 1) {
-                var s = stack.quantity.ToString();
-                Game.gui.drawStringUIThin(s,
-                    new Vector2(
-                        pos.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
-                        s.Length * 6f / guiScale,
-                        pos.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+            var blockID = item.getBlockID();
+            if (Block.renderItemLike[blockID]) {
+                drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y);
+            } else {
+                Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
+                    ItemSlot.ITEMSIZE, (byte)stack.metadata);
+                // draw amount text
+                if (stack.quantity > 1) {
+                    var s = stack.quantity.ToString();
+                    Game.gui.drawStringUIThin(s,
+                        new Vector2(
+                            pos.X + itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING -
+                            s.Length * 6f / guiScale,
+                            pos.Y + itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+                }
             }
+        }
+        else if (item.isItem()) {
+            drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y);
         }
     }
 
     public void drawItemWithoutInv(ItemSlot slot) {
         var stack = slot.getStack();
         var itemPos = slot.itemPos;
-        
+
         var item = Item.get(stack.id);
         if (item.isBlock()) {
-
-            Game.gui.drawBlockUI(item.getBlock(), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE, (byte)stack.metadata);
-            if (stack.quantity > 1) {
-                var s = stack.quantity.ToString();
-                Game.gui.drawStringUIThin(s,
-                    new Vector2(itemPos.X + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
-                        itemPos.Y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+            var blockID = item.getBlockID();
+            if (Block.renderItemLike[blockID]) {
+                drawItemSprite(item, stack, itemPos.X, itemPos.Y);
+            } else {
+                Game.gui.drawBlockUI(item.getBlock(), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE, (byte)stack.metadata);
+                drawQuantityText(stack, itemPos.X, itemPos.Y);
             }
+        }
+        else if (item.isItem()) {
+            drawItemSprite(item, stack, itemPos.X, itemPos.Y);
         }
     }
 
@@ -201,21 +211,29 @@ public class GUI {
         }
 
         var item = Item.get(cursorItem.id);
+        var pos = s2u(mousePos);
+        // offset by half item size so it's centered on cursor
+        var drawX = pos.X - ItemSlot.ITEMSIZE / 2f;
+        var drawY = pos.Y - ItemSlot.ITEMSIZE / 2f;
+
         if (item.isBlock()) {
-            var pos = s2u(mousePos);
-            // offset by half item size so it's centered on cursor
-            var drawX = pos.X - ItemSlot.ITEMSIZE / 2;
-            var drawY = pos.Y - ItemSlot.ITEMSIZE / 2;
+            var blockID = item.getBlockID();
+            if (Block.renderItemLike[blockID]) {
+                drawItemSprite(item, cursorItem, drawX, drawY);
+            } else {
+                Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata);
 
-            Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata);
-
-            // draw quantity if > 1
-            if (cursorItem.quantity > 1) {
-                var s = cursorItem.quantity.ToString();
-                Game.gui.drawStringUIThin(s,
-                    new Vector2(drawX + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
-                        drawY + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+                // draw quantity if > 1
+                if (cursorItem.quantity > 1) {
+                    var s = cursorItem.quantity.ToString();
+                    Game.gui.drawStringUIThin(s,
+                        new Vector2(drawX + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
+                            drawY + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+                }
             }
+        }
+        else if (item.isItem()) {
+            drawItemSprite(item, cursorItem, drawX, drawY);
         }
     }
 
@@ -765,5 +783,35 @@ public class GUI {
 
     public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0) {
         drawBlock(block, x * guiScale, y * guiScale, size, metadata);
+    }
+
+    private void drawItemSprite(Item item, ItemStack stack, float x, float y) {
+        var destRect = new RectangleF(x, y, ItemSlot.ITEMSIZE, ItemSlot.ITEMSIZE);
+
+        if (item.isBlock() && Block.renderItemLike[item.getBlockID()]) {
+            // get texture directly from block
+            var block = item.getBlock();
+            var texUV = block.getTexture(0, (byte)stack.metadata);
+            var blockAtlas = Game.textures.blockTexture.atlasSize;
+            var sourceRect = new Rectangle((int)(texUV.u * blockAtlas), (int)(texUV.v * blockAtlas), blockAtlas, blockAtlas);
+            drawUI(Game.textures.blockTexture, destRect, sourceRect);
+        } else {
+            // normal item rendering
+            var texUV = item.getTexture(stack);
+            var itemAtlas = Game.textures.itemTexture.atlasSize;
+            var sourceRect = new Rectangle((int)(texUV.u * itemAtlas), (int)(texUV.v * itemAtlas), itemAtlas, itemAtlas);
+            drawUI(Game.textures.itemTexture, destRect, sourceRect);
+        }
+
+        drawQuantityText(stack, x, y);
+    }
+
+    private void drawQuantityText(ItemStack stack, float x, float y) {
+        if (stack.quantity > 1) {
+            var s = stack.quantity.ToString();
+            Game.gui.drawStringUIThin(s,
+                new Vector2(x + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
+                    y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
+        }
     }
 }

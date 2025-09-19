@@ -29,10 +29,10 @@ public class ItemSlot {
     }
 
     /**
-     * Returns the stack currently in this slot. May be null.
+     * Returns the stack currently in this slot.
      */
-    public virtual ItemStack? getStack() {
-        if (inventory == null || index == -1) return null;
+    public virtual ItemStack getStack() {
+        if (inventory == null || index == -1) return ItemStack.EMPTY;
         return inventory.getStack(index);
     }
 
@@ -45,14 +45,14 @@ public class ItemSlot {
 
     /**
      * Attempts to take up to <i>count</i> items from this slot.
-     * Returns the taken items or null if none could be taken.
+     * Returns the taken items or ItemStack.EMPTY if none could be taken.
     */
-    public virtual ItemStack? take(int count) {
-        if (inventory == null) return null;
+    public virtual ItemStack take(int count) {
+        if (inventory == null) return ItemStack.EMPTY;
 
         var current = getStack();
-        if (current == null || current.quantity == 0 || count <= 0) {
-            return null;
+        if (current == ItemStack.EMPTY || current.quantity == 0 || count <= 0) {
+            return ItemStack.EMPTY;
         }
 
         var takeAmount = Math.Min(count, current.quantity);
@@ -60,7 +60,7 @@ public class ItemSlot {
 
         current.quantity -= takeAmount;
         if (current.quantity <= 0) {
-            inventory.setStack(index, null);
+            inventory.setStack(index, ItemStack.EMPTY);
         }
 
         return taken;
@@ -70,8 +70,8 @@ public class ItemSlot {
      * Attempts to place the given stack in this slot.
      * Returns any items that couldn't be placed.
     */
-    public virtual ItemStack? place(ItemStack stack) {
-        if (inventory == null || stack == null || stack.quantity <= 0) {
+    public virtual ItemStack place(ItemStack stack) {
+        if (inventory == null || stack == ItemStack.EMPTY || stack.quantity <= 0) {
             return stack;
         }
 
@@ -81,10 +81,10 @@ public class ItemSlot {
 
         var current = getStack();
 
-        if (current == null) {
+        if (current == ItemStack.EMPTY) {
             // slot is empty, place the entire stack
             inventory.setStack(index, stack.copy());
-            return null;
+            return ItemStack.EMPTY;
         }
 
         if (current.same(stack)) {
@@ -96,7 +96,7 @@ public class ItemSlot {
                 current.quantity += addAmount;
 
                 if (stack.quantity <= addAmount) {
-                    return null; // all items placed
+                    return ItemStack.EMPTY; // all items placed
                 } else {
                     // return remainder - don't modify the input!
                     return new ItemStack(stack.id, stack.quantity - addAmount, stack.metadata);
@@ -115,18 +115,18 @@ public class ItemSlot {
         }
 
         SkillIssueException.throwNew("something is wrong in inventoryland!");
-        return null;
+        return ItemStack.EMPTY;
     }
 
     /**
      * Swaps the contents of this slot with the given stack.
      * Returns the original contents of the slot.
      */
-    public virtual ItemStack? swap(ItemStack? stack) {
-        if (inventory == null) return null;
+    public virtual ItemStack swap(ItemStack stack) {
+        if (inventory == null) return ItemStack.EMPTY;
 
         var current = getStack();
-        if (stack != null && !accept(stack)) {
+        if (stack != ItemStack.EMPTY && !accept(stack)) {
             return current; // can't swap if slot doesn't accept the new stack
         }
 

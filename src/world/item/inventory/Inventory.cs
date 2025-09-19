@@ -10,24 +10,24 @@ public interface Inventory {
     public int size();
     
     /**
-     * Returns the stack at index. May be null.
+     * Returns the stack at index.
      */
-    public ItemStack? getStack(int index);
+    public ItemStack getStack(int index);
     
     /**
-     * Overwrites the stack at index. 
+     * Overwrites the stack at index.
      */
-    public void setStack(int index, ItemStack? stack);
+    public void setStack(int index, ItemStack stack);
     
     /**
      * Removes up to count items from the stack at index. Returns the removed items as a new stack.
      */
-    public ItemStack? removeStack(int index, int count);
+    public ItemStack removeStack(int index, int count);
     
     /**
      * Removes the entire stack at index. Returns the removed stack.
      */
-    public ItemStack? clear(int index);
+    public ItemStack clear(int index);
     
     public void clearAll();
     

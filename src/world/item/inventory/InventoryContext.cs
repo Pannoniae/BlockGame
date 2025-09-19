@@ -22,10 +22,11 @@ public abstract class InventoryContext {
         var cursor = player.survivalInventory.cursor;
 
         if (click == ClickType.LEFT) {
-            if (cursor == null) {
+            if (cursor == ItemStack.EMPTY) {
                 // try to take from slot
-                var taken = slot.take(slot.getStack()?.quantity ?? 1);
-                if (taken != null && taken.id != Items.AIR) {
+                var currentStack = slot.getStack();
+                var taken = slot.take(currentStack == ItemStack.EMPTY ? 1 : currentStack.quantity);
+                if (taken != ItemStack.EMPTY && taken.id != Items.AIR) {
                     player.survivalInventory.cursor = taken;
                 }
             }
@@ -36,13 +37,13 @@ public abstract class InventoryContext {
             }
         }
         else if (click == ClickType.RIGHT) {
-            if (cursor == null) {
+            if (cursor == ItemStack.EMPTY) {
                 // try to take half
                 var currentStack = slot.getStack();
-                if (currentStack != null && currentStack.quantity > 0) {
+                if (currentStack != ItemStack.EMPTY && currentStack.quantity > 0) {
                     var halfQuantity = (currentStack.quantity + 1) / 2;
                     var taken = slot.take(halfQuantity);
-                    if (taken != null) {
+                    if (taken != ItemStack.EMPTY) {
                         player.survivalInventory.cursor = taken;
                     }
                 }
@@ -52,11 +53,11 @@ public abstract class InventoryContext {
                 var singleItem = new ItemStack(cursor.id, 1, cursor.metadata);
                 var remaining = slot.place(singleItem);
 
-                if (remaining == null) {
+                if (remaining == ItemStack.EMPTY) {
                     // Successfully placed 1 item through merging or into empty slot
                     cursor.quantity--;
                     if (cursor.quantity <= 0) {
-                        player.survivalInventory.cursor = null;
+                        player.survivalInventory.cursor = ItemStack.EMPTY;
                     }
                 }
                 else {

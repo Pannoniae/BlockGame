@@ -17,7 +17,7 @@ public class PlayerRenderer {
     private List<BlockVertexTinted> vertices = new();
     private List<ushort> indices = new();
 
-    private ItemStack? handItem;
+    private ItemStack handItem;
     private int handSlot;
 
     /// Lower block when switching
@@ -50,7 +50,7 @@ public class PlayerRenderer {
     }
 
     public void render(double dt, double interp) {
-        if (handItem == null) {
+        if (handItem == ItemStack.EMPTY) {
             return;
         }
 

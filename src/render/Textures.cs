@@ -12,6 +12,7 @@ public class Textures {
 
     public BTexture2D background;
     public BTextureAtlas blockTexture;
+    public BTextureAtlas itemTexture;
     public BTexture2D lightTexture;
     public BTexture2D lightTexture2;
 
@@ -42,6 +43,9 @@ public class Textures {
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
         blockTexture.reload();
 
+        itemTexture = new BTextureAtlas("textures/items.png", 16);
+        itemTexture.reload();
+
         // init lightmap
         for (int i = 0; i < 256; i++) {
             lightmap[i] = lightTexture.getPixel(i & 15, i >> 4);
@@ -68,6 +72,7 @@ public class Textures {
     public void update(double dt) {
         // update animated textures in block atlas
         blockTexture.update(dt);
+        itemTexture.update(dt);
 
         // update lightmap every 5 ticks
         // or don't, this doesn't eat our performance yet

@@ -8,7 +8,7 @@ public class Recipe {
     public static Recipe[] recipes;
 
     public static void preLoad() {
-        WOOD_PICKAXE = register(Item.WOOD_PICKAXE);
+        WOOD_PICKAXE = register(Item.AIR);
         WOOD_PICKAXE.shape(111_020_020);
         WOOD_PICKAXE.ingredients(
             Item.block(Blocks.PLANKS),

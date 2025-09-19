@@ -9,7 +9,7 @@ public class CreativeSlot : ItemSlot {
         this.template = template;
     }
 
-    public override ItemStack? getStack() {
+    public override ItemStack getStack() {
         return template;
     }
 
@@ -17,15 +17,15 @@ public class CreativeSlot : ItemSlot {
         return true; // creative slots swallow all items
     }
 
-    public override ItemStack? take(int count) {
+    public override ItemStack take(int count) {
         return template.copy(); // infinite supply
     }
 
-    public override ItemStack? place(ItemStack stack) {
-        return null; // creative slots swallow all items
+    public override ItemStack place(ItemStack stack) {
+        return ItemStack.EMPTY; // creative slots swallow all items
     }
 
-    public override ItemStack? swap(ItemStack? stack) {
+    public override ItemStack swap(ItemStack stack) {
         return stack; // can't swap with creative slots
     }
 }

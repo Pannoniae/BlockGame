@@ -11,7 +11,9 @@ namespace BlockGame.world.item;
  */
 public class Item {
     public int id;
-    private string name;
+    public string name;
+
+    public UVPair tex = new UVPair(0, 0);
 
     /**
      * Problem is, we can't get the actual name without an itemstack, because the metadata might change the name (e.g. different colours of candy).
@@ -31,7 +33,6 @@ public class Item {
     public static int currentID = 1;
 
     public static Item AIR;
-    public static Item WOOD_PICKAXE;
 
     public Item(int id, string name) {
         this.id = id;
@@ -66,7 +67,7 @@ public class Item {
     
     public bool isBlock() => id < 0 && -id < Block.currentID && Block.blocks[-id] != null;
     
-    public bool isItem() => id > 0 && id < currentID && items[id] != null;
+    public bool isItem() => id > 0 && id < currentID && items[getIdx(id)] != null;
     
     public int getBlockID() => isBlock() ? -id : 0;
     
@@ -74,7 +75,32 @@ public class Item {
 
     public static void preLoad() {
         AIR = register(new Item(Items.AIR, "Air"));
-        WOOD_PICKAXE = register(new Item(Items.WOOD_PICKAXE, "Wooden Pickaxe"));
+
+        var goldIngot = new Item(Items.GOLD_INGOT, "Gold Ingot");
+        goldIngot.tex = new UVPair(0, 0);
+        register(goldIngot);
+
+        var ironIngot = new Item(Items.IRON_INGOT, "Iron Ingot");
+        ironIngot.tex = new UVPair(1, 0);
+        register(ironIngot);
+
+        var tinIngot = new Item(Items.TIN_INGOT, "Tin Ingot");
+        tinIngot.tex = new UVPair(2, 0);
+        register(tinIngot);
+
+        var silverIngot = new Item(Items.SILVER_INGOT, "Silver Ingot");
+        silverIngot.tex = new UVPair(3, 0);
+        register(silverIngot);
+    }
+
+    public virtual UVPair getTexture(ItemStack stack) {
+        if (isBlock()) {
+            var blockID = getBlockID();
+            if (Block.renderItemLike[blockID]) {
+                return getBlock().getTexture(0, stack.metadata);
+            }
+        }
+        return tex;
     }
     
     /**
