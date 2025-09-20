@@ -328,7 +328,7 @@ public class Block {
         HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
         HEAD.setModel(BlockModel.makeHalfCube(HEAD));
         HEAD.partialBlock();
-        
+
         WATER = register(new Water(Blocks.WATER, "Water", 15, 8));
         WATER.setTex(new UVPair(0, 4), new UVPair(0, 8));
         WATER.makeLiquid();
