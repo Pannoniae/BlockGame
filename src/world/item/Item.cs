@@ -67,7 +67,7 @@ public class Item {
     
     public bool isBlock() => id < 0 && -id < Block.currentID && Block.blocks[-id] != null;
     
-    public bool isItem() => id > 0 && id < currentID && items[getIdx(id)] != null;
+    public bool isItem() => id > 0 && id <= currentID && items[getIdx(id)] != null;
     
     public int getBlockID() => isBlock() ? -id : 0;
     
@@ -91,6 +91,10 @@ public class Item {
         var silverIngot = new Item(Items.SILVER_INGOT, "Silver Ingot");
         silverIngot.tex = new UVPair(3, 0);
         register(silverIngot);
+
+        var goldPickaxe = new Item(Items.GOLD_PICKAXE, "Gold Pickaxe");
+        goldPickaxe.tex = new UVPair(3, 2);
+        register(goldPickaxe);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
