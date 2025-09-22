@@ -3,6 +3,7 @@ using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -184,6 +185,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
             
             int currentChunks = world.chunkLoadQueue.Count;
             c = total - currentChunks;
+            //Log.info($"Meshed {currentChunks}/{total} chunks");
             float meshProgress = total > 0 ? (float)c / total : 1f;
             // Meshing: 70%-95%
             update(mapProgress(meshProgress, 0.70f, 0.95f));

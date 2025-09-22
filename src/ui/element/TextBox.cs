@@ -6,7 +6,7 @@ namespace BlockGame.ui.element;
 
 public class TextBox : GUIElement {
 
-    public string input;
+    public string input = "";
 
     public static int padding => 2 * GUI.guiScale;
 

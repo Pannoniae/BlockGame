@@ -44,8 +44,8 @@ public class GUI {
     /// </summary>
     public Shader guiBlockShader;
 
-    public DynamicSpriteFont guiFont;
-    public DynamicSpriteFont guiFontThin;
+    public DynamicSpriteFont guiFont = null!;
+    public DynamicSpriteFont guiFontThin = null!;
     public Rectangle buttonRect = new(96, 0, 96, 16);
     public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
 
@@ -792,14 +792,14 @@ public class GUI {
             // get texture directly from block
             var block = item.getBlock();
             var texUV = block.getTexture(0, (byte)stack.metadata);
-            var blockAtlas = Game.textures.blockTexture.atlasSize;
-            var sourceRect = new Rectangle((int)(texUV.u * blockAtlas), (int)(texUV.v * blockAtlas), blockAtlas, blockAtlas);
+            var uv = UVPair.texCoordsI(texUV);
+            var sourceRect = new Rectangle((int)uv.X, (int)uv.Y, UVPair.ATLASSIZE, UVPair.ATLASSIZE);
             drawUI(Game.textures.blockTexture, destRect, sourceRect);
         } else {
             // normal item rendering
             var texUV = item.getTexture(stack);
-            var itemAtlas = Game.textures.itemTexture.atlasSize;
-            var sourceRect = new Rectangle((int)(texUV.u * itemAtlas), (int)(texUV.v * itemAtlas), itemAtlas, itemAtlas);
+            var uv = UVPair.texCoordsI(texUV);
+            var sourceRect = new Rectangle((int)uv.X, (int)uv.Y, UVPair.ATLASSIZE, UVPair.ATLASSIZE);
             drawUI(Game.textures.itemTexture, destRect, sourceRect);
         }
 

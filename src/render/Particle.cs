@@ -34,7 +34,7 @@ public class Particle {
     public int maxAge;
 
     /** texture path */
-    public string texture;
+    public string texture = null!;
 
     /** texture U coordinate */
     public float u;

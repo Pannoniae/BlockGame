@@ -7,7 +7,6 @@ using Rectangle = System.Drawing.Rectangle;
 namespace BlockGame.ui.element;
 
 public class Button : GUIElement {
-    public string? text { get; set; }
 
     public bool wide;
 

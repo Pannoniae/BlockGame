@@ -21,17 +21,18 @@ public class WorldIO {
     private const int mz = Chunk.CHUNKSIZE;
 
     public World world;
-    
+
     private readonly ChunkSaveThread chunkSaveThread;
-    
-    // Background saving
+    private readonly ChunkLoadThread chunkLoadThread;
+
+    // Background saving and loading
     public readonly ManualResetEvent shutdownEvent = new(false);
     private volatile bool isDisposed;
 
     public WorldIO(World world) {
         this.world = world;
         chunkSaveThread = new ChunkSaveThread(this);
-        
+        chunkLoadThread = new ChunkLoadThread(this);
     }
 
     public void save(World world, string filename, bool saveChunks = true) {
@@ -79,20 +80,38 @@ public class WorldIO {
             saveChunk(world, chunk);
             return;
         }
-        
+
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
         var pathStr = getChunkString(world.name, chunk.coord);
-        
+
         chunkSaveThread.add(new ChunkSaveData(nbt, pathStr, chunk.lastSaved));
+    }
+
+    public void loadChunkAsync(ChunkCoord coord, ChunkStatus targetStatus) {
+        if (isDisposed) {
+            // can't load async if disposed
+            return;
+        }
+
+        chunkLoadThread.queueLoad(new ChunkLoadRequest(world, world.name, coord, targetStatus));
+    }
+
+    public bool hasChunkLoadResult() {
+        return chunkLoadThread.hasResult();
+    }
+
+    public ChunkLoadResult? getChunkLoadResult() {
+        return chunkLoadThread.getResult();
     }
 
     public void Dispose() {
         if (isDisposed) return;
         isDisposed = true;
-        
-        // wait for the save thread to finish
+
+        // wait for the save and load threads to finish
         chunkSaveThread.Dispose();
+        chunkLoadThread.Dispose();
         shutdownEvent.Dispose();
     }
 
@@ -169,6 +188,41 @@ public class WorldIO {
         return chunk;
     }
 
+    /**
+     * Apply NBT data to an existing empty chunk (for async loading)
+     */
+    // todo merge this with WorldIO.loadChunkFromNBT
+    public static void loadChunkDataFromNBT(Chunk chunk, NBTCompound nbt) {
+        var status = nbt.getByte("status");
+        var lastSaved = nbt.getULong("lastSaved");
+
+        chunk.status = (ChunkStatus)status;
+        chunk.lastSaved = lastSaved;
+
+        var sections = nbt.getListTag<NBTCompound>("sections");
+        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            var section = sections.get(sectionY);
+            var blocks = chunk.blocks[sectionY];
+
+            // if not initialised, leave it be
+            if (section.getByte("inited") == 0) {
+                blocks.inited = false;
+                continue;
+            }
+
+            // init chunk section
+            blocks.loadInit();
+
+            // blocks
+            blocks.setSerializationData(section.getUIntArray("blocks"), section.getByteArray("light"));
+        }
+
+        // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
+        if (chunk.status >= ChunkStatus.MESHED) {
+            chunk.status = ChunkStatus.LIGHTED;
+        }
+    }
+
     public static World load(string filename) {
         Log.info($"Loaded data from level/{filename}/level.xnbt");
         var tag = NBT.readFile($"level/{filename}/level.xnbt");
@@ -232,6 +286,20 @@ public struct ChunkSaveData(NBTCompound nbt, string path, ulong lastSave) {
     public readonly NBTCompound nbt = nbt;
     public readonly string path = path;
     public ulong lastSave = lastSave;
+}
+
+public struct ChunkLoadRequest(World world, string worldName, ChunkCoord coord, ChunkStatus targetStatus) {
+    public readonly World world = world;
+    public readonly string worldName = worldName;
+    public readonly ChunkCoord coord = coord;
+    public readonly ChunkStatus targetStatus = targetStatus;
+}
+
+public struct ChunkLoadResult(ChunkCoord coord, NBTCompound? nbtData, ChunkStatus targetStatus, Exception? error = null) {
+    public readonly ChunkCoord coord = coord;
+    public readonly NBTCompound? nbtData = nbtData;
+    public readonly ChunkStatus targetStatus = targetStatus;
+    public readonly Exception? error = error;
 }
 
 public class ChunkSaveThread : IDisposable {
@@ -321,5 +389,87 @@ public class ChunkSaveThread : IDisposable {
 
     public void add(ChunkSaveData chunk) {
         saveQueue.Enqueue(chunk);
+    }
+}
+
+public class ChunkLoadThread : IDisposable {
+    private readonly WorldIO io;
+    private readonly Thread loadThread;
+
+    private volatile bool isDisposed;
+
+    private readonly ConcurrentQueue<ChunkLoadRequest> loadQueue = new();
+    private readonly ConcurrentQueue<ChunkLoadResult> resultQueue = new();
+
+    public ChunkLoadThread(WorldIO io) {
+        this.io = io;
+        loadThread = new Thread(loadLoop) {
+            IsBackground = true,
+            Name = "ChunkLoadThread"
+        };
+        loadThread.Start();
+    }
+
+    public void Join() {
+        loadThread.Join();
+    }
+
+    private void loadLoop() {
+        try {
+            while (!io.shutdownEvent.WaitOne(0)) {
+                if (loadQueue.TryDequeue(out var loadRequest)) {
+                    try {
+                        // Background thread: File I/O + NBT parsing only
+                        var pathStr = WorldIO.getChunkString(loadRequest.worldName, loadRequest.coord);
+                        var nbt = NBT.readFile(pathStr);
+
+                        resultQueue.Enqueue(new ChunkLoadResult(loadRequest.coord, nbt, loadRequest.targetStatus));
+                    }
+                    catch (Exception ex) {
+                        // Queue the error result
+                        resultQueue.Enqueue(new ChunkLoadResult(loadRequest.coord, null, loadRequest.targetStatus, ex));
+                    }
+                }
+                else {
+                    // no chunks to load, wait a bit or until shutdown
+                    io.shutdownEvent.WaitOne(10);
+                }
+            }
+        }
+        catch (Exception ex) {
+            Log.error("Background load loop error", ex);
+        }
+    }
+
+    public void Dispose() {
+        if (isDisposed) return;
+        isDisposed = true;
+
+        // wait for the thread to finish
+        io.shutdownEvent.Set();
+        try {
+            loadThread.Join(5000); // wait up to 5 seconds
+        }
+        catch (Exception ex) {
+            Log.error("Error waiting for load thread to complete", ex);
+        }
+
+        // clear remaining queues
+        while (loadQueue.TryDequeue(out _)) { }
+        while (resultQueue.TryDequeue(out _)) { }
+    }
+
+    public void queueLoad(ChunkLoadRequest request) {
+        if (!isDisposed) {
+            loadQueue.Enqueue(request);
+        }
+    }
+
+    public bool hasResult() {
+        return !resultQueue.IsEmpty;
+    }
+
+    public ChunkLoadResult? getResult() {
+        return resultQueue.TryDequeue(out var result) ? result : null;
     }
 }

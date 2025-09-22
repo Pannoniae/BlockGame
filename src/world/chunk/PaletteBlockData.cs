@@ -6,9 +6,9 @@ using BlockGame.world.block;
 namespace BlockGame.world.chunk;
 
 public sealed class PaletteBlockData : BlockData, IDisposable {
-    private static readonly VariableArrayPool<byte> arrayPool = new();
-    private static readonly VariableArrayPool<ushort> arrayPoolUS = new();
-    private static readonly VariableArrayPool<uint> arrayPoolU = new();
+    public static readonly VariableArrayPool<byte> arrayPool = new();
+    public static readonly VariableArrayPool<ushort> arrayPoolUS = new();
+    public static readonly VariableArrayPool<uint> arrayPoolU = new();
 
     private uint[] vertices;
     private ushort[] blockRefs;
@@ -573,7 +573,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
     public void loadInit() {
-        inited = true;
+        // inited will be set by setSerializationData after arrays are initialized
     }
 
     public bool isEmpty() {
@@ -810,27 +810,29 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             arrayPool.putBack(lightIndices);
             lightIndices = null;
         }
-        
+
         if (vertices != null) {
             arrayPoolU.putBack(vertices);
             vertices = null;
         }
-        
+
         if (blockRefs != null) {
             arrayPoolUS.putBack(blockRefs);
             blockRefs = null;
         }
-        
+
         if (lightVertices != null) {
             arrayPool.putBack(lightVertices);
             lightVertices = null;
         }
-        
+
         if (lightRefs != null) {
             arrayPoolUS.putBack(lightRefs);
             lightRefs = null;
         }
-        
+
+        // reset state to prevent access to disposed arrays
+        inited = false;
     }
 
     public void Dispose() {

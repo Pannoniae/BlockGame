@@ -25,9 +25,7 @@ uniform sampler2D tex;
 #endif
 
 void main() {
-    if (colour.a <= 0) {
-        discard;
-    }
+    
     
     vec4 finalColour;
     
@@ -37,6 +35,10 @@ void main() {
 #else
     finalColour = colour;
 #endif
+
+    if (finalColour.a <= 0) {
+        discard;
+    }
     
 #ifdef HAS_NORMALS
     // Apply lighting from both sources

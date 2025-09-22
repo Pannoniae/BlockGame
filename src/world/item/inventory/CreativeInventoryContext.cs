@@ -13,7 +13,7 @@ public class CreativeInventoryContext : InventoryContext {
     private int currentPage = 0;
     private readonly int itemsPerPage;
 
-    public int totalPages { get; private set; }
+    public int totalPages;
 
     public CreativeInventoryContext(int itemsPerPage) {
         this.itemsPerPage = itemsPerPage;
@@ -27,7 +27,7 @@ public class CreativeInventoryContext : InventoryContext {
         allItems.Clear();
 
         // add all blocks
-        for (int i = 1; i <= Block.currentID; i++) {
+        for (int i = 1; i < Block.currentID; i++) {
             if (Block.blocks[i] == null || Block.isBlacklisted(i)) {
                 continue;
             }
@@ -44,7 +44,7 @@ public class CreativeInventoryContext : InventoryContext {
         }
 
         // add all items
-        for (int i = 1; i <= Item.currentID; i++) {
+        for (int i = 1; i < Item.currentID; i++) {
             var item = Item.get(i);
             if (item != null && item.isItem()) {
                 allItems.Add(new ItemStack(i, 1));

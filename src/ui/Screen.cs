@@ -13,14 +13,14 @@ public class Screen {
     public Vector2I size;
     public Vector2I centre;
 
-    public static MainMenuScreen MAIN_MENU_SCREEN;
-    public static GameScreen GAME_SCREEN;
-    public static SettingsScreen SETTINGS_SCREEN;
+    public static MainMenuScreen MAIN_MENU_SCREEN = null!;
+    public static GameScreen GAME_SCREEN = null!;
+    public static SettingsScreen SETTINGS_SCREEN = null!;
 
     /// <summary>
     /// The current game menu which is shown.
     /// </summary>
-    public Menu currentMenu;
+    public Menu? currentMenu;
 
 
     public static void init() {

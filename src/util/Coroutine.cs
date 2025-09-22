@@ -110,23 +110,15 @@ public class Coroutine : Coroutineish {
             return false;
         }
 
-        try {
-            if (!enumerator.MoveNext()) {
-                isRunning = false;
-                isCompleted = true;
-                return false;
-            }
-
-            currentYield = enumerator.Current as YieldInstruction;
-            return true;
-        }
-        catch (Exception ex) {
-            throw;
-            this.ex = ex;
+        if (!enumerator.MoveNext()) {
             isRunning = false;
             isCompleted = true;
             return false;
         }
+
+        currentYield = (enumerator.Current as YieldInstruction)!;
+
+        return true;
     }
 }
 
@@ -165,7 +157,7 @@ public class Coroutine<T> : Coroutine, Coroutineish<T> {
                 return false;
             }
 
-            currentYield = typedEnumerator.Current as YieldInstruction;
+            currentYield = (typedEnumerator.Current as YieldInstruction)!;
             return true;
         }
         catch (Exception ex) {

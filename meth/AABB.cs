@@ -11,7 +11,8 @@ namespace BlockGame.util;
 
 // mutable
 [StructLayout(LayoutKind.Auto)]
-public struct AABB {
+public struct AABB : IEquatable<AABB> {
+
     public static readonly AABB empty = new AABB(new Vector3D(0, 0, 0), new Vector3D(0, 0, 0));
 
     public Vector3D min;
@@ -136,7 +137,7 @@ public struct AABB {
     /// Optimized to process multiple AABBs simultaneously using SIMD.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe byte isFrontTwoEight(Span<AABB> aabbs, Plane p1, Plane p2) {
+    public static byte isFrontTwoEight(Span<AABB> aabbs, Plane p1, Plane p2) {
         // todo actually make this shit different
         // rn its just a copy of the other method
         //if (false && Avx512F.IsSupported) {
@@ -303,7 +304,7 @@ public struct AABB {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe byte isFrontTwoEightFallback(Span<AABB> aabbs, Plane p1, Plane p2) {
+    public static byte isFrontTwoEightFallback(Span<AABB> aabbs, Plane p1, Plane p2) {
         // Fallback implementation for non-AVX2 systems - still better than the original due to reduced overhead
         var vP1 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p1));
         var vP2 = Vector128.LoadUnsafe(ref Unsafe.As<Plane, float>(ref p2));
@@ -374,6 +375,26 @@ public struct AABB {
     
     public static AABB operator-(AABB a, Vector3D b) {
         return new AABB(a.min - b, a.max - b);
+    }
+
+    public bool Equals(AABB other) {
+        return min.Equals(other.min) && max.Equals(other.max);
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is AABB other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(min, max);
+    }
+
+    public static bool operator ==(AABB left, AABB right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(AABB left, AABB right) {
+        return !left.Equals(right);
     }
 
     public override string ToString() {

@@ -78,7 +78,7 @@ public class Particles {
             var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
             
             
-            var tint = WorldRenderer.getLightColour(skylight, blocklight);
+            var tint = WorldRenderer.getLightColour(blocklight, skylight);
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);

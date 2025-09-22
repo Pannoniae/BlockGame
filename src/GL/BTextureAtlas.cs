@@ -8,7 +8,7 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace BlockGame.GL;
 
-public class BTextureAtlas : BTexture2D, IDisposable {
+public class BTextureAtlas : BTexture2D {
     
     public int atlasSize;
     
@@ -16,7 +16,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
     
     public List<DynamicTexture> dtextures = [];
     
-    public Rgba32[] mipmap;
+    public Rgba32[] mipmap = null!;
 
     public BTextureAtlas(string path, int atlasSize) : base(path) {
         GL = Game.GL;
@@ -107,7 +107,7 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         );
     }
 
-    unsafe private void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
+    private unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
         fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
             GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
@@ -176,16 +176,6 @@ public class BTextureAtlas : BTexture2D, IDisposable {
         }
 
         firstLoad = false;
-    }
-
-
-
-    public void bind() {
-        Game.graphics.tex(0, handle);
-    }
-
-    public void Dispose() {
-        GL.DeleteTexture(handle);
     }
 
     public void update(double dt) {

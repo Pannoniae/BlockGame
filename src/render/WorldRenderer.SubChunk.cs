@@ -8,7 +8,7 @@ using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 namespace BlockGame.render;
 
 public partial class WorldRenderer {
-    public bool isVisible(SubChunk subChunk, BoundingFrustum frustum) {
+    public static bool isVisible(SubChunk subChunk, BoundingFrustum frustum) {
         return !frustum.outsideCameraUpDown(subChunk.box);
     }
 
@@ -81,7 +81,7 @@ public partial class WorldRenderer {
         }
     }
 
-    public void drawOpaqueUBO(SubChunk subChunk, uint idx) {
+    public static void drawOpaqueUBO(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
         if (subChunk.hasRenderOpaque) {
@@ -93,7 +93,7 @@ public partial class WorldRenderer {
         }
     }
 
-    public void drawTransparentUBO(SubChunk subChunk, uint idx) {
+    public static void drawTransparentUBO(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var watervao = subChunk.watervao;
         if (subChunk.hasRenderTranslucent) {
@@ -104,7 +104,7 @@ public partial class WorldRenderer {
         }
     }
 
-    public void drawOpaqueCMDL(SubChunk subChunk, uint idx) {
+    public static void drawOpaqueCMDL(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
         if (subChunk.hasRenderOpaque) {
@@ -116,7 +116,7 @@ public partial class WorldRenderer {
         }
     }
 
-    public void drawTransparentCMDL(SubChunk subChunk, uint idx) {
+    public static void drawTransparentCMDL(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var watervao = subChunk.watervao;
         if (subChunk.hasRenderTranslucent) {

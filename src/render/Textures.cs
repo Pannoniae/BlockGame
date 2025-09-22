@@ -62,7 +62,7 @@ public class Textures {
     }
 
     public Rgba32 light(int x, int y) {
-        return lightmap[y | (x << 4)];
+        return lightmap[x | (y << 4)];
     }
 
     /**

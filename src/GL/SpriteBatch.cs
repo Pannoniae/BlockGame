@@ -149,7 +149,7 @@ public sealed class SpriteBatch : IDisposable {
         shader.setUniform(textureUniform, 0);
     }
 
-    private void CreateIndices(ushort[] indices, uint quadCount) {
+    private static void CreateIndices(ushort[] indices, uint quadCount) {
         for (uint i = 0, vertex = 0; i < quadCount; i++) {
             uint idx = i * 6;
             indices[idx] = (ushort)vertex;
@@ -211,7 +211,7 @@ public sealed class SpriteBatch : IDisposable {
         return requiredCapacity <= batchItems.Length;
     }
 
-    private uint NextPowerOfTwo(uint value) {
+    private static uint NextPowerOfTwo(uint value) {
         uint result = 1;
         while (result < value)
             result <<= 1;

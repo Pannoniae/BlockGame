@@ -7,8 +7,8 @@ namespace BlockGame.world;
  * TODO make this stuff actually work. Probably won't happen anytime soon but oh well
  */
 public class WorldThread {
-    public World world;
-    public Thread thread;
+    public World? world;
+    public Thread? thread;
 
     public bool stopped = false;
 
@@ -34,7 +34,7 @@ public class WorldThread {
     }
 
     public void update(double dt) {
-        if (!world.paused && !Game.lockingMouse) {
+        if (!world!.paused && !Game.lockingMouse) {
             world.update(dt);
         }
 

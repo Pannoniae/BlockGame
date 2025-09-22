@@ -352,6 +352,8 @@ public class Camera {
         // render distance, or minimum 128/8chunks (so depthtest isn't completely inaccurate)
         var maxPlane = Math.Max(128, (Settings.instance.renderDistance * 2) * Chunk.CHUNKSIZE);
         const float nearPlane = 0.1f;
+
+        //normalFov = 110;
         
         if (Settings.instance.reverseZ) {
             // reverse-Z: swap near and far, use infinite far plane

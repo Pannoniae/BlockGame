@@ -57,7 +57,7 @@ See [CONTRIBUTING.MD](./CONTRIBUTING.md).
 
 - Huge thanks to `ThomasMiz` for TrippyGL and the Silk.NET contributors for their bindings.
 - Thank you `rds1983` for FontStashSharp!
-- Thank you 1980's anons for making the X11 fixed spritefonts which the project uses. 
+- ~~Thank you 1980's anons for making the X11 fixed spritefonts which the project uses.~~ they aren't used now, but good run..:)
 - Thank you everyone on `my server` for feedback and testing.
 - Thank you `Notch` for being a champ and making the ultimate sandbox!
 

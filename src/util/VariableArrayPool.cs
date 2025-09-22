@@ -2,17 +2,13 @@ namespace BlockGame.util;
 
 public class VariableArrayPool<T> {
 
-    private readonly Dictionary<int, FixedArrayPool<T>> _pools;
+    private readonly Dictionary<int, FixedArrayPool<T>> _pools = new();
     private readonly Lock _poolsLock = new();
-
-    public VariableArrayPool() {
-        _pools = new Dictionary<int, FixedArrayPool<T>>();
-    }
 
     public T[] grab(int size) {
         if (size <= 0) SkillIssueException.throwNew($"Size must be positive ({nameof(size)}");
         
-        FixedArrayPool<T> pool;
+        FixedArrayPool<T>? pool;
         lock (_poolsLock) {
             if (!_pools.TryGetValue(size, out pool)) {
                 pool = new FixedArrayPool<T>(size);
@@ -27,7 +23,7 @@ public class VariableArrayPool<T> {
         if (array == null) return;
         
         int size = array.Length;
-        FixedArrayPool<T> pool;
+        FixedArrayPool<T>? pool;
         
         lock (_poolsLock) {
             if (!_pools.TryGetValue(size, out pool)) {
@@ -45,6 +41,7 @@ public class VariableArrayPool<T> {
             foreach (var pool in _pools.Values) {
                 pool.trim();
             }
+            _pools.TrimExcess();
         }
     }
 

@@ -63,7 +63,7 @@ public class Player : Entity {
     }
 
 
-    public void update(double dt) {
+    public override void update(double dt) {
         collisionXThisFrame = false;
         collisionZThisFrame = false;
 

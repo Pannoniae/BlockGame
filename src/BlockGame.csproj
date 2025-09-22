@@ -8,7 +8,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>preview</LangVersion>
         <AnalysisLevel>preview-recommended</AnalysisLevel>
-        <NoWarn>${NoWarn};CA1707;CA1051;CA2211;CA1711</NoWarn>
+        <!-- IDISP008 is bullshit  -->
+        <NoWarn>${NoWarn};CA1707;CA1051;CA2211;CA1711;IDISP008;CA1708</NoWarn>
         <InvariantGlobalization>true</InvariantGlobalization>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
@@ -35,7 +36,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.4.0" />
+        <PackageReference Include="JAJ.Packages.MiniAudioEx" Version="2.5.1" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
         <PackageReference Include="JetBrains.Profiler.Api" Version="1.4.10" />
         <PackageReference Include="JetBrains.Profiler.SelfApi" Version="2.5.14" />
@@ -59,6 +60,7 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="SuperluminalPerf" Version="1.3.0" />
+        <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0-rc.1.25451.107" />
         <PackageReference Include="System.IO.Hashing" Version="10.0.0-rc.1.25451.107" />
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>

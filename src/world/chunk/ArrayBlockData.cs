@@ -9,13 +9,13 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
     public static readonly FixedArrayPool<uint> blockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static readonly FixedArrayPool<byte> lightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
-    public uint[]? blocks;
+    public uint[] blocks;
 
     /// <summary>
     /// Skylight is on the lower 4 bits, blocklight is on the upper 4 bits.
     /// Stored in YZX order.
     /// </summary>
-    public byte[]? light;
+    public byte[] light;
 
     public int blockCount;
     public int translucentCount;

@@ -50,6 +50,7 @@ public partial class World : IDisposable {
 
     // Queues
     public List<ChunkLoadTicket> chunkLoadQueue = new();
+    //public HashSet<ChunkLoadTicket> chunkLoadQueueSet = new();
 
     public List<BlockUpdate> blockUpdateQueue = new();
     public HashSet<BlockUpdate> blockUpdateQueueSet = new();
@@ -65,6 +66,12 @@ public partial class World : IDisposable {
     public WorldGenerator generator;
 
     public bool isLoading;
+
+    /**
+     * Tracking for stuck queue detection (used for shuffling the chunkload queue only when stuck)
+     */
+    private int lastQueueSize = -1;
+    private int stuckIterations = 0;
 
     /**
      * True if the world has actually been initialized, false if the init method hasn't been called yet.
@@ -336,6 +343,13 @@ public partial class World : IDisposable {
         chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
     }
 
+    public void sortChunksRandom() {
+        // randomize the chunk load queue so chunks can load in a more random order
+        // this helps with not getting deadlocked
+        var rnd = new XRandom();
+        chunkLoadQueue = chunkLoadQueue.OrderBy(x => rnd.Next()).ToList();
+    }
+
     public void loadAroundPlayer() {
         // create terrain
         //genTerrainNoise();
@@ -508,8 +522,42 @@ public partial class World : IDisposable {
         particles.update(dt);
     }
 
+    private void processAsyncChunkLoads(double startTime, bool loading, ref int loadedChunks) {
+        var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
+
+        while (worldIO.hasChunkLoadResult() && Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
+            var result = worldIO.getChunkLoadResult();
+            if (result == null) {
+                break;
+            }
+
+            // handle error cases
+            if (result.Value.error != null) {
+                // log error and fall back to sync loading
+                Log.error($"Async chunk load failed for {result.Value.coord}", result.Value.error);
+                // re-queue for sync loading
+                addToChunkLoadQueue(result.Value.coord, result.Value.targetStatus);
+                continue;
+            }
+
+            // successful load: apply NBT data to existing chunk
+            var coord = result.Value.coord;
+            if (chunks.TryGetValue(coord, out Chunk? existingChunk) && result.Value.nbtData != null) {
+                WorldIO.loadChunkDataFromNBT(existingChunk, result.Value.nbtData);
+                loadedChunks++;
+            }
+
+            // re-queue for status progression (GENERATED -> POPULATED -> LIGHTED -> MESHED)
+            // this will handle neighbor dependencies correctly
+            addToChunkLoadQueue(result.Value.coord, result.Value.targetStatus);
+        }
+    }
+
     /** This is separate so this can be called from the outside without updating the whole (still nonexistent) world. */
     public void updateChunkloading(double startTime, bool loading, ref int loadedChunks) {
+        // process async chunk load results first
+        processAsyncChunkLoads(startTime, loading, ref loadedChunks);
+
         // if is loading, don't throttle
         // consume the chunk queue
         // ONLY IF THERE ARE CHUNKS
@@ -517,6 +565,22 @@ public partial class World : IDisposable {
         // yes I was an idiot
         var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
         while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
+
+            // check if queue is stuck and shuffle only when needed
+            var currentQueueSize = chunkLoadQueue.Count;
+            if (lastQueueSize == currentQueueSize) {
+                stuckIterations++;
+                // only shuffle if stuck for a while (queue size not changing)
+                if (stuckIterations > 20) {
+                    sortChunksRandom();
+                    stuckIterations = 0;
+                }
+            } else {
+                // queue is making progress, reset stuck counter
+                stuckIterations = 0;
+                lastQueueSize = currentQueueSize;
+            }
+
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
                 chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
@@ -723,9 +787,9 @@ public partial class World : IDisposable {
         //Console.Out.WriteLine(cnt);
         var node = queue[cnt - 1];
         queue.RemoveAt(cnt - 1);
-        
-        // if null, chunk got unloaded meanwhile
-        if (node.chunk == null!) {
+
+        // if null or destroyed, chunk got unloaded meanwhile
+        if (node.chunk == null! || node.chunk.destroyed) {
             return;
         }
 
@@ -805,8 +869,8 @@ public partial class World : IDisposable {
         //var blockPos = new Vector3I(node.x, node.y, node.z);
         var level = node.value;
         
-        // if null, chunk got unloaded meanwhile
-        if (node.chunk == null!) {
+        // if null or destroyed, chunk got unloaded meanwhile
+        if (node.chunk == null! || node.chunk.destroyed) {
             return;
         }
 
@@ -843,7 +907,10 @@ public partial class World : IDisposable {
     }
 
     public void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
-        chunkLoadQueue.Add(new ChunkLoadTicket(chunkCoord, level));
+        var ticket = new ChunkLoadTicket(chunkCoord, level);
+        if (!chunkLoadQueue.Contains(ticket)) {
+            chunkLoadQueue.Add(ticket);
+        }
     }
 
     /// <summary>
@@ -883,7 +950,7 @@ public partial class World : IDisposable {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    loadChunk(coord, ChunkStatus.MESHED);
+                    loadChunk(coord, ChunkStatus.MESHED, true);
                 }
             }
         }
@@ -900,16 +967,17 @@ public partial class World : IDisposable {
     }
 
     public void unloadChunk(ChunkCoord coord) {
+        var chunk = chunks[coord];
         // save chunk asynchronously to prevent lagspikes
-        worldIO.saveChunkAsync(this, chunks[coord]);
+        worldIO.saveChunkAsync(this, chunk);
 
         foreach (var l in listeners) {
             l.onChunkUnload(coord);
         }
 
         // ONLY DO THIS WHEN IT'S ALREADY SAVED
-        chunkList.Remove(chunks[coord]);
-        chunks[coord].destroyChunk();
+        chunkList.Remove(chunk);
+        chunk.destroyChunk();
         chunks.Remove(coord);
     }
 
@@ -955,12 +1023,82 @@ public partial class World : IDisposable {
     }
 
     /// <summary>
+    /// Check if all neighbors around a chunk have reached the specified status
+    /// </summary>
+    private bool areNeighboursReady(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
+        var neighbours = new[] {
+            new ChunkCoord(chunkCoord.x - 1, chunkCoord.z),
+            new ChunkCoord(chunkCoord.x + 1, chunkCoord.z),
+            new ChunkCoord(chunkCoord.x, chunkCoord.z - 1),
+            new ChunkCoord(chunkCoord.x, chunkCoord.z + 1),
+            new ChunkCoord(chunkCoord.x - 1, chunkCoord.z - 1),
+            new ChunkCoord(chunkCoord.x - 1, chunkCoord.z + 1),
+            new ChunkCoord(chunkCoord.x + 1, chunkCoord.z - 1),
+            new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1)
+        };
+
+        foreach (var neighbour in neighbours) {
+            if (!chunks.TryGetValue(neighbour, out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Queue neighbors for loading and ensure they reach the required status
+    /// </summary>
+    private void queueNeighboursForLoading(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
+        Span<ChunkCoord> neighbours = [
+            new(chunkCoord.x - 1, chunkCoord.z),
+            new(chunkCoord.x + 1, chunkCoord.z),
+            new(chunkCoord.x, chunkCoord.z - 1),
+            new(chunkCoord.x, chunkCoord.z + 1),
+            new(chunkCoord.x - 1, chunkCoord.z - 1),
+            new(chunkCoord.x - 1, chunkCoord.z + 1),
+            new(chunkCoord.x + 1, chunkCoord.z - 1),
+            new(chunkCoord.x + 1, chunkCoord.z + 1)
+        ];
+
+        foreach (var neighbour in neighbours) {
+            if (!chunks.TryGetValue(neighbour, out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
+                addToChunkLoadQueue(neighbour, requiredStatus);
+            }
+        }
+    }
+
+    private void loadNeighbours(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
+        Span<ChunkCoord> neighbours = [
+            new(chunkCoord.x - 1, chunkCoord.z),
+            new(chunkCoord.x + 1, chunkCoord.z),
+            new(chunkCoord.x, chunkCoord.z - 1),
+            new(chunkCoord.x, chunkCoord.z + 1),
+            new(chunkCoord.x - 1, chunkCoord.z - 1),
+            new(chunkCoord.x - 1, chunkCoord.z + 1),
+            new(chunkCoord.x + 1, chunkCoord.z - 1),
+            new(chunkCoord.x + 1, chunkCoord.z + 1)
+        ];
+
+        foreach (var neighbour in neighbours) {
+            if (!chunks.TryGetValue(neighbour, out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
+                loadChunk(neighbour, requiredStatus, true);
+            }
+        }
+    }
+
+    /// <summary>
     /// Load this chunk either from disk (if exists) or generate it with the given level.
     /// </summary>
-    public Chunk loadChunk(ChunkCoord chunkCoord, ChunkStatus status) {
+    public void loadChunk(ChunkCoord chunkCoord, ChunkStatus status, bool immediately = false) {
+
+        // TODO emergency switch! if players complain about chunk errors & lost data / crashes, flip this switch! it should make things better
+        // it will make chunk loading synchronous and thus laggy / especially on shit HDDs, but it will prevent chunk errors until we can fix things:tm:
+        //immediately = true;
+
         // if it already exists and has the proper level, just return it
         if (chunks.TryGetValue(chunkCoord, out var chunk) && chunk.status >= status) {
-            return chunk;
+            return;
         }
 
         // does the chunk exist?
@@ -969,32 +1107,47 @@ public partial class World : IDisposable {
         Chunk c;
         bool chunkAdded = false;
 
-        // if it exists on disk, load it
-        if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
-            Chunk ch;
-            try {
-                ch = WorldIO.loadChunkFromFile(this, chunkCoord);
-                addChunk(chunkCoord, ch);
-                // we got the chunk so set to true
-                hasChunk = true;
-                chunkAdded = true;
+        // if it exists on disk, load it asynchronously
+
+        if (!immediately) {
+            if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
+                // queue for async loading - async result processing will handle status progression
+
+                // we cheat! we only load up to GENERATED asynchronously, rest goes normally!
+                worldIO.loadChunkAsync(chunkCoord, ChunkStatus.GENERATED);
+                // create empty chunk that will be populated when async loading completes
+                c = new Chunk(this, chunkCoord.x, chunkCoord.z);
+                addChunk(chunkCoord, c);
+                return;
             }
-            catch (EndOfStreamException e) {
-                // corrupted chunk file!
-                Log.error($"Corrupted chunk file for {chunkCoord}", e);
-                hasChunk = false;
-                chunkAdded = false;
-            }
-            catch (IOException e) {
-                // corrupted chunk file! or can't read it for some reason
-                Log.error($"IO error loading chunk file for {chunkCoord}", e);
-                hasChunk = false;
-                chunkAdded = false;
+        }
+        else {
+            // load synchronously
+            if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
+                Chunk ch;
+                try {
+                    ch = WorldIO.loadChunkFromFile(this, chunkCoord);
+                    addChunk(chunkCoord, ch);
+                    // we got the chunk so set to true
+                    hasChunk = true;
+                    chunkAdded = true;
+                }
+                catch (EndOfStreamException e) {
+                    // corrupted chunk file!
+                    Log.error($"Corrupted chunk file for {chunkCoord}", e);
+                    hasChunk = false;
+                    chunkAdded = false;
+                }
+                catch (IOException e) {
+                    // corrupted chunk file! or can't read it for some reason
+                    Log.error($"IO error loading chunk file for {chunkCoord}", e);
+                    hasChunk = false;
+                    chunkAdded = false;
+                }
             }
         }
 
-        // right now we only generate, not load
-        // if it's already generated, don't do it again
+        // if it doesn't exist, generate it
         if (status >= ChunkStatus.GENERATED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
             if (!chunkAdded) {
@@ -1007,17 +1160,20 @@ public partial class World : IDisposable {
 
         if (status >= ChunkStatus.POPULATED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
-            // load adjacent first
-            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z), ChunkStatus.GENERATED);
-            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.GENERATED);
-            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z - 1), ChunkStatus.GENERATED);
-            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z + 1), ChunkStatus.GENERATED);
+            // check if neighbors are ready, if not defer this chunk
+            if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED)) {
+                // queue neighbors for loading and defer this chunk
 
-
-            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z - 1), ChunkStatus.GENERATED);
-            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z + 1), ChunkStatus.GENERATED);
-            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z - 1), ChunkStatus.GENERATED);
-            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1), ChunkStatus.GENERATED);
+                // DISABLE ASYNC, lighting should happen immediately too!
+                if (false && !immediately) {
+                    queueNeighboursForLoading(chunkCoord, ChunkStatus.GENERATED);
+                    addToChunkLoadQueue(chunkCoord, status);
+                    return;
+                }
+                else {
+                    loadNeighbours(chunkCoord, ChunkStatus.GENERATED);
+                }
+            }
 
             generator.populate(chunkCoord);
         }
@@ -1029,23 +1185,20 @@ public partial class World : IDisposable {
 
         if (status >= ChunkStatus.MESHED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
-            // load adjacent first
-            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z), ChunkStatus.LIGHTED);
-            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z), ChunkStatus.LIGHTED);
-            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z - 1), ChunkStatus.LIGHTED);
-            loadChunk(new ChunkCoord(chunkCoord.x, chunkCoord.z + 1), ChunkStatus.LIGHTED);
+            // check if neighbors are ready, if not defer this chunk
+            if (!areNeighboursReady(chunkCoord, ChunkStatus.LIGHTED)) {
+                // load neighbors SYNCHRONOUSLY
+                loadNeighbours(chunkCoord, ChunkStatus.LIGHTED);
+                // DON'T DO THIS, IT MESSES THE QUEUE UP
+                //addToChunkLoadQueue(chunkCoord, status);
+                //return;
+            }
 
-            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z - 1), ChunkStatus.LIGHTED);
-            loadChunk(new ChunkCoord(chunkCoord.x - 1, chunkCoord.z + 1), ChunkStatus.LIGHTED);
-            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z - 1), ChunkStatus.LIGHTED);
-            loadChunk(new ChunkCoord(chunkCoord.x + 1, chunkCoord.z + 1), ChunkStatus.LIGHTED);
             chunks[chunkCoord].meshChunk();
         }
 
         // reassign any entities waiting for this chunk
         loadEntitiesIntoChunk(chunkCoord);
-
-        return chunks[chunkCoord];
     }
 
     // MAKE IT SO ONLY THE ORIGINAL BLOCK IS UPDATED

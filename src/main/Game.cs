@@ -66,7 +66,7 @@ public partial class Game {
     /// <summary>
     /// The current game screen which is shown.
     /// </summary>
-    public Screen currentScreen;
+    public Screen currentScreen = null!;
 
     public static bool devMode;
 
@@ -83,8 +83,8 @@ public partial class Game {
     public static FontLoader fontLoader;
     public static SoundEngine snd;
 
-    public static World? world;
-    public static Player? player;
+    public static World world;
+    public static Player player;
     public static WorldRenderer renderer = null!;
 
     private static Coroutines cs;
@@ -243,7 +243,7 @@ public partial class Game {
         window.Initialize();
         glfw = Glfw.GetApi();
         unsafe {
-            glfw.SetWindowSizeLimits((WindowHandle*)window.Native.Glfw,
+            glfw.SetWindowSizeLimits((WindowHandle*)window.Native!.Glfw,
                 Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
         }
         
@@ -265,7 +265,7 @@ public partial class Game {
     /// </summary>
     /// <param name="monitor">The monitor in which the window will be located.</param>
     private static Vector2D<int> GetNewWindowSize(IMonitor monitor) {
-        return (monitor.VideoMode.Resolution ?? monitor.Bounds.Origin);
+        return monitor.VideoMode.Resolution ?? monitor.Bounds.Origin;
     }
 
     private static void runCallback() {
@@ -538,11 +538,14 @@ public partial class Game {
         GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-        //GL.Enable(EnableCap.CullFace);
+        GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
         GL.CullFace(GLEnum.Back);
 
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
+
+        // init memoryutils!
+        MemoryUtils.init();
         
         // we load the settings FIRST so our graphics settings get picked up when initialising stuff
         Settings.instance.load();
@@ -686,7 +689,7 @@ public partial class Game {
 
     private void setIconToBlock() {
         using var logo = Image.Load<Rgba32>("logo.png");
-        var success = logo.DangerousTryGetSinglePixelMemory(out var imgData);
+        var success = logo.DangerousTryGetSinglePixelMemory(out Memory<Rgba32> imgData);
         if (!success) {
             Log.warn("Couldn't set window logo!");
         }

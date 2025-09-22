@@ -3,7 +3,7 @@ namespace BlockGame.util;
 public class FixedArrayPool<T> {
 
     // how many items the pool can hold before it gets trimmed
-    private const int MAX_ITEMS_BEFORE_TRIM = 1024;
+    private const int MAX_ITEMS_BEFORE_TRIM = 24;
 
     /**
      * IDK how to do thread-safety here but fear not, we have an overkill solution!
@@ -44,7 +44,7 @@ public class FixedArrayPool<T> {
                 // nuke all the old objects
                 // AND TRIM THE ARRAY
                 _objects.Clear();
-                _objects.TrimExcess(_objects.Count);
+                _objects.TrimExcess(MAX_ITEMS_BEFORE_TRIM);
             }
         }
     }

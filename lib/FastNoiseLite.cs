@@ -1069,7 +1069,7 @@ public class FastNoiseLite
 
     // Simplex/OpenSimplex2 Noise
 
-    private float SingleSimplex(int seed, FNLfloat x, FNLfloat y)
+    private static float SingleSimplex(int seed, FNLfloat x, FNLfloat y)
     {
         // 2D OpenSimplex2 case uses the same algorithm as ordinary Simplex.
 
@@ -1139,7 +1139,7 @@ public class FastNoiseLite
         return (n0 + n1 + n2) * 99.83685446303647f;
     }
 
-    private float SingleOpenSimplex2(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
+    private static float SingleOpenSimplex2(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
     {
         // 3D OpenSimplex2 case uses two offset rotated cube grids.
 
@@ -1235,7 +1235,7 @@ public class FastNoiseLite
 
     // OpenSimplex2S Noise
 
-    private float SingleOpenSimplex2S(int seed, FNLfloat x, FNLfloat y)
+    private static float SingleOpenSimplex2S(int seed, FNLfloat x, FNLfloat y)
     {
         // 2D OpenSimplex2S case is a modified 2D simplex noise.
 
@@ -1365,7 +1365,7 @@ public class FastNoiseLite
         return value * 18.24196194486065f;
     }
 
-    private float SingleOpenSimplex2S(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
+    private static float SingleOpenSimplex2S(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
     {
         // 3D OpenSimplex2S case uses two offset rotated cube grids.
 
@@ -1845,7 +1845,7 @@ public class FastNoiseLite
 
     // Perlin Noise
 
-    private float SinglePerlin(int seed, FNLfloat x, FNLfloat y)
+    private static float SinglePerlin(int seed, FNLfloat x, FNLfloat y)
     {
         int x0 = FastFloor(x);
         int y0 = FastFloor(y);
@@ -1869,7 +1869,7 @@ public class FastNoiseLite
         return Lerp(xf0, xf1, ys) * 1.4247691104677813f;
     }
 
-    private float SinglePerlin(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
+    private static float SinglePerlin(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
     {
         int x0 = FastFloor(x);
         int y0 = FastFloor(y);
@@ -1907,7 +1907,7 @@ public class FastNoiseLite
 
     // Value Cubic Noise
 
-    private float SingleValueCubic(int seed, FNLfloat x, FNLfloat y)
+    private static float SingleValueCubic(int seed, FNLfloat x, FNLfloat y)
     {
         int x1 = FastFloor(x);
         int y1 = FastFloor(y);
@@ -1936,7 +1936,7 @@ public class FastNoiseLite
             ys) * (1 / (1.5f * 1.5f));
     }
 
-    private float SingleValueCubic(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
+    private static float SingleValueCubic(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
     {
         int x1 = FastFloor(x);
         int y1 = FastFloor(y);
@@ -1992,7 +1992,7 @@ public class FastNoiseLite
 
     // Value Noise
 
-    private float SingleValue(int seed, FNLfloat x, FNLfloat y)
+    private static float SingleValue(int seed, FNLfloat x, FNLfloat y)
     {
         int x0 = FastFloor(x);
         int y0 = FastFloor(y);
@@ -2011,7 +2011,7 @@ public class FastNoiseLite
         return Lerp(xf0, xf1, ys);
     }
 
-    private float SingleValue(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
+    private static float SingleValue(int seed, FNLfloat x, FNLfloat y, FNLfloat z)
     {
         int x0 = FastFloor(x);
         int y0 = FastFloor(y);
@@ -2194,7 +2194,7 @@ public class FastNoiseLite
 
     // Domain Warp Basic Grid
 
-    private void SingleDomainWarpBasicGrid(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, ref FNLfloat xr, ref FNLfloat yr)
+    private static void SingleDomainWarpBasicGrid(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, ref FNLfloat xr, ref FNLfloat yr)
     {
         FNLfloat xf = x * frequency;
         FNLfloat yf = y * frequency;
@@ -2226,7 +2226,7 @@ public class FastNoiseLite
         yr += Lerp(ly0x, ly1x, ys) * warpAmp;
     }
 
-    private void SingleDomainWarpBasicGrid(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, FNLfloat z, ref FNLfloat xr, ref FNLfloat yr, ref FNLfloat zr)
+    private static void SingleDomainWarpBasicGrid(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, FNLfloat z, ref FNLfloat xr, ref FNLfloat yr, ref FNLfloat zr)
     {
         FNLfloat xf = x * frequency;
         FNLfloat yf = y * frequency;
@@ -2286,7 +2286,7 @@ public class FastNoiseLite
 
 
     // Domain Warp Simplex/OpenSimplex2
-    private void SingleDomainWarpSimplexGradient(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, ref FNLfloat xr, ref FNLfloat yr, bool outGradOnly)
+    private static void SingleDomainWarpSimplexGradient(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, ref FNLfloat xr, ref FNLfloat yr, bool outGradOnly)
     {
         const float SQRT3 = 1.7320508075688772935274463415059f;
         const float G2 = (3 - SQRT3) / 6;
@@ -2383,7 +2383,7 @@ public class FastNoiseLite
         yr += vy * warpAmp;
     }
 
-    private void SingleDomainWarpOpenSimplex2Gradient(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, FNLfloat z, ref FNLfloat xr, ref FNLfloat yr, ref FNLfloat zr, bool outGradOnly)
+    private static void SingleDomainWarpOpenSimplex2Gradient(int seed, float warpAmp, float frequency, FNLfloat x, FNLfloat y, FNLfloat z, ref FNLfloat xr, ref FNLfloat yr, ref FNLfloat zr, bool outGradOnly)
     {
         x *= frequency;
         y *= frequency;

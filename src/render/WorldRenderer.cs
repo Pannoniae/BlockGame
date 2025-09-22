@@ -30,9 +30,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public Silk.NET.OpenGL.Legacy.GL GL;
 
-    public Shader worldShader;
-    public Shader dummyShader;
-    public Shader waterShader;
+    public Shader worldShader = null!;
+    public Shader dummyShader = null!;
+    public Shader waterShader = null!;
 
 
     //public int uColor;
@@ -84,10 +84,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public ulong elementAddress;
     public uint elementLen;
 
-    public UniformBuffer chunkUBO;
-    public ShaderStorageBuffer chunkSSBO;
-    public CommandBuffer chunkCMD;
-    public BindlessIndirectBuffer bindlessBuffer;
+    public UniformBuffer chunkUBO = null!;
+    public ShaderStorageBuffer chunkSSBO = null!;
+    public CommandBuffer chunkCMD = null!;
+    public BindlessIndirectBuffer bindlessBuffer = null!;
 
 
     public WorldRenderer() {
@@ -118,7 +118,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     public void onChunkUnload(ChunkCoord coord) {
-        foreach (var subChunk in world.getChunk(coord).subChunks) {
+        foreach (var subChunk in world!.getChunk(coord).subChunks) {
             subChunk.vao?.Dispose();
             subChunk.watervao?.Dispose();
             subChunk.vao = null;
@@ -147,7 +147,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 for (int z = min.Z; z <= max.Z; z++) {
                     // section coord
                     var coord = World.getChunkSectionPos(x, y, z);
-                    world.getSubChunkMaybe(coord, out SubChunk? subChunk);
+                    world!.getSubChunkMaybe(coord, out SubChunk? subChunk);
                     if (subChunk != null && !subChunk.isEmpty) {
                         // add to meshing list
                         chunksToMesh.Add(coord);
@@ -609,7 +609,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // gather chunks to render
         for (int i = 0; i < chunkList.Length; i++) {
             Chunk chunk = chunkList[i];
-            var test = noCulling || (chunk.status >= ChunkStatus.MESHED && chunk.isVisible(frustum));
+            var test = (chunk.status >= ChunkStatus.MESHED) && (noCulling || chunk.isVisible(frustum));
             chunk.isRendered = test;
             if (test) {
                 // updates isRendered
@@ -904,7 +904,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public ulong ssboaddr;
 
     /** Stores the chunk positions! */
-    private List<Vector4> chunkData;
+    private List<Vector4> chunkData = null!;
 
     private static readonly List<AABB> AABBList = [];
     

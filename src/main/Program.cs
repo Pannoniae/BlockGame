@@ -12,7 +12,7 @@ namespace BlockGame.main;
 
 public class Program {
 
-    public static Game game;
+    public static Game game = null!;
     
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
@@ -75,13 +75,6 @@ public class Program {
             
             Console.WriteLine("Exiting...");
             Console.Out.Flush();
-        
-            // kill everything off
-            Game.window.Close();
-            Game.window.Dispose();
-        
-            
-            Environment.Exit(1);
         }
     }
 

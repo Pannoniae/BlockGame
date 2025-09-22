@@ -39,6 +39,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public bool isRendered = false;
     public ulong lastSaved;
+    public bool destroyed = false;
 
     public int worldX => coord.x << 4;
     public int worldZ => coord.z << 4;
@@ -604,10 +605,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void destroyChunk() {
+        destroyed = true;
         Dispose();
     }
 
     private void ReleaseUnmanagedResources() {
+        destroyed = true;
+
         foreach (var blocks in blocks) {
             blocks.Dispose();
         }

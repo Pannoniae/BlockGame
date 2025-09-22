@@ -89,14 +89,14 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(dayNightCycle);
         addElement(dayNightCycle);
 
-        var mipmapping = new Slider(this, "mipmapping", 0, 4, 1, settings.mipmapping);
+        Func<float, string> getText = value => value == 0 ? "Mipmapping: Off" : $"Mipmapping: {value}x";
+        var mipmapping = new Slider(this, "mipmapping", 0, 4, 1, settings.mipmapping, getText);
         mipmapping.setPosition(new Rectangle(0, 112, 128, 16));
         mipmapping.topCentre();
         mipmapping.applied += () => {
             settings.mipmapping = (int)mipmapping.value;
             Game.textures.blockTexture.reload();
         };
-        mipmapping.getText = value => value == 0 ? "Mipmapping: Off" : $"Mipmapping: {value}x";
         mipmapping.tooltip = "Mipmapping reduces the flickering of textures at a distance.";
         settingElements.Add(mipmapping);
         addElement(mipmapping);
@@ -196,7 +196,9 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(ssaaMode);
         addElement(ssaaMode);
 
-        var renderDistance = new Slider(this, "renderDistance", 2, 96, 1, settings.renderDistance);
+
+        getText = value => "Render Distance: " + value;
+        var renderDistance = new Slider(this, "renderDistance", 2, 96, 1, settings.renderDistance, getText);
         renderDistance.setPosition(new Rectangle(0, 112, 128, 16));
         renderDistance.topCentre();
         renderDistance.tooltip =
@@ -206,25 +208,23 @@ public class VideoSettingsMenu : Menu {
             settings.renderDistance = (int)renderDistance.value;
             remeshIfRequired(old);
         };
-        renderDistance.getText = value => "Render Distance: " + value;
         settingElements.Add(renderDistance);
         addElement(renderDistance);
 
-        var FOV = new FOVSlider(this, "FOV", 50, 150, 1, (int)settings.FOV);
+
+        getText = [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")](value) => {
+            return value switch {
+                75 => "Field of View: Normal",
+                50 => "Field of View: Fish Eye",
+                120 => "Field of View: Quake Pro",
+                150 => "Field of View: Tunnel Vision",
+                _ => "Field of View: " + value
+            };
+        };
+        var FOV = new FOVSlider(this, "FOV", 50, 150, 1, (int)settings.FOV, getText);
         FOV.setPosition(new Rectangle(0, 112, 128, 16));
         FOV.topCentre();
         FOV.applied += () => { settings.FOV = (int)FOV.value; };
-        FOV.getText = [SuppressMessage("ReSharper", "CompareOfFloatsByEqualityOperator")](value) => {
-            if (value == 75)
-                return "Field of View: Normal";
-            if (value == 50)
-                return "Field of View: Fish Eye";
-            if (value == 120)
-                return "Field of View: Quake Pro";
-            if (value == 150)
-                return "Field of View: Tunnel Vision";
-            return "Field of View: " + value;
-        };
         settingElements.Add(FOV);
         addElement(FOV);
 

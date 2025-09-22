@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BlockGame.main;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
@@ -10,10 +11,10 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public Silk.NET.OpenGL.Legacy.GL GL;
 
-    public string path;
+    public string? path;
 
     public Memory<Rgba32> imageData;
-    public Image<Rgba32> image;
+    public Image<Rgba32> image = null!;
 
     public BTexture2D(string path) {
         GL = Game.GL;
@@ -30,7 +31,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
         image?.Dispose();
-        image = Image.Load<Rgba32>(path);
+        image = Image.Load<Rgba32>(path!);
         GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
         if (image.DangerousTryGetSinglePixelMemory(out imageData)) {
             //Console.Out.WriteLine("Loading textures the proper way!");
@@ -81,6 +82,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public void Dispose() {
         GL.DeleteTexture(handle);
+        GC.SuppressFinalize(this);
     }
     
     public unsafe void updateTexture(int left, int top, int width, int height, int srcX, int srcY) {
@@ -120,6 +122,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         return Equals((BTexture2D)obj);
     }
 
+    [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
     public override int GetHashCode() {
         return (int)handle;
     }

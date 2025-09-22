@@ -6,9 +6,9 @@ namespace BlockGame.ui.screen;
 public class SettingsScreen : Screen {
 
     public Screen? prevScreen;
-    public static VideoSettingsMenu VIDEO_SETTINGS_MENU;
-    public static SettingsMenu SETTINGS_MENU;
-    public static ControlsMenu CONTROLS_MENU;
+    public static VideoSettingsMenu VIDEO_SETTINGS_MENU = null!;
+    public static SettingsMenu SETTINGS_MENU = null!;
+    public static ControlsMenu CONTROLS_MENU = null!;
 
     public SettingsScreen() {
         VIDEO_SETTINGS_MENU = new VideoSettingsMenu(this);

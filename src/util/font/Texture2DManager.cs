@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using BlockGame.GL;
 using FontStashSharp.Interfaces;
@@ -10,6 +11,7 @@ public class BTexture2DManager : ITexture2DManager {
         
     }
 
+    [SuppressMessage("IDisposableAnalyzers.Correctness", "IDISP005:Return type should indicate that the value should be disposed")]
     public object CreateTexture(int width, int height) => new BTexture2D((uint)width, (uint)height);
 
     public Point GetTextureSize(object texture) {

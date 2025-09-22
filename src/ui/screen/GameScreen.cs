@@ -211,9 +211,12 @@ public class GameScreen : Screen {
         }
 
         // render entities
-        Game.GL.Disable(EnableCap.DepthTest);
+        //Game.GL.Disable(EnableCap.DepthTest);
+
+        // since we have 3d items, we don't bother with disabling because it will be fucked. HOWEVER, we do a bit of depth clearing...
+        Game.GL.Clear(ClearBufferMask.DepthBufferBit);
         Game.world.player.render(dt, interp);
-        Game.GL.Enable(EnableCap.DepthTest);
+        //Game.GL.Enable(EnableCap.DepthTest);
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
@@ -451,8 +454,16 @@ public class GameScreen : Screen {
         var world = Game.world;
         
         // free up memory from the block arraypool - we probably don't need that much
-        ArrayBlockData.blockPool.trim();
-        ArrayBlockData.lightPool.trim();
+        ArrayBlockData.blockPool.clear();
+        ArrayBlockData.lightPool.clear();
+        PaletteBlockData.arrayPool.clear();
+        PaletteBlockData.arrayPoolU.clear();
+        PaletteBlockData.arrayPoolUS.clear();
+
+        WorldIO.saveBlockPool.clear();
+        WorldIO.saveLightPool.clear();
+        HeightMap.heightPool.clear();
+
         
         Game.renderer.setUniforms();
         foreach (var chunk in world.chunks.Values) {
@@ -464,6 +475,23 @@ public class GameScreen : Screen {
         }
 
         world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+
+        // queue up ANOTHER freeing because we'll be saving a lot of chunks now
+        // todo is this REALLY needed??
+        Game.setTimeout(4000, () => {
+            ArrayBlockData.blockPool.clear();
+            ArrayBlockData.lightPool.clear();
+            PaletteBlockData.arrayPool.clear();
+            PaletteBlockData.arrayPoolU.clear();
+            PaletteBlockData.arrayPoolUS.clear();
+
+            WorldIO.saveBlockPool.clear();
+            WorldIO.saveLightPool.clear();
+            HeightMap.heightPool.clear();
+
+            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+            GC.Collect(generation: 2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+        });
     }
 
     public void pause() {
@@ -727,10 +755,10 @@ public class GameScreen : Screen {
         var pos = Game.instance.targetedPos.Value;
         var world = Game.world;
         var blockValue = world.getBlockRaw(pos.X, pos.Y, pos.Z);
-        var blockId = blockValue.getID();
+        var blockID = blockValue.getID();
         var currentMeta = blockValue.getMetadata();
         
-        if (blockId == 0 || !Block.tryGet(blockId, out var block)) {
+        if (blockID == 0 || !Block.tryGet(blockID, out var block)) {
             return;
         }
 

@@ -1,6 +1,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.world;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
@@ -366,6 +367,22 @@ public static partial class Meth {
             ax.Z != 0 ? new Vector3(point.X * cos - point.Y * sin, point.X * sin + point.Y * cos, point.Z) : point;
 
         return rotated + pivot;
+    }
+
+    // printers
+    public static string print<T>(this T[] arr) {
+        return "[" + string.Join(", ", arr) + "]";
+    }
+
+    public static string print(this Matrix4x4 mat) {
+        return $"Matrix: [{mat.M11}, {mat.M12}, {mat.M13}, {mat.M14}]\n" +
+               $"\t[{mat.M21}, {mat.M22}, {mat.M23}, {mat.M24}]\n" +
+               $"\t[{mat.M31}, {mat.M32}, {mat.M33}, {mat.M34}]\n" +
+               $"\t[{mat.M41}, {mat.M42}, {mat.M43}, {mat.M44}]";
+    }
+
+    public static string print(this MatrixStack mat) {
+        return mat.top.print();
     }
 }
 

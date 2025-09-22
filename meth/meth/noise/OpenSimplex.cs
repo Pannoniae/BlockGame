@@ -262,7 +262,7 @@ public class OpenSimplex2S_Exp {
         LOOKUP_2D = new LatticePoint2D[8 * 4];
         LOOKUP_3D = new LatticePoint3D[8];
 
-        for (int i = 0; i < 8; i++) {
+        for (var i = 0; i < 8; i++) {
             int i1, j1, i2, j2;
             if ((i & 1) == 0) {
                 if ((i & 2) == 0) {
@@ -309,7 +309,7 @@ public class OpenSimplex2S_Exp {
             LOOKUP_2D[i * 4 + 3] = new LatticePoint2D(i2, j2);
         }
 
-        for (int i = 0; i < 8; i++) {
+        for (var i = 0; i < 8; i++) {
             int i1, j1, k1, i2, j2, k2;
             i1 = (i >> 0) & 1;
             j1 = (i >> 1) & 1;
@@ -319,32 +319,32 @@ public class OpenSimplex2S_Exp {
             k2 = k1 ^ 1;
 
             // The two points within this octant, one from each of the two cubic half-lattices.
-            LatticePoint3D c0 = new LatticePoint3D(i1, j1, k1, 0);
-            LatticePoint3D c1 = new LatticePoint3D(i1 + i2, j1 + j2, k1 + k2, 1);
+            var c0 = new LatticePoint3D(i1, j1, k1, 0);
+            var c1 = new LatticePoint3D(i1 + i2, j1 + j2, k1 + k2, 1);
 
             // (1, 0, 0) vs (0, 1, 1) away from octant.
-            LatticePoint3D c2 = new LatticePoint3D(i1 ^ 1, j1, k1, 0);
-            LatticePoint3D c3 = new LatticePoint3D(i1, j1 ^ 1, k1 ^ 1, 0);
+            var c2 = new LatticePoint3D(i1 ^ 1, j1, k1, 0);
+            var c3 = new LatticePoint3D(i1, j1 ^ 1, k1 ^ 1, 0);
 
             // (1, 0, 0) vs (0, 1, 1) away from octant, on second half-lattice.
-            LatticePoint3D c4 = new LatticePoint3D(i1 + (i2 ^ 1), j1 + j2, k1 + k2, 1);
-            LatticePoint3D c5 = new LatticePoint3D(i1 + i2, j1 + (j2 ^ 1), k1 + (k2 ^ 1), 1);
+            var c4 = new LatticePoint3D(i1 + (i2 ^ 1), j1 + j2, k1 + k2, 1);
+            var c5 = new LatticePoint3D(i1 + i2, j1 + (j2 ^ 1), k1 + (k2 ^ 1), 1);
 
             // (0, 1, 0) vs (1, 0, 1) away from octant.
-            LatticePoint3D c6 = new LatticePoint3D(i1, j1 ^ 1, k1, 0);
-            LatticePoint3D c7 = new LatticePoint3D(i1 ^ 1, j1, k1 ^ 1, 0);
+            var c6 = new LatticePoint3D(i1, j1 ^ 1, k1, 0);
+            var c7 = new LatticePoint3D(i1 ^ 1, j1, k1 ^ 1, 0);
 
             // (0, 1, 0) vs (1, 0, 1) away from octant, on second half-lattice.
-            LatticePoint3D c8 = new LatticePoint3D(i1 + i2, j1 + (j2 ^ 1), k1 + k2, 1);
-            LatticePoint3D c9 = new LatticePoint3D(i1 + (i2 ^ 1), j1 + j2, k1 + (k2 ^ 1), 1);
+            var c8 = new LatticePoint3D(i1 + i2, j1 + (j2 ^ 1), k1 + k2, 1);
+            var c9 = new LatticePoint3D(i1 + (i2 ^ 1), j1 + j2, k1 + (k2 ^ 1), 1);
 
             // (0, 0, 1) vs (1, 1, 0) away from octant.
-            LatticePoint3D cA = new LatticePoint3D(i1, j1, k1 ^ 1, 0);
-            LatticePoint3D cB = new LatticePoint3D(i1 ^ 1, j1 ^ 1, k1, 0);
+            var cA = new LatticePoint3D(i1, j1, k1 ^ 1, 0);
+            var cB = new LatticePoint3D(i1 ^ 1, j1 ^ 1, k1, 0);
 
             // (0, 0, 1) vs (1, 1, 0) away from octant, on second half-lattice.
-            LatticePoint3D cC = new LatticePoint3D(i1 + i2, j1 + j2, k1 + (k2 ^ 1), 1);
-            LatticePoint3D cD = new LatticePoint3D(i1 + (i2 ^ 1), j1 + (j2 ^ 1), k1 + k2, 1);
+            var cC = new LatticePoint3D(i1 + i2, j1 + j2, k1 + (k2 ^ 1), 1);
+            var cD = new LatticePoint3D(i1 + (i2 ^ 1), j1 + (j2 ^ 1), k1 + k2, 1);
 
             // First two points are guaranteed.
             c0.nextOnFailure = c0.nextOnSuccess = c1;
@@ -413,13 +413,13 @@ public class OpenSimplex2S_Exp {
             new Grad2(-0.38268343236509, 0.923879532511287),
             new Grad2(-0.130526192220052, 0.99144486137381)
         };
-        Grad2[] grad2XBeforeY = new Grad2[grad2.Length];
-        for (int i = 0; i < grad2.Length; i++) {
+        var grad2XBeforeY = new Grad2[grad2.Length];
+        for (var i = 0; i < grad2.Length; i++) {
             grad2[i].dx /= N2;
             grad2[i].dy /= N2;
         }
 
-        for (int i = 0; i < PSIZE; i++) {
+        for (var i = 0; i < PSIZE; i++) {
             GRADIENTS_2D[i] = grad2[i % grad2.Length];
         }
 
@@ -474,13 +474,13 @@ public class OpenSimplex2S_Exp {
             new Grad3(3.0862664687972017, 1.1721513422464978, 0.0),
             new Grad3(1.1721513422464978, 3.0862664687972017, 0.0)
         };
-        for (int i = 0; i < grad3.Length; i++) {
+        for (var i = 0; i < grad3.Length; i++) {
             grad3[i].dx /= N3;
             grad3[i].dy /= N3;
             grad3[i].dz /= N3;
         }
 
-        for (int i = 0; i < PSIZE; i++) {
+        for (var i = 0; i < PSIZE; i++) {
             GRADIENTS_3D[i] = grad3[i % grad3.Length];
         }
     }

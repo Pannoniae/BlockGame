@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -10,6 +11,7 @@ using BlockGame.world.item;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world.block;
 
@@ -17,14 +19,15 @@ namespace BlockGame.world.block;
 /**
  * For now, we'll only have 65536 blocks for typechecking (ushort -> uint), this can be extended later.
  */
+[SuppressMessage("Compiler", "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Block {
     
     /**
      * The maximum block ID we have. This ID is one past the end!
-     * If you want to loop, do for (int i = 0; i &lt;= currentID; i++) { ... }
+     * If you want to loop, do for (int i = 0; i &lt; currentID; i++) { ... }
      * so you won't overread.
      */
-    public static int currentID;
+    public static int currentID = 0;
 
     private const int particleCount = 4;
 
@@ -176,18 +179,20 @@ public class Block {
 
     public static Block register(Block block) {
         // update maxid
-        currentID = Math.Max(currentID, block.id) + 1;
+        if (block.id >= currentID) {
+            currentID = block.id + 1;
+        }
         return blocks[block.id] = block;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Block get(int id) {
+    public static Block? get(int id) {
         return blocks[id];
     }
 
     public static bool tryGet(int id, out Block block) {
-        var cond = id is >= 0 and < MAXBLOCKS;
-        block = cond ? blocks[id] : blocks[1];
+        var cond = id >= 0 && id < currentID;
+        block = (cond ? blocks[id] : blocks[1])!;
         return cond;
     }
 
@@ -830,11 +835,12 @@ public class Block {
     
     public virtual void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         aabbs.Clear();
-        if (!collision[id] || AABB[id] == null) {
+        if (!AABB[id].HasValue || !collision[id]) {
             return;
         }
-        aabbs.Add(new AABB((float)(x + AABB[id].Value.min.X), (float)(y + AABB[id].Value.min.Y), (float)(z + AABB[id].Value.min.Z), 
-                           (float)(x + AABB[id].Value.max.X), (float)(y + AABB[id].Value.max.Y), (float)(z + AABB[id].Value.max.Z)));
+        var aabb = AABB[id]!.Value;
+        aabbs.Add(new AABB((float)(x + aabb.min.X), (float)(y + aabb.min.Y), (float)(z + aabb.min.Z),
+                           (float)(x + aabb.max.X), (float)(y + aabb.max.Y), (float)(z + AABB[id]!.Value.max.Z)));
     }
     
     /**
@@ -843,7 +849,8 @@ public class Block {
      * Override for block-specific placement rules.
      */
     public virtual bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        return world.getBlock(x, y, z) == Blocks.AIR;
+        // by default, non-collidable blocks can be replaced
+        return !collision[world.getBlock(x, y, z)];
     }
     
     /**
@@ -930,6 +937,8 @@ public class FallingBlock(ushort id, string name) : Block(id, name) {
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct UVPair(float u, float v) {
 
+    public const int ATLASSIZE = 16;
+
     public readonly float u = u;
     public readonly float v = v;
 
@@ -971,6 +980,11 @@ public readonly record struct UVPair(float u, float v) {
     public static Vector2 texCoords(BTexture2D tex, float x, float y) {
         return new Vector2(x / tex.width, y / tex.height);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 texCoordsI(UVPair uv) {
+        return new Vector2(uv.u * ATLASSIZE, uv.v * ATLASSIZE);
+    }
     
     public static Vector2 texCoords(BTexture2D tex, UVPair uv) {
         return new Vector2(uv.u / tex.width, uv.v / tex.height);
@@ -982,6 +996,22 @@ public readonly record struct UVPair(float u, float v) {
     
     public static float texV(BTexture2D tex, float v) {
         return v / tex.height;
+    }
+
+    public static int texUI(float u) {
+        return (int)(u * ATLASSIZE);
+    }
+
+    public static int texUI(BTexture2D tex, float u) {
+        return (int)(u * tex.width);
+    }
+
+    public static int texVI(float v) {
+        return (int)(v * ATLASSIZE);
+    }
+
+    public static int texVI(BTexture2D tex, float v) {
+        return (int)(v * tex.height);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

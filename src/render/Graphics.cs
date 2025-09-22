@@ -190,15 +190,16 @@ public class Graphics : IDisposable {
     
     public void scissor(int x, int y, int w, int h) {
         GL.Enable(EnableCap.ScissorTest);
-        GL.Scissor(x, y, (uint)w, (uint)h);
+        // convert from top-left screen coords to bottom-left OpenGL coords
+        GL.Scissor(x, Game.height - y - h, (uint)w, (uint)h);
     }
-    
+
     /**
      * Takes UI coords!
      */
     public void scissorUI(int x, int y, int w, int h) {
         var scale = GUI.guiScale;
-        scissor(x * scale, Game.gui.uiHeight * scale - (y + h) * scale, w * scale, h * scale);
+        scissor(x * scale, y * scale, w * scale, h * scale);
     }
 
     public void noScissor() {

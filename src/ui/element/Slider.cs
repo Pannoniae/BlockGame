@@ -8,12 +8,6 @@ namespace BlockGame.ui.element;
 
 public class Slider : GUIElement {
 
-    public float value;
-    public int min;
-    public int max;
-
-    public float step;
-
     public const int knobWidth = 7;
     public const int knobHeight = 18;
 
@@ -21,15 +15,27 @@ public class Slider : GUIElement {
     private const int leftPadding = 4;
     private const int rightPadding = 4;
 
+    public float value;
+    public int min;
+    public int max;
+
+    public float step;
+
+    public Func<float, string> getText;
+
+    public event Action? applied;
+
+
     public static Rectangle slider = new(0, 80, 128, 16);
     public static Rectangle pressedSlider = new(0, 80 + 32, 128, 16);
     public static Rectangle knob = new(192, 0, knobWidth, knobHeight);
 
-    public Slider(Menu menu, string name, int min, int max, float step, int defaultValue) : base(menu, name) {
+    public Slider(Menu menu, string name, int min, int max, float step, int defaultValue, Func<float, string> getText) : base(menu, name) {
         this.min = min;
         this.max = max;
         this.step = step;
         value = defaultValue;
+        this.getText = getText;
     }
 
 
@@ -75,10 +81,6 @@ public class Slider : GUIElement {
         Game.gui.drawStringCentred(getText(value), centre);
     }
 
-    public Func<float, string> getText;
-
-    public event Action? applied;
-
     protected virtual void apply() {
         applied?.Invoke();
     }
@@ -86,6 +88,6 @@ public class Slider : GUIElement {
 
 public class FOVSlider : Slider {
 
-    public FOVSlider(Menu menu, string name, int min, int max, float step, int defaultValue) : base(menu, name, min, max, step, defaultValue) {
+    public FOVSlider(Menu menu, string name, int min, int max, float step, int defaultValue, Func<float, string> getText) : base(menu, name, min, max, step, defaultValue, getText) {
     }
 }

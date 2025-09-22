@@ -10,7 +10,7 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class Entity(World world) : Persistent {
-    public const int MAX_SWING_TICKS = 16;
+    public const int MAX_SWING_TICKS = 24;
     public const int AIR_HIT_CD = 20;
 
     /** is player walking on (colling with) ground */

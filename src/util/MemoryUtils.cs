@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using BlockGame.main;
 using BlockGame.util.log;
 using BlockGame.world;
@@ -10,7 +11,13 @@ using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.util;
 
-public static class MemoryUtils {
+public static partial class MemoryUtils {
+
+    public static void init() {
+        if (OperatingSystem.IsWindows()) {
+            WindowsMemoryUtility.init();
+        }
+    }
 
     /// <summary>
     /// Gets the alignment of the given object.
@@ -20,7 +27,7 @@ public static class MemoryUtils {
         var alignment = BitOperations.TrailingZeroCount((uint)ptr);
         return alignment;
     }
-    
+
     public static unsafe void crash(string exceptionMessage) {
         Log.info("MANUAL CRASH: " + exceptionMessage);
         *(int*)0 = 42;
@@ -30,6 +37,9 @@ public static class MemoryUtils {
 
         ArrayBlockData.blockPool.clear();
         ArrayBlockData.lightPool.clear();
+        PaletteBlockData.arrayPool.clear();
+        PaletteBlockData.arrayPoolU.clear();
+        PaletteBlockData.arrayPoolUS.clear();
         WorldIO.saveBlockPool.clear();
         WorldIO.saveLightPool.clear();
         HeightMap.heightPool.clear();
@@ -138,11 +148,22 @@ public static class MemoryUtils {
         }
     }
 
-    /// Get VRAM usage in bytes. Returns -1 if not supported.
+    /// Get VRAM usage in bytes. Returns per-process usage on Windows, total usage on other platforms. Returns -1 if not supported.
     public static long getVRAMUsage(out int stat) {
+        // On Windows, try to get per-process GPU memory usage first because WDDM means the GPU driver doesn't know per-process usage
+        // and OpenGL extensions only return total usage.
+        if (OperatingSystem.IsWindows()) {
+            long processGpuMem = WindowsMemoryUtility.getCurrentProcessGpuMemory();
+            if (processGpuMem != -1) {
+                stat = 3; // stat type for Windows Performance Counters
+                return processGpuMem;
+            }
+        }
+
+        // Fall back to OpenGL extensions (returns total GPU memory usage)
         var gl = Game.GL;
         if (gl.IsExtensionPresent("GL_NVX_gpu_memory_info")) {
-            // Hell yeah, NVidia card
+            // NVidia card
             const uint NVX_GPU_MEMORY_INFO_DEDICATED_VIDMEM_NVX = 0x9047;
             const uint NVX_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX = 0x9049;
             const uint NVX_GPU_MEMORY_INFO_EVICTED_MEMORY_NVX = 0x904B;
@@ -174,12 +195,79 @@ public static class MemoryUtils {
         return -1;
     }
 
-    public class WindowsMemoryUtility {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetProcessWorkingSetSize(IntPtr proc, int minSize, int maxSize);
+    [SupportedOSPlatform("windows")]
+    public partial class WindowsMemoryUtility {
+        private static PerformanceCounterCategory category;
+        private static PerformanceCounter counter;
+
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetProcessWorkingSetSize(IntPtr proc, int minSize, int maxSize);
 
         public static void ReleaseUnusedProcessWorkingSetMemory() {
             SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+        }
+
+        public static void init() {
+            try {
+                category = new PerformanceCounterCategory("GPU Process Memory");
+            }
+            catch (Exception ex) {
+                Log.error("Failed to initialize GPU Process Memory Performance Counter Category:");
+                Log.error(ex);
+            }
+
+            using var process = Process.GetCurrentProcess();
+            //string processName = process.ProcessName;
+            int processId = process.Id;
+
+            string[] instanceNames = category.GetInstanceNames();
+
+            //Console.Out.WriteLine($"Looking for GPU memory usage for process '{processName}' (PID {processId})");
+            //Console.Out.WriteLine($"Available GPU Process Memory instances: {string.Join(", ", instanceNames)}");
+
+            // Find the instance that matches our process
+            string? targetInstance = null;
+            foreach (string instanceName in instanceNames) {
+                // Instance names are typically in format "pid_9244_luid_0x00000000_0x00010378_phys_0" or something
+                if (instanceName.Contains(processId.ToString())) {
+                    targetInstance = instanceName;
+                    break;
+                }
+            }
+
+            if (targetInstance != null) {
+                counter?.Dispose();
+                counter = new PerformanceCounter("GPU Process Memory", "Dedicated Usage", targetInstance);
+            }
+            else {
+                Log.error("Failed to find matching GPU Process Memory instance for current process.");
+            }
+
+        }
+
+        /// <summary>
+        /// Gets the current process's GPU dedicated memory usage in bytes using Windows Performance Counters.
+        /// Returns -1 if not available or on error.
+        /// </summary>
+        /// TODO clean this method up
+
+        public static long getCurrentProcessGpuMemory() {
+            try {
+
+                if (category == null || counter == null) {
+                    return -1;
+                }
+
+                float value = counter.NextValue();
+                // Performance counter returns value in bytes
+                return (long)value;
+            }
+            catch (Exception ex) {
+                Log.error("Failed to get GPU memory for current process:");
+                Log.error(ex);
+                return -1;
+            }
         }
     }
 }

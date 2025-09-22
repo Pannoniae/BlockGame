@@ -1,5 +1,7 @@
-﻿using BlockGame.util;
+﻿using System.Diagnostics.CodeAnalysis;
+using BlockGame.util;
 using BlockGame.world.block;
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world.item;
 
@@ -9,6 +11,7 @@ namespace BlockGame.world.item;
  * 
  * itemID = -blockID
  */
+[SuppressMessage("Compiler", "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Item {
     public int id;
     public string name;
@@ -30,7 +33,7 @@ public class Item {
 
     
 
-    public static int currentID = 1;
+    public static int currentID = 0;
 
     public static Item AIR;
 
@@ -41,7 +44,9 @@ public class Item {
     
     public static Item register(Item item) {
         // handles negatives correctly!
-        currentID = Math.Max(currentID, item.id);
+        if (item.id >= currentID) {
+            currentID = item.id + 1;
+        }
         return items[getIdx(item.id)] = item;
     }
 
@@ -67,7 +72,7 @@ public class Item {
     
     public bool isBlock() => id < 0 && -id < Block.currentID && Block.blocks[-id] != null;
     
-    public bool isItem() => id > 0 && id <= currentID && items[getIdx(id)] != null;
+    public bool isItem() => id > 0 && id < currentID && items[getIdx(id)] != null;
     
     public int getBlockID() => isBlock() ? -id : 0;
     
