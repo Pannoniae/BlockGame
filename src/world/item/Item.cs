@@ -100,6 +100,30 @@ public class Item {
         var goldPickaxe = new Item(Items.GOLD_PICKAXE, "Gold Pickaxe");
         goldPickaxe.tex = new UVPair(3, 2);
         register(goldPickaxe);
+
+        var ironPickaxe = new Item(Items.IRON_PICKAXE, "Iron Pickaxe");
+        ironPickaxe.tex = new UVPair(1, 2);
+        register(ironPickaxe);
+
+        var woodPickaxe = new Item(Items.WOOD_PICKAXE, "Wood Pickaxe");
+        woodPickaxe.tex = new UVPair(2, 2);
+        register(woodPickaxe);
+
+        var stonePickaxe = new Item(Items.STONE_PICKAXE, "Stone Pickaxe");
+        stonePickaxe.tex = new UVPair(0, 2);
+        register(stonePickaxe);
+
+        var woodAxe = new Item(Items.WOOD_AXE, "Wood Axe");
+        woodAxe.tex = new UVPair(2, 3);
+        register(woodAxe);
+
+        var stoneShovel = new Item(Items.STONE_SHOVEL, "Stone Shovel");
+        stoneShovel.tex = new UVPair(4, 2);
+        register(stoneShovel);
+
+        var stoneSword = new Item(Items.STONE_SWORD, "Stone Sword");
+        stoneSword.tex = new UVPair(5, 2);
+        register(stoneSword);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
