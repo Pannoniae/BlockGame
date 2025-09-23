@@ -124,6 +124,14 @@ public class Item {
         var stoneSword = new Item(Items.STONE_SWORD, "Stone Sword");
         stoneSword.tex = new UVPair(5, 2);
         register(stoneSword);
+
+        var stoneHoe = new Item(Items.STONE_HOE, "Stone Hoe");
+        stoneHoe.tex = new UVPair(6, 2);
+        register(stoneHoe);
+
+        var stoneSickle = new Item(Items.STONE_SICKLE, "Stone Sickle");
+        stoneSickle.tex = new UVPair(7, 2);
+        register(stoneSickle);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
