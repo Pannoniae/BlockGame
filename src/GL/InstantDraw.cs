@@ -2,6 +2,8 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
+using BlockGame.util;
+using BlockGame.world;
 using Silk.NET.OpenGL.Legacy;
 using Color = Molten.Color;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
@@ -46,9 +48,14 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected bool fogEnabled = false;  // Disabled by default
     protected FogType fogType = FogType.Linear;
     protected float fogDensity = 0.01f;
-    
+
     // vertex tint
     protected Color tint = Color.White;
+
+    // Matrix components for automatic matrix computation
+    protected MatrixStack? modelMatrix;
+    protected Matrix4x4 viewMatrix = Matrix4x4.Identity;
+    protected Matrix4x4 projMatrix = Matrix4x4.Identity;
     
 
     public InstantDraw(int maxVertices) {
@@ -122,11 +129,25 @@ public abstract class InstantDraw<T> where T : unmanaged {
     }
     
     public void setMV(Matrix4x4 modelView) {
+        modelMatrix = null; // Disable automatic matrix computation
         instantShader.setUniform(uModelView, modelView);
     }
-    
+
     public void setMVP(Matrix4x4 mvp) {
+        modelMatrix = null; // Disable automatic matrix computation
         instantShader.setUniform(uMVP, mvp);
+    }
+    
+    public void model(MatrixStack? m) {
+        modelMatrix = m;
+    }
+
+    public void view(Matrix4x4 v) {
+        viewMatrix = v;
+    }
+
+    public void proj(Matrix4x4 p) {
+        projMatrix = p;
     }
     
     /// <summary>
@@ -158,6 +179,17 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
         // Apply current fog settings
         instantShader.use();
+
+        // Compute final matrices from components if available
+        if (modelMatrix != null) {
+            var model = modelMatrix.top;
+            var mv = model * viewMatrix;
+            var mvp = model * viewMatrix * projMatrix;
+
+            instantShader.setUniform(uModelView, mv);
+            instantShader.setUniform(uMVP, mvp);
+        }
+
         if (fogEnabled) {
             instantShader.setUniform(uFogEnabled, true);
             instantShader.setUniform(uFogColour, fogColour);
@@ -263,12 +295,12 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
         instantShader = Game.graphics.instantColourShader;
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
-        uFogColour = instantShader.getUniformLocation("fogColour");
-        uFogStart = instantShader.getUniformLocation("fogStart");
-        uFogEnd = instantShader.getUniformLocation("fogEnd");
-        uFogEnabled = instantShader.getUniformLocation("fogEnabled");
-        uFogType = instantShader.getUniformLocation("fogType");
-        uFogDensity = instantShader.getUniformLocation("fogDensity");
+        uFogColour = instantShader.getUniformLocation(nameof(fogColour));
+        uFogStart = instantShader.getUniformLocation(nameof(fogStart));
+        uFogEnd = instantShader.getUniformLocation(nameof(fogEnd));
+        uFogEnabled = instantShader.getUniformLocation(nameof(fogEnabled));
+        uFogType = instantShader.getUniformLocation(nameof(fogType));
+        uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
         
 
         // Initialize fog as disabled
@@ -311,28 +343,32 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
 
 public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxVertices) {
 
-    protected int uLightDir;
-    protected int uLightRatio;
-    
-    protected Vector3 lightDir = new Vector3(0.0f, 1.0f, 0.0f);
+    protected int uLightDir1;
+    protected int uLightRatio1;
+    protected int uLightDir2;
+    protected int uLightRatio2;
+
+    protected Vector3 lightDir = new Vector3(1.0f, 0.0f, 0.0f);
     /** The ratio between direct and ambient light. 1 = only direct, 0 = only ambient
      *  TODO we don't have ambient light colouring or any of that shit, rn it's just a simple lerp
      */
-    protected float lightRatio = 1.0f;
+    protected float lightRatio = Meth.psiF;
     
     public override void setup() {
         base.setup();
         instantShader = Game.graphics.instantEntityShader;
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
         uModelView = instantShader.getUniformLocation(nameof(uModelView));
-        uFogColour = instantShader.getUniformLocation(nameof(fogColor));
+        uFogColour = instantShader.getUniformLocation(nameof(fogColour));
         uFogStart = instantShader.getUniformLocation(nameof(fogStart));
         uFogEnd = instantShader.getUniformLocation(nameof(fogEnd));
         uFogEnabled = instantShader.getUniformLocation(nameof(fogEnabled));
         uFogType = instantShader.getUniformLocation(nameof(fogType));
         uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
-        uLightDir = instantShader.getUniformLocation(nameof(lightDir));
-        uLightRatio = instantShader.getUniformLocation(nameof(lightRatio));
+        uLightDir1 = instantShader.getUniformLocation(nameof(lightDir));
+        uLightRatio1 = instantShader.getUniformLocation(nameof(lightRatio));
+        uLightDir2 = instantShader.getUniformLocation("lightDir2");
+        uLightRatio2 = instantShader.getUniformLocation("lightRatio2");
 
         // Initialize fog as disabled
         instantShader.setUniform(uFogEnabled, false);
@@ -342,8 +378,11 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
         instantShader.setUniform(uFogDensity, fogDensity);
         
         // Set default lighting
-        instantShader.setUniform(uLightDir, lightDir);
-        instantShader.setUniform(uLightRatio, lightRatio);
+        instantShader.setUniform(uLightDir1, lightDir);
+        instantShader.setUniform(uLightRatio1, lightRatio);
+
+        instantShader.setUniform(uLightDir2, new Vector3(-lightDir.X, -lightDir.Y, -lightDir.Z));
+        instantShader.setUniform(uLightRatio2, 1.0f - lightRatio);
     }
 
     public override void format() {
@@ -352,15 +391,15 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
         GL.EnableVertexAttribArray(2);
 
         GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
-        GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
-        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 8 * sizeof(ushort));
-        GL.VertexAttribFormat(3, 3, VertexAttribType.Int2101010Rev, true, 0 + 10 * sizeof(ushort));
+        GL.VertexAttribFormat(1, 2, VertexAttribType.Float, false, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 10 * sizeof(ushort));
+        GL.VertexAttribFormat(3, 4, VertexAttribType.Int2101010Rev, true, 0 + 12 * sizeof(ushort));
 
         GL.VertexAttribBinding(0, 0);
         GL.VertexAttribBinding(1, 0);
         GL.VertexAttribBinding(2, 0);
         GL.VertexAttribBinding(3, 0);
 
-        GL.BindVertexBuffer(0, VBO, 0, 12 * sizeof(ushort));
+        GL.BindVertexBuffer(0, VBO, 0, 14 * sizeof(ushort));
     }
 }

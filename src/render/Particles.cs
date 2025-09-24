@@ -68,8 +68,8 @@ public class Particles {
             // get interp pos
             var pos = Vector3D.Lerp(particle.prevPosition, particle.position, (float)interp);
             var blockPos = pos.toBlockPos();
-            var right = Vector3.Cross(Game.camera.up.toVec3(), Game.camera.forward.toVec3());
-            var up = Game.camera.up.toVec3();
+            var right = Vector3.Cross(Game.camera.up(interp).toVec3(), Game.camera.forward(interp).toVec3());
+            var up = Game.camera.up(interp).toVec3();
             var ul = pos.toVec3() - right * particle.size.X / 2 + up * particle.size.Y / 2;
             var ll = pos.toVec3() - right * particle.size.X / 2 - up * particle.size.Y / 2;
             var lr = pos.toVec3() + right * particle.size.X / 2 - up * particle.size.Y / 2;

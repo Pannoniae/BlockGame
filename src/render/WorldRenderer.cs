@@ -3,12 +3,14 @@ using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
+using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
 using Molten;
+using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
@@ -95,9 +97,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         idc.setup();
         idt.setup();
-        
+
         var mode = Settings.instance.rendererMode;
-        
+
         reloadRenderer(mode, mode);
     }
 
@@ -174,7 +176,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             indices[i * 6 + 4] = (ushort)(i * 4 + 2);
             indices[i * 6 + 5] = (ushort)(i * 4 + 3);
         }
-        
+
         // delete old buffer if any
         GL.DeleteBuffer(Game.graphics.fatQuadIndices);
         Game.graphics.fatQuadIndices = 0;
@@ -233,7 +235,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     private void initializeShaders() {
         worldShader = createWorldShader();
-        
+
         // some integrated AMD cards shit themselves when they see a vertex shader-only program. IDK which ones (it works on my dedicated AMD card)
         // but for safety, I'll just make it render fragments too on any non-NV card
 
@@ -291,7 +293,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         worldShader?.Dispose();
         dummyShader?.Dispose();
         waterShader?.Dispose();
-        
+
         // dispose mode-specific resources
         chunkCMD?.Dispose();
         chunkCMD = null;
@@ -299,7 +301,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         bindlessBuffer = null;
         chunkSSBO?.Dispose();
         chunkSSBO = null;
-        
+
         // destroy all sharedchunkVAOs
         foreach (var chunk in world?.chunkList ?? []) {
             foreach (var subChunk in chunk.subChunks) {
@@ -309,7 +311,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 subChunk.watervao = null;
             }
         }
-        
+
         // CMDLIST FIX: clear default FBO because we don't do it normally! :P
         var isActualCMDL = newm == RendererMode.Auto && Game.hasCMDL;
         if (oldm == RendererMode.CommandList || newm == RendererMode.CommandList || isActualCMDL) {
@@ -318,19 +320,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 defaultClearColour.B / 255f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
         }
-        
+
         // switch to new
         Settings.instance.rendererMode = newm;
-        
+
         var effectiveMode = Settings.instance.getActualRendererMode();
-        
+
         // create shared chunk VAO
         GL.DeleteVertexArray(chunkVAO);
         chunkVAO = GL.GenVertexArray();
-        
+
         // initialize shaders
         initializeShaders();
-        
+
         if (effectiveMode >= RendererMode.Instanced) {
             // allocate SSBO for chunk positions (2MB initial, grows as needed)
             chunkSSBO = new ShaderStorageBuffer(GL, 2 * 1024 * 1024, 0);
@@ -383,10 +385,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
                 out ssboaddr);
         }
-        
+
         currentAnisoLevel = -1;
         currentMSAA = -1;
-        
+
         // regen shared quad indices for unified memory
         genFatQuadIndices();
     }
@@ -412,7 +414,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
-            
+
 
             // re-bind texture units
             worldShader.setUniform(blockTexture, 0);
@@ -522,18 +524,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
         setUniforms();
-        
+
         // if not a2c, blend
         GL.Enable(EnableCap.Blend);
         GL.DepthMask(false);
         // render sky
-        
+
         renderSky(interp);
         GL.DepthMask(true);
 
         // no blending solid shit!
         GL.Disable(EnableCap.Blend);
-        
+
         // Enable A2C whenever MSAA is active for alpha-tested geometry (leaves)
         if (Settings.instance.msaa > 1) {
             GL.Enable(EnableCap.SampleAlphaToCoverage);
@@ -661,7 +663,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // unbind ssbo
             //GL.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, 0, 0);
         }
-        
+
         if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
             // why is this necessary?? otherwise it just says
             // DebugSourceApi [DebugTypeOther] [DebugSeverityMedium] (65537): ,  BufferAddressRange (address=0x0000000000000000, length=0x0000000000000000) for attrib 0 is not contained in a resident buffer. This may not be fatal depending on which addresses are actually referenced.
@@ -738,7 +740,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //goto skip;
 
         // TRANSLUCENT DEPTH PRE-PASS
-        
+
         // if integrated shit, don't do depth pre-pass
         if (Game.isAMDIntegratedCard || Game.isIntelIntegratedCard) {
             waterShader.use();
@@ -893,7 +895,51 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         //GL.DepthMask(true);
         GL.Enable(EnableCap.CullFace);
-        
+
+
+        var mat = Game.graphics.model;
+        mat.push();
+        mat.loadIdentity();
+
+        var ide = EntityRenderers.ide;
+
+        // Set matrix components for automatic computation
+        ide.model(mat);
+        ide.view(Game.camera.getViewMatrix(interp));
+        ide.proj(Game.camera.getProjectionMatrix());
+
+        // test pos
+        mat.translate(0, 100, 0);
+
+        // render test model - each limb will use current mat.top automatically
+        //var m = new HumanModel();
+        m.render(mat, Game.player, new Vector3(), 1f / 16f, interp);
+        mat.pop();
+
+        if (Game.camera.mode == CameraMode.FirstPerson) {
+            goto skip1;
+        }
+
+        mat.push();
+        mat.loadIdentity();
+
+        // make player the rendered entity
+        var interpPos = Vector3D.Lerp(Game.player.prevPosition, Game.player.position, interp);
+        var interpRot = Vector3.Lerp(Game.player.prevRotation, Game.player.rotation, (float)interp);
+        mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
+        mat.rotate(-interpRot.Y, 0, 1, 0);
+        mat.rotate(90, 0, 1, 0);
+        //mat.rotate(interpRot.X, 1, 0, 0);
+        mat.rotate(interpRot.Z, 0, 0, 1);
+
+        //m = new HumanModel();
+        m.render(mat, Game.player, new Vector3(), 1f / 16f, interp);
+        mat.pop();
+
+
+        skip1: ;
+
+
         // no depth writes!
         GL.DepthMask(false);
         world.particles.render(interp);
@@ -906,8 +952,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     /** Stores the chunk positions! */
     private List<Vector4> chunkData = null!;
 
+    private HumanModel m = new HumanModel();
+
     private static readonly List<AABB> AABBList = [];
-    
+
     public void updateRandom(double dt) {
         var player = Game.player;
         const int r = 16;

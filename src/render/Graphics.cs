@@ -60,8 +60,7 @@ public class Graphics : IDisposable {
     
     public int groupCount;
 
-    public MatrixStack modelView = new MatrixStack().reversed();
-    public MatrixStack projection = new MatrixStack().reversed();
+    public MatrixStack model = new MatrixStack().reversed();
     
     /** List of currently bound textures.
      * TODO make the size dynamic, rn it's just 16

@@ -245,7 +245,7 @@ public class GameScreen : Screen {
                 var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
                 Game.instance.lastMousePos = pos;
 
-                Game.camera.ModifyDirection(xOffset, yOffset);
+                Game.player.handleMouseInput(xOffset, yOffset);
             }
         }
 
@@ -327,7 +327,7 @@ public class GameScreen : Screen {
                 world = WorldIO.load("level1");
                 Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
                 break;
-            case Key.F8:
+            case Key.F8 when keyboard.IsKeyPressed(Key.ShiftLeft):
                 Game.noUpdate = !Game.noUpdate;
                 break;
             case Key.F9:

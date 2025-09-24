@@ -328,7 +328,7 @@ public class IngameMenu : Menu, IDisposable {
             debugStrG.Clear();
             if (Game.devMode) {
                 // calculate facing
-                var facing = cameraFacing(c.forward);
+                var facing = cameraFacing(c.forward());
 
                 var ww = w.getBlockRaw(Raycast.raycast(w, true).block);
                 var wwb = ww.getID();
@@ -339,7 +339,8 @@ public class IngameMenu : Menu, IDisposable {
                 debugStr.AppendFormat("vx:{0:0.000}, vy:{1:0.000}, vz:{2:0.000}, vl:{3:0.000}\n", p.velocity.X,
                     p.velocity.Y, p.velocity.Z, p.velocity.Length());
                 debugStr.AppendFormat("ax:{0:0.000}, ay:{1:0.000}, az:{2:0.000}\n", p.accel.X, p.accel.Y, p.accel.Z);
-                debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000} {3}\n", c.forward.X, c.forward.Y, c.forward.Z,
+                var forwardVec = c.forward();
+                debugStr.AppendFormat("cf:{0:0.000}, {1:0.000}, {2:0.000} {3}\n", forwardVec.X, forwardVec.Y, forwardVec.Z,
                     facing);
                 debugStr.AppendFormat("sl:{0}, bl:{1}, i:{2}\n", sl, bl, inited);
                 debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');

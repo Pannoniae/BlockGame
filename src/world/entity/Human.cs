@@ -1,7 +1,7 @@
 namespace BlockGame.world;
 
-public class Humanoid : Entity {
-    public Humanoid(World world) : base(world) {
+public class Human : Entity {
+    public Human(World world) : base(world) {
     }
 
     public override void update(double dt) {

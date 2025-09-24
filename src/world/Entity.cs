@@ -10,7 +10,7 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class Entity(World world) : Persistent {
-    public const int MAX_SWING_TICKS = 24;
+    public const int MAX_SWING_TICKS = 20;
     public const int AIR_HIT_CD = 20;
 
     /** is player walking on (colling with) ground */
@@ -38,10 +38,9 @@ public class Entity(World world) : Persistent {
 
 
     /// <summary>
-    /// Which direction the entity faces (horizontally)
-    /// TODO also store pitch/yaw for head without camera
+    /// Which direction the entity faces (horizontally only)
     /// </summary>
-    public virtual Vector3D forward {
+    public virtual Vector3D hfacing {
         get {
             var cameraDirection = Vector3.Zero;
             cameraDirection.X = MathF.Cos(Meth.deg2rad(rotation.Y));
@@ -61,8 +60,8 @@ public class Entity(World world) : Persistent {
     // TODO implement some MovementState system so movement constants don't have to be duplicated...
     // it would store a set of values for acceleration, drag, friction, maxspeed, etc...
 
-    public bool collisionXThisFrame;
-    public bool collisionZThisFrame;
+    public bool collx;
+    public bool collz;
 
     /// <summary>
     /// This number is lying to you.
@@ -76,7 +75,7 @@ public class Entity(World world) : Persistent {
     public bool flyMode;
     public bool noClip;
 
-    protected List<AABB> collisionTargets = [];
+    protected List<AABB> collisions = [];
 
     public int airHitCD;
 
@@ -87,6 +86,14 @@ public class Entity(World world) : Persistent {
     public double prevSwingProgress;
 
     public double swingProgress;
+
+    // animation state
+    public float apos;
+    public float papos;
+    
+    public float aspeed;
+    public float paspeed;
+    
     private readonly List<Vector3I> neighbours = new(26);
 
     /** Is it in a valid chunk? */
@@ -239,7 +246,7 @@ public class Entity(World world) : Persistent {
         var oldPos = position;
         var blockPos = position.toBlockPos();
         // collect potential collision targets
-        collisionTargets.Clear();
+        collisions.Clear();
 
         // if we aren't noclipping
         if (!noClip) {
@@ -254,7 +261,7 @@ public class Entity(World world) : Persistent {
 
                 // for each AABB of the block the player is in
                 foreach (AABB aa in AABBList) {
-                    collisionTargets.Add(aa);
+                    collisions.Add(aa);
                 }
 
                 // gather neighbouring blocks
@@ -265,7 +272,7 @@ public class Entity(World world) : Persistent {
                     var block = world.getBlock(neighbour);
                     world.getAABBsCollision(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
                     foreach (AABB aa in AABBList) {
-                        collisionTargets.Add(aa);
+                        collisions.Add(aa);
                     }
                 }
             }
@@ -275,7 +282,7 @@ public class Entity(World world) : Persistent {
         AABB aabb;
         AABB sneakaabb;
         var loss = new List<AABB>();
-        foreach (var blockAABB in collisionTargets) {
+        foreach (var blockAABB in collisions) {
             if (AABB.isCollision(caabb, blockAABB)) {
                 loss.Add(blockAABB);
             }
@@ -283,7 +290,7 @@ public class Entity(World world) : Persistent {
 
         // Y axis resolution
         position.Y += velocity.Y * dt;
-        foreach (var blockAABB in collisionTargets) {
+        foreach (var blockAABB in collisions) {
             aabb = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             if (AABB.isCollision(aabb, blockAABB)) {
                 // If we're stuck in this block, only prevent escape
@@ -320,11 +327,11 @@ public class Entity(World world) : Persistent {
         // X axis resolution
         position.X += velocity.X * dt;
         var hasCollision = false;
-        foreach (var blockAABB in collisionTargets) {
+        foreach (var blockAABB in collisions) {
             aabb = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             sneakaabb = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabb, blockAABB)) {
-                collisionXThisFrame = true;
+                collx = true;
 
                 // If stuck in this block, only prevent escape
                 if (loss.Contains(blockAABB)) {
@@ -348,7 +355,7 @@ public class Entity(World world) : Persistent {
                             bool hasCollisionAtStep = false;
 
                             // check if this step position has any collisions
-                            foreach (var testAABB in collisionTargets) {
+                            foreach (var testAABB in collisions) {
                                 if (AABB.isCollision(stepAABB, testAABB)) {
                                     hasCollisionAtStep = true;
                                     break;
@@ -391,11 +398,11 @@ public class Entity(World world) : Persistent {
 
         position.Z += velocity.Z * dt;
         hasCollision = false;
-        foreach (var blockAABB in collisionTargets) {
+        foreach (var blockAABB in collisions) {
             aabb = calcAABB(new Vector3D(position.X, position.Y, position.Z));
             sneakaabb = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z));
             if (AABB.isCollision(aabb, blockAABB)) {
-                collisionZThisFrame = true;
+                collz = true;
 
                 // If stuck in this block, only prevent escape
                 if (loss.Contains(blockAABB)) {
@@ -418,7 +425,7 @@ public class Entity(World world) : Persistent {
                             bool collideStep = false;
 
                             // check if this step position has any collisions
-                            foreach (var testAABB in collisionTargets) {
+                            foreach (var testAABB in collisions) {
                                 if (AABB.isCollision(stepAABB, testAABB)) {
                                     collideStep = true;
                                     break;
@@ -462,7 +469,7 @@ public class Entity(World world) : Persistent {
         // is player on ground? check slightly below
         var groundCheck = calcAABB(new Vector3D(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
         onGround = false;
-        foreach (var blockAABB in collisionTargets) {
+        foreach (var blockAABB in collisions) {
             if (AABB.isCollision(blockAABB, groundCheck)) {
                 onGround = true;
                 flyMode = false;
@@ -510,5 +517,14 @@ public class Entity(World world) : Persistent {
                 airHitCD = AIR_HIT_CD;
             }
         }
+    }
+
+    public Vector3 facing() {
+        var cameraDirection = Vector3.Zero;
+        cameraDirection.X = MathF.Cos(Meth.deg2rad(rotation.Y));
+        cameraDirection.Y = 0;
+        cameraDirection.Z = MathF.Sin(Meth.deg2rad(rotation.Y));
+
+        return Vector3.Normalize(cameraDirection);
     }
 }

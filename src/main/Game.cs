@@ -545,7 +545,8 @@ public partial class Game {
         GL.ClipControl(ClipControlOrigin.LowerLeft, ClipControlDepth.ZeroToOne);
 
         // init memoryutils!
-        MemoryUtils.init();
+        // the good thing is that we can yeet this off to another thread
+        _ = Task.Run(MemoryUtils.init);
         
         // we load the settings FIRST so our graphics settings get picked up when initialising stuff
         Settings.instance.load();

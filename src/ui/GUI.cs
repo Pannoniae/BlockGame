@@ -736,30 +736,26 @@ public class GUI {
             lightOverride: 255, cullFaces: false);
         
         // assemble the matrix using existing matrix stacks from Graphics
-        Game.graphics.projection.push();
-        Game.graphics.projection.loadIdentity();
         var projMatrix = Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
-        Game.graphics.projection.multiply(projMatrix);
         
-        Game.graphics.modelView.push();
-        Game.graphics.modelView.loadIdentity();
+        Game.graphics.model.push();
+        Game.graphics.model.loadIdentity();
         
         
         // view transformation - camera position
         var camPos = new Vector3(1, 2 / 3f, 1);
         var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-        Game.graphics.modelView.multiply(viewMatrix);
+        Game.graphics.model.multiply(viewMatrix);
         
         // model transformations
-        Game.graphics.modelView.translate(0, 5 / 6f, 0);
-        Game.graphics.modelView.scale(1, -1, 1);
+        Game.graphics.model.translate(0, 5 / 6f, 0);
+        Game.graphics.model.scale(1, -1, 1);
         
         // combine matrices
-        var mat = Game.graphics.modelView.top * Game.graphics.projection.top;
+        var mat = Game.graphics.model.top * projMatrix;
         
         // restore matrix stacks
-        Game.graphics.modelView.pop();
-        Game.graphics.projection.pop();
+        Game.graphics.model.pop();
         //Matrix4x4.CreateTranslation(0, 0, 0);
         //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
         guiBlockShader.setUniform(uMVP, mat);

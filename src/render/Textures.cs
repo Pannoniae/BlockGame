@@ -27,6 +27,7 @@ public class Textures {
     public const int LIGHTMAP_SIZE = 16;
 
     public readonly Rgba32[] lightmap = new Rgba32[256];
+    public BTexture2D human;
 
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
@@ -45,6 +46,11 @@ public class Textures {
 
         itemTexture = new BTextureAtlas("textures/items.png", 16);
         itemTexture.reload();
+
+        human = get("textures/character.png");
+        human.reload();
+
+
 
         // init lightmap
         for (int i = 0; i < 256; i++) {

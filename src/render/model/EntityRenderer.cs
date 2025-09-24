@@ -1,4 +1,5 @@
-﻿using BlockGame.world;
+﻿using BlockGame.GL;
+using BlockGame.world;
 using BlockGame.world.entity;
 
 namespace BlockGame.render.model;
@@ -23,7 +24,11 @@ public static class EntityRenderers {
     public const int ENTITY_RENDERER_COUNT = 16;
     public static EntityRenderer<Entity>[] renderers = new EntityRenderer<Entity>[ENTITY_RENDERER_COUNT];
 
+    public static readonly InstantDrawEntity ide = new(2048);
+
     static EntityRenderers() {
+        ide.setup();
+
         renderers[0] = new CowRenderer();
     }
 }

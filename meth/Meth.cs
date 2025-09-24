@@ -242,6 +242,10 @@ public static partial class Meth {
         return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
     }
 
+    public static Vector3 lerp(Vector3 start, Vector3 end, float amount) {
+        return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
+    }
+
     public static byte toByte(this bool value) {
         return Unsafe.BitCast<bool, byte>(value);
     }
@@ -383,6 +387,42 @@ public static partial class Meth {
 
     public static string print(this MatrixStack mat) {
         return mat.top.print();
+    }
+
+    public static float clamp(float x, float min, float max) {
+        if (x < min) {
+            return min;
+        }
+
+        if (x > max) {
+            return max;
+        }
+
+        return x;
+    }
+
+    public static int clamp(int x, int min, int max) {
+        if (x < min) {
+            return min;
+        }
+
+        if (x > max) {
+            return max;
+        }
+
+        return x;
+    }
+
+    public static double clamp(double x, double min, double max) {
+        if (x < min) {
+            return min;
+        }
+
+        if (x > max) {
+            return max;
+        }
+
+        return x;
     }
 }
 

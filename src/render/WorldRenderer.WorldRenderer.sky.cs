@@ -40,7 +40,7 @@ public sealed partial class WorldRenderer {
         //idc.setFogDensity(0.002f);
         idc.fogDistance(0f, 128f);
 
-        var mat = Game.graphics.modelView;
+        var mat = Game.graphics.model;
         mat.push();
 
         // tilt should be 1 at sunrise (0)
@@ -112,7 +112,7 @@ public sealed partial class WorldRenderer {
         const float sunSize = 8f;
         const float moonSize = sunSize * 0.75f;
 
-        var mat = Game.graphics.modelView;
+        var mat = Game.graphics.model;
         mat.push();
 
         float sunElevation = world.getSunElevation(world.worldTick);
@@ -213,7 +213,7 @@ public sealed partial class WorldRenderer {
         const float starSize = 0.15f;
 
         float continuousTime = dayPercent * 360;
-        var mat = Game.graphics.modelView;
+        var mat = Game.graphics.model;
 
         mat.push();
 

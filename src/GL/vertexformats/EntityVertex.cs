@@ -3,22 +3,30 @@ using Molten;
 
 namespace BlockGame.GL.vertexformats;
 
-[StructLayout(LayoutKind.Explicit, Size = 24)]
+/**
+ * Never think you can replace this with a half float, you'll be burned with texture bugs forever.
+ * TODO add fancy packed vertex format, what the cool kids call "vertex pulling" -
+ * have the vertices defined as position, extent, UV, and normal for every *face*, and colours can still be per-vertex
+ * This can either be yeeted in an SSBO and read in the shader, or we can use mesh shaders? idk
+ * I know mesh shaders are fancy compute-driven stuff which can generate vertices from non-1:1 vertex attribute fetching,
+ * but I have skill issues so we'll see
+ */
+[StructLayout(LayoutKind.Explicit, Size = 28)]
 public struct EntityVertex {
     [FieldOffset(0)] public float x;
     [FieldOffset(4)] public float y;
     [FieldOffset(8)] public float z;
     
-    [FieldOffset(12)] public Half u;
-    [FieldOffset(14)] public Half v;
+    [FieldOffset(12)] public float u;
+    [FieldOffset(16)] public float v;
     
-    [FieldOffset(16)] public byte r;
-    [FieldOffset(17)] public byte g;
-    [FieldOffset(18)] public byte b;
-    [FieldOffset(19)] public byte a;
-    [FieldOffset(16)] public Color c;
+    [FieldOffset(20)] public byte r;
+    [FieldOffset(21)] public byte g;
+    [FieldOffset(22)] public byte b;
+    [FieldOffset(23)] public byte a;
+    [FieldOffset(20)] public Color c;
 
-    [FieldOffset(20)]
+    [FieldOffset(24)]
     public uint normal;
     
     /**
@@ -44,8 +52,8 @@ public struct EntityVertex {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.u = (Half)u;
-        this.v = (Half)v;
+        this.u = u;
+        this.v = v;
         this.r = r;
         this.g = g;
         this.b = b;
@@ -53,7 +61,7 @@ public struct EntityVertex {
         this.normal = pack(xn, yn, zn, 0.0f);
     }
 
-    public EntityVertex(float x, float y, float z, Half u, Half v) {
+    public EntityVertex(float x, float y, float z, float u, float v) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -66,30 +74,17 @@ public struct EntityVertex {
         this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    public EntityVertex(float x, float y, float z, float u, float v) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.u = (Half)u;
-        this.v = (Half)v;
-        r = 255;
-        g = 255;
-        b = 255;
-        a = 255;
-        this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
-    }
-
     public EntityVertex(float x, float y, float z, float u, float v, Color c, float xn, float yn, float zn) {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.u = (Half)u;
-        this.v = (Half)v;
+        this.u = u;
+        this.v = v;
         this.c = c;
         this.normal = pack(xn, yn, zn, 0.0f);
     }
 
-    public EntityVertex(float x, float y, float z, Half u, Half v, Color c) {
+    public EntityVertex(float x, float y, float z, float u, float v, Color c) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -103,8 +98,8 @@ public struct EntityVertex {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.u = (Half)u;
-        this.v = (Half)v;
+        this.u = u;
+        this.v = v;
         this.r = r;
         this.g = g;
         this.b = b;
@@ -112,7 +107,7 @@ public struct EntityVertex {
         this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    public EntityVertex(float x, float y, float z, Half u, Half v, byte r, byte g, byte b, byte a) {
+    public EntityVertex(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -125,7 +120,7 @@ public struct EntityVertex {
         this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    public EntityVertex(float x, float y, float z, Half u, Half v, float r, float g, float b, float a) {
+    public EntityVertex(float x, float y, float z, float u, float v, float r, float g, float b, float a) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -136,5 +131,12 @@ public struct EntityVertex {
         this.b = (byte)(b * 255);
         this.a = (byte)(a * 255);
         this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
+    }
+
+    public EntityVertex scale(float scale) {
+        x *= scale;
+        y *= scale;
+        z *= scale;
+        return this;
     }
 }

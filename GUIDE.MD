@@ -72,10 +72,10 @@ Remember: this isn't your fucking day job. Write code like your performance revi
 
 **Random/hashing:**
 - `Random` class: seeded constructor has backwards compat overhead making it slow as shit. Use `XRandom`.
-- Built-in `GetHashCode()`: randomized by design for "security". Use `XHash` for deterministic results in worldgen.
+- Built-in `GetHashCode()`: randomized by design for "security". Use `XHash` for deterministic results (worldgen or anywhere else you need it).
 
-**Silk.NET traps (prepare for pain):**
-- Generic `<T>` overloads: don't do what you expect, will segfault
-- Casting `(void*)0`: ALWAYS cast or it uses IntPtr overload → segfault at 0x0000
-- String overloads: allocate on native heap every call → garbage in render loops
-- Solution: use raw pointer overloads exclusively, ask if you don't know unsafe syntax
+**Silk.NET noobtraps (prepare for pain):**
+- Generic `<T>` overloads: they DON'T do what you expect, it will segfault
+- Casting `(void*)0`: ALWAYS cast or it uses the IntPtr overload → the game will segfault at 0x0000
+- String overloads: allocate on native heap every call → it generates HUGE amounts of heap garbage in the render loop
+- Solution: use raw pointer overloads exclusively. Ask me if you don't know pointers.

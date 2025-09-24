@@ -54,7 +54,7 @@ public class Settings {
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || getActualRendererMode() == RendererMode.CommandList || crtEffect;
+    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || getActualRendererMode() == RendererMode.CommandList || crtEffect || reverseZ;
     
     /// <summary>
     /// Whether FXAA is enabled.

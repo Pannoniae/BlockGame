@@ -21,7 +21,8 @@ public class Player : Entity {
 
     public Vector3D inputVector;
 
-    public PlayerRenderer renderer;
+    public PlayerHandRenderer handRenderer;
+    public PlayerRenderer modelRenderer;
 
     // sound stuff
     private double lastFootstepDistance = 0;
@@ -47,10 +48,11 @@ public class Player : Entity {
         position = new Vector3D(x, y, z);
         prevPosition = position;
         survivalInventory = new SurvivalInventory();
-        renderer = new PlayerRenderer(this);
+        handRenderer = new PlayerHandRenderer(this);
+        modelRenderer = new PlayerRenderer(this);
 
         this.world = world;
-        rotation.Y = Game.camera.yaw;
+        rotation = new Vector3();
         calcAABB(ref aabb, position);
 
         swingProgress = 0;
@@ -59,18 +61,21 @@ public class Player : Entity {
 
     public void render(double dt, double interp) {
         Game.camera.updateFOV(isUnderWater(), dt);
-        renderer.render(dt, interp);
+
+        if (Game.camera.mode == CameraMode.FirstPerson) {
+            handRenderer.render(dt, interp);
+        }
     }
 
 
     public override void update(double dt) {
-        collisionXThisFrame = false;
-        collisionZThisFrame = false;
+        collx = false;
+        collz = false;
 
         // after everything is done
         // calculate total traveled
         setPrevVars();
-        renderer.update(dt);
+        handRenderer.update(dt);
         updateSwing();
 
         interactBlock(dt);
@@ -117,27 +122,38 @@ public class Player : Entity {
 
         // Update the camera system
         Game.camera.updatePosition(dt);
-        
-        // Sync rotation with camera
-        rotation.Y = Game.camera.yaw;
-        rotation.X = Game.camera.pitch;
         calcAABB(ref aabb, position);
+
+        // update animation state
+        var vel = velocity.withoutY();
+
+
+        aspeed = (float)vel.Length() * 0.3f;
+        // cap aspeed!
+        aspeed = Meth.clamp(aspeed, 0f, 1f);
+
+        bool isMoving = aspeed > 0f;
+        if (isMoving) {
+            apos += aspeed * (float)dt;
+        }
     }
 
     public void setPrevVars() {
         prevPosition = position;
+        prevRotation = rotation;
         Game.camera.prevBob = Game.camera.bob;
-        Game.camera.prevpForward = Game.camera.pForward;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
         prevSwingProgress = swingProgress;
-        renderer.prevLower = renderer.lower;
+        handRenderer.prevLower = handRenderer.lower;
+        papos = apos;
+        paspeed = aspeed;
     }
 
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
         setPrevVars();
-        Game.camera.prevPosition = Game.camera.position;
+        // camera position is now computed from player state, no need to sync
     }
 
     public void loadChunksAroundThePlayer(int renderDistance) {
@@ -253,7 +269,7 @@ public class Player : Entity {
             velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
 
             // if on the edge of water, boost
-            if (inLiquid && (collisionXThisFrame || collisionZThisFrame)) {
+            if (inLiquid && (collx || collz)) {
                 velocity.Y += Constants.liquidSurfaceBoost;
             }
 
@@ -263,7 +279,6 @@ public class Player : Entity {
     }
 
     private void updateGravity(double dt) {
-
         // if in liquid, don't apply gravity
         if (inLiquid) {
             accel.Y = 0;
@@ -299,9 +314,9 @@ public class Player : Entity {
                 // first, normalise (v / v.length) then multiply with movespeed
                 strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
 
-                Vector3D moveVector = strafeVector.Z * forward +
+                Vector3D moveVector = strafeVector.Z * hfacing +
                                       strafeVector.X *
-                                      Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward));
+                                      Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, hfacing));
 
 
                 moveVector.Y = 0;
@@ -320,9 +335,9 @@ public class Player : Entity {
                     strafeVector *= 5;
                 }
 
-                Vector3D moveVector = strafeVector.Z * forward +
+                Vector3D moveVector = strafeVector.Z * hfacing +
                                       strafeVector.X *
-                                      Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, forward)) +
+                                      Vector3D.Normalize(Vector3D.Cross(Vector3D.UnitY, hfacing)) +
                                       strafeVector.Y * Vector3D.UnitY;
 
                 inputVector = new Vector3D(moveVector.X, moveVector.Y, moveVector.Z);
@@ -347,6 +362,14 @@ public class Player : Entity {
         if (key >= Key.Number0 && key <= Key.Number9) {
             survivalInventory.selected = (ushort)(key - Key.Number0 - 1);
         }
+    }
+
+    public void handleMouseInput(float xOffset, float yOffset) {
+        rotation.Y -= xOffset; // yaw
+        rotation.X -= yOffset; // pitch
+
+        // clamp pitch to prevent looking behind by going over head or under feet
+        rotation.X = Math.Clamp(rotation.X, -Constants.maxPitch, Constants.maxPitch);
     }
 
     public void updateInput(double dt) {
@@ -438,16 +461,16 @@ public class Player : Entity {
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
             var stack = survivalInventory.getSelected();
-            
+
             var metadata = (byte)stack.metadata;
-            
+
             // if item, fire the hook (WHICH DOESN'T EXIST YET LOL)
             stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, getFacing());
-            
+
             // if block, place it
             if (stack.getItem().isBlock()) {
                 var block = Block.get(stack.getItem().getBlockID());
-                
+
                 RawDirection dir = getFacing();
 
                 // check block-specific placement rules first
@@ -458,7 +481,7 @@ public class Player : Entity {
 
                 // check entity collisions with the proposed block placement
                 bool hasCollisions = false;
-                
+
                 // don't intersect the player with already placed block
                 world.getAABBsCollision(AABBList, pos.X, pos.Y, pos.Z);
                 foreach (AABB aabb in AABBList) {
@@ -467,23 +490,23 @@ public class Player : Entity {
                         break;
                     }
                 }
-                
+
                 // check entity collisions with the new block's bounding boxes
                 if (!hasCollisions && Block.collision[block.id]) {
                     var entities = new List<Entity>();
                     block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
-                    
+
                     foreach (var aabb in AABBList) {
                         entities.Clear();
                         world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
-                        
+
                         foreach (var entity in entities) {
                             if (AABB.isCollision(aabb, entity.aabb)) {
                                 hasCollisions = true;
                                 break;
                             }
                         }
-                        
+
                         if (hasCollisions) break;
                     }
                 }
@@ -503,7 +526,7 @@ public class Player : Entity {
             setSwinging(false);
         }
     }
-    
+
     public void breakBlock() {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
@@ -525,7 +548,7 @@ public class Player : Entity {
 
     public RawDirection getFacing() {
         // Get the forward vector from the camera
-        Vector3 forward = Game.camera.CalculateForwardVector();
+        Vector3 forward = facing();
 
         double verticalThreshold = Math.Cos(Math.PI / 4f); // 45 degrees in radians
 

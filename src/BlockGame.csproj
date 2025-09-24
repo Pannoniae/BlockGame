@@ -74,30 +74,30 @@
     
     <!-- Files to copy -->
     <ItemGroup>
-        <None Update="level/**/*.*">
+        <Content Include="level/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="shaders/**/*.*">
+        </Content>
+        <Content Include="shaders/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="textures/**/*.*">
+        </Content>
+        <Content Include="textures/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="fonts/**/*.*">
+        </Content>
+        <Content Include="fonts/**/*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="snd/**">
+        </Content>
+        <Content Include="snd/**">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="wglinfo64.exe">
+        </Content>
+        <Content Include="wglinfo64.exe">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="logo.png">
+        </Content>
+        <Content Include="logo.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="assets/**">
+        </Content>
+        <Content Include="assets/**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        </Content>
         
         
         <!-- Folders to NEVER copy -->

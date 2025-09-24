@@ -16,10 +16,9 @@ public class Raycast {
     /// <returns></returns>
     public static RayCollision raycast(World world, bool liquids = false) {
         // raycast
-        var cameraPos = Game.camera.position;
-        var forward = Game.camera.forward;
-        var cameraForward = new Vector3D(forward.X, forward.Y, forward.Z);
-        var currentPos = new Vector3D(cameraPos.X, cameraPos.Y, cameraPos.Z);
+        var cameraPos = Game.camera.renderPosition(1.0);
+        var cameraForward = Game.camera.forward();
+        var currentPos = cameraPos;
 
         // don't round!!
         //var blockPos = toBlockPos(currentPos);
