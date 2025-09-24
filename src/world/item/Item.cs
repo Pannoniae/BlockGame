@@ -130,7 +130,7 @@ public class Item {
         register(stoneHoe);
 
         var stoneSickle = new Item(Items.STONE_SICKLE, "Stone Sickle");
-        stoneSickle.tex = new UVPair(7, 2);
+        stoneSickle.tex = new UVPair(7 , 2);
         register(stoneSickle);
     }
 
