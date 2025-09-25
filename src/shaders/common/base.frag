@@ -25,30 +25,29 @@ uniform sampler2D tex;
 #endif
 
 void main() {
-    
-    
     vec4 finalColour;
     
-#ifdef HAS_TEXTURE
+    #ifdef HAS_TEXTURE
     vec4 texColour = texture(tex, texCoords);
     finalColour = texColour * colour;
-#else
+    #else
     finalColour = colour;
-#endif
+    #endif
 
     if (finalColour.a <= 0) {
         discard;
     }
     
-#ifdef HAS_NORMALS
-    // Apply lighting from both sources
-    float light1 = max(0.0, dot(lightDir, normal));
-    float light2 = max(0.0, dot(lightDir2, normal));
-    float combined1 = clamp(light1 * lightRatio + (1 - lightRatio), 0.0, 1.0);
-    float combined2 = clamp(light2 * lightRatio2 + (1 - lightRatio2), 0.0, 1.0);
-    float totalLight = min(1.0, combined1 + combined2);
-    finalColour = vec4(finalColour.rgb * totalLight, finalColour.a);
-#endif
+    #ifdef HAS_NORMALS
+    // Apply lighting from both sources: ambient + diffuse1 + diffuse2
+    float light1 = max(0.0, dot(normal, lightDir));
+    float light2 = max(0.0, dot(normal, lightDir2));
+    
+    // lightRatio controls diffuse intensity, ambient is (1 - max(lightRatio, lightRatio2))
+    float ambient = 1.0 - max(lightRatio, lightRatio2);
+    float totalLight = ambient + light1 * lightRatio + light2 * lightRatio2;
+    finalColour.rgb *= min(1.0, totalLight);
+    #endif
     
     // Apply fog
     finalColour = applyFog(finalColour, viewPosition);

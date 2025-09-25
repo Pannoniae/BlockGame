@@ -2,6 +2,6 @@
 
 public class Cow : Entity {
     public Cow(World world) : base(world) {
-        
+        id = Entities.COW;
     }
 }

@@ -611,7 +611,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // gather chunks to render
         for (int i = 0; i < chunkList.Length; i++) {
             Chunk chunk = chunkList[i];
-            var test = (chunk.status >= ChunkStatus.MESHED) && (noCulling || chunk.isVisible(frustum));
+            var test = !chunk.destroyed && (chunk.status >= ChunkStatus.MESHED) && (noCulling || chunk.isVisible(frustum));
             chunk.isRendered = test;
             if (test) {
                 // updates isRendered
@@ -908,36 +908,38 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         ide.view(Game.camera.getViewMatrix(interp));
         ide.proj(Game.camera.getProjectionMatrix());
 
-        // test pos
-        mat.translate(0, 100, 0);
+        // render all entities
+        foreach (var entity in world.entities) {
+            var renderer = EntityRenderers.renderers[entity.id];
+            if (renderer == null) {
+                continue;
+            }
 
-        // render test model - each limb will use current mat.top automatically
-        //var m = new HumanModel();
-        m.render(mat, Game.player, new Vector3(), 1f / 16f, interp);
-        mat.pop();
+            // frustum cull entities
+            if (Settings.instance.frustumCulling && frustum.outsideCamera(entity.aabb.toBB())) {
+                continue;
+            }
 
-        if (Game.camera.mode == CameraMode.FirstPerson) {
-            goto skip1;
+            mat.push();
+            mat.loadIdentity();
+
+            // interpolate position and rotation
+            var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
+            var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
+
+            // translate to entity position
+            mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
+
+            // apply entity rotation
+            mat.rotate(-interpRot.Y, 0, 1, 0);
+            mat.rotate(90, 0, 1, 0);
+            mat.rotate(interpRot.Z, 0, 0, 1);
+
+            // render entity using its renderer
+            renderer.render(mat, entity, 1f / 16f, interp);
+
+            mat.pop();
         }
-
-        mat.push();
-        mat.loadIdentity();
-
-        // make player the rendered entity
-        var interpPos = Vector3D.Lerp(Game.player.prevPosition, Game.player.position, interp);
-        var interpRot = Vector3.Lerp(Game.player.prevRotation, Game.player.rotation, (float)interp);
-        mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
-        mat.rotate(-interpRot.Y, 0, 1, 0);
-        mat.rotate(90, 0, 1, 0);
-        //mat.rotate(interpRot.X, 1, 0, 0);
-        mat.rotate(interpRot.Z, 0, 0, 1);
-
-        //m = new HumanModel();
-        m.render(mat, Game.player, new Vector3(), 1f / 16f, interp);
-        mat.pop();
-
-
-        skip1: ;
 
 
         // no depth writes!
@@ -951,8 +953,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     /** Stores the chunk positions! */
     private List<Vector4> chunkData = null!;
-
-    private HumanModel m = new HumanModel();
 
     private static readonly List<AABB> AABBList = [];
 

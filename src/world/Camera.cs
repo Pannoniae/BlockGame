@@ -77,7 +77,7 @@ public class Camera {
         // For front-facing camera, look at the player's eye position
         if (mode == CameraMode.ThirdPersonFront) {
             var cameraPos = renderPosition(1.0); // Get current camera position
-            var playerEyePos = p.position;
+            var playerEyePos = Vector3D.Lerp(p.prevPosition, p.position, 1.0);
             var trueEyeHeight = p.sneaking ? Player.sneakingEyeHeight : Player.eyeHeight;
             playerEyePos.Y += trueEyeHeight;
 
@@ -102,7 +102,7 @@ public class Camera {
         // For front-facing camera, look at the player's eye position
         if (mode == CameraMode.ThirdPersonFront) {
             var cameraPos = renderPosition(interp);
-            var playerEyePos = p.position;
+            var playerEyePos = Vector3D.Lerp(p.prevPosition, p.position, interp);
             var trueEyeHeight = p.sneaking ? Player.sneakingEyeHeight : Player.eyeHeight;
             playerEyePos.Y += trueEyeHeight;
 
@@ -206,8 +206,18 @@ public class Camera {
         prevAirBob = airBob;
         if (!p.onGround && !p.flyMode) {
             // Base on vertical velocity, stronger effect when falling/jumping
-            var verticalSpeed = Math.Abs(p.velocity.Y);
-            airBob = Math.Clamp((float)(verticalSpeed / 8), 0, 1) * Math.Sign(p.velocity.Y) * 0.8f;
+            float verticalSpeed = (float)p.velocity.Y * 0.08f;
+
+            //Console.Out.WriteLine(verticalSpeed);
+
+            //if (verticalSpeed > 0) verticalSpeed *= 0.1f; // "Stronger" effect when going up
+
+            // magic sauce
+            verticalSpeed = -float.Asinh(verticalSpeed);
+            airBob += verticalSpeed;
+            airBob *= 0.8f;
+
+            Console.Out.WriteLine(airBob);
         } else {
             airBob *= 0.8f; // Faster decay than regular bob
         }
@@ -255,8 +265,8 @@ public class Camera {
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
         }
-        var factor = 0.4f;
-        var factor2 = 0.15f;
+        const float factor = 0.4f;
+        const float factor2 = 0.15f;
 
         // Use standard look direction - forward vector already handles front camera rotation
         Vector3 lookTarget = interpPos.toVec3() + interpForward.toVec3();
@@ -294,7 +304,9 @@ public class Camera {
     /// </summary>
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.8f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.6f);
+
+        //Console.Out.WriteLine(iAirBob);
         var tt = 0.0;
         if (player is Player p) {
             tt = double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -308,7 +320,8 @@ public class Camera {
 
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY)
                * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor))
-               * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor) + iAirBob);
+               * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor))
+               * Matrix4x4.CreateRotationX(-iAirBob);
 
     }
 

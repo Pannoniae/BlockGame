@@ -123,12 +123,12 @@ public class Cube {
 
         v = 0;
 
-        face(nxx, nnx, nnn, nxn, u0 + ze + xe, u0 + ze + xe + ze, v0 + ze, v0 + ze + ye); // west
-        face(xxn, xnn, xnx, xxx, u0, u0 + ze, v0 + ze, v0 + ze + ye); // east
-        face(nxn, nnn, xnn, xxn, u0 + ze + xe + ze, u0 + ze + xe + ze + xe, v0 + ze, v0 + ze + ye); // south
-        face(xxx, xnx, nnx, nxx, u0 + ze, u0 + ze + xe, v0 + ze, v0 + ze + ye); // north
-        face(xnx, xnn, nnn, nnx, u0 + ze + xe, u0 + ze + xe + xe, v0, v0 + ze); // down
-        face(nxx, nxn, xxn, xxx, u0 + ze, u0 + ze + xe, v0, v0 + ze); // up
+        face(nxx, nnx, nnn, nxn, u0 + ze + xe, u0 + ze + xe + ze, v0 + ze, v0 + ze + ye, hmirror); // west
+        face(xxn, xnn, xnx, xxx, u0, u0 + ze, v0 + ze, v0 + ze + ye, hmirror); // east
+        face(nxn, nnn, xnn, xxn, u0 + ze + xe + ze, u0 + ze + xe + ze + xe, v0 + ze, v0 + ze + ye, hmirror); // south
+        face(xxx, xnx, nnx, nxx, u0 + ze, u0 + ze + xe, v0 + ze, v0 + ze + ye, hmirror); // north
+        face(xnx, xnn, nnn, nnx, u0 + ze + xe, u0 + ze + xe + xe, v0, v0 + ze, hmirror); // down
+        face(nxx, nxn, xxn, xxx, u0 + ze, u0 + ze + xe, v0, v0 + ze, hmirror); // up
 
         // divide uvs down
         for (int i = 0; i < vertices.Length; i++) {
@@ -149,12 +149,12 @@ public class Cube {
         return this;
     }
 
-    private void face(Vector3 xx, Vector3 xn, Vector3 nn, Vector3 nx, float u0, float u1, float v0, float v1) {
+    private void face(Vector3 xx, Vector3 xn, Vector3 nn, Vector3 nx, float u0, float u1, float v0, float v1, bool mirrored) {
 
         // normal is just the cross product of two edges:tm:
         var e0 = xn - xx; // bottom left to top left
         var e1 = nx - xx; // top right to top left
-        var n = Vector3.Cross(e1, e0);
+        var n = mirrored ? Vector3.Cross(e0, e1) : Vector3.Cross(e1, e0);
         n.normi();
 
         vertices[v++] = new EntityVertex(xx.X, xx.Y, xx.Z, u0, v0, 255, 255, 255, 255, n.X, n.Y, n.Z); // top left

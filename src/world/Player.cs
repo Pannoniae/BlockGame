@@ -45,11 +45,12 @@ public class Player : Entity {
 
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world) {
+        id = Entities.PLAYER;
         position = new Vector3D(x, y, z);
         prevPosition = position;
         survivalInventory = new SurvivalInventory();
         handRenderer = new PlayerHandRenderer(this);
-        modelRenderer = new PlayerRenderer(this);
+        modelRenderer = new PlayerRenderer();
 
         this.world = world;
         rotation = new Vector3();

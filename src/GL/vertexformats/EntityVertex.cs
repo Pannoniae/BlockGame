@@ -36,14 +36,18 @@ public struct EntityVertex {
      * All are normalised to the range of -1.0f to 1.0f.
      */
     private static uint pack(float x, float y, float z, float w) {
-        
+
         // convert to integer ranges: 10-bit [-512,511], 2-bit [-2,1]
-        uint px = (uint)((int)(x * 511.0f) & 0x3FF);
-        uint py = (uint)((int)(y * 511.0f) & 0x3FF);
-        uint pz = (uint)((int)(z * 511.0f) & 0x3FF);
-        uint pw = (uint)((int)(w * 1.0f) & 0x3);
-        
-        return px | (py << 10) | (pz << 20) | (pw << 30);
+        int px = (int)(x * 511.0f);
+        int py = (int)(y * 511.0f);
+        int pz = (int)(z * 511.0f);
+        int pw = (int)(w * 1.0f);
+
+        // pack into uint with proper two's complement handling
+        return ((uint)px & 0x3FF) |
+               (((uint)py & 0x3FF) << 10) |
+               (((uint)pz & 0x3FF) << 20) |
+               (((uint)pw & 0x3) << 30);
     }
 
 

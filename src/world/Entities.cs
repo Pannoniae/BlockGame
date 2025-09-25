@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿    using System.Diagnostics.CodeAnalysis;
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world;
@@ -10,21 +10,23 @@ namespace BlockGame.world;
  * Alternative: we just store the classes here and have a create function or something.
  */
 
-[SuppressMessage("Compiler", "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Entities {
-    public const int ENTITYCOUNT = 1;
-    
-    
-    public static Entity[] entities = new Entity[ENTITYCOUNT];
-    
-    public static Entity? get(int id) {
+    public const int COW = 0;
+    public const int PLAYER = 1;
+
+    public const int ENTITYCOUNT = 2;
+
+    public static Type[] entityTypes = new Type[ENTITYCOUNT];
+
+    public static Type? getType(int id) {
         if (id is < 0 or >= ENTITYCOUNT) {
             return null;
         }
-        return entities[id];
+        return entityTypes[id];
     }
-    
-    public static void init() {
-        
+
+    static Entities() {
+        entityTypes[COW] = typeof(BlockGame.world.entity.Cow);
+        entityTypes[PLAYER] = typeof(Player);
     }
 }

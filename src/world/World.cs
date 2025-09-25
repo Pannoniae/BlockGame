@@ -977,8 +977,9 @@ public partial class World : IDisposable {
 
         // ONLY DO THIS WHEN IT'S ALREADY SAVED
         chunkList.Remove(chunk);
-        chunk.destroyChunk();
         chunks.Remove(coord);
+        chunk.destroyChunk();
+
     }
 
     private void ReleaseUnmanagedResources() {

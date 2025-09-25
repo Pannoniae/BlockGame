@@ -6,29 +6,32 @@ namespace BlockGame.render.model;
 
 /** Renders an entity with its associated model. Optionally applies effects like being hit, etc. */
 public interface EntityRenderer<out T> where T : Entity {
-    
-    public virtual void render(Entity entity, double t, double yaw, double pitch, double scale) {
+
+    /**
+     * We originally had pos/rot here in addition to scale but I kinda realised you can just 1. use the matrix stack for that if you want to modify 2. get it from the entity itself
+     */
+    public virtual void render(MatrixStack mat, Entity e, float scale, double interp) {
         
     }
 }
 
 public class CowRenderer : EntityRenderer<Cow> {
     
-    public void render(Entity cow, double t, double yaw, double pitch, double scale) {
+    public void render(MatrixStack mat, Entity e, float scale, double interp) {
     }
 }
 
 
 public static class EntityRenderers {
 
-    public const int ENTITY_RENDERER_COUNT = 16;
-    public static EntityRenderer<Entity>[] renderers = new EntityRenderer<Entity>[ENTITY_RENDERER_COUNT];
+    public static readonly EntityRenderer<Entity>[] renderers = new EntityRenderer<Entity>[Entities.ENTITYCOUNT];
 
     public static readonly InstantDrawEntity ide = new(2048);
 
     static EntityRenderers() {
         ide.setup();
 
-        renderers[0] = new CowRenderer();
+        renderers[Entities.COW] = new CowRenderer();
+        renderers[Entities.PLAYER] = new PlayerRenderer();
     }
 }

@@ -126,7 +126,7 @@ public class PlayerHandRenderer {
 
             mat.scale(0.6f);
 
-            mat.rotate(sinSwingSqrt * 90, 1, 0, 0);
+            mat.rotate(sinSwingSqrt * 60, 1, 0, 0);
             mat.rotate(sinSwingSqrt * 20, 0, 0, 1);
 
             // only rotate a *bit*

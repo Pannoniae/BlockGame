@@ -19,6 +19,7 @@ out vec3 normal;
 
 uniform mat4 uMVP;
 uniform mat4 uModelView;
+uniform mat4 uModel;
 
 void main() {
     gl_Position = uMVP * vec4(vPos, 1.0);
@@ -26,6 +27,6 @@ void main() {
     texCoords = texCoord;
     colour = color;
     #ifdef HAS_NORMALS
-    normal = vec3(vNormal);
+    normal = normalize(mat3(transpose(inverse(uModel))) * vec3(vNormal));
     #endif 
 }

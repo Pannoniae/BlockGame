@@ -266,6 +266,10 @@ public static partial class Meth {
     public static Vector3 toVec3(this Vector3F vec) {
         return new Vector3(vec.X, vec.Y, vec.Z);
     }
+
+    public static Vector3D toVec3D(this Vector3F vec) {
+        return new Vector3D(vec.X, vec.Y, vec.Z);
+    }
     
     public static Vector4 toVec4(this Color4 color) {
         return new Vector4(color.R, color.G, color.B, color.A);
@@ -423,6 +427,14 @@ public static partial class Meth {
         }
 
         return x;
+    }
+
+    public static meth.BoundingBox toBB(this AABB aabb) {
+        return new meth.BoundingBox(aabb.min.toVec3(), aabb.max.toVec3());
+    }
+
+    public static AABB toAABB(this meth.BoundingBox bb) {
+        return new AABB(bb.Min.toVec3D(), bb.Max.toVec3D());
     }
 }
 

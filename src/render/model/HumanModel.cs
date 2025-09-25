@@ -20,12 +20,11 @@ public class HumanModel : EntityModel {
     public readonly Cube rightLeg = new Cube().pos(1.5f, 10, 0).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).mirror().gen(xs, ys);
     public readonly Cube leftLeg = new Cube().pos(-1.5f, 10, 0).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).gen(xs, ys);
 
-    public override void render(MatrixStack mat, Entity e, Vector3 rot, float scale, double interp) {
+    public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         // texture
         Game.graphics.tex(0, Game.textures.human);
 
-        var apos = float.Lerp(e.papos, e.apos, (float)interp);
-        var aspeed = float.Lerp(e.paspeed, e.aspeed, (float)interp);
+
 
         head.render(mat, scale);
         body.render(mat, scale);

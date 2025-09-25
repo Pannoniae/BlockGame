@@ -1,42 +1,28 @@
-using System.Numerics;
+using BlockGame.main;
 using BlockGame.render.model;
-using BlockGame.util;
-using Molten;
-using Molten.DoublePrecision;
 
 namespace BlockGame.world;
 
 public class PlayerRenderer : EntityRenderer<Player> {
-    private Player player;
     private HumanModel model;
 
-    public PlayerRenderer(Player player) {
-        this.player = player;
+    public PlayerRenderer() {
         model = new HumanModel();
     }
 
-    public void render(MatrixStack mat, double interp) {
-        // interpolate position and rotation
-        var interpPos = Vector3D.Lerp(player.prevPosition, player.position, interp);
-        var interpRot = Vector3.Lerp(player.prevRotation, player.rotation, (float)interp);
+    public void render(MatrixStack mat, Entity e, float scale, double interp) {
+        if (e is not Player player) return;
 
-        mat.push();
-
-        // translate to player position
-        mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
-
-        // apply player rotation
-        mat.rotate(interpRot.X, 1, 0, 0);
-        mat.rotate(interpRot.Y, 0, 1, 0);
-        mat.rotate(interpRot.Z, 0, 0, 1);
+        // don't render player in first person
+        if (Game.camera.mode == CameraMode.FirstPerson) {
+            return;
+        }
 
         // interpolate animation state
-        var interpApos = float.Lerp(player.papos, player.apos, (float)interp);
-        var interpAspeed = float.Lerp(player.paspeed, player.aspeed, (float)interp);
+        var apos = float.Lerp(player.papos, player.apos, (float)interp);
+        var aspeed = float.Lerp(player.paspeed, player.aspeed, (float)interp);
 
         // render the human model with animation
-        model.render(mat, player, interpRot, 1.0f, interp);
-
-        mat.pop();
+        model.render(mat, player, apos, aspeed, scale, interp);
     }
 }

@@ -13,6 +13,8 @@ public class Entity(World world) : Persistent {
     public const int MAX_SWING_TICKS = 20;
     public const int AIR_HIT_CD = 20;
 
+    public int id;
+
     /** is player walking on (colling with) ground */
     public bool onGround;
 
