@@ -36,9 +36,9 @@ public class Camera {
         var pitch = p.rotation.X;
 
         var cameraDirection = Vector3D.Zero;
-        cameraDirection.X = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.X = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
         cameraDirection.Y = MathF.Sin(Meth.deg2rad(pitch));
-        cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.Z = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
 
         return Vector3D.Normalize(cameraDirection);
     }
@@ -89,9 +89,9 @@ public class Camera {
         var pitch = p.rotation.X;
 
         var cameraDirection = Vector3D.Zero;
-        cameraDirection.X = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.X = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
         cameraDirection.Y = MathF.Sin(Meth.deg2rad(pitch));
-        cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.Z = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
 
         return Vector3D.Normalize(cameraDirection);
     }
@@ -114,9 +114,9 @@ public class Camera {
         var pitch = p.rotation.X;
 
         var cameraDirection = Vector3D.Zero;
-        cameraDirection.X = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.X = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
         cameraDirection.Y = MathF.Sin(Meth.deg2rad(pitch));
-        cameraDirection.Z = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        cameraDirection.Z = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
 
         return Vector3D.Normalize(cameraDirection);
     }
@@ -206,7 +206,7 @@ public class Camera {
         prevAirBob = airBob;
         if (!p.onGround && !p.flyMode) {
             // Base on vertical velocity, stronger effect when falling/jumping
-            float verticalSpeed = (float)p.velocity.Y * 0.08f;
+            float verticalSpeed = (float)p.velocity.Y * 0.6f;
 
             //Console.Out.WriteLine(verticalSpeed);
 
@@ -215,12 +215,12 @@ public class Camera {
             // magic sauce
             verticalSpeed = -float.Asinh(verticalSpeed);
             airBob += verticalSpeed;
-            airBob *= 0.8f;
 
-            Console.Out.WriteLine(airBob);
-        } else {
-            airBob *= 0.8f; // Faster decay than regular bob
+            //Console.Out.WriteLine(airBob);
         }
+
+        // Faster decay than regular bob
+        airBob *= 0.8f;
     }
 
     public void setViewport(float width, float height) {
@@ -260,7 +260,7 @@ public class Camera {
         var interpForward = forward(interp);
         var interpUp = up(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.8f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.09f);
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -285,7 +285,7 @@ public class Camera {
         var interpForward = forward(interp);
         var interpUp = up(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.8f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.09f);
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -304,7 +304,7 @@ public class Camera {
     /// </summary>
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.6f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.09f);
 
         //Console.Out.WriteLine(iAirBob);
         var tt = 0.0;
@@ -321,7 +321,7 @@ public class Camera {
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY)
                * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor))
                * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor))
-               * Matrix4x4.CreateRotationX(-iAirBob);
+               * Matrix4x4.CreateRotationX(iAirBob);
 
     }
 

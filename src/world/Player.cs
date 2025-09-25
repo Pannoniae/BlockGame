@@ -142,6 +142,7 @@ public class Player : Entity {
     public void setPrevVars() {
         prevPosition = position;
         prevRotation = rotation;
+        prevBodyRotation = bodyRotation;
         Game.camera.prevBob = Game.camera.bob;
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
@@ -366,11 +367,17 @@ public class Player : Entity {
     }
 
     public void handleMouseInput(float xOffset, float yOffset) {
-        rotation.Y -= xOffset; // yaw
-        rotation.X -= yOffset; // pitch
+        // why did the sign get inverted? I DUNNO TBH
+        rotation.Y += xOffset; // yaw
+        rotation.X -= yOffset * Settings.instance.mouseInv; // pitch
 
         // clamp pitch to prevent looking behind by going over head or under feet
         rotation.X = Math.Clamp(rotation.X, -Constants.maxPitch, Constants.maxPitch);
+
+        // update body rotation - follows yaw but not pitch (stays level and doesn't bend)
+        bodyRotation.Y = rotation.Y;
+        bodyRotation.Z = rotation.Z;
+        // bodyRotation.X stays 0! (no pitch)
     }
 
     public void updateInput(double dt) {

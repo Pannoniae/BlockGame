@@ -30,7 +30,11 @@ public static class EntityRenderers {
 
     static EntityRenderers() {
         ide.setup();
+        reloadAll();
+    }
 
+    /** hot reload all entity models by recreating them */
+    public static void reloadAll() {
         renderers[Entities.COW] = new CowRenderer();
         renderers[Entities.PLAYER] = new PlayerRenderer();
     }

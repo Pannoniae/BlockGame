@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime;
 using BlockGame.main;
 using BlockGame.render;
+using BlockGame.render.model;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -47,7 +48,7 @@ public class GameScreen : Screen {
 
     public override void activate() {
         D = new Debug();
-        
+
         // lock mouse & activate ingame menu
         backToGame();
 
@@ -75,9 +76,9 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal()) {
             INGAME_MENU.update(dt);
         }
-        
+
         var world = Game.world;
-        
+
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
         var prevTargetedPos = Game.instance.targetedPos;
@@ -129,15 +130,17 @@ public class GameScreen : Screen {
         // if user holds down alt + f10 for 5 seconds, crash the game lul
         if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F10) &&
             Game.permanentStopwatch.ElapsedMilliseconds > altF10Press + 5000) {
-            Game.instance.executeOnMainThread(() => MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!"));
+            Game.instance.executeOnMainThread(() =>
+                MemoryUtils.crash("Alt + F10 pressed for 5 seconds, SKILL ISSUE BITCH!"));
         }
-        
+
         // same for f7 but managed crash
         if (Game.keyboard.IsKeyPressed(Key.AltLeft) && Game.keyboard.IsKeyPressed(Key.F7) &&
             Game.permanentStopwatch.ElapsedMilliseconds > altF7Press + 5000) {
-            Game.instance.executeOnMainThread(() => SkillIssueException.throwNew("Alt + F7 pressed for 5 seconds, SKILL ISSUE BITCH!"));
+            Game.instance.executeOnMainThread(() =>
+                SkillIssueException.throwNew("Alt + F7 pressed for 5 seconds, SKILL ISSUE BITCH!"));
         }
-        
+
         // check for F3 release behavior
         if (f3Press != -1 && !Game.keyboard.IsKeyPressed(Key.F3)) {
             // F3 was released - check if it was a short press
@@ -146,15 +149,17 @@ public class GameScreen : Screen {
                 // short press - toggle debug screen or fps mode
                 if (Game.keyboard.IsKeyPressed(Key.ShiftLeft)) {
                     fpsOnly = !fpsOnly;
-                } else {
+                }
+                else {
                     debugScreen = !debugScreen;
                 }
             }
+
             f3Press = -1;
         }
-        
+
         // we update input here (shit doesn't work in non-main thread)
-        
+
 
         world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
@@ -301,13 +306,15 @@ public class GameScreen : Screen {
                 // cancel any pending F3 toggle if other keys besides Shift are pressed
                 var pressedKeys = keyboard.GetPressedKeys().Count;
                 var hasShift = keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
-                
+
                 if (pressedKeys > (hasShift ? 2 : 1)) {
                     f3Press = -1;
-                } else {
+                }
+                else {
                     // start F3 timeout window
                     f3Press = Game.permanentStopwatch.ElapsedMilliseconds;
                 }
+
                 break;
             case Key.F4:
                 INGAME_MENU.ToggleSegmentedMode();
@@ -385,28 +392,43 @@ public class GameScreen : Screen {
                 break;
             }
             case Key.T: {
-                if (currentMenu == INGAME_MENU) {
-                    Game.instance.executeOnMainThread(() => {
-                        Game.instance.unlockMouse();
-                        switchToMenu(CHAT);
-                    });
+                if (keyboard.IsKeyPressed(Key.F3)) {
+                    // reload all textures
+                    Game.textures.reloadAll();
+                    Log.info("Reloaded all textures");
                 }
-                else if (currentMenu == CHAT) {
-                    Game.instance.lockMouse();
-                    switchToMenu(INGAME_MENU);
+                else {
+                    if (currentMenu == INGAME_MENU) {
+                        Game.instance.executeOnMainThread(() => {
+                            Game.instance.unlockMouse();
+                            switchToMenu(CHAT);
+                        });
+                    }
+                    else if (currentMenu == CHAT) {
+                        Game.instance.lockMouse();
+                        switchToMenu(INGAME_MENU);
+                    }
                 }
 
                 break;
             }
             case Key.M: {
-                // toggle music
-                music = !music;
-                if (music) {
-                    Game.snd.unmuteMusic();
+                if (keyboard.IsKeyPressed(Key.F3)) {
+                    // reload all entity models
+                    EntityRenderers.reloadAll();
+                    Log.info("Reloaded all entity models");
                 }
                 else {
-                    Game.snd.muteMusic();
+                    // toggle music
+                    music = !music;
+                    if (music) {
+                        Game.snd.unmuteMusic();
+                    }
+                    else {
+                        Game.snd.muteMusic();
+                    }
                 }
+
 
                 break;
             }
@@ -424,7 +446,7 @@ public class GameScreen : Screen {
                 Log.info("Time paused");
                 break;
             }
-            
+
             case Key.B when keyboard.IsKeyPressed(Key.F3): {
                 // cycle metadata of targeted block
                 cycleBlockMetadata();
@@ -452,7 +474,7 @@ public class GameScreen : Screen {
 
     public void remeshWorld(int oldRenderDist) {
         var world = Game.world;
-        
+
         // free up memory from the block arraypool - we probably don't need that much
         ArrayBlockData.blockPool.clear();
         ArrayBlockData.lightPool.clear();
@@ -464,7 +486,7 @@ public class GameScreen : Screen {
         WorldIO.saveLightPool.clear();
         HeightMap.heightPool.clear();
 
-        
+
         Game.renderer.setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
@@ -540,7 +562,7 @@ public class GameScreen : Screen {
 
         // clear depth buffer so the gui can use it properly
         //Game.GL.Clear(ClearBufferMask.DepthBufferBit);
-        
+
         var centreX = Game.centreX;
         var centreY = Game.centreY;
 
@@ -632,7 +654,7 @@ public class GameScreen : Screen {
                 ChunkStatus.EMPTY => Color4b.Gray,
                 _ => colour
             };
-            
+
             // todo when we'll have a proper GL state tracker, we'll "uncomment" these and set them in the tracker
             // in case the previous code changes
             // for now, just don't set shit because the GUI code is already setup the same way
@@ -640,10 +662,10 @@ public class GameScreen : Screen {
             //Game.GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             //Game.GL.Disable(EnableCap.DepthTest);
             //Game.GL.Disable(EnableCap.CullFace);
-            
+
             // draw translucent planes for chunk borders (north, south, east, west faces)
             var planeColour = new Color4b(colour.R, colour.G, colour.B, 32);
-            
+
             D.idc.begin(PrimitiveType.Quads);
             // north face
             D.drawTranslucentPlane(
@@ -677,7 +699,7 @@ public class GameScreen : Screen {
                 new Vector3D(chunkWorldPos.X + Chunk.CHUNKSIZE, 0, chunkWorldPos.Z + Chunk.CHUNKSIZE),
                 planeColour);
             D.idc.end();
-            
+
 
             // draw 16x16x16 subchunk wireframes
             D.idc.begin(PrimitiveType.Lines);
@@ -708,6 +730,7 @@ public class GameScreen : Screen {
                 D.drawLine(new Vector3D(max.X, min.Y, max.Z), new Vector3D(max.X, max.Y, max.Z), wireColor);
                 D.drawLine(new Vector3D(min.X, min.Y, max.Z), new Vector3D(min.X, max.Y, max.Z), wireColor);
             }
+
             D.idc.end();
         }
     }
@@ -746,7 +769,7 @@ public class GameScreen : Screen {
         Screen.SETTINGS_SCREEN.prevScreen = Screen.GAME_SCREEN;
         Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
     }
-    
+
     private void cycleBlockMetadata() {
         if (!Game.instance.targetedPos.HasValue) {
             return;
@@ -757,7 +780,7 @@ public class GameScreen : Screen {
         var blockValue = world.getBlockRaw(pos.X, pos.Y, pos.Z);
         var blockID = blockValue.getID();
         var currentMeta = blockValue.getMetadata();
-        
+
         if (blockID == 0 || !Block.tryGet(blockID, out var block)) {
             return;
         }
@@ -770,7 +793,7 @@ public class GameScreen : Screen {
         // cycle to next metadata value
         var newMeta = (byte)((currentMeta + 1) % (maxMeta + 1));
         var newBlockValue = blockValue.setMetadata(newMeta);
-        
+
         world.setBlockMetadata(pos.X, pos.Y, pos.Z, newBlockValue);
     }
 }

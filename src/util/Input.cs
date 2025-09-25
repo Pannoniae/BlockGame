@@ -3,10 +3,10 @@
 namespace BlockGame.util;
 
 public class Input : IEquatable<Input> {
-    public string name;
+    public readonly string name;
 
     public int key;
-    public int defaultKey;
+    public readonly int defaultKey;
 
     public Input(string name, int defaultKey) {
         this.name = name;
@@ -56,7 +56,7 @@ public class Input : IEquatable<Input> {
     public bool Equals(Input? other) {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        return key == other.key;
+        return name == other.name;
     }
 
     public override bool Equals(object? obj) {
@@ -67,7 +67,7 @@ public class Input : IEquatable<Input> {
     }
 
     public override int GetHashCode() {
-        return key;
+        return name.GetHashCode();
     }
 
     public static bool operator ==(Input left, Input right) {

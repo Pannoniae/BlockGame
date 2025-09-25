@@ -35,6 +35,9 @@ public class Entity(World world) : Persistent {
 
     public Vector3 prevRotation;
 
+    public Vector3 bodyRotation;
+    public Vector3 prevBodyRotation;
+
     // slightly above so it doesn't think it's under the player
     public Vector3D feetPosition;
 
@@ -45,9 +48,9 @@ public class Entity(World world) : Persistent {
     public virtual Vector3D hfacing {
         get {
             var cameraDirection = Vector3.Zero;
-            cameraDirection.X = MathF.Cos(Meth.deg2rad(rotation.Y));
+            cameraDirection.X = MathF.Sin(Meth.deg2rad(rotation.Y));
             cameraDirection.Y = 0;
-            cameraDirection.Z = MathF.Sin(Meth.deg2rad(rotation.Y));
+            cameraDirection.Z = MathF.Cos(Meth.deg2rad(rotation.Y));
             var v = Vector3.Normalize(cameraDirection);
             return new Vector3D(v.X, v.Y, v.Z);
         }
@@ -523,9 +526,9 @@ public class Entity(World world) : Persistent {
 
     public Vector3 facing() {
         var cameraDirection = Vector3.Zero;
-        cameraDirection.X = MathF.Cos(Meth.deg2rad(rotation.Y));
+        cameraDirection.X = MathF.Sin(Meth.deg2rad(rotation.Y));
         cameraDirection.Y = 0;
-        cameraDirection.Z = MathF.Sin(Meth.deg2rad(rotation.Y));
+        cameraDirection.Z = MathF.Cos(Meth.deg2rad(rotation.Y));
 
         return Vector3.Normalize(cameraDirection);
     }

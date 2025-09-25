@@ -236,6 +236,7 @@ public class Menu {
     public virtual void resize(Vector2I newSize) {
         size = newSize;
         centre = size / 2;
+        Console.Out.WriteLine("s = " + newSize);
     }
 
     public static void layoutSettingsTwoCols(List<GUIElement> elements, Vector2I startPos, int buttonWidth) {

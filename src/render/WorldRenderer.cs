@@ -926,14 +926,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // interpolate position and rotation
             var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
             var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
+            var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
 
             // translate to entity position
             mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
 
-            // apply entity rotation
-            mat.rotate(-interpRot.Y, 0, 1, 0);
-            mat.rotate(90, 0, 1, 0);
-            mat.rotate(interpRot.Z, 0, 0, 1);
+            // apply entity body rotation (no X-axis rotation for body)
+            mat.rotate(interpBodyRot.Y, 0, 1, 0);
+            //mat.rotate(90, 0, 1, 0);  // investigate why this 90-degree offset is needed
+            mat.rotate(interpBodyRot.Z, 0, 0, 1);
 
             // render entity using its renderer
             renderer.render(mat, entity, 1f / 16f, interp);

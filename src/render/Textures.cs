@@ -42,20 +42,13 @@ public class Textures {
         particleTex = get("textures/particle.png");
         
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);
-        blockTexture.reload();
 
         itemTexture = new BTextureAtlas("textures/items.png", 16);
-        itemTexture.reload();
 
         human = get("textures/character.png");
-        human.reload();
 
 
-
-        // init lightmap
-        for (int i = 0; i < 256; i++) {
-            lightmap[i] = lightTexture.getPixel(i & 15, i >> 4);
-        }
+        reloadAll();
     }
 
     public BTexture2D get(string path) {
@@ -166,12 +159,39 @@ public class Textures {
         var width = (int)blockTexture.width;
         var height = (int)blockTexture.height;
         var pixels = new Rgba32[width * height];
-        
+
         fixed (Rgba32* pixelPtr = pixels) {
             GL.GetTextureImage(blockTexture.handle, 0, PixelFormat.Rgba, PixelType.UnsignedByte, (uint)(width * height * 4), pixelPtr);
         }
-        
+
         using var image = Image.WrapMemory<Rgba32>(pixels, width, height);
         image.Save("atlas.png");
+    }
+
+    /** reload all textures from disk */
+    public void reloadAll() {
+        // reload all cached textures
+        foreach (var tex in textures.Values) {
+            tex.reload();
+        }
+
+        // reload atlases
+        blockTexture.reload();
+        itemTexture.reload();
+
+        // reload specific textures
+        background.reload();
+        lightTexture.reload();
+        lightTexture2.reload();
+        waterOverlay.reload();
+        sunTexture.reload();
+        moonTexture.reload();
+        particleTex.reload();
+        human.reload();
+
+        // regenerate lightmap
+        for (int i = 0; i < 256; i++) {
+            lightmap[i] = lightTexture.getPixel(i & 15, i >> 4);
+        }
     }
 }

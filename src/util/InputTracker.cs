@@ -27,9 +27,9 @@ public class InputTracker {
     
     public static Input DUMMYINPUT;
 
-    public static List<Input> all = [];
+    public static readonly List<Input> all = [];
 
-    public static int DUMMY = -999;
+    public static readonly int DUMMY = -999;
 
     private static Dictionary<int, bool> pressedKeys = new();
     private static Dictionary<int, bool> releasedKeys = new();
@@ -50,6 +50,7 @@ public class InputTracker {
         middle = new Input("Pick Block", -(int)MouseButton.Middle);
         
         DUMMYINPUT = new Input("Unbound", DUMMY);
+        all.Remove(DUMMYINPUT); // remove dummy from all inputs list!!
     }
 
     public static bool pressed(int key) {

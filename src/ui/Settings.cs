@@ -49,6 +49,8 @@ public class Settings {
      */
     internal RendererMode rendererMode = RendererMode.Auto;
 
+    public int mouseInv = 1; // 1 = normal, -1 = inverted
+
     public static readonly Settings instance = new();
 
     /// <summary>
@@ -156,7 +158,8 @@ public class Settings {
         tag.addByte("crtEffect", (byte)(crtEffect ? 1 : 0));
         tag.addByte("reverseZ", (byte)(reverseZ ? 1 : 0));
         tag.addInt("rendererMode", (int)rendererMode);
-        
+        tag.addInt("mouseInv", mouseInv);
+
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
 
@@ -187,6 +190,9 @@ public class Settings {
             
             if (tag.has("rendererMode")) {
                 rendererMode = (RendererMode)tag.getInt("rendererMode");
+            }
+            if (tag.has("mouseInv")) {
+                mouseInv = tag.getInt("mouseInv");
             }
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);

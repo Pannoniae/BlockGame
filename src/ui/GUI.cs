@@ -49,6 +49,8 @@ public class GUI {
     public Rectangle buttonRect = new(96, 0, 96, 16);
     public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
 
+    public Rectangle scrollbarRect = new(199, 0, 6, 20);
+
     public static GUI instance;
     private StreamingVAO<BlockVertexTinted> buffer;
     private Matrix4x4 ortho;
