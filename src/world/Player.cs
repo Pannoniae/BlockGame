@@ -33,8 +33,8 @@ public class Player : Entity {
     public Vector3D strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
 
-    public double lastPlace;
-    public double lastBreak;
+    public double lastMouseAction;
+    public double lastAirHit;
 
     /// <summary>
     /// Used for flymode
@@ -64,7 +64,7 @@ public class Player : Entity {
         Game.camera.updateFOV(isUnderWater(), dt);
 
         if (Game.camera.mode == CameraMode.FirstPerson) {
-            handRenderer.render(dt, interp);
+            handRenderer.render(interp);
         }
     }
 
@@ -436,36 +436,59 @@ public class Player : Entity {
 
         fastMode = Game.inputs.ctrl.down();
 
-        // TODO this horribly breaks when you speed time up, you become a terminator and be able to break/place blocks instantly
-        // oh no it's a debug feature anyway but yk
+        var now = Game.permanentStopwatch.ElapsedMilliseconds;
+
         // repeated action while held (with delay to prevent spam)
         if (Game.inputs.left.pressed()) {
-            breakBlock();
-        }
-        else {
-            if (Game.inputs.left.down() && world.worldTick - lastBreak > Constants.breakDelay) {
+            if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
                 breakBlock();
+                lastMouseAction = now;
+                if (!Game.instance.targetedPos.HasValue) {
+                    lastAirHit = now;
+                }
             }
         }
-
+        else {
+            if (Game.inputs.left.down() && now - lastMouseAction > Constants.breakDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+                breakBlock();
+                lastMouseAction = now;
+                if (!Game.instance.targetedPos.HasValue) {
+                    lastAirHit = now;
+                }
+            }
+        }
 
         if (Game.inputs.right.pressed()) {
-            placeBlock();
+            if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+                placeBlock();
+                lastMouseAction = now;
+                if (!Game.instance.previousPos.HasValue) {
+                    lastAirHit = now;
+                }
+            }
         }
         else {
-            if (Game.inputs.right.down() && world.worldTick - lastPlace > Constants.placeDelay) {
+            if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
                 placeBlock();
+                lastMouseAction = now;
+                if (!Game.instance.previousPos.HasValue) {
+                    lastAirHit = now;
+                }
             }
         }
 
-
         if (Game.inputs.middle.pressed()) {
-            pickBlock();
+            if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+                pickBlock();
+                lastMouseAction = now;
+                if (!Game.instance.targetedPos.HasValue) {
+                    lastAirHit = now;
+                }
+            }
         }
     }
 
     public void placeBlock() {
-        lastPlace = world.worldTick;
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
             var stack = survivalInventory.getSelected();
@@ -544,7 +567,6 @@ public class Player : Entity {
             // we don't set it to anything, we just propagate from neighbours
             world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
             // place water if adjacent
-            lastBreak = world.worldTick;
 
             Game.snd.playBlockHit();
             setSwinging(true);

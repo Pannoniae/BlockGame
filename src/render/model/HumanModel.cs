@@ -12,13 +12,17 @@ public class HumanModel : EntityModel {
 
 
     public readonly Cube head = new Cube().pos(0, 22, 0).off(-4, 0, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
-    public readonly Cube body = new Cube().pos(0, 10, 0).off(-3, 0, -2).ext(6, 12, 3).tex(12, 16).gen(xs, ys);
+    public readonly Cube body = new Cube().pos(0, 22, 0f).off(-3, -12, -1.5f).ext(6, 12, 3).tex(12, 16).gen(xs, ys);
     // same with the arms lol
-    public readonly Cube rightArm = new Cube().pos(4.5f, 24, 0).off(-1.5f, -14, -2).ext(3, 12, 3).tex(32, 16).mirror().gen(xs, ys);
-    public readonly Cube leftArm = new Cube().pos(-4.5f, 24, 0).off(-1.5f, -14, -2).ext(3, 12, 3).tex(32, 16).gen(xs, ys);
+    // centre of the arm should be at the shoulder!!
+    public readonly Cube rightArm = new Cube().pos(4.5f, 24, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).mirror().gen(xs, ys);
+    public readonly Cube leftArm = new Cube().pos(-4.5f, 24, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).gen(xs, ys);
     // the legs should be positioned at the hips!! so the rotation works properly
-    public readonly Cube rightLeg = new Cube().pos(1.5f, 10, 0).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).mirror().gen(xs, ys);
-    public readonly Cube leftLeg = new Cube().pos(-1.5f, 10, 0).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).gen(xs, ys);
+    public readonly Cube rightLeg = new Cube().pos(1.5f, 10, 0f).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).mirror().gen(xs, ys);
+    public readonly Cube leftLeg = new Cube().pos(-1.5f, 10, 0f).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).gen(xs, ys);
+
+    public bool armRaise = false;
+    public bool sneaking = false;
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         // texture
@@ -32,10 +36,44 @@ public class HumanModel : EntityModel {
         var headRotX = interpRot.X - interpBodyRot.X; // pitch diff
         var headRotY = interpRot.Y - interpBodyRot.Y; // yaw diff
 
+
+        // SNEAKING CODE
+        if (sneaking) {
+            head.position.Y = 19f;
+            rightArm.position.Y = 21f;
+            leftArm.position.Y = 21f;
+
+            rightLeg.position.Y = 9;
+            leftLeg.position.Y = 9;
+
+            // move legs back
+            rightLeg.position.Z = -4f;
+            leftLeg.position.Z = -4f;
+
+            body.position.Y = 20f;
+            body.rotation.X = 20f;
+        } else {
+            head.position.Y = 22;
+            rightArm.position.Y = 24;
+            leftArm.position.Y = 24;
+
+
+            rightLeg.position.Y = 10;
+            leftLeg.position.Y = 10;
+
+            rightLeg.position.Z = 0;
+            leftLeg.position.Z = 0;
+
+            body.position.Y = 22;
+            body.rotation.X = 0;
+        }
+
+
+
+
         // render head with additional rotation for up/down look
         head.rotation = new Vector3(-headRotX, headRotY, 0);
         head.render(mat, scale);
-        body.render(mat, scale);
 
         float cs = Meth.clamp(aspeed, 0, 1);
         float ar = MathF.Sin(apos * 10) * 30f * cs * Meth.phiF;
@@ -43,20 +81,37 @@ public class HumanModel : EntityModel {
 
         // get swing animation progress
         // TODO this is fucked
+        // fuck it circle time
         var swingProgress = (float)e.getSwingProgress(interp);
 
-        // calculate swing animation values (same as first-person)
-        var sinSwing = MathF.Sin(swingProgress * MathF.PI);
-        var sinSwingSqrt = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI);
+        var sinSwing = float.Sin(swingProgress * MathF.PI * 2f);
+        var sinSwingSqrt = -float.Sin(float.Sqrt(swingProgress) * MathF.PI * 2f);
+        var cosSwing = -float.Sin(swingProgress * MathF.PI);
+        var cosSwingSqrt = -float.Sin(float.Sqrt(swingProgress) * MathF.PI);
 
         // apply swing animation to right arm (main hand)
-        var rightArmSwingX = -sinSwingSqrt * 60f * Meth.phiF; // convert to radians
-        var rightArmSwingZ = -sinSwingSqrt * 20f * Meth.phiF;
-        var rightArmSwingY = sinSwing * 10f * Meth.phiF;
+        const int n = 60;
+        var rasX = cosSwingSqrt * n / 2f;
+        var rasY = cosSwing * 360;
+        var rasZ = sinSwingSqrt * n / -3f;
+
+        var off = armRaise ? -10 : 0;
+        var sneakArmRotX = sneaking ? 5f : 0f;
+
+        // tilt body
+        body.rotation = new Vector3(body.rotation.X, rasX / 2f, body.rotation.Z);
+        body.render(mat, scale);
+
 
         // blend walking animation with swing animation for right arm
-        rightArm.rotation = new Vector3(ar + rightArmSwingX, rightArmSwingY, rightArmSwingZ);
-        leftArm.rotation = new Vector3(-ar, 0, 0);
+        rightArm.rotation = new Vector3(ar + rasX + off + sneakArmRotX, 0, rasZ);
+
+        var lpos = leftArm.position;
+        var rpos = rightArm.position;
+        // offset arms to avoid clipping into body when swinging
+        rightArm.position = new Vector3(rightArm.position.X, rightArm.position.Y, 0 + (rasX * (1 / 15f)));
+        leftArm.position = new Vector3(leftArm.position.X, leftArm.position.Y, 0 + (rasX * 0.04f));
+        leftArm.rotation = new Vector3(-ar + sneakArmRotX, rasX * 0.5f, 0);
         rightLeg.rotation = new Vector3(-lr, 0, 0);
         leftLeg.rotation = new Vector3(lr, 0, 0);
 
@@ -64,5 +119,8 @@ public class HumanModel : EntityModel {
         leftArm.render(mat, scale);
         rightLeg.render(mat, scale);
         leftLeg.render(mat, scale);
+
+        leftArm.position = lpos;
+        rightArm.position = rpos;
     }
 }

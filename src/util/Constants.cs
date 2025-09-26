@@ -34,7 +34,9 @@ public static class Constants {
     public const double stepHeight = 0.6; // max height entity can step up
     public const float RAYCASTSTEP = 1 / 32f;
     public const float RAYCASTDIST = 6f;
-    public const double breakDelay = 16;
-    public const double placeDelay = 16;
+    public const double breakDelayMs = 267; // ~16 ticks at 60fps
+    public const double breakMissDelayMs = 67; // 4 ticks at 60fps
+    public const double placeDelayMs = 267; // ~16 ticks at 60fps
+    public const double airHitDelayMs = 67; // 4 ticks at 60fps - additional delay when hitting air
     public const double flyModeDelay = 0.4;
 }

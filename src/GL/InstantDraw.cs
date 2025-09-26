@@ -154,6 +154,19 @@ public abstract class InstantDraw<T> where T : unmanaged {
         projMatrix = p;
     }
 
+    public void applyMat() {
+        instantShader.use();
+        // Compute final matrices from components if available
+        if (modelMatrix != null) {
+            var model = modelMatrix.top;
+            var mv = model * viewMatrix;
+            var mvp = model * viewMatrix * projMatrix;
+            if (uModel != -1) instantShader.setUniform(uModel, model);
+            instantShader.setUniform(uModelView, mv);
+            instantShader.setUniform(uMVP, mvp);
+        }
+    }
+
     /// <summary>
     /// Set the primitive mode for the instant draw.
     /// When set to quads, it will use triangles on the OpenGL side - but it will be transparently handled by using the shared indices.

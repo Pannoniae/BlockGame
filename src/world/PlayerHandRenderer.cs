@@ -8,6 +8,7 @@ using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.item;
 using Molten;
+using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.world;
@@ -57,19 +58,23 @@ public class PlayerHandRenderer {
     }
 
     // This method is held together with duct tape and prayers, send help
-    public void render(double dt, double interp) {
-        if (handItem == ItemStack.EMPTY) {
+    public void render(double interp) {
+        var renderHand = handItem == ItemStack.EMPTY;
+
+        var world = player.world;
+        var pos = player.position.toBlockPos();
+        var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
+
+        // If rendering empty hand, skip item-specific shit
+        if (renderHand) {
+            renderEmptyHand(interp, l);
             return;
         }
 
         var a = handItem.getItem().isBlock();
 
-        var world = player.world;
-        var pos = player.position.toBlockPos();
         Game.graphics.tex(0, Game.textures.blockTexture);
         Game.blockRenderer.setupStandalone();
-
-        var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
 
         if (a) {
             Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero,
@@ -96,15 +101,19 @@ public class PlayerHandRenderer {
         // thx classicube? the description is bs with the matrices but it gives some ideas for the maths
         var sinSwing = MathF.Sin(swingProgress * MathF.PI);
         var sinSwingSqrt = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI);
+        var sinSwingSqrtish = MathF.Sin(float.Pow(swingProgress, 0.75f) * MathF.PI);
         // we need something like a circle?
         var circleishThing = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI * 2f);
+        var circleindThing = MathF.Sin(float.Pow(swingProgress, 0.25f) * MathF.PI * 2f);
+        var circleimpThing = MathF.Sin(swingProgress * swingProgress * MathF.PI * 2f);
+        var circleishishThing = MathF.Sin(float.Pow(swingProgress, 0.75f) * MathF.PI * 2f);
         var circle = MathF.Sin(swingProgress * MathF.PI * 2f);
 
         var mat = Game.graphics.model;
 
         //Console.Out.WriteLine(mat.stack.Count);
         mat.push();
-        mat.loadIdentity();
+        //mat.loadIdentity();
 
         //Console.Out.WriteLine(mat.print());
 
@@ -113,6 +122,10 @@ public class PlayerHandRenderer {
         // the swing code (common)
 
         mat.translate(sinSwingSqrt * -0.7f, ((float)-getLower(interp) + circleishThing) * 0.35f, sinSwing * 0.5f);
+        // cheat a bit, lower in second half
+        // cut positive out
+        var prog = float.Min(0, circleishThing) * 0.2f;
+        mat.translate(0, prog, 0);
 
         // the lowering
         //mat.translate(0,  * 0.35f, 0);
@@ -139,9 +152,14 @@ public class PlayerHandRenderer {
             mat.translate(-0.5f, -0.5f, -0.5f);
 
             Game.graphics.instantTextureShader.use();
-            Game.graphics.instantTextureShader.setUniform(uMVP,
-                mat.top * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
-            Game.graphics.instantTextureShader.setUniform(tex, 0);
+
+            itemRenderer.model(mat);
+            itemRenderer.view(Game.camera.getHandViewMatrix(interp));
+            itemRenderer.proj(Game.camera.getFixedProjectionMatrix());
+
+            // actually apply uniform (it's not automatic here because we don't use instantdraw!)
+            itemRenderer.applyMat();
+
             vao.render();
         }
 
@@ -152,7 +170,9 @@ public class PlayerHandRenderer {
 
             // we need to fixup the rotation a bit because items don't rotate somehow??
 
-            mat.translate(0, 0, sinSwing * -0.3f);
+            mat.translate(sinSwingSqrt * -0.35f, 0, sinSwing * -0.2f);
+            //mat.translate(sinSwingSqrtish * 0.7f + sinSwing * -0.6f, 0, sinSwing * -0.5f);
+            //mat.translate(sinSwingSqrt * -0.7f, ((float)-getLower(interp) + circleishThing) * 0.35f, sinSwing * 0.5f);
 
             mat.translate(0.5f, 0.5f, 0.5f);
 
@@ -200,6 +220,76 @@ public class PlayerHandRenderer {
 
             mat.pop();
         }
+
+        mat.pop();
+
+        // Render water overlay if player is underwater
+        if (player.isUnderWater()) {
+            renderWaterOverlay();
+        }
+    }
+
+    private void renderEmptyHand(double interp, byte lightLevel) {
+        var swingProgress = (float)player.getSwingProgress(interp);
+        var sinSwing = MathF.Sin(swingProgress * MathF.PI);
+        var sinSwingSqrt = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI);
+        var circleishThing = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI * 2f);
+        var circleishishThing = MathF.Sin(float.Pow(swingProgress, 0.75f) * MathF.PI * 2f);
+
+        var mat = Game.graphics.model;
+        mat.push();
+
+        var entity = player;
+
+        // interpolate position and rotation
+        var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
+        var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
+        var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
+
+        // translate to entity position
+        mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
+
+        // apply entity body rotation (no X-axis rotation for body)
+        mat.rotate(interpBodyRot.Y, 0, 1, 0);
+        //mat.rotate(90, 0, 1, 0);  // investigate why this 90-degree offset is needed
+        mat.rotate(interpBodyRot.Z, 0, 0, 1);
+
+        // apply head pitch!!
+        mat.rotate(-interpRot.X, 1, 0, 0);
+
+        // Apply swing animation - similar to item rendering
+        mat.translate(sinSwingSqrt * -0.7f, ((float)-getLower(interp) + circleishThing) * 0.35f, sinSwing * 0.5f);
+        //mat.translate(0.65f, -1.45f, 1f);
+        mat.translate(0, -1f, 12f);
+
+        // rotate to face away from camera
+        mat.rotate(-90, 1, 0, 0);
+
+        // tweak a bit
+        mat.translate(1f, 0f, 0f);
+
+        mat.scale(8f);
+
+        // Get the actual rightArm from the player's model
+        var rightArm = player.modelRenderer.model.rightArm;
+
+        // Apply swing animation to the arm (same logic as HumanModel)
+        const int n = 60;
+        var rasX = -MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI) * n / 2f;
+        var rasZ = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI) * n / -3f;
+
+        // Store original rotation and set swing rotation
+        var originalRotation = rightArm.rotation;
+        rightArm.rotation = new Vector3(rasX, 0, rasZ);
+
+        // Set human texture
+        Game.graphics.tex(0, Game.textures.human);
+
+        // Render the right arm
+        rightArm.render(mat, 1 / 16f);
+
+        // Restore original rotation
+        rightArm.rotation = originalRotation;
 
         mat.pop();
 
@@ -309,6 +399,142 @@ public class PlayerHandRenderer {
         itemRenderer.addVertex(new BlockVertexTinted(x4, y4, z4, u4, v4, shade.R, shade.G, shade.B, shade.A));
 
         //itemRenderer.end();
+    }
+
+    // Render held item in third person (called from HumanModel)
+    public void renderThirdPerson(MatrixStack mat, double interp) {
+        if (handItem == ItemStack.EMPTY) {
+            return;
+        }
+
+        var a = handItem.getItem().isBlock();
+
+        var world = player.world;
+        var pos = player.position.toBlockPos();
+        Game.graphics.tex(0, Game.textures.blockTexture);
+        Game.blockRenderer.setupStandalone();
+
+        var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
+
+        if (a) {
+            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero,
+                vertices,
+                lightOverride: l,
+                cullFaces: false);
+
+            vao.bind();
+            Game.renderer.bindQuad();
+            vao.upload(CollectionsMarshal.AsSpan(vertices));
+        }
+        else {
+            // render item as flat card using InstantDrawTexture
+            itemRenderer.begin(PrimitiveType.Quads);
+        }
+
+
+        var swingProgress = (float)player.getSwingProgress(interp);
+        var sinSwing = MathF.Sin(swingProgress * MathF.PI);
+        var sinSwingSqrt = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI);
+
+
+        mat.push();
+        mat.translate(-0.5f, -1.28f, -0.3f);
+
+        //mat.translate(sinSwingSqrt2 * 0.3f, sinSwingSqrt * 0.15f, sinSwingSqrt * 0.1f);
+
+        if (a) {
+            mat.translate(0.5f, 0.5f, 0.5f);
+
+            mat.scale(0.2f);
+
+            mat.rotate(sinSwingSqrt * 60, 1, 0, 0);
+            mat.rotate(sinSwingSqrt * 20, 0, 0, 1);
+
+            // only rotate a *bit*
+            mat.rotate(sinSwing * 10, 0, 1, 0);
+
+            // show the sunny side!
+            mat.rotate(-45, 0, 1, 0);
+
+            // rotate around the centre point
+            mat.translate(-0.5f, -0.5f, -0.5f);
+
+            Game.graphics.instantTextureShader.use();
+            itemRenderer.model(mat);
+            itemRenderer.view(Game.camera.getViewMatrix(interp));
+            itemRenderer.proj(Game.camera.getProjectionMatrix());
+
+            // actually apply uniform (it's not automatic here because we don't use instantdraw!)
+            itemRenderer.applyMat();
+
+            vao.render();
+
+            // debug test point
+        }
+
+        else {
+            mat.push();
+
+            // we need to fixup the rotation a bit because items don't rotate somehow??
+            //mat.translate(0, 0, sinSwing * -0.3f);
+
+            mat.translate(0.75f, 0.6f, 0.55f);
+
+            // bit of fixup
+            mat.translate(-0.1f * sinSwing, 0, 0);
+
+            mat.scale(0.5f);
+
+            //mat.rotate(sinSwingSqrt * 30, 0, 0, 1);
+            //mat.rotate(sinSwing * 20, 0, 1, 0);
+
+            // rotate into a proper orientation
+            mat.rotate(70, 1, 0, 0);
+
+            mat.rotate(sinSwingSqrt * 60, 1, 0, 0);
+            mat.rotate(sinSwingSqrt * 20, 0, 0, 1);
+
+            // only rotate a *bit*
+            mat.rotate(sinSwing * 10, 0, 1, 0);
+
+
+            // it's too much to the left..
+            //mat.translate(0.5f, 0.2f, 0f);
+
+            // rotate into direction
+            // overrotate a bit so it's not as "harsh" into the distance
+            mat.rotate(80, 0, 1, 0);
+
+            // we rotate the item "into place"
+            mat.rotate(20.0f, 0, 0, 1);
+
+            // do shit around the centre point
+            mat.translate(-0.5f, -0.5f, -0.5f);
+
+            // we can't just shrink here because it messes the swing animation up..
+            //mat.scale(0.5f);
+
+
+
+            itemRenderer.setTexture(Game.textures.itemTexture);
+
+
+            //Console.Out.WriteLine((mat.top).print());
+            itemRenderer.model(mat);
+            itemRenderer.view(Game.camera.getViewMatrix(interp));
+            itemRenderer.proj(Game.camera.getProjectionMatrix());
+
+
+            renderItemInHand(handItem, WorldRenderer.getLightColour((byte)(l >> 4), (byte)(l & 15)));
+
+            //Game.GL.Disable(EnableCap.CullFace);
+            //Game.GL.FrontFace(FrontFaceDirection.CW);
+            itemRenderer.end();
+
+            mat.pop();
+        }
+
+        mat.pop();
     }
 
     private void renderWaterOverlay() {

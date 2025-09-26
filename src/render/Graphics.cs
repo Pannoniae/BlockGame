@@ -178,6 +178,10 @@ public class Graphics : IDisposable {
         }
     }
 
+    public void invalidateTextures() {
+        Array.Fill(textures, 0u);
+    }
+
     public void resize(Vector2D<int> size) {
         setViewport(0, 0, size.X, size.Y);
         var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);

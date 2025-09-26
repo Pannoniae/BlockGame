@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using BlockGame.main;
 using BlockGame.util;
+using BlockGame.util.meth;
 using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
@@ -15,10 +16,22 @@ public class Raycast {
     /// </summary>
     /// <returns></returns>
     public static RayCollision raycast(World world, bool liquids = false) {
-        // raycast
-        var cameraPos = Game.camera.renderPosition(1.0);
-        var cameraForward = Game.camera.forward();
-        var currentPos = cameraPos;
+        // raycast from player eye position in player look direction (not camera direction)
+        var player = Game.player;
+        var basePos = player.position;
+        var trueEyeHeight = player.sneaking ? Player.sneakingEyeHeight : Player.eyeHeight;
+        var raycastPos = basePos + new Vector3D(0, trueEyeHeight, 0);
+
+        // calculate player look direction based on player rotation (not camera rotation)
+        var yaw = player.rotation.Y;
+        var pitch = player.rotation.X;
+        var playerForward = new Vector3D();
+        playerForward.X = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        playerForward.Y = MathF.Sin(Meth.deg2rad(pitch));
+        playerForward.Z = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        playerForward = Vector3D.Normalize(playerForward);
+
+        var currentPos = raycastPos;
 
         // don't round!!
         //var blockPos = toBlockPos(currentPos);
@@ -26,8 +39,8 @@ public class Raycast {
 
         var previous = currentPos.toBlockPos();
         for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
-            dist += (cameraForward * Constants.RAYCASTSTEP).Length();
-            currentPos += cameraForward * Constants.RAYCASTSTEP;
+            dist += (playerForward * Constants.RAYCASTSTEP).Length();
+            currentPos += playerForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();
             if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z) || (liquids && Block.liquid[world.getBlock(blockPos.X, blockPos.Y, blockPos.Z)])) {
                 // we also need to check if it's inside the selection of the block

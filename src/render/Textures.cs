@@ -179,16 +179,6 @@ public class Textures {
         blockTexture.reload();
         itemTexture.reload();
 
-        // reload specific textures
-        background.reload();
-        lightTexture.reload();
-        lightTexture2.reload();
-        waterOverlay.reload();
-        sunTexture.reload();
-        moonTexture.reload();
-        particleTex.reload();
-        human.reload();
-
         // regenerate lightmap
         for (int i = 0; i < 256; i++) {
             lightmap[i] = lightTexture.getPixel(i & 15, i >> 4);

@@ -210,7 +210,9 @@ public class Camera {
 
             //Console.Out.WriteLine(verticalSpeed);
 
-            //if (verticalSpeed > 0) verticalSpeed *= 0.1f; // "Stronger" effect when going up
+            //if (verticalSpeed > 0) verticalSpeed *= 0.4f; // "Stronger" effect when going up
+
+            //verticalSpeed = float.Min(verticalSpeed, 3f);
 
             // magic sauce
             verticalSpeed = -float.Asinh(verticalSpeed);
@@ -220,7 +222,7 @@ public class Camera {
         }
 
         // Faster decay than regular bob
-        airBob *= 0.8f;
+        airBob *= 0.46f;
     }
 
     public void setViewport(float width, float height) {
@@ -260,7 +262,7 @@ public class Camera {
         var interpForward = forward(interp);
         var interpUp = up(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.09f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -285,7 +287,7 @@ public class Camera {
         var interpForward = forward(interp);
         var interpUp = up(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.09f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -304,7 +306,7 @@ public class Camera {
     /// </summary>
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.09f);
+        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
 
         //Console.Out.WriteLine(iAirBob);
         var tt = 0.0;
