@@ -136,6 +136,7 @@ public class Block {
     public static Block HELLROCK;
     public static Block GLASS;
     public static Block CALCITE;
+    public static Block BRICK_BLOCK;
 
     public static Block LANTERN;
 
@@ -240,7 +241,10 @@ public class Block {
         CALCITE = register(new Block(Blocks.CALCITE, "Calcite"));
         CALCITE.setTex(cubeUVs(6, 1));
         CALCITE.setModel(BlockModel.makeCube(CALCITE));
-        CALCITE.transparency();
+
+        BRICK_BLOCK = register(new Block(Blocks.BRICK_BLOCK, "Brick Block"));
+        BRICK_BLOCK.setTex(cubeUVs(5, 1));
+        BRICK_BLOCK.setModel(BlockModel.makeCube(BRICK_BLOCK));
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
         LANTERN.setTex(new(13, 1), new(14, 1), new(15, 1));
