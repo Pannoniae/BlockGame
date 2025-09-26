@@ -394,7 +394,6 @@ public class GameScreen : Screen {
             case Key.T: {
                 if (keyboard.IsKeyPressed(Key.F3)) {
                     // reload all textures
-                    Game.graphics.invalidateTextures();
                     Game.textures.reloadAll();
                     Log.info("Reloaded all textures");
                 }

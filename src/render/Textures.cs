@@ -170,6 +170,7 @@ public class Textures {
 
     /** reload all textures from disk */
     public void reloadAll() {
+        Game.graphics.invalidateTextures();
         // reload all cached textures
         foreach (var tex in textures.Values) {
             tex.reload();

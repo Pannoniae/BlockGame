@@ -194,7 +194,7 @@ public class PlayerHandRenderer {
             mat.rotate(80, 0, 1, 0);
 
             // we rotate the item "into place"
-            mat.rotate(20.0F, 0.0F, 0.0F, 1.0F);
+            mat.rotate(20, 0, 0, 1);
 
             // do shit around the centre point
             mat.translate(-0.5f, -0.5f, -0.5f);

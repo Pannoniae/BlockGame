@@ -56,6 +56,8 @@ public partial class Game {
     
     public static Process proc;
 
+    public static Spy spy;
+
     private static int timerID;
 
     /// <summary>
@@ -680,6 +682,8 @@ public partial class Game {
         switchTo(Menu.MAIN_MENU);
         Block.postLoad();
         resize(new Vector2D<int>(width, height));
+
+        Spy.init();
 
         // apply fullscreen setting
         setFullscreen(Settings.instance.fullscreen);

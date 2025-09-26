@@ -70,8 +70,7 @@
         <ProjectReference Include="..\Analyzers\Analyzers\Analyzers.csproj"
                           OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
     </ItemGroup>
-    
-    
+
     <!-- Files to copy -->
     <ItemGroup>
         <Content Include="level/**/*.*">
@@ -98,7 +97,7 @@
         <Content Include="assets/**">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        
+
         
         <!-- Folders to NEVER copy -->
         <!-- This is either libraries (compiled separately), or separate dll's -->
