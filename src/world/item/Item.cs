@@ -129,9 +129,9 @@ public class Item {
         stoneHoe.tex = new UVPair(6, 2);
         register(stoneHoe);
 
-        var stoneSickle = new Item(Items.STONE_SICKLE, "Stone Sickle");
-        stoneSickle.tex = new UVPair(7 , 2);
-        register(stoneSickle);
+        var stoneScythe = new Item(Items.STONE_SCYTHE, "Stone Scythe");
+        stoneScythe.tex = new UVPair(7 , 2);
+        register(stoneScythe);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

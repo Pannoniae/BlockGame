@@ -42,4 +42,5 @@ public class Blocks {
     public const ushort TORCH = 54;
     public const ushort THISTLE = 55;
     public const ushort CRAFTING_TABLE = 56;
+    public const ushort CALCITE = 57;
 }

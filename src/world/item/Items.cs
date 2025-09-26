@@ -14,5 +14,5 @@ public class Items {
     public const int STONE_SHOVEL = 10;
     public const int STONE_SWORD = 11;
     public const int STONE_HOE = 12;
-    public const int STONE_SICKLE = 13;
+    public const int STONE_SCYTHE = 13;
 }

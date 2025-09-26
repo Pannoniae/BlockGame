@@ -45,7 +45,7 @@ public abstract class DynamicTexture {
 public class StillWaterTexture(BTextureAtlas parent) : DynamicTexture(parent, 0, 4 * 16, 16, 16) {
     private int frameIndex;
     
-    public override int updateFreq => 16;
+    public override int updateFreq => 12;
 
     protected override void update() {
         if (parent?.imageData.IsEmpty == false) {
@@ -67,7 +67,7 @@ public class StillWaterTexture(BTextureAtlas parent) : DynamicTexture(parent, 0,
 public class FlowingWaterTexture : DynamicTexture {
     private readonly Rgba32[] src;
     
-    public override int updateFreq => 4;
+    public override int updateFreq => 8;
 
     public FlowingWaterTexture(BTextureAtlas parent) : base(parent, 0, 8 * parent.atlasSize, 32, 32) {
         src = new Rgba32[width * height];

@@ -135,6 +135,7 @@ public class Block {
     public static Block HELLSTONE;
     public static Block HELLROCK;
     public static Block GLASS;
+    public static Block CALCITE;
 
     public static Block LANTERN;
 
@@ -235,6 +236,11 @@ public class Block {
         GLASS.setTex(cubeUVs(6, 0));
         GLASS.setModel(BlockModel.makeCube(GLASS));
         GLASS.transparency();
+
+        CALCITE = register(new Block(Blocks.CALCITE, "Calcite"));
+        CALCITE.setTex(cubeUVs(6, 1));
+        CALCITE.setModel(BlockModel.makeCube(CALCITE));
+        CALCITE.transparency();
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
         LANTERN.setTex(new(13, 1), new(14, 1), new(15, 1));
