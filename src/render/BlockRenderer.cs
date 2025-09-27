@@ -72,6 +72,8 @@ public class BlockRenderer {
     private unsafe byte* lightColourCache;
     private int vertexCount;
 
+    public UVPair forceTex = new UVPair(-1, -1);
+
 
     /** Hack to convert between vertices. */
     private readonly List<BlockVertexPacked> _listHack = new(24);
@@ -599,8 +601,8 @@ public class BlockRenderer {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
         
-        var blockID = block.getID();
-        var bl = Block.get(blockID);
+        uint blockID = block.getID();
+        var bl = Block.get(blockID.getID());
         
         // we render to a temp list
         _listHack.Clear();
@@ -611,7 +613,7 @@ public class BlockRenderer {
         // setup (fake) cache
         fillCacheEmpty(blockCache, lightCache);
         // place the block in it
-        blockCache[13] = blockID;
+        blockCache[13] = blockID.setMetadata(metadata);
         lightCache[13] = lightOverride;
         
         renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
@@ -646,6 +648,12 @@ public class BlockRenderer {
             var texCoordsMax = face.max;
             var tex = UVPair.texCoords(texCoords);
             var texMax = UVPair.texCoords(texCoordsMax);
+
+            // check for forced texture override (for breaking overlay)
+            if (forceTex.u >= 0 && forceTex.v >= 0) {
+                tex = UVPair.texCoords(forceTex);
+                texMax = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
+            }
             
             // vertex positions
             float x1 = worldPos.X + face.x1;
@@ -690,6 +698,12 @@ public class BlockRenderer {
                 var txm = tx + 1;
                 var uvx = UVPair.texCoords(tx);
                 var uvxm = UVPair.texCoords(txm);
+                
+                if (forceTex.u >= 0 && forceTex.v >= 0) {
+                    uvx = UVPair.texCoords(forceTex);
+                    uvxm = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
+                }
+
                 renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
@@ -699,6 +713,11 @@ public class BlockRenderer {
                 var uvd = UVPair.texCoords(dynTex);
                 var uvdm = UVPair.texCoords(dynTexm);
                 
+                if (forceTex.u >= 0 && forceTex.v >= 0) {
+                    uvd = UVPair.texCoords(forceTex);
+                    uvdm = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
+                }
+
                 // USE LOCAL COORDS
                 renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
 
@@ -1217,6 +1236,10 @@ public class BlockRenderer {
                     tex.W = facesRef.max.v * 16f / Block.atlasSize;*/
 
                     tex = Vector128.Create(facesRef.min.u, facesRef.min.v, facesRef.max.u, facesRef.max.v);
+
+                    if (forceTex.u >= 0 && forceTex.v >= 0) {
+                        tex = Vector128.Create(forceTex.u, forceTex.v, forceTex.u + 1, forceTex.v + 1);
+                    }
 
                     // divide by texture size / atlas size, multiply by scaling factor
                     const float factor = Block.atlasRatio * 32768f;

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using BlockGame.logic;
 using BlockGame.render;
 using BlockGame.snd;
 using BlockGame.ui;
@@ -86,7 +87,7 @@ public partial class Game {
     public static SoundEngine snd;
 
     public static World world;
-    public static Player player;
+    public static ClientPlayer player;
     public static WorldRenderer renderer = null!;
 
     private static Coroutines cs;
@@ -98,8 +99,10 @@ public partial class Game {
     public Vector2 lastMousePos;
     public Vector3I? targetedPos;
     public Vector3I? previousPos;
-    
+
     public static RayCollision raycast;
+
+    public static GameMode gamemode;
 
     public int fps;
     public double ft;
@@ -684,6 +687,9 @@ public partial class Game {
         resize(new Vector2D<int>(width, height));
 
         Spy.init();
+
+        // initialize game mode (default to creative for now)
+        gamemode = new CreativeMode();
 
         // apply fullscreen setting
         setFullscreen(Settings.instance.fullscreen);

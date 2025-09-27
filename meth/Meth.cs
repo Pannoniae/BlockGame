@@ -242,6 +242,10 @@ public static partial class Meth {
         return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
     }
 
+    public static double lerp(double start, double end, double amount) {
+        return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
+    }
+
     public static Vector3 lerp(Vector3 start, Vector3 end, float amount) {
         return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
     }

@@ -113,7 +113,8 @@ public class Block {
     public static bool[] collision = new bool[MAXBLOCKS];
     public static byte[] lightLevel = new byte[MAXBLOCKS];
     public static byte[] lightAbsorption = new byte[MAXBLOCKS];
-    
+    public static double[] hardness = new double[MAXBLOCKS];
+
     /**
      Block update delay in ticks. 0 = normal immediate block updates
     */
@@ -402,6 +403,13 @@ public class Block {
                 Item.register(new BlockItem(i, blocks[i].name));
             }
         }
+
+        // set hardness
+        for (int i = 0; i < currentID; i++) {
+            if (hardness[i] == 0) {
+                hardness[i] = 1;
+            }
+        }
     }
     
     // I've removed this because realistically it will always be null / 0 and it would mislead the API caller
@@ -431,6 +439,7 @@ public class Block {
                 translucent[blocks[i].id] = blocks[i].layer == RenderLayer.TRANSLUCENT;
             }
         }
+
         //inventoryBlacklist[Blocks.WATER] = true;
         //inventoryBlacklist[7] = true;
     }
@@ -667,6 +676,11 @@ public class Block {
 
     public Block itemLike() {
         renderItemLike[id] = true;
+        return this;
+    }
+
+    public Block setHardness(double hardness) {
+        Block.hardness[id] = hardness;
         return this;
     }
     

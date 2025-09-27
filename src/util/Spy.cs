@@ -1,19 +1,17 @@
-﻿using System.Reflection.Metadata;
+﻿using System.Diagnostics;
+using System.Reflection.Metadata;
 using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.util.log;
-using BlockGame.world;
 
 namespace BlockGame.util;
 
 public class Spy {
-
     public static bool enabled;
 
     private static string projectDir;
 
     private static FileSystemWatcher[]? spies;
-
 
 
     public static void init() {
@@ -39,7 +37,8 @@ public class Spy {
             var sourcePath = Path.Combine(projectDir, "src", folder);
             var watcher = new FileSystemWatcher(sourcePath, "*.*") {
                 IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Size | NotifyFilters.Attributes | NotifyFilters.FileName
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Size |
+                               NotifyFilters.Attributes | NotifyFilters.FileName
             };
             watcher.Filters.Add("*.png");
             watcher.Filters.Add("*.vert");
@@ -57,7 +56,6 @@ public class Spy {
     }
 
     private static void changed(object sender, FileSystemEventArgs e) {
-
         // SANITY CHECK SHIT
         // if it doesn't *actually* match the extension, ignore it (.pdnsave for example)
         var ext = Path.GetExtension(e.FullPath).ToLower();
@@ -72,7 +70,6 @@ public class Spy {
         var relativePath = Path.GetRelativePath(srcDir, e.FullPath);
         var destPath = Path.Combine(outputDir, relativePath);
 
-        Console.Out.WriteLine("destpath: " +  destPath);
 
         // trick! we just wait a bit lol
 

@@ -137,9 +137,9 @@ public partial class World : IDisposable {
     }
 
     public void init(bool loadingSave = false) {
-        player = new Player(this, 6, 20, 6);
+        player = new ClientPlayer(this, 6, 20, 6);
         addEntity(player);
-        Game.player = player;
+        Game.player = player as ClientPlayer;
         Game.camera.setPlayer(player);
 
         if (!loadingSave) {

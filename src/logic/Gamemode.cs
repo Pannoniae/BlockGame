@@ -1,13 +1,17 @@
 ﻿namespace BlockGame.logic;
 
-public class Gamemode {
-    
+public class GameMode {
     /**
      * Does this gamemode use blocks when building / uses breaking time for blocks?
      */
     public bool gameplay;
+
     public bool flying;
     public float reach;
-    
-    public static Gamemode[] modes = [];
+    public string name;
+
+    public static GameMode creative = new CreativeMode();
+    public static GameMode survival = new SurvivalMode();
+
+    public static GameMode[] modes = [creative, survival];
 }

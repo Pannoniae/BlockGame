@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 using System.Runtime;
+using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.render.model;
@@ -385,7 +386,9 @@ public class GameScreen : Screen {
             case Key.Space: {
                 if (Game.permanentStopwatch.ElapsedMilliseconds <
                     world.player.spacePress + Constants.flyModeDelay * 1000) {
-                    world.player.flyMode = !world.player.flyMode;
+                    if (Game.gamemode.flying) {
+                        world.player.flyMode = !world.player.flyMode;
+                    }
                 }
 
                 world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;

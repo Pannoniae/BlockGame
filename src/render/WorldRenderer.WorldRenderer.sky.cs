@@ -164,6 +164,9 @@ public sealed partial class WorldRenderer {
 
         mat.pop();
         mat.pop();
+
+        // reset colour!
+        idt.setColour(Color.White);
     }
 
     private static Vector3[] generateStarPositions() {

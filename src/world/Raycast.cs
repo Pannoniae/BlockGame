@@ -38,7 +38,7 @@ public class Raycast {
         var dist = 0.0;
 
         var previous = currentPos.toBlockPos();
-        for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Constants.RAYCASTDIST; i++) {
+        for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Game.gamemode.reach; i++) {
             dist += (playerForward * Constants.RAYCASTSTEP).Length();
             currentPos += playerForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();

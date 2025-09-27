@@ -43,6 +43,15 @@ public class Player : Entity {
 
     private bool fastMode = false;
 
+    public bool isBreaking;
+
+    public Vector3I breaking;
+
+    public double breakProgress;
+    public double prevBreakProgress;
+
+    public int breakTime;
+
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world) {
         id = Entities.PLAYER;
@@ -147,6 +156,7 @@ public class Player : Entity {
         prevTotalTraveled = totalTraveled;
         wasInLiquid = inLiquid;
         prevSwingProgress = swingProgress;
+        prevBreakProgress = breakProgress;
         handRenderer.prevLower = handRenderer.lower;
         papos = apos;
         paspeed = aspeed;
@@ -434,6 +444,13 @@ public class Player : Entity {
             }
         }
 
+        // if mouse up, stop breaking
+        if (!Game.inputs.left.down() && isBreaking) {
+            isBreaking = false;
+            breakProgress = 0;
+            prevBreakProgress = 0;
+        }
+
         fastMode = Game.inputs.ctrl.down();
 
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
@@ -484,6 +501,62 @@ public class Player : Entity {
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
                 }
+            }
+        }
+    }
+
+    public void getMiningSpeed(Block block) {
+
+    }
+
+    public override void interactBlock(double dt) {
+        base.interactBlock(dt);
+
+        // handle block breaking progress
+        if (isBreaking && Game.instance.targetedPos.HasValue) {
+            var pos = Game.instance.targetedPos.Value;
+
+
+            // check if we're still looking at the same block
+            if (pos != breaking) {
+                // switched targets, reset progress
+                isBreaking = false;
+                breakProgress = 0;
+                return;
+            }
+
+            var block = Block.get(world.getBlock(pos));
+            if (block == null || block.id == 0) {
+                // block no longer exists
+                isBreaking = false;
+                breakProgress = 0;
+                return;
+            }
+
+            // breaking logic
+            var hardness = Block.hardness[block.id];
+            var breakSpeed = 1.0 / hardness;
+
+            prevBreakProgress = breakProgress;
+            breakProgress += breakSpeed * dt;
+
+            if (breakProgress >= 1.0) {
+                // block is fully broken
+                block.crack(world, pos.X, pos.Y, pos.Z);
+                world.setBlock(pos.X, pos.Y, pos.Z, 0);
+                world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+                Game.snd.playBlockHit();
+
+                isBreaking = false;
+                breakProgress = 0;
+                prevBreakProgress = 0;
+            }
+        } else {
+            // not breaking, reset progress
+            if (isBreaking) {
+                isBreaking = false;
+                breakProgress = 0;
+                prevBreakProgress = 0;
             }
         }
     }
@@ -561,14 +634,28 @@ public class Player : Entity {
     public void breakBlock() {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
-            var bl = Block.get(world.getBlock(pos));
-            bl.crack(world, pos.X, pos.Y, pos.Z);
-            world.setBlock(pos.X, pos.Y, pos.Z, 0);
-            // we don't set it to anything, we just propagate from neighbours
-            world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
-            // place water if adjacent
 
-            Game.snd.playBlockHit();
+            // instabreak
+            if (!Game.gamemode.gameplay) {
+                var block = Block.get(world.getBlock(pos));
+                if (block != null && block.id != 0) {
+                    block.crack(world, pos.X, pos.Y, pos.Z);
+                    world.setBlock(pos.X, pos.Y, pos.Z, 0);
+                    world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
+                    Game.snd.playBlockHit();
+                }
+                setSwinging(true);
+                return;
+            }
+
+            // survival mode - start breaking process
+            if (!isBreaking || breaking != pos) {
+                isBreaking = true;
+                breaking = pos;
+                breakProgress = 0;
+                prevBreakProgress = 0;
+            }
+
             setSwinging(true);
         }
         else {

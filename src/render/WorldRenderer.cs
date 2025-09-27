@@ -942,6 +942,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             mat.pop();
         }
 
+        // render breaking block overlay if any
+        renderBreakBlock(interp);
+
 
         // no depth writes!
         GL.DepthMask(false);
@@ -949,11 +952,102 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthMask(true);
     }
 
+    /**
+     * Basically render the block at the position, just with the texture overridden to be the breaking texture. (UVPair x = 0 to 8, y = 7)
+     */
+    public void renderBreakBlock(double interp) {
+        if (Game.player == null || !Game.player.isBreaking) {
+            return;
+        }
+
+        var pos = Game.player.breaking;
+        var block = Block.get(world!.getBlock(pos));
+        var metadata = world.getBlockMetadata(pos);
+
+        if (block == null || block.id == 0) {
+            return;
+        }
+
+        // calculate interpolated break progress
+        var progress = Meth.lerp(Game.player.prevBreakProgress, Game.player.breakProgress, interp);
+
+        // determine break stage (0-9, where 9 is almost broken)
+        var breakStage = (int)(progress * 9);
+        breakStage = Math.Clamp(breakStage, 0, 8);
+
+        // only render if there's visible progress
+        if (breakStage <= 0) {
+            return;
+        }
+
+        breakStage--; // adjust to 0-7 range
+
+        // set up block renderer for standalone rendering
+        Game.blockRenderer.setupStandalone();
+
+        // force the breaking texture
+        Game.blockRenderer.forceTex = new UVPair(breakStage, 7);
+
+        // render the block using BlockRenderer
+        breakVertices.Clear();
+        Game.blockRenderer.renderBlock(block, metadata, new Vector3I(0, 0, 0), breakVertices, VertexConstructionMode.OPAQUE, 15, default, false);
+
+        // reset forceTex
+        Game.blockRenderer.forceTex = new UVPair(-1, -1);
+
+        if (breakVertices.Count == 0) {
+            return;
+        }
+
+        // setup rendering state
+        //GL.Enable(EnableCap.Blend);
+        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.DepthMask(false); // don't write to depth buffer
+        //GL.Disable(EnableCap.CullFace); // render both sides of the breaking block
+        GL.PolygonOffset(-3.0f, -3.0f); // pull the breaking block closer to the camera to prevent z-fighting
+        GL.Enable(EnableCap.PolygonOffsetFill);
+        //GL.Disable(EnableCap.DepthTest); // disable depth testing to ensure visibility
+
+        var mat = Game.graphics.model;
+        mat.push();
+        mat.loadIdentity();
+        mat.translate(pos.X, pos.Y, pos.Z);
+        //mat.scale(1.001f, 1.001f, 1.001f); // slight scale to prevent z-fighting
+
+        // setup matrices
+        var view = Game.camera.getViewMatrix(interp);
+        var projection = Game.camera.getProjectionMatrix();
+
+        // use idt to render BlockVertexTinted vertices
+        idt.model(mat);
+        idt.view(view);
+        idt.proj(projection);
+        Game.graphics.tex(0, Game.textures.blockTexture);
+        idt.begin(PrimitiveType.Quads);
+
+        //Console.Out.WriteLine(breakVertices[0].x + ", " + breakVertices[0].y + ", " + breakVertices[0].z + " :: " + breakVertices[0].u + ", " + breakVertices[0].v);
+
+        foreach (var vertex in breakVertices) {
+            idt.addVertex(vertex);
+        }
+
+        idt.end();
+
+        mat.pop();
+
+        GL.DepthMask(true);
+        //GL.Enable(EnableCap.CullFace);
+        GL.Disable(EnableCap.PolygonOffsetFill);
+        //GL.Enable(EnableCap.DepthTest);
+    }
+
     public ulong testidx;
     public ulong ssboaddr;
 
     /** Stores the chunk positions! */
     private List<Vector4> chunkData = null!;
+
+    private List<BlockVertexTinted> breakVertices = [];
 
     private static readonly List<AABB> AABBList = [];
 

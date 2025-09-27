@@ -101,6 +101,12 @@ public class Slabs : Block {
 
         var min = uvs[0];
         var max = uvs[0] + 1;
+
+        if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
+            min = br.forceTex;
+            max = br.forceTex + 1;
+        }
+
         var u0 = UVPair.texU(min.u);
         var v0 = UVPair.texV(min.v);
         var u1 = UVPair.texU(max.u);

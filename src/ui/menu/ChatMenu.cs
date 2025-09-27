@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.ui.screen;
 using BlockGame.util;
@@ -111,7 +112,34 @@ public class ChatMenu : Menu {
             var args = msg[1..].Split(' ');
             switch (args[0]) {
                 case "help":
-                    addMessage("Commands: /help");
+                    addMessage("Commands: /help, /gamemode, /tp, /clear, /cb, /fb, /fly, /time, /debug");
+                    break;
+                case "gamemode":
+                    if (args.Length == 2) {
+                        switch (args[1].ToLower()) {
+                            case "creative":
+                            case "c":
+                            case "1":
+                                Game.gamemode = GameMode.creative;
+                                addMessage("Set gamemode to Creative");
+                                break;
+                            case "survival":
+                            case "s":
+                            case "0":
+                                Game.gamemode = GameMode.survival;
+                                // disable flying when switching to survival
+                                Game.player.flyMode = false;
+                                addMessage("Set gamemode to Survival");
+                                break;
+                            default:
+                                addMessage("Invalid gamemode. Use: creative/c/1 or survival/s/0");
+                                break;
+                        }
+                    }
+                    else {
+                        var currentMode = Game.gamemode.name;
+                        addMessage($"Current gamemode: {currentMode}. Usage: /gamemode <creative|survival>");
+                    }
                     break;
                 case "clear":
                     messages.Clear();

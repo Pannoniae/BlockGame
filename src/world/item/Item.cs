@@ -157,4 +157,18 @@ public class Item {
     public virtual void use(ItemStack stack, World world, Player player) {
         
     }
+
+    public virtual double getBreakSpeed(ItemStack stack, Block block) {
+        return 1.0;
+    }
+
+    public virtual bool canBreak(ItemStack stack, Block block) {
+        return true;
+    }
+
+    public virtual int getMaxStackSize() => 64;
+
+    public override string ToString() {
+        return "Item{id=" + id + ", name=" + name + "}";
+    }
 }
