@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 #
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockGame", "BlockGame.csproj", "{2D6DEDE2-015E-4BD8-BBA7-63BB929DA1CE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlockGame", "src/BlockGame.csproj", "{2D6DEDE2-015E-4BD8-BBA7-63BB929DA1CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontStashSharp", "lib/FontStashSharp/FontStashSharp.csproj", "{1D9EF992-4846-4202-9649-809903851066}"
 EndProject
