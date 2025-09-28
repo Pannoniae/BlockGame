@@ -1000,7 +1000,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // setup rendering state
-        //GL.Enable(EnableCap.Blend);
+        GL.Enable(EnableCap.Blend);
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.DepthMask(false); // don't write to depth buffer
         //GL.Disable(EnableCap.CullFace); // render both sides of the breaking block
@@ -1022,6 +1022,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.model(mat);
         idt.view(view);
         idt.proj(projection);
+        idt.enableFog(false);
         Game.graphics.tex(0, Game.textures.blockTexture);
         idt.begin(PrimitiveType.Quads);
 
