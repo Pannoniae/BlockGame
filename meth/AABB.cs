@@ -38,6 +38,11 @@ public struct AABB : IEquatable<AABB> {
         max = new Vector3D(x1, y1, z1);
     }
 
+    public AABB(double x0, double y0, double z0, double x1, double y1, double z1) {
+        min = new Vector3D(x0, y0, z0);
+        max = new Vector3D(x1, y1, z1);
+    }
+
     public static AABB fromSize(Vector3D min, Vector3D size) {
         return new AABB(min, min + size);
     }

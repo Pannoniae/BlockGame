@@ -26,7 +26,6 @@ public class Particles {
     }
 
     public void update(double dt) {
-        //Console.Out.WriteLine(particles[0].position);
         for (var i = 0; i < particles.Count; i++) {
             var particle = particles[i];
             

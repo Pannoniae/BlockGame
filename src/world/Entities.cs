@@ -13,8 +13,9 @@ namespace BlockGame.world;
 public class Entities {
     public const int COW = 0;
     public const int PLAYER = 1;
+    public const int ITEM_ENTITY = 2;
 
-    public const int ENTITYCOUNT = 2;
+    public const int ENTITYCOUNT = 3;
 
     public static Type[] entityTypes = new Type[ENTITYCOUNT];
 
@@ -29,5 +30,6 @@ public class Entities {
     static Entities() {
         entityTypes[COW] = typeof(Cow);
         entityTypes[PLAYER] = typeof(Player);
+        entityTypes[ITEM_ENTITY] = typeof(ItemEntity);
     }
 }

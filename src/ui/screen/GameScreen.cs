@@ -26,6 +26,7 @@ public class GameScreen : Screen {
     public bool debugScreen = false;
     public bool fpsOnly = false;
     public bool chunkBorders = false;
+    public bool entityAABBs = false;
     public bool music = false;
 
     public readonly PauseMenu PAUSE_MENU = new();
@@ -168,11 +169,11 @@ public class GameScreen : Screen {
 
         if (!world.paused && !Game.lockingMouse) {
             if (currentMenu == INGAME_MENU) {
-                world.player.updateInput(dt);
+                Game.player.updateInput(dt);
             }
-
+            Game.player.blockHandling(dt);
             world.update(dt);
-            world.player.update(dt);
+            //world.player.update(dt);
         }
 
         world.renderUpdate(dt);
@@ -461,6 +462,12 @@ public class GameScreen : Screen {
                 Log.info("Frustum freeze: " + (Game.camera.frustumFrozen ? "ON" : "OFF"));
                 break;
             }
+            case Key.X when keyboard.IsKeyPressed(Key.F3): {
+                // toggle entity AABB rendering
+                entityAABBs = !entityAABBs;
+                Log.info("Entity AABBs: " + (entityAABBs ? "ON" : "OFF"));
+                break;
+            }
         }
 
 
@@ -600,6 +607,11 @@ public class GameScreen : Screen {
                 drawChunkBorders();
             }
 
+            // Draw entity AABBs
+            if (entityAABBs) {
+                drawEntityAABBs();
+            }
+
             // Draw chat
 
             var msgLimit = currentMenu == CHAT ? 20 : 10;
@@ -736,6 +748,37 @@ public class GameScreen : Screen {
 
             D.idc.end();
         }
+    }
+
+    private void drawEntityAABBs() {
+        var world = Game.world;
+
+        // get player position for range culling
+        var playerPos = world.player.position;
+        const double renderRange = 32.0; // only render AABBs within this range
+
+        D.idc.begin(PrimitiveType.Lines);
+
+        // iterate through all entities
+        foreach (var entity in world.entities) {
+
+            var distance = (entity.position - playerPos).Length();
+            if (distance > renderRange) continue;
+
+            // update the entity's AABB based on current position
+            entity.aabb = entity.calcAABB(entity.position);
+
+            // use different colors for different entity types
+            var color = entity switch {
+                Player => Color4b.Green,
+                _ => Color4b.Yellow
+            };
+
+            // draw the AABB wireframe
+            D.drawAABB(entity.aabb, color);
+        }
+
+        D.idc.end();
     }
 
     public override void postDraw() {

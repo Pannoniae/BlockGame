@@ -35,7 +35,7 @@ public class PlayerRenderer : EntityRenderer<Player> {
         // Position at right arm location and render item
         // BETTER IDEA, we just also steal the rotation from the arm too!
         mat.push();
-        var sc = 1f / 16f;
+        const float sc = 1f / 16f;
         mat.translate(model.rightArm.position.X * sc, model.rightArm.position.Y * sc, model.rightArm.position.Z * sc);
         mat.rotate(model.rightArm.rotation.X, 1, 0, 0);
         mat.rotate(model.rightArm.rotation.Y, 0, 1, 0);

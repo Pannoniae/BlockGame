@@ -31,14 +31,12 @@ public class HotbarGUI : GUIElement {
     public override void postDraw() {
         // draw hotbar
         var world = Game.world;
-        var items = world.player.survivalInventory.slots;
+        var inventory = world.player.survivalInventory;
         var gui = Game.gui;
 
-        var pos = world.player.position.toBlockPos();
-        
         Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);
         for (int i = 0; i < LENGTH; i++) {
-            var selected = world.player.survivalInventory.selected == i;
+            var selected = inventory.selected == i;
             // if we draw in the middle, then we'll start in the middle of the 5th slot.... need to offset by half a slot
             slots[i].itemPos = new Vector2I(Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
                 GUI.instance.uiHeight - (BLOCKSIZE + 2));

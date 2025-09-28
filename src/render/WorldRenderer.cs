@@ -1004,7 +1004,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.DepthMask(false); // don't write to depth buffer
         //GL.Disable(EnableCap.CullFace); // render both sides of the breaking block
-        GL.PolygonOffset(-3.0f, -3.0f); // pull the breaking block closer to the camera to prevent z-fighting
+
         GL.Enable(EnableCap.PolygonOffsetFill);
         //GL.Disable(EnableCap.DepthTest); // disable depth testing to ensure visibility
 

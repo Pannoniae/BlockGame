@@ -75,40 +75,28 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     /** Don't call these, they won't update the world! */
     internal void addEntity(Entity entity) {
-        // check if the entity is in the chunk
-        if (entity.position.X < worldX || entity.position.X >= worldX + CHUNKSIZE ||
-            entity.position.Z < worldZ || entity.position.Z >= worldZ + CHUNKSIZE) {
-            SkillIssueException.throwNew($"Entity position is out of chunk bounds: {entity.position} in chunk {coord}");
-        }
 
         // get the subchunk Y coordinate
-        int worldY = (int)entity.position.Y;
-        if (worldY is < 0 or >= CHUNKHEIGHT * CHUNKSIZE) {
-            return; // out of bounds
-        }
+        var scy = entity.subChunkCoord.y;
 
-        int subChunkY = worldY >> 4; // divide by 16 to get subchunk coordinate
-        entities[subChunkY].Add(entity);
+        // cap
+        scy = int.Clamp(scy, 0, CHUNKHEIGHT - 1);
+
+        entities[scy].Add(entity);
+
+        // set the entity's chunk reference
+        entity.subChunkCoord = new SubChunkCoord(coord.x, scy, coord.z);
     }
 
     /** Don't call these, they won't update the world! */
     internal void removeEntity(Entity entity) {
-        // check if the entity is in the chunk
-        if (entity.prevPosition.X < worldX || entity.prevPosition.X >= worldX + CHUNKSIZE ||
-            entity.prevPosition.Z < worldZ || entity.prevPosition.Z >= worldZ + CHUNKSIZE) {
-            SkillIssueException.throwNew(
-                $"Entity position is out of chunk bounds: {entity.prevPosition} in chunk {coord}");
-        }
 
         // get the subchunk Y coordinate
-        int worldY = (int)entity.prevPosition.Y;
-        int subChunkY = worldY >> 4; // divide by 16 to get subchunk coordinate
-        if (subChunkY is < 0 or >= CHUNKHEIGHT) {
-            return; // out of bounds
-        }
+        var scy = entity.subChunkCoord.y;
+        // cap
+        scy = int.Clamp(scy, 0, CHUNKHEIGHT - 1);
 
-
-        entities[subChunkY].Remove(entity);
+        entities[scy].Remove(entity);
     }
 
     public void lightChunk() {
@@ -701,6 +689,10 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
     public readonly int x = x;
     public readonly int y = y;
     public readonly int z = z;
+
+    public ChunkCoord toChunk() {
+        return new ChunkCoord(x, z);
+    }
 
     public override int GetHashCode() {
         return XHash.hash(x, y, z);

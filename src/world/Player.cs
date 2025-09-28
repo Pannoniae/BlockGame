@@ -5,6 +5,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using BlockGame.world.item;
 using Molten;
 using Molten.DoublePrecision;
@@ -146,6 +147,18 @@ public class Player : Entity {
         if (isMoving) {
             apos += aspeed * (float)dt;
         }
+
+        // item pickup logic
+
+        // print number of entities
+        /*Console.Out.WriteLine("w: " + world.entities.Count);
+        var tc = world.getSubChunk(position.toBlockPos().X, position.toBlockPos().Y, position.toBlockPos().Z);
+        Console.Out.WriteLine("c: " + tc.chunk.entities[tc.coord.y].Count);
+        foreach (var e in tc.chunk.entities[tc.coord.y]) {
+            Console.Out.WriteLine(" - " + e.id + " at " + e.position + "type: " + e.GetType());
+        }*/
+
+        pickup();
     }
 
     public void setPrevVars() {
@@ -364,7 +377,7 @@ public class Player : Entity {
     }
 
     [Pure]
-    protected override AABB calcAABB(Vector3D pos) {
+    public override AABB calcAABB(Vector3D pos) {
         var sizehalf = width / 2;
         return AABB.fromSize(new Vector3D(pos.X - sizehalf, pos.Y, pos.Z - sizehalf),
             new Vector3D(width, height, width));
@@ -466,7 +479,8 @@ public class Player : Entity {
             }
         }
         else {
-            if (Game.inputs.left.down() && now - lastMouseAction > Constants.breakDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+            if (Game.inputs.left.down() && now - lastMouseAction > Constants.breakDelayMs &&
+                now - lastAirHit > Constants.airHitDelayMs) {
                 breakBlock();
                 lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
@@ -485,7 +499,8 @@ public class Player : Entity {
             }
         }
         else {
-            if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+            if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
+                now - lastAirHit > Constants.airHitDelayMs) {
                 placeBlock();
                 lastMouseAction = now;
                 if (!Game.instance.previousPos.HasValue) {
@@ -506,12 +521,13 @@ public class Player : Entity {
     }
 
     public void getMiningSpeed(Block block) {
-
     }
 
-    public override void interactBlock(double dt) {
-        base.interactBlock(dt);
+    //public override void interactBlock(double dt) {
+    //    base.interactBlock(dt);
+    //}
 
+    public void blockHandling(double dt) {
         // handle block breaking progress
         if (isBreaking && Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
@@ -535,14 +551,36 @@ public class Player : Entity {
 
             // breaking logic
             var hardness = Block.hardness[block.id];
-            var breakSpeed = 1.0 / hardness;
+            var heldItem = survivalInventory.getSelected().getItem();
+            var toolBreakSpeed = heldItem.getBreakSpeed(survivalInventory.getSelected(), block);
+            var breakSpeed = toolBreakSpeed / hardness;
 
             prevBreakProgress = breakProgress;
             breakProgress += breakSpeed * dt;
 
             if (breakProgress >= 1.0) {
                 // block is fully broken
-                block.crack(world, pos.X, pos.Y, pos.Z);
+                block.shatter(world, pos.X, pos.Y, pos.Z);
+
+                // get block drop and spawn item entity in survival mode
+                var (dropItem, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, 0);
+                if (dropCount > 0) {
+                    var itemEntity = new ItemEntity(world);
+                    itemEntity.stack = new ItemStack(dropItem, dropCount);
+                    itemEntity.position = new Vector3D(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5);
+
+                    // add some random velocity
+                    var random = Game.clientRandom;
+                    itemEntity.velocity = new Vector3D(
+                        (random.NextSingle() - 0.5) * 0.3,
+                        random.NextSingle() * 0.3 + 0.1,
+                        (random.NextSingle() - 0.5) * 0.3
+                    );
+
+                    // add to world (chunk will add it to its entity list)
+                    world.addEntity(itemEntity);
+                }
+
                 world.setBlock(pos.X, pos.Y, pos.Z, 0);
                 world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
                 Game.snd.playBlockHit();
@@ -551,7 +589,8 @@ public class Player : Entity {
                 breakProgress = 0;
                 prevBreakProgress = 0;
             }
-        } else {
+        }
+        else {
             // not breaking, reset progress
             if (isBreaking) {
                 isBreaking = false;
@@ -639,11 +678,12 @@ public class Player : Entity {
             if (!Game.gamemode.gameplay) {
                 var block = Block.get(world.getBlock(pos));
                 if (block != null && block.id != 0) {
-                    block.crack(world, pos.X, pos.Y, pos.Z);
+                    block.shatter(world, pos.X, pos.Y, pos.Z);
                     world.setBlock(pos.X, pos.Y, pos.Z, 0);
                     world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
                     Game.snd.playBlockHit();
                 }
+
                 setSwinging(true);
                 return;
             }
@@ -711,6 +751,21 @@ public class Player : Entity {
             var bl = Block.get(world.getBlock(pos));
             if (bl != null) {
                 survivalInventory.slots[survivalInventory.selected] = new ItemStack(Item.blockID(bl.id), 1);
+            }
+        }
+    }
+
+    private void pickup() {
+        // get nearby entities
+        var entities = new List<Entity>();
+        var min = position.toBlockPos() - new Vector3I(2, 2, 2);
+        var max = position.toBlockPos() + new Vector3I(2, 2, 2);
+        world.getEntitiesInBox(entities, min, max);
+
+        // try to pickup any ItemEntities
+        foreach (var entity in entities) {
+            if (entity is ItemEntity itemEntity) {
+                itemEntity.pickup(this);
             }
         }
     }
