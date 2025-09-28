@@ -66,6 +66,7 @@
         <PackageReference Include="ZString" Version="2.6.0"/>
 
         <ProjectReference Include="../meth/Meth.csproj"/>
+        <ProjectReference Include="../lib/FastNoiseLite/FastNoiseLite.csproj"/>
         <ProjectReference Include="../lib/FontStashSharp.Base/FontStashSharp.Base.csproj"/>
         <ProjectReference Include="../lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj" />
         <ProjectReference Include="../lib/FontStashSharp/FontStashSharp.csproj"/>
@@ -90,16 +91,9 @@
         <Content Include="snd/**" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="assets/**" CopyToOutputDirectory="PreserveNewest" />
 
-        <!-- TODO: move this to lib -->
-        <Content Include="wglinfo64.exe" CopyToOutputDirectory="PreserveNewest" />
-
         <None Update="../lib/runtimes/linux-x64/native/libminiaudioex.so" CopyToOutputDirectory="PreserveNewest" />
         <None Update="../lib/glfw3.dll" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
-
-    <!-- TODO: move this to a project -->
-    <ItemGroup>
-        <Compile Include="../lib/FastNoiseLite.cs"/>
+        <None Update="../lib/wglinfo64.exe" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
     
     <!-- Print the RID -->

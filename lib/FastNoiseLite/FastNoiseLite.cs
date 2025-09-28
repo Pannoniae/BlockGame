@@ -47,12 +47,14 @@
 // VERSION: 1.1.1
 // https://github.com/Auburn/FastNoiseLite
 
+using System;
 using System.Runtime.CompilerServices;
 
 // Switch between using floats or doubles for input position
 //using FNLfloat = System.Single;
 using FNLfloat = System.Double;
 
+// ReSharper disable once CheckNamespace
 public class FastNoiseLite
 {
     private const short INLINE = 256; // MethodImplOptions.AggressiveInlining;
