@@ -110,13 +110,6 @@ public class Player : Entity {
         applyFriction();
         clamp(dt);
 
-        // after movement applied, check the chunk the player is in
-        var prevChunk = getChunk(prevPosition);
-        var thisChunk = getChunk(position);
-        if (prevChunk != thisChunk) {
-            onChunkChanged();
-        }
-
 
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 1.5f : 0;
@@ -197,7 +190,7 @@ public class Player : Entity {
 
     public override void teleport(Vector3D pos) {
         base.teleport(pos);
-        onChunkChanged();
+        //onChunkChanged();
     }
 
     public override void onChunkChanged() {
