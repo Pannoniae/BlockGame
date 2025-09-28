@@ -243,8 +243,8 @@ public class GUI {
     /// Draw a full-screen background with a block texture and the specified block size in pixels.
     /// </summary>
     public void drawBG(Block block, float size) {
-        var texCoords = UVPair.texCoords(block.model.faces[0].min);
-        var texCoordsMax = UVPair.texCoords(block.model.faces[0].max);
+        var texCoords = UVPair.texCoords(block.uvs[0]);
+        var texCoordsMax = UVPair.texCoords(block.uvs[0] + 1);
 
         // handle guiscale
         size *= guiScale * 2;
@@ -355,8 +355,8 @@ public class GUI {
                 }
                 
                 var block = Block.get(blockId);
-                var texCoords_ = UVPair.texCoords(block.model!.faces[0].min);
-                var texCoordsMax_ = UVPair.texCoords(block.model!.faces[0].max);
+                var texCoords_ = UVPair.texCoords(block.uvs[0]);
+                var texCoordsMax_ = UVPair.texCoords(block.uvs[0] + 1);
                 var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                 var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
 

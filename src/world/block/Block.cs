@@ -215,56 +215,56 @@ public class Block {
         
         DIRT = register(new Block(Blocks.DIRT, "Dirt"));
         DIRT.setTex(cubeUVs(2, 0));
-        DIRT.setModel(BlockModel.makeCube(DIRT));
+        renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
         
         SAND = register(new FallingBlock(Blocks.SAND, "Sand"));
         SAND.setTex(cubeUVs(3, 0));
-        SAND.setModel(BlockModel.makeCube(SAND));
+        renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
         // less hard than dirt!
         SAND.setHardness(0.5);
         
         BASALT = register(new Block(Blocks.BASALT, "Basalt"));
         BASALT.setTex(cubeUVs(4, 0));
-        BASALT.setModel(BlockModel.makeCube(BASALT));
+        renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
         
         STONE = register(new Block(Blocks.STONE, "Stone"));
         STONE.setTex(cubeUVs(5, 0));
-        STONE.setModel(BlockModel.makeCube(STONE));
+        renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
 
         GRAVEL = register(new Block(Blocks.GRAVEL, "Gravel"));
         GRAVEL.setTex(cubeUVs(7, 0));
-        GRAVEL.setModel(BlockModel.makeCube(GRAVEL));
+        renderType[GRAVEL.id] = RenderType.CUBE;
         GRAVEL.material(Material.EARTH);
 
         HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone"));
         HELLSTONE.setTex(cubeUVs(8, 0));
-        HELLSTONE.setModel(BlockModel.makeCube(HELLSTONE));
+        renderType[HELLSTONE.id] = RenderType.CUBE;
         HELLSTONE.light(10);
         HELLSTONE.material(Material.HELL);
 
         HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
         HELLROCK.setTex(cubeUVs(9, 0));
-        HELLROCK.setModel(BlockModel.makeCube(HELLROCK));
+        renderType[HELLROCK.id] = RenderType.CUBE;
         HELLROCK.material(Material.HELL);
 
         GLASS = register(new Block(Blocks.GLASS, "Glass"));
         GLASS.setTex(cubeUVs(6, 0));
-        GLASS.setModel(BlockModel.makeCube(GLASS));
+        renderType[GLASS.id] = RenderType.CUBE;
         GLASS.transparency();
         GLASS.material(Material.GLASS);
 
         CALCITE = register(new Block(Blocks.CALCITE, "Calcite"));
         CALCITE.setTex(cubeUVs(6, 1));
-        CALCITE.setModel(BlockModel.makeCube(CALCITE));
+        renderType[CALCITE.id] = RenderType.CUBE;
         CALCITE.material(Material.STONE);
 
         BRICK_BLOCK = register(new Block(Blocks.BRICK_BLOCK, "Brick Block"));
         BRICK_BLOCK.setTex(cubeUVs(5, 1));
-        BRICK_BLOCK.setModel(BlockModel.makeCube(BRICK_BLOCK));
+        renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
@@ -322,7 +322,7 @@ public class Block {
         
         PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
         PLANKS.setTex(cubeUVs(0, 5));
-        PLANKS.setModel(BlockModel.makeCube(PLANKS));
+        renderType[PLANKS.id] = RenderType.CUBE;
         PLANKS.material(Material.WOOD);
 
         STAIRS = register(new Stairs(Blocks.STAIRS, "Stairs"));
@@ -349,14 +349,14 @@ public class Block {
         
         LEAVES = register(new Block(Blocks.LEAVES, "Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
-        LEAVES.setModel(BlockModel.makeCube(LEAVES));
+        renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
         LEAVES.material(Material.ORGANIC);
         
         MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks"));
         MAPLE_PLANKS.setTex(cubeUVs(5, 5));
-        MAPLE_PLANKS.setModel(BlockModel.makeCube(MAPLE_PLANKS));
+        renderType[MAPLE_PLANKS.id] = RenderType.CUBE;
         MAPLE_PLANKS.material(Material.WOOD);
         
         MAPLE_STAIRS = register(new Stairs(Blocks.MAPLE_STAIRS, "Maple Stairs"));
@@ -371,7 +371,7 @@ public class Block {
         
         MAPLE_LEAVES = register(new Block(Blocks.MAPLE_LEAVES, "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
-        MAPLE_LEAVES.setModel(BlockModel.makeCube(MAPLE_LEAVES));
+        renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
         MAPLE_LEAVES.material(Material.ORGANIC);
         
@@ -391,63 +391,63 @@ public class Block {
         
         RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore"));
         RED_ORE.setTex(cubeUVs(10, 0));
-        RED_ORE.setModel(BlockModel.makeCube(RED_ORE));
+        renderType[RED_ORE.id] = RenderType.CUBE;
         RED_ORE.material(Material.FANCY_STONE);
         RED_ORE.setHardness(6.0);
         RED_ORE.setTier(MaterialTier.GOLD);
         
         TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore"));
         TITANIUM_ORE.setTex(cubeUVs(11, 0));
-        TITANIUM_ORE.setModel(BlockModel.makeCube(TITANIUM_ORE));
+        renderType[TITANIUM_ORE.id] = RenderType.CUBE;
         TITANIUM_ORE.material(Material.FANCY_STONE);
         TITANIUM_ORE.setHardness(7.5);
         TITANIUM_ORE.setTier(MaterialTier.GOLD);
         
         AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore"));
         AMBER_ORE.setTex(cubeUVs(12, 0));
-        AMBER_ORE.setModel(BlockModel.makeCube(AMBER_ORE));
+        renderType[AMBER_ORE.id] = RenderType.CUBE;
         AMBER_ORE.material(Material.FANCY_STONE);
         AMBER_ORE.setHardness(3.0);
         AMBER_ORE.setTier(MaterialTier.STONE);
         
         AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore"));
         AMETHYST_ORE.setTex(cubeUVs(13, 0));
-        AMETHYST_ORE.setModel(BlockModel.makeCube(AMETHYST_ORE));
+        renderType[AMETHYST_ORE.id] = RenderType.CUBE;
         AMETHYST_ORE.material(Material.FANCY_STONE);
         AMETHYST_ORE.setHardness(4.0);
         AMETHYST_ORE.setTier(MaterialTier.IRON);
         
         EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore"));
         EMERALD_ORE.setTex(cubeUVs(14, 0));
-        EMERALD_ORE.setModel(BlockModel.makeCube(EMERALD_ORE));
+        renderType[EMERALD_ORE.id] = RenderType.CUBE;
         EMERALD_ORE.material(Material.FANCY_STONE);
         EMERALD_ORE.setHardness(5.0);
         EMERALD_ORE.setTier(MaterialTier.GOLD);
         
         DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore"));
         DIAMOND_ORE.setTex(cubeUVs(15, 0));
-        DIAMOND_ORE.setModel(BlockModel.makeCube(DIAMOND_ORE));
+        renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
         DIAMOND_ORE.setTier(MaterialTier.GOLD);
         
         GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore"));
         GOLD_ORE.setTex(cubeUVs(0, 1));
-        GOLD_ORE.setModel(BlockModel.makeCube(GOLD_ORE));
+        renderType[GOLD_ORE.id] = RenderType.CUBE;
         GOLD_ORE.material(Material.FANCY_STONE);
         GOLD_ORE.setHardness(3.0);
         GOLD_ORE.setTier(MaterialTier.IRON);
         
         IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore"));
         IRON_ORE.setTex(cubeUVs(1, 1));
-        IRON_ORE.setModel(BlockModel.makeCube(IRON_ORE));
+        renderType[IRON_ORE.id] = RenderType.CUBE;
         IRON_ORE.material(Material.FANCY_STONE);
         IRON_ORE.setHardness(3.0);
         IRON_ORE.setTier(MaterialTier.STONE);
         
         COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
-        COAL_ORE.setModel(BlockModel.makeCube(COAL_ORE));
+        renderType[COAL_ORE.id] = RenderType.CUBE;
         COAL_ORE.material(Material.FANCY_STONE);
         COAL_ORE.setHardness(2.0);
         COAL_ORE.setTier(MaterialTier.WOOD);

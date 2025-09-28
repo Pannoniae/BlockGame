@@ -10,6 +10,7 @@ public class OreFeature : Feature {
     public ushort block;
     public int minCount;
     public int maxCount;
+    private Queue<Vector3I> expansionQueue = new(32 * 2);
 
     public OreFeature(ushort block, int minCount, int maxCount) {
         this.block = block;
@@ -57,7 +58,7 @@ public class OreFeature : Feature {
         // Place first ore block at origin point
         world.setBlockDumb(x, y, z, block);
         
-        Queue<Vector3I> expansionQueue = new(count * 2);
+        expansionQueue.Clear();
         expansionQueue.Enqueue(new Vector3I(x, y, z));
 
         int placedCount = 1;
