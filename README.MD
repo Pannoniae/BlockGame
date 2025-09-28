@@ -1,5 +1,5 @@
-![BlockGame image (terrain)](cover1.png)
-![BlockGame image (caves)](cover2.png)
+![BlockGame image (terrain)](img/cover1.png)
+![BlockGame image (caves)](img/cover2.png)
 
 # BlockGame
 
@@ -63,4 +63,4 @@ See [CONTRIBUTING.MD](./CONTRIBUTING.md).
 
 
 ### Obligatory max render distance screenshot which every failed game has lol
-![Obligatory max render distance](flex.png)
+![Obligatory max render distance](img/flex.png)
