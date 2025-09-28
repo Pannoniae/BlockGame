@@ -56,6 +56,11 @@ public class Block {
     public string name;
 
     /// <summary>
+    /// Block material - defines tool requirements, hardness, and sound
+    /// </summary>
+    public Material mat;
+
+    /// <summary>
     /// Is fully transparent? (glass, leaves, etc.)
     /// Is translucent? (partially transparent blocks like water)
     /// </summary>
@@ -124,6 +129,8 @@ public class Block {
     public static bool[] customAABB = new bool[MAXBLOCKS];
     
     public static RenderType[] renderType = new RenderType[MAXBLOCKS];
+    public static ToolType[] tool = new ToolType[MAXBLOCKS];
+    public static MaterialTier[] tier = new MaterialTier[MAXBLOCKS];
     
     
     public static Block AIR;
@@ -204,54 +211,68 @@ public class Block {
         GRASS = register(new Block(Blocks.GRASS, "Grass")).tick();
         GRASS.setTex(grassUVs(0, 0, 1, 0, 2, 0));
         GRASS.setModel(BlockModel.makeCube(GRASS));
+        GRASS.material(Material.EARTH);
         
         DIRT = register(new Block(Blocks.DIRT, "Dirt"));
         DIRT.setTex(cubeUVs(2, 0));
         DIRT.setModel(BlockModel.makeCube(DIRT));
+        DIRT.material(Material.EARTH);
         
         SAND = register(new FallingBlock(Blocks.SAND, "Sand"));
         SAND.setTex(cubeUVs(3, 0));
         SAND.setModel(BlockModel.makeCube(SAND));
+        SAND.material(Material.EARTH);
+        // less hard than dirt!
+        SAND.setHardness(0.5);
         
         BASALT = register(new Block(Blocks.BASALT, "Basalt"));
         BASALT.setTex(cubeUVs(4, 0));
         BASALT.setModel(BlockModel.makeCube(BASALT));
+        BASALT.material(Material.STONE);
         
         STONE = register(new Block(Blocks.STONE, "Stone"));
         STONE.setTex(cubeUVs(5, 0));
         STONE.setModel(BlockModel.makeCube(STONE));
+        STONE.material(Material.STONE);
 
         GRAVEL = register(new Block(Blocks.GRAVEL, "Gravel"));
         GRAVEL.setTex(cubeUVs(7, 0));
         GRAVEL.setModel(BlockModel.makeCube(GRAVEL));
-        
+        GRAVEL.material(Material.EARTH);
+
         HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone"));
         HELLSTONE.setTex(cubeUVs(8, 0));
         HELLSTONE.setModel(BlockModel.makeCube(HELLSTONE));
         HELLSTONE.light(10);
-        
+        HELLSTONE.material(Material.HELL);
+
         HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
         HELLROCK.setTex(cubeUVs(9, 0));
         HELLROCK.setModel(BlockModel.makeCube(HELLROCK));
-        
+        HELLROCK.material(Material.HELL);
+
         GLASS = register(new Block(Blocks.GLASS, "Glass"));
         GLASS.setTex(cubeUVs(6, 0));
         GLASS.setModel(BlockModel.makeCube(GLASS));
         GLASS.transparency();
+        GLASS.material(Material.GLASS);
 
         CALCITE = register(new Block(Blocks.CALCITE, "Calcite"));
         CALCITE.setTex(cubeUVs(6, 1));
         CALCITE.setModel(BlockModel.makeCube(CALCITE));
+        CALCITE.material(Material.STONE);
 
         BRICK_BLOCK = register(new Block(Blocks.BRICK_BLOCK, "Brick Block"));
         BRICK_BLOCK.setTex(cubeUVs(5, 1));
         BRICK_BLOCK.setModel(BlockModel.makeCube(BRICK_BLOCK));
+        BRICK_BLOCK.material(Material.STONE);
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
         LANTERN.setTex(new(13, 1), new(14, 1), new(15, 1));
         LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
+        LANTERN.material(Material.METAL);
         
         TALL_GRASS = register(new Flower(Blocks.TALL_GRASS, "Tall Grass"));
         TALL_GRASS.setTex(crossUVs(9, 1));
@@ -259,6 +280,7 @@ public class Block {
         TALL_GRASS.transparency();
         TALL_GRASS.noCollision();
         TALL_GRASS.waterTransparent();
+        TALL_GRASS.material(Material.ORGANIC);
         
         SHORT_GRASS = register(new Flower(Blocks.SHORT_GRASS, "Short Grass"));
         SHORT_GRASS.setTex(crossUVs(8, 1));
@@ -267,6 +289,7 @@ public class Block {
         SHORT_GRASS.shortGrassAABB();
         SHORT_GRASS.noCollision();
         SHORT_GRASS.waterTransparent();
+        SHORT_GRASS.material(Material.ORGANIC);
         
         YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(10, 1));
@@ -276,6 +299,7 @@ public class Block {
         YELLOW_FLOWER.noCollision();
         YELLOW_FLOWER.waterTransparent();
         YELLOW_FLOWER.itemLike();
+        YELLOW_FLOWER.material(Material.ORGANIC);
 
         RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
         RED_FLOWER.setTex(crossUVs(11, 1));
@@ -285,6 +309,7 @@ public class Block {
         RED_FLOWER.noCollision();
         RED_FLOWER.waterTransparent();
         RED_FLOWER.itemLike();
+        RED_FLOWER.material(Material.ORGANIC);
 
         THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
         THISTLE.setTex(crossUVs(12, 1));
@@ -293,52 +318,65 @@ public class Block {
         THISTLE.flowerAABB();
         THISTLE.waterTransparent();
         THISTLE.itemLike();
+        THISTLE.material(Material.ORGANIC);
         
         PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
         PLANKS.setTex(cubeUVs(0, 5));
         PLANKS.setModel(BlockModel.makeCube(PLANKS));
+        PLANKS.material(Material.WOOD);
 
         STAIRS = register(new Stairs(Blocks.STAIRS, "Stairs"));
         STAIRS.setTex(cubeUVs(0, 5));
         STAIRS.partialBlock();
+        STAIRS.material(Material.WOOD);
 
         STONE_SLAB = register(new Slabs(Blocks.STONE_SLAB, "Stone Slab"));
         STONE_SLAB.setTex(cubeUVs(5, 0));
+        STONE_SLAB.material(Material.STONE);
 
         OAK_SLAB = register(new Slabs(Blocks.OAK_SLAB, "Planks Slab"));
         OAK_SLAB.setTex(cubeUVs(0, 5));
+        OAK_SLAB.material(Material.WOOD);
 
         MAPLE_PLANKS_SLAB = register(new Slabs(Blocks.MAPLE_PLANKS_SLAB, "Maple Planks Slab"));
         MAPLE_PLANKS_SLAB.setTex(cubeUVs(5, 5));
+        MAPLE_PLANKS_SLAB.material(Material.WOOD);
 
         LOG = register(new Block(Blocks.LOG, "Log"));
         LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
         LOG.setModel(BlockModel.makeCube(LOG));
+        LOG.material(Material.WOOD);
         
         LEAVES = register(new Block(Blocks.LEAVES, "Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
         LEAVES.setModel(BlockModel.makeCube(LEAVES));
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
+        LEAVES.material(Material.ORGANIC);
         
         MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks"));
         MAPLE_PLANKS.setTex(cubeUVs(5, 5));
         MAPLE_PLANKS.setModel(BlockModel.makeCube(MAPLE_PLANKS));
+        MAPLE_PLANKS.material(Material.WOOD);
         
         MAPLE_STAIRS = register(new Stairs(Blocks.MAPLE_STAIRS, "Maple Stairs"));
         MAPLE_STAIRS.setTex(cubeUVs(5, 5));
         MAPLE_STAIRS.partialBlock();
+        MAPLE_STAIRS.material(Material.WOOD);
         
         MAPLE_LOG = register(new Block(Blocks.MAPLE_LOG, "Maple Log"));
         MAPLE_LOG.setTex(grassUVs(7, 5, 6, 5, 8, 5));
         MAPLE_LOG.setModel(BlockModel.makeCube(MAPLE_LOG));
+        MAPLE_LOG.material(Material.WOOD);
         
         MAPLE_LEAVES = register(new Block(Blocks.MAPLE_LEAVES, "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         MAPLE_LEAVES.setModel(BlockModel.makeCube(MAPLE_LEAVES));
         MAPLE_LEAVES.transparency();
+        MAPLE_LEAVES.material(Material.ORGANIC);
         
         CANDY = register(new CandyBlock(Blocks.CANDY, "Candy"));
+        CANDY.material(Material.FOOD);
         
         HEAD = register(new Block(Blocks.HEAD, "Head"));
         HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
@@ -348,51 +386,81 @@ public class Block {
         WATER = register(new Water(Blocks.WATER, "Water", 15, 8));
         WATER.setTex(new UVPair(0, 4), new UVPair(0, 8));
         WATER.makeLiquid();
-        
+
+        // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
         
         RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore"));
         RED_ORE.setTex(cubeUVs(10, 0));
         RED_ORE.setModel(BlockModel.makeCube(RED_ORE));
+        RED_ORE.material(Material.FANCY_STONE);
+        RED_ORE.setHardness(6.0);
+        RED_ORE.setTier(MaterialTier.GOLD);
         
         TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore"));
         TITANIUM_ORE.setTex(cubeUVs(11, 0));
         TITANIUM_ORE.setModel(BlockModel.makeCube(TITANIUM_ORE));
+        TITANIUM_ORE.material(Material.FANCY_STONE);
+        TITANIUM_ORE.setHardness(7.5);
+        TITANIUM_ORE.setTier(MaterialTier.GOLD);
         
         AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore"));
         AMBER_ORE.setTex(cubeUVs(12, 0));
         AMBER_ORE.setModel(BlockModel.makeCube(AMBER_ORE));
+        AMBER_ORE.material(Material.FANCY_STONE);
+        AMBER_ORE.setHardness(3.0);
+        AMBER_ORE.setTier(MaterialTier.STONE);
         
         AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore"));
         AMETHYST_ORE.setTex(cubeUVs(13, 0));
         AMETHYST_ORE.setModel(BlockModel.makeCube(AMETHYST_ORE));
+        AMETHYST_ORE.material(Material.FANCY_STONE);
+        AMETHYST_ORE.setHardness(4.0);
+        AMETHYST_ORE.setTier(MaterialTier.IRON);
         
         EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore"));
         EMERALD_ORE.setTex(cubeUVs(14, 0));
         EMERALD_ORE.setModel(BlockModel.makeCube(EMERALD_ORE));
+        EMERALD_ORE.material(Material.FANCY_STONE);
+        EMERALD_ORE.setHardness(5.0);
+        EMERALD_ORE.setTier(MaterialTier.GOLD);
         
         DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore"));
         DIAMOND_ORE.setTex(cubeUVs(15, 0));
         DIAMOND_ORE.setModel(BlockModel.makeCube(DIAMOND_ORE));
+        DIAMOND_ORE.material(Material.FANCY_STONE);
+        DIAMOND_ORE.setHardness(4.0);
+        DIAMOND_ORE.setTier(MaterialTier.GOLD);
         
         GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore"));
         GOLD_ORE.setTex(cubeUVs(0, 1));
         GOLD_ORE.setModel(BlockModel.makeCube(GOLD_ORE));
+        GOLD_ORE.material(Material.FANCY_STONE);
+        GOLD_ORE.setHardness(3.0);
+        GOLD_ORE.setTier(MaterialTier.IRON);
         
         IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore"));
         IRON_ORE.setTex(cubeUVs(1, 1));
         IRON_ORE.setModel(BlockModel.makeCube(IRON_ORE));
+        IRON_ORE.material(Material.FANCY_STONE);
+        IRON_ORE.setHardness(3.0);
+        IRON_ORE.setTier(MaterialTier.STONE);
         
         COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
         COAL_ORE.setModel(BlockModel.makeCube(COAL_ORE));
+        COAL_ORE.material(Material.FANCY_STONE);
+        COAL_ORE.setHardness(2.0);
+        COAL_ORE.setTier(MaterialTier.WOOD);
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
         TORCH.setTex(cubeUVs(0, 6));
         TORCH.itemLike();
+        TORCH.material(Material.ORGANIC);
         
         CRAFTING_TABLE = register(new Block(Blocks.CRAFTING_TABLE, "Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4,3, 3,3, 2, 3, 5,3));
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
+        CRAFTING_TABLE.material(Material.WOOD);
         
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
@@ -403,6 +471,7 @@ public class Block {
                 Item.register(new BlockItem(i, blocks[i].name));
             }
         }
+
 
         // set hardness
         for (int i = 0; i < currentID; i++) {
@@ -679,11 +748,24 @@ public class Block {
         return this;
     }
 
-    public Block setHardness(double hardness) {
-        Block.hardness[id] = hardness;
+    public Block setHardness(double hards) {
+        hardness[id] = hards;
         return this;
     }
-    
+
+    public Block material(Material mat) {
+        this.mat = mat;
+        tool[id] = mat.toolType;
+        tier[id] = mat.tier;
+        hardness[id] = mat.hardness;
+        return this;
+    }
+
+    public Block setTier(MaterialTier t) {
+        tier[id] = t;
+        return this;
+    }
+
     // CUSTOM BEHAVIOURS
     
     /**
@@ -749,10 +831,18 @@ public class Block {
     * Called after the block is removed from the world.
      */
     public virtual void onBreak(World world, int x, int y, int z, byte metadata) {
-        
+
     }
 
-    public virtual void crack(World world, int x, int y, int z) {
+    /**
+     * Returns the item drops when this block is broken.
+     * By default, blocks drop themselves as an item.
+     */
+    public virtual (Item item, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        return (Item.block(id), 1);
+    }
+
+    public virtual void shatter(World world, int x, int y, int z) {
 
         UVPair uv;
         
@@ -1104,4 +1194,81 @@ public enum RenderType : byte {
     CROSS,
     CUSTOM,
     CUBE_DYNTEXTURE
+}
+
+public enum ToolType : byte {
+    NONE,
+    PICKAXE,
+    AXE,
+    SHOVEL,
+    HOE
+}
+
+public record class MaterialTier(MaterialTiers tier, double level, double speed) {
+
+    public static readonly MaterialTier NONE = new(MaterialTiers.NONE, 0, 1);
+    public static readonly MaterialTier WOOD = new(MaterialTiers.WOOD, 1, 1.25);
+    public static readonly MaterialTier STONE = new(MaterialTiers.STONE, 2, 1.3);
+    public static readonly MaterialTier IRON = new(MaterialTiers.IRON, 3, 1.5);
+    public static readonly MaterialTier GOLD = new(MaterialTiers.GOLD, 2.5, 2);
+
+    /** The index of the tier (NO GAMEPLAY EFFECT, DON'T USE IT FOR THAT), only use for sorting or indexing */
+    public readonly MaterialTiers tier = tier;
+    /** The "tier value", should roughly be increasing but can be the same or less than the previous. Used for determining stats */
+    public readonly double level = level;
+
+    public readonly double speed = speed;
+
+    // todo add more stats here like durability, damage, speed, etc. as needed
+}
+
+public enum MaterialTiers : byte {
+    NONE,
+    WOOD,
+    STONE,
+    IRON,
+    GOLD,
+}
+
+public enum SoundMaterial : byte {
+    WOOD,
+    STONE,
+    METAL,
+    DIRT,
+    GRASS,
+    SAND,
+    GLASS,
+    ORGANIC
+}
+
+/**
+ * Block hardness: 0.5 to 30+ (wide range)
+ * Tool speed: something like 1.0 to 4.0 (narrow range)
+ * Tier scaling: Handles the actual progression via the fancy-ass logarithmic formula
+ */
+public class Material {
+    public static readonly Material WOOD = new Material(SoundMaterial.WOOD, ToolType.AXE, MaterialTier.NONE, 2);
+    public static readonly Material STONE = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
+    public static readonly Material METAL = new Material(SoundMaterial.METAL, ToolType.PICKAXE, MaterialTier.STONE, 4);
+    public static readonly Material EARTH = new Material(SoundMaterial.DIRT, ToolType.SHOVEL, MaterialTier.NONE, 0.6);
+    public static readonly Material ORGANIC = new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.25);
+    /** Yummy! */
+    public static readonly Material FOOD = new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.8);
+    public static readonly Material GLASS = new Material(SoundMaterial.GLASS, ToolType.NONE, MaterialTier.NONE, 0.2);
+    /** Mostly ores */
+    public static readonly Material FANCY_STONE = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.STONE, 3);
+    /** TODO */
+    public static readonly Material HELL = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.NONE, 2);
+    
+    public SoundMaterial smat;
+    public ToolType toolType;
+    public MaterialTier tier;
+    public double hardness;
+
+    public Material(SoundMaterial smat, ToolType toolType, MaterialTier tier, double hardness) {
+        this.smat = smat;
+        this.toolType = toolType;
+        this.tier = tier;
+        this.hardness = hardness;
+    }
 }

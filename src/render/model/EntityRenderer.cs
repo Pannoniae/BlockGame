@@ -37,5 +37,6 @@ public static class EntityRenderers {
     public static void reloadAll() {
         renderers[Entities.COW] = new CowRenderer();
         renderers[Entities.PLAYER] = new PlayerRenderer();
+        renderers[Entities.ITEM_ENTITY] = new ItemEntityRenderer();
     }
 }

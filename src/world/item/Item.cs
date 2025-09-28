@@ -97,27 +97,27 @@ public class Item {
         silverIngot.tex = new UVPair(3, 0);
         register(silverIngot);
 
-        var goldPickaxe = new Item(Items.GOLD_PICKAXE, "Gold Pickaxe");
+        var goldPickaxe = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 6.0);
         goldPickaxe.tex = new UVPair(3, 2);
         register(goldPickaxe);
 
-        var ironPickaxe = new Item(Items.IRON_PICKAXE, "Iron Pickaxe");
+        var ironPickaxe = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 5.0);
         ironPickaxe.tex = new UVPair(1, 2);
         register(ironPickaxe);
 
-        var woodPickaxe = new Item(Items.WOOD_PICKAXE, "Wood Pickaxe");
+        var woodPickaxe = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 2.0);
         woodPickaxe.tex = new UVPair(2, 2);
         register(woodPickaxe);
 
-        var stonePickaxe = new Item(Items.STONE_PICKAXE, "Stone Pickaxe");
+        var stonePickaxe = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 4.0);
         stonePickaxe.tex = new UVPair(0, 2);
         register(stonePickaxe);
 
-        var woodAxe = new Item(Items.WOOD_AXE, "Wood Axe");
+        var woodAxe = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
         woodAxe.tex = new UVPair(2, 3);
         register(woodAxe);
 
-        var stoneShovel = new Item(Items.STONE_SHOVEL, "Stone Shovel");
+        var stoneShovel = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 2.0);
         stoneShovel.tex = new UVPair(4, 2);
         register(stoneShovel);
 
@@ -125,11 +125,11 @@ public class Item {
         stoneSword.tex = new UVPair(5, 2);
         register(stoneSword);
 
-        var stoneHoe = new Item(Items.STONE_HOE, "Stone Hoe");
+        var stoneHoe = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 2.0);
         stoneHoe.tex = new UVPair(6, 2);
         register(stoneHoe);
 
-        var stoneScythe = new Item(Items.STONE_SCYTHE, "Stone Scythe");
+        var stoneScythe = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 2.0);
         stoneScythe.tex = new UVPair(7 , 2);
         register(stoneScythe);
     }
@@ -158,10 +158,16 @@ public class Item {
         
     }
 
+    /**
+     * How fast this item can break the given block. 1.0 is default, higher is faster, lower is slower.
+     */
     public virtual double getBreakSpeed(ItemStack stack, Block block) {
         return 1.0;
     }
 
+    /**
+     * Can this item actually break the given block and get drops?
+     */
     public virtual bool canBreak(ItemStack stack, Block block) {
         return true;
     }
@@ -170,5 +176,39 @@ public class Item {
 
     public override string ToString() {
         return "Item{id=" + id + ", name=" + name + "}";
+    }
+}
+
+public class Tool : Item {
+    public ToolType type;
+    public MaterialTier tier;
+    public double speed;
+
+    public Tool(int id, string name, ToolType type, MaterialTier tier, double speed) : base(id, name) {
+        this.type = type;
+        this.tier = tier;
+        this.speed = speed;
+    }
+
+    public override double getBreakSpeed(ItemStack stack, Block block) {
+        if (Block.tool[block.id] != type) {
+            return 1.0;
+        }
+
+        double basePower = 1.0 + double.Log(1 + tier.level);
+        double targetPower = 1.0 + double.Log(1 + Block.tier[block.id].level);
+
+        if (tier.level < Block.tier[block.id].level) {
+            return double.Max(1.0, basePower / targetPower); // Penalty but never < 1.0!!
+        }
+
+        return speed * (basePower / targetPower); // Efficiency bonus for overtiered tools
+    }
+
+    public override bool canBreak(ItemStack stack, Block block) {
+        if (Block.tool[block.id] == type) {
+            return tier.level >= Block.tier[block.id].level;
+        }
+        return Block.tool[block.id] == ToolType.NONE;
     }
 }

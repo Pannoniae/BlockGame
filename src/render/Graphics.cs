@@ -252,4 +252,12 @@ public class Graphics : IDisposable {
     ~Graphics() {
         Dispose(false);
     }
+
+    public void polyOffset(float f, float u) {
+        if (Settings.instance.reverseZ) {
+            GL.PolygonOffset(-f, -u);
+        } else {
+            GL.PolygonOffset(f, u);
+        }
+    }
 }

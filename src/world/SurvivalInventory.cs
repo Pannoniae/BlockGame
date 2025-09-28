@@ -5,7 +5,7 @@ using BlockGame.world.item.inventory;
 namespace BlockGame.world;
 
 public class SurvivalInventory : Inventory {
-    public ItemStack[] slots = new ItemStack[50].fill();
+    public readonly ItemStack[] slots = new ItemStack[50].fill();
     
     public ItemStack cursor = ItemStack.EMPTY;
     
@@ -90,6 +90,48 @@ public class SurvivalInventory : Inventory {
     }
 
     public void setDirty(bool dirty) {
-        
+
+    }
+
+    /**
+     * Try to add an ItemStack to the inventory. Returns true if successful, false if full.
+     */
+    public bool addItem(ItemStack stack) {
+        if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
+            return true;
+        }
+
+        var remaining = stack.quantity;
+        var maxStackSize = stack.getItem().getMaxStackSize();
+
+        // first, try to add to existing stacks of the same item
+        for (int i = 0; i < slots.Length; i++) {
+            var slot = slots[i];
+            if (slot != ItemStack.EMPTY && slot.same(stack)) {
+                var canAdd = Math.Min(remaining, maxStackSize - slot.quantity);
+                if (canAdd > 0) {
+                    slot.quantity += canAdd;
+                    remaining -= canAdd;
+                    if (remaining <= 0) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // if we still have items left, try to place in empty slots
+        for (int i = 0; i < slots.Length; i++) {
+            if (slots[i] == ItemStack.EMPTY) {
+                var canAdd = Math.Min(remaining, maxStackSize);
+                slots[i] = new ItemStack(stack.id, canAdd, stack.metadata);
+                remaining -= canAdd;
+                if (remaining <= 0) {
+                    return true;
+                }
+            }
+        }
+
+        // if we get here, the inventory is full
+        return false;
     }
 }

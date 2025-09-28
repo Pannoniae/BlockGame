@@ -4,6 +4,7 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.render;
+using BlockGame.render.model;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.item;
@@ -30,10 +31,10 @@ public class PlayerHandRenderer {
     private int tex;
 
     // Water overlay renderer
-    private InstantDrawTexture waterOverlayRenderer;
+    public InstantDrawTexture waterOverlayRenderer;
 
     // Item renderer for hand
-    private InstantDrawTexture itemRenderer;
+    public InstantDrawTexture itemRenderer;
 
     public PlayerHandRenderer(Player player) {
         this.player = player;
@@ -238,55 +239,111 @@ public class PlayerHandRenderer {
 
         var mat = Game.graphics.model;
         mat.push();
+        mat.loadIdentity();
+
+        var ide = EntityRenderers.ide;
+
+        // Set matrix components for automatic computation
+        ide.model(mat);
+        ide.view(Game.camera.getHandViewMatrix(interp));
+        ide.proj(Game.camera.getProjectionMatrix());
+
 
         var entity = player;
+
+        // Get the actual rightArm from the player's model
+        var rightArm = player.modelRenderer.model.rightArm;
+
+        const float sc = 1 / 16f;
 
         // interpolate position and rotation
         var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
         var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
         var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
 
-        // translate to entity position
-        mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
+        var headRotX = interpRot.X - interpBodyRot.X; // pitch diff
+        var headRotY = interpRot.Y - interpBodyRot.Y; // yaw diff
 
-        // apply entity body rotation (no X-axis rotation for body)
-        mat.rotate(interpBodyRot.Y, 0, 1, 0);
-        //mat.rotate(90, 0, 1, 0);  // investigate why this 90-degree offset is needed
-        mat.rotate(interpBodyRot.Z, 0, 0, 1);
+        // Translate to interpolated position
+        //mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
+        // Rotate to face the correct direction
+        //mat.rotate(interpRot.Y, 0, 1, 0);
+        //mat.rotate(interpRot.Z, 1, 0, 0);
+        //mat.rotate(interpBodyRot.X, 1, 0, 0);
+
+
+
+        //mat.translate(sinSwingSqrt * -0.2f, ((float)-getLower(interp) + circleishThing) * 0.15f, sinSwing * 0.15f);
+        //mat.translate(0.65f, -1.45f, 1f);
+
+        //mat.scale(8f);
+        //mat.translate(0.5f, 2.5f, -0.5f);
+
+        // translate enough so we can only see the tip hehehe
+        //mat.translate(0.4f, -0f, 3f);
+
+        //mat.translate(sinSwingSqrt * -0.35f, 0, sinSwing * -0.2f);
+        //mat.translate(sinSwingSqrtish * 0.7f + sinSwing * -0.6f, 0, sinSwing * -0.5f);
+        //mat.translate(sinSwingSqrt * -0.7f, ((float)-getLower(interp) + circleishThing) * 0.35f, sinSwing * 0.5f);
+
+
+        //mat.rotate(sinSwingSqrt * 30, 0, 0, 1);
+        //mat.rotate(-sinSwing * 20, 0, 1, 0);
+
+        //mat.rotate(sinSwingSqrt * 5, 1, 0, 0);
+        //mat.rotate(sinSwingSqrt * 20, 0, 0, 1);
+
+        // only rotate a *bit*
+        //mat.rotate(-sinSwing * 10, 0, 1, 0);
+
+        // rotate it a bit
+        //mat.rotate(5, 1, 0, 0);
+        //DEBUG TESTER
+        //mat.translate(0f, 0f, 4f);
+
+        mat.translate(0.4f, -1.0f, 0.3f);
+
+        //mat.translate(sinSwingSqrt * -0.35f, 0, sinSwing * -0.2f);
+        //mat.translate(sinSwingSqrtish * 0.7f + sinSwing * -0.6f, 0, sinSwing * -0.5f);
+        mat.translate(sinSwingSqrt * -0.1f, ((float)-getLower(interp) + circleishThing) * 0.2f, sinSwing * 0.1f);
+
+        //mat.rotate(-45 - 5, 1, 0, 0);
+        // we cheat a bit, we need to change the base
+        mat.translate(0, 0.2f, 0);
+        mat.rotate(sinSwingSqrt * 50, 0, 0, 1);
+        mat.translate(0, -0.2f, 0);
+        //mat.rotate(-(-45 - 5), 1, 0, 0);
+        //mat.rotate(sinSwing * 20, 0, 1, 0);
+
+        //mat.rotate(sinSwingSqrt * 20, 1, 0, 0);
+        //mat.rotate(sinSwingSqrt * 20, 0, 0, 1);
+
+        // only rotate a *bit*
+        //mat.rotate(-sinSwing * 10, 0, 1, 0);
+
+        // we rotate the item "into place"
+        mat.rotate(-45 - 5, 1, 0, 0);
+        mat.rotate(60 + 15, 0, 0, 1);
+
+        mat.rotate(-90 + 10, 1, 0, 0);
 
         // apply head pitch!!
-        mat.rotate(-interpRot.X, 1, 0, 0);
+        //mat.rotate(-headRotX, 1, 0, 0);
 
-        // Apply swing animation - similar to item rendering
-        mat.translate(sinSwingSqrt * -0.7f, ((float)-getLower(interp) + circleishThing) * 0.35f, sinSwing * 0.5f);
-        //mat.translate(0.65f, -1.45f, 1f);
-        mat.translate(0, -1f, 12f);
+        // go to the arm BUT REVERSE hehehehe
+        mat.translate(-rightArm.position.X * sc, -rightArm.position.Y * sc, -rightArm.position.Z * sc);
 
-        // rotate to face away from camera
-        mat.rotate(-90, 1, 0, 0);
-
-        // tweak a bit
-        mat.translate(1f, 0f, 0f);
-
-        mat.scale(8f);
-
-        // Get the actual rightArm from the player's model
-        var rightArm = player.modelRenderer.model.rightArm;
-
-        // Apply swing animation to the arm (same logic as HumanModel)
-        const int n = 60;
-        var rasX = -MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI) * n / 2f;
-        var rasZ = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI) * n / -3f;
-
-        // Store original rotation and set swing rotation
+        // How about not having ANY of this??
         var originalRotation = rightArm.rotation;
-        rightArm.rotation = new Vector3(rasX, 0, rasZ);
+        rightArm.rotation = new Vector3(0, 0, 0);
 
         // Set human texture
         Game.graphics.tex(0, Game.textures.human);
 
-        // Render the right arm
-        rightArm.render(mat, 1 / 16f);
+        // test point
+        //Console.Out.WriteLine(Vector3.Transform(Vector3.Zero, mat.top));
+
+        rightArm.render(mat, sc);
 
         // Restore original rotation
         rightArm.rotation = originalRotation;

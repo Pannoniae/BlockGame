@@ -110,7 +110,8 @@ public partial class World : IDisposable {
         chunks = new Dictionary<ChunkCoord, Chunk>();
         chunkList = new List<Chunk>(2048);
 
-        entities = new List<Entity>();
+        entities = [];
+        removedEntities = [];
         particles = new Particles(this);
 
         // setup world saving every 5 seconds
@@ -204,7 +205,7 @@ public partial class World : IDisposable {
         var x = 0;
         foreach (var chunk in chunks.Values) {
             if (chunk.status >= ChunkStatus.MESHED &&
-                chunk.lastSaved + 60 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+                chunk.lastSaved + 15 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
                 worldIO.saveChunkAsync(this, chunk);
                 x++;
             }
@@ -677,6 +678,8 @@ public partial class World : IDisposable {
                 }
             }
         }
+
+        updateEntities(dt);
     }
 
     public void processSkyLightQueue() {

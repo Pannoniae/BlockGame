@@ -561,6 +561,9 @@ public partial class Game {
         // setup depth testing with reverse-Z support
         graphics.setupDepthTesting();
 
+        // BE CAREFUL! Reverse-Z fucks this if you don't invert
+        graphics.polyOffset(-3f, -3f);
+
         camera = new Camera(Constants.initialWidth, Constants.initialHeight);
         
         // initialize viewport and projection for GUI rendering

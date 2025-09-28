@@ -286,6 +286,12 @@ public class IngameMenu : Menu, IDisposable {
 
         // Draw block display
         var stack = Game.player.survivalInventory.getSelected();
+
+        // DON'T DRAW AIR
+        if (stack == ItemStack.EMPTY) {
+            return;
+        }
+
         var blockStr = Item.get(stack.id).getName(stack);
         Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
             Color4b.White);

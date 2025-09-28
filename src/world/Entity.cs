@@ -15,6 +15,9 @@ public class Entity(World world) : Persistent {
 
     public int id;
 
+    /** is entity deleted? */
+    public bool active = true;
+
     /** is player walking on (colling with) ground */
     public bool onGround;
 
@@ -101,14 +104,19 @@ public class Entity(World world) : Persistent {
     
     private readonly List<Vector3I> neighbours = new(26);
 
-    /** Is it in a valid chunk? */
+    /** Is it in a valid chunk?
+     * STATUS UPDATE: We have a genius idea, we just store it in the bottommost/topmost chunk if out of bounds
+     * This way the entity will almost never be out of world except if the chunk is unloaded or teleported far away or something
+     */
     public bool inWorld;
+
+    /** We kept losing track of which chunk the entity was in, so fuck it let's just store it */
+    public SubChunkCoord subChunkCoord;
 
     protected static readonly List<AABB> AABBList = [];
 
     public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();
-        //world.actionQueue
         return World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
     }
 
@@ -118,8 +126,11 @@ public class Entity(World world) : Persistent {
     }
 
     [Pure]
-    protected virtual AABB calcAABB(Vector3D pos) {
-        return AABB.empty;
+    public virtual AABB calcAABB(Vector3D pos) {
+        return new AABB(
+            pos.X - 0.3, pos.Y, pos.Z - 0.3,
+            pos.X + 0.3, pos.Y + 1.8, pos.Z + 0.3
+        );
     }
 
     public virtual void teleport(Vector3D pos) {
@@ -163,12 +174,7 @@ public class Entity(World world) : Persistent {
     }
 
     public virtual void update(double dt) {
-        // after movement applied, check the chunk the player is in
-        var prevChunk = getChunk(prevPosition);
-        var thisChunk = getChunk(position);
-        if (prevChunk != thisChunk) {
-            onChunkChanged();
-        }
+
     }
 
     /**
@@ -215,33 +221,7 @@ public class Entity(World world) : Persistent {
     }
 
     public virtual void onChunkChanged() {
-        // remove from old chunk, add to new chunk
-        if (inWorld) {
-            var pp = World.getChunkPos(prevPosition.toBlockPos().X, prevPosition.toBlockPos().Z);
-            world.getChunkMaybe(pp, out var oldChunk);
-            oldChunk?.removeEntity(this);
 
-            var cp = World.getChunkPos(position.toBlockPos().X, position.toBlockPos().Z);
-            world.getChunkMaybe(cp, out var newChunk);
-            if (newChunk != null && position.Y is >= 0 and < World.WORLDHEIGHT) {
-                newChunk.addEntity(this);
-                inWorld = true;
-            }
-            else {
-                inWorld = false;
-            }
-        }
-        else {
-            var cp = World.getChunkPos(position.toBlockPos().X, position.toBlockPos().Z);
-            world.getChunkMaybe(cp, out var newChunk);
-            if (newChunk != null && position.Y is >= 0 and < World.WORLDHEIGHT) {
-                newChunk.addEntity(this);
-                inWorld = true;
-            }
-            else {
-                inWorld = false;
-            }
-        }
     }
 
     /**
