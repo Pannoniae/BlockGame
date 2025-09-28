@@ -704,7 +704,7 @@ public class BlockRenderer {
                     uvxm = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
                 }
 
-                renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0.3f, 0.3f, 0.3f, 0.7f, 0.7f, 0.7f, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
+                renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
                 // cube using metadata-based dynamic texture
