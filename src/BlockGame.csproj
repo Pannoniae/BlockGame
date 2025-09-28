@@ -14,7 +14,7 @@
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <OutputPath>..\bin\$(Configuration)\</OutputPath>
+        <OutputPath>../bin/$(Configuration)/</OutputPath>
     </PropertyGroup>
 
     <!-- Give .PDBs to the poor players/modders -->
@@ -64,115 +64,50 @@
         <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0-rc.1.25451.107" />
         <PackageReference Include="System.IO.Hashing" Version="10.0.0-rc.1.25451.107" />
         <PackageReference Include="ZString" Version="2.6.0"/>
-    </ItemGroup>
-    
-    <!-- Analyzers or something (to detect skill issues) -->
-    <ItemGroup>
+
+        <ProjectReference Include="../meth/Meth.csproj"/>
+        <ProjectReference Include="../lib/FontStashSharp.Base/FontStashSharp.Base.csproj"/>
+        <ProjectReference Include="../lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj" />
+        <ProjectReference Include="../lib/FontStashSharp/FontStashSharp.csproj"/>
+        <ProjectReference Include="../lib/Silk.NET.Input/Silk.NET.Input.csproj"/>
+
+        <!-- Analyzers or something (to detect skill issues) -->
         <ProjectReference
-            Include="..\Analyzers\Analyzers\Analyzers.csproj"
-            OutputItemType="Analyzer"
-            ReferenceOutputAssembly="false"
+                Include="../Analyzers/Analyzers/Analyzers.csproj"
+                OutputItemType="Analyzer"
+                ReferenceOutputAssembly="false"
         />
     </ItemGroup>
 
-    <!-- Files to copy -->
+    <!-- Files to copy to output folder -->
     <ItemGroup>
-        <Content Include="level/**/*.*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="shaders/**/*.*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="textures/**/*.*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="fonts/**/*.*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="snd/**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="wglinfo64.exe">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="logo.png">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="assets/**">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
+        <Content Include="logo.png" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="logo_small.png" CopyToOutputDirectory="PreserveNewest" />
+        <!-- TODO: move all assets into a single folder called assets -->
+        <Content Include="shaders/**/*.*" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="textures/**/*.*" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="fonts/**/*.*" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="snd/**" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="assets/**" CopyToOutputDirectory="PreserveNewest" />
 
-        
-        <!-- Folders to NEVER copy -->
-        <!-- This is either libraries (compiled separately), or separate dll's -->
-        <!-- If you add a new project, ALWAYS exclude it here from the main project, otherwise it will have duplicate files and crash -->
-        <None Remove="lib\**"/>
-        <None Remove="BlockGameTesting\**"/>
-        <None Remove="SNBT2NBT\**"/>
-        <None Remove="NBT2SNBT\**"/>
-        <None Remove="win10fix\**"/>
-        
-        <None Remove="publish\**"/>
-        <None Remove="Analyzers\**"/>
-        <None Remove="..\meth\**"/>
-        
-        <Compile Remove="lib\**"/>
-        <Compile Remove="BlockGameTesting\**"/>
-        <Compile Remove="SNBT2NBT\**"/>
-        <Compile Remove="NBT2SNBT\**"/>
-        <Compile Remove="win10fix\**"/>
-        
-        <Compile Remove="publish\**"/>
-        <Compile Remove="Analyzers\**"/>
-        <Compile Remove="..\meth\**"/>
-        
-        <EmbeddedResource Remove="lib\**"/>
-        <EmbeddedResource Remove="BlockGameTesting\**"/>
-        <EmbeddedResource Remove="SNBT2NBT\**"/>
-        <EmbeddedResource Remove="NBT2SNBT\**"/>
-        <EmbeddedResource Remove="win10fix\**"/>
-        
-        <EmbeddedResource Remove="publish\**"/>
-        <EmbeddedResource Remove="Analyzers\**"/>
-        <EmbeddedResource Remove="..\meth\**"/>
-        
-        
-        <None Update="..\runtimes\linux-x64\native\libminiaudioex.so">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        <!-- TODO: move this to lib -->
+        <Content Include="wglinfo64.exe" CopyToOutputDirectory="PreserveNewest" />
 
-        <None Include="../lib/glfw3.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        <None Update="../lib/runtimes/linux-x64/native/libminiaudioex.so" CopyToOutputDirectory="PreserveNewest" />
+        <None Update="../lib/glfw3.dll" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
+    <!-- TODO: move this to a project -->
     <ItemGroup>
         <Compile Include="../lib/FastNoiseLite.cs"/>
     </ItemGroup>
-
-    <!-- These are the NATIVE libs 
-    IDK how to do proper RID-specific inclusion. So we just copy all of them lol
-    -->
-    <ItemGroup>
-        <Content Include="..\libs\**">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\lib\FontStashSharp.Base\FontStashSharp.Base.csproj"/>
-        <ProjectReference Include="..\lib\FontStashSharp.Rasterizers.FreeType\FontStashSharp.Rasterizers.FreeType.csproj" />
-        <ProjectReference Include="..\lib\FontStashSharp\FontStashSharp.csproj"/>
-        <ProjectReference Include="../lib/Silk.NET.Input/Silk.NET.Input.csproj"/>
-        <ProjectReference Include="..\meth\Meth.csproj"/>
-    </ItemGroup>
-    
     
     <!-- Print the RID -->
     <Target Name="PrintRID" BeforeTargets="Build">
         <Message Text="Runtime Identifier: $(RuntimeIdentifier)" Importance="high" />
     </Target>
 
+    <!-- Setup NetBeauty -->
     <Import Project="../NetBeauty.targets" />
 
     <PropertyGroup>
@@ -184,6 +119,4 @@
         <BeautyAppHostEntry>BlockGame.dll</BeautyAppHostEntry>
         <BeautyAppHostDir>.</BeautyAppHostDir>
     </PropertyGroup>
-
-
 </Project>
