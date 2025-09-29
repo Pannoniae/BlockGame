@@ -509,7 +509,7 @@ public partial class Game {
         // initialise debug print
         unsafe {
             GL.Enable(EnableCap.DebugOutput);
-            GL.Enable(EnableCap.DebugOutputSynchronous);
+            //GL.Enable(EnableCap.DebugOutputSynchronous);
             GL.DebugMessageCallback(GLDebug, 0);
             #if DEBUG
             GL.Enable(EnableCap.DebugOutputSynchronous);
@@ -841,8 +841,19 @@ public partial class Game {
         }
         
         // gui wireframe code needs to be here because we want it to apply on all screens
-        if (key == Key.Keypad9) {
-            GUI.WIREFRAME = !GUI.WIREFRAME;
+
+
+        // gui bounds debug - shift+numpad9
+        if (key == Key.Keypad9 && keyboard.IsKeyPressed(Key.ShiftLeft)) {
+            GUI.SHOW_GUI_BOUNDS = !GUI.SHOW_GUI_BOUNDS;
+            Log.info("Enabled GUI bounds: " + GUI.SHOW_GUI_BOUNDS);
+        }
+
+        else {
+            if (key == Key.Keypad9) {
+                GUI.WIREFRAME = !GUI.WIREFRAME;
+                Log.info("Enabled GUI wireframe: " + GUI.WIREFRAME);
+            }
         }
 
         currentScreen.onKeyDown(keyboard, key, scancode);
@@ -877,10 +888,13 @@ public partial class Game {
         }
     }
 
-    private void recalcGUIScale() {
+    private static void recalcGUIScale() {
         var guiScaleTarget = 2;
-        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 300 &&
-               height / ((double)guiScaleTarget + 1) >= 200) {
+        // status update! we target 1920x1080 as the minimum for guiScale 4 to look good.
+        // so the "virtual" GUI size is 480x270.
+        // but we only have 360 because 4:3 and shit
+        while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 360 &&
+               height / ((double)guiScaleTarget + 1) >= 270) {
             guiScaleTarget++;
         }
         
@@ -974,12 +988,13 @@ public partial class Game {
         
         //currentScreen.clear(dt, interp);
 
-        /*if (Settings.instance.framebufferEffects) {
+        if (Settings.instance.framebufferEffects) {
             // clear 0 as well
             // todo this fucks up with msaa and has blue fringing? need to investigate..
+            // not anymore??
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             currentScreen.clear(dt, interp);
-        }*/
+        }
 
         GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
         // clear AFTER binding the framebuffer
@@ -1063,6 +1078,10 @@ public partial class Game {
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         }
 
+        // clear depth for GUI!!
+        GL.Clear(ClearBufferMask.DepthBufferBit);
+        graphics.setDepthFunction();
+
         GL.Disable(EnableCap.DepthTest);
         //GL.Disable(EnableCap.CullFace);
 
@@ -1094,6 +1113,13 @@ public partial class Game {
             foreach (var element in currentScreen.currentMenu.elements.Values) {
                 gui.drawWireframe(element.bounds, Color4b.Red);
             }
+            graphics.mainBatch.End();
+        }
+
+        // gui bounds debug overlay
+        if (GUI.SHOW_GUI_BOUNDS) {
+            graphics.mainBatch.Begin();
+            gui.drawGUIBounds();
             graphics.mainBatch.End();
         }
         

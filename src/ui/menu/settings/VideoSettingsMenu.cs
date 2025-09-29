@@ -257,6 +257,8 @@ public class VideoSettingsMenu : Menu {
             Game.instance.updateFramebuffers();
             // adjust polygon offset to match new depth range
             Game.graphics.polyOffset(-3f, -3f);
+            Game.graphics.setDepthFunction();
+            Game.gui.refreshMatrix(new Vector2I(Game.width, Game.height));
             // Depth state will be updated on next frame
         };
         reverseZ.tooltip =

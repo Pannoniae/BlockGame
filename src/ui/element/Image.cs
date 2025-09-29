@@ -12,7 +12,7 @@ public class Image : GUIElement {
     public BTexture2D texture;
     
     /** Scale in gui sizes. 4 = normal guiscale, 2 = small/half, 1 = 1px */
-    public float scale = 4f;
+    public float scale => GUI.guiScale / 4f;
     
     // if guiscale is 4, 2/4
     // if guiscale is 2, 2/2
@@ -31,7 +31,7 @@ public class Image : GUIElement {
     }
     
     public void setScale(float sc) {
-        scale = sc;
+        //scale = sc;
         guiPosition.Width = (int)(texture.width * realScale);
         guiPosition.Height = (int)(texture.height * realScale);
     }

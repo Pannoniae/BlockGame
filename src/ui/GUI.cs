@@ -64,7 +64,8 @@ public class GUI {
     private static readonly Color4b skyc = Color4b.CornflowerBlue;
 
     public static bool WIREFRAME = false;
-    
+    public static bool SHOW_GUI_BOUNDS = false;
+
     /** pixels per second */
     private const float SCROLL_SPEED = 32.0f; 
 
@@ -95,7 +96,10 @@ public class GUI {
 
 
     public void resize(Vector2I size) {
-        ortho = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, size.X, size.Y, 0, -10000f, 10000f);
+
+        refreshMatrix(size);
+
+        //Console.Out.WriteLine($"{0} {size.X} {size.Y}");
         //shader.Projection = ortho;
         uiCentreX = size.X / 2 / guiScale;
         uiCentreY = size.Y / 2 / guiScale;
@@ -112,6 +116,12 @@ public class GUI {
         // if one block is a given size, how many blocks can we fit on the screen?
         var xCount = (int)Math.Ceiling(Game.width / blockSize);
         var yCount = (int)Math.Ceiling(Game.height / blockSize);
+    }
+
+    public void refreshMatrix(Vector2I size) {
+        var near = Settings.instance.reverseZ ? 10000f : -10000f;
+        var far = Settings.instance.reverseZ ? -10000f : 10000f;
+        ortho = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, size.X, size.Y, 0, near, far);
     }
 
     public void update(double dt) {
@@ -706,40 +716,18 @@ public class GUI {
     }
 
     public void drawBlock(Block block, int x, int y, int size, byte metadata = 0) {
-        //GD.Clear(ClearBuffers.Color);
-        //Game.graphics.saveViewport();
-        //var dt = GD.DepthTestingEnabled;
-        //GD.DepthTestingEnabled = true;
+
+        //Console.Out.WriteLine(Game.GL.GetBoolean(GetPName.DepthTest));
+        Game.GL.Enable(EnableCap.DepthTest);
 
         var idt = Game.graphics.idt;
 
         buffer.bind();
         Game.renderer.bindQuad();
-        //Game.graphics.instantTextureShader.use();
-
-        // bind block texture
-        //Game.textures.blockTexture.bind();
-        
-        // calculate light level at player
-
-        /*var pos = Game.player?.position.toBlockPos();
-
-        byte light;
-
-        if (pos.HasValue) {
-            var posObj = pos.Value;
-            light = Game.world?.getLight(posObj.X, posObj.Y, posObj.Z) ?? 0;
-        }
-        else {
-            light = 15;
-        }*/
 
         Game.blockRenderer.setupStandalone();
         Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock, 
             lightOverride: 255, cullFaces: false);
-        
-        // assemble the matrix using existing matrix stacks from Graphics
-        //var projMatrix = Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
 
         var mat = Game.graphics.model;
         
@@ -748,53 +736,66 @@ public class GUI {
 
         
         // view transformation - camera position
-        var camPos = new Vector3(1, 2 / 3f, 1);
-        var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+        //var camPos = new Vector3(1, 2 / 3f, 1);
+        // fuck this, we rotate it manually! :trolley:
+        //var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+        var viewMatrix = Matrix4x4.Identity;
         //mat.multiply(viewMatrix);
+        mat.translate(x, y, 0);
+        // +1 because it doesn't touch the bottom!!
+        // add the padding
+
+        mat.translate(2.5f * guiScale, 2.5f * guiScale, 0);
+
+        // we're now in screen space
+
+        // scale up to proper scale
+        //mat.scale(size * guiScale * (5 / 8f));
+        //mat.scale(size * guiScale * (2 / 3f));
+        mat.scale(size * guiScale * (32 / 48f));
+
+
+
+        // "shrink"
+        //mat.scale(2 / 3f);
+
+        // translate into the correct spot
+        mat.translate(0f / 6f, 11f / 12f, 0);
+        mat.translate(0.5f, 0.5f, 0.5f);
+
+        // rotate "down"
+        // we cheat a bit because this one makes the block ACTUALLY fit into the gui perfectly
+        mat.rotate(24, 1, 0, 0);
+        //mat.rotate(30, 1, 0, 0);
+
+        mat.rotate(270 + 45, 0, 1, 0);
+        //mat.rotate(45, 0, 0, 0);
+        mat.translate(-0.5f, -0.5f, -0.5f);
 
         // model transformations
-        mat.translate(0, 5 / 6f, 0);
+        //mat.translate(5 / 6f, 5 / 6f, 0);
         mat.scale(1, -1, 1);
 
-        // scale up!
-        mat.scale(16f);
-
         // test point debug
-        //Console.Out.WriteLine($"Test point: {Vector3.Transform(new Vector3(0, 0, 0), mat.top)}");
-        
-        // combine matrices
-        //var mat2 = Game.graphics.model.top * projMatrix;
+        //Console.Out.WriteLine($"Test point: {Vector3.Transform(new Vector3(1, 1, 1), mat.top)}");
 
         Game.graphics.tex(0, Game.textures.blockTexture);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         buffer.upload(sp);
 
-        //Matrix4x4.CreateTranslation(0, 0, 0);
-        //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
-        //guiBlockShader.setUniform(uMVP, mat2);
-        //guiBlockShader.setUniform(blockTexture, 0);
         idt.model(mat);
         idt.view(viewMatrix);
         idt.proj(ortho);
+        //idt.proj(Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10));
         idt.applyMat();
-        var sSize = size * guiScale;
         //Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
-        // DON'T REMOVE OR THIS FUCKING SEGFAULTS
-        // status update: it doesn't segfault anymore because we hacked the trippygl layer to reset their expectations!
-        // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
-        //GL.BindVertexArray(buffer.VertexArray.Handle);
-        unsafe {
-            //Game.GL.DrawElements(PrimitiveType.Triangles, (uint)(sp.Length * 1.5), DrawElementsType.UnsignedShort, (void*)0);
-        }
 
         buffer.render();
 
         // restore matrix stacks
         mat.pop();
 
-        // restore
-        //GD.DepthTestingEnabled = dt;
-        //Game.graphics.restoreViewport();
+        Game.GL.Disable(EnableCap.DepthTest);
     }
 
     public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0) {
@@ -829,5 +830,48 @@ public class GUI {
                 new Vector2(x + ItemSlot.ITEMSIZE - ItemSlot.PADDING - s.Length * 6f / guiScale,
                     y + ItemSlot.ITEMSIZE - 13f / guiScale - ItemSlot.PADDING));
         }
+    }
+
+    public void drawGUIBounds() {
+        if (!SHOW_GUI_BOUNDS) return;
+
+        // calculate virtual GUI dimensions
+        var virtualWidth = Game.width / guiScale;
+        var virtualHeight = Game.height / guiScale;
+
+        // center the bounds on screen
+        var offsetX = (Game.width - virtualWidth * guiScale) / 2f;
+        var offsetY = (Game.height - virtualHeight * guiScale) / 2f;
+
+        const float lineWidth = 2f;
+        var col = Color4b.Cyan;
+
+        // draw hollow rectangle outline - top
+        tb.DrawRaw(colourTexture,
+            new VertexColorTexture(new Vector3(offsetX, offsetY, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + lineWidth, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(offsetX, offsetY + lineWidth, 0), col, new Vector2(0, 1)));
+
+        // bottom
+        tb.DrawRaw(colourTexture,
+            new VertexColorTexture(new Vector3(offsetX, offsetY + virtualHeight * guiScale - lineWidth, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + virtualHeight * guiScale - lineWidth, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + virtualHeight * guiScale, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(offsetX, offsetY + virtualHeight * guiScale, 0), col, new Vector2(0, 1)));
+
+        // left
+        tb.DrawRaw(colourTexture,
+            new VertexColorTexture(new Vector3(offsetX, offsetY, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(offsetX + lineWidth, offsetY, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(offsetX + lineWidth, offsetY + virtualHeight * guiScale, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(offsetX, offsetY + virtualHeight * guiScale, 0), col, new Vector2(0, 1)));
+
+        // right
+        tb.DrawRaw(colourTexture,
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale - lineWidth, offsetY, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + virtualHeight * guiScale, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale - lineWidth, offsetY + virtualHeight * guiScale, 0), col, new Vector2(0, 1)));
     }
 }
