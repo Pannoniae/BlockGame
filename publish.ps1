@@ -3,7 +3,7 @@
 # (there will be a warning, ignore it)
 
 # delete publish folder
-Remove-Item -Recurse -Force .\publish\
+Remove-Item -Recurse -Force ./publish/
 
 dotnet publish src/BlockGame.csproj -r "win-x64" -c Release
 dotnet publish SNBT2NBT/SNBT2NBT.csproj -r "win-x64" -c Release

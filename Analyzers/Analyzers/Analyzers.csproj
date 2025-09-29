@@ -11,7 +11,6 @@
 
         <RootNamespace>Analyzers</RootNamespace>
         <AssemblyName>Analyzers</AssemblyName>
-        <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 

@@ -5,15 +5,14 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\meth\Meth.csproj"/>
+        <ProjectReference Include="../meth/Meth.csproj"/>
     </ItemGroup>
 
-    <Import Project="..\NetBeauty.targets" />
+    <Import Project="../NetBeauty.targets" />
 
     <PropertyGroup>
         <PublishDir>../publish/libs</PublishDir>

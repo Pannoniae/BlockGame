@@ -13,7 +13,7 @@
 Use `dotnet build BlockGame.slnx -c Release /property:WarningLevel=0` to build the entire solution in Release mode.
 Use `dotnet run --project BlockGame.csproj -c Release /property:WarningLevel=0` to run the main project in Release mode.
 (This is so the output doesn't get spammed with superfluous warnings.)
-If you want to run tests, do `dotnet test BlockGameTesting\BlockGameTesting.csproj`.
+If you want to run tests, do `dotnet test BlockGameTesting/BlockGameTesting.csproj`.
 
 ## Architecture
 

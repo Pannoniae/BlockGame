@@ -6,7 +6,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
-        <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
@@ -28,7 +27,7 @@
         </PackageReference>
         <PackageReference Include="NUnit3TestAdapter" Version="5.1.0" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
-        <ProjectReference Include="..\src\BlockGame.csproj" PrivateAssets="all" />
+        <ProjectReference Include="../src/BlockGame.csproj" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
