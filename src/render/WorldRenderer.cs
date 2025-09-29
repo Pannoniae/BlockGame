@@ -910,7 +910,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render all entities
         foreach (var entity in world.entities) {
-            var renderer = EntityRenderers.renderers[entity.id];
+            var renderer = EntityRenderers.renderers[entity.type];
             if (renderer == null) {
                 continue;
             }
@@ -1000,7 +1000,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // setup rendering state
-        //GL.Enable(EnableCap.Blend);
+        GL.Enable(EnableCap.Blend);
         //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
         GL.DepthMask(false); // don't write to depth buffer
         //GL.Disable(EnableCap.CullFace); // render both sides of the breaking block
@@ -1012,7 +1012,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         mat.push();
         mat.loadIdentity();
         mat.translate(pos.X, pos.Y, pos.Z);
-        //mat.scale(1.001f, 1.001f, 1.001f); // slight scale to prevent z-fighting
+        mat.scale(1f + Constants.epsilonF, 1f + Constants.epsilonF, 1f + Constants.epsilonF); // slight scale to prevent z-fighting
 
         // setup matrices
         var view = Game.camera.getViewMatrix(interp);
@@ -1022,6 +1022,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.model(mat);
         idt.view(view);
         idt.proj(projection);
+        idt.enableFog(false);
         Game.graphics.tex(0, Game.textures.blockTexture);
         idt.begin(PrimitiveType.Quads);
 

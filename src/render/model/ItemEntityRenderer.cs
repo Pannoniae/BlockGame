@@ -61,6 +61,8 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
     private void renderItemAsBlock(MatrixStack mat, ItemEntity itemEntity, double interp) {
 
+        var itemRenderer = Game.graphics.idt;
+
         vertices.Clear();
 
         var block = itemEntity.stack.getItem().getBlock();
@@ -70,8 +72,6 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
         var pos = itemEntity.position.toBlockPos();
         var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
-
-        var itemRenderer = Game.player.handRenderer.itemRenderer;
 
         Game.graphics.tex(0, Game.textures.blockTexture);
         Game.blockRenderer.setupStandalone();
@@ -115,12 +115,14 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         renderItemCard(texUV);
 
         if (vertices.Count > 0) {
+
+            var itemRenderer = Game.graphics.idt;
+
             // upload and render vertices
             vao.bind();
             Game.renderer.bindQuad();
             vao.upload(CollectionsMarshal.AsSpan(vertices));
 
-            var itemRenderer = Game.player.handRenderer.itemRenderer;
             Game.graphics.instantTextureShader.use();
 
             itemRenderer.model(mat);

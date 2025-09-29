@@ -6,6 +6,7 @@ namespace BlockGame.world;
 
 public class SurvivalInventory : Inventory {
     public readonly ItemStack[] slots = new ItemStack[50].fill();
+    public readonly float[] shiny = new float[50];
     
     public ItemStack cursor = ItemStack.EMPTY;
     

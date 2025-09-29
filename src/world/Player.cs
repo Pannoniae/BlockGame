@@ -54,8 +54,7 @@ public class Player : Entity {
     public int breakTime;
 
     // positions are feet positions
-    public Player(World world, int x, int y, int z) : base(world) {
-        id = Entities.PLAYER;
+    public Player(World world, int x, int y, int z) : base(world, Entities.PLAYER) {
         position = new Vector3D(x, y, z);
         prevPosition = position;
         survivalInventory = new SurvivalInventory();
@@ -112,7 +111,7 @@ public class Player : Entity {
 
 
         // don't increment if flying
-        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 1.5f : 0;
+        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
 
         // Play footstep sounds when moving on ground
         if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
@@ -463,19 +462,19 @@ public class Player : Entity {
 
         // repeated action while held (with delay to prevent spam)
         if (Game.inputs.left.pressed()) {
-            if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+            if (now - lastAirHit > Constants.airHitDelayMs) {
                 breakBlock();
-                lastMouseAction = now;
+                //lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
                 }
             }
         }
         else {
-            if (Game.inputs.left.down() && now - lastMouseAction > Constants.breakDelayMs &&
+            if (Game.inputs.left.down() &&
                 now - lastAirHit > Constants.airHitDelayMs) {
                 breakBlock();
-                lastMouseAction = now;
+                //lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
                 }
@@ -664,11 +663,15 @@ public class Player : Entity {
     }
 
     public void breakBlock() {
+
+        var now = Game.permanentStopwatch.ElapsedMilliseconds;
+
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
 
             // instabreak
-            if (!Game.gamemode.gameplay) {
+            // delay because we'll end up breaking blocks too fast otherwise
+            if (!Game.gamemode.gameplay && now - lastMouseAction > Constants.breakDelayMs) {
                 var block = Block.get(world.getBlock(pos));
                 if (block != null && block.id != 0) {
                     block.shatter(world, pos.X, pos.Y, pos.Z);
@@ -678,18 +681,25 @@ public class Player : Entity {
                 }
 
                 setSwinging(true);
+                lastMouseAction = now;
                 return;
             }
 
-            // survival mode - start breaking process
-            if (!isBreaking || breaking != pos) {
-                isBreaking = true;
-                breaking = pos;
-                breakProgress = 0;
-                prevBreakProgress = 0;
+            if (Game.gamemode.gameplay) {
+                // survival mode - start breaking process
+                if (!isBreaking || breaking != pos) {
+                    isBreaking = true;
+                    breaking = pos;
+                    breakProgress = 0;
+                    prevBreakProgress = 0;
+                }
             }
 
-            setSwinging(true);
+            // don't swing too fast!
+            if (now - lastMouseAction > Constants.breakDelayMs) {
+                setSwinging(true);
+                lastMouseAction = now;
+            }
         }
         else {
             setSwinging(false);

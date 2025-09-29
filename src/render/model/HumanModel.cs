@@ -11,12 +11,12 @@ public class HumanModel : EntityModel {
     public const int ys = 32;
 
 
-    public readonly Cube head = new Cube().pos(0, 22, 0).off(-4, 0, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
-    public readonly Cube body = new Cube().pos(0, 22, 0f).off(-3, -12, -1.5f).ext(6, 12, 3).tex(12, 16).gen(xs, ys);
+    public readonly Cube head = new Cube().pos(0, 20, 0).off(-4, 0, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
+    public readonly Cube body = new Cube().pos(0, 20, 0f).off(-3, -10, -1.5f).ext(6, 10, 3).tex(12, 16).gen(xs, ys);
     // same with the arms lol
     // centre of the arm should be at the shoulder!!
-    public readonly Cube rightArm = new Cube().pos(4.5f, 24, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).mirror().gen(xs, ys);
-    public readonly Cube leftArm = new Cube().pos(-4.5f, 24, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).gen(xs, ys);
+    public readonly Cube rightArm = new Cube().pos(4.5f, 20, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).mirror().gen(xs, ys);
+    public readonly Cube leftArm = new Cube().pos(-4.5f, 20, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).gen(xs, ys);
     // the legs should be positioned at the hips!! so the rotation works properly
     public readonly Cube rightLeg = new Cube().pos(1.5f, 10, 0f).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).mirror().gen(xs, ys);
     public readonly Cube leftLeg = new Cube().pos(-1.5f, 10, 0f).off(-1.5f, -10, -1.5f).ext(3, 10, 3).tex(0, 16).gen(xs, ys);
@@ -39,9 +39,9 @@ public class HumanModel : EntityModel {
 
         // SNEAKING CODE
         if (sneaking) {
-            head.position.Y = 19f;
-            rightArm.position.Y = 21f;
-            leftArm.position.Y = 21f;
+            head.position.Y = 17f;
+            rightArm.position.Y = 19f;
+            leftArm.position.Y = 19f;
 
             rightLeg.position.Y = 9;
             leftLeg.position.Y = 9;
@@ -50,12 +50,12 @@ public class HumanModel : EntityModel {
             rightLeg.position.Z = -4f;
             leftLeg.position.Z = -4f;
 
-            body.position.Y = 20f;
+            body.position.Y = 18f;
             body.rotation.X = 20f;
         } else {
-            head.position.Y = 22;
-            rightArm.position.Y = 24;
-            leftArm.position.Y = 24;
+            head.position.Y = 20;
+            rightArm.position.Y = 22;
+            leftArm.position.Y = 22;
 
 
             rightLeg.position.Y = 10;
@@ -64,7 +64,7 @@ public class HumanModel : EntityModel {
             rightLeg.position.Z = 0;
             leftLeg.position.Z = 0;
 
-            body.position.Y = 22;
+            body.position.Y = 20;
             body.rotation.X = 0;
         }
 

@@ -95,7 +95,7 @@ public class GUI {
 
 
     public void resize(Vector2I size) {
-        ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
+        ortho = Matrix4x4.CreateOrthographicOffCenterLeftHanded(0, size.X, size.Y, 0, -10000f, 10000f);
         //shader.Projection = ortho;
         uiCentreX = size.X / 2 / guiScale;
         uiCentreY = size.Y / 2 / guiScale;
@@ -243,8 +243,8 @@ public class GUI {
     /// Draw a full-screen background with a block texture and the specified block size in pixels.
     /// </summary>
     public void drawBG(Block block, float size) {
-        var texCoords = UVPair.texCoords(block.model.faces[0].min);
-        var texCoordsMax = UVPair.texCoords(block.model.faces[0].max);
+        var texCoords = UVPair.texCoords(block.uvs[0]);
+        var texCoordsMax = UVPair.texCoords(block.uvs[0] + 1);
 
         // handle guiscale
         size *= guiScale * 2;
@@ -355,8 +355,8 @@ public class GUI {
                 }
                 
                 var block = Block.get(blockId);
-                var texCoords_ = UVPair.texCoords(block.model!.faces[0].min);
-                var texCoordsMax_ = UVPair.texCoords(block.model!.faces[0].max);
+                var texCoords_ = UVPair.texCoords(block.uvs[0]);
+                var texCoordsMax_ = UVPair.texCoords(block.uvs[0] + 1);
                 var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                 var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
 
@@ -707,17 +707,18 @@ public class GUI {
 
     public void drawBlock(Block block, int x, int y, int size, byte metadata = 0) {
         //GD.Clear(ClearBuffers.Color);
-        Game.graphics.saveViewport();
+        //Game.graphics.saveViewport();
         //var dt = GD.DepthTestingEnabled;
         //GD.DepthTestingEnabled = true;
 
+        var idt = Game.graphics.idt;
 
         buffer.bind();
         Game.renderer.bindQuad();
-        guiBlockShader.use();
+        //Game.graphics.instantTextureShader.use();
 
         // bind block texture
-        Game.textures.blockTexture.bind();
+        //Game.textures.blockTexture.bind();
         
         // calculate light level at player
 
@@ -738,45 +739,62 @@ public class GUI {
             lightOverride: 255, cullFaces: false);
         
         // assemble the matrix using existing matrix stacks from Graphics
-        var projMatrix = Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
+        //var projMatrix = Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10);
+
+        var mat = Game.graphics.model;
         
-        Game.graphics.model.push();
-        Game.graphics.model.loadIdentity();
-        
+        mat.push();
+        mat.loadIdentity();
+
         
         // view transformation - camera position
         var camPos = new Vector3(1, 2 / 3f, 1);
         var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-        Game.graphics.model.multiply(viewMatrix);
-        
+        //mat.multiply(viewMatrix);
+
         // model transformations
-        Game.graphics.model.translate(0, 5 / 6f, 0);
-        Game.graphics.model.scale(1, -1, 1);
+        mat.translate(0, 5 / 6f, 0);
+        mat.scale(1, -1, 1);
+
+        // scale up!
+        mat.scale(16f);
+
+        // test point debug
+        //Console.Out.WriteLine($"Test point: {Vector3.Transform(new Vector3(0, 0, 0), mat.top)}");
         
         // combine matrices
-        var mat = Game.graphics.model.top * projMatrix;
-        
-        // restore matrix stacks
-        Game.graphics.model.pop();
-        //Matrix4x4.CreateTranslation(0, 0, 0);
-        //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
-        guiBlockShader.setUniform(uMVP, mat);
-        guiBlockShader.setUniform(blockTexture, 0);
+        //var mat2 = Game.graphics.model.top * projMatrix;
+
+        Game.graphics.tex(0, Game.textures.blockTexture);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         buffer.upload(sp);
+
+        //Matrix4x4.CreateTranslation(0, 0, 0);
+        //var unit = GD.BindTextureSetActive(Game.instance.blockTexture);
+        //guiBlockShader.setUniform(uMVP, mat2);
+        //guiBlockShader.setUniform(blockTexture, 0);
+        idt.model(mat);
+        idt.view(viewMatrix);
+        idt.proj(ortho);
+        idt.applyMat();
         var sSize = size * guiScale;
-        Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
+        //Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
         // DON'T REMOVE OR THIS FUCKING SEGFAULTS
         // status update: it doesn't segfault anymore because we hacked the trippygl layer to reset their expectations!
         // it no longer thinks we have vertex arrays bound when we actually trashed it in our renderer
         //GL.BindVertexArray(buffer.VertexArray.Handle);
         unsafe {
-            Game.GL.DrawElements(PrimitiveType.Triangles, (uint)(sp.Length * 1.5), DrawElementsType.UnsignedShort, (void*)0);
+            //Game.GL.DrawElements(PrimitiveType.Triangles, (uint)(sp.Length * 1.5), DrawElementsType.UnsignedShort, (void*)0);
         }
+
+        buffer.render();
+
+        // restore matrix stacks
+        mat.pop();
 
         // restore
         //GD.DepthTestingEnabled = dt;
-        Game.graphics.restoreViewport();
+        //Game.graphics.restoreViewport();
     }
 
     public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0) {

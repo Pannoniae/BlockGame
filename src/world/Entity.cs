@@ -9,13 +9,19 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world;
 
-public class Entity(World world) : Persistent {
+public class Entity(World world, int type) : Persistent {
     public const int MAX_SWING_TICKS = 20;
     public const int AIR_HIT_CD = 20;
 
-    public int id;
+    public int type = type;
+    public int id = World.ec++;
 
-    /** is entity deleted? */
+    public World world = world;
+
+
+    /** is entity deleted?
+     * Status update: we shouldn't use this!! it's stupid and HAS TO BE CHECKED EVERYWHERE
+     */
     public bool active = true;
 
     /** is player walking on (colling with) ground */
@@ -78,8 +84,6 @@ public class Entity(World world) : Persistent {
 
     public double prevTotalTraveled;
 
-    public World world = world;
-
     public bool flyMode;
     public bool noClip;
 
@@ -141,6 +145,7 @@ public class Entity(World world) : Persistent {
 
     // todo unfinished shit below
     public void read(NBTCompound data) {
+        id = data.getInt("id");
         position = new Vector3D(
             data.getDouble("posX"),
             data.getDouble("posY"),
@@ -162,6 +167,7 @@ public class Entity(World world) : Persistent {
     }
 
     public void write(NBTCompound data) {
+        data.addInt("id", id);
         data.addDouble("posX", position.X);
         data.addDouble("posY", position.Y);
         data.addDouble("posZ", position.Z);

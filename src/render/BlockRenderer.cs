@@ -923,27 +923,31 @@ public class BlockRenderer {
         var ve = v1 - v0;
 
         // WEST face
-        var westUMax = u0 + ue * ze;
-        var westVMin = v0 + ve * (1f - ye);
+        var westUMin = u0 + ue * z0;
+        var westUMax = u0 + ue * z1;
+        var westVMin = v0 + ve * (1f - y1);
+        var westVMax = v0 + ve * (1f - y0);
         var vec = Direction.getDirection(RawDirection.WEST);
         var nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
-        
+
         bool edge = x0 == 0f;
         bool render = !Block.fullBlock[nb] || !edge;
-        
+
         if (render) {
             applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
             begin(cache);
-            vertex(x + x0, y + y1, z + z1, u0, westVMin);
-            vertex(x + x0, y + y0, z + z1, u0, v1);
-            vertex(x + x0, y + y0, z + z0, westUMax, v1);
+            vertex(x + x0, y + y1, z + z1, westUMin, westVMin);
+            vertex(x + x0, y + y0, z + z1, westUMin, westVMax);
+            vertex(x + x0, y + y0, z + z0, westUMax, westVMax);
             vertex(x + x0, y + y1, z + z0, westUMax, westVMin);
             end(vertices);
         }
 
         // EAST face
-        var eastUMax = u0 + ue * ze;
-        var eastVMin = v0 + ve * (1f - ye);
+        var eastUMin = u0 + ue * z0;
+        var eastUMax = u0 + ue * z1;
+        var eastVMin = v0 + ve * (1f - y1);
+        var eastVMax = v0 + ve * (1f - y0);
         vec = Direction.getDirection(RawDirection.EAST);
         nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
@@ -953,16 +957,18 @@ public class BlockRenderer {
         if (render) {
             applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
             begin(cache);
-            vertex(x + x1, y + y1, z + z0, u0, eastVMin);
-            vertex(x + x1, y + y0, z + z0, u0, v1);
-            vertex(x + x1, y + y0, z + z1, eastUMax, v1);
-            vertex(x + x1, y + y1, z + z1, eastUMax, eastVMin);
+            vertex(x + x1, y + y1, z + z0, eastUMax, eastVMin);
+            vertex(x + x1, y + y0, z + z0, eastUMax, eastVMax);
+            vertex(x + x1, y + y0, z + z1, eastUMin, eastVMax);
+            vertex(x + x1, y + y1, z + z1, eastUMin, eastVMin);
             end(vertices);
         }
 
         // SOUTH face
-        var southUMax = u0 + ue * xe;
-        var southVMin = v0 + ve * (1f - ye);
+        var southUMin = u0 + ue * x0;
+        var southUMax = u0 + ue * x1;
+        var southVMin = v0 + ve * (1f - y1);
+        var southVMax = v0 + ve * (1f - y0);
         vec = Direction.getDirection(RawDirection.SOUTH);
         nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
@@ -972,35 +978,39 @@ public class BlockRenderer {
         if (render) {
             applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
             begin(cache);
-            vertex(x + x0, y + y1, z + z0, u0, southVMin);
-            vertex(x + x0, y + y0, z + z0, u0, v1);
-            vertex(x + x1, y + y0, z + z0, southUMax, v1);
+            vertex(x + x0, y + y1, z + z0, southUMin, southVMin);
+            vertex(x + x0, y + y0, z + z0, southUMin, southVMax);
+            vertex(x + x1, y + y0, z + z0, southUMax, southVMax);
             vertex(x + x1, y + y1, z + z0, southUMax, southVMin);
             end(vertices);
         }
 
         // NORTH face
-        var northUMax = u0 + ue * xe;
-        var northVMin = v0 + ve * (1f - ye);
+        var northUMin = u0 + ue * x0;
+        var northUMax = u0 + ue * x1;
+        var northVMin = v0 + ve * (1f - y1);
+        var northVMax = v0 + ve * (1f - y0);
         vec = Direction.getDirection(RawDirection.NORTH);
         nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
-        
+
         edge = z1 == 1f;
         render = !Block.fullBlock[nb] || !edge;
-        
+
         if (render) {
             applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
             begin(cache);
-            vertex(x + x1, y + y1, z + z1, u0, northVMin);
-            vertex(x + x1, y + y0, z + z1, u0, v1);
-            vertex(x + x0, y + y0, z + z1, northUMax, v1);
-            vertex(x + x0, y + y1, z + z1, northUMax, northVMin);
+            vertex(x + x1, y + y1, z + z1, northUMax, northVMin);
+            vertex(x + x1, y + y0, z + z1, northUMax, northVMax);
+            vertex(x + x0, y + y0, z + z1, northUMin, northVMax);
+            vertex(x + x0, y + y1, z + z1, northUMin, northVMin);
             end(vertices);
         }
 
         // DOWN face
-        var downUMax = u0 + ue * xe;
-        var downVMax = v0 + ve * ze;
+        var downUMin = u0 + ue * x0;
+        var downUMax = u0 + ue * x1;
+        var downVMin = v0 + ve * (1f - z1);
+        var downVMax = v0 + ve * (1f - z0);
         vec = Direction.getDirection(RawDirection.DOWN);
         nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
@@ -1010,29 +1020,31 @@ public class BlockRenderer {
         if (render) {
             applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
             begin(cache);
-            vertex(x + x1, y + y0, z + z1, u0, v0);
-            vertex(x + x1, y + y0, z + z0, u0, downVMax);
-            vertex(x + x0, y + y0, z + z0, downUMax, downVMax);
-            vertex(x + x0, y + y0, z + z1, downUMax, v0);
+            vertex(x + x1, y + y0, z + z1, downUMax, downVMin);
+            vertex(x + x1, y + y0, z + z0, downUMax, downVMax);
+            vertex(x + x0, y + y0, z + z0, downUMin, downVMax);
+            vertex(x + x0, y + y0, z + z1, downUMin, downVMin);
             end(vertices);
         }
 
-        // UP face  
-        var upUMax = u0 + ue * xe;
-        var upVMax = v0 + ve * ze;
+        // UP face
+        var upUMin = u0 + ue * x0;
+        var upUMax = u0 + ue * x1;
+        var upVMin = v0 + ve * (1f - z1);
+        var upVMax = v0 + ve * (1f - z0);
         vec = Direction.getDirection(RawDirection.UP);
         nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
-            
+
         edge = y1 == 1f;
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
             applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
             begin(cache);
-            vertex(x + x0, y + y1, z + z1, u0, v0);
-            vertex(x + x0, y + y1, z + z0, u0, upVMax);
+            vertex(x + x0, y + y1, z + z1, upUMin, upVMin);
+            vertex(x + x0, y + y1, z + z0, upUMin, upVMax);
             vertex(x + x1, y + y1, z + z0, upUMax, upVMax);
-            vertex(x + x1, y + y1, z + z1, upUMax, v0);
+            vertex(x + x1, y + y1, z + z1, upUMax, upVMin);
             end(vertices);
         }
     }
