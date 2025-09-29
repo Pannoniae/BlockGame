@@ -19,6 +19,9 @@ public class Graphics : IDisposable {
     public readonly SpriteBatch mainBatch;
     public readonly SpriteBatch immediateBatch;
 
+    // InstantRenderers
+    public InstantDrawTexture idt;
+
     // Shaders
     public readonly InstantShader batchShader;
 
@@ -75,6 +78,11 @@ public class Graphics : IDisposable {
         batchShader = new InstantShader(Game.GL, nameof(batchShader), "shaders/ui/batch.vert", "shaders/ui/batch.frag");
         mainBatch.setShader(batchShader);
         immediateBatch.setShader(batchShader);
+    }
+
+    public void init() {
+        idt = new InstantDrawTexture(1024);
+        idt.setup();
     }
 
     public void clearColor(Color4b color) {

@@ -111,7 +111,6 @@ public partial class World : IDisposable {
         chunkList = new List<Chunk>(2048);
 
         entities = [];
-        removedEntities = [];
         particles = new Particles(this);
 
         // setup world saving every 5 seconds
@@ -543,6 +542,12 @@ public partial class World : IDisposable {
 
             // successful load: apply NBT data to existing chunk
             var coord = result.Value.coord;
+
+            // check if chunk is still relevant before processing
+            if (!isChunkRelevant(coord)) {
+                continue; // skip chunks that are now too far away
+            }
+
             if (chunks.TryGetValue(coord, out Chunk? existingChunk) && result.Value.nbtData != null) {
                 WorldIO.loadChunkDataFromNBT(existingChunk, result.Value.nbtData);
                 loadedChunks++;
@@ -585,8 +590,13 @@ public partial class World : IDisposable {
             if (chunkLoadQueue.Count > 0) {
                 var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
                 chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
-                loadChunk(ticket.chunkCoord, ticket.level);
-                loadedChunks++;
+
+                // check if chunk is still relevant before loading it
+                if (isChunkRelevant(ticket.chunkCoord)) {
+                    loadChunk(ticket.chunkCoord, ticket.level);
+                    loadedChunks++;
+                }
+                // if too far, just discard the ticket and continue
             }
             else {
                 // chunk queue empty, don't loop more
@@ -1092,6 +1102,15 @@ public partial class World : IDisposable {
     }
 
     /// <summary>
+    /// Check if a chunk is still within loading distance of the player
+    /// </summary>
+    private bool isChunkRelevant(ChunkCoord chunkCoord) {
+        var playerChunk = player.getChunk();
+        var maxDistance = Settings.instance.renderDistance + 2; // bit more buffer than unload distance
+        return playerChunk.distanceSq(chunkCoord) < maxDistance * maxDistance;
+    }
+
+    /// <summary>
     /// Load this chunk either from disk (if exists) or generate it with the given level.
     /// </summary>
     public void loadChunk(ChunkCoord chunkCoord, ChunkStatus status, bool immediately = false) {
@@ -1099,6 +1118,11 @@ public partial class World : IDisposable {
         // TODO emergency switch! if players complain about chunk errors & lost data / crashes, flip this switch! it should make things better
         // it will make chunk loading synchronous and thus laggy / especially on shit HDDs, but it will prevent chunk errors until we can fix things:tm:
         //immediately = true;
+
+        // early exit if chunk is too far from player (unless forced immediate load)
+        if (!immediately && !isChunkRelevant(chunkCoord)) {
+            return;
+        }
 
         // if it already exists and has the proper level, just return it
         if (chunks.TryGetValue(chunkCoord, out var chunk) && chunk.status >= status) {

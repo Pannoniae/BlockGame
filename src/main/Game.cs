@@ -557,6 +557,7 @@ public partial class Game {
         Settings.instance.load();
 
         graphics = new Graphics();
+        graphics.init();
         
         // setup depth testing with reverse-Z support
         graphics.setupDepthTesting();

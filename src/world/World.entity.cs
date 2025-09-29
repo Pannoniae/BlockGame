@@ -9,13 +9,17 @@ namespace BlockGame.world;
 public partial class World {
     public readonly List<Entity> entities;
 
-    /** Entities that are scheduled for removal at the end of the tick. They aren't removed yet!!! */
-    public readonly List<Entity> removedEntities;
-
     public readonly Particles particles;
     public Player player;
 
+    public static int ec = 1;
+
     public void addEntity(Entity entity) {
+        // assign id if not already set!!
+        if (entity.id == 0) {
+            entity.id = ec++;
+        }
+
         // search for matching chunk
         var pos = entity.position.toBlockPos();
         var success = getChunkMaybe(pos.X, pos.Z, out var chunk);
@@ -28,7 +32,12 @@ public partial class World {
         entities.Add(entity);
     }
 
-    public void removeEntity(Entity entity) {
+    public void removeEntity(Entity entity, int i) {
+        doRemove(entity);
+        entities.RemoveAt(i);
+    }
+
+    private void doRemove(Entity entity) {
         if (entity.inWorld) {
             var pos = entity.prevPosition.toBlockPos();
             var success = getChunkMaybe(pos.X, pos.Z, out var chunk);
@@ -39,7 +48,10 @@ public partial class World {
             entity.inWorld = false;
             entity.active = false;
         }
+    }
 
+    public void removeEntity(Entity entity) {
+        doRemove(entity);
         entities.Remove(entity);
     }
 
@@ -91,25 +103,17 @@ public partial class World {
     }
 
     public void updateEntities(double dt) {
-        // first, remove entities which don't belong
-        foreach (Entity e in removedEntities) {
-            removeEntity(e);
-        }
 
-        removedEntities.Clear();
-
-        foreach (var entity in entities) {
+        for (int i = entities.Count - 1; i >= 0; i--) {
+            Entity entity = entities[i];
             if (entity.active) {
                 updateEntity(entity, dt);
             }
-            else {
-                removedEntities.Add(entity);
-            }
-        }
 
-        // remove entities that are scheduled for removal *again* ??
-        foreach (var entity in removedEntities) {
-            removeEntity(entity);
+            // we check again because entity might have suicided in update
+            if (!entity.active) {
+                removeEntity(entity, i);
+            }
         }
     }
 
@@ -125,16 +129,26 @@ public partial class World {
         var newChunkPos = getChunkSectionPos(pos.X, pos.Y, pos.Z);
         var oldChunkPos = e.subChunkCoord;
 
+        //Console.Out.WriteLine("hi1! " + oldChunkPos + " -> " + newChunkPos);
+
+        // clamp
+        oldChunkPos = new SubChunkCoord(oldChunkPos.x, Math.Clamp(oldChunkPos.y, 0, Chunk.CHUNKHEIGHT - 1), oldChunkPos.z);
+        newChunkPos = new SubChunkCoord(newChunkPos.x, Math.Clamp(newChunkPos.y, 0, Chunk.CHUNKHEIGHT - 1), newChunkPos.z);
+
         // if it doesn't match, remove
         if (newChunkPos != oldChunkPos || !e.inWorld) {
+
+
             // has chunk at old?
             if (getChunkMaybe(oldChunkPos.toChunk(), out var oldChunk)) {
+                //Console.Out.WriteLine("yes? " + oldChunkPos + " -> " + newChunkPos);
                 oldChunk!.removeEntity(e);
             }
 
 
             // has chunk at new?
             if (getChunkMaybe(newChunkPos.toChunk(), out var newChunk)) {
+                //Console.Out.WriteLine("yes2? " + oldChunkPos + " -> " + newChunkPos);
                 newChunk!.addEntity(e);
                 e.inWorld = true;
             }
@@ -142,9 +156,9 @@ public partial class World {
                 e.inWorld = false;
             }
 
-            // clamp
-            newChunkPos = new SubChunkCoord(newChunkPos.x, Math.Clamp(newChunkPos.y, 0, Chunk.CHUNKHEIGHT - 1), newChunkPos.z);
+
             if (newChunkPos != oldChunkPos) {
+                //Console.Out.WriteLine("hi! " + oldChunkPos + " -> " + newChunkPos);
                 //Console.Out.WriteLine("asdasdasd!");
                 e.onChunkChanged();
             }

@@ -74,29 +74,28 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     /** Don't call these, they won't update the world! */
-    internal void addEntity(Entity entity) {
-
+    internal void addEntity(Entity e) {
         // get the subchunk Y coordinate
-        var scy = entity.subChunkCoord.y;
+        var epos = e.position.toBlockPos();
+        var scy = World.getChunkSectionPos(epos).y;
 
         // cap
         scy = int.Clamp(scy, 0, CHUNKHEIGHT - 1);
 
-        entities[scy].Add(entity);
+        entities[scy].Add(e);
 
         // set the entity's chunk reference
-        entity.subChunkCoord = new SubChunkCoord(coord.x, scy, coord.z);
+        e.subChunkCoord = new SubChunkCoord(coord.x, scy, coord.z);
     }
 
     /** Don't call these, they won't update the world! */
-    internal void removeEntity(Entity entity) {
-
+    internal void removeEntity(Entity e) {
         // get the subchunk Y coordinate
-        var scy = entity.subChunkCoord.y;
+        var scy = e.subChunkCoord.y;
         // cap
         scy = int.Clamp(scy, 0, CHUNKHEIGHT - 1);
 
-        entities[scy].Remove(entity);
+        entities[scy].Remove(e);
     }
 
     public void lightChunk() {
@@ -396,7 +395,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // remove lightsource
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
-        
+
         // call onPlace callback for new block if being placed
         if (block != 0 && oldBlock != block) {
             Block.get(block).onPlace(world, wx, y, wz, 0);
@@ -414,12 +413,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         var id = block.getID();
         var oldMetadata = block.getMetadata();
-        
+
         // call onBreak callback for old block if being replaced
         if (oldBlock != 0 && oldBlock != id) {
             Block.get(oldBlock).onBreak(world, wx, y, wz, 0);
         }
-        
+
         // if block broken, add sunlight from neighbours
         if (id == 0) {
             // Queue all 6 neighbors for light propagation
@@ -463,7 +462,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // remove lightsource
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
-        
+
         // call onPlace callback for new block if being placed
         if (id != 0 && oldBlock != id) {
             Block.get(id).onPlace(world, wx, y, wz, oldMetadata);

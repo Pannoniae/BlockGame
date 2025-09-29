@@ -10,8 +10,8 @@ namespace BlockGame.world.entity;
  * Floating items/blocks on the ground.
  */
 public class ItemEntity : Entity {
-    public ItemEntity(World world) : base(world) {
-        id = Entities.ITEM_ENTITY;
+    public ItemEntity(World world) : base(world, Entities.ITEM_ENTITY) {
+
     }
 
     /** funny number */

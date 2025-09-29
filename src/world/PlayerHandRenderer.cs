@@ -33,9 +33,6 @@ public class PlayerHandRenderer {
     // Water overlay renderer
     public InstantDrawTexture waterOverlayRenderer;
 
-    // Item renderer for hand
-    public InstantDrawTexture itemRenderer;
-
     public PlayerHandRenderer(Player player) {
         this.player = player;
         handItem = player.survivalInventory.getSelected();
@@ -48,10 +45,6 @@ public class PlayerHandRenderer {
         // Initialize water overlay renderer
         waterOverlayRenderer = new InstantDrawTexture(60);
         waterOverlayRenderer.setup();
-
-        // Initialize item renderer
-        itemRenderer = new InstantDrawTexture(100);
-        itemRenderer.setup();
     }
 
     public double getLower(double dt) {
@@ -71,6 +64,8 @@ public class PlayerHandRenderer {
             renderEmptyHand(interp, l);
             return;
         }
+
+        var itemRenderer = Game.graphics.idt;
 
         var a = handItem.getItem().isBlock();
 
@@ -450,6 +445,7 @@ public class PlayerHandRenderer {
 
         //itemRenderer.begin(PrimitiveType.Quads);
 
+        var itemRenderer = Game.graphics.idt;
         itemRenderer.addVertex(new BlockVertexTinted(x1, y1, z1, u1, v1, shade.R, shade.G, shade.B, shade.A));
         itemRenderer.addVertex(new BlockVertexTinted(x2, y2, z2, u2, v2, shade.R, shade.G, shade.B, shade.A));
         itemRenderer.addVertex(new BlockVertexTinted(x3, y3, z3, u3, v3, shade.R, shade.G, shade.B, shade.A));
@@ -463,6 +459,8 @@ public class PlayerHandRenderer {
         if (handItem == ItemStack.EMPTY) {
             return;
         }
+
+        var itemRenderer = Game.graphics.idt;
 
         var a = handItem.getItem().isBlock();
 
