@@ -171,6 +171,9 @@ public partial class Game {
     public Game(bool devMode) {
         Game.devMode = devMode;
         instance = this;
+
+        if (devMode)
+            VERSION += " (Dev Mode)";
         
         SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
 

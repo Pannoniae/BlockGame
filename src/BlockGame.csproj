@@ -21,12 +21,6 @@
         <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
-    <!-- Make a define for debug mode -->
-    <!-- TODO: test building in release and debug (and that it actually changes) as well as dev features and no dev featuress, as well as publishing -->
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
-    </PropertyGroup>
-
     <!-- References -->
     <ItemGroup>
         <PackageReference Include="CircularBuffer" Version="1.4.0" />

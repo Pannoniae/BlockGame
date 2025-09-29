@@ -47,6 +47,7 @@ public class MainMenu : Menu {
         addElement(button4);
     }
 
+    // TODO: having clear as part of menus is dumb. it should be called no matter what and by the renderer, not the menus
     public override void clear(double dt, double interp) {
         Game.graphics.clearColor(Color4b.Black);
         Game.graphics.clearDepth();
