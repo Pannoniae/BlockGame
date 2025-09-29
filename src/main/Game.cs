@@ -201,6 +201,7 @@ public partial class Game {
         windowOptions.VideoMode = new VideoMode(windowSize);
         windowOptions.ShouldSwapAutomatically = false;
         windowOptions.IsVisible = true;
+        windowOptions.WindowState = WindowState.Maximized;
         windowOptions.PreferredDepthBufferBits = 32;
         windowOptions.PreferredStencilBufferBits = 0;
         var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability,
@@ -843,8 +844,8 @@ public partial class Game {
         // gui wireframe code needs to be here because we want it to apply on all screens
 
 
-        // gui bounds debug - shift+numpad9
-        if (key == Key.Keypad9 && keyboard.IsKeyPressed(Key.ShiftLeft)) {
+        // gui bounds debug - ctrl+numpad9
+        if (key == Key.Keypad9 && keyboard.IsKeyPressed(Key.ControlLeft)) {
             GUI.SHOW_GUI_BOUNDS = !GUI.SHOW_GUI_BOUNDS;
             Log.info("Enabled GUI bounds: " + GUI.SHOW_GUI_BOUNDS);
         }

@@ -9,5 +9,6 @@
       "Read(/D:\\dev\\cs\\BlockGame/**)"
     ],
     "deny": []
-  }
+  },
+  "outputStyle": "default"
 }

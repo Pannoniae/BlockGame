@@ -835,43 +835,42 @@ public class GUI {
     public void drawGUIBounds() {
         if (!SHOW_GUI_BOUNDS) return;
 
-        // calculate virtual GUI dimensions
-        var virtualWidth = Game.width / guiScale;
-        var virtualHeight = Game.height / guiScale;
+        // show the virtual GUI coordinate space (minimum 360x270 starting from 0,0)
+        const float minVirtualWidth = 360f;
+        const float minVirtualHeight = 270f;
 
-        // center the bounds on screen
-        var offsetX = (Game.width - virtualWidth * guiScale) / 2f;
-        var offsetY = (Game.height - virtualHeight * guiScale) / 2f;
+        var w = minVirtualWidth * guiScale;
+        var h = minVirtualHeight * guiScale;
 
         const float lineWidth = 2f;
         var col = Color4b.Cyan;
 
-        // draw hollow rectangle outline - top
+        // top
         tb.DrawRaw(colourTexture,
-            new VertexColorTexture(new Vector3(offsetX, offsetY, 0), col, new Vector2(0, 0)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY, 0), col, new Vector2(1, 0)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + lineWidth, 0), col, new Vector2(1, 1)),
-            new VertexColorTexture(new Vector3(offsetX, offsetY + lineWidth, 0), col, new Vector2(0, 1)));
+            new VertexColorTexture(new Vector3(0, 0, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(w, 0, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(w, lineWidth, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(0, lineWidth, 0), col, new Vector2(0, 1)));
 
         // bottom
         tb.DrawRaw(colourTexture,
-            new VertexColorTexture(new Vector3(offsetX, offsetY + virtualHeight * guiScale - lineWidth, 0), col, new Vector2(0, 0)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + virtualHeight * guiScale - lineWidth, 0), col, new Vector2(1, 0)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + virtualHeight * guiScale, 0), col, new Vector2(1, 1)),
-            new VertexColorTexture(new Vector3(offsetX, offsetY + virtualHeight * guiScale, 0), col, new Vector2(0, 1)));
+            new VertexColorTexture(new Vector3(0, h - lineWidth, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(w, h - lineWidth, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(w, h, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(0, h, 0), col, new Vector2(0, 1)));
 
         // left
         tb.DrawRaw(colourTexture,
-            new VertexColorTexture(new Vector3(offsetX, offsetY, 0), col, new Vector2(0, 0)),
-            new VertexColorTexture(new Vector3(offsetX + lineWidth, offsetY, 0), col, new Vector2(1, 0)),
-            new VertexColorTexture(new Vector3(offsetX + lineWidth, offsetY + virtualHeight * guiScale, 0), col, new Vector2(1, 1)),
-            new VertexColorTexture(new Vector3(offsetX, offsetY + virtualHeight * guiScale, 0), col, new Vector2(0, 1)));
+            new VertexColorTexture(new Vector3(0, 0, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(lineWidth, 0, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(lineWidth, h, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(0, h, 0), col, new Vector2(0, 1)));
 
         // right
         tb.DrawRaw(colourTexture,
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale - lineWidth, offsetY, 0), col, new Vector2(0, 0)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY, 0), col, new Vector2(1, 0)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale, offsetY + virtualHeight * guiScale, 0), col, new Vector2(1, 1)),
-            new VertexColorTexture(new Vector3(offsetX + virtualWidth * guiScale - lineWidth, offsetY + virtualHeight * guiScale, 0), col, new Vector2(0, 1)));
+            new VertexColorTexture(new Vector3(w - lineWidth, 0, 0), col, new Vector2(0, 0)),
+            new VertexColorTexture(new Vector3(w, 0, 0), col, new Vector2(1, 0)),
+            new VertexColorTexture(new Vector3(w, h, 0), col, new Vector2(1, 1)),
+            new VertexColorTexture(new Vector3(w - lineWidth, h, 0), col, new Vector2(0, 1)));
     }
 }
