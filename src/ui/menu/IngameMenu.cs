@@ -86,10 +86,10 @@ public class IngameMenu : Menu, IDisposable {
     }
 
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
-        var s = -scroll.Y;
-        int y = (int)Math.Clamp(s, -1, 1);
-        var newSelection = Game.player.survivalInventory.selected + y;
-        newSelection = Meth.mod(newSelection, 10);
+        float scrollDir = -scroll.Y;
+        int scrollAmount = (int)Math.Clamp(scrollDir, -1, 1);
+        int newSelection = Game.player.survivalInventory.selected + scrollAmount;
+        newSelection = Meth.mod(newSelection, SurvivalInventory.HOTBAR_SIZE);
         Game.player.survivalInventory.selected = newSelection;
     }
 

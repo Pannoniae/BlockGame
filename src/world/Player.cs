@@ -376,9 +376,17 @@ public class Player : Entity {
     }
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
-        if (key >= Key.Number0 && key <= Key.Number9) {
-            survivalInventory.selected = (ushort)(key - Key.Number0 - 1);
+        if (key is < Key.Number0 or > Key.Number9)
+            return;
+
+        // 0 should map to the 10th slot since it comes after 9 on a keyboard
+        if (key == Key.Number0) {
+            survivalInventory.selected = 9;
+            return;
         }
+
+        // [1-9]
+        survivalInventory.selected = (ushort)Meth.mod(key - Key.Number1, SurvivalInventory.HOTBAR_SIZE);
     }
 
     public void handleMouseInput(float xOffset, float yOffset) {

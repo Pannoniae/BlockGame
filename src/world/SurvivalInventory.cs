@@ -5,6 +5,9 @@ using BlockGame.world.item.inventory;
 namespace BlockGame.world;
 
 public class SurvivalInventory : Inventory {
+    public static readonly int HOTBAR_SIZE = 10;
+
+    // The first 10 slots are the hotbar
     public readonly ItemStack[] slots = new ItemStack[50].fill();
     public readonly float[] shiny = new float[50];
     
@@ -13,7 +16,7 @@ public class SurvivalInventory : Inventory {
     /**
      * The index of the selected item.
      */
-    public int selected;
+    public int selected = 0;
 
     public SurvivalInventory() {
         for (int i = 0; i < 10; i++) {
