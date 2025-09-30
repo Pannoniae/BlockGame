@@ -510,6 +510,10 @@ public class Player : Entity {
                 }
             }
         }
+
+        if (Game.inputs.q.pressed()) {
+            dropItem();
+        }
     }
 
     public void getMiningSpeed(Block block) {
@@ -771,5 +775,30 @@ public class Player : Entity {
                 itemEntity.pickup(this);
             }
         }
+    }
+
+    public void dropItem() {
+        var stack = survivalInventory.getSelected();
+        if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
+            return;
+        }
+
+        // remove 1 item from stack
+        var droppedStack = survivalInventory.removeStack(survivalInventory.selected, 1);
+
+        // create item entity
+        var itemEntity = new ItemEntity(world);
+        itemEntity.stack = droppedStack;
+
+        // position at eye height slightly in front of player
+        var eyePos = new Vector3D(position.X, position.Y + eyeHeight, position.Z);
+        var forward = facing();
+        itemEntity.position = eyePos + forward.toVec3D() * 0.5;
+
+        // give it velocity in the direction player is facing + a bit up
+        itemEntity.velocity = forward.toVec3D() * 3.0 + new Vector3D(0, 2.0, 0);
+
+        // add to world
+        world.addEntity(itemEntity);
     }
 }

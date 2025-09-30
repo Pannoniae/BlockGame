@@ -338,7 +338,9 @@ public class PlayerHandRenderer {
         // test point
         //Console.Out.WriteLine(Vector3.Transform(Vector3.Zero, mat.top));
 
-        rightArm.render(mat, sc);
+        var c = WorldRenderer.getLightColour((byte)(lightLevel >> 4), (byte)(lightLevel & 15));
+
+        rightArm.render(mat, sc, c.R, c.G, c.B);
 
         // Restore original rotation
         rightArm.rotation = originalRotation;

@@ -308,6 +308,7 @@ public class VideoSettingsMenu : Menu {
         };
         back.setPosition(new Vector2I(2, -18));
         back.clicked += _ => {
+            deactivate();
             parentScreen.returnToPrevScreen();
         };
         addElement(back);

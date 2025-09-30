@@ -24,7 +24,7 @@ public class HumanModel : EntityModel {
     public bool armRaise = false;
     public bool sneaking = false;
 
-    public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
+    public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp, byte r, byte g, byte b) {
         // texture
         Game.graphics.tex(0, Game.textures.human);
 
@@ -73,7 +73,7 @@ public class HumanModel : EntityModel {
 
         // render head with additional rotation for up/down look
         head.rotation = new Vector3(-headRotX, headRotY, 0);
-        head.render(mat, scale);
+        head.render(mat, scale, r, g, b);
 
         float cs = Meth.clamp(aspeed, 0, 1);
         float ar = MathF.Sin(apos * 10) * 30f * cs * Meth.phiF;
@@ -100,7 +100,7 @@ public class HumanModel : EntityModel {
 
         // tilt body
         body.rotation = new Vector3(body.rotation.X, rasX / 2f, body.rotation.Z);
-        body.render(mat, scale);
+        body.render(mat, scale, r, g, b);
 
 
         // blend walking animation with swing animation for right arm
@@ -115,10 +115,10 @@ public class HumanModel : EntityModel {
         rightLeg.rotation = new Vector3(-lr, 0, 0);
         leftLeg.rotation = new Vector3(lr, 0, 0);
 
-        rightArm.render(mat, scale);
-        leftArm.render(mat, scale);
-        rightLeg.render(mat, scale);
-        leftLeg.render(mat, scale);
+        rightArm.render(mat, scale, r, g, b);
+        leftArm.render(mat, scale, r, g, b);
+        rightLeg.render(mat, scale, r, g, b);
+        leftLeg.render(mat, scale, r, g, b);
 
         leftArm.position = lpos;
         rightArm.position = rpos;

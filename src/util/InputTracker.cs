@@ -24,7 +24,8 @@ public class InputTracker {
     public Input left;
     public Input right;
     public Input middle;
-    
+    public Input q;
+
     public static Input DUMMYINPUT;
 
     public static readonly List<Input> all = [];
@@ -44,6 +45,7 @@ public class InputTracker {
         space = new Input("Jump", (int)Key.Space);
         shift = new Input("Sneak", (int)Key.ShiftLeft);
         ctrl = new Input("Sprint", (int)Key.ControlLeft);
+        q = new Input("Drop Item", (int)Key.Q);
         
         left = new Input("Attack", -(int)MouseButton.Left);
         right = new Input("Use", -(int)MouseButton.Right);

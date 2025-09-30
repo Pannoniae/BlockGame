@@ -41,7 +41,7 @@ public class ItemEntity : Entity {
         }
 
         // hover animation
-        hover = float.Sin(age * 12f) * 0.15f;
+        hover = float.Sin(age * (1 / 16f)) * (1 / 32f);
 
         // update AABB for collision system
         aabb = calcAABB(position);
@@ -133,7 +133,7 @@ public class ItemEntity : Entity {
     }
 
     private Player? findNearestPlayer() {
-        if (plotArmour < 10) {
+        if (plotArmour < 30) {
             return null; // no attraction during grace period
         }
 
@@ -197,7 +197,7 @@ public class ItemEntity : Entity {
 
     /** Try to be picked up by the given player. Returns true if successful. */
     public bool pickup(Player player) {
-        if (plotArmour < 10) {
+        if (plotArmour < 30) {
             return false; // grace period to prevent immediate pickup
         }
 

@@ -167,7 +167,7 @@ public class Cube {
     // todo if there is no rotation, we could just batch the cubes together and draw them all at once!
     // like, to vert.scale(scale).offset(position * scale) and just use the same instantdrawentity call
     // we'd need to track this though, and I'm not in the mood to fuck this up rn...
-    public void render(MatrixStack mat, float scale) {
+    public void render(MatrixStack mat, float scale, byte r, byte g, byte b) {
         var ide = EntityRenderers.ide;
         if (rendered) {
             mat.push();
@@ -180,7 +180,11 @@ public class Cube {
 
             // actually draw!
             foreach (EntityVertex vert in vertices) {
-                ide.addVertex(vert.scale(scale));
+                var v = vert.scale(scale);
+                v.r = r;
+                v.g = g;
+                v.b = b;
+                ide.addVertex(v);
             }
             ide.end();
 

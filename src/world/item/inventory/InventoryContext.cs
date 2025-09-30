@@ -10,7 +10,7 @@ namespace BlockGame.world.item.inventory;
  * This is needed because the player can interact with multiple inventories at once, and we can't just yeet this onto the menu itself (there will be server code!)
  */
 public abstract class InventoryContext {
-    protected readonly List<ItemSlot> slots = new();
+    protected readonly List<ItemSlot> slots = [];
 
     public List<ItemSlot> getSlots() => slots;
 
