@@ -9,6 +9,8 @@ using BlockGame.world.chunk;
 using BlockGame.world.worldgen.generator;
 using Molten;
 using Molten.DoublePrecision;
+using Silk.NET.GLFW;
+using Silk.NET.Windowing.Glfw;
 
 namespace BlockGame.world;
 

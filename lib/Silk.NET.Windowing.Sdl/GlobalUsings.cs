@@ -1,0 +1,1 @@
+// Global type aliases for SDL3 compatibility

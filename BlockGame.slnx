@@ -15,10 +15,6 @@
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>
-  <Project Path="src/BlockGame.csproj">
-    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
-    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
-  </Project>
   <Project Path="BlockGameTesting/BlockGameTesting.csproj">
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
@@ -79,6 +75,26 @@
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>
+  <Project Path="lib\Silk.NET.Input.Sdl\Silk.NET.Input.Sdl.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib\Silk.NET.Windowing.Common\Silk.NET.Windowing.Common.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib\Silk.NET.Windowing.Glfw\Silk.NET.Windowing.Glfw.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib\Silk.NET.Windowing.Sdl\Silk.NET.Windowing.Sdl.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
+  <Project Path="lib\Silk.NET.Windowing\Silk.NET.Windowing.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
+  </Project>
   <Project Path="meth\Meth.csproj" Type="Classic C#">
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
@@ -88,6 +104,10 @@
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>
   <Project Path="SNBT2NBT\SNBT2NBT.csproj" Type="Classic C#">
+    <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+    <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+  </Project>
+  <Project Path="src/BlockGame.csproj">
     <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
     <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
   </Project>

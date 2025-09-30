@@ -2,6 +2,7 @@ using System.Numerics;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using BlockGame.world;
+using Molten;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render.model;
@@ -176,14 +177,13 @@ public class Cube {
             mat.rotate(rotation.Y, 0, 1, 0);
             mat.rotate(rotation.Z, 0, 0, 1);
 
+            ide.setColour(new Color(r, g, b, (byte)255));
+
             ide.begin(PrimitiveType.Quads);
 
             // actually draw!
             foreach (EntityVertex vert in vertices) {
                 var v = vert.scale(scale);
-                v.r = r;
-                v.g = g;
-                v.b = b;
                 ide.addVertex(v);
             }
             ide.end();

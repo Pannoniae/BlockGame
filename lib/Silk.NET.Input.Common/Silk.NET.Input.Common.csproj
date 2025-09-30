@@ -7,7 +7,7 @@
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-
+    
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
             <_Parameter1>Silk.NET.Input.Glfw</_Parameter1>
@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Silk.NET.Windowing" Version="2.22.0"/>
+        <ProjectReference Include="..\Silk.NET.Windowing\Silk.NET.Windowing.csproj" />
     </ItemGroup>
 
 </Project>

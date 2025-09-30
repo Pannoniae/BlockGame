@@ -17,6 +17,7 @@ using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.item;
 using Molten;
+using SDL;
 using Silk.NET.Core;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
@@ -52,7 +53,7 @@ public partial class Game {
     
     
     //private static WGL wgl;
-    public static Glfw glfw;
+    //public static Glfw glfw;
     private static readonly bool windows = OperatingSystem.IsWindows();
     
     public static Process proc;
@@ -171,7 +172,7 @@ public partial class Game {
     public Game(bool devMode) {
         Game.devMode = devMode;
         instance = this;
-        
+
         SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
 
         #if DEBUG
@@ -217,17 +218,33 @@ public partial class Game {
         #endif
         // force x11 in release too because wayland breaks everything
         // it even breaks the fucking mouse position
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+        if (false && RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             GlfwProvider.UninitializedGLFW.Value.InitHint((InitHint)0x00050003, 0x00060004);
         }
 
         //windowOptions.Samples = 4;
         windowOptions.API = api;
-        Window.PrioritizeGlfw();
 
-        #if DEBUG
-        GlfwProvider.GLFW.Value.WindowHint(WindowHintRobustness.ContextRobustness, Robustness.LoseContextOnReset);
-        #endif
+        const bool sdl = true;
+        if (sdl) {
+            Window.PrioritizeSdl();
+            // set hints
+            SDL3.SDL_SetHint(SDL3.SDL_HINT_APP_NAME, "BlockGame");
+            //SDL3.SDL_SetHint(SDL3.SDL_HINT_WINDOWS_GAMEINPUT, "1");
+
+            // print SDL version!
+            var a = SDL3.SDL_GetVersion();
+            Log.info($"SDL version: { SDL3.SDL_VERSIONNUM_MAJOR(a)}.{SDL3.SDL_VERSIONNUM_MINOR(a)}.{SDL3.SDL_VERSIONNUM_MICRO(a)}");
+
+        }
+        else {
+            Window.PrioritizeGlfw();
+            #if DEBUG
+        //GlfwProvider.GLFW.Value.WindowHint(WindowHintRobustness.ContextRobustness, Robustness.LoseContextOnReset);
+            #endif
+        }
+
+
 
         // no errors if in release mode, fuck glGetError() ;)
         // ALSO WHAT THE FUCK SILK.NET
@@ -247,18 +264,22 @@ public partial class Game {
         window.Closing += close;
         
         window.Initialize();
-        glfw = Glfw.GetApi();
+
+        // print API used
+        Log.info($"Initialised {window.GetType()} window!");
+
+        /*glfw = Glfw.GetApi();
         unsafe {
             glfw.SetWindowSizeLimits((WindowHandle*)window.Native!.Glfw,
                 Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
-        }
+        }*/
         
         if (windows) {
             hdc = window.Native!.Win32!.Value!.HDC;
         }
         
         // GLFW get version
-        Log.info($"GLFW version: {glfw.GetVersionString()}");
+        //Log.info($"GLFW version: {glfw.GetVersionString()}");
         
         window.Run(runCallback);
 
