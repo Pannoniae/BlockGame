@@ -420,8 +420,19 @@ public partial class Game {
     private void init() {
         GL = window.CreateLegacyOpenGL();
 
+        unsafe {
+            // todo why do I have to call SDL_Init here?? The thing is, if I do it BEFORE the window is created, we get a 1.1 context....
+            // the input starting is needed to get unicode text input
+            // this WILL break on mobile platforms and IME
+            // we don't care about mobile but we will need to fix IME at some point;)
+            SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO | SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS |
+                          SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK);
+            SDL3.SDL_StartTextInput((SDL_Window*)window.Handle);
+        }
+
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
         var version = GL.GetStringS(StringName.Version);
+        Log.info("Running on OpenGL " + version);
         sampleShadingSupported = version.StartsWith("4.") || GL.TryGetExtension(out ArbSampleShading arbSampleShading);
         
         // check if this is an NVIDIA card

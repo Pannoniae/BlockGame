@@ -111,6 +111,7 @@ namespace Silk.NET.SDL
             AssertCreated();
             SDL3.SDL_ClearError();
             var ret = SDL3.SDL_GL_GetProcAddress(proc);
+            //Console.Out.WriteLine($"{proc} {ret}");
             SdlExt.ThrowError();
             if (ret == 0)
             {

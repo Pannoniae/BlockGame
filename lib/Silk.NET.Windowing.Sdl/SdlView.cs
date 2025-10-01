@@ -225,7 +225,7 @@ namespace Silk.NET.Windowing.Sdl
             );*/
 
             SDL_PropertiesID props = SDL3.SDL_CreateProperties();
-            SDL3.SDL_SetStringProperty(props, SDL3.SDL_PROP_WINDOW_CREATE_TITLE_STRING, title);
+            SDL3.SDL_SetStringProperty(props, SDL3.SDL_PROP_WINDOW_CREATE_TITLE_STRING, title ?? Assembly.GetEntryAssembly()?.GetName().Name ?? "Silk.NET Window");
             SDL3.SDL_SetNumberProperty(props, SDL3.SDL_PROP_WINDOW_CREATE_X_NUMBER, x ?? 50);
             SDL3.SDL_SetNumberProperty(props, SDL3.SDL_PROP_WINDOW_CREATE_Y_NUMBER, y ?? 50);
             SDL3.SDL_SetNumberProperty(props, SDL3.SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, w ?? 1280);
