@@ -940,8 +940,9 @@ public partial class Game {
         // status update! we target 1920x1080 as the minimum for guiScale 4 to look good.
         // so the "virtual" GUI size is 480x270.
         // but we only have 360 because 4:3 and shit
+        // status update, it should be slightly smaller because title bar and shit so we cut 30 from it
         while (guiScaleTarget < Settings.instance.guiScale && width / ((double)guiScaleTarget + 1) >= 360 &&
-               height / ((double)guiScaleTarget + 1) >= 270) {
+               height / ((double)guiScaleTarget + 1) >= 240) {
             guiScaleTarget++;
         }
         
@@ -1000,6 +1001,10 @@ public partial class Game {
         //Console.Out.WriteLine($"{i} updates called");
         // get remaining time between 0 and 1
         var interp = accumTime / fixeddt;
+        // when paused, use interp=1.0 so rendering uses current state without interpolation
+        if (world?.paused == true) {
+            interp = 1.0;
+        }
         actualRender(dt, interp);
     }
 

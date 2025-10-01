@@ -531,7 +531,6 @@ public class GameScreen : Screen {
         Game.world.inMenu = true;
         Game.world.paused = true;
         Game.instance.unlockMouse();
-        Game.world.player.catchUpOnPrevVars();
     }
 
     public void backToGame() {

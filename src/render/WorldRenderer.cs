@@ -1004,7 +1004,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // setup rendering state
         GL.Enable(EnableCap.Blend);
         // multiply!
-        //GL.BlendEquation(BlendEquationMode);
+        //GL.BlendEquation(BlendEquationMode);o
         //GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.SrcColor);
         GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusSrcAlpha);
 
