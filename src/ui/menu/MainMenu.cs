@@ -14,7 +14,6 @@ public class MainMenu : Menu {
         title.centreContents();
         title.setScale(1.5f);
 
-
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
         sp.setPosition(new Vector2I(0, -34));
         sp.centreContents();
