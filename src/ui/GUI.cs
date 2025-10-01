@@ -233,7 +233,8 @@ public class GUI {
             if (Block.renderItemLike[blockID]) {
                 drawItemSprite(item, cursorItem, drawX, drawY);
             } else {
-                Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata);
+                // render cursor item closer to camera to avoid z-fighting with gui blocks
+                Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata, -1000);
 
                 // draw quantity if > 1
                 if (cursorItem.quantity > 1) {
@@ -715,7 +716,7 @@ public class GUI {
             new VertexColorTexture(new Vector3(bounds.X, bounds.Y + bounds.Height, 0), col, new Vector2(0, 1)));
     }
 
-    public void drawBlock(Block block, int x, int y, int size, byte metadata = 0) {
+    public void drawBlock(Block block, int x, int y, int size, byte metadata = 0, float depth = 0) {
 
         //Console.Out.WriteLine(Game.GL.GetBoolean(GetPName.DepthTest));
         Game.GL.Enable(EnableCap.DepthTest);
@@ -726,22 +727,22 @@ public class GUI {
         Game.renderer.bindQuad();
 
         Game.blockRenderer.setupStandalone();
-        Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock, 
+        Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock,
             lightOverride: 255, cullFaces: false);
 
         var mat = Game.graphics.model;
-        
+
         mat.push();
         mat.loadIdentity();
 
-        
+
         // view transformation - camera position
         //var camPos = new Vector3(1, 2 / 3f, 1);
         // fuck this, we rotate it manually! :trolley:
         //var viewMatrix = Matrix4x4.CreateLookAt(camPos, new Vector3(0, 0, 0), new Vector3(0, 1, 0));
         var viewMatrix = Matrix4x4.Identity;
         //mat.multiply(viewMatrix);
-        mat.translate(x, y, 0);
+        mat.translate(x, y, depth);
         // +1 because it doesn't touch the bottom!!
         // add the padding
 
@@ -798,8 +799,8 @@ public class GUI {
         Game.GL.Disable(EnableCap.DepthTest);
     }
 
-    public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0) {
-        drawBlock(block, x * guiScale, y * guiScale, size, metadata);
+    public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0, float depth = 0) {
+        drawBlock(block, x * guiScale, y * guiScale, size, metadata, depth);
     }
 
     private void drawItemSprite(Item item, ItemStack stack, float x, float y) {
