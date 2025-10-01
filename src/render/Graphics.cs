@@ -121,12 +121,22 @@ public class Graphics : IDisposable {
     /// <summary>
     /// Sets the depth function based on current depth mode (reverse-Z or normal).
     /// </summary>
-    public void setDepthFunction() {
+    public void setDepthFunc() {
         if (Settings.instance.reverseZ) {
             GL.DepthFunc(DepthFunction.Gequal);
         } else {
             GL.DepthFunc(DepthFunction.Lequal);
         }
+    }
+
+    public void setupBlend() {
+        GL.Enable(EnableCap.Blend);
+        GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
+        setBlendFunc();
+    }
+
+    public void setBlendFunc() {
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
     }
 
     public void setViewport(int x, int y, int width, int height) {

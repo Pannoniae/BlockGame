@@ -257,7 +257,7 @@ public class VideoSettingsMenu : Menu {
             Game.instance.updateFramebuffers();
             // adjust polygon offset to match new depth range
             Game.graphics.polyOffset(-3f, -3f);
-            Game.graphics.setDepthFunction();
+            Game.graphics.setDepthFunc();
             Game.gui.refreshMatrix(new Vector2I(Game.width, Game.height));
             // Depth state will be updated on next frame
         };
@@ -266,12 +266,35 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(reverseZ);
         addElement(reverseZ);
 
-        var rendererMode = new ToggleButton(this, "rendererMode", false, (int)settings.rendererMode,
-            "Renderer: Auto", "Renderer: Plain", "Renderer: Instanced", "Renderer: Bindless MDI", "Renderer: Command List");
+        // build renderer options based on hardware support
+        var rendererOptions = new List<string> { "Renderer: Auto", "Renderer: Plain" };
+        var rendererModeValues = new List<RendererMode> { RendererMode.Auto, RendererMode.Plain };
+
+        if (Game.hasInstancedUBO) {
+            rendererOptions.Add("Renderer: Instanced");
+            rendererModeValues.Add(RendererMode.Instanced);
+        }
+        if (Game.hasBindlessMDI) {
+            rendererOptions.Add("Renderer: Bindless MDI");
+            rendererModeValues.Add(RendererMode.BindlessMDI);
+        }
+        if (Game.hasCMDL) {
+            rendererOptions.Add("Renderer: Command List");
+            rendererModeValues.Add(RendererMode.CommandList);
+        }
+
+        var currentRendererIndex = rendererModeValues.IndexOf(settings.rendererMode);
+        if (currentRendererIndex == -1) {
+            currentRendererIndex = 0; // fallback to Auto
+        }
+
+        var rendererMode = new ToggleButton(this, "rendererMode", false, currentRendererIndex, rendererOptions.ToArray());
         rendererMode.topCentre();
         rendererMode.clicked += _ => {
             var old = settings.rendererMode;
-            var newm = (RendererMode)rendererMode.getIndex();
+            var index = rendererMode.getIndex();
+            var newm = index < rendererModeValues.Count ? rendererModeValues[index] : RendererMode.Auto;
+            settings.rendererMode = newm;
             Game.renderer?.reloadRenderer(old, newm);
             Game.instance.updateFramebuffers();
             // REMESH THE ENTIRE WORLD

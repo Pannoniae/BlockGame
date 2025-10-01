@@ -1,3 +1,4 @@
+using System.Collections;
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
@@ -40,6 +41,8 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public bool isRendered = false;
     public ulong lastSaved;
     public bool destroyed = false;
+    private readonly List<LightNode> toPropagate = [];
+    private readonly Queue<LightNode> propQueue = new();
 
     public int worldX => coord.x << 4;
     public int worldZ => coord.z << 4;
@@ -161,7 +164,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         }
 
         // we collect, then we propagate!
-        List<LightNode> toPropagate = [];
+        toPropagate.Clear();
 
         // second pass: check for horizontal propagation into unlit neighbors
         for (int x = 0; x < CHUNKSIZE; x++) {
@@ -266,11 +269,11 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
      * This makes it much easier!
      */
     private void manuallyPropagate(int x, int y, int z) {
-        var queue = new Queue<LightNode>();
-        queue.Enqueue(new LightNode(x, y, z, this));
+        propQueue.Clear();
+        propQueue.Enqueue(new LightNode(x, y, z, this));
 
-        while (queue.Count > 0) {
-            var (cx, cy, cz, chunk) = queue.Dequeue();
+        while (propQueue.Count > 0) {
+            var (cx, cy, cz, chunk) = propQueue.Dequeue();
             var currentLight = chunk.getSkyLight(cx, cy, cz);
 
             // propagate to all 6 neighbors
@@ -302,7 +305,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 if (newLevel > 0 && newLevel > neighborLight &&
                     (neighborLight + 2 <= currentLight || dir == Direction.DOWN)) {
                     neighborChunk.setSkyLightDumb(nx, ny, nz, newLevel);
-                    queue.Enqueue(new LightNode(nx, ny, nz, neighborChunk));
+                    propQueue.Enqueue(new LightNode(nx, ny, nz, neighborChunk));
                 }
             }
         }

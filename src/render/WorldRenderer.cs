@@ -822,7 +822,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
-        Game.graphics.setDepthFunction();
+        Game.graphics.setDepthFunc();
 
         cd = 0;
         if (usingCMDL) {
@@ -999,9 +999,21 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             return;
         }
 
+        //var yes = GL.TryGetExtension(out NVBlendEquationAdvanced nvblend);
+
         // setup rendering state
         GL.Enable(EnableCap.Blend);
-        //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        // multiply!
+        //GL.BlendEquation(BlendEquationMode);
+        //GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.SrcColor);
+        GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusSrcAlpha);
+
+        //if (yes) {
+            //nvblend.BlendParameter(NV.BlendPremultipliedSrcNV, 1);
+            // todo add this shit as an optional feature
+            //GL.BlendEquation((BlendEquationModeEXT)NV.OverlayNV);
+        //}
+
         GL.DepthMask(false); // don't write to depth buffer
         //GL.Disable(EnableCap.CullFace); // render both sides of the breaking block
 
@@ -1038,6 +1050,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.DepthMask(true);
         //GL.Enable(EnableCap.CullFace);
+        //GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
+        Game.graphics.setBlendFunc();
         GL.Disable(EnableCap.PolygonOffsetFill);
         //GL.Enable(EnableCap.DepthTest);
     }

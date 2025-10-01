@@ -25,6 +25,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ARB;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
+using Silk.NET.WGL;
 using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -52,8 +53,11 @@ public partial class Game {
     private static IInputContext input = null!;
     
     
-    //private static WGL wgl;
-    //public static Glfw glfw;
+    private static WGL wgl;
+    public static Glfw glfw;
+
+    private readonly bool sdl;
+
     private static readonly bool windows = OperatingSystem.IsWindows();
     
     public static Process proc;
@@ -225,7 +229,7 @@ public partial class Game {
         //windowOptions.Samples = 4;
         windowOptions.API = api;
 
-        const bool sdl = true;
+        sdl = true;
         if (sdl) {
             Window.PrioritizeSdl();
             // set hints
@@ -268,19 +272,24 @@ public partial class Game {
         // print API used
         Log.info($"Initialised {window.GetType()} window!");
 
-        /*glfw = Glfw.GetApi();
-        unsafe {
-            glfw.SetWindowSizeLimits((WindowHandle*)window.Native!.Glfw,
-                Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
-        }*/
-        
+
+        if (!sdl) {
+            glfw = Glfw.GetApi();
+            unsafe {
+                glfw.SetWindowSizeLimits((WindowHandle*)window.Native!.Glfw,
+                    Constants.minWidth, Constants.minHeight, Glfw.DontCare, Glfw.DontCare);
+            }
+        }
+
         if (windows) {
             hdc = window.Native!.Win32!.Value!.HDC;
         }
-        
-        // GLFW get version
-        //Log.info($"GLFW version: {glfw.GetVersionString()}");
-        
+
+        if (!sdl) {
+            // GLFW get version
+            //Log.info($"GLFW version: {glfw.GetVersionString()}");
+        }
+
         window.Run(runCallback);
 
         window.DoEvents();
@@ -420,14 +429,17 @@ public partial class Game {
     private void init() {
         GL = window.CreateLegacyOpenGL();
 
-        unsafe {
-            // todo why do I have to call SDL_Init here?? The thing is, if I do it BEFORE the window is created, we get a 1.1 context....
-            // the input starting is needed to get unicode text input
-            // this WILL break on mobile platforms and IME
-            // we don't care about mobile but we will need to fix IME at some point;)
-            SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO | SDL_InitFlags.SDL_INIT_VIDEO | SDL_InitFlags.SDL_INIT_EVENTS |
-                          SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK);
-            SDL3.SDL_StartTextInput((SDL_Window*)window.Handle);
+        if (sdl) {
+            unsafe {
+                // todo why do I have to call SDL_Init here?? The thing is, if I do it BEFORE the window is created, we get a 1.1 context....
+                // the input starting is needed to get unicode text input
+                // this WILL break on mobile platforms and IME
+                // we don't care about mobile but we will need to fix IME at some point;)
+                SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO | SDL_InitFlags.SDL_INIT_VIDEO |
+                              SDL_InitFlags.SDL_INIT_EVENTS |
+                              SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK);
+                SDL3.SDL_StartTextInput((SDL_Window*)window.Handle);
+            }
         }
 
         // check for sample shading support (OpenGL 4.0+ or ARB_sample_shading extension)
@@ -572,9 +584,8 @@ public partial class Game {
 
         Configuration.Default.PreferContiguousImageBuffers = true;
         proc = Process.GetCurrentProcess();
-        GL.Enable(EnableCap.Blend);
-        GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+
 
         GL.Enable(EnableCap.CullFace);
         GL.FrontFace(FrontFaceDirection.Ccw);
@@ -594,8 +605,11 @@ public partial class Game {
         
         // setup depth testing with reverse-Z support
         graphics.setupDepthTesting();
+        graphics.setupBlend();
 
         // BE CAREFUL! Reverse-Z fucks this if you don't invert
+        // this used to be 1 and 2 but even then it z-fights on my card so increase
+        // todo if someone complains, increase again
         graphics.polyOffset(-3f, -3f);
 
         camera = new Camera(Constants.initialWidth, Constants.initialHeight);
@@ -1113,7 +1127,7 @@ public partial class Game {
 
         // clear depth for GUI!!
         GL.Clear(ClearBufferMask.DepthBufferBit);
-        graphics.setDepthFunction();
+        graphics.setDepthFunc();
 
         GL.Disable(EnableCap.DepthTest);
         //GL.Disable(EnableCap.CullFace);
