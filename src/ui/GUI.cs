@@ -873,4 +873,47 @@ public class GUI {
             new VertexColorTexture(new Vector3(w, h, 0), col, new Vector2(1, 1)),
             new VertexColorTexture(new Vector3(w - lineWidth, h, 0), col, new Vector2(0, 1)));
     }
+
+    /**
+     * Draw a vertical scrollbar using 3-patch rendering (top, middle, bottom).
+     * x, y, height in GUI coords. scrollProgress 0-1.
+     */
+    public void drawScrollbarUI(int x, int y, int height, float scrollProgress, float viewportRatio) {
+        const int WIDTH = 6;
+
+        // draw track (dimmed)
+        draw3PatchVerticalUI(x, y, WIDTH, height, scrollbarRect, Color4b.DimGray);
+
+        // calculate thumb size and position
+        var thumbHeight = Math.Max(10, (int)(height * viewportRatio));
+        var thumbY = y + (int)((height - thumbHeight) * scrollProgress);
+
+        // draw thumb (normal)
+        draw3PatchVerticalUI(x, thumbY, WIDTH, thumbHeight, scrollbarRect);
+    }
+
+    /**
+     * Draw a vertical 3-patch sprite (top 3px, stretched middle 14px, bottom 3px).
+     * x, y, width, height in GUI coords. This function is hilariously hardcoded but good enough for now.
+     */
+    private void draw3PatchVerticalUI(int x, int y, int width, int height, Rectangle sourceRect, Color4b? tint = null) {
+        var color = tint ?? Color4b.White;
+
+        // top cap (first 3 pixels)
+        drawUI(guiTexture,
+            new Rectangle(x, y, width, 3),
+            new Rectangle(sourceRect.X, sourceRect.Y, width, 3), color);
+
+        // middle section (stretched)
+        if (height > 6) {
+            drawUI(guiTexture,
+                new Rectangle(x, y + 3, width, height - 6),
+                new Rectangle(sourceRect.X, sourceRect.Y + 3, width, 14), color);
+        }
+
+        // bottom cap (last 3 pixels)
+        drawUI(guiTexture,
+            new Rectangle(x, y + height - 3, width, 3),
+            new Rectangle(sourceRect.X, sourceRect.Y + 17, width, 3), color);
+    }
 }

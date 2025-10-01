@@ -21,7 +21,8 @@ public class Menu {
     public GUIElement? hoveredElement;
 
     /// <summary>
-    /// The element which is currently being pressed.
+    /// The element which is currently being pressed (has mouse capture).
+    /// Receives all mouse events until release, regardless of cursor position.
     /// </summary>
     public GUIElement? pressedElement;
 
@@ -64,7 +65,9 @@ public class Menu {
     // for example, the pause menu calls the ingame menu to still draw and update (in MP) while it's open
 
     public virtual void activate() {
-
+        // clear mouse capture state when menu activates?
+        pressedElement = null;
+        hoveredElement = null;
     }
 
     public virtual void deactivate() {
@@ -168,48 +171,64 @@ public class Menu {
     }
 
     public virtual void onMouseDown(IMouse mouse, MouseButton button) {
+        // find element under cursor
+        GUIElement? target = null;
         foreach (var element in elements.Values) {
-            element.onMouseDown(button);
-            
-            if (button == MouseButton.Left && element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
-                pressedElement = element;
+            if (element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
+                target = element;
+                break;
+            }
+        }
+
+        // only the target element receives the event
+        if (target != null) {
+            target.onMouseDown(button);
+            if (button == MouseButton.Left) {
+                pressedElement = target;
             }
         }
     }
 
     public virtual void onMouseUp(Vector2 pos, MouseButton button) {
-        foreach (var element in elements.Values) {
-            //Console.Out.WriteLine(element);
-            //Console.Out.WriteLine(element.bounds);
-            //Console.Out.WriteLine(pos);
-            element.onMouseUp(button);
-            if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
-                element.click(button);
+        if (pressedElement != null) {
+            // captured element gets the release
+            pressedElement.onMouseUp(button);
+            if (pressedElement.active) {
+                pressedElement.click(button);
+            }
+            if (button == MouseButton.Left) {
+                pressedElement = null;
+            }
+        } else {
+            // no capture - check for element under cursor
+            foreach (var element in elements.Values) {
+                if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
+                    element.onMouseUp(button);
+                    element.click(button);
+                    break;
+                }
             }
         }
-
-        // clear pressed element
-        if (button == MouseButton.Left && pressedElement != null) {
-            pressedElement = null;
-        }
-        
     }
 
     public virtual void onMouseMove(IMouse mouse, Vector2 pos) {
-        bool found = false;
-        foreach (var element in elements.Values) {
-            //Console.Out.WriteLine(element);
-            //Console.Out.WriteLine(element.bounds);
-            //Console.Out.WriteLine(pos);
-            element.onMouseMove();
-            element.hovered = element.bounds.Contains((int)pos.X, (int)pos.Y);
-            if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
-                hoveredElement = element;
-                found = true;
+        if (pressedElement != null) {
+            // captured element gets all moves
+            pressedElement.onMouseMove();
+        } else {
+            // normal hover behaviour
+            bool found = false;
+            foreach (var element in elements.Values) {
+                element.hovered = element.bounds.Contains((int)pos.X, (int)pos.Y);
+                if (element.bounds.Contains((int)pos.X, (int)pos.Y)) {
+                    element.onMouseMove();
+                    hoveredElement = element;
+                    found = true;
+                }
             }
-        }
-        if (!found) {
-            hoveredElement = null;
+            if (!found) {
+                hoveredElement = null;
+            }
         }
     }
 

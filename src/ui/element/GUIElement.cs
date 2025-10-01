@@ -52,6 +52,7 @@ public class GUIElement {
             
             return resolveAnchors(absolutePos, horizontalAnchor, verticalAnchor, menu, false);
         }
+
     }
 
     /// <summary>

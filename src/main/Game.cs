@@ -734,6 +734,7 @@ public partial class Game {
         Menu.STARTUP_LOADING.updateProgress(1.0f, "loaded!");
         jankyFrame();
         switchTo(Menu.MAIN_MENU);
+
         Block.postLoad();
         resize(new Vector2D<int>(width, height));
 
@@ -744,6 +745,14 @@ public partial class Game {
 
         // apply fullscreen setting
         setFullscreen(Settings.instance.fullscreen);
+
+        // request focus so first click works?
+        // todo do we really need this? it works inconsistently... need testing. my SDL layer might be fucked, sorry
+        if (sdl) {
+            unsafe {
+                SDL3.SDL_RaiseWindow((SDL_Window*)window.Handle);
+            }
+        }
 
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         MemoryUtils.cleanGC();

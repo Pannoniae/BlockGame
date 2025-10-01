@@ -15,12 +15,6 @@ public class ToggleButton : Button {
         text = states[index];
     }
 
-    public override void update() {
-        base.update();
-        pressed = pressed || 
-                  (bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.inputs.right.down());
-    }
-
     public override void click(MouseButton button) {
         switch (button) {
             case MouseButton.Left:

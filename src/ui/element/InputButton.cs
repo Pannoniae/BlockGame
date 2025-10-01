@@ -14,35 +14,18 @@ public class InputButton : Button {
         this.text = input.ToString();
     }
     
-    public override void update() {
-        base.update();
-        
-        // don't click if awaiting input
-        if (SettingsScreen.CONTROLS_MENU.awaitingInput != null) {
-            return;
-        }
-        
-        pressed = pressed || (bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y) && Game.inputs.left.down());
-    }
-    
     public override void onMouseDown(MouseButton button) {
-        
-        // only handle if inside bounds!!!
-        if (!bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
-            return;
-        }
-        
         if (button == MouseButton.Right && SettingsScreen.CONTROLS_MENU.awaitingInput == null) {
             text = "Unbound";
             SettingsScreen.CONTROLS_MENU.awaitingInput = null;
             return;
         }
-        
+
         // don't click if awaiting input
         if (SettingsScreen.CONTROLS_MENU.awaitingInput != null) {
             return;
         }
-        
+
         if (button == MouseButton.Left) {
             text = "Press a key...";
             SettingsScreen.CONTROLS_MENU.awaitingInput = this;
