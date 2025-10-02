@@ -159,6 +159,15 @@ public class Graphics : IDisposable {
         }
     }
 
+    public void setBlendFuncOverlay() {
+        // destination is irrelevant so we can kind of "cheat" here
+        // we abuse blending to achieve tinting with DrawTextureNV
+        if (!blendFuncTint) {
+            GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusSrcAlpha);
+            blendFuncTint = true;
+        }
+    }
+
     public void setBlendFuncTint() {
         // destination is irrelevant so we can kind of "cheat" here
         // we abuse blending to achieve tinting with DrawTextureNV

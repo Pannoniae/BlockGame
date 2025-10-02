@@ -1006,7 +1006,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // multiply!
         //GL.BlendEquation(BlendEquationMode);o
         //GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.SrcColor);
-        GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.OneMinusSrcAlpha);
+        Game.graphics.setBlendFuncOverlay();
 
         //if (yes) {
             //nvblend.BlendParameter(NV.BlendPremultipliedSrcNV, 1);
@@ -1024,7 +1024,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         mat.push();
         mat.loadIdentity();
         mat.translate(pos.X, pos.Y, pos.Z);
-        mat.scale(1f + Constants.epsilonF, 1f + Constants.epsilonF, 1f + Constants.epsilonF); // slight scale to prevent z-fighting
+        //mat.scale(1f + Constants.epsilonF, 1f + Constants.epsilonF, 1f + Constants.epsilonF); // slight scale to prevent z-fighting
 
         // setup matrices
         var view = Game.camera.getViewMatrix(interp);
