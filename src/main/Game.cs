@@ -542,6 +542,12 @@ public partial class Game {
                                   GL.IsExtensionPresent("ARB_shader_draw_parameters");
         Log.info($"ARB_shader_draw_parameters supported: {hasShaderDrawParameters}");
         //hasShaderDrawParameters = false;
+
+        // check for NV_draw_texture support
+        hasNVDT = GL.TryGetExtension(out NVDrawTexture nvDrawTexture);
+        nvdt = nvDrawTexture;
+        Log.info($"NV_draw_texture supported: {hasNVDT}");
+        //hasNVDT = false;
         
         // print all valid anti-aliasing modes
         printAntiAliasingModes();
@@ -610,7 +616,7 @@ public partial class Game {
         // BE CAREFUL! Reverse-Z fucks this if you don't invert
         // this used to be 1 and 2 but even then it z-fights on my card so increase
         // todo if someone complains, increase again
-        graphics.polyOffset(-3f, -3f);
+        graphics.polyOffset(-2f, -3f);
 
         camera = new Camera(Constants.initialWidth, Constants.initialHeight);
         
@@ -1049,7 +1055,13 @@ public partial class Game {
         
         //currentScreen.clear(dt, interp);
 
-        if (Settings.instance.framebufferEffects) {
+        //if (currentScreen != Screen.GAME_SCREEN) {
+        GL.Disable(EnableCap.DepthTest);
+        //}
+
+        profiler.section(ProfileSectionName.Clear);
+
+        if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
             // clear 0 as well
             // todo this fucks up with msaa and has blue fringing? need to investigate..
             // not anymore??
@@ -1057,20 +1069,25 @@ public partial class Game {
             currentScreen.clear(dt, interp);
         }
 
-        GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
+        if (currentScreen == Screen.GAME_SCREEN) {
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, Settings.instance.framebufferEffects ? fbo : 0);
+        }
+
         // clear AFTER binding the framebuffer
         // otherwise it won't clean shit
         currentScreen.clear(dt, interp);
 
         // Set viewport for SSAA/MSAA rendering
-        if (Settings.instance.framebufferEffects) {
+        if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
             var ssaaWidth = width * Settings.instance.effectiveScale;
             var ssaaHeight = height * Settings.instance.effectiveScale;
             GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
         }
-        
-        GL.Enable(EnableCap.DepthTest);
-        
+
+        if (currentScreen == Screen.GAME_SCREEN) {
+            GL.Enable(EnableCap.DepthTest);
+        }
+
         profiler.section(ProfileSectionName.World3D);
         if (currentScreen == Screen.GAME_SCREEN) {
             fontLoader.renderer3D.begin();
@@ -1084,7 +1101,7 @@ public partial class Game {
         }
 
         profiler.section(ProfileSectionName.PostFX);
-        if (Settings.instance.framebufferEffects) {
+        if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
             var ssaaWidth = width * Settings.instance.effectiveScale;
             var ssaaHeight = height * Settings.instance.effectiveScale;
 
@@ -1111,7 +1128,7 @@ public partial class Game {
             GL.Viewport(0, 0, (uint)width, (uint)height);
         }
 
-        if (Settings.instance.framebufferEffects) {
+        if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
             // Select the appropriate post-processing shader
             if (Settings.instance.crtEffect) {
                 graphics.crtShader.use();
@@ -1140,10 +1157,15 @@ public partial class Game {
         }
 
         // clear depth for GUI!!
-        GL.Clear(ClearBufferMask.DepthBufferBit);
-        graphics.setDepthFunc();
+        if (currentScreen == Screen.GAME_SCREEN) {
+            GL.Clear(ClearBufferMask.DepthBufferBit);
+        }
 
-        GL.Disable(EnableCap.DepthTest);
+        //graphics.setDepthFunc();
+
+        if (currentScreen == Screen.GAME_SCREEN) {
+            GL.Disable(EnableCap.DepthTest);
+        }
         //GL.Disable(EnableCap.CullFace);
 
         // for GUI, no depth test
@@ -1183,8 +1205,10 @@ public partial class Game {
             gui.drawGUIBounds();
             graphics.mainBatch.End();
         }
-        
-        GL.Enable(EnableCap.DepthTest);
+
+        if (currentScreen == Screen.GAME_SCREEN) {
+            GL.Enable(EnableCap.DepthTest);
+        }
 
         //GL.Finish();
         //GL.Flush();

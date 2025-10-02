@@ -27,6 +27,7 @@ public partial class Game {
     public static bool hasInstancedUBO = false;
     public static bool hasCMDL = false;
     public static bool hasBindlessMDI = false;
+    public static bool hasNVDT = false;
     public static bool isNVCard = false;
     public static bool isAMDCard = false;
     
@@ -44,8 +45,9 @@ public partial class Game {
     public static NVShaderBufferLoad sbl;
     public static NVVertexBufferUnifiedMemory vbum;
     public static ExtBindableUniform extbu;
-    public static NVCommandList cmdl;
     public static NVBindlessMultiDrawIndirect bmdi;
+    public static NVCommandList cmdl;
+    public static NVDrawTexture nvdt;
     public static ArbShadingLanguageInclude arbInclude;
 
     // MSAA resolve framebuffer (for MSAA -> regular texture)
@@ -128,7 +130,7 @@ public partial class Game {
         var ssaaHeight = height * Settings.instance.effectiveScale;
         var samples = Settings.instance.msaa;
 
-        GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
+        //GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
 
         if (samples > 1) {
             // Create MSAA framebuffer

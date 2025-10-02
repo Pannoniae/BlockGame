@@ -805,8 +805,6 @@ public class GameScreen : Screen {
     public override void clear(double dt, double interp) {
         var world = Game.world;
         var clearColour = world?.getHorizonColour(world.worldTick) ?? WorldRenderer.defaultClearColour;
-        Game.graphics.clearColor(clearColour);
-        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

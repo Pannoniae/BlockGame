@@ -256,7 +256,7 @@ public class VideoSettingsMenu : Menu {
             settings.reverseZ = reverseZ.getIndex() == 1;
             Game.instance.updateFramebuffers();
             // adjust polygon offset to match new depth range
-            Game.graphics.polyOffset(-3f, -3f);
+            Game.graphics.polyOffset(-2f, -3f);
             Game.graphics.setDepthFunc();
             Game.gui.refreshMatrix(new Vector2I(Game.width, Game.height));
             // Depth state will be updated on next frame
@@ -294,11 +294,12 @@ public class VideoSettingsMenu : Menu {
             var old = settings.rendererMode;
             var index = rendererMode.getIndex();
             var newm = index < rendererModeValues.Count ? rendererModeValues[index] : RendererMode.Auto;
-            settings.rendererMode = newm;
             Game.renderer?.reloadRenderer(old, newm);
             Game.instance.updateFramebuffers();
             // REMESH THE ENTIRE WORLD
-            Screen.GAME_SCREEN.remeshWorld(Settings.instance.renderDistance);
+            if (Game.world != null) {
+                Screen.GAME_SCREEN.remeshWorld(Settings.instance.renderDistance);
+            }
         };
         rendererMode.tooltip = "World rendering backend:\n" +
             "Auto: The best one available for your hardware\n" +
@@ -354,8 +355,6 @@ public class VideoSettingsMenu : Menu {
     }
 
     public override void clear(double dt, double interp) {
-        Game.graphics.clearColor(Color4b.SlateGray);
-        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

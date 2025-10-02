@@ -6,6 +6,7 @@ namespace BlockGame.util;
 
 public enum ProfileSectionName {
     Events, // Input events, window events
+    Clear, // Clear screen, depth buffer
     Logic, // Update logic, world simulation
     World3D, // 3D world rendering  
     PostFX, // Post-processing, FXAA
@@ -15,7 +16,7 @@ public enum ProfileSectionName {
 }
 
 public record struct ProfileSection(ProfileSectionName section, float time) {
-    public const int SECTION_COUNT = 7;
+    public const int SECTION_COUNT = 8;
     
     public readonly ProfileSectionName section = section;
     public float time = time;
@@ -50,6 +51,7 @@ public record struct ProfileData {
 
     public static Color4b getColour(ProfileSectionName section) => section switch {
         ProfileSectionName.Events => new Color4b(150, 100, 255), // Purple
+        ProfileSectionName.Clear => new Color4b(100, 255, 200), // Light green
         ProfileSectionName.Logic => new Color4b(100, 150, 255), // Light blue
         ProfileSectionName.World3D => new Color4b(255, 100, 100), // Red
         ProfileSectionName.PostFX => new Color4b(255, 150, 0), // Orange
@@ -113,6 +115,7 @@ public class Profiler {
     
     public static string getSectionName(ProfileSectionName section) => section switch {
         ProfileSectionName.Events => "Events",
+        ProfileSectionName.Clear => "Clear",
         ProfileSectionName.Logic => "Logic",
         ProfileSectionName.World3D => "World3D", 
         ProfileSectionName.PostFX => "PostFX",

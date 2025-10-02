@@ -38,8 +38,6 @@ public class SettingsMenu : Menu {
     
     
     public override void clear(double dt, double interp) {
-        Game.graphics.clearColor(Color4b.SlateGray);
-        Game.graphics.clearDepth();
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     }
 

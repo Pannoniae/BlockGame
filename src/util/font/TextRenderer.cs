@@ -17,6 +17,8 @@ public class TextRenderer : IFontStashRenderer {
     public TextRenderer() {
         _textureManager = new BTexture2DManager();
         tb = Game.graphics.mainBatch;
+        // disable because it's mostly transparent and it fucks performance with drawtexture
+        tb.NoScreenSpace = true;
     }
 
     public void Draw(object texture, Vector2 pos, ref Matrix4x4 worldMatrix, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {

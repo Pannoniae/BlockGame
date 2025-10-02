@@ -822,7 +822,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         GL.ColorMask(true, true, true, true);
         //GL.DepthMask(false);
-        Game.graphics.setDepthFunc();
+        //Game.graphics.setDepthFunc();
 
         cd = 0;
         if (usingCMDL) {

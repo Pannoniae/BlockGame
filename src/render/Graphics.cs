@@ -55,6 +55,9 @@ public class Graphics : IDisposable {
     private int vao;
     public bool fullbright;
 
+    // samplers
+    public uint noMipmapSampler;
+
     /// <summary>
     /// A buffer of indices for the maximum amount of quads.
     /// </summary>
@@ -62,6 +65,8 @@ public class Graphics : IDisposable {
     public uint fatQuadIndicesLen;
     
     public int groupCount;
+
+    private bool blendFuncTint = true;
 
     public MatrixStack model = new MatrixStack().reversed();
     
@@ -83,6 +88,15 @@ public class Graphics : IDisposable {
     public void init() {
         idt = new InstantDrawTexture(1024);
         idt.setup();
+
+        // create sampler without mipmaps (is it faster?)
+        noMipmapSampler = GL.CreateSampler();
+        GL.SamplerParameter(noMipmapSampler, SamplerParameterI.WrapS, (int)GLEnum.ClampToEdge);
+        GL.SamplerParameter(noMipmapSampler, SamplerParameterI.WrapT, (int)GLEnum.ClampToEdge);
+        GL.SamplerParameter(noMipmapSampler, SamplerParameterI.MinFilter, (int)GLEnum.Nearest);
+        GL.SamplerParameter(noMipmapSampler, SamplerParameterI.MagFilter, (int)GLEnum.Nearest);
+        GL.SamplerParameter(noMipmapSampler, SamplerParameterF.MaxLod, 0);
+        GL.SamplerParameter(noMipmapSampler, SamplerParameterF.MinLod, 0);
     }
 
     public void clearColor(Color4b color) {
@@ -105,6 +119,9 @@ public class Graphics : IDisposable {
             GL.DepthFunc(DepthFunction.Lequal);
             GL.ClearDepth(1.0);
         }
+
+        Game.graphics.clearColor(Color4b.Black);
+        Game.graphics.clearDepth();
     }
 
     /// <summary>
@@ -136,7 +153,19 @@ public class Graphics : IDisposable {
     }
 
     public void setBlendFunc() {
-        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        if (blendFuncTint) {
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            blendFuncTint = false;
+        }
+    }
+
+    public void setBlendFuncTint() {
+        // destination is irrelevant so we can kind of "cheat" here
+        // we abuse blending to achieve tinting with DrawTextureNV
+        if (!blendFuncTint) {
+            GL.BlendFunc(BlendingFactor.ConstantColor, BlendingFactor.OneMinusSrcAlpha);
+            blendFuncTint = true;
+        }
     }
 
     public void setViewport(int x, int y, int width, int height) {

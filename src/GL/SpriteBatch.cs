@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Numerics;
 using Silk.NET.OpenGL.Legacy;
 using System.Runtime.InteropServices;
+using BlockGame.main;
 using BlockGame.util;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
@@ -56,12 +57,16 @@ public sealed class SpriteBatch : IDisposable {
     private ushort[] indices;
 
     // State
+    /**
+     * Disable the NV_draw_texture path if true, when the rendering happens with a world matrix instead of screen space.
+     */
+    public bool NoScreenSpace { get; set; } = false;
+
     public bool IsActive { get; private set; }
     public BatcherBeginMode BeginMode { get; private set; }
     public bool IsDisposed { get; private set; }
 
     public SpriteBatch(Silk.NET.OpenGL.Legacy.GL gl, uint initialBatchCapacity = InitialBatchItemsCapacity) {
-
         GL = gl;
 
         // Initialize OpenGL resources
@@ -131,7 +136,7 @@ public sealed class SpriteBatch : IDisposable {
         IsActive = false;
         IsDisposed = false;
     }
-    
+
     public void setShader(Shader newShader) {
         ObjectDisposedException.ThrowIf(IsDisposed, nameof(SpriteBatch));
         ArgumentNullException.ThrowIfNull(newShader);
@@ -141,7 +146,7 @@ public sealed class SpriteBatch : IDisposable {
 
         // Rebind the VAO and set the texture uniform
         GL.BindVertexArray(vao);
-        
+
         // Get uniform locations
         textureUniform = shader.getUniformLocation("tex");
         shader.use();
@@ -473,6 +478,11 @@ public sealed class SpriteBatch : IDisposable {
         if ((BeginMode & (BatcherBeginMode)1) == (BatcherBeginMode)1)
             Array.Sort(batchItems, 0, (int)batchItemCount);
 
+        if (Game.hasNVDT && !NoScreenSpace) {
+            nvFlush(sameTextureEnsured);
+            return;
+        }
+
         // Bind the VAO and shader
         GL.BindVertexArray(vao);
         shader.use();
@@ -539,6 +549,196 @@ public sealed class SpriteBatch : IDisposable {
         batchItemCount = 0;
     }
 
+    private void nvFlush(bool sameTextureEnsured) {
+        // only SortByTexture can reorder freely - all other modes need submission order preserved - is this right?
+        bool canReorder = BeginMode == BatcherBeginMode.SortByTexture || BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly || sameTextureEnsured || BeginMode == BatcherBeginMode.Deferred;
+
+        // todo this might break shit so if the texture order is fucked, adjust canReorder
+        if (canReorder) {
+            nvFlushSeparated();
+        } else {
+            nvFlushOrdered();
+        }
+
+        batchItemCount = 0;
+    }
+
+    private void nvFlushSeparated() {
+        // draw all non-tinted with NV path
+        for (uint i = 0; i < batchItemCount; i++) {
+            SpriteBatchItem item = batchItems[i];
+            if (item.VertexTL.Color != Color4b.White) continue;
+
+            BTexture2D tex = item.Texture!;
+            var sh = Game.height;
+            var x0 = item.VertexTL.Position.X;
+            var y0 = sh - item.VertexTL.Position.Y;
+            var x1 = item.VertexBR.Position.X;
+            var y1 = sh - item.VertexBR.Position.Y;
+            var z = item.VertexTL.Position.Z;
+
+            Game.nvdt.DrawTexture(tex.handle, Game.graphics.noMipmapSampler,
+                x0, y0, x1, y1, z,
+                item.VertexTL.TexCoords.X, item.VertexTL.TexCoords.Y,
+                item.VertexBR.TexCoords.X, item.VertexBR.TexCoords.Y);
+        }
+
+        // count tinted items
+        uint tintedCount = 0;
+        for (uint i = 0; i < batchItemCount; i++) {
+            if (batchItems[i].VertexTL.Color != Color4b.White) tintedCount++;
+        }
+
+        // draw all tinted with shader path, batched by texture
+        if (tintedCount > 0) {
+            GL.BindVertexArray(vao);
+            shader.use();
+            EnsureBufferCapacity(tintedCount);
+
+            // collect all tinted vertices
+            uint vertexIndex = 0;
+            for (uint i = 0; i < batchItemCount; i++) {
+                SpriteBatchItem item = batchItems[i];
+                if (item.VertexTL.Color == Color4b.White) continue;
+
+                vertices[vertexIndex++] = item.VertexTL;
+                vertices[vertexIndex++] = item.VertexBL;
+                vertices[vertexIndex++] = item.VertexBR;
+                vertices[vertexIndex++] = item.VertexTR;
+            }
+
+            // upload vertices
+            unsafe {
+                fixed (VertexColorTexture* ptr = vertices) {
+                    GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                    GL.InvalidateBufferData(vbo);
+                    GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
+                        (uint)(vertexIndex * sizeof(VertexColorTexture)), ptr);
+                }
+            }
+
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+
+            // draw batched by texture
+            uint itemIdx = 0;
+            while (itemIdx < batchItemCount) {
+                // skip non-tinted
+                while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color4b.White) {
+                    itemIdx++;
+                }
+                if (itemIdx >= batchItemCount) break;
+
+                // found a tinted item - batch all consecutive tinted items with same texture
+                BTexture2D tex = batchItems[itemIdx].Texture!;
+                uint batchStart = itemIdx;
+
+                while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color4b.White
+                       && batchItems[itemIdx].Texture == tex) {
+                    itemIdx++;
+                }
+
+                uint batchCount = itemIdx - batchStart;
+                tex.bind();
+
+                unsafe {
+                    GL.DrawElements(PrimitiveType.Triangles, batchCount * 6,
+                        DrawElementsType.UnsignedShort, (void*)((batchStart - countWhiteItemsBefore(batchStart)) * 6 * sizeof(ushort)));
+                }
+            }
+        }
+    }
+
+    private uint countWhiteItemsBefore(uint index) {
+        uint count = 0;
+        for (uint i = 0; i < index; i++) {
+            if (batchItems[i].VertexTL.Color == Color4b.White) count++;
+        }
+        return count;
+    }
+
+    private void nvFlushOrdered() {
+        uint itemIdx = 0;
+
+        while (itemIdx < batchItemCount) {
+            // find run of non-tinted
+            uint runStart = itemIdx;
+            while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color4b.White) {
+                itemIdx++;
+            }
+
+            // draw non-tinted run with NV path
+            if (itemIdx > runStart) {
+                for (uint i = runStart; i < itemIdx; i++) {
+                    SpriteBatchItem item = batchItems[i];
+                    BTexture2D tex = item.Texture!;
+                    var sh = Game.height;
+
+                    Game.nvdt.DrawTexture(tex.handle, Game.graphics.noMipmapSampler,
+                        item.VertexTL.Position.X, sh - item.VertexTL.Position.Y,
+                        item.VertexBR.Position.X, sh - item.VertexBR.Position.Y,
+                        item.VertexTL.Position.Z,
+                        item.VertexTL.TexCoords.X, item.VertexTL.TexCoords.Y,
+                        item.VertexBR.TexCoords.X, item.VertexBR.TexCoords.Y);
+                }
+            }
+
+            // find run of tinted
+            runStart = itemIdx;
+            while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color4b.White) {
+                itemIdx++;
+            }
+
+            // draw tinted run with shader path, batched by texture
+            if (itemIdx > runStart) {
+                GL.BindVertexArray(vao);
+                shader.use();
+                EnsureBufferCapacity(itemIdx - runStart);
+
+                // collect vertices
+                uint vertexIndex = 0;
+                for (uint i = runStart; i < itemIdx; i++) {
+                    SpriteBatchItem item = batchItems[i];
+                    vertices[vertexIndex++] = item.VertexTL;
+                    vertices[vertexIndex++] = item.VertexBL;
+                    vertices[vertexIndex++] = item.VertexBR;
+                    vertices[vertexIndex++] = item.VertexTR;
+                }
+
+                // upload vertices
+                unsafe {
+                    fixed (VertexColorTexture* ptr = vertices) {
+                        GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                        GL.InvalidateBufferData(vbo);
+                        GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
+                            (uint)(vertexIndex * sizeof(VertexColorTexture)), ptr);
+                    }
+                }
+
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+
+                // batch by texture
+                uint texBatchStart = runStart;
+                uint vertOffset = 0;
+                while (texBatchStart < itemIdx) {
+                    BTexture2D tex = batchItems[texBatchStart].Texture!;
+                    uint texBatchEnd = texBatchStart + 1;
+                    while (texBatchEnd < itemIdx && batchItems[texBatchEnd].Texture == tex) {
+                        texBatchEnd++;
+                    }
+
+                    tex.bind();
+                    unsafe {
+                        GL.DrawElements(PrimitiveType.Triangles, (texBatchEnd - texBatchStart) * 6,
+                            DrawElementsType.UnsignedShort, (void*)(vertOffset * sizeof(ushort)));
+                    }
+
+                    vertOffset += (texBatchEnd - texBatchStart) * 6;
+                    texBatchStart = texBatchEnd;
+                }
+            }
+        }
+    }
+
     private uint FindDifferentTexture(BTexture2D currentTexture, uint startIndex) {
         while (startIndex < batchItemCount && batchItems[startIndex].Texture == currentTexture)
             startIndex++;
@@ -562,7 +762,7 @@ public sealed class SpriteBatch : IDisposable {
                         (nuint)(newCapacity * sizeof(VertexColorTexture)),
                         ptr, BufferStorageMask.DynamicStorageBit);
                     GL.ObjectLabel(ObjectIdentifier.Buffer, vbo, uint.MaxValue, "SpriteBatch Vertex Buffer");
-                
+
                     // Update binding with new buffer
                     GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
                 }
@@ -591,6 +791,14 @@ public sealed class SpriteBatch : IDisposable {
                     }
                 }
             }
+        }
+    }
+
+    private void nvEnsureBufferCapacity(uint batchCount) {
+        var requiredVertexCount = batchCount * 4;
+        if (vertices.Length < requiredVertexCount) {
+            uint newCapacity = Math.Min(NextPowerOfTwo(requiredVertexCount), (int)MaxBufferCapacity);
+            Array.Resize(ref vertices, (int)newCapacity);
         }
     }
 
