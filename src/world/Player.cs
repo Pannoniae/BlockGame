@@ -537,7 +537,8 @@ public class Player : Entity {
                 return;
             }
 
-            var block = Block.get(world.getBlock(pos));
+            var val = world.getBlockRaw(pos);
+            var block = Block.get(val.getID());
             if (block == null || block.id == 0) {
                 // block no longer exists
                 isBreaking = false;
@@ -559,10 +560,11 @@ public class Player : Entity {
                 block.shatter(world, pos.X, pos.Y, pos.Z);
 
                 // get block drop and spawn item entity in survival mode
-                var (dropItem, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, 0);
-                if (dropCount > 0) {
+                var metadata = val.getMetadata();
+                var (dropItem, meta, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, metadata);
+                    if (dropCount > 0) {
                     var itemEntity = new ItemEntity(world);
-                    itemEntity.stack = new ItemStack(dropItem, dropCount);
+                    itemEntity.stack = new ItemStack(dropItem, dropCount, metadata);
                     itemEntity.position = new Vector3D(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5);
 
                     // add some random velocity

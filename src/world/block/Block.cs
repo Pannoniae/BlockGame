@@ -838,8 +838,8 @@ public class Block {
      * Returns the item drops when this block is broken.
      * By default, blocks drop themselves as an item.
      */
-    public virtual (Item item, int count) getDrop(World world, int x, int y, int z, byte metadata) {
-        return (Item.block(id), 1);
+    public virtual (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        return (Item.block(id), metadata, 1);
     }
 
     public virtual void shatter(World world, int x, int y, int z) {
