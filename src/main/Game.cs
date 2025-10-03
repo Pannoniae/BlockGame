@@ -1079,8 +1079,8 @@ public partial class Game {
 
         // Set viewport for SSAA/MSAA rendering
         if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
-            var ssaaWidth = width * Settings.instance.effectiveScale;
-            var ssaaHeight = height * Settings.instance.effectiveScale;
+            var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+            var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
             GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
         }
 
@@ -1102,8 +1102,8 @@ public partial class Game {
 
         profiler.section(ProfileSectionName.PostFX);
         if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
-            var ssaaWidth = width * Settings.instance.effectiveScale;
-            var ssaaHeight = height * Settings.instance.effectiveScale;
+            var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+            var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
 
             // Handle MSAA resolve if needed
             if (Settings.instance.msaa > 1) {

@@ -126,8 +126,8 @@ public partial class Game {
             height = 12;
         }
 
-        var ssaaWidth = width * Settings.instance.effectiveScale;
-        var ssaaHeight = height * Settings.instance.effectiveScale;
+        var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+        var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
         var samples = Settings.instance.msaa;
 
         //GL.Viewport(0, 0, (uint)ssaaWidth, (uint)ssaaHeight);
@@ -166,8 +166,9 @@ public partial class Game {
             GL.TextureStorage2D(resolveTex, 1, SizedInternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureMaxLevel, 0);
-            GL.TextureParameter(resolveTex, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-            GL.TextureParameter(resolveTex, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+            var filter = Settings.instance.resolutionScaleLinear ? (int)GLEnum.Linear : (int)GLEnum.Nearest;
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureMinFilter, filter);
+            GL.TextureParameter(resolveTex, TextureParameterName.TextureMagFilter, filter);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
             GL.TextureParameter(resolveTex, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 
@@ -187,8 +188,9 @@ public partial class Game {
             GL.TextureStorage2D(FBOtex, 1, SizedInternalFormat.Rgba8, (uint)ssaaWidth, (uint)ssaaHeight);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureMaxLevel, 0);
-            GL.TextureParameter(FBOtex, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
-            GL.TextureParameter(FBOtex, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+            var filter = Settings.instance.resolutionScaleLinear ? (int)GLEnum.Linear : (int)GLEnum.Nearest;
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureMinFilter, filter);
+            GL.TextureParameter(FBOtex, TextureParameterName.TextureMagFilter, filter);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
             GL.TextureParameter(FBOtex, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
 

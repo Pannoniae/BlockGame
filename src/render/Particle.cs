@@ -9,7 +9,6 @@ using Molten.DoublePrecision;
 namespace BlockGame.render;
 
 public class Particle {
-    
     public World world;
 
     /** current position */
@@ -29,7 +28,7 @@ public class Particle {
 
     /** elapsed time this particle lived */
     public int age;
-    
+
     /** maximum age in ticks */
     public int maxAge;
 
@@ -47,12 +46,13 @@ public class Particle {
 
     /** texture size on particle (UV scale) */
     public Vector2 uvsize;
-    
+
     public bool noGravity;
-    
+
 
     /** collision detection cache */
     private readonly List<AABB> collisionTargets = [];
+
     private readonly List<Vector3I> collisionTargetsList = [];
     private static readonly List<AABB> AABBList = [];
 
@@ -61,6 +61,30 @@ public class Particle {
         this.position = position;
         this.prevPosition = position;
         velocity = Vector3D.Zero;
+    }
+
+    /**
+     * BB stands for basic bitch
+     */
+    public static Vector3 bbMotion() {
+        return new Vector3(
+            (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
+            (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
+            (Game.clientRandom.NextSingle() - 0.5f) * 0.2f
+        );
+    }
+
+    /**
+     * ABB stands for...
+     */
+    public static Vector3 abbMotion(Vector3 direction) {
+        var motion = bbMotion() + direction;
+        var s = Game.clientRandom.NextSingle();
+        s *= s;
+        var speed = (s + 1);
+        motion *= speed;
+        motion.Y += 0.15f;
+        return motion;
     }
 
     private AABB calcAABB(Vector3D pos) {
@@ -126,6 +150,7 @@ public class Particle {
                 else if (velocity.X < 0 && aabb.x0 <= blockAABB.x1) {
                     position.X += blockAABB.x1 - aabb.x0;
                 }
+
                 velocity.X = 0;
             }
         }
@@ -141,6 +166,7 @@ public class Particle {
                 else if (velocity.Z < 0 && aabb.z0 <= blockAABB.z1) {
                     position.Z += blockAABB.z1 - aabb.z0;
                 }
+
                 velocity.Z = 0;
             }
         }
@@ -162,17 +188,16 @@ public class Particle {
 }
 
 public class FlameParticle : Particle {
-
     private Vector2 ssize;
-    
+
     public FlameParticle(World world, Vector3D position)
         : base(world, position) {
         size = new Vector2(3 / 24f, 6 / 24f);
         ssize = size;
         maxAge = (int)(12f / (Game.clientRandom.NextSingle() + 0.25f) + 5f) * 4;
         noGravity = true;
-        
-        
+
+
         // texture maths
         texture = "textures/particle.png";
         u = UVPair.texCoords(Game.textures.particleTex, 0, 10).X;
@@ -186,7 +211,7 @@ public class FlameParticle : Particle {
         const float f = 0.16f;
         // TODO COMMENT THIS BACK IN WHEN READY
         size = ssize * (1 - (age / (float)maxAge) * f);
-        
+
         // change texture frame
         int frame = (int)(age / (double)maxAge * 4);
         u = UVPair.texCoords(Game.textures.particleTex, frame * 4, 10).X;

@@ -39,6 +39,8 @@ public class Settings {
     public int msaaSamples = 1; // 1, 2, 4, 8, 16, 32
     public int ssaaScale = 1; // 1, 2 (2x2), 4 (4x4), 8 (8x8)
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
+    public float resolutionScale = 1.0f; // 0.25, 0.5, 0.75, 1.0
+    public bool resolutionScaleLinear = true; // true = linear filtering, false = nearest
     public bool fullscreen = false;
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
     public bool frustumCulling = true;
@@ -56,7 +58,7 @@ public class Settings {
     /// <summary>
     /// Whether to use framebuffer effects.
     /// </summary>
-    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || getActualRendererMode() == RendererMode.CommandList || crtEffect || reverseZ;
+    public bool framebufferEffects => fxaaEnabled || msaaSamples > 1 || ssaaScale > 1 || resolutionScale != 1.0f || getActualRendererMode() == RendererMode.CommandList || crtEffect || reverseZ;
     
     /// <summary>
     /// Whether FXAA is enabled.
@@ -152,6 +154,8 @@ public class Settings {
         tag.addInt("msaaSamples", msaaSamples);
         tag.addInt("ssaaScale", ssaaScale);
         tag.addInt("ssaaMode", ssaaMode);
+        tag.addFloat("resolutionScale", resolutionScale);
+        tag.addByte("resolutionScaleLinear", (byte)(resolutionScaleLinear ? 1 : 0));
         tag.addByte("fullscreen", (byte)(fullscreen ? 1 : 0));
         tag.addByte("smoothDayNight", (byte)(smoothDayNight ? 1 : 0));
         tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
@@ -182,6 +186,12 @@ public class Settings {
             msaaSamples = tag.getInt("msaaSamples");
             ssaaScale = tag.getInt("ssaaScale");
             ssaaMode = tag.getInt("ssaaMode");
+            if (tag.has("resolutionScale")) {
+                resolutionScale = tag.getFloat("resolutionScale");
+            }
+            if (tag.has("resolutionScaleLinear")) {
+                resolutionScaleLinear = tag.getByte("resolutionScaleLinear") != 0;
+            }
             fullscreen = tag.getByte("fullscreen") != 0;
             smoothDayNight = tag.getByte("smoothDayNight") != 0;
             frustumCulling = tag.getByte("frustumCulling") != 0;

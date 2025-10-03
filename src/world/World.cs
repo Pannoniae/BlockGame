@@ -391,7 +391,7 @@ public partial class World : IDisposable {
     public Color4b getSkyColour(int ticks) {
         float e = getSunElevation(ticks);
         float angle = getSunAngle(ticks);
-        
+
         var nightSky = new Color4b(5, 5, 15);
         var daySky = new Color4b(100, 180, 255);
 
@@ -421,7 +421,7 @@ public partial class World : IDisposable {
 
         var nightHorizon = new Color4b(15, 15, 40);
         var dayHorizon = new Color4b(135, 206, 235);
-        
+
         const float NIGHT_START = -18f * MathF.PI / 180f;
         const float TWILIGHT_START = -12f * MathF.PI / 180f;
         const float GOLDEN_START = -0f * MathF.PI / 180f;
@@ -448,15 +448,15 @@ public partial class World : IDisposable {
                 isSunset = 0.5f - (angle - 3f * MathF.PI / 2f) / (MathF.PI / 2f) * 0.5f;
                 break;
         }
-        
+
         var twilightColor = Color4b.Lerp(
             new Color4b(80, 40, 100), // dawn purple
             new Color4b(120, 50, 90), // sunset purple=pink
             isSunset);
 
         var goldenColor = Color4b.Lerp(
-            new Color4b(255, 140, 80),   // dawn orange
-            new Color4b(255, 80, 50),    // sunset red-orange-ish thingie
+            new Color4b(255, 140, 80), // dawn orange
+            new Color4b(255, 80, 50), // sunset red-orange-ish thingie
             isSunset);
 
         switch (e) {
@@ -508,7 +508,7 @@ public partial class World : IDisposable {
                 darken = 11f;
                 break;
         }
-        
+
         return !Settings.instance.smoothDayNight ? (float)Math.Round(darken) : darken;
     }
 
@@ -520,7 +520,7 @@ public partial class World : IDisposable {
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         var ctr = 0;
         updateChunkloading(start, loading: false, ref ctr);
-        
+
         particles.update(dt);
     }
 
@@ -573,7 +573,6 @@ public partial class World : IDisposable {
         // yes I was an idiot
         var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
         while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
-
             // check if queue is stuck and shuffle only when needed
             var currentQueueSize = chunkLoadQueue.Count;
             if (lastQueueSize == currentQueueSize) {
@@ -583,7 +582,8 @@ public partial class World : IDisposable {
                     sortChunksRandom();
                     stuckIterations = 0;
                 }
-            } else {
+            }
+            else {
                 // queue is making progress, reset stuck counter
                 stuckIterations = 0;
                 lastQueueSize = currentQueueSize;
@@ -883,7 +883,7 @@ public partial class World : IDisposable {
 
         //var blockPos = new Vector3I(node.x, node.y, node.z);
         var level = node.value;
-        
+
         // if null or destroyed, chunk got unloaded meanwhile
         if (node.chunk == null! || node.chunk.destroyed) {
             return;
@@ -994,7 +994,6 @@ public partial class World : IDisposable {
         chunkList.Remove(chunk);
         chunks.Remove(coord);
         chunk.destroyChunk();
-
     }
 
     private void ReleaseUnmanagedResources() {

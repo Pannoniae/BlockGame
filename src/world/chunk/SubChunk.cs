@@ -29,6 +29,9 @@ public class SubChunk {
     /// </summary>
     public bool isEmpty => blocks.isEmpty();
 
+    /** Returns true if this subchunk has been meshed (has VAO data) */
+    public bool isMeshed() => vao != null;
+
     public int worldX => coord.x << 4;
     public int worldY => coord.y << 4;
     public int worldZ => coord.z << 4;

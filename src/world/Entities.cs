@@ -18,6 +18,7 @@ public class Entities {
     public const int ENTITYCOUNT = 3;
 
     public static Type[] entityTypes = new Type[ENTITYCOUNT];
+    public static bool[] blocksPlacement = new bool[ENTITYCOUNT];
 
     public static Type? getType(int id) {
         if (id is < 0 or >= ENTITYCOUNT) {
@@ -31,5 +32,13 @@ public class Entities {
         entityTypes[COW] = typeof(Cow);
         entityTypes[PLAYER] = typeof(Player);
         entityTypes[ITEM_ENTITY] = typeof(ItemEntity);
+
+        // by default, entities block placement
+        for (int i = 0; i < ENTITYCOUNT; i++) {
+            blocksPlacement[i] = true;
+        }
+
+        // item entities don't block placement
+        blocksPlacement[ITEM_ENTITY] = false;
     }
 }

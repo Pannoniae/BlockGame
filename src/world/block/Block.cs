@@ -875,7 +875,7 @@ public class Block {
                     var particlePosition = new Vector3D(particleX, particleY, particleZ);
 
                     var size = Game.clientRandom.NextSingle() * 0.1f + 0.05f;
-                    var ttl = (int)(3f / (Game.clientRandom.NextSingle() + 0.05f));
+                    var ttl = (int)(5f / (Game.clientRandom.NextSingle() + 0.05f));
 
                     switch (renderType[id]) {
                         // if custom texture, get that
@@ -896,24 +896,12 @@ public class Block {
                     float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f); 
                     float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
 
-                    // the closer to the centre, the less the motion
-                    // dx gives a number between -0.5 and 0.5 -> remap to between 0.5 and 3
+                    // break particles: explode outward from center, biased upward
                     var dx = (particleX - x - 0.5f);
                     var dy = (particleY - y - 0.5f);
                     var dz = (particleZ - z - 0.5f);
 
-
-                    // between -0.7 and 0.7
-                    var motion = new Vector3(dx * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
-                        dy * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f,
-                        dz * 3 + (Game.clientRandom.NextSingle() - 0.5f) * 0.2f);
-
-                    var s = Game.clientRandom.NextSingle();
-                    s *= s;
-                    var speed = (s + 1) * 0.8f;
-
-                    motion *= speed;
-                    motion.Y += 0.15f;
+                    var motion = Particle.abbMotion(new Vector3(dx * 2, dy * 2 + 0.6f, dz * 2));
 
                     var particle = new Particle(
                         world,
@@ -931,7 +919,100 @@ public class Block {
             }
         }
     }
-    
+
+    /** mining particles for when block is being broken */
+    public virtual void shatter(World world, int x, int y, int z, RawDirection hitFace) {
+        UVPair uv;
+
+        if (model == null || model.faces.Length == 0) {
+            var custom = renderType[id] == RenderType.CUSTOM || renderType[id] == RenderType.CUBE_DYNTEXTURE;
+            if (!custom && (uvs == null || uvs.Length == 0)) {
+                return;
+            }
+        }
+
+        // spawn fewer particles for mining (2-4 particles)
+        var count = Game.clientRandom.Next(2, 5);
+
+        for (var i = 0; i < count; i++) {
+            // spawn particles just outside the hit face to avoid collision with block
+            float particleX = 0;
+            float particleY = 0;
+            float particleZ = 0;
+
+            const float offset = 0.08f;
+
+            switch (hitFace) {
+                case RawDirection.UP:
+                    particleX = x + Game.clientRandom.NextSingle();
+                    particleY = y + 1 + offset;
+                    particleZ = z + Game.clientRandom.NextSingle();
+                    break;
+                case RawDirection.DOWN:
+                    particleX = x + Game.clientRandom.NextSingle();
+                    particleY = y - offset;
+                    particleZ = z + Game.clientRandom.NextSingle();
+                    break;
+                case RawDirection.NORTH:
+                    particleX = x + Game.clientRandom.NextSingle();
+                    particleY = y + Game.clientRandom.NextSingle();
+                    particleZ = z + 1 + offset;
+                    break;
+                case RawDirection.SOUTH:
+                    particleX = x + Game.clientRandom.NextSingle();
+                    particleY = y + Game.clientRandom.NextSingle();
+                    particleZ = z - offset;
+                    break;
+                case RawDirection.EAST:
+                    particleX = x + 1 + offset;
+                    particleY = y + Game.clientRandom.NextSingle();
+                    particleZ = z + Game.clientRandom.NextSingle();
+                    break;
+                case RawDirection.WEST:
+                    particleX = x - offset;
+                    particleY = y + Game.clientRandom.NextSingle();
+                    particleZ = z + Game.clientRandom.NextSingle();
+                    break;
+            }
+
+            var particlePosition = new Vector3D(particleX, particleY, particleZ);
+            var size = Game.clientRandom.NextSingle() * 0.08f + 0.04f;
+            var ttl = (int)(14f / (Game.clientRandom.NextSingle() + 0.05f));
+
+            switch (renderType[id]) {
+                case RenderType.CUBE_DYNTEXTURE:
+                case RenderType.CUSTOM:
+                    var meta = world.getBlockMetadata(x, y, z);
+                    uv = getTexture(0, meta);
+                    break;
+                case RenderType.MODEL:
+                    uv = uvs[Game.clientRandom.Next(0, uvs.Length)];
+                    break;
+                default:
+                    uv = uvs[0];
+                    break;
+            }
+
+            float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f);
+            float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
+
+            // mining particles: fall down with slight horizontal drift
+            var rx = (Game.clientRandom.NextSingle() - 0.5f) * 0.3f;
+            var rz = (Game.clientRandom.NextSingle() - 0.5f) * 0.3f;
+            var motion = Particle.abbMotion(new Vector3(rx, 0.5f, rz));
+
+            var particle = new Particle(world, particlePosition);
+            particle.texture = "textures/blocks.png";
+            particle.u = u;
+            particle.v = v;
+            particle.size = new Vector2(size);
+            particle.uvsize = new Vector2(1 / 16f * size);
+            particle.maxAge = ttl;
+            world.particles.add(particle);
+            particle.velocity = motion.toVec3D();
+        }
+    }
+
     /**
      * Returns whether a face should be rendered.
      */

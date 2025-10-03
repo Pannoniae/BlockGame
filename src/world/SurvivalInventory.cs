@@ -112,6 +112,7 @@ public class SurvivalInventory : Inventory {
                 var canAdd = Math.Min(remaining, maxStackSize - slot.quantity);
                 if (canAdd > 0) {
                     slot.quantity += canAdd;
+                    shiny[i] = 1.0f; // trigger pop animation
                     remaining -= canAdd;
                     if (remaining <= 0) {
                         return true;
@@ -125,6 +126,7 @@ public class SurvivalInventory : Inventory {
             if (slots[i] == ItemStack.EMPTY) {
                 var canAdd = Math.Min(remaining, maxStackSize);
                 slots[i] = new ItemStack(stack.id, canAdd, stack.metadata);
+                shiny[i] = 1.0f; // trigger pop animation
                 remaining -= canAdd;
                 if (remaining <= 0) {
                     return true;

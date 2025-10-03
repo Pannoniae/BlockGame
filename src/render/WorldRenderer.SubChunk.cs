@@ -49,7 +49,7 @@ public partial class WorldRenderer {
     public void drawOpaque(SubChunk subChunk, Vector3D cameraPos) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
-        if (subChunk.hasRenderOpaque) {
+        if (vao != null && subChunk.hasRenderOpaque) {
             vao.bind();
             //GL.PolygonMode(TriangleFace.FrontAndBack, PolygonMode.Line);
             setUniformPos(coord, worldShader, cameraPos);
@@ -62,7 +62,7 @@ public partial class WorldRenderer {
     public void drawTransparent(SubChunk subChunk, Vector3D cameraPos) {
         var coord = subChunk.coord;
         var watervao = subChunk.watervao;
-        if (subChunk.hasRenderTranslucent) {
+        if (watervao != null && subChunk.hasRenderTranslucent) {
             watervao.bind();
             setUniformPosWater(coord, waterShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
@@ -73,7 +73,7 @@ public partial class WorldRenderer {
     public void drawTransparentDummy(SubChunk subChunk, Vector3D cameraPos) {
         var coord = subChunk.coord;
         var watervao = subChunk.watervao;
-        if (subChunk.hasRenderTranslucent) {
+        if (watervao != null && subChunk.hasRenderTranslucent) {
             watervao.bind();
             setUniformPosDummy(coord, dummyShader, cameraPos);
             uint renderedTransparentVerts = watervao.render();
@@ -84,7 +84,7 @@ public partial class WorldRenderer {
     public static void drawOpaqueUBO(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
-        if (subChunk.hasRenderOpaque) {
+        if (vao != null && subChunk.hasRenderOpaque) {
             vao.bind();
 
             uint renderedVerts = vao.renderBaseInstance(idx);
@@ -96,7 +96,7 @@ public partial class WorldRenderer {
     public static void drawTransparentUBO(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var watervao = subChunk.watervao;
-        if (subChunk.hasRenderTranslucent) {
+        if (watervao != null && subChunk.hasRenderTranslucent) {
             watervao.bind();
 
             uint renderedTransparentVerts = watervao.renderBaseInstance(idx);
@@ -107,7 +107,7 @@ public partial class WorldRenderer {
     public static void drawOpaqueCMDL(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var vao = subChunk.vao;
-        if (subChunk.hasRenderOpaque) {
+        if (vao != null && subChunk.hasRenderOpaque) {
             vao.addCMDLCommand();
 
             uint renderedVerts = vao.renderCMDL(idx);
@@ -119,7 +119,7 @@ public partial class WorldRenderer {
     public static void drawTransparentCMDL(SubChunk subChunk, uint idx) {
         var coord = subChunk.coord;
         var watervao = subChunk.watervao;
-        if (subChunk.hasRenderTranslucent) {
+        if (watervao != null && subChunk.hasRenderTranslucent) {
             watervao.addCMDLCommand();
 
             uint renderedTransparentVerts = watervao.renderCMDL(idx);

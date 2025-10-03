@@ -9,6 +9,7 @@ using BlockGame.world.entity;
 using BlockGame.world.item;
 using Molten;
 using Molten.DoublePrecision;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render.model;
 
@@ -36,17 +37,24 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
         mat.push();
 
+        // translate so it's not rendered at centre but the corner
+        var o = 0.25f / 2f;
+        mat.translate(0, o, 0);
+
         // apply hover animation
-        var hoverOffset = itemEntity.hover;
-        mat.translate(0, hoverOffset, 0);
+        var age = itemEntity.age + (float)interp;
+        var ho =  float.Sin(age * (1 / 16f)) * (1 / 32f);
+        mat.translate(0, ho, 0);
 
         // rotate slowly for visual appeal:tm:
-        var rotation = (itemEntity.age + (float)interp) * 2f;
-        mat.rotate(rotation, 0, 1, 0);
+        var rot = (itemEntity.age + (float)interp) * 2f;
+        mat.rotate(rot, 0, 1, 0);
 
         // scale down the item
-        const float itemScale = 0.25f;
+        float itemScale = item.isBlock() ? 0.25f : 0.4f;
         mat.scale(itemScale, itemScale, itemScale);
+
+
 
         if (item.isBlock()) {
             // render as small block
@@ -76,7 +84,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         Game.graphics.tex(0, Game.textures.blockTexture);
         Game.blockRenderer.setupStandalone();
 
-        // center the block around origin
+        // centre the block around origin
         mat.push();
         mat.translate(-0.5f, -0.5f, -0.5f);
 
@@ -106,9 +114,6 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
     }
 
     private void renderItemAsTexture(MatrixStack mat, ItemEntity itemEntity, double interp) {
-        if (vao == null) return;
-
-        vertices.Clear();
 
         var item = itemEntity.stack.getItem();
         var texUV = item.getTexture(itemEntity.stack);
@@ -117,33 +122,36 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         var pos = itemEntity.position.toBlockPos();
         var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
 
-        Game.graphics.tex(0, Game.textures.itemTexture);
+
+
         Game.blockRenderer.setupStandalone();
 
-        // create 3D flat item card
-        renderItemCard(texUV, l);
+        // offset -0.5 so it's centred on origin
+        mat.push();
+        // NOZ
+        mat.translate(-0.5f, -0.5f, 0f);
 
         if (vertices.Count > 0) {
 
-            var itemRenderer = Game.graphics.idt;
+            var idt = Game.graphics.idt;
 
-            // upload and render vertices
-            vao.bind();
-            Game.renderer.bindQuad();
-            vao.upload(CollectionsMarshal.AsSpan(vertices));
+            idt.begin(PrimitiveType.Quads);
 
-            Game.graphics.instantTextureShader.use();
+            idt.setTexture(Game.textures.itemTexture);
 
-            itemRenderer.model(mat);
-            itemRenderer.view(Game.camera.getViewMatrix(interp));
-            itemRenderer.proj(Game.camera.getProjectionMatrix());
-            itemRenderer.applyMat();
+            Game.player.handRenderer.renderItemInHand(itemEntity.stack, WorldRenderer.getLightColour((byte)(l >> 4), (byte)(l & 15)));
 
-            vao.render();
+            idt.model(mat);
+            idt.view(Game.camera.getViewMatrix(interp));
+            idt.proj(Game.camera.getProjectionMatrix());
+            idt.applyMat();
+
+            idt.end();
         }
+        mat.pop();
     }
 
-    private void renderItemCard(UVPair texUV, byte light) {
+    private void renderItem(UVPair texUV, byte light) {
         const float thickness = 1 / 16f;
 
         // unpack light and look up in lightmap
@@ -156,18 +164,12 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         var u1 = UVPair.texU(texUV.u + 1);
         var v1 = UVPair.texV(texUV.v + 1);
 
-        // center the card around origin by offsetting from -0.5 to 0.5
-        const float halfSize = 0.5f;
-        const float halfThickness = thickness / 2f;
-
         // front face
-        addQuad(-halfSize, -halfSize, -halfThickness, -halfSize, halfSize, -halfThickness,
-            halfSize, halfSize, -halfThickness, halfSize, -halfSize, -halfThickness,
+        addQuad(0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0,
             u0, v1, u0, v0, u1, v0, u1, v1, lightVal.R, lightVal.G, lightVal.B);
 
         // back face
-        addQuad(halfSize, -halfSize, halfThickness, halfSize, halfSize, halfThickness,
-            -halfSize, halfSize, halfThickness, -halfSize, -halfSize, halfThickness,
+        addQuad(1, 0, thickness, 1, 1, thickness, 0, 1, thickness, 0, 0, thickness,
             u1, v1, u1, v0, u0, v0, u0, v1, lightVal.R, lightVal.G, lightVal.B);
     }
 

@@ -15,8 +15,8 @@ public class ItemSlot {
     public const int ITEMSIZE = 16;
     public const int ITEMSIZEHALF = 8;
 
-    protected readonly Inventory? inventory;
-    protected readonly int index;
+    public readonly Inventory? inventory;
+    public readonly int index;
 
     public Rectangle rect;
     public Vector2I itemPos;

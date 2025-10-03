@@ -1037,9 +1037,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.enableFog(false);
         Game.graphics.tex(0, Game.textures.blockTexture);
         idt.begin(PrimitiveType.Quads);
-
-        //Console.Out.WriteLine(breakVertices[0].x + ", " + breakVertices[0].y + ", " + breakVertices[0].z + " :: " + breakVertices[0].u + ", " + breakVertices[0].v);
-
         foreach (var vertex in breakVertices) {
             idt.addVertex(vertex);
         }

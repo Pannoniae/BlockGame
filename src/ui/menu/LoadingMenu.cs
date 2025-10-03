@@ -151,9 +151,9 @@ public class LoadingMenu : Menu, ProgressUpdater {
             }
         }
 
-        // mesh all chunks after lighting
+        // light all chunks after lighting
         stage("Spreading dirt");
-        world.loadAroundPlayer(ChunkStatus.MESHED);
+        world.loadAroundPlayer(ChunkStatus.LIGHTED);
         
         // mark all chunks dirty for remeshing since lighting was processed with noUpdate=true
         // idk why this is necessary tho, the following section SHOULD mesh everything but idk

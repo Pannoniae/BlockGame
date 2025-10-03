@@ -87,8 +87,6 @@ public sealed class XRandom {
     private ulong _s0, _s1, _s2, _s3;
 
     public unsafe XRandom() {
-        //Console.Out.WriteLine("called! (noarg)");
-        //Console.Out.WriteLine(Environment.StackTrace);
         ulong* ptr = stackalloc ulong[4];
         do {
             Interop.GetRandomBytes2((byte*)ptr, 4 * sizeof(ulong));
@@ -101,27 +99,19 @@ public sealed class XRandom {
 
     // Seed with ulong
     public XRandom(ulong seed) {
-        //Console.Out.WriteLine("called! (u)");
-        //Console.Out.WriteLine(Environment.StackTrace);
         SplitMix64Seed(seed);
     }
 
     // Seed with int (standard Random compatibility)
     public XRandom(int seed) : this((ulong)seed) {
-        //Console.Out.WriteLine("called! (i)");
-        //Console.Out.WriteLine(Environment.StackTrace);
     }
     
     // Convenience array constructor
     public XRandom(ulong[] seeds) : this(seeds.AsSpan()) {
-        //Console.Out.WriteLine("called! (a)");
-        //Console.Out.WriteLine(Environment.StackTrace);
     }
 
     // Seed with multiple values
     public unsafe XRandom(ReadOnlySpan<ulong> seeds) {
-        //Console.Out.WriteLine("called! (s)");
-        //Console.Out.WriteLine(Environment.StackTrace);
         if (seeds.Length >= 4) {
             // Use provided seeds directly
             _s0 = seeds[0];

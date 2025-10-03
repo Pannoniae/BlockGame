@@ -16,14 +16,6 @@ public class Program {
     
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
-
-        Console.Out.WriteLine(Vector<int>.Count);
-        Console.Out.WriteLine(Vector256<int>.Count);
-        Console.Out.WriteLine(Vector512<int>.Count);
-        Console.Out.WriteLine(Vector256<int>.IsSupported);
-        Console.Out.WriteLine(Vector512<int>.IsSupported);
-        Console.Out.WriteLine(Vector256.IsHardwareAccelerated);
-        Console.Out.WriteLine(Vector512.IsHardwareAccelerated);
         
         // name the thread
         Thread.CurrentThread.Name = "Main";

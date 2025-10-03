@@ -10,8 +10,9 @@ namespace BlockGame.world.entity;
  * Floating items/blocks on the ground.
  */
 public class ItemEntity : Entity {
-    public ItemEntity(World world) : base(world, Entities.ITEM_ENTITY) {
+    const double size = 0.25;
 
+    public ItemEntity(World world) : base(world, Entities.ITEM_ENTITY) {
     }
 
     /** funny number */
@@ -35,13 +36,9 @@ public class ItemEntity : Entity {
         plotArmour++; // increment pickup timer
 
         if (age >= DESPAWN) {
-            // remove from world
             remove();
             return;
         }
-
-        // hover animation
-        hover = float.Sin(age * (1 / 16f)) * (1 / 32f);
 
         // update AABB for collision system
         aabb = calcAABB(position);
@@ -49,31 +46,31 @@ public class ItemEntity : Entity {
         // apply physics
         updatePhysics(dt);
 
-        // collision detection
+        applyFriction();
+
+        // collision detection (applies movement!)
         collide(dt);
 
         // if stuck in a block, try to get unstuck
         if (isStuckInBlock()) {
             yeet();
         }
-
-        // update position from velocity
-        position += velocity * dt;
     }
 
-    /** If stuck in a block, try to get unstuck by finding nearest air block */
+    /** If stuck in a block, apply velocity towards nearest escape */
     public void yeet() {
         var currentPos = position.toBlockPos();
         var nearestAir = findNearestAirBlock(currentPos);
 
         if (nearestAir.HasValue) {
-            // move towards the nearest air block
+            // apply velocity towards the nearest air block
             var dir = (Vector3D)nearestAir.Value + new Vector3D(0.5, 0.5, 0.5) - position;
-            dir = dir.norm() * 0.2; // gentle movement
-            position += dir;
-        } else {
-            // fallback: try moving up
-            position.Y += 0.2;
+            var escape = dir.norm() * 2.0;
+            velocity += escape;
+        }
+        else {
+            // fallback: push up
+            velocity.Y += 2.0;
         }
     }
 
@@ -105,30 +102,20 @@ public class ItemEntity : Entity {
     }
 
     private void updatePhysics(double dt) {
-        // find nearby players for attraction
-        var nearbyPlayer = findNearestPlayer();
-        if (nearbyPlayer != null) {
-            applyPlayerAttraction(nearbyPlayer, dt);
-        }
-
         // apply gravity
         if (!onGround) {
             velocity.Y -= 20 * dt; // gravity
         }
 
-        // apply friction/drag
-        velocity.X *= 0.98; // air resistance
-        velocity.Z *= 0.98;
-
-        if (onGround) {
-            velocity.X *= 0.8; // ground friction
-            velocity.Z *= 0.8;
-            velocity.Y *= 0.8;
-        }
-
         // terminal velocity
         if (velocity.Y < -20.0) {
             velocity.Y = -20.0;
+        }
+
+        // find nearby players for attraction
+        var nearbyPlayer = findNearestPlayer();
+        if (nearbyPlayer != null) {
+            applyPlayerAttraction(nearbyPlayer, dt);
         }
     }
 
@@ -138,8 +125,8 @@ public class ItemEntity : Entity {
         }
 
         var entities = new List<Entity>();
-        var min = position.toBlockPos() - new Vector3I(6, 6, 6);
-        var max = position.toBlockPos() + new Vector3I(6, 6, 6);
+        var min = position.toBlockPos() - new Vector3I(2, 2, 2);
+        var max = position.toBlockPos() + new Vector3I(2, 2, 2);
         world.getEntitiesInBox(entities, min, max);
 
         Player? nearest = null;
@@ -148,7 +135,7 @@ public class ItemEntity : Entity {
         foreach (var entity in entities) {
             if (entity is Player player) {
                 var dist = (position - player.position).Length();
-                if (dist < nearestDist && dist <= 6.0) {
+                if (dist < nearestDist && dist <= 2.0) {
                     nearest = player;
                     nearestDist = dist;
                 }
@@ -160,23 +147,25 @@ public class ItemEntity : Entity {
 
     private void applyPlayerAttraction(Player player, double dt) {
         var toPlayer = player.position - position;
-        var distance = toPlayer.Length();
-        
-        if (distance < 0.001) {
+        var distSq = toPlayer.LengthSquared();
+
+        if (distSq < 0.001) {
             return;
         }
 
-        // different attraction ranges
-        if (distance <= 1.0) {
-            // close enough - strong attraction for pickup
-            var attractionForce = toPlayer.norm() * 8.0 * dt;
-            velocity += attractionForce;
-        } else if (distance <= 3.0) {
-            // medium range - gentle attraction
-            var attractionForce = toPlayer.norm() * 2.0 * dt;
-            velocity += attractionForce;
+        var dist = Math.Sqrt(distSq);
+        var dir = toPlayer / dist;
+
+        double strength;
+        if (dist <= 2.0) {
+            var a = (2.0 - dist);
+            strength = 22.0 * a * a * a;
         }
-        // beyond 3 blocks, no attraction
+        else {
+            return;
+        }
+
+        velocity += dir * strength * dt;
     }
 
     private bool isStuckInBlock() {
@@ -186,12 +175,9 @@ public class ItemEntity : Entity {
     }
 
     public override AABB calcAABB(Vector3D pos) {
-        // small AABB for item entities
-        const double size = 0.25;
-        const double height = 0.25;
         return AABB.fromSize(
             new Vector3D(pos.X - size / 2, pos.Y, pos.Z - size / 2),
-            new Vector3D(size, height, size)
+            new Vector3D(size, size, size)
         );
     }
 
@@ -217,7 +203,7 @@ public class ItemEntity : Entity {
     private bool canPickup(Player player) {
         // check distance
         var distance = (position - player.position).Length();
-        return distance <= 1.5; // pickup radius
+        return distance <= 0.5; // pickup radius
     }
 
     private void remove() {

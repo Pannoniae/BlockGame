@@ -61,7 +61,7 @@ public partial class PerlinWorldGenerator {
     public const float BLOCK_VARIATION_FREQUENCY = 1 / 412f;
     public const float HELLROCK_FREQUENCY = 1 / 1.5f;
 
-    public const float FOLIAGE_FREQUENCY = 1 / 69f;
+    public const float FOLIAGE_FREQUENCY = 1 / 169f;
 
     public void generate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
@@ -474,6 +474,29 @@ public partial class PerlinWorldGenerator {
         caves.place(world, coord);
         // Do ravines
         ravines.place(world, coord);
+
+        // place grass
+        var grassDensity = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY * 2, zChunk * FOLIAGE_FREQUENCY * 2, 2, 1.5f);
+        var grassCount = (grassDensity) * (128 / 4f); // 0-64 attempts
+
+        if (grassDensity < 0) {
+            grassCount = 0;
+        }
+
+        grassCount *= grassCount;
+
+        for (int i = 0; i < grassCount; i++) {
+            var x = random.Next(0, Chunk.CHUNKSIZE);
+            var z = random.Next(0, Chunk.CHUNKSIZE);
+            var y = chunk.heightMap.get(x, z);
+
+            if (chunk.getBlock(x, y, z) == Blocks.GRASS && y < World.WORLDHEIGHT - 1) {
+                if (chunk.getBlock(x, y + 1, z) == Blocks.AIR) {
+                    var grassType = random.NextSingle() > 0.7f ? Blocks.TALL_GRASS : Blocks.SHORT_GRASS;
+                    chunk.setBlockFast(x, y + 1, z, grassType);
+                }
+            }
+        }
 
         chunk.status = ChunkStatus.POPULATED;
     }

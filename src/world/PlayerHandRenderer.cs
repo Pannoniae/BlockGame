@@ -91,9 +91,9 @@ public class PlayerHandRenderer {
 
         var swingProgress = (float)player.getSwingProgress(interp);
 
-        //swingProgress = (world.worldTick % 360 + interp) / 360.0;
+        //swingProgress = (world.worldTick % 360f + (float)interp) / 360.0f;
 
-        //swingProgress = 0.0005;
+        //swingProgress = 0.9f;
         // thx classicube? the description is bs with the matrices but it gives some ideas for the maths
         var sinSwing = MathF.Sin(swingProgress * MathF.PI);
         var sinSwingSqrt = MathF.Sin(MathF.Sqrt(swingProgress) * MathF.PI);
@@ -353,7 +353,7 @@ public class PlayerHandRenderer {
         }
     }
 
-    private void renderItemInHand(ItemStack itemStack, Color4b lightOverride) {
+    public void renderItemInHand(ItemStack itemStack, Color4b lightOverride) {
         var item = Item.get(itemStack.id);
         var texUV = item.getTexture(itemStack);
 

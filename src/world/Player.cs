@@ -151,6 +151,16 @@ public class Player : Entity {
         }*/
 
         pickup();
+
+        // decay shiny values (4 over 30 ticks)
+        for (int i = 0; i < survivalInventory.shiny.Length; i++) {
+            if (survivalInventory.shiny[i] > 0) {
+                survivalInventory.shiny[i] -= (float)(dt * 6.0);
+                if (survivalInventory.shiny[i] < 0) {
+                    survivalInventory.shiny[i] = 0;
+                }
+            }
+        }
     }
 
     public void setPrevVars() {
@@ -204,110 +214,6 @@ public class Player : Entity {
 
     private void resetFrameVars() {
         pressedMovementKey = false;
-    }
-
-    private void clamp(double dt) {
-        // clamp
-        if (Math.Abs(velocity.X) < Constants.epsilon) {
-            velocity.X = 0;
-        }
-
-        if (Math.Abs(velocity.Y) < Constants.epsilon) {
-            velocity.Y = 0;
-        }
-
-        if (Math.Abs(velocity.Z) < Constants.epsilon) {
-            velocity.Z = 0;
-        }
-
-        // clamp fallspeed
-        if (Math.Abs(velocity.Y) > Constants.maxVSpeed) {
-            var cappedVel = Constants.maxVSpeed;
-            velocity.Y = cappedVel * Math.Sign(velocity.Y);
-        }
-
-        // clamp accel (only Y for now, other axes aren't used)
-        if (Math.Abs(accel.Y) > Constants.maxAccel) {
-            accel.Y = Constants.maxAccel * Math.Sign(accel.Y);
-        }
-
-        // world bounds check
-        //var s = world.getWorldSize();
-        //position.X = Math.Clamp(position.X, 0, s.X);
-        //position.Y = Math.Clamp(position.Y, 0, s.Y);
-        //position.Z = Math.Clamp(position.Z, 0, s.Z);
-    }
-
-    private void applyFriction() {
-        if (flyMode) {
-            var f = Constants.flyFriction;
-            velocity.X *= f;
-            velocity.Z *= f;
-            velocity.Y *= f;
-            return;
-        }
-
-        // ground friction
-        if (!inLiquid) {
-            var f2 = Constants.verticalFriction;
-            if (onGround) {
-                //if (sneaking) {
-                //    velocity = Vector3D.Zero;
-                //}
-                //else {
-                var f = Constants.friction;
-                velocity.X *= f;
-                velocity.Z *= f;
-                velocity.Y *= f2;
-                //}
-            }
-            else {
-                var f = Constants.airFriction;
-                velocity.X *= f;
-                velocity.Z *= f;
-                velocity.Y *= f2;
-            }
-        }
-
-        // liquid friction
-        if (inLiquid) {
-            velocity.X *= Constants.liquidFriction;
-            velocity.Z *= Constants.liquidFriction;
-            velocity.Y *= Constants.liquidFriction;
-            velocity.Y -= 0.25;
-        }
-
-        if (jumping && !wasInLiquid && inLiquid) {
-            velocity.Y -= 2.5;
-        }
-
-        //Console.Out.WriteLine(level);
-        if (jumping && (onGround || inLiquid)) {
-            velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
-
-            // if on the edge of water, boost
-            if (inLiquid && (collx || collz)) {
-                velocity.Y += Constants.liquidSurfaceBoost;
-            }
-
-            onGround = false;
-            jumping = false;
-        }
-    }
-
-    private void updateGravity(double dt) {
-        // if in liquid, don't apply gravity
-        if (inLiquid) {
-            accel.Y = 0;
-            return;
-        }
-
-        if (!onGround && !flyMode) {
-            accel.Y = -Constants.gravity;
-        }
-        else {
-            accel.Y = 0;
-        }
     }
 
     private void updateInputVelocity(double dt) {
@@ -534,6 +440,7 @@ public class Player : Entity {
                 // switched targets, reset progress
                 isBreaking = false;
                 breakProgress = 0;
+                breakTime = 0;
                 return;
             }
 
@@ -554,6 +461,12 @@ public class Player : Entity {
 
             prevBreakProgress = breakProgress;
             breakProgress += breakSpeed * dt;
+
+            // spawn mining particles every 4 ticks
+            breakTime++;
+            if (breakTime % 4 == 0) {
+                block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face);
+            }
 
             if (breakProgress >= 1.0) {
                 // block is fully broken
@@ -586,6 +499,7 @@ public class Player : Entity {
                 isBreaking = false;
                 breakProgress = 0;
                 prevBreakProgress = 0;
+                breakTime = 0;
             }
         }
         else {
@@ -594,6 +508,7 @@ public class Player : Entity {
                 isBreaking = false;
                 breakProgress = 0;
                 prevBreakProgress = 0;
+                breakTime = 0;
             }
         }
     }
@@ -642,7 +557,7 @@ public class Player : Entity {
                         world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
 
                         foreach (var entity in entities) {
-                            if (AABB.isCollision(aabb, entity.aabb)) {
+                            if (Entities.blocksPlacement[entity.type] && AABB.isCollision(aabb, entity.aabb)) {
                                 hasCollisions = true;
                                 break;
                             }
@@ -653,7 +568,22 @@ public class Player : Entity {
                 }
 
                 if (!hasCollisions) {
+                    // in survival mode, check if player has blocks to place
+                    if (Game.gamemode.gameplay) {
+                        Console.Out.WriteLine(stack == ItemStack.EMPTY);
+                        if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
+                            setSwinging(false);
+                            return;
+                        }
+                    }
+
                     block.place(world, pos.X, pos.Y, pos.Z, metadata, dir);
+
+                    // consume block from inventory in survival mode
+                    if (Game.gamemode.gameplay) {
+                        survivalInventory.removeStack(survivalInventory.selected, 1);
+                    }
+
                     setSwinging(true);
                 }
                 else {
@@ -777,6 +707,8 @@ public class Player : Entity {
                 itemEntity.pickup(this);
             }
         }
+
+        // todo play popcat sound!!
     }
 
     public void dropItem() {

@@ -518,4 +518,108 @@ public class Entity(World world, int type) : Persistent {
 
         return Vector3.Normalize(cameraDirection);
     }
+
+    protected void clamp(double dt) {
+        // clamp
+        if (Math.Abs(velocity.X) < Constants.epsilon) {
+            velocity.X = 0;
+        }
+
+        if (Math.Abs(velocity.Y) < Constants.epsilon) {
+            velocity.Y = 0;
+        }
+
+        if (Math.Abs(velocity.Z) < Constants.epsilon) {
+            velocity.Z = 0;
+        }
+
+        // clamp fallspeed
+        if (Math.Abs(velocity.Y) > Constants.maxVSpeed) {
+            var cappedVel = Constants.maxVSpeed;
+            velocity.Y = cappedVel * Math.Sign(velocity.Y);
+        }
+
+        // clamp accel (only Y for now, other axes aren't used)
+        if (Math.Abs(accel.Y) > Constants.maxAccel) {
+            accel.Y = Constants.maxAccel * Math.Sign(accel.Y);
+        }
+
+        // world bounds check
+        //var s = world.getWorldSize();
+        //position.X = Math.Clamp(position.X, 0, s.X);
+        //position.Y = Math.Clamp(position.Y, 0, s.Y);
+        //position.Z = Math.Clamp(position.Z, 0, s.Z);
+    }
+
+    protected void applyFriction() {
+        if (flyMode) {
+            var f = Constants.flyFriction;
+            velocity.X *= f;
+            velocity.Z *= f;
+            velocity.Y *= f;
+            return;
+        }
+
+        // ground friction
+        if (!inLiquid) {
+            var f2 = Constants.verticalFriction;
+            if (onGround) {
+                //if (sneaking) {
+                //    velocity = Vector3D.Zero;
+                //}
+                //else {
+                var f = Constants.friction;
+                velocity.X *= f;
+                velocity.Z *= f;
+                velocity.Y *= f2;
+                //}
+            }
+            else {
+                var f = Constants.airFriction;
+                velocity.X *= f;
+                velocity.Z *= f;
+                velocity.Y *= f2;
+            }
+        }
+
+        // liquid friction
+        if (inLiquid) {
+            velocity.X *= Constants.liquidFriction;
+            velocity.Z *= Constants.liquidFriction;
+            velocity.Y *= Constants.liquidFriction;
+            velocity.Y -= 0.25;
+        }
+
+        if (jumping && !wasInLiquid && inLiquid) {
+            velocity.Y -= 2.5;
+        }
+
+        //Console.Out.WriteLine(level);
+        if (jumping && (onGround || inLiquid)) {
+            velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
+
+            // if on the edge of water, boost
+            if (inLiquid && (collx || collz)) {
+                velocity.Y += Constants.liquidSurfaceBoost;
+            }
+
+            onGround = false;
+            jumping = false;
+        }
+    }
+
+    protected void updateGravity(double dt) {
+        // if in liquid, don't apply gravity
+        if (inLiquid) {
+            accel.Y = 0;
+            return;
+        }
+
+        if (!onGround && !flyMode) {
+            accel.Y = -Constants.gravity;
+        }
+        else {
+            accel.Y = 0;
+        }
+    }
 }

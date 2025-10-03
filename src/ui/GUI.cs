@@ -6,6 +6,7 @@ using BlockGame.main;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.font;
+using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.item;
 using FontStashSharp;
@@ -99,23 +100,15 @@ public class GUI {
 
         refreshMatrix(size);
 
-        //Console.Out.WriteLine($"{0} {size.X} {size.Y}");
-        //shader.Projection = ortho;
         uiCentreX = size.X / 2 / guiScale;
         uiCentreY = size.Y / 2 / guiScale;
 
         uiWidth = size.X / guiScale;
         uiHeight = size.Y / guiScale;
-        //worldShader.Projection = Game.instance.world.player.camera.getProjectionMatrix();
-        //worldShader.View = Game.instance.world.player.camera.getViewMatrix(1);
 
         // handle guiscale
         var blockSize = 16d;
         blockSize *= guiScale * 2;
-
-        // if one block is a given size, how many blocks can we fit on the screen?
-        var xCount = (int)Math.Ceiling(Game.width / blockSize);
-        var yCount = (int)Math.Ceiling(Game.height / blockSize);
     }
 
     public void refreshMatrix(Vector2I size) {
@@ -166,22 +159,26 @@ public class GUI {
 
     public void drawItem(ItemSlot slot, Vector2 pos) {
         var stack = slot.getStack();
-        
+
         if (stack == null || stack.id == Items.AIR) {
             return;
         }
-        
+
         var itemPos = slot.itemPos;
-        
+        var shiny = 0f;
+        if (slot.inventory is SurvivalInventory sh) {
+            shiny = sh.shiny[slot.index];
+        }
+
         // if block
         var item = Item.get(stack.id);
         if (item.isBlock()) {
             var blockID = item.getBlockID();
             if (Block.renderItemLike[blockID]) {
-                drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y);
+                drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y, shiny);
             } else {
                 Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
-                    ItemSlot.ITEMSIZE, (byte)stack.metadata);
+                    ItemSlot.ITEMSIZE, (byte)stack.metadata, 0, shiny);
                 // draw amount text
                 if (stack.quantity > 1) {
                     var s = stack.quantity.ToString();
@@ -194,7 +191,7 @@ public class GUI {
             }
         }
         else if (item.isItem()) {
-            drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y);
+            drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y, shiny);
         }
     }
 
@@ -716,7 +713,7 @@ public class GUI {
             new VertexColorTexture(new Vector3(bounds.X, bounds.Y + bounds.Height, 0), col, new Vector2(0, 1)));
     }
 
-    public void drawBlock(Block block, int x, int y, int size, byte metadata = 0, float depth = 0) {
+    public void drawBlock(Block block, int x, int y, int size, byte metadata = 0, float depth = 0, float shiny = 0) {
 
         //Console.Out.WriteLine(Game.GL.GetBoolean(GetPName.DepthTest));
         Game.GL.Enable(EnableCap.DepthTest);
@@ -762,6 +759,10 @@ public class GUI {
 
         // translate into the correct spot
         mat.translate(0f / 6f, 11f / 12f, 0);
+
+        var yScale = 1.0f + shiny;
+        mat.scale(1, yScale, 1);
+
         mat.translate(0.5f, 0.5f, 0.5f);
 
         // rotate "down"
@@ -771,7 +772,10 @@ public class GUI {
 
         mat.rotate(270 + 45, 0, 1, 0);
         //mat.rotate(45, 0, 0, 0);
+
         mat.translate(-0.5f, -0.5f, -0.5f);
+
+
 
         // model transformations
         //mat.translate(5 / 6f, 5 / 6f, 0);
@@ -799,12 +803,16 @@ public class GUI {
         Game.GL.Disable(EnableCap.DepthTest);
     }
 
-    public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0, float depth = 0) {
-        drawBlock(block, x * guiScale, y * guiScale, size, metadata, depth);
+    public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0, float depth = 0, float shiny = 0) {
+        drawBlock(block, x * guiScale, y * guiScale, size, metadata, depth, shiny);
     }
 
-    private void drawItemSprite(Item item, ItemStack stack, float x, float y) {
-        var destRect = new RectangleF(x, y, ItemSlot.ITEMSIZE, ItemSlot.ITEMSIZE);
+    private void drawItemSprite(Item item, ItemStack stack, float x, float y, float shiny = 0) {
+        // apply Y-stretch for shiny items
+        var yScale = 1.0f + shiny;
+        var yOffset = (ItemSlot.ITEMSIZE * (yScale - 1.0f)) / 2f;  // center the stretched item
+
+        var destRect = new RectangleF(x, y - yOffset, ItemSlot.ITEMSIZE, ItemSlot.ITEMSIZE * yScale);
 
         if (item.isBlock() && Block.renderItemLike[item.getBlockID()]) {
             // get texture directly from block

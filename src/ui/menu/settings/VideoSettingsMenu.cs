@@ -196,6 +196,33 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(ssaaMode);
         addElement(ssaaMode);
 
+        var resScale = new ToggleButton(this, "resScale", false,
+            settings.resolutionScale switch {
+                0.25f => 0, 0.5f => 1, 0.75f => 2, _ => 3
+            },
+            "Resolution: 25%", "Resolution: 50%", "Resolution: 75%", "Resolution: 100%");
+        resScale.topCentre();
+        resScale.clicked += _ => {
+            settings.resolutionScale = resScale.getIndex() switch {
+                0 => 0.25f, 1 => 0.5f, 2 => 0.75f, _ => 1.0f
+            };
+            Game.instance.updateFramebuffers();
+        };
+        resScale.tooltip = "Renders the game at a lower internal resolution then upscales to window size.\nReduces GPU load for better performance on weaker PCs.";
+        settingElements.Add(resScale);
+        addElement(resScale);
+
+        var resScaleFilter = new ToggleButton(this, "resScaleFilter", false, settings.resolutionScaleLinear ? 1 : 0,
+            "Upscale Filter: Nearest", "Upscale Filter: Linear");
+        resScaleFilter.topCentre();
+        resScaleFilter.clicked += _ => {
+            settings.resolutionScaleLinear = resScaleFilter.getIndex() == 1;
+            Game.instance.updateFramebuffers();
+        };
+        resScaleFilter.tooltip = "Texture filtering for resolution scaling.\nNearest: pixelated/sharp upscaling\nLinear: smooth upscaling";
+        settingElements.Add(resScaleFilter);
+        addElement(resScaleFilter);
+
 
         getText = value => "Render Distance: " + value;
         var renderDistance = new Slider(this, "renderDistance", 2, 96, 1, settings.renderDistance, getText);
@@ -257,7 +284,7 @@ public class VideoSettingsMenu : Menu {
             Game.instance.updateFramebuffers();
             // adjust polygon offset to match new depth range
             Game.graphics.polyOffset(-2f, -3f);
-            Game.graphics.setDepthFunc();
+            Game.graphics.setupDepthTesting();
             Game.gui.refreshMatrix(new Vector2I(Game.width, Game.height));
             // Depth state will be updated on next frame
         };

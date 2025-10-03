@@ -104,12 +104,10 @@ public class GameScreen : Screen {
         if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
             // speed up time
             targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 64.0f);
-            //Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
         }
         else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
             // slow down time
             targetTimeAcceleration = Math.Max(targetTimeAcceleration / 2.0f, 0.25f);
-            //Console.Out.WriteLine($"Time acceleration: {targetTimeAcceleration}x");
         }
         else {
             targetTimeAcceleration = 1.0f; // reset to normal speed
@@ -189,10 +187,8 @@ public class GameScreen : Screen {
 
         //world.mesh();
         Game.camera.calculateFrustum(interp);
-        //Console.Out.WriteLine(world.player.camera.frustum);
         Game.renderer.render(interp);
         if (Game.instance.targetedPos.HasValue) {
-            //Console.Out.WriteLine(Game.instance.targetedPos.Value);
             Game.renderer.drawBlockOutline(interp);
         }
 
@@ -500,9 +496,16 @@ public class GameScreen : Screen {
         Game.renderer.setUniforms();
         foreach (var chunk in world.chunks.Values) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
-            if (chunk.status >= ChunkStatus.MESHED) {
-                // just unload everything
-                chunk.status = ChunkStatus.MESHED - 1;
+            if (chunk.status >= ChunkStatus.LIGHTED) {
+                // mark for remeshing by clearing VAOs and dirtying
+                for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
+                    var subChunk = chunk.subChunks[y];
+                    subChunk.vao?.Dispose();
+                    subChunk.vao = null;
+                    subChunk.watervao?.Dispose();
+                    subChunk.watervao = null;
+                    world.dirtyChunk(new SubChunkCoord(chunk.coord.x, y, chunk.coord.z));
+                }
             }
         }
 
@@ -661,7 +664,6 @@ public class GameScreen : Screen {
             var chunkWorldPos = World.toWorldPos(chunkPos, new Vector3I(0, 0, 0));
             var colour = Color4b.Red;
             colour = chunk.status switch {
-                ChunkStatus.MESHED => Color4b.Blue,
                 ChunkStatus.LIGHTED => Color4b.Green,
                 ChunkStatus.POPULATED => Color4b.Yellow,
                 ChunkStatus.GENERATED => Color4b.Orange,

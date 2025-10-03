@@ -121,29 +121,6 @@ public class Graphics : IDisposable {
         }
 
         Game.graphics.clearColor(Color4b.Black);
-        Game.graphics.clearDepth();
-    }
-
-    /// <summary>
-    /// Clears depth buffer with correct clear value for current depth mode.
-    /// </summary>
-    public void clearDepth() {
-        if (Settings.instance.reverseZ) {
-            GL.ClearDepth(0.0);
-        } else {
-            GL.ClearDepth(1.0);
-        }
-    }
-
-    /// <summary>
-    /// Sets the depth function based on current depth mode (reverse-Z or normal).
-    /// </summary>
-    public void setDepthFunc() {
-        if (Settings.instance.reverseZ) {
-            GL.DepthFunc(DepthFunction.Gequal);
-        } else {
-            GL.DepthFunc(DepthFunction.Lequal);
-        }
     }
 
     public void setupBlend() {

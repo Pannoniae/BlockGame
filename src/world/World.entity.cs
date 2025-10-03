@@ -39,8 +39,7 @@ public partial class World {
 
     private void doRemove(Entity entity) {
         if (entity.inWorld) {
-            var pos = entity.prevPosition.toBlockPos();
-            var success = getChunkMaybe(pos.X, pos.Z, out var chunk);
+            var success = getChunkMaybe(entity.subChunkCoord.toChunk(), out var chunk);
             if (success) {
                 chunk!.removeEntity(entity);
             }
@@ -91,9 +90,9 @@ public partial class World {
     public void loadEntitiesIntoChunk(ChunkCoord chunkCoord) {
         // check all entities not currently in world to see if they belong in this newly loaded chunk
         foreach (var entity in entities) {
-            if (!entity.inWorld) {
-                var entityChunkCoord = getChunkPos(entity.position.X.toBlockPos(), entity.position.Z.toBlockPos());
-                if (entityChunkCoord.Equals(chunkCoord) && entity.position.Y is >= 0 and < WORLDHEIGHT) {
+            if (!entity.inWorld && entity.subChunkCoord.toChunk().Equals(chunkCoord)) {
+                var y = entity.subChunkCoord.y;
+                if (y >= 0 && y < Chunk.CHUNKHEIGHT) {
                     var chunk = chunks[chunkCoord];
                     chunk.addEntity(entity);
                     entity.inWorld = true;
