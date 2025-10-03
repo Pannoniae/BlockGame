@@ -44,4 +44,5 @@ public class Blocks {
     public const ushort CRAFTING_TABLE = 56;
     public const ushort CALCITE = 57;
     public const ushort BRICK_BLOCK = 58;
+    public const ushort CHEST = 59;
 }

@@ -186,6 +186,7 @@ public class Block {
     public static Block COAL_ORE;
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
+    public static Block CHEST;
 
     public static Block register(Block block) {
         // update maxid
@@ -461,6 +462,12 @@ public class Block {
         CRAFTING_TABLE.setTex(CTUVs(4,3, 3,3, 2, 3, 5,3));
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
         CRAFTING_TABLE.material(Material.WOOD);
+
+        CHEST = register(new Block(Blocks.CHEST, "Chest"));
+        CHEST.setTex(CTUVs(2,10, 0,10, 1,10, 3,10));
+        CHEST.setModel(BlockModel.makeCube(CHEST));
+        //CHEST.transparency();
+
         
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
