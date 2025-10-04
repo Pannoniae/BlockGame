@@ -664,6 +664,7 @@ public class GameScreen : Screen {
             var chunkWorldPos = World.toWorldPos(chunkPos, new Vector3I(0, 0, 0));
             var colour = Color4b.Red;
             colour = chunk.status switch {
+                ChunkStatus.MESHED => Color4b.Blue,
                 ChunkStatus.LIGHTED => Color4b.Green,
                 ChunkStatus.POPULATED => Color4b.Yellow,
                 ChunkStatus.GENERATED => Color4b.Orange,

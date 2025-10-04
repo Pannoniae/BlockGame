@@ -170,6 +170,8 @@ public class GUI {
             shiny = sh.shiny[slot.index];
         }
 
+        shiny *= shiny;
+
         // if block
         var item = Item.get(stack.id);
         if (item.isBlock()) {

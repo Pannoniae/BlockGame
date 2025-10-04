@@ -118,7 +118,7 @@ public class Block {
     public static bool[] collision = new bool[MAXBLOCKS];
     public static byte[] lightLevel = new byte[MAXBLOCKS];
     public static byte[] lightAbsorption = new byte[MAXBLOCKS];
-    public static double[] hardness = new double[MAXBLOCKS];
+    public static double[] hardness = new double[MAXBLOCKS].fill(-1);
 
     /**
      Block update delay in ticks. 0 = normal immediate block updates
@@ -275,15 +275,16 @@ public class Block {
         LANTERN.partialBlock();
         LANTERN.material(Material.METAL);
         
-        TALL_GRASS = register(new Flower(Blocks.TALL_GRASS, "Tall Grass"));
+        TALL_GRASS = register(new Grass(Blocks.TALL_GRASS, "Tall Grass"));
         TALL_GRASS.setTex(crossUVs(9, 1));
         TALL_GRASS.setModel(BlockModel.makeGrass(TALL_GRASS));
         TALL_GRASS.transparency();
         TALL_GRASS.noCollision();
         TALL_GRASS.waterTransparent();
         TALL_GRASS.material(Material.ORGANIC);
-        
-        SHORT_GRASS = register(new Flower(Blocks.SHORT_GRASS, "Short Grass"));
+        TALL_GRASS.setHardness(0);
+
+        SHORT_GRASS = register(new Grass(Blocks.SHORT_GRASS, "Short Grass"));
         SHORT_GRASS.setTex(crossUVs(8, 1));
         SHORT_GRASS.setModel(BlockModel.makeGrass(SHORT_GRASS));
         SHORT_GRASS.transparency();
@@ -291,6 +292,7 @@ public class Block {
         SHORT_GRASS.noCollision();
         SHORT_GRASS.waterTransparent();
         SHORT_GRASS.material(Material.ORGANIC);
+        SHORT_GRASS.setHardness(0);
         
         YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(10, 1));
@@ -480,9 +482,9 @@ public class Block {
         }
 
 
-        // set hardness
+        // set default hardness for blocks that haven't set it
         for (int i = 0; i < currentID; i++) {
-            if (hardness[i] == 0) {
+            if (hardness[i] == -1) {
                 hardness[i] = 1;
             }
         }
@@ -1105,6 +1107,19 @@ public class Flower(ushort id, string name) : Block(id, name) {
     }
 }
 
+public class Grass(ushort id, string name) : Block(id, name) {
+
+    public override void update(World world, int x, int y, int z) {
+        if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
+            world.setBlock(x, y, z, Blocks.AIR);
+        }
+    }
+
+    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        return (null!, 0, 0);
+    }
+}
+
 public class FallingBlock(ushort id, string name) : Block(id, name) {
     public override void update(World world, int x, int y, int z) {
         var ym = y - 1;
@@ -1130,6 +1145,12 @@ public class FallingBlock(ushort id, string name) : Block(id, name) {
     public override void scheduledUpdate(World world, int x, int y, int z) {
         // run a normal update
         update(world, x, y, z);
+    }
+}
+
+public class GrassBlock(ushort id, string name) : Block(id, name) {
+    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        return (null!, 0, 0);
     }
 }
 

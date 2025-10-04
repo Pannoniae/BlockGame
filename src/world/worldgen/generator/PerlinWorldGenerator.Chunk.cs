@@ -476,8 +476,8 @@ public partial class PerlinWorldGenerator {
         ravines.place(world, coord);
 
         // place grass
-        var grassDensity = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY * 2, zChunk * FOLIAGE_FREQUENCY * 2, 2, 1.5f);
-        var grassCount = (grassDensity) * (128 / 4f); // 0-64 attempts
+        var grassDensity = float.Abs(getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 1.5f));
+        var grassCount = grassDensity * World.WORLDHEIGHT;
 
         if (grassDensity < 0) {
             grassCount = 0;
@@ -488,7 +488,10 @@ public partial class PerlinWorldGenerator {
         for (int i = 0; i < grassCount; i++) {
             var x = random.Next(0, Chunk.CHUNKSIZE);
             var z = random.Next(0, Chunk.CHUNKSIZE);
-            var y = chunk.heightMap.get(x, z);
+            // var y = chunk.heightMap.get(x, z);
+            // the problem with the heightmap approach is that you get chunks FULL of grass vs. literally nothing elsewhere
+            // STOCHASTIC RANDOMISATION FOR THE LULZ
+            var y = random.Next(0, World.WORLDHEIGHT - 1);
 
             if (chunk.getBlock(x, y, z) == Blocks.GRASS && y < World.WORLDHEIGHT - 1) {
                 if (chunk.getBlock(x, y + 1, z) == Blocks.AIR) {

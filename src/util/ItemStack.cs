@@ -50,9 +50,7 @@ public class ItemStack {
 
 public static class ItemStackArrayExtensions {
     public static ItemStack[] fill(this ItemStack[] array) {
-        for (int i = 0; i < array.Length; i++) {
-            array[i] = ItemStack.EMPTY;
-        }
+        new Span<ItemStack>(array).Fill(ItemStack.EMPTY);
         return array;
     }
 }

@@ -20,7 +20,7 @@ public class ItemEntity : Entity {
 
     public ItemStack stack;
     public int age;
-    public int plotArmour;
+    public int plotArmour = 30; // half a second
 
     /** funny sine wave */
     public float hover;
@@ -33,7 +33,7 @@ public class ItemEntity : Entity {
 
         // age the item
         age++;
-        plotArmour++; // increment pickup timer
+        plotArmour--;
 
         if (age >= DESPAWN) {
             remove();
@@ -46,15 +46,15 @@ public class ItemEntity : Entity {
         // apply physics
         updatePhysics(dt);
 
-        applyFriction();
-
-        // collision detection (applies movement!)
-        collide(dt);
-
         // if stuck in a block, try to get unstuck
         if (isStuckInBlock()) {
             yeet();
         }
+
+        applyFriction();
+
+        // collision detection (applies movement!)
+        collide(dt);
     }
 
     /** If stuck in a block, apply velocity towards nearest escape */
@@ -104,7 +104,7 @@ public class ItemEntity : Entity {
     private void updatePhysics(double dt) {
         // apply gravity
         if (!onGround) {
-            velocity.Y -= 20 * dt; // gravity
+            velocity.Y -= 15 * dt; // gravity
         }
 
         // terminal velocity
@@ -120,7 +120,7 @@ public class ItemEntity : Entity {
     }
 
     private Player? findNearestPlayer() {
-        if (plotArmour < 30) {
+        if (plotArmour > 0) {
             return null; // no attraction during grace period
         }
 
@@ -134,7 +134,8 @@ public class ItemEntity : Entity {
 
         foreach (var entity in entities) {
             if (entity is Player player) {
-                var dist = (position - player.position).Length();
+                var pp = player.nomnomPos();
+                var dist = (position - pp).Length();
                 if (dist < nearestDist && dist <= 2.0) {
                     nearest = player;
                     nearestDist = dist;
@@ -146,7 +147,8 @@ public class ItemEntity : Entity {
     }
 
     private void applyPlayerAttraction(Player player, double dt) {
-        var toPlayer = player.position - position;
+        var pp = player.nomnomPos();
+        var toPlayer = pp - position;
         var distSq = toPlayer.LengthSquared();
 
         if (distSq < 0.001) {
@@ -157,8 +159,8 @@ public class ItemEntity : Entity {
         var dir = toPlayer / dist;
 
         double strength;
-        if (dist <= 2.0) {
-            var a = (2.0 - dist);
+        if (dist <= 4.0) {
+            var a = (4.0 - dist);
             strength = 22.0 * a * a * a;
         }
         else {
@@ -183,7 +185,7 @@ public class ItemEntity : Entity {
 
     /** Try to be picked up by the given player. Returns true if successful. */
     public bool pickup(Player player) {
-        if (plotArmour < 30) {
+        if (plotArmour > 0) {
             return false; // grace period to prevent immediate pickup
         }
 
@@ -202,8 +204,9 @@ public class ItemEntity : Entity {
 
     private bool canPickup(Player player) {
         // check distance
-        var distance = (position - player.position).Length();
-        return distance <= 0.5; // pickup radius
+        var pp = player.nomnomPos();
+        var distance = (position - pp).Length();
+        return distance <= 0.8; // pickup radius
     }
 
     private void remove() {

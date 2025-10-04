@@ -152,10 +152,10 @@ public class Player : Entity {
 
         pickup();
 
-        // decay shiny values (4 over 30 ticks)
+        // decay shiny values
         for (int i = 0; i < survivalInventory.shiny.Length; i++) {
             if (survivalInventory.shiny[i] > 0) {
-                survivalInventory.shiny[i] -= (float)(dt * 6.0);
+                survivalInventory.shiny[i] -= (float)(dt * 4.0); // historically 6, 3, probably settle at 4?
                 if (survivalInventory.shiny[i] < 0) {
                     survivalInventory.shiny[i] = 0;
                 }
@@ -694,6 +694,10 @@ public class Player : Entity {
         }
     }
 
+    public Vector3D nomnomPos() {
+        return new Vector3D(position.X, position.Y + eyeHeight - 0.4, position.Z);
+    }
+
     private void pickup() {
         // get nearby entities
         var entities = new List<Entity>();
@@ -724,13 +728,16 @@ public class Player : Entity {
         var itemEntity = new ItemEntity(world);
         itemEntity.stack = droppedStack;
 
+        // add plot armour!! otherwise we'll just pick it up immediately LOL
+        itemEntity.plotArmour = 144;
+
         // position at eye height slightly in front of player
         var eyePos = new Vector3D(position.X, position.Y + eyeHeight, position.Z);
-        var forward = facing();
+        var forward = camFacing();
         itemEntity.position = eyePos + forward.toVec3D() * 0.5;
 
         // give it velocity in the direction player is facing + a bit up
-        itemEntity.velocity = forward.toVec3D() * 3.0 + new Vector3D(0, 2.0, 0);
+        itemEntity.velocity = forward.toVec3D() * 5 + new Vector3D(0, 2, 0);
 
         // add to world
         world.addEntity(itemEntity);
