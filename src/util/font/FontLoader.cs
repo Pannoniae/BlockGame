@@ -1,3 +1,4 @@
+using BlockGame.main;
 using FontStashSharp;
 using FontStashSharp.Rasterizers.FreeType;
 
@@ -21,8 +22,10 @@ public class FontLoader {
 
         // todo hack something together in a better way
         fontSystem = new FontSystem(settings);
-        fontSystem.AddFont(File.ReadAllBytes(name));
+        using var s = Game.assets.open(name);
+        fontSystem.AddFont(s);
         fontSystemThin = new FontSystem(settings);
-        fontSystemThin.AddFont(File.ReadAllBytes(name2));
+        using FileStream s2 = Game.assets.open(name2);
+        fontSystemThin.AddFont(s2);
     }
 }

@@ -146,7 +146,8 @@ public class BTextureAtlas : BTexture2D {
         GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
         //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureLodBias, -0.4f);
         image?.Dispose();
-        image = Image.Load<Rgba32>(path);
+        using var s = Game.assets.open(path!);
+        image = Image.Load<Rgba32>(s);
         var maxLevel = Settings.instance.mipmapping;
         GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);

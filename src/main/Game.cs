@@ -80,6 +80,8 @@ public partial class Game {
 
     public static InputTracker inputs;
 
+    public static Assets assets;
+
     public static Graphics graphics;
     public static GUI gui;
     public static BlockRenderer blockRenderer;
@@ -605,6 +607,9 @@ public partial class Game {
         
         // we load the settings FIRST so our graphics settings get picked up when initialising stuff
         Settings.instance.load();
+
+        assets = new Assets();
+        assets.init();
 
         graphics = new Graphics();
         graphics.init();

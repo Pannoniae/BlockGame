@@ -31,7 +31,8 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
         image?.Dispose();
-        image = Image.Load<Rgba32>(path!);
+        using var s = Game.assets.open(path!);
+        image = Image.Load<Rgba32>(s);
         GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
         if (image.DangerousTryGetSinglePixelMemory(out imageData)) {
             //Console.Out.WriteLine("Loading textures the proper way!");
@@ -80,7 +81,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         Game.graphics.tex(0, handle);
     }
 
-    public void Dispose() {
+    public virtual void Dispose() {
         GL.DeleteTexture(handle);
         GC.SuppressFinalize(this);
     }

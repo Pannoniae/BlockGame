@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
 using MiniAudioEx;
@@ -37,17 +38,18 @@ public class SoundEngine : IDisposable {
     }
 
     private void loadSounds() {
-        if (!Directory.Exists("snd")) {
+        var snd = Game.assets.getPath("snd");
+        if (!Directory.Exists(snd)) {
             throw new SkillIssueException("where the fuck is the sound dir?");
         }
         
         // scan all subdirectories in snd/
-        foreach (var categoryDir in Directory.EnumerateDirectories("snd")) {
+        foreach (var categoryDir in Directory.EnumerateDirectories(snd)) {
             var categoryName = Path.GetFileName(categoryDir);
             var clips = new List<AudioClip>();
             
             foreach (var file in Directory.EnumerateFiles(categoryDir)) {
-                var clip = load(file);
+                var clip = doLoad(file);
                 if (clip != null) {
                     clips.Add(clip);
                 }
@@ -60,6 +62,11 @@ public class SoundEngine : IDisposable {
     }
 
     public AudioClip? load(string filepath) {
+        var f = Game.assets.getPath(filepath);
+        return doLoad(f);
+    }
+
+    private AudioClip? doLoad(string filepath) {
         if (!File.Exists(filepath)) {
             Log.warn($"SFX {filepath} does not exist!");
             throw new SoundException($"SFX {filepath} does not exist!");
@@ -109,6 +116,9 @@ public class SoundEngine : IDisposable {
     /// Play music file, returns controllable MusicSource
     /// </summary>
     public MusicSource playMusic(string filepath) {
+
+        filepath = Game.assets.getPath(filepath);
+
         if (!File.Exists(filepath)) {
             throw new SoundException($"Music file does not exist: {filepath}");
         }

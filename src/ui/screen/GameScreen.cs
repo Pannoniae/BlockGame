@@ -327,11 +327,6 @@ public class GameScreen : Screen {
             case Key.F:
                 world.worldIO.save(world, world.name);
                 break;
-            case Key.G:
-                world?.Dispose();
-                world = WorldIO.load("level1");
-                Game.instance.resize(new Vector2D<int>(Game.width, Game.height));
-                break;
             case Key.F8 when keyboard.IsKeyPressed(Key.ShiftLeft):
                 Game.noUpdate = !Game.noUpdate;
                 break;

@@ -50,8 +50,8 @@ public partial class Shader : IDisposable {
             }
         }
 
-        vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
-        fragmentShader = preprocess(fragmentShaderPath, File.ReadAllText(fragmentShaderPath));
+        vertexShader = preprocess(vertexShaderPath, Game.assets.load(vertexShaderPath));
+        fragmentShader = preprocess(fragmentShaderPath, Game.assets.load(fragmentShaderPath));
 
         var vert = load(vertexShader, ShaderType.VertexShader);
         var frag = load(fragmentShader, ShaderType.FragmentShader);
@@ -69,7 +69,7 @@ public partial class Shader : IDisposable {
             }
         }
 
-        vertexShader = preprocess(vertexShaderPath, File.ReadAllText(vertexShaderPath));
+        vertexShader = preprocess(vertexShaderPath, Game.assets.load(vertexShaderPath));
         var vert = load(vertexShader, ShaderType.VertexShader);
         link(vert);
     }
@@ -140,7 +140,7 @@ public partial class Shader : IDisposable {
     public static void initializeIncludeFiles() {
         if (!Game.hasShadingLanguageInclude) return;
         
-        var searchDirectories = new[] { "shaders" };
+        var searchDirectories = new[] { Game.assets.getPath("shaders") };
         
         foreach (var dir in searchDirectories) {
             if (!Directory.Exists(dir)) continue;
@@ -193,6 +193,9 @@ public partial class Shader : IDisposable {
 
                 if (match.Success) {
                     var includePath = match.Groups[1].Value;
+
+                    // slap the assetdir on it
+                    includePath = "/assets" + includePath;
                     
                     string fullPath;
                     if (includePath.StartsWith('/')) {
