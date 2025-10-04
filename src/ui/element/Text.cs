@@ -2,7 +2,6 @@ using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.menu;
 using Molten;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui.element;
 
@@ -54,7 +53,7 @@ public class Text : GUIElement {
     public override void draw() {
         
         // draw bounding box for debugging
-        //Game.gui.draw(Game.gui.colourTexture, bounds, color: Color4b.Red);
+        //Game.gui.draw(Game.gui.colourTexture, bounds, color: Color.Red);
         
         if (shadowed) {
             Game.gui.drawStringShadowed(_text, new Vector2(bounds.X, bounds.Y), thin);

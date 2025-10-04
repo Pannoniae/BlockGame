@@ -1,6 +1,5 @@
 using BlockGame.world.item.inventory;
 using Molten;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.util;
 

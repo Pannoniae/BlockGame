@@ -32,7 +32,7 @@ public class Spy {
         var outputDir = AppDomain.CurrentDomain.BaseDirectory; // D:\dev\cs\BlockGame\bin\Debug\net10.0\
         projectDir = Path.GetFullPath(Path.Combine(outputDir, "..", "..", "..")); // D:\dev\cs\BlockGame\
 
-        var folders = new[] { "textures", "shaders", "assets", "fonts" };
+        var folders = new[] { "textures", "shaders", "snd", "fonts" };
         spies = folders.Select(folder => {
             var sourcePath = Path.Combine(projectDir, "src", Game.assets.getPath(folder));
             var watcher = new FileSystemWatcher(sourcePath, "*.*") {

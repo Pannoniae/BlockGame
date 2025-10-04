@@ -25,8 +25,8 @@ public sealed partial class WorldRenderer {
 
         float sunAngle = world.getSunAngle(world.worldTick);
 
-        var horizonColour = world.getHorizonColour(world.worldTick).toColor();
-        var skyColour = world.getSkyColour(world.worldTick).toColor();
+        var horizonColour = world.getHorizonColour(world.worldTick);
+        var skyColour = world.getSkyColour(world.worldTick);
         var underSkyColour = new Color(skyColour.R / 255f * 0.3f, skyColour.G / 255f * 0.3f, skyColour.B / 255f * 0.4f);
 
         // Setup fog

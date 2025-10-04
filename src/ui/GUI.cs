@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
-using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.font;
 using BlockGame.world;
@@ -13,8 +12,6 @@ using FontStashSharp;
 using FontStashSharp.RichText;
 using Molten;
 using Silk.NET.OpenGL.Legacy;
-using Rectangle = System.Drawing.Rectangle;
-using RectangleF = System.Drawing.RectangleF;
 using Shader = BlockGame.GL.Shader;
 using VertexColorTexture = BlockGame.GL.VertexColorTexture;
 
@@ -61,8 +58,8 @@ public class GUI {
     private int blockTexture = 0;
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
-    private static readonly Color4b bgGray = Color4b.DarkGray;
-    private static readonly Color4b skyc = Color4b.CornflowerBlue;
+    private static readonly Color bgGray = Color.DarkGray;
+    private static readonly Color skyc = Color.CornflowerBlue;
 
     public static bool WIREFRAME = false;
     public static bool SHOW_GUI_BOUNDS = false;
@@ -412,15 +409,15 @@ public class GUI {
 
 
     public void draw(BTexture2D texture, Vector2 position, float scale = 1f, Rectangle? source = null,
-        Color4b color = default, Vector2 origin = default, float depth = 0f) {
-        tb.Draw(texture, position, source, color == default ? Color4b.White : color, scale != 1f ? guiScale * scale : guiScale, 0f, origin, depth);
+        Color color = default, Vector2 origin = default, float depth = 0f) {
+        tb.Draw(texture, position, source, color == default ? Color.White : color, scale != 1f ? guiScale * scale : guiScale, 0f, origin, depth);
     }
 
-    public void draw(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color4b color = default) {
-        tb.Draw(texture, dest, source, color == default ? Color4b.White : color);
+    public void draw(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color color = default) {
+        tb.Draw(texture, dest, source, color == default ? Color.White : color);
     }
 
-    public void drawGradientVertical(BTexture2D texture, RectangleF dest, Color4b topColor, Color4b bottomColor, Rectangle? source = null) {
+    public void drawGradientVertical(BTexture2D texture, RectangleF dest, Color topColor, Color bottomColor, Rectangle? source = null) {
         var left = dest.X;
         var right = dest.X + dest.Width;
         var top = dest.Y;
@@ -438,29 +435,29 @@ public class GUI {
     }
 
     public void drawImmediate(BTexture2D texture, Vector2 position, Rectangle? source = null,
-        Color4b color = default, Vector2 origin = default, float depth = 0f) {
-        immediatetb.Draw(texture, position, source, color == default ? Color4b.White : color, guiScale, 0f, origin,
+        Color color = default, Vector2 origin = default, float depth = 0f) {
+        immediatetb.Draw(texture, position, source, color == default ? Color.White : color, guiScale, 0f, origin,
             depth);
     }
 
     public void drawUI(BTexture2D texture, Vector2 position, Rectangle? source = null,
-        Color4b color = default, Vector2 origin = default, float depth = 0f) {
-        tb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f, origin,
+        Color color = default, Vector2 origin = default, float depth = 0f) {
+        tb.Draw(texture, position * guiScale, source, color == default ? Color.White : color, guiScale, 0f, origin,
             depth);
     }
 
-    public void drawUI(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color4b color = default,
+    public void drawUI(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color color = default,
         float depth = 0f) {
         tb.Draw(texture, new RectangleF(
             (int)(dest.X * guiScale),
             (int)(dest.Y * guiScale),
             (int)(dest.Width * guiScale),
-            (int)(dest.Height * guiScale)), source, color == default ? Color4b.White : color, depth);
+            (int)(dest.Height * guiScale)), source, color == default ? Color.White : color, depth);
     }
 
     public void drawUIImmediate(BTexture2D texture, Vector2 position, Rectangle? source = null,
-        Color4b color = default, Vector2 origin = default, float depth = 0f) {
-        immediatetb.Draw(texture, position * guiScale, source, color == default ? Color4b.White : color, guiScale, 0f,
+        Color color = default, Vector2 origin = default, float depth = 0f) {
+        immediatetb.Draw(texture, position * guiScale, source, color == default ? Color.White : color, guiScale, 0f,
             origin, depth);
     }
 
@@ -471,34 +468,34 @@ public class GUI {
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
 
-    public void drawString(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    public void drawString(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
+        DrawString(text, position, color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringSmall(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawStringThin(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE / 2f), default);
+    public void drawStringSmall(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
+        DrawStringThin(text, position, color == default ? Color.White : color, new Vector2(TEXTSCALE / 2f), default);
     }
 
-    public void drawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawStringThin(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    public void drawStringThin(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
+        DrawStringThin(text, position, color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
     public void drawRString(RichTextLayout layout, Vector2 position, TextHorizontalAlignment alignment,
-        Color4b color = default) {
-        DrawRString(layout, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), alignment);
+        Color color = default) {
+        DrawRString(layout, position, color == default ? Color.White : color, new Vector2(TEXTSCALE), alignment);
     }
 
-    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE),
+    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
+        DrawString(text, position * guiScale, color == default ? Color.White : color, new Vector2(TEXTSCALE),
             default);
     }
 
-    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale) {
-        DrawString(text, position * guiScale, colour == default ? Color4b.White : colour, TEXTSCALE * scale, default);
+    public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale) {
+        DrawString(text, position * guiScale, colour == default ? Color.White : colour, TEXTSCALE * scale, default);
     }
 
-    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour = default) {
-        DrawStringThin(text, position * guiScale, colour == default ? Color4b.White : colour, new Vector2(TEXTSCALE),
+    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color colour = default) {
+        DrawStringThin(text, position * guiScale, colour == default ? Color.White : colour, new Vector2(TEXTSCALE),
             default);
     }
 
@@ -509,7 +506,7 @@ public class GUI {
     /// Rotation Z = roll (tilt sideways)
     /// </summary>
     public void drawString3D(ReadOnlySpan<char> text, Vector3 position, Vector3 rotation, float scale = 1f,
-        Color4b colour = default) {
+        Color colour = default) {
         // flip the text - 2D rendering goes +y=down, we want +y=up
         // 1 pt should be 1/16th pixel
         var flip = Matrix4x4.Identity;
@@ -521,7 +518,7 @@ public class GUI {
     }
 
     public void drawStringOnBlock(ReadOnlySpan<char> text, Vector3I pos, RawDirection face, float scale,
-        Color4b colour = default) {
+        Color colour = default) {
         // draw slightly out so the block won't z-fight with the text
         const float offset = 0.001f;
         Vector3 rotation = Vector3.Zero;
@@ -565,71 +562,71 @@ public class GUI {
         drawString3D(text, pos.toVec3() + offsetVec, rotation, scale, colour);
     }
 
-    public void drawStringCentred(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+    public void drawStringCentred(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY),
-            color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+            color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringCentredUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+    public void drawStringCentredUI(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY),
-            color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+            color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
     // some day we'll have a better API, but not this day
-    public void drawStringShadowed(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawString(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
-        DrawString(text, position, color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+    public void drawStringShadowed(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
+        DrawString(text, position + new Vector2(1, 1), Color.DimGray, new Vector2(TEXTSCALE), default);
+        DrawString(text, position, color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringShadowedUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
-        DrawString(text, position * guiScale + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
-        DrawString(text, position * guiScale, color == default ? Color4b.White : color, new Vector2(TEXTSCALE),
+    public void drawStringShadowedUI(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
+        DrawString(text, position * guiScale + new Vector2(1, 1), Color.DimGray, new Vector2(TEXTSCALE), default);
+        DrawString(text, position * guiScale, color == default ? Color.White : color, new Vector2(TEXTSCALE),
             default);
     }
 
-    public void drawStringCentredShadowed(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+    public void drawStringCentredShadowed(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
-        DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color4b.DimGray,
+        DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY) + new Vector2(1, 1), Color.DimGray,
             new Vector2(TEXTSCALE), default);
         DrawString(text, new Vector2(position.X - offsetX, position.Y - offsetY),
-            color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+            color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    public void drawStringCentredShadowedUI(ReadOnlySpan<char> text, Vector2 position, Color4b color = default) {
+    public void drawStringCentredShadowedUI(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
         var offsetX = guiFont.MeasureString(text, TEXTSCALEV).X / 2;
         var offsetY = guiFont.MeasureString(text, TEXTSCALEV).Y / 2;
         DrawString(text,
             new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY) + new Vector2(1, 1),
-            Color4b.DimGray, new Vector2(TEXTSCALE), default);
+            Color.DimGray, new Vector2(TEXTSCALE), default);
         DrawString(text, new Vector2(position.X * guiScale - offsetX, position.Y * guiScale - offsetY),
-            color == default ? Color4b.White : color, new Vector2(TEXTSCALE), default);
+            color == default ? Color.White : color, new Vector2(TEXTSCALE), default);
     }
 
-    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour) {
+    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color colour) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS());
     }
 
-    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale,
+    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale,
         Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, scale);
     }
 
-    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, float rotation,
+    protected void DrawString(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale, float rotation,
         Vector2 offset) {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
     }
 
-    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color4b colour, Vector2 scale, Vector2 offset) {
+    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale, Vector2 offset) {
         var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
         guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
     }
 
-    protected void DrawRString(RichTextLayout layout, Vector2 position, Color4b colour, Vector2 scale, TextHorizontalAlignment alignment) {
+    protected void DrawRString(RichTextLayout layout, Vector2 position, Color colour, Vector2 scale, TextHorizontalAlignment alignment) {
         if (layout.Font == guiFontThin) {
             // If the layout uses the thin font, we need to adjust the scale for the aspect ratio
             scale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
@@ -642,21 +639,21 @@ public class GUI {
     
     public void drawStringShadowed(string text, Vector2 position, bool thin) {
         if (thin) {
-            DrawStringThin(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
-            DrawStringThin(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+            DrawStringThin(text, position + new Vector2(1, 1), Color.DimGray, new Vector2(TEXTSCALE), default);
+            DrawStringThin(text, position, Color.White, new Vector2(TEXTSCALE), default);
         }
         else {
-            DrawString(text, position + new Vector2(1, 1), Color4b.DimGray, new Vector2(TEXTSCALE), default);
-            DrawString(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+            DrawString(text, position + new Vector2(1, 1), Color.DimGray, new Vector2(TEXTSCALE), default);
+            DrawString(text, position, Color.White, new Vector2(TEXTSCALE), default);
         }
     }
     
     public void drawString(string text, Vector2 position, bool thin) {
         if (thin) {
-            DrawStringThin(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+            DrawStringThin(text, position, Color.White, new Vector2(TEXTSCALE), default);
         }
         else {
-            DrawString(text, position, Color4b.White, new Vector2(TEXTSCALE), default);
+            DrawString(text, position, Color.White, new Vector2(TEXTSCALE), default);
         }
     }
     
@@ -704,7 +701,7 @@ public class GUI {
         return guiFont.MeasureString(text);
     }
     
-    public void drawWireframe(Rectangle bounds, Color4b col) {
+    public void drawWireframe(Rectangle bounds, Color col) {
         // draw an empty rectangle with the given color
         
         tb.DrawRaw(colourTexture,
@@ -854,7 +851,7 @@ public class GUI {
         var h = minVirtualHeight * guiScale;
 
         const float lineWidth = 2f;
-        var col = Color4b.Cyan;
+        var col = Color.Cyan;
 
         // top
         tb.DrawRaw(colourTexture,
@@ -893,7 +890,7 @@ public class GUI {
         const int WIDTH = 6;
 
         // draw track (dimmed)
-        draw3PatchVerticalUI(x, y, WIDTH, height, scrollbarRect, Color4b.DimGray);
+        draw3PatchVerticalUI(x, y, WIDTH, height, scrollbarRect, Color.DimGray);
 
         // calculate thumb size and position
         var thumbHeight = Math.Max(10, (int)(height * viewportRatio));
@@ -907,8 +904,8 @@ public class GUI {
      * Draw a vertical 3-patch sprite (top 3px, stretched middle 14px, bottom 3px).
      * x, y, width, height in GUI coords. This function is hilariously hardcoded but good enough for now.
      */
-    private void draw3PatchVerticalUI(int x, int y, int width, int height, Rectangle sourceRect, Color4b? tint = null) {
-        var color = tint ?? Color4b.White;
+    private void draw3PatchVerticalUI(int x, int y, int width, int height, Rectangle sourceRect, Color? tint = null) {
+        var color = tint ?? Color.White;
 
         // top cap (first 3 pixels)
         drawUI(guiTexture,

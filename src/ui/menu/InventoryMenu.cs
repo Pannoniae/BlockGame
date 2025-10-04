@@ -9,7 +9,6 @@ using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using Molten;
 using Silk.NET.Input;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui.menu;
 
@@ -88,7 +87,7 @@ public class InventoryMenu : Menu {
         var currentPage = creativeContext.getCurrentPage();
         var totalPages = creativeContext.totalPages;
         string title = totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
-        Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color4b.White);
+        Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color.White);
 
         foreach (var slot in slots) {
             Game.gui.drawItem(slot, new Vector2(guiBounds.X, guiBounds.Y));

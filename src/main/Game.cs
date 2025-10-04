@@ -414,7 +414,7 @@ public partial class Game {
         currentScreen.draw();
         if (GUI.WIREFRAME) {
             foreach (var element in currentScreen.currentMenu.elements.Values) {
-                gui.drawWireframe(element.bounds, Color4b.Red);
+                gui.drawWireframe(element.bounds, Color.Red);
             }
         }
         currentScreen.postDraw();
@@ -1187,7 +1187,7 @@ public partial class Game {
         // if wireframe, draw bbox
         if (GUI.WIREFRAME) {
             foreach (var element in currentScreen.currentMenu.elements.Values) {
-                gui.drawWireframe(element.bounds, Color4b.Red);
+                gui.drawWireframe(element.bounds, Color.Red);
             }
         }
         
@@ -1199,7 +1199,7 @@ public partial class Game {
         if (GUI.WIREFRAME) {
             graphics.mainBatch.Begin();
             foreach (var element in currentScreen.currentMenu.elements.Values) {
-                gui.drawWireframe(element.bounds, Color4b.Red);
+                gui.drawWireframe(element.bounds, Color.Red);
             }
             graphics.mainBatch.End();
         }

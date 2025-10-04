@@ -4,7 +4,6 @@ using BlockGame.main;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Molten;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.util.font;
 
@@ -67,7 +66,7 @@ public class TextRenderer3D : IFontStashRenderer {
             pos,
             ref worldMatrix,
             src,
-            new Color4b(color.R, color.G, color.B, color.A),
+            new Color(color.R, color.G, color.B, color.A),
             scale,
             rotation,
             Vector2.Zero,

@@ -14,7 +14,6 @@ using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
-using Color = Molten.Color;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 using Shader = BlockGame.GL.Shader;
 
@@ -76,8 +75,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     private static readonly Vector3[] starPositions = generateStarPositions();
 
-    public static Color4b defaultClearColour = new Color4b(168, 204, 232);
-    public static Color4b defaultFogColour = Color4b.White;
+    public static Color defaultClearColour = new Color(168, 204, 232);
+    public static Color defaultFogColour = Color.White;
 
     private readonly HashSet<SubChunkCoord> chunksToMesh = [];
 
@@ -363,15 +362,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         worldShader.setUniform(lightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
-        worldShader.setUniform(fogColour, defaultFogColour);
-        worldShader.setUniform(horizonColour, defaultClearColour);
+        worldShader.setUniform(fogColour, defaultFogColour.toVec4());
+        worldShader.setUniform(horizonColour, defaultClearColour.toVec4());
 
         waterShader.setUniform(waterBlockTexture, 0);
         waterShader.setUniform(waterLightTexture, 1);
         //shader.setUniform(drawDistance, dd);
 
-        waterShader.setUniform(waterFogColour, defaultFogColour);
-        waterShader.setUniform(waterHorizonColour, defaultClearColour);
+        waterShader.setUniform(waterFogColour, defaultFogColour.toVec4());
+        waterShader.setUniform(waterHorizonColour, defaultClearColour.toVec4());
 
 
         // initialize chunk UBO (16 bytes: vec3 + padding)
@@ -451,10 +450,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         if (world.player.isUnderWater()) {
             // set fog colour to blue
-            worldShader.setUniform(fogColour, Color4b.CornflowerBlue);
-            waterShader.setUniform(waterFogColour, Color4b.CornflowerBlue);
-            worldShader.setUniform(horizonColour, Color4b.CornflowerBlue);
-            waterShader.setUniform(waterHorizonColour, Color4b.CornflowerBlue);
+            worldShader.setUniform(fogColour, Color.CornflowerBlue.toVec4());
+            waterShader.setUniform(waterFogColour, Color.CornflowerBlue.toVec4());
+            worldShader.setUniform(horizonColour, Color.CornflowerBlue.toVec4());
+            waterShader.setUniform(waterHorizonColour, Color.CornflowerBlue.toVec4());
             worldShader.setUniform(fogEnd, 0f);
             waterShader.setUniform(waterFogEnd, 0f);
             worldShader.setUniform(fogStart, 24f);
@@ -465,10 +464,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             var currentFogColour = world.getFogColour(world.worldTick);
             var currentHorizonColour = world.getHorizonColour(world.worldTick);
 
-            worldShader.setUniform(fogColour, currentFogColour);
-            waterShader.setUniform(waterFogColour, currentFogColour);
-            worldShader.setUniform(horizonColour, currentHorizonColour);
-            waterShader.setUniform(waterHorizonColour, currentHorizonColour);
+            worldShader.setUniform(fogColour, currentFogColour.toVec4());
+            waterShader.setUniform(waterFogColour, currentFogColour.toVec4());
+            worldShader.setUniform(horizonColour, currentHorizonColour.toVec4());
+            waterShader.setUniform(waterHorizonColour, currentHorizonColour.toVec4());
         }
     }
 
@@ -936,6 +935,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             //mat.rotate(90, 0, 1, 0);  // investigate why this 90-degree offset is needed
             mat.rotate(interpBodyRot.Z, 0, 0, 1);
 
+            // get light level at player position and look up in lightmap
+            var pos = entity.position.toBlockPos();
+            var light = entity.world.inWorld(pos.X, pos.Y, pos.Z) ? entity.world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
+            var blocklight = (byte)((light >> 4) & 0xF);
+            var skylight = (byte)(light & 0xF);
+            var lightVal = Game.textures.light(blocklight, skylight);
+
+            EntityRenderers.ide.setColour(new Color(lightVal.R, lightVal.G, lightVal.B, (byte)255));
+
             // render entity using its renderer
             renderer.render(mat, entity, 1f / 16f, interp);
 
@@ -1152,7 +1160,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
     ];
 
-    public Color4 getLightColourDarken(byte blocklight, byte skylight) {
+    public Color getLightColourDarken(byte blocklight, byte skylight) {
         var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
         // apply darken
@@ -1160,16 +1168,16 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var a = lightVal.A;
         lightVal *= 1 - darken;
         lightVal.A = a; // keep alpha the same
-        return lightVal;
+        return lightVal.toC();
     }
 
-    public static Color4b getLightColour(byte blocklight, byte skylight) {
+    public static Color getLightColour(byte blocklight, byte skylight) {
         var px = Game.textures.light(blocklight, skylight);
-        var lightVal = new Color4b(px.R, px.G, px.B, px.A);
+        var lightVal = new Color(px.R, px.G, px.B, px.A);
         return lightVal;
     }
 
-    public static Color4b calculateTint(byte dir, byte ao, byte light) {
+    public static Color calculateTint(byte dir, byte ao, byte light) {
         dir = (byte)(dir & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
@@ -1180,7 +1188,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //lightVal *= 1 - darken;
 
         float tint = a[dir] * aoArray[ao];
-        var ab = new Color4b(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
+        var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
     }
 

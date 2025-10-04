@@ -388,12 +388,12 @@ public partial class World : IDisposable {
         return MathF.Sin(angle);
     }
 
-    public Color4b getSkyColour(int ticks) {
+    public Color getSkyColour(int ticks) {
         float e = getSunElevation(ticks);
         float angle = getSunAngle(ticks);
 
-        var nightSky = new Color4b(5, 5, 15);
-        var daySky = new Color4b(100, 180, 255);
+        var nightSky = new Color(5, 5, 15);
+        var daySky = new Color(100, 180, 255);
 
         if (e < TWILIGHT_ANGLE) {
             // night
@@ -402,12 +402,12 @@ public partial class World : IDisposable {
         else if (e < SUNRISE_ANGLE) {
             // civil twilight
             float t = (e - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
-            return Color4b.Lerp(nightSky, new Color4b(20, 35, 80), t);
+            return Color.Lerp(nightSky, new Color(20, 35, 80), t);
         }
         else if (e < MathF.PI / 12f) {
             // 15 deg, sunrise/sunset
             float t = e / (MathF.PI / 12f);
-            return Color4b.Lerp(new Color4b(20, 35, 80), daySky, t);
+            return Color.Lerp(new Color(20, 35, 80), daySky, t);
         }
         else {
             // Full day
@@ -415,12 +415,12 @@ public partial class World : IDisposable {
         }
     }
 
-    public Color4b getHorizonColour(int ticks) {
+    public Color getHorizonColour(int ticks) {
         float e = getSunElevation(ticks);
         float angle = getSunAngle(ticks);
 
-        var nightHorizon = new Color4b(15, 15, 40);
-        var dayHorizon = new Color4b(135, 206, 235);
+        var nightHorizon = new Color(15, 15, 40);
+        var dayHorizon = new Color(135, 206, 235);
 
         const float NIGHT_START = -18f * MathF.PI / 180f;
         const float TWILIGHT_START = -12f * MathF.PI / 180f;
@@ -449,14 +449,14 @@ public partial class World : IDisposable {
                 break;
         }
 
-        var twilightColor = Color4b.Lerp(
-            new Color4b(80, 40, 100), // dawn purple
-            new Color4b(120, 50, 90), // sunset purple=pink
+        var twilightColor = Color.Lerp(
+            new Color(80, 40, 100), // dawn purple
+            new Color(120, 50, 90), // sunset purple=pink
             isSunset);
 
-        var goldenColor = Color4b.Lerp(
-            new Color4b(255, 140, 80), // dawn orange
-            new Color4b(255, 80, 50), // sunset red-orange-ish thingie
+        var goldenColor = Color.Lerp(
+            new Color(255, 140, 80), // dawn orange
+            new Color(255, 80, 50), // sunset red-orange-ish thingie
             isSunset);
 
         switch (e) {
@@ -464,11 +464,11 @@ public partial class World : IDisposable {
                 return nightHorizon;
             case <= TWILIGHT_START: {
                 float t = (e - NIGHT_START) / (TWILIGHT_START - NIGHT_START);
-                return Color4b.Lerp(nightHorizon, twilightColor, t);
+                return Color.Lerp(nightHorizon, twilightColor, t);
             }
             case <= GOLDEN_START: {
                 float t = (e - TWILIGHT_START) / (GOLDEN_START - TWILIGHT_START);
-                return Color4b.Lerp(twilightColor, goldenColor, t);
+                return Color.Lerp(twilightColor, goldenColor, t);
             }
             case <= GOLDEN_END: {
                 float t = (e - GOLDEN_START) / (GOLDEN_END - GOLDEN_START);
@@ -477,17 +477,17 @@ public partial class World : IDisposable {
             }
             case <= DAY_START: {
                 float t = (e - GOLDEN_END) / (DAY_START - GOLDEN_END);
-                return Color4b.Lerp(goldenColor, dayHorizon, t);
+                return Color.Lerp(goldenColor, dayHorizon, t);
             }
             default:
                 return dayHorizon;
         }
     }
 
-    public Color4b getFogColour(int ticks) {
+    public Color getFogColour(int ticks) {
         var horizon = getHorizonColour(ticks);
-        var gray = new Color4b(180, 180, 180);
-        return Color4b.Lerp(horizon, gray, 0.3f);
+        var gray = new Color(180, 180, 180);
+        return Color.Lerp(horizon, gray, 0.3f);
     }
 
     public float getSkyDarkenFloat(int ticks) {

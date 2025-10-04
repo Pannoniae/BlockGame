@@ -1,9 +1,8 @@
-using System.Drawing;
 using System.Numerics;
 using Silk.NET.OpenGL.Legacy;
 using System.Runtime.InteropServices;
 using BlockGame.main;
-using BlockGame.util;
+using Molten;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
@@ -20,10 +19,10 @@ public enum BatcherBeginMode {
 [StructLayout(LayoutKind.Sequential)]
 public struct VertexColorTexture {
     public Vector3 Position;
-    public Color4b Color;
+    public Color Color;
     public Vector2 TexCoords;
 
-    public VertexColorTexture(Vector3 position, Color4b color, Vector2 texCoords) {
+    public VertexColorTexture(Vector3 position, Color color, Vector2 texCoords) {
         Position = position;
         Color = color;
         TexCoords = texCoords;
@@ -291,7 +290,7 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     // Draw methods for different parameter combinations
-    public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color4b color, float depth = 0) {
+    public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color color, float depth = 0) {
         ValidateBeginCalled();
 
         if (texture == null)
@@ -302,7 +301,7 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
 
         SpriteBatchItem item = GetNextBatchItem();
-        item.SetValue(texture, position, source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height), color,
+        item.SetValue(texture, position, source ?? new System.Drawing.Rectangle(0, 0, (int)texture.width, (int)texture.height), color,
             depth);
 
         // Set sort key if needed
@@ -313,15 +312,15 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
     }
 
-    public void Draw(BTexture2D texture, Vector2 position, Color4b color, float depth = 0) {
+    public void Draw(BTexture2D texture, Vector2 position, Color color, float depth = 0) {
         Draw(texture, position, new Rectangle(0, 0, (int)texture.width, (int)texture.height), color, depth);
     }
 
     public void Draw(BTexture2D texture, Vector2 position, Rectangle? source = null, float depth = 0) {
-        Draw(texture, position, source, Color4b.White, depth);
+        Draw(texture, position, source, Color.White, depth);
     }
 
-    public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color4b color, Vector2 scale,
+    public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color color, Vector2 scale,
         float rotation, Vector2 origin, float depth = 0) {
         ValidateBeginCalled();
 
@@ -345,12 +344,12 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
     }
 
-    public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color4b color, float scale,
+    public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color color, float scale,
         float rotation, Vector2 origin = default, float depth = 0) {
         Draw(texture, position, source, color, new Vector2(scale, scale), rotation, origin, depth);
     }
 
-    public void Draw(BTexture2D texture, Vector2 position, ref Matrix4x4 worldMatrix, Rectangle? source, Color4b color,
+    public void Draw(BTexture2D texture, Vector2 position, ref Matrix4x4 worldMatrix, Rectangle? source, Color color,
         Vector2 scale, float rotation, Vector2 origin = default, float depth = 0) {
         ValidateBeginCalled();
 
@@ -373,7 +372,7 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
     }
 
-    public void Draw(BTexture2D texture, RectangleF destination, Rectangle? source, Color4b color, float depth = 0) {
+    public void Draw(BTexture2D texture, RectangleF destination, Rectangle? source, Color color, float depth = 0) {
         ValidateBeginCalled();
 
         ArgumentNullException.ThrowIfNull(texture);
@@ -395,15 +394,15 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
     }
 
-    public void Draw(BTexture2D texture, RectangleF destination, Color4b color, float depth = 0) {
+    public void Draw(BTexture2D texture, RectangleF destination, Color color, float depth = 0) {
         Draw(texture, destination, null, color, depth);
     }
 
     public void Draw(BTexture2D texture, RectangleF destination, float depth = 0) {
-        Draw(texture, destination, null, Color4b.White, depth);
+        Draw(texture, destination, null, Color.White, depth);
     }
 
-    public void Draw(BTexture2D texture, Matrix3x2 transform, Rectangle? source, Color4b color, float depth = 0) {
+    public void Draw(BTexture2D texture, Matrix3x2 transform, Rectangle? source, Color color, float depth = 0) {
         ValidateBeginCalled();
 
         if (texture == null)
@@ -426,7 +425,7 @@ public sealed class SpriteBatch : IDisposable {
             Flush(true);
     }
 
-    public void Draw(BTexture2D texture, Matrix3x2 transform, Rectangle? source, Color4b color, Vector2 origin,
+    public void Draw(BTexture2D texture, Matrix3x2 transform, Rectangle? source, Color color, Vector2 origin,
         float depth = 0) {
         ValidateBeginCalled();
 
@@ -567,7 +566,7 @@ public sealed class SpriteBatch : IDisposable {
         // draw all non-tinted with NV path
         for (uint i = 0; i < batchItemCount; i++) {
             SpriteBatchItem item = batchItems[i];
-            if (item.VertexTL.Color != Color4b.White) continue;
+            if (item.VertexTL.Color != Color.White) continue;
 
             BTexture2D tex = item.Texture!;
             var sh = Game.height;
@@ -586,7 +585,7 @@ public sealed class SpriteBatch : IDisposable {
         // count tinted items
         uint tintedCount = 0;
         for (uint i = 0; i < batchItemCount; i++) {
-            if (batchItems[i].VertexTL.Color != Color4b.White) tintedCount++;
+            if (batchItems[i].VertexTL.Color != Color.White) tintedCount++;
         }
 
         // draw all tinted with shader path, batched by texture
@@ -599,7 +598,7 @@ public sealed class SpriteBatch : IDisposable {
             uint vertexIndex = 0;
             for (uint i = 0; i < batchItemCount; i++) {
                 SpriteBatchItem item = batchItems[i];
-                if (item.VertexTL.Color == Color4b.White) continue;
+                if (item.VertexTL.Color == Color.White) continue;
 
                 vertices[vertexIndex++] = item.VertexTL;
                 vertices[vertexIndex++] = item.VertexBL;
@@ -623,7 +622,7 @@ public sealed class SpriteBatch : IDisposable {
             uint itemIdx = 0;
             while (itemIdx < batchItemCount) {
                 // skip non-tinted
-                while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color4b.White) {
+                while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color.White) {
                     itemIdx++;
                 }
                 if (itemIdx >= batchItemCount) break;
@@ -632,7 +631,7 @@ public sealed class SpriteBatch : IDisposable {
                 BTexture2D tex = batchItems[itemIdx].Texture!;
                 uint batchStart = itemIdx;
 
-                while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color4b.White
+                while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color.White
                        && batchItems[itemIdx].Texture == tex) {
                     itemIdx++;
                 }
@@ -651,7 +650,7 @@ public sealed class SpriteBatch : IDisposable {
     private uint countWhiteItemsBefore(uint index) {
         uint count = 0;
         for (uint i = 0; i < index; i++) {
-            if (batchItems[i].VertexTL.Color == Color4b.White) count++;
+            if (batchItems[i].VertexTL.Color == Color.White) count++;
         }
         return count;
     }
@@ -662,7 +661,7 @@ public sealed class SpriteBatch : IDisposable {
         while (itemIdx < batchItemCount) {
             // find run of non-tinted
             uint runStart = itemIdx;
-            while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color4b.White) {
+            while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color.White) {
                 itemIdx++;
             }
 
@@ -684,7 +683,7 @@ public sealed class SpriteBatch : IDisposable {
 
             // find run of tinted
             runStart = itemIdx;
-            while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color4b.White) {
+            while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color.White) {
                 itemIdx++;
             }
 

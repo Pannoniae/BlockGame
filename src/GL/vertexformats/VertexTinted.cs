@@ -52,7 +52,7 @@ public struct VertexTinted {
         this.a = a;
     }
 
-    public VertexTinted(Vector3 pos, Color4b tint) {
+    public VertexTinted(Vector3 pos, Color tint) {
         x = pos.X;
         y = pos.Y;
         z = pos.Z;

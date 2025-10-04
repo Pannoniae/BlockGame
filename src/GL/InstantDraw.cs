@@ -6,7 +6,6 @@ using BlockGame.util;
 using BlockGame.world;
 using JetBrains.Annotations;
 using Silk.NET.OpenGL.Legacy;
-using Color = Molten.Color;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;
@@ -446,5 +445,21 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
         GL.VertexAttribBinding(3, 0);
 
         GL.BindVertexBuffer(0, VBO, 0, 14 * sizeof(ushort));
+    }
+
+    public override void addVertex(EntityVertex vertex) {
+        // resize VBO before adding if needed
+        if (currentVertex >= maxVertices - 1) {
+            resizeStorage();
+        }
+
+        // apply tint
+        vertex.r = (byte)((vertex.r * tint.R) / 255);
+        vertex.g = (byte)((vertex.g * tint.G) / 255);
+        vertex.b = (byte)((vertex.b * tint.B) / 255);
+        vertex.a = (byte)((vertex.a * tint.A) / 255);
+
+        vertices.Add(vertex);
+        currentVertex++;
     }
 }

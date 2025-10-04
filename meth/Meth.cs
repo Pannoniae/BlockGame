@@ -1,3 +1,8 @@
+// cheats!
+global using Rectangle = System.Drawing.Rectangle;
+global using RectangleF = System.Drawing.RectangleF;
+global using Color = Molten.Color;
+
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -185,14 +190,14 @@ public static partial class Meth {
         waste = new byte[(int)(megs * 1024 * 1024 * dt)];
     }
     public static float deg2rad(float degrees) {
-        return float.Pi / 180f * degrees;
+        return degrees * float.Pi / 180f;
     }
     
     public const float d2r = MathF.PI / 180f;
     public const float r2d = 180f / MathF.PI;
     
     public static float rad2deg(float radians) {
-        return 180f / float.Pi * radians;
+        return radians * 180f / float.Pi;
     }
 
     /// <summary>
@@ -251,6 +256,26 @@ public static partial class Meth {
         return start + (end - start) * Math.Clamp(amount, 0.0f, 1.0f);
     }
 
+    /** returns shortest angular difference between two angles in degrees (-180 to 180) */
+    public static float angleDiff(float from, float to) {
+        float diff = (to - from + 540f) % 360f - 180f;
+        return diff;
+    }
+
+    /** lerp between angles, taking shortest path */
+    public static float lerpAngle(float from, float to, float amount) {
+        return from + angleDiff(from, to) * Math.Clamp(amount, 0.0f, 1.0f);
+    }
+
+    /** clamps the angle from -180 to 180 */
+    public static Vector3 clampAngle(Vector3 a) {
+        return new Vector3(
+            (a.X + 180f) % 360f - 180f,
+            (a.Y + 180f) % 360f - 180f,
+            (a.Z + 180f) % 360f - 180f
+        );
+    }
+
     public static byte toByte(this bool value) {
         return Unsafe.BitCast<bool, byte>(value);
     }
@@ -283,25 +308,9 @@ public static partial class Meth {
     public static Vector4 toVec4(this Color color) {
         return new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
     }
-    
-    public static Vector4 toVec4(this Color4b color) {
-        return new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
-    }
 
-    public static Color4b to4b(this Color color) {
-        return new Color4b(color.R, color.G, color.B, color.A);
-    }
-    
-    public static Color4b to4b(this Color4 color) {
-        return new Color4b((byte)(color.R * 255), (byte)(color.G * 255), (byte)(color.B * 255), (byte)(color.A * 255));
-    }
-    
-    public static Color toColor(this Color4b color) {
-        return new Color(color.R, color.G, color.B, color.A);
-    }
-    
-    public static Color4 toColor4(this Color4b color) {
-        return new Color4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+    public static Color toC(this Color4 color) {
+        return new Color((byte)(color.R * 255), (byte)(color.G * 255), (byte)(color.B * 255), (byte)(color.A * 255));
     }
     
     public static Color4 toColor4(this Color color) {

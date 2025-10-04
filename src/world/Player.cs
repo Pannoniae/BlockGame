@@ -34,6 +34,11 @@ public class Player : Entity {
     public Vector3D strafeVector = new(0, 0, 0);
     public bool pressedMovementKey;
 
+    // body rotation constants
+    private const double IDLE_VELOCITY_THRESHOLD = 0.05;
+    private const float BODY_ROTATION_SNAP = 45f; // degrees
+    private const float ROTATION_SPEED = 1.8f; // deg/s when moving
+
     public double lastMouseAction;
     public double lastAirHit;
 
@@ -63,6 +68,8 @@ public class Player : Entity {
 
         this.world = world;
         rotation = new Vector3();
+        bodyRotation = rotation;  // initialize body rotation to match head
+        prevBodyRotation = rotation;
         calcAABB(ref aabb, position);
 
         swingProgress = 0;
@@ -109,6 +116,7 @@ public class Player : Entity {
         applyFriction();
         clamp(dt);
 
+        updateBodyRotation(dt);
 
         // don't increment if flying
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
@@ -165,6 +173,7 @@ public class Player : Entity {
 
     public void setPrevVars() {
         prevPosition = position;
+        prevVelocity = velocity;
         prevRotation = rotation;
         prevBodyRotation = bodyRotation;
         Game.camera.prevBob = Game.camera.bob;
@@ -295,10 +304,7 @@ public class Player : Entity {
         // clamp pitch to prevent looking behind by going over head or under feet
         rotation.X = Math.Clamp(rotation.X, -Constants.maxPitch, Constants.maxPitch);
 
-        // update body rotation - follows yaw but not pitch (stays level and doesn't bend)
-        bodyRotation.Y = rotation.Y;
-        bodyRotation.Z = rotation.Z;
-        // bodyRotation.X stays 0! (no pitch)
+        // body rotation is updated separately in updateBodyRotation() based on movement
     }
 
     public void updateInput(double dt) {
@@ -713,6 +719,62 @@ public class Player : Entity {
         }
 
         // todo play popcat sound!!
+    }
+
+    /**
+     * Updates body rotation to face movement direction with smooth interpolation
+     * Freshly made claudeslop
+     */
+    private void updateBodyRotation(double dt) {
+        var input = strafeVector.withoutY();
+        var inputLength = input.Length();
+
+        bool moving = inputLength > IDLE_VELOCITY_THRESHOLD;
+        bool swinging = swingProgress > 0;
+
+        float targetYaw;
+        float rotSpeed;
+
+        if (swinging) {
+            targetYaw = rotation.Y;
+            rotSpeed = 9.6f;
+        } else if (moving) {
+            // Body faces movement direction relative to head
+            float inputAngle = Meth.rad2deg((float)Math.Atan2(-input.X, input.Z));
+            targetYaw = rotation.Y + inputAngle;
+            rotSpeed = ROTATION_SPEED * 2;
+        } else {
+            // Idle - face head
+            targetYaw = bodyRotation.Y;
+            rotSpeed = ROTATION_SPEED * 2;
+        }
+
+        // Rotate towards target yaw
+        //float targetDiff = Meth.angleDiff(targetYaw, rotation.Y);
+        bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, targetYaw, rotSpeed * (float)dt);
+
+        // Rotate if outside deadzone
+        float angleDiff = Meth.angleDiff(bodyRotation.Y, rotation.Y);
+
+        // hardcap at 70 degrees
+        if (angleDiff is > 70 or < -70) {
+            bodyRotation.Y = rotation.Y - float.CopySign(70, angleDiff);
+        }
+
+        //Console.Out.WriteLine(angleDiff);
+        if (Math.Abs(angleDiff) > BODY_ROTATION_SNAP) {
+            // idk why the number 2 is good here but here it is!
+            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * 0.5f * (float)dt);
+        }
+
+        //Console.Out.WriteLine(bodyRotation.Y);
+
+        bodyRotation.X = 0;
+        bodyRotation.Z = 0;
+
+        // clamp angles
+        bodyRotation = Meth.clampAngle(bodyRotation);
+        rotation = Meth.clampAngle(rotation);
     }
 
     public void dropItem() {

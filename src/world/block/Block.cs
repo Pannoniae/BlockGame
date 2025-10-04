@@ -600,8 +600,8 @@ public class Block {
         return ab;
     }
     
-    public static Color4b packColour(RawDirection direction, byte ao, byte light) {
-        return packColour((byte)direction, ao, light).to4b();
+    public static Color packColour(RawDirection direction, byte ao, byte light) {
+        return packColour((byte)direction, ao, light);
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

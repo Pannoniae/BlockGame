@@ -1,3 +1,8 @@
+// cheats!
+global using Rectangle = System.Drawing.Rectangle;
+global using RectangleF = System.Drawing.RectangleF;
+global using Color = Molten.Color;
+
 namespace BlockGame.util;
 
 public static class Constants {

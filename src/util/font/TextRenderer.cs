@@ -4,7 +4,6 @@ using BlockGame.GL;
 using BlockGame.main;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.util.font;
 
@@ -28,7 +27,7 @@ public class TextRenderer : IFontStashRenderer {
         tb.Draw(tex,
             intPos,
             src,
-            new Color4b(color.R, color.G, color.B, color.A),
+            new Color(color.R, color.G, color.B, color.A),
             scale,
             rotation,
             Vector2.Zero,
@@ -41,11 +40,11 @@ internal static class Utility {
         return new Vector2(p.X, p.Y);
     }
 
-    public static Color4b ToTrippy(this FSColor c) {
-        return new Color4b(c.R, c.G, c.B, c.A);
+    public static Color ToTrippy(this FSColor c) {
+        return new Color(c.R, c.G, c.B, c.A);
     }
 
-    public static FSColor toFS(this Color4b c) {
+    public static FSColor toFS(this Color c) {
         return new FSColor(c.R, c.G, c.B, c.A);
     }
 }

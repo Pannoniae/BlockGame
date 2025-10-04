@@ -1,6 +1,5 @@
-using System.Drawing;
 using System.Numerics;
-using BlockGame.util;
+using Molten;
 
 namespace BlockGame.GL
 {
@@ -25,7 +24,7 @@ namespace BlockGame.GL
         public VertexColorTexture VertexBR;
 
         // Basic setup with position, source, and color
-        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color4b color, float depth)
+        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color color, float depth)
         {
             Texture = texture;
 
@@ -46,7 +45,7 @@ namespace BlockGame.GL
         }
 
         // With scale
-        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color4b color, Vector2 scale, float depth)
+        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color color, Vector2 scale, float depth)
         {
             Texture = texture;
 
@@ -68,7 +67,7 @@ namespace BlockGame.GL
         }
 
         // With scale, rotation, and origin
-        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color4b color, Vector2 scale, 
+        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color color, Vector2 scale,
                             float rotation, Vector2 origin, float depth)
         {
             Texture = texture;
@@ -98,7 +97,7 @@ namespace BlockGame.GL
 
         // With worldMatrix
         public void SetValue(BTexture2D texture, Vector2 position, ref Matrix4x4 worldMatrix, Rectangle source, 
-                           Color4b color, Vector2 scale, float rotation, Vector2 origin, float depth)
+                           Color color, Vector2 scale, float rotation, Vector2 origin, float depth)
         {
             Texture = texture;
 
@@ -132,7 +131,7 @@ namespace BlockGame.GL
 
         // With worldMatrix without rotation
         public void SetValue(BTexture2D texture, Vector2 position, ref Matrix4x4 worldMatrix, Rectangle source, 
-                           Color4b color, Vector2 scale, Vector2 origin, float depth)
+                           Color color, Vector2 scale, Vector2 origin, float depth)
         {
             Texture = texture;
 
@@ -156,7 +155,7 @@ namespace BlockGame.GL
         }
 
         // With scale and origin
-        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color4b color, Vector2 scale, 
+        public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color color, Vector2 scale,
                            Vector2 origin, float depth)
         {
             Texture = texture;
@@ -180,7 +179,7 @@ namespace BlockGame.GL
         }
 
         // With RectangleF destination 
-        public void SetValue(BTexture2D texture, RectangleF destination, Rectangle source, Color4b color, float depth)
+        public void SetValue(BTexture2D texture, RectangleF destination, Rectangle source, Color color, float depth)
         {
             Texture = texture;
 
@@ -201,7 +200,7 @@ namespace BlockGame.GL
         }
 
         // With Matrix3x2
-        public void SetValue(BTexture2D texture, Matrix3x2 transform, Rectangle source, Color4b color, float depth)
+        public void SetValue(BTexture2D texture, Matrix3x2 transform, Rectangle source, Color color, float depth)
         {
             Texture = texture;            
 
@@ -225,7 +224,7 @@ namespace BlockGame.GL
         }
 
         // With Matrix3x2 and origin
-        public void SetValue(BTexture2D texture, Matrix3x2 transform, Rectangle source, Color4b color, Vector2 origin, float depth)
+        public void SetValue(BTexture2D texture, Matrix3x2 transform, Rectangle source, Color color, Vector2 origin, float depth)
         {
             // Apply origin transform
             transform.Translation -= Vector2.TransformNormal(origin, transform);

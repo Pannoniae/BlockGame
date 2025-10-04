@@ -3,6 +3,7 @@ using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
+using Molten;
 
 
 namespace BlockGame.util;
@@ -24,9 +25,9 @@ public class Debug {
         idc.setMVP(mvpMatrix);
     }
 
-    public void drawLine(Vector3D from, Vector3D to, Color4b colour = default) {
+    public void drawLine(Vector3D from, Vector3D to, Color colour = default) {
         if (colour == default) {
-            colour = Color4b.Red;
+            colour = Color.Red;
         }
         
         idc.addVertex(new VertexTinted(from.toVec3(), colour));
@@ -34,7 +35,7 @@ public class Debug {
         
     }
 
-    public void drawAABB(AABB aabb, Color4b colour = default) {
+    public void drawAABB(AABB aabb, Color colour = default) {
         // corners
         var lsw = aabb.min;
         var lse = new Vector3D(aabb.x1, aabb.y0, aabb.z0);
@@ -64,7 +65,7 @@ public class Debug {
         drawLine(lnw, unw);
     }
 
-    public void drawTranslucentPlane(Vector3D p1, Vector3D p2, Vector3D p3, Vector3D p4, Color4b colour) {
+    public void drawTranslucentPlane(Vector3D p1, Vector3D p2, Vector3D p3, Vector3D p4, Color colour) {
         idc.addVertex(new VertexTinted(p1.toVec3(), colour));
         idc.addVertex(new VertexTinted(p2.toVec3(), colour));
         idc.addVertex(new VertexTinted(p3.toVec3(), colour));

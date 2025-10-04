@@ -3,7 +3,6 @@ using BlockGame.main;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using Molten;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui.element;
 

@@ -30,6 +30,7 @@ public class ItemEntity : Entity {
 
         prevPosition = position;
         prevRotation = rotation;
+        prevVelocity = velocity;
 
         // age the item
         age++;
@@ -65,30 +66,49 @@ public class ItemEntity : Entity {
         if (nearestAir.HasValue) {
             // apply velocity towards the nearest air block
             var dir = (Vector3D)nearestAir.Value + new Vector3D(0.5, 0.5, 0.5) - position;
-            var escape = dir.norm() * 2.0;
-            velocity += escape;
+            var escape = dir.norm() * 2;
+            velocity = escape;
         }
         else {
             // fallback: push up
-            velocity.Y += 2.0;
+            velocity.Y = 2;
         }
     }
 
     /** Find the nearest air block within a 3x3x3 area */
-    private Vector3I? findNearestAirBlock(Vector3I center) {
+    private Vector3I? findNearestAirBlock(Vector3I centre) {
         Vector3I? nearest = null;
         double nearestDist = double.MaxValue;
+
+        // go up first!!
+        var checkPos = centre + new Vector3I(0, 1, 0);
+        var block = world.getBlock(checkPos);
+
+        // if this block is air (not solid)
+        if (!Block.collision[block]) {
+            var dist = (checkPos - centre).LengthSquared();
+            if (dist < nearestDist) {
+                nearest = checkPos;
+                nearestDist = dist;
+            }
+        }
 
         // check 3x3x3 area around current position
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    var checkPos = center + new Vector3I(dx, dy, dz);
-                    var block = world.getBlock(checkPos);
+
+                    // don't go diagonal
+                    if (int.Abs(dx) + int.Abs(dy) + int.Abs(dz) != 1) {
+                        continue;
+                    }
+
+                    checkPos = centre + new Vector3I(dx, dy, dz);
+                    block = world.getBlock(checkPos);
 
                     // if this block is air (not solid)
                     if (!Block.collision[block]) {
-                        var dist = (checkPos - center).LengthSquared();
+                        var dist = (checkPos - centre).LengthSquared();
                         if (dist < nearestDist) {
                             nearest = checkPos;
                             nearestDist = dist;

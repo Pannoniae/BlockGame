@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BlockGame.main;
+using Molten;
 
 namespace BlockGame.util;
 
@@ -49,16 +50,16 @@ public record struct ProfileData {
         profileSection.time = time;
     }
 
-    public static Color4b getColour(ProfileSectionName section) => section switch {
-        ProfileSectionName.Events => new Color4b(150, 100, 255), // Purple
-        ProfileSectionName.Clear => new Color4b(100, 255, 200), // Light green
-        ProfileSectionName.Logic => new Color4b(100, 150, 255), // Light blue
-        ProfileSectionName.World3D => new Color4b(255, 100, 100), // Red
-        ProfileSectionName.PostFX => new Color4b(255, 150, 0), // Orange
-        ProfileSectionName.GUI => new Color4b(100, 255, 100), // Green
-        ProfileSectionName.Swap => new Color4b(255, 100, 255), // Magenta
-        ProfileSectionName.Other => new Color4b(200, 200, 200), // Gray
-        _ => Color4b.White
+    public static Color getColour(ProfileSectionName section) => section switch {
+        ProfileSectionName.Events => new Color(150, 100, 255), // Purple
+        ProfileSectionName.Clear => new Color(100, 255, 200), // Light green
+        ProfileSectionName.Logic => new Color(100, 150, 255), // Light blue
+        ProfileSectionName.World3D => new Color(255, 100, 100), // Red
+        ProfileSectionName.PostFX => new Color(255, 150, 0), // Orange
+        ProfileSectionName.GUI => new Color(100, 255, 100), // Green
+        ProfileSectionName.Swap => new Color(255, 100, 255), // Magenta
+        ProfileSectionName.Other => new Color(200, 200, 200), // Gray
+        _ => Color.White
     };
 }
 

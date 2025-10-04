@@ -36,6 +36,7 @@ public class Entity(World world, int type) : Persistent {
     public Vector3D prevPosition;
 
     public Vector3D position;
+    public Vector3D prevVelocity;
     public Vector3D velocity;
     public Vector3D accel;
 
@@ -141,6 +142,7 @@ public class Entity(World world, int type) : Persistent {
         position = pos;
         prevPosition = pos;
         velocity = Vector3D.Zero;
+        prevVelocity = Vector3D.Zero;
     }
 
     // todo unfinished shit below
@@ -163,6 +165,7 @@ public class Entity(World world, int type) : Persistent {
             data.getDouble("velY"),
             data.getDouble("velZ")
         );
+        prevVelocity = velocity;
         accel = Vector3D.Zero;
     }
 

@@ -4,7 +4,6 @@ using BlockGame.ui.element;
 using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui.menu;
 

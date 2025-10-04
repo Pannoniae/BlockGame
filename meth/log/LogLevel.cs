@@ -1,5 +1,7 @@
 using Spectre.Console;
 
+using ColorS = Spectre.Console.Color;
+
 namespace BlockGame.util.log;
 
 public enum LogLevel : byte {
@@ -12,11 +14,11 @@ public enum LogLevel : byte {
 
 public static class LogLevelExtensions {
     
-    private static readonly Color[] levelColors = [
-        Color.Grey,      // DEBUG
-        Color.White,     // INFO  
-        Color.Yellow,    // WARNING
-        Color.Red        // ERROR
+    private static readonly ColorS[] levelColors = [
+        ColorS.Grey,      // DEBUG
+        ColorS.White,     // INFO
+        ColorS.Yellow,    // WARNING
+        ColorS.Red        // ERROR
     ];
     
     public static string getShortName(this LogLevel level) => level switch {
@@ -27,8 +29,8 @@ public static class LogLevelExtensions {
         _ => level.ToString()
     };
     
-    public static Color getLevelColor(this LogLevel level) {
+    public static ColorS getLevelColor(this LogLevel level) {
         int idx = (int)level;
-        return idx < levelColors.Length ? levelColors[idx] : Color.Red;
+        return idx < levelColors.Length ? levelColors[idx] : ColorS.Red;
     }
 }

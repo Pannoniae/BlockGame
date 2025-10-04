@@ -7,7 +7,6 @@ using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
 using Button = BlockGame.ui.element.Button;
-using Rectangle = System.Drawing.Rectangle;
 
 namespace BlockGame.ui.menu.settings;
 

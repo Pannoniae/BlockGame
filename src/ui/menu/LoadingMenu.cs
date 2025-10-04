@@ -79,7 +79,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
         // draw a random vertical line at x = 0
         // draw a rectangle (that's what we can draw)
-        // Game.gui.draw(Game.gui.colourTexture, new RectangleF(Game.width / 2f, 0, 1, Game.height), color: Color4b.Red);
+        // Game.gui.draw(Game.gui.colourTexture, new RectangleF(Game.width / 2f, 0, 1, Game.height), color: Color.Red);
     }
 
     private IEnumerator loadWorldCoroutine(bool isLoading) {

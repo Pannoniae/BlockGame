@@ -523,7 +523,7 @@ public class BlockRenderer {
     /// </summary>
     public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
                            byte lightOverride = 255,
-                           Color4b tintOverride = default,
+                           Color tintOverride = default,
                            bool cullFaces = true) {
         
         vertices.Clear();
@@ -597,7 +597,7 @@ public class BlockRenderer {
     }
 
     [SkipLocalsInit]
-    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride, Color4b tintOverride, byte metadata = 0) {
+    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, byte lightOverride, Color tintOverride, byte metadata = 0) {
         
         Span<BlockVertexTinted> tempVertices = stackalloc BlockVertexTinted[4];
         
@@ -670,7 +670,7 @@ public class BlockRenderer {
             float z4 = worldPos.Z + face.z4;
             
             // calculate tint
-            Color4b tint;
+            Color tint;
             if (tintOverride != default) {
                 // use provided tint
                 tint = tintOverride * WorldRenderer.calculateTint((byte)dir, 0, lightOverride);

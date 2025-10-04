@@ -1,14 +1,15 @@
-using System.Drawing;
 using BlockGame.main;
 using BlockGame.ui.menu;
 using BlockGame.util;
+using Molten;
+
 
 namespace BlockGame.ui.element;
 
 public class ProgressBar : GUIElement {
     private float progress = 0f;
-    private Color4b backgroundColor = new(32, 32, 32, 255);
-    private Color4b foregroundColor = new(0, 255, 0, 255);
+    private Color backgroundColor = new(32, 32, 32, 255);
+    private Color foregroundColor = new(0, 255, 0, 255);
     
     public ProgressBar(Menu menu, string name, int width, int height) : base(menu, name) {
         guiPosition.Width = width;

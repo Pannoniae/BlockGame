@@ -5,6 +5,7 @@ using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world;
+using Molten;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
 using Shader = BlockGame.GL.Shader;
@@ -99,7 +100,7 @@ public class Graphics : IDisposable {
         GL.SamplerParameter(noMipmapSampler, SamplerParameterF.MinLod, 0);
     }
 
-    public void clearColor(Color4b color) {
+    public void clearColor(Color color) {
         //GL.ClearColor(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
         // we cheat! this is faster maybe?, IF YOU DRAW EVERYTHING OVER.
         // if you don't, we're fucked
@@ -120,7 +121,7 @@ public class Graphics : IDisposable {
             GL.ClearDepth(1.0);
         }
 
-        Game.graphics.clearColor(Color4b.Black);
+        Game.graphics.clearColor(Color.Black);
     }
 
     public void setupBlend() {
@@ -251,7 +252,7 @@ public class Graphics : IDisposable {
         GL.PopDebugGroup();
     }
 
-    public unsafe void pushGroup(string group, Color4b colour) {
+    public unsafe void pushGroup(string group, Color colour) {
         groupCount++;
         Span<byte> buffer = stackalloc byte[128];
         int bytesWritten = Encoding.UTF8.GetBytes(group, buffer);

@@ -15,7 +15,6 @@ using Molten;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
-using RectangleF = System.Drawing.RectangleF;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
 namespace BlockGame.ui.screen;
@@ -579,24 +578,24 @@ public class GameScreen : Screen {
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairThickness, centreY - Constants.crosshairSize),
                     new SizeF(Constants.crosshairThickness * 2, Constants.crosshairSize * 2)),
-                new Color4b(240, 240, 240));
+                new Color(240, 240, 240));
 
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(new PointF(centreX - Constants.crosshairSize, centreY - Constants.crosshairThickness),
                     new SizeF(Constants.crosshairSize - Constants.crosshairThickness,
                         Constants.crosshairThickness * 2)),
-                new Color4b(240, 240, 240));
+                new Color(240, 240, 240));
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(
                     new PointF(centreX + Constants.crosshairThickness, centreY - Constants.crosshairThickness),
                     new SizeF(Constants.crosshairSize - Constants.crosshairThickness,
                         Constants.crosshairThickness * 2)),
-                new Color4b(240, 240, 240));
+                new Color(240, 240, 240));
 
             // Draw debug lines
             if (debugScreen && !fpsOnly) {
-                D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color4b.Red);
-                D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color4b.Red);
+                D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color.Red);
+                D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color.Red);
             }
 
             // Draw chunk borders
@@ -632,9 +631,9 @@ public class GameScreen : Screen {
                         var msgHeight = gui.uiHeight - 42 - (8 * i);
 
                         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 9),
-                            color: new Color4b(0, 0, 0, MathF.Min(a, 0.5f)));
+                            color: new Color(0, 0, 0, MathF.Min(a, 0.5f)));
                         gui.drawStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight),
-                            new Color4b(1, 1, 1, a));
+                            new Color(1, 1, 1, a));
                     }
                 }
             }
@@ -643,7 +642,7 @@ public class GameScreen : Screen {
         if (Game.world.paused && currentMenu == PAUSE_MENU) {
             var pauseText = "-PAUSED-";
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
-                Color4b.OrangeRed);
+                Color.OrangeRed);
         }
     }
 
@@ -657,13 +656,13 @@ public class GameScreen : Screen {
         world.getChunkMaybe(new ChunkCoord(chunkPos.x, chunkPos.z), out var chunk);
         if (chunk != null) {
             var chunkWorldPos = World.toWorldPos(chunkPos, new Vector3I(0, 0, 0));
-            var colour = Color4b.Red;
+            var colour = Color.Red;
             colour = chunk.status switch {
-                ChunkStatus.MESHED => Color4b.Blue,
-                ChunkStatus.LIGHTED => Color4b.Green,
-                ChunkStatus.POPULATED => Color4b.Yellow,
-                ChunkStatus.GENERATED => Color4b.Orange,
-                ChunkStatus.EMPTY => Color4b.Gray,
+                ChunkStatus.MESHED => Color.Blue,
+                ChunkStatus.LIGHTED => Color.Green,
+                ChunkStatus.POPULATED => Color.Yellow,
+                ChunkStatus.GENERATED => Color.Orange,
+                ChunkStatus.EMPTY => Color.Gray,
                 _ => colour
             };
 
@@ -676,7 +675,7 @@ public class GameScreen : Screen {
             //Game.GL.Disable(EnableCap.CullFace);
 
             // draw translucent planes for chunk borders (north, south, east, west faces)
-            var planeColour = new Color4b(colour.R, colour.G, colour.B, 32);
+            var planeColour = new Color(colour.R, colour.G, colour.B, (byte)32);
 
             D.idc.begin(PrimitiveType.Quads);
             // north face
@@ -721,7 +720,7 @@ public class GameScreen : Screen {
                 var max = subChunkWorldPos + new Vector3I(Chunk.CHUNKSIZE, Chunk.CHUNKSIZE, Chunk.CHUNKSIZE);
 
                 // use dimmer color for subchunk wireframes
-                var wireColor = new Color4b((byte)(colour.R / 2), (byte)(colour.G / 2), (byte)(colour.B / 2), 255);
+                var wireColor = new Color((byte)(colour.R / 2), (byte)(colour.G / 2), (byte)(colour.B / 2), (byte)255);
 
                 // draw 12 edges of the subchunk wireframe
                 // bottom face edges
@@ -767,8 +766,8 @@ public class GameScreen : Screen {
 
             // use different colors for different entity types
             var color = entity switch {
-                Player => Color4b.Green,
-                _ => Color4b.Yellow
+                Player => Color.Green,
+                _ => Color.Yellow
             };
 
             // draw the AABB wireframe

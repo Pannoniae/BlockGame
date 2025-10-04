@@ -109,7 +109,7 @@ public class IngameMenu : Menu, IDisposable {
             // Background rectangle with transparency
             gui.tb.Draw(gui.colourTexture,
                 new System.Drawing.RectangleF(graphX, graphY, GRAPH_WIDTH, GRAPH_HEIGHT),
-                new Color4b(0, 0, 0, 180));
+                new Color(0, 0, 0, 180));
 
             // Fixed 60 FPS threshold (16.67ms)
             const float MAX_FRAMETIME = 33.3f; // Cap display at 30 FPS for readability
@@ -120,18 +120,18 @@ public class IngameMenu : Menu, IDisposable {
             // Draw guide line
             gui.tb.Draw(gui.colourTexture,
                 new System.Drawing.RectangleF(graphX, sixtyFpsY, GRAPH_WIDTH, 1),
-                new Color4b(0, 255, 0, 150)); // 60 FPS line (green)
+                new Color(0, 255, 0, 150)); // 60 FPS line (green)
 
             // Draw FPS marker
             gui.drawStringThin("60 FPS",
                 new Vector2(graphX + 5, sixtyFpsY - 12),
-                new Color4b(0, 255, 0));
+                new Color(0, 255, 0));
                 
             // Draw mode indicator
             string modeText = segmentedMode ? "[F4] Segmented" : "[F4] Simple";
             gui.drawStringThin(modeText,
                 new Vector2(graphX + GRAPH_WIDTH - 80, graphY - 40),
-                new Color4b(200, 200, 200));
+                new Color(200, 200, 200));
 
             // Draw vertical bars
             const float BAR_WIDTH = GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE;
@@ -163,28 +163,28 @@ public class IngameMenu : Menu, IDisposable {
             float y = graphY + GRAPH_HEIGHT - barHeight;
 
             // Determine color based on performance
-            Color4b barColor;
+            Color barColor;
             const float SIXTY_FPS = 16.6f;
             const float THIRTY_FPS = 33.3f;
 
             if (frametime < SIXTY_FPS) {
                 float t = frametime / SIXTY_FPS; // 0 to 1
-                barColor = new Color4b(
-                    (byte)(255 * t),
+                barColor = new Color(
+                    255 * t,
                     255,
                     0
                 );
             }
             else if (frametime < THIRTY_FPS) {
                 float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
-                barColor = new Color4b(
+                barColor = new Color(
                     255,
-                    (byte)(255 * (1 - t)),
+                    255 * (1 - t),
                     0
                 );
             }
             else {
-                barColor = new Color4b(255, 0, 0);
+                barColor = new Color(255, 0, 0);
             }
 
             // Draw bar
@@ -245,7 +245,7 @@ public class IngameMenu : Menu, IDisposable {
             // Draw label
             gui.drawStringThin(Profiler.getSectionName((ProfileSectionName)i),
                 new Vector2(legendX + 12, legendY + yOffset - 16),
-                new Color4b(200, 200, 200));
+                new Color(200, 200, 200));
             yOffset += 24;
         }
     }
@@ -273,9 +273,9 @@ public class IngameMenu : Menu, IDisposable {
         if (screen.debugScreen && !screen.fpsOnly) {
             var ver = getElement("version");
             Game.gui.drawStringThin(debugStr.AsSpan(),
-                new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color4b.White);
+                new Vector2(ver.bounds.Left, ver.bounds.Bottom), Color.White);
             Game.gui.drawRString(rendererText,
-                new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color4b.White);
+                new Vector2(Game.width - 2, 2), TextHorizontalAlignment.Right, Color.White);
         }
 
         // Draw frametime graph if enabled
@@ -294,7 +294,7 @@ public class IngameMenu : Menu, IDisposable {
 
         var blockStr = Item.get(stack.id).getName(stack);
         Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
-            Color4b.White);
+            Color.White);
     }
 
     public void Dispose() {

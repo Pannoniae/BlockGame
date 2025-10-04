@@ -340,7 +340,8 @@ public class PlayerHandRenderer {
 
         var c = WorldRenderer.getLightColour((byte)(lightLevel >> 4), (byte)(lightLevel & 15));
 
-        rightArm.render(mat, sc, c.R, c.G, c.B);
+        EntityRenderers.ide.setColour(new Color(c.R, c.G, c.B, (byte)255));
+        rightArm.render(mat, sc);
 
         // Restore original rotation
         rightArm.rotation = originalRotation;
@@ -353,13 +354,13 @@ public class PlayerHandRenderer {
         }
     }
 
-    public void renderItemInHand(ItemStack itemStack, Color4b lightOverride) {
+    public void renderItemInHand(ItemStack itemStack, Color lightOverride) {
         var item = Item.get(itemStack.id);
         var texUV = item.getTexture(itemStack);
 
         //Console.Out.WriteLine(lightOverride);
 
-        Span<Color4b> shade = [
+        Span<Color> shade = [
             new(0.8f, 0.8f, 0.8f, 1f),
             new(0.8f, 0.8f, 0.8f, 1f),
             new(0.6f, 0.6f, 0.6f, 1f),
@@ -383,18 +384,18 @@ public class PlayerHandRenderer {
 
 
         // Front face
-        Color4b frontShade = lightOverride * shade[5];
+        Color frontShade = lightOverride * shade[5];
         addQuad(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, u0, v0, u0, v1, u1, v1, u1, v0, frontShade);
 
         //return;
 
         // Back face
-        Color4b backShade = lightOverride * shade[4];
+        Color backShade = lightOverride * shade[4];
         addQuad(0, 0, thickness, 0, 1, thickness, 1, 1, thickness, 1, 0, thickness, u0, v1, u0, v0, u1, v0, u1, v1,
             backShade);
 
         // Left face - slices from x=0 to x=15/16
-        Color4b leftShade = lightOverride * shade[0];
+        Color leftShade = lightOverride * shade[0];
         float u;
         float v;
         for (int i = 0; i < strips; i++) {
@@ -407,7 +408,7 @@ public class PlayerHandRenderer {
         }
 
         // Right face - slices from x=1/16 to x=1
-        Color4b rightShade = lightOverride * shade[1];
+        Color rightShade = lightOverride * shade[1];
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float x = r + thickness;
@@ -418,7 +419,7 @@ public class PlayerHandRenderer {
         }
 
         // Top face - slices from y=1 to y=1/16
-        Color4b topShade = lightOverride * shade[2];
+        Color topShade = lightOverride * shade[2];
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float y = 1 - r;
@@ -429,7 +430,7 @@ public class PlayerHandRenderer {
         }
 
         // Bottom face - slices from y=15/16 to y=0
-        Color4b bottomShade = lightOverride * shade[3];
+        Color bottomShade = lightOverride * shade[3];
         for (int i = 0; i < strips; i++) {
             float r = (float)i / strips;
             float y = (1 - thickness) - r;
@@ -442,7 +443,7 @@ public class PlayerHandRenderer {
 
     private void addQuad(float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
-        float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, Color4b shade) {
+        float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, Color shade) {
         // Add 4 vertices for quad
 
         //itemRenderer.begin(PrimitiveType.Quads);
