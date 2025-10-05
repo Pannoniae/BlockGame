@@ -45,4 +45,6 @@ public class Blocks {
     public const ushort CALCITE = 57;
     public const ushort BRICK_BLOCK = 58;
     public const ushort CHEST = 59;
+    public const ushort STONE_BRICK = 60;
+    public const ushort SAND_BRICK = 61;
 }
