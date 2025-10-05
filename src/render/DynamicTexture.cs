@@ -42,7 +42,7 @@ public abstract class DynamicTexture {
     }
 }
 
-public class StillWaterTexture(BTextureAtlas parent) : DynamicTexture(parent, 0, 4 * 16, 16, 16) {
+public class StillWaterTexture(BTextureAtlas parent) : DynamicTexture(parent, 0, 13 * 16, 16, 16) {
     private int frameIndex;
     
     public override int updateFreq => 12;
@@ -50,7 +50,7 @@ public class StillWaterTexture(BTextureAtlas parent) : DynamicTexture(parent, 0,
     protected override void update() {
         if (parent?.imageData.IsEmpty == false) {
             int srcX = (frameIndex % 16) * 16;
-            int srcY = 4 * 16;
+            int srcY = 13 * 16;
             
             var span = parent.imageData.Span;
             for (int y = 0; y < height; y++) {
@@ -69,14 +69,15 @@ public class FlowingWaterTexture : DynamicTexture {
     
     public override int updateFreq => 8;
 
-    public FlowingWaterTexture(BTextureAtlas parent) : base(parent, 0, 8 * parent.atlasSize, 32, 32) {
+    public FlowingWaterTexture(BTextureAtlas parent) : base(parent, 1 * parent.atlasSize, 14 * parent.atlasSize, 32, 32) {
         src = new Rgba32[width * height];
         var span = parent.imageData.Span;
-        int srcY = 8 * parent.atlasSize;
-        
+        int srcX = 1 * parent.atlasSize;
+        int srcY = 14 * parent.atlasSize;
+
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                src[y * width + x] = span[(srcY + y) * parent.image.Width + x];
+                src[y * width + x] = span[(srcY + y) * parent.image.Width + (srcX + x)];
             }
         }
     }

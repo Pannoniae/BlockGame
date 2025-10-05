@@ -16,6 +16,6 @@ public class CandyBlock : Block {
     public string getName(byte metadata) => $"{colorNames[metadata]} Candy";
     
     public override UVPair getTexture(int faceIdx, int metadata) {
-        return new UVPair(metadata, 2);
+        return new UVPair(metadata, 6);
     }
 }

@@ -24,7 +24,7 @@ public class Blocks {
     public const ushort CANDY = 21;
     public const ushort HEAD = 37;
     public const ushort WATER = 38;
-    public const ushort RED_ORE = 39;
+    public const ushort REALGAR = 39;
     public const ushort TITANIUM_ORE = 40;
     public const ushort AMBER_ORE = 41;
     public const ushort AMETHYST_ORE = 42;
@@ -47,4 +47,5 @@ public class Blocks {
     public const ushort CHEST = 59;
     public const ushort STONE_BRICK = 60;
     public const ushort SAND_BRICK = 61;
+    public const ushort INFERNO_ROCK = 62;
 }

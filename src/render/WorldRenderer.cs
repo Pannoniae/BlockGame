@@ -994,7 +994,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.blockRenderer.setupStandalone();
 
         // force the breaking texture
-        Game.blockRenderer.forceTex = new UVPair(breakStage, 7);
+        Game.blockRenderer.forceTex = new UVPair(breakStage, 12);
 
         // render the block using BlockRenderer
         breakVertices.Clear();

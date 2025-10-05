@@ -142,6 +142,7 @@ public class Block {
     public static Block GRAVEL;
     public static Block HELLSTONE;
     public static Block HELLROCK;
+    public static Block INFERNO_ROCK;
     public static Block GLASS;
     public static Block CALCITE;
     public static Block BRICK_BLOCK;
@@ -179,7 +180,7 @@ public class Block {
 
     public static Block WATER;
 
-    public static Block RED_ORE;
+    public static Block REALGAR;
     public static Block TITANIUM_ORE;
     public static Block AMBER_ORE;
     public static Block AMETHYST_ORE;
@@ -256,6 +257,11 @@ public class Block {
         renderType[HELLROCK.id] = RenderType.CUBE;
         HELLROCK.material(Material.HELL);
 
+        INFERNO_ROCK = register(new Block(Blocks.INFERNO_ROCK, "Inferno Rock"));
+        INFERNO_ROCK.setTex(cubeUVs(10, 0));
+        renderType[INFERNO_ROCK.id] = RenderType.CUBE;
+        INFERNO_ROCK.material(Material.HELL);
+
         GLASS = register(new Block(Blocks.GLASS, "Glass"));
         GLASS.setTex(cubeUVs(6, 0));
         renderType[GLASS.id] = RenderType.CUBE;
@@ -263,22 +269,22 @@ public class Block {
         GLASS.material(Material.GLASS);
 
         CALCITE = register(new Block(Blocks.CALCITE, "Calcite"));
-        CALCITE.setTex(cubeUVs(6, 1));
+        CALCITE.setTex(cubeUVs(11, 0));
         renderType[CALCITE.id] = RenderType.CUBE;
         CALCITE.material(Material.STONE);
 
         BRICK_BLOCK = register(new Block(Blocks.BRICK_BLOCK, "Brick Block"));
-        BRICK_BLOCK.setTex(cubeUVs(5, 1));
+        BRICK_BLOCK.setTex(cubeUVs(0, 2));
         renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
 
         STONE_BRICK = register(new Block(Blocks.STONE_BRICK, "Stone Brick"));
-        STONE_BRICK.setTex(cubeUVs(8, 1));
+        STONE_BRICK.setTex(cubeUVs(1, 2));
         renderType[STONE_BRICK.id] = RenderType.CUBE;
         STONE_BRICK.material(Material.STONE);
 
         SAND_BRICK = register(new Block(Blocks.SAND_BRICK, "Sand Brick"));
-        SAND_BRICK.setTex(cubeUVs(9, 1));
+        SAND_BRICK.setTex(cubeUVs(2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
         
@@ -420,48 +426,48 @@ public class Block {
         HEAD.partialBlock();
 
         WATER = register(new Water(Blocks.WATER, "Water", 15, 8));
-        WATER.setTex(new UVPair(0, 4), new UVPair(0, 8));
+        WATER.setTex(new UVPair(0, 13), new UVPair(1, 14));
         WATER.makeLiquid();
 
         // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
         
-        RED_ORE = register(new Block(Blocks.RED_ORE, "Red Ore"));
-        RED_ORE.setTex(cubeUVs(10, 0));
-        renderType[RED_ORE.id] = RenderType.CUBE;
-        RED_ORE.material(Material.FANCY_STONE);
-        RED_ORE.setHardness(6.0);
-        RED_ORE.setTier(MaterialTier.GOLD);
+        REALGAR = register(new Block(Blocks.REALGAR, "Realgar"));
+        REALGAR.setTex(cubeUVs(10, 1));
+        renderType[REALGAR.id] = RenderType.CUBE;
+        REALGAR.material(Material.FANCY_STONE);
+        REALGAR.setHardness(6.0);
+        REALGAR.setTier(MaterialTier.GOLD);
         
         TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore"));
-        TITANIUM_ORE.setTex(cubeUVs(11, 0));
+        TITANIUM_ORE.setTex(cubeUVs(11, 1));
         renderType[TITANIUM_ORE.id] = RenderType.CUBE;
         TITANIUM_ORE.material(Material.FANCY_STONE);
         TITANIUM_ORE.setHardness(7.5);
         TITANIUM_ORE.setTier(MaterialTier.GOLD);
         
         AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore"));
-        AMBER_ORE.setTex(cubeUVs(12, 0));
+        AMBER_ORE.setTex(cubeUVs(12, 1));
         renderType[AMBER_ORE.id] = RenderType.CUBE;
         AMBER_ORE.material(Material.FANCY_STONE);
         AMBER_ORE.setHardness(3.0);
         AMBER_ORE.setTier(MaterialTier.STONE);
         
         AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore"));
-        AMETHYST_ORE.setTex(cubeUVs(13, 0));
+        AMETHYST_ORE.setTex(cubeUVs(13, 1));
         renderType[AMETHYST_ORE.id] = RenderType.CUBE;
         AMETHYST_ORE.material(Material.FANCY_STONE);
         AMETHYST_ORE.setHardness(4.0);
         AMETHYST_ORE.setTier(MaterialTier.IRON);
         
         EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore"));
-        EMERALD_ORE.setTex(cubeUVs(14, 0));
+        EMERALD_ORE.setTex(cubeUVs(14, 1));
         renderType[EMERALD_ORE.id] = RenderType.CUBE;
         EMERALD_ORE.material(Material.FANCY_STONE);
         EMERALD_ORE.setHardness(5.0);
         EMERALD_ORE.setTier(MaterialTier.GOLD);
         
         DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore"));
-        DIAMOND_ORE.setTex(cubeUVs(15, 0));
+        DIAMOND_ORE.setTex(cubeUVs(15, 1));
         renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
@@ -489,7 +495,7 @@ public class Block {
         COAL_ORE.setTier(MaterialTier.WOOD);
         
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
-        TORCH.setTex(cubeUVs(0, 6));
+        TORCH.setTex(cubeUVs(11, 3));
         TORCH.itemLike();
         TORCH.material(Material.ORGANIC);
         
@@ -499,7 +505,7 @@ public class Block {
         CRAFTING_TABLE.material(Material.WOOD);
 
         CHEST = register(new Block(Blocks.CHEST, "Chest"));
-        CHEST.setTex(CTUVs(2,10, 0,10, 1,10, 3,10));
+        CHEST.setTex(CTUVs(2,4, 0,4, 1,10, 3,4));
         CHEST.setModel(BlockModel.makeCube(CHEST));
         //CHEST.transparency();
 
@@ -727,7 +733,7 @@ public class Block {
         return this;
     }
     
-    public Block waterTransparent() {
+    public Block  waterTransparent() {
         waterSolid[id] = false;
         return this;
     }

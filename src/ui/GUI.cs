@@ -332,7 +332,7 @@ public class GUI {
         float offsetX = backgroundScrollOffset.X % blockSize;
         float offsetY = backgroundScrollOffset.Y % blockSize;
 
-        Span<ushort> ores = [Blocks.AMBER_ORE, Blocks.RED_ORE, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE, Blocks.AMETHYST_ORE];
+        Span<ushort> ores = [Blocks.AMBER_ORE, Blocks.REALGAR, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE, Blocks.AMETHYST_ORE];
 
         // Draw layered background
         for (int x = 0; x < xCount; x++) {
