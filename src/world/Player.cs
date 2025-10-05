@@ -292,7 +292,7 @@ public class Player : Entity {
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
-            survivalInventory.selected = (ushort)(key - Key.Number0 - 1);
+            survivalInventory.selected = key > Key.Number0 ? (ushort)(key - Key.Number0 - 1) : 9;
         }
     }
 
@@ -763,8 +763,9 @@ public class Player : Entity {
 
         //Console.Out.WriteLine(angleDiff);
         if (Math.Abs(angleDiff) > BODY_ROTATION_SNAP) {
+
             // idk why the number 2 is good here but here it is!
-            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * 0.5f * (float)dt);
+            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * (float)dt);
         }
 
         //Console.Out.WriteLine(bodyRotation.Y);

@@ -11,8 +11,8 @@ public class Blocks {
     public const ushort HELLSTONE = 7;
     public const ushort GLASS = 8;
     public const ushort LANTERN = 9;
-    public const ushort YELLOW_FLOWER = 10;
-    public const ushort RED_FLOWER = 11;
+    public const ushort ORANGE_WEED = 10;
+    public const ushort CYAN_TULIP = 11;
     public const ushort PLANKS = 12;
     public const ushort STAIRS = 13;
     public const ushort LOG = 14;

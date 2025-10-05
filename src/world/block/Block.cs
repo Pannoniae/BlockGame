@@ -150,8 +150,10 @@ public class Block {
 
     public static Block TALL_GRASS;
     public static Block SHORT_GRASS;
-    public static Block YELLOW_FLOWER;
-    public static Block RED_FLOWER;
+    //public static Block YELLOW_FLOWER;
+    //public static Block RED_FLOWER;
+    public static Block ORANGE_WEED;
+    public static Block CYAN_TULIP;
     public static Block THISTLE;
 
 
@@ -294,31 +296,49 @@ public class Block {
         SHORT_GRASS.material(Material.ORGANIC);
         SHORT_GRASS.setHardness(0);
         
-        YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
-        YELLOW_FLOWER.setTex(crossUVs(10, 1));
-        YELLOW_FLOWER.setModel(BlockModel.makeGrass(YELLOW_FLOWER));
-        YELLOW_FLOWER.transparency();
-        YELLOW_FLOWER.flowerAABB();
-        YELLOW_FLOWER.noCollision();
-        YELLOW_FLOWER.waterTransparent();
-        YELLOW_FLOWER.itemLike();
-        YELLOW_FLOWER.material(Material.ORGANIC);
+        //YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
+        //YELLOW_FLOWER.setTex(crossUVs(10, 1));
+        //YELLOW_FLOWER.setModel(BlockModel.makeGrass(YELLOW_FLOWER));
+        //YELLOW_FLOWER.transparency();
+        //YELLOW_FLOWER.flowerAABB();
+        //YELLOW_FLOWER.noCollision();
+        //YELLOW_FLOWER.waterTransparent();
+        //YELLOW_FLOWER.itemLike();
+        //YELLOW_FLOWER.material(Material.ORGANIC);
 
-        RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
-        RED_FLOWER.setTex(crossUVs(11, 1));
-        RED_FLOWER.setModel(BlockModel.makeGrass(RED_FLOWER));
-        RED_FLOWER.transparency();
-        RED_FLOWER.flowerAABB();
-        RED_FLOWER.noCollision();
-        RED_FLOWER.waterTransparent();
-        RED_FLOWER.itemLike();
-        RED_FLOWER.material(Material.ORGANIC);
+        //RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
+        //RED_FLOWER.setTex(crossUVs(11, 1));
+        //RED_FLOWER.setModel(BlockModel.makeGrass(RED_FLOWER));
+        //RED_FLOWER.transparency();
+        //RED_FLOWER.flowerAABB();
+        //RED_FLOWER.noCollision();
+        //RED_FLOWER.waterTransparent();
+        //RED_FLOWER.itemLike();
+        //RED_FLOWER.material(Material.ORGANIC);
+
+        ORANGE_WEED = register(new Flower(Blocks.ORANGE_WEED, "Orange Weed"));
+        ORANGE_WEED.setTex(crossUVs(10, 1));
+        ORANGE_WEED.setModel(BlockModel.makeGrass(ORANGE_WEED));
+        ORANGE_WEED.transparency();
+        ORANGE_WEED.flowerAABB();
+        ORANGE_WEED.noCollision();
+        ORANGE_WEED.waterTransparent();
+        ORANGE_WEED.itemLike();
+        ORANGE_WEED.material(Material.ORGANIC);
+
+        CYAN_TULIP = register(new Flower(Blocks.CYAN_TULIP, "Cyan Tulip"));
+        CYAN_TULIP.setTex(crossUVs(11, 1));
+        CYAN_TULIP.setModel(BlockModel.makeGrass(CYAN_TULIP));
+        CYAN_TULIP.transparency();
+        CYAN_TULIP.noCollision();
+        CYAN_TULIP.waterTransparent();
+        CYAN_TULIP.itemLike();
+        CYAN_TULIP.material(Material.ORGANIC);
 
         THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
         THISTLE.setTex(crossUVs(12, 1));
         THISTLE.setModel(BlockModel.makeGrass(THISTLE));
         THISTLE.transparency();
-        THISTLE.flowerAABB();
         THISTLE.waterTransparent();
         THISTLE.itemLike();
         THISTLE.material(Material.ORGANIC);
