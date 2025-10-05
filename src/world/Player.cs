@@ -765,7 +765,7 @@ public class Player : Entity {
         var a = Math.Abs(angleDiff);
         if (a > BODY_ROTATION_SNAP) {
             // idk why the number 2 is good here but here it is!
-            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * (float)dt * (a / BODY_ROTATION_SNAP * 3));
+            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * 0.6f * (float)dt * (a / BODY_ROTATION_SNAP));
         }
 
         //Console.Out.WriteLine(bodyRotation.Y);
