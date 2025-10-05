@@ -154,6 +154,12 @@ public class GUI {
         return new Vector2(pos.X * guiScale, pos.Y * guiScale);
     }
 
+    /** Draw a colored tint over a slot (for status indication) */
+    public void drawSlotTint(Vector2 pos, Rectangle slotRect, Color tint) {
+        var dest = new RectangleF(pos.X + slotRect.X + ItemSlot.PADDING, pos.Y + slotRect.Y + ItemSlot.PADDING, slotRect.Width - ItemSlot.PADDING * 2, slotRect.Height - ItemSlot.PADDING * 2);
+        drawUI(colourTexture, dest, new Rectangle(0, 0, 1, 1), tint);
+    }
+
     public void drawItem(ItemSlot slot, Vector2 pos) {
         var stack = slot.getStack();
 
@@ -163,7 +169,7 @@ public class GUI {
 
         var itemPos = slot.itemPos;
         var shiny = 0f;
-        if (slot.inventory is SurvivalInventory sh) {
+        if (slot.inventory is PlayerInventory sh) {
             shiny = sh.shiny[slot.index];
         }
 
@@ -809,7 +815,7 @@ public class GUI {
     private void drawItemSprite(Item item, ItemStack stack, float x, float y, float shiny = 0) {
         // apply Y-stretch for shiny items
         var yScale = 1.0f + shiny;
-        var yOffset = (ItemSlot.ITEMSIZE * (yScale - 1.0f)) / 2f;  // center the stretched item
+        var yOffset = (ItemSlot.ITEMSIZE * (yScale - 1.0f)) / 2f;  // centre the stretched item
 
         var destRect = new RectangleF(x, y - yOffset, ItemSlot.ITEMSIZE, ItemSlot.ITEMSIZE * yScale);
 

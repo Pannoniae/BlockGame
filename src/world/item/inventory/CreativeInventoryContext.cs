@@ -17,7 +17,7 @@ public class CreativeInventoryContext : InventoryContext {
 
     public CreativeInventoryContext(int itemsPerPage) {
         this.itemsPerPage = itemsPerPage;
-        this.allItems = new List<ItemStack>();
+        this.allItems = [];
 
         collectAllItems();
         calculatePages();
@@ -79,7 +79,7 @@ public class CreativeInventoryContext : InventoryContext {
         // add player hotbar slots (first 10 slots only!)
         var player = Game.world.player;
         for (int i = 0; i < 10; i++) {
-            var hotbarSlot = new ItemSlot(player.survivalInventory, i,
+            var hotbarSlot = new ItemSlot(player.inventory, i,
                 invOffsetX + i * ItemSlot.SLOTSIZE,
                 invOffsetY + rows * ItemSlot.SLOTSIZE + 2); // 2 pixel padding
             slots.Add(hotbarSlot);

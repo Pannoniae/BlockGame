@@ -22,7 +22,7 @@ public class HotbarGUI : GUIElement {
     public HotbarGUI(Menu menu, string name, Vector2I pos, string? text = null) : base(menu, name) {
         setPosition(new Rectangle(pos.X, pos.Y, hotbarTexture.Width, hotbarTexture.Height));
         for (int i = 0; i < 10; i++) {
-            slots[i] = new ItemSlot(Game.player.survivalInventory,i, Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
+            slots[i] = new ItemSlot(Game.player.inventory,i, Game.gui.uiCentreX + ((i - 5) * SIZE) + 2,
                 GUI.instance.uiHeight - (BLOCKSIZE + 2));
         }
     }
@@ -30,7 +30,7 @@ public class HotbarGUI : GUIElement {
     public override void postDraw() {
         // draw hotbar
         var world = Game.world;
-        var inventory = world.player.survivalInventory;
+        var inventory = world.player.inventory;
         var gui = Game.gui;
 
         Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);

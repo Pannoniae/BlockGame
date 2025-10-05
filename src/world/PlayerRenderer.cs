@@ -20,7 +20,7 @@ public class PlayerRenderer : EntityRenderer<Player> {
             return;
         }
 
-        var item = player.survivalInventory.getSelected();
+        var item = player.inventory.getSelected();
         model.armRaise = item != ItemStack.EMPTY;
 
         model.sneaking = player.sneaking;

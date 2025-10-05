@@ -121,6 +121,8 @@ public class ChatMenu : Menu {
                             case "c":
                             case "1":
                                 Game.gamemode = GameMode.creative;
+                                // switch to creative inventory context
+                                Game.player.inventoryCtx = new world.item.inventory.CreativeInventoryContext(40);
                                 addMessage("Set gamemode to Creative");
                                 break;
                             case "survival":
@@ -129,6 +131,8 @@ public class ChatMenu : Menu {
                                 Game.gamemode = GameMode.survival;
                                 // disable flying when switching to survival
                                 Game.player.flyMode = false;
+                                // switch to survival inventory context
+                                Game.player.inventoryCtx = new world.item.inventory.SurvivalInventoryContext(Game.player.inventory);
                                 addMessage("Set gamemode to Survival");
                                 break;
                             default:

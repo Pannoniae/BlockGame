@@ -215,7 +215,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var defs = new List<Definition> {
             new("ANISO_LEVEL", anisoLevel.ToString()),
             new("DEBUG_ANISO", "0"),
-            new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 ? "1" : "0")
+            new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 && false ? "1" : "0")
         };
 
         // Add variant-specific defines based on renderer mode setting
@@ -533,11 +533,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthMask(true);
 
         // no blending solid shit!
-        GL.Disable(EnableCap.Blend);
+        //GL.Disable(EnableCap.Blend);
 
         // Enable A2C whenever MSAA is active for alpha-tested geometry (leaves)
         if (Settings.instance.msaa > 1) {
-            GL.Enable(EnableCap.SampleAlphaToCoverage);
+            GL.Disable(EnableCap.SampleAlphaToCoverage);
         }
         else {
             GL.Disable(EnableCap.SampleAlphaToCoverage);
@@ -808,7 +808,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         // start blending at transparent stuff
-        GL.Enable(EnableCap.Blend);
+        //GL.Enable(EnableCap.Blend);
         GL.Disable(EnableCap.SampleAlphaToCoverage);
 
         GL.Disable(EnableCap.CullFace);
@@ -871,7 +871,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         skip: ;
-        GL.Enable(EnableCap.Blend);
+        //GL.Enable(EnableCap.Blend);
 
         // disable unified memory after all chunk rendering passes
         if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
@@ -1010,7 +1010,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //var yes = GL.TryGetExtension(out NVBlendEquationAdvanced nvblend);
 
         // setup rendering state
-        GL.Enable(EnableCap.Blend);
+        //GL.Enable(EnableCap.Blend);
         // multiply!
         //GL.BlendEquation(BlendEquationMode);o
         //GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.SrcColor);

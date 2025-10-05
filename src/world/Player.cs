@@ -7,6 +7,7 @@ using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.entity;
 using BlockGame.world.item;
+using BlockGame.world.item.inventory;
 using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
@@ -29,10 +30,18 @@ public class Player : Entity {
     private double lastFootstepDistance = 0;
     private const double FOOTSTEP_DISTANCE = 3.0; // Distance between footstep sounds
 
-    public SurvivalInventory survivalInventory;
+    public PlayerInventory inventory;
+
+    /**
+     * The player's inventory (survival or creative)
+     */
+    public InventoryContext inventoryCtx;
+    /**
+     * Whatever's currently open (could be chest, workbench, etc.), or just the player's inventory if none
+     */
+    public InventoryContext currentCtx;
 
     public Vector3D strafeVector = new(0, 0, 0);
-    public bool pressedMovementKey;
 
     // body rotation constants
     private const double IDLE_VELOCITY_THRESHOLD = 0.05;
@@ -62,9 +71,11 @@ public class Player : Entity {
     public Player(World world, int x, int y, int z) : base(world, Entities.PLAYER) {
         position = new Vector3D(x, y, z);
         prevPosition = position;
-        survivalInventory = new SurvivalInventory();
+        inventory = new PlayerInventory();
         handRenderer = new PlayerHandRenderer(this);
         modelRenderer = new PlayerRenderer();
+
+        inventoryCtx = new CreativeInventoryContext(40);
 
         this.world = world;
         rotation = new Vector3();
@@ -161,11 +172,11 @@ public class Player : Entity {
         pickup();
 
         // decay shiny values
-        for (int i = 0; i < survivalInventory.shiny.Length; i++) {
-            if (survivalInventory.shiny[i] > 0) {
-                survivalInventory.shiny[i] -= (float)(dt * 4.0); // historically 6, 3, probably settle at 4?
-                if (survivalInventory.shiny[i] < 0) {
-                    survivalInventory.shiny[i] = 0;
+        for (int i = 0; i < inventory.shiny.Length; i++) {
+            if (inventory.shiny[i] > 0) {
+                inventory.shiny[i] -= (float)(dt * 4.0); // historically 6, 3, probably settle at 4?
+                if (inventory.shiny[i] < 0) {
+                    inventory.shiny[i] = 0;
                 }
             }
         }
@@ -219,10 +230,6 @@ public class Player : Entity {
 
     private void applyInputMovement(double dt) {
         velocity += inputVector;
-    }
-
-    private void resetFrameVars() {
-        pressedMovementKey = false;
     }
 
     private void updateInputVelocity(double dt) {
@@ -292,7 +299,7 @@ public class Player : Entity {
 
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
-            survivalInventory.selected = key > Key.Number0 ? (ushort)(key - Key.Number0 - 1) : 9;
+            inventory.selected = key > Key.Number0 ? (ushort)(key - Key.Number0 - 1) : 9;
         }
     }
 
@@ -312,8 +319,6 @@ public class Player : Entity {
             return;
         }
 
-        pressedMovementKey = false;
-
         if (Game.inputs.shift.down()) {
             if (flyMode) {
                 strafeVector.Y -= 0.8;
@@ -329,31 +334,26 @@ public class Player : Entity {
         if (Game.inputs.w.down()) {
             // Move forwards
             strafeVector.Z += 1;
-            pressedMovementKey = true;
         }
 
         if (Game.inputs.s.down()) {
             //Move backwards
             strafeVector.Z -= 1;
-            pressedMovementKey = true;
         }
 
         if (Game.inputs.a.down()) {
             //Move left
             strafeVector.X -= 1;
-            pressedMovementKey = true;
         }
 
         if (Game.inputs.d.down()) {
             //Move right
             strafeVector.X += 1;
-            pressedMovementKey = true;
         }
 
         if (Game.inputs.space.down()) {
             if ((onGround || inLiquid) && !flyMode) {
                 jumping = true;
-                pressedMovementKey = true;
             }
 
             if (flyMode) {
@@ -461,8 +461,8 @@ public class Player : Entity {
 
             // breaking logic
             var hardness = Block.hardness[block.id];
-            var heldItem = survivalInventory.getSelected().getItem();
-            var toolBreakSpeed = heldItem.getBreakSpeed(survivalInventory.getSelected(), block);
+            var heldItem = inventory.getSelected().getItem();
+            var toolBreakSpeed = heldItem.getBreakSpeed(inventory.getSelected(), block);
             var breakSpeed = toolBreakSpeed / hardness;
 
             prevBreakProgress = breakProgress;
@@ -522,7 +522,7 @@ public class Player : Entity {
     public void placeBlock() {
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
-            var stack = survivalInventory.getSelected();
+            var stack = inventory.getSelected();
 
             var metadata = (byte)stack.metadata;
 
@@ -587,7 +587,7 @@ public class Player : Entity {
 
                     // consume block from inventory in survival mode
                     if (Game.gamemode.gameplay) {
-                        survivalInventory.removeStack(survivalInventory.selected, 1);
+                        inventory.removeStack(inventory.selected, 1);
                     }
 
                     setSwinging(true);
@@ -598,7 +598,7 @@ public class Player : Entity {
             }
         }
         else {
-            var stack = survivalInventory.getSelected();
+            var stack = inventory.getSelected();
             stack.getItem().use(stack, world, this);
             setSwinging(false);
         }
@@ -695,7 +695,7 @@ public class Player : Entity {
             var pos = Game.instance.targetedPos.Value;
             var bl = Block.get(world.getBlock(pos));
             if (bl != null) {
-                survivalInventory.slots[survivalInventory.selected] = new ItemStack(Item.blockID(bl.id), 1);
+                inventory.slots[inventory.selected] = new ItemStack(Item.blockID(bl.id), 1);
             }
         }
     }
@@ -762,10 +762,10 @@ public class Player : Entity {
         }
 
         //Console.Out.WriteLine(angleDiff);
-        if (Math.Abs(angleDiff) > BODY_ROTATION_SNAP) {
-
+        var a = Math.Abs(angleDiff);
+        if (a > BODY_ROTATION_SNAP) {
             // idk why the number 2 is good here but here it is!
-            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * (float)dt);
+            bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * (float)dt * (a / BODY_ROTATION_SNAP * 3));
         }
 
         //Console.Out.WriteLine(bodyRotation.Y);
@@ -779,13 +779,13 @@ public class Player : Entity {
     }
 
     public void dropItem() {
-        var stack = survivalInventory.getSelected();
+        var stack = inventory.getSelected();
         if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
             return;
         }
 
         // remove 1 item from stack
-        var droppedStack = survivalInventory.removeStack(survivalInventory.selected, 1);
+        var droppedStack = inventory.removeStack(inventory.selected, 1);
 
         // create item entity
         var itemEntity = new ItemEntity(world);

@@ -4,9 +4,29 @@ using BlockGame.world.item.inventory;
 
 namespace BlockGame.world;
 
-public class SurvivalInventory : Inventory {
-    public readonly ItemStack[] slots = new ItemStack[50].fill();
-    public readonly float[] shiny = new float[50];
+public class PlayerInventory : Inventory {
+
+    public const int HOTBAR_SIZE = 10;
+    public const int MAIN_SIZE = 40;
+    public const int ARMOUR_SIZE = 3;
+    public const int ACCESSORY_SIZE = 10;
+    public const int TOTAL_SIZE = HOTBAR_SIZE + MAIN_SIZE + ARMOUR_SIZE + ACCESSORY_SIZE;
+
+    public const int ARMOUR = 50;
+    public const int ARMOUR_HELMET = 50;
+    public const int ARMOUR_CHESTPLATE = 51;
+    public const int ARMOUR_BOOTS = 52;
+
+    public const int ACCESSORIES = 53;
+    public const int ACCESSORIES_END = 62;
+
+    /** 0-49 */
+    public readonly ItemStack[] slots = new ItemStack[HOTBAR_SIZE + MAIN_SIZE].fill();
+    /** 50-52 */
+    public readonly ItemStack[] armour = new ItemStack[ARMOUR_SIZE].fill();
+    /** 53-62 */
+    public readonly ItemStack[] accessories = new ItemStack[ACCESSORY_SIZE].fill();
+    public readonly float[] shiny = new float[TOTAL_SIZE];
     
     public ItemStack cursor = ItemStack.EMPTY;
     
@@ -15,7 +35,7 @@ public class SurvivalInventory : Inventory {
      */
     public int selected;
 
-    public SurvivalInventory() {
+    public PlayerInventory() {
         for (int i = 0; i < 10; i++) {
             slots[i] = new ItemStack(Item.blockID(i + 1), Random.Shared.Next(15));
         }
@@ -28,20 +48,37 @@ public class SurvivalInventory : Inventory {
     }
 
     public int size() {
-        return slots.Length;
+        return slots.Length + armour.Length + accessories.Length;
     }
 
     public ItemStack getStack(int index) {
-        return slots[index];
+        if (index < slots.Length) {
+            return slots[index];
+        }
+        if (index < slots.Length + armour.Length) {
+            return armour[index - slots.Length];
+        }
+        if (index < slots.Length + armour.Length + accessories.Length) {
+            return accessories[index - slots.Length - armour.Length];
+        }
+        return ItemStack.EMPTY;
     }
 
     public void setStack(int index, ItemStack stack) {
-        slots[index] = stack;
+        if (index < slots.Length) {
+            slots[index] = stack;
+        }
+        else if (index < slots.Length + armour.Length) {
+            armour[index - slots.Length] = stack;
+        }
+        else if (index < slots.Length + armour.Length + accessories.Length) {
+            accessories[index - slots.Length - armour.Length] = stack;
+        }
     }
 
     public ItemStack removeStack(int index, int count) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
-        var stack = slots[index];
+        if (index < 0 || index >= size()) return ItemStack.EMPTY;
+        var stack = getStack(index);
         if (stack == ItemStack.EMPTY || count <= 0) return ItemStack.EMPTY;
 
         var removeAmount = Math.Min(count, stack.quantity);
@@ -49,16 +86,16 @@ public class SurvivalInventory : Inventory {
 
         stack.quantity -= removeAmount;
         if (stack.quantity <= 0) {
-            slots[index] = ItemStack.EMPTY;
+            setStack(index, ItemStack.EMPTY);
         }
 
         return removed;
     }
 
     public ItemStack clear(int index) {
-        if (index < 0 || index >= slots.Length) return ItemStack.EMPTY;
-        var stack = slots[index];
-        slots[index] = ItemStack.EMPTY;
+        if (index < 0 || index >= size()) return ItemStack.EMPTY;
+        var stack = getStack(index);
+        setStack(index, ItemStack.EMPTY);
         return stack;
     }
 
@@ -66,11 +103,17 @@ public class SurvivalInventory : Inventory {
         for (int i = 0; i < slots.Length; i++) {
             slots[i] = ItemStack.EMPTY;
         }
+        for (int i = 0; i < armour.Length; i++) {
+            armour[i] = ItemStack.EMPTY;
+        }
+        for (int i = 0; i < accessories.Length; i++) {
+            accessories[i] = ItemStack.EMPTY;
+        }
     }
 
     public bool add(int index, int count) {
-        if (index < 0 || index >= slots.Length || count <= 0) return false;
-        var stack = slots[index];
+        if (index < 0 || index >= size() || count <= 0) return false;
+        var stack = getStack(index);
         if (stack == ItemStack.EMPTY) return false;
 
         stack.quantity += count;

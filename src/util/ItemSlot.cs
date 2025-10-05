@@ -1,3 +1,4 @@
+using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using Molten;
 
@@ -132,5 +133,73 @@ public class ItemSlot {
         // simple swap for basic slots
         inventory.setStack(index, stack);
         return current;
+    }
+}
+
+public class ArmourSlot : ItemSlot {
+    public ArmourSlot(Inventory? inventory, int index, int x, int y) : base(inventory, index, x, y) {
+    }
+
+    public override bool accept(ItemStack stack) {
+        if (stack == ItemStack.EMPTY) {
+            return true;
+        }
+
+        var item = stack.getItem();
+        return Item.armour[item.idx];
+    }
+}
+
+public class AccessorySlot : ItemSlot {
+    public AccessorySlot(Inventory? inventory, int index, int x, int y) : base(inventory, index, x, y) {
+    }
+
+    public override bool accept(ItemStack stack) {
+        if (stack == ItemStack.EMPTY) {
+            return true;
+        }
+
+        var item = stack.getItem();
+        return Item.accessory[item.idx];
+    }
+}
+
+public class CraftingResultSlot : ItemSlot {
+    private readonly CraftingGridInventory craftingGrid;
+
+    public CraftingResultSlot(CraftingGridInventory craftingGrid, int index, int x, int y) : base(craftingGrid, index, x, y) {
+        this.craftingGrid = craftingGrid;
+    }
+
+    public override ItemStack getStack() {
+        return craftingGrid.result;
+    }
+
+    public override ItemStack take(int count) {
+        var result = craftingGrid.result;
+        if (result == ItemStack.EMPTY || count <= 0) {
+            return ItemStack.EMPTY;
+        }
+
+        var takeAmount = Math.Min(count, result.quantity);
+        var taken = new ItemStack(result.id, takeAmount, result.metadata);
+
+        // find the matching recipe and consume ingredients
+        var recipe = Recipe.findMatch(craftingGrid);
+        if (recipe != null) {
+            recipe.consumeIngredients(craftingGrid);
+            craftingGrid.updateResult(); // recalculate to see if we can craft again
+        }
+        else {
+            // shouldn't happen, but clear grid as fallback
+            craftingGrid.clearAll();
+        }
+
+        return taken;
+    }
+
+    public override ItemStack place(ItemStack stack) {
+        // Can't place items in the result slot!
+        return stack;
     }
 }

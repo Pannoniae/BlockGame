@@ -4,15 +4,13 @@ using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.world;
-using BlockGame.world.block;
-using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using Molten;
 using Silk.NET.Input;
 
 namespace BlockGame.ui.menu;
 
-public class InventoryMenu : Menu {
+public class CreativeInventoryMenu : Menu {
 
     public const int rows = 4;
     public const int cols = 10;
@@ -30,7 +28,7 @@ public class InventoryMenu : Menu {
 
     public List<ItemSlot> slots = [];
 
-    private readonly CreativeInventoryContext creativeContext;
+    private readonly CreativeInventoryContext creativeCtx;
 
     public Vector2I guiPos;
     public Rectangle guiBounds;
@@ -44,14 +42,14 @@ public class InventoryMenu : Menu {
         return false;
     }
 
-    public InventoryMenu(Vector2I guiPos) {
+    public CreativeInventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
 
         invTex?.Dispose();
         invTex = new BTexture2D("textures/creative_inventory.png");
         invTex.reload();
 
-        creativeContext = new CreativeInventoryContext(ITEMS_PER_PAGE);
+        creativeCtx = (CreativeInventoryContext)Game.player.inventoryCtx;
 
         resize(guiPos);
     }
@@ -75,8 +73,8 @@ public class InventoryMenu : Menu {
 
     public void setup() {
         // setup slots using the creative context
-        creativeContext.setupSlots(rows, cols, invOffsetX, invOffsetY);
-        slots = creativeContext.getSlots();
+        creativeCtx.setupSlots(rows, cols, invOffsetX, invOffsetY);
+        slots = creativeCtx.getSlots();
     }
 
 
@@ -84,8 +82,8 @@ public class InventoryMenu : Menu {
         base.draw();
         Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
         // draw inventory text with page info
-        var currentPage = creativeContext.getCurrentPage();
-        var totalPages = creativeContext.totalPages;
+        var currentPage = creativeCtx.getCurrentPage();
+        var totalPages = creativeCtx.totalPages;
         string title = totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
         Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color.White);
 
@@ -104,9 +102,9 @@ public class InventoryMenu : Menu {
 
         // draw cursor item
         var player = Game.world.player;
-        if (player?.survivalInventory?.cursor != null) {
+        if (player?.inventory?.cursor != null) {
             var mousePos = Game.mousePos;
-            Game.gui.drawCursorItem(player.survivalInventory.cursor, mousePos);
+            Game.gui.drawCursorItem(player.inventory.cursor, mousePos);
         }
     }
 
@@ -127,7 +125,7 @@ public class InventoryMenu : Menu {
     private void handleSlotClick(ItemSlot slot, MouseButton button, Player player) {
         // convert MouseButton to ClickType and delegate to the creative context
         var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
-        creativeContext.handleSlotClick(slot, clickType);
+        creativeCtx.handleSlotClick(slot, clickType);
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -144,7 +142,7 @@ public class InventoryMenu : Menu {
 
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         base.scroll(mouse, scroll);
-        if (creativeContext.totalPages <= 1) {
+        if (creativeCtx.totalPages <= 1) {
             return;
         }
 
@@ -156,16 +154,16 @@ public class InventoryMenu : Menu {
     }
 
     private void nextPage() {
-        var currentPage = creativeContext.getCurrentPage();
-        if (currentPage < creativeContext.totalPages - 1) {
-            creativeContext.setPage(currentPage + 1);
+        var currentPage = creativeCtx.getCurrentPage();
+        if (currentPage < creativeCtx.totalPages - 1) {
+            creativeCtx.setPage(currentPage + 1);
         }
     }
 
     private void previousPage() {
-        var currentPage = creativeContext.getCurrentPage();
+        var currentPage = creativeCtx.getCurrentPage();
         if (currentPage > 0) {
-            creativeContext.setPage(currentPage - 1);
+            creativeCtx.setPage(currentPage - 1);
         }
     }
 

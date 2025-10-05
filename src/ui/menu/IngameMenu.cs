@@ -88,9 +88,9 @@ public class IngameMenu : Menu, IDisposable {
     public override void scroll(IMouse mouse, ScrollWheel scroll) {
         var s = -scroll.Y;
         int y = (int)Math.Clamp(s, -1, 1);
-        var newSelection = Game.player.survivalInventory.selected + y;
+        var newSelection = Game.player.inventory.selected + y;
         newSelection = Meth.mod(newSelection, 10);
-        Game.player.survivalInventory.selected = newSelection;
+        Game.player.inventory.selected = newSelection;
     }
 
     // No longer needed - we're using fixed thresholds
@@ -170,26 +170,26 @@ public class IngameMenu : Menu, IDisposable {
             if (frametime < SIXTY_FPS) {
                 float t = frametime / SIXTY_FPS; // 0 to 1
                 barColor = new Color(
-                    255 * t,
-                    255,
+                    1 * t,
+                    1,
                     0
                 );
             }
             else if (frametime < THIRTY_FPS) {
                 float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
                 barColor = new Color(
-                    255,
-                    255 * (1 - t),
+                    1,
+                    1 * (1 - t),
                     0
                 );
             }
             else {
-                barColor = new Color(255, 0, 0);
+                barColor = new Color(1f, 0, 0);
             }
 
             // Draw bar
             gui.tb.Draw(gui.colourTexture,
-                new System.Drawing.RectangleF(x, y, barWidth, barHeight),
+                new RectangleF(x, y, barWidth, barHeight),
                 barColor);
         }
     }
@@ -219,7 +219,7 @@ public class IngameMenu : Menu, IDisposable {
 
                 // Draw segment
                 gui.tb.Draw(gui.colourTexture,
-                    new System.Drawing.RectangleF(x, currentY, barWidth, segmentHeight),
+                    new RectangleF(x, currentY, barWidth, segmentHeight),
                     ProfileData.getColour((ProfileSectionName)s));
             }
         }
@@ -285,7 +285,7 @@ public class IngameMenu : Menu, IDisposable {
         
 
         // Draw block display
-        var stack = Game.player.survivalInventory.getSelected();
+        var stack = Game.player.inventory.getSelected();
 
         // DON'T DRAW AIR
         if (stack == ItemStack.EMPTY) {

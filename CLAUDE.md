@@ -78,12 +78,13 @@ src/
 ├── ui/          # GUI system, screens, menus, elements
 ├── GL/          # OpenGL abstraction, VAOs, shaders, textures
 ├── util/        # Utilities, math, NBT, fonts, constants
-└── snd/         # Sound engine
+├── snd/         # Sound engine
+└── assets/
+    ├── shaders/     # GLSL shaders (including cmdl variants)
+    ├── textures/    # Game textures and atlases
+    └── fonts/       # Fonts
 
 docs/            # Design documents and architecture specs
-shaders/         # GLSL shaders (including cmdl variants)
-textures/        # Game textures and atlases
-fonts/           # BDF and TTF fonts
 lib/             # Custom libraries and dependencies
 ```
 

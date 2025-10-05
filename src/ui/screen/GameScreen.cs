@@ -160,7 +160,6 @@ public class GameScreen : Screen {
         // we update input here (shit doesn't work in non-main thread)
 
 
-        world.player.pressedMovementKey = false;
         world.player.strafeVector = new Vector3D(0, 0, 0);
         world.player.inputVector = new Vector3D(0, 0, 0);
 
@@ -366,8 +365,14 @@ public class GameScreen : Screen {
                     backToGame();
                 }
                 else {
-                    switchToMenu(new InventoryMenu(new Vector2I(0, 32)));
-                    ((InventoryMenu)currentMenu!).setup();
+                    // open appropriate inventory menu based on gamemode
+                    if (Game.gamemode == GameMode.survival) {
+                        switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
+                        ((SurvivalInventoryMenu)currentMenu!).setup();
+                    } else {
+                        switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
+                        ((CreativeInventoryMenu)currentMenu!).setup();
+                    }
                     world.inMenu = true;
                     Game.instance.unlockMouse();
                 }

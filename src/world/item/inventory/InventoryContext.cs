@@ -14,12 +14,9 @@ public abstract class InventoryContext {
 
     public List<ItemSlot> getSlots() => slots;
 
-    /**
-     * TODO this should be reused to avoid code duplication with SurvivalInventoryContext and other stuff!
-     */
     public virtual void handleSlotClick(ItemSlot slot, ClickType click) {
         var player = Game.player;
-        var cursor = player.survivalInventory.cursor;
+        var cursor = player.inventory.cursor;
 
         if (click == ClickType.LEFT) {
             if (cursor == ItemStack.EMPTY) {
@@ -27,13 +24,33 @@ public abstract class InventoryContext {
                 var currentStack = slot.getStack();
                 var taken = slot.take(currentStack == ItemStack.EMPTY ? 1 : currentStack.quantity);
                 if (taken != ItemStack.EMPTY && taken.id != Items.AIR) {
-                    player.survivalInventory.cursor = taken;
+                    player.inventory.cursor = taken;
                 }
             }
             else {
-                // try to place in slot
-                var remaining = slot.place(cursor);
-                player.survivalInventory.cursor = remaining;
+                var slotStack = slot.getStack();
+
+                // if cursor matches slot contents and can merge, take from slot instead
+                if (slotStack != ItemStack.EMPTY && slotStack.same(cursor)) {
+                    int totalQty = cursor.quantity + slotStack.quantity;
+                    if (totalQty <= Inventory.MAX_STACK_SIZE) {
+                        // can merge - take all from slot
+                        var taken = slot.take(slotStack.quantity);
+                        if (taken != ItemStack.EMPTY) {
+                            cursor.quantity += taken.quantity;
+                        }
+                    }
+                    else {
+                        // would exceed max stack - try to place instead
+                        var remaining = slot.place(cursor);
+                        player.inventory.cursor = remaining;
+                    }
+                }
+                else {
+                    // different items or slot empty - try to place
+                    var remaining = slot.place(cursor);
+                    player.inventory.cursor = remaining;
+                }
             }
         }
         else if (click == ClickType.RIGHT) {
@@ -44,27 +61,40 @@ public abstract class InventoryContext {
                     var halfQuantity = (currentStack.quantity + 1) / 2;
                     var taken = slot.take(halfQuantity);
                     if (taken != ItemStack.EMPTY) {
-                        player.survivalInventory.cursor = taken;
+                        player.inventory.cursor = taken;
                     }
                 }
             }
             else {
-                // try to place one item
-                var singleItem = new ItemStack(cursor.id, 1, cursor.metadata);
-                var remaining = slot.place(singleItem);
+                // right-click only places 1 item if slot is empty or can merge (no swapping!)
+                var slotStack = slot.getStack();
 
-                if (remaining == ItemStack.EMPTY) {
-                    // Successfully placed 1 item through merging or into empty slot
+                if (!slot.accept(cursor)) {
+                    // slot doesn't accept this item type - do nothing
+                    return;
+                }
+
+                if (slotStack == ItemStack.EMPTY) {
+                    // empty slot - place 1 item
+                    var singleItem = new ItemStack(cursor.id, 1, cursor.metadata);
+                    slot.place(singleItem);
                     cursor.quantity--;
                     if (cursor.quantity <= 0) {
-                        player.survivalInventory.cursor = ItemStack.EMPTY;
+                        player.inventory.cursor = ItemStack.EMPTY;
                     }
                 }
-                else {
-                    // Swap occurred - either different item type or same type but slot was full
-                    // The slot now contains our 1 item, cursor should become what was returned
-                    player.survivalInventory.cursor = remaining;
+                else if (slotStack.same(cursor)) {
+                    // same item - try to add 1 if there's room
+                    if (slotStack.quantity < Inventory.MAX_STACK_SIZE) {
+                        slotStack.quantity++;
+                        cursor.quantity--;
+                        if (cursor.quantity <= 0) {
+                            player.inventory.cursor = ItemStack.EMPTY;
+                        }
+                    }
+                    // else slot is full, do nothing
                 }
+                // else different item - do nothing (no swap on right-click)
             }
         }
     }

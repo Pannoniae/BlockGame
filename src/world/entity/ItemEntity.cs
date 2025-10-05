@@ -212,7 +212,7 @@ public class ItemEntity : Entity {
         // check if player can pick up this item
         if (canPickup(player)) {
             // try to add to inventory
-            if (player.survivalInventory.addItem(stack)) {
+            if (player.inventory.addItem(stack)) {
                 // successfully added to inventory, remove from world
                 remove();
                 return true;

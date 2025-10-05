@@ -35,7 +35,7 @@ public class PlayerHandRenderer {
 
     public PlayerHandRenderer(Player player) {
         this.player = player;
-        handItem = player.survivalInventory.getSelected();
+        handItem = player.inventory.getSelected();
         vao = new StreamingVAO<BlockVertexTinted>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
@@ -639,7 +639,7 @@ public class PlayerHandRenderer {
         double target;
 
         var d = dt * 5;
-        if (handSlot == player.survivalInventory.selected && handItem == player.survivalInventory.getSelected()) {
+        if (handSlot == player.inventory.selected && handItem == player.inventory.getSelected()) {
             target = 0;
         }
         else {
@@ -657,8 +657,8 @@ public class PlayerHandRenderer {
 
         // lowering shit
         if (lower > 0.8f) {
-            handSlot = player.survivalInventory.selected;
-            handItem = player.survivalInventory.getSelected();
+            handSlot = player.inventory.selected;
+            handItem = player.inventory.getSelected();
         }
     }
 }
