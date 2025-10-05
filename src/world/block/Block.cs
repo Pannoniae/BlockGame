@@ -145,6 +145,8 @@ public class Block {
     public static Block GLASS;
     public static Block CALCITE;
     public static Block BRICK_BLOCK;
+    public static Block STONE_BRICK;
+    public static Block SAND_BRICK;
 
     public static Block LANTERN;
 
@@ -269,16 +271,26 @@ public class Block {
         BRICK_BLOCK.setTex(cubeUVs(5, 1));
         renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
+
+        STONE_BRICK = register(new Block(Blocks.STONE_BRICK, "Stone Brick"));
+        STONE_BRICK.setTex(cubeUVs(8, 1));
+        renderType[STONE_BRICK.id] = RenderType.CUBE;
+        STONE_BRICK.material(Material.STONE);
+
+        SAND_BRICK = register(new Block(Blocks.SAND_BRICK, "Sand Brick"));
+        SAND_BRICK.setTex(cubeUVs(9, 1));
+        renderType[SAND_BRICK.id] = RenderType.CUBE;
+        SAND_BRICK.material(Material.STONE);
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
-        LANTERN.setTex(new(13, 1), new(14, 1), new(15, 1));
+        LANTERN.setTex(new UVPair(8,3), new UVPair(9,3), new UVPair(10,3));
         LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
         LANTERN.material(Material.METAL);
         
         TALL_GRASS = register(new Grass(Blocks.TALL_GRASS, "Tall Grass"));
-        TALL_GRASS.setTex(crossUVs(9, 1));
+        TALL_GRASS.setTex(crossUVs(11, 5));
         TALL_GRASS.setModel(BlockModel.makeGrass(TALL_GRASS));
         TALL_GRASS.transparency();
         TALL_GRASS.noCollision();
@@ -287,7 +299,7 @@ public class Block {
         TALL_GRASS.setHardness(0);
 
         SHORT_GRASS = register(new Grass(Blocks.SHORT_GRASS, "Short Grass"));
-        SHORT_GRASS.setTex(crossUVs(8, 1));
+        SHORT_GRASS.setTex(crossUVs(10, 5));
         SHORT_GRASS.setModel(BlockModel.makeGrass(SHORT_GRASS));
         SHORT_GRASS.transparency();
         SHORT_GRASS.shortGrassAABB();
@@ -317,7 +329,7 @@ public class Block {
         //RED_FLOWER.material(Material.ORGANIC);
 
         ORANGE_WEED = register(new Flower(Blocks.ORANGE_WEED, "Orange Weed"));
-        ORANGE_WEED.setTex(crossUVs(10, 1));
+        ORANGE_WEED.setTex(crossUVs(12, 5));
         ORANGE_WEED.setModel(BlockModel.makeGrass(ORANGE_WEED));
         ORANGE_WEED.transparency();
         ORANGE_WEED.flowerAABB();
@@ -327,7 +339,7 @@ public class Block {
         ORANGE_WEED.material(Material.ORGANIC);
 
         CYAN_TULIP = register(new Flower(Blocks.CYAN_TULIP, "Cyan Tulip"));
-        CYAN_TULIP.setTex(crossUVs(11, 1));
+        CYAN_TULIP.setTex(crossUVs(13, 5));
         CYAN_TULIP.setModel(BlockModel.makeGrass(CYAN_TULIP));
         CYAN_TULIP.transparency();
         CYAN_TULIP.noCollision();
@@ -336,9 +348,10 @@ public class Block {
         CYAN_TULIP.material(Material.ORGANIC);
 
         THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
-        THISTLE.setTex(crossUVs(12, 1));
+        THISTLE.setTex(crossUVs(14, 5));
         THISTLE.setModel(BlockModel.makeGrass(THISTLE));
         THISTLE.transparency();
+        THISTLE.noCollision();
         THISTLE.waterTransparent();
         THISTLE.itemLike();
         THISTLE.material(Material.ORGANIC);
