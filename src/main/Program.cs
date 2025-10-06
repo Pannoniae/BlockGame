@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using BlockGame.render;
 using BlockGame.util.log;
 using Silk.NET.GLFW;
 
@@ -16,7 +17,11 @@ public class Program {
     
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
-        
+
+        unsafe {
+            Console.Out.WriteLine(sizeof(BlockRenderer.RenderContext));
+        }
+
         // name the thread
         Thread.CurrentThread.Name = "Main";
 

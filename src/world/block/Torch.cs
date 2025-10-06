@@ -221,7 +221,7 @@ public class Torch : Block {
 
 
         for (RawDirection i = 0; i < RawDirection.MAX; i++) {
-            br.applySimpleLighting(RawDirection.NONE, colourCache, lightColourCache);
+            br.applySimpleLighting(RawDirection.NONE);
             
             
             Vector3 v0 = default;
@@ -292,7 +292,7 @@ public class Torch : Block {
             v2 = Meth.transformVertex(v2.X, v2.Y, v2.Z, brot, pivot, angle, ax);
             v3 = Meth.transformVertex(v3.X, v3.Y, v3.Z, brot, pivot, angle, ax);
             
-            br.begin(cache);
+            br.begin();
 
             br.vertex(v0.X, v0.Y, v0.Z, u0_, v0_);
                 br.vertex(v1.X, v1.Y, v1.Z, u0_, v1_);

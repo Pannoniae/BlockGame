@@ -40,7 +40,7 @@ public class BlockRenderer {
         neighbourLights =
             GC.AllocateUninitializedArray<byte>(Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX * Chunk.CHUNKSIZEEX);
 
-    // 3x3x3 local cache for smooth lighting optimization
+    // 3x3x3 local cache for smooth lighting optimisation
     public const int LOCALCACHESIZE = 3;
     public const int LOCALCACHESIZE_SQ = 9;
     public const int LOCALCACHESIZE_CUBE = 27;
@@ -50,47 +50,111 @@ public class BlockRenderer {
     public static ReadOnlySpan<short> lightOffsets => [-1, +1, -18, +18, -324, +324];
 
     public World? world;
-    /** Always 27 elements!
-     * You need to initialise the array first before calling fillCache or any of the variants.
-     * This is so you can set it up however you want in a modular way without a hardcoded stackalloc, but this requires semi-manual setup.
-     * Just copy the existing code and you'll be fine.
-     */
-    private unsafe uint* blockCache;
-    /** Always 27 elements! */
-    private unsafe byte* lightCache;
-
-    private unsafe BlockVertexPacked* vertexCache;
-    
-    /**
-     * Stores the baked colours for each vertex, including lighting, AO and shading.
-     * Filled by <see cref="getDirectionOffsetsAndData"/>.
-     * Has 4 elements (RGBA * 4 vertices)
-     */
-    private unsafe Vector4* colourCache;
-    
-    /** Store the averaged block light values. (same as <see cref="colourCache"/> except without AO and tint)*/
-    private unsafe byte* lightColourCache;
-    private int vertexCount;
 
     public UVPair forceTex = new UVPair(-1, -1);
 
-
     /** Hack to convert between vertices. */
     private readonly List<BlockVertexPacked> _listHack = new(24);
-    
-    
-    // flags to enable/disable various vertex colouring features
-    public bool smoothLighting;
-    public bool AO;
-    public bool tinting;
-    
-    // AO flip state
-    private bool shouldFlipVertices;
-    
+
     private bool isRenderingWorld;
 
-    public BlockRenderer() {
+    public bool smoothLighting;
+    public bool AO;
 
+    public ref struct RenderContext {
+
+        [InlineArray(27)]
+        public struct ArrayBlockCache {
+            public uint block;
+        }
+
+        [InlineArray(27)]
+        public struct ArrayLightCache {
+            public byte light;
+        }
+
+        [InlineArray(4)]
+        public struct ArrayColourCache {
+            public Vector4 colour;
+        }
+
+        [InlineArray(4)]
+        public struct ArrayLightColourCache {
+            public byte light;
+        }
+
+        [InlineArray(4)]
+        public struct ArrayVertexCache {
+            public BlockVertexPacked vertex;
+        }
+
+        public ArrayBlockCache blockCache;
+        public ArrayLightCache lightCache;
+        public ArrayColourCache colourCache;
+        public ArrayLightColourCache lightColourCache;
+        public ArrayVertexCache vertexCache;
+
+        public int vertexCount;
+
+        public bool shouldFlipVertices;
+
+        public uint getBlock() {
+            // this is unsafe but we know the cache is always 27 elements
+            return blockCache[13];
+        }
+
+        public byte getLight() {
+            // this is unsafe but we know the cache is always 27 elements
+            return lightCache[13];
+        }
+
+        public uint getBlockCached(int x, int y, int z) {
+            // this is unsafe but we know the cache is always 27 elements
+            return blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
+
+        public byte getLightCached(int x, int y, int z) {
+            // this is unsafe but we know the cache is always 27 elements
+            return lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
+    }
+
+    public static unsafe RenderContext* _ctx;
+
+    public static unsafe ref RenderContext ctx => ref Unsafe.AsRef<RenderContext>(_ctx);
+
+    public static unsafe void setCtx(ref RenderContext context) {
+        _ctx = (RenderContext*)Unsafe.AsPointer(ref context);
+    }
+
+
+
+    public uint getBlock() {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return ctx.blockCache[13];
+        }
+    }
+
+    public byte getLight() {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return ctx.lightCache[13];
+        }
+    }
+
+    public uint getBlockCached(int x, int y, int z) {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return ctx.blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
+    }
+
+    public byte getLightCached(int x, int y, int z) {
+        unsafe {
+            // this is unsafe but we know the cache is always 27 elements
+            return ctx.lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
+        }
     }
 
     // setup for world context
@@ -103,8 +167,8 @@ public class BlockRenderer {
 
     // setup for standalone context
     public void setupStandalone() {
-        smoothLighting = false;
-        AO = false;
+        this.smoothLighting = false;
+        this.AO = false;
         isRenderingWorld = false;
     }
 
@@ -119,36 +183,9 @@ public class BlockRenderer {
         isRenderingWorld = true;
     }
 
-    public uint getBlock() {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return blockCache[13];
-        }
-    }
-    
-    public byte getLight() {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return lightCache[13];
-        }
-    }
-    
-    public uint getBlockCached(int x, int y, int z) {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
-        }
-    }
-    
-    public byte getLightCached(int x, int y, int z) {
-        unsafe {
-            // this is unsafe but we know the cache is always 27 elements
-            return lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
-        }
-    }
-    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte calculateVertexLightAndAO(ref uint blockCache, ref byte lightCache, int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2, int z2, byte lb, out byte opacity) {
+    private static unsafe byte calculateVertexLightAndAO(int x0, int y0, int z0, int x1, int y1, int z1, int x2, int y2,
+        int z2, byte lb, out byte opacity) {
         
         // since we're using a cache now, we're getting the offsets from the cache which is 3x3x3
         // so +1 is +3, -1 is -3, etc.
@@ -158,14 +195,14 @@ public class BlockRenderer {
         int offset1 =  (y1 + 1) * LOCALCACHESIZE_SQ + (z1 + 1) * LOCALCACHESIZE + (x1 + 1);
         int offset2 =  (y2 + 1) * LOCALCACHESIZE_SQ + (z2 + 1) * LOCALCACHESIZE + (x2 + 1);
         
-        uint lightValue = (uint)(Unsafe.Add(ref lightCache, offset0) |
-                                 (Unsafe.Add(ref lightCache, offset1) << 8) |
-                                 (Unsafe.Add(ref lightCache, offset2) << 16) | 
+        uint lightValue = (uint)(ctx.lightCache[offset0] |
+                                 (ctx.lightCache[offset1] << 8) |
+                                 (ctx.lightCache[offset2] << 16) |
                                  lb << 24);
         
-        opacity = (byte)((Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref blockCache, offset0).getID()])) |
-                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref blockCache, offset1).getID()]) << 1) |
-                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[Unsafe.Add(ref blockCache, offset2).getID()]) << 2));
+        opacity = (byte)((Unsafe.BitCast<bool, byte>(Block.fullBlock[ctx.blockCache[offset0].getID()])) |
+                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[ctx.blockCache[offset1].getID()]) << 1) |
+                        (Unsafe.BitCast<bool, byte>(Block.fullBlock[ctx.blockCache[offset2].getID()]) << 2));
         
         return average2(lightValue, opacity);
     }
@@ -174,45 +211,45 @@ public class BlockRenderer {
      * TODO there could be a 4x version of this, which does all 4 vertices at once for a face.... and average2 could have an average2x4 version too which does 128 bits at once and writes an entire opacity uint at once
      */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void getDirectionOffsetsAndData(RawDirection dir, ref uint blockCache, ref byte lightCache, byte lb, out FourBytes light, out FourBytes o) {
+    private static void getDirectionOffsetsAndData(RawDirection dir, byte lb, out FourBytes light, out FourBytes o) {
         Unsafe.SkipInit(out o);
         Unsafe.SkipInit(out light);
         switch (dir) {
             case RawDirection.WEST:
-                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, -1, -1, 0, -1, -1, 1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, -1, 1, 0, -1, 1, -1, lb, out o.Fourth);
+                light.First = calculateVertexLightAndAO(-1, 0, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(-1, 0, 1, -1, -1, 0, -1, -1, 1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(-1, 0, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(-1, 0, -1, -1, 1, 0, -1, 1, -1, lb, out o.Fourth);
                 break;
             case RawDirection.EAST:
-                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 1, 1, 0, 1, 1, -1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 1, -1, 0, 1, -1, 1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
+                light.First = calculateVertexLightAndAO(1, 0, -1, 1, 1, 0, 1, 1, -1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(1, 0, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(1, 0, 1, 1, -1, 0, 1, -1, 1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(1, 0, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
                 break;
             case RawDirection.SOUTH:
-                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, 0, 1, -1, -1, 1, -1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, -1, 0, -1, -1, -1, -1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 0, -1, -1, 1, -1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, -1, 0, 1, -1, 1, 1, -1, lb, out o.Fourth);
+                light.First = calculateVertexLightAndAO(-1, 0, -1, 0, 1, -1, -1, 1, -1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(-1, 0, -1, 0, -1, -1, -1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(1, 0, -1, 0, -1, -1, 1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(1, 0, -1, 0, 1, -1, 1, 1, -1, lb, out o.Fourth);
                 break;
             case RawDirection.NORTH:
-                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 0, 1, 1, 1, 1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 1, 0, 1, 0, -1, 1, 1, -1, 1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, 0, -1, 1, -1, -1, 1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, -1, 0, 1, 0, 1, 1, -1, 1, 1, lb, out o.Fourth);
+                light.First = calculateVertexLightAndAO(1, 0, 1, 0, 1, 1, 1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(1, 0, 1, 0, -1, 1, 1, -1, 1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(-1, 0, 1, 0, -1, 1, -1, -1, 1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(-1, 0, 1, 0, 1, 1, -1, 1, 1, lb, out o.Fourth);
                 break;
             case RawDirection.DOWN:
-                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, 1, 1, -1, 0, 1, -1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, -1, 1, -1, -1, 0, -1, -1, 1, lb, out o.Fourth);
+                light.First = calculateVertexLightAndAO(0, -1, 1, 1, -1, 0, 1, -1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(0, -1, -1, 1, -1, 0, 1, -1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(0, -1, -1, -1, -1, 0, -1, -1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(0, -1, 1, -1, -1, 0, -1, -1, 1, lb, out o.Fourth);
                 break;
             case RawDirection.UP:
-                light.First = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
-                light.Second = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, -1, -1, 1, 0, -1, 1, -1, lb, out o.Second);
-                light.Third = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, -1, 1, 1, 0, 1, 1, -1, lb, out o.Third);
-                light.Fourth = calculateVertexLightAndAO(ref blockCache, ref lightCache, 0, 1, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
+                light.First = calculateVertexLightAndAO(0, 1, 1, -1, 1, 0, -1, 1, 1, lb, out o.First);
+                light.Second = calculateVertexLightAndAO(0, 1, -1, -1, 1, 0, -1, 1, -1, lb, out o.Second);
+                light.Third = calculateVertexLightAndAO(0, 1, -1, 1, 1, 0, 1, 1, -1, lb, out o.Third);
+                light.Fourth = calculateVertexLightAndAO(0, 1, 1, 1, 1, 0, 1, 1, 1, lb, out o.Fourth);
                 break;
         }
     }
@@ -254,7 +291,7 @@ public class BlockRenderer {
             }
             
             else {
-                getDirectionOffsetsAndData(dir, ref Unsafe.AsRef<uint>(blockCache), ref Unsafe.AsRef<byte>(lightCache), lb, out light, out FourBytes o);
+                getDirectionOffsetsAndData(dir, lb, out light, out FourBytes o);
                 
                 if (AO) {
                     ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount(o.First));
@@ -269,9 +306,7 @@ public class BlockRenderer {
     }
 
 
-    public unsafe void applyFaceLighting(RawDirection dir, Span<Vector4> colourCache, Span<byte> lightColourCache) {
-        this.colourCache = (Vector4*)Unsafe.AsPointer(ref colourCache.GetPinnableReference());
-        this.lightColourCache = (byte*)Unsafe.AsPointer(ref lightColourCache.GetPinnableReference());
+    public unsafe void applyFaceLighting(RawDirection dir) {
         
         calculateFaceLighting(dir, out FourBytes light, out FourBytes ao);
         
@@ -282,9 +317,9 @@ public class BlockRenderer {
             var dark2 = (~light.Third & 0xF);
             var dark3 = (~light.Fourth & 0xF);
             
-            shouldFlipVertices = ao.First + dark0 + ao.Third + dark2 > ao.Second + dark1 + ao.Fourth + dark3;
+            ctx.shouldFlipVertices = ao.First + dark0 + ao.Third + dark2 > ao.Second + dark1 + ao.Fourth + dark3;
         } else {
-            shouldFlipVertices = false;
+            ctx.shouldFlipVertices = false;
         }
         
         Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
@@ -298,8 +333,8 @@ public class BlockRenderer {
             // set alpha to 1!
             // todo do we really need this? user can fuck it up for himself whatever
             //res.W = 1;
-            colourCache[i] = new Vector4(tint, tint, tint, 1);
-            lightColourCache[i] = light.bytes[i];
+            ctx.colourCache[i] = new Vector4(tint, tint, tint, 1);
+            ctx.lightColourCache[i] = light.bytes[i];
         }
     }
 
@@ -307,11 +342,9 @@ public class BlockRenderer {
     /// Apply simple uniform lighting without AO for faces like torch rendering.
     /// Uses the current block's light level, not neighbour light.
     /// </summary>
-    public unsafe void applySimpleLighting(RawDirection dir, Span<Vector4> colourCache, Span<byte> lightColourCache) {
-        this.colourCache = (Vector4*)Unsafe.AsPointer(ref colourCache.GetPinnableReference());
-        this.lightColourCache = (byte*)Unsafe.AsPointer(ref lightColourCache.GetPinnableReference());
+    public unsafe void applySimpleLighting(RawDirection dir) {
 
-        shouldFlipVertices = false;
+        ctx.shouldFlipVertices = false;
 
         var blockLight = getLightCached(0, 0, 0);
 
@@ -323,8 +356,8 @@ public class BlockRenderer {
             a[(byte)dir]; // no AO!
 
         for (int i = 0; i < 4; i++) {
-            colourCache[i] = new Vector4(tint, tint, tint, 1);
-            lightColourCache[i] = blockLight;
+            ctx.colourCache[i] = new Vector4(tint, tint, tint, 1);
+            ctx.lightColourCache[i] = blockLight;
         }
     }
 
@@ -363,15 +396,11 @@ public class BlockRenderer {
             return;
         }
         
-        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
-        Span<Vector4> colourCache = stackalloc Vector4[4];
-        Span<byte> lightColourCache = stackalloc byte[4];
-        
         
         // calculate lighting and AO
-        applyFaceLighting(dir, colourCache, lightColourCache);
+        applyFaceLighting(dir);
         
-        begin(cache);
+        begin();
         vertex(x + x1, y + y1, z + z1, uMin, vMin);
         vertex(x + x2, y + y2, z + z2, uMin, vMax);
         vertex(x + x3, y + y3, z + z3, uMax, vMax);
@@ -389,15 +418,11 @@ public class BlockRenderer {
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
         
-        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
-        Span<Vector4> colourCache = stackalloc Vector4[4];
-        Span<byte> lightColourCache = stackalloc byte[4];
-        
         
         // calculate lighting and AO
-        applyFaceLighting(dir, colourCache, lightColourCache);
+        applyFaceLighting(dir);
         
-        begin(cache);
+        begin();
         vertex(x + x1, y + y1, z + z1, uMin, vMin);
         vertex(x + x2, y + y2, z + z2, uMin, vMax);
         vertex(x + x3, y + y3, z + z3, uMax, vMax);
@@ -411,9 +436,8 @@ public class BlockRenderer {
     /// Start building a face. Caller must provide a vertex cache (typically stackalloc BlockVertexPacked[4]).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void begin(Span<BlockVertexPacked> cache) {
-        vertexCount = 0;
-        vertexCache = (BlockVertexPacked*)Unsafe.AsPointer(ref cache.GetPinnableReference());
+    public unsafe void begin() {
+        ctx.vertexCount = 0;
     }
     
     /// <summary>
@@ -423,11 +447,11 @@ public class BlockRenderer {
     public unsafe void vertex(float x, float y, float z, float u, float v, byte light, Vector4 tint) {
         
         // multiply tint by the stored colour
-        var c = tint * colourCache[vertexCount];
+        var c = tint * ctx.colourCache[ctx.vertexCount];
 
         var col = Meth.f2b(c);
         
-        ref var vert = ref vertexCache[vertexCount];
+        ref var vert = ref ctx.vertexCache[ctx.vertexCount];
         vert.x = (ushort)((x + 16f) * 256f);
         vert.y = (ushort)((y + 16f) * 256f);
         vert.z = (ushort)((z + 16f) * 256f);
@@ -435,7 +459,7 @@ public class BlockRenderer {
         vert.v = (ushort)(v * 32768);
         vert.light = light;
         vert.cu = col;
-        vertexCount++;
+        ctx.vertexCount++;
     }
     
     /// <summary>
@@ -446,11 +470,11 @@ public class BlockRenderer {
         
         // multiply tint by the stored colour
         // there is no tint though!
-        var c = colourCache[vertexCount];
+        var c = ctx.colourCache[ctx.vertexCount];
 
         var col = Meth.f2b(c);
         
-        ref var vert = ref vertexCache[vertexCount];
+        ref var vert = ref ctx.vertexCache[ctx.vertexCount];
         vert.x = (ushort)((x + 16f) * 256f);
         vert.y = (ushort)((y + 16f) * 256f);
         vert.z = (ushort)((z + 16f) * 256f);
@@ -458,7 +482,7 @@ public class BlockRenderer {
         vert.v = (ushort)(v * 32768);
         vert.light = light;
         vert.cu = col;
-        vertexCount++;
+        ctx.vertexCount++;
     }
     
     /// <summary>
@@ -469,19 +493,19 @@ public class BlockRenderer {
         
         // multiply tint by the stored colour
         // there is no tint though!
-        var c = colourCache[vertexCount];
+        var c = ctx.colourCache[ctx.vertexCount];
 
         var col = Meth.f2b(c);
         
-        ref var vert = ref vertexCache[vertexCount];
+        ref var vert = ref ctx.vertexCache[ctx.vertexCount];
         vert.x = (ushort)((x + 16f) * 256f);
         vert.y = (ushort)((y + 16f) * 256f);
         vert.z = (ushort)((z + 16f) * 256f);
         vert.u = (ushort)(u * 32768);
         vert.v = (ushort)(v * 32768);
-        vert.light = lightColourCache[vertexCount];
+        vert.light = ctx.lightColourCache[ctx.vertexCount];
         vert.cu = col;
-        vertexCount++;
+        ctx.vertexCount++;
     }
     
     
@@ -493,11 +517,13 @@ public class BlockRenderer {
     [SuppressMessage("ReSharper", "RedundantExplicitParamsArrayCreation")]
     public void end(List<BlockVertexPacked> vertices) {
         unsafe {
-            if (shouldFlipVertices) {
+            ref var vertexCache = ref ctx.vertexCache;
+            if (ctx.shouldFlipVertices) {
                 // apply AO flip - reorder vertices: 0,1,2,3 -> 3,0,1,2
                 
                 // how about NOT copying shit all over the place? so slopcode begin
                 // we'll have only ONE temp
+
                 var v0 = vertexCache[0];
                 //var v1 = vertexCache[1];
                 //var v2 = vertexCache[2];
@@ -513,8 +539,8 @@ public class BlockRenderer {
             }
             
             // add the vertices to the list
-            vertices.AddRange(new ReadOnlySpan<BlockVertexPacked>(vertexCache, vertexCount));
-            vertexCount = 0; // reset
+            vertices.AddRange(ctx.vertexCache);
+            ctx.vertexCount = 0; // reset
         }
     }
 
@@ -525,13 +551,14 @@ public class BlockRenderer {
                            byte lightOverride = 255,
                            Color tintOverride = default,
                            bool cullFaces = true) {
-        
+        // SETUP CACHE
+        RenderContext c = new();
+        setCtx(ref c);
+
         vertices.Clear();
         
         if (isRenderingWorld) {
-            Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
-            Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
-            fillCache(blockCache, lightCache, ref MemoryMarshal.GetReference(neighbours), ref MemoryMarshal.GetReference(neighbourLights));
+            fillCache(ref MemoryMarshal.GetReference(neighbours), ref MemoryMarshal.GetReference(neighbourLights));
             renderBlockWorld(block, worldPos, vertices, mode, cullFaces);
         } else {
             renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride, metadata);
@@ -612,11 +639,8 @@ public class BlockRenderer {
 
         setupStandalone();
                 
-        Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
-        Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
-                
         // setup (fake) cache
-        fillCacheStandalone(blockCache, lightCache, blockID.setMetadata(metadata), lightOverride);
+        fillCacheStandalone(blockID.setMetadata(metadata), lightOverride);
 
         renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
 
@@ -756,7 +780,10 @@ public class BlockRenderer {
 
 
     public void meshChunk(SubChunk subChunk) {
-        //sw.Restart();
+        // SETUP CACHE
+        RenderContext c = new();
+        setCtx(ref c);
+
         subChunk.vao?.Dispose();
         subChunk.vao = new SharedBlockVAO(Game.renderer.chunkVAO);
         subChunk.watervao?.Dispose();
@@ -774,64 +801,33 @@ public class BlockRenderer {
             return;
         }
 
-        //Console.Out.WriteLine($"PartMeshing0.5: {sw.Elapsed.TotalMicroseconds}us");
-        // first we render everything which is NOT translucent
-        //lock (meshingLock) {
         setupNeighbours(subChunk);
 
-
-        // if chunk is full, don't mesh either
-        // status update: this is actually bullshit and causes rendering bugs with *weird* worlds such as "all stone until building height". So this won't work anymore
-        //if (subChunk.hasOnlySolid) {
-        //return;
-        //}
-
-        /*if (World.glob) {
-                MeasureProfiler.StartCollectingData();
-            }*/
-        //Console.Out.WriteLine($"PartMeshing0.7: {sw.Elapsed.TotalMicroseconds}us");
         constructVertices(subChunk, RenderLayer.SOLID, chunkVertices);
-        /*if (World.glob) {
-                MeasureProfiler.SaveData();
-            }*/
-        //Console.Out.WriteLine($"PartMeshing1: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
+
         if (chunkVertices.Count > 0) {
             subChunk.hasRenderOpaque = true;
             currentVAO.bindVAO();
             var finalVertices = CollectionsMarshal.AsSpan(chunkVertices);
             currentVAO.upload(finalVertices, (uint)finalVertices.Length);
-            //Console.Out.WriteLine($"PartMeshing1.2: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
         }
         else {
             subChunk.hasRenderOpaque = false;
         }
 
-        //}
-        //lock (meshingLock) {
         if (subChunk.blocks.hasTranslucentBlocks()) {
-            // then we render everything which is translucent (water for now)
             constructVertices(subChunk, RenderLayer.TRANSLUCENT, chunkVertices);
-            //Console.Out.WriteLine($"PartMeshing1.4: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
             if (chunkVertices.Count > 0) {
                 subChunk.hasRenderTranslucent = true;
                 currentWaterVAO.bindVAO();
 
                 var tFinalVertices = CollectionsMarshal.AsSpan(chunkVertices);
                 currentWaterVAO.upload(tFinalVertices, (uint)tFinalVertices.Length);
-                //Console.Out.WriteLine($"PartMeshing1.7: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-                //world.sortedTransparentChunks.Add(this);
             }
             else {
-                //world.sortedTransparentChunks.Remove(this);
                 subChunk.hasRenderTranslucent = false;
             }
         }
-        //}
-        //Console.Out.WriteLine($"Meshing: {sw.Elapsed.TotalMicroseconds}us {chunkIndices.Count}");
-        //if (!subChunk.isEmpty && !hasRenderOpaque && !hasRenderTranslucent) {
-        //    Console.Out.WriteLine($"CHUNKDATA: {subChunk.Block.blockCount} {subChunk.Block.isFull()}");
-        //}
-        //sw.Stop();
     }
 
     [SkipLocalsInit]
@@ -932,10 +928,6 @@ public class BlockRenderer {
     public void renderCube(int x, int y, int z, List<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float u0, float v0, float u1, float v1) {
-        
-        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
-        Span<Vector4> colourCache = stackalloc Vector4[4];
-        Span<byte> lightColourCache = stackalloc byte[4];
 
         var xe = x1 - x0;
         var ye = y1 - y0;
@@ -955,8 +947,8 @@ public class BlockRenderer {
         bool render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.WEST, colourCache, lightColourCache);
-            begin(cache);
+            applyFaceLighting(RawDirection.WEST);
+            begin();
             vertex(x + x0, y + y1, z + z1, westUMin, westVMin);
             vertex(x + x0, y + y0, z + z1, westUMin, westVMax);
             vertex(x + x0, y + y0, z + z0, westUMax, westVMax);
@@ -976,8 +968,8 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.EAST, colourCache, lightColourCache);
-            begin(cache);
+            applyFaceLighting(RawDirection.EAST);
+            begin();
             vertex(x + x1, y + y1, z + z0, eastUMax, eastVMin);
             vertex(x + x1, y + y0, z + z0, eastUMax, eastVMax);
             vertex(x + x1, y + y0, z + z1, eastUMin, eastVMax);
@@ -997,8 +989,8 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.SOUTH, colourCache, lightColourCache);
-            begin(cache);
+            applyFaceLighting(RawDirection.SOUTH);
+            begin();
             vertex(x + x0, y + y1, z + z0, southUMin, southVMin);
             vertex(x + x0, y + y0, z + z0, southUMin, southVMax);
             vertex(x + x1, y + y0, z + z0, southUMax, southVMax);
@@ -1018,8 +1010,8 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.NORTH, colourCache, lightColourCache);
-            begin(cache);
+            applyFaceLighting(RawDirection.NORTH);
+            begin();
             vertex(x + x1, y + y1, z + z1, northUMax, northVMin);
             vertex(x + x1, y + y0, z + z1, northUMax, northVMax);
             vertex(x + x0, y + y0, z + z1, northUMin, northVMax);
@@ -1039,8 +1031,8 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.DOWN, colourCache, lightColourCache);
-            begin(cache);
+            applyFaceLighting(RawDirection.DOWN);
+            begin();
             vertex(x + x1, y + y0, z + z1, downUMax, downVMin);
             vertex(x + x1, y + y0, z + z0, downUMax, downVMax);
             vertex(x + x0, y + y0, z + z0, downUMin, downVMax);
@@ -1060,8 +1052,8 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applyFaceLighting(RawDirection.UP, colourCache, lightColourCache);
-            begin(cache);
+            applyFaceLighting(RawDirection.UP);
+            begin();
             vertex(x + x0, y + y1, z + z1, upUMin, upVMin);
             vertex(x + x0, y + y1, z + z0, upUMin, upVMax);
             vertex(x + x1, y + y1, z + z0, upUMax, upVMax);
@@ -1077,11 +1069,8 @@ public class BlockRenderer {
         // clear arrays before starting
         chunkVertices.Clear();
 
-        Span<BlockVertexPacked> tempVertices = stackalloc BlockVertexPacked[4];
+        ref RenderContext.ArrayVertexCache tempVertices = ref ctx.vertexCache;
         Span<uint> nba = stackalloc uint[6];
-
-        Span<uint> blockCache = stackalloc uint[27];
-        Span<byte> lightCache = stackalloc byte[27];
 
         // this is correct!
         //ReadOnlySpan<int> normalOrder = [0, 1, 2, 3];
@@ -1114,7 +1103,7 @@ public class BlockRenderer {
             var blockID = neighbourRef.getID();
             var bl = Block.get(blockID);
 
-            if (blockID == 0 || bl.layer != layer) {
+            if (blockID == 0 || bl?.layer != layer) {
                 continue;
             }
 
@@ -1165,7 +1154,7 @@ public class BlockRenderer {
             
             // if smooth lighting, fill cache
             // status update: we fill it regardless otherwise we crash lol
-            fillCache(blockCache, lightCache, ref neighbourRef, ref lightRef);
+            fillCache(ref neighbourRef, ref lightRef);
             
             var wp = World.toWorldPos(subChunk.coord, x, y, z);
             
@@ -1232,19 +1221,9 @@ public class BlockRenderer {
                         // ox, oy, oz
 
                         ao.Whole = 0;
-                        
-                        //192.168.100.1
-
-
-                        //for (int j = 0; j < 4; j++) {
-                        //mult = dirIdx * 36 + j * 9 + vert * 3;
-                        // premultiply cuz its faster that way
-                        
-                        
 
                         FourBytes o;
-                        getDirectionOffsetsAndData(dir, ref MemoryMarshal.GetReference(blockCache),
-                            ref MemoryMarshal.GetReference(lightCache), lb, out light, out o);
+                        getDirectionOffsetsAndData(dir, lb, out light, out o);
                         
                         // if no smooth lighting, leave it be! we've just calculated a bunch of useless stuff but i dont wanna create another vaguely similar function lol
                         if (!smoothLighting) {
@@ -1375,7 +1354,7 @@ public class BlockRenderer {
     /**
      * Fills the 3x3x3 local cache with blocks and light values.
      */
-    public unsafe void fillCache(Span<uint> blockCache, Span<byte> lightCache, ref uint neighbourRef, ref byte lightRef) {
+    public unsafe void fillCache(ref uint neighbourRef, ref byte lightRef) {
         // it used to look like this:
         // nba[0] = Unsafe.Add(ref neighbourRef, -1);
         // nba[1] = Unsafe.Add(ref neighbourRef, +1);
@@ -1397,17 +1376,14 @@ public class BlockRenderer {
                     int nz = z - 1;
 
                     // get the block and light value from the neighbour array
-                    blockCache[index] = Unsafe.Add(ref neighbourRef, ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
-                    lightCache[index] = Unsafe.Add(ref lightRef,  ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
+                    ctx.blockCache[index] = Unsafe.Add(ref neighbourRef, ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
+                    ctx.lightCache[index] = Unsafe.Add(ref lightRef,  ny * Chunk.CHUNKSIZEEXSQ + nz * Chunk.CHUNKSIZEEX + nx);
                 }
             }
         }
-
-        this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
-        this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
     }
     
-    public unsafe void fillCacheEmpty(Span<uint> blockCache, Span<byte> lightCache) {
+    public unsafe void fillCacheEmpty() {
         // fill the cache with empty blocks
         for (int y = 0; y < LOCALCACHESIZE; y++) {
             for (int z = 0; z < LOCALCACHESIZE; z++) {
@@ -1415,33 +1391,27 @@ public class BlockRenderer {
                     // calculate the index in the cache
                     int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
                     // set the block and light value to empty
-                    blockCache[index] = 0;
-                    lightCache[index] = 15;
+                    ctx.blockCache[index] = 0;
+                    ctx.lightCache[index] = 15;
                 }
             }
         }
-
-        this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
-        this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
     }
 
-    public unsafe void fillCacheStandalone(Span<uint> blockCache, Span<byte> lightCache, uint block, byte light) {
+    public unsafe void fillCacheStandalone(uint block, byte light) {
         // fill the cache with the given light value
         for (int y = 0; y < LOCALCACHESIZE; y++) {
             for (int z = 0; z < LOCALCACHESIZE; z++) {
                 for (int x = 0; x < LOCALCACHESIZE; x++) {
                     int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
-                    blockCache[index] = 0;
-                    lightCache[index] = light;
+                    ctx.blockCache[index] = 0;
+                    ctx.lightCache[index] = light;
                 }
             }
         }
 
         // set the centre block to the given block
-        blockCache[13] = block;
-
-        this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
-        this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
+        ctx.blockCache[13] = block;
     }
 
     // this averages the four light values. If the block is opaque, it ignores the light value.

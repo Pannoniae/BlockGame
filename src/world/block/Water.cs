@@ -554,14 +554,14 @@ public class Water : Block {
         for (RawDirection d = 0; d < RawDirection.MAX; d++) {
             if (!cullFace(br, lx, ly, lz, d)) continue;
 
-            br.applyFaceLighting(d, colourCache, lightColourCache);
+            br.applyFaceLighting(d);
 
             // debug tint for dynamic water
             //if (isDynamic(metadata)) {
             //    colourCache.Fill(new Vector4(1f, 0.5f, 0.5f, 1f));
             //}
 
-            br.begin(cache);
+            br.begin();
 
             switch (d) {
                 case RawDirection.WEST:
