@@ -3,6 +3,7 @@ using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.entity;
@@ -79,12 +80,20 @@ public class Player : Entity {
 
         this.world = world;
         rotation = new Vector3();
-        bodyRotation = rotation;  // initialize body rotation to match head
+        bodyRotation = rotation;  // initialise body rotation to match head
         prevBodyRotation = rotation;
         calcAABB(ref aabb, position);
 
         swingProgress = 0;
         prevSwingProgress = 0;
+    }
+
+    protected override void readx(NBTCompound data) {
+        // read inventory
+    }
+
+    public override void writex(NBTCompound data) {
+        // write inventory
     }
 
     public void render(double dt, double interp) {

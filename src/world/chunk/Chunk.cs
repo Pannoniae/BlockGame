@@ -125,7 +125,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     goto blockLoop;
                 }
 
-                world.skyLightQueue.Add(new LightNode(x, y + 1, z, this));
+                world.skyLightQueue.Enqueue(new LightNode(x, y + 1, z, this));
 
                 // y + 1 is air
                 // y is water or solid block
@@ -148,7 +148,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     }
 
                     // add it to the queue for propagation
-                    world.skyLightQueue.Add(new LightNode(x, y + 1, z, this));
+                    world.skyLightQueue.Enqueue(new LightNode(x, y + 1, z, this));
                 }
 
                 blockLoop: ;
@@ -157,7 +157,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     bl = getBlock(x, yy, z);
                     // if blocklight, propagate
                     if (Block.lightLevel[bl] > 0) {
-                        world.blockLightQueue.Add(new LightNode(x, yy, z, this));
+                        world.blockLightQueue.Enqueue(new LightNode(x, yy, z, this));
                     }
                 }
             }
@@ -345,12 +345,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
                     if (skyLight > 0) {
-                        world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        world.skyLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
                             neighborChunk));
                     }
 
                     if (blockLight > 0) {
-                        world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        world.blockLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
                             neighborChunk));
                     }
                 }
@@ -366,7 +366,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // add lightsource
             setBlockLightDumb(x, y, z, Block.lightLevel[block]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
-            world.blockLightQueue.Add(new LightNode(x, y, z, this));
+            world.blockLightQueue.Enqueue(new LightNode(x, y, z, this));
         }
 
         // if the old block had light, remove the light
@@ -412,12 +412,12 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                     var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
 
                     if (skyLight > 0) {
-                        world.skyLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        world.skyLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
                             neighborChunk));
                     }
 
                     if (blockLight > 0) {
-                        world.blockLightQueue.Add(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
+                        world.blockLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
                             neighborChunk));
                     }
                 }
@@ -433,7 +433,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             // add lightsource
             setBlockLightDumb(x, y, z, Block.lightLevel[id]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
-            world.blockLightQueue.Add(new LightNode(x, y, z, this));
+            world.blockLightQueue.Enqueue(new LightNode(x, y, z, this));
         }
 
         // if the old block had light, remove the light

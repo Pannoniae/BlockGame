@@ -164,6 +164,11 @@ public class Entity(World world, int type) : Persistent {
             data.getDouble("velZ")
         );
         accel = Vector3D.Zero;
+        readx(data);
+    }
+
+    protected virtual void readx(NBTCompound data) {
+
     }
 
     public void write(NBTCompound data) {
@@ -177,6 +182,11 @@ public class Entity(World world, int type) : Persistent {
         data.addDouble("velX", velocity.X);
         data.addDouble("velY", velocity.Y);
         data.addDouble("velZ", velocity.Z);
+        writex(data);
+    }
+
+    public virtual void writex(NBTCompound data) {
+
     }
 
     public virtual void update(double dt) {

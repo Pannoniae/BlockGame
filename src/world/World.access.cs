@@ -162,7 +162,7 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
-            skyLightQueue.Add(new LightNode(blockPos.X, blockPos.Y, blockPos.Z, chunk));
+            skyLightQueue.Enqueue(new LightNode(blockPos.X, blockPos.Y, blockPos.Z, chunk));
             //processSkyLightQueue();
         }
     }
@@ -176,7 +176,7 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getSkyLight(x, y, z);
-            skyLightRemovalQueue.Add(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
+            skyLightRemovalQueue.Enqueue(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }
@@ -214,7 +214,7 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         if (success) {
             var value = getBlockLight(x, y, z);
-            blockLightRemovalQueue.Add(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
+            blockLightRemovalQueue.Enqueue(new LightRemovalNode(blockPos.X, blockPos.Y, blockPos.Z, value, chunk!));
             chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
     }

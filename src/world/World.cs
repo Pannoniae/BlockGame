@@ -57,10 +57,10 @@ public partial class World : IDisposable {
 
     public readonly List<TickAction> actionQueue = [];
 
-    public readonly List<LightNode> skyLightQueue = [];
-    public readonly List<LightRemovalNode> skyLightRemovalQueue = [];
-    public readonly List<LightNode> blockLightQueue = [];
-    public readonly List<LightRemovalNode> blockLightRemovalQueue = [];
+    public readonly Queue<LightNode> skyLightQueue = [];
+    public readonly Queue<LightRemovalNode> skyLightRemovalQueue = [];
+    public readonly Queue<LightNode> blockLightQueue = [];
+    public readonly Queue<LightRemovalNode> blockLightRemovalQueue = [];
 
     public WorldGenerator generator;
 
@@ -784,7 +784,7 @@ public partial class World : IDisposable {
     /**
      * If noUpdate, we're loading, don't bother invalidating chunks, they'll get remeshed *anyway*
      */
-    public void processLightQueue(List<LightNode> queue, bool isSkylight, bool noUpdate = false) {
+    public void processLightQueue(Queue<LightNode> queue, bool isSkylight, bool noUpdate = false) {
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
             processLightQueueOne(queue, isSkylight, noUpdate);
@@ -793,11 +793,8 @@ public partial class World : IDisposable {
 
 
     //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void processLightQueueOne(List<LightNode> queue, bool isSkylight, bool noUpdate) {
-        var cnt = queue.Count;
-        //Console.Out.WriteLine(cnt);
-        var node = queue[cnt - 1];
-        queue.RemoveAt(cnt - 1);
+    public void processLightQueueOne(Queue<LightNode> queue, bool isSkylight, bool noUpdate) {
+        var node = queue.Dequeue();
 
         // if null or destroyed, chunk got unloaded meanwhile
         if (node.chunk == null! || node.chunk.destroyed) {
@@ -862,22 +859,20 @@ public partial class World : IDisposable {
                     }
                 }
 
-                queue.Add(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
+                queue.Enqueue(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
             }
         }
     }
 
-    public void processLightRemovalQueue(List<LightRemovalNode> queue, List<LightNode> addQueue, bool isSkylight) {
+    public void processLightRemovalQueue(Queue<LightRemovalNode> queue, Queue<LightNode> addQueue, bool isSkylight) {
         var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
         while (queue.Count > 0 && Game.permanentStopwatch.Elapsed.TotalMilliseconds - start < MAX_LIGHT_FRAMETIME) {
             processLightRemovalQueueOne(queue, addQueue, isSkylight);
         }
     }
 
-    public void processLightRemovalQueueOne(List<LightRemovalNode> queue, List<LightNode> addQueue, bool isSkylight) {
-        var cnt = queue.Count;
-        var node = queue[cnt - 1];
-        queue.RemoveAt(cnt - 1);
+    public void processLightRemovalQueueOne(Queue<LightRemovalNode> queue, Queue<LightNode> addQueue, bool isSkylight) {
+        var node = queue.Dequeue();
 
         //var blockPos = new Vector3I(node.x, node.y, node.z);
         var level = node.value;
@@ -908,14 +903,14 @@ public partial class World : IDisposable {
                 }
 
                 // Emplace new node to queue. (could use push as well)
-                queue.Add(new LightRemovalNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighbourLevel,
+                queue.Enqueue(new LightRemovalNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighbourLevel,
                     neighborChunk));
             }
             else if (neighbourLevel >= level) {
                 // Add it to the update queue, so it can propagate to fill in the gaps
                 // left behind by this removal. We should update the lightBfsQueue after
                 // the lightRemovalBfsQueue is empty.
-                addQueue.Add(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
+                addQueue.Enqueue(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
             }
         }
     }
