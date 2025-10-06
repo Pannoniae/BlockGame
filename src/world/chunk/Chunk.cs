@@ -176,34 +176,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
                         bool propagateThis = false;
                         bool propagateBelow = false;
-                        for (var i = 0; i < 4; i++) {
-                            int dx = 0;
-                            int dz = 0;
+                        foreach (var d in Direction.directionsHorizontal) {
 
-                            switch (i) {
-                                case 0: // left
-                                    dx = -1;
-                                    dz = 0;
-                                    break;
-                                case 1: // right
-                                    dx = 1;
-                                    dz = 0;
-                                    break;
-                                case 2: // front
-                                    dx = 0;
-                                    dz = -1;
-                                    break;
-                                case 3: // back
-                                    dx = 0;
-                                    dz = 1;
-                                    break;
-                                // yes i know the switch isn't exhaustive SHUT UP
-                            }
-
-                            var nx = x + dx;
-                            var nz = z + dz;
-                            var worldnx = worldX + nx;
-                            var worldnz = worldZ + nz;
+                            var nx = x + d.X;
+                            var nz = z + d.Z;
 
                             // if neighbor is air and has no skylight, add for propagation
                             //if (!Block.isFullBlock(world.getRelativeBlock(this, x, y, z, new Vector3I(dx, 0, dz))) {
@@ -216,7 +192,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
 
                             // if at least one neighbour is solid, add this to the propagation and the block below it too! (for overhangs)
-                            var relPos = world.getChunkAndRelativePos(this, x, y, z, new Vector3I(dx, 0, dz),
+                            var relPos = world.getChunkAndRelativePos(this, x, y, z, new Vector3I(d.X, 0, d.Z),
                                 out var neighborChunk);
                             var neighborBlock = neighborChunk?.getBlock(relPos.X, relPos.Y, relPos.Z) ?? 0;
                             if (Block.isFullBlock(neighborBlock)) {

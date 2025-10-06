@@ -505,6 +505,7 @@ public class GameScreen : Screen {
                     subChunk.watervao = null;
                     world.dirtyChunk(new SubChunkCoord(chunk.coord.x, y, chunk.coord.z));
                 }
+                chunk.status = ChunkStatus.LIGHTED;
             }
         }
 

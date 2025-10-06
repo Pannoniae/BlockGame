@@ -309,6 +309,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 subChunk.vao = null;
                 subChunk.watervao = null;
             }
+            chunk.status = ChunkStatus.LIGHTED;
         }
 
         // CMDLIST FIX: clear default FBO because we don't do it normally! :P

@@ -49,19 +49,18 @@ public partial class World : IDisposable {
 
 
     // Queues
-    public List<ChunkLoadTicket> chunkLoadQueue = new();
+    public List<ChunkLoadTicket> chunkLoadQueue = [];
     //public HashSet<ChunkLoadTicket> chunkLoadQueueSet = new();
 
-    public List<BlockUpdate> blockUpdateQueue = new();
-    public HashSet<BlockUpdate> blockUpdateQueueSet = new();
+    public readonly List<BlockUpdate> blockUpdateQueue = [];
 
 
-    public List<TickAction> actionQueue = new();
+    public readonly List<TickAction> actionQueue = [];
 
-    public List<LightNode> skyLightQueue = new();
-    public List<LightRemovalNode> skyLightRemovalQueue = new();
-    public List<LightNode> blockLightQueue = new();
-    public List<LightRemovalNode> blockLightRemovalQueue = new();
+    public readonly List<LightNode> skyLightQueue = [];
+    public readonly List<LightRemovalNode> skyLightRemovalQueue = [];
+    public readonly List<LightNode> blockLightQueue = [];
+    public readonly List<LightRemovalNode> blockLightRemovalQueue = [];
 
     public WorldGenerator generator;
 
@@ -654,7 +653,6 @@ public partial class World : IDisposable {
             if (update.tick <= worldTick) {
                 blockScheduledUpdate(update.position.X, update.position.Y, update.position.Z);
                 blockUpdateQueue.RemoveAt(i);
-                blockUpdateQueueSet.Remove(update);
             }
         }
 
@@ -744,7 +742,7 @@ public partial class World : IDisposable {
     }
 
     /// <summary>
-    /// Gets the chunk and relative position for a neighbor of a block in chunk-relative coordinates
+    /// Gets the chunk and relative position for a neighbour of a block in chunk-relative coordinates
     /// </summary>
     public Vector3I getChunkAndRelativePos(Chunk currentChunk, int x, int y, int z, Vector3I direction,
         out Chunk? chunk) {
@@ -807,9 +805,10 @@ public partial class World : IDisposable {
         }
 
         //var blockPos = new Vector3I(node.x, node.y, node.z);
-        byte level = isSkylight
-            ? node.chunk.getSkyLight(node.x, node.y, node.z)
-            : node.chunk.getBlockLight(node.x, node.y, node.z);
+        byte level = node.chunk.getLight(node.x, node.y, node.z);
+        level = isSkylight
+            ? (byte)(level & 0x0F)
+            : (byte)(level >> 4);
 
         // if this is opaque (for skylight), don't bother
         if (isSkylight && Block.isFullBlock(node.chunk.getBlock(node.x, node.y, node.z))) {
@@ -830,9 +829,10 @@ public partial class World : IDisposable {
                 continue;
             }
 
-            byte neighbourLevel = isSkylight
-                ? neighborChunk.getSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z)
-                : neighborChunk.getBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            byte neighbourLevel = neighborChunk.getLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            neighbourLevel = isSkylight
+                ? (byte)(neighbourLevel & 0x0F)
+                : (byte)(neighbourLevel >> 4);
             //var neighbourBlock = getBlock(neighbour);
             var isDown = isSkylight && level == 15 && neighbourLevel != 15 && dir == Direction.DOWN;
 
@@ -894,9 +894,10 @@ public partial class World : IDisposable {
                 continue;
             }
 
-            byte neighbourLevel = isSkylight
-                ? neighborChunk.getSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z)
-                : neighborChunk.getBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            byte neighbourLevel = neighborChunk.getLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            neighbourLevel = isSkylight
+                ? (byte)(neighbourLevel & 0x0F)
+                : (byte)(neighbourLevel >> 4);
             var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
             if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                 if (isSkylight) {
@@ -1260,7 +1261,6 @@ public partial class World : IDisposable {
         var update = new BlockUpdate(pos, worldTick + actualDelay);
         if (actualDelay > 0 && !blockUpdateQueue.Contains(update)) {
             blockUpdateQueue.Add(update);
-            blockUpdateQueueSet.Add(update);
         }
     }
 }
