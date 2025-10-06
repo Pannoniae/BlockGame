@@ -305,7 +305,7 @@ public class BlockRenderer {
 
     /// <summary>
     /// Apply simple uniform lighting without AO for faces like torch rendering.
-    /// Uses the current block's light level, not neighbor light.
+    /// Uses the current block's light level, not neighbour light.
     /// </summary>
     public unsafe void applySimpleLighting(RawDirection dir, Span<Vector4> colourCache, Span<byte> lightColourCache) {
         this.colourCache = (Vector4*)Unsafe.AsPointer(ref colourCache.GetPinnableReference());
@@ -606,16 +606,18 @@ public class BlockRenderer {
         
         // we render to a temp list
         _listHack.Clear();
+
+        // turn off AO and smooth lighting for standalone rendering! it won't work properly and it will mess the lighting up
+        // because we don't have a proper cache
+
+        setupStandalone();
                 
         Span<uint> blockCache = stackalloc uint[LOCALCACHESIZE_CUBE];
         Span<byte> lightCache = stackalloc byte[LOCALCACHESIZE_CUBE];
                 
         // setup (fake) cache
-        fillCacheEmpty(blockCache, lightCache);
-        // place the block in it
-        blockCache[13] = blockID.setMetadata(metadata);
-        lightCache[13] = lightOverride;
-        
+        fillCacheStandalone(blockCache, lightCache, blockID.setMetadata(metadata), lightOverride);
+
         renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
 
         if (Block.renderType[blockID] != RenderType.MODEL) {
@@ -630,7 +632,24 @@ public class BlockRenderer {
                 tintedVertex.z = (vertex.z / 256f) - 16f;
                 tintedVertex.u = (Half)(vertex.u / 32768f);
                 tintedVertex.v = (Half)(vertex.v / 32768f);
-                tintedVertex.cu = vertex.cu;
+
+                // apply lighting from vertex.light to the base colour in vertex.cu
+                var blocklight = (byte)(vertex.light >> 4);
+                var skylight = (byte)(vertex.light & 0xF);
+                var lightColor = WorldRenderer.getLightColour(blocklight, skylight);
+
+                // unpack base colour
+                var r = (byte)(vertex.cu & 0xFF);
+                var g = (byte)((vertex.cu >> 8) & 0xFF);
+                var b = (byte)((vertex.cu >> 16) & 0xFF);
+                var a = (byte)((vertex.cu >> 24) & 0xFF);
+
+                // multiply by light
+                r = (byte)((r / 255f) * lightColor.R);
+                g = (byte)((g / 255f) * lightColor.G);
+                b = (byte)((b / 255f) * lightColor.B);
+
+                tintedVertex.cu = (uint)(r | (g << 8) | (b << 16) | (a << 24));
                 vertices.Add(tintedVertex);
             }
 
@@ -638,11 +657,11 @@ public class BlockRenderer {
         }
 
         var faces = block.model.faces;
-        
+
         for (int d = 0; d < faces.Length; d++) {
             var face = faces[d];
             var dir = face.direction;
-            
+
             // texture coordinates
             var texCoords = face.min;
             var texCoordsMax = face.max;
@@ -654,7 +673,7 @@ public class BlockRenderer {
                 tex = UVPair.texCoords(forceTex);
                 texMax = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
             }
-            
+
             // vertex positions
             float x1 = worldPos.X + face.x1;
             float y1 = worldPos.Y + face.y1;
@@ -668,7 +687,7 @@ public class BlockRenderer {
             float x4 = worldPos.X + face.x4;
             float y4 = worldPos.Y + face.y4;
             float z4 = worldPos.Z + face.z4;
-            
+
             // calculate tint
             Color tint;
             if (tintOverride != default) {
@@ -678,16 +697,18 @@ public class BlockRenderer {
                 // calculate tint based on direction and light
                 tint = WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
             }
-            
+
             // create vertices
             tempVertices[0] = new BlockVertexTinted(x1, y1, z1, tex.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
             tempVertices[1] = new BlockVertexTinted(x2, y2, z2, tex.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
             tempVertices[2] = new BlockVertexTinted(x3, y3, z3, texMax.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
             tempVertices[3] = new BlockVertexTinted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
-            
+
             vertices.AddRange(tempVertices);
         }
     }
+
+
 
     private void renderBlockSwitch(Block bl, int x, int y, int z, byte metadata, List<BlockVertexPacked> vertices) {
         switch (Block.renderType[bl.getID()]) {
@@ -1381,8 +1402,7 @@ public class BlockRenderer {
                 }
             }
         }
-        
-        // set pointers to the cache
+
         this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
         this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
     }
@@ -1400,8 +1420,26 @@ public class BlockRenderer {
                 }
             }
         }
-        
-        // set pointers to the cache
+
+        this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
+        this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
+    }
+
+    public unsafe void fillCacheStandalone(Span<uint> blockCache, Span<byte> lightCache, uint block, byte light) {
+        // fill the cache with the given light value
+        for (int y = 0; y < LOCALCACHESIZE; y++) {
+            for (int z = 0; z < LOCALCACHESIZE; z++) {
+                for (int x = 0; x < LOCALCACHESIZE; x++) {
+                    int index = y * LOCALCACHESIZE_SQ + z * LOCALCACHESIZE + x;
+                    blockCache[index] = 0;
+                    lightCache[index] = light;
+                }
+            }
+        }
+
+        // set the centre block to the given block
+        blockCache[13] = block;
+
         this.blockCache = (uint*)Unsafe.AsPointer(ref blockCache.GetPinnableReference());
         this.lightCache = (byte*)Unsafe.AsPointer(ref lightCache.GetPinnableReference());
     }

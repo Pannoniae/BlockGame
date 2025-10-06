@@ -23,26 +23,84 @@ public class Item {
      */
     public virtual string getName(ItemStack stack) => name;
     
-    private const int MAXITEMS = 4096;
-    
+    private const int INITIAL_ITEM_CAPACITY = 128;
+    private const int GROW_SIZE = 128;
+    private static int MAXITEMS = INITIAL_ITEM_CAPACITY;
+    private static int RMAXITEMS = MAXITEMS * 2 + 1;
+
+    /**
+     * Gets the index into the items arrays.
+     */
+    public int idx => id + MAXITEMS;
+
     /**
      * We "cheat", half of this goes for blocks (the negatives), half for items.
      * We shift it automatically in register, shh.
      */
-    public static readonly Item[] items = new Item[MAXITEMS * 2 + 1];
+    public static Item[] items = new Item[INITIAL_ITEM_CAPACITY * 2 + 1];
 
-    
+    /** is this item armour? */
+    public static bool[] armour = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
+
+    /** is this item an accessory? */
+    public static bool[] accessory = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
 
     public static int currentID = 0;
 
     public static Item AIR;
+    public static Item GOLD_INGOT;
+    public static Item IRON_INGOT;
+    public static Item TIN_INGOT;
+    public static Item SILVER_INGOT;
+    public static Tool GOLD_PICKAXE;
+    public static Tool IRON_PICKAXE;
+    public static Tool STONE_PICKAXE;
+    public static Tool STONE_AXE;
+    public static Tool STONE_SHOVEL;
+    public static Item STONE_SWORD;
+    public static Tool STONE_HOE;
+    public static Tool STONE_SCYTHE;
+    public static Tool WOOD_PICKAXE;
+    public static Tool WOOD_AXE;
+    public static Tool WOOD_SHOVEL;
+    public static Item WOOD_SWORD;
+
 
     public Item(int id, string name) {
         this.id = id;
         this.name = name;
     }
-    
+
+    private static void ensureCapacity(int id) {
+        int idx = id + MAXITEMS;
+        if (idx >= 0 && idx < items.Length) return;
+
+        // need more space - grow all arrays
+        int newMaxItems = MAXITEMS + GROW_SIZE;
+        int newRMaxItems = newMaxItems * 2 + 1;
+
+        var newItems = new Item[newRMaxItems];
+        var newArmour = new bool[newRMaxItems];
+        var newAccessory = new bool[newRMaxItems];
+
+        // copy old data to centre of new arrays
+        int offset = newMaxItems - MAXITEMS;
+        for (int i = 0; i < items.Length; i++) {
+            newItems[i + offset] = items[i];
+            newArmour[i + offset] = armour[i];
+            newAccessory[i + offset] = accessory[i];
+        }
+
+        items = newItems;
+        armour = newArmour;
+        accessory = newAccessory;
+        MAXITEMS = newMaxItems;
+        RMAXITEMS = newRMaxItems;
+    }
+
     public static Item register(Item item) {
+        ensureCapacity(item.id);
+
         // handles negatives correctly!
         if (item.id >= currentID) {
             currentID = item.id + 1;
@@ -55,7 +113,7 @@ public class Item {
     }
 
     public static Item get(int i) {
-        if (i is <= -MAXITEMS or >= MAXITEMS) {
+        if (i <= -MAXITEMS || i >= MAXITEMS) {
             return null!;
         }
 
@@ -65,7 +123,7 @@ public class Item {
     public static Item block(int blockID) {
         return get(-blockID);
     }
-    
+
     public static int blockID(int blockID) {
         return -blockID;
     }
@@ -81,69 +139,69 @@ public class Item {
     public static void preLoad() {
         AIR = register(new Item(Items.AIR, "Air"));
 
-        var goldIngot = new Item(Items.GOLD_INGOT, "Gold Ingot");
-        goldIngot.tex = new UVPair(0, 0);
-        register(goldIngot);
+        GOLD_INGOT = new Item(Items.GOLD_INGOT, "Gold Ingot");
+        GOLD_INGOT.tex = new UVPair(0, 0);
+        register(GOLD_INGOT);
 
-        var ironIngot = new Item(Items.IRON_INGOT, "Iron Ingot");
-        ironIngot.tex = new UVPair(1, 0);
-        register(ironIngot);
+        IRON_INGOT = new Item(Items.IRON_INGOT, "Iron Ingot");
+        IRON_INGOT.tex = new UVPair(1, 0);
+        register(IRON_INGOT);
 
-        var tinIngot = new Item(Items.TIN_INGOT, "Tin Ingot");
-        tinIngot.tex = new UVPair(2, 0);
-        register(tinIngot);
+        TIN_INGOT = new Item(Items.TIN_INGOT, "Tin Ingot");
+        TIN_INGOT.tex = new UVPair(2, 0);
+        register(TIN_INGOT);
 
-        var silverIngot = new Item(Items.SILVER_INGOT, "Silver Ingot");
-        silverIngot.tex = new UVPair(3, 0);
-        register(silverIngot);
+        SILVER_INGOT = new Item(Items.SILVER_INGOT, "Silver Ingot");
+        SILVER_INGOT.tex = new UVPair(3, 0);
+        register(SILVER_INGOT);
 
-        var goldPickaxe = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 6.0);
-        goldPickaxe.tex = new UVPair(2, 2);
-        register(goldPickaxe);
+        GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 6.0);
+        GOLD_PICKAXE.tex = new UVPair(2, 2);
+        register(GOLD_PICKAXE);
 
-        var ironPickaxe = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 5.0);
-        ironPickaxe.tex = new UVPair(1, 2);
-        register(ironPickaxe);
+        IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 5.0);
+        IRON_PICKAXE.tex = new UVPair(1, 2);
+        register(IRON_PICKAXE);
 
-        var stonePickaxe = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 4.0);
-        stonePickaxe.tex = new UVPair(0, 2);
-        register(stonePickaxe);
+        STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 4.0);
+        STONE_PICKAXE.tex = new UVPair(0, 2);
+        register(STONE_PICKAXE);
 
-        var stoneAxe = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 4.0);
-        stoneAxe.tex = new UVPair(3, 2);
-        register(stoneAxe);
+        STONE_AXE = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 4.0);
+        STONE_AXE.tex = new UVPair(3, 2);
+        register(STONE_AXE);
 
-        var stoneShovel = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 2.0);
-        stoneShovel.tex = new UVPair(4, 2);
-        register(stoneShovel);
+        STONE_SHOVEL = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 2.0);
+        STONE_SHOVEL.tex = new UVPair(4, 2);
+        register(STONE_SHOVEL);
 
-        var stoneSword = new Item(Items.STONE_SWORD, "Stone Sword");
-        stoneSword.tex = new UVPair(5, 2);
-        register(stoneSword);
+        STONE_SWORD = new Item(Items.STONE_SWORD, "Stone Sword");
+        STONE_SWORD.tex = new UVPair(5, 2);
+        register(STONE_SWORD);
 
-        var stoneHoe = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 2.0);
-        stoneHoe.tex = new UVPair(6, 2);
-        register(stoneHoe);
+        STONE_HOE = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 2.0);
+        STONE_HOE.tex = new UVPair(6, 2);
+        register(STONE_HOE);
 
-        var stoneScythe = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 2.0);
-        stoneScythe.tex = new UVPair(7 , 2);
-        register(stoneScythe);
+        STONE_SCYTHE = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 2.0);
+        STONE_SCYTHE.tex = new UVPair(7 , 2);
+        register(STONE_SCYTHE);
 
-        var woodPickaxe = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 2.0);
-        woodPickaxe.tex = new UVPair(1, 3);
-        register(woodPickaxe);
+        WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 2.0);
+        WOOD_PICKAXE.tex = new UVPair(1, 3);
+        register(WOOD_PICKAXE);
 
-        var woodAxe = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
-        woodAxe.tex = new UVPair(3, 3);
-        register(woodAxe);
+        WOOD_AXE = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
+        WOOD_AXE.tex = new UVPair(3, 3);
+        register(WOOD_AXE);
 
-        var woodShovel = new Tool(Items.WOOD_SHOVEL, "Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0);
-        woodShovel.tex = new UVPair(4, 3);
-        register(woodShovel);
+        WOOD_SHOVEL = new Tool(Items.WOOD_SHOVEL, "Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0);
+        WOOD_SHOVEL.tex = new UVPair(4, 3);
+        register(WOOD_SHOVEL);
 
-        var woodSword = new Item(Items.WOOD_SWORD, "Wood Sword");
-        woodSword.tex = new UVPair(5, 3);
-        register(woodSword);
+        WOOD_SWORD = new Item(Items.WOOD_SWORD, "Wood Sword");
+        WOOD_SWORD.tex = new UVPair(5, 3);
+        register(WOOD_SWORD);
 
 
 

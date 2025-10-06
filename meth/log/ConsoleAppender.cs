@@ -3,10 +3,9 @@ using Spectre.Console;
 namespace BlockGame.util.log;
 
 /**
- * Outputs formatted log messages to console with colors using Spectre.Console.
+ * Outputs formatted log messages to console with colours using Spectre.Console.
  */
 public class ConsoleAppender {
-    
     
     private readonly Lock consoleLock = new();
     

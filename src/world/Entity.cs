@@ -148,24 +148,21 @@ public class Entity(World world, int type) : Persistent {
     // todo unfinished shit below
     public void read(NBTCompound data) {
         id = data.getInt("id");
-        position = new Vector3D(
+        position = prevPosition = new Vector3D(
             data.getDouble("posX"),
             data.getDouble("posY"),
             data.getDouble("posZ")
         );
-        prevPosition = position;
-        rotation = new Vector3(
+        rotation = prevRotation = new Vector3(
             data.getFloat("rotX"),
             data.getFloat("rotY"),
             data.getFloat("rotZ")
         );
-        prevRotation = rotation;
-        velocity = new Vector3D(
+        velocity = prevVelocity = new Vector3D(
             data.getDouble("velX"),
             data.getDouble("velY"),
             data.getDouble("velZ")
         );
-        prevVelocity = velocity;
         accel = Vector3D.Zero;
     }
 
@@ -234,6 +231,8 @@ public class Entity(World world, int type) : Persistent {
     /**
      * Swept collision - adjust velocity per axis, apply movement immediately.
      * Reduces velocity to exact contact point instead of preventing escape.
+     *
+     * This used to be YXZ order but I changed it to match the blocks' order to be YZX.
      */
     protected void collide(double dt) {
         var oldPos = position;
@@ -312,76 +311,6 @@ public class Entity(World world, int type) : Persistent {
         // recalc aabb after Y movement!
         p = calcAABB(position);
 
-        // X axis
-        foreach (var b in collisions) {
-            if (!AABB.isCollisionY(p, b) || !AABB.isCollisionZ(p, b)) {
-                continue;
-            }
-
-            // try stepping up if on ground
-            bool canStepUp = false;
-            if (onGround && velocity.X != 0) {
-                for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += 0.1) {
-                    var stepAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y + stepY, position.Z));
-                    bool cb = false;
-
-                    foreach (var testAABB in collisions) {
-                        if (AABB.isCollision(stepAABB, testAABB)) {
-                            cb = true;
-                            break;
-                        }
-                    }
-
-                    if (!cb) {
-                        position.Y += stepY;
-                        canStepUp = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!canStepUp) {
-                switch (velocity.X) {
-                    case > 0: {
-                        d = b.x0 - p.x1;
-                        if (p.x1 <= b.x0 && d < velocity.X * dt) {
-                            velocity.X = d / dt;
-                            collx = true;
-                        }
-                        break;
-                    }
-                    case < 0: {
-                        d = b.x1 - p.x0;
-                        if (p.x0 >= b.x1 && d > velocity.X * dt) {
-                            velocity.X = d / dt;
-                            collx = true;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        // sneaking edge prevention for X
-        if (sneaking && onGround) {
-            var sneakAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y - 0.1, position.Z));
-            bool hasEdge = false;
-            foreach (var blockAABB in collisions) {
-                if (AABB.isCollision(sneakAABB, blockAABB)) {
-                    hasEdge = true;
-                    break;
-                }
-            }
-
-            if (!hasEdge) {
-                velocity.X = 0;
-            }
-        }
-
-        position.X += velocity.X * dt;
-        // recalc aabb after X movement!
-        p = calcAABB(position);
-
         // Z axis
         foreach (var b in collisions) {
             if (!AABB.isCollisionX(p, b) || !AABB.isCollisionY(p, b)) {
@@ -450,6 +379,76 @@ public class Entity(World world, int type) : Persistent {
 
         position.Z += velocity.Z * dt;
         // recalc aabb after Z movement!
+        p = calcAABB(position);
+
+        // X axis
+        foreach (var b in collisions) {
+            if (!AABB.isCollisionY(p, b) || !AABB.isCollisionZ(p, b)) {
+                continue;
+            }
+
+            // try stepping up if on ground
+            bool canStepUp = false;
+            if (onGround && velocity.X != 0) {
+                for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += 0.1) {
+                    var stepAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y + stepY, position.Z));
+                    bool cb = false;
+
+                    foreach (var testAABB in collisions) {
+                        if (AABB.isCollision(stepAABB, testAABB)) {
+                            cb = true;
+                            break;
+                        }
+                    }
+
+                    if (!cb) {
+                        position.Y += stepY;
+                        canStepUp = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!canStepUp) {
+                switch (velocity.X) {
+                    case > 0: {
+                        d = b.x0 - p.x1;
+                        if (p.x1 <= b.x0 && d < velocity.X * dt) {
+                            velocity.X = d / dt;
+                            collx = true;
+                        }
+                        break;
+                    }
+                    case < 0: {
+                        d = b.x1 - p.x0;
+                        if (p.x0 >= b.x1 && d > velocity.X * dt) {
+                            velocity.X = d / dt;
+                            collx = true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        // sneaking edge prevention for X
+        if (sneaking && onGround) {
+            var sneakAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y - 0.1, position.Z));
+            bool hasEdge = false;
+            foreach (var blockAABB in collisions) {
+                if (AABB.isCollision(sneakAABB, blockAABB)) {
+                    hasEdge = true;
+                    break;
+                }
+            }
+
+            if (!hasEdge) {
+                velocity.X = 0;
+            }
+        }
+
+        position.X += velocity.X * dt;
+        // recalc aabb after X movement!
         p = calcAABB(position);
 
         // zero out velocity on collision?

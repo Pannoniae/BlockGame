@@ -33,7 +33,7 @@ public partial class World : IDisposable {
     public const int MAX_TICKING_DISTANCE = 128;
 
     /// <summary>
-    /// Random ticks per chunk section per tick. Normally 3 but let's test with 50
+    /// Random ticks per chunk section per tick.
     /// </summary>
     public const int numTicks = 1;
 
@@ -46,8 +46,6 @@ public partial class World : IDisposable {
 
     // used for rendering
     public readonly List<Chunk> chunkList;
-
-    //public List<ChunkSection> sortedTransparentChunks = [];
 
 
     // Queues

@@ -1,6 +1,7 @@
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
+using BlockGame.world.block;
 using MiniAudioEx;
 using MiniAudioEx.Core.StandardAPI;
 
@@ -42,22 +43,35 @@ public class SoundEngine : IDisposable {
         if (!Directory.Exists(snd)) {
             throw new SkillIssueException("where the fuck is the sound dir?");
         }
-        
-        // scan all subdirectories in snd/
-        foreach (var categoryDir in Directory.EnumerateDirectories(snd)) {
-            var categoryName = Path.GetFileName(categoryDir);
+
+        // recursively scan all subdirectories in snd/
+        loadSoundsRecursive(snd, "");
+    }
+
+    private void loadSoundsRecursive(string dir, string prefix) {
+        // load sounds from current directory
+        var files = Directory.EnumerateFiles(dir).ToArray();
+        if (files.Length > 0) {
+            var categoryName = string.IsNullOrEmpty(prefix) ? Path.GetFileName(dir) : prefix;
             var clips = new List<AudioClip>();
-            
-            foreach (var file in Directory.EnumerateFiles(categoryDir)) {
+
+            foreach (var file in files) {
                 var clip = doLoad(file);
                 if (clip != null) {
                     clips.Add(clip);
                 }
             }
-            
+
             if (clips.Count > 0) {
                 soundCategories[categoryName] = clips;
             }
+        }
+
+        // recurse into subdirectories
+        foreach (var subdir in Directory.EnumerateDirectories(dir)) {
+            var subdirName = Path.GetFileName(subdir);
+            var newPrefix = string.IsNullOrEmpty(prefix) ? subdirName : $"{prefix}/{subdirName}";
+            loadSoundsRecursive(subdir, newPrefix);
         }
     }
 
@@ -156,9 +170,19 @@ public class SoundEngine : IDisposable {
         AudioContext.Update();
     }
 
-    // convenience methods using the new generic system
-    public void playFootstep() => playSfx("steps", getRandomPitch());
-    public void playBlockHit() => playSfx("hit", getRandomPitch());
+    public void playFootstep(SoundMaterial mat) {
+        var cat = mat.stepCategory();
+        if (soundCategories.ContainsKey(cat)) {
+            playSfx(cat, getRandomPitch());
+        }
+    }
+
+    public void playBlockBreak(SoundMaterial mat) {
+        var cat = mat.breakCategory();
+        if (soundCategories.ContainsKey(cat)) {
+            playSfx(cat, getRandomPitch());
+        }
+    }
     
     public long getMemoryUsage() {
         // MiniAudioEx doesn't provide direct memory usage stats lmfao, todo

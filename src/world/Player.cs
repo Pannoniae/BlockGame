@@ -135,7 +135,12 @@ public class Player : Entity {
         // Play footstep sounds when moving on ground
         if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
             if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
-                Game.snd.playFootstep();
+                // get block below player
+                var pos = position.toBlockPos() - 1;
+                var blockBelow = Block.get(world.getBlock(pos));
+                if (blockBelow?.mat != null) {
+                    Game.snd.playFootstep(blockBelow.mat.smat);
+                }
                 lastFootstepDistance = totalTraveled;
             }
         }
@@ -500,7 +505,9 @@ public class Player : Entity {
 
                 world.setBlock(pos.X, pos.Y, pos.Z, 0);
                 world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
-                Game.snd.playBlockHit();
+                if (block.mat != null) {
+                    Game.snd.playBlockBreak(block.mat.smat);
+                }
 
                 isBreaking = false;
                 breakProgress = 0;
@@ -619,7 +626,9 @@ public class Player : Entity {
                     block.shatter(world, pos.X, pos.Y, pos.Z);
                     world.setBlock(pos.X, pos.Y, pos.Z, 0);
                     world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
-                    Game.snd.playBlockHit();
+                    if (block.mat != null) {
+                        Game.snd.playBlockBreak(block.mat.smat);
+                    }
                 }
 
                 setSwinging(true);

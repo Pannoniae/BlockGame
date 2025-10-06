@@ -87,50 +87,52 @@ public class Block {
     public const float atlasRatioInv = 1 / atlasRatio;
     
     
-    private const int MAXBLOCKS = 128;
-    public static Block?[] blocks = new Block[MAXBLOCKS];
+    private const int INITIAL_CAPACITY = 128;
+    private const int GROW_SIZE = 64;
+
+    public static Block?[] blocks = new Block[INITIAL_CAPACITY];
 
     /**
      * Stores whether the block is a full, opaque block or not.
      */
-    public static bool[] fullBlock = new bool[MAXBLOCKS];
-    
+    public static bool[] fullBlock = new bool[INITIAL_CAPACITY];
+
     /**
      * Is this block transparent? (glass, leaves, etc.)
      */
-    public static bool[] transparent = new bool[MAXBLOCKS];
-    
-    public static bool[] translucent = new bool[MAXBLOCKS];
-    
+    public static bool[] transparent = new bool[INITIAL_CAPACITY];
+
+    public static bool[] translucent = new bool[INITIAL_CAPACITY];
+
     /**
      * If false, water can break this block (like tall grass, flowers, etc.)
      * If true, water cannot break this block (like stone, dirt, stairs, etc.)
      */
-    public static bool[] waterSolid = new bool[MAXBLOCKS];
-    public static bool[] inventoryBlacklist = new bool[MAXBLOCKS];
-    public static bool[] randomTick = new bool[MAXBLOCKS];
-    public static bool[] renderTick = new bool[MAXBLOCKS];
-    public static bool[] liquid = new bool[MAXBLOCKS];
-    public static bool[] customCulling = new bool[MAXBLOCKS];
-    public static bool[] renderItemLike = new bool[MAXBLOCKS];
+    public static bool[] waterSolid = new bool[INITIAL_CAPACITY];
+    public static bool[] inventoryBlacklist = new bool[INITIAL_CAPACITY];
+    public static bool[] randomTick = new bool[INITIAL_CAPACITY];
+    public static bool[] renderTick = new bool[INITIAL_CAPACITY];
+    public static bool[] liquid = new bool[INITIAL_CAPACITY];
+    public static bool[] customCulling = new bool[INITIAL_CAPACITY];
+    public static bool[] renderItemLike = new bool[INITIAL_CAPACITY];
 
-    public static bool[] selection = new bool[MAXBLOCKS];
-    public static bool[] collision = new bool[MAXBLOCKS];
-    public static byte[] lightLevel = new byte[MAXBLOCKS];
-    public static byte[] lightAbsorption = new byte[MAXBLOCKS];
-    public static double[] hardness = new double[MAXBLOCKS].fill(-1);
+    public static bool[] selection = new bool[INITIAL_CAPACITY];
+    public static bool[] collision = new bool[INITIAL_CAPACITY];
+    public static byte[] lightLevel = new byte[INITIAL_CAPACITY];
+    public static byte[] lightAbsorption = new byte[INITIAL_CAPACITY];
+    public static double[] hardness = new double[INITIAL_CAPACITY].fill(-1);
 
     /**
      Block update delay in ticks. 0 = normal immediate block updates
     */
-    public static byte[] updateDelay = new byte[MAXBLOCKS];
-    
-    public static AABB?[] AABB = new AABB?[MAXBLOCKS];
-    public static bool[] customAABB = new bool[MAXBLOCKS];
-    
-    public static RenderType[] renderType = new RenderType[MAXBLOCKS];
-    public static ToolType[] tool = new ToolType[MAXBLOCKS];
-    public static MaterialTier[] tier = new MaterialTier[MAXBLOCKS];
+    public static byte[] updateDelay = new byte[INITIAL_CAPACITY];
+
+    public static AABB?[] AABB = new AABB?[INITIAL_CAPACITY];
+    public static bool[] customAABB = new bool[INITIAL_CAPACITY];
+
+    public static RenderType[] renderType = new RenderType[INITIAL_CAPACITY];
+    public static ToolType[] tool = new ToolType[INITIAL_CAPACITY];
+    public static MaterialTier[] tier = new MaterialTier[INITIAL_CAPACITY];
     
     
     public static Block AIR;
@@ -193,8 +195,44 @@ public class Block {
     public static Block CRAFTING_TABLE;
     public static Block CHEST;
 
+    private static void ensureCapacity(int id) {
+        if (id < blocks.Length) return;
+
+        int newSize = Math.Max(blocks.Length + GROW_SIZE, id + 1);
+        Array.Resize(ref blocks, newSize);
+        Array.Resize(ref fullBlock, newSize);
+        Array.Resize(ref transparent, newSize);
+        Array.Resize(ref translucent, newSize);
+        Array.Resize(ref waterSolid, newSize);
+        Array.Resize(ref inventoryBlacklist, newSize);
+        Array.Resize(ref randomTick, newSize);
+        Array.Resize(ref renderTick, newSize);
+        Array.Resize(ref liquid, newSize);
+        Array.Resize(ref customCulling, newSize);
+        Array.Resize(ref renderItemLike, newSize);
+        Array.Resize(ref selection, newSize);
+        Array.Resize(ref collision, newSize);
+        Array.Resize(ref lightLevel, newSize);
+        Array.Resize(ref lightAbsorption, newSize);
+
+        // resize and fill new hardness entries with -1
+        int oldSize = hardness.Length;
+        Array.Resize(ref hardness, newSize);
+        for (int i = oldSize; i < newSize; i++) {
+            hardness[i] = -1;
+        }
+
+        Array.Resize(ref updateDelay, newSize);
+        Array.Resize(ref AABB, newSize);
+        Array.Resize(ref customAABB, newSize);
+        Array.Resize(ref renderType, newSize);
+        Array.Resize(ref tool, newSize);
+        Array.Resize(ref tier, newSize);
+    }
+
     public static Block register(Block block) {
-        // update maxid
+        ensureCapacity(block.id);
+
         if (block.id >= currentID) {
             currentID = block.id + 1;
         }
@@ -865,7 +903,7 @@ public class Block {
     [ClientOnly]
     public virtual void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         // setup
-        br.setupWorld();
+        //br.setupWorld();
     }
     
     /**
@@ -1387,6 +1425,34 @@ public enum SoundMaterial : byte {
     SAND,
     GLASS,
     ORGANIC
+}
+
+public static class SoundMaterialExtensions {
+    extension(SoundMaterial mat) {
+        public string stepCategory() => mat switch {
+            SoundMaterial.GRASS => "step",
+            SoundMaterial.DIRT => "step",
+            SoundMaterial.SAND => "step",
+            SoundMaterial.WOOD => "step",
+            SoundMaterial.STONE => "step",
+            SoundMaterial.METAL => "step",
+            SoundMaterial.GLASS => "step",
+            SoundMaterial.ORGANIC => "step",
+            _ => "step"
+        };
+
+        public string breakCategory() => mat switch {
+            SoundMaterial.WOOD => "break/wood",
+            SoundMaterial.STONE => "break/stone",
+            SoundMaterial.SAND => "break/sand",
+            SoundMaterial.METAL => "break/stone",
+            SoundMaterial.DIRT => "break/sand",
+            SoundMaterial.GRASS => "break/sand",
+            SoundMaterial.GLASS => "break/stone",
+            SoundMaterial.ORGANIC => "break/wood",
+            _ => "break"
+        };
+    }
 }
 
 /**

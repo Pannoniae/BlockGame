@@ -45,7 +45,6 @@
         <PackageReference Include="Molten.Utility" Version="0.7.4" />
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.AMD" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ARB" Version="2.22.0"/>
-        <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.ATI" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.EXT" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.KHR" Version="2.22.0"/>
         <PackageReference Include="Silk.NET.OpenGL.Legacy.Extensions.NV" Version="2.22.0"/>

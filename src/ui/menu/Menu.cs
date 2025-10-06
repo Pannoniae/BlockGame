@@ -104,46 +104,56 @@ public class Menu {
                 element.postDraw();
             }
         }
-        // draw tooltip for active element
-        var tooltip = hoveredElement?.tooltip;
+
+        var tooltip = getTooltipText();
         if (!string.IsNullOrEmpty(tooltip)) {
-            var pos = Game.mousePos + new Vector2(MOUSEPOSPADDING) - new Vector2(2);
-            var posExt = Game.gui.measureStringThin(tooltip) + new Vector2(4);
-            var textPos = Game.mousePos + new Vector2(MOUSEPOSPADDING);
-            
-            // clamp tooltip to screen bounds
-            var screenWidth = Game.window.Size.X;
-            var screenHeight = Game.window.Size.Y;
-            
-            var borderSize = GUI.guiScale;
-            
-            
-            if (pos.X + posExt.X + borderSize > screenWidth) {
-                var overflow = pos.X + posExt.X + borderSize - screenWidth;
-                pos.X -= overflow;
-                textPos.X -= overflow;
-            }
-            if (pos.Y + posExt.Y + borderSize > screenHeight) {
-                var overflow = pos.Y + posExt.Y + borderSize - screenHeight;
-                pos.Y -= overflow;
-                textPos.Y -= overflow;
-            }
-            
-            var borderRect = new RectangleF(pos.X - borderSize, pos.Y - borderSize, posExt.X + borderSize * 2, posExt.Y + borderSize * 2);
-            var bgRect = new RectangleF(pos.X, pos.Y, posExt.X, posExt.Y);
-            
-            // draw border with gradient (vibrant purple to deep blue)
-            var borderColorTop = new Color(147, 51, 234, 255);    // bright purple
-            var borderColorBottom = new Color(59, 130, 246, 255); // bright blue
-            Game.gui.drawGradientVertical(Game.gui.colourTexture, borderRect, borderColorTop, borderColorBottom);
-            
-            // draw background with gradient (dark purple to dark blue)  
-            var bgColorTop = new Color(30, 15, 45, 240);    // dark purple
-            var bgColorBottom = new Color(15, 25, 45, 240); // dark blue
-            Game.gui.drawGradientVertical(Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
-            
-            Game.gui.drawStringThin(tooltip, textPos);
+            drawTooltip(tooltip);
         }
+    }
+
+    /** Override to provide custom tooltip text (e.g. from item slots) */
+    protected virtual string? getTooltipText() {
+        return hoveredElement?.tooltip;
+    }
+
+    /** Draw a tooltip at mouse position with the given text */
+    protected static void drawTooltip(string tooltip) {
+        var pos = Game.mousePos + new Vector2(MOUSEPOSPADDING);
+        var posExt = Game.gui.measureStringThin(tooltip) + new Vector2(4, 2) * GUI.guiScale;
+        var textPos = Game.mousePos + new Vector2(MOUSEPOSPADDING) + new Vector2(2, 1) * GUI.guiScale;
+
+        // clamp tooltip to screen bounds
+        var screenWidth = Game.window.Size.X;
+        var screenHeight = Game.window.Size.Y;
+
+        var borderSize = GUI.guiScale;
+
+
+        if (pos.X + posExt.X + borderSize > screenWidth) {
+            var overflow = pos.X + posExt.X + borderSize - screenWidth;
+            pos.X -= overflow;
+            textPos.X -= overflow;
+        }
+        if (pos.Y + posExt.Y + borderSize > screenHeight) {
+            var overflow = pos.Y + posExt.Y + borderSize - screenHeight;
+            pos.Y -= overflow;
+            textPos.Y -= overflow;
+        }
+
+        var borderRect = new RectangleF(pos.X - borderSize, pos.Y - borderSize, posExt.X + borderSize * 2, posExt.Y + borderSize * 2);
+        var bgRect = new RectangleF(pos.X, pos.Y, posExt.X, posExt.Y);
+
+        // draw border with gradient (vibrant purple to deep blue)
+        var borderColorTop = new Color(147, 51, 234, 255);    // bright purple
+        var borderColorBottom = new Color(59, 130, 246, 255); // bright blue
+        Game.gui.drawGradientVertical(Game.gui.colourTexture, borderRect, borderColorTop, borderColorBottom);
+
+        // draw background with gradient (dark purple to dark blue)
+        var bgColorTop = new Color(30, 15, 45, 240);    // dark purple
+        var bgColorBottom = new Color(15, 25, 45, 240); // dark blue
+        Game.gui.drawGradientVertical(Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
+
+        Game.gui.drawStringThin(tooltip, textPos);
     }
 
     public virtual void update(double dt) {

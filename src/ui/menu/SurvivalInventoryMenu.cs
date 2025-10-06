@@ -14,8 +14,8 @@ public class SurvivalInventoryMenu : Menu {
     public const int cols = 10;
 
     public const int invOffsetY = 20;
-    public const int textOffsetX = 6;
-    public const int textOffsetY = 8;
+    public const int textOffsetX = 4;
+    public const int textOffsetY = 3;
     public const int invOffsetX = 5;
 
     public List<ItemSlot> slots = [];
@@ -80,6 +80,25 @@ public class SurvivalInventoryMenu : Menu {
             var mousePos = Game.mousePos;
             Game.gui.drawCursorItem(player.inventory.cursor, mousePos);
         }
+    }
+
+    protected override string? getTooltipText() {
+        var guiPos = GUI.s2u(Game.mousePos);
+
+        // check slots first
+        foreach (var slot in slots) {
+            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
+            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
+                var stack = slot.getStack();
+                if (stack != ItemStack.EMPTY && stack.id != 0) {
+                    return stack.getItem().getName(stack);
+                }
+                break;
+            }
+        }
+
+        // fallback to base (GUIElement tooltips)
+        return base.getTooltipText();
     }
 
     public override void onMouseUp(Vector2 pos, MouseButton button) {
