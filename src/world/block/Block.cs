@@ -547,7 +547,7 @@ public class Block {
         CHEST.setModel(BlockModel.makeCube(CHEST));
         //CHEST.transparency();
 
-        
+
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
         

@@ -64,6 +64,7 @@ public class Item {
     public static Tool WOOD_AXE;
     public static Tool WOOD_SHOVEL;
     public static Item WOOD_SWORD;
+    public static Item STICK;
 
 
     public Item(int id, string name) {
@@ -203,9 +204,9 @@ public class Item {
         WOOD_SWORD.tex = new UVPair(5, 3);
         register(WOOD_SWORD);
 
-
-
-
+        STICK = new Item(Items.STICK, "Stick");
+        STICK.tex = new UVPair(3, 5);
+        register(STICK);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

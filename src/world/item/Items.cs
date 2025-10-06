@@ -18,4 +18,5 @@ public class Items {
     public const int WOOD_AXE = 14;
     public const int WOOD_SHOVEL = 15;
     public const int WOOD_SWORD = 16;
+    public const int STICK = 17;
 }

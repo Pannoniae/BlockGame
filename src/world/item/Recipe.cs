@@ -9,6 +9,8 @@ public class Recipe {
     public static Recipe PLANKS;
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
+    public static Recipe STICK;
+
 
     public static readonly List<Recipe> recipes = [];
 
@@ -35,8 +37,15 @@ public class Recipe {
         TORCH.shape(01_02, 2); // empty hellstone / empty log
         TORCH.ingredients(
             Item.block(Blocks.HELLSTONE), // coal placeholder!!
-            Item.block(Blocks.LOG)); // stick placeholder!!
-        TORCH.quantities(2, 1); // 2 hellstone, 1 log
+            Item.STICK);
+        TORCH.quantities(2, 1); // 2 hellstone, 1 stick
+
+        // stick (2 planks vertically)
+        STICK = register(new ItemStack(Item.STICK, 4));
+        STICK.shape(01_01, 2);
+        STICK.ingredients(
+            Item.block(Blocks.PLANKS),
+            Item.block(Blocks.PLANKS));
 
         // 3x3
         WOOD_PICKAXE = register(new ItemStack(Item.WOOD_PICKAXE, 1));
@@ -90,7 +99,7 @@ public class Recipe {
             return matchesShapeless(grid);
         }
 
-        return matchesShaped(grid, checkQty: true);
+        return matchesShaped(grid, checkQty:true);
     }
 
     /** Matches shape only, ignoring quantities */
@@ -99,7 +108,7 @@ public class Recipe {
             return matchesShapelessShape(grid);
         }
 
-        return matchesShaped(grid, checkQty: false);
+        return matchesShaped(grid, checkQty:false);
     }
 
     /** Find matching recipe for given grid, or null */
@@ -301,7 +310,7 @@ public class Recipe {
         for (int offsetRow = 0; offsetRow <= grid.rows - patternHeight; offsetRow++) {
             for (int offsetCol = 0; offsetCol <= grid.cols - patternWidth; offsetCol++) {
                 if (matchesAt(grid, digits, gridSize, minRow, minCol, patternHeight, patternWidth, offsetRow,
-                        offsetCol, checkQty: true)) {
+                        offsetCol, checkQty:true)) {
                     // found the match, consume ingredients at this offset
                     consumeAtOffset(grid, digits, gridSize, minRow, minCol, patternHeight, patternWidth, offsetRow,
                         offsetCol);
