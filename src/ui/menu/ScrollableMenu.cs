@@ -8,7 +8,7 @@ using Silk.NET.Input;
 namespace BlockGame.ui.menu;
 
 public abstract class ScrollableMenu : Menu {
-    private HashSet<GUIElement> scrollables = [];
+    private readonly HashSet<GUIElement> scrollables = [];
 
     private float scrollY = 0f;
     private float minScrollY = 0f;
@@ -22,6 +22,11 @@ public abstract class ScrollableMenu : Menu {
     protected void addScrollable(GUIElement element) {
         scrollables.Add(element);
         addElement(element);
+    }
+
+    protected void removeScrollable(GUIElement element) {
+        scrollables.Remove(element);
+        removeElement(element.name);
     }
 
     public override void resize(Vector2I newSize) {

@@ -38,7 +38,8 @@ public partial class World : IDisposable {
     public const int numTicks = 1;
 
     public string name;
-
+    public string displayName;
+    public string generatorName;
 
     public readonly List<WorldListener> listeners = [];
 
@@ -94,11 +95,15 @@ public partial class World : IDisposable {
     public NBTCompound toBeLoadedNBT;
     private static readonly List<AABB> listAABB = [];
 
-    public World(string name, int seed) {
+    public World(string name, int seed, string? displayName = null, string? generatorName = null) {
         this.name = name;
+        this.displayName = displayName ?? name;
+        this.generatorName = generatorName ?? "perlin";
+
         inited = false;
         worldIO = new WorldIO(this);
-        generator = new NewWorldGenerator(this);
+
+        generator = WorldGenerators.create(this, generatorName);
 
         random = new XRandom(seed);
         worldTick = 0;

@@ -25,6 +25,12 @@ public class Menu {
     public GUIElement? pressedElement;
 
     /// <summary>
+    /// The element which currently has keyboard focus.
+    /// Receives all keyboard events.
+    /// </summary>
+    public GUIElement? focusedElement;
+
+    /// <summary>
     /// The current screen this menu is opened in.
     /// </summary>
     public Screen screen;
@@ -33,6 +39,8 @@ public class Menu {
     public static StartupLoadingMenu STARTUP_LOADING;
     public static MainMenu MAIN_MENU;
     public static LevelSelectMenu LEVEL_SELECT;
+    public static CreateWorldMenu CREATE_WORLD;
+    public static ConfirmDialog CONFIRM_DIALOG;
 
 
     /// <summary>
@@ -57,6 +65,8 @@ public class Menu {
         //STARTUP_LOADING = new StartupLoadingMenu();
         MAIN_MENU = new MainMenu();
         LEVEL_SELECT = new LevelSelectMenu();
+        CREATE_WORLD = new CreateWorldMenu();
+        CONFIRM_DIALOG = new ConfirmDialog();
     }
 
     // there is no activate/deactivate here to manage elements here because multiple menus can exist (there no generic system for that; it's on a case-by-case basis)
@@ -66,6 +76,7 @@ public class Menu {
         // clear mouse capture state when menu activates?
         pressedElement = null;
         hoveredElement = null;
+        focusedElement = null;
     }
 
     public virtual void deactivate() {
@@ -239,19 +250,19 @@ public class Menu {
     }
 
     public virtual void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
-
+        focusedElement?.onKeyDown(key, scancode);
     }
 
     public virtual void onKeyRepeat(IKeyboard keyboard, Key key, int scancode) {
-
+        focusedElement?.onKeyRepeat(key, scancode);
     }
 
     public virtual void onKeyUp(IKeyboard keyboard, Key key, int scancode) {
-
+        focusedElement?.onKeyUp(key, scancode);
     }
 
     public virtual void onKeyChar(IKeyboard keyboard, char c) {
-
+        focusedElement?.onKeyChar(c);
     }
 
     public virtual void scroll(IMouse mouse, ScrollWheel scroll) {

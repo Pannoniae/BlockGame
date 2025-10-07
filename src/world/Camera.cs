@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.meth;
@@ -237,8 +238,7 @@ public class Camera {
 
     public void applyImpact(float damage) {
         // tilt proportional to damage, randomly left or right
-        var random = new Random();
-        var dir = random.Next(2) == 0 ? 1f : -1f;
+        var dir = Game.clientRandom.Next(2) == 0 ? 1f : -1f;
         impactTilt += damage * 0.5f * dir;
         impactTilt = Math.Clamp(impactTilt, -10f, 10f); // cap at ±10 degrees
     }

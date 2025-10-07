@@ -23,7 +23,6 @@ namespace BlockGame.ui;
 /// Drawing methods ending with "UI" draw on the virtual GUI coordinate system, so they are positioned in the right place when the GUI scale is changed.
 /// </summary>
 public class GUI {
-
     public static int guiScale = 4;
 
     public SpriteBatch tb;
@@ -44,8 +43,6 @@ public class GUI {
 
     public DynamicSpriteFont guiFont = null!;
     public DynamicSpriteFont guiFontThin = null!;
-    public Rectangle buttonRect = new(96, 0, 96, 16);
-    public Rectangle grayButtonRect = new(0, 16 * 2, 96, 16);
 
     public Rectangle scrollbarRect = new(199, 0, 6, 20);
 
@@ -83,7 +80,8 @@ public class GUI {
         guiTexture.reload();
         colourTexture.reload();
         instance = this;
-        guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert", "shaders/ui/simpleBlock.frag");
+        guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert",
+            "shaders/ui/simpleBlock.frag");
         buffer = new StreamingVAO<BlockVertexTinted>();
         buffer.bind();
         buffer.setSize(Face.MAX_FACES * 4);
@@ -101,7 +99,6 @@ public class GUI {
 
 
     public void resize(Vector2I size) {
-
         refreshMatrix(size);
 
         uiCentreX = size.X / 2 / guiScale;
@@ -163,7 +160,8 @@ public class GUI {
 
     /** Draw a colored tint over a slot (for status indication) */
     public void drawSlotTint(Vector2 pos, Rectangle slotRect, Color tint) {
-        var dest = new RectangleF(pos.X + slotRect.X + ItemSlot.PADDING, pos.Y + slotRect.Y + ItemSlot.PADDING, slotRect.Width - ItemSlot.PADDING * 2, slotRect.Height - ItemSlot.PADDING * 2);
+        var dest = new RectangleF(pos.X + slotRect.X + ItemSlot.PADDING, pos.Y + slotRect.Y + ItemSlot.PADDING,
+            slotRect.Width - ItemSlot.PADDING * 2, slotRect.Height - ItemSlot.PADDING * 2);
         drawUI(colourTexture, dest, new Rectangle(0, 0, 1, 1), tint);
     }
 
@@ -188,7 +186,8 @@ public class GUI {
             var blockID = item.getBlockID();
             if (Block.renderItemLike[blockID]) {
                 drawItemSprite(item, stack, pos.X + itemPos.X, pos.Y + itemPos.Y, shiny);
-            } else {
+            }
+            else {
                 Game.gui.drawBlockUI(item.getBlock(), (int)(pos.X + itemPos.X), (int)(pos.Y + itemPos.Y),
                     ItemSlot.ITEMSIZE, (byte)stack.metadata, 0, shiny);
                 // draw amount text
@@ -216,7 +215,8 @@ public class GUI {
             var blockID = item.getBlockID();
             if (Block.renderItemLike[blockID]) {
                 drawItemSprite(item, stack, itemPos.X, itemPos.Y);
-            } else {
+            }
+            else {
                 Game.gui.drawBlockUI(item.getBlock(), itemPos.X, itemPos.Y, ItemSlot.ITEMSIZE, (byte)stack.metadata);
                 drawQuantityText(stack, itemPos.X, itemPos.Y);
             }
@@ -241,9 +241,11 @@ public class GUI {
             var blockID = item.getBlockID();
             if (Block.renderItemLike[blockID]) {
                 drawItemSprite(item, cursorItem, drawX, drawY);
-            } else {
+            }
+            else {
                 // render cursor item closer to camera to avoid z-fighting with gui blocks
-                Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE, (byte)cursorItem.metadata, -1000);
+                Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE,
+                    (byte)cursorItem.metadata, -1000);
 
                 // draw quantity if > 1
                 if (cursorItem.quantity > 1) {
@@ -314,7 +316,6 @@ public class GUI {
                 new Vector2(texCoordsMax.X, texCoordsMax.Y)),
             new VertexColorTexture(new Vector3(left, bottom, 0), bgGray,
                 new Vector2(texCoords.X, texCoordsMax.Y)));
-
     }
 
     public void drawScrollingBG(float size) {
@@ -339,7 +340,10 @@ public class GUI {
         float offsetX = backgroundScrollOffset.X % blockSize;
         float offsetY = backgroundScrollOffset.Y % blockSize;
 
-        Span<ushort> ores = [Blocks.AMBER_ORE, Blocks.REALGAR, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE, Blocks.AMETHYST_ORE];
+        Span<ushort> ores = [
+            Blocks.AMBER_ORE, Blocks.REALGAR, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE,
+            Blocks.AMETHYST_ORE
+        ];
 
         // Draw layered background
         for (int x = 0; x < xCount; x++) {
@@ -351,29 +355,31 @@ public class GUI {
                 // absolute world position
                 int worldX = startX + x;
                 int worldY = startY + y;
-                
-                
+
+
                 ushort blockId = getBlockTypeForDepth(worldX, worldY);
-                
+
                 // Skip drawing air blocks
                 if (blockId == Block.AIR.id) {
-                    
                     // draw gray rectangle for air blocks
                     tb.DrawRaw(colourTexture,
                         new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray * skyc, new Vector2(0, 0)),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray * skyc, new Vector2(1, 0)),
-                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray * skyc, new Vector2(1, 1)),
-                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray * skyc, new Vector2(0, 1)));
-                    
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray * skyc,
+                            new Vector2(1, 0)),
+                        new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray * skyc,
+                            new Vector2(1, 1)),
+                        new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray * skyc,
+                            new Vector2(0, 1)));
+
                     continue;
                 }
-                
+
                 // If it's in the stone layer, check for ores
                 if (blockId == Block.STONE.id && shouldPlaceOre(worldX, worldY)) {
                     int oreIndex = XHash.hashRange(worldX, worldY, ores.Length);
                     blockId = ores[oreIndex];
                 }
-                
+
                 var block = Block.get(blockId);
                 var texCoords_ = UVPair.texCoords(block.uvs[0]);
                 var texCoordsMax_ = UVPair.texCoords(block.uvs[0] + 1);
@@ -382,9 +388,12 @@ public class GUI {
 
                 tb.DrawRaw(Game.textures.blockTexture,
                     new VertexColorTexture(new Vector3(tileLeft, tileTop, 0), bgGray, texCoords),
-                    new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray, new Vector2(texCoordsMax.X, texCoords.Y)),
-                    new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray, texCoordsMax),
-                    new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray, new Vector2(texCoords.X, texCoordsMax.Y)));
+                    new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop, 0), bgGray,
+                        new Vector2(texCoordsMax.X, texCoords.Y)),
+                    new VertexColorTexture(new Vector3(tileLeft + blockSize, tileTop + blockSize, 0), bgGray,
+                        texCoordsMax),
+                    new VertexColorTexture(new Vector3(tileLeft, tileTop + blockSize, 0), bgGray,
+                        new Vector2(texCoords.X, texCoordsMax.Y)));
             }
         }
     }
@@ -399,23 +408,23 @@ public class GUI {
         if (worldY < 0) {
             return Blocks.AIR;
         }
-        
+
         // surface layer (y = 0) is grass
         if (worldY == 0) {
             return Blocks.GRASS;
         }
-        
+
         // dirt percentage increases linearly from depth 1 to 7
         if (worldY >= 1 && worldY <= 7) {
             // calculate dirt percentage: 100% at depth 1, decreasing to ~15% at depth 7
             float dirtPercentage = 1.0f - ((worldY - 1) / 6.0f * 0.85f);
             float randomValue = XHash.hashFloat(worldX, worldY);
-            
+
             if (randomValue < dirtPercentage) {
                 return Blocks.DIRT;
             }
         }
-        
+
         // what isn't dirt is stone
         return Blocks.STONE;
     }
@@ -423,28 +432,32 @@ public class GUI {
 
     public void draw(BTexture2D texture, Vector2 position, float scale = 1f, Rectangle? source = null,
         Color color = default, Vector2 origin = default, float depth = 0f) {
-        tb.Draw(texture, position, source, color == default ? Color.White : color, scale != 1f ? guiScale * scale : guiScale, 0f, origin, depth);
+        tb.Draw(texture, position, source, color == default ? Color.White : color,
+            scale != 1f ? guiScale * scale : guiScale, 0f, origin, depth);
     }
 
     public void draw(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color color = default) {
         tb.Draw(texture, dest, source, color == default ? Color.White : color);
     }
 
-    public void drawGradientVertical(BTexture2D texture, RectangleF dest, Color topColor, Color bottomColor, Rectangle? source = null) {
+    public void drawGradientVertical(BTexture2D texture, RectangleF dest, Color topColor, Color bottomColor,
+        Rectangle? source = null) {
         var left = dest.X;
         var right = dest.X + dest.Width;
         var top = dest.Y;
         var bottom = dest.Y + dest.Height;
-        
-        var texCoords = source.HasValue ? 
-            new RectangleF(source.Value.X, source.Value.Y, source.Value.Width, source.Value.Height) :
-            new RectangleF(0, 0, 1, 1);
-        
+
+        var texCoords = source.HasValue
+            ? new RectangleF(source.Value.X, source.Value.Y, source.Value.Width, source.Value.Height)
+            : new RectangleF(0, 0, 1, 1);
+
         tb.DrawRaw(texture,
             new VertexColorTexture(new Vector3(left, top, 0), topColor, new Vector2(texCoords.X, texCoords.Y)),
             new VertexColorTexture(new Vector3(right, top, 0), topColor, new Vector2(texCoords.Right, texCoords.Y)),
-            new VertexColorTexture(new Vector3(right, bottom, 0), bottomColor, new Vector2(texCoords.Right, texCoords.Bottom)),
-            new VertexColorTexture(new Vector3(left, bottom, 0), bottomColor, new Vector2(texCoords.X, texCoords.Bottom)));
+            new VertexColorTexture(new Vector3(right, bottom, 0), bottomColor,
+                new Vector2(texCoords.Right, texCoords.Bottom)),
+            new VertexColorTexture(new Vector3(left, bottom, 0), bottomColor,
+                new Vector2(texCoords.X, texCoords.Bottom)));
     }
 
     public void drawImmediate(BTexture2D texture, Vector2 position, Rectangle? source = null,
@@ -478,9 +491,10 @@ public class GUI {
         immediatetb.Draw(texture, position, source, Color.White, 1f);
     }
 
-    
+
     /** Text rendering is at half gui scale, which is normally 2x (compared to the guiscale 4x) */
     public static int TEXTSCALE => guiScale / 2;
+
     public static Vector2 TEXTSCALEV => new(TEXTSCALE, TEXTSCALE);
 
     // maybe some day we will have common logic for these functions if the number of permutations grow in size. BUT NOT TODAY
@@ -638,22 +652,24 @@ public class GUI {
         guiFont.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), rotation, offset, scale);
     }
 
-    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale, Vector2 offset) {
+    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale,
+        Vector2 offset) {
         var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
         guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
     }
 
-    protected void DrawRString(RichTextLayout layout, Vector2 position, Color colour, Vector2 scale, TextHorizontalAlignment alignment) {
+    protected void DrawRString(RichTextLayout layout, Vector2 position, Color colour, Vector2 scale,
+        TextHorizontalAlignment alignment) {
         if (layout.Font == guiFontThin) {
             // If the layout uses the thin font, we need to adjust the scale for the aspect ratio
             scale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
         }
-        
+
         layout.Draw(Game.fontLoader.renderer, position, colour.toFS(), 0, new Vector2(0), scale, 0f, alignment);
     }
-    
+
     // selector versions
-    
+
     public void drawStringShadowed(string text, Vector2 position, bool thin) {
         if (thin) {
             DrawStringThin(text, position + new Vector2(1, 1), Color.DimGray, new Vector2(TEXTSCALE), default);
@@ -664,7 +680,7 @@ public class GUI {
             DrawString(text, position, Color.White, new Vector2(TEXTSCALE), default);
         }
     }
-    
+
     public void drawString(string text, Vector2 position, bool thin) {
         if (thin) {
             DrawStringThin(text, position, Color.White, new Vector2(TEXTSCALE), default);
@@ -673,7 +689,7 @@ public class GUI {
             DrawString(text, position, Color.White, new Vector2(TEXTSCALE), default);
         }
     }
-    
+
     public Vector2 measureString(ReadOnlySpan<char> text) {
         return guiFont.MeasureString(text, TEXTSCALEV);
     }
@@ -682,12 +698,13 @@ public class GUI {
         var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
         return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
-    
+
     public Vector2 measureString(ReadOnlySpan<char> text, bool thin) {
         if (thin) {
             var measurement = guiFontThin.MeasureString(text, TEXTSCALEV);
             return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
         }
+
         return guiFont.MeasureString(text, TEXTSCALEV);
     }
 
@@ -695,32 +712,33 @@ public class GUI {
         var measurement = guiFontThin.MeasureString(text, TEXTSCALEV / 2f);
         return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
-    
+
     public Vector2 measureStringUI(ReadOnlySpan<char> text) {
-        // 
+        //
         return guiFont.MeasureString(text);
     }
-    
+
     public Vector2 measureStringUIThin(ReadOnlySpan<char> text) {
         var measurement = guiFontThin.MeasureString(text);
         return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
-    
+
     public Vector2 measureStringUICentred(ReadOnlySpan<char> text) {
         return guiFont.MeasureString(text) / 2f;
     }
-    
+
     public Vector2 measureStringUI(ReadOnlySpan<char> text, bool thin) {
         if (thin) {
             var measurement = guiFontThin.MeasureString(text);
             return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
         }
+
         return guiFont.MeasureString(text);
     }
-    
+
     public void drawWireframe(Rectangle bounds, Color col) {
         // draw an empty rectangle with the given color
-        
+
         tb.DrawRaw(colourTexture,
             new VertexColorTexture(new Vector3(bounds.X, bounds.Y, 0), col, new Vector2(0, 0)),
             new VertexColorTexture(new Vector3(bounds.X + bounds.Width, bounds.Y, 0), col, new Vector2(1, 0)),
@@ -730,7 +748,6 @@ public class GUI {
     }
 
     public void drawBlock(Block block, int x, int y, int size, byte metadata = 0, float depth = 0, float shiny = 0) {
-
         //Console.Out.WriteLine(Game.GL.GetBoolean(GetPName.DepthTest));
         Game.GL.Enable(EnableCap.DepthTest);
 
@@ -769,7 +786,6 @@ public class GUI {
         mat.scale(size * guiScale * (32 / 48f));
 
 
-
         // "shrink"
         //mat.scale(2 / 3f);
 
@@ -790,7 +806,6 @@ public class GUI {
         //mat.rotate(45, 0, 0, 0);
 
         mat.translate(-0.5f, -0.5f, -0.5f);
-
 
 
         // model transformations
@@ -826,7 +841,7 @@ public class GUI {
     private void drawItemSprite(Item item, ItemStack stack, float x, float y, float shiny = 0) {
         // apply Y-stretch for shiny items
         var yScale = 1.0f + shiny;
-        var yOffset = (ItemSlot.ITEMSIZE * (yScale - 1.0f)) / 2f;  // centre the stretched item
+        var yOffset = (ItemSlot.ITEMSIZE * (yScale - 1.0f)) / 2f; // centre the stretched item
 
         var destRect = new RectangleF(x, y - yOffset, ItemSlot.ITEMSIZE, ItemSlot.ITEMSIZE * yScale);
 
@@ -837,7 +852,8 @@ public class GUI {
             var uv = UVPair.texCoordsI(texUV);
             var sourceRect = new Rectangle((int)uv.X, (int)uv.Y, UVPair.ATLASSIZE, UVPair.ATLASSIZE);
             drawUI(Game.textures.blockTexture, destRect, sourceRect);
-        } else {
+        }
+        else {
             // normal item rendering
             var texUV = item.getTexture(stack);
             var uv = UVPair.texCoordsI(texUV);
@@ -940,5 +956,78 @@ public class GUI {
         drawUI(guiTexture,
             new Rectangle(x, y + height - 3, width, 3),
             new Rectangle(sourceRect.X, sourceRect.Y + 17, width, 3), color);
+    }
+
+    /** 9-patch with separate border sizes per side
+     * Less hilariously hardcoded:tm:
+     */
+    public void draw9PatchUI(int x, int y, int width, int height, Rectangle src, int borderL, int borderR, int borderT,
+        int borderB, Color? tint = null) {
+        var c = tint ?? Color.White;
+
+        // corners
+        drawUI(guiTexture, new Rectangle(x, y, borderL, borderT),
+            new Rectangle(src.X, src.Y, borderL, borderT), c);
+        drawUI(guiTexture, new Rectangle(x + width - borderR, y, borderR, borderT),
+            new Rectangle(src.X + src.Width - borderR, src.Y, borderR, borderT), c);
+        drawUI(guiTexture, new Rectangle(x, y + height - borderB, borderL, borderB),
+            new Rectangle(src.X, src.Y + src.Height - borderB, borderL, borderB), c);
+        drawUI(guiTexture, new Rectangle(x + width - borderR, y + height - borderB, borderR, borderB),
+            new Rectangle(src.X + src.Width - borderR, src.Y + src.Height - borderB, borderR, borderB), c);
+
+        // edges
+        var midW = width - borderL - borderR;
+        var midH = height - borderT - borderB;
+        var srcMidW = src.Width - borderL - borderR;
+        var srcMidH = src.Height - borderT - borderB;
+
+        if (midW > 0) {
+            // top
+            drawUI(guiTexture, new Rectangle(x + borderL, y, midW, borderT),
+                new Rectangle(src.X + borderL, src.Y, srcMidW, borderT), c);
+            // bottom
+            drawUI(guiTexture, new Rectangle(x + borderL, y + height - borderB, midW, borderB),
+                new Rectangle(src.X + borderL, src.Y + src.Height - borderB, srcMidW, borderB), c);
+        }
+
+        if (midH > 0) {
+            // left
+            drawUI(guiTexture, new Rectangle(x, y + borderT, borderL, midH),
+                new Rectangle(src.X, src.Y + borderT, borderL, srcMidH), c);
+            // right
+            drawUI(guiTexture, new Rectangle(x + width - borderR, y + borderT, borderR, midH),
+                new Rectangle(src.X + src.Width - borderR, src.Y + borderT, borderR, srcMidH), c);
+        }
+
+        // centre
+        if (midW > 0 && midH > 0) {
+            drawUI(guiTexture, new Rectangle(x + borderL, y + borderT, midW, midH),
+                new Rectangle(src.X + borderL, src.Y + borderT, srcMidW, srcMidH), c);
+        }
+    }
+
+    /** Draw a hollow border (screen coords) */
+    public void drawBorder(int x, int y, int width, int height, int borderWidth, Color color) {
+        // top
+        draw(colourTexture, new RectangleF(x, y, width, borderWidth), null, color);
+        // bottom
+        draw(colourTexture, new RectangleF(x, y + height - borderWidth, width, borderWidth), null, color);
+        // left
+        draw(colourTexture, new RectangleF(x, y, borderWidth, height), null, color);
+        // right
+        draw(colourTexture, new RectangleF(x + width - borderWidth, y, borderWidth, height), null, color);
+    }
+
+    /** Draw a hollow border (GUI coords) */
+    public void drawBorderUI(int x, int y, int width, int height, int borderWidth, Color color) {
+        var bw = borderWidth * guiScale;
+        // top
+        drawUI(colourTexture, new Rectangle(x, y, width, borderWidth), null, color);
+        // bottom
+        drawUI(colourTexture, new Rectangle(x, y + height - borderWidth, width, borderWidth), null, color);
+        // left
+        drawUI(colourTexture, new Rectangle(x, y, borderWidth, height), null, color);
+        // right
+        drawUI(colourTexture, new Rectangle(x + width - borderWidth, y, borderWidth, height), null, color);
     }
 }

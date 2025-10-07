@@ -111,7 +111,7 @@ public class GUIElement {
         this.name = name;
     }
 
-    public void setPosition(Rectangle pos) {
+    public virtual void setPosition(Rectangle pos) {
         guiPosition = pos;
     }
 
@@ -162,6 +162,18 @@ public class GUIElement {
     
     /** The element *always* gets these events, you need to check whether this element is focused! */
     public virtual void onMouseUp(MouseButton button) {
+    }
+
+    public virtual void onKeyDown(Key key, int scancode) {
+    }
+
+    public virtual void onKeyRepeat(Key key, int scancode) {
+    }
+
+    public virtual void onKeyUp(Key key, int scancode) {
+    }
+
+    public virtual void onKeyChar(char c) {
     }
 
     public virtual void update() {

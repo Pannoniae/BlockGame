@@ -61,6 +61,9 @@ public class WorldIO {
         tag.addDouble("posY", world.player.position.Y);
         tag.addDouble("posZ", world.player.position.Z);
         tag.addInt("time", world.worldTick);
+        tag.addString("displayName", world.displayName);
+        tag.addLong("lastPlayed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        tag.addString("generator", world.generatorName);
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
         Log.info($"Saved world data to level/{world.name}/level.xnbt");
     }
@@ -293,7 +296,9 @@ public class WorldIO {
         Log.info($"Loaded data from level/{filename}/level.xnbt");
         var tag = NBT.readFile($"level/{filename}/level.xnbt");
         var seed = tag.getInt("seed");
-        var world = new World(filename, seed);
+        var displayName = tag.has("displayName") ? tag.getString("displayName") : filename;
+        var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
+        var world = new World(filename, seed, displayName, generatorName);
         world.toBeLoadedNBT = tag;
 
         // dump nbt into file

@@ -1,119 +1,157 @@
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.util.xNBT;
 using BlockGame.world;
 using Molten;
+using Silk.NET.Input;
 using Button = BlockGame.ui.element.Button;
 
 namespace BlockGame.ui.menu;
 
-public class LevelSelectMenu : Menu {
+public class LevelSelectMenu : ScrollableMenu {
 
-    public const int NUM_LEVELS = 5;
-
-    public bool[] worldExists = new bool[NUM_LEVELS];
     private bool load;
+    private WorldEntry? selectedEntry;
+
+    protected override int viewportY => 32;
+
+    protected override int viewportMargin => 64; // top + bottom
 
     public LevelSelectMenu() {
-        // create level buttons
-        for (int i = 0; i < NUM_LEVELS; i++) {
-            var levelIndex = i + 1;
-            var levelButton = new LevelSelectButton(this, $"level{levelIndex}", levelIndex, $"Level {levelIndex}");
-            levelButton.setPosition(new Vector2I(0, 32 + i * 24));
-            levelButton.topCentre();
-            levelButton.clicked += loadLevel;
-            addElement(levelButton);
-        }
-
-        // delete levels
-        var deleteButton = new Button(this, $"deleteButton", false, "Delete levels") {
-            horizontalAnchor = HorizontalAnchor.RIGHT,
-            verticalAnchor = VerticalAnchor.TOP
+        // create new world button (fixed at bottom)
+        var createButton = new Button(this, "createWorld", true, "Create New World") {
+            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
+            verticalAnchor = VerticalAnchor.BOTTOM
         };
-        deleteButton.setPosition(new Vector2I(0, 32 + NUM_LEVELS * 24 + 16));
-        deleteButton.topCentre();
-        deleteButton.clicked += _ => {
-            for (int i = 0; i < NUM_LEVELS; i++) {
-                var levelIndex = i + 1;
-                if (worldExists[i]) {
-                    worldExists[i] = false;
-                    elements[$"level{levelIndex}"].text = "-empty-";
-                    WorldIO.deleteLevel($"level{levelIndex}");
-
-                    // refresh elements
-                    activate();
-                }
-            }
+        createButton.setPosition(new Vector2I(0, -18));
+        createButton.clicked += _ => {
+            Game.instance.switchTo(CREATE_WORLD);
         };
-        addElement(deleteButton);
+        addElement(createButton);
 
+        // back button (fixed at bottom)
         var backButton = new Button(this, "back", false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         backButton.setPosition(new Vector2I(2, -18));
         backButton.clicked += _ => { Game.instance.switchTo(MAIN_MENU); };
-
         addElement(backButton);
+
+        // delete world button (fixed at bottom right)
+        var deleteButton = new Button(this, "deleteWorld", false, "Delete World") {
+            horizontalAnchor = HorizontalAnchor.RIGHT,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
+        deleteButton.setPosition(new Vector2I(-16 - deleteButton.guiPosition.Width, -18));
+        deleteButton.clicked += _ => deleteSelectedWorld();
+        addElement(deleteButton);
     }
 
-    private void loadLevel(GUIElement element) {
-
-        if (load) {
-            return;
-        }
-        
+    private void loadWorld(GUIElement element) {
+        if (load) return;
         load = true;
-        
-        var levelSelect = (LevelSelectButton)element;
 
-        // if exists, load
-        // it doesn't, create
-        World world;
-        bool isLoading;
-        if (worldExists[levelSelect.levelIndex - 1]) {
-            world = WorldIO.load($"level{levelSelect.levelIndex}");
-            isLoading = true;
-        }
-        else {
-            var seed = Game.random.Next();
-            if (Game.inputs.shift.down()) {
-                // if shift is pressed, use the seed from the level select button
-                seed = 674414719;
-            }
-            world = new World($"level{levelSelect.levelIndex}", seed);
-            isLoading = false;
-        }
-
+        var worldEntry = (WorldEntry)element;
+        var world = WorldIO.load(worldEntry.folderName);
         Game.setWorld(world);
-        
-        // start world thread
-        // todo this shit doesn't work, fix later
-        //Game.worldThread = new WorldThread();
-        
-        // set to loading screen
         Game.instance.switchTo(LOADING);
-        LOADING.load(world, isLoading);
-        
-        // logic continues in the loading screen
+        LOADING.load(world, true);
     }
 
-    // when activated, refresh the button states/texts
+    private void deleteSelectedWorld() {
+        if (selectedEntry == null) return;
+
+        var worldEntry = selectedEntry;
+        Game.instance.switchTo(CONFIRM_DIALOG);
+        CONFIRM_DIALOG.show(
+            $"Delete '{worldEntry.displayName}'?",
+            () => {
+                WorldIO.deleteLevel(worldEntry.folderName);
+                Game.instance.switchTo(LEVEL_SELECT);
+                refreshWorldList();
+            },
+            () => {
+                Game.instance.switchTo(LEVEL_SELECT);
+            }
+        );
+    }
+
+    private void selectWorld(GUIElement element) {
+        var entry = (WorldEntry)element;
+
+        // deselect previous
+        if (selectedEntry != null) {
+            selectedEntry.isSelected = false;
+        }
+
+        selectedEntry = entry;
+    }
+
+    // when activated, refresh world list
     public override void activate() {
         load = false;
-        for (int i = 0; i < NUM_LEVELS; i++) {
-            var levelIndex = i + 1;
-            worldExists[i] = WorldIO.worldExists($"level{levelIndex}");
-            var levelButton = (Button)getElement($"level{levelIndex}");
-            // get the size of the level
-            if (worldExists[i]) {
-                var levelSize = getDirSize($"level/level{levelIndex}");
-                levelButton.text = $"Level {levelIndex} ({levelSize / (double)Constants.MEGABYTES:0.###}MB)\n";
-            }
-            else {
-                levelButton.text = "-empty-";
-            }
+        refreshWorldList();
+    }
 
+    private void refreshWorldList() {
+        // clear selection
+        selectedEntry = null;
+
+        // remove old world entries (keep fixed buttons)
+        var toRemove = elements.Values.Where(e => e is WorldEntry).ToList();
+        foreach (var e in toRemove) {
+            removeScrollable(e);
+        }
+
+        // scan level directory for worlds
+        var levelDir = "level";
+        if (!Directory.Exists(levelDir)) {
+            Directory.CreateDirectory(levelDir);
+            return;
+        }
+
+        var worlds = new List<(string folderName, string displayName, int seed, long size, long lastPlayed)>();
+
+        // enumerate directories
+        foreach (var dir in Directory.GetDirectories(levelDir)) {
+            var folderName = Path.GetFileName(dir);
+            var levelFile = $"{dir}/level.xnbt";
+            if (!File.Exists(levelFile)) continue;
+
+            try {
+                var tag = NBT.readFile(levelFile);
+                var displayName = tag.has("displayName") ? tag.getString("displayName") : folderName;
+                var seed = tag.getInt("seed");
+                var lastPlayed = tag.has("lastPlayed") ? tag.getLong("lastPlayed") : 0;
+                var size = getDirSize(dir);
+                worlds.Add((folderName, displayName, seed, size, lastPlayed));
+            }
+            catch {
+                // skip corrupted worlds
+            }
+        }
+
+        // sort by lastPlayed descending
+        worlds.Sort((a, b) => b.lastPlayed.CompareTo(a.lastPlayed));
+
+        // create WorldEntry elements
+        var y = 32;
+        foreach (var (folderName, displayName, seed, size, lastPlayed) in worlds) {
+            var entry = new WorldEntry(this, $"world_{folderName}", folderName, displayName, seed, size, lastPlayed);
+            entry.guiPosition = new Rectangle(0, y, 400, 32);
+            entry.setPosition(entry.guiPosition);
+            entry.horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;
+            entry.verticalAnchor = VerticalAnchor.TOP;
+
+            // single-click selects
+            entry.selected += selectWorld;
+            // double-click loads
+            entry.clicked += loadWorld;
+
+            addScrollable(entry);
+            y += 36;
         }
     }
 
@@ -125,6 +163,14 @@ public class LevelSelectMenu : Menu {
     public override void draw() {
         Game.gui.drawBG(16);
         base.draw();
+    }
+
+    // esc handling
+    public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyDown(keyboard, key, scancode);
+        if (key == Key.Escape) {
+            Game.instance.switchTo(MAIN_MENU);
+        }
     }
 
     private static long getDirSize(string folderPath) {
