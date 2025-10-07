@@ -71,8 +71,8 @@ public class GUI {
     public const int heartY = 0;
     public const int heartNoX = 213;
     public const int heartNoY = 0;
-    public const int heartW = 11;
-    public const int heartH = 11;
+    public const int heartW = 9;
+    public const int heartH = 9;
 
     public GUI() {
         //shader = new InstantShader(GL, "shaders/batch.vert", "shaders/batch.frag");
