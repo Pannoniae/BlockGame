@@ -73,30 +73,30 @@ public class HotbarGUI : GUIElement {
             if (heartHP >= HP_PER_HEART) {
                 // full heart
                 gui.drawUI(gui.guiTexture, new Vector2(x, startY),
-                    new Rectangle(GUI.heartX, GUI.heartY, GUI.heartW+2, GUI.heartH+2));
+                    new Rectangle(GUI.heartX, GUI.heartY, GUI.heartW, GUI.heartH));
             } else if (heartHP > 0) {
                 // partial heart - split horizontally
                 float fillRatio = heartHP / HP_PER_HEART;
-                int fillWidth = (int)(GUI.heartW+2 * fillRatio);
+                int fillWidth = (int)(GUI.heartW * fillRatio);
 
                 // left side (filled)
                 if (fillWidth > 0) {
                     gui.drawUI(gui.guiTexture,
-                        new RectangleF(x, startY, fillWidth, GUI.heartH+2),
-                        new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH+2));
+                        new RectangleF(x, startY, fillWidth, GUI.heartH),
+                        new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH));
                 }
 
                 // right side (empty)
-                int emptyWidth = GUI.heartW+2 - fillWidth;
+                int emptyWidth = GUI.heartW - fillWidth;
                 if (emptyWidth > 0) {
                     gui.drawUI(gui.guiTexture,
-                        new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH+2),
-                        new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH+2));
+                        new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH),
+                        new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH));
                 }
             } else {
                 // empty heart
                 gui.drawUI(gui.guiTexture, new Vector2(x, startY),
-                    new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW+2, GUI.heartH+2));
+                    new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW, GUI.heartH));
             }
         }
     }

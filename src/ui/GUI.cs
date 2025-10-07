@@ -64,12 +64,12 @@ public class GUI {
     /** pixels per second */
     private const float SCROLL_SPEED = 32.0f;
 
-    public const int heartX = 226;
-    public const int heartY = 2;
-    public const int heartNoX = 214;
-    public const int heartNoY = 1;
-    public const int heartW = 7;
-    public const int heartH = 7;
+    public const int heartX = 224;
+    public const int heartY = 0;
+    public const int heartNoX = 213;
+    public const int heartNoY = 0;
+    public const int heartW = 9;
+    public const int heartH = 9;
 
     public GUI() {
         //shader = new InstantShader(GL, "shaders/batch.vert", "shaders/batch.frag");
