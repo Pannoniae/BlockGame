@@ -8,7 +8,7 @@ namespace BlockGame.world.item;
 /**
  * Items have IDs from 1 and up,
  * blocks have IDs from -1 and down.
- * 
+ *
  * itemID = -blockID
  */
 [SuppressMessage("Compiler", "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
@@ -22,7 +22,7 @@ public class Item {
      * Problem is, we can't get the actual name without an itemstack, because the metadata might change the name (e.g. different colours of candy).
      */
     public virtual string getName(ItemStack stack) => name;
-    
+
     private const int INITIAL_ITEM_CAPACITY = 128;
     private const int GROW_SIZE = 128;
     private static int MAXITEMS = INITIAL_ITEM_CAPACITY;
@@ -125,7 +125,7 @@ public class Item {
 
         return items[getIdx(i)];
     }
-    
+
     public static Item block(int blockID) {
         return get(-blockID);
     }
@@ -133,13 +133,13 @@ public class Item {
     public static int blockID(int blockID) {
         return -blockID;
     }
-    
+
     public bool isBlock() => id < 0 && -id < Block.currentID && Block.blocks[-id] != null;
-    
+
     public bool isItem() => id > 0 && id < currentID && items[getIdx(id)] != null;
-    
+
     public int getBlockID() => isBlock() ? -id : 0;
-    
+
     public Block getBlock() => isBlock() ? Block.blocks[-id] : null!;
 
     public static void preLoad() {
@@ -165,23 +165,23 @@ public class Item {
         COPPER_INGOT.tex = new UVPair(4, 0);
         register(COPPER_INGOT);
 
-        GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 6.0);
+        GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f);
         GOLD_PICKAXE.tex = new UVPair(1, 2);
         register(GOLD_PICKAXE);
 
-        IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 5.0);
+        IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f);
         IRON_PICKAXE.tex = new UVPair(0, 2);
         register(IRON_PICKAXE);
 
-        STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 4.0);
+        STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25);
         STONE_PICKAXE.tex = new UVPair(2, 2);
         register(STONE_PICKAXE);
 
-        STONE_AXE = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 4.0);
+        STONE_AXE = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 1.25);
         STONE_AXE.tex = new UVPair(3, 2);
         register(STONE_AXE);
 
-        STONE_SHOVEL = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 2.0);
+        STONE_SHOVEL = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 1.25);
         STONE_SHOVEL.tex = new UVPair(4, 2);
         register(STONE_SHOVEL);
 
@@ -189,19 +189,19 @@ public class Item {
         STONE_SWORD.tex = new UVPair(5, 2);
         register(STONE_SWORD);
 
-        STONE_HOE = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 2.0);
+        STONE_HOE = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25);
         STONE_HOE.tex = new UVPair(6, 2);
         register(STONE_HOE);
 
-        STONE_SCYTHE = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 2.0);
+        STONE_SCYTHE = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25);
         STONE_SCYTHE.tex = new UVPair(7 , 2);
         register(STONE_SCYTHE);
 
-        WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 2.0);
+        WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0);
         WOOD_PICKAXE.tex = new UVPair(2, 3);
         register(WOOD_PICKAXE);
 
-        WOOD_AXE = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
+        WOOD_AXE = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0);
         WOOD_AXE.tex = new UVPair(3, 3);
         register(WOOD_AXE);
 
@@ -244,19 +244,19 @@ public class Item {
         }
         return tex;
     }
-    
+
     /**
      * What a meaty method lol. Called when the player uses an item on a block.
      */
     public virtual void useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
-        
+
     }
-    
+
     /**
      * Called when the player uses an item in the air (not on a block).
      */
     public virtual void use(ItemStack stack, World world, Player player) {
-        
+
     }
 
     /**
