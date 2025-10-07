@@ -77,20 +77,20 @@ public class HotbarGUI : GUIElement {
             } else if (heartHP > 0) {
                 // partial heart - split horizontally
                 float fillRatio = heartHP / HP_PER_HEART;
-                int fillWidth = (int)(GUI.heartW * fillRatio);
+                int fillWidth = (int)(GUI.heartW+2 * fillRatio);
 
                 // left side (filled)
                 if (fillWidth > 0) {
                     gui.drawUI(gui.guiTexture,
-                        new RectangleF(x, startY, fillWidth, GUI.heartH),
+                        new RectangleF(x, startY, fillWidth, GUI.heartH+2),
                         new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH+2));
                 }
 
                 // right side (empty)
-                int emptyWidth = GUI.heartW - fillWidth;
+                int emptyWidth = GUI.heartW+2 - fillWidth;
                 if (emptyWidth > 0) {
                     gui.drawUI(gui.guiTexture,
-                        new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH),
+                        new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH+2),
                         new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH+2));
                 }
             } else {
