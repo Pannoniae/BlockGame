@@ -530,9 +530,9 @@ public class Block {
         COPPER_ORE = register(new Block(Blocks.COPPER_ORE, "Copper Ore"));
         COPPER_ORE.setTex(cubeUVs(5, 1));
         renderType[COPPER_ORE.id] = RenderType.CUBE;
-        //COPPER_ORE.material(Material.FANCY_STONE); //ZS allitsa be!
-        //COPPER_ORE.setHardness(3.0); //ZS allitsa be!
-        //COPPER_ORE.setTier(MaterialTier.STONE); ZS allitsa be!
+        COPPER_ORE.material(Material.FANCY_STONE);
+        COPPER_ORE.setHardness(2.5);
+        COPPER_ORE.setTier(MaterialTier.STONE);
         
         COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
