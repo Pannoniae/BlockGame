@@ -41,4 +41,16 @@ public class Entities {
         // item entities don't block placement
         blocksPlacement[ITEM_ENTITY] = false;
     }
+
+    /**
+     * Create an entity instance by type ID.
+     * Note: PLAYER entities are not created here - they're saved/loaded separately with world data.
+     */
+    public static Entity? create(World world, int type) {
+        return type switch {
+            ITEM_ENTITY => new ItemEntity(world),
+            COW => new Cow(world),
+            _ => null
+        };
+    }
 }

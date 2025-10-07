@@ -1,5 +1,6 @@
 ﻿using System;
 using BlockGame.util;
+using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
@@ -231,5 +232,25 @@ public class ItemEntity : Entity {
 
     private void remove() {
         active = false;
+    }
+
+    protected override void readx(NBTCompound data) {
+        if (data.has("stack")) {
+            stack = new ItemStack(data.getCompoundTag("stack"));
+        }
+        if (data.has("age")) {
+            age = data.getInt("age");
+        }
+        if (data.has("plotArmour")) {
+            plotArmour = data.getInt("plotArmour");
+        }
+    }
+
+    public override void writex(NBTCompound data) {
+        var stackData = new NBTCompound("stack");
+        stack.write(stackData);
+        data.add(stackData);
+        data.addInt("age", age);
+        data.addInt("plotArmour", plotArmour);
     }
 }

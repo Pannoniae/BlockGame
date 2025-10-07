@@ -43,7 +43,7 @@ public partial class NewWorldGenerator : WorldGenerator {
         en.setExp(s, float.E, 0.1f);
         s = random.Next(seed);
         fn = new ExpNoise(s);
-        fn.setExp(s, float.E, 0.1f);
+        fn.setExp(s, Meth.phiF, 0.1f);
         gn = new SimplexNoise(random.Next(seed));
         mn = new SimplexNoise(random.Next(seed));
 

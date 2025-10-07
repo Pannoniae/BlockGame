@@ -293,7 +293,7 @@ public class IngameMenu : Menu, IDisposable {
         }
 
         var blockStr = Item.get(stack.id).getName(stack);
-        Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 30),
+        Game.gui.drawStringCentredUI(blockStr, new Vector2(Game.gui.uiCentreX, Game.gui.uiHeight - 36),
             Color.White);
     }
 

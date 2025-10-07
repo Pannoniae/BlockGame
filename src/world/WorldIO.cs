@@ -150,6 +150,26 @@ public class WorldIO {
         }
 
         chunkTag.addListTag("sections", sectionsTag);
+
+        // save entities (skip players - they're saved with world data)
+        var entitiesTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "entities");
+        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            foreach (var entity in chunk.entities[sectionY]) {
+                // skip players
+                if (entity.type == Entities.PLAYER) {
+                    continue;
+                }
+
+                var entityData = new NBTCompound();
+                entityData.addInt("type", entity.type);
+                var data = new NBTCompound("data");
+                entity.write(data);
+                entityData.add(data);
+                entitiesTag.add(entityData);
+            }
+        }
+        chunkTag.addListTag("entities", entitiesTag);
+
         return chunkTag;
     }
 
@@ -177,6 +197,29 @@ public class WorldIO {
 
             // blocks
             blocks.setSerializationData(section.getUIntArray("blocks"), section.getByteArray("light"));
+        }
+
+        // load entities (skip players - they're saved with world data)
+        if (nbt.has("entities")) {
+            var entitiesTag = nbt.getListTag<NBTCompound>("entities");
+            for (int i = 0; i < entitiesTag.count(); i++) {
+                var entityData = entitiesTag.get(i);
+                var type = entityData.getInt("type");
+
+                // skip players
+                if (type == Entities.PLAYER) {
+                    continue;
+                }
+
+                var data = entityData.getCompoundTag("data");
+                var entity = Entities.create(world, type);
+                if (entity != null) {
+                    entity.read(data);
+                    // update global entity ID counter to prevent duplicates
+                    World.ec = Math.Max(World.ec, entity.id + 1);
+                    world.addEntity(entity);
+                }
+            }
         }
 
         /*var file = "chunk.xnbt";
@@ -215,6 +258,29 @@ public class WorldIO {
 
             // blocks
             blocks.setSerializationData(section.getUIntArray("blocks"), section.getByteArray("light"));
+        }
+
+        // load entities (skip players - they're saved with world data)
+        if (nbt.has("entities")) {
+            var entitiesTag = nbt.getListTag<NBTCompound>("entities");
+            for (int i = 0; i < entitiesTag.count(); i++) {
+                var entityData = entitiesTag.get(i);
+                var type = entityData.getInt("type");
+
+                // skip players
+                if (type == Entities.PLAYER) {
+                    continue;
+                }
+
+                var data = entityData.getCompoundTag("data");
+                var entity = Entities.create(chunk.world, type);
+                if (entity != null) {
+                    entity.read(data);
+                    // update global entity ID counter to prevent duplicates
+                    World.ec = Math.Max(World.ec, entity.id + 1);
+                    chunk.world.addEntity(entity);
+                }
+            }
         }
 
         // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)

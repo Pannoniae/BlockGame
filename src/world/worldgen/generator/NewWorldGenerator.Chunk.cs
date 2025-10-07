@@ -150,6 +150,8 @@ public partial class NewWorldGenerator {
                     var c = 8f;
                     // high m = flat, low m = not
                     var sh = (e / 2f) + 1f;
+
+                    var dd = float.Abs(e - 0.04f);
                     //var m = sh * sh * c;
                     //var m = 1 / (sh * (e / 2f));
                     var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
@@ -161,7 +163,10 @@ public partial class NewWorldGenerator {
                     // leave the broken to the d
                     //m *= (e - 0.2f);
 
-                    var h = 1 / (0.5f + float.Pow(float.E, -5 * (e - 0.3f)));
+                    var h = 1 / (0.1f + float.Pow(float.E, -5 * (e - 0.3f)));
+
+                    // if mountains, add a bit
+                    m = e > 0.4f ? m + ((e - 0.4f) * 2f) : m;
                     m *= h;
 
                     m = 1 / (m + 0.5f);
@@ -171,7 +176,7 @@ public partial class NewWorldGenerator {
                     //var d = (float.Abs(e * e)) * World.WORLDHEIGHT * 2.4f;
 
                     // if you touch these values ill murder you
-                    var d = (float.Abs(e - 0.04f) - 0.0675f);
+                    var d = (dd - 0.0675f);
                     // cheat
                     d = (d > -0.03 && d < 0.03f) ? d + 0.02f : d;
                     //var d2 = float.Sqrt(float.Abs(0.08f * (e - 0.04f))) - 0.065f;
@@ -181,11 +186,12 @@ public partial class NewWorldGenerator {
                     //d = o is > 0.5f and < 0.75f ? (float.Abs(o - 0.625f) - 0.125f) : d;
                     var od = float.Abs((0.5f) * (mm + 0.8f)) - 0.1f;
                     //od = (od > -0.1 && od < 0.03f) ? od + 0.07f : od;
-                    d = mm < -0.6f ? od : d;
+                    d = mm < -0.6f && e < 0.2f ? od : d;
                     //d = mm < -0.2f ? 1f : d;
 
                     d *= World.WORLDHEIGHT;
-                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)World.WORLDHEIGHT * 8f * m;
+                    // increase bias by default, mod it above
+                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)World.WORLDHEIGHT * 10f * m;
 
                     //Console.Out.WriteLine(airBias);
 
@@ -324,8 +330,8 @@ public partial class NewWorldGenerator {
                     height--;
                 }
 
-                // thickness of the soil layer (1.5 to 3.5)
-                var amt = getNoise2D(auxn, worldPos.X, worldPos.Z, 1, 1) + 2.5f;
+                // thickness of the soil layer (1 to 5)
+                var amt = getNoise2D(auxn, worldPos.X, worldPos.Z, 1, 1) + 4f;
 
                 // on high, make it thinner
                 var f = fb[getIndex(x >> NOISE_PER_X_SHIFT, worldPos.Y >> NOISE_PER_Y_SHIFT, z >> NOISE_PER_Z_SHIFT)];
@@ -372,11 +378,17 @@ public partial class NewWorldGenerator {
                 // if it's rock (otherwise it's water which we don't wanna replace)
                 if (chunk.getBlock(x, height, z) == Blocks.STONE) {
                     // replace top layer with topBlock
-                    chunk.setBlockFast(x, height, z, topBlock);
-                    for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {
-                        // replace stone with dirt
-                        if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
-                            chunk.setBlockFast(x, yy, z, filler);
+
+                    for (int yy = height; yy > height - amt && yy > 0; yy--) {
+
+                        // place top
+                        if (yy == height) {
+                            chunk.setBlockFast(x, height, z, topBlock);
+                        }
+                        else {
+                            if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
+                                chunk.setBlockFast(x, yy, z, filler);
+                            }
                         }
                     }
                 }

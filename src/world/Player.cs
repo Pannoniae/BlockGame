@@ -89,11 +89,66 @@ public class Player : Entity {
     }
 
     protected override void readx(NBTCompound data) {
-        // read inventory
+        if (data.has("inv")) {
+            var invData = data.getCompoundTag("inv");
+
+            // read slots
+            if (invData.has("slots")) {
+                var slotsList = invData.getListTag<NBTCompound>("slots");
+                for (int i = 0; i < slotsList.count() && i < inventory.slots.Length; i++) {
+                    inventory.slots[i] = new ItemStack(slotsList.get(i));
+                }
+            }
+
+            // read armour
+            if (invData.has("armour")) {
+                var armourList = invData.getListTag<NBTCompound>("armour");
+                for (int i = 0; i < armourList.count() && i < inventory.armour.Length; i++) {
+                    inventory.armour[i] = new ItemStack(armourList.get(i));
+                }
+            }
+
+            // read accessories
+            if (invData.has("accessories")) {
+                var accList = invData.getListTag<NBTCompound>("accessories");
+                for (int i = 0; i < accList.count() && i < inventory.accessories.Length; i++) {
+                    inventory.accessories[i] = new ItemStack(accList.get(i));
+                }
+            }
+        }
     }
 
     public override void writex(NBTCompound data) {
-        // write inventory
+        var invData = new NBTCompound("inv");
+
+        // write slots
+        var slotsList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "slots");
+        foreach (var stack in inventory.slots) {
+            var stackData = new NBTCompound();
+            stack.write(stackData);
+            slotsList.add(stackData);
+        }
+        invData.add(slotsList);
+
+        // write armour
+        var armourList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "armour");
+        foreach (var stack in inventory.armour) {
+            var stackData = new NBTCompound();
+            stack.write(stackData);
+            armourList.add(stackData);
+        }
+        invData.add(armourList);
+
+        // write accessories
+        var accList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "accessories");
+        foreach (var stack in inventory.accessories) {
+            var stackData = new NBTCompound();
+            stack.write(stackData);
+            accList.add(stackData);
+        }
+        invData.add(accList);
+
+        data.add(invData);
     }
 
     public void render(double dt, double interp) {

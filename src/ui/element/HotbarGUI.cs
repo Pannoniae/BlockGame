@@ -47,5 +47,57 @@ public class HotbarGUI : GUIElement {
                     selectedTexture);
             }
         }
+
+        // draw hearts in survival
+        if (Game.gamemode.gameplay) {
+            drawHearts();
+        }
+    }
+
+    private static void drawHearts() {
+        var gui = Game.gui;
+        var player = Game.world.player;
+        var hp = player.hp;
+
+        const int MAX_HEARTS = 10;
+        const int HP_PER_HEART = 10;
+
+        // hearts positioned above hotbar, aligned to left edge
+        int startX = gui.uiCentreX - (5 * SIZE);
+        int startY = gui.uiHeight - (BLOCKSIZE + 2) - GUI.heartH - 2;
+
+        for (int i = 0; i < MAX_HEARTS; i++) {
+            float heartHP = hp - (i * HP_PER_HEART);
+            int x = startX + (i * GUI.heartW);
+
+            if (heartHP >= HP_PER_HEART) {
+                // full heart
+                gui.drawUI(gui.guiTexture, new Vector2(x, startY),
+                    new Rectangle(GUI.heartX, GUI.heartY, GUI.heartW, GUI.heartH));
+            } else if (heartHP > 0) {
+                // partial heart - split horizontally
+                float fillRatio = heartHP / HP_PER_HEART;
+                int fillWidth = (int)(GUI.heartW * fillRatio);
+
+                // left side (filled)
+                if (fillWidth > 0) {
+                    gui.drawUI(gui.guiTexture,
+                        new RectangleF(x, startY, fillWidth, GUI.heartH),
+                        new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH));
+                }
+
+                // right side (empty)
+                int emptyWidth = GUI.heartW - fillWidth;
+                if (emptyWidth > 0) {
+                    gui.drawUI(gui.guiTexture,
+                        new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH),
+                        new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH));
+                }
+            } else {
+                // empty heart
+                gui.drawUI(gui.guiTexture, new Vector2(x, startY),
+                    new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW, GUI.heartH));
+            }
+        }
     }
 }

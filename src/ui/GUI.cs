@@ -65,7 +65,14 @@ public class GUI {
     public static bool SHOW_GUI_BOUNDS = false;
 
     /** pixels per second */
-    private const float SCROLL_SPEED = 32.0f; 
+    private const float SCROLL_SPEED = 32.0f;
+
+    public const int heartX = 224;
+    public const int heartY = 0;
+    public const int heartNoX = 213;
+    public const int heartNoY = 0;
+    public const int heartW = 11;
+    public const int heartH = 11;
 
     public GUI() {
         //shader = new InstantShader(GL, "shaders/batch.vert", "shaders/batch.frag");
@@ -465,6 +472,10 @@ public class GUI {
         Color color = default, Vector2 origin = default, float depth = 0f) {
         immediatetb.Draw(texture, position * guiScale, source, color == default ? Color.White : color, guiScale, 0f,
             origin, depth);
+    }
+
+    public void drawUIImmediate(BTexture2D texture, RectangleF position, Rectangle source) {
+        immediatetb.Draw(texture, position, source, Color.White, 1f);
     }
 
     
