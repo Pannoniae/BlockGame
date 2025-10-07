@@ -71,6 +71,8 @@ public class Camera {
 
     public float renderAirBob(double interp) => float.Lerp(prevAirBob, airBob, (float)interp);
 
+    public float renderImpactTilt(double interp) => float.Lerp(prevImpactTilt, impactTilt, (float)interp);
+
     public Vector3D forward() {
         if (player is not Player p) return Vector3D.UnitZ;
 
@@ -155,6 +157,10 @@ public class Camera {
     public float airBob;
     public float prevAirBob;
 
+    /** impact tilt from fall damage */
+    public float impactTilt;
+    public float prevImpactTilt;
+
     private float aspectRatio;
 
     public BoundingFrustum frustum;
@@ -223,6 +229,18 @@ public class Camera {
 
         // Faster decay than regular bob
         airBob *= 0.46f;
+
+        // Update impact tilt
+        prevImpactTilt = impactTilt;
+        impactTilt *= 0.85f; // decay
+    }
+
+    public void applyImpact(float damage) {
+        // tilt proportional to damage, randomly left or right
+        var random = new Random();
+        var dir = random.Next(2) == 0 ? 1f : -1f;
+        impactTilt += damage * 0.5f * dir;
+        impactTilt = Math.Clamp(impactTilt, -10f, 10f); // cap at ±10 degrees
     }
 
     public void setViewport(float width, float height) {
@@ -263,6 +281,7 @@ public class Camera {
         var interpUp = up(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
         var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
+        var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -274,7 +293,7 @@ public class Camera {
         Vector3 lookTarget = interpPos.toVec3() + interpForward.toVec3();
 
         return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), lookTarget, interpUp.toVec3())
-               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
+               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor + iTilt) // add impact tilt
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor + iAirBob) // Add airBob to pitch
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
@@ -288,6 +307,7 @@ public class Camera {
         var interpUp = up(interp);
         var iBob = float.DegreesToRadians(renderBob(interp));
         var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
+        var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -295,7 +315,7 @@ public class Camera {
         const float factor = 0.4f;
         const float factor2 = 0.15f;
         return Matrix4x4.CreateLookAtLeftHanded(interpPos, interpPos + interpForward.toVec3(), interpUp.toVec3())
-               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor)
+               * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor + iTilt) // add impact tilt
                * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor + iAirBob) // Add airBob to pitch
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
@@ -307,6 +327,7 @@ public class Camera {
     public Matrix4x4 getHandViewMatrix(double interp) {
         var iBob = float.DegreesToRadians(renderBob(interp));
         var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
+        var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
 
         //Console.Out.WriteLine(iAirBob);
         var tt = 0.0;
@@ -321,7 +342,7 @@ public class Camera {
         var axisX = Vector3.Normalize(Vector3.Transform(new Vector3(1, 0, 0), Matrix4x4.CreateRotationY(Meth.deg2rad(30f))));
 
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY)
-               * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor))
+               * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor + iTilt))
                * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor))
                * Matrix4x4.CreateRotationX(iAirBob);
 

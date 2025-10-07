@@ -68,7 +68,7 @@ public class HotbarGUI : GUIElement {
 
         for (int i = 0; i < MAX_HEARTS; i++) {
             float heartHP = hp - (i * HP_PER_HEART);
-            int x = startX + (i * GUI.heartW);
+            int x = startX + i * GUI.heartW;
 
             if (heartHP >= HP_PER_HEART) {
                 // full heart

@@ -15,7 +15,7 @@ using Silk.NET.Input;
 
 namespace BlockGame.world;
 
-public class Player : Entity {
+public class Player : Soul {
     public const double height = 1.75;
     public const double width = 0.625;
     public const double eyeHeight = 1.6;
@@ -30,6 +30,11 @@ public class Player : Entity {
     // sound stuff
     private double lastFootstepDistance = 0;
     private const double FOOTSTEP_DISTANCE = 3.0; // Distance between footstep sounds
+
+    // fall damage tracking
+    private bool wasInAir = false;
+    private const double SAFE_FALL_SPEED = 13.0; // velocity threshold for damage
+    private const double FALL_DAMAGE_MULTIPLIER = 2.0; // damage per unit velocity over threshold
 
     public PlayerInventory inventory;
 
@@ -187,6 +192,17 @@ public class Player : Entity {
         //inLiquid = Block.liquid[blockAtFeet];
 
         collide(dt);
+
+        // fall damage check
+        if (Game.gamemode.gameplay && onGround && wasInAir && !flyMode && !inLiquid) {
+            var fallSpeed = -prevVelocity.Y;
+            if (fallSpeed > SAFE_FALL_SPEED) {
+                var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
+                hp -= dmg;
+                Game.camera.applyImpact(dmg);
+            }
+        }
+        wasInAir = !onGround && !flyMode;
 
         applyFriction();
         clamp(dt);
