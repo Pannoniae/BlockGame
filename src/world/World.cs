@@ -149,18 +149,19 @@ public partial class World : IDisposable {
         if (!loadingSave) {
             // find safe spawn position with proper AABB clearance
             ensurePlayerSpawnClearance();
+            // give starter items
+            player.inventory.initNewPlayer();
         }
 
         // if loading, actually load
         if (loadingSave) {
             var tag = toBeLoadedNBT;
-            Log.debug(tag.getDouble("posX"));
-            Log.debug(tag.getDouble("posY"));
-            Log.debug(tag.getDouble("posZ"));
-            player.position.X = tag.getDouble("posX");
-            player.position.Y = tag.getDouble("posY");
-            player.position.Z = tag.getDouble("posZ");
             worldTick = tag.has("time") ? tag.getInt("time") : 0;
+
+            // load full player data
+            if (tag.has("player")) {
+                player.read(tag.getCompoundTag("player"));
+            }
 
             player.prevPosition = player.position;
         }

@@ -57,13 +57,16 @@ public class WorldIO {
     public void saveWorldData() {
         var tag = new NBTCompound("");
         tag.addInt("seed", world.seed);
-        tag.addDouble("posX", world.player.position.X);
-        tag.addDouble("posY", world.player.position.Y);
-        tag.addDouble("posZ", world.player.position.Z);
         tag.addInt("time", world.worldTick);
         tag.addString("displayName", world.displayName);
         tag.addLong("lastPlayed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         tag.addString("generator", world.generatorName);
+
+        // save full player entity data
+        var playerData = new NBTCompound("player");
+        world.player.write(playerData);
+        tag.add(playerData);
+
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
         Log.info($"Saved world data to level/{world.name}/level.xnbt");
     }

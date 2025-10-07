@@ -101,7 +101,7 @@ public class Player : Soul {
             if (invData.has("slots")) {
                 var slotsList = invData.getListTag<NBTCompound>("slots");
                 for (int i = 0; i < slotsList.count() && i < inventory.slots.Length; i++) {
-                    inventory.slots[i] = new ItemStack(slotsList.get(i));
+                    inventory.slots[i] = ItemStack.fromTag(slotsList.get(i));
                 }
             }
 
@@ -109,7 +109,7 @@ public class Player : Soul {
             if (invData.has("armour")) {
                 var armourList = invData.getListTag<NBTCompound>("armour");
                 for (int i = 0; i < armourList.count() && i < inventory.armour.Length; i++) {
-                    inventory.armour[i] = new ItemStack(armourList.get(i));
+                    inventory.armour[i] = ItemStack.fromTag(armourList.get(i));
                 }
             }
 
@@ -117,7 +117,7 @@ public class Player : Soul {
             if (invData.has("accessories")) {
                 var accList = invData.getListTag<NBTCompound>("accessories");
                 for (int i = 0; i < accList.count() && i < inventory.accessories.Length; i++) {
-                    inventory.accessories[i] = new ItemStack(accList.get(i));
+                    inventory.accessories[i] = ItemStack.fromTag(accList.get(i));
                 }
             }
         }

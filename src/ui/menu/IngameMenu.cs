@@ -65,16 +65,6 @@ public class IngameMenu : Menu, IDisposable {
     }
 
     public override void activate() {
-        
-        // only add if it doesn't exist!
-
-        if (!hasElement("hotbar")) {
-            var hotbar = new HotbarGUI(this, "hotbar", new Vector2I(0, -20)) {
-                horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
-                verticalAnchor = VerticalAnchor.BOTTOM
-            };
-            addElement(hotbar);
-        }
     }
 
     public override void deactivate() {

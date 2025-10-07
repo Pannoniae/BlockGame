@@ -36,11 +36,14 @@ public class PlayerInventory : Inventory {
     public int selected;
 
     public PlayerInventory() {
+        
+    }
+
+   
+    public void initNewPlayer() {
         for (int i = 0; i < 10; i++) {
             slots[i] = new ItemStack(Item.blockID(i + 1), Random.Shared.Next(15));
         }
-        // replace water with something useful
-        //slots[Block.WATER.id - 1] = new ItemStack(Block.LEAVES.id, 1);
     }
 
     public ItemStack getSelected() {

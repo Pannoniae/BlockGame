@@ -5,6 +5,7 @@ using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.render.model;
+using BlockGame.ui.element;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -32,6 +33,8 @@ public class GameScreen : Screen {
     public readonly IngameMenu INGAME_MENU = new();
     public readonly ChatMenu CHAT = new();
 
+    private HotbarGUI? hotbar;
+
     private TimerAction updateMemory;
     private TimerAction updateDebugText;
 
@@ -53,6 +56,13 @@ public class GameScreen : Screen {
         // lock mouse & activate ingame menu
         backToGame();
 
+        // create hotbar and add to ingame menu
+        hotbar = new HotbarGUI(INGAME_MENU, "hotbar", new Vector2I(0, -20)) {
+            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
+        INGAME_MENU.addElement(hotbar);
+
         umt?.stop();
         umt = new UpdateMemoryThread(this);
 
@@ -65,6 +75,13 @@ public class GameScreen : Screen {
 
     public override void deactivate() {
         base.deactivate();
+
+        // remove hotbar from menu
+        if (hotbar != null) {
+            INGAME_MENU.removeElement("hotbar");
+            hotbar = null;
+        }
+
         //Game.renderer = null;
         //updateMemory.enabled = false;
         updateDebugText.enabled = false;

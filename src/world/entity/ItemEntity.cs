@@ -236,7 +236,7 @@ public class ItemEntity : Entity {
 
     protected override void readx(NBTCompound data) {
         if (data.has("stack")) {
-            stack = new ItemStack(data.getCompoundTag("stack"));
+            stack = ItemStack.fromTag(data.getCompoundTag("stack"));
         }
         if (data.has("age")) {
             age = data.getInt("age");
