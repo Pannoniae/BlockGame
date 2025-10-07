@@ -10,6 +10,8 @@ namespace BlockGame.world.worldgen.feature;
 public abstract class OverlayFeature {
     public readonly XRandom rand = new();
 
+    public float freq;
+
     /// <summary>
     /// How many chunks to check around the populated chunk.
     /// </summary>

@@ -7,15 +7,15 @@ namespace BlockGame.world.worldgen.generator;
 public partial class PerlinWorldGenerator : WorldGenerator {
     public World world;
 
-    public FastNoiseLite lowNoise;
-    public FastNoiseLite highNoise;
-    public FastNoiseLite selectorNoise;
-    public FastNoiseLite auxNoise;
+    public SimplexNoise lowNoise;
+    public SimplexNoise highNoise;
+    public SimplexNoise selectorNoise;
+    public SimplexNoise auxNoise;
 
-    public FastNoiseLite foliageNoise;
-    public FastNoiseLite temperatureNoise;
-    public FastNoiseLite humidityNoise;
-    public FastNoiseLite weirdnessNoise;
+    public SimplexNoise foliageNoise;
+    public SimplexNoise temperatureNoise;
+    public SimplexNoise humidityNoise;
+    public SimplexNoise weirdnessNoise;
 
     public XRandom random;
 
@@ -25,45 +25,21 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
     public void setup(int seed) {
         random = new XRandom(seed);
-        lowNoise = new FastNoiseLite(seed);
-        //lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-        lowNoise.SetFrequency(1f);
-        highNoise = new FastNoiseLite(random.Next(seed));
-        highNoise.SetFrequency(1f);
-        //lowNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-        // todo
-        //highNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-        selectorNoise = new FastNoiseLite(random.Next(seed));
-        selectorNoise.SetFrequency(1f);
+        lowNoise = new SimplexNoise(seed);
+        highNoise = new SimplexNoise(random.Next(seed));
+        selectorNoise = new SimplexNoise(random.Next(seed));
 
+        auxNoise = new SimplexNoise(random.Next(seed));
 
-        // DONT UNCOMMENT THIS
-        // yes the selector is broken, trying to use the valuecubic interpolation with opensimplex noise
-        // however this makes it wildly swing to 1 and -1 which is exactly what we want lol
-        // so the terrain isn't a hilly mess but either flat or just straight-up shattered cliffs and stuff
-        //selectorNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        foliageNoise = new SimplexNoise(random.Next(seed));
+        temperatureNoise = new SimplexNoise(random.Next(seed));
+        humidityNoise = new SimplexNoise(random.Next(seed));
 
-        auxNoise = new FastNoiseLite(random.Next(seed));
-        auxNoise.SetFrequency(1f);
-        //auxNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-
-        foliageNoise = new FastNoiseLite(random.Next(seed));
-        //foliageNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-        foliageNoise.SetFrequency(1f);
-        temperatureNoise = new FastNoiseLite(random.Next(seed));
-        //temperatureNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-        temperatureNoise.SetFrequency(1f);
-        humidityNoise = new FastNoiseLite(random.Next(seed));
-        //humidityNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
-        humidityNoise.SetFrequency(1f);
-        
-        weirdnessNoise = new FastNoiseLite(random.Next(seed));
-        weirdnessNoise.SetFrequency(1f);
-        //weirdnessNoise.SetNoiseType(FastNoiseLite.NoiseType.ValueCubic);
+        weirdnessNoise = new SimplexNoise(random.Next(seed));
     }
 
     // 2D
-    public float getNoise2D(FastNoiseLite noise, double x, double z, int octaves, float falloff) {
+    public float getNoise2DVC(SimplexNoise noise, double x, double z, int octaves, float falloff) {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(falloff, "Falloff must be positive");
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(octaves, "Octaves must be at least 1");
 
@@ -75,7 +51,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
             result = 0.0f;
             for (int i = 0; i < octaves; i++) {
                 frequency = (float)Math.Pow(2, i);
-                result += noise.GetNoise((float)(x * frequency),
+                result += noise.noise2((float)(x * frequency),
                     (float)(z * frequency)) / octaves;
             }
 
@@ -91,7 +67,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         frequency = 1.0f;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.GetNoise((float)(x * frequency),
+            result += amplitude * noise.noise2((float)(x * frequency),
                 (float)(z * frequency));
             amplitude /= falloff;
             frequency *= 2.0f;
@@ -100,16 +76,32 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         return result;
     }
 
-    public float getNoise3DFBm(FastNoiseLite noise, double x, double y, double z, int octaves, float falloff) {
+    public float getNoise2D(SimplexNoise noise, double x, double y, int octaves, float falloff) {
         float result = 0.0f;
         float frequency = 1.0f;
-        float amplitude = 0.5f;
+        float amplitude = 1 / falloff;
         float gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            result += noise.GetNoise((float)(x * frequency),
+            result += amplitude * noise.noise2((float)(x * frequency),
+                (float)(y * frequency));
+            frequency *= falloff;
+            amplitude *= gain;
+        }
+
+        return result;
+    }
+
+    public float getNoise3DFBm(SimplexNoise noise, double x, double y, double z, int octaves, float falloff) {
+        float result = 0.0f;
+        float frequency = 1.0f;
+        float amplitude = 1 / falloff;
+        var gain = 1 / falloff;
+
+        for (int i = 0; i < octaves; i++) {
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency),
                 (float)(y * frequency),
-                (float)(z * frequency)) / octaves;
+                (float)(z * frequency));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -118,11 +110,11 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     }
 
     /// TODO also replace fastNoiseLite with a custom noise generator
-    /// probably caching the noise values + 
-    public float getNoise3D(FastNoiseLite noise, double x, double y, double z, int octaves, float falloff) {
+    /// probably caching the noise values +
+    public float getNoise3D(SimplexNoise noise, double x, double y, double z, int octaves, float falloff) {
         float result;
         float frequency;
-        
+
         var ampl = 1f / falloff;
         // we're given a number like 2, which means each octave has half the influence of the previous
         //falloff = 1f / falloff;
@@ -132,7 +124,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
             result = 0.0f;
             for (int i = 0; i < octaves; i++) {
                 frequency = (float)Math.Pow(2, i);
-                result += noise.GetNoise((float)(x * frequency),
+                result += noise.noise3_XZBeforeY((float)(x * frequency),
                     (float)(y * frequency),
                     (float)(z * frequency)) / octaves;
             }
@@ -154,7 +146,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         //Console.Out.WriteLine("initialInfluence: " + initialInfluence);
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.GetNoise((float)(x * frequency),
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency),
                 (float)(y * frequency),
                 (float)(z * frequency));
 
@@ -169,11 +161,11 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
         return result;
     }
-    
-    public float getNoise3D(OpenSimplex2S_Exp noise, double x, double y, double z, int octaves, float falloff) {
+
+    public float getNoise3D(ExpNoise noise, double x, double y, double z, int octaves, float falloff) {
         float result;
         float frequency;
-        
+
         var ampl = 1f / falloff;
         // we're given a number like 2, which means each octave has half the influence of the previous
         //falloff = 1f / falloff;
@@ -220,20 +212,20 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
         return result;
     }
-    
-    public double getNoise3Dfbm3(OpenSimplex2S_Exp noise, double x, double y, double z, int octaves, double lacunarity, double persistence) {
+
+    public double getNoise3Dfbm3(ExpNoise noise, double x, double y, double z, int octaves, double lacunarity, double persistence) {
         double sum = 0;
         double amplitude = 1;
         double frequency = 1;
         double maxValue = 0;
-    
+
         for (int i = 0; i < octaves; i++) {
             sum += noise.noise3_XYBeforeZ(x * frequency, y * frequency, z * frequency) * amplitude;
             maxValue += amplitude;
             amplitude *= persistence;
             frequency *= lacunarity;
         }
-    
+
         return sum / maxValue;
     }
 
@@ -242,7 +234,36 @@ public partial class PerlinWorldGenerator : WorldGenerator {
     /// Run getNoise3D on the entire chunk. This is more efficient in theory:tm:
     /// The size determines the buffer's size and the scale determines the scale of the noise. (bigger = bigger terrain features)
     /// </summary>
-    public void getNoise3DRegion(float[] buffer, FastNoiseLite noise, ChunkCoord coord, double xScale, double yScale,
+    public void getNoise3DRegion(float[] buffer, SimplexNoise noise, ChunkCoord coord, double xScale, double yScale,
+        double zScale, int octaves,
+        float falloff) {
+        // Precalculate world position offsets
+        int worldX = coord.x * Chunk.CHUNKSIZE;
+        int worldZ = coord.z * Chunk.CHUNKSIZE;
+
+        for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
+            int x = worldX + nx * NOISE_PER_X;
+
+            for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
+                int z = worldZ + nz * NOISE_PER_Z;
+                // For 3D noise, sample at each Y level
+                for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
+                    int y = ny * NOISE_PER_Y;
+
+                    buffer[getIndex(nx, ny, nz)] = getNoise3DFBm(
+                        noise,
+                        x * xScale,
+                        y * yScale,
+                        z * zScale,
+                        octaves,
+                        falloff
+                    );
+                }
+            }
+        }
+    }
+
+    public void getNoise3DRegion(float[] buffer, ExpNoise noise, ChunkCoord coord, double xScale, double yScale,
         double zScale, int octaves,
         float falloff) {
         // Precalculate world position offsets
@@ -270,37 +291,8 @@ public partial class PerlinWorldGenerator : WorldGenerator {
             }
         }
     }
-    
-    public void getNoise3DRegion(float[] buffer, OpenSimplex2S_Exp noise, ChunkCoord coord, double xScale, double yScale,
-        double zScale, int octaves,
-        float falloff) {
-        // Precalculate world position offsets
-        int worldX = coord.x * Chunk.CHUNKSIZE;
-        int worldZ = coord.z * Chunk.CHUNKSIZE;
 
-        for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
-            int x = worldX + nx * NOISE_PER_X;
-
-            for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
-                int z = worldZ + nz * NOISE_PER_Z;
-                // For 3D noise, sample at each Y level
-                for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
-                    int y = ny * NOISE_PER_Y;
-
-                    buffer[getIndex(nx, ny, nz)] = getNoise3D(
-                        noise,
-                        x * xScale,
-                        y * yScale,
-                        z * zScale,
-                        octaves,
-                        falloff
-                    );
-                }
-            }
-        }
-    }
-    
-    public void getNoise3DRegionfbm3(float[] buffer, OpenSimplex2S_Exp noise, ChunkCoord coord, double xScale, double yScale,
+    public void getNoise3DRegionfbm3(float[] buffer, ExpNoise noise, ChunkCoord coord, double xScale, double yScale,
         double zScale, int octaves,
         double lacunarity, double persistence) {
         // Precalculate world position offsets
@@ -329,7 +321,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
         }
     }
 
-    public void getNoise2DRegion(float[] buffer, FastNoiseLite noise, ChunkCoord coord, double xScale, double zScale,
+    public void getNoise2DRegion(float[] buffer, SimplexNoise noise, ChunkCoord coord, double xScale, double zScale,
         double frequency, int octaves,
         float falloff) {
         // Precalculate world position offsets
@@ -362,8 +354,8 @@ public partial class PerlinWorldGenerator : WorldGenerator {
             ["selectorNoise"] = getNoise3D(selectorNoise, x * SELECTOR_FREQUENCY, y * SELECTOR_FREQUENCY, z * SELECTOR_FREQUENCY, 4, Meth.etaF),
             ["auxNoise"] = getNoise3D(auxNoise, x * BLOCK_VARIATION_FREQUENCY, 128, z * BLOCK_VARIATION_FREQUENCY, 1, 1),
             ["foliageNoise"] = getNoise2D(foliageNoise, x * FOLIAGE_FREQUENCY, z * FOLIAGE_FREQUENCY, 2, 2),
-            ["temperatureNoise"] = temperatureNoise.GetNoise(x, z),
-            ["humidityNoise"] = humidityNoise.GetNoise(x, z)
+            ["temperatureNoise"] = temperatureNoise.noise2(x, z),
+            ["humidityNoise"] = humidityNoise.noise2(x, z)
         };
 
         // calculate final density using the same method as worldgen

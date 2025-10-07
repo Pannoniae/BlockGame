@@ -19,10 +19,15 @@ public class Ravine : OverlayFeature {
     public int[] ledges = new int[4];
 
     public override void generate(World world, XRandom rand, ChunkCoord coord, ChunkCoord origin) {
+
+        //var count = 1 / (1 * (freq + 0.05f));
+
         // 1 in 20 chance for a ravine (orig was 1/15, WAY TOO COMMON, shit should be special)
         if (rand.Next(20) != 0) {
             return;
         }
+
+
         
         var x = coord.x * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);
         var z = coord.z * Chunk.CHUNKSIZE + rand.Next(Chunk.CHUNKSIZE);

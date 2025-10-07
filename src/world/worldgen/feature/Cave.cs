@@ -55,11 +55,15 @@ public class Cave : OverlayFeature {
         }
 
         // decide how many to generate (totally randomly, trust)
+        //var count = rand.Next(1, (int)(50 * (1 / freq + 0.05f)));
         var count = rand.Next(1, 50);
         count = rand.Next(1, count);
         // if you copypaste this line, you'll get avg fewer caves, with a small chance of a lot of caves
         // is there a better method for this? idk
         count = rand.Next(1, count);
+
+        //count = (int)(count * freq);
+        // stop spamming plains!
 
         //Console.Out.WriteLine("Cave count: " + count);
 

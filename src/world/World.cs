@@ -98,7 +98,7 @@ public partial class World : IDisposable {
         this.name = name;
         inited = false;
         worldIO = new WorldIO(this);
-        generator = new PerlinWorldGenerator(this);
+        generator = new NewWorldGenerator(this);
 
         random = new XRandom(seed);
         worldTick = 0;
@@ -985,6 +985,18 @@ public partial class World : IDisposable {
         }
 
         // ONLY DO THIS WHEN IT'S ALREADY SAVED
+        chunkList.Remove(chunk);
+        chunks.Remove(coord);
+        chunk.destroyChunk();
+    }
+
+    public void unloadChunkWithHammer(ChunkCoord coord) {
+        var chunk = chunks[coord];
+
+        foreach (var l in listeners) {
+            l.onChunkUnload(coord);
+        }
+
         chunkList.Remove(chunk);
         chunks.Remove(coord);
         chunk.destroyChunk();

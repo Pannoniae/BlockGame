@@ -463,6 +463,11 @@ public class GameScreen : Screen {
                 Log.info("Entity AABBs: " + (entityAABBs ? "ON" : "OFF"));
                 break;
             }
+            case Key.R when keyboard.IsKeyPressed(Key.F3): {
+                // regenerate all chunks (worldgen testing!)
+                regenAllChunks();
+                break;
+            }
         }
 
 
@@ -475,6 +480,56 @@ public class GameScreen : Screen {
         else {
             world.player.updatePickBlock(keyboard, key, scancode);
         }
+    }
+
+    public void regenAllChunks() {
+        var world = Game.world;
+        Log.info("Regenerating all chunks...");
+
+        var ch = world.chunks.Keys.ToArray();
+
+        // destroy and clear all chunks
+        foreach (var chunk in world.chunks.Values.ToList()) {
+            world.unloadChunkWithHammer(chunk.coord);
+        }
+
+        // delete chunk files from disk so they regenerate
+        var chunkCoords = ch.ToList();
+        foreach (var coord in chunkCoords) {
+            var path = WorldIO.getChunkString(world.name, coord);
+            if (File.Exists(path)) {
+                File.Delete(path);
+            }
+        }
+
+        // clear renderer queues
+        while (Game.renderer.meshingQueue.TryDequeue(out _)) { }
+
+        // clear light queues
+        world.skyLightQueue.Clear();
+        world.skyLightRemovalQueue.Clear();
+        world.blockLightQueue.Clear();
+        world.blockLightRemovalQueue.Clear();
+
+        // free pools
+        ArrayBlockData.blockPool.clear();
+        ArrayBlockData.lightPool.clear();
+        PaletteBlockData.arrayPool.clear();
+        PaletteBlockData.arrayPoolU.clear();
+        PaletteBlockData.arrayPoolUS.clear();
+        WorldIO.saveBlockPool.clear();
+        WorldIO.saveLightPool.clear();
+        HeightMap.heightPool.clear();
+
+        // reload around player
+        world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+
+        // trigger "chunk change"
+        Game.setTimeout(200, () => {
+            world.player.onChunkChanged();
+        });
+
+        Log.info("Chunk regeneration complete");
     }
 
     public void remeshWorld(int oldRenderDist) {

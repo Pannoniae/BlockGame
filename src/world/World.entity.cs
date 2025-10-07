@@ -103,6 +103,12 @@ public partial class World {
 
     public void updateEntities(double dt) {
 
+        //Console.Out.WriteLine(entities.Count);
+
+        // player chunk entities
+        //getChunkMaybe(player.subChunkCoord.toChunk(), out var pc);
+        //Console.Out.WriteLine("Player chunk entities: " + (pc != null ? pc.entities[player.subChunkCoord.y].Count : 0));
+
         for (int i = entities.Count - 1; i >= 0; i--) {
             Entity entity = entities[i];
             if (entity.active) {

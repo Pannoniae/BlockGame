@@ -7,26 +7,26 @@ using BlockGame.world.worldgen.feature;
 
 namespace BlockGame.world.worldgen.generator;
 
-public partial class PerlinWorldGenerator {
+public partial class NewWorldGenerator {
     // The noise is sampled every X blocks
     public const int NOISE_PER_X = 4;
     public const int NOISE_PER_Y = 4;
     public const int NOISE_PER_Z = 4;
 
     // mod 4 == & 3
-    const int NOISE_PER_X_MASK = 3;
-    const int NOISE_PER_Y_MASK = 3;
-    const int NOISE_PER_Z_MASK = 3;
+    private const int NOISE_PER_X_MASK = 3;
+    private const int NOISE_PER_Y_MASK = 3;
+    private const int NOISE_PER_Z_MASK = 3;
 
     // div 4 == >> 2
-    const int NOISE_PER_X_SHIFT = 2;
-    const int NOISE_PER_Y_SHIFT = 2;
-    const int NOISE_PER_Z_SHIFT = 2;
+    private const int NOISE_PER_X_SHIFT = 2;
+    private const int NOISE_PER_Y_SHIFT = 2;
+    private const int NOISE_PER_Z_SHIFT = 2;
 
     // x / y = x * (1 / y)
-    const float NOISE_PER_X_INV = 1f / NOISE_PER_X;
-    const float NOISE_PER_Y_INV = 1f / NOISE_PER_Y;
-    const float NOISE_PER_Z_INV = 1f / NOISE_PER_Z;
+    private const float NOISE_PER_X_INV = 1f / NOISE_PER_X;
+    private const float NOISE_PER_Y_INV = 1f / NOISE_PER_Y;
+    private const float NOISE_PER_Z_INV = 1f / NOISE_PER_Z;
 
     public const int NOISE_SIZE_X = (Chunk.CHUNKSIZE / NOISE_PER_X) + 1;
     public const int NOISE_SIZE_Y = (Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT) / NOISE_PER_Y + 1;
@@ -34,34 +34,45 @@ public partial class PerlinWorldGenerator {
 
     public const int WATER_LEVEL = 64;
 
-    private float[] buffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] lowBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] highBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] selectorBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] weirdnessBuffer = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] b = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] tb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] t2b = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] sb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] eb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] fb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] gb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] mb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] ob = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] auxb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] foliageb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] tempb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] humb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private float[] wb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
     private readonly OreFeature ironOre = new(Blocks.REALGAR, 6, 12);
     private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
 
-    public const float LOW_FREQUENCY = 1 / 167f;
-    public const float HIGH_FREQUENCY = 1 / 135f;
-    public const float SELECTOR_FREQUENCY = 1 / 390f;
-    
-    public const float WEIRDNESS_FREQUENCY = 1 / 590f;
+    /**
+     * Everyone knows the meaning of life, don't they?
+     */
+    public const float FREQ1 = 1 / (42f + Meth.sqrt2F);
 
-    public const float Y_DIVIDER = 1;
+    public const float FREQ2 = 1 / (54f - Meth.kappaF * Meth.phiF);
+    public const float FREQS = 1 / 390f;
+    public const float FREQE = 1 / 390f;
+    public const float FREQW = 1 / 590f;
 
-    public const float BLOCK_VARIATION_FREQUENCY = 1 / 412f;
+    public const float FREQAUX = 1 / 42f;
     public const float HELLROCK_FREQUENCY = 1 / 1.5f;
 
-    public const float FOLIAGE_FREQUENCY = 1 / 169f;
+    public const float FREQFOLIAGE = 1 / 169f;
 
     public void generate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
-        getDensity(buffer, coord);
-        interpolate(buffer, coord);
+        getDensity(b, coord);
+        interpolate(b, coord);
         //Console.Out.WriteLine(coord);
         generateSurface(coord);
 
@@ -73,25 +84,26 @@ public partial class PerlinWorldGenerator {
     public void getDensity(float[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         // get the noise
-        getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
-            LOW_FREQUENCY, 12, 2f);
-        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
-            HIGH_FREQUENCY, 12, Meth.phiF);
-        
-        // get weirdness
-        // only low octaves for this one, it's a glorified selector
-        getNoise3DRegion(weirdnessBuffer, weirdnessNoise, coord, WEIRDNESS_FREQUENCY, WEIRDNESS_FREQUENCY,
-            WEIRDNESS_FREQUENCY, 4, Meth.phiF);
+        // todo cleanup this shit and give it proper constants
+        getNoise3DRegion(tb, tn, coord, 1 / (42f * 2), 1 / (42f * 2),
+            1 / (42f * 2), 12, 1 + Meth.rhoF * 2);
+        getNoise3DRegion(t2b, t2n, coord, 1 / (42f * 2), 1 / (42f * 2),
+            1 / (42f * 2), 12, 2 + Meth.rhoF);
 
 
-        // todo the selector could be sampled less frequently because it doesn't need to be as precise
-        // also sample it less in the Y axis too because it should be 2d you know?
-        // also todo migrate it to valuecubic somehow? yes the broken valuecubic octave summer combined with simplex
-        // produces the actually cool results BUT we could cook something up with maths to make it more extreme and stuff
-        // basically it should be mostly 0 (flat) or 1 (quirky shit) with transitions inbetween
-        // im sure we can cook something up mr white
-        getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
-            SELECTOR_FREQUENCY, 4, Meth.etaF);
+        getNoise3DRegion(sb, sn, coord, 1 / 59f, 1 / 29f,
+            1 / 29f, 4, 2f);
+
+        getNoise2DRegion(eb, en, coord, 1 / 342f, 1 / 342f, 8, 2f);
+        getNoise2DRegion(fb, fn, coord, 1 / 342f, 1 / 342f, 8, 2f - Meth.d2r);
+
+        //getNoise2DRegion(gb, gn, coord, 1 / 342f, 1 / 342f, 8, 2f);
+
+        //getNoise2DRegion(ob, on, coord, 1 / (754 * 300f), 1 / (754 * 300f), 4, 1.81f);
+
+        getNoise2DRegion(mb, mn, coord, 1 / 154f, 1 / 154f, 4, 1.81f);
+
+        //getNoise3DRegion(wb, wn, coord, FREQW, FREQW, FREQW, 4, Meth.phiF);
 
         for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
@@ -101,105 +113,98 @@ public partial class PerlinWorldGenerator {
                     var y = ny * NOISE_PER_Y;
                     //var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
 
-                    // sample lowNoise
-                    float low = lowBuffer[getIndex(nx, ny, nz)];
-                    // sample highNoise
-                    float high = highBuffer[getIndex(nx, ny, nz)];
-                    // sample selectorNoise
-                    float selector = selectorBuffer[getIndex(nx, ny, nz)];
-                    
-                    float weirdness = weirdnessBuffer[getIndex(nx, ny, nz)];
+
+                    float t = tb[getIndex(nx, ny, nz)];
+                    float t2 = t2b[getIndex(nx, ny, nz)];
+                    float s = sb[getIndex(nx, ny, nz)];
+
+                    float e = eb[getIndex(nx, ny, nz)];
+                    float f = fb[getIndex(nx, ny, nz)];
+                    float g = gb[getIndex(nx, ny, nz)];
+
+                    float mm = mb[getIndex(nx, ny, nz)];
+                    //float o = ob[getIndex(nx, ny, nz)];
+
+                    float w = wb[getIndex(nx, ny, nz)];
 
                     // store the value in the buffer
-                    buffer[getIndex(nx, ny, nz)] = calculateDensity(low, high, selector, weirdness, y);
+                    t = float.Tan(t);
+                    t2 = float.Tan(t2);
+
+
+                    // we select and we win
+                    // maybe something like -0.08 to 0.24?
+                    s = float.Clamp((s * 6 + 0.5f) * 6f, 0, 1);
+
+                    //s = 0f;
+
+                    //s *= 2;
+                    //s = float.Clamp(s, 0, 1);
+
+                    float density = lerp(t, t2, s);
+
+                    e = float.Clamp(e, 0, 1);
+
+                    //Console.Out.WriteLine(density);
+                    var a = 0;
+                    var c = 8f;
+                    // high m = flat, low m = not
+                    var sh = (e / 2f) + 1f;
+                    //var m = sh * sh * c;
+                    //var m = 1 / (sh * (e / 2f));
+                    var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
+                    //m *= float.Clamp(g, 0, 1);
+
+                    //m *= (1 / e * e);
+                    //m *= e;
+
+                    // leave the broken to the d
+                    //m *= (e - 0.2f);
+
+                    var h = 1 / (0.5f + float.Pow(float.E, -5 * (e - 0.3f)));
+                    m *= h;
+
+                    m = 1 / (m + 0.5f);
+
+                    // follow the fucking terrain shape goddamnit
+                    //e -= (0.05f / 4f);
+                    //var d = (float.Abs(e * e)) * World.WORLDHEIGHT * 2.4f;
+
+                    // if you touch these values ill murder you
+                    var d = (float.Abs(e - 0.04f) - 0.0675f);
+                    // cheat
+                    d = (d > -0.03 && d < 0.03f) ? d + 0.02f : d;
+                    //var d2 = float.Sqrt(float.Abs(0.08f * (e - 0.04f))) - 0.065f;
+                    //d = float.Max(d, d2);
+
+                    // OR it together with the 25%
+                    //d = o is > 0.5f and < 0.75f ? (float.Abs(o - 0.625f) - 0.125f) : d;
+                    var od = float.Abs((0.5f) * (mm + 0.8f)) - 0.1f;
+                    //od = (od > -0.1 && od < 0.03f) ? od + 0.07f : od;
+                    d = mm < -0.6f ? od : d;
+                    //d = mm < -0.2f ? 1f : d;
+
+                    d *= World.WORLDHEIGHT;
+                    var airBias = (y - ((WATER_LEVEL + 4) + d)) / (float)World.WORLDHEIGHT * 8f * m;
+
+                    //Console.Out.WriteLine(airBias);
+
+                    // reduce it below ground (is water anyway, useless)
+                    if (y < WATER_LEVEL + 4) {
+                        airBias *= 4;
+                    }
+
+
+                    // between y=120-128, taper it off to -1
+                    // at max should be 0.5
+                    // ^2 to have a better taper
+                    var mt = float.Max((y - 120), 0) / 16f;
+                    airBias += mt * mt;
+                    density -= airBias;
+                    buffer[getIndex(nx, ny, nz)] = density;
                 }
             }
         }
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float calculateAirBias(float low, float high, float weirdness, int y) {
-        // Reduce the density when too high above 64 and increase it when too low
-        // range: // -0.5 (at y=128) to 0.5 (at y=0)
-        var airBias = (y - WATER_LEVEL - 4) / (float)World.WORLDHEIGHT;
-        // our SIGNATURE weird terrain
-        //airBias *= 0.5f;
-        // normalish terrain (kinda like old mc?)
-        //airBias *= 1f;
-        // fairly normal terrain, but its like a fucking warzone, littered with caves. if we want a normalish/realistic-looking terrain like that,
-        // we should decrease the cave density in the lowlands because otherwise it will be cancer to traverse/build on
-        //airBias *= 2f;
-
-        // flatten out low noise
-        // is this needed?
-        //low -= airBias;
-        
-        // todo when making normal terrain, raise the "sealevel" (the midpoint of the terrain) by like ~4 blocks, so there will be actual plains instead of
-        // just endless beaches and shallow water everywhere  
-
-        // reduce it below ground (is water anyway, useless)
-        if (y < WATER_LEVEL + 4) {
-            airBias *= 4;
-        }
-        
-        // border
-        if (y is < 44 and > 36) {
-            // make it more extreme
-            airBias *= int.Max(44 - y, y - 36) - 2;
-        }
-        
-        // under y=40
-        var caveDepth = float.Max(0, float.Min(y - 6, 36 - y));
-        
-        // combine weirdness with highnoise so the actual cave isnt just slop
-        var cw = weirdness + 0.45f * high;
-        
-        // if weirdness noise is high enough (>0.5), multiply the caveDepth bias by the remainder * 3
-        var factor = float.Abs(cw) > 0.5f ? ((float.Abs(cw) - 0.5f) * 6f) + 1f : 0f;
-        airBias += (caveDepth * 0.036f) * factor;
-        
-        
-
-        // between y=120-128, taper it off to -1
-        // at max should be 0.5
-        // ^2 to have a better taper
-        var t = float.Max((y - 120), 0) / 16f;
-        airBias += t * t;
-        
-        return airBias;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float calculateDensity(float low, float high, float selector, float weirdness, int y) {
-        low = float.Tan(low);
-        high = float.Tan(high);
-        
-        // make it more radical
-        // can't sqrt a negative number so sign(abs(x))
-        selector = float.Abs(selector);
-
-        // sin it
-        //selector = 0.5 * float.SinPi(selector - 0.5) + 0.5;
-
-        selector *= 2;
-        //high *= 2;
-        selector = float.Clamp(selector, 0, 1);
-
-        //Console.Out.WriteLine("b: " + selector);
-
-        // we only want mountains when selector is high
-
-        // squish selector towards zero - more flat areas, less mountains
-        //selector *= selector;
-
-        // squish the high noise towards zero when the selector is low - more flat areas, less mountains
-        var bias = calculateAirBias(low, high, weirdness, y);
-        low -= bias;
-        // combine the two with the ratio selector
-        float density = lerp(low, high, selector);
-        density -= calculateAirBias(low, high, weirdness, y);
-
-        return density;
     }
 
     private void interpolate(float[] buffer, ChunkCoord coord) {
@@ -231,6 +236,39 @@ public partial class PerlinWorldGenerator {
                     //var ys = y >> 4;
 
                     float value;
+
+                    /*if (Avx2.IsSupported && false) {
+                        unsafe {
+                            // load the eight corner values from the buffer into a vector
+                            var c000 = buffer[getIndex(x0, y0, z0)];
+                            var c001 = buffer[getIndex(x0, y0, z1)];
+                            var c010 = buffer[getIndex(x0, y1, z0)];
+                            var c011 = buffer[getIndex(x0, y1, z1)];
+                            var c100 = buffer[getIndex(x1, y0, z0)];
+                            var c101 = buffer[getIndex(x1, y0, z1)];
+                            var c110 = buffer[getIndex(x1, y1, z0)];
+                            var c111 = buffer[getIndex(x1, y1, z1)];
+
+
+                            var values1 = Vector256.Create(c000, c001, c010, c011);
+                            var values2 = Vector256.Create(c100, c101, c110, c111);
+
+                            // the two vectors contain the two halves of the cube to be interpolated.
+                            // We need to interpolate element-wise.
+                            var interp = lerp4(values1, values2, Vector256.Create(xd));
+
+                            // now the vector contains the 4 interpolated values. interpolate narrower (2x2)
+                            var low = interp.GetLower();
+                            var high = interp.GetUpper();
+                            var interp2 = lerp2(low, high, Vector128.Create(yd));
+
+                            // now the vector contains the 2 interpolated values. interpolate again (1x2)
+                            var lower = interp2.GetElement(0);
+                            var higher = interp2.GetElement(1);
+                            value = lerp(lower, higher, zd);
+                        }
+                    }
+                    else */
                     {
                         // the eight corner values from the buffer
                         var c000 = buffer[getIndex(x0, y0, z0)];
@@ -286,11 +324,18 @@ public partial class PerlinWorldGenerator {
                     height--;
                 }
 
-                // thickness of the soil layer layer
-                var amt = getNoise2D(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
-                var blockVar = getNoise3DFBm(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
+                // thickness of the soil layer (1.5 to 3.5)
+                var amt = getNoise2D(auxn, worldPos.X, worldPos.Z, 1, 1) + 2.5f;
+
+                // on high, make it thinner
+                var f = fb[getIndex(x >> NOISE_PER_X_SHIFT, worldPos.Y >> NOISE_PER_Y_SHIFT, z >> NOISE_PER_Z_SHIFT)];
+                amt -= (f * 2f + 1.5f);
+
+                amt = float.Max(amt, 0);
+
+                var blockVar = getNoise3D(auxn, worldPos.X * FREQAUX,
                     128,
-                    worldPos.Z * BLOCK_VARIATION_FREQUENCY,
+                    worldPos.Z * FREQAUX,
                     1, 1);
 
                 ushort topBlock = 0;
@@ -396,7 +441,7 @@ public partial class PerlinWorldGenerator {
                 var zs = zWorld + z;
 
                 var height =
-                    getNoise2D(auxNoise, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
+                    getNoise2D(auxn, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
                     chunk.setBlockFast(x, y, z, Blocks.HELLROCK);
@@ -419,7 +464,7 @@ public partial class PerlinWorldGenerator {
             ironOre.place(world, random, x, y, z);
         }
 
-        var foliage = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);
+        var foliage = getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 2, 2);
         var treeCount = foliage;
         if (foliage < 0) {
             treeCount = 0;
@@ -432,13 +477,20 @@ public partial class PerlinWorldGenerator {
             placeTree(random, coord);
         }
 
+        // get e
+        //var e = getNoise2D(en, 1 / 342f, 1 / 342f, 8, 2f);
+
+        //e = float.Clamp(e, 0, 1);
+
         // Do caves
+        //caves.freq = e;
         caves.place(world, coord);
         // Do ravines
+        //ravines.freq = e;
         ravines.place(world, coord);
 
         // place grass
-        var grassDensity = float.Abs(getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 1.5f));
+        var grassDensity = float.Abs(getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 2, 1.5f));
         var grassCount = grassDensity * World.WORLDHEIGHT;
 
         if (grassDensity < 0) {
