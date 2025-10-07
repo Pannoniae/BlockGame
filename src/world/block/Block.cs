@@ -191,6 +191,8 @@ public class Block {
     public static Block GOLD_ORE;
     public static Block IRON_ORE;
     public static Block COAL_ORE;
+    public static Block COPPER_ORE;
+
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
     public static Block CHEST;
@@ -327,7 +329,7 @@ public class Block {
         SAND_BRICK.material(Material.STONE);
         
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
-        LANTERN.setTex(new UVPair(8,3), new UVPair(9,3), new UVPair(10,3));
+        LANTERN.setTex(new UVPair(6,3), new UVPair(7,3), new UVPair(8,3));
         LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
@@ -524,6 +526,13 @@ public class Block {
         IRON_ORE.material(Material.FANCY_STONE);
         IRON_ORE.setHardness(3.0);
         IRON_ORE.setTier(MaterialTier.STONE);
+
+        COPPER_ORE = register(new Block(Blocks.COPPER_ORE, "Copper Ore"));
+        COPPER_ORE.setTex(cubeUVs(5, 1));
+        renderType[COPPER_ORE.id] = RenderType.CUBE;
+        //COPPER_ORE.material(Material.FANCY_STONE); //ZS allitsa be!
+        //COPPER_ORE.setHardness(3.0); //ZS allitsa be!
+        //COPPER_ORE.setTier(MaterialTier.STONE); ZS allitsa be!
         
         COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
@@ -531,9 +540,9 @@ public class Block {
         COAL_ORE.material(Material.FANCY_STONE);
         COAL_ORE.setHardness(2.0);
         COAL_ORE.setTier(MaterialTier.WOOD);
-        
+
         TORCH = register(new Torch(Blocks.TORCH, "Torch"));
-        TORCH.setTex(cubeUVs(11, 3));
+        TORCH.setTex(cubeUVs(9, 3));
         TORCH.itemLike();
         TORCH.material(Material.ORGANIC);
         
@@ -543,7 +552,7 @@ public class Block {
         CRAFTING_TABLE.material(Material.WOOD);
 
         CHEST = register(new Block(Blocks.CHEST, "Chest"));
-        CHEST.setTex(CTUVs(2,4, 0,4, 1,10, 3,4));
+        CHEST.setTex(CTUVs(2,4, 1,4, 0,4, 3,4));
         CHEST.setModel(BlockModel.makeCube(CHEST));
         //CHEST.transparency();
 

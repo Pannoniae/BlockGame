@@ -52,6 +52,7 @@ public class Item {
     public static Item IRON_INGOT;
     public static Item TIN_INGOT;
     public static Item SILVER_INGOT;
+    public static Item COPPER_INGOT;
     public static Tool GOLD_PICKAXE;
     public static Tool IRON_PICKAXE;
     public static Tool STONE_PICKAXE;
@@ -65,6 +66,10 @@ public class Item {
     public static Tool WOOD_SHOVEL;
     public static Item WOOD_SWORD;
     public static Item STICK;
+    public static Item COPPER_PICKAXE;
+    public static Item COPPER_AXE;
+    public static Item COPPER_SHOVEL;
+    public static Item COPPER_SWORD;
 
 
     public Item(int id, string name) {
@@ -156,16 +161,20 @@ public class Item {
         SILVER_INGOT.tex = new UVPair(3, 0);
         register(SILVER_INGOT);
 
+        COPPER_INGOT = new Item(Items.COPPER_INGOT, "Copper Ingot");
+        COPPER_INGOT.tex = new UVPair(4, 0);
+        register(COPPER_INGOT);
+
         GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 6.0);
-        GOLD_PICKAXE.tex = new UVPair(2, 2);
+        GOLD_PICKAXE.tex = new UVPair(1, 2);
         register(GOLD_PICKAXE);
 
         IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 5.0);
-        IRON_PICKAXE.tex = new UVPair(1, 2);
+        IRON_PICKAXE.tex = new UVPair(0, 2);
         register(IRON_PICKAXE);
 
         STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 4.0);
-        STONE_PICKAXE.tex = new UVPair(0, 2);
+        STONE_PICKAXE.tex = new UVPair(2, 2);
         register(STONE_PICKAXE);
 
         STONE_AXE = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 4.0);
@@ -189,7 +198,7 @@ public class Item {
         register(STONE_SCYTHE);
 
         WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 2.0);
-        WOOD_PICKAXE.tex = new UVPair(1, 3);
+        WOOD_PICKAXE.tex = new UVPair(2, 3);
         register(WOOD_PICKAXE);
 
         WOOD_AXE = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
@@ -207,6 +216,23 @@ public class Item {
         STICK = new Item(Items.STICK, "Stick");
         STICK.tex = new UVPair(3, 5);
         register(STICK);
+
+        COPPER_PICKAXE = new Tool(Items.COPPER_PICKAXE, "Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
+        COPPER_PICKAXE.tex = new UVPair(2, 4);
+        register(COPPER_PICKAXE);
+
+        COPPER_AXE = new Tool(Items.COPPER_AXE, "Copper Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
+        COPPER_AXE.tex = new UVPair(3, 4);
+        register(COPPER_AXE);
+
+        COPPER_SHOVEL = new Tool(Items.COPPER_SHOVEL, "Copper Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.5);
+        COPPER_SHOVEL.tex = new UVPair(4, 4);
+        register(COPPER_SHOVEL);
+
+        COPPER_SWORD = new Item(Items.COPPER_SWORD, "Copper Sword");
+        COPPER_SWORD.tex = new UVPair(5, 4);
+        register(COPPER_SWORD);
+
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
