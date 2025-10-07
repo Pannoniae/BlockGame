@@ -73,7 +73,7 @@ public class HotbarGUI : GUIElement {
             if (heartHP >= HP_PER_HEART) {
                 // full heart
                 gui.drawUI(gui.guiTexture, new Vector2(x, startY),
-                    new Rectangle(GUI.heartX, GUI.heartY, GUI.heartW, GUI.heartH));
+                    new Rectangle(GUI.heartX, GUI.heartY, GUI.heartW+2, GUI.heartH+2));
             } else if (heartHP > 0) {
                 // partial heart - split horizontally
                 float fillRatio = heartHP / HP_PER_HEART;
@@ -83,7 +83,7 @@ public class HotbarGUI : GUIElement {
                 if (fillWidth > 0) {
                     gui.drawUI(gui.guiTexture,
                         new RectangleF(x, startY, fillWidth, GUI.heartH),
-                        new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH));
+                        new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH+2));
                 }
 
                 // right side (empty)
@@ -91,12 +91,12 @@ public class HotbarGUI : GUIElement {
                 if (emptyWidth > 0) {
                     gui.drawUI(gui.guiTexture,
                         new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH),
-                        new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH));
+                        new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH+2));
                 }
             } else {
                 // empty heart
                 gui.drawUI(gui.guiTexture, new Vector2(x, startY),
-                    new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW, GUI.heartH));
+                    new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW+2, GUI.heartH+2));
             }
         }
     }
