@@ -86,7 +86,7 @@ public class GUI {
         buffer.bind();
         buffer.setSize(Face.MAX_FACES * 4);
         // GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw
-        guiBlock = new List<BlockVertexTinted>();
+        guiBlock = [];
 
         uMVP = guiBlockShader.getUniformLocation("uMVP");
         blockTexture = guiBlockShader.getUniformLocation("blockTexture");

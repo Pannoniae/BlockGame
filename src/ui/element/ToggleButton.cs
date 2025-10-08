@@ -1,25 +1,29 @@
 using BlockGame.main;
 using BlockGame.ui.menu;
+using BlockGame.util;
 using Silk.NET.Input;
 
 namespace BlockGame.ui.element;
 
 public class ToggleButton : Button {
 
-    private List<string> states;
-    private List<string>? tooltips;
+    private List<string> ids; // internal IDs
     private int index;
 
-    public ToggleButton(Menu menu, string name, bool wide, int initialState, params string[] states) : base(menu, name, wide) {
+    public ToggleButton(Menu menu, string name, bool wide, int initialState, params string[] ids) : base(menu, name, wide) {
         index = initialState;
-        this.states = new List<string>(states);
-        text = states[index];
+        this.ids = new List<string>(ids);
+        updateDisplay();
     }
 
-    public void setTooltips(params ReadOnlySpan<string> tooltips) {
-        this.tooltips = new List<string>(tooltips.ToArray());
-        if (tooltips.Length > 0 && index < tooltips.Length) {
-            tooltip = tooltips[index];
+    private void updateDisplay() {
+        var id = ids[index];
+        text = Loc.get(id);
+
+        // try to find tooltip with .tooltip suffix
+        var tooltipKey = id + ".tooltip";
+        if (Loc.has(tooltipKey)) {
+            tooltip = Loc.get(tooltipKey);
         }
     }
 
@@ -37,28 +41,20 @@ public class ToggleButton : Button {
 
     public void _click(GUIElement e) {
         index++;
-        index %= states.Count;
-        text = states[index];
-        updateTooltip();
+        index %= ids.Count;
+        updateDisplay();
     }
 
     public void _clickReverse(GUIElement e) {
         index--;
         if (index < 0) {
-            index = states.Count - 1;
+            index = ids.Count - 1;
         }
-        text = states[index];
-        updateTooltip();
-    }
-
-    private void updateTooltip() {
-        if (tooltips != null && index < tooltips.Count) {
-            tooltip = tooltips[index];
-        }
+        updateDisplay();
     }
 
     public string getState() {
-        return states[index];
+        return ids[index];
     }
 
     public int getIndex() {

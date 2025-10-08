@@ -59,12 +59,11 @@ public class CreateWorldMenu : Menu {
         addElement(genLabel);
 
         // generator toggle button
-        generatorButton = new ToggleButton(this, "generator", false, 0, "Default", "Perlin", "Overworld", "Simple") {
+        generatorButton = new ToggleButton(this, "generator", false, 0, "generator.new", "generator.perlin", "generator.overworld", "generator.simple") {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.TOP
         };
         generatorButton.setPosition(new Vector2I(0, 50 + labelspacing + spacing + labelspacing + spacing + labelspacing));
-        generatorButton.setTooltips(WorldGenerators.getAllTooltips("Default", "Perlin", "Overworld", "Simple"));
         addElement(generatorButton);
 
         // create button
@@ -112,8 +111,8 @@ public class CreateWorldMenu : Menu {
             seed = !string.IsNullOrEmpty(seedInput.input) ? seedInput.input.GetHashCode() : Game.random.Next();
         }
 
-        // get generator name
-        var generatorName = generatorButton.getState().ToLower();
+        // get generator name (strip "generator." prefix)
+        var generatorName = generatorButton.getState().Replace("generator.", "");
 
         // create world
         var world = new World(folderName, seed, worldName, generatorName);
