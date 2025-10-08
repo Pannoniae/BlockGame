@@ -342,7 +342,7 @@ public partial class NewWorldGenerator {
                 e = float.Clamp(e, 0, 1);
 
                 //amt -= float.Max(0, (f * 2f + 1.5f));
-                amt -= float.Max(0, (e >= 0.25 ? float.Sqrt(e - 0.25f) : 0f) * 30f);
+                amt -= float.Max(0, (e >= 0.3 ? float.Sqrt(e - 0.3f) : 0f) * 30f);
 
                 amt = float.Max(amt, 0);
 
