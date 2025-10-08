@@ -13,6 +13,7 @@ public class WorldEntry : GUIElement {
     public int seed;
     public long size;
     public long lastPlayed;
+    public string generatorName;
     public bool isSelected;
 
     public event Action<GUIElement>? selected;
@@ -22,12 +23,13 @@ public class WorldEntry : GUIElement {
 
     public static readonly Vector2 textOffset = new(5, 4);
 
-    public WorldEntry(Menu menu, string name, string folderName, string displayName, int seed, long size, long lastPlayed) : base(menu, name) {
+    public WorldEntry(Menu menu, string name, string folderName, string displayName, int seed, long size, long lastPlayed, string generatorName) : base(menu, name) {
         this.folderName = folderName;
         this.displayName = displayName;
         this.seed = seed;
         this.size = size;
         this.lastPlayed = lastPlayed;
+        this.generatorName = generatorName;
     }
 
     public override void draw() {
@@ -62,7 +64,8 @@ public class WorldEntry : GUIElement {
 
         // show folder name if it differs from display name (helps distinguish duplicate "New World"s)
 
-        var metaStr = $"seed: {seed} | {sizeStr} | {timeAgo}";
+        var genName = Loc.get($"generator.{generatorName}");
+        var metaStr = $"{genName} | seed: {seed} | {sizeStr} | {timeAgo}";
 
         var metaPos = new Vector2(bounds.X + textOffset.X * GUI.guiScale, bounds.Y + (bounds.Height - 8 * GUI.guiScale) - (textOffset.Y + 1) * GUI.guiScale);
         Game.gui.drawStringThin(metaStr, metaPos);

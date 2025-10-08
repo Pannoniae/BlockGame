@@ -101,7 +101,7 @@ public partial class NewWorldGenerator {
 
         //getNoise2DRegion(ob, on, coord, 1 / (754 * 300f), 1 / (754 * 300f), 4, 1.81f);
 
-        getNoise2DRegion(mb, mn, coord, 1 / 154f, 1 / 154f, 4, 1.81f);
+        getNoise2DRegion(mb, mn, coord, 1 / 354f, 1 / 354f, 6, 1.81f);
 
         //getNoise3DRegion(wb, wn, coord, FREQW, FREQW, FREQW, 4, Meth.phiF);
 
@@ -143,7 +143,8 @@ public partial class NewWorldGenerator {
 
                     float density = lerp(t, t2, s);
 
-                    e = float.Clamp(e, -0.1f, 1);
+                    e = float.Clamp(e, 0, 1);
+                    //e = e < 0.05f ? 0 : e;
 
                     //Console.Out.WriteLine(density);
                     var a = 0;
@@ -151,7 +152,7 @@ public partial class NewWorldGenerator {
                     // high m = flat, low m = not
                     var sh = (e / 2f) + 1f;
 
-                    var dd = float.Abs(e - 0.03f);
+                    var dd = float.Abs(e - 0.09f);
                     //var m = sh * sh * c;
                     //var m = 1 / (sh * (e / 2f));
                     var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
@@ -163,7 +164,7 @@ public partial class NewWorldGenerator {
                     // leave the broken to the d
                     //m *= (e - 0.2f);
 
-                    e = float.Clamp(e, 0, 1);
+                    //e = float.Clamp(e, 0, 1);
 
                     var h = 1 / (0.1f + float.Pow(float.E, -5 * (e - 0.3f)));
 
@@ -178,10 +179,15 @@ public partial class NewWorldGenerator {
                     //var d = (float.Abs(e * e)) * World.WORLDHEIGHT * 2.4f;
 
                     // if you touch these values ill murder you
-                    var d = (dd - 0.06f);
+                    var d = (dd - 0.05f);
+
+                    d = (d is < 0.04f and > 0f) ? d * 0.4f : d;
+                    d = (d < 0f) ? d * 1.5f : d;
+
+                    d = e < 0.05f ? 0 : d;
+                    d = e is < 0.05f and > 0f ? ((0.25f * (0.05f - e)) - 0.03f) : d;
                     // cheat
                     //d = (d > -0.03 && d < 0.03f) ? d + 0.02f : d;
-                    d = (d < 0f) ? d * 1.5f : d;
                     //var d2 = float.Sqrt(float.Abs(0.08f * (e - 0.04f))) - 0.065f;
                     //d = float.Max(d, d2);
 

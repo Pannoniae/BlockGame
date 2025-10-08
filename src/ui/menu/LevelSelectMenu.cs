@@ -1,6 +1,7 @@
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.util.xNBT;
 using BlockGame.world;
 using Molten;
@@ -106,13 +107,13 @@ public class LevelSelectMenu : ScrollableMenu {
         }
 
         // scan level directory for worlds
-        var levelDir = "level";
+        const string levelDir = "level";
         if (!Directory.Exists(levelDir)) {
             Directory.CreateDirectory(levelDir);
             return;
         }
 
-        var worlds = new List<(string folderName, string displayName, int seed, long size, long lastPlayed)>();
+        var worlds = new List<WorldEntry>();
 
         // enumerate directories
         foreach (var dir in Directory.GetDirectories(levelDir)) {
@@ -125,21 +126,23 @@ public class LevelSelectMenu : ScrollableMenu {
                 var displayName = tag.has("displayName") ? tag.getString("displayName") : folderName;
                 var seed = tag.getInt("seed");
                 var lastPlayed = tag.has("lastPlayed") ? tag.getLong("lastPlayed") : 0;
+                var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
                 var size = getDirSize(dir);
-                worlds.Add((folderName, displayName, seed, size, lastPlayed));
+                var entry = new WorldEntry(this, $"world_{folderName}", folderName, displayName, seed, size, lastPlayed, generatorName);
+                worlds.Add(entry);
             }
             catch {
                 // skip corrupted worlds
+                Log.warn($"Failed to load world info for '{folderName}', skipping");
             }
         }
 
         // sort by lastPlayed descending
         worlds.Sort((a, b) => b.lastPlayed.CompareTo(a.lastPlayed));
 
-        // create WorldEntry elements
+        // add sorted entries to UI
         var y = 32;
-        foreach (var (folderName, displayName, seed, size, lastPlayed) in worlds) {
-            var entry = new WorldEntry(this, $"world_{folderName}", folderName, displayName, seed, size, lastPlayed);
+        foreach (var entry in worlds) {
             entry.guiPosition = new Rectangle(0, y, 400, 32);
             entry.setPosition(entry.guiPosition);
             entry.horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;

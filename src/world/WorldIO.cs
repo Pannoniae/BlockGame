@@ -376,7 +376,7 @@ public struct ChunkLoadResult(ChunkCoord coord, NBTCompound? nbtData, ChunkStatu
     public readonly Exception? error = error;
 }
 
-public class ChunkSaveThread : IDisposable {
+public sealed class ChunkSaveThread : IDisposable {
     private readonly WorldIO io;
     private readonly Thread saveThread;
     
@@ -466,7 +466,7 @@ public class ChunkSaveThread : IDisposable {
     }
 }
 
-public class ChunkLoadThread : IDisposable {
+public sealed class ChunkLoadThread : IDisposable {
     private readonly WorldIO io;
     private readonly Thread loadThread;
 

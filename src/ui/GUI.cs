@@ -398,12 +398,12 @@ public class GUI {
         }
     }
 
-    private bool shouldPlaceOre(int worldX, int worldZ) {
+    private static bool shouldPlaceOre(int worldX, int worldZ) {
         return XHash.hashRange(worldX, worldZ, 20) == 0; // 5% chance
     }
 
     // determine block type based on depth (y coordinate)
-    private ushort getBlockTypeForDepth(int worldX, int worldY) {
+    private static ushort getBlockTypeForDepth(int worldX, int worldY) {
         // air above surface (y < 0)
         if (worldY < 0) {
             return Blocks.AIR;
@@ -864,7 +864,7 @@ public class GUI {
         drawQuantityText(stack, x, y);
     }
 
-    private void drawQuantityText(ItemStack stack, float x, float y) {
+    private static void drawQuantityText(ItemStack stack, float x, float y) {
         if (stack.quantity > 1) {
             var s = stack.quantity.ToString();
             Game.gui.drawStringUIThin(s,

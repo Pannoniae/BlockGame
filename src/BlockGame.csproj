@@ -9,7 +9,7 @@
         <LangVersion>preview</LangVersion>
         <AnalysisLevel>preview-recommended</AnalysisLevel>
         <!-- IDISP008 is bullshit  -->
-        <NoWarn>${NoWarn};CA1707;CA1051;CA2211;CA1711;IDISP008;CA1708</NoWarn>
+        <NoWarn>${NoWarn};CA1707;CA1051;CA2211;CA1711;IDISP008;CA1708;CA1805;CA1715</NoWarn>
         <InvariantGlobalization>true</InvariantGlobalization>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>

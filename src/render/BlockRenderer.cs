@@ -98,22 +98,22 @@ public class BlockRenderer {
 
         public bool shouldFlipVertices;
 
-        public uint getBlock() {
+        public readonly uint getBlock() {
             // this is unsafe but we know the cache is always 27 elements
             return blockCache[13];
         }
 
-        public byte getLight() {
+        public readonly byte getLight() {
             // this is unsafe but we know the cache is always 27 elements
             return lightCache[13];
         }
 
-        public uint getBlockCached(int x, int y, int z) {
+        public readonly uint getBlockCached(int x, int y, int z) {
             // this is unsafe but we know the cache is always 27 elements
             return blockCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
         }
 
-        public byte getLightCached(int x, int y, int z) {
+        public readonly byte getLightCached(int x, int y, int z) {
             // this is unsafe but we know the cache is always 27 elements
             return lightCache[(y + 1) * LOCALCACHESIZE_SQ + (z + 1) * LOCALCACHESIZE + (x + 1)];
         }

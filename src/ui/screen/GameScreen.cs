@@ -35,7 +35,6 @@ public class GameScreen : Screen {
 
     private HotbarGUI? hotbar;
 
-    private TimerAction updateMemory;
     private TimerAction updateDebugText;
 
     private UpdateMemoryThread umt;

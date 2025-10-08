@@ -17,16 +17,10 @@ public enum BatcherBeginMode {
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct VertexColorTexture {
-    public Vector3 Position;
-    public Color Color;
-    public Vector2 TexCoords;
-
-    public VertexColorTexture(Vector3 position, Color color, Vector2 texCoords) {
-        Position = position;
-        Color = color;
-        TexCoords = texCoords;
-    }
+public struct VertexColorTexture(Vector3 position, Color color, Vector2 texCoords) {
+    public Vector3 Position = position;
+    public Color Color = color;
+    public Vector2 TexCoords = texCoords;
 }
 
 /// <summary>
@@ -167,8 +161,7 @@ public sealed class SpriteBatch : IDisposable {
     }
 
     public void Begin(BatcherBeginMode beginMode = BatcherBeginMode.Deferred) {
-        if (IsDisposed)
-            throw new ObjectDisposedException(nameof(SpriteBatch));
+        ObjectDisposedException.ThrowIf(IsDisposed, nameof(SpriteBatch));
 
         if (IsActive)
             throw new InvalidOperationException("This TextureBatcher has already begun.");
@@ -242,8 +235,7 @@ public sealed class SpriteBatch : IDisposable {
         VertexColorTexture vertexBR, VertexColorTexture vertexBL) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
@@ -264,8 +256,7 @@ public sealed class SpriteBatch : IDisposable {
         VertexColorTexture vertexBR, VertexColorTexture vertexBL, Matrix4x4 matrix) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
@@ -293,8 +284,7 @@ public sealed class SpriteBatch : IDisposable {
     public void Draw(BTexture2D texture, Vector2 position, Rectangle? source, Color color, float depth = 0) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
@@ -324,8 +314,7 @@ public sealed class SpriteBatch : IDisposable {
         float rotation, Vector2 origin, float depth = 0) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
@@ -405,8 +394,7 @@ public sealed class SpriteBatch : IDisposable {
     public void Draw(BTexture2D texture, Matrix3x2 transform, Rectangle? source, Color color, float depth = 0) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
@@ -429,8 +417,7 @@ public sealed class SpriteBatch : IDisposable {
         float depth = 0) {
         ValidateBeginCalled();
 
-        if (texture == null)
-            throw new ArgumentNullException(nameof(texture));
+        ArgumentNullException.ThrowIfNull(texture);
 
         // Check if we need to flush before adding this item
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
