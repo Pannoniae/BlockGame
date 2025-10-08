@@ -143,7 +143,7 @@ public partial class NewWorldGenerator {
 
                     float density = lerp(t, t2, s);
 
-                    e = float.Clamp(e, 0, 1);
+                    e = float.Clamp(e, -0.1f, 1);
 
                     //Console.Out.WriteLine(density);
                     var a = 0;
@@ -151,7 +151,7 @@ public partial class NewWorldGenerator {
                     // high m = flat, low m = not
                     var sh = (e / 2f) + 1f;
 
-                    var dd = float.Abs(e - 0.04f);
+                    var dd = float.Abs(e - 0.03f);
                     //var m = sh * sh * c;
                     //var m = 1 / (sh * (e / 2f));
                     var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
@@ -162,6 +162,8 @@ public partial class NewWorldGenerator {
 
                     // leave the broken to the d
                     //m *= (e - 0.2f);
+
+                    e = float.Clamp(e, 0, 1);
 
                     var h = 1 / (0.1f + float.Pow(float.E, -5 * (e - 0.3f)));
 
@@ -176,9 +178,10 @@ public partial class NewWorldGenerator {
                     //var d = (float.Abs(e * e)) * World.WORLDHEIGHT * 2.4f;
 
                     // if you touch these values ill murder you
-                    var d = (dd - 0.0675f);
+                    var d = (dd - 0.06f);
                     // cheat
-                    d = (d > -0.03 && d < 0.03f) ? d + 0.02f : d;
+                    //d = (d > -0.03 && d < 0.03f) ? d + 0.02f : d;
+                    d = (d < 0f) ? d * 1.5f : d;
                     //var d2 = float.Sqrt(float.Abs(0.08f * (e - 0.04f))) - 0.065f;
                     //d = float.Max(d, d2);
 
@@ -333,9 +336,13 @@ public partial class NewWorldGenerator {
                 // thickness of the soil layer (1 to 5)
                 var amt = getNoise2D(auxn, worldPos.X, worldPos.Z, 1, 1) + 4f;
 
-                // on high, make it thinner
-                var f = fb[getIndex(x >> NOISE_PER_X_SHIFT, worldPos.Y >> NOISE_PER_Y_SHIFT, z >> NOISE_PER_Z_SHIFT)];
-                amt -= (f * 2f + 1.5f);
+                var e = sample2D(eb, x, z);
+                var f = sample2D(fb, x, z);
+
+                e = float.Clamp(e, 0, 1);
+
+                //amt -= float.Max(0, (f * 2f + 1.5f));
+                amt -= float.Max(0, (e >= 0.25 ? float.Sqrt(e - 0.25f) : 0f) * 30f);
 
                 amt = float.Max(amt, 0);
 
@@ -374,14 +381,8 @@ public partial class NewWorldGenerator {
                     filler = Blocks.DIRT;
                 }
 
-                // replace top layers with dirt
-                // if it's rock (otherwise it's water which we don't wanna replace)
-                if (chunk.getBlock(x, height, z) == Blocks.STONE) {
-                    // replace top layer with topBlock
-
+                if (chunk.getBlock(x, height, z) == Blocks.STONE && amt >= 1f) {
                     for (int yy = height; yy > height - amt && yy > 0; yy--) {
-
-                        // place top
                         if (yy == height) {
                             chunk.setBlockFast(x, height, z, topBlock);
                         }
@@ -411,6 +412,57 @@ public partial class NewWorldGenerator {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float lerp(float a, float b, float t) {
         return a + t * (b - a);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float sample2D(float[] buffer, int x, int z) {
+        var x0 = x >> NOISE_PER_X_SHIFT;
+        var x1 = x0 + 1;
+        var z0 = z >> NOISE_PER_Z_SHIFT;
+        var z1 = z0 + 1;
+        float xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
+        float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+
+        var v00 = buffer[getIndex(x0, 0, z0)];
+        var v01 = buffer[getIndex(x0, 0, z1)];
+        var v10 = buffer[getIndex(x1, 0, z0)];
+        var v11 = buffer[getIndex(x1, 0, z1)];
+
+        var v0 = lerp(v00, v10, xd);
+        var v1 = lerp(v01, v11, xd);
+        return lerp(v0, v1, zd);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float sample3D(float[] buffer, int x, int y, int z) {
+        var x0 = x >> NOISE_PER_X_SHIFT;
+        var x1 = x0 + 1;
+        var y0 = y >> NOISE_PER_Y_SHIFT;
+        var y1 = y0 + 1;
+        var z0 = z >> NOISE_PER_Z_SHIFT;
+        var z1 = z0 + 1;
+        float xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
+        float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+        float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+
+        var c000 = buffer[getIndex(x0, y0, z0)];
+        var c001 = buffer[getIndex(x0, y0, z1)];
+        var c010 = buffer[getIndex(x0, y1, z0)];
+        var c011 = buffer[getIndex(x0, y1, z1)];
+        var c100 = buffer[getIndex(x1, y0, z0)];
+        var c101 = buffer[getIndex(x1, y0, z1)];
+        var c110 = buffer[getIndex(x1, y1, z0)];
+        var c111 = buffer[getIndex(x1, y1, z1)];
+
+        var c00 = lerp(c000, c100, xd);
+        var c01 = lerp(c001, c101, xd);
+        var c10 = lerp(c010, c110, xd);
+        var c11 = lerp(c011, c111, xd);
+
+        var c0 = lerp(c00, c10, yd);
+        var c1 = lerp(c01, c11, yd);
+
+        return lerp(c0, c1, zd);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

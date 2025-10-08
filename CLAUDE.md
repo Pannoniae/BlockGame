@@ -57,7 +57,7 @@ The documentation is in `docs/` and various debugging shit is in `debug/`.
 **World Generation**
 
 - Located in `src/world/worldgen/`
-- Multiple generators: `SimpleWorldGenerator`, `PerlinWorldGenerator`, `OverworldWorldGenerator`. `PerlinWorldGenerator` is the actually used one.
+- Multiple generators: `SimpleWorldGenerator`, `PerlinWorldGenerator`, `OverworldWorldGenerator`. `NewWorldGenerator` is the actually used one.
 - Feature system for caves, ores, ravines in `src/world/worldgen/feature/`
 
 ### Dependencies
