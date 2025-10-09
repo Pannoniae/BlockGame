@@ -166,11 +166,11 @@ public class Item {
         register(COPPER_INGOT);
 
         GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f);
-        GOLD_PICKAXE.tex = new UVPair(1, 2);
+        GOLD_PICKAXE.tex = new UVPair(2,6);
         register(GOLD_PICKAXE);
 
         IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f);
-        IRON_PICKAXE.tex = new UVPair(0, 2);
+        IRON_PICKAXE.tex = new UVPair(2, 5);
         register(IRON_PICKAXE);
 
         STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25);
@@ -214,7 +214,7 @@ public class Item {
         register(WOOD_SWORD);
 
         STICK = new Item(Items.STICK, "Stick");
-        STICK.tex = new UVPair(3, 5);
+        STICK.tex = new UVPair(0, 7);
         register(STICK);
 
         COPPER_PICKAXE = new Tool(Items.COPPER_PICKAXE, "Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
