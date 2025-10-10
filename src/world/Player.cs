@@ -216,7 +216,7 @@ public class Player : Soul {
         if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
             if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
                 // get block below player
-                var pos = position.toBlockPos() - 1;
+                var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
                 if (blockBelow?.mat != null) {
                     Game.snd.playFootstep(blockBelow.mat.smat);
@@ -451,6 +451,7 @@ public class Player : Soul {
             isBreaking = false;
             breakProgress = 0;
             prevBreakProgress = 0;
+            breakTime = 0;
         }
 
         fastMode = Game.inputs.ctrl.down();
@@ -541,6 +542,7 @@ public class Player : Soul {
                 // block no longer exists
                 isBreaking = false;
                 breakProgress = 0;
+                breakTime = 0;
                 return;
             }
 
@@ -554,10 +556,13 @@ public class Player : Soul {
             breakProgress += breakSpeed * dt;
 
             // spawn mining particles every 4 ticks
-            breakTime++;
             if (breakTime % 4 == 0) {
                 block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face);
             }
+            if ((breakTime / 4f) % 4 == 0) {
+                Game.snd.playBlockKnock(block.mat.smat);
+            }
+            breakTime++;
 
             if (breakProgress >= 1.0) {
                 // block is fully broken
@@ -663,7 +668,6 @@ public class Player : Soul {
                 if (!hasCollisions) {
                     // in survival mode, check if player has blocks to place
                     if (Game.gamemode.gameplay) {
-                        Console.Out.WriteLine(stack == ItemStack.EMPTY);
                         if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
                             setSwinging(false);
                             return;
@@ -723,6 +727,7 @@ public class Player : Soul {
                     breaking = pos;
                     breakProgress = 0;
                     prevBreakProgress = 0;
+                    breakTime = 0;
                 }
             }
 

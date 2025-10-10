@@ -80,6 +80,7 @@ public abstract class ScrollableMenu : Menu {
             target.onMouseDown(button);
             if (button == MouseButton.Left) {
                 pressedElement = target;
+                playClick();
             }
         }
     }
@@ -92,6 +93,7 @@ public abstract class ScrollableMenu : Menu {
                 pressedElement.click(button);
             }
             if (button == MouseButton.Left) {
+                playRelease();
                 pressedElement = null;
             }
         } else {
@@ -100,6 +102,9 @@ public abstract class ScrollableMenu : Menu {
                 if (element.active && getEffectiveBounds(element).Contains((int)pos.X, (int)pos.Y)) {
                     element.onMouseUp(button);
                     element.click(button);
+                    if (button == MouseButton.Left) {
+                        playRelease();
+                    }
                     break;
                 }
             }

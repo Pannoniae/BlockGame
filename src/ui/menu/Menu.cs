@@ -11,6 +11,19 @@ namespace BlockGame.ui.menu;
 
 public class Menu {
 
+    protected static long clickTimer = 0;
+
+    protected static void playClick() {
+        Game.snd.plays("click");
+        clickTimer = Game.permanentStopwatch.ElapsedMilliseconds;
+    }
+
+    protected static void playRelease() {
+        if (clickTimer + 200 < Game.permanentStopwatch.ElapsedMilliseconds) {
+            Game.snd.plays("clickr");
+        }
+    }
+
     public Vector2I size;
     public Vector2I centre;
 
@@ -202,6 +215,7 @@ public class Menu {
             target.onMouseDown(button);
             if (button == MouseButton.Left) {
                 pressedElement = target;
+                playClick();
             }
         }
     }
@@ -214,6 +228,7 @@ public class Menu {
                 pressedElement.click(button);
             }
             if (button == MouseButton.Left) {
+                playRelease();
                 pressedElement = null;
             }
         } else {
@@ -222,6 +237,9 @@ public class Menu {
                 if (element.active && element.bounds.Contains((int)pos.X, (int)pos.Y)) {
                     element.onMouseUp(button);
                     element.click(button);
+                    if (button == MouseButton.Left) {
+                        playRelease();
+                    }
                     break;
                 }
             }

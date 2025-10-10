@@ -4,8 +4,7 @@
 
 using System.Runtime.CompilerServices;
 
-public static class OpenSimplex2
-{
+public static class OpenSimplex2 {
     private const long PRIME_X = 0x5205402B9270C86FL;
     private const long PRIME_Y = 0x598CD327003817B5L;
     private const long PRIME_Z = 0x5BCC226E9FA0BACBL;
@@ -49,8 +48,7 @@ public static class OpenSimplex2
     /**
      * 2D Simplex noise, standard lattice orientation.
      */
-    public static float Noise2(long seed, double x, double y)
-    {
+    public static float Noise2(long seed, double x, double y) {
         // Get points for A2* lattice
         double s = SKEW_2D * (x + y);
         double xs = x + s, ys = y + s;
@@ -65,8 +63,7 @@ public static class OpenSimplex2
      * unless your map is centered around an equator. It's a subtle
      * difference, but the option is here to make it an easy choice.
      */
-    public static float Noise2_ImproveX(long seed, double x, double y)
-    {
+    public static float Noise2_ImproveX(long seed, double x, double y) {
         // Skew transform and rotation baked into one.
         double xx = x * ROOT2OVER2;
         double yy = y * (ROOT2OVER2 * (1 + 2 * SKEW_2D));
@@ -77,8 +74,7 @@ public static class OpenSimplex2
     /**
      * 2D Simplex noise base.
      */
-    private static float Noise2_UnskewedBase(long seed, double xs, double ys)
-    {
+    private static float Noise2_UnskewedBase(long seed, double xs, double ys) {
         // Get base points and offsets.
         int xsb = FastFloor(xs), ysb = FastFloor(ys);
         float xi = (float)(xs - xsb), yi = (float)(ys - ysb);
@@ -93,38 +89,33 @@ public static class OpenSimplex2
         // First vertex.
         float value = 0;
         float a0 = RSQUARED_2D - dx0 * dx0 - dy0 * dy0;
-        if (a0 > 0)
-        {
+        if (a0 > 0) {
             value = (a0 * a0) * (a0 * a0) * Grad(seed, xsbp, ysbp, dx0, dy0);
         }
 
         // Second vertex.
-        float a1 = (float)(2 * (1 + 2 * UNSKEW_2D) * (1 / UNSKEW_2D + 2)) * t + ((float)(-2 * (1 + 2 * UNSKEW_2D) * (1 + 2 * UNSKEW_2D)) + a0);
-        if (a1 > 0)
-        {
+        float a1 = (float)(2 * (1 + 2 * UNSKEW_2D) * (1 / UNSKEW_2D + 2)) * t +
+                   ((float)(-2 * (1 + 2 * UNSKEW_2D) * (1 + 2 * UNSKEW_2D)) + a0);
+        if (a1 > 0) {
             float dx1 = dx0 - (float)(1 + 2 * UNSKEW_2D);
             float dy1 = dy0 - (float)(1 + 2 * UNSKEW_2D);
             value += (a1 * a1) * (a1 * a1) * Grad(seed, xsbp + PRIME_X, ysbp + PRIME_Y, dx1, dy1);
         }
 
         // Third vertex.
-        if (dy0 > dx0)
-        {
+        if (dy0 > dx0) {
             float dx2 = dx0 - (float)UNSKEW_2D;
             float dy2 = dy0 - (float)(UNSKEW_2D + 1);
             float a2 = RSQUARED_2D - dx2 * dx2 - dy2 * dy2;
-            if (a2 > 0)
-            {
+            if (a2 > 0) {
                 value += (a2 * a2) * (a2 * a2) * Grad(seed, xsbp, ysbp + PRIME_Y, dx2, dy2);
             }
         }
-        else
-        {
+        else {
             float dx2 = dx0 - (float)(UNSKEW_2D + 1);
             float dy2 = dy0 - (float)UNSKEW_2D;
             float a2 = RSQUARED_2D - dx2 * dx2 - dy2 * dy2;
-            if (a2 > 0)
-            {
+            if (a2 > 0) {
                 value += (a2 * a2) * (a2 * a2) * Grad(seed, xsbp + PRIME_X, ysbp, dx2, dy2);
             }
         }
@@ -140,8 +131,7 @@ public static class OpenSimplex2
      * If Z is vertical in world coordinates, call Noise3_ImproveXZ(x, y, Z).
      * For a time varied animation, call Noise3_ImproveXY(x, y, T).
      */
-    public static float Noise3_ImproveXY(long seed, double x, double y, double z)
-    {
+    public static float Noise3_ImproveXY(long seed, double x, double y, double z) {
         // Re-orient the cubic lattices without skewing, so Z points up the main lattice diagonal,
         // and the planes formed by XY are moved far out of alignment with the cube faces.
         // Orthonormal rotation. Not a skew transform.
@@ -164,8 +154,7 @@ public static class OpenSimplex2
      * If Z is vertical in world coordinates, call Noise3_ImproveXZ(x, Z, y) or use Noise3_ImproveXY.
      * For a time varied animation, call Noise3_ImproveXZ(x, T, y) or use Noise3_ImproveXY.
      */
-    public static float Noise3_ImproveXZ(long seed, double x, double y, double z)
-    {
+    public static float Noise3_ImproveXZ(long seed, double x, double y, double z) {
         // Re-orient the cubic lattices without skewing, so Y points up the main lattice diagonal,
         // and the planes formed by XZ are moved far out of alignment with the cube faces.
         // Orthonormal rotation. Not a skew transform.
@@ -185,8 +174,7 @@ public static class OpenSimplex2
      * Use Noise3_ImproveXY or Noise3_ImproveXZ instead, wherever appropriate.
      * They have less diagonal bias. This function's best use is as a fallback.
      */
-    public static float Noise3_Fallback(long seed, double x, double y, double z)
-    {
+    public static float Noise3_Fallback(long seed, double x, double y, double z) {
         // Re-orient the cubic lattices via rotation, to produce a familiar look.
         // Orthonormal rotation. Not a skew transform.
         double r = FALLBACK_ROTATE_3D * (x + y + z);
@@ -199,8 +187,7 @@ public static class OpenSimplex2
     /**
      * Generate overlapping cubic lattices for 3D OpenSimplex2 noise.
      */
-    private static float Noise3_UnrotatedBase(long seed, double xr, double yr, double zr)
-    {
+    private static float Noise3_UnrotatedBase(long seed, double xr, double yr, double zr) {
         // Get base points and offsets.
         int xrb = FastRound(xr), yrb = FastRound(yr), zrb = FastRound(zr);
         float xri = (float)(xr - xrb), yri = (float)(yr - yrb), zri = (float)(zr - zrb);
@@ -217,41 +204,35 @@ public static class OpenSimplex2
         // Loop: Pick an edge on each lattice copy.
         float value = 0;
         float a = (RSQUARED_3D - xri * xri) - (yri * yri + zri * zri);
-        for (int l = 0; ; l++)
-        {
-
+        for (int l = 0;; l++) {
             // Closest point on cube.
-            if (a > 0)
-            {
+            if (a > 0) {
                 value += (a * a) * (a * a) * Grad(seed, xrbp, yrbp, zrbp, xri, yri, zri);
             }
 
             // Second-closest point.
-            if (ax0 >= ay0 && ax0 >= az0)
-            {
+            if (ax0 >= ay0 && ax0 >= az0) {
                 float b = a + ax0 + ax0;
-                if (b > 1)
-                {
+                if (b > 1) {
                     b -= 1;
-                    value += (b * b) * (b * b) * Grad(seed, xrbp - xNSign * PRIME_X, yrbp, zrbp, xri + xNSign, yri, zri);
+                    value += (b * b) * (b * b) *
+                             Grad(seed, xrbp - xNSign * PRIME_X, yrbp, zrbp, xri + xNSign, yri, zri);
                 }
             }
-            else if (ay0 > ax0 && ay0 >= az0)
-            {
+            else if (ay0 > ax0 && ay0 >= az0) {
                 float b = a + ay0 + ay0;
-                if (b > 1)
-                {
+                if (b > 1) {
                     b -= 1;
-                    value += (b * b) * (b * b) * Grad(seed, xrbp, yrbp - yNSign * PRIME_Y, zrbp, xri, yri + yNSign, zri);
+                    value += (b * b) * (b * b) *
+                             Grad(seed, xrbp, yrbp - yNSign * PRIME_Y, zrbp, xri, yri + yNSign, zri);
                 }
             }
-            else
-            {
+            else {
                 float b = a + az0 + az0;
-                if (b > 1)
-                {
+                if (b > 1) {
                     b -= 1;
-                    value += (b * b) * (b * b) * Grad(seed, xrbp, yrbp, zrbp - zNSign * PRIME_Z, xri, yri, zri + zNSign);
+                    value += (b * b) * (b * b) *
+                             Grad(seed, xrbp, yrbp, zrbp - zNSign * PRIME_Z, xri, yri, zri + zNSign);
                 }
             }
 
@@ -294,8 +275,7 @@ public static class OpenSimplex2
      * Recommended for time-varied animations which texture a 3D object (W=time)
      * in a space where Z is vertical
      */
-    public static float Noise4_ImproveXYZ_ImproveXY(long seed, double x, double y, double z, double w)
-    {
+    public static float Noise4_ImproveXYZ_ImproveXY(long seed, double x, double y, double z, double w) {
         double xy = x + y;
         double s2 = xy * -0.21132486540518699998;
         double zz = z * 0.28867513459481294226;
@@ -313,8 +293,7 @@ public static class OpenSimplex2
      * Recommended for time-varied animations which texture a 3D object (W=time)
      * in a space where Y is vertical
      */
-    public static float Noise4_ImproveXYZ_ImproveXZ(long seed, double x, double y, double z, double w)
-    {
+    public static float Noise4_ImproveXYZ_ImproveXZ(long seed, double x, double y, double z, double w) {
         double xz = x + z;
         double s2 = xz * -0.21132486540518699998;
         double yy = y * 0.28867513459481294226;
@@ -332,8 +311,7 @@ public static class OpenSimplex2
      * Recommended for time-varied animations which texture a 3D object (W=time)
      * where there isn't a clear distinction between horizontal and vertical
      */
-    public static float Noise4_ImproveXYZ(long seed, double x, double y, double z, double w)
-    {
+    public static float Noise4_ImproveXYZ(long seed, double x, double y, double z, double w) {
         double xyz = x + y + z;
         double ww = w * 0.2236067977499788;
         double s2 = xyz * -0.16666666666666666 + ww;
@@ -345,8 +323,7 @@ public static class OpenSimplex2
     /**
      * 4D OpenSimplex2 noise, fallback lattice orientation.
      */
-    public static float Noise4_Fallback(long seed, double x, double y, double z, double w)
-    {
+    public static float Noise4_Fallback(long seed, double x, double y, double z, double w) {
         // Get points for A4 lattice
         double s = SKEW_4D * (x + y + z + w);
         double xs = x + s, ys = y + s, zs = z + s, ws = w + s;
@@ -357,8 +334,7 @@ public static class OpenSimplex2
     /**
     * 4D OpenSimplex2 noise base.
     */
-    private static float Noise4_UnskewedBase(long seed, double xs, double ys, double zs, double ws)
-    {
+    private static float Noise4_UnskewedBase(long seed, double xs, double ys, double zs, double ws) {
         // Get base points and offsets
         int xsb = FastFloor(xs), ysb = FastFloor(ys), zsb = FastFloor(zs), wsb = FastFloor(ws);
         float xsi = (float)(xs - xsb), ysi = (float)(ys - ysb), zsi = (float)(zs - zsb), wsi = (float)(ws - wsb);
@@ -373,41 +349,38 @@ public static class OpenSimplex2
 
         // Offset for lattice point relative positions (skewed)
         float startingLatticeOffset = startingLattice * -LATTICE_STEP_4D;
-        xsi += startingLatticeOffset; ysi += startingLatticeOffset; zsi += startingLatticeOffset; wsi += startingLatticeOffset;
+        xsi += startingLatticeOffset;
+        ysi += startingLatticeOffset;
+        zsi += startingLatticeOffset;
+        wsi += startingLatticeOffset;
 
         // Prep for vertex contributions.
         float ssi = (siSum + startingLatticeOffset * 4) * UNSKEW_4D;
-        
+
         // Prime pre-multiplication for hash.
         long xsvp = xsb * PRIME_X, ysvp = ysb * PRIME_Y, zsvp = zsb * PRIME_Z, wsvp = wsb * PRIME_W;
 
         // Five points to add, total, from five copies of the A4 lattice.
         float value = 0;
-        for (int i = 0; ; i++)
-        {
-
+        for (int i = 0;; i++) {
             // Next point is the closest vertex on the 4-simplex whose base vertex is the aforementioned vertex.
             double score0 = 1.0 + ssi * (-1.0 / UNSKEW_4D); // Seems slightly faster than 1.0-xsi-ysi-zsi-wsi
-            if (xsi >= ysi && xsi >= zsi && xsi >= wsi && xsi >= score0)
-            {
+            if (xsi >= ysi && xsi >= zsi && xsi >= wsi && xsi >= score0) {
                 xsvp += PRIME_X;
                 xsi -= 1;
                 ssi -= UNSKEW_4D;
             }
-            else if (ysi > xsi && ysi >= zsi && ysi >= wsi && ysi >= score0)
-            {
+            else if (ysi > xsi && ysi >= zsi && ysi >= wsi && ysi >= score0) {
                 ysvp += PRIME_Y;
                 ysi -= 1;
                 ssi -= UNSKEW_4D;
             }
-            else if (zsi > xsi && zsi > ysi && zsi >= wsi && zsi >= score0)
-            {
+            else if (zsi > xsi && zsi > ysi && zsi >= wsi && zsi >= score0) {
                 zsvp += PRIME_Z;
                 zsi -= 1;
                 ssi -= UNSKEW_4D;
             }
-            else if (wsi > xsi && wsi > ysi && wsi > zsi && wsi >= score0)
-            {
+            else if (wsi > xsi && wsi > ysi && wsi > zsi && wsi >= score0) {
                 wsvp += PRIME_W;
                 wsi -= 1;
                 ssi -= UNSKEW_4D;
@@ -416,8 +389,7 @@ public static class OpenSimplex2
             // Gradient contribution with falloff.
             float dx = xsi + ssi, dy = ysi + ssi, dz = zsi + ssi, dw = wsi + ssi;
             float a = (dx * dx + dy * dy) + (dz * dz + dw * dw);
-            if (a < RSQUARED_4D)
-            {
+            if (a < RSQUARED_4D) {
                 a -= RSQUARED_4D;
                 a *= a;
                 value += a * a * Grad(seed, xsvp, ysvp, zsvp, wsvp, dx, dy, dz, dw);
@@ -427,13 +399,15 @@ public static class OpenSimplex2
             if (i == 4) break;
 
             // Update for next lattice copy shifted down by <-0.2, -0.2, -0.2, -0.2>.
-            xsi += LATTICE_STEP_4D; ysi += LATTICE_STEP_4D; zsi += LATTICE_STEP_4D; wsi += LATTICE_STEP_4D;
+            xsi += LATTICE_STEP_4D;
+            ysi += LATTICE_STEP_4D;
+            zsi += LATTICE_STEP_4D;
+            wsi += LATTICE_STEP_4D;
             ssi += LATTICE_STEP_4D * 4 * UNSKEW_4D;
             seed -= SEED_OFFSET_4D;
 
             // Because we don't always start on the same lattice copy, there's a special reset case.
-            if (i == startingLattice)
-            {
+            if (i == startingLattice) {
                 xsvp -= PRIME_X;
                 ysvp -= PRIME_Y;
                 zsvp -= PRIME_Z;
@@ -450,8 +424,7 @@ public static class OpenSimplex2
      */
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Grad(long seed, long xsvp, long ysvp, float dx, float dy)
-    {
+    private static float Grad(long seed, long xsvp, long ysvp, float dx, float dy) {
         long hash = seed ^ xsvp ^ ysvp;
         hash *= HASH_MULTIPLIER;
         hash ^= hash >> (64 - N_GRADS_2D_EXPONENT + 1);
@@ -460,8 +433,7 @@ public static class OpenSimplex2
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Grad(long seed, long xrvp, long yrvp, long zrvp, float dx, float dy, float dz)
-    {
+    private static float Grad(long seed, long xrvp, long yrvp, long zrvp, float dx, float dy, float dz) {
         long hash = (seed ^ xrvp) ^ (yrvp ^ zrvp);
         hash *= HASH_MULTIPLIER;
         hash ^= hash >> (64 - N_GRADS_3D_EXPONENT + 2);
@@ -470,25 +442,24 @@ public static class OpenSimplex2
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Grad(long seed, long xsvp, long ysvp, long zsvp, long wsvp, float dx, float dy, float dz, float dw)
-    {
+    private static float Grad(long seed, long xsvp, long ysvp, long zsvp, long wsvp, float dx, float dy, float dz,
+        float dw) {
         long hash = seed ^ (xsvp ^ ysvp) ^ (zsvp ^ wsvp);
         hash *= HASH_MULTIPLIER;
         hash ^= hash >> (64 - N_GRADS_4D_EXPONENT + 2);
         int gi = (int)hash & ((N_GRADS_4D - 1) << 2);
-        return (GRADIENTS_4D[gi | 0] * dx + GRADIENTS_4D[gi | 1] * dy) + (GRADIENTS_4D[gi | 2] * dz + GRADIENTS_4D[gi | 3] * dw);
+        return (GRADIENTS_4D[gi | 0] * dx + GRADIENTS_4D[gi | 1] * dy) +
+               (GRADIENTS_4D[gi | 2] * dz + GRADIENTS_4D[gi | 3] * dw);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int FastFloor(double x)
-    {
+    private static int FastFloor(double x) {
         int xi = (int)x;
         return x < xi ? xi - 1 : xi;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int FastRound(double x)
-    {
+    private static int FastRound(double x) {
         return x < 0 ? (int)(x - 0.5) : (int)(x + 0.5);
     }
 
@@ -499,279 +470,275 @@ public static class OpenSimplex2
     private static readonly float[] GRADIENTS_2D;
     private static readonly float[] GRADIENTS_3D;
     private static readonly float[] GRADIENTS_4D;
-    static OpenSimplex2()
-    {
 
+    static OpenSimplex2() {
         GRADIENTS_2D = new float[N_GRADS_2D * 2];
-        float[] grad2 = {
-             0.38268343236509f,   0.923879532511287f,
-             0.923879532511287f,  0.38268343236509f,
-             0.923879532511287f, -0.38268343236509f,
-             0.38268343236509f,  -0.923879532511287f,
-            -0.38268343236509f,  -0.923879532511287f,
+        float[] grad2 = [
+            0.38268343236509f, 0.923879532511287f,
+            0.923879532511287f, 0.38268343236509f,
+            0.923879532511287f, -0.38268343236509f,
+            0.38268343236509f, -0.923879532511287f,
+            -0.38268343236509f, -0.923879532511287f,
             -0.923879532511287f, -0.38268343236509f,
-            -0.923879532511287f,  0.38268343236509f,
-            -0.38268343236509f,   0.923879532511287f,
+            -0.923879532511287f, 0.38268343236509f,
+            -0.38268343236509f, 0.923879532511287f,
             //-------------------------------------//
-             0.130526192220052f,  0.99144486137381f,
-             0.608761429008721f,  0.793353340291235f,
-             0.793353340291235f,  0.608761429008721f,
-             0.99144486137381f,   0.130526192220051f,
-             0.99144486137381f,  -0.130526192220051f,
-             0.793353340291235f, -0.60876142900872f,
-             0.608761429008721f, -0.793353340291235f,
-             0.130526192220052f, -0.99144486137381f,
+            0.130526192220052f, 0.99144486137381f,
+            0.608761429008721f, 0.793353340291235f,
+            0.793353340291235f, 0.608761429008721f,
+            0.99144486137381f, 0.130526192220051f,
+            0.99144486137381f, -0.130526192220051f,
+            0.793353340291235f, -0.60876142900872f,
+            0.608761429008721f, -0.793353340291235f,
+            0.130526192220052f, -0.99144486137381f,
             -0.130526192220052f, -0.99144486137381f,
             -0.608761429008721f, -0.793353340291235f,
             -0.793353340291235f, -0.608761429008721f,
-            -0.99144486137381f,  -0.130526192220052f,
-            -0.99144486137381f,   0.130526192220051f,
-            -0.793353340291235f,  0.608761429008721f,
-            -0.608761429008721f,  0.793353340291235f,
-            -0.130526192220052f,  0.99144486137381f,
-        };
-        for (int i = 0; i < grad2.Length; i++)
-        {
+            -0.99144486137381f, -0.130526192220052f,
+            -0.99144486137381f, 0.130526192220051f,
+            -0.793353340291235f, 0.608761429008721f,
+            -0.608761429008721f, 0.793353340291235f,
+            -0.130526192220052f, 0.99144486137381f
+        ];
+        for (int i = 0; i < grad2.Length; i++) {
             grad2[i] = (float)(grad2[i] / NORMALIZER_2D);
         }
-        for (int i = 0, j = 0; i < GRADIENTS_2D.Length; i++, j++)
-        {
+
+        for (int i = 0, j = 0; i < GRADIENTS_2D.Length; i++, j++) {
             if (j == grad2.Length) j = 0;
             GRADIENTS_2D[i] = grad2[j];
         }
 
         GRADIENTS_3D = new float[N_GRADS_3D * 4];
-        float[] grad3 = {
-             2.22474487139f,       2.22474487139f,      -1.0f,                 0.0f,
-             2.22474487139f,       2.22474487139f,       1.0f,                 0.0f,
-             3.0862664687972017f,  1.1721513422464978f,  0.0f,                 0.0f,
-             1.1721513422464978f,  3.0862664687972017f,  0.0f,                 0.0f,
-            -2.22474487139f,       2.22474487139f,      -1.0f,                 0.0f,
-            -2.22474487139f,       2.22474487139f,       1.0f,                 0.0f,
-            -1.1721513422464978f,  3.0862664687972017f,  0.0f,                 0.0f,
-            -3.0862664687972017f,  1.1721513422464978f,  0.0f,                 0.0f,
-            -1.0f,                -2.22474487139f,      -2.22474487139f,       0.0f,
-             1.0f,                -2.22474487139f,      -2.22474487139f,       0.0f,
-             0.0f,                -3.0862664687972017f, -1.1721513422464978f,  0.0f,
-             0.0f,                -1.1721513422464978f, -3.0862664687972017f,  0.0f,
-            -1.0f,                -2.22474487139f,       2.22474487139f,       0.0f,
-             1.0f,                -2.22474487139f,       2.22474487139f,       0.0f,
-             0.0f,                -1.1721513422464978f,  3.0862664687972017f,  0.0f,
-             0.0f,                -3.0862664687972017f,  1.1721513422464978f,  0.0f,
+        float[] grad3 = [
+            2.22474487139f, 2.22474487139f, -1.0f, 0.0f,
+            2.22474487139f, 2.22474487139f, 1.0f, 0.0f,
+            3.0862664687972017f, 1.1721513422464978f, 0.0f, 0.0f,
+            1.1721513422464978f, 3.0862664687972017f, 0.0f, 0.0f,
+            -2.22474487139f, 2.22474487139f, -1.0f, 0.0f,
+            -2.22474487139f, 2.22474487139f, 1.0f, 0.0f,
+            -1.1721513422464978f, 3.0862664687972017f, 0.0f, 0.0f,
+            -3.0862664687972017f, 1.1721513422464978f, 0.0f, 0.0f,
+            -1.0f, -2.22474487139f, -2.22474487139f, 0.0f,
+            1.0f, -2.22474487139f, -2.22474487139f, 0.0f,
+            0.0f, -3.0862664687972017f, -1.1721513422464978f, 0.0f,
+            0.0f, -1.1721513422464978f, -3.0862664687972017f, 0.0f,
+            -1.0f, -2.22474487139f, 2.22474487139f, 0.0f,
+            1.0f, -2.22474487139f, 2.22474487139f, 0.0f,
+            0.0f, -1.1721513422464978f, 3.0862664687972017f, 0.0f,
+            0.0f, -3.0862664687972017f, 1.1721513422464978f, 0.0f,
             //--------------------------------------------------------------------//
-            -2.22474487139f,      -2.22474487139f,      -1.0f,                 0.0f,
-            -2.22474487139f,      -2.22474487139f,       1.0f,                 0.0f,
-            -3.0862664687972017f, -1.1721513422464978f,  0.0f,                 0.0f,
-            -1.1721513422464978f, -3.0862664687972017f,  0.0f,                 0.0f,
-            -2.22474487139f,      -1.0f,                -2.22474487139f,       0.0f,
-            -2.22474487139f,       1.0f,                -2.22474487139f,       0.0f,
-            -1.1721513422464978f,  0.0f,                -3.0862664687972017f,  0.0f,
-            -3.0862664687972017f,  0.0f,                -1.1721513422464978f,  0.0f,
-            -2.22474487139f,      -1.0f,                 2.22474487139f,       0.0f,
-            -2.22474487139f,       1.0f,                 2.22474487139f,       0.0f,
-            -3.0862664687972017f,  0.0f,                 1.1721513422464978f,  0.0f,
-            -1.1721513422464978f,  0.0f,                 3.0862664687972017f,  0.0f,
-            -1.0f,                 2.22474487139f,      -2.22474487139f,       0.0f,
-             1.0f,                 2.22474487139f,      -2.22474487139f,       0.0f,
-             0.0f,                 1.1721513422464978f, -3.0862664687972017f,  0.0f,
-             0.0f,                 3.0862664687972017f, -1.1721513422464978f,  0.0f,
-            -1.0f,                 2.22474487139f,       2.22474487139f,       0.0f,
-             1.0f,                 2.22474487139f,       2.22474487139f,       0.0f,
-             0.0f,                 3.0862664687972017f,  1.1721513422464978f,  0.0f,
-             0.0f,                 1.1721513422464978f,  3.0862664687972017f,  0.0f,
-             2.22474487139f,      -2.22474487139f,      -1.0f,                 0.0f,
-             2.22474487139f,      -2.22474487139f,       1.0f,                 0.0f,
-             1.1721513422464978f, -3.0862664687972017f,  0.0f,                 0.0f,
-             3.0862664687972017f, -1.1721513422464978f,  0.0f,                 0.0f,
-             2.22474487139f,      -1.0f,                -2.22474487139f,       0.0f,
-             2.22474487139f,       1.0f,                -2.22474487139f,       0.0f,
-             3.0862664687972017f,  0.0f,                -1.1721513422464978f,  0.0f,
-             1.1721513422464978f,  0.0f,                -3.0862664687972017f,  0.0f,
-             2.22474487139f,      -1.0f,                 2.22474487139f,       0.0f,
-             2.22474487139f,       1.0f,                 2.22474487139f,       0.0f,
-             1.1721513422464978f,  0.0f,                 3.0862664687972017f,  0.0f,
-             3.0862664687972017f,  0.0f,                 1.1721513422464978f,  0.0f,
-        };
-        for (int i = 0; i < grad3.Length; i++)
-        {
+            -2.22474487139f, -2.22474487139f, -1.0f, 0.0f,
+            -2.22474487139f, -2.22474487139f, 1.0f, 0.0f,
+            -3.0862664687972017f, -1.1721513422464978f, 0.0f, 0.0f,
+            -1.1721513422464978f, -3.0862664687972017f, 0.0f, 0.0f,
+            -2.22474487139f, -1.0f, -2.22474487139f, 0.0f,
+            -2.22474487139f, 1.0f, -2.22474487139f, 0.0f,
+            -1.1721513422464978f, 0.0f, -3.0862664687972017f, 0.0f,
+            -3.0862664687972017f, 0.0f, -1.1721513422464978f, 0.0f,
+            -2.22474487139f, -1.0f, 2.22474487139f, 0.0f,
+            -2.22474487139f, 1.0f, 2.22474487139f, 0.0f,
+            -3.0862664687972017f, 0.0f, 1.1721513422464978f, 0.0f,
+            -1.1721513422464978f, 0.0f, 3.0862664687972017f, 0.0f,
+            -1.0f, 2.22474487139f, -2.22474487139f, 0.0f,
+            1.0f, 2.22474487139f, -2.22474487139f, 0.0f,
+            0.0f, 1.1721513422464978f, -3.0862664687972017f, 0.0f,
+            0.0f, 3.0862664687972017f, -1.1721513422464978f, 0.0f,
+            -1.0f, 2.22474487139f, 2.22474487139f, 0.0f,
+            1.0f, 2.22474487139f, 2.22474487139f, 0.0f,
+            0.0f, 3.0862664687972017f, 1.1721513422464978f, 0.0f,
+            0.0f, 1.1721513422464978f, 3.0862664687972017f, 0.0f,
+            2.22474487139f, -2.22474487139f, -1.0f, 0.0f,
+            2.22474487139f, -2.22474487139f, 1.0f, 0.0f,
+            1.1721513422464978f, -3.0862664687972017f, 0.0f, 0.0f,
+            3.0862664687972017f, -1.1721513422464978f, 0.0f, 0.0f,
+            2.22474487139f, -1.0f, -2.22474487139f, 0.0f,
+            2.22474487139f, 1.0f, -2.22474487139f, 0.0f,
+            3.0862664687972017f, 0.0f, -1.1721513422464978f, 0.0f,
+            1.1721513422464978f, 0.0f, -3.0862664687972017f, 0.0f,
+            2.22474487139f, -1.0f, 2.22474487139f, 0.0f,
+            2.22474487139f, 1.0f, 2.22474487139f, 0.0f,
+            1.1721513422464978f, 0.0f, 3.0862664687972017f, 0.0f,
+            3.0862664687972017f, 0.0f, 1.1721513422464978f, 0.0f
+        ];
+        for (int i = 0; i < grad3.Length; i++) {
             grad3[i] = (float)(grad3[i] / NORMALIZER_3D);
         }
-        for (int i = 0, j = 0; i < GRADIENTS_3D.Length; i++, j++)
-        {
+
+        for (int i = 0, j = 0; i < GRADIENTS_3D.Length; i++, j++) {
             if (j == grad3.Length) j = 0;
             GRADIENTS_3D[i] = grad3[j];
         }
 
         GRADIENTS_4D = new float[N_GRADS_4D * 4];
-        float[] grad4 = {
-            -0.6740059517812944f,   -0.3239847771997537f,   -0.3239847771997537f,    0.5794684678643381f,
-            -0.7504883828755602f,   -0.4004672082940195f,    0.15296486218853164f,   0.5029860367700724f,
-            -0.7504883828755602f,    0.15296486218853164f,  -0.4004672082940195f,    0.5029860367700724f,
-            -0.8828161875373585f,    0.08164729285680945f,   0.08164729285680945f,   0.4553054119602712f,
-            -0.4553054119602712f,   -0.08164729285680945f,  -0.08164729285680945f,   0.8828161875373585f,
-            -0.5029860367700724f,   -0.15296486218853164f,   0.4004672082940195f,    0.7504883828755602f,
-            -0.5029860367700724f,    0.4004672082940195f,   -0.15296486218853164f,   0.7504883828755602f,
-            -0.5794684678643381f,    0.3239847771997537f,    0.3239847771997537f,    0.6740059517812944f,
-            -0.6740059517812944f,   -0.3239847771997537f,    0.5794684678643381f,   -0.3239847771997537f,
-            -0.7504883828755602f,   -0.4004672082940195f,    0.5029860367700724f,    0.15296486218853164f,
-            -0.7504883828755602f,    0.15296486218853164f,   0.5029860367700724f,   -0.4004672082940195f,
-            -0.8828161875373585f,    0.08164729285680945f,   0.4553054119602712f,    0.08164729285680945f,
-            -0.4553054119602712f,   -0.08164729285680945f,   0.8828161875373585f,   -0.08164729285680945f,
-            -0.5029860367700724f,   -0.15296486218853164f,   0.7504883828755602f,    0.4004672082940195f,
-            -0.5029860367700724f,    0.4004672082940195f,    0.7504883828755602f,   -0.15296486218853164f,
-            -0.5794684678643381f,    0.3239847771997537f,    0.6740059517812944f,    0.3239847771997537f,
-            -0.6740059517812944f,    0.5794684678643381f,   -0.3239847771997537f,   -0.3239847771997537f,
-            -0.7504883828755602f,    0.5029860367700724f,   -0.4004672082940195f,    0.15296486218853164f,
-            -0.7504883828755602f,    0.5029860367700724f,    0.15296486218853164f,  -0.4004672082940195f,
-            -0.8828161875373585f,    0.4553054119602712f,    0.08164729285680945f,   0.08164729285680945f,
-            -0.4553054119602712f,    0.8828161875373585f,   -0.08164729285680945f,  -0.08164729285680945f,
-            -0.5029860367700724f,    0.7504883828755602f,   -0.15296486218853164f,   0.4004672082940195f,
-            -0.5029860367700724f,    0.7504883828755602f,    0.4004672082940195f,   -0.15296486218853164f,
-            -0.5794684678643381f,    0.6740059517812944f,    0.3239847771997537f,    0.3239847771997537f,
-             0.5794684678643381f,   -0.6740059517812944f,   -0.3239847771997537f,   -0.3239847771997537f,
-             0.5029860367700724f,   -0.7504883828755602f,   -0.4004672082940195f,    0.15296486218853164f,
-             0.5029860367700724f,   -0.7504883828755602f,    0.15296486218853164f,  -0.4004672082940195f,
-             0.4553054119602712f,   -0.8828161875373585f,    0.08164729285680945f,   0.08164729285680945f,
-             0.8828161875373585f,   -0.4553054119602712f,   -0.08164729285680945f,  -0.08164729285680945f,
-             0.7504883828755602f,   -0.5029860367700724f,   -0.15296486218853164f,   0.4004672082940195f,
-             0.7504883828755602f,   -0.5029860367700724f,    0.4004672082940195f,   -0.15296486218853164f,
-             0.6740059517812944f,   -0.5794684678643381f,    0.3239847771997537f,    0.3239847771997537f,
+        float[] grad4 = [
+            -0.6740059517812944f, -0.3239847771997537f, -0.3239847771997537f, 0.5794684678643381f,
+            -0.7504883828755602f, -0.4004672082940195f, 0.15296486218853164f, 0.5029860367700724f,
+            -0.7504883828755602f, 0.15296486218853164f, -0.4004672082940195f, 0.5029860367700724f,
+            -0.8828161875373585f, 0.08164729285680945f, 0.08164729285680945f, 0.4553054119602712f,
+            -0.4553054119602712f, -0.08164729285680945f, -0.08164729285680945f, 0.8828161875373585f,
+            -0.5029860367700724f, -0.15296486218853164f, 0.4004672082940195f, 0.7504883828755602f,
+            -0.5029860367700724f, 0.4004672082940195f, -0.15296486218853164f, 0.7504883828755602f,
+            -0.5794684678643381f, 0.3239847771997537f, 0.3239847771997537f, 0.6740059517812944f,
+            -0.6740059517812944f, -0.3239847771997537f, 0.5794684678643381f, -0.3239847771997537f,
+            -0.7504883828755602f, -0.4004672082940195f, 0.5029860367700724f, 0.15296486218853164f,
+            -0.7504883828755602f, 0.15296486218853164f, 0.5029860367700724f, -0.4004672082940195f,
+            -0.8828161875373585f, 0.08164729285680945f, 0.4553054119602712f, 0.08164729285680945f,
+            -0.4553054119602712f, -0.08164729285680945f, 0.8828161875373585f, -0.08164729285680945f,
+            -0.5029860367700724f, -0.15296486218853164f, 0.7504883828755602f, 0.4004672082940195f,
+            -0.5029860367700724f, 0.4004672082940195f, 0.7504883828755602f, -0.15296486218853164f,
+            -0.5794684678643381f, 0.3239847771997537f, 0.6740059517812944f, 0.3239847771997537f,
+            -0.6740059517812944f, 0.5794684678643381f, -0.3239847771997537f, -0.3239847771997537f,
+            -0.7504883828755602f, 0.5029860367700724f, -0.4004672082940195f, 0.15296486218853164f,
+            -0.7504883828755602f, 0.5029860367700724f, 0.15296486218853164f, -0.4004672082940195f,
+            -0.8828161875373585f, 0.4553054119602712f, 0.08164729285680945f, 0.08164729285680945f,
+            -0.4553054119602712f, 0.8828161875373585f, -0.08164729285680945f, -0.08164729285680945f,
+            -0.5029860367700724f, 0.7504883828755602f, -0.15296486218853164f, 0.4004672082940195f,
+            -0.5029860367700724f, 0.7504883828755602f, 0.4004672082940195f, -0.15296486218853164f,
+            -0.5794684678643381f, 0.6740059517812944f, 0.3239847771997537f, 0.3239847771997537f,
+            0.5794684678643381f, -0.6740059517812944f, -0.3239847771997537f, -0.3239847771997537f,
+            0.5029860367700724f, -0.7504883828755602f, -0.4004672082940195f, 0.15296486218853164f,
+            0.5029860367700724f, -0.7504883828755602f, 0.15296486218853164f, -0.4004672082940195f,
+            0.4553054119602712f, -0.8828161875373585f, 0.08164729285680945f, 0.08164729285680945f,
+            0.8828161875373585f, -0.4553054119602712f, -0.08164729285680945f, -0.08164729285680945f,
+            0.7504883828755602f, -0.5029860367700724f, -0.15296486218853164f, 0.4004672082940195f,
+            0.7504883828755602f, -0.5029860367700724f, 0.4004672082940195f, -0.15296486218853164f,
+            0.6740059517812944f, -0.5794684678643381f, 0.3239847771997537f, 0.3239847771997537f,
             //------------------------------------------------------------------------------------------//
-            -0.753341017856078f,    -0.37968289875261624f,  -0.37968289875261624f,  -0.37968289875261624f,
-            -0.7821684431180708f,   -0.4321472685365301f,   -0.4321472685365301f,    0.12128480194602098f,
-            -0.7821684431180708f,   -0.4321472685365301f,    0.12128480194602098f,  -0.4321472685365301f,
-            -0.7821684431180708f,    0.12128480194602098f,  -0.4321472685365301f,   -0.4321472685365301f,
-            -0.8586508742123365f,   -0.508629699630796f,     0.044802370851755174f,  0.044802370851755174f,
-            -0.8586508742123365f,    0.044802370851755174f, -0.508629699630796f,     0.044802370851755174f,
-            -0.8586508742123365f,    0.044802370851755174f,  0.044802370851755174f, -0.508629699630796f,
-            -0.9982828964265062f,   -0.03381941603233842f,  -0.03381941603233842f,  -0.03381941603233842f,
-            -0.37968289875261624f,  -0.753341017856078f,    -0.37968289875261624f,  -0.37968289875261624f,
-            -0.4321472685365301f,   -0.7821684431180708f,   -0.4321472685365301f,    0.12128480194602098f,
-            -0.4321472685365301f,   -0.7821684431180708f,    0.12128480194602098f,  -0.4321472685365301f,
-             0.12128480194602098f,  -0.7821684431180708f,   -0.4321472685365301f,   -0.4321472685365301f,
-            -0.508629699630796f,    -0.8586508742123365f,    0.044802370851755174f,  0.044802370851755174f,
-             0.044802370851755174f, -0.8586508742123365f,   -0.508629699630796f,     0.044802370851755174f,
-             0.044802370851755174f, -0.8586508742123365f,    0.044802370851755174f, -0.508629699630796f,
-            -0.03381941603233842f,  -0.9982828964265062f,   -0.03381941603233842f,  -0.03381941603233842f,
-            -0.37968289875261624f,  -0.37968289875261624f,  -0.753341017856078f,    -0.37968289875261624f,
-            -0.4321472685365301f,   -0.4321472685365301f,   -0.7821684431180708f,    0.12128480194602098f,
-            -0.4321472685365301f,    0.12128480194602098f,  -0.7821684431180708f,   -0.4321472685365301f,
-             0.12128480194602098f,  -0.4321472685365301f,   -0.7821684431180708f,   -0.4321472685365301f,
-            -0.508629699630796f,     0.044802370851755174f, -0.8586508742123365f,    0.044802370851755174f,
-             0.044802370851755174f, -0.508629699630796f,    -0.8586508742123365f,    0.044802370851755174f,
-             0.044802370851755174f,  0.044802370851755174f, -0.8586508742123365f,   -0.508629699630796f,
-            -0.03381941603233842f,  -0.03381941603233842f,  -0.9982828964265062f,   -0.03381941603233842f,
-            -0.37968289875261624f,  -0.37968289875261624f,  -0.37968289875261624f,  -0.753341017856078f,
-            -0.4321472685365301f,   -0.4321472685365301f,    0.12128480194602098f,  -0.7821684431180708f,
-            -0.4321472685365301f,    0.12128480194602098f,  -0.4321472685365301f,   -0.7821684431180708f,
-             0.12128480194602098f,  -0.4321472685365301f,   -0.4321472685365301f,   -0.7821684431180708f,
-            -0.508629699630796f,     0.044802370851755174f,  0.044802370851755174f, -0.8586508742123365f,
-             0.044802370851755174f, -0.508629699630796f,     0.044802370851755174f, -0.8586508742123365f,
-             0.044802370851755174f,  0.044802370851755174f, -0.508629699630796f,    -0.8586508742123365f,
-            -0.03381941603233842f,  -0.03381941603233842f,  -0.03381941603233842f,  -0.9982828964265062f,
-            -0.3239847771997537f,   -0.6740059517812944f,   -0.3239847771997537f,    0.5794684678643381f,
-            -0.4004672082940195f,   -0.7504883828755602f,    0.15296486218853164f,   0.5029860367700724f,
-             0.15296486218853164f,  -0.7504883828755602f,   -0.4004672082940195f,    0.5029860367700724f,
-             0.08164729285680945f,  -0.8828161875373585f,    0.08164729285680945f,   0.4553054119602712f,
-            -0.08164729285680945f,  -0.4553054119602712f,   -0.08164729285680945f,   0.8828161875373585f,
-            -0.15296486218853164f,  -0.5029860367700724f,    0.4004672082940195f,    0.7504883828755602f,
-             0.4004672082940195f,   -0.5029860367700724f,   -0.15296486218853164f,   0.7504883828755602f,
-             0.3239847771997537f,   -0.5794684678643381f,    0.3239847771997537f,    0.6740059517812944f,
-            -0.3239847771997537f,   -0.3239847771997537f,   -0.6740059517812944f,    0.5794684678643381f,
-            -0.4004672082940195f,    0.15296486218853164f,  -0.7504883828755602f,    0.5029860367700724f,
-             0.15296486218853164f,  -0.4004672082940195f,   -0.7504883828755602f,    0.5029860367700724f,
-             0.08164729285680945f,   0.08164729285680945f,  -0.8828161875373585f,    0.4553054119602712f,
-            -0.08164729285680945f,  -0.08164729285680945f,  -0.4553054119602712f,    0.8828161875373585f,
-            -0.15296486218853164f,   0.4004672082940195f,   -0.5029860367700724f,    0.7504883828755602f,
-             0.4004672082940195f,   -0.15296486218853164f,  -0.5029860367700724f,    0.7504883828755602f,
-             0.3239847771997537f,    0.3239847771997537f,   -0.5794684678643381f,    0.6740059517812944f,
-            -0.3239847771997537f,   -0.6740059517812944f,    0.5794684678643381f,   -0.3239847771997537f,
-            -0.4004672082940195f,   -0.7504883828755602f,    0.5029860367700724f,    0.15296486218853164f,
-             0.15296486218853164f,  -0.7504883828755602f,    0.5029860367700724f,   -0.4004672082940195f,
-             0.08164729285680945f,  -0.8828161875373585f,    0.4553054119602712f,    0.08164729285680945f,
-            -0.08164729285680945f,  -0.4553054119602712f,    0.8828161875373585f,   -0.08164729285680945f,
-            -0.15296486218853164f,  -0.5029860367700724f,    0.7504883828755602f,    0.4004672082940195f,
-             0.4004672082940195f,   -0.5029860367700724f,    0.7504883828755602f,   -0.15296486218853164f,
-             0.3239847771997537f,   -0.5794684678643381f,    0.6740059517812944f,    0.3239847771997537f,
-            -0.3239847771997537f,   -0.3239847771997537f,    0.5794684678643381f,   -0.6740059517812944f,
-            -0.4004672082940195f,    0.15296486218853164f,   0.5029860367700724f,   -0.7504883828755602f,
-             0.15296486218853164f,  -0.4004672082940195f,    0.5029860367700724f,   -0.7504883828755602f,
-             0.08164729285680945f,   0.08164729285680945f,   0.4553054119602712f,   -0.8828161875373585f,
-            -0.08164729285680945f,  -0.08164729285680945f,   0.8828161875373585f,   -0.4553054119602712f,
-            -0.15296486218853164f,   0.4004672082940195f,    0.7504883828755602f,   -0.5029860367700724f,
-             0.4004672082940195f,   -0.15296486218853164f,   0.7504883828755602f,   -0.5029860367700724f,
-             0.3239847771997537f,    0.3239847771997537f,    0.6740059517812944f,   -0.5794684678643381f,
-            -0.3239847771997537f,    0.5794684678643381f,   -0.6740059517812944f,   -0.3239847771997537f,
-            -0.4004672082940195f,    0.5029860367700724f,   -0.7504883828755602f,    0.15296486218853164f,
-             0.15296486218853164f,   0.5029860367700724f,   -0.7504883828755602f,   -0.4004672082940195f,
-             0.08164729285680945f,   0.4553054119602712f,   -0.8828161875373585f,    0.08164729285680945f,
-            -0.08164729285680945f,   0.8828161875373585f,   -0.4553054119602712f,   -0.08164729285680945f,
-            -0.15296486218853164f,   0.7504883828755602f,   -0.5029860367700724f,    0.4004672082940195f,
-             0.4004672082940195f,    0.7504883828755602f,   -0.5029860367700724f,   -0.15296486218853164f,
-             0.3239847771997537f,    0.6740059517812944f,   -0.5794684678643381f,    0.3239847771997537f,
-            -0.3239847771997537f,    0.5794684678643381f,   -0.3239847771997537f,   -0.6740059517812944f,
-            -0.4004672082940195f,    0.5029860367700724f,    0.15296486218853164f,  -0.7504883828755602f,
-             0.15296486218853164f,   0.5029860367700724f,   -0.4004672082940195f,   -0.7504883828755602f,
-             0.08164729285680945f,   0.4553054119602712f,    0.08164729285680945f,  -0.8828161875373585f,
-            -0.08164729285680945f,   0.8828161875373585f,   -0.08164729285680945f,  -0.4553054119602712f,
-            -0.15296486218853164f,   0.7504883828755602f,    0.4004672082940195f,   -0.5029860367700724f,
-             0.4004672082940195f,    0.7504883828755602f,   -0.15296486218853164f,  -0.5029860367700724f,
-             0.3239847771997537f,    0.6740059517812944f,    0.3239847771997537f,   -0.5794684678643381f,
-             0.5794684678643381f,   -0.3239847771997537f,   -0.6740059517812944f,   -0.3239847771997537f,
-             0.5029860367700724f,   -0.4004672082940195f,   -0.7504883828755602f,    0.15296486218853164f,
-             0.5029860367700724f,    0.15296486218853164f,  -0.7504883828755602f,   -0.4004672082940195f,
-             0.4553054119602712f,    0.08164729285680945f,  -0.8828161875373585f,    0.08164729285680945f,
-             0.8828161875373585f,   -0.08164729285680945f,  -0.4553054119602712f,   -0.08164729285680945f,
-             0.7504883828755602f,   -0.15296486218853164f,  -0.5029860367700724f,    0.4004672082940195f,
-             0.7504883828755602f,    0.4004672082940195f,   -0.5029860367700724f,   -0.15296486218853164f,
-             0.6740059517812944f,    0.3239847771997537f,   -0.5794684678643381f,    0.3239847771997537f,
-             0.5794684678643381f,   -0.3239847771997537f,   -0.3239847771997537f,   -0.6740059517812944f,
-             0.5029860367700724f,   -0.4004672082940195f,    0.15296486218853164f,  -0.7504883828755602f,
-             0.5029860367700724f,    0.15296486218853164f,  -0.4004672082940195f,   -0.7504883828755602f,
-             0.4553054119602712f,    0.08164729285680945f,   0.08164729285680945f,  -0.8828161875373585f,
-             0.8828161875373585f,   -0.08164729285680945f,  -0.08164729285680945f,  -0.4553054119602712f,
-             0.7504883828755602f,   -0.15296486218853164f,   0.4004672082940195f,   -0.5029860367700724f,
-             0.7504883828755602f,    0.4004672082940195f,   -0.15296486218853164f,  -0.5029860367700724f,
-             0.6740059517812944f,    0.3239847771997537f,    0.3239847771997537f,   -0.5794684678643381f,
-             0.03381941603233842f,   0.03381941603233842f,   0.03381941603233842f,   0.9982828964265062f,
-            -0.044802370851755174f, -0.044802370851755174f,  0.508629699630796f,     0.8586508742123365f,
-            -0.044802370851755174f,  0.508629699630796f,    -0.044802370851755174f,  0.8586508742123365f,
-            -0.12128480194602098f,   0.4321472685365301f,    0.4321472685365301f,    0.7821684431180708f,
-             0.508629699630796f,    -0.044802370851755174f, -0.044802370851755174f,  0.8586508742123365f,
-             0.4321472685365301f,   -0.12128480194602098f,   0.4321472685365301f,    0.7821684431180708f,
-             0.4321472685365301f,    0.4321472685365301f,   -0.12128480194602098f,   0.7821684431180708f,
-             0.37968289875261624f,   0.37968289875261624f,   0.37968289875261624f,   0.753341017856078f,
-             0.03381941603233842f,   0.03381941603233842f,   0.9982828964265062f,    0.03381941603233842f,
-            -0.044802370851755174f,  0.044802370851755174f,  0.8586508742123365f,    0.508629699630796f,
-            -0.044802370851755174f,  0.508629699630796f,     0.8586508742123365f,   -0.044802370851755174f,
-            -0.12128480194602098f,   0.4321472685365301f,    0.7821684431180708f,    0.4321472685365301f,
-             0.508629699630796f,    -0.044802370851755174f,  0.8586508742123365f,   -0.044802370851755174f,
-             0.4321472685365301f,   -0.12128480194602098f,   0.7821684431180708f,    0.4321472685365301f,
-             0.4321472685365301f,    0.4321472685365301f,    0.7821684431180708f,   -0.12128480194602098f,
-             0.37968289875261624f,   0.37968289875261624f,   0.753341017856078f,     0.37968289875261624f,
-             0.03381941603233842f,   0.9982828964265062f,    0.03381941603233842f,   0.03381941603233842f,
-            -0.044802370851755174f,  0.8586508742123365f,   -0.044802370851755174f,  0.508629699630796f,
-            -0.044802370851755174f,  0.8586508742123365f,    0.508629699630796f,    -0.044802370851755174f,
-            -0.12128480194602098f,   0.7821684431180708f,    0.4321472685365301f,    0.4321472685365301f,
-             0.508629699630796f,     0.8586508742123365f,   -0.044802370851755174f, -0.044802370851755174f,
-             0.4321472685365301f,    0.7821684431180708f,   -0.12128480194602098f,   0.4321472685365301f,
-             0.4321472685365301f,    0.7821684431180708f,    0.4321472685365301f,   -0.12128480194602098f,
-             0.37968289875261624f,   0.753341017856078f,     0.37968289875261624f,   0.37968289875261624f,
-             0.9982828964265062f,    0.03381941603233842f,   0.03381941603233842f,   0.03381941603233842f,
-             0.8586508742123365f,   -0.044802370851755174f, -0.044802370851755174f,  0.508629699630796f,
-             0.8586508742123365f,   -0.044802370851755174f,  0.508629699630796f,    -0.044802370851755174f,
-             0.7821684431180708f,   -0.12128480194602098f,   0.4321472685365301f,    0.4321472685365301f,
-             0.8586508742123365f,    0.508629699630796f,    -0.044802370851755174f, -0.044802370851755174f,
-             0.7821684431180708f,    0.4321472685365301f,   -0.12128480194602098f,   0.4321472685365301f,
-             0.7821684431180708f,    0.4321472685365301f,    0.4321472685365301f,   -0.12128480194602098f,
-             0.753341017856078f,     0.37968289875261624f,   0.37968289875261624f,   0.37968289875261624f,
-        };
-        for (int i = 0; i < grad4.Length; i++)
-        {
+            -0.753341017856078f, -0.37968289875261624f, -0.37968289875261624f, -0.37968289875261624f,
+            -0.7821684431180708f, -0.4321472685365301f, -0.4321472685365301f, 0.12128480194602098f,
+            -0.7821684431180708f, -0.4321472685365301f, 0.12128480194602098f, -0.4321472685365301f,
+            -0.7821684431180708f, 0.12128480194602098f, -0.4321472685365301f, -0.4321472685365301f,
+            -0.8586508742123365f, -0.508629699630796f, 0.044802370851755174f, 0.044802370851755174f,
+            -0.8586508742123365f, 0.044802370851755174f, -0.508629699630796f, 0.044802370851755174f,
+            -0.8586508742123365f, 0.044802370851755174f, 0.044802370851755174f, -0.508629699630796f,
+            -0.9982828964265062f, -0.03381941603233842f, -0.03381941603233842f, -0.03381941603233842f,
+            -0.37968289875261624f, -0.753341017856078f, -0.37968289875261624f, -0.37968289875261624f,
+            -0.4321472685365301f, -0.7821684431180708f, -0.4321472685365301f, 0.12128480194602098f,
+            -0.4321472685365301f, -0.7821684431180708f, 0.12128480194602098f, -0.4321472685365301f,
+            0.12128480194602098f, -0.7821684431180708f, -0.4321472685365301f, -0.4321472685365301f,
+            -0.508629699630796f, -0.8586508742123365f, 0.044802370851755174f, 0.044802370851755174f,
+            0.044802370851755174f, -0.8586508742123365f, -0.508629699630796f, 0.044802370851755174f,
+            0.044802370851755174f, -0.8586508742123365f, 0.044802370851755174f, -0.508629699630796f,
+            -0.03381941603233842f, -0.9982828964265062f, -0.03381941603233842f, -0.03381941603233842f,
+            -0.37968289875261624f, -0.37968289875261624f, -0.753341017856078f, -0.37968289875261624f,
+            -0.4321472685365301f, -0.4321472685365301f, -0.7821684431180708f, 0.12128480194602098f,
+            -0.4321472685365301f, 0.12128480194602098f, -0.7821684431180708f, -0.4321472685365301f,
+            0.12128480194602098f, -0.4321472685365301f, -0.7821684431180708f, -0.4321472685365301f,
+            -0.508629699630796f, 0.044802370851755174f, -0.8586508742123365f, 0.044802370851755174f,
+            0.044802370851755174f, -0.508629699630796f, -0.8586508742123365f, 0.044802370851755174f,
+            0.044802370851755174f, 0.044802370851755174f, -0.8586508742123365f, -0.508629699630796f,
+            -0.03381941603233842f, -0.03381941603233842f, -0.9982828964265062f, -0.03381941603233842f,
+            -0.37968289875261624f, -0.37968289875261624f, -0.37968289875261624f, -0.753341017856078f,
+            -0.4321472685365301f, -0.4321472685365301f, 0.12128480194602098f, -0.7821684431180708f,
+            -0.4321472685365301f, 0.12128480194602098f, -0.4321472685365301f, -0.7821684431180708f,
+            0.12128480194602098f, -0.4321472685365301f, -0.4321472685365301f, -0.7821684431180708f,
+            -0.508629699630796f, 0.044802370851755174f, 0.044802370851755174f, -0.8586508742123365f,
+            0.044802370851755174f, -0.508629699630796f, 0.044802370851755174f, -0.8586508742123365f,
+            0.044802370851755174f, 0.044802370851755174f, -0.508629699630796f, -0.8586508742123365f,
+            -0.03381941603233842f, -0.03381941603233842f, -0.03381941603233842f, -0.9982828964265062f,
+            -0.3239847771997537f, -0.6740059517812944f, -0.3239847771997537f, 0.5794684678643381f,
+            -0.4004672082940195f, -0.7504883828755602f, 0.15296486218853164f, 0.5029860367700724f,
+            0.15296486218853164f, -0.7504883828755602f, -0.4004672082940195f, 0.5029860367700724f,
+            0.08164729285680945f, -0.8828161875373585f, 0.08164729285680945f, 0.4553054119602712f,
+            -0.08164729285680945f, -0.4553054119602712f, -0.08164729285680945f, 0.8828161875373585f,
+            -0.15296486218853164f, -0.5029860367700724f, 0.4004672082940195f, 0.7504883828755602f,
+            0.4004672082940195f, -0.5029860367700724f, -0.15296486218853164f, 0.7504883828755602f,
+            0.3239847771997537f, -0.5794684678643381f, 0.3239847771997537f, 0.6740059517812944f,
+            -0.3239847771997537f, -0.3239847771997537f, -0.6740059517812944f, 0.5794684678643381f,
+            -0.4004672082940195f, 0.15296486218853164f, -0.7504883828755602f, 0.5029860367700724f,
+            0.15296486218853164f, -0.4004672082940195f, -0.7504883828755602f, 0.5029860367700724f,
+            0.08164729285680945f, 0.08164729285680945f, -0.8828161875373585f, 0.4553054119602712f,
+            -0.08164729285680945f, -0.08164729285680945f, -0.4553054119602712f, 0.8828161875373585f,
+            -0.15296486218853164f, 0.4004672082940195f, -0.5029860367700724f, 0.7504883828755602f,
+            0.4004672082940195f, -0.15296486218853164f, -0.5029860367700724f, 0.7504883828755602f,
+            0.3239847771997537f, 0.3239847771997537f, -0.5794684678643381f, 0.6740059517812944f,
+            -0.3239847771997537f, -0.6740059517812944f, 0.5794684678643381f, -0.3239847771997537f,
+            -0.4004672082940195f, -0.7504883828755602f, 0.5029860367700724f, 0.15296486218853164f,
+            0.15296486218853164f, -0.7504883828755602f, 0.5029860367700724f, -0.4004672082940195f,
+            0.08164729285680945f, -0.8828161875373585f, 0.4553054119602712f, 0.08164729285680945f,
+            -0.08164729285680945f, -0.4553054119602712f, 0.8828161875373585f, -0.08164729285680945f,
+            -0.15296486218853164f, -0.5029860367700724f, 0.7504883828755602f, 0.4004672082940195f,
+            0.4004672082940195f, -0.5029860367700724f, 0.7504883828755602f, -0.15296486218853164f,
+            0.3239847771997537f, -0.5794684678643381f, 0.6740059517812944f, 0.3239847771997537f,
+            -0.3239847771997537f, -0.3239847771997537f, 0.5794684678643381f, -0.6740059517812944f,
+            -0.4004672082940195f, 0.15296486218853164f, 0.5029860367700724f, -0.7504883828755602f,
+            0.15296486218853164f, -0.4004672082940195f, 0.5029860367700724f, -0.7504883828755602f,
+            0.08164729285680945f, 0.08164729285680945f, 0.4553054119602712f, -0.8828161875373585f,
+            -0.08164729285680945f, -0.08164729285680945f, 0.8828161875373585f, -0.4553054119602712f,
+            -0.15296486218853164f, 0.4004672082940195f, 0.7504883828755602f, -0.5029860367700724f,
+            0.4004672082940195f, -0.15296486218853164f, 0.7504883828755602f, -0.5029860367700724f,
+            0.3239847771997537f, 0.3239847771997537f, 0.6740059517812944f, -0.5794684678643381f,
+            -0.3239847771997537f, 0.5794684678643381f, -0.6740059517812944f, -0.3239847771997537f,
+            -0.4004672082940195f, 0.5029860367700724f, -0.7504883828755602f, 0.15296486218853164f,
+            0.15296486218853164f, 0.5029860367700724f, -0.7504883828755602f, -0.4004672082940195f,
+            0.08164729285680945f, 0.4553054119602712f, -0.8828161875373585f, 0.08164729285680945f,
+            -0.08164729285680945f, 0.8828161875373585f, -0.4553054119602712f, -0.08164729285680945f,
+            -0.15296486218853164f, 0.7504883828755602f, -0.5029860367700724f, 0.4004672082940195f,
+            0.4004672082940195f, 0.7504883828755602f, -0.5029860367700724f, -0.15296486218853164f,
+            0.3239847771997537f, 0.6740059517812944f, -0.5794684678643381f, 0.3239847771997537f,
+            -0.3239847771997537f, 0.5794684678643381f, -0.3239847771997537f, -0.6740059517812944f,
+            -0.4004672082940195f, 0.5029860367700724f, 0.15296486218853164f, -0.7504883828755602f,
+            0.15296486218853164f, 0.5029860367700724f, -0.4004672082940195f, -0.7504883828755602f,
+            0.08164729285680945f, 0.4553054119602712f, 0.08164729285680945f, -0.8828161875373585f,
+            -0.08164729285680945f, 0.8828161875373585f, -0.08164729285680945f, -0.4553054119602712f,
+            -0.15296486218853164f, 0.7504883828755602f, 0.4004672082940195f, -0.5029860367700724f,
+            0.4004672082940195f, 0.7504883828755602f, -0.15296486218853164f, -0.5029860367700724f,
+            0.3239847771997537f, 0.6740059517812944f, 0.3239847771997537f, -0.5794684678643381f,
+            0.5794684678643381f, -0.3239847771997537f, -0.6740059517812944f, -0.3239847771997537f,
+            0.5029860367700724f, -0.4004672082940195f, -0.7504883828755602f, 0.15296486218853164f,
+            0.5029860367700724f, 0.15296486218853164f, -0.7504883828755602f, -0.4004672082940195f,
+            0.4553054119602712f, 0.08164729285680945f, -0.8828161875373585f, 0.08164729285680945f,
+            0.8828161875373585f, -0.08164729285680945f, -0.4553054119602712f, -0.08164729285680945f,
+            0.7504883828755602f, -0.15296486218853164f, -0.5029860367700724f, 0.4004672082940195f,
+            0.7504883828755602f, 0.4004672082940195f, -0.5029860367700724f, -0.15296486218853164f,
+            0.6740059517812944f, 0.3239847771997537f, -0.5794684678643381f, 0.3239847771997537f,
+            0.5794684678643381f, -0.3239847771997537f, -0.3239847771997537f, -0.6740059517812944f,
+            0.5029860367700724f, -0.4004672082940195f, 0.15296486218853164f, -0.7504883828755602f,
+            0.5029860367700724f, 0.15296486218853164f, -0.4004672082940195f, -0.7504883828755602f,
+            0.4553054119602712f, 0.08164729285680945f, 0.08164729285680945f, -0.8828161875373585f,
+            0.8828161875373585f, -0.08164729285680945f, -0.08164729285680945f, -0.4553054119602712f,
+            0.7504883828755602f, -0.15296486218853164f, 0.4004672082940195f, -0.5029860367700724f,
+            0.7504883828755602f, 0.4004672082940195f, -0.15296486218853164f, -0.5029860367700724f,
+            0.6740059517812944f, 0.3239847771997537f, 0.3239847771997537f, -0.5794684678643381f,
+            0.03381941603233842f, 0.03381941603233842f, 0.03381941603233842f, 0.9982828964265062f,
+            -0.044802370851755174f, -0.044802370851755174f, 0.508629699630796f, 0.8586508742123365f,
+            -0.044802370851755174f, 0.508629699630796f, -0.044802370851755174f, 0.8586508742123365f,
+            -0.12128480194602098f, 0.4321472685365301f, 0.4321472685365301f, 0.7821684431180708f,
+            0.508629699630796f, -0.044802370851755174f, -0.044802370851755174f, 0.8586508742123365f,
+            0.4321472685365301f, -0.12128480194602098f, 0.4321472685365301f, 0.7821684431180708f,
+            0.4321472685365301f, 0.4321472685365301f, -0.12128480194602098f, 0.7821684431180708f,
+            0.37968289875261624f, 0.37968289875261624f, 0.37968289875261624f, 0.753341017856078f,
+            0.03381941603233842f, 0.03381941603233842f, 0.9982828964265062f, 0.03381941603233842f,
+            -0.044802370851755174f, 0.044802370851755174f, 0.8586508742123365f, 0.508629699630796f,
+            -0.044802370851755174f, 0.508629699630796f, 0.8586508742123365f, -0.044802370851755174f,
+            -0.12128480194602098f, 0.4321472685365301f, 0.7821684431180708f, 0.4321472685365301f,
+            0.508629699630796f, -0.044802370851755174f, 0.8586508742123365f, -0.044802370851755174f,
+            0.4321472685365301f, -0.12128480194602098f, 0.7821684431180708f, 0.4321472685365301f,
+            0.4321472685365301f, 0.4321472685365301f, 0.7821684431180708f, -0.12128480194602098f,
+            0.37968289875261624f, 0.37968289875261624f, 0.753341017856078f, 0.37968289875261624f,
+            0.03381941603233842f, 0.9982828964265062f, 0.03381941603233842f, 0.03381941603233842f,
+            -0.044802370851755174f, 0.8586508742123365f, -0.044802370851755174f, 0.508629699630796f,
+            -0.044802370851755174f, 0.8586508742123365f, 0.508629699630796f, -0.044802370851755174f,
+            -0.12128480194602098f, 0.7821684431180708f, 0.4321472685365301f, 0.4321472685365301f,
+            0.508629699630796f, 0.8586508742123365f, -0.044802370851755174f, -0.044802370851755174f,
+            0.4321472685365301f, 0.7821684431180708f, -0.12128480194602098f, 0.4321472685365301f,
+            0.4321472685365301f, 0.7821684431180708f, 0.4321472685365301f, -0.12128480194602098f,
+            0.37968289875261624f, 0.753341017856078f, 0.37968289875261624f, 0.37968289875261624f,
+            0.9982828964265062f, 0.03381941603233842f, 0.03381941603233842f, 0.03381941603233842f,
+            0.8586508742123365f, -0.044802370851755174f, -0.044802370851755174f, 0.508629699630796f,
+            0.8586508742123365f, -0.044802370851755174f, 0.508629699630796f, -0.044802370851755174f,
+            0.7821684431180708f, -0.12128480194602098f, 0.4321472685365301f, 0.4321472685365301f,
+            0.8586508742123365f, 0.508629699630796f, -0.044802370851755174f, -0.044802370851755174f,
+            0.7821684431180708f, 0.4321472685365301f, -0.12128480194602098f, 0.4321472685365301f,
+            0.7821684431180708f, 0.4321472685365301f, 0.4321472685365301f, -0.12128480194602098f,
+            0.753341017856078f, 0.37968289875261624f, 0.37968289875261624f, 0.37968289875261624f
+        ];
+        for (int i = 0; i < grad4.Length; i++) {
             grad4[i] = (float)(grad4[i] / NORMALIZER_4D);
         }
-        for (int i = 0, j = 0; i < GRADIENTS_4D.Length; i++, j++)
-        {
+
+        for (int i = 0, j = 0; i < GRADIENTS_4D.Length; i++, j++) {
             if (j == grad4.Length) j = 0;
             GRADIENTS_4D[i] = grad4[j];
         }

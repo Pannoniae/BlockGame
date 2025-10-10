@@ -34,6 +34,10 @@ public sealed partial class WorldRenderer {
         //idc.fogColor(horizonColor.toVec4());
         //idc.setFogType(FogType.Exp2);
         //idc.setFogDensity(0.02f);
+
+        // idk why this is needed! but otherwise it spazzes out when switching light level
+        idc.setColour(Color.White);
+
         idc.enableFog(true);
         idc.fogColor(horizonColour.toVec4());
         idc.setFogType(FogType.Linear);
@@ -212,7 +216,6 @@ public sealed partial class WorldRenderer {
             return; // day
         }
 
-        var starColour = new Color(1f, 1f, 1f, starAlpha);
         const float starSize = 0.15f;
 
         float continuousTime = dayPercent * 360;
@@ -241,11 +244,17 @@ public sealed partial class WorldRenderer {
             var v3 = starPos + (right + up) * starSize;
             var v4 = starPos + (-right + up) * starSize;
 
+            // generate deterministic colour per star
+            var hash = XHash.hash(i);
+            var colourHash = XHash.hash(hash); // second hash for colour variation
+            
+            float r = 0.7f + (((colourHash >> 0) & 0xFF) / 255f) * 0.3f;
+            float g = 0.7f + (((colourHash >> 8) & 0xFF) / 255f) * 0.3f;
+            float b = 0.7f + (((colourHash >> 16) & 0xFF) / 255f) * 0.3f;
+
             // generate flicker
             // so we do it per star
             var time = world.worldTick;
-
-            var hash = XHash.hash(i);
 
             const int TOTAL = 5000;
             const int THRESHOLD = 4950;
@@ -265,7 +274,7 @@ public sealed partial class WorldRenderer {
             var pc3 = pc2 / DIVIDER; // 0 to 0.3ish???
             var flicker = pc > THRESHOLD ? pc3 : 0f;
 
-            var sc = starColour * (1 - flicker);
+            var sc = new Color(r * (1 - flicker), g * (1 - flicker), b * (1 - flicker), starAlpha);
 
 
             idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, sc));

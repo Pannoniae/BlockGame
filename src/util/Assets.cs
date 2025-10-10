@@ -26,7 +26,7 @@ public partial class Assets {
     public FileStream open(string path) {
         var fullPath = getPath(path);
 
-        Console.Out.WriteLine(fullPath);
+        //Console.Out.WriteLine(fullPath);
         if (!File.Exists(fullPath)) {
             throw new FileNotFoundException("Asset not found: " + fullPath);
         }

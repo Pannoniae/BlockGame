@@ -1442,11 +1442,11 @@ public static class SoundMaterialExtensions {
             SoundMaterial.GRASS => "step",
             SoundMaterial.DIRT => "step",
             SoundMaterial.SAND => "step",
-            SoundMaterial.WOOD => "step",
+            SoundMaterial.WOOD => "step/wood",
             SoundMaterial.STONE => "step",
             SoundMaterial.METAL => "step",
             SoundMaterial.GLASS => "step",
-            SoundMaterial.ORGANIC => "step",
+            SoundMaterial.ORGANIC => "step/grass",
             _ => "step"
         };
 
@@ -1455,11 +1455,23 @@ public static class SoundMaterialExtensions {
             SoundMaterial.STONE => "break/stone",
             SoundMaterial.SAND => "break/sand",
             SoundMaterial.METAL => "break/stone",
-            SoundMaterial.DIRT => "break/sand",
+            SoundMaterial.DIRT => "break/grass",
             SoundMaterial.GRASS => "break/sand",
             SoundMaterial.GLASS => "break/stone",
-            SoundMaterial.ORGANIC => "break/wood",
-            _ => "break"
+            SoundMaterial.ORGANIC => "break/grass",
+            _ => "step"
+        };
+
+        public string knockCategory() => mat switch {
+            SoundMaterial.WOOD => "knock/wood",
+            SoundMaterial.STONE => "break/stone",
+            SoundMaterial.SAND => "break/sand",
+            SoundMaterial.METAL => "break/stone",
+            SoundMaterial.DIRT => "knock/grass",
+            SoundMaterial.GRASS => "break/sand",
+            SoundMaterial.GLASS => "break/stone",
+            SoundMaterial.ORGANIC => "break/grass",
+            _ => "step"
         };
     }
 }

@@ -696,7 +696,7 @@ public partial class Game {
         //jankyFrame();
         
         //  set icon
-        Menu.STARTUP_LOADING.updateProgress(0.1f, "Loading joy");
+        Menu.STARTUP_LOADING.updateProgress(0.1f, "If you see this, hi!");
         setIconToBlock();
         input = window.CreateInput();
         
@@ -730,7 +730,7 @@ public partial class Game {
         jankyFrame();
         renderer = new WorldRenderer();
         
-        Menu.STARTUP_LOADING.updateProgress(0.7f, "Initializing block renderer");
+        Menu.STARTUP_LOADING.updateProgress(0.7f, "the dev has L ratio");
         jankyFrame();
         blockRenderer = new BlockRenderer();
 

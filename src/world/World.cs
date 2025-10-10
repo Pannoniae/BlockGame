@@ -146,24 +146,25 @@ public partial class World : IDisposable {
         Game.player = player as ClientPlayer;
         Game.camera.setPlayer(player);
 
-        if (!loadingSave) {
+        if (loadingSave) {
+            // if loading, actually load
+            if (loadingSave) {
+                var tag = toBeLoadedNBT;
+                worldTick = tag.has("time") ? tag.getInt("time") : 0;
+
+                // load full player data
+                if (tag.has("player")) {
+                    player.read(tag.getCompoundTag("player"));
+                }
+
+                player.prevPosition = player.position;
+            }
+        }
+        else {
             // find safe spawn position with proper AABB clearance
             ensurePlayerSpawnClearance();
             // give starter items
             player.inventory.initNewPlayer();
-        }
-
-        // if loading, actually load
-        if (loadingSave) {
-            var tag = toBeLoadedNBT;
-            worldTick = tag.has("time") ? tag.getInt("time") : 0;
-
-            // load full player data
-            if (tag.has("player")) {
-                player.read(tag.getCompoundTag("player"));
-            }
-
-            player.prevPosition = player.position;
         }
 
         // After everything is done, SAVE THE WORLD

@@ -375,6 +375,8 @@ public class IngameMenu : Menu, IDisposable {
             // clear chunk updates after displaying for next measurement period
             m.clearChunkUpdates();
 
+            debugStr.AppendFormat("{0}/8 chan\n", Game.snd.getUsedChannels());
+
             // show FB info
             if (Settings.instance.framebufferEffects) {
                 var fbw = Game.width * Settings.instance.ssaa;

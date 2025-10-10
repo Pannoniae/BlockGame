@@ -7,9 +7,8 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace BlockGameTesting;
 
 public class WorldgenTesting {
-    
     public NewWorldGenerator gen;
-    
+
     [SetUp]
     public void Setup() {
         gen = new NewWorldGenerator(null!);
@@ -24,15 +23,16 @@ public class WorldgenTesting {
             for (int y = 0; y < img.Height; y++) {
                 var val = gen.getNoise3D(gen.t2n, x / 20f, 0, y / 20f, 2, 2f);
                 var orig = val;
-                val = float.Tan(val);
+                //val = float.Tan(val);
                 //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
                     255);
             }
         }
+
         img.Save(getPath("highNoiseT.png"));
 
         for (int x = 0; x < img.Width; x++) {
@@ -42,42 +42,62 @@ public class WorldgenTesting {
                 val = float.Tan(val);
                 //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
                     255);
             }
         }
+
         img.Save(getPath("highNoiseT2.png"));
 
         var e = new ExpNoise(1337);
-        e.setExp(1337, float.Pow(float.E, 10), 0f);
+        //e.setExp(1337, float.Pow(float.E, 10), 0f);
+        e.setExp(1337, 9, 0f);
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
-                var val = gen.getNoise3D(e, x / 20f, 0, y / 20f, 4, 2f);
+                var val = gen.getNoise3D(e, x / 20f, 0, y / 20f, 4, 2f) * 2f;
                 //val = float.Tanh(val);
                 //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
                     255);
             }
         }
+
         img.Save(getPath("highNoiseH.png"));
-        
+
+        e.setExp(1337, 109, 0f);
+        for (int x = 0; x < img.Width; x++) {
+            for (int y = 0; y < img.Height; y++) {
+                var val = gen.getNoise3D(e, x / 20f, 0, y / 20f, 4, 2f) * 2f;
+                //val = float.Tanh(val);
+                //Console.Out.WriteLine(val);
+                img[x, y] = new Rgba32(
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    255);
+            }
+        }
+
+        img.Save(getPath("highNoiseHA.png"));
+
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
                 var val = gen.getNoise3D(gen.t2n, x / 20f, 0, y / 20f, 8, 2f);
                 val = float.Atanh(val);
                 //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
                     255);
             }
         }
+
         img.Save(getPath("highNoiseH2.png"));
 
         var xs = 1000;
@@ -92,17 +112,18 @@ public class WorldgenTesting {
 
                 //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
-                    (byte) ((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
+                    (byte)((val + 1) * 127.5f),
                     255);
             }
         }
+
         img.Save(getPath("highNoiseO.png"));
-        
+
         Assert.Pass();
     }
-    
+
     // use the PROJECT folder not the build folder lol
     private string getPath(string path) {
         var projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));

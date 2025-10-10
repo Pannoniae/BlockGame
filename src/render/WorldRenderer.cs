@@ -537,12 +537,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //GL.Disable(EnableCap.Blend);
 
         // Enable A2C whenever MSAA is active for alpha-tested geometry (leaves)
-        if (Settings.instance.msaa > 1) {
+        /*if (Settings.instance.msaa > 1) {
             GL.Disable(EnableCap.SampleAlphaToCoverage);
         }
         else {
             GL.Disable(EnableCap.SampleAlphaToCoverage);
-        }
+        }*/
 
         //worldShader.use();
 

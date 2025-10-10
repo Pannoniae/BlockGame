@@ -8,7 +8,10 @@
       "Read(../**)",
       "Read(/D:\\dev\\cs\\BlockGame/**)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "D:\\dev\\cs\\MiniAudioExNET\\"
+    ]
   },
   "outputStyle": "default"
 }

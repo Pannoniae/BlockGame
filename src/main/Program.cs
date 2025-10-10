@@ -19,7 +19,7 @@ public class Program {
         var devMode = args.Length > 0 && args[0] == "--dev";
 
         unsafe {
-            Console.Out.WriteLine(sizeof(BlockRenderer.RenderContext));
+            Log.info($"The correct answer is {sizeof(BlockRenderer.RenderContext)}! What was the question?");
         }
 
         // name the thread

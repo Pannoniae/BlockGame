@@ -64,7 +64,7 @@ public class StartupLoadingMenu : Menu {
     public override void draw() {
         // draw gradient background
         Game.gui.drawGradientVertical(Game.gui.colourTexture, 
-            new System.Drawing.RectangleF(0, 0, Game.width, Game.height),
+            new RectangleF(0, 0, Game.width, Game.height),
             Color.CornflowerBlue,
             Color.MediumPurple);
         

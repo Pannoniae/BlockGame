@@ -9,9 +9,9 @@ namespace BlockGame.snd;
 
 public class SoundEngine : IDisposable {
     
-    private Dictionary<string, AudioClip> loadedSamples = new();
-    private Dictionary<string, List<AudioClip>> soundCategories = new();
-    private XRandom random = new();
+    private readonly Dictionary<string, AudioClip> loadedSamples = new();
+    private readonly Dictionary<string, List<AudioClip>> soundCategories = new();
+    private readonly XRandom random = new();
     
     // SFX channels (fire-and-forget)
     private SfxChannel[] sfxChannels = new SfxChannel[8];
@@ -21,8 +21,8 @@ public class SoundEngine : IDisposable {
     private List<MusicSource> musicSources = [];
     
     // The range for pitch variation (0.85 to 1.15 means 15% lower or higher pitch)
-    private const float MIN_PITCH = 0.85f;
-    private const float MAX_PITCH = 1.15f;
+    private const float MIN_PITCH = 0.95f;
+    private const float MAX_PITCH = 1.05f;
 
     public SoundEngine() {
         const uint SAMPLE_RATE = 44100;
@@ -88,18 +88,20 @@ public class SoundEngine : IDisposable {
 
         try {
             var clip = new AudioClip(filepath);
-            loadedSamples[filepath] = clip;
+            // strip ext
+            var s = Path.ChangeExtension(Path.GetFileName(filepath), null);
+            loadedSamples[s] = clip;
             return clip;
         }
         catch (Exception ex) {
-            throw new SoundException($"Failed to load {filepath}: {ex.Message}");
+            throw new SoundException($"Failed to load {filepath}: {ex}");
         }
     }
 
     /// <summary>
     /// Play a sound from the specified category using channel system
     /// </summary>
-    public void playSfx(string category, float pitch = 1.0f, float volume = 1.0f) {
+    public void play(string category, float pitch = 1.0f, float volume = 1.0f) {
         if (!soundCategories.TryGetValue(category, out var clips) || clips.Count == 0) {
             throw new SoundException($"No sounds loaded for category: {category}");
         }
@@ -107,6 +109,17 @@ public class SoundEngine : IDisposable {
         // pick random clip from category
         var clip = clips[random.Next(clips.Count)];
         
+        // find free channel or use round-robin
+        var channel = getFreeChannel();
+        channel.play(clip, pitch, volume);
+    }
+
+    public void plays(string sound, float pitch = 1.0f, float volume = 1.0f) {
+        if (!loadedSamples.TryGetValue(sound, out var clip)) {
+            clip = doLoad(sound);
+            loadedSamples[sound] = clip ?? throw new SoundException($"Failed to load sound: {sound}");
+        }
+
         // find free channel or use round-robin
         var channel = getFreeChannel();
         channel.play(clip, pitch, volume);
@@ -119,11 +132,21 @@ public class SoundEngine : IDisposable {
                 return channel;
             }
         }
-        
+
         // all busy, use round-robin
         var selectedChannel = sfxChannels[nextChannelIndex];
         nextChannelIndex = (nextChannelIndex + 1) % sfxChannels.Length;
         return selectedChannel;
+    }
+
+    public int getUsedChannels() {
+        int count = 0;
+        foreach (var channel in sfxChannels) {
+            if (!channel.isFree) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /// <summary>
@@ -172,15 +195,28 @@ public class SoundEngine : IDisposable {
 
     public void playFootstep(SoundMaterial mat) {
         var cat = mat.stepCategory();
-        if (soundCategories.ContainsKey(cat)) {
-            playSfx(cat, getRandomPitch());
+        play(cat, 1.0f, 0.4f);
+    }
+
+    public void playBlockKnock(SoundMaterial mat) {
+        var cat = mat.knockCategory();
+        if (cat == mat.breakCategory()) {
+            play(cat, (getRandomPitch() * 0.05f) + 0.5f, 0.3f);
+        }
+        else {
+            play(cat, (getRandomPitch() * 0.05f) + 1f, 0.3f);
+            //play(cat, getRandomPitch());
         }
     }
 
     public void playBlockBreak(SoundMaterial mat) {
         var cat = mat.breakCategory();
-        if (soundCategories.ContainsKey(cat)) {
-            playSfx(cat, getRandomPitch());
+        if (cat == mat.stepCategory()) {
+            play(cat, (getRandomPitch() * 0.1f) + 0.8f, 0.5f);
+        }
+        else {
+            play(cat, (getRandomPitch() * 0.1f) + 1f, 0.5f);
+            //play(cat, getRandomPitch());
         }
     }
     

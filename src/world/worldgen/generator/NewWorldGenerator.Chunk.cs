@@ -34,20 +34,20 @@ public partial class NewWorldGenerator {
 
     public const int WATER_LEVEL = 64;
 
-    private float[] b = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] tb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] t2b = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] sb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] eb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] fb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] gb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] mb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] ob = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] auxb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] foliageb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] tempb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] humb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
-    private float[] wb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] b = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] tb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] t2b = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] sb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] eb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] fb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] gb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] mb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] ob = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] auxb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] foliageb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] tempb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] humb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
+    private readonly float[] wb = new float[NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z];
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
@@ -86,9 +86,9 @@ public partial class NewWorldGenerator {
         // get the noise
         // todo cleanup this shit and give it proper constants
         getNoise3DRegion(tb, tn, coord, 1 / (42f * 2), 1 / (42f * 2),
-            1 / (42f * 2), 12, 1 + Meth.rhoF * 2);
+            1 / (42f * 2), 8, 1 + Meth.rhoF * 2);
         getNoise3DRegion(t2b, t2n, coord, 1 / (42f * 2), 1 / (42f * 2),
-            1 / (42f * 2), 12, 2 + Meth.rhoF);
+            1 / (42f * 2), 8, 2 + Meth.rhoF);
 
 
         getNoise3DRegion(sb, sn, coord, 1 / 59f, 1 / 29f,
@@ -544,7 +544,7 @@ public partial class NewWorldGenerator {
         treeCount *= treeCount;
 
         for (int i = 0; i < treeCount; i++) {
-            placeTree(random, coord);
+            placeTree(world, random, coord);
         }
 
         // get e
@@ -588,7 +588,7 @@ public partial class NewWorldGenerator {
         chunk.status = ChunkStatus.POPULATED;
     }
 
-    private void placeTree(XRandom random, ChunkCoord coord) {
+    private static void placeTree(World world, XRandom random, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         var x = random.Next(0, Chunk.CHUNKSIZE);
         var z = random.Next(0, Chunk.CHUNKSIZE);
@@ -617,10 +617,10 @@ public partial class NewWorldGenerator {
             }
         }
 
-        placeOakTree(random, x + coord.x * Chunk.CHUNKSIZE, y + 1, z + coord.z * Chunk.CHUNKSIZE);
+        placeOakTree(world, random, x + coord.x * Chunk.CHUNKSIZE, y + 1, z + coord.z * Chunk.CHUNKSIZE);
     }
 
-    public void placeOakTree(XRandom random, int x, int y, int z) {
+    private static void placeOakTree(World world, XRandom random, int x, int y, int z) {
         int randomNumber = random.Next(5, 8);
         for (int i = 0; i < randomNumber; i++) {
             world.setBlockDumb(x, y + i, z, Blocks.LOG);

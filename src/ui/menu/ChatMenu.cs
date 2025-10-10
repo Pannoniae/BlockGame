@@ -112,7 +112,7 @@ public class ChatMenu : Menu {
             var args = msg[1..].Split(' ');
             switch (args[0]) {
                 case "help":
-                    addMessage("Commands: /help, /gamemode, /tp, /clear, /cb, /fb, /fly, /time, /debug");
+                    addMessage("Commands: /help, /gamemode, /tp, /clear, /cb, /fb, /fly, /time, /debug, /summon");
                     break;
                 case "gamemode":
                     if (args.Length == 2) {
@@ -297,6 +297,51 @@ public class ChatMenu : Menu {
                         addMessage("Failed to spawn entity");
                     }
                     break;*/
+                    break;
+                case "summon":
+                    if (args.Length < 2) {
+                        addMessage("Usage: /summon <entity> [x] [y] [z]");
+                        break;
+                    }
+
+                    var entityName = args[1].ToUpper();
+                    var entityField = typeof(Entities).GetField(entityName);
+
+                    if (entityField == null || !entityField.IsLiteral) {
+                        addMessage($"Unknown entity: {args[1]}");
+                        break;
+                    }
+
+                    int entityType = (int)entityField.GetValue(null)!;
+
+                    if (entityType is Entities.PLAYER or Entities.ITEM_ENTITY) {
+                        addMessage($"Cannot summon entity: {args[1]}");
+                        break;
+                    }
+
+                    var entity = Entities.create(Game.world, entityType);
+                    if (entity == null) {
+                        addMessage($"Failed to create entity: {args[1]}");
+                        break;
+                    }
+
+                    // parse position (default to player position)
+                    Vector3D spawnPos = Game.player.position;
+                    if (args.Length >= 5) {
+                        if (double.TryParse(args[2], out double sx) &&
+                            double.TryParse(args[3], out double sy) &&
+                            double.TryParse(args[4], out double sz)) {
+                            spawnPos = new Vector3D(sx, sy, sz);
+                        } else {
+                            addMessage("Invalid coords");
+                            break;
+                        }
+                    }
+
+                    entity.position = spawnPos;
+                    entity.prevPosition = spawnPos;
+                    Game.world.addEntity(entity);
+                    addMessage($"Summoned {args[1]} at {(int)spawnPos.X}, {(int)spawnPos.Y}, {(int)spawnPos.Z}");
                     break;
             }
         }

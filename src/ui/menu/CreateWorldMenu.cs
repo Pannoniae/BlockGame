@@ -87,7 +87,7 @@ public class CreateWorldMenu : Menu {
 
     private void createWorld() {
         var worldName = nameInput.input.Trim();
-        Console.Out.WriteLine("world name: " + worldName);
+        //Console.Out.WriteLine("world name: " + worldName);
         if (string.IsNullOrEmpty(worldName)) {
             worldName = "New World";
             nameInput.input = worldName;

@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace BlockGame.util.meth.noise;
 
-public class OpenSimplex2S_Exp {
+public static class OpenSimplex2S_Exp {
     private const long PRIME_X = 0x5205402B9270C86FL;
     private const long PRIME_Y = 0x598CD327003817B5L;
     private const long PRIME_Z = 0x5BCC226E9FA0BACBL;
@@ -83,8 +83,8 @@ public class OpenSimplex2S_Exp {
     }
 
     /**
- * Calculate exponential multiplier based on position hash
- */
+     * Calculate exponential multiplier based on position hash
+     */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float GetExpMultiplier(long hash) {
         // Mix with exp seed and get a uniform value in [0, 1]
