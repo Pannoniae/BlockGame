@@ -204,7 +204,7 @@ public class SoundEngine : IDisposable {
             play(cat, (getRandomPitch() * 0.05f) + 0.5f, 0.3f);
         }
         else {
-            play(cat, (getRandomPitch() * 0.05f) + 1f, 0.3f);
+            play(cat, 1f, 0.3f);
             //play(cat, getRandomPitch());
         }
     }

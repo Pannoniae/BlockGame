@@ -559,7 +559,7 @@ public class Player : Soul {
             if (breakTime % 4 == 0) {
                 block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face);
             }
-            if ((breakTime / 4f) % 4 == 0) {
+            if (breakTime % 12 == 0) {
                 Game.snd.playBlockKnock(block.mat.smat);
             }
             breakTime++;
