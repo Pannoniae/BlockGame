@@ -550,7 +550,7 @@ public class Player : Soul {
             var hardness = Block.hardness[block.id];
             var heldItem = inventory.getSelected().getItem();
             var toolBreakSpeed = heldItem.getBreakSpeed(inventory.getSelected(), block);
-            var breakSpeed = toolBreakSpeed / hardness;
+            var breakSpeed = toolBreakSpeed / hardness / 2; // why 2? idk
 
             prevBreakProgress = breakProgress;
             breakProgress += breakSpeed * dt;
@@ -575,6 +575,11 @@ public class Player : Soul {
                     var itemEntity = new ItemEntity(world);
                     itemEntity.stack = new ItemStack(dropItem, dropCount, metadata);
                     itemEntity.position = new Vector3D(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5);
+
+                    // randomise pos
+                    itemEntity.position.X += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
+                    itemEntity.position.Z += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
+                    itemEntity.position.Y += Game.clientRandom.NextSingle() * 0.15;
 
                     // add some random velocity
                     var random = Game.clientRandom;
@@ -679,6 +684,11 @@ public class Player : Soul {
                     // consume block from inventory in survival mode
                     if (Game.gamemode.gameplay) {
                         inventory.removeStack(inventory.selected, 1);
+                    }
+
+                    // play sound
+                    if (block.mat != null) {
+                        Game.snd.playBlockBreak(block.mat.smat);
                     }
 
                     setSwinging(true);
@@ -894,7 +904,7 @@ public class Player : Soul {
         itemEntity.position = eyePos + forward.toVec3D() * 0.5;
 
         // give it velocity in the direction player is facing + a bit up
-        itemEntity.velocity = forward.toVec3D() * 5 + new Vector3D(0, 2, 0);
+        itemEntity.velocity = forward.toVec3D() * 8 + new Vector3D(0, 2, 0);
 
         // add to world
         world.addEntity(itemEntity);

@@ -201,7 +201,7 @@ public class SoundEngine : IDisposable {
     public void playBlockKnock(SoundMaterial mat) {
         var cat = mat.knockCategory();
         if (cat == mat.breakCategory()) {
-            play(cat, (getRandomPitch() * 0.05f) + 0.5f, 0.3f);
+            play(cat, 0.5f, 0.3f);
         }
         else {
             play(cat, 1f, 0.3f);
@@ -293,6 +293,8 @@ public class MusicSource {
         var clip = new AudioClip(filepath);
         source = new AudioSource();
         source.Play(clip);
+        source.End += () => {
+        };
     }
     
     public float volume {

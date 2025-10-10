@@ -1439,8 +1439,8 @@ public enum SoundMaterial : byte {
 public static class SoundMaterialExtensions {
     extension(SoundMaterial mat) {
         public string stepCategory() => mat switch {
-            SoundMaterial.GRASS => "step",
-            SoundMaterial.DIRT => "step",
+            SoundMaterial.GRASS => "step/grass",
+            SoundMaterial.DIRT => "step/grass",
             SoundMaterial.SAND => "step",
             SoundMaterial.WOOD => "step/wood",
             SoundMaterial.STONE => "step",
@@ -1456,7 +1456,7 @@ public static class SoundMaterialExtensions {
             SoundMaterial.SAND => "break/sand",
             SoundMaterial.METAL => "break/stone",
             SoundMaterial.DIRT => "break/grass",
-            SoundMaterial.GRASS => "break/sand",
+            SoundMaterial.GRASS => "break/grass",
             SoundMaterial.GLASS => "break/stone",
             SoundMaterial.ORGANIC => "break/grass",
             _ => "step"
@@ -1468,9 +1468,9 @@ public static class SoundMaterialExtensions {
             SoundMaterial.SAND => "break/sand",
             SoundMaterial.METAL => "break/stone",
             SoundMaterial.DIRT => "knock/grass",
-            SoundMaterial.GRASS => "break/sand",
+            SoundMaterial.GRASS => "knock/grass",
             SoundMaterial.GLASS => "break/stone",
-            SoundMaterial.ORGANIC => "break/grass",
+            SoundMaterial.ORGANIC => "knock/grass",
             _ => "step"
         };
     }
