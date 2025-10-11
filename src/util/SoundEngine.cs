@@ -1,9 +1,11 @@
 using BlockGame.main;
+using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.block;
 using MiniAudioEx;
 using MiniAudioEx.Core.StandardAPI;
+using MiniAudioEx.Native;
 
 namespace BlockGame.snd;
 
@@ -14,12 +16,13 @@ public class SoundEngine : IDisposable {
     private readonly XRandom random = new();
     
     // SFX channels (fire-and-forget)
-    private SfxChannel[] sfxChannels = new SfxChannel[8];
+    private SfxChannel[] sfxChannels = new SfxChannel[16];
     private int nextChannelIndex = 0;
     
     // Music sources (long-running, controllable)
     private List<MusicSource> musicSources = [];
-    
+    private long lastKnock;
+
     // The range for pitch variation (0.85 to 1.15 means 15% lower or higher pitch)
     private const float MIN_PITCH = 0.95f;
     private const float MAX_PITCH = 1.05f;
@@ -27,8 +30,10 @@ public class SoundEngine : IDisposable {
     public SoundEngine() {
         const uint SAMPLE_RATE = 44100;
         const uint CHANNELS = 2;
-        
-        AudioContext.Initialize(SAMPLE_RATE, CHANNELS);
+
+        // IF YOU CHANGE THIS stuff will jitter
+        // so don't increase it too much, 2048 is crazy (like 46ms latency??)
+        AudioContext.Initialize(SAMPLE_RATE, CHANNELS, 256);
         
         // initialize SFX channels
         for (int i = 0; i < sfxChannels.Length; i++) {
@@ -166,7 +171,7 @@ public class SoundEngine : IDisposable {
             return musicSource;
         }
         catch (Exception ex) {
-            throw new SoundException($"Failed to play music {filepath}: {ex.Message}");
+            throw new SoundException($"Failed to play music {filepath}: {ex}");
         }
     }
 
@@ -179,6 +184,18 @@ public class SoundEngine : IDisposable {
     public void unmuteMusic() {
         foreach (var music in musicSources) {
             music.volume = 1.0f;
+        }
+    }
+
+    public void updateSfxVolumes() {
+        foreach (var channel in sfxChannels) {
+            channel.updateVolume();
+        }
+    }
+
+    public void updateMusicVolumes() {
+        foreach (var music in musicSources) {
+            music.updateVolume();
         }
     }
 
@@ -199,6 +216,11 @@ public class SoundEngine : IDisposable {
     }
 
     public void playBlockKnock(SoundMaterial mat) {
+
+        // print time since last knock (debug)
+        //var now = Game.permanentStopwatch.ElapsedMilliseconds;
+        //Console.Out.WriteLine($"Knock time since last: {now - lastKnock} ms");
+
         var cat = mat.knockCategory();
         if (cat == mat.breakCategory()) {
             play(cat, 0.5f, 0.3f);
@@ -207,6 +229,7 @@ public class SoundEngine : IDisposable {
             play(cat, 1f, 0.3f);
             //play(cat, getRandomPitch());
         }
+        //lastKnock = now;
     }
 
     public void playBlockBreak(SoundMaterial mat) {
@@ -264,19 +287,27 @@ public class SoundEngine : IDisposable {
 public class SfxChannel {
     public AudioSource source;
     public bool isFree => !source.IsPlaying;
-    
+    private float vol = 1.0f;
+
     public SfxChannel() {
         source = new AudioSource();
         source.End += () => { /* channel becomes free automatically via isFree */ };
     }
-    
+
     public void play(AudioClip clip, float pitch = 1.0f, float volume = 1.0f) {
         source.Stop(); // interrupt if already playing
         source.Pitch = pitch;
-        source.Volume = volume;
+        vol = volume;
+        source.Volume = volume * Settings.instance.sfxVolume;
         source.Play(clip);
     }
-    
+
+    public void updateVolume() {
+        if (!isFree) {
+            source.Volume = vol * Settings.instance.sfxVolume;
+        }
+    }
+
     public void dispose() {
         source?.Dispose();
     }
@@ -285,35 +316,59 @@ public class SfxChannel {
 /// <summary>
 /// Represents a controllable music source
 /// </summary>
-public class MusicSource {
-    public AudioSource source;
+public class MusicSource : IDisposable {
+    private readonly AudioSource source;
+    private readonly AudioClip clip;
+    private float vol = 1.0f;
     public bool isMusic => true;
-    
+
     public MusicSource(string filepath) {
-        var clip = new AudioClip(filepath);
+        clip = new AudioClip(filepath);
         source = new AudioSource();
+        source.Volume = vol * Settings.instance.musicVolume;
         source.Play(clip);
         source.End += () => {
         };
     }
-    
+
     public float volume {
-        get => source.Volume;
-        set => source.Volume = value;
+        get => vol;
+        set {
+            vol = value;
+            source.Volume = value * Settings.instance.musicVolume;
+        }
     }
-    
+
+    public void updateVolume() {
+        source.Volume = vol * Settings.instance.musicVolume;
+    }
+
     public float pitch {
         get => source.Pitch;
         set => source.Pitch = value;
     }
-    
+
     public bool loop {
         get => source.Loop;
         set => source.Loop = value;
     }
-    
+
     public void dispose() {
         source?.Dispose();
+        clip?.Dispose();
+    }
+
+    private void ReleaseUnmanagedResources() {
+        dispose();
+    }
+
+    public void Dispose() {
+        ReleaseUnmanagedResources();
+        GC.SuppressFinalize(this);
+    }
+
+    ~MusicSource() {
+        Dispose();
     }
 }
 

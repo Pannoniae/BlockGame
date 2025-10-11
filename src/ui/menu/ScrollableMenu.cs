@@ -15,6 +15,10 @@ public abstract class ScrollableMenu : Menu {
     private float maxScrollY = 0f;
     private const float SCROLL_SPEED = 20f;
 
+    // scrollbar drag state
+    private bool draggingScrollbar = false;
+    private float scrollbarDragOffset = 0f; // offset from thumb top to click position
+
     // viewport bounds in GUI coords
     protected virtual int viewportY => 16;
     protected virtual int viewportMargin => 32; // top + bottom
@@ -50,22 +54,48 @@ public abstract class ScrollableMenu : Menu {
         scrollY = Math.Max(minScrollY, Math.Min(maxScrollY, scrollY));
     }
 
+    // get scrollbar thumb bounds in screen coords
+    private Rectangle? getScrollbarThumbBounds() {
+        if (maxScrollY <= 0) return null;
+
+        var viewportH = size.Y / GUI.guiScale - viewportMargin;
+        var scrollbarX = size.X / GUI.guiScale - 16;
+        var viewportRatio = viewportH / (viewportH + maxScrollY);
+        var scrollProgress = scrollY / maxScrollY;
+
+        const int WIDTH = 6;
+        var thumbHeight = Math.Max(10, (int)(viewportH * viewportRatio));
+        var thumbY = viewportY + (int)((viewportH - thumbHeight) * scrollProgress);
+
+        // convert to screen coords
+        return new Rectangle(
+            scrollbarX * GUI.guiScale,
+            thumbY * GUI.guiScale,
+            WIDTH * GUI.guiScale,
+            thumbHeight * GUI.guiScale
+        );
+    }
+
     // get screen-space bounds with scroll applied
     private Rectangle getEffectiveBounds(GUIElement e) {
         if (scrollables.Contains(e)) {
             // apply scroll offset in screen space
-            return new Rectangle(
-                e.bounds.X,
-                e.bounds.Y - (int)(scrollY * GUI.guiScale),
-                e.bounds.Width,
-                e.bounds.Height
-            );
+            return e.bounds with { Y = e.bounds.Y - (int)(scrollY * GUI.guiScale) };
         }
         // fixed elements use normal bounds
         return e.bounds;
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
+        
+        // check if clicking on scrollbar thumb
+        var thumbBounds = getScrollbarThumbBounds();
+        if (thumbBounds.HasValue && button == MouseButton.Left && thumbBounds.Value.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
+            draggingScrollbar = true;
+            scrollbarDragOffset = Game.mousePos.Y - thumbBounds.Value.Top;
+            return;
+        }
+
         // find element under cursor using effective bounds
         GUIElement? target = null;
         foreach (var element in elements.Values) {
@@ -86,6 +116,12 @@ public abstract class ScrollableMenu : Menu {
     }
 
     public override void onMouseUp(Vector2 pos, MouseButton button) {
+        // end scrollbar drag
+        if (draggingScrollbar && button == MouseButton.Left) {
+            draggingScrollbar = false;
+            return;
+        }
+
         if (pressedElement != null) {
             // captured element gets the release
             pressedElement.onMouseUp(button);
@@ -112,6 +148,25 @@ public abstract class ScrollableMenu : Menu {
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
+        // handle scrollbar drag
+        if (draggingScrollbar) {
+            var viewportH = size.Y / GUI.guiScale - viewportMargin;
+            var thumbBounds = getScrollbarThumbBounds();
+            if (thumbBounds.HasValue) {
+                var thumbHeight = thumbBounds.Value.Height;
+                var trackHeight = viewportH * GUI.guiScale - thumbHeight;
+
+                // calculate desired thumb top position
+                var desiredThumbY = pos.Y - scrollbarDragOffset;
+                var trackTop = viewportY * GUI.guiScale;
+
+                // calculate scroll progress (0-1)
+                var scrollProgress = float.Max(0, float.Min(1, (desiredThumbY - trackTop) / trackHeight));
+                scrollY = scrollProgress * maxScrollY;
+            }
+            return;
+        }
+
         if (pressedElement != null) {
             // captured element gets all moves
             pressedElement.onMouseMove();

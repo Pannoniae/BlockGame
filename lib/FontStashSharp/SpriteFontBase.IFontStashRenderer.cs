@@ -45,8 +45,7 @@ namespace FontStashSharp
 			
 			scale.X *= pos.X;
 			scale.Y *= (FontSystemDefaults.TextStyleLineHeight * RenderFontSizeMultiplicator);
-			var dummy = Matrix4x4.Identity;
-			renderer.Draw(white, start, ref dummy, null, color, rotation, scale, layerDepth);
+			renderer.Draw(white, start, null, color, rotation, scale, layerDepth);
 		}
 
 		private float DrawText(IFontStashRenderer renderer, TextColorSource source, Vector2 position,
@@ -54,10 +53,7 @@ namespace FontStashSharp
 			float layerDepth, float characterSpacing, float lineSpacing,
 			TextStyle textStyle, FontSystemEffect effect, int effectAmount)
 		{
-			if (renderer == null)
-			{
-				throw new ArgumentNullException(nameof(renderer));
-			}
+            ArgumentNullException.ThrowIfNull(renderer);
 
 #if MONOGAME || FNA || STRIDE
 			if (renderer.GraphicsDevice == null)
@@ -65,9 +61,9 @@ namespace FontStashSharp
 				throw new ArgumentNullException("renderer.GraphicsDevice can't be null.");
 			}
 #else
-			if (renderer.TextureManager == null)
+            if (renderer.TextureManager == null)
 			{
-				throw new ArgumentNullException("renderer.TextureManager can't be null.");
+				ArgumentNullException.ThrowIfNull(renderer.TextureManager, "renderer.TextureManager can't be null.");
 			}
 #endif
 
@@ -130,10 +126,8 @@ namespace FontStashSharp
 					var p = pos + new Vector2(glyph.RenderOffset.X, glyph.RenderOffset.Y);
 					p = p.Transform(ref transformation);
 
-					var dummy = Matrix4x4.Identity;
 					renderer.Draw(glyph.Texture,
 						p,
-						ref dummy,
 						glyph.TextureRectangle,
 						color,
 						rotation,
@@ -205,7 +199,7 @@ namespace FontStashSharp
 #else
 			if (renderer.TextureManager == null)
 			{
-				throw new ArgumentNullException("renderer.TextureManager can't be null.");
+                ArgumentNullException.ThrowIfNull(renderer.TextureManager, "renderer.TextureManager can't be null.");
 			}
 #endif
 

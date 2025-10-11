@@ -23,5 +23,7 @@ namespace FontStashSharp.Interfaces
 #endif
 
 		void Draw(Texture2D texture, Vector2 pos, ref Matrix4x4 worldMatrix, Rectangle? src, Color color, float rotation, Vector2 scale, float depth);
+
+        void Draw(Texture2D texture, Vector2 pos, Rectangle? src, Color color, float rotation, Vector2 scale, float depth);
 	}
 }

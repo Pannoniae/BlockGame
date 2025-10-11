@@ -2,6 +2,7 @@ using System.Numerics;
 using Silk.NET.OpenGL.Legacy;
 using System.Runtime.InteropServices;
 using BlockGame.main;
+using BlockGame.util;
 using Molten;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
@@ -164,7 +165,7 @@ public sealed class SpriteBatch : IDisposable {
         ObjectDisposedException.ThrowIf(IsDisposed, nameof(SpriteBatch));
 
         if (IsActive)
-            throw new InvalidOperationException("This TextureBatcher has already begun.");
+            SkillIssueException.throwNew("This TextureBatcher has already begun.");
 
         batchItemCount = 0;
         BeginMode = beginMode;
@@ -176,7 +177,7 @@ public sealed class SpriteBatch : IDisposable {
 
     public void End() {
         if (!IsActive)
-            throw new InvalidOperationException("Begin() must be called before End().");
+            SkillIssueException.throwNew("Begin() must be called before End().");
 
         // Flush any remaining items
         Flush(BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly);
@@ -186,7 +187,7 @@ public sealed class SpriteBatch : IDisposable {
 
     private void ValidateBeginCalled() {
         if (!IsActive) {
-            throw new InvalidOperationException("Draw() must be called in between Begin() and End().");
+            SkillIssueException.throwNew("Draw() must be called in between Begin() and End().");
         }
     }
 
@@ -215,19 +216,19 @@ public sealed class SpriteBatch : IDisposable {
         return result;
     }
 
-    private SpriteBatchItem GetNextBatchItem() {
+    private ref SpriteBatchItem GetNextBatchItem() {
         // Check that we have enough capacity for one more batch item
         if (!EnsureBatchListCapacity(batchItemCount + 1)) {
             // If the array can't be expanded further, try to flush
-            if (BeginMode == BatcherBeginMode.OnTheFly || BeginMode == BatcherBeginMode.Immediate)
+            if (BeginMode is BatcherBeginMode.OnTheFly or BatcherBeginMode.Immediate)
                 Flush(true);
             else
-                throw new InvalidOperationException(
+                SkillIssueException.throwNew(
                     "Too many TextureBatcher items. Try drawing less per Begin()-End() cycle or use OnTheFly or Immediate begin modes.");
         }
 
         // Return the next batch item
-        return batchItems[batchItemCount++];
+        return ref batchItems[batchItemCount++];
     }
 
     // DrawRaw methods
@@ -241,7 +242,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetVertices(texture, vertexTL, vertexTR, vertexBR, vertexBL);
 
         // Set sort key if needed
@@ -262,7 +263,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
 
         // Transform vertices
         vertexTL.Position = Vector3.Transform(vertexTL.Position, matrix);
@@ -290,8 +291,8 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
-        item.SetValue(texture, position, source ?? new System.Drawing.Rectangle(0, 0, (int)texture.width, (int)texture.height), color,
+        ref SpriteBatchItem item = ref GetNextBatchItem();
+        item.SetValue(texture, position, source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height), color,
             depth);
 
         // Set sort key if needed
@@ -320,7 +321,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, position,
             source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height),
             color, scale, rotation, origin, depth);
@@ -348,7 +349,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, position, ref worldMatrix,
             source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height),
             color, scale, rotation, origin, depth);
@@ -370,7 +371,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, destination,
             source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height),
             color, depth);
@@ -400,7 +401,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, transform,
             source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height),
             color, depth);
@@ -423,7 +424,7 @@ public sealed class SpriteBatch : IDisposable {
         if (BeginMode == BatcherBeginMode.OnTheFly && batchItemCount > 0 && batchItems[0].Texture != texture)
             Flush(true);
 
-        SpriteBatchItem item = GetNextBatchItem();
+        ref SpriteBatchItem item = ref GetNextBatchItem();
         item.SetValue(texture, transform,
             source ?? new Rectangle(0, 0, (int)texture.width, (int)texture.height),
             color, origin, depth);
@@ -537,7 +538,7 @@ public sealed class SpriteBatch : IDisposable {
 
     private void nvFlush(bool sameTextureEnsured) {
         // only SortByTexture can reorder freely - all other modes need submission order preserved - is this right?
-        bool canReorder = BeginMode == BatcherBeginMode.SortByTexture || BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly || sameTextureEnsured || BeginMode == BatcherBeginMode.Deferred;
+        bool canReorder = BeginMode == BatcherBeginMode.SortByTexture || BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly || sameTextureEnsured;
 
         // todo this might break shit so if the texture order is fucked, adjust canReorder
         if (canReorder) {
@@ -733,7 +734,7 @@ public sealed class SpriteBatch : IDisposable {
 
     private void EnsureBufferCapacity(uint batchCount) {
         var requiredVertexCount = batchCount * 4;
-        var requiredIndexCount = batchCount * 6;
+
         if (vertices.Length < requiredVertexCount) {
             uint newCapacity = Math.Min(NextPowerOfTwo(requiredVertexCount), (int)MaxBufferCapacity);
             Array.Resize(ref vertices, (int)newCapacity);
@@ -753,6 +754,8 @@ public sealed class SpriteBatch : IDisposable {
                     GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
                 }
             }
+
+            var requiredIndexCount = batchCount * 6;
 
             // Resize indices if needed (each quad uses 6 indices for 4 vertices)
             if (indices.Length < requiredIndexCount) {

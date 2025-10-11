@@ -74,4 +74,17 @@ public class TextRenderer3D : IFontStashRenderer {
         //Console.Out.WriteLine(new Vector3(pos, depth));
         //Console.Out.WriteLine(Vector4.Transform(new Vector3(pos, depth), shaderProgram.World * shaderProgram.View * shaderProgram.Projection));
     }
+
+    public void Draw(object texture, Vector2 pos, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
+        var tex = (BTexture2D)texture;
+        // texture height
+        tb.Draw(tex,
+            pos,
+            src,
+            new Color(color.R, color.G, color.B, color.A),
+            scale,
+            rotation,
+            Vector2.Zero,
+            depth);
+    }
 }

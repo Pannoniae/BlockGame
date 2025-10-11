@@ -810,7 +810,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // start blending at transparent stuff
         //GL.Enable(EnableCap.Blend);
-        GL.Disable(EnableCap.SampleAlphaToCoverage);
+        //GL.Disable(EnableCap.SampleAlphaToCoverage);
 
         GL.Disable(EnableCap.CullFace);
 
@@ -897,6 +897,19 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.Enable(EnableCap.CullFace);
 
 
+        renderEntities(interp);
+
+        // render breaking block overlay if any
+        renderBreakBlock(interp);
+
+
+        // no depth writes!
+        GL.DepthMask(false);
+        world.particles.render(interp);
+        GL.DepthMask(true);
+    }
+
+    public void renderEntities(double interp) {
         var mat = Game.graphics.model;
         mat.push();
         mat.loadIdentity();
@@ -950,15 +963,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             mat.pop();
         }
-
-        // render breaking block overlay if any
-        renderBreakBlock(interp);
-
-
-        // no depth writes!
-        GL.DepthMask(false);
-        world.particles.render(interp);
-        GL.DepthMask(true);
     }
 
     /**

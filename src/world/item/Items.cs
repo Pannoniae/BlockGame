@@ -24,4 +24,5 @@ public class Items {
     public const int COPPER_AXE = 20;
     public const int COPPER_SHOVEL = 21;
     public const int COPPER_SWORD = 22;
+    public const int DYE = 23;
  }

@@ -16,12 +16,12 @@ public class Slider : GUIElement {
     private const int rightPadding = 4;
 
     public float value;
-    public int min;
-    public int max;
+    public readonly int min;
+    public readonly int max;
 
-    public float step;
+    public readonly float step;
 
-    public Func<float, string> getText;
+    public readonly Func<float, string> getText;
 
     public event Action? applied;
 

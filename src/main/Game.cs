@@ -410,6 +410,7 @@ public partial class Game {
         // render GUI
         graphics.mainBatch.Begin();
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
+        //fontLoader.renderer.begin();
         
         currentScreen.draw();
         if (GUI.WIREFRAME) {
@@ -418,9 +419,11 @@ public partial class Game {
             }
         }
         currentScreen.postDraw();
-        
+
+        //fontLoader.renderer.end();
         graphics.mainBatch.End();
         graphics.immediateBatch.End();
+
         
         GL.Enable(EnableCap.DepthTest);
         
@@ -1165,21 +1168,14 @@ public partial class Game {
         // clear depth for GUI!!
         if (currentScreen == Screen.GAME_SCREEN) {
             GL.Clear(ClearBufferMask.DepthBufferBit);
-        }
-
-        //graphics.setDepthFunc();
-
-        if (currentScreen == Screen.GAME_SCREEN) {
             GL.Disable(EnableCap.DepthTest);
         }
-        //GL.Disable(EnableCap.CullFace);
-
-        // for GUI, no depth test
-        //GD.BlendingEnabled = true;
         
         profiler.section(ProfileSectionName.GUI);
+        //graphics.mainBatch.NoScreenSpace = true;
         graphics.mainBatch.Begin();
         graphics.immediateBatch.Begin(BatcherBeginMode.Immediate);
+        //fontLoader.renderer.begin();
 
         currentScreen.draw();
         currentScreen.postDraw();
@@ -1191,11 +1187,10 @@ public partial class Game {
                 gui.drawWireframe(element.bounds, Color.Red);
             }
         }
-        
+
         graphics.mainBatch.End();
         graphics.immediateBatch.End();
-        //Console.Out.WriteLine(((InstantShader)graphics.mainBatch.shader).MVP);
-        //GD.BlendingEnabled = false;
+        //fontLoader.renderer.end();
         
         if (GUI.WIREFRAME) {
             graphics.mainBatch.Begin();

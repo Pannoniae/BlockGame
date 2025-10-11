@@ -53,6 +53,9 @@ public class Settings {
 
     public int mouseInv = 1; // 1 = normal, -1 = inverted
 
+    public float sfxVolume = 1.0f; // 0.0 to 1.0
+    public float musicVolume = 1.0f; // 0.0 to 1.0
+
     public static readonly Settings instance = new();
 
     /// <summary>
@@ -163,6 +166,8 @@ public class Settings {
         tag.addByte("reverseZ", (byte)(reverseZ ? 1 : 0));
         tag.addInt("rendererMode", (int)rendererMode);
         tag.addInt("mouseInv", mouseInv);
+        tag.addFloat("sfxVolume", sfxVolume);
+        tag.addFloat("musicVolume", musicVolume);
 
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
@@ -203,6 +208,12 @@ public class Settings {
             }
             if (tag.has("mouseInv")) {
                 mouseInv = tag.getInt("mouseInv");
+            }
+            if (tag.has("sfxVolume")) {
+                sfxVolume = tag.getFloat("sfxVolume");
+            }
+            if (tag.has("musicVolume")) {
+                musicVolume = tag.getFloat("musicVolume");
             }
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);

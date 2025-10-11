@@ -18,21 +18,26 @@ public class SettingsMenu : Menu {
     }
 
     private void initializeButtons() {
-        // Two buttons: Video Settings and Controls
         var elements = new List<GUIElement>();
-        
+
         var videoSettings = new Button(this, "videoSettings", false, "Video Settings");
         videoSettings.clicked += _ => { parentScreen.switchToMenu(SettingsScreen.VIDEO_SETTINGS_MENU); };
         videoSettings.centreContents();
         elements.Add(videoSettings);
         addElement(videoSettings);
-        
+
+        var audioSettings = new Button(this, "audioSettings", false, "Audio Settings");
+        audioSettings.clicked += _ => { parentScreen.switchToMenu(SettingsScreen.AUDIO_SETTINGS_MENU); };
+        audioSettings.centreContents();
+        elements.Add(audioSettings);
+        addElement(audioSettings);
+
         var controls = new Button(this, "controls", false, "Controls");
         controls.clicked += _ => { parentScreen.switchToMenu(SettingsScreen.CONTROLS_MENU); };
         controls.centreContents();
         elements.Add(controls);
         addElement(controls);
-        
+
         layoutSettingsTwoCols(elements, new Vector2I(0, 16), videoSettings.GUIbounds.Width);
     }
     

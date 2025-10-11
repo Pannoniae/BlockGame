@@ -6,13 +6,10 @@ namespace BlockGame.GL
     /// <summary>
     /// Used internally by TextureBatcher to store the vertices for each Draw() call.
     /// </summary>
-    internal sealed class SpriteBatchItem : IComparable<SpriteBatchItem>
+    internal struct SpriteBatchItem : IComparable<SpriteBatchItem>
     {
         /// <summary>The texture to draw the vertices with.</summary>
         public BTexture2D? Texture;
-
-        /// <summary>A value used for sorting based on the BatcherBeginMode.</summary>
-        public float SortValue;
 
         /// <summary>The top-left vertex.</summary>
         public VertexColorTexture VertexTL;
@@ -22,6 +19,9 @@ namespace BlockGame.GL
         public VertexColorTexture VertexBL;
         /// <summary>The bottom-right vertex.</summary>
         public VertexColorTexture VertexBR;
+
+        /// <summary>A value used for sorting based on the BatcherBeginMode.</summary>
+        public float SortValue;
 
         // Basic setup with position, source, and color
         public void SetValue(BTexture2D texture, Vector2 position, Rectangle source, Color color, float depth)
@@ -243,7 +243,7 @@ namespace BlockGame.GL
             VertexBL = vBL;
         }
 
-        public int CompareTo(SpriteBatchItem? other)
+        public readonly int CompareTo(SpriteBatchItem other)
         {
             return SortValue.CompareTo((float)other!.SortValue);
         }

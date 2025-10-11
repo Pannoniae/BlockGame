@@ -30,12 +30,9 @@ namespace FontStashSharp.RichText
 
 		public TextChunk(SpriteFontBase font, string text, Point size, Point? startPos)
 		{
-			if (font == null)
-			{
-				throw new ArgumentNullException("font");
-			}
+            ArgumentNullException.ThrowIfNull(font);
 
-			Font = font;
+            Font = font;
 			Text = text;
 			_size = size;
 			Count = TextSource.CalculateLength(text);

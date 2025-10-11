@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace FontStashSharp
 {
-	class ThrowHelper
+    internal static class ThrowHelper
 	{
 		public static void KeyNotFoundException()
 		{
@@ -27,13 +27,13 @@ namespace FontStashSharp
 		}
 	}
 
-	class SizingHelper
+    internal static class SizingHelper
 	{
-		static readonly int[] Primes = {
-			3, 5, 7, 11, 17, 23, 37, 53, 79, 113, 163, 229, 331, 463, 653, 919, 1289, 1811, 2539, 3557, 4987, 6983, 9781, 13693, 19181, 26861, 37607, 52667, 73751, 103289,
+        private static ReadOnlySpan<int> Primes => [
+            3, 5, 7, 11, 17, 23, 37, 53, 79, 113, 163, 229, 331, 463, 653, 919, 1289, 1811, 2539, 3557, 4987, 6983, 9781, 13693, 19181, 26861, 37607, 52667, 73751, 103289,
 			144611, 202471, 283463, 396871, 555637, 777901, 1089091, 1524763, 2134697, 2988607, 4184087, 5857727, 8200847, 11481199, 16073693, 22503181, 31504453, 44106241,
 			61748749, 86448259, 121027583, 169438627, 237214097, 332099741, 464939639, 650915521, 911281733, 1275794449, 1786112231
-		};
+        ];
 
 		public static int GetSizingPrime(int min)
 		{
@@ -43,10 +43,16 @@ namespace FontStashSharp
 				if (num >= min)
 					return num;
 			}
-			throw new Exception("Trying to find a too large prime.");
-		}
 
-		public static int NextSizingPrime(int min)
+            doThrow("Trying to find a too large prime.");
+            return 0;
+        }
+
+        private static void doThrow(string msg) {
+            throw new Exception(msg);
+        }
+
+        public static int NextSizingPrime(int min)
 		{
 			for (var index = 0; index < Primes.Length; ++index)
 			{
@@ -54,18 +60,20 @@ namespace FontStashSharp
 				if (num > min)
 					return num;
 			}
-			throw new Exception("Trying to find a too large prime.");
+
+            doThrow("Trying to find a too large prime.");
+            return 0;
 		}
 	}
 
 	public class Int32Map<TValue> : IEnumerable<KeyValuePair<int, TValue>>
 	{
-		int[] _buckets;
-		Entry[] _entries;
-		int _count;
-		int _version;
-		int _freeList;
-		int _freeCount;
+        private int[] _buckets;
+        private Entry[] _entries;
+        private int _count;
+        private int _version;
+        private int _freeList;
+        private int _freeCount;
 
 		public Int32Map() : this(0) { }
 
@@ -77,12 +85,9 @@ namespace FontStashSharp
 				Initialize(capacity);
 		}
 
-		public int Count
-		{
-			get { return _count - _freeCount; }
-		}
+		public int Count => _count - _freeCount;
 
-		public TValue this[int key]
+        public TValue this[int key]
 		{
 			get
 			{
@@ -99,8 +104,8 @@ namespace FontStashSharp
 					return default(TValue);
 				}
 			}
-			set { Insert(key, value, false); }
-		}
+			set => Insert(key, value, false);
+        }
 
 		IEnumerator<KeyValuePair<int, TValue>> IEnumerable<KeyValuePair<int, TValue>>.GetEnumerator()
 		{
@@ -135,7 +140,7 @@ namespace FontStashSharp
 			return FindEntry(key) >= 0;
 		}
 
-		int FindEntry(int key)
+        private int FindEntry(int key)
 		{
 			unchecked
 			{
@@ -150,7 +155,7 @@ namespace FontStashSharp
 			}
 		}
 
-		void Initialize(int capacity)
+        private void Initialize(int capacity)
 		{
 			var prime = SizingHelper.GetSizingPrime(capacity);
 			_buckets = new int[prime];
@@ -160,7 +165,7 @@ namespace FontStashSharp
 			_freeList = -1;
 		}
 
-		void Insert(int key, TValue value, bool add)
+        private void Insert(int key, TValue value, bool add)
 		{
 			unchecked
 			{
@@ -210,12 +215,12 @@ namespace FontStashSharp
 			}
 		}
 
-		void Resize()
+        private void Resize()
 		{
 			Resize(SizingHelper.NextSizingPrime(_count));
 		}
 
-		void Resize(int newSize)
+        private void Resize(int newSize)
 		{
 			var numArray = new int[newSize];
 			for (var index = 0; index < numArray.Length; ++index)
@@ -290,7 +295,7 @@ namespace FontStashSharp
 			return new Enumerator(this);
 		}
 
-		struct Entry
+        private struct Entry
 		{
 			public int HashCode;
 			public int Next;
@@ -300,27 +305,21 @@ namespace FontStashSharp
 
 		public struct Enumerator : IEnumerator<KeyValuePair<int, TValue>>
 		{
-			readonly Int32Map<TValue> _parent;
-			readonly int _version;
-			int _index;
-			KeyValuePair<int, TValue> _current;
+            private readonly Int32Map<TValue> _parent;
+            private readonly int _version;
+            private int _index;
+            private KeyValuePair<int, TValue> _current;
 
 			public void Reset()
 			{
 				throw new NotImplementedException();
 			}
 
-			object IEnumerator.Current
-			{
-				get { return _current; }
-			}
+			object IEnumerator.Current => _current;
 
-			public KeyValuePair<int, TValue> Current
-			{
-				get { return _current; }
-			}
+            public KeyValuePair<int, TValue> Current => _current;
 
-			internal Enumerator(Int32Map<TValue> parent)
+            internal Enumerator(Int32Map<TValue> parent)
 			{
 				_parent = parent;
 				_version = parent._version;

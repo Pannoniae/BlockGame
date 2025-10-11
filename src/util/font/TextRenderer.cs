@@ -33,6 +33,28 @@ public class TextRenderer : IFontStashRenderer {
             Vector2.Zero,
             depth);
     }
+
+    public void Draw(object texture, Vector2 pos, Rectangle? src, FSColor color, float rotation, Vector2 scale, float depth) {
+        var tex = (BTexture2D)texture;
+        var intPos = new Vector2((int)pos.X, (int)pos.Y);
+        // texture height
+        tb.Draw(tex,
+            intPos,
+            src,
+            new Color(color.R, color.G, color.B, color.A),
+            scale,
+            rotation,
+            Vector2.Zero,
+            depth);
+    }
+
+    public void begin() {
+        tb.Begin();
+    }
+
+    public void end() {
+        tb.End();
+    }
 }
 
 internal static class Utility {

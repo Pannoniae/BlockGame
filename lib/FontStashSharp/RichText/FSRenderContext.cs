@@ -29,22 +29,16 @@ namespace FontStashSharp.RichText
 
 		public void SetRenderer(IFontStashRenderer renderer)
 		{
-			if (renderer == null)
-			{
-				throw new ArgumentNullException(nameof(renderer));
-			}
+            ArgumentNullException.ThrowIfNull(renderer);
 
-			_renderer = renderer;
+            _renderer = renderer;
 			_renderer2 = null;
 		}
 
 		public void SetRenderer(IFontStashRenderer2 renderer)
 		{
-			if (renderer == null)
-			{
-				throw new ArgumentNullException(nameof(renderer));
-			}
-			_renderer = null;
+            ArgumentNullException.ThrowIfNull(renderer);
+            _renderer = null;
 			_renderer2 = renderer;
 		}
 

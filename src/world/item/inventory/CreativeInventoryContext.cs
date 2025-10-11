@@ -47,7 +47,15 @@ public class CreativeInventoryContext : InventoryContext {
         for (int i = 1; i < Item.currentID; i++) {
             var item = Item.get(i);
             if (item != null && item.isItem()) {
-                allItems.Add(new ItemStack(i, 1));
+                // special handling for dye - add all 16 color variants
+                if (i == Items.DYE) {
+                    for (byte metadata = 0; metadata < 16; metadata++) {
+                        allItems.Add(new ItemStack(i, 1, metadata));
+                    }
+                }
+                else {
+                    allItems.Add(new ItemStack(i, 1));
+                }
             }
         }
     }

@@ -19,7 +19,7 @@ namespace FontStashSharp.RichText
 		public const int NewLineWidth = 0;
 		public const string Commands = "cefistv";
 
-		private string _text;
+		//private string _text;
 		private SpriteFontBase _font;
 		private bool _measureRun;
 
@@ -54,7 +54,7 @@ namespace FontStashSharp.RichText
 			_richTextSettings = richTextSettings;
 		}
 
-		private bool HasIntegerParam(int i)
+		private bool HasIntegerParam(ReadOnlySpan<char> _text, int i)
 		{
 			if (char.IsDigit(_text[i]) ||
 				(_text[i] == '-' && i < _text.Length - 1 && char.IsDigit(_text[i + 1])))
@@ -77,7 +77,7 @@ namespace FontStashSharp.RichText
 			return false;
 		}
 
-		private bool IsCommand(int i)
+		private bool IsCommand(ReadOnlySpan<char> _text, int i)
 		{
 			if (!SupportsCommands ||
 				i >= _text.Length - 2 ||
@@ -128,7 +128,7 @@ namespace FontStashSharp.RichText
 			}
 			else if (command == 's' || command == 'v')
 			{
-				return HasIntegerParam(i + 1);
+				return HasIntegerParam(_text, i + 1);
 			}
 			else
 			{
@@ -164,7 +164,7 @@ namespace FontStashSharp.RichText
 			return true;
 		}
 
-		private int? ProcessIntegerParam(ref int i)
+		private int? ProcessIntegerParam(ReadOnlySpan<char> _text, ref int i)
 		{
 			int? startPos = null;
 			int endPos = 0;
@@ -199,14 +199,14 @@ namespace FontStashSharp.RichText
 				return null;
 			}
 
-			var parameters = _text.Substring(startPos.Value, endPos - startPos.Value);
+			var parameters = _text.Slice(startPos.Value, endPos - startPos.Value);
 			return int.Parse(parameters);
 		}
 
-		private bool ProcessCommand(ref int i, ref ChunkInfo r, out bool chunkFilled)
+		private bool ProcessCommand(ReadOnlySpan<char> _text, ref int i, ref ChunkInfo r, out bool chunkFilled)
 		{
 			chunkFilled = false;
-			if (!IsCommand(i))
+			if (!IsCommand(_text, i))
 			{
 				return false;
 			}
@@ -235,7 +235,7 @@ namespace FontStashSharp.RichText
 
 				i += 2;
 
-				var p = ProcessIntegerParam(ref i);
+				var p = ProcessIntegerParam(_text, ref i);
 				if (p != null)
 				{
 					if (p.Value < 0)
@@ -284,7 +284,7 @@ namespace FontStashSharp.RichText
 			else if (command == 's')
 			{
 				++i;
-				var p = ProcessIntegerParam(ref i);
+				var p = ProcessIntegerParam(_text, ref i);
 				r.Type = ChunkInfoType.Space;
 				r.X = p.Value;
 				r.Y = 0;
@@ -294,7 +294,7 @@ namespace FontStashSharp.RichText
 			else if (command == 'v')
 			{
 				++i;
-				var p = ProcessIntegerParam(ref i);
+				var p = ProcessIntegerParam(_text, ref i);
 				_currentVerticalOffset = p.Value;
 			}
 			else
@@ -311,7 +311,7 @@ namespace FontStashSharp.RichText
 					}
 				}
 
-				var parameters = _text.Substring(startPos, j - startPos);
+				var parameters = _text.Slice(startPos, j - startPos).ToString();
 				switch (command)
 				{
 					case 'c':
@@ -348,7 +348,7 @@ namespace FontStashSharp.RichText
 			return true;
 		}
 
-		private ChunkInfo GetNextChunk(ref int i, int? remainingWidth)
+		private ChunkInfo GetNextChunk(ReadOnlySpan<char> _text, ref int i, int? remainingWidth)
 		{
 			var r = new ChunkInfo
 			{
@@ -357,7 +357,7 @@ namespace FontStashSharp.RichText
 
 			// Process commands at the beginning of the chunk
 			bool chunkFilled;
-			while (ProcessCommand(ref i, ref r, out chunkFilled))
+			while (ProcessCommand(_text, ref i, ref r, out chunkFilled))
 			{
 				if (chunkFilled)
 				{
@@ -403,7 +403,7 @@ namespace FontStashSharp.RichText
 						// Two '\' means one
 						++i; ++r.EndIndex;
 					}
-					else if (IsCommand(i))
+					else if (IsCommand(_text, i))
 					{
 						// Return right here, so the command
 						// would be processed in the next chunk
@@ -515,7 +515,7 @@ namespace FontStashSharp.RichText
 			}
 		}
 
-		public Point Layout(string text, SpriteFontBase font, int? rowWidth, int? height, bool measureRun = false)
+		public Point Layout(ReadOnlySpan<char> text, SpriteFontBase font, int? rowWidth, int? height, bool measureRun = false)
 		{
 			if (!measureRun)
 			{
@@ -525,12 +525,12 @@ namespace FontStashSharp.RichText
 			_lineCount = 0;
 			var size = Utility.PointZero;
 
-			if (string.IsNullOrEmpty(text))
+			if (text == null || text.Length == 0)
 			{
 				return size;
 			}
 
-			_text = text;
+			//_text = text;
 			_font = font;
 			_measureRun = measureRun;
 			_height = height;
@@ -540,9 +540,9 @@ namespace FontStashSharp.RichText
 			var i = 0;
 
 			StartLine(0, rowWidth);
-			while (i < _text.Length)
+			while (i < text.Length)
 			{
-				var c = GetNextChunk(ref i, _width);
+				var c = GetNextChunk(text, ref i, _width);
 
 				if (_width != null && c.Width > _width.Value && _currentLineChunks > 0)
 				{
@@ -579,10 +579,11 @@ namespace FontStashSharp.RichText
 					switch (c.Type)
 					{
 						case ChunkInfoType.Text:
-							var t = _text.Substring(c.StartIndex, c.EndIndex - c.StartIndex);
+							var t = text.Slice(c.StartIndex, c.EndIndex - c.StartIndex).ToString();
 							if (SupportsCommands)
 							{
-								t = t.Replace("//", "/");
+								//t = t.Replace("//", "/");
+                                t = t.Replace("//", "/");
 							}
 							var textChunk = new TextChunk(_currentFont, t, new Point(c.X, c.Y), startPos)
 							{
@@ -628,14 +629,14 @@ namespace FontStashSharp.RichText
 			}
 
 			// If text ends with '\n', then add additional line
-			if (_text[_text.Length - 1] == '\n')
+			if (text[^1] == '\n')
 			{
 				var lineSize = _currentFont.MeasureString(" ");
 				if (!_measureRun)
 				{
 					var additionalLine = new TextLine
 					{
-						TextStartIndex = _text.Length
+						TextStartIndex = text.Length
 					};
 
 					additionalLine.Size.Y = (int)lineSize.Y;
@@ -671,11 +672,10 @@ namespace FontStashSharp.RichText
 
 				if (AutoEllipsisMethod != AutoEllipsisMethod.None &&
 					lines.Count > 0 &&
-					lines[lines.Count - 1].Chunks.Count > 0)
+					lines[^1].Chunks.Count > 0)
 				{
-					var lastLine = lines[lines.Count - 1];
-					var lastChunk = lastLine.Chunks[lastLine.Chunks.Count - 1] as TextChunk;
-					if (lastChunk != null && !string.IsNullOrEmpty(lastChunk.Text))
+					var lastLine = lines[^1];
+                    if (lastLine.Chunks[^1] is TextChunk lastChunk && !string.IsNullOrEmpty(lastChunk.Text))
 					{
 						var otherChunksWidth = 0;
 						for (i = 0; i < lastLine.Chunks.Count - 1; ++i)
@@ -683,21 +683,21 @@ namespace FontStashSharp.RichText
 							otherChunksWidth += lastLine.Chunks[i].Size.X;
 						}
 
-						text = lastChunk.Text;
+						var _text = lastChunk.Text;
 						if (AutoEllipsisMethod == AutoEllipsisMethod.Word)
 						{
 							// Simply trim end and add ellipsis
-							var words = new List<string>(text.Split(' '));
+							var words = new List<string>(_text.ToString().Split(' '));
 
 							while (words.Count > 0)
 							{
-								text = string.Join(" ", words).TrimEnd();
+                                _text = string.Join(" ", words).TrimEnd();
 								if (!string.IsNullOrEmpty(AutoEllipsisString))
 								{
-									text += AutoEllipsisString;
+                                    _text += AutoEllipsisString;
 								}
 
-								var sz = lastChunk.Font.MeasureString(text);
+								var sz = lastChunk.Font.MeasureString(_text);
 
 								if (otherChunksWidth + sz.X < rowWidth.Value)
 								{
@@ -712,8 +712,7 @@ namespace FontStashSharp.RichText
 							// Try to add word from the next chunk
 							if (_lines.Count > lines.Count && _lines[lines.Count].Chunks.Count > 0)
 							{
-								var nextChunk = _lines[lines.Count].Chunks[0] as TextChunk;
-								if (nextChunk != null)
+                                if (_lines[lines.Count].Chunks[0] is TextChunk nextChunk)
 								{
 									var words = nextChunk.Text.Split(' ');
 									if (words.Length > 0)
@@ -721,16 +720,16 @@ namespace FontStashSharp.RichText
 										var firstWord = words[0].Trim();
 										if (!string.IsNullOrEmpty(firstWord))
 										{
-											text = text.TrimEnd();
-											text += " " + firstWord;
+                                            _text = _text.TrimEnd();
+                                            _text += " " + firstWord;
 										}
 									}
 								}
 							}
 
-							while (!string.IsNullOrEmpty(text))
+							while (!string.IsNullOrEmpty(_text))
 							{
-								var newText = text.TrimEnd();
+								var newText = _text.TrimEnd();
 								if (!string.IsNullOrEmpty(AutoEllipsisString))
 								{
 									newText += AutoEllipsisString;
@@ -740,18 +739,18 @@ namespace FontStashSharp.RichText
 
 								if (otherChunksWidth + sz.X < rowWidth.Value)
 								{
-									text = newText;
+                                    _text = newText;
 									break;
 								}
 
-								text = text.Substring(0, text.Length - 1);
+                                _text = _text[..^1];
 							}
 						}
 
-						lastChunk.Text = text;
+                        lastChunk.Text = _text.ToString();
 
 						// Update chunk size
-						var measure = lastChunk.Font.MeasureString(text);
+						var measure = lastChunk.Font.MeasureString(_text);
 						lastChunk._size = new Point((int)measure.X, (int)measure.Y);
 
 						// Update line size

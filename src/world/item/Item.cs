@@ -70,6 +70,7 @@ public class Item {
     public static Item COPPER_AXE;
     public static Item COPPER_SHOVEL;
     public static Item COPPER_SWORD;
+    public static DyeItem DYE;
 
 
     public Item(int id, string name) {
@@ -232,6 +233,9 @@ public class Item {
         COPPER_SWORD = new Item(Items.COPPER_SWORD, "Copper Sword");
         COPPER_SWORD.tex = new UVPair(5, 4);
         register(COPPER_SWORD);
+
+        DYE = new DyeItem(Items.DYE, "Dye");
+        register(DYE);
 
     }
 
