@@ -34,7 +34,7 @@ public class CreativeInventoryContext : InventoryContext {
 
             // special handling for candy block - add all 16 variants
             if (i == Blocks.CANDY) {
-                for (byte metadata = 0; metadata < 16; metadata++) {
+                for (byte metadata = 0; metadata < Block.CANDY.maxValidMetadata() + 1; metadata++) {
                     allItems.Add(new ItemStack(Item.blockID(i), 1, metadata));
                 }
             }
