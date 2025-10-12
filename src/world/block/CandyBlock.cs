@@ -7,8 +7,8 @@ public class CandyBlock : Block {
 
     public static readonly string[] colourNames = [
         "Blue", "Sky Blue", "Turquoise", "Dark Green", "Light Green",
-        "Orange", "Yellow", "Light Red", "Pink", "Purple", 
-        "Violet", "Red", "Dark Blue", "White", "Gray", "Black",
+        "Orange", "Yellow", "Red", "Pink", "Purple",
+        "Violet", "Dark Red", "Dark Blue", "White", "Gray", "Black",
         "Cyan", "Apple Green", "Beige", "Neon", "Light Orange", "Brown", "Light Purple", "Dark Violet"
     ];
 
