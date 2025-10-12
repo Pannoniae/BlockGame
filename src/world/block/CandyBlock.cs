@@ -5,7 +5,7 @@ public class CandyBlock : Block {
         renderType[id] = RenderType.CUBE_DYNTEXTURE;
     }
 
-    private static readonly string[] colourNames = [
+    public static readonly string[] colourNames = [
         "Blue", "Sky Blue", "Turquoise", "Dark Green", "Light Green",
         "Orange", "Yellow", "Light Red", "Pink", "Purple", 
         "Violet", "Red", "Dark Blue", "White", "Gray", "Black",
