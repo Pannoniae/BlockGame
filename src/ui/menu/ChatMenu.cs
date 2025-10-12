@@ -5,6 +5,7 @@ using BlockGame.main;
 using BlockGame.ui.screen;
 using BlockGame.util;
 using BlockGame.world;
+using BlockGame.world.item.inventory;
 using CircularBuffer;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
@@ -122,7 +123,7 @@ public class ChatMenu : Menu {
                             case "1":
                                 Game.gamemode = GameMode.creative;
                                 // switch to creative inventory context
-                                Game.player.inventoryCtx = new world.item.inventory.CreativeInventoryContext(40);
+                                Game.player.inventoryCtx = new CreativeInventoryContext(40);
                                 addMessage("Set gamemode to Creative");
                                 break;
                             case "survival":
@@ -132,7 +133,7 @@ public class ChatMenu : Menu {
                                 // disable flying when switching to survival
                                 Game.player.flyMode = false;
                                 // switch to survival inventory context
-                                Game.player.inventoryCtx = new world.item.inventory.SurvivalInventoryContext(Game.player.inventory);
+                                Game.player.inventoryCtx = new SurvivalInventoryContext(Game.player.inventory);
                                 addMessage("Set gamemode to Survival");
                                 break;
                             default:

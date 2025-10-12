@@ -120,7 +120,7 @@ public class Menu {
             }
         }
     }
-    public static int MOUSEPOSPADDING => 4 * GUI.guiScale;
+    public static Vector2 MOUSEPOSPADDING => new Vector2(10 * GUI.guiScale, 6 * GUI.guiScale);
 
     public virtual void postDraw() {
         foreach (var element in elements.Values) {
@@ -142,9 +142,9 @@ public class Menu {
 
     /** Draw a tooltip at mouse position with the given text */
     protected static void drawTooltip(string tooltip) {
-        var pos = Game.mousePos + new Vector2(MOUSEPOSPADDING);
+        var pos = Game.mousePos + MOUSEPOSPADDING;
         var posExt = Game.gui.measureStringThin(tooltip) + new Vector2(4, 2) * GUI.guiScale;
-        var textPos = Game.mousePos + new Vector2(MOUSEPOSPADDING) + new Vector2(2, 1) * GUI.guiScale;
+        var textPos = Game.mousePos + MOUSEPOSPADDING + new Vector2(2, 1) * GUI.guiScale;
 
         // clamp tooltip to screen bounds
         var screenWidth = Game.window.Size.X;

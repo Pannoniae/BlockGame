@@ -118,7 +118,7 @@ public class CraftingGridInventory : Inventory {
         var fullMatch = Recipe.findMatch(this);
         if (fullMatch != null) {
             matchStatus = CraftingMatchStatus.FULL_MATCH;
-            result = fullMatch.getResult();
+            result = fullMatch.getResult(this);
             return;
         }
 

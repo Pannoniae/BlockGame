@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -59,6 +60,7 @@ public class WorldIO {
         tag.addInt("seed", world.seed);
         tag.addInt("time", world.worldTick);
         tag.addString("displayName", world.displayName);
+        tag.addString("gamemode", Game.gamemode == GameMode.survival ? "survival" : "creative");
         tag.addLong("lastPlayed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         tag.addString("generator", world.generatorName);
 

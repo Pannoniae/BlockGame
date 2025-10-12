@@ -11,6 +11,33 @@ public class CandyBlock : Block {
         "Violet", "Red", "Dark Blue", "White", "Gray", "Black",
         "Cyan", "Apple Green", "Lime", "Neon", "Light Orange", "Brown", "Light Purple", "Dark Violet"
     ];
+
+    public static readonly Color[] colours = [
+        Color.FromBgra(0xFF1542F8),
+        Color.FromBgra(0xFF0db5e3),
+        Color.FromBgra(0xFF3fdccc),
+        Color.FromBgra(0xFF084e0b),
+        Color.FromBgra(0xFF0df415),
+        Color.FromBgra(0xFFff9e42),
+        Color.FromBgra(0xFFe4e81a),
+        Color.FromBgra(0xFFfe0909),
+        Color.FromBgra(0xFFff8ee1),
+        Color.FromBgra(0xFFd55df1),
+        Color.FromBgra(0xFF9d5bd7),
+        Color.FromBgra(0xFFbe0505),
+        Color.FromBgra(0xFF0014c7),
+        Color.FromBgra(0xFFf2f2f2),
+        Color.FromBgra(0xFF858585),
+        Color.FromBgra(0xFF404040),
+        Color.FromBgra(0xFF06e9ed),
+        Color.FromBgra(0xFF00f8a6),
+        Color.FromBgra(0xFF00ee4c),
+        Color.FromBgra(0xFFb0fa00),
+        Color.FromBgra(0xFFffbe42),
+        Color.FromBgra(0xFF89440b),
+        Color.FromBgra(0xFFf3aafc),
+        Color.FromBgra(0xFF8018a0),
+    ];
     
     public override byte maxValidMetadata() => 23;
     

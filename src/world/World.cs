@@ -1,3 +1,4 @@
+using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.ui;
@@ -6,6 +7,7 @@ using BlockGame.util.log;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
 using Molten;
 using Molten.DoublePrecision;
@@ -156,6 +158,13 @@ public partial class World : IDisposable {
                 if (tag.has("player")) {
                     player.read(tag.getCompoundTag("player"));
                 }
+
+                // load gamemode
+                var gmStr = tag.getString("gamemode");
+                Game.gamemode = gmStr == "survival" ? GameMode.survival : GameMode.creative;
+                player.inventoryCtx = Game.gamemode == GameMode.survival
+                    ? new SurvivalInventoryContext(player.inventory)
+                    : new CreativeInventoryContext(40);
 
                 player.prevPosition = player.position;
             }

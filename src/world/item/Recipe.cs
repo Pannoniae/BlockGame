@@ -22,6 +22,9 @@ public class Recipe {
     private int gridSize; // 2 for 2x2, 3 for 3x3
 
     public static void preLoad() {
+        // dye mixing (any 2 dyes -> 2 of average colour)
+        recipes.Add(new DyeRecipe());
+
         // shapeless: 1 log -> 4 planks
         PLANKS = register(new ItemStack(Item.block(Blocks.PLANKS), 4));
         PLANKS.noShape();
@@ -94,7 +97,7 @@ public class Recipe {
     }
 
 
-    public bool matches(CraftingGridInventory grid) {
+    public virtual bool matches(CraftingGridInventory grid) {
         if (isShapeless) {
             return matchesShapeless(grid);
         }
@@ -103,7 +106,7 @@ public class Recipe {
     }
 
     /** Matches shape only, ignoring quantities */
-    public bool matchesShape(CraftingGridInventory grid) {
+    public virtual bool matchesShape(CraftingGridInventory grid) {
         if (isShapeless) {
             return matchesShapelessShape(grid);
         }
@@ -288,8 +291,11 @@ public class Recipe {
 
     public ItemStack getResult() => result.copy();
 
+    /** Get result based on grid contents (for dynamic recipes) */
+    public virtual ItemStack getResult(CraftingGridInventory grid) => getResult();
+
     /** Consumes ingredients from the grid for this recipe */
-    public void consumeIngredients(CraftingGridInventory grid) {
+    public virtual void consumeIngredients(CraftingGridInventory grid) {
         if (isShapeless) {
             consumeShapeless(grid);
         }
