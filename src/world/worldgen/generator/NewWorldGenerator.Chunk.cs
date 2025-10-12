@@ -91,7 +91,7 @@ public partial class NewWorldGenerator {
             1 / (42f * 2), 8, 2 + Meth.rhoF);
 
 
-        getNoise3DRegion(sb, sn, coord, 1 / 59f, 1 / 29f,
+        getNoise3DRegion(sb, sn, coord, 1 / 29f, 1 / 29f,
             1 / 29f, 4, 2f);
 
         getNoise2DRegion(eb, en, coord, 1 / 342f, 1 / 342f, 8, 2f);
@@ -103,7 +103,13 @@ public partial class NewWorldGenerator {
 
         getNoise2DRegion(mb, mn, coord, 1 / 354f, 1 / 354f, 6, 1.81f);
 
+
         //getNoise3DRegion(wb, wn, coord, FREQW, FREQW, FREQW, 4, Meth.phiF);
+
+        // print all noise resolutions
+        //WorldgenUtil.printNoiseResolution(1 / (42f * 2), 8, 1 + Meth.rhoF * 2, 1 / (1 + Meth.rhoF * 2));
+        //WorldgenUtil.printNoiseResolution(1 / 29f, 4, 2f,0.5f);
+
 
         for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
             for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
