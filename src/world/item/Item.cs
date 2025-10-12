@@ -175,63 +175,63 @@ public class Item {
         register(IRON_PICKAXE);
 
         STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25);
-        STONE_PICKAXE.tex = new UVPair(2, 2);
+        STONE_PICKAXE.tex = new UVPair(2, 3);
         register(STONE_PICKAXE);
 
         STONE_AXE = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 1.25);
-        STONE_AXE.tex = new UVPair(3, 2);
+        STONE_AXE.tex = new UVPair(3, 3);
         register(STONE_AXE);
 
         STONE_SHOVEL = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 1.25);
-        STONE_SHOVEL.tex = new UVPair(4, 2);
+        STONE_SHOVEL.tex = new UVPair(4, 3);
         register(STONE_SHOVEL);
 
         STONE_SWORD = new Item(Items.STONE_SWORD, "Stone Sword");
-        STONE_SWORD.tex = new UVPair(5, 2);
+        STONE_SWORD.tex = new UVPair(5, 3);
         register(STONE_SWORD);
 
         STONE_HOE = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25);
-        STONE_HOE.tex = new UVPair(6, 2);
+        STONE_HOE.tex = new UVPair(6, 3);
         register(STONE_HOE);
 
         STONE_SCYTHE = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25);
-        STONE_SCYTHE.tex = new UVPair(7 , 2);
+        STONE_SCYTHE.tex = new UVPair(7 , 3);
         register(STONE_SCYTHE);
 
         WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0);
-        WOOD_PICKAXE.tex = new UVPair(2, 3);
+        WOOD_PICKAXE.tex = new UVPair(2, 4);
         register(WOOD_PICKAXE);
 
         WOOD_AXE = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0);
-        WOOD_AXE.tex = new UVPair(3, 3);
+        WOOD_AXE.tex = new UVPair(3, 4);
         register(WOOD_AXE);
 
         WOOD_SHOVEL = new Tool(Items.WOOD_SHOVEL, "Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0);
-        WOOD_SHOVEL.tex = new UVPair(4, 3);
+        WOOD_SHOVEL.tex = new UVPair(4, 4);
         register(WOOD_SHOVEL);
 
         WOOD_SWORD = new Item(Items.WOOD_SWORD, "Wood Sword");
-        WOOD_SWORD.tex = new UVPair(5, 3);
+        WOOD_SWORD.tex = new UVPair(5, 4);
         register(WOOD_SWORD);
 
         STICK = new Item(Items.STICK, "Stick");
-        STICK.tex = new UVPair(0, 7);
+        STICK.tex = new UVPair(0, 8);
         register(STICK);
 
         COPPER_PICKAXE = new Tool(Items.COPPER_PICKAXE, "Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
-        COPPER_PICKAXE.tex = new UVPair(2, 4);
+        COPPER_PICKAXE.tex = new UVPair(2, 5);
         register(COPPER_PICKAXE);
 
         COPPER_AXE = new Tool(Items.COPPER_AXE, "Copper Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
-        COPPER_AXE.tex = new UVPair(3, 4);
+        COPPER_AXE.tex = new UVPair(3, 5);
         register(COPPER_AXE);
 
         COPPER_SHOVEL = new Tool(Items.COPPER_SHOVEL, "Copper Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.5);
-        COPPER_SHOVEL.tex = new UVPair(4, 4);
+        COPPER_SHOVEL.tex = new UVPair(4, 5);
         register(COPPER_SHOVEL);
 
         COPPER_SWORD = new Item(Items.COPPER_SWORD, "Copper Sword");
-        COPPER_SWORD.tex = new UVPair(5, 4);
+        COPPER_SWORD.tex = new UVPair(5, 5);
         register(COPPER_SWORD);
 
         DYE = new DyeItem(Items.DYE, "Dye");
