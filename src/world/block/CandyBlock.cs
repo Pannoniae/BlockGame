@@ -9,7 +9,7 @@ public class CandyBlock : Block {
         "Blue", "Sky Blue", "Turquoise", "Dark Green", "Light Green",
         "Orange", "Yellow", "Light Red", "Pink", "Purple", 
         "Violet", "Red", "Dark Blue", "White", "Gray", "Black",
-        "Cyan", "Apple Green", "Lime", "Neon", "Light Orange", "Brown", "Light Purple", "Dark Violet"
+        "Cyan", "Apple Green", "Beige", "Neon", "Light Orange", "Brown", "Light Purple", "Dark Violet"
     ];
 
     public static readonly Color[] colours = [
@@ -31,7 +31,7 @@ public class CandyBlock : Block {
         Color.FromBgra(0xFF404040),
         Color.FromBgra(0xFF06e9ed),
         Color.FromBgra(0xFF00f8a6),
-        Color.FromBgra(0xFF00ee4c),
+        Color.FromBgra(0xFFfdecd8),
         Color.FromBgra(0xFFb0fa00),
         Color.FromBgra(0xFFffbe42),
         Color.FromBgra(0xFF89440b),

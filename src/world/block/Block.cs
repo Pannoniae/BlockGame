@@ -155,7 +155,7 @@ public class Block {
 
     public static Block TALL_GRASS;
     public static Block SHORT_GRASS;
-    //public static Block YELLOW_FLOWER;
+    public static Block YELLOW_FLOWER;
     //public static Block RED_FLOWER;
     public static Block ORANGE_WEED;
     public static Block CYAN_TULIP;
@@ -354,15 +354,15 @@ public class Block {
         SHORT_GRASS.material(Material.ORGANIC);
         SHORT_GRASS.setHardness(0);
         
-        //YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
-        //YELLOW_FLOWER.setTex(crossUVs(10, 1));
-        //YELLOW_FLOWER.setModel(BlockModel.makeGrass(YELLOW_FLOWER));
-        //YELLOW_FLOWER.transparency();
-        //YELLOW_FLOWER.flowerAABB();
-        //YELLOW_FLOWER.noCollision();
-        //YELLOW_FLOWER.waterTransparent();
-        //YELLOW_FLOWER.itemLike();
-        //YELLOW_FLOWER.material(Material.ORGANIC);
+        YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
+        YELLOW_FLOWER.setTex(crossUVs(15, 5));
+        YELLOW_FLOWER.setModel(BlockModel.makeGrass(YELLOW_FLOWER));
+        YELLOW_FLOWER.transparency();
+        YELLOW_FLOWER.flowerAABB();
+        YELLOW_FLOWER.noCollision();
+        YELLOW_FLOWER.waterTransparent();
+        YELLOW_FLOWER.itemLike();
+        YELLOW_FLOWER.material(Material.ORGANIC);
 
         //RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
         //RED_FLOWER.setTex(crossUVs(11, 1));
