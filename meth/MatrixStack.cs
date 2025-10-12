@@ -20,7 +20,7 @@ namespace BlockGame.world;
  * Matrix multiplication reminder: In A * B * C, C is applied first to vertices, then B, then A.
  */
 public class MatrixStack {
-    public Stack<Matrix4x4> stack = new();
+    public readonly Stack<Matrix4x4> stack = new();
     
     public bool reverse;
 

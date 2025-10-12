@@ -1,56 +1,77 @@
-﻿using BlockGame.world.entity;
+using BlockGame.util;
+using BlockGame.world.entity;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world;
 
 /**
- * Sadly can't do this like blocks because if you init an entity, it should exist in the world, etc.
- * Now of course there could be special "template" entities (like how items work in terraria) but
- * that's too much hassle.
- * Alternative: we just store the classes here and have a create function or something.
+ * Entity registry using string IDs.
+ * Runtime uses int IDs for performance, string IDs map to sequential ints.
+ * Added this so we can officially claim to be a factory game. :D
+ *
+ * TODO should we return the runtime int ID on create()? Or just the entity instance? (But then you create entities without adding them to the world...)
  */
 public class Entities {
-    public const int COW = 0;
-    public const int PLAYER = 1;
-    public const int ITEM_ENTITY = 2;
+    private static readonly Dictionary<string, int> stringToID = new();
+    private static readonly Dictionary<int, string> idToString = new();
+    private static readonly List<Func<World, Entity>> factories = [];
+    private static int c = 0;
 
-    public const int ENTITYCOUNT = 3;
+    public static readonly int COW = register("cow", w => new Cow(w));
+    public static readonly int PLAYER = register("player", w => new Player(w,0, 0, 0));
+    public static readonly int ITEM_ENTITY = register("item", w => new ItemEntity(w));
 
-    public static Type[] entityTypes = new Type[ENTITYCOUNT];
-    public static bool[] blocksPlacement = new bool[ENTITYCOUNT];
-
-    public static Type? getType(int id) {
-        if (id is < 0 or >= ENTITYCOUNT) {
-            return null;
+    /**
+     * Register an entity type with a string ID.
+     * Returns runtime int ID for fast lookups.
+     */
+    public static int register(string type, Func<World, Entity> factory) {
+        if (stringToID.ContainsKey(type)) {
+            InputException.throwNew($"Entity '{type}' is already registered!");
         }
 
-        return entityTypes[id];
-    }
-
-    static Entities() {
-        entityTypes[COW] = typeof(Cow);
-        entityTypes[PLAYER] = typeof(Player);
-        entityTypes[ITEM_ENTITY] = typeof(ItemEntity);
-
-        // by default, entities block placement
-        for (int i = 0; i < ENTITYCOUNT; i++) {
-            blocksPlacement[i] = true;
-        }
-
-        // item entities don't block placement
-        blocksPlacement[ITEM_ENTITY] = false;
+        int itype = c++;
+        stringToID[type] = itype;
+        idToString[itype] = type;
+        factories.Add(factory);
+        return itype;
     }
 
     /**
-     * Create an entity instance by type ID.
-     * Note: PLAYER entities are not created here - they're saved/loaded separately with world data.
+     * Create an entity instance by runtime int ID.
      */
     public static Entity? create(World world, int type) {
-        return type switch {
-            ITEM_ENTITY => new ItemEntity(world),
-            COW => new Cow(world),
-            _ => null
-        };
+        if (type < 0 || type >= factories.Count) return null;
+        return factories[type](world);
     }
+
+    /**
+     * Create an entity instance by string ID (used for loading saves).
+     */
+    public static Entity? create(World world, string type) {
+        if (stringToID.TryGetValue(type, out int id)) {
+            return create(world, id);
+        }
+        return null;
+    }
+
+    /**
+     * Get runtime int ID from string ID.
+     */
+    public static int getID(string id) {
+        return stringToID.TryGetValue(id, out int iid) ? iid : -1;
+    }
+
+    /**
+     * Get string ID from runtime int ID.
+     */
+    public static string? getStringID(int id) {
+        return idToString.TryGetValue(id, out string? str) ? str : null;
+    }
+
+    /**
+     * Get total number of registered entities.
+     */
+    public static int count() => factories.Count;
 }

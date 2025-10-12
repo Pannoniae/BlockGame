@@ -923,7 +923,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render all entities
         foreach (var entity in world.entities) {
-            var renderer = EntityRenderers.renderers[entity.type];
+            var renderer = EntityRenderers.get(Entities.getID(entity.type));
             if (renderer == null) {
                 continue;
             }

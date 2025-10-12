@@ -9,15 +9,17 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world;
 
-public class Entity(World world, int type) : Persistent {
+public class Entity(World world, string type) : Persistent {
     public const int MAX_SWING_TICKS = 20;
     public const int AIR_HIT_CD = 20;
 
-    public int type = type;
+    public string type = type;
     public int id = World.ec++;
 
     public World world = world;
 
+    /** does this entity block block placement? */
+    public virtual bool blocksPlacement => true;
 
     /** is entity deleted?
      * Status update: we shouldn't use this!! it's stupid and HAS TO BE CHECKED EVERYWHERE
@@ -150,6 +152,13 @@ public class Entity(World world, int type) : Persistent {
     // todo unfinished shit below
     public void read(NBTCompound data) {
         id = data.getInt("id");
+
+        // load entity type from string ID
+        if (data.has("type")) {
+            var id = data.getString("type");
+            type = id;
+        }
+
         position = prevPosition = new Vector3D(
             data.getDouble("posX"),
             data.getDouble("posY"),
@@ -175,6 +184,10 @@ public class Entity(World world, int type) : Persistent {
 
     public void write(NBTCompound data) {
         data.addInt("id", id);
+
+        // save string ID
+        data.addString("type", type);
+
         data.addDouble("posX", position.X);
         data.addDouble("posY", position.Y);
         data.addDouble("posZ", position.Z);

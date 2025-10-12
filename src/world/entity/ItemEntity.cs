@@ -13,8 +13,11 @@ namespace BlockGame.world.entity;
 public class ItemEntity : Entity {
     const double size = 0.25;
 
-    public ItemEntity(World world) : base(world, Entities.ITEM_ENTITY) {
+    public ItemEntity(World world) : base(world, "item") {
     }
+
+    /** item entities don't block block placement */
+    public override bool blocksPlacement => false;
 
     /** funny number */
     public const int DESPAWN = 36900;

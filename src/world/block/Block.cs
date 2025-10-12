@@ -1162,25 +1162,26 @@ public class Block {
 }
 
 public static class BlockExtensions {
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort getID(this uint block) {
-        return (ushort)(block & 0xFFFFFF);
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte getMetadata(this uint block) {
-        return (byte)(block >> 24);
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint setMetadata(this uint block, byte metadata) {
-        return (block & 0xFFFFFF) | ((uint)metadata << 24);
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint setID(this uint block, ushort id) {
-        return (block & 0xFF000000) | id;
+    extension(uint block) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ushort getID() {
+            return (ushort)(block & 0xFFFFFF);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public byte getMetadata() {
+            return (byte)(block >> 24);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint setMetadata(byte metadata) {
+            return (block & 0xFFFFFF) | ((uint)metadata << 24);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint setID(ushort id) {
+            return (block & 0xFF000000) | id;
+        }
     }
 }
 

@@ -74,7 +74,7 @@ public class Player : Soul {
     public int breakTime;
 
     // positions are feet positions
-    public Player(World world, int x, int y, int z) : base(world, Entities.PLAYER) {
+    public Player(World world, int x, int y, int z) : base(world, "player") {
         position = new Vector3D(x, y, z);
         prevPosition = position;
         inventory = new PlayerInventory();
@@ -660,7 +660,7 @@ public class Player : Soul {
                         world.getEntitiesInBox(entities, aabb.min.toBlockPos(), aabb.max.toBlockPos() + 1);
 
                         foreach (var entity in entities) {
-                            if (Entities.blocksPlacement[entity.type] && AABB.isCollision(aabb, entity.aabb)) {
+                            if (entity.blocksPlacement && AABB.isCollision(aabb, entity.aabb)) {
                                 hasCollisions = true;
                                 break;
                             }
@@ -797,9 +797,10 @@ public class Player : Soul {
     public void pickBlock() {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
-            var bl = Block.get(world.getBlock(pos));
+            var raw = world.getBlockRaw(pos);
+            var bl = Block.get(raw.getID());
             if (bl != null) {
-                inventory.slots[inventory.selected] = new ItemStack(Item.blockID(bl.id), 1);
+                inventory.slots[inventory.selected] = new ItemStack(Item.blockID(bl.id), 1, raw.getMetadata());
             }
         }
     }

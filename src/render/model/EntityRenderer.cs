@@ -23,8 +23,7 @@ public class CowRenderer : EntityRenderer<Cow> {
 
 
 public static class EntityRenderers {
-
-    public static readonly EntityRenderer<Entity>[] renderers = new EntityRenderer<Entity>[Entities.ENTITYCOUNT];
+    private static readonly Dictionary<int, EntityRenderer<Entity>> renderers = new();
 
     public static readonly InstantDrawEntity ide = new(2048);
 
@@ -33,10 +32,20 @@ public static class EntityRenderers {
         reloadAll();
     }
 
+    /** Register a renderer for an entity type */
+    public static void register(int entityID, EntityRenderer<Entity> renderer) {
+        renderers[entityID] = renderer;
+    }
+
+    /** Get renderer for an entity type */
+    public static EntityRenderer<Entity>? get(int entityID) {
+        return renderers.GetValueOrDefault(entityID);
+    }
+
     /** hot reload all entity models by recreating them */
     public static void reloadAll() {
-        renderers[Entities.COW] = new CowRenderer();
-        renderers[Entities.PLAYER] = new PlayerRenderer();
-        renderers[Entities.ITEM_ENTITY] = new ItemEntityRenderer();
+        register(Entities.COW, new CowRenderer());
+        register(Entities.PLAYER, new PlayerRenderer());
+        register(Entities.ITEM_ENTITY, new ItemEntityRenderer());
     }
 }

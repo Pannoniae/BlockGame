@@ -20,9 +20,11 @@ public class Debug {
         // Set projection and view uniforms for the instant draw system
         Matrix4x4 projMatrix = Game.camera.getProjectionMatrix();
         Matrix4x4 viewMatrix = Game.camera.getViewMatrix(interp);
-        Matrix4x4 mvpMatrix = viewMatrix * projMatrix;
-        
-        idc.setMVP(mvpMatrix);
+
+        var mat = Game.graphics.model;
+        idc.model(mat);
+        idc.view(viewMatrix);
+        idc.proj(projMatrix);
     }
 
     public void drawLine(Vector3D from, Vector3D to, Color colour = default) {
@@ -45,7 +47,7 @@ public class Debug {
         var usw = new Vector3D(aabb.x0, aabb.y1, aabb.z0);
         var use = new Vector3D(aabb.x1, aabb.y1, aabb.z0);
         var unw = new Vector3D(aabb.x0, aabb.y1, aabb.z1);
-        var une = new Vector3D(aabb.x1, aabb.y1, aabb.z1);
+        var une = aabb.max;
 
         // join them with lines
         drawLine(lsw, lse);

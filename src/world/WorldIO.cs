@@ -162,12 +162,12 @@ public class WorldIO {
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             foreach (var entity in chunk.entities[sectionY]) {
                 // skip players
-                if (entity.type == Entities.PLAYER) {
+                if (entity.type == "player") {
                     continue;
                 }
 
                 var entityData = new NBTCompound();
-                entityData.addInt("type", entity.type);
+                entityData.addString("type", entity.type);
                 var data = new NBTCompound("data");
                 entity.write(data);
                 entityData.add(data);

@@ -237,10 +237,13 @@ public class GameScreen : Screen {
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
-        base.onMouseDown(mouse, button);
-        if (Game.world.inMenu || currentMenu != INGAME_MENU) {
+
+        // also return if we're ingame!! so we won't handle bs "clicks"
+        if (Game.world.inMenu || currentMenu != INGAME_MENU || currentMenu == INGAME_MENU) {
             return;
         }
+
+        base.onMouseDown(mouse, button);
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
@@ -826,9 +829,12 @@ public class GameScreen : Screen {
     private void drawEntityAABBs() {
         var world = Game.world;
 
-        // get player position for range culling
         var playerPos = world.player.position;
-        const double renderRange = 32.0; // only render AABBs within this range
+        const double renderRange = 32.0;
+
+        var mat = Game.graphics.model;
+        mat.push();
+        mat.loadIdentity();
 
         D.idc.begin(PrimitiveType.Lines);
 
@@ -841,17 +847,19 @@ public class GameScreen : Screen {
             // update the entity's AABB based on current position
             entity.aabb = entity.calcAABB(entity.position);
 
-            // use different colors for different entity types
-            var color = entity switch {
+            // use different colours for different entity types
+            var c = entity switch {
                 Player => Color.Green,
                 _ => Color.Yellow
             };
 
             // draw the AABB wireframe
-            D.drawAABB(entity.aabb, color);
+            D.drawAABB(entity.aabb, c);
+
         }
 
         D.idc.end();
+        mat.pop();
     }
 
     public override void postDraw() {

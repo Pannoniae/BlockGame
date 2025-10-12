@@ -23,7 +23,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Spectre.Console" Version="0.51.2-preview.0.2" />
+        <PackageReference Include="Spectre.Console" Version="0.52.1-preview.0.4" />
         <PackageReference Include="Spectre.Console.Analyzer" Version="1.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -38,7 +38,16 @@
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
         <PackageReference Include="System.IO.Hashing" Version="10.0.0-rc.1.25451.107" />
+        <PackageReference Include="U8String" Version="0.16.0-alpha" />
+        <PackageReference Include="U8String.Optimization" Version="0.16.0-alpha">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="ZString" Version="2.6.0"/>
     </ItemGroup>
+
+    <PropertyGroup>
+        <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);U8.Generated</InterceptorsPreviewNamespaces>
+    </PropertyGroup>
     
 </Project>

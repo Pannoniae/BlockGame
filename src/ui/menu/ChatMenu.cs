@@ -314,7 +314,7 @@ public class ChatMenu : Menu {
 
                     int entityType = (int)entityField.GetValue(null)!;
 
-                    if (entityType is Entities.PLAYER or Entities.ITEM_ENTITY) {
+                    if (entityType == Entities.PLAYER || entityType == Entities.ITEM_ENTITY) {
                         addMessage($"Cannot summon entity: {args[1]}");
                         break;
                     }
