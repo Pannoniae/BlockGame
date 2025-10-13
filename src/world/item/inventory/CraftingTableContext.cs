@@ -8,12 +8,12 @@ public class CraftingTableContext : InventoryContext {
     private readonly CraftingGridInventory craftingGrid;
 
     public const int hotbarX = 5;
-    public const int hotbarY = 193;
-    public const int mainY = 171;
-    public const int craftingGridX = 85;
-    public const int craftingGridY = 27;
-    public const int craftingResultX = 174;
-    public const int craftingResultY = 48;
+    public const int hotbarY = 191;
+    public const int mainY = 144;
+    public const int craftingGridX = 51;
+    public const int craftingGridY = 14;
+    public const int craftingResultX = 140;
+    public const int craftingResultY = 33;
 
     public CraftingTableContext(PlayerInventory playerInv) {
         this.playerInv = playerInv;
