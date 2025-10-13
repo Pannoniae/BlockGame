@@ -24,5 +24,12 @@ public class Items {
     public const int COPPER_AXE = 20;
     public const int COPPER_SHOVEL = 21;
     public const int COPPER_SWORD = 22;
-    public const int DYE = 23;
+    public const int COPPER_HOE = 23;
+    public const int COPPER_SCYTHE = 24;
+    public const int IRON_AXE = 25;
+    public const int IRON_SHOVEL = 26;
+    public const int IRON_SWORD = 27;
+    public const int IRON_HOE = 28;
+    public const int IRON_SCYTHE = 29;
+    public const int DYE = 30;
  }

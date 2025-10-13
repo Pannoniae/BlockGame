@@ -72,6 +72,13 @@ public class Item {
     public static Item COPPER_AXE;
     public static Item COPPER_SHOVEL;
     public static Item COPPER_SWORD;
+    public static Item COPPER_HOE;
+    public static Item COPPER_SCYTHE;
+    public static Tool IRON_AXE;
+    public static Tool IRON_SHOVEL;
+    public static Item IRON_SWORD;
+    public static Tool IRON_HOE;
+    public static Tool IRON_SCYTHE;
     public static DyeItem DYE;
 
 
@@ -236,6 +243,34 @@ public class Item {
         COPPER_SWORD = new Item(Items.COPPER_SWORD, "Copper Sword");
         COPPER_SWORD.tex = new UVPair(5, 5);
         register(COPPER_SWORD);
+
+        COPPER_HOE = new Item(Items.COPPER_HOE, "Copper Hoe");
+        COPPER_HOE.tex = new UVPair(6, 5);
+        register(COPPER_HOE);
+
+        COPPER_SCYTHE = new Item(Items.COPPER_SCYTHE, "Copper Scythe");
+        COPPER_SCYTHE.tex = new UVPair(7, 5);
+        register(COPPER_SCYTHE);
+
+        IRON_AXE = new Tool(Items.IRON_AXE, "Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5);
+        IRON_AXE.tex = new UVPair(3, 6);
+        register(IRON_AXE);
+
+        IRON_SHOVEL = new Tool(Items.IRON_SHOVEL, "Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2.5);
+        IRON_SHOVEL.tex = new UVPair(4, 6);
+        register(IRON_SHOVEL);
+
+        IRON_SWORD = new Item(Items.IRON_SWORD, "Iron Sword");
+        IRON_SWORD.tex = new UVPair(5, 6);
+        register(IRON_SWORD);
+
+        IRON_HOE = new Tool(Items.IRON_HOE, "Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5);
+        IRON_HOE.tex = new UVPair(6, 6);
+        register(IRON_HOE);
+
+        IRON_SCYTHE = new Tool(Items.IRON_SCYTHE, "Iron Scythe", ToolType.HOE, MaterialTier.IRON, 2.5);
+        IRON_SCYTHE.tex = new UVPair(7, 6);
+        register(IRON_SCYTHE);
 
         DYE = new DyeItem(Items.DYE, "Dye");
         register(DYE);
