@@ -208,10 +208,10 @@ public class WorldIO {
             var entitiesTag = nbt.getListTag<NBTCompound>("entities");
             for (int i = 0; i < entitiesTag.count(); i++) {
                 var entityData = entitiesTag.get(i);
-                var type = entityData.getInt("type");
+                var type = entityData.getString("type");
 
                 // skip players
-                if (type == Entities.PLAYER) {
+                if (type == "player") {
                     continue;
                 }
 
@@ -269,10 +269,10 @@ public class WorldIO {
             var entitiesTag = nbt.getListTag<NBTCompound>("entities");
             for (int i = 0; i < entitiesTag.count(); i++) {
                 var entityData = entitiesTag.get(i);
-                var type = entityData.getInt("type");
+                var type = entityData.getString("type");
 
                 // skip players
-                if (type == Entities.PLAYER) {
+                if (type == "player") {
                     continue;
                 }
 

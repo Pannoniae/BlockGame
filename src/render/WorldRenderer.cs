@@ -987,8 +987,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var progress = Meth.lerp(Game.player.prevBreakProgress, Game.player.breakProgress, interp);
 
         // determine break stage (0-9, where 9 is almost broken)
-        var breakStage = (int)(progress * 9);
-        breakStage = Math.Clamp(breakStage, 0, 8);
+        var breakStage = (int)(progress * 13);
+        breakStage = Math.Clamp(breakStage, 0, 12);
 
         // only render if there's visible progress
         if (breakStage <= 0) {
