@@ -28,6 +28,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public World? world;
     private int currentAnisoLevel = -1;
     private int currentMSAA = -1;
+    private bool currentAffineMapping;
+    private bool currentVertexJitter;
 
     public Silk.NET.OpenGL.Legacy.GL GL;
 
@@ -211,25 +213,49 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var settings = Settings.instance;
         var anisoLevel = settings.anisotropy;
         currentAnisoLevel = anisoLevel;
+        currentAffineMapping = settings.affineMapping;
+        currentVertexJitter = settings.vertexJitter;
 
         var defs = new List<Definition> {
             new("ANISO_LEVEL", anisoLevel.ToString()),
             new("DEBUG_ANISO", "0"),
-            new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 && false ? "1" : "0")
-        };
-
-        // Add variant-specific defines based on renderer mode setting
-        var effectiveMode = settings.getActualRendererMode();
-        var variant = effectiveMode switch {
-            RendererMode.CommandList => ShaderVariant.CommandList,
-            RendererMode.BindlessMDI => ShaderVariant.Instanced, // BindlessMDI uses same shaders as instanced
-            RendererMode.Instanced => ShaderVariant.Instanced,
-            RendererMode.Plain => ShaderVariant.Normal,
-            _ => ShaderVariant.Normal
+            new("ALPHA_TO_COVERAGE", Settings.instance.msaa > 1 && false ? "1" : "0"),
+            new("AFFINE_MAPPING", settings.affineMapping ? "1" : "0"),
+            new("VERTEX_JITTER", settings.vertexJitter ? "1" : "0")
         };
 
         return Shader.createVariant(GL, nameof(worldShader), "shaders/world/shader.vert", "shaders/world/shader.frag",
-            variant, defs);
+            null, defs);
+    }
+
+    private Shader createWaterShader() {
+        var settings = Settings.instance;
+
+        var defs = new List<Definition> {
+            new("ANISO_LEVEL", settings.anisotropy.ToString()),
+            new("DEBUG_ANISO", "0"),
+            new("AFFINE_MAPPING", settings.affineMapping ? "1" : "0"),
+            new("VERTEX_JITTER", settings.vertexJitter ? "1" : "0")
+        };
+
+        return Shader.createVariant(GL, nameof(waterShader), "shaders/world/waterShader.vert",
+            "shaders/world/waterShader.frag", null, defs);
+    }
+
+    private Shader createDummyShader() {
+        var settings = Settings.instance;
+
+        var defs = new List<Definition> {
+            new("AFFINE_MAPPING", settings.affineMapping ? "1" : "0"),
+            new("VERTEX_JITTER", settings.vertexJitter ? "1" : "0")
+        };
+        if (Game.isNVCard) {
+            return Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert", null, null, defs);
+        }
+        else {
+            return Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert",
+                "shaders/world/dummyShader.frag", null, defs);
+        }
     }
 
     private void initializeShaders() {
@@ -238,16 +264,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // some integrated AMD cards shit themselves when they see a vertex shader-only program. IDK which ones (it works on my dedicated AMD card)
         // but for safety, I'll just make it render fragments too on any non-NV card
 
-        if (Game.isNVCard) {
-            dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert");
-        }
-        else {
-            dummyShader = Shader.createVariant(GL, nameof(dummyShader), "shaders/world/dummyShader.vert",
-                "shaders/world/dummyShader.frag");
-        }
+        dummyShader = createDummyShader();
 
-        waterShader = Shader.createVariant(GL, nameof(waterShader), "shaders/world/waterShader.vert",
-            "shaders/world/waterShader.frag");
+        waterShader = createWaterShader();
     }
 
     private void initializeUniforms() {
@@ -397,13 +416,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var settings = Settings.instance;
         var anisoLevel = settings.anisotropy;
         var msaa = settings.msaa;
+        var affineMapping = settings.affineMapping;
+        var vertexJitter = settings.vertexJitter;
 
-        if (currentAnisoLevel != anisoLevel || currentMSAA != msaa) {
+        if (currentAnisoLevel != anisoLevel || currentMSAA != msaa || currentAffineMapping != affineMapping || currentVertexJitter != vertexJitter) {
+            // reload worldShader
             worldShader?.Dispose();
             worldShader = createWorldShader();
 
             currentAnisoLevel = anisoLevel;
             currentMSAA = msaa;
+            currentAffineMapping = affineMapping;
+            currentVertexJitter = vertexJitter;
 
             // re-get uniform locations since we have a new shader
             blockTexture = worldShader.getUniformLocation(nameof(blockTexture));
@@ -415,10 +439,39 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
 
-
             // re-bind texture units
             worldShader.setUniform(blockTexture, 0);
             worldShader.setUniform(lightTexture, 1);
+
+            // reload waterShader too
+            waterShader?.Dispose();
+            waterShader = createWaterShader();
+
+            // re-get water shader uniforms
+            waterBlockTexture = waterShader.getUniformLocation(nameof(blockTexture));
+            waterLightTexture = waterShader.getUniformLocation(nameof(lightTexture));
+            wateruMVP = waterShader.getUniformLocation(nameof(uMVP));
+            wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
+            waterFogStart = waterShader.getUniformLocation(nameof(fogStart));
+            waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
+            waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
+            waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
+
+            // re-bind water shader texture units
+            waterShader.setUniform(waterBlockTexture, 0);
+            waterShader.setUniform(waterLightTexture, 1);
+
+            // reload dummy shader too
+            dummyShader?.Dispose();
+            dummyShader = createDummyShader();
+
+            dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
+
+            // re-get chunk position uniforms if needed
+            if (Settings.instance.getActualRendererMode() < RendererMode.Instanced) {
+                uChunkPos = worldShader.getUniformLocation("uChunkPos");
+                wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
+            }
         }
     }
 

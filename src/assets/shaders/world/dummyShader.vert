@@ -39,6 +39,7 @@ centroid out vec2 texCoords;
 out vec4 tint;
 
 const float m = 1 / 256.;
+const float n = 1 / 32768.;
 
 void main() {
     vec3 chunkOffset;
@@ -55,7 +56,16 @@ void main() {
 
     vec3 pos = chunkOffset + ((vPos * m) - 16);
     gl_Position = uMVP * vec4(pos, 1.0);
-    texCoords = texCoord / 32768.;
+
+    #if VERTEX_JITTER == 1
+    vec4 snap = gl_Position;
+    snap.xyz = snap.xyz / snap.w; // persp
+    snap.xy = floor(snap.xy * 160.0) / 160.0; // snap to virtual 160p
+    snap.xyz *= snap.w; // undo persp
+    gl_Position = snap;
+    #endif
+
+    texCoords = texCoord * n;
     
     tint = colour;
 }

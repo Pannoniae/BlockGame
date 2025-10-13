@@ -27,7 +27,7 @@ public class HotbarGUI : GUIElement {
         }
     }
 
-    public override void postDraw() {
+    public override void draw() {
         // draw hotbar
         var world = Game.world;
         var inventory = world.player.inventory;

@@ -3,14 +3,13 @@ using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
-using BlockGame.world;
 using BlockGame.world.item.inventory;
 using Molten;
 using Silk.NET.Input;
 
 namespace BlockGame.ui.menu;
 
-public class CreativeInventoryMenu : Menu {
+public class CreativeInventoryMenu : InventoryMenu {
 
     public const int rows = 4;
     public const int cols = 10;
@@ -26,21 +25,10 @@ public class CreativeInventoryMenu : Menu {
     public const int BUTTONW = 8;
     public const int BUTTONH = 6;
 
-    public List<ItemSlot> slots = [];
-
     private readonly CreativeInventoryContext creativeCtx;
 
-    public Vector2I guiPos;
-    public Rectangle guiBounds;
-
-    public readonly BTexture2D invTex;
-    
     public Rectangle upArrow = new Rectangle(205, 0, BUTTONW, BUTTONH);
     public Rectangle downArrow = new Rectangle(205, 6, BUTTONW, BUTTONH);
-
-    public override bool isModal() {
-        return false;
-    }
 
     public CreativeInventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
@@ -62,7 +50,7 @@ public class CreativeInventoryMenu : Menu {
             previousPage();
         };
         addElement(upButton);
-        
+
         var downButton = new HiddenButton(this, "downArrow", new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
             guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONH), BUTTONW, BUTTONH);
         downButton.clicked += _ => {
@@ -72,84 +60,36 @@ public class CreativeInventoryMenu : Menu {
     }
 
     public void setup() {
-        // setup slots using the creative context
         creativeCtx.setupSlots(rows, cols, invOffsetX, invOffsetY);
         slots = creativeCtx.getSlots();
     }
 
-
-    public override void draw() {
-        base.draw();
-        Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
-        // draw inventory text with page info
+    protected override string getTitle() {
         var currentPage = creativeCtx.getCurrentPage();
         var totalPages = creativeCtx.totalPages;
-        string title = totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
-        Game.gui.drawStringUI(title, new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color.White);
+        return totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
+    }
 
+    protected override BTexture2D getTexture() => invTex;
+    protected override int getTextOffsetX() => textOffsetX;
+    protected override int getTextOffsetY() => textOffsetY;
+
+    protected override void drawSlots(Vector2 guiBoundsPos) {
         foreach (var slot in slots) {
-            Game.gui.drawItem(slot, new Vector2(guiBounds.X, guiBounds.Y));
+            Game.gui.drawItem(slot, guiBoundsPos);
         }
 
         // draw the two arrows
-        if (totalPages > 1) {
+        if (creativeCtx.totalPages > 1) {
             var upPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING, guiBounds.Y + invOffsetY);
             var downPos = new Vector2(guiBounds.X + guiBounds.Width - BUTTONW - BUTTONPADDING,
                 guiBounds.Y + invOffsetY + rows * ItemSlot.SLOTSIZE - BUTTONH);
             Game.gui.drawUIImmediate(Game.gui.guiTexture, upPos, upArrow);
             Game.gui.drawUIImmediate(Game.gui.guiTexture, downPos, downArrow);
         }
-
-        // draw cursor item
-        var player = Game.world.player;
-        if (player?.inventory?.cursor != null) {
-            var mousePos = Game.mousePos;
-            Game.gui.drawCursorItem(player.inventory.cursor, mousePos);
-        }
     }
 
-    protected override string? getTooltipText() {
-        var player = Game.world.player;
-
-        // if holding an item in cursor, show its tooltip
-        if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            return player.inventory.cursor.getItem().getName(player.inventory.cursor);
-        }
-
-        var guiPos = GUI.s2u(Game.mousePos);
-
-        // check slots first
-        foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
-                var stack = slot.getStack();
-                if (stack != ItemStack.EMPTY && stack.id != 0) {
-                    return stack.getItem().getName(stack);
-                }
-                break;
-            }
-        }
-
-        // fallback to base (GUIElement tooltips)
-        return base.getTooltipText();
-    }
-
-    public override void onMouseUp(Vector2 pos, MouseButton button) {
-        base.onMouseUp(pos, button);
-        var guiPos = GUI.s2u(pos);
-        var player = Game.world.player;
-
-        foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
-                handleSlotClick(slot, button, player);
-                return;
-            }
-        }
-    }
-
-    private void handleSlotClick(ItemSlot slot, MouseButton button, Player player) {
-        // convert MouseButton to ClickType and delegate to the creative context
+    protected override void handleSlotClick(ItemSlot slot, MouseButton button) {
         var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
         creativeCtx.handleSlotClick(slot, clickType);
     }
@@ -191,11 +131,5 @@ public class CreativeInventoryMenu : Menu {
         if (currentPage > 0) {
             creativeCtx.setPage(currentPage - 1);
         }
-    }
-
-    public sealed override void resize(Vector2I newSize) {
-        base.resize(newSize);
-        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.width, (int)invTex.height),
-            HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 }

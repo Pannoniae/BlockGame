@@ -46,6 +46,8 @@ public class Settings {
     public bool frustumCulling = true;
     public bool crtEffect = false;
     public bool reverseZ = true; // reverse-Z depth buffer for improved precision
+    public bool affineMapping = false; // SO LIMINAL UWU
+    public bool vertexJitter = false; // SO LIMINAL UWU
     /**
      * Don't use this! Use getActualRendererMode() instead.
      */
@@ -164,6 +166,8 @@ public class Settings {
         tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
         tag.addByte("crtEffect", (byte)(crtEffect ? 1 : 0));
         tag.addByte("reverseZ", (byte)(reverseZ ? 1 : 0));
+        tag.addByte("affineMapping", (byte)(affineMapping ? 1 : 0));
+        tag.addByte("vertexJitter", (byte)(vertexJitter ? 1 : 0));
         tag.addInt("rendererMode", (int)rendererMode);
         tag.addInt("mouseInv", mouseInv);
         tag.addFloat("sfxVolume", sfxVolume);
@@ -202,7 +206,13 @@ public class Settings {
             frustumCulling = tag.getByte("frustumCulling") != 0;
             crtEffect = tag.getByte("crtEffect") != 0;
             reverseZ = tag.getByte("reverseZ") != 0;
-            
+            if (tag.has("affineMapping")) {
+                affineMapping = tag.getByte("affineMapping") != 0;
+            }
+            if (tag.has("vertexJitter")) {
+                vertexJitter = tag.getByte("vertexJitter") != 0;
+            }
+
             if (tag.has("rendererMode")) {
                 rendererMode = (RendererMode)tag.getInt("rendererMode");
             }

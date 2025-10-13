@@ -15,32 +15,41 @@ layout(commandBindableNV) uniform;
 #include "/shaders/inc/dither.inc.glsl"
 #include "/shaders/inc/af.inc.glsl"
 
-//#if not defined(ANISO_LEVEL)
-//#define ANISO_LEVEL 0
-//#endif
-
-
-
-
 // don't, glass will be fucked
 //layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
 
+#if AFFINE_MAPPING == 1
+noperspective centroid in vec2 affineCoords;
 centroid in vec2 texCoords;
+in vec3 worldPos;
+#else
+centroid in vec2 texCoords;
+#endif
 in vec4 tint;
 in float vertexDist;
 
 uniform sampler2D blockTexture;
 uniform sampler2D lightTexture;
+uniform vec3 uCameraPos;
 
 void main() {
+    // blend between affine and perspective UVs based on distance (clamp affine up close)
+#if AFFINE_MAPPING == 1
+    float dist = length(worldPos - uCameraPos);
+    float affineBlend = smoothstep(1.0, 2.0, dist); // blend from 1 to 2 blocks
+    vec2 finalCoords = mix(texCoords, affineCoords, affineBlend);
+#else
+    vec2 finalCoords = texCoords;
+#endif
+
     vec4 blockColour;
 #if ANISO_LEVEL == 0
     // no anisotropic filtering, use regular texture lookup
-    blockColour = texture(blockTexture, texCoords);
+    blockColour = texture(blockTexture, finalCoords);
 #else
     // use anisotropic filtering
-    blockColour = textureAF(blockTexture, texCoords);
+    blockColour = textureAF(blockTexture, finalCoords);
 #endif
     float ratio = calculateFogFactor(vertexDist);
     

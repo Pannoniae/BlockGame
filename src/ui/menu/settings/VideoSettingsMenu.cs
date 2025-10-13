@@ -292,6 +292,25 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(reverseZ);
         addElement(reverseZ);
 
+        // fuck it it's too liminal
+        var affineMapping = new ToggleButton(this, "affineMapping", false, settings.affineMapping ? 1 : 0,
+            "Affine Mapping: OFF", "Affine Mapping: ON");
+        affineMapping.topCentre();
+        affineMapping.clicked += _ => { settings.affineMapping = affineMapping.getIndex() == 1; };
+        affineMapping.tooltip =
+            "PS1-style affine texture mapping (no perspective correction).\nVERY LIMINAL.";
+        settingElements.Add(affineMapping);
+        addElement(affineMapping);
+
+        var vertexJitter = new ToggleButton(this, "vertexJitter", false, settings.vertexJitter ? 1 : 0,
+            "Vertex Jitter: OFF", "Vertex Jitter: ON");
+        vertexJitter.topCentre();
+        vertexJitter.clicked += _ => { settings.vertexJitter = vertexJitter.getIndex() == 1; };
+        vertexJitter.tooltip =
+            "PS1-style vertex snapping/wobble effect.\nMUCH NOSTALGIA.";
+        settingElements.Add(vertexJitter);
+        addElement(vertexJitter);
+
         // build renderer options based on hardware support
         var rendererOptions = new List<string> { "Renderer: Auto", "Renderer: Plain" };
         var rendererModeValues = new List<RendererMode> { RendererMode.Auto, RendererMode.Plain };

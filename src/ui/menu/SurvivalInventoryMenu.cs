@@ -1,7 +1,6 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
-using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.world.item.inventory;
 using Molten;
@@ -9,7 +8,7 @@ using Silk.NET.Input;
 
 namespace BlockGame.ui.menu;
 
-public class SurvivalInventoryMenu : Menu {
+public class SurvivalInventoryMenu : InventoryMenu {
     public const int rows = 5;
     public const int cols = 10;
 
@@ -18,18 +17,7 @@ public class SurvivalInventoryMenu : Menu {
     public const int textOffsetY = 3;
     public const int invOffsetX = 5;
 
-    public List<ItemSlot> slots = [];
-
     private readonly SurvivalInventoryContext survivalCtx;
-
-    public Vector2I guiPos;
-    public Rectangle guiBounds;
-
-    public readonly BTexture2D invTex;
-
-    public override bool isModal() {
-        return false;
-    }
 
     public SurvivalInventoryMenu(Vector2I guiPos) {
         this.guiPos = guiPos;
@@ -47,12 +35,12 @@ public class SurvivalInventoryMenu : Menu {
         slots = survivalCtx.getSlots();
     }
 
-    public override void draw() {
-        base.draw();
-        Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
-        // draw inventory text
-        Game.gui.drawStringUI("Inventory", new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color.White);
+    protected override string getTitle() => "Inventory";
+    protected override BTexture2D getTexture() => invTex;
+    protected override int getTextOffsetX() => textOffsetX;
+    protected override int getTextOffsetY() => textOffsetY;
 
+    protected override void drawSlots(Vector2 guiBoundsPos) {
         foreach (var slot in slots) {
             // draw tint for crafting result slot
             if (slot is CraftingResultSlot resultSlot) {
@@ -66,71 +54,17 @@ public class SurvivalInventoryMenu : Menu {
                     };
 
                     if (tint.A > 0) {
-                        Game.gui.drawSlotTint(new Vector2(guiBounds.X, guiBounds.Y), slot.rect, tint);
+                        Game.gui.drawSlotTint(guiBoundsPos, slot.rect, tint);
                     }
                 }
             }
 
-            Game.gui.drawItem(slot, new Vector2(guiBounds.X, guiBounds.Y));
-        }
-
-        // draw cursor item
-        var player = Game.world.player;
-        if (player?.inventory?.cursor != null) {
-            var mousePos = Game.mousePos;
-            Game.gui.drawCursorItem(player.inventory.cursor, mousePos);
+            Game.gui.drawItem(slot, guiBoundsPos);
         }
     }
 
-    protected override string? getTooltipText() {
-        var player = Game.world.player;
-
-        // if holding an item in cursor, show its tooltip
-        if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            return player.inventory.cursor.getItem().getName(player.inventory.cursor);
-        }
-
-        var guiPos = GUI.s2u(Game.mousePos);
-
-        // check slots first
-        foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
-                var stack = slot.getStack();
-                if (stack != ItemStack.EMPTY && stack.id != 0) {
-                    return stack.getItem().getName(stack);
-                }
-                break;
-            }
-        }
-
-        // fallback to base (GUIElement tooltips)
-        return base.getTooltipText();
-    }
-
-    public override void onMouseUp(Vector2 pos, MouseButton button) {
-        base.onMouseUp(pos, button);
-        var guiPos = GUI.s2u(pos);
-        var player = Game.world.player;
-
-        foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
-                handleSlotClick(slot, button, player);
-                return;
-            }
-        }
-    }
-
-    private void handleSlotClick(ItemSlot slot, MouseButton button, world.Player player) {
-        // convert MouseButton to ClickType and delegate to the survival context
+    protected override void handleSlotClick(ItemSlot slot, MouseButton button) {
         var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
         survivalCtx.handleSlotClick(slot, clickType);
-    }
-
-    public sealed override void resize(Vector2I newSize) {
-        base.resize(newSize);
-        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.width, (int)invTex.height),
-            HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 }

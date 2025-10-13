@@ -37,7 +37,13 @@ uniform vec3 uChunkPos;
     #endif
 #endif
 
+#if AFFINE_MAPPING == 1
+noperspective centroid out vec2 affineCoords;
+centroid out vec2 texCoords; // perspective-correct
+out vec3 worldPos;
+#else
 centroid out vec2 texCoords;
+#endif
 out vec4 tint;
 out float vertexDist;
 
@@ -61,8 +67,21 @@ void main() {
 
     vec3 pos = chunkOffset + ((vPos * m) - 16);
     gl_Position = uMVP * vec4(pos, 1.0);
+
+#if VERTEX_JITTER == 1
+    vec4 snap = gl_Position;
+    snap.xyz = snap.xyz / snap.w; // persp
+    snap.xy = floor(snap.xy * 160.0) / 160.0; // snap to virtual 160p
+    snap.xyz *= snap.w; // undo persp
+    gl_Position = snap;
+#endif
+
     texCoords = texCoord * n;
-    
+#if AFFINE_MAPPING == 1
+    affineCoords = texCoords;
+    worldPos = pos;
+#endif
+
     uint light = vLight.x & 0xFFu;
     
     // extract skylight and blocklight from packed light data (0-15)
