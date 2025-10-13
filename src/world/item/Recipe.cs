@@ -35,27 +35,46 @@ public class Recipe {
         CRAFTING_TABLE.shape(11_11, 2);
         CRAFTING_TABLE.ingredients(Item.block(Blocks.PLANKS));
 
-        // torch (2 hellstone on top of log)
+        // torch (2 hellstone on top of stick)
         TORCH = register(new ItemStack(Item.block(Blocks.TORCH), 4));
-        TORCH.shape(01_02, 2); // empty hellstone / empty log
-        TORCH.ingredients(
-            Item.block(Blocks.HELLSTONE), // coal placeholder!!
-            Item.STICK);
-        TORCH.quantities(2, 1); // 2 hellstone, 1 stick
+        TORCH.shape(01_02, 2);
+        TORCH.ingredients(Item.block(Blocks.HELLSTONE), Item.STICK);
+        TORCH.quantities(2, 1);
 
         // stick (2 planks vertically)
         STICK = register(new ItemStack(Item.STICK, 4));
         STICK.shape(01_01, 2);
-        STICK.ingredients(
-            Item.block(Blocks.PLANKS),
-            Item.block(Blocks.PLANKS));
+        STICK.ingredients(Item.block(Blocks.PLANKS), Item.block(Blocks.PLANKS));
 
-        // 3x3
-        WOOD_PICKAXE = register(new ItemStack(Item.WOOD_PICKAXE, 1));
-        WOOD_PICKAXE.shape(111_020_020, 3);
-        WOOD_PICKAXE.ingredients(
-            Item.block(Blocks.PLANKS),
-            Item.block(Blocks.PLANKS));
+        // tools
+        tool(Item.WOOD_PICKAXE, Item.block(Blocks.PLANKS), 111_020_020);
+        tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 011_012_002);
+        tool(Item.WOOD_SHOVEL, Item.block(Blocks.PLANKS), 01_02_02);
+        tool(Item.WOOD_SWORD, Item.block(Blocks.PLANKS), 01_01_02);
+
+        tool(Item.STONE_PICKAXE, Item.block(Blocks.STONE), 111_020_020);
+        tool(Item.STONE_AXE, Item.block(Blocks.STONE), 011_012_002);
+        tool(Item.STONE_SHOVEL, Item.block(Blocks.STONE), 01_02_02);
+        tool(Item.STONE_SWORD, Item.block(Blocks.STONE), 01_01_02);
+        tool(Item.STONE_HOE, Item.block(Blocks.STONE), 11_02_02);
+        tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_002_002);
+
+        tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020);
+        tool(Item.COPPER_AXE, Item.COPPER_INGOT, 011_012_002);
+        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 01_02_02);
+        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 01_01_02);
+
+        tool(Item.IRON_PICKAXE, Item.IRON_INGOT, 111_020_020);
+        tool(Item.GOLD_PICKAXE, Item.GOLD_INGOT, 111_020_020);
+    }
+
+
+    private static Recipe tool(Item result, Item material, int shape) {
+        int gridSize = shape > 9999 ? 3 : 2;
+        var r = register(result);
+        r.shape(shape, gridSize);
+        r.ingredients(material, Item.STICK);
+        return r;
     }
 
     // todo add ItemStack result too for metadata items, maybe NBT items in the future too...

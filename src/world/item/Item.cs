@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using BlockGame.util;
 using BlockGame.world.block;
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world.item;
@@ -11,7 +12,8 @@ namespace BlockGame.world.item;
  *
  * itemID = -blockID
  */
-[SuppressMessage("Compiler", "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
+[SuppressMessage("Compiler",
+    "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Item {
     public int id;
     public string name;
@@ -112,6 +114,7 @@ public class Item {
         if (item.id >= currentID) {
             currentID = item.id + 1;
         }
+
         return items[getIdx(item.id)] = item;
     }
 
@@ -167,11 +170,11 @@ public class Item {
         register(COPPER_INGOT);
 
         GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f);
-        GOLD_PICKAXE.tex = new UVPair(2,6);
+        GOLD_PICKAXE.tex = new UVPair(2, 7);
         register(GOLD_PICKAXE);
 
         IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f);
-        IRON_PICKAXE.tex = new UVPair(2, 5);
+        IRON_PICKAXE.tex = new UVPair(2, 6);
         register(IRON_PICKAXE);
 
         STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25);
@@ -195,7 +198,7 @@ public class Item {
         register(STONE_HOE);
 
         STONE_SCYTHE = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25);
-        STONE_SCYTHE.tex = new UVPair(7 , 3);
+        STONE_SCYTHE.tex = new UVPair(7, 3);
         register(STONE_SCYTHE);
 
         WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0);
@@ -236,7 +239,6 @@ public class Item {
 
         DYE = new DyeItem(Items.DYE, "Dye");
         register(DYE);
-
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
@@ -246,6 +248,7 @@ public class Item {
                 return getBlock().getTexture(0, stack.metadata);
             }
         }
+
         return tex;
     }
 
@@ -253,14 +256,12 @@ public class Item {
      * What a meaty method lol. Called when the player uses an item on a block.
      */
     public virtual void useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
-
     }
 
     /**
      * Called when the player uses an item in the air (not on a block).
      */
     public virtual void use(ItemStack stack, World world, Player player) {
-
     }
 
     /**
@@ -314,6 +315,7 @@ public class Tool : Item {
         if (Block.tool[block.id] == type) {
             return tier.level >= Block.tier[block.id].level;
         }
+
         return Block.tool[block.id] == ToolType.NONE;
     }
 }

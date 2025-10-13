@@ -14,13 +14,11 @@ public class DyeItem : Item {
 
     public override UVPair getTexture(ItemStack stack) {
         int meta = stack.metadata & 0xF;
-        if (meta < 16) {
+        return meta < 16 ?
             // v=1, u=0 to 15
-            return new UVPair(meta, 1);
-        } else {
+            new UVPair(meta, 1) :
             // v=2, u=0 to 3
-            return new UVPair(meta - 16, 2);
-        }
+            new UVPair(meta - 16, 2);
     }
 
     /** Find the closest dye colour to target RGB */
@@ -76,12 +74,36 @@ public class DyeItem : Item {
         float m = l - c / 2f;
 
         float r1, g1, b1;
-        if (h < 60) { r1 = c; g1 = x; b1 = 0; }
-        else if (h < 120) { r1 = x; g1 = c; b1 = 0; }
-        else if (h < 180) { r1 = 0; g1 = c; b1 = x; }
-        else if (h < 240) { r1 = 0; g1 = x; b1 = c; }
-        else if (h < 300) { r1 = x; g1 = 0; b1 = c; }
-        else { r1 = c; g1 = 0; b1 = x; }
+        if (h < 60) {
+            r1 = c;
+            g1 = x;
+            b1 = 0;
+        }
+        else if (h < 120) {
+            r1 = x;
+            g1 = c;
+            b1 = 0;
+        }
+        else if (h < 180) {
+            r1 = 0;
+            g1 = c;
+            b1 = x;
+        }
+        else if (h < 240) {
+            r1 = 0;
+            g1 = x;
+            b1 = c;
+        }
+        else if (h < 300) {
+            r1 = x;
+            g1 = 0;
+            b1 = c;
+        }
+        else {
+            r1 = c;
+            g1 = 0;
+            b1 = x;
+        }
 
         return ((r1 + m) * 255f, (g1 + m) * 255f, (b1 + m) * 255f);
     }
@@ -94,6 +116,7 @@ public class DyeItem : Item {
             if (h1 < h2) h1 += 360f;
             else h2 += 360f;
         }
+
         float avg = (h1 + h2) / 2f;
         return avg >= 360f ? avg - 360f : avg;
     }

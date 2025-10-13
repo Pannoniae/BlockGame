@@ -963,6 +963,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             mat.pop();
         }
+
+        mat.pop(); // THIS is why it was leaking
     }
 
     /**

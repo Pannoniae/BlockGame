@@ -17,10 +17,6 @@ public class WorldIO {
     public static readonly FixedArrayPool<uint> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
-    private const int my = Chunk.CHUNKSIZE;
-    private const int mx = Chunk.CHUNKSIZE;
-    private const int mz = Chunk.CHUNKSIZE;
-
     public World world;
 
     private readonly ChunkSaveThread chunkSaveThread;

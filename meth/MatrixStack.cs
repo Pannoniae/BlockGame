@@ -20,8 +20,8 @@ namespace BlockGame.world;
  * Matrix multiplication reminder: In A * B * C, C is applied first to vertices, then B, then A.
  */
 public class MatrixStack {
-    public readonly Stack<Matrix4x4> stack = new();
-    
+    public readonly Stack<Matrix4x4> stack = new(8); // pre-allocate to avoid growth (max depth ~4-5 in practice)
+
     public bool reverse;
 
     public MatrixStack() {

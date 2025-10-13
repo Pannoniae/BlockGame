@@ -617,6 +617,19 @@ public class Player : Soul {
     }
 
     public void placeBlock() {
+        // first check if player is clicking on an existing block with onUse behavior
+        if (Game.instance.targetedPos.HasValue) {
+            var targetPos = Game.instance.targetedPos.Value;
+            var blockId = world.getBlock(targetPos.X, targetPos.Y, targetPos.Z);
+            var block = Block.get(blockId);
+            if (block != null && block != Block.AIR) {
+                if (block.onUse(world, targetPos.X, targetPos.Y, targetPos.Z, this)) {
+                    // if block has custom behaviour, stop here (don't place)
+                    return;
+                }
+            }
+        }
+
         if (Game.instance.previousPos.HasValue) {
             var pos = Game.instance.previousPos.Value;
             var stack = inventory.getSelected();
@@ -891,23 +904,28 @@ public class Player : Soul {
 
         // remove 1 item from stack
         var droppedStack = inventory.removeStack(inventory.selected, 1);
+        dropItemStack(droppedStack, withVelocity: true);
+    }
 
-        // create item entity
+    /** Drop an item stack at player position. withVelocity = throw in facing direction */
+    public void dropItemStack(ItemStack stack, bool withVelocity = false) {
+        if (stack == ItemStack.EMPTY || stack.quantity <= 0) return;
+
         var itemEntity = new ItemEntity(world);
-        itemEntity.stack = droppedStack;
-
-        // add plot armour!! otherwise we'll just pick it up immediately LOL
+        itemEntity.stack = stack;
         itemEntity.plotArmour = 144;
 
-        // position at eye height slightly in front of player
-        var eyePos = new Vector3D(position.X, position.Y + eyeHeight, position.Z);
-        var forward = camFacing();
-        itemEntity.position = eyePos + forward.toVec3D() * 0.5;
+        if (withVelocity) {
+            // throw in facing direction
+            var eyePos = new Vector3D(position.X, position.Y + eyeHeight, position.Z);
+            var forward = camFacing();
+            itemEntity.position = eyePos + forward.toVec3D() * 0.5;
+            itemEntity.velocity = forward.toVec3D() * 8 + new Vector3D(0, 2, 0);
+        } else {
+            // drop at feet
+            itemEntity.position = position + new Vector3D(0, 0.5, 0);
+        }
 
-        // give it velocity in the direction player is facing + a bit up
-        itemEntity.velocity = forward.toVec3D() * 8 + new Vector3D(0, 2, 0);
-
-        // add to world
         world.addEntity(itemEntity);
     }
 }

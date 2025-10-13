@@ -69,6 +69,52 @@ public static partial class MemoryUtils {
     }
 
     public class LinuxMemoryUtility {
+        public static string getCPUName() {
+            try {
+                if (File.Exists("/proc/cpuinfo")) {
+                    var lines = File.ReadAllLines("/proc/cpuinfo");
+                    foreach (var line in lines) {
+                        if (line.StartsWith("model name", StringComparison.OrdinalIgnoreCase)) {
+                            var parts = line.Split(':', 2);
+                            if (parts.Length == 2) {
+                                return parts[1].Trim();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                Log.error("Failed to read CPU info from /proc/cpuinfo:");
+                Log.error(ex);
+            }
+            return "Unknown CPU";
+        }
+
+        public static long getTotalRAM() {
+            try {
+                if (File.Exists("/proc/meminfo")) {
+                    var lines = File.ReadAllLines("/proc/meminfo");
+                    foreach (var line in lines) {
+                        if (line.StartsWith("MemTotal:", StringComparison.OrdinalIgnoreCase)) {
+                            var parts = line.Split(':', 2);
+                            if (parts.Length == 2) {
+                                // meminfo reports in KB
+                                var numStr = parts[1].Trim().Split(' ')[0];
+                                if (long.TryParse(numStr, out long kb)) {
+                                    return kb * 1024L; // convert to bytes
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                Log.error("Failed to read RAM info from /proc/meminfo:");
+                Log.error(ex);
+            }
+            return -1;
+        }
+
         [DllImport("libc", SetLastError = true)]
         private static extern int madvise(IntPtr addr, UIntPtr length, int advice);
 
@@ -148,6 +194,106 @@ public static partial class MemoryUtils {
         }
     }
 
+    private static string? cachedCPUInfo;
+    private static long cachedTotalRAM = -2; // -2 = not cached yet, -1 = failed
+    private static string? cachedGPURenderer;
+    private static string? cachedGPUVendor;
+    private static string? cachedGLVersion;
+
+    /// <summary>
+    /// Gets GPU renderer string (e.g., "NVIDIA GeForce RTX 4060").
+    /// Cached after first call since GPU doesn't change at runtime.
+    /// </summary>
+    public static string getGPURenderer() {
+        if (cachedGPURenderer != null) {
+            return cachedGPURenderer;
+        }
+        cachedGPURenderer = Game.GL.GetStringS(StringName.Renderer);
+        return cachedGPURenderer;
+    }
+
+    /// <summary>
+    /// Gets GPU vendor string (e.g., "NVIDIA Corporation").
+    /// Cached after first call since GPU doesn't change at runtime.
+    /// </summary>
+    public static string getGPUVendor() {
+        if (cachedGPUVendor != null) {
+            return cachedGPUVendor;
+        }
+        cachedGPUVendor = Game.GL.GetStringS(StringName.Vendor);
+        return cachedGPUVendor;
+    }
+
+    /// <summary>
+    /// Gets OpenGL version string (e.g., "4.6.0 NVIDIA 551.86").
+    /// Cached after first call since OpenGL version doesn't change at runtime.
+    /// </summary>
+    public static string getGLVersion() {
+        if (cachedGLVersion != null) {
+            return cachedGLVersion;
+        }
+        cachedGLVersion = Game.GL.GetStringS(StringName.Version);
+        return cachedGLVersion;
+    }
+
+    /// <summary>
+    /// Gets CPU information including processor name and core count.
+    /// Cached after first call since CPU info doesn't change at runtime.
+    /// </summary>
+    public static string getCPUInfo() {
+        if (cachedCPUInfo != null) {
+            return cachedCPUInfo;
+        }
+
+        int logicalCores = Environment.ProcessorCount;
+        string cpuName = "Unknown CPU";
+
+        try {
+            if (OperatingSystem.IsWindows()) {
+                cpuName = WindowsMemoryUtility.getCPUName();
+            }
+            else if (OperatingSystem.IsLinux()) {
+                cpuName = LinuxMemoryUtility.getCPUName();
+            }
+        }
+        catch (Exception ex) {
+            Log.error("Failed to get CPU name:");
+            Log.error(ex);
+        }
+
+        cachedCPUInfo = $"{cpuName} ({logicalCores}x)";
+        return cachedCPUInfo;
+    }
+
+    /// <summary>
+    /// Gets total physical RAM in bytes. Returns -1 if unable to determine.
+    /// Cached after first call since RAM amount doesn't change at runtime.
+    /// </summary>
+    public static long getTotalRAM() {
+        if (cachedTotalRAM != -2) {
+            return cachedTotalRAM;
+        }
+
+        try {
+            if (OperatingSystem.IsWindows()) {
+                cachedTotalRAM = WindowsMemoryUtility.getTotalRAM();
+            }
+            else if (OperatingSystem.IsLinux()) {
+                cachedTotalRAM = LinuxMemoryUtility.getTotalRAM();
+            }
+            else {
+                cachedTotalRAM = -1;
+            }
+        }
+        catch (Exception ex) {
+            Log.error("Failed to get total RAM:");
+            Log.error(ex);
+            cachedTotalRAM = -1;
+        }
+
+        return cachedTotalRAM;
+    }
+
     /// Get VRAM usage in bytes. Returns per-process usage on Windows, total usage on other platforms. Returns -1 if not supported.
     public static long getVRAMUsage(out int stat) {
         // On Windows, try to get per-process GPU memory usage first because WDDM means the GPU driver doesn't know per-process usage
@@ -202,10 +348,44 @@ public static partial class MemoryUtils {
 
         [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool GetPhysicallyInstalledSystemMemory(out ulong totalMemoryInKilobytes);
+
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool SetProcessWorkingSetSize(IntPtr proc, int minSize, int maxSize);
 
         public static void ReleaseUnusedProcessWorkingSetMemory() {
             SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+        }
+
+        public static long getTotalRAM() {
+            try {
+                if (GetPhysicallyInstalledSystemMemory(out ulong memKb)) {
+                    return (long)(memKb * 1024L); // convert KB to bytes
+                }
+            }
+            catch (Exception ex) {
+                Log.error("Failed to get total RAM from GetPhysicallyInstalledSystemMemory:");
+                Log.error(ex);
+            }
+            return -1;
+        }
+
+        public static string getCPUName() {
+            try {
+                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
+                if (key != null) {
+                    var cpuName = key.GetValue("ProcessorNameString")?.ToString();
+                    if (!string.IsNullOrWhiteSpace(cpuName)) {
+                        return cpuName.Trim();
+                    }
+                }
+            }
+            catch (Exception ex) {
+                Log.error("Failed to read CPU name from registry:");
+                Log.error(ex);
+            }
+            return "Unknown CPU";
         }
 
         public static void init() {
@@ -243,7 +423,6 @@ public static partial class MemoryUtils {
             else {
                 Log.error("Failed to find matching GPU Process Memory instance for current process.");
             }
-
         }
 
         /// <summary>
@@ -254,14 +433,14 @@ public static partial class MemoryUtils {
 
         public static long getCurrentProcessGpuMemory() {
             try {
-
                 if (category == null || counter == null) {
                     return -1;
                 }
 
-                float value = counter.NextValue();
+                var value = counter.RawValue;
+
                 // Performance counter returns value in bytes
-                return (long)value;
+                return value;
             }
             catch (Exception ex) {
                 Log.error("Failed to get GPU memory for current process:");

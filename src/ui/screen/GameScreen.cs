@@ -674,8 +674,10 @@ public class GameScreen : Screen {
 
             // Draw debug lines
             if (debugScreen && !fpsOnly) {
+                D.idc.begin(PrimitiveType.Lines);
                 D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color.Red);
                 D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color.Red);
+                D.idc.end();
             }
 
             // Draw chunk borders

@@ -249,7 +249,7 @@ public class GUI {
             else {
                 // render cursor item closer to camera to avoid z-fighting with gui blocks
                 Game.gui.drawBlockUI(item.getBlock(), (int)drawX, (int)drawY, ItemSlot.ITEMSIZE,
-                    (byte)cursorItem.metadata, 1000);
+                    (byte)cursorItem.metadata, -1000);
 
                 // draw quantity if > 1
                 if (cursorItem.quantity > 1) {

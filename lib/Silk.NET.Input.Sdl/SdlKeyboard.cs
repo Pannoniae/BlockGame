@@ -28,7 +28,14 @@ namespace Silk.NET.Input.Sdl
             get => SDL3.SDL_GetClipboardText();
             set => SDL3.SDL_SetClipboardText(value);
         }
-        public bool IsKeyPressed(Key key) => _scancodesDown.Any(x => _keyMap.TryGetValue(x, out Key skey) && key == skey);
+        public bool IsKeyPressed(Key key) {
+            foreach (var scancode in _scancodesDown) {
+                if (_keyMap.TryGetValue(scancode, out Key skey) && key == skey) {
+                    return true;
+                }
+            }
+            return false;
+        }
         public bool IsScancodePressed(int scancode) => _scancodesDown.Contains((SDL_Scancode) scancode);
         public List<Key> GetPressedKeys() {
             var keys = new List<Key>();

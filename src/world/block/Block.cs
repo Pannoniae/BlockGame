@@ -11,17 +11,17 @@ using BlockGame.world.item;
 using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world.block;
 
-
 /**
  * For now, we'll only have 65536 blocks for typechecking (ushort -> uint), this can be extended later.
  */
-[SuppressMessage("Compiler", "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
+[SuppressMessage("Compiler",
+    "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Block {
-    
     /**
      * The maximum block ID we have. This ID is one past the end!
      * If you want to loop, do for (int i = 0; i &lt; currentID; i++) { ... }
@@ -35,14 +35,14 @@ public class Block {
     /// Block ID
     /// </summary>
     private uint value;
-    
+
     public ushort id {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ushort)(value & 0xFFFFFF);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private set => this.value = (this.value & 0xFF000000) | value;
     }
-    
+
     /*public ushort metadata {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ushort)(value >> 24);
@@ -65,13 +65,13 @@ public class Block {
     /// Is translucent? (partially transparent blocks like water)
     /// </summary>
     public RenderLayer layer = RenderLayer.SOLID;
-    
+
     /**
      * The block's model, if it has one.
      * Only has one if RenderType is MODEL.
      */
     public BlockModel? model;
-    
+
     /**
      * The texture of the block.
      */
@@ -85,8 +85,8 @@ public class Block {
 
     public const float atlasRatio = textureSize / (float)atlasSize;
     public const float atlasRatioInv = 1 / atlasRatio;
-    
-    
+
+
     private const int INITIAL_CAPACITY = 128;
     private const int GROW_SIZE = 64;
 
@@ -109,6 +109,7 @@ public class Block {
      * If true, water cannot break this block (like stone, dirt, stairs, etc.)
      */
     public static bool[] waterSolid = new bool[INITIAL_CAPACITY];
+
     public static bool[] inventoryBlacklist = new bool[INITIAL_CAPACITY];
     public static bool[] randomTick = new bool[INITIAL_CAPACITY];
     public static bool[] renderTick = new bool[INITIAL_CAPACITY];
@@ -133,8 +134,8 @@ public class Block {
     public static RenderType[] renderType = new RenderType[INITIAL_CAPACITY];
     public static ToolType[] tool = new ToolType[INITIAL_CAPACITY];
     public static MaterialTier[] tier = new MaterialTier[INITIAL_CAPACITY];
-    
-    
+
+
     public static Block AIR;
     public static Block GRASS;
     public static Block DIRT;
@@ -154,7 +155,9 @@ public class Block {
     public static Block LANTERN;
 
     public static Block TALL_GRASS;
+
     public static Block SHORT_GRASS;
+
     public static Block YELLOW_FLOWER;
     //public static Block RED_FLOWER;
     public static Block ORANGE_WEED;
@@ -172,10 +175,11 @@ public class Block {
     public static Block MAPLE_PLANKS;
     public static Block MAPLE_STAIRS;
     public static Block MAPLE_LOG;
+
     public static Block MAPLE_LEAVES;
     //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
     //public static Block MAHOGANY_LEAVES = register(new Block(20, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
-    
+
     public static Block CANDY;
 
     public static Block HEAD;
@@ -238,6 +242,7 @@ public class Block {
         if (block.id >= currentID) {
             currentID = block.id + 1;
         }
+
         return blocks[block.id] = block;
     }
 
@@ -258,24 +263,24 @@ public class Block {
         GRASS.setTex(grassUVs(0, 0, 1, 0, 2, 0));
         GRASS.setModel(BlockModel.makeCube(GRASS));
         GRASS.material(Material.EARTH);
-        
+
         DIRT = register(new Block(Blocks.DIRT, "Dirt"));
         DIRT.setTex(cubeUVs(2, 0));
         renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
-        
+
         SAND = register(new FallingBlock(Blocks.SAND, "Sand"));
         SAND.setTex(cubeUVs(3, 0));
         renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
         // less hard than dirt!
         SAND.setHardness(0.5);
-        
+
         BASALT = register(new Block(Blocks.BASALT, "Basalt"));
         BASALT.setTex(cubeUVs(4, 0));
         renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
-        
+
         STONE = register(new Block(Blocks.STONE, "Stone"));
         STONE.setTex(cubeUVs(5, 0));
         renderType[STONE.id] = RenderType.CUBE;
@@ -327,14 +332,14 @@ public class Block {
         SAND_BRICK.setTex(cubeUVs(2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
-        
+
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
-        LANTERN.setTex(new UVPair(6,3), new UVPair(7,3), new UVPair(8,3));
+        LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
         LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
         LANTERN.material(Material.METAL);
-        
+
         TALL_GRASS = register(new Grass(Blocks.TALL_GRASS, "Tall Grass"));
         TALL_GRASS.setTex(crossUVs(11, 5));
         TALL_GRASS.setModel(BlockModel.makeGrass(TALL_GRASS));
@@ -353,7 +358,7 @@ public class Block {
         SHORT_GRASS.waterTransparent();
         SHORT_GRASS.material(Material.ORGANIC);
         SHORT_GRASS.setHardness(0);
-        
+
         YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(15, 5));
         YELLOW_FLOWER.setModel(BlockModel.makeGrass(YELLOW_FLOWER));
@@ -401,7 +406,7 @@ public class Block {
         THISTLE.waterTransparent();
         THISTLE.itemLike();
         THISTLE.material(Material.ORGANIC);
-        
+
         PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
         PLANKS.setTex(cubeUVs(0, 5));
         renderType[PLANKS.id] = RenderType.CUBE;
@@ -428,38 +433,38 @@ public class Block {
         LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
         LOG.setModel(BlockModel.makeCube(LOG));
         LOG.material(Material.WOOD);
-        
+
         LEAVES = register(new Block(Blocks.LEAVES, "Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
         LEAVES.material(Material.ORGANIC);
-        
+
         MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks"));
         MAPLE_PLANKS.setTex(cubeUVs(5, 5));
         renderType[MAPLE_PLANKS.id] = RenderType.CUBE;
         MAPLE_PLANKS.material(Material.WOOD);
-        
+
         MAPLE_STAIRS = register(new Stairs(Blocks.MAPLE_STAIRS, "Maple Stairs"));
         MAPLE_STAIRS.setTex(cubeUVs(5, 5));
         MAPLE_STAIRS.partialBlock();
         MAPLE_STAIRS.material(Material.WOOD);
-        
+
         MAPLE_LOG = register(new Block(Blocks.MAPLE_LOG, "Maple Log"));
         MAPLE_LOG.setTex(grassUVs(7, 5, 6, 5, 8, 5));
         MAPLE_LOG.setModel(BlockModel.makeCube(MAPLE_LOG));
         MAPLE_LOG.material(Material.WOOD);
-        
+
         MAPLE_LEAVES = register(new Block(Blocks.MAPLE_LEAVES, "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
         MAPLE_LEAVES.material(Material.ORGANIC);
-        
+
         CANDY = register(new CandyBlock(Blocks.CANDY, "Candy"));
         CANDY.material(Material.FOOD);
-        
+
         HEAD = register(new Block(Blocks.HEAD, "Head"));
         HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
         HEAD.setModel(BlockModel.makeHalfCube(HEAD));
@@ -470,56 +475,56 @@ public class Block {
         WATER.makeLiquid();
 
         // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
-        
+
         REALGAR = register(new Block(Blocks.REALGAR, "Realgar"));
         REALGAR.setTex(cubeUVs(10, 1));
         renderType[REALGAR.id] = RenderType.CUBE;
         REALGAR.material(Material.FANCY_STONE);
         REALGAR.setHardness(6.0);
         REALGAR.setTier(MaterialTier.GOLD);
-        
+
         TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore"));
         TITANIUM_ORE.setTex(cubeUVs(11, 1));
         renderType[TITANIUM_ORE.id] = RenderType.CUBE;
         TITANIUM_ORE.material(Material.FANCY_STONE);
         TITANIUM_ORE.setHardness(7.5);
         TITANIUM_ORE.setTier(MaterialTier.GOLD);
-        
+
         AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore"));
         AMBER_ORE.setTex(cubeUVs(12, 1));
         renderType[AMBER_ORE.id] = RenderType.CUBE;
         AMBER_ORE.material(Material.FANCY_STONE);
         AMBER_ORE.setHardness(3.0);
         AMBER_ORE.setTier(MaterialTier.STONE);
-        
+
         AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore"));
         AMETHYST_ORE.setTex(cubeUVs(13, 1));
         renderType[AMETHYST_ORE.id] = RenderType.CUBE;
         AMETHYST_ORE.material(Material.FANCY_STONE);
         AMETHYST_ORE.setHardness(4.0);
         AMETHYST_ORE.setTier(MaterialTier.IRON);
-        
+
         EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore"));
         EMERALD_ORE.setTex(cubeUVs(14, 1));
         renderType[EMERALD_ORE.id] = RenderType.CUBE;
         EMERALD_ORE.material(Material.FANCY_STONE);
         EMERALD_ORE.setHardness(5.0);
         EMERALD_ORE.setTier(MaterialTier.GOLD);
-        
+
         DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore"));
         DIAMOND_ORE.setTex(cubeUVs(15, 1));
         renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
         DIAMOND_ORE.setTier(MaterialTier.GOLD);
-        
+
         GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore"));
         GOLD_ORE.setTex(cubeUVs(0, 1));
         renderType[GOLD_ORE.id] = RenderType.CUBE;
         GOLD_ORE.material(Material.FANCY_STONE);
         GOLD_ORE.setHardness(3.0);
         GOLD_ORE.setTier(MaterialTier.IRON);
-        
+
         IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore"));
         IRON_ORE.setTex(cubeUVs(1, 1));
         renderType[IRON_ORE.id] = RenderType.CUBE;
@@ -533,7 +538,7 @@ public class Block {
         COPPER_ORE.material(Material.FANCY_STONE);
         COPPER_ORE.setHardness(2.5);
         COPPER_ORE.setTier(MaterialTier.STONE);
-        
+
         COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
         renderType[COAL_ORE.id] = RenderType.CUBE;
@@ -545,21 +550,21 @@ public class Block {
         TORCH.setTex(cubeUVs(9, 3));
         TORCH.itemLike();
         TORCH.material(Material.ORGANIC);
-        
-        CRAFTING_TABLE = register(new Block(Blocks.CRAFTING_TABLE, "Crafting Table"));
-        CRAFTING_TABLE.setTex(CTUVs(4,3, 3,3, 2, 3, 5,3));
+
+        CRAFTING_TABLE = register(new CraftingTable(Blocks.CRAFTING_TABLE, "Crafting Table"));
+        CRAFTING_TABLE.setTex(CTUVs(4, 3, 3, 3, 2, 3, 5, 3));
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
         CRAFTING_TABLE.material(Material.WOOD);
 
         CHEST = register(new Block(Blocks.CHEST, "Chest"));
-        CHEST.setTex(CTUVs(2,4, 1,4, 0,4, 3,4));
+        CHEST.setTex(CTUVs(2, 4, 1, 4, 0, 4, 3, 4));
         CHEST.setModel(BlockModel.makeCube(CHEST));
         //CHEST.transparency();
 
 
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
-        
+
         // register items for all blocks
         for (int i = 0; i < currentID; i++) {
             if (blocks[i] != null && Item.get(-i) == null) {
@@ -575,23 +580,23 @@ public class Block {
             }
         }
     }
-    
+
     // I've removed this because realistically it will always be null / 0 and it would mislead the API caller
     /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getMetadata() {
         return (ushort)(value >> 24);
     }*/
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ushort getID() {
         return (ushort)(value & 0xFFFFFF);
     }
-    
+
     public ushort setMetadata(ushort metadata) {
         value = value & 0xFFFFFF | (uint)(metadata << 24);
         return getID();
     }
-    
+
     public ushort setID(ushort id) {
         this.value = (this.value & 0xFF000000) | id;
         return getID();
@@ -638,10 +643,10 @@ public class Block {
             new(topX, topY)
         ];
     }
-    
+
     public static UVPair[] CTUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
         return [
-            new(xx, xy),new(xx, xy),  new(zx, zy), new(zx, zy), new(bottomX, bottomY),
+            new(xx, xy), new(xx, xy), new(zx, zy), new(zx, zy), new(bottomX, bottomY),
             new(topX, topY)
         ];
     }
@@ -650,9 +655,11 @@ public class Block {
         return [new(x, y), new(x, y)];
     }
 
-    public static UVPair[] HeadUVs(int leftX, int leftY, int rightX, int rightY, int frontX, int frontY, int backX, int backY, int bottomX, int bottomY, int topX, int topY) {
+    public static UVPair[] HeadUVs(int leftX, int leftY, int rightX, int rightY, int frontX, int frontY, int backX,
+        int backY, int bottomX, int bottomY, int topX, int topY) {
         return [
-            new(leftX, leftY), new(rightX, rightY), new(frontX, frontY), new(backX, backY), new(bottomX, bottomY), new(topX, topY)
+            new(leftX, leftY), new(rightX, rightY), new(frontX, frontY), new(backX, backY), new(bottomX, bottomY),
+            new(topX, topY)
         ];
     }
 
@@ -665,18 +672,17 @@ public class Block {
         var a = 2;
         return (ushort)(light << 8 | ao << 3 | direction & 0b111);
     }
-    
-    
+
+
     // ivec2 lightCoords = ivec2((lightValue >> 4) & 0xFu, lightValue & 0xFu);
     // compute tint (light * ao * direction)
     // per-face lighting
     // float lColor = a[direction]
     // tint = texelFetch(lightTexture, lightCoords, 0) * a[direction] * aoArray[aoValue];
     public static Color packColour(byte direction, byte ao, byte light) {
-        
         Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-        
+
         direction = (byte)(direction & 0b111);
         var blocklight = (byte)(light >> 4);
         var skylight = (byte)(light & 0xF);
@@ -685,29 +691,29 @@ public class Block {
         var ab = new Color(lightVal.R / 255f * tint, lightVal.G / 255f * tint, lightVal.B / 255f * tint, 1);
         return ab;
     }
-    
+
     public static Color packColour(RawDirection direction, byte ao, byte light) {
         return packColour((byte)direction, ao, light);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Color packColour(byte direction, byte ao) {
         Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-        
+
         direction &= 0b111;
         byte tint = (byte)(a[direction] * aoArray[ao] * 255);
         return new Color(tint, tint, tint, (byte)255);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint packColourB(byte direction, byte ao) {
         // can we just inline the array?
-        
+
         Span<float> aoArray = [1.0f, 0.75f, 0.5f, 0.25f];
         Span<float> a = [0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1];
-        
-        
+
+
         direction &= 0b111;
         byte tint = (byte)(a[direction] * aoArray[ao] * 255);
         return (uint)(tint | (tint << 8) | (tint << 16) | (255 << 24));
@@ -739,7 +745,7 @@ public class Block {
     public Block(ushort id, string name) {
         this.id = id;
         this.name = name;
-        
+
         fullBlock[id] = true;
         waterSolid[id] = true;
         selection[id] = true;
@@ -756,12 +762,12 @@ public class Block {
         renderType[id] = RenderType.MODEL;
         return this;
     }
-    
+
     public Block setTex(UVPair[] uvs) {
         this.uvs = uvs;
         return this;
     }
-    
+
     public Block setTex(params ReadOnlySpan<UVPair> uvs) {
         this.uvs = uvs.ToArray();
         return this;
@@ -779,8 +785,8 @@ public class Block {
         fullBlock[id] = false;
         return this;
     }
-    
-    public Block  waterTransparent() {
+
+    public Block waterTransparent() {
         waterSolid[id] = false;
         return this;
     }
@@ -820,7 +826,7 @@ public class Block {
         lightLevel[id] = amount;
         return this;
     }
-    
+
     public Block setLightAbsorption(byte amount) {
         lightAbsorption[id] = amount;
         return this;
@@ -862,7 +868,7 @@ public class Block {
     }
 
     // CUSTOM BEHAVIOURS
-    
+
     /**
      * This is a fucking mess but the alternative is making an even worse mess. There are 4 distinct update types -
      * for (neighbour) updates, for scheduled updates (delayed), for random updates (if randomTick is true and player is close enough), and for render updates (if renderTick is true and the player is nearby).
@@ -870,63 +876,55 @@ public class Block {
      * If you don't want to copypaste code, I'd recommend making a custom method and calling that from the relevant update methods, maybe with some bool parameters.
      * The alternative would have been to have a single update method with a flag enum, but that would have been a nightmare to use and EVEN MORE SPAGHETTI
      */
-    
     /**
      * Coords are for the updated block.
      */
     public virtual void update(World world, int x, int y, int z) {
-
     }
-    
+
     /**
      * Only called when this is a delayed update!
      */
     public virtual void scheduledUpdate(World world, int x, int y, int z) {
-
     }
-    
+
     /**
      * Only called when you don't want it! (i.e. randomly)
      */
     public virtual void randomUpdate(World world, int x, int y, int z) {
-
     }
-    
+
     /**
      * This should have been called renderTick but that name already existed, oh well
      * Called around the player frequently for blocks that need it (if you want to do particle effects or some fancy shit)
      */
     [ClientOnly]
     public virtual void renderUpdate(World world, int x, int y, int z) {
+    }
 
-    }
-    
     public virtual void interact(World world, int x, int y, int z, Entity e) {
-        
     }
-    
+
     public virtual Vector3D push(World world, int x, int y, int z, Entity e) {
         return Vector3D.Zero;
     }
-    
+
     [ClientOnly]
     public virtual void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         // setup
         //br.setupWorld();
     }
-    
+
     /**
      * Called after the block has been set in the world.
      */
     public virtual void onPlace(World world, int x, int y, int z, byte metadata) {
-        
     }
-    
+
     /**
     * Called after the block is removed from the world.
      */
     public virtual void onBreak(World world, int x, int y, int z, byte metadata) {
-
     }
 
     /**
@@ -937,22 +935,37 @@ public class Block {
         return (Item.block(id), metadata, 1);
     }
 
-    public virtual void shatter(World world, int x, int y, int z) {
+    /**
+     * Called when right-clicking on the block.
+     * Returns true if the interaction was handled (prevents block placement).
+     */
+    public virtual bool onUse(World world, int x, int y, int z, Player player) {
+        return false;
+    }
 
+    /**
+     * Called when an entity walks on the block (only if the block has collision).
+     */
+    public virtual void onStepped(World world, int x, int y, int z, Entity entity) {
+    }
+
+    // todo add biome tinting, later?
+
+    public virtual void shatter(World world, int x, int y, int z) {
         UVPair uv;
-        
+
         if (model == null || model.faces.Length == 0) {
             // no model, no particles
 
             // unless there's textures!
-            
+
             // UNLESS it's custom texture
             var custom = renderType[id] == RenderType.CUSTOM || renderType[id] == RenderType.CUBE_DYNTEXTURE;
             if (!custom && (uvs == null || uvs.Length == 0)) {
                 return;
             }
         }
-        
+
         var factor = 1f / particleCount;
         for (var x1 = 0; x1 < particleCount; x1++) {
             for (var y1 = 0; y1 < particleCount; y1++) {
@@ -981,7 +994,7 @@ public class Block {
                             break;
                     }
 
-                    float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f); 
+                    float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f);
                     float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
 
                     // break particles: explode outward from center, biased upward
@@ -1105,15 +1118,14 @@ public class Block {
      * Returns whether a face should be rendered.
      */
     public virtual bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
-        
         // if none, always render
         if (dir == RawDirection.NONE) {
             return true;
         }
-        
+
         var direction = Direction.getDirection(dir);
         var neighbourBlock = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
-        
+
         // if it's not a full block, we render the face
         return !fullBlock[neighbourBlock];
     }
@@ -1122,17 +1134,18 @@ public class Block {
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(metadata));
         world.blockUpdateNeighbours(x, y, z);
     }
-    
+
     public virtual void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         aabbs.Clear();
         if (!AABB[id].HasValue || !collision[id]) {
             return;
         }
+
         var aabb = AABB[id]!.Value;
         aabbs.Add(new AABB((float)(x + aabb.min.X), (float)(y + aabb.min.Y), (float)(z + aabb.min.Z),
-                           (float)(x + aabb.max.X), (float)(y + aabb.max.Y), (float)(z + AABB[id]!.Value.max.Z)));
+            (float)(x + aabb.max.X), (float)(y + aabb.max.Y), (float)(z + AABB[id]!.Value.max.Z)));
     }
-    
+
     /**
      * Check if this block can be placed at the given position.
      * Entity collision checking is handled by the placement method.
@@ -1142,7 +1155,7 @@ public class Block {
         // by default, non-collidable blocks can be replaced
         return !collision[world.getBlock(x, y, z)];
     }
-    
+
     /**
      * Returns the maximum valid metadata value for this block type.
      * Default implementation returns 0 (no metadata variants).
@@ -1150,7 +1163,7 @@ public class Block {
     public virtual byte maxValidMetadata() {
         return 0;
     }
-    
+
     /**
      * Returns the texture for a specific face index and metadata.
      * Default implementation returns the static texture.
@@ -1186,7 +1199,6 @@ public static class BlockExtensions {
 }
 
 public class Flower(ushort id, string name) : Block(id, name) {
-
     public override void update(World world, int x, int y, int z) {
         if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
             world.setBlock(x, y, z, Blocks.AIR);
@@ -1195,7 +1207,6 @@ public class Flower(ushort id, string name) : Block(id, name) {
 }
 
 public class Grass(ushort id, string name) : Block(id, name) {
-
     public override void update(World world, int x, int y, int z) {
         if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
             world.setBlock(x, y, z, Blocks.AIR);
@@ -1217,9 +1228,10 @@ public class FallingBlock(ushort id, string name) : Block(id, name) {
             isSupported = false;
             ym--;
         }
+
         if (!isSupported) {
             world.setBlock(x, y, z, 0);
-            world.setBlock(x, ym + 1,z, getID());
+            world.setBlock(x, ym + 1, z, getID());
         }
 
         // if sand above, update
@@ -1246,7 +1258,6 @@ public class GrassBlock(ushort id, string name) : Block(id, name) {
 /// </summary>
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct UVPair(float u, float v) {
-
     public const int ATLASSIZE = 16;
 
     public readonly float u = u;
@@ -1286,7 +1297,7 @@ public readonly record struct UVPair(float u, float v) {
     public static Vector2 texCoords(UVPair uv) {
         return new Vector2(uv.u * Block.atlasRatio, uv.v * Block.atlasRatio);
     }
-    
+
     public static Vector2 texCoords(BTexture2D tex, float x, float y) {
         return new Vector2(x / tex.width, y / tex.height);
     }
@@ -1295,15 +1306,15 @@ public readonly record struct UVPair(float u, float v) {
     public static Vector2 texCoordsI(UVPair uv) {
         return new Vector2(uv.u * ATLASSIZE, uv.v * ATLASSIZE);
     }
-    
+
     public static Vector2 texCoords(BTexture2D tex, UVPair uv) {
         return new Vector2(uv.u / tex.width, uv.v / tex.height);
     }
-    
+
     public static float texU(BTexture2D tex, float u) {
         return u / tex.width;
     }
-    
+
     public static float texV(BTexture2D tex, float v) {
         return v / tex.height;
     }
@@ -1341,12 +1352,23 @@ public readonly record struct UVPair(float u, float v) {
 /// </summary>
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct Face(
-    float x1, float y1, float z1,
-    float x2, float y2, float z2,
-    float x3, float y3, float z3,
-    float x4, float y4, float z4,
-    UVPair min, UVPair max, RawDirection direction, bool noAO = false, bool nonFullFace = false) {
-
+    float x1,
+    float y1,
+    float z1,
+    float x2,
+    float y2,
+    float z2,
+    float x3,
+    float y3,
+    float z3,
+    float x4,
+    float y4,
+    float z4,
+    UVPair min,
+    UVPair max,
+    RawDirection direction,
+    bool noAO = false,
+    bool nonFullFace = false) {
     public const int MAX_FACES = 12;
 
     public readonly float x1 = x1;
@@ -1401,7 +1423,6 @@ public enum ToolType : byte {
 }
 
 public record class MaterialTier(MaterialTiers tier, double level, double speed) {
-
     public static readonly MaterialTier NONE = new(MaterialTiers.NONE, 0, 1);
     public static readonly MaterialTier WOOD = new(MaterialTiers.WOOD, 1, 1.25);
     public static readonly MaterialTier STONE = new(MaterialTiers.STONE, 2, 1.3);
@@ -1410,6 +1431,7 @@ public record class MaterialTier(MaterialTiers tier, double level, double speed)
 
     /** The index of the tier (NO GAMEPLAY EFFECT, DON'T USE IT FOR THAT), only use for sorting or indexing */
     public readonly MaterialTiers tier = tier;
+
     /** The "tier value", should roughly be increasing but can be the same or less than the previous. Used for determining stats */
     public readonly double level = level;
 
@@ -1487,15 +1509,22 @@ public class Material {
     public static readonly Material STONE = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
     public static readonly Material METAL = new Material(SoundMaterial.METAL, ToolType.PICKAXE, MaterialTier.STONE, 4);
     public static readonly Material EARTH = new Material(SoundMaterial.DIRT, ToolType.SHOVEL, MaterialTier.NONE, 0.6);
-    public static readonly Material ORGANIC = new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.25);
+
+    public static readonly Material ORGANIC =
+        new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.25);
+
     /** Yummy! */
     public static readonly Material FOOD = new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.8);
+
     public static readonly Material GLASS = new Material(SoundMaterial.GLASS, ToolType.NONE, MaterialTier.NONE, 0.2);
+
     /** Mostly ores */
-    public static readonly Material FANCY_STONE = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.STONE, 3);
+    public static readonly Material FANCY_STONE =
+        new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.STONE, 3);
+
     /** TODO */
     public static readonly Material HELL = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.NONE, 2);
-    
+
     public SoundMaterial smat;
     public ToolType toolType;
     public MaterialTier tier;

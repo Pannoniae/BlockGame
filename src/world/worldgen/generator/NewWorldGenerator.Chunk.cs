@@ -257,39 +257,6 @@ public partial class NewWorldGenerator {
                     //var ys = y >> 4;
 
                     float value;
-
-                    /*if (Avx2.IsSupported && false) {
-                        unsafe {
-                            // load the eight corner values from the buffer into a vector
-                            var c000 = buffer[getIndex(x0, y0, z0)];
-                            var c001 = buffer[getIndex(x0, y0, z1)];
-                            var c010 = buffer[getIndex(x0, y1, z0)];
-                            var c011 = buffer[getIndex(x0, y1, z1)];
-                            var c100 = buffer[getIndex(x1, y0, z0)];
-                            var c101 = buffer[getIndex(x1, y0, z1)];
-                            var c110 = buffer[getIndex(x1, y1, z0)];
-                            var c111 = buffer[getIndex(x1, y1, z1)];
-
-
-                            var values1 = Vector256.Create(c000, c001, c010, c011);
-                            var values2 = Vector256.Create(c100, c101, c110, c111);
-
-                            // the two vectors contain the two halves of the cube to be interpolated.
-                            // We need to interpolate element-wise.
-                            var interp = lerp4(values1, values2, Vector256.Create(xd));
-
-                            // now the vector contains the 4 interpolated values. interpolate narrower (2x2)
-                            var low = interp.GetLower();
-                            var high = interp.GetUpper();
-                            var interp2 = lerp2(low, high, Vector128.Create(yd));
-
-                            // now the vector contains the 2 interpolated values. interpolate again (1x2)
-                            var lower = interp2.GetElement(0);
-                            var higher = interp2.GetElement(1);
-                            value = lerp(lower, higher, zd);
-                        }
-                    }
-                    else */
                     {
                         // the eight corner values from the buffer
                         var c000 = buffer[getIndex(x0, y0, z0)];

@@ -4,6 +4,8 @@ public static class Constants {
     public const int crosshairSize = 10;
     public const int crosshairThickness = 2;
     public const long MEGABYTES = 1 * 1024 * 1024;
+    public const long MEGABYTES_SMOL = 1 * 1000 * 1000;
+    public const long GIGABYTES = 1024L * 1024L * 1024L;
     public const float maxPitch = 89;
     public const int initialWidth = 1440;
     public const int initialHeight = 960;

@@ -4,23 +4,21 @@ using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.world.item.inventory;
+using BlockGame.world.entity;
 using Molten;
 using Silk.NET.Input;
+using Molten.DoublePrecision;
 
 namespace BlockGame.ui.menu;
 
-public class SurvivalInventoryMenu : Menu {
-    public const int rows = 5;
-    public const int cols = 10;
+public class CraftingTableMenu : Menu {
 
-    public const int invOffsetY = 20;
     public const int textOffsetX = 4;
     public const int textOffsetY = 3;
-    public const int invOffsetX = 5;
 
     public List<ItemSlot> slots = [];
 
-    private readonly SurvivalInventoryContext survivalCtx;
+    private readonly CraftingTableContext craftingCtx;
 
     public Vector2I guiPos;
     public Rectangle guiBounds;
@@ -31,27 +29,26 @@ public class SurvivalInventoryMenu : Menu {
         return false;
     }
 
-    public SurvivalInventoryMenu(Vector2I guiPos) {
+    public CraftingTableMenu(Vector2I guiPos, CraftingTableContext ctx) {
         this.guiPos = guiPos;
+        this.craftingCtx = ctx;
 
         invTex?.Dispose();
-        invTex = new BTexture2D("textures/inventory.png");
+        invTex = new BTexture2D("textures/crafting_table.png");
         invTex.reload();
-
-        survivalCtx = (SurvivalInventoryContext)Game.player.inventoryCtx;
 
         resize(guiPos);
     }
 
     public void setup() {
-        slots = survivalCtx.getSlots();
+        slots = craftingCtx.getSlots();
     }
 
     public override void draw() {
         base.draw();
         Game.gui.drawUIImmediate(invTex, new Vector2(guiBounds.X, guiBounds.Y));
-        // draw inventory text
-        Game.gui.drawStringUI("Inventory", new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color.White);
+        // draw title
+        Game.gui.drawStringUI("Crafting Table", new Vector2(guiBounds.X + textOffsetX, guiBounds.Y + textOffsetY), Color.White);
 
         foreach (var slot in slots) {
             // draw tint for crafting result slot
@@ -123,14 +120,35 @@ public class SurvivalInventoryMenu : Menu {
     }
 
     private void handleSlotClick(ItemSlot slot, MouseButton button, world.Player player) {
-        // convert MouseButton to ClickType and delegate to the survival context
+        // convert MouseButton to ClickType and delegate to the crafting context
         var clickType = button == MouseButton.Left ? ClickType.LEFT : ClickType.RIGHT;
-        survivalCtx.handleSlotClick(slot, clickType);
+        craftingCtx.handleSlotClick(slot, clickType);
     }
 
     public sealed override void resize(Vector2I newSize) {
         base.resize(newSize);
         guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.width, (int)invTex.height),
             HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
+    }
+
+    public override void deactivate() {
+        base.deactivate();
+
+        // return all items from crafting grid to player inventory
+        var player = Game.world.player;
+        if (player == null) return;
+
+        var craftingGrid = craftingCtx.getCraftingGrid();
+
+        for (int i = 0; i < craftingGrid.grid.Length; i++) {
+            var stack = craftingGrid.grid[i];
+            if (stack != ItemStack.EMPTY && stack.quantity > 0) {
+                // try to add to player inventory, drop if full
+                if (!player.inventory.addItem(stack)) {
+                    player.dropItemStack(stack, true);
+                }
+                craftingGrid.grid[i] = ItemStack.EMPTY;
+            }
+        }
     }
 }

@@ -35,6 +35,9 @@ public class InputTracker {
     private static Dictionary<int, bool> pressedKeys = new();
     private static Dictionary<int, bool> releasedKeys = new();
     private static Dictionary<int, bool> previousFrameKeys = new();
+    
+    private static readonly Key[] allKeys = Enum.GetValues<Key>();
+    private static readonly MouseButton[] allMouseButtons = Enum.GetValues<MouseButton>();
 
     public InputTracker() {
         
@@ -88,8 +91,8 @@ public class InputTracker {
         releasedKeys.Clear();
 
         // update pressed/released states for keyboard keys
-        foreach (var key in Enum.GetValues<Key>()) {
-            
+        foreach (var key in allKeys) {
+
             if (key == Key.Unknown) {
                 continue;
             }
@@ -109,7 +112,7 @@ public class InputTracker {
         }
 
         // update pressed/released states for mouse buttons
-        foreach (var button in Enum.GetValues<MouseButton>()) {
+        foreach (var button in allMouseButtons) {
             
             if (button == MouseButton.Unknown) {
                 continue;

@@ -109,6 +109,13 @@ public class CreativeInventoryMenu : Menu {
     }
 
     protected override string? getTooltipText() {
+        var player = Game.world.player;
+
+        // if holding an item in cursor, show its tooltip
+        if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
+            return player.inventory.cursor.getItem().getName(player.inventory.cursor);
+        }
+
         var guiPos = GUI.s2u(Game.mousePos);
 
         // check slots first
