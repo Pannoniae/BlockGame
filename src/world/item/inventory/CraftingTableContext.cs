@@ -8,7 +8,7 @@ public class CraftingTableContext : InventoryContext {
     private readonly CraftingGridInventory craftingGrid;
 
     public const int hotbarX = 5;
-    public const int hotbarY = 191;
+    public const int hotbarY = 166;
     public const int mainY = 144;
     public const int craftingGridX = 51;
     public const int craftingGridY = 14;
