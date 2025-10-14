@@ -79,6 +79,11 @@ public class Item {
     public static Item IRON_SWORD;
     public static Tool IRON_HOE;
     public static Tool IRON_SCYTHE;
+    public static Tool GOLD_AXE;
+    public static Tool GOLD_SHOVEL;
+    public static Item GOLD_SWORD;
+    public static Tool GOLD_HOE;
+    public static Tool GOLD_SCYTHE;
     public static DyeItem DYE;
 
 
@@ -271,6 +276,26 @@ public class Item {
         IRON_SCYTHE = new Tool(Items.IRON_SCYTHE, "Iron Scythe", ToolType.HOE, MaterialTier.IRON, 2.5);
         IRON_SCYTHE.tex = new UVPair(7, 6);
         register(IRON_SCYTHE);
+
+        GOLD_AXE = new Tool(Items.GOLD_AXE, "Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3.0);
+        GOLD_AXE.tex = new UVPair(3, 7);
+        register(GOLD_AXE);
+
+        GOLD_SHOVEL = new Tool(Items.GOLD_SHOVEL, "Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3.0);
+        GOLD_SHOVEL.tex = new UVPair(4, 7);
+        register(GOLD_SHOVEL);
+
+        GOLD_SWORD = new Item(Items.GOLD_SWORD, "Gold Sword");
+        GOLD_SWORD.tex = new UVPair(5, 7);
+        register(GOLD_SWORD);
+
+        GOLD_HOE = new Tool(Items.GOLD_HOE, "Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0);
+        GOLD_HOE.tex = new UVPair(6, 7);
+        register(GOLD_HOE);
+
+        GOLD_SCYTHE = new Tool(Items.GOLD_SCYTHE, "Gold Scythe", ToolType.HOE, MaterialTier.GOLD, 3.0);
+        GOLD_SCYTHE.tex = new UVPair(7, 7);
+        register(GOLD_SCYTHE);
 
         DYE = new DyeItem(Items.DYE, "Dye");
         register(DYE);

@@ -31,5 +31,10 @@ public class Items {
     public const int IRON_SWORD = 27;
     public const int IRON_HOE = 28;
     public const int IRON_SCYTHE = 29;
-    public const int DYE = 30;
+    public const int GOLD_AXE = 30;
+    public const int GOLD_SHOVEL = 31;
+    public const int GOLD_SWORD = 32;
+    public const int GOLD_HOE = 33;
+    public const int GOLD_SCYTHE = 34;
+    public const int DYE = 35;
  }
