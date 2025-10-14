@@ -50,22 +50,22 @@ public class Recipe {
         tool(Item.WOOD_PICKAXE, Item.block(Blocks.PLANKS), 111_020_020);
         tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 011_021_020);
         tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 110_120_020);
-        tool(Item.WOOD_SHOVEL, Item.block(Blocks.PLANKS), 01_02_02);
-        tool(Item.WOOD_SWORD, Item.block(Blocks.PLANKS), 01_01_02);
+        tool(Item.WOOD_SHOVEL, Item.block(Blocks.PLANKS), 010_020_020);
+        tool(Item.WOOD_SWORD, Item.block(Blocks.PLANKS), 010_010_020);
 
         tool(Item.STONE_PICKAXE, Item.block(Blocks.STONE), 111_020_020);
         tool(Item.STONE_AXE, Item.block(Blocks.STONE), 011_021_020);
         tool(Item.STONE_AXE, Item.block(Blocks.STONE), 110_120_020);
-        tool(Item.STONE_SHOVEL, Item.block(Blocks.STONE), 01_02_02);
-        tool(Item.STONE_SWORD, Item.block(Blocks.STONE), 01_01_02);
-        tool(Item.STONE_HOE, Item.block(Blocks.STONE), 11_02_02);
+        tool(Item.STONE_SHOVEL, Item.block(Blocks.STONE), 010_020_020);
+        tool(Item.STONE_SWORD, Item.block(Blocks.STONE), 010_010_020);
+        tool(Item.STONE_HOE, Item.block(Blocks.STONE), 110_020_020);
         tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_002_002);
 
         tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020);
         tool(Item.COPPER_AXE, Item.COPPER_INGOT, 011_021_020);
         tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020);
-        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 01_02_02);
-        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 01_01_02);
+        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 010_020_020);
+        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 010_010_020);
 
         tool(Item.IRON_PICKAXE, Item.IRON_INGOT, 111_020_020);
         tool(Item.GOLD_PICKAXE, Item.GOLD_INGOT, 111_020_020);

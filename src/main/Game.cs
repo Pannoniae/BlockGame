@@ -1138,6 +1138,8 @@ public partial class Game {
         }
 
         if (Settings.instance.framebufferEffects && currentScreen == Screen.GAME_SCREEN) {
+            var ssaaWidth = (int)(width * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
+            var ssaaHeight = (int)(height * Settings.instance.resolutionScale * Settings.instance.effectiveScale);
             // Select the appropriate post-processing shader
             if (Settings.instance.crtEffect) {
                 graphics.crtShader.use();
@@ -1158,12 +1160,22 @@ public partial class Game {
             } else if (Settings.instance.ssaa > 1) {
                 graphics.ssaaShader.use();
             } else {
-                graphics.simplePostShader.use();
+                //graphics.simplePostShader.use();
+
+                // what if we just blitted?
+                GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, Settings.instance.msaa > 1 ? resolveFbo : fbo);
+
+                GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+                GL.BlitFramebuffer(0, 0, ssaaWidth, ssaaHeight, 0, 0, width, height,
+                    ClearBufferMask.ColorBufferBit, Settings.instance.resolutionScaleLinear ? BlitFramebufferFilter.Linear : BlitFramebufferFilter.Nearest);
+                goto esc;
             }
 
             GL.BindVertexArray(throwawayVAO);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         }
+
+        esc:;
 
         // clear depth for GUI!!
         if (currentScreen == Screen.GAME_SCREEN) {
