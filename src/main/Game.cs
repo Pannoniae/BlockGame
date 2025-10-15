@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 using BlockGame.logic;
 using BlockGame.render;
 using BlockGame.snd;
@@ -38,6 +39,7 @@ using IWindow = Silk.NET.Windowing.IWindow;
 using Monitor = Silk.NET.Windowing.Monitor;
 using MouseButton = Silk.NET.Input.MouseButton;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
+using Shader = BlockGame.GL.Shader;
 using VideoMode = Silk.NET.Windowing.VideoMode;
 
 namespace BlockGame.main;
@@ -188,8 +190,8 @@ public partial class Game {
         #endif
         Log.log(LogLevel.INFO, "Game", "Starting game!");
 
-        regNativeLib();
-        sigHandler();
+        initDedicatedGraphics();
+        cc();
 
         // load titles
         titles = File.ReadAllLines("assets/titles.txt");
@@ -373,14 +375,37 @@ public partial class Game {
             DebugSeverity.DebugSeverityNotification => LogLevel.DEBUG,
             _ => LogLevel.DEBUG
         };
+
         
         string msg = Marshal.PtrToStringAnsi(message, length)!;
         Log.log(logLevel, $"{source} [{type}] [{severity}] ({id}): {msg}");
+
+        // reverse engineer the shadername because the driver only gives us the handle
+        if (msg.Contains("performance warning", StringComparison.Ordinal)) {
+            var i = msg.IndexOf("program ", StringComparison.Ordinal);
+            // id after that
+            var j = msg.IndexOf(' ', i + 8);
+            if (i != -1 && j != -1) {
+                var prog = msg.Substring(i + 8, j - (i + 8));
+                if (int.TryParse(prog, out var progId)) {
+
+                    for (int k = 0; k < graphics.shaders.Count; k++) {
+                        var shader = graphics.shaders[k];
+                        if (shader.programHandle == progId) {
+                            Log.warn($"(🤓Shader name: {shader.name})");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+
         // Dump stacktrace
         //Console.Out.WriteLine(Environment.StackTrace);
         
         // sort by severity
-        if (type is DebugType.DebugTypeError or DebugType.DebugTypeOther or DebugType.DebugTypePortability && 
+        if (type is DebugType.DebugTypeError or DebugType.DebugTypeOther or DebugType.DebugTypePortability &&
             severity is DebugSeverity.DebugSeverityHigh or DebugSeverity.DebugSeverityMedium) {
             Log.log(LogLevel.INFO, Environment.StackTrace);
         }
@@ -556,9 +581,23 @@ public partial class Game {
         
         // print all valid anti-aliasing modes
         printAntiAliasingModes();
-        
+
+        if (devMode) {
+            unsafe {
+                // start fucking things up
+                GL.TryGetExtension<NVQueryResource>(out var nvr);
+                GL.TryGetExtension<NVQueryResourceTag>(out var nvrt);
+
+                var t = nvrt.GenQueryResourceTag();
+                nvrt.QueryResourceTag(t, "NV_BG");
+
+                // this is what we won't do!
+                //nvrt.DeleteQueryResourceTag(t);
+            }
+        }
+
         if (hasShadingLanguageInclude) {
-            BlockGame.GL.Shader.initializeIncludeFiles();
+            Shader.initializeIncludeFiles();
         }
 
         //#if DEBUG
@@ -771,6 +810,24 @@ public partial class Game {
 
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         MemoryUtils.cleanGC();
+    }
+
+    public struct S {
+        public int a;
+        public int b;
+        public long c;
+
+        // the rest of the owl
+        public unsafe void* d;
+        public unsafe void* e;
+        public unsafe void* f;
+        public unsafe void* g;
+        public unsafe void* h;
+        public unsafe void* i;
+        public unsafe void* j;
+        public unsafe void* k;
+        public unsafe void* l;
+
     }
 
     private void setIconToBlock() {
@@ -1171,7 +1228,7 @@ public partial class Game {
                 goto esc;
             }
 
-            GL.BindVertexArray(throwawayVAO);
+            Game.graphics.vao(throwawayVAO);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         }
 

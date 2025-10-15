@@ -93,7 +93,7 @@ public sealed class ExtremelySharedBlockVAO : VAO {
     }
 
     public void bindVAO() {
-        GL.BindVertexArray(VAOHandle);
+        Game.graphics.vao(VAOHandle);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

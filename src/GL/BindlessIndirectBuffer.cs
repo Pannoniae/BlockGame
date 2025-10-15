@@ -103,7 +103,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
             resize(Math.Max(capacity * 2, offset + commandSize));
         }
         
-        DrawElementsIndirectBindlessCommandNV* commandPtr = 
+        var commandPtr =
             (DrawElementsIndirectBindlessCommandNV*)((byte*)data + offset);
         
         offset += commandSize;

@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Text;
 using BlockGame.render;
 using BlockGame.util.log;
 using Silk.NET.GLFW;
@@ -25,9 +26,10 @@ public class Program {
         // name the thread
         Thread.CurrentThread.Name = "Main";
 
+        // IMPORTANT PART
+        Console.OutputEncoding = Encoding.UTF8;
+
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
-        Game.initDedicatedGraphics();
-        Game.cc();
 
         game = new Game(devMode);
     }

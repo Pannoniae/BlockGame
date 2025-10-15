@@ -85,6 +85,7 @@ public class Item {
     public static Tool GOLD_HOE;
     public static Tool GOLD_SCYTHE;
     public static DyeItem DYE;
+    public static Item APPLE;
 
 
     public Item(int id, string name) {
@@ -299,6 +300,10 @@ public class Item {
 
         DYE = new DyeItem(Items.DYE, "Dye");
         register(DYE);
+
+        APPLE = new Item(Items.APPLE, "Apple");
+        APPLE.tex = new UVPair(2, 9);
+        register(APPLE);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

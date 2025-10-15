@@ -65,7 +65,7 @@ public sealed class SpriteBatch : IDisposable {
 
         // Initialize OpenGL resources
         vao = GL.CreateVertexArray();
-        GL.BindVertexArray(vao);
+        Game.graphics.vao(vao);
 
         vbo = GL.CreateBuffer();
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
@@ -139,11 +139,10 @@ public sealed class SpriteBatch : IDisposable {
         shader = newShader;
 
         // Rebind the VAO and set the texture uniform
-        GL.BindVertexArray(vao);
+        Game.graphics.vao(vao);
 
         // Get uniform locations
         textureUniform = shader.getUniformLocation("tex");
-        shader.use();
         // Set texture to 0
         shader.setUniform(textureUniform, 0);
     }
@@ -170,9 +169,6 @@ public sealed class SpriteBatch : IDisposable {
         batchItemCount = 0;
         BeginMode = beginMode;
         IsActive = true;
-
-        // Set up the shader
-        shader.use();
     }
 
     public void End() {
@@ -180,7 +176,7 @@ public sealed class SpriteBatch : IDisposable {
             SkillIssueException.throwNew("Begin() must be called before End().");
 
         // Flush any remaining items
-        Flush(BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly);
+        Flush(BeginMode is BatcherBeginMode.Immediate or BatcherBeginMode.OnTheFly);
 
         IsActive = false;
     }
@@ -471,7 +467,7 @@ public sealed class SpriteBatch : IDisposable {
         }
 
         // Bind the VAO and shader
-        GL.BindVertexArray(vao);
+        Game.graphics.vao(vao);
         shader.use();
 
         // First, calculate total vertices required to avoid buffer resize issues
@@ -578,7 +574,7 @@ public sealed class SpriteBatch : IDisposable {
 
         // draw all tinted with shader path, batched by texture
         if (tintedCount > 0) {
-            GL.BindVertexArray(vao);
+            Game.graphics.vao(vao);
             shader.use();
             EnsureBufferCapacity(tintedCount);
 
@@ -677,7 +673,7 @@ public sealed class SpriteBatch : IDisposable {
 
             // draw tinted run with shader path, batched by texture
             if (itemIdx > runStart) {
-                GL.BindVertexArray(vao);
+                Game.graphics.vao(vao);
                 shader.use();
                 EnsureBufferCapacity(itemIdx - runStart);
 

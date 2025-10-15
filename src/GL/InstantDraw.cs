@@ -69,7 +69,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
         unsafe {
             VAO = GL.CreateVertexArray();
             VBO = GL.CreateBuffer();
-            GL.BindVertexArray(VAO);
+            Game.graphics.vao(VAO);
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
             GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
@@ -88,7 +88,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
             // create new buffer with double capacity
             VBO = GL.CreateBuffer();
-            GL.BindVertexArray(VAO);
+            Game.graphics.vao(VAO);
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
             GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(newMaxVertices * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
@@ -154,7 +154,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     }
 
     public void applyMat() {
-        instantShader.use();
+        //instantShader.use();
         // Compute final matrices from components if available
         if (modelMatrix != null) {
             var model = modelMatrix.top;
@@ -192,7 +192,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
             return;
         }
 
-        GL.BindVertexArray(VAO);
+        Game.graphics.vao(VAO);
 
         // Apply current fog settings
         instantShader.use();
@@ -294,7 +294,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
     }
 
     public void setTexture(BTexture2D texture) {
-        instantShader.use();
+        //instantShader.use();
         Game.graphics.tex(0, texture);
     }
 

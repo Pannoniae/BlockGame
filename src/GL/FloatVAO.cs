@@ -15,7 +15,7 @@ public class FloatVAO {
     public FloatVAO() {
         GL = Game.GL;
         handle = GL.GenVertexArray();
-        GL.BindVertexArray(handle);
+        Game.graphics.vao(handle);
     }
 
     public void upload(float[] data) {
@@ -57,7 +57,7 @@ public class FloatVAO {
     }
 
     public void bind() {
-        GL.BindVertexArray(handle);
+        Game.graphics.vao(handle);
     }
 
     public void render() {

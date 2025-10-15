@@ -165,7 +165,7 @@ public sealed class SharedBlockVAO : VAO {
     }
 
     public void bindVAO() {
-        GL.BindVertexArray(VAOHandle);
+        Game.graphics.vao(VAOHandle);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -191,13 +191,11 @@ public sealed class SharedBlockVAO : VAO {
         // set the vertex buffer address range for the VAO
         //var addr = bufferAddress;
         //Console.Out.WriteLine($"Setting vertex buffer address: 0x{addr:X16}, length={bufferLength} bytes");
-        var cmd0 = new AttributeAddressCommandNV {
-            header = CommandBuffer.attribaddressToken,
-            index = 0,
-            addressLo = (uint)(bufferAddress & 0xFFFFFFFF),
-            addressHi = (uint)(bufferAddress >> 32),
-        };
-        cmdBuffer.putData(cmd0);
+        ref var cmd0 = ref cmdBuffer.getRef<AttributeAddressCommandNV>();
+        cmd0.header = CommandBuffer.attribaddressToken;
+        cmd0.index = 0;
+        cmd0.addressLo = (uint)(bufferAddress & 0xFFFFFFFF);
+        cmd0.addressHi = (uint)(bufferAddress >> 32);
 
         // Attribute 1: UV at offset 3*sizeof(ushort) = 6 bytes
         /*var addr1 = bufferAddress;
@@ -261,33 +259,27 @@ public sealed class SharedBlockVAO : VAO {
     [SkipLocalsInit]
     public unsafe void addChunkCommand(BindlessIndirectBuffer indirect, uint baseInstance, ulong elementAddress,
         uint elementLength) {
-        
-        
-        DrawElementsIndirectBindlessCommandNV* commandBuffer = indirect.addCommand();
-        
-        // Create the complete bindless command structure and just write it in one step
-        *commandBuffer = new DrawElementsIndirectBindlessCommandNV {
-            cmd = new DrawElementsIndirectCommand {
-                count = count,
-                instanceCount = 1,
-                firstIndex = 0,
-                baseVertex = 0,
-                baseInstance = baseInstance
-            },
-            reserved = 0,
-            indexBuffer = new BindlessPtrNV {
-                index = 0, // element buffer index
-                reserved = 0,
-                address = elementAddress,
-                length = elementLength,
-            },
-            vertexBuffer = new BindlessPtrNV {
-                index = 0, // vertex attribute index
-                reserved = 0,
-                address = bufferAddress,
-                length = bufferLength
-            }
-        };
+
+        var cmd = indirect.addCommand();
+
+        // write directly lol
+        cmd->cmd.count = count;
+        cmd->cmd.instanceCount = 1;
+        cmd->cmd.firstIndex = 0;
+        cmd->cmd.baseVertex = 0;
+        cmd->cmd.baseInstance = baseInstance;
+
+        cmd->reserved = 0;
+
+        cmd->indexBuffer.index = 0;
+        cmd->indexBuffer.reserved = 0;
+        cmd->indexBuffer.address = elementAddress;
+        cmd->indexBuffer.length = elementLength;
+
+        cmd->vertexBuffer.index = 0;
+        cmd->vertexBuffer.reserved = 0;
+        cmd->vertexBuffer.address = bufferAddress;
+        cmd->vertexBuffer.length = bufferLength;
 
         // game metrics
         Game.metrics.renderedVerts += (int)count;
@@ -326,30 +318,25 @@ public sealed class SharedBlockVAO : VAO {
         ulong chunkPosAddress = baseAddress + (baseInstance * 16); // Each Vector4 is 16 bytes
 
         // Set attribute 3 to point to the chunk position in SSBO
-        var cmd3 = new AttributeAddressCommandNV {
-            header = CommandBuffer.attribaddressToken,
-            index = 1,
-            addressLo = (uint)(chunkPosAddress & 0xFFFFFFFF),
-            addressHi = (uint)(chunkPosAddress >> 32),
-        };
-        cmdBuffer.putData(cmd3);
+        ref var cmd3 = ref cmdBuffer.getRef<AttributeAddressCommandNV>();
+        cmd3.header = CommandBuffer.attribaddressToken;
+        cmd3.index = 1;
+        cmd3.addressLo = (uint)(chunkPosAddress & 0xFFFFFFFF);
+        cmd3.addressHi = (uint)(chunkPosAddress >> 32);
 
         // set the draw command parameters
-        var cmd = new DrawElementsCommandNV {
-            header = CommandBuffer.drawelementsToken,
-            //mode = (uint)PrimitiveType.Triangles,
-            count = count,
-            //instanceCount = 1,
-            firstIndex = 0,
-            //first = 0,
-            //firstIndex = 0, 
-            baseVertex = 0,
-            //baseInstance = 0
-        };
+        ref var cmd = ref cmdBuffer.getRef<DrawElementsCommandNV>();
+        cmd.header = CommandBuffer.drawelementsToken;
+        //cmd.mode = (uint)PrimitiveType.Triangles;
+        cmd.count = count;
+        //cmd.instanceCount = 1;
+        cmd.firstIndex = 0;
+        //cmd.first = 0;
+        //cmd.firstIndex = 0;
+        cmd.baseVertex = 0;
+        //cmd.baseInstance = 0;
 
         //Console.Out.WriteLine(baseInstance);
-
-        cmdBuffer.putData(cmd);
         
         return count;
 

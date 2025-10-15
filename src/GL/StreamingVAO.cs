@@ -60,7 +60,7 @@ public class StreamingVAO<T> where T : unmanaged {
     }
 
     public void bind() {
-        GL.BindVertexArray(VAOHandle);
+        Game.graphics.vao(VAOHandle);
     }
 
     public uint render() {

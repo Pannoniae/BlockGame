@@ -353,25 +353,25 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         initializeShaders();
 
         if (effectiveMode >= RendererMode.Instanced) {
-            // allocate SSBO for chunk positions (2MB initial, grows as needed)
-            chunkSSBO = new ShaderStorageBuffer(GL, 2 * 1024 * 1024, 0);
+            // allocate SSBO for chunk positions (64KB initial, grows as needed)
+            chunkSSBO = new ShaderStorageBuffer(GL, 64 * 1024, 0);
 
             if (effectiveMode == RendererMode.CommandList) {
-                // allocate command buffer for chunk rendering (1MB initial, grows as needed)
-                chunkCMD = new CommandBuffer(GL, 1024 * 1024);
+                // allocate command buffer for chunk rendering (64KB initial, grows as needed)
+                chunkCMD = new CommandBuffer(GL, 64 * 1024);
             }
 
             // allocate bindless indirect buffer if supported
             if (effectiveMode == RendererMode.BindlessMDI) {
-                // 512KB initial (~7K commands), grows as needed
-                bindlessBuffer = new BindlessIndirectBuffer(GL, 512 * 1024);
+                // 64KB initial, grows as needed
+                bindlessBuffer = new BindlessIndirectBuffer(GL, 64 * 1024);
             }
         }
 
         initializeUniforms();
 
         if (effectiveMode >= RendererMode.Instanced) {
-            chunkData = new List<Vector4>(8192 * Chunk.CHUNKHEIGHT);
+            chunkData = new List<Vector4>(256 * Chunk.CHUNKHEIGHT);
         }
         else {
             chunkData = null!;
@@ -396,13 +396,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // initialize chunk UBO (16 bytes: vec3 + padding)
         //chunkUBO = new UniformBuffer(GL, 256, 0);
 
-        // make resident
-        // get address of the ssbo
-
-        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
-            Game.sbl.MakeNamedBufferResident(chunkSSBO.handle, (NV)GLEnum.ReadOnly);
-            Game.sbl.GetNamedBufferParameter(chunkSSBO.handle, NV.BufferGpuAddressNV,
-                out ssboaddr);
+        if (effectiveMode >= RendererMode.Instanced) {
+            chunkSSBO.makeResident(out ssboaddr);
         }
 
         currentAnisoLevel = -1;
@@ -599,7 +594,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         //worldShader.use();
 
-        GL.BindVertexArray(chunkVAO);
+        Game.graphics.vao(chunkVAO);
         bindQuad();
         // we'll be using this for a while
         //chunkUBO.bind();

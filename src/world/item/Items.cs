@@ -37,4 +37,5 @@ public class Items {
     public const int GOLD_HOE = 33;
     public const int GOLD_SCYTHE = 34;
     public const int DYE = 35;
+    public const int APPLE = 36;
  }

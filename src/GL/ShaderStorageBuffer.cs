@@ -1,7 +1,10 @@
 using System.Runtime.InteropServices;
+using BlockGame.main;
+using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.log;
 using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Buffer = System.Buffer;
 
 namespace BlockGame.GL;
@@ -55,7 +58,7 @@ public unsafe class ShaderStorageBuffer : IDisposable {
     }
 
     private void resize(int newCapacity) {
-        Log.debug($"ShaderStorageBuffer resizing from {capacity} to {newCapacity} bytes");
+        Log.info($"ShaderStorageBuffer resizing from {capacity} to {newCapacity} bytes");
         
         // allocate new GPU buffer
         var oldHandle = handle;
@@ -72,6 +75,9 @@ public unsafe class ShaderStorageBuffer : IDisposable {
         if (size > 0 && oldData != null) {
             Buffer.MemoryCopy(oldData, data, newCapacity, size);
         }
+
+        // make resident!
+        makeResident(out Game.renderer.ssboaddr);
         
         // cleanup old resources
         GL.DeleteBuffer(oldHandle);
@@ -93,6 +99,19 @@ public unsafe class ShaderStorageBuffer : IDisposable {
 
     public void bindToPoint() {
         GL.BindBufferBase(BufferTargetARB.ShaderStorageBuffer, bindingPoint, handle);
+    }
+
+    public void makeResident(out ulong ssboaddr) {
+        // make resident
+        // get address of the ssbo
+        if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
+            Game.sbl.MakeNamedBufferResident(handle, (NV)GLEnum.ReadOnly);
+            Game.sbl.GetNamedBufferParameter(handle, NV.BufferGpuAddressNV,
+                out ssboaddr);
+        }
+        else {
+            ssboaddr = 0;
+        }
     }
 
     public void Dispose() {

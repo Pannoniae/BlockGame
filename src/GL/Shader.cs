@@ -26,7 +26,7 @@ public enum ShaderVariant {
 }
 
 public partial class Shader : IDisposable {
-    private string name;
+    public string name;
     private string vertexShader;
     private string fragmentShader;
 
@@ -43,6 +43,9 @@ public partial class Shader : IDisposable {
         IEnumerable<Definition>? defs = null) {
         this.GL = GL;
         this.name = name;
+
+        // reg
+        Game.graphics.regShader(this);
 
         if (defs != null) {
             foreach (var def in defs) {
@@ -62,6 +65,9 @@ public partial class Shader : IDisposable {
         IEnumerable<Definition>? customDefinitions = null) {
         this.GL = GL;
         this.name = name;
+
+        // reg
+        Game.graphics.regShader(this);
 
         if (customDefinitions != null) {
             foreach (var def in customDefinitions) {
@@ -372,7 +378,7 @@ public partial class Shader : IDisposable {
     }
 
     public void use() {
-        GL.UseProgram(programHandle);
+        Game.graphics.shader(programHandle);
     }
 
     public int getUniformLocation(string name) {

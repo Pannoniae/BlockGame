@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.main;
 using BlockGame.util;
@@ -239,6 +240,27 @@ public unsafe class CommandBuffer : IDisposable {
         Log.info($"CommandBuffer created with capacity {capacity} bytes");
     }
 
+    // what if we did it in place?
+    public ref T getRef<T>() where T : unmanaged {
+        return ref getRef<T>(offset);
+    }
+
+    public ref T getRef<T>(int offset) where T : unmanaged {
+        if (offset + sizeof(T) > capacity) {
+            resize(Math.Max(capacity * 2, offset + sizeof(T)));
+        }
+
+        byte* location = (data + offset);
+
+        // advance it!! the fucking caller won't do it for us
+        this.offset += sizeof(T);
+        if (this.offset > size) {
+            size = this.offset;
+        }
+
+        return ref Unsafe.AsRef<T>(location);
+    }
+
     public void putData<T>(T src) where T : unmanaged {
         putData(offset, src);
     }
@@ -340,7 +362,7 @@ public unsafe class CommandBuffer : IDisposable {
     }
 
     private void resize(int newCapacity) {
-        Log.debug($"CommandBuffer resizing from {capacity} to {newCapacity} bytes");
+        Log.info($"CommandBuffer resizing from {capacity} to {newCapacity} bytes");
         
         // allocate new GPU buffer
         var oldHandle = handle;

@@ -44,6 +44,7 @@ void main() {
 #endif
 
     vec4 blockColour;
+
 #if ANISO_LEVEL == 0
     // no anisotropic filtering, use regular texture lookup
     blockColour = texture(blockTexture, finalCoords);

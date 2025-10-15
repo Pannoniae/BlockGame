@@ -30,15 +30,15 @@ public partial class Game {
     public static bool hasNVDT = false;
     public static bool isNVCard = false;
     public static bool isAMDCard = false;
-    
+
     // time for the shitware
     public static bool isIntegratedCard = false;
     public static bool isAMDIntegratedCard = false;
     public static bool isIntelIntegratedCard = false;
-    
+
     public static bool hasShadingLanguageInclude = false;
     public static bool hasShaderDrawParameters = false;
-    
+
     public static long[] supportedMSAASamples = [];
     public static int maxMSAASamples = 1;
 
@@ -66,7 +66,7 @@ public partial class Game {
     private int g_ssaa_texelStepLocation;
     private int g_ssaa_factorLocation;
     private int g_ssaa_modeLocation;
-    
+
     // CRT shader uniforms
     private int g_crt_maskTypeLocation;
     private int g_crt_curveLocation;
@@ -100,6 +100,25 @@ public partial class Game {
             // nothing!
             Console.WriteLine("Well, apparently there is no nVidia");
         }
+
+
+        // also set it to dedicated! (SHIM_MCCOMPAT)
+
+        /*
+         NOTE: this WILL NOT work on linux because of the setenv bullshit, .NET caches it so ogl won't see it
+         we'll have to implement an actual exe postsign thing where we hack the optimus / amdxpress exports onto the .NET apphost shim....
+         But most people who run laptops will run windows anyway, especially the less technically literate ones who don't know how to force
+         the exe to the dgpu so it's fine for now
+        */
+
+        try {
+            Environment.SetEnvironmentVariable("SHIM_MCCOMPAT", "0x800000001");
+            Log.info("Using dedicated GPU (if it exists)!");
+        }
+        catch (Exception e) {
+            Log.info("Couldn't set SHIM_MCCOMPAT, you might be using integrated graphics! Report this to the developer!");
+            Log.info(e);
+        }
     }
 
     public void updateFramebuffers() {
@@ -120,7 +139,7 @@ public partial class Game {
         if (width < 24) {
             width = 24;
         }
-        
+
 
         if (height < 12) {
             height = 12;
@@ -145,7 +164,9 @@ public partial class Game {
             // Create multisampled depth buffer
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.CreateRenderbuffer();
-            var depthFormat = Settings.instance.reverseZ ? InternalFormat.DepthComponent32f : InternalFormat.DepthComponent24;
+            var depthFormat = Settings.instance.reverseZ
+                ? InternalFormat.DepthComponent32f
+                : InternalFormat.DepthComponent;
             GL.NamedRenderbufferStorageMultisample(depthBuffer, (uint)samples,
                 depthFormat, (uint)ssaaWidth, (uint)ssaaHeight);
 
@@ -196,7 +217,9 @@ public partial class Game {
 
             GL.DeleteRenderbuffer(depthBuffer);
             depthBuffer = GL.CreateRenderbuffer();
-            var depthFormat = Settings.instance.reverseZ ? InternalFormat.DepthComponent32f : InternalFormat.DepthComponent24;
+            var depthFormat = Settings.instance.reverseZ
+                ? InternalFormat.DepthComponent32f
+                : InternalFormat.DepthComponent;
             GL.NamedRenderbufferStorage(depthBuffer, depthFormat, (uint)ssaaWidth,
                 (uint)ssaaHeight);
 
@@ -228,8 +251,7 @@ public partial class Game {
             GL.Disable(EnableCap.SampleShading);
             sampleShadingEnabled = false;
         }
-        
-        
+
 
         throwawayVAO = GL.CreateVertexArray();
     }
@@ -298,95 +320,104 @@ public partial class Game {
         }
     }
     #endif
-    
+
     private unsafe void printAntiAliasingModes() {
         Log.info("Enumerating supported MSAA modes and extensions:");
-        
+
         // Check for internal format query extensions
         var hasInternalFormatQuery = GL.IsExtensionPresent("GL_ARB_internalformat_query");
         var hasNVSampleQuery = GL.IsExtensionPresent("GL_NV_internalformat_sample_query");
-        
+
         Log.info("Internal format query extensions:");
         Log.info($"  GL_ARB_internalformat_query: {hasInternalFormatQuery}");
         Log.info($"  GL_NV_internalformat_sample_query: {hasNVSampleQuery}");
-        
+
         // Query supported sample counts for RGBA8 format using glGetInternalformativ
-        GL.GetInternalformat(TextureTarget.Texture2DMultisample, InternalFormat.Rgba8, InternalFormatPName.NumSampleCounts, 1, out int numSampleCounts);
-        
+        GL.GetInternalformat(TextureTarget.Texture2DMultisample, InternalFormat.Rgba8,
+            InternalFormatPName.NumSampleCounts, 1, out int numSampleCounts);
+
         if (numSampleCounts > 0) {
             var supportedSamples = new long[numSampleCounts];
             fixed (long* ptr = supportedSamples) {
-                GL.GetInternalformat(TextureTarget.Texture2DMultisample, InternalFormat.Rgba8, InternalFormatPName.Samples, (uint)numSampleCounts, ptr);
+                GL.GetInternalformat(TextureTarget.Texture2DMultisample, InternalFormat.Rgba8,
+                    InternalFormatPName.Samples, (uint)numSampleCounts, ptr);
             }
-            
+
             Log.info($"  Supported MSAA sample counts for RGBA8: [{string.Join(", ", supportedSamples)}]");
-            
+
             // Store supported samples for validation
             supportedMSAASamples = supportedSamples;
-            
+
             // sort them
             Array.Sort(supportedMSAASamples);
-            
+
             maxMSAASamples = (int)supportedSamples[^1];
-            
+
             // If NVIDIA sample query extension is available, get detailed per-sample info
             if (hasNVSampleQuery) {
                 GL.TryGetExtension<NVInternalformatSampleQuery>(out var nvSampleQuery);
                 Log.info("Detailed per-sample analysis (NV_internalformat_sample_query):");
-                
+
                 for (int i = 0; i < numSampleCounts; i++) {
                     var samples = (uint)supportedSamples[i];
-                    
+
                     // Query NVIDIA-specific properties for this sample count
-                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
-                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.MultisamplesNV, 1, out int actualMultisamples); // MULTISAMPLES_NV
-                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
-                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.SupersampleScaleXNV, 1, out int scaleX); // SUPERSAMPLE_SCALE_X_NV
-                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
-                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.SupersampleScaleYNV, 1, out int scaleY); // SUPERSAMPLE_SCALE_Y_NV
-                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample, 
-                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.ConformantNV, 1, out int conformant); // CONFORMANT_NV
-                    
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample,
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.MultisamplesNV, 1,
+                        out int actualMultisamples); // MULTISAMPLES_NV
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample,
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.SupersampleScaleXNV, 1,
+                        out int scaleX); // SUPERSAMPLE_SCALE_X_NV
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample,
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.SupersampleScaleYNV, 1,
+                        out int scaleY); // SUPERSAMPLE_SCALE_Y_NV
+                    nvSampleQuery.GetInternalformatSample((TextureTarget)GLEnum.Texture2DMultisample,
+                        InternalFormat.Rgba8, samples, (InternalFormatPName)NV.ConformantNV, 1,
+                        out int conformant); // CONFORMANT_NV
+
                     var conformStr = conformant != 0 ? "CONFORMANT" : "NON-CONFORMANT";
                     var typeStr = samples == actualMultisamples ? "MSAA" : "hybrid MSAA+SSAA";
-                    
+
                     if (scaleX > 1 || scaleY > 1) {
-                        Log.info($"    {samples}x: {actualMultisamples} HW samples + {scaleX}x{scaleY} supersample ({typeStr}, {conformStr})");
-                    } else {
+                        Log.info(
+                            $"    {samples}x: {actualMultisamples} HW samples + {scaleX}x{scaleY} supersample ({typeStr}, {conformStr})");
+                    }
+                    else {
                         Log.info($"    {samples}x: {actualMultisamples} HW samples ({typeStr}, {conformStr})");
                     }
                 }
             }
-        } else {
+        }
+        else {
             Log.info("  Could not query supported sample counts - falling back to GL_MAX_SAMPLES");
             GL.GetInteger(GetPName.MaxFramebufferSamples, out int maxSamples);
             Log.info($"  Hardware max MSAA samples: {maxSamples}");
         }
-        
+
         // Check for NVIDIA CSAA extensions and actually query supported modes
         var hasCSAA = GL.IsExtensionPresent("GL_NV_multisample_coverage");
         var hasCSAAFBO = GL.IsExtensionPresent("GL_NV_framebuffer_multisample_coverage");
-        
+
         if (hasCSAAFBO) {
             Log.info("NVIDIA CSAA detected:");
         }
-        
+
         // Query additional extension capabilities
         var hasExplicitMS = GL.IsExtensionPresent("GL_NV_explicit_multisample");
         var hasSampleLocations = GL.IsExtensionPresent("GL_ARB_sample_locations");
         var hasTextureMS = GL.IsExtensionPresent("GL_ARB_texture_multisample");
-        
+
         Log.info("Additional MSAA extensions:");
         Log.info($"  GL_NV_explicit_multisample: {hasExplicitMS}");
         Log.info($"  GL_ARB_sample_locations: {hasSampleLocations}");
         Log.info($"  GL_ARB_texture_multisample: {hasTextureMS}");
         Log.info($"  GL_ARB_sample_shading: {sampleShadingSupported}");
-        
+
 
         GL.GetInteger(GetPName.MaxColorTextureSamples, out int maxColorSamples);
         GL.GetInteger(GetPName.MaxDepthTextureSamples, out int maxDepthSamples);
         GL.GetInteger(GetPName.MaxIntegerSamples, out int maxIntSamples);
-        
+
         Log.info("Hardware limits:");
         Log.info($"  Max color texture samples: {maxColorSamples}");
         Log.info($"  Max depth texture samples: {maxDepthSamples}");

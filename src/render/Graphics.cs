@@ -26,35 +26,31 @@ public class Graphics : IDisposable {
     // Shaders
     public readonly InstantShader batchShader;
 
-    public readonly InstantShader instantTextureShader = new InstantShader(Game.GL, nameof(instantTextureShader),
-        "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_TEXTURE")]);
+    public readonly InstantShader instantTextureShader;
 
-    public readonly InstantShader instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
-        "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
-    
-    public readonly InstantShader instantEntityShader = new InstantShader(Game.GL, nameof(instantEntityShader),
-        "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
+    public readonly InstantShader instantColourShader;
+
+    public readonly InstantShader instantEntityShader;
 
     // Post-processing shaders
-    public readonly Shader fxaaShader =
-        new(Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
-    
-    public readonly Shader ssaaShader =
-        new(Game.GL, nameof(ssaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/ssaa.frag");
-    
-    public readonly Shader simplePostShader =
-        new(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
-    
-    public readonly Shader crtShader =
-        new(Game.GL, nameof(crtShader), "shaders/postprocess/post.vert", "shaders/postprocess/crt.frag");
+    public readonly Shader fxaaShader;
+
+    public readonly Shader ssaaShader;
+
+    public readonly Shader simplePostShader;
+
+    public readonly Shader crtShader;
 
     public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
     private readonly int[] viewportParams = new int[4]; // x, y, width, height
     private int currentViewportX, currentViewportY, currentViewportWidth, currentViewportHeight;
 
-    private int vao;
     public bool fullbright;
+
+    // state tracking
+    private uint cshader = 0;
+    private uint cvao = 0;
 
     // samplers
     public uint noMipmapSampler;
@@ -63,21 +59,45 @@ public class Graphics : IDisposable {
     /// A buffer of indices for the maximum amount of quads.
     /// </summary>
     public uint fatQuadIndices;
+
     public uint fatQuadIndicesLen;
-    
+
     public int groupCount;
 
     private bool blendFuncTint = true;
 
     public MatrixStack model = new MatrixStack().reversed();
-    
+
     /** List of currently bound textures.
      * TODO make the size dynamic, rn it's just 16
      */
     private uint[] textures = new uint[16];
 
+    public readonly List<Shader> shaders = [];
+
     public Graphics() {
         GL = Game.GL;
+        Game.graphics = this;
+
+        instantTextureShader = new InstantShader(Game.GL, nameof(instantTextureShader),
+            "shaders/common/base.vert", "shaders/common/base.frag", [new Definition("HAS_TEXTURE")]);
+        instantColourShader = new InstantShader(Game.GL, nameof(instantColourShader),
+            "shaders/common/base_colour.vert", "shaders/common/base_colour.frag");
+        instantEntityShader = new InstantShader(Game.GL, nameof(instantEntityShader),
+            "shaders/common/base.vert", "shaders/common/base.frag",
+            [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
+
+        fxaaShader =
+            new Shader(Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
+         ssaaShader =
+             new Shader(Game.GL, nameof(ssaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/ssaa.frag");
+         simplePostShader =
+             new Shader(Game.GL, nameof(simplePostShader), "shaders/postprocess/post.vert", "shaders/postprocess/simple_post.frag");
+         crtShader =
+             new Shader(Game.GL, nameof(crtShader), "shaders/postprocess/post.vert", "shaders/postprocess/crt.frag");
+
+
+
         mainBatch = new SpriteBatch(GL);
         immediateBatch = new SpriteBatch(GL);
 
@@ -105,7 +125,6 @@ public class Graphics : IDisposable {
         // we cheat! this is faster maybe?, IF YOU DRAW EVERYTHING OVER.
         // if you don't, we're fucked
         GL.ClearColor(255, 255, 255, 255);
-        
     }
 
     /// <summary>
@@ -116,7 +135,8 @@ public class Graphics : IDisposable {
         if (Settings.instance.reverseZ) {
             GL.DepthFunc(DepthFunction.Gequal);
             GL.ClearDepth(0.0);
-        } else {
+        }
+        else {
             GL.DepthFunc(DepthFunction.Lequal);
             GL.ClearDepth(1.0);
         }
@@ -175,27 +195,28 @@ public class Graphics : IDisposable {
     }
 
     public void saveVAO() {
-        GL.GetInteger(GetPName.VertexArrayBinding, out vao);
+        GL.GetInteger(GetPName.VertexArrayBinding, out var cvao);
+        this.cvao = (uint)cvao;
     }
 
     public void restoreVAO() {
-        GL.BindVertexArray((uint)vao);
+        GL.BindVertexArray(cvao);
     }
-    
+
     public void tex(uint idx, BTexture2D texture) {
         if (textures[idx] != texture.handle) {
             textures[idx] = texture.handle;
             GL.BindTextureUnit(idx, texture.handle);
         }
     }
-    
+
     public void tex(uint idx, uint handle) {
         if (textures[idx] != handle) {
             textures[idx] = handle;
             GL.BindTextureUnit(idx, handle);
         }
     }
-    
+
     public void updateTexMapping(int idx, uint handle) {
         textures[idx] = handle;
     }
@@ -216,6 +237,24 @@ public class Graphics : IDisposable {
         Array.Fill(textures, 0u);
     }
 
+    public void shader(uint handle) {
+        if (cshader != handle) {
+            cshader = handle;
+            GL.UseProgram(handle);
+        }
+    }
+
+    public void vao(uint handle) {
+        if (cvao != handle) {
+            cvao = handle;
+            GL.BindVertexArray(handle);
+        }
+    }
+
+    public void regShader(Shader shader) {
+        shaders.Add(shader);
+    }
+
     public void resize(Vector2D<int> size) {
         setViewport(0, 0, size.X, size.Y);
         var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
@@ -224,7 +263,7 @@ public class Graphics : IDisposable {
         batchShader.View = Matrix4x4.Identity;
         batchShader.Projection = ortho;
     }
-    
+
     public void scissor(int x, int y, int w, int h) {
         GL.Enable(EnableCap.ScissorTest);
         // convert from top-left screen coords to bottom-left OpenGL coords
@@ -247,8 +286,9 @@ public class Graphics : IDisposable {
         if (groupCount <= 0) {
             return;
         }
+
         groupCount--;
-        
+
         GL.PopDebugGroup();
     }
 
@@ -290,7 +330,8 @@ public class Graphics : IDisposable {
     public void polyOffset(float f, float u) {
         if (Settings.instance.reverseZ) {
             GL.PolygonOffset(-f, -u);
-        } else {
+        }
+        else {
             GL.PolygonOffset(f, u);
         }
     }

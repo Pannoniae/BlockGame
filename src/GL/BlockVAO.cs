@@ -97,7 +97,7 @@ public class BlockVAO : VAO {
     }
 
     public void bind() {
-        GL.BindVertexArray(handle);
+        Game.graphics.vao(handle);
     }
 
     // rendering
