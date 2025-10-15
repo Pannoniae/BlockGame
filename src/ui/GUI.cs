@@ -830,6 +830,9 @@ public class GUI {
         idt.applyMat();
         //Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
 
+        // use shader
+        Game.graphics.instantTextureShader.use();
+
         buffer.render();
 
         // restore matrix stacks

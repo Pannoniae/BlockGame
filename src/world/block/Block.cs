@@ -559,8 +559,8 @@ public class Block {
         CHEST = register(new Block(Blocks.CHEST, "Chest"));
         CHEST.setTex(CTUVs(2, 4, 1, 4, 0, 4, 3, 4));
         CHEST.setModel(BlockModel.makeCube(CHEST));
+        CHEST.material(Material.WOOD);
         //CHEST.transparency();
-
 
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
         Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));

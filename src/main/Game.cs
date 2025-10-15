@@ -588,11 +588,15 @@ public partial class Game {
                 GL.TryGetExtension<NVQueryResource>(out var nvr);
                 GL.TryGetExtension<NVQueryResourceTag>(out var nvrt);
 
-                var t = nvrt.GenQueryResourceTag();
-                nvrt.QueryResourceTag(t, "NV_BG");
+                if (nvr != null && nvrt != null) {
 
-                // this is what we won't do!
-                //nvrt.DeleteQueryResourceTag(t);
+                    var t = nvrt.GenQueryResourceTag();
+                    nvrt.QueryResourceTag(t, "NV_BG");
+
+                    // this is what we won't do!
+                    //nvrt.DeleteQueryResourceTag(t);
+
+                }
             }
         }
 
