@@ -11,6 +11,7 @@ public class WorldThread {
     public Thread? thread;
 
     public bool stopped = false;
+    public bool started = false;
 
 
     public void run() {
@@ -19,6 +20,17 @@ public class WorldThread {
             Name = "World Thread"
         };
         thread.Start();
+        started = true;
+    }
+
+    public void kill() {
+        if (!started) {
+            return;
+        }
+
+        thread?.Join();
+
+        stopped = true;
     }
 
     public void doRun() {
@@ -28,7 +40,8 @@ public class WorldThread {
                 update(dt);
             }
             catch (Exception e) {
-                Log.error("Error in world thread", e);
+                Log.error("Error in world thread");
+                Log.error(e);
             }
         }
     }

@@ -56,7 +56,7 @@ public class ItemEntity : Entity {
             yeet();
         }
 
-        applyFriction(dt);
+        applyFriction();
 
         // collision detection (applies movement!)
         collide(dt);
