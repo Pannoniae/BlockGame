@@ -73,6 +73,7 @@ public partial class World : IDisposable {
      * Tracking for stuck queue detection (used for shuffling the chunkload queue only when stuck)
      */
     private int lastQueueSize = -1;
+
     private int stuckIterations = 0;
 
     /**
@@ -296,9 +297,26 @@ public partial class World : IDisposable {
     public void addChunk(ChunkCoord coord, Chunk chunk) {
         chunks[coord] = chunk;
         chunkList.Add(chunk);
+
+        // populate this chunk's cache and update neighbours to point to it
+        chunk.getCache();
+        addToCache(chunk);
+
         foreach (var l in listeners) {
             l.onChunkLoad(coord);
         }
+    }
+
+    /** update neighbour chunks' caches to point to the new chunk */
+    private void addToCache(Chunk chunk) {
+        if (chunk.cache.w != null) chunk.cache.w.cache.e = chunk;
+        if (chunk.cache.e != null) chunk.cache.e.cache.w = chunk;
+        if (chunk.cache.s != null) chunk.cache.s.cache.n = chunk;
+        if (chunk.cache.n != null) chunk.cache.n.cache.s = chunk;
+        if (chunk.cache.sw != null) chunk.cache.sw.cache.ne = chunk;
+        if (chunk.cache.se != null) chunk.cache.se.cache.nw = chunk;
+        if (chunk.cache.nw != null) chunk.cache.nw.cache.se = chunk;
+        if (chunk.cache.ne != null) chunk.cache.ne.cache.sw = chunk;
     }
 
     private void loadSpawnChunks() {
@@ -686,19 +704,14 @@ public partial class World : IDisposable {
             if (Vector2I.DistanceSquared(chunk.Value.centrePos,
                     new Vector2I((int)player.position.X, (int)player.position.Z)) <
                 MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
-                foreach (var chunksection in chunk.Value.subChunks) {
-                    if (!chunksection.blocks.hasRandomTickingBlocks()) {
-                        continue;
-                    }
-
-                    for (int i = 0; i < numTicks; i++) {
-                        // I pray this is random
-                        var coord = random.Next(16 * 16 * 16);
-                        var x = (coord >> 8);
-                        var y = (coord >> 4) & 0xF;
-                        var z = coord & 0xF;
-                        chunksection.tick(this, random, x, y, z);
-                    }
+                for (int i = 0; i < numTicks * Chunk.CHUNKHEIGHT; i++) {
+                    // I pray this is random
+                    var coord = random.Next(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+                    var s = random.Next(Chunk.CHUNKHEIGHT);
+                    var x = (coord >> 8);
+                    var y = (coord >> 4) & 0xF + s * Chunk.CHUNKSIZE;
+                    var z = coord & 0xF;
+                    tick(this, chunk.Key, chunk.Value, random, x, y, z);
                 }
             }
         }
@@ -775,25 +788,46 @@ public partial class World : IDisposable {
             return neighbour;
         }
 
+        // neighbor crosses XZ boundary - try cache first
+        int dx = direction.X;
+        int dz = direction.Z;
 
-        // todo this could be way simpler but it was buggy so im leaving the optimisation for later
-        // neighbour crosses XZ boundary - calculate global position and find target chunk
-        //var neighbourGlobal = toWorldPos(currentChunk.coord.x, currentChunk.coord.z, neighbourX, neighbourY, neighbourZ);
+        // compute cache index from direction
+        // WEST=0, EAST=1, SOUTH=2, NORTH=3, SW=4, SE=5, NW=6, NE=7
+        int index;
+        if (dz == 0) {
+            index = (dx + 1) >> 1;
+        }
+        else if (dx == 0) {
+            index = 2 + ((dz + 1) >> 1);
+        }
+        else {
+            index = 4 + ((dx + 1) >> 1) + ((dz + 1) & 2);
+        }
 
+        Chunk? cchunk = currentChunk.cache[index];
+
+        // if cache hit, use it
+        if (cchunk != null) {
+            chunk = cchunk;
+            var worldX = (currentChunk.coord.x << 4) + neighbour.X;
+            var worldZ = (currentChunk.coord.z << 4) + neighbour.Z;
+            return new Vector3I(worldX & 0xF, neighbour.Y, worldZ & 0xF);
+        }
+
+        // cache miss or more than 1 chunk away - fall back to dictionary lookup
         // get the chunk world coord by shifting the chunk-relative coordinates "out" of the number
-        var newX = (currentChunk.coord.x << 4) + neighbour.X;
-        var newZ = (currentChunk.coord.z << 4) + neighbour.Z;
+        var nx = (currentChunk.coord.x << 4) + neighbour.X;
+        var nz = (currentChunk.coord.z << 4) + neighbour.Z;
 
         // get target chunk
         // this assigns directly to the output variable! might be null, FYI
-        if (!getChunkMaybe(newX, newZ, out var testChunk)) {
+        if (!getChunkMaybe(nx, nz, out chunk)) {
             chunk = null;
             return Vector3I.Zero; // Chunk not loaded, bail
         }
 
-
-        chunk = testChunk;
-        return new Vector3I(newX & 0xF, neighbour.Y, newZ & 0xF);
+        return new Vector3I(nx & 0xF, neighbour.Y, nz & 0xF);
     }
 
 
@@ -1000,6 +1034,9 @@ public partial class World : IDisposable {
             l.onChunkUnload(coord);
         }
 
+        // invalidate neighbour caches before removal
+        chunk.removeFromCache();
+
         // ONLY DO THIS WHEN IT'S ALREADY SAVED
         chunkList.Remove(chunk);
         chunks.Remove(coord);
@@ -1012,6 +1049,9 @@ public partial class World : IDisposable {
         foreach (var l in listeners) {
             l.onChunkUnload(coord);
         }
+
+        // invalidate neighbour caches before removal
+        chunk.removeFromCache();
 
         chunkList.Remove(chunk);
         chunks.Remove(coord);
@@ -1137,7 +1177,6 @@ public partial class World : IDisposable {
     /// Load this chunk either from disk (if exists) or generate it with the given level.
     /// </summary>
     public void loadChunk(ChunkCoord chunkCoord, ChunkStatus status, bool immediately = false) {
-
         // TODO emergency switch! if players complain about chunk errors & lost data / crashes, flip this switch! it should make things better
         // it will make chunk loading synchronous and thus laggy / especially on shit HDDs, but it will prevent chunk errors until we can fix things:tm:
         //immediately = true;

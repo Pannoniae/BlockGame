@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
@@ -389,6 +390,7 @@ public class IngameMenu : Menu, IDisposable {
 
             if (Game.devMode) {
                 debugStr.AppendFormat("Seed: {0}\n", Game.world.seed);
+                debugStr.AppendFormat("c: {0}\n", SharedBlockVAO.c);
             }
 
             long vmem = MemoryUtils.getVRAMUsage(out var stat);

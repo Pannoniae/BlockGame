@@ -12,7 +12,7 @@ public class StreamingVAO<T> where T : unmanaged {
     public uint vbo;
     public uint count;
 
-    public Silk.NET.OpenGL.Legacy.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
     public StreamingVAO() {
         GL = Game.GL;

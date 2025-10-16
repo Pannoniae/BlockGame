@@ -44,6 +44,33 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     private readonly List<LightNode> toPropagate = [];
     private readonly Queue<LightNode> propQueue = new();
 
+    public ChunkCache cache = new();
+
+    /** populate cache with all 8 neighbours */
+    public void getCache() {
+        cache.w = world.getChunkMaybe(coord.x - 1, coord.z, out var w) ? w : null;
+        cache.e = world.getChunkMaybe(coord.x + 1, coord.z, out var e) ? e : null;
+        cache.s = world.getChunkMaybe(coord.x, coord.z - 1, out var s) ? s : null;
+        cache.n = world.getChunkMaybe(coord.x, coord.z + 1, out var n) ? n : null;
+        cache.sw = world.getChunkMaybe(coord.x - 1, coord.z - 1, out var sw) ? sw : null;
+        cache.se = world.getChunkMaybe(coord.x + 1, coord.z - 1, out var se) ? se : null;
+        cache.nw = world.getChunkMaybe(coord.x - 1, coord.z + 1, out var nw) ? nw : null;
+        cache.ne = world.getChunkMaybe(coord.x + 1, coord.z + 1, out var ne) ? ne : null;
+    }
+
+    /** invalidate cache entry in neighbours when this chunk is removed */
+    public void removeFromCache() {
+        if (cache.w != null) cache.w.cache.e = null;
+        if (cache.e != null) cache.e.cache.w = null;
+        if (cache.s != null) cache.s.cache.n = null;
+        if (cache.n != null) cache.n.cache.s = null;
+        if (cache.sw != null) cache.sw.cache.ne = null;
+        if (cache.se != null) cache.se.cache.nw = null;
+        if (cache.nw != null) cache.nw.cache.se = null;
+        if (cache.ne != null) cache.ne.cache.sw = null;
+        cache.clear();
+    }
+
     public int worldX => coord.x << 4;
     public int worldZ => coord.z << 4;
     public Vector2I worldPos => new(worldX, worldZ);

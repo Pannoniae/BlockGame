@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.ui;
+using BlockGame.ui.screen;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
@@ -23,6 +25,9 @@ public sealed class SharedBlockVAO : VAO {
     public nuint bufferLength;
 
     public readonly Silk.NET.OpenGL.Legacy.GL GL;
+    public static long lastTrim;
+
+    public static int c;
 
     public SharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
@@ -63,12 +68,18 @@ public sealed class SharedBlockVAO : VAO {
                     BufferStorageMask.None);
             }
 
+            // i have an idea. What if we mapped it, unmapped it, THEN manually freed it? what's the worst which could happen, right??
+            //var ptr = GL.MapBuffer(BufferTargetARB.ArrayBuffer, BufferAccessARB.ReadOnly);
+            //GL.UnmapBuffer(BufferTargetARB.ArrayBuffer);
+            //Console.WriteLine($"Mapped buffer ptr: 0x{(ulong)ptr:X16}");
+            //NativeMemory.AlignedFree(ptr); // free the temp buffer we mapped (we don't need it anymore)
+
             // name the buffer
             GL.ObjectLabel(ObjectIdentifier.Buffer, buffer, uint.MaxValue, "SharedBlockVAO Buffer");
 
             // check for unified memory support and get buffer address
             if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
-                bufferLength = (nuint)vertexSize;
+                bufferLength = vertexSize;
                 // make buffer resident first, then get its GPU address
                 //GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
                 //Game.sbl.MakeNamedBufferResident(buffer, (NV)GLEnum.ReadOnly);
@@ -80,6 +91,13 @@ public sealed class SharedBlockVAO : VAO {
         }
 
         format();
+
+        // better idea. instead of crashing our process by skill issuing free(), we just trim the process after a certain number of new buffers
+        // so the stupid driver which will never touch the buffer again doesn't keep it in main memory forever
+        if (++c >= 1024 && lastTrim + 20000 < Game.permanentStopwatch.ElapsedMilliseconds) {
+            // we used to trim here but better to trim off-thread
+            Screen.GAME_SCREEN.trim();
+        }
     }
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
@@ -102,31 +120,14 @@ public sealed class SharedBlockVAO : VAO {
         if (Settings.instance.getActualRendererMode() == RendererMode.CommandList) {
             // regular format setup
 
+            // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
+
             // bind the vertex buffer to the VAO
             GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
             // FAKE BINDING FOR THE BUFFER (only to shut up driver validation)
             // THE ZERO STRIDE IS IMPORTANT HERE!
             // you know why? because stride=0 means we don't advance! so it's a constant value lol
             GL.BindVertexBuffer(1, Game.graphics.fatQuadIndices, 0, 0);
-
-            // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
-            GL.EnableVertexAttribArray(0);
-            GL.EnableVertexAttribArray(1);
-            GL.EnableVertexAttribArray(2);
-            GL.EnableVertexAttribArray(3);
-            GL.EnableVertexAttribArray(4);
-
-            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
-            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
-            GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
-            GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 7 * sizeof(ushort));
-            GL.VertexAttribFormat(4, 4, VertexAttribType.Float, false, 0);
-
-            GL.VertexAttribBinding(0, 0);
-            GL.VertexAttribBinding(1, 0);
-            GL.VertexAttribBinding(2, 0);
-            GL.VertexAttribBinding(3, 0);
-            GL.VertexAttribBinding(4, 1); // Different binding point for constant attribute!!
 
             
             // we don't need the divisor anymore in fact
@@ -140,6 +141,42 @@ public sealed class SharedBlockVAO : VAO {
             // this will work?
             //Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0, 0, 0);
             //Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0, 0, 0);
+        }
+        // normal path
+        else {
+
+            // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
+            
+            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
+        }
+    }
+
+    public static void VAOFormat(uint vao) {
+        Game.graphics.vao(vao);
+
+        var GL = Game.GL;
+
+        if (Settings.instance.getActualRendererMode() == RendererMode.CommandList) {
+            // regular format setup
+
+            // 14 bytes in total, 3*2 for pos, 2*2 for uv, 4 bytes for colour
+            GL.EnableVertexAttribArray(0);
+            GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
+            GL.EnableVertexAttribArray(3);
+            GL.EnableVertexAttribArray(4);
+
+            GL.VertexAttribIFormat(0, 3, VertexAttribIType.UnsignedShort, 0);
+            GL.VertexAttribIFormat(1, 2, VertexAttribIType.UnsignedShort, 0 + 3 * sizeof(ushort));
+            GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 5 * sizeof(ushort));
+            GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 7 * sizeof(ushort));
+            GL.VertexAttribFormat(4, 3, VertexAttribType.Float, false, 0);
+
+            GL.VertexAttribBinding(0, 0);
+            GL.VertexAttribBinding(1, 0);
+            GL.VertexAttribBinding(2, 0);
+            GL.VertexAttribBinding(3, 0);
+            GL.VertexAttribBinding(4, 1); // Different binding point for constant attribute!!
         }
         // normal path
         else {
@@ -159,8 +196,6 @@ public sealed class SharedBlockVAO : VAO {
             GL.VertexAttribBinding(1, 0);
             GL.VertexAttribBinding(2, 0);
             GL.VertexAttribBinding(3, 0);
-            
-            GL.BindVertexBuffer(0, buffer, 0, 8 * sizeof(ushort));
         }
     }
 

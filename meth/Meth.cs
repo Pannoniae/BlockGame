@@ -613,3 +613,19 @@ public enum RawDirection : byte {
     MAX = 6,
     NONE = 13 // 13 is 5 with the 4th bit set to 1
 }
+
+/**
+ * Horizontal raw direction
+ */
+public enum RawDirectionExt : byte {
+    WEST = 0,
+    EAST = 1,
+    SOUTH = 2,
+    NORTH = 3,
+    SW = 4,
+    SE = 5,
+    NW = 6,
+    NE = 7,
+    /** NOT A REAL DIRECTION, just a loop terminator */
+    MAX = 9,
+}

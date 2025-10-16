@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 using System.Runtime;
+using BlockGame.GL;
 using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.render;
@@ -85,6 +86,10 @@ public class GameScreen : Screen {
         //updateMemory.enabled = false;
         updateDebugText.enabled = false;
         Game.clearInterval(updateDebugText);
+    }
+
+    public void trim() {
+        umt?.needTrim = true;
     }
 
 
@@ -929,6 +934,8 @@ public class UpdateMemoryThread(GameScreen screen) {
     private GameScreen screen = screen;
     public volatile bool stopped;
 
+    public volatile bool needTrim;
+
     public void run() {
         while (true) {
             if (stopped) {
@@ -936,6 +943,16 @@ public class UpdateMemoryThread(GameScreen screen) {
             }
 
             updateMemoryMethod();
+
+            // we're also responsible for periodically trimming SharedBlockVAO! yes this is fucked but shhhh
+            if (needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 512)) {
+                // if 60s has passed AND we have pending ones, trim
+                MemoryUtils.cleanGC();
+                SharedBlockVAO.c = 0;
+                SharedBlockVAO.lastTrim = Game.permanentStopwatch.ElapsedMilliseconds;
+                needTrim = false;
+            }
+
             // sleep 200ms
             Thread.Sleep(200);
         }

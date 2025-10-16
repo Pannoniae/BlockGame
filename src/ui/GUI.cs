@@ -757,9 +757,6 @@ public class GUI {
 
         var idt = Game.graphics.idt;
 
-        buffer.bind();
-        Game.renderer.bindQuad();
-
         Game.blockRenderer.setupStandalone();
         Game.blockRenderer.renderBlock(block, metadata, Vector3I.Zero, guiBlock,
             lightOverride: 255, cullFaces: false);
@@ -818,6 +815,11 @@ public class GUI {
 
         // test point debug
         //Console.Out.WriteLine($"Test point: {Vector3.Transform(new Vector3(1, 1, 1), mat.top)}");
+
+        buffer.bind();
+        Game.renderer.bindQuad();
+
+        Game.graphics.instantTextureShader.use();
 
         Game.graphics.tex(0, Game.textures.blockTexture);
         var sp = CollectionsMarshal.AsSpan(guiBlock);

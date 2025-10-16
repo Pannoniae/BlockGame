@@ -68,7 +68,18 @@ public static partial class MemoryUtils {
         Log.info($"Released memory in {sw.Elapsed.TotalMilliseconds} ms");
     }
 
-    public class LinuxMemoryUtility {
+    public static void trim() {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+            WindowsMemoryUtility.ReleaseUnusedProcessWorkingSetMemory();
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+            LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMallocTrim();
+            LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_DONTNEED();
+            LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_PAGEOUT();
+        }
+    }
+
+    public static class LinuxMemoryUtility {
         public static string getCPUName() {
             try {
                 if (File.Exists("/proc/cpuinfo")) {
@@ -342,7 +353,7 @@ public static partial class MemoryUtils {
     }
 
     [SupportedOSPlatform("windows")]
-    public partial class WindowsMemoryUtility {
+    public static partial class WindowsMemoryUtility {
         private static PerformanceCounterCategory category;
         private static PerformanceCounter counter;
 
@@ -354,8 +365,13 @@ public static partial class MemoryUtils {
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool SetProcessWorkingSetSize(IntPtr proc, int minSize, int maxSize);
 
+        [LibraryImport("psapi.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool EmptyWorkingSet(IntPtr proc);
+
         public static void ReleaseUnusedProcessWorkingSetMemory() {
-            SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+            //SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+            EmptyWorkingSet(Process.GetCurrentProcess().Handle);
         }
 
         public static long getTotalRAM() {

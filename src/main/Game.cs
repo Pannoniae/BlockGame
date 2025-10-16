@@ -816,24 +816,6 @@ public partial class Game {
         MemoryUtils.cleanGC();
     }
 
-    public struct S {
-        public int a;
-        public int b;
-        public long c;
-
-        // the rest of the owl
-        public unsafe void* d;
-        public unsafe void* e;
-        public unsafe void* f;
-        public unsafe void* g;
-        public unsafe void* h;
-        public unsafe void* i;
-        public unsafe void* j;
-        public unsafe void* k;
-        public unsafe void* l;
-
-    }
-
     private void setIconToBlock() {
         using var logo = Image.Load<Rgba32>("logo.png");
         var success = logo.DangerousTryGetSinglePixelMemory(out Memory<Rgba32> imgData);

@@ -29,6 +29,8 @@ public class Program {
         // IMPORTANT PART
         Console.OutputEncoding = Encoding.UTF8;
 
+        //Thread.Sleep(4000);
+
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 
         game = new Game(devMode);

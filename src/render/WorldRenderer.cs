@@ -349,6 +349,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DeleteVertexArray(chunkVAO);
         chunkVAO = GL.GenVertexArray();
 
+        SharedBlockVAO.VAOFormat(chunkVAO);
+
         // initialize shaders
         initializeShaders();
 
