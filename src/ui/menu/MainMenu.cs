@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.util;
@@ -13,6 +14,10 @@ public class MainMenu : Menu {
         title.setPosition(new Vector2I(0, -75));
         title.centreContents();
         title.setScale(1.5f);
+
+        var subtitle = new Subtitle(this, "subtitle");
+        subtitle.setPosition(new Vector2I(0, -55));
+        subtitle.centreContents();
 
         var sp = new Button(this, "singleplayer", true, "Singleplayer");
         sp.setPosition(new Vector2I(0, -34));
@@ -35,14 +40,32 @@ public class MainMenu : Menu {
                 Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
             });
         };
+
+        var discord = new Button(this, "discord", true, "Discord");
+        discord.setPosition(new Vector2I(0, 44));
+        discord.centreContents();
+        discord.clicked += _ => {
+            try {
+                Process.Start(new ProcessStartInfo {
+                    FileName = "https://discord.gg/tdbsvWpADe",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception e) {
+                Log.error("failed to open discord link: " + e.Message);
+            }
+        };
+
         var button4 = new Button(this, "quit", true, "Quit");
-        button4.setPosition(new Vector2I(0, 44));
+        button4.setPosition(new Vector2I(0, 70));
         button4.centreContents();
         button4.clicked += _ => Environment.Exit(0);
         addElement(title);
+        addElement(subtitle);
         addElement(sp);
         addElement(button2);
         addElement(settings);
+        addElement(discord);
         addElement(button4);
     }
 

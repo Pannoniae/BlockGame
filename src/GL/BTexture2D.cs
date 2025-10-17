@@ -53,15 +53,16 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         }
     }
 
-    public BTexture2D(uint width, uint height) {
+    public BTexture2D(uint width, uint height, bool linear = false) {
         unsafe {
             GL = Game.GL;
 
             handle = GL.CreateTexture(TextureTarget.Texture2D);
             GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
             GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
-            GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-            GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+            var filter = linear ? GLEnum.Linear : GLEnum.Nearest;
+            GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)filter);
+            GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)filter);
             GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
             GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 1);
             image = new Image<Rgba32>((int)width, (int)height);

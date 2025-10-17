@@ -200,7 +200,7 @@ public partial class Game {
         //windowOptions.FramesPerSecond = 6000;
         //windowOptions.UpdatesPerSecond = 6000;
         windowOptions.VSync = false;
-        title = getRandomSplash();
+        title = getRandomTitle();
 
 
         IMonitor mainMonitor = Monitor.GetMainMonitor(null);
@@ -235,14 +235,17 @@ public partial class Game {
 
         sdl = true;
         if (sdl) {
-            Window.PrioritizeSdl();
-            // set hints
-            SDL3.SDL_SetHint(SDL3.SDL_HINT_APP_NAME, "BlockGame");
-            //SDL3.SDL_SetHint(SDL3.SDL_HINT_WINDOWS_GAMEINPUT, "1");
+            unsafe {
+                Window.PrioritizeSdl();
+                // set hints
+                SDL3.SDL_SetHint(SDL3.SDL_HINT_APP_NAME, "BlockGame");
+                //SDL3.SDL_SetHint(SDL3.SDL_HINT_WINDOWS_GAMEINPUT, "1");
 
-            // print SDL version!
-            var a = SDL3.SDL_GetVersion();
-            Log.info($"SDL version: { SDL3.SDL_VERSIONNUM_MAJOR(a)}.{SDL3.SDL_VERSIONNUM_MINOR(a)}.{SDL3.SDL_VERSIONNUM_MICRO(a)}");
+                // print SDL version!
+                var a = SDL3.SDL_GetVersion();
+                Log.info(
+                    $"SDL version: {SDL3.SDL_VERSIONNUM_MAJOR(a)}.{SDL3.SDL_VERSIONNUM_MINOR(a)}.{SDL3.SDL_VERSIONNUM_MICRO(a)}");
+            }
 
         }
         else {
@@ -339,7 +342,7 @@ public partial class Game {
     }
 
 
-    private string getRandomSplash() {
+    public string getRandomTitle() {
         return titles[clientRandom.Next(titles.Length)];
     }
 
@@ -469,6 +472,9 @@ public partial class Game {
                               SDL_InitFlags.SDL_INIT_EVENTS |
                               SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK);
                 SDL3.SDL_StartTextInput((SDL_Window*)window.Handle);
+
+                // cap window size
+                SDL3.SDL_SetWindowMinimumSize((SDL_Window*)window.Handle, Constants.minWidth, Constants.minHeight);
             }
         }
 

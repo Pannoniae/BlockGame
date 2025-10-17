@@ -6,6 +6,7 @@ namespace BlockGame.util.font;
 
 public class FontLoader {
     public TextRenderer renderer;
+    public TextRenderer rendererl;
     public TextRenderer3D renderer3D;
     public FontSystem fontSystem;
     public FontSystem fontSystemThin;
@@ -18,6 +19,7 @@ public class FontLoader {
             TextureHeight = 256
         };
         renderer = new TextRenderer();
+        rendererl = new TextRenderer(linear: true);
         renderer3D = new TextRenderer3D();
 
         // todo hack something together in a better way

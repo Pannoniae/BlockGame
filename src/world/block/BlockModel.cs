@@ -23,6 +23,28 @@ public class BlockModel {
         model.faces[5] = new(0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, uvs[5], uvs[5] + 1, RawDirection.UP);
         return model;
     }
+
+    /**
+     * Same shit except uv[0] on front, uv[1] elsewhere
+     */
+    public static BlockModel makeFurnace(Block bl) {
+        var uvs = bl.uvs;
+        var model = new BlockModel();
+        model.faces = new Face[6];
+        // west
+        model.faces[0] = new(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, uvs[1], uvs[1] + 1, RawDirection.WEST);
+        // east
+        model.faces[1] = new(1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.EAST);
+        // south
+        model.faces[2] = new(0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, uvs[0], uvs[0] + 1, RawDirection.SOUTH);
+        // north
+        model.faces[3] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[1], uvs[1] + 1, RawDirection.NORTH);
+        // down
+        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[1], uvs[1] + 1, RawDirection.DOWN);
+        // up
+        model.faces[5] = new(0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.UP);
+        return model;
+    }
     
     /// <summary>
     /// Liquids are cubes but only the bottom 7/8th of the block is drawn

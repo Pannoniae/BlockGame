@@ -564,8 +564,8 @@ public class Block {
         //CHEST.transparency();
 
         FURNACE = register(new Block(Blocks.FURNACE, "Furnace"));
-        FURNACE.setTex(grassUVs(6, 4, 4, 4, 5, 4));
-        FURNACE.setModel(BlockModel.makeCube(FURNACE));
+        FURNACE.setTex(furnaceUVs(4, 4,  5, 4));
+        FURNACE.setModel(BlockModel.makeFurnace(FURNACE));
         FURNACE.material(Material.STONE);
 
 
@@ -648,6 +648,12 @@ public class Block {
         return [
             new(sideX, sideY), new(sideX, sideY), new(sideX, sideY), new(sideX, sideY), new(bottomX, bottomY),
             new(topX, topY)
+        ];
+    }
+
+    public static UVPair[] furnaceUVs(int frontX, int frontY, int sideX, int sideY) {
+        return [
+            new(frontX, frontY), new(sideX, sideY),
         ];
     }
 

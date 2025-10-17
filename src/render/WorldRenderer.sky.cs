@@ -199,11 +199,11 @@ public sealed partial class WorldRenderer {
     private void renderStars(float dayPercent, Matrix4x4 viewProj, Matrix4x4 modelView) {
         float starAlpha = 0f;
 
-        if (dayPercent >= 0.65f && dayPercent <= 0.9f) {
+        if (dayPercent is >= 0.65f and <= 0.9f) {
             //night
             starAlpha = 1.0f;
         }
-        else if (dayPercent >= 0.5f && dayPercent < 0.65f) {
+        else if (dayPercent is >= 0.5f and < 0.65f) {
             // evening
             starAlpha = Meth.fadeIn(dayPercent, 0.5f, 0.65f);
         }

@@ -26,7 +26,6 @@ public class Image : GUIElement {
 
     public void setPosition(Vector2I pos) {
         setPosition(new Rectangle(pos.X, pos.Y, guiPosition.Width, guiPosition.Height));
-        
     }
     
     public void setScale(float sc) {

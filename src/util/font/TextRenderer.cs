@@ -13,8 +13,8 @@ public class TextRenderer : IFontStashRenderer {
 
     public ITexture2DManager TextureManager => _textureManager;
 
-    public TextRenderer() {
-        _textureManager = new BTexture2DManager();
+    public TextRenderer(bool linear = false) {
+        _textureManager = new BTexture2DManager(linear);
         tb = Game.graphics.mainBatch;
         // disable because it's mostly transparent and it fucks performance with drawtexture
         tb.NoScreenSpace = true;

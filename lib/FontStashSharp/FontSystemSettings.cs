@@ -21,7 +21,8 @@ namespace FontStashSharp
 	{
 		None,
 		Blurry,
-		Stroked
+		Stroked,
+        Shadow
 	}
 
 	public class FontSystemSettings
