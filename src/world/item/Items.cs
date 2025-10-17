@@ -38,4 +38,5 @@ public class Items {
     public const int GOLD_SCYTHE = 34;
     public const int DYE = 35;
     public const int APPLE = 36;
+    public const int MAPLE_SYRUP = 37;
  }
