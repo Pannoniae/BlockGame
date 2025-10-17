@@ -43,6 +43,7 @@ public class GUI {
 
     public DynamicSpriteFont guiFont = null!;
     public DynamicSpriteFont guiFontThin = null!;
+    public DynamicSpriteFont guiFontThinl = null!;
 
     public Rectangle scrollbarRect = new(199, 0, 6, 20);
 
@@ -95,6 +96,7 @@ public class GUI {
     public void loadFont(int size) {
         guiFont = Game.fontLoader.fontSystem.GetFont(size);
         guiFontThin = Game.fontLoader.fontSystemThin.GetFont(size);
+        guiFontThinl = Game.fontLoader.fontSystemThinl.GetFont(size);
     }
 
 

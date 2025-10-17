@@ -10,6 +10,7 @@ public class FontLoader {
     public TextRenderer3D renderer3D;
     public FontSystem fontSystem;
     public FontSystem fontSystemThin;
+    public FontSystem fontSystemThinl;
     public float thinFontAspectRatio = 0.75f; // 3:4 ratio (narrower)
 
     public FontLoader(string name, string name2) {
@@ -29,5 +30,8 @@ public class FontLoader {
         fontSystemThin = new FontSystem(settings);
         using FileStream s2 = Game.assets.open(name2);
         fontSystemThin.AddFont(s2);
+        fontSystemThinl = new FontSystem(settings);
+        using FileStream s3 = Game.assets.open(name2);
+        fontSystemThinl.AddFont(s3);
     }
 }

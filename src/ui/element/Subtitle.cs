@@ -49,10 +49,10 @@ public class Subtitle : GUIElement {
         var cy = bounds.Y + bounds.Height / 2f;
 
         // (origin is in local text space before scaling)
-        var size = Game.gui.guiFontThin.MeasureString(subtitleText);
+        var size = Game.gui.guiFontThinl.MeasureString(subtitleText);
         var origin = size / 2f;
 
-        Game.gui.guiFontThin.DrawText(
+        Game.gui.guiFontThinl.DrawText(
             Game.fontLoader.rendererl,
             subtitleText,
             new Vector2(cx, cy),
@@ -64,7 +64,7 @@ public class Subtitle : GUIElement {
             effectAmount: 1
         );
 
-        Game.gui.guiFontThin.DrawText(
+        Game.gui.guiFontThinl.DrawText(
             Game.fontLoader.rendererl,
             subtitleText,
             new Vector2(cx, cy),
