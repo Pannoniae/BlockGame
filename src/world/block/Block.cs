@@ -1433,7 +1433,8 @@ public enum ToolType : byte {
     PICKAXE,
     AXE,
     SHOVEL,
-    HOE
+    HOE,
+    SCYTHE,
 }
 
 public record class MaterialTier(MaterialTiers tier, double level, double speed) {

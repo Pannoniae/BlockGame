@@ -8,12 +8,12 @@ public class FurnaceMenuContext : InventoryContext {
     private readonly CraftingGridInventory craftingGrid;
 
     public const int hotbarX = 5;
-    public const int hotbarY = 146;
-    public const int mainY = 124;
+    public const int hotbarY = 166;
+    public const int mainY = 144;
     public const int craftingGridX = 71;
     public const int craftingGridY = 14;
     public const int craftingResultX = 120;
-    public const int craftingResultY = 23;
+    public const int craftingResultY = 32;
 
     public FurnaceMenuContext(PlayerInventory playerInv) {
         this.playerInv = playerInv;

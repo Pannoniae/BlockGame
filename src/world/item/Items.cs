@@ -39,4 +39,5 @@ public class Items {
     public const int DYE = 35;
     public const int APPLE = 36;
     public const int MAPLE_SYRUP = 37;
+    public const int COAL = 38;
  }

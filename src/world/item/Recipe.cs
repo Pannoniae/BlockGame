@@ -1,6 +1,7 @@
 ﻿using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.item.inventory;
+using JetBrains.Annotations;
 
 namespace BlockGame.world.item;
 
@@ -35,16 +36,15 @@ public class Recipe {
         CRAFTING_TABLE.shape(11_11, 2);
         CRAFTING_TABLE.ingredients(Item.block(Blocks.PLANKS));
 
-        // torch (2 hellstone on top of stick)
+        // torch (1 coal on top of 1 stick)
         TORCH = register(new ItemStack(Item.block(Blocks.TORCH), 4));
         TORCH.shape(01_02, 2);
-        TORCH.ingredients(Item.block(Blocks.HELLSTONE), Item.STICK);
-        TORCH.quantities(2, 1);
+        TORCH.ingredients(Item.block(Items.STICK), Item.block(Items.COAL));
 
         // stick (2 planks vertically)
         STICK = register(new ItemStack(Item.STICK, 4));
         STICK.shape(01_01, 2);
-        STICK.ingredients(Item.block(Blocks.PLANKS), Item.block(Blocks.PLANKS));
+        STICK.ingredients(Item.block(Blocks.PLANKS));
 
         // tools
         tool(Item.WOOD_PICKAXE, Item.block(Blocks.PLANKS), 111_020_020);

@@ -87,6 +87,7 @@ public class Item {
     public static DyeItem DYE;
     public static Item APPLE;
     public static Item MAPLE_SYRUP;
+    public static Item COAL;
 
 
     public Item(int id, string name) {
@@ -309,6 +310,10 @@ public class Item {
         MAPLE_SYRUP = new Item(Items.MAPLE_SYRUP, "Maple Syrup");
         MAPLE_SYRUP.tex = new UVPair(3, 9);
         register(MAPLE_SYRUP);
+
+        COAL = new Item(Items.COAL, "Coal");
+        COAL.tex = new UVPair(1, 9);
+        register(COAL);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
