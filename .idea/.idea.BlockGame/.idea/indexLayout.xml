@@ -9,6 +9,7 @@
       <Path>debug</Path>
       <Path>fonts</Path>
       <Path>lib</Path>
+      <Path>src/world/block/Frunace.cs</Path>
     </explicitExcludes>
   </component>
 </project>

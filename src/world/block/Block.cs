@@ -563,7 +563,7 @@ public class Block {
         CHEST.material(Material.WOOD);
         //CHEST.transparency();
 
-        FURNACE = register(new Block(Blocks.FURNACE, "Furnace"));
+        FURNACE = register(new Furnace(Blocks.FURNACE, "Furnace"));
         FURNACE.setTex(furnaceUVs(4, 4,  5, 4, 6, 4));
         FURNACE.setModel(BlockModel.makeFurnace(FURNACE));
         FURNACE.material(Material.STONE);
