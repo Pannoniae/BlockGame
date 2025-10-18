@@ -62,7 +62,7 @@ public class TextBox : GUIElement {
         if (focused && (Game.permanentStopwatch.ElapsedMilliseconds / 500) % 2 == 0) {
             var cursorX = bounds.X + padding.X * GUI.guiScale + Game.gui.measureString(input).X;
             var cursorY = bounds.Y + padding.Y * GUI.guiScale;
-            Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), null, new Color(255, 255, 255, 255));
+            Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), default, new Color(255, 255, 255, 255));
         }
     }
 }

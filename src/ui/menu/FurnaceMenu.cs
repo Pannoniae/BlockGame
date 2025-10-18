@@ -32,6 +32,11 @@ public class FurnaceMenu : InventoryMenu {
 
     protected override string getTitle() => "Furnace";
     protected override BTexture2D getTexture() => invTex;
+
+    protected override int getWidth() => (int)invTex.width - 20;
+
+    protected override int getHeight() => (int)invTex.height;
+
     protected override int getTextOffsetX() => textOffsetX;
     protected override int getTextOffsetY() => textOffsetY;
 
@@ -42,22 +47,5 @@ public class FurnaceMenu : InventoryMenu {
 
     public override void deactivate() {
         base.deactivate();
-
-        // return all items from crafting grid to player inventory
-        var player = Game.world.player;
-        if (player == null) return;
-
-        var craftingGrid = craftingCtx.getCraftingGrid();
-
-        for (int i = 0; i < craftingGrid.grid.Length; i++) {
-            var stack = craftingGrid.grid[i];
-            if (stack != ItemStack.EMPTY && stack.quantity > 0) {
-                // try to add to player inventory, drop if full
-                if (!player.inventory.addItem(stack)) {
-                    player.dropItemStack(stack, true);
-                }
-                craftingGrid.grid[i] = ItemStack.EMPTY;
-            }
-        }
     }
 }

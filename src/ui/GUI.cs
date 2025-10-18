@@ -56,7 +56,7 @@ public class GUI {
     private int blockTexture = 0;
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
-    private static readonly Color bgGray = Color.DarkGray;
+    private static readonly Color bgGray = new Color(144, 144, 144, 255);
     private static readonly Color skyc = Color.CornflowerBlue;
 
     public static bool WIREFRAME = false;
@@ -493,8 +493,13 @@ public class GUI {
             origin, depth);
     }
 
-    public void drawUIImmediate(BTexture2D texture, RectangleF position, Rectangle source) {
-        immediatetb.Draw(texture, position, source, Color.White, 1f);
+    public void drawUIImmediate(BTexture2D texture, RectangleF position, Rectangle? source = null) {
+        var np = new RectangleF(
+            position.X * guiScale,
+            position.Y * guiScale,
+            position.Width * guiScale,
+            position.Height * guiScale);
+        immediatetb.Draw(texture, np, source, Color.White, guiScale);
     }
 
 

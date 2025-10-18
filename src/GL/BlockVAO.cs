@@ -103,7 +103,7 @@ public class BlockVAO : VAO {
     // rendering
     public uint render() {
         unsafe {
-            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)0);
+            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (void*)0);
             return count;
         }
     }

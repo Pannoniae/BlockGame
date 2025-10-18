@@ -257,7 +257,7 @@ public class BlockRenderer {
     // Helper methods for custom blocks
 
     /// <summary>
-    /// Standard face culling logic - checks if neighbor is solid and full.
+    /// Standard face culling logic - checks if neighbour is solid and full.
     /// Custom blocks can override Block.cullFace instead of using this.
     /// </summary>
     public bool shouldCullFace(RawDirection dir) {
@@ -607,9 +607,7 @@ public class BlockRenderer {
             float z4 = worldPos.Z + face.z4;
             
             // lighting
-            byte light = world?.inWorld(worldPos.X, worldPos.Y, worldPos.Z) == true 
-                ? world.getLight(worldPos.X, worldPos.Y, worldPos.Z) 
-                : (byte)15;
+            byte light = world.getLightC(worldPos.X, worldPos.Y, worldPos.Z);
             
             var tint = WorldRenderer.calculateTint((byte)dir, 0, light);
             
@@ -651,16 +649,16 @@ public class BlockRenderer {
                 // we need to restore the UVs (so multiply by inverse atlas)
                 // and we need to uncompress the positions
                 var tintedVertex = new BlockVertexTinted();
-                tintedVertex.x = (vertex.x / 256f) - 16f;
-                tintedVertex.y = (vertex.y / 256f) - 16f;
-                tintedVertex.z = (vertex.z / 256f) - 16f;
-                tintedVertex.u = (Half)(vertex.u / 32768f);
-                tintedVertex.v = (Half)(vertex.v / 32768f);
+                tintedVertex.x = vertex.x / 256f - 16f;
+                tintedVertex.y = vertex.y / 256f - 16f;
+                tintedVertex.z = vertex.z / 256f - 16f;
+                tintedVertex.u = vertex.u / 32768f;
+                tintedVertex.v = vertex.v / 32768f;
 
                 // apply lighting from vertex.light to the base colour in vertex.cu
                 var blocklight = (byte)(vertex.light >> 4);
                 var skylight = (byte)(vertex.light & 0xF);
-                var lightColor = WorldRenderer.getLightColour(blocklight, skylight);
+                var lightColor = WorldRenderer.getLightColour(skylight, blocklight);
 
                 // unpack base colour
                 var r = (byte)(vertex.cu & 0xFF);
@@ -669,9 +667,9 @@ public class BlockRenderer {
                 var a = (byte)((vertex.cu >> 24) & 0xFF);
 
                 // multiply by light
-                r = (byte)((r / 255f) * lightColor.R);
-                g = (byte)((g / 255f) * lightColor.G);
-                b = (byte)((b / 255f) * lightColor.B);
+                r = (byte)(r / 255f * lightColor.R);
+                g = (byte)(g / 255f * lightColor.G);
+                b = (byte)(b / 255f * lightColor.B);
 
                 tintedVertex.cu = (uint)(r | (g << 8) | (b << 16) | (a << 24));
                 vertices.Add(tintedVertex);

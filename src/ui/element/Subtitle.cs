@@ -22,8 +22,6 @@ public class Subtitle : GUIElement {
         // randomly select subtitle
         subtitleText = Game.instance.getRandomTitle();
 
-        Console.Out.WriteLine(subtitleText);
-
         // yellow colour like NOSTALGIA FR
         colour = new Color(255, 255, 0, 255);
 

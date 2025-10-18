@@ -104,7 +104,7 @@ public sealed class ExtremelySharedBlockVAO : VAO {
 
     public uint render() {
         unsafe {
-            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedShort, (void*)indexOffset);
+            GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (void*)indexOffset);
             return count;
         }
     }

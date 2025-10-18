@@ -328,14 +328,6 @@ public sealed class ArrayBlockData : BlockData, IDisposable {
         value = (byte)((val << 4) | skylight);
     }
 
-    public static byte extractSkylight(byte value) {
-        return (byte)(value & 0xF);
-    }
-
-    public static byte extractBlocklight(byte value) {
-        return (byte)((value >> 4) & 0xF);
-    }
-
     // methods for serialization compatibility with WorldIO
     public uint[] getSerializationBlocks() {
         return blocks;

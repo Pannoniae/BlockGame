@@ -132,7 +132,7 @@ public partial class WorldRenderer {
     /// </summary>
     public void addOpaqueToBindlessBuffer(SubChunk subChunk, uint instanceId) {
         if (subChunk.hasRenderOpaque) {
-            subChunk.vao.addChunkCommand(bindlessBuffer, instanceId, elementAddress, elementLen);
+            subChunk.vao.addChunkCommand(bindlessBuffer, instanceId, Game.graphics.elementAddress, Game.graphics.elementLen);
         }
     }
 
@@ -141,7 +141,7 @@ public partial class WorldRenderer {
     /// </summary>
     public void addTransparentToBindlessBuffer(SubChunk subChunk, uint instanceId) {
         if (subChunk.hasRenderTranslucent) {
-            subChunk.watervao.addChunkCommand(bindlessBuffer, instanceId, elementAddress, elementLen);
+            subChunk.watervao.addChunkCommand(bindlessBuffer, instanceId, Game.graphics.elementAddress, Game.graphics.elementLen);
         }
     }
 

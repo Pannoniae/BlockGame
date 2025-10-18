@@ -26,7 +26,7 @@ public class TextRenderer : IFontStashRenderer {
         // texture height
         tb.Draw(tex,
             intPos,
-            src,
+            src.GetValueOrDefault(),
             new Color(color.R, color.G, color.B, color.A),
             scale,
             rotation,
@@ -40,7 +40,7 @@ public class TextRenderer : IFontStashRenderer {
         // texture height
         tb.Draw(tex,
             intPos,
-            src,
+            src.GetValueOrDefault(),
             new Color(color.R, color.G, color.B, color.A),
             scale,
             rotation,

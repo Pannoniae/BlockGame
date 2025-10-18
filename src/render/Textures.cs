@@ -21,7 +21,8 @@ public class Textures {
 
     public BTexture2D sunTexture;
     public BTexture2D moonTexture;
-    
+    public BTexture2D cloudTexture;
+
     public BTexture2D particleTex;
 
     public const int LIGHTMAP_SIZE = 16;
@@ -38,7 +39,8 @@ public class Textures {
         waterOverlay = get("textures/water.png");
         sunTexture = get("textures/sun_03.png");
         moonTexture = get("textures/moon_01.png");
-        
+        cloudTexture = get("textures/clouds.png");
+
         particleTex = get("textures/particle.png");
         
         blockTexture = new BTextureAtlas("textures/blocks.png", 16);

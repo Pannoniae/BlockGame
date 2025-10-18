@@ -38,7 +38,6 @@ public sealed class SpriteBatch : IDisposable {
     private readonly Silk.NET.OpenGL.Legacy.GL GL;
     public readonly uint vao;
     private uint vbo;
-    private uint ibo;
 
     // Shader
     internal Shader shader;
@@ -48,7 +47,6 @@ public sealed class SpriteBatch : IDisposable {
     private SpriteBatchItem[] batchItems;
     private uint batchItemCount;
     private VertexColorTexture[] vertices;
-    private ushort[] indices;
 
     // State
     /**
@@ -70,10 +68,6 @@ public sealed class SpriteBatch : IDisposable {
         vbo = GL.CreateBuffer();
         GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
         GL.ObjectLabel(ObjectIdentifier.Buffer, vbo, uint.MaxValue, "SpriteBatch Vertex Buffer");
-
-        ibo = GL.CreateBuffer();
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-        GL.ObjectLabel(ObjectIdentifier.Buffer, ibo, uint.MaxValue, "SpriteBatch Index Buffer");
 
         // Set up vertex attributes
         unsafe {
@@ -105,26 +99,12 @@ public sealed class SpriteBatch : IDisposable {
 
         // Initialize vertex and index arrays
         vertices = new VertexColorTexture[InitialBufferCapacity];
-        indices = new ushort[InitialBufferCapacity * 6 / 4]; // Each quad uses 6 indices for 4 vertices
-
-        // Set up indices for a quad (two triangles)
-        CreateIndices(indices, InitialBufferCapacity / 4);
 
         // Create vertices
         unsafe {
             GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
                 (nuint)(vertices.Length * sizeof(VertexColorTexture)),
                 null, BufferStorageMask.DynamicStorageBit);
-        }
-
-        // Upload the index data
-        unsafe {
-            fixed (ushort* ptr = indices) {
-                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer,
-                    (nuint)(indices.Length * sizeof(ushort)),
-                    ptr, BufferStorageMask.DynamicStorageBit);
-            }
         }
 
         IsActive = false;
@@ -145,19 +125,6 @@ public sealed class SpriteBatch : IDisposable {
         textureUniform = shader.getUniformLocation("tex");
         // Set texture to 0
         shader.setUniform(textureUniform, 0);
-    }
-
-    private static void CreateIndices(ushort[] indices, uint quadCount) {
-        for (uint i = 0, vertex = 0; i < quadCount; i++) {
-            uint idx = i * 6;
-            indices[idx] = (ushort)vertex;
-            indices[idx + 1] = (ushort)(vertex + 1);
-            indices[idx + 2] = (ushort)(vertex + 2);
-            indices[idx + 3] = (ushort)vertex;
-            indices[idx + 4] = (ushort)(vertex + 2);
-            indices[idx + 5] = (ushort)(vertex + 3);
-            vertex += 4;
-        }
     }
 
     public void Begin(BatcherBeginMode beginMode = BatcherBeginMode.Deferred) {
@@ -512,7 +479,7 @@ public sealed class SpriteBatch : IDisposable {
             currentTexture.bind();
 
             // Bind indices
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
 
             /*Console.Out.WriteLine(
                 $"itemStarIndex: {itemStartIndex}, itemEndIndex: {itemEndIndex}, itemCount: {itemCount}, vertexIndex: {vertexIndex}," +
@@ -521,7 +488,7 @@ public sealed class SpriteBatch : IDisposable {
             // Draw the batch
             unsafe {
                 GL.DrawElements(PrimitiveType.Triangles, itemCount * 6,
-                    DrawElementsType.UnsignedShort, (void*)0);
+                    DrawElementsType.UnsignedInt, (void*)0);
             }
 
             // Move to the next batch
@@ -600,7 +567,7 @@ public sealed class SpriteBatch : IDisposable {
                 }
             }
 
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
 
             // draw batched by texture
             uint itemIdx = 0;
@@ -625,7 +592,7 @@ public sealed class SpriteBatch : IDisposable {
 
                 unsafe {
                     GL.DrawElements(PrimitiveType.Triangles, batchCount * 6,
-                        DrawElementsType.UnsignedShort, (void*)((batchStart - countWhiteItemsBefore(batchStart)) * 6 * sizeof(ushort)));
+                        DrawElementsType.UnsignedInt, (void*)((batchStart - countWhiteItemsBefore(batchStart)) * 6 * sizeof(ushort)));
                 }
             }
         }
@@ -697,7 +664,7 @@ public sealed class SpriteBatch : IDisposable {
                     }
                 }
 
-                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
 
                 // batch by texture
                 uint texBatchStart = runStart;
@@ -712,7 +679,7 @@ public sealed class SpriteBatch : IDisposable {
                     tex.bind();
                     unsafe {
                         GL.DrawElements(PrimitiveType.Triangles, (texBatchEnd - texBatchStart) * 6,
-                            DrawElementsType.UnsignedShort, (void*)(vertOffset * sizeof(ushort)));
+                            DrawElementsType.UnsignedInt, (void*)(vertOffset * sizeof(ushort)));
                     }
 
                     vertOffset += (texBatchEnd - texBatchStart) * 6;
@@ -750,32 +717,6 @@ public sealed class SpriteBatch : IDisposable {
                     GL.BindVertexBuffer(0, vbo, 0, (uint)sizeof(VertexColorTexture));
                 }
             }
-
-            var requiredIndexCount = batchCount * 6;
-
-            // Resize indices if needed (each quad uses 6 indices for 4 vertices)
-            if (indices.Length < requiredIndexCount) {
-                var newIndexCapacity = Math.Min(NextPowerOfTwo(requiredIndexCount), MaxBufferCapacity * 6 / 4);
-                Array.Resize(ref indices, (int)newIndexCapacity);
-
-                // Set up new indices
-                var newQuadCount = newIndexCapacity / 6;
-
-                CreateIndices(indices, newQuadCount);
-
-                // Upload the index data
-                unsafe {
-                    fixed (ushort* ptr = indices) {
-                        GL.DeleteBuffer(ibo);
-                        ibo = GL.CreateBuffer();
-                        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
-                        GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer,
-                            newIndexCapacity * sizeof(ushort),
-                            ptr, BufferStorageMask.DynamicStorageBit);
-                        GL.ObjectLabel(ObjectIdentifier.Buffer, ibo, uint.MaxValue, "SpriteBatch Index Buffer");
-                    }
-                }
-            }
         }
     }
 
@@ -792,7 +733,6 @@ public sealed class SpriteBatch : IDisposable {
             return;
 
         GL.DeleteBuffer(vbo);
-        GL.DeleteBuffer(ibo);
         GL.DeleteVertexArray(vao);
 
         IsDisposed = true;

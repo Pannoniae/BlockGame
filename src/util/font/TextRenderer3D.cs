@@ -65,7 +65,7 @@ public class TextRenderer3D : IFontStashRenderer {
         tb.Draw(tex,
             pos,
             ref worldMatrix,
-            src,
+            src.GetValueOrDefault(),
             new Color(color.R, color.G, color.B, color.A),
             scale,
             rotation,
@@ -80,7 +80,7 @@ public class TextRenderer3D : IFontStashRenderer {
         // texture height
         tb.Draw(tex,
             pos,
-            src,
+            src.GetValueOrDefault(),
             new Color(color.R, color.G, color.B, color.A),
             scale,
             rotation,

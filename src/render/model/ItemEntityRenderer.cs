@@ -79,7 +79,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         var world = itemEntity.world;
 
         var pos = itemEntity.position.toBlockPos();
-        var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
+        var l = world.getLightC(pos.X, pos.Y, pos.Z);
 
         Game.graphics.tex(0, Game.textures.blockTexture);
         Game.blockRenderer.setupStandalone();
@@ -120,7 +120,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
         var world = itemEntity.world;
         var pos = itemEntity.position.toBlockPos();
-        var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
+        var l = world.getLightC(pos.X, pos.Y, pos.Z);
 
 
 
@@ -139,7 +139,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
             idt.setTexture(Game.textures.itemTexture);
 
-            Game.player.handRenderer.renderItemInHand(itemEntity.stack, WorldRenderer.getLightColour((byte)(l >> 4), (byte)(l & 15)));
+            Game.player.handRenderer.renderItemInHand(itemEntity.stack, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
 
             idt.model(mat);
             idt.view(Game.camera.getViewMatrix(interp));

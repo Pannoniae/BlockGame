@@ -18,7 +18,10 @@ public sealed partial class WorldRenderer {
         GL.Disable(EnableCap.DepthTest);
         GL.Disable(EnableCap.CullFace);
 
-        var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
+        var idc = Game.graphics.idc;
+        var idt = Game.graphics.idt;
+
+        var proj = Game.camera.getProjectionMatrix();
         var modelView = Game.camera.getStaticViewMatrix(interp);
 
         float dayPercent = world.getDayPercentage(world.worldTick);
@@ -53,23 +56,29 @@ public sealed partial class WorldRenderer {
         mat.rotate(tiltAngle, 0, 0, 1);
 
 
-        idc.setMVP(mat.top * viewProj);
-        idc.setMV(mat.top * modelView);
+        idc.model(mat);
+        idc.view(modelView);
+        idc.proj(proj);
+
+        idt.model(mat);
+        idt.view(modelView);
+        idt.proj(proj);
 
         renderSkyDome(horizonColour, skyColour, underSkyColour);
 
         mat.pop();
 
         idc.enableFog(false);
-
-        // Render sun and moon
-        renderSunnyMoony(dayPercent, sunAngle, viewProj, modelView);
-
-        // Render stars
-        renderStars(dayPercent, viewProj, modelView);
+        
+        renderSunnyMoony(sunAngle);
+        renderStars(dayPercent);
 
         GL.Enable(EnableCap.DepthTest);
         GL.Enable(EnableCap.CullFace);
+    }
+
+    private void renderSkyPost(double interp) {
+        renderClouds(interp);
     }
 
     private void renderSkyDome(Color horizonColour, Color skyColour, Color underSkyColour) {
@@ -77,6 +86,8 @@ public sealed partial class WorldRenderer {
         const float topHeight = 16f;
         const float bottomHeight = -64f;
         const int segments = 24;
+
+        var idc = Game.graphics.idc;
 
         idc.begin(PrimitiveType.Triangles);
 
@@ -111,10 +122,12 @@ public sealed partial class WorldRenderer {
         idc.end();
     }
 
-    private void renderSunnyMoony(float dayPercent, float sunAngle, Matrix4x4 viewProj, Matrix4x4 modelView) {
+    private void renderSunnyMoony(float sunAngle) {
         const float sunDistance = 96f;
         const float sunSize = 8f;
         const float moonSize = sunSize * 0.75f;
+
+        var idt = Game.graphics.idt;
 
         var mat = Game.graphics.model;
         mat.push();
@@ -127,8 +140,6 @@ public sealed partial class WorldRenderer {
         Game.graphics.tex(0, Game.textures.sunTexture);
         mat.rotate(Meth.rad2deg(sunAngle), 0, 0, 1);
 
-        idt.setMVP(mat.top * viewProj);
-        idt.setMV(mat.top * modelView);
         idt.setColour(new Color(sunIntensity, sunIntensity, sunIntensity * 0.9f, sunIntensity));
 
         idt.begin(PrimitiveType.Quads);
@@ -149,8 +160,6 @@ public sealed partial class WorldRenderer {
 
         mat.push();
         mat.rotate(180f, 0, 0, 1);
-        idt.setMVP(mat.top * viewProj);
-        idt.setMV(mat.top * modelView);
         idt.setColour(new Color(moonIntensity * 0.9f, moonIntensity * 0.9f, moonIntensity, moonIntensity));
 
         idt.begin(PrimitiveType.Quads);
@@ -196,7 +205,7 @@ public sealed partial class WorldRenderer {
         return stars;
     }
 
-    private void renderStars(float dayPercent, Matrix4x4 viewProj, Matrix4x4 modelView) {
+    private void renderStars(float dayPercent) {
         float starAlpha = 0f;
 
         if (dayPercent is >= 0.65f and <= 0.9f) {
@@ -218,6 +227,8 @@ public sealed partial class WorldRenderer {
 
         const float starSize = 0.15f;
 
+        var idc = Game.graphics.idc;
+
         float continuousTime = dayPercent * 360;
         var mat = Game.graphics.model;
 
@@ -225,8 +236,6 @@ public sealed partial class WorldRenderer {
 
         mat.rotate(continuousTime, 0.7f, 1f, 0.1f); // tilted celestial axis
 
-        idc.setMVP(mat.top * viewProj);
-        idc.setMV(mat.top * modelView);
         idc.enableFog(false);
 
         idc.begin(PrimitiveType.Quads);

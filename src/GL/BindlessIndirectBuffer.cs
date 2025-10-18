@@ -79,7 +79,7 @@ public unsafe class BindlessIndirectBuffer : IDisposable {
         // update metrics
         Game.metrics.renderedSubChunks = commands;
         
-        Game.bmdi.MultiDrawElementsIndirectBindles(PrimitiveType.Triangles, DrawElementsType.UnsignedShort, 
+        Game.bmdi.MultiDrawElementsIndirectBindles(PrimitiveType.Triangles, DrawElementsType.UnsignedInt,
             null, (uint)commands, 0, vertexBufferCount);
         
         // unbind so it's not tracked anymore!

@@ -73,11 +73,10 @@ public class Particles {
             var ll = pos.toVec3() - right * particle.size.X / 2 - up * particle.size.Y / 2;
             var lr = pos.toVec3() + right * particle.size.X / 2 - up * particle.size.Y / 2;
             var ur = pos.toVec3() + right * particle.size.X / 2 + up * particle.size.Y / 2;
-            var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
-            var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
+            var l = world.getLightC(blockPos.X, blockPos.Y, blockPos.Z);
             
             
-            var tint = WorldRenderer.getLightColour(blocklight, skylight);
+            var tint = WorldRenderer.getLightColour((byte)(l & 0xF), (byte)((l >> 4) & 0xF));
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
                 (Half)particle.u, (Half)particle.v, tint.R, tint.G, tint.B, tint.A);

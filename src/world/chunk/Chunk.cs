@@ -48,14 +48,14 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     /** populate cache with all 8 neighbours */
     public void getCache() {
-        cache.w = world.getChunkMaybe(coord.x - 1, coord.z, out var w) ? w : null;
-        cache.e = world.getChunkMaybe(coord.x + 1, coord.z, out var e) ? e : null;
-        cache.s = world.getChunkMaybe(coord.x, coord.z - 1, out var s) ? s : null;
-        cache.n = world.getChunkMaybe(coord.x, coord.z + 1, out var n) ? n : null;
-        cache.sw = world.getChunkMaybe(coord.x - 1, coord.z - 1, out var sw) ? sw : null;
-        cache.se = world.getChunkMaybe(coord.x + 1, coord.z - 1, out var se) ? se : null;
-        cache.nw = world.getChunkMaybe(coord.x - 1, coord.z + 1, out var nw) ? nw : null;
-        cache.ne = world.getChunkMaybe(coord.x + 1, coord.z + 1, out var ne) ? ne : null;
+        cache.w = world.getChunkMaybe(new ChunkCoord(coord.x - 1, coord.z), out var w) ? w : null;
+        cache.e = world.getChunkMaybe(new ChunkCoord(coord.x + 1, coord.z), out var e) ? e : null;
+        cache.s = world.getChunkMaybe(new ChunkCoord(coord.x, coord.z - 1), out var s) ? s : null;
+        cache.n = world.getChunkMaybe(new ChunkCoord(coord.x, coord.z + 1), out var n) ? n : null;
+        cache.sw = world.getChunkMaybe(new ChunkCoord(coord.x - 1, coord.z - 1), out var sw) ? sw : null;
+        cache.se = world.getChunkMaybe(new ChunkCoord(coord.x + 1, coord.z - 1), out var se) ? se : null;
+        cache.nw = world.getChunkMaybe(new ChunkCoord(coord.x - 1, coord.z + 1), out var nw) ? nw : null;
+        cache.ne = world.getChunkMaybe(new ChunkCoord(coord.x + 1, coord.z + 1), out var ne) ? ne : null;
     }
 
     /** invalidate cache entry in neighbours when this chunk is removed */
@@ -193,13 +193,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         // we collect, then we propagate!
         toPropagate.Clear();
 
-        // second pass: check for horizontal propagation into unlit neighbors
+        // second pass: check for horizontal propagation into unlit neighbours
         for (int x = 0; x < CHUNKSIZE; x++) {
             for (int z = 0; z < CHUNKSIZE; z++) {
                 for (int y = CHUNKSIZE * CHUNKHEIGHT - 1; y >= 0; y--) {
                     // if this position has skylight and is air
                     if (getSkyLight(x, y, z) == 15) {
-                        // check horizontal neighbors
+                        // check horizontal neighbours
 
                         bool propagateThis = false;
                         bool propagateBelow = false;
@@ -208,7 +208,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                             var nx = x + d.X;
                             var nz = z + d.Z;
 
-                            // if neighbor is air and has no skylight, add for propagation
+                            // if neighbour is air and has no skylight, add for propagation
                             //if (!Block.isFullBlock(world.getRelativeBlock(this, x, y, z, new Vector3I(dx, 0, dz))) {
                             // if full skylight there, nothing to do....
                             //world.getSkyLight(worldnx, y, worldnz) != 15) {
@@ -220,15 +220,20 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
                             // if at least one neighbour is solid, add this to the propagation and the block below it too! (for overhangs)
                             var relPos = world.getChunkAndRelativePos(this, x, y, z, new Vector3I(d.X, 0, d.Z),
-                                out var neighborChunk);
-                            var neighborBlock = neighborChunk?.getBlock(relPos.X, relPos.Y, relPos.Z) ?? 0;
-                            if (Block.isFullBlock(neighborBlock)) {
-                                // if the neighbor is solid, we can propagate skylight from this position
+                                out var neighbourChunk);
+
+                            if (neighbourChunk.destroyed) {
+                                Console.Out.WriteLine(neighbourChunk.coord);
+                            }
+
+                            var neighbourBlock = neighbourChunk?.getBlock(relPos.X, relPos.Y, relPos.Z) ?? 0;
+                            if (Block.isFullBlock(neighbourBlock)) {
+                                // if the neighbour is solid, we can propagate skylight from this position
                                 propagateThis = true;
                                 // also add the block below it for propagation
                                 if (y > 0) {
                                     // only add if the block below is not solid
-                                    var belowBlock = neighborChunk?.getBlock(relPos.X, relPos.Y - 1, relPos.Z) ?? 0;
+                                    var belowBlock = neighbourChunk?.getBlock(relPos.X, relPos.Y - 1, relPos.Z) ?? 0;
                                     if (!Block.isFullBlock(belowBlock)) {
                                         // add the block below for propagation
                                         propagateBelow = true;
@@ -237,7 +242,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                             }
                         }
 
-                        // we only propagate *once* per position, so if we found an empty neighbor, we propagate
+                        // we only propagate *once* per position, so if we found an empty neighbour, we propagate
                         // we don't propagate inside the loop lol
                         //if (propagateThis) {
                         //toPropagate.Add(new LightNode(x, y, z, this));
@@ -279,21 +284,21 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             var (cx, cy, cz, chunk) = propQueue.Dequeue();
             var currentLight = chunk.getSkyLight(cx, cy, cz);
 
-            // propagate to all 6 neighbors
+            // propagate to all 6 neighbours
             foreach (var dir in Direction.directions) {
-                var neighborPos = world.getChunkAndRelativePos(chunk, cx, cy, cz, dir, out var neighborChunk);
-                if (neighborChunk == null) {
+                var neighbourPos = world.getChunkAndRelativePos(chunk, cx, cy, cz, dir, out var neighbourChunk);
+                if (neighbourChunk == null) {
                     continue;
                 }
 
-                var nx = neighborPos.X;
-                var ny = neighborPos.Y;
-                var nz = neighborPos.Z;
+                var nx = neighbourPos.X;
+                var ny = neighbourPos.Y;
+                var nz = neighbourPos.Z;
 
-                // skip if neighbor is solid
-                if (Block.fullBlock[neighborChunk.getBlock(nx, ny, nz)]) continue;
+                // skip if neighbour is solid
+                if (Block.fullBlock[neighbourChunk.getBlock(nx, ny, nz)]) continue;
 
-                var neighborLight = neighborChunk.getSkyLight(nx, ny, nz);
+                var neighbourLight = neighbourChunk.getSkyLight(nx, ny, nz);
                 byte newLevel;
 
                 // special case for skylight downward propagation
@@ -305,10 +310,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 }
 
                 // only propagate if we can improve the light level
-                if (newLevel > 0 && newLevel > neighborLight &&
-                    (neighborLight + 2 <= currentLight || dir == Direction.DOWN)) {
-                    neighborChunk.setSkyLightDumb(nx, ny, nz, newLevel);
-                    propQueue.Enqueue(new LightNode(nx, ny, nz, neighborChunk));
+                if (newLevel > 0 && newLevel > neighbourLight &&
+                    (neighbourLight + 2 <= currentLight || dir == Direction.DOWN)) {
+                    neighbourChunk.setSkyLightDumb(nx, ny, nz, newLevel);
+                    propQueue.Enqueue(new LightNode(nx, ny, nz, neighbourChunk));
                 }
             }
         }
@@ -360,25 +365,25 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         // if block broken, add sunlight from neighbours
         if (block == 0) {
-            // Queue all 6 neighbors for light propagation
+            // Queue all 6 neighbours for light propagation
             // The propagation algorithm will handle cross-chunk boundaries
             foreach (var dir in Direction.directions) {
-                var neighborPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighborChunk);
+                var neighbourPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighbourChunk);
 
                 // is nullcheck needed?
-                if (neighborChunk != null) {
-                    // Only queue if neighbor has light to propagate
-                    var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
-                    var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                if (neighbourChunk != null) {
+                    // Only queue if neighbour has light to propagate
+                    var skyLight = neighbourChunk.getSkyLight(neighbourPos.X, neighbourPos.Y, neighbourPos.Z);
+                    var blockLight = neighbourChunk.getBlockLight(neighbourPos.X, neighbourPos.Y, neighbourPos.Z);
 
                     if (skyLight > 0) {
-                        world.skyLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                            neighborChunk));
+                        world.skyLightQueue.Enqueue(new LightNode(neighbourPos.X, neighbourPos.Y, neighbourPos.Z,
+                            neighbourChunk));
                     }
 
                     if (blockLight > 0) {
-                        world.blockLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                            neighborChunk));
+                        world.blockLightQueue.Enqueue(new LightNode(neighbourPos.X, neighbourPos.Y, neighbourPos.Z,
+                            neighbourChunk));
                     }
                 }
             }
@@ -427,25 +432,25 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         // if block broken, add sunlight from neighbours
         if (id == 0) {
-            // Queue all 6 neighbors for light propagation
+            // Queue all 6 neighbours for light propagation
             // The propagation algorithm will handle cross-chunk boundaries
             foreach (var dir in Direction.directions) {
-                var neighborPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighborChunk);
+                var neighbourPos = world.getChunkAndRelativePos(this, x, y, z, dir, out var neighbourChunk);
 
                 // is nullcheck needed?
-                if (neighborChunk != null) {
-                    // Only queue if neighbor has light to propagate
-                    var skyLight = neighborChunk.getSkyLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
-                    var blockLight = neighborChunk.getBlockLight(neighborPos.X, neighborPos.Y, neighborPos.Z);
+                if (neighbourChunk != null) {
+                    // Only queue if neighbour has light to propagate
+                    var skyLight = neighbourChunk.getSkyLight(neighbourPos.X, neighbourPos.Y, neighbourPos.Z);
+                    var blockLight = neighbourChunk.getBlockLight(neighbourPos.X, neighbourPos.Y, neighbourPos.Z);
 
                     if (skyLight > 0) {
-                        world.skyLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                            neighborChunk));
+                        world.skyLightQueue.Enqueue(new LightNode(neighbourPos.X, neighbourPos.Y, neighbourPos.Z,
+                            neighbourChunk));
                     }
 
                     if (blockLight > 0) {
-                        world.blockLightQueue.Enqueue(new LightNode(neighborPos.X, neighborPos.Y, neighborPos.Z,
-                            neighborChunk));
+                        world.blockLightQueue.Enqueue(new LightNode(neighbourPos.X, neighbourPos.Y, neighbourPos.Z,
+                            neighbourChunk));
                     }
                 }
             }

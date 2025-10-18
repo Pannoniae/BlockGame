@@ -311,6 +311,15 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(vertexJitter);
         addElement(vertexJitter);
 
+        var clouds = new ToggleButton(this, "clouds", false, settings.cloudMode,
+            "Clouds: OFF", "Clouds: Simple", "Clouds: Fancy", "Clouds: Hypercube");
+        clouds.topCentre();
+        clouds.clicked += _ => { settings.cloudMode = clouds.getIndex(); };
+        clouds.tooltip =
+            "Cloud rendering mode.\nOff: No clouds\nSimple: Flat clouds\nFancy: 3D clouds\nHypercube: 4D clouds (SLOW!)";
+        settingElements.Add(clouds);
+        addElement(clouds);
+
         // build renderer options based on hardware support
         var rendererOptions = new List<string> { "Renderer: Auto", "Renderer: Plain" };
         var rendererModeValues = new List<RendererMode> { RendererMode.Auto, RendererMode.Plain };

@@ -96,6 +96,16 @@ public partial class World {
         var success = getChunkMaybe(x, z, out var chunk);
         return success ? chunk!.getLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
     }
+
+    public byte getLightC(int x, int y, int z) {
+        if (y is < 0 or >= WORLDHEIGHT) {
+            return 15;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var success = getChunkMaybe(x, z, out var chunk);
+        return success ? chunk!.getLight(blockPos.X, blockPos.Y, blockPos.Z) : (byte)0;
+    }
     
     public byte getLight(Vector3I pos) {
         return getLight(pos.X, pos.Y, pos.Z);

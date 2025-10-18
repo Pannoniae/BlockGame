@@ -16,7 +16,7 @@ public abstract class InventoryMenu : Menu {
     protected List<ItemSlot> slots = [];
     protected Vector2I guiPos;
     protected Rectangle guiBounds;
-    protected BTexture2D invTex;
+    public BTexture2D invTex;
 
     public override bool isModal() {
         return false;
@@ -24,6 +24,15 @@ public abstract class InventoryMenu : Menu {
 
     protected abstract string getTitle();
     protected abstract BTexture2D getTexture();
+
+    protected virtual int getWidth() {
+        return (int)invTex.width;
+    }
+
+    protected virtual int getHeight() {
+        return (int)invTex.height;
+    }
+
     protected abstract int getTextOffsetX();
     protected abstract int getTextOffsetY();
 
@@ -36,11 +45,11 @@ public abstract class InventoryMenu : Menu {
 
     public override void draw() {
         base.draw();
-        var guiBoundsPos = new Vector2(guiBounds.X, guiBounds.Y);
-        Game.gui.drawUIImmediate(invTex, guiBoundsPos);
+        var guiBoundsPos = new RectangleF(guiBounds.X, guiBounds.Y, getWidth(), getHeight());
+        Game.gui.drawUIImmediate(invTex, guiBoundsPos, new Rectangle(0, 0, getWidth(), getHeight()));
         Game.gui.drawStringUI(getTitle(), new Vector2(guiBounds.X + getTextOffsetX(), guiBounds.Y + getTextOffsetY()), Color.White);
 
-        drawSlots(guiBoundsPos);
+        drawSlots(new Vector2(guiBounds.X, guiBounds.Y));
 
         // draw cursor item
         var player = Game.world.player;
@@ -93,7 +102,7 @@ public abstract class InventoryMenu : Menu {
     public sealed override void resize(Vector2I newSize) {
         base.resize(newSize);
         invTex = getTexture();
-        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, (int)invTex.width, (int)invTex.height),
+        guiBounds = GUIElement.resolveAnchors(new Rectangle(guiPos.X, guiPos.Y, getWidth(), getHeight()),
             HorizontalAnchor.CENTREDCONTENTS, VerticalAnchor.TOP, this);
     }
 }

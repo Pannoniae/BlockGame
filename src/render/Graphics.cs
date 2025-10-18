@@ -8,6 +8,7 @@ using BlockGame.world;
 using Molten;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
+using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using Shader = BlockGame.GL.Shader;
 
 namespace BlockGame.render;
@@ -21,6 +22,7 @@ public class Graphics : IDisposable {
     public readonly SpriteBatch immediateBatch;
 
     // InstantRenderers
+    public InstantDrawColour idc;
     public InstantDrawTexture idt;
 
     // Shaders
@@ -59,8 +61,10 @@ public class Graphics : IDisposable {
     /// A buffer of indices for the maximum amount of quads.
     /// </summary>
     public uint fatQuadIndices;
-
     public uint fatQuadIndicesLen;
+
+    public ulong elementAddress;
+    public uint elementLen;
 
     public int groupCount;
 
@@ -97,6 +101,10 @@ public class Graphics : IDisposable {
              new Shader(Game.GL, nameof(crtShader), "shaders/postprocess/post.vert", "shaders/postprocess/crt.frag");
 
 
+         // gen some indices!
+         genFatQuadIndices();
+
+
 
         mainBatch = new SpriteBatch(GL);
         immediateBatch = new SpriteBatch(GL);
@@ -107,6 +115,10 @@ public class Graphics : IDisposable {
     }
 
     public void init() {
+
+        idc = new InstantDrawColour(1024);
+        idc.setup();
+
         idt = new InstantDrawTexture(1024);
         idt.setup();
 
@@ -298,6 +310,47 @@ public class Graphics : IDisposable {
         int bytesWritten = Encoding.UTF8.GetBytes(group, buffer);
         fixed (byte* ptr = buffer) {
             GL.PushDebugGroup(DebugSource.DebugSourceApplication, 0, (uint)bytesWritten, ptr);
+        }
+    }
+
+    private void genFatQuadIndices() {
+        // max quads we can fit: 1000k quads = 4M verts, 6M indices
+        const int maxQuads = 1000000;
+        var indices = new uint[maxQuads * 6];
+        // 0 1 2 0 2 3
+        for (int i = 0; i < maxQuads; i++) {
+            indices[i * 6] = (uint)(i * 4);
+            indices[i * 6 + 1] = (uint)(i * 4 + 1);
+            indices[i * 6 + 2] = (uint)(i * 4 + 2);
+            indices[i * 6 + 3] = (uint)(i * 4);
+            indices[i * 6 + 4] = (uint)(i * 4 + 2);
+            indices[i * 6 + 5] = (uint)(i * 4 + 3);
+        }
+
+        // delete old buffer if any
+        GL.DeleteBuffer(Game.graphics.fatQuadIndices);
+        Game.graphics.fatQuadIndices = 0;
+        Game.graphics.fatQuadIndicesLen = 0;
+        Game.graphics.fatQuadIndices = GL.GenBuffer();
+        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+        unsafe {
+            fixed (uint* pIndices = indices) {
+                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(uint)),
+                    pIndices, BufferStorageMask.None);
+                GL.ObjectLabel(ObjectIdentifier.Buffer, Game.graphics.fatQuadIndices, uint.MaxValue,
+                    "Shared quad indices");
+            }
+
+            Game.graphics.fatQuadIndicesLen = (uint)(indices.Length * sizeof(uint));
+
+            // make element buffer resident for unified memory if supported
+            if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
+                Game.sbl.MakeBufferResident((NV)BufferTargetARB.ElementArrayBuffer,
+                    (NV)GLEnum.ReadOnly);
+                Game.sbl.GetBufferParameter((NV)BufferTargetARB.ElementArrayBuffer,
+                    NV.BufferGpuAddressNV, out elementAddress);
+                elementLen = Game.graphics.fatQuadIndicesLen;
+            }
         }
     }
 

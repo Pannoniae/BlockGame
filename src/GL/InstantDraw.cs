@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
@@ -23,7 +25,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
     protected int maxVertices;
     protected readonly List<T> vertices;
-    protected int currentVertex = 0;
+    public int currentVertex = 0;
 
     protected readonly Silk.NET.OpenGL.Legacy.GL GL;
 
@@ -51,7 +53,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
     protected float fogDensity = 0.01f;
 
     // vertex tint
-    protected Color tint = Color.White;
+    public Color tint = Color.White;
 
     // Matrix components for automatic matrix computation
     protected MatrixStack? modelMatrix;
@@ -94,6 +96,8 @@ public abstract class InstantDraw<T> where T : unmanaged {
                 BufferStorageMask.DynamicStorageBit);
 
             maxVertices = newMaxVertices;
+
+
             format();
         }
     }
@@ -235,7 +239,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
             unsafe {
                 effectiveMode = PrimitiveType.Triangles;
                 GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
-                GL.DrawElements(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedShort,
+                GL.DrawElements(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedInt,
                     (void*)0);
             }
         }
@@ -249,7 +253,9 @@ public abstract class InstantDraw<T> where T : unmanaged {
 }
 
 public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted>(maxVertices) {
-    public static int instantTexture;
+    public int instantTexture;
+
+    public bool reused = false;
 
     public override void setup() {
         base.setup();
@@ -283,14 +289,14 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
         GL.EnableVertexAttribArray(2);
 
         GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
-        GL.VertexAttribFormat(1, 2, VertexAttribType.HalfFloat, false, 0 + 6 * sizeof(ushort));
-        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 8 * sizeof(ushort));
+        GL.VertexAttribFormat(1, 2, VertexAttribType.Float, false, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 10 * sizeof(ushort));
 
         GL.VertexAttribBinding(0, 0);
         GL.VertexAttribBinding(1, 0);
         GL.VertexAttribBinding(2, 0);
 
-        GL.BindVertexBuffer(0, VBO, 0, 10 * sizeof(ushort));
+        GL.BindVertexBuffer(0, VBO, 0, 12 * sizeof(ushort));
     }
 
     public void setTexture(BTexture2D texture) {
@@ -305,14 +311,271 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
         }
 
         // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) / 255);
-        vertex.g = (byte)((vertex.g * tint.G) / 255);
-        vertex.b = (byte)((vertex.b * tint.B) / 255);
-        vertex.a = (byte)((vertex.a * tint.A) / 255);
+        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
+        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
+        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
+        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
 
         vertices.Add(vertex);
         currentVertex++;
     }
+}
+
+public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted>(maxVertices) {
+    public int instantTexture;
+
+    public bool reused = false;
+
+    public override void setup() {
+        base.setup();
+        instantShader = Game.graphics.instantTextureShader;
+        instantTexture = instantShader.getUniformLocation("tex");
+        uMVP = instantShader.getUniformLocation(nameof(uMVP));
+        uModelView = instantShader.getUniformLocation(nameof(uModelView));
+        try {
+            uModel = instantShader.getUniformLocation(nameof(uModel));
+        }
+        catch (InputException e) {
+            uModel = -1;
+        }
+
+        uFogColour = instantShader.getUniformLocation(nameof(fogColour));
+        uFogStart = instantShader.getUniformLocation(nameof(fogStart));
+        uFogEnd = instantShader.getUniformLocation(nameof(fogEnd));
+        uFogEnabled = instantShader.getUniformLocation(nameof(fogEnabled));
+        uFogType = instantShader.getUniformLocation(nameof(fogType));
+        uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
+        instantShader.setUniform(instantTexture, 0);
+
+        // Set default fog type
+        instantShader.setUniform(uFogType, (int)FogType.Linear);
+        instantShader.setUniform(uFogDensity, fogDensity);
+    }
+
+    public override void format() {
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
+
+        GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+        GL.VertexAttribFormat(1, 2, VertexAttribType.Float, false, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 10 * sizeof(ushort));
+
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
+
+        GL.BindVertexBuffer(0, VBO, 0, 12 * sizeof(ushort));
+    }
+
+    public void setTexture(BTexture2D texture) {
+        //instantShader.use();
+        Game.graphics.tex(0, texture);
+    }
+
+    public override void addVertex(BlockVertexTinted vertex) {
+        // resize VBO before adding if needed
+        if (currentVertex >= maxVertices - 1) {
+            resizeStorage();
+        }
+
+        // apply tint
+        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
+        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
+        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
+        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+
+        // write directly to the mapped ptr
+        /*unsafe {
+            mappedPtr[currentVertex++] = vertex;
+        }*/
+        vertices.Add(vertex);
+        currentVertex++;
+    }
+
+    /** Pre-reserve capacity for known vertex count - zero overhead addVertex after this */
+    public void reserve(int count) {
+        while (count > maxVertices) {
+            resizeStorage();
+        }
+
+        vertices.Capacity = count;
+        CollectionsMarshal.SetCount(vertices, count); // ensure Count matches so AsSpan works!!
+    }
+
+    public void reserve(int count, int mult) {
+        // todo
+    }
+
+    public void addVertexE(BlockVertexTinted vertex) {
+        // apply tint
+        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
+        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
+        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
+        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
+
+        // write
+        Unsafe.Add(ref MemoryMarshal.GetReference(ListHack<BlockVertexTinted>.getItems(vertices)), currentVertex++) =
+            vertex;
+    }
+
+    public ref BlockVertexTinted getRefE() {
+        // write
+        ref var a = ref Unsafe.Add(ref MemoryMarshal.GetReference(ListHack<BlockVertexTinted>.getItems(vertices)),
+            currentVertex++);
+
+        return ref a;
+    }
+
+    /**
+     * Draw but don't throw the verts away.
+     */
+    public void endReuse(bool last) {
+        // nothing to do
+        if (currentVertex == 0) {
+            return;
+        }
+
+        Game.graphics.vao(VAO);
+
+        // Apply current fog settings
+        instantShader.use();
+
+        // Compute final matrices from components if available
+        if (modelMatrix != null) {
+            var model = modelMatrix.top;
+            var mv = model * viewMatrix;
+            var mvp = model * viewMatrix * projMatrix;
+
+            if (uModel != -1) instantShader.setUniform(uModel, model);
+            instantShader.setUniform(uModelView, mv);
+            instantShader.setUniform(uMVP, mvp);
+        }
+
+        if (fogEnabled) {
+            instantShader.setUniform(uFogEnabled, true);
+            instantShader.setUniform(uFogColour, fogColour);
+            instantShader.setUniform(uFogStart, fogStart);
+            instantShader.setUniform(uFogEnd, fogEnd);
+            instantShader.setUniform(uFogType, (int)fogType);
+            instantShader.setUniform(uFogDensity, fogDensity);
+        }
+        else {
+            instantShader.setUniform(uFogEnabled, false);
+        }
+
+        // Upload buffer
+
+        if (!reused) {
+            unsafe {
+                GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+                Game.GL.InvalidateBufferData(VBO);
+                fixed (BlockVertexTinted* v = CollectionsMarshal.AsSpan(vertices)) {
+                    GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)),
+                        v);
+                }
+            }
+        }
+
+        // handle the vertex type
+        var effectiveMode = vertexType;
+        if (vertexType == PrimitiveType.Quads) {
+            unsafe {
+                effectiveMode = PrimitiveType.Triangles;
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+                GL.DrawElements(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedInt,
+                    (void*)0);
+            }
+        }
+        else {
+            GL.DrawArrays(effectiveMode, 0, (uint)currentVertex);
+        }
+
+        if (!last) {
+            reused = true;
+        }
+
+        if (last) {
+            reused = false;
+            vertices.Clear();
+            currentVertex = 0;
+        }
+    }
+
+    /** Upload to GPU without rendering - for batched range rendering */
+    public void reuseUpload() {
+        if (currentVertex == 0) return;
+
+        Game.graphics.vao(VAO);
+        instantShader.use();
+
+        // set up matrices/fog
+        if (modelMatrix != null) {
+            var model = modelMatrix.top;
+            var mv = model * viewMatrix;
+            var mvp = model * viewMatrix * projMatrix;
+
+            if (uModel != -1) instantShader.setUniform(uModel, model);
+            instantShader.setUniform(uModelView, mv);
+            instantShader.setUniform(uMVP, mvp);
+        }
+
+        if (fogEnabled) {
+            instantShader.setUniform(uFogEnabled, true);
+            instantShader.setUniform(uFogColour, fogColour);
+            instantShader.setUniform(uFogStart, fogStart);
+            instantShader.setUniform(uFogEnd, fogEnd);
+            instantShader.setUniform(uFogType, (int)fogType);
+            instantShader.setUniform(uFogDensity, fogDensity);
+        }
+        else {
+            instantShader.setUniform(uFogEnabled, false);
+        }
+
+        // upload once
+        unsafe {
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
+            Game.GL.InvalidateBufferData(VBO);
+            fixed (BlockVertexTinted* v = CollectionsMarshal.AsSpan(vertices)) {
+                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)), v);
+            }
+        }
+
+        reused = true;
+    }
+
+    /** Draw a range of vertices from the uploaded buffer */
+    public void renderRange(int offset, int count) {
+        if (count == 0) return;
+
+        var effectiveMode = vertexType;
+        if (vertexType == PrimitiveType.Quads) {
+            unsafe {
+                effectiveMode = PrimitiveType.Triangles;
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+                // use BaseVertex to offset all indices - starts from index 0 but adds baseVertex to each lookup
+                uint indexCount = (uint)(count * 6 / 4);
+                Game.GL.DrawElementsBaseVertex(effectiveMode, indexCount, DrawElementsType.UnsignedInt,
+                    (void*)0, offset);
+            }
+        }
+        else {
+            GL.DrawArrays(effectiveMode, offset, (uint)count);
+        }
+    }
+
+    /** Cleanup after range rendering */
+    public void finishReuse() {
+        reused = false;
+        vertices.Clear();
+        currentVertex = 0;
+    }
+}
+
+[SuppressMessage("Design", "CA1000:Do not declare static members on generic types")]
+public static class ListHack<T> {
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_items")]
+    public static extern ref T[] getItems(List<T> list);
 }
 
 public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxVertices) {
@@ -364,10 +627,10 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
         }
 
         // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) / 255);
-        vertex.g = (byte)((vertex.g * tint.G) / 255);
-        vertex.b = (byte)((vertex.b * tint.B) / 255);
-        vertex.a = (byte)((vertex.a * tint.A) / 255);
+        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
+        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
+        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
+        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
 
         vertices.Add(vertex);
         currentVertex++;
@@ -454,10 +717,10 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
         }
 
         // apply tint
-        vertex.r = (byte)((vertex.r * tint.R) / 255);
-        vertex.g = (byte)((vertex.g * tint.G) / 255);
-        vertex.b = (byte)((vertex.b * tint.B) / 255);
-        vertex.a = (byte)((vertex.a * tint.A) / 255);
+        vertex.r = (byte)((vertex.r * tint.R) * (1 / 255f));
+        vertex.g = (byte)((vertex.g * tint.G) * (1 / 255f));
+        vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
+        vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
 
         vertices.Add(vertex);
         currentVertex++;

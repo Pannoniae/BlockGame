@@ -587,7 +587,7 @@ public partial class World : IDisposable {
             }
 
             // re-queue for status progression (GENERATED -> POPULATED -> LIGHTED -> MESHED)
-            // this will handle neighbor dependencies correctly
+            // this will handle neighbour dependencies correctly
             addToChunkLoadQueue(result.Value.coord, result.Value.targetStatus);
         }
     }
@@ -760,7 +760,7 @@ public partial class World : IDisposable {
 
     /** Uses <see cref="getChunkAndRelativePos"/> to make lookups faster! since it's probably in the chunk */
     public ushort getRelativeBlock(Chunk currentChunk, int x, int y, int z, Vector3I direction) {
-        // get the neighbor chunk and relative position
+        // get the neighbour chunk and relative position
         var neighbourPos = getChunkAndRelativePos(currentChunk, x, y, z, direction, out var neighbourChunk);
         if (neighbourChunk == null) {
             return 0; // no chunk loaded
@@ -782,13 +782,13 @@ public partial class World : IDisposable {
             return Vector3I.Zero;
         }
 
-        // Check if neighbor is within current chunk bounds (0-15 for X/Z)
+        // Check if neighbour is within current chunk bounds (0-15 for X/Z)
         if (neighbour.X is >= 0 and < 16 && neighbour.Z is >= 0 and < 16) {
             chunk = currentChunk;
             return neighbour;
         }
 
-        // neighbor crosses XZ boundary - try cache first
+        // neighbour crosses XZ boundary - try cache first
         int dx = direction.X;
         int dz = direction.Z;
 
@@ -822,7 +822,7 @@ public partial class World : IDisposable {
 
         // get target chunk
         // this assigns directly to the output variable! might be null, FYI
-        if (!getChunkMaybe(nx, nz, out chunk)) {
+        if (!getChunkMaybe(nx, nz, out chunk) || (chunk?.destroyed ?? true)) {
             chunk = null;
             return Vector3I.Zero; // Chunk not loaded, bail
         }
@@ -865,18 +865,18 @@ public partial class World : IDisposable {
         //Console.Out.WriteLine(blockPos);
 
         foreach (var dir in Direction.directionsLight) {
-            // Get neighbor chunk and relative position
-            var neighborRelPos = getChunkAndRelativePos(node.chunk, node.x, node.y, node.z, dir, out var neighborChunk);
-            if (neighborChunk == null) {
+            // Get neighbour chunk and relative position
+            var neighbourRelPos = getChunkAndRelativePos(node.chunk, node.x, node.y, node.z, dir, out var neighbourChunk);
+            if (neighbourChunk == null) {
                 continue;
             }
 
             // if neighbour is opaque, don't bother either
-            if (Block.isFullBlock(neighborChunk.getBlock(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z))) {
+            if (Block.isFullBlock(neighbourChunk.getBlock(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z))) {
                 continue;
             }
 
-            byte neighbourLevel = neighborChunk.getLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            byte neighbourLevel = neighbourChunk.getLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z);
             neighbourLevel = isSkylight
                 ? (byte)(neighbourLevel & 0x0F)
                 : (byte)(neighbourLevel >> 4);
@@ -884,32 +884,32 @@ public partial class World : IDisposable {
             var isDown = isSkylight && level == 15 && neighbourLevel != 15 && dir == Direction.DOWN;
 
             if (neighbourLevel + 2 <= level || isDown) {
-                var neighborBlockId = neighborChunk.getBlock(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
-                var absorption = Block.lightAbsorption[neighborBlockId];
+                var neighbourBlockId = neighbourChunk.getBlock(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z);
+                var absorption = Block.lightAbsorption[neighbourBlockId];
 
                 // apply absorption, or if no absorption: down=no decrease, sideways=decrease by 1
                 var decrease = absorption > 0 ? absorption : (isDown ? 0 : 1);
                 byte newLevel = (byte)Math.Max(0, level - decrease);
                 if (isSkylight) {
                     if (noUpdate) {
-                        neighborChunk.setSkyLightDumb(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
+                        neighbourChunk.setSkyLightDumb(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, newLevel);
                     }
                     else {
-                        neighborChunk.setSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
+                        neighbourChunk.setSkyLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z,
                             newLevel);
                     }
                 }
                 else {
                     if (noUpdate) {
-                        neighborChunk.setBlockLightDumb(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, newLevel);
+                        neighbourChunk.setBlockLightDumb(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, newLevel);
                     }
                     else {
-                        neighborChunk.setBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z,
+                        neighbourChunk.setBlockLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z,
                             newLevel);
                     }
                 }
 
-                queue.Enqueue(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
+                queue.Enqueue(new LightNode(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, neighbourChunk));
             }
         }
     }
@@ -933,34 +933,34 @@ public partial class World : IDisposable {
         }
 
         foreach (var dir in Direction.directionsLight) {
-            // Get neighbor chunk and relative position
-            var neighborRelPos = getChunkAndRelativePos(node.chunk, node.x, node.y, node.z, dir, out var neighborChunk);
-            if (neighborChunk == null) {
+            // Get neighbour chunk and relative position
+            var neighbourRelPos = getChunkAndRelativePos(node.chunk, node.x, node.y, node.z, dir, out var neighbourChunk);
+            if (neighbourChunk == null) {
                 continue;
             }
 
-            byte neighbourLevel = neighborChunk.getLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z);
+            byte neighbourLevel = neighbourChunk.getLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z);
             neighbourLevel = isSkylight
                 ? (byte)(neighbourLevel & 0x0F)
                 : (byte)(neighbourLevel >> 4);
             var isDownLight = isSkylight && dir == Direction.DOWN && level == 15;
             if (isDownLight || neighbourLevel != 0 && neighbourLevel < level) {
                 if (isSkylight) {
-                    neighborChunk.setSkyLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
+                    neighbourChunk.setSkyLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, 0);
                 }
                 else {
-                    neighborChunk.setBlockLight(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, 0);
+                    neighbourChunk.setBlockLight(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, 0);
                 }
 
                 // Emplace new node to queue. (could use push as well)
-                queue.Enqueue(new LightRemovalNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighbourLevel,
-                    neighborChunk));
+                queue.Enqueue(new LightRemovalNode(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, neighbourLevel,
+                    neighbourChunk));
             }
             else if (neighbourLevel >= level) {
                 // Add it to the update queue, so it can propagate to fill in the gaps
                 // left behind by this removal. We should update the lightBfsQueue after
                 // the lightRemovalBfsQueue is empty.
-                addQueue.Enqueue(new LightNode(neighborRelPos.X, neighborRelPos.Y, neighborRelPos.Z, neighborChunk));
+                addQueue.Enqueue(new LightNode(neighbourRelPos.X, neighbourRelPos.Y, neighbourRelPos.Z, neighbourChunk));
             }
         }
     }
@@ -1100,7 +1100,7 @@ public partial class World : IDisposable {
     }
 
     /// <summary>
-    /// Check if all neighbors around a chunk have reached the specified status
+    /// Check if all neighbours around a chunk have reached the specified status
     /// </summary>
     private bool areNeighboursReady(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
         var neighbours = new[] {
@@ -1124,7 +1124,7 @@ public partial class World : IDisposable {
     }
 
     /// <summary>
-    /// Queue neighbors for loading and ensure they reach the required status
+    /// Queue neighbours for loading and ensure they reach the required status
     /// </summary>
     private void queueNeighboursForLoading(ChunkCoord chunkCoord, ChunkStatus requiredStatus) {
         Span<ChunkCoord> neighbours = [
@@ -1250,9 +1250,9 @@ public partial class World : IDisposable {
 
         if (status >= ChunkStatus.POPULATED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
-            // check if neighbors are ready, if not defer this chunk
+            // check if neighbours are ready, if not defer this chunk
             if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED)) {
-                // queue neighbors for loading and defer this chunk
+                // queue neighbours for loading and defer this chunk
 
                 // DISABLE ASYNC, lighting should happen immediately too!
                 if (false && !immediately) {
@@ -1275,9 +1275,9 @@ public partial class World : IDisposable {
 
         if (status >= ChunkStatus.MESHED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
-            // check if neighbors are ready, if not defer this chunk
+            // check if neighbours are ready, if not defer this chunk
             if (!areNeighboursReady(chunkCoord, ChunkStatus.LIGHTED)) {
-                // load neighbors SYNCHRONOUSLY
+                // load neighbours SYNCHRONOUSLY
                 loadNeighbours(chunkCoord, ChunkStatus.LIGHTED);
                 // DON'T DO THIS, IT MESSES THE QUEUE UP
                 //addToChunkLoadQueue(chunkCoord, status);

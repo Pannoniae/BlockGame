@@ -711,14 +711,6 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         tryCompact(true);
     }
 
-    public static byte extractSkylight(byte value) {
-        return (byte)(value & 0xF);
-    }
-
-    public static byte extractBlocklight(byte value) {
-        return (byte)((value >> 4) & 0xF);
-    }
-
     // methods for serialization compatibility with WorldIO
     public void getSerializationBlocks(uint[] blocks) {
         for (int i = 0; i < TOTAL_BLOCKS; i++) {

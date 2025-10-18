@@ -1,10 +1,6 @@
 // cheats!
-global using Rectangle = System.Drawing.Rectangle;
-global using RectangleF = System.Drawing.RectangleF;
+
 global using Color = Molten.Color;
-global using static U8.Extensions.Syntax;
-
-
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -86,14 +82,6 @@ public static partial class Meth {
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector3D norm(this Vector3D v) {
-        
-        double lengthSq = double.MultiplyAddEstimate(v.X, v.X, double.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
-        double invLength = double.ReciprocalSqrtEstimate(lengthSq);
-        return new Vector3D(v.X * invLength, v.Y * invLength, v.Z * invLength);
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void normi(this ref Vector3D v) {
         double lengthSq = double.MultiplyAddEstimate(v.X, v.X, double.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
         double invLength = double.ReciprocalSqrtEstimate(lengthSq);
@@ -110,17 +98,7 @@ public static partial class Meth {
         v.Y *= invLength;
         v.Z *= invLength;
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static double dot(this Vector3D a, Vector3D b) {
-        return double.MultiplyAddEstimate(a.X, b.X, double.MultiplyAddEstimate(a.Y, b.Y, a.Z * b.Z));
-    }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float dot(this Vector3 a, Vector3 b) {
-        return float.MultiplyAddEstimate(a.X, b.X, float.MultiplyAddEstimate(a.Y, b.Y, a.Z * b.Z));
-    }
-    
+
     /**
      * float.SinCos is accurate. It's also slow. Sometimes we don't care, but this time we do.
      * This one gets roughly the right value in roughly the right time!
@@ -278,63 +256,6 @@ public static partial class Meth {
         );
     }
 
-    public static byte toByte(this bool value) {
-        return Unsafe.BitCast<bool, byte>(value);
-    }
-    
-    public static string yes(this bool values) {
-        return values ? "y" : "n";
-    }
-    
-    public static Vector3 toVec3(this Vector3D vec) {
-        return new Vector3((float)vec.X, (float)vec.Y, (float)vec.Z);
-    }
-    public static Vector3 toVec3(this Vector3D<float> vec) {
-        return new Vector3(vec.X, vec.Y, vec.Z);
-    }
-    public static Vector3 toVec3(this Vector3I vec) {
-        return new Vector3(vec.X, vec.Y, vec.Z);
-    }
-    public static Vector3 toVec3(this Vector3F vec) {
-        return new Vector3(vec.X, vec.Y, vec.Z);
-    }
-
-    public static Vector3D toVec3D(this Vector3F vec) {
-        return new Vector3D(vec.X, vec.Y, vec.Z);
-    }
-    
-    public static Vector4 toVec4(this Color4 color) {
-        return new Vector4(color.R, color.G, color.B, color.A);
-    }
-    
-    public static Vector4 toVec4(this Color color) {
-        return new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
-    }
-
-    public static Color toC(this Color4 color) {
-        return new Color((byte)(color.R * 255), (byte)(color.G * 255), (byte)(color.B * 255), (byte)(color.A * 255));
-    }
-    
-    public static Color4 toColor4(this Color color) {
-        return new Color4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
-    }
-
-    public static Vector3F toVec3F(this Vector3D vec) {
-        return new Vector3F((float)vec.X, (float)vec.Y, (float)vec.Z);
-    }
-    public static Vector3F toVec3F(this Vector3D<float> vec) {
-        return new Vector3F(vec.X, vec.Y, vec.Z);
-    }
-    public static Vector3D<float> toVec3F(this Vector3 vec) {
-        return new Vector3D<float>(vec.X, vec.Y, vec.Z);
-    }
-    public static Vector3D toVec3D(this Vector3 vec) {
-        return new Vector3D(vec.X, vec.Y, vec.Z);
-    }
-    public static Vector3F toVec3FM(this Vector3 vec) {
-        return new Vector3F(vec.X, vec.Y, vec.Z);
-    }
-
     public static Matrix4x4 to4x4(this Matrix4F mat) {
         return Unsafe.BitCast<Matrix4F, Matrix4x4>(mat);
     }
@@ -343,16 +264,6 @@ public static partial class Meth {
         return Unsafe.BitCast<Matrix4x4, Matrix4F>(mat);
     }
 
-    public static Vector3I toBlockPos(this Vector3D currentPos) {
-        return new Vector3I((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
-            (int)Math.Floor(currentPos.Z));
-    }
-
-    public static Vector3I toBlockPos(this Vector3D<float> currentPos) {
-        return new Vector3I((int)Math.Floor(currentPos.X), (int)Math.Floor(currentPos.Y),
-            (int)Math.Floor(currentPos.Z));
-    }
-    
     public static int toBlockPos(this double d) {
         return (int)Math.Floor(d);
     }
@@ -363,18 +274,6 @@ public static partial class Meth {
 
     public static Vector3D<T> withoutY<T>(this Vector3D<T> vec) where T : unmanaged, IFormattable, IEquatable<T>, IComparable<T> {
         return new Vector3D<T>(vec.X, default, vec.Z);
-    }
-
-    public static Vector3F withoutY(this Vector3F vec) {
-        return new Vector3F(vec.X, 0, vec.Z);
-    }
-
-    public static Vector3D withoutY(this Vector3D vec) {
-        return new Vector3D(vec.X, 0, vec.Z);
-    }
-
-    public static Vector3I withoutY(this Vector3I vec) {
-        return new Vector3I(vec.X, 0, vec.Z);
     }
 
     public static Vector3 transformVertex(float vx, float vy, float vz, bool brot, Vector3 pivot, float angle, Vector3 ax) {
@@ -451,6 +350,136 @@ public static partial class Meth {
 
     public static AABB toAABB(this meth.BoundingBox bb) {
         return new AABB(bb.Min.toVec3D(), bb.Max.toVec3D());
+    }
+
+    extension(byte b) {
+        public byte skylight() {
+            return (byte)(b & 0xF);
+        }
+
+        public byte blocklight() {
+            return (byte)((b >> 4) & 0xF);
+        }
+    }
+
+    extension(Vector3D v) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3D norm() {
+
+            double lengthSq = double.MultiplyAddEstimate(v.X, v.X, double.MultiplyAddEstimate(v.Y, v.Y, v.Z * v.Z));
+            double invLength = double.ReciprocalSqrtEstimate(lengthSq);
+            return new Vector3D(v.X * invLength, v.Y * invLength, v.Z * invLength);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double dot(Vector3D b) {
+            return double.MultiplyAddEstimate(v.X, b.X, double.MultiplyAddEstimate(v.Y, b.Y, v.Z * b.Z));
+        }
+
+        public Vector3 toVec3() {
+            return new Vector3((float)v.X, (float)v.Y, (float)v.Z);
+        }
+
+        public Vector3F toVec3F() {
+            return new Vector3F((float)v.X, (float)v.Y, (float)v.Z);
+        }
+
+        public Vector3I toBlockPos() {
+            return new Vector3I((int)Math.Floor(v.X), (int)Math.Floor(v.Y),
+                (int)Math.Floor(v.Z));
+        }
+
+        public Vector3D withoutY() {
+            return new Vector3D(v.X, 0, v.Z);
+        }
+    }
+
+    extension(Vector3D<float> vec) {
+        public Vector3 toVec3() {
+            return new Vector3(vec.X, vec.Y, vec.Z);
+        }
+
+        public Vector3F toVec3F() {
+            return new Vector3F(vec.X, vec.Y, vec.Z);
+        }
+
+        public Vector3I toBlockPos() {
+            return new Vector3I((int)Math.Floor(vec.X), (int)Math.Floor(vec.Y),
+                (int)Math.Floor(vec.Z));
+        }
+    }
+
+    extension(Vector3F vec) {
+        public Vector3 toVec3() {
+            return new Vector3(vec.X, vec.Y, vec.Z);
+        }
+
+        public Vector3D toVec3D() {
+            return new Vector3D(vec.X, vec.Y, vec.Z);
+        }
+
+        public Vector3F withoutY() {
+            return new Vector3F(vec.X, 0, vec.Z);
+        }
+    }
+
+    extension(Vector3I vec) {
+        public Vector3 toVec3() {
+            return new Vector3(vec.X, vec.Y, vec.Z);
+        }
+
+        public Vector3I withoutY() {
+            return new Vector3I(vec.X, 0, vec.Z);
+        }
+    }
+
+    extension(Vector3 a) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float dot(Vector3 b) {
+            return float.MultiplyAddEstimate(a.X, b.X, float.MultiplyAddEstimate(a.Y, b.Y, a.Z * b.Z));
+        }
+
+        public Vector3D<float> toVec3F() {
+            return new Vector3D<float>(a.X, a.Y, a.Z);
+        }
+
+        public Vector3D toVec3D() {
+            return new Vector3D(a.X, a.Y, a.Z);
+        }
+
+        public Vector3F toVec3FM() {
+            return new Vector3F(a.X, a.Y, a.Z);
+        }
+    }
+
+    extension(Color color) {
+        public Vector4 toVec4() {
+            return new Vector4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+        }
+
+        public Color4 toColor4() {
+            return new Color4(color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f);
+        }
+    }
+
+    extension(Color4 color) {
+        public Vector4 toVec4() {
+            return new Vector4(color.R, color.G, color.B, color.A);
+        }
+
+        public Color toC() {
+            return new Color((byte)(color.R * 255), (byte)(color.G * 255), (byte)(color.B * 255), (byte)(color.A * 255));
+        }
+    }
+
+    extension(bool value) {
+        public byte toByte() {
+            return Unsafe.BitCast<bool, byte>(value);
+        }
+
+        public string yes() {
+            return value ? "y" : "n";
+        }
     }
 }
 

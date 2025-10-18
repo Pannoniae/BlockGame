@@ -13,6 +13,7 @@ using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
+using SixLabors.ImageSharp.PixelFormats;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 using Shader = BlockGame.GL.Shader;
@@ -72,9 +73,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     /// </summary>
     public Queue<SubChunkCoord> meshingQueue = new();
 
-    public InstantDrawColour idc = new InstantDrawColour(8192);
-    public InstantDrawTexture idt = new InstantDrawTexture(8192);
-
     private static readonly Vector3[] starPositions = generateStarPositions();
 
     public static Color defaultClearColour = new Color(168, 204, 232);
@@ -84,8 +82,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
     public bool fastChunkSwitch = true;
     public uint chunkVAO;
-    public ulong elementAddress;
-    public uint elementLen;
 
     public UniformBuffer chunkUBO = null!;
     public ShaderStorageBuffer chunkSSBO = null!;
@@ -96,10 +92,18 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public WorldRenderer() {
         GL = Game.GL;
 
-        idc.setup();
-        idt.setup();
-
         var mode = Settings.instance.rendererMode;
+
+        cloudidt.setup();
+
+        // load cloud texture
+        var p = Game.textures.cloudTexture.imageData.Span;
+
+        pixels = new Rgba32[p.Length];
+
+        for (int i = 0; i < p.Length; i++) {
+            pixels[i] = p[i];
+        }
 
         reloadRenderer(mode, mode);
     }
@@ -164,45 +168,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         this.world?.unlisten(this);
         this.world = world;
         this.world?.listen(this);
-    }
-
-    private void genFatQuadIndices() {
-        var indices = new ushort[65535];
-        // 0 1 2 0 2 3
-        for (int i = 0; i < 65535 / 6; i++) {
-            indices[i * 6] = (ushort)(i * 4);
-            indices[i * 6 + 1] = (ushort)(i * 4 + 1);
-            indices[i * 6 + 2] = (ushort)(i * 4 + 2);
-            indices[i * 6 + 3] = (ushort)(i * 4);
-            indices[i * 6 + 4] = (ushort)(i * 4 + 2);
-            indices[i * 6 + 5] = (ushort)(i * 4 + 3);
-        }
-
-        // delete old buffer if any
-        GL.DeleteBuffer(Game.graphics.fatQuadIndices);
-        Game.graphics.fatQuadIndices = 0;
-        Game.graphics.fatQuadIndicesLen = 0;
-        Game.graphics.fatQuadIndices = GL.GenBuffer();
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
-        unsafe {
-            fixed (ushort* pIndices = indices) {
-                GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)),
-                    pIndices, BufferStorageMask.None);
-                GL.ObjectLabel(ObjectIdentifier.Buffer, Game.graphics.fatQuadIndices, uint.MaxValue,
-                    "Shared quad indices");
-            }
-
-            Game.graphics.fatQuadIndicesLen = (uint)(indices.Length * sizeof(ushort));
-
-            // make element buffer resident for unified memory if supported
-            if (Settings.instance.getActualRendererMode() >= RendererMode.BindlessMDI) {
-                Game.sbl.MakeBufferResident((NV)BufferTargetARB.ElementArrayBuffer,
-                    (NV)GLEnum.ReadOnly);
-                Game.sbl.GetBufferParameter((NV)BufferTargetARB.ElementArrayBuffer,
-                    NV.BufferGpuAddressNV, out elementAddress);
-                elementLen = Game.graphics.fatQuadIndicesLen;
-            }
-        }
     }
 
     public void bindQuad() {
@@ -404,9 +369,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         currentAnisoLevel = -1;
         currentMSAA = -1;
-
-        // regen shared quad indices for unified memory
-        genFatQuadIndices();
     }
 
     public void updateAF() {
@@ -511,7 +473,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterShader.setUniform(waterFogStart, 24f);
         }
         else {
-            // use time-based colours
+            // use time-based colours// regen shared quad indices for unified memory
             var currentFogColour = world.getFogColour(world.worldTick);
             var currentHorizonColour = world.getHorizonColour(world.worldTick);
 
@@ -614,7 +576,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // set up element array address (shared index buffer)
             Game.vbum.BufferAddressRange(NV.ElementArrayAddressNV, 0,
-                elementAddress,
+                Game.graphics.elementAddress,
                 Game.graphics.fatQuadIndicesLen);
         }
 
@@ -723,9 +685,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // well, this is cheap enough for me to not care! :P
             // status update 2.0: apparently, the error message in the driver refers to the attrib, which *is* hooked onto index 0.... so just select the pointer on index 0 and we're good
             Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 0,
-                elementAddress, 0);
+                Game.graphics.elementAddress, 0);
             Game.vbum.BufferAddressRange(NV.VertexAttribArrayAddressNV, 1,
-                elementAddress, 0);
+                Game.graphics.elementAddress, 0);
 
             //Game.vbum.BufferAddressRange((Silk.NET.OpenGL.Legacy.Extensions.NV.NV)NV.UniformBufferAddressNV, i,
             //    elementAddress, 0);
@@ -957,6 +919,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.DepthMask(false);
         world.particles.render(interp);
         GL.DepthMask(true);
+
+        // last thing!
+        renderSkyPost(interp);
     }
 
     public void renderEntities(double interp) {
@@ -1024,6 +989,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         if (Game.player == null || !Game.player.isBreaking) {
             return;
         }
+
+        var idt = Game.graphics.idt;
 
         var pos = Game.player.breaking;
         var block = Block.get(world!.getBlock(pos));
@@ -1155,6 +1122,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             return;
         }
 
+        var idc = Game.graphics.idc;
+
         // disable fog for outline rendering
         idc.enableFog(false);
 
@@ -1217,7 +1186,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         0.8f, 0.8f, 0.6f, 0.6f, 0.6f, 1
     ];
 
-    public Color getLightColourDarken(byte blocklight, byte skylight) {
+    public Color getLightColourDarken(byte skylight, byte blocklight) {
         var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color4(px.R / 255f, px.G / 255f, px.B / 255f, px.A / 255f);
         // apply darken
@@ -1228,7 +1197,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         return lightVal.toC();
     }
 
-    public static Color getLightColour(byte blocklight, byte skylight) {
+    public static Color getLightColour(byte skylight, byte blocklight) {
         var px = Game.textures.light(blocklight, skylight);
         var lightVal = new Color(px.R, px.G, px.B, px.A);
         return lightVal;

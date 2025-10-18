@@ -57,6 +57,4 @@ public class FurnaceMenuContext : InventoryContext {
         // crafting result slot
         slots.Add(new CraftingResultSlot(craftingGrid, -1, craftingResultX, craftingResultY));
     }
-
-    public CraftingGridInventory getCraftingGrid() => craftingGrid;
 }

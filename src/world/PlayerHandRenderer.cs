@@ -208,7 +208,7 @@ public class PlayerHandRenderer {
             itemRenderer.setMV(mat.top * Game.camera.getHandViewMatrix(interp));
 
 
-            renderItemInHand(handItem, WorldRenderer.getLightColour((byte)(l >> 4), (byte)(l & 15)));
+            renderItemInHand(handItem, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
 
             //Game.GL.Disable(EnableCap.CullFace);
             //Game.GL.FrontFace(FrontFaceDirection.CW);
@@ -338,7 +338,7 @@ public class PlayerHandRenderer {
         // test point
         //Console.Out.WriteLine(Vector3.Transform(Vector3.Zero, mat.top));
 
-        var c = WorldRenderer.getLightColour((byte)(lightLevel >> 4), (byte)(lightLevel & 15));
+        var c = WorldRenderer.getLightColour((byte)(lightLevel & 15), (byte)(lightLevel >> 4));
 
         EntityRenderers.ide.setColour(new Color(c.R, c.G, c.B, (byte)255));
         rightArm.render(mat, sc);
@@ -583,7 +583,7 @@ public class PlayerHandRenderer {
             itemRenderer.proj(Game.camera.getProjectionMatrix());
 
 
-            renderItemInHand(handItem, WorldRenderer.getLightColour((byte)(l >> 4), (byte)(l & 15)));
+            renderItemInHand(handItem, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
 
             //Game.GL.Disable(EnableCap.CullFace);
             //Game.GL.FrontFace(FrontFaceDirection.CW);
@@ -613,7 +613,7 @@ public class PlayerHandRenderer {
 
         var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
         var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
-        var tint = Game.renderer.getLightColourDarken(blocklight, skylight);
+        var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
 
         var r = (byte)(tint.R * 255);
         var g = (byte)(tint.G * 255);

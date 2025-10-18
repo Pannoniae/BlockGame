@@ -23,11 +23,11 @@ public class ProgressBar : GUIElement {
     public override void draw() {
         var bg = bounds;
         
-        Game.gui.draw(Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, bg.Width, bg.Height), null, backgroundColor);
+        Game.gui.draw(Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, bg.Width, bg.Height), default, backgroundColor);
         
         if (progress > 0f) {
             var progressWidth = (int)(bg.Width * progress);
-            Game.gui.draw(Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, progressWidth, bg.Height), null, foregroundColor);
+            Game.gui.draw(Game.gui.colourTexture, new RectangleF(bg.X, bg.Y, progressWidth, bg.Height), default, foregroundColor);
         }
     }
 }

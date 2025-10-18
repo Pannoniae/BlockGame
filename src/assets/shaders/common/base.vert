@@ -19,7 +19,9 @@ out vec3 normal;
 
 uniform mat4 uMVP;
 uniform mat4 uModelView;
+#ifdef HAS_NORMALS
 uniform mat4 uModel;
+#endif
 
 void main() {
     gl_Position = uMVP * vec4(vPos, 1.0);

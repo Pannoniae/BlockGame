@@ -96,7 +96,7 @@ public class Water : Block {
             if (w3 >= 0) bestLevel = Math.Min(bestLevel, w3);
             if (w4 >= 0) bestLevel = Math.Min(bestLevel, w4);
 
-            // no water neighbors found?
+            // no water neighbours found?
             if (bestLevel == 999) {
                 // do we still need this? IDK
                 newLevel = -1;
@@ -128,11 +128,11 @@ public class Water : Block {
             // check for adjacent sources, if 2+ then become source
             int adjacentSources = 0;
             foreach (var dir in Direction.directionsHorizontal) {
-                var neighbor = pos + dir;
-                if (world.getBlock(neighbor) == Blocks.WATER) {
-                    var neighborMetadata = world.getBlockMetadata(neighbor);
-                    // if neighbor is a source and not falling (not sure how the second one could happen but whatever)
-                    if (getWaterLevel(neighborMetadata) == 0 && !isFalling(neighborMetadata)) {
+                var neighbour = pos + dir;
+                if (world.getBlock(neighbour) == Blocks.WATER) {
+                    var neighbourMetadata = world.getBlockMetadata(neighbour);
+                    // if neighbour is a source and not falling (not sure how the second one could happen but whatever)
+                    if (getWaterLevel(neighbourMetadata) == 0 && !isFalling(neighbourMetadata)) {
                         // source block
                         adjacentSources++;
                     }
@@ -400,7 +400,7 @@ public class Water : Block {
             return Vector3.Zero;
         }
 
-        // Check horizontal neighbors for where to flow
+        // Check horizontal neighbours for where to flow
         foreach (var dir in Direction.directionsHorizontal) {
             var neighbourLevel = getRenderHeight(world, x + dir.X, y, z + dir.Z);
             if (neighbourLevel > 0) {

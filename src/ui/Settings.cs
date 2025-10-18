@@ -48,6 +48,7 @@ public class Settings {
     public bool reverseZ = true; // reverse-Z depth buffer for improved precision
     public bool affineMapping = false; // SO LIMINAL UWU
     public bool vertexJitter = false; // SO LIMINAL UWU
+    public int cloudMode = 3; // 0=off, 1=simple, 2=fancy, 3=hypercube
     /**
      * Don't use this! Use getActualRendererMode() instead.
      */
@@ -168,6 +169,8 @@ public class Settings {
         tag.addByte("reverseZ", (byte)(reverseZ ? 1 : 0));
         tag.addByte("affineMapping", (byte)(affineMapping ? 1 : 0));
         tag.addByte("vertexJitter", (byte)(vertexJitter ? 1 : 0));
+        tag.addInt("cloudMode", cloudMode);
+
         tag.addInt("rendererMode", (int)rendererMode);
         tag.addInt("mouseInv", mouseInv);
         tag.addFloat("sfxVolume", sfxVolume);
@@ -211,6 +214,9 @@ public class Settings {
             }
             if (tag.has("vertexJitter")) {
                 vertexJitter = tag.getByte("vertexJitter") != 0;
+            }
+            if (tag.has("cloudMode")) {
+                cloudMode = tag.getInt("cloudMode");
             }
 
             if (tag.has("rendererMode")) {

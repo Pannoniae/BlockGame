@@ -17,8 +17,32 @@ public class WorldgenTesting {
 
     [Test]
     public void GenHighNoise() {
-        // generate an image from the highNoise
+
+
         using var img = new Image<Rgba32>(512, 512);
+        for (int x = 0; x < img.Width; x++) {
+            for (int y = 0; y < img.Height; y++) {
+                var val = gen.getNoise3D(gen.t2n, x / 12f, 0, y / 12f, 4, 2f);
+                // "random" noise
+                var val2 = gen.getNoise3D(gen.t2n, x + 1444, 0, y + 1444, 1, 2f);
+                var orig = val;
+                //val = float.Tan(val);
+                //Console.Out.WriteLine(val);
+                var v = (byte)((val + 1) * 127.5f);
+                v += (byte)((val2 + 0.4f) * 127.5f / 4f);
+                // quantise to yes/no
+                v = (byte)(v > 144 ? 255 : 0);
+                img[x, y] = new Rgba32(
+                    v,
+                    v,
+                    v,
+                    v > 0 ? 255 : 0);
+            }
+        }
+
+        img.Save(getPath("highNoiseC.png"));
+
+
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
                 var val = gen.getNoise3D(gen.t2n, x / 20f, 0, y / 20f, 2, 2f);
