@@ -40,9 +40,9 @@ public class BlockModel {
         // north
         model.faces[3] = new(1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, uvs[1], uvs[1] + 1, RawDirection.NORTH);
         // down
-        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[1], uvs[1] + 1, RawDirection.DOWN);
+        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[2], uvs[2] + 1, RawDirection.DOWN);
         // up
-        model.faces[5] = new(0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, uvs[1], uvs[1] + 1, RawDirection.UP);
+        model.faces[5] = new(0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, uvs[2], uvs[2] + 1, RawDirection.UP);
         return model;
     }
     

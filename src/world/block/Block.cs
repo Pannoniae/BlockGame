@@ -295,7 +295,7 @@ public class Block {
         HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone"));
         HELLSTONE.setTex(cubeUVs(8, 0));
         renderType[HELLSTONE.id] = RenderType.CUBE;
-        HELLSTONE.light(10);
+        HELLSTONE.light(15);
         HELLSTONE.material(Material.HELL);
 
         HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
@@ -564,9 +564,10 @@ public class Block {
         //CHEST.transparency();
 
         FURNACE = register(new Block(Blocks.FURNACE, "Furnace"));
-        FURNACE.setTex(furnaceUVs(4, 4,  5, 4));
+        FURNACE.setTex(furnaceUVs(4, 4,  5, 4, 6, 4));
         FURNACE.setModel(BlockModel.makeFurnace(FURNACE));
         FURNACE.material(Material.STONE);
+        FURNACE.light(15);
 
 
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
@@ -651,9 +652,9 @@ public class Block {
         ];
     }
 
-    public static UVPair[] furnaceUVs(int frontX, int frontY, int sideX, int sideY) {
+    public static UVPair[] furnaceUVs(int frontX, int frontY, int sideX, int sideY, int top_bottomX, int top_bottomY){
         return [
-            new(frontX, frontY), new(sideX, sideY),
+            new(frontX, frontY), new(sideX, sideY), new UVPair(top_bottomX, top_bottomY)
         ];
     }
 
