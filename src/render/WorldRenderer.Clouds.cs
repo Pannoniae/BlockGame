@@ -21,7 +21,7 @@ public sealed partial class WorldRenderer {
 
 
     // this is separate to not fuck the main one up!
-    public FastInstantDrawTexture cloudidt = new(65536);
+    public FastInstantDrawTexture cloudidt = new(16384);
 
 
     private Rgba32[] pixels;
@@ -74,8 +74,11 @@ public sealed partial class WorldRenderer {
         float px = (float)pp.X;
         float pz = (float)pp.Z;
 
+        // cap it to render distance as usual
+        var cext = 64 + float.Min(WorldRenderer.cext, Settings.instance.renderDistance * 16);
+
         // snap to cloud plane grid to avoid seams
-        const float gridSize = cext;
+        float gridSize = cext;
         float baseX = MathF.Floor(px / gridSize) * gridSize;
         float baseZ = MathF.Floor(pz / gridSize) * gridSize;
 
@@ -157,6 +160,9 @@ public sealed partial class WorldRenderer {
 
         // tile zScroll so we don't get precision issues at extreme distances
         zScroll %= (cscale * 2);
+
+        // cap it to render distance as usual
+        var cext = 64 + float.Min(WorldRenderer.cext, Settings.instance.renderDistance * 16);
 
         // box bounds - actually centred on player this time!
         float x0 = px - cext;
@@ -590,6 +596,9 @@ public sealed partial class WorldRenderer {
 
         // tile zScroll so we don't get precision issues at extreme distances
         zScroll %= (cscale * 2);
+
+        // cap it to render distance as usual
+        var cext = 64 + float.Min(WorldRenderer.cext, Settings.instance.renderDistance * 16);
 
         // box bounds - actually centred on player this time!
         float x0 = px - cext;

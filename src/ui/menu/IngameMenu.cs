@@ -1,5 +1,6 @@
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
@@ -402,6 +403,12 @@ public class IngameMenu : Menu, IDisposable {
             debugStrG.AppendFormat("Mem:{0:0.###}MB (proc:{1:0.###}MB)\nvmem: {2:0.###}MB ({3})\n",
                 GCMemory / Constants.MEGABYTES,
                 workingSet / Constants.MEGABYTES, vmem / Constants.MEGABYTES, stat);
+
+            // cloud buffer size
+            unsafe {
+                var cloudBufSize = Game.renderer.cloudidt.maxVertices * 4 * sizeof(BlockVertexTinted);
+                debugStrG.AppendFormat("cbuf: {0:0.##}MB ({1}v×4)\n", cloudBufSize / Constants.MEGABYTES, Game.renderer.cloudidt.maxVertices);
+            }
             debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2} IUBO:{3} BMDI:{4} CMDL:{5} rZ:{6} r:{7}", Game.hasSBL.yes(), Game.hasVBUM.yes(), Game.hasUBUM.yes(), Game.hasInstancedUBO.yes(), Game.hasBindlessMDI.yes(), Game.hasCMDL.yes(), Settings.instance.reverseZ.yes(), Settings.instance.rendererMode.yes()); 
             // calculate textwidth
             rendererText = new RichTextLayout {

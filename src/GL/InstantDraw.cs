@@ -23,7 +23,7 @@ public enum FogType {
 public abstract class InstantDraw<T> where T : unmanaged {
     protected PrimitiveType vertexType;
 
-    protected int maxVertices;
+    public int maxVertices;
     protected readonly List<T> vertices;
     public int currentVertex = 0;
 
@@ -326,8 +326,33 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
     public bool reused = false;
 
+    // 3-region ring buffer to avoid sync
+    private int currentRegion = 0;
+    // the cake is a lie
+    // the NV dualcore driver has another frame worth of buffering, so this WILL flicker. Solution? use 4 regions instead.
+    // note: if someone complains about flickering, increase this number
+    private const int regionCount = 4;
+
+    // persistent mapped pointer
+    private unsafe BlockVertexTinted* mappedPtr = null;
+
     public override void setup() {
-        base.setup();
+        // allocate 3x buffer for ring buffering with persistent mapping
+        unsafe {
+            VAO = GL.CreateVertexArray();
+            VBO = GL.CreateBuffer();
+            Game.graphics.vao(VAO);
+            GL.NamedBufferStorage(VBO, (uint)(maxVertices * regionCount * sizeof(BlockVertexTinted)), (void*)0,
+                BufferStorageMask.MapPersistentBit | BufferStorageMask.MapWriteBit | BufferStorageMask.MapCoherentBit);
+
+            // map persistently
+            mappedPtr = (BlockVertexTinted*)GL.MapNamedBufferRange(VBO, 0,
+                (nuint)(maxVertices * regionCount * sizeof(BlockVertexTinted)),
+                (uint)(MapBufferAccessMask.PersistentBit | MapBufferAccessMask.WriteBit | MapBufferAccessMask.CoherentBit));
+
+            format();
+        }
+
         instantShader = Game.graphics.instantTextureShader;
         instantTexture = instantShader.getUniformLocation("tex");
         uMVP = instantShader.getUniformLocation(nameof(uMVP));
@@ -373,6 +398,11 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         Game.graphics.tex(0, texture);
     }
 
+    public new void begin(PrimitiveType type) {
+        currentVertex = 0;
+        vertexType = type;
+    }
+
     public override void addVertex(BlockVertexTinted vertex) {
         // resize VBO before adding if needed
         if (currentVertex >= maxVertices - 1) {
@@ -385,12 +415,43 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
         vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
 
-        // write directly to the mapped ptr
-        /*unsafe {
-            mappedPtr[currentVertex++] = vertex;
-        }*/
-        vertices.Add(vertex);
-        currentVertex++;
+        // write directly to mapped ptr with region offset
+        unsafe {
+            int regionOffset = currentRegion * maxVertices;
+            mappedPtr[regionOffset + currentVertex++] = vertex;
+        }
+    }
+
+    protected new void resizeStorage() {
+        var newMaxVertices = maxVertices * 2;
+
+        unsafe {
+            // unmap old buffer
+            if (mappedPtr != null) {
+                GL.UnmapNamedBuffer(VBO);
+                mappedPtr = null;
+            }
+
+            // delete old buffer
+            GL.DeleteBuffer(VBO);
+
+            // create new buffer with 3x capacity for ring buffering
+            VBO = GL.CreateBuffer();
+            Game.graphics.vao(VAO);
+            GL.NamedBufferStorage(VBO, (uint)(newMaxVertices * regionCount * sizeof(BlockVertexTinted)), (void*)0,
+                BufferStorageMask.MapPersistentBit | BufferStorageMask.MapWriteBit | BufferStorageMask.MapCoherentBit);
+
+            // remap persistently
+            mappedPtr = (BlockVertexTinted*)GL.MapNamedBufferRange(VBO, 0,
+                (nuint)(newMaxVertices * regionCount * sizeof(BlockVertexTinted)),
+                (uint)(MapBufferAccessMask.PersistentBit | MapBufferAccessMask.WriteBit | MapBufferAccessMask.CoherentBit));
+
+            maxVertices = newMaxVertices;
+
+            format();
+        }
+
+        // DON'T reset region - new buffer is independent, keep rotating
     }
 
     /** Pre-reserve capacity for known vertex count - zero overhead addVertex after this */
@@ -398,9 +459,6 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         while (count > maxVertices) {
             resizeStorage();
         }
-
-        vertices.Capacity = count;
-        CollectionsMarshal.SetCount(vertices, count); // ensure Count matches so AsSpan works!!
     }
 
     public void reserve(int count, int mult) {
@@ -414,17 +472,69 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         vertex.b = (byte)((vertex.b * tint.B) * (1 / 255f));
         vertex.a = (byte)((vertex.a * tint.A) * (1 / 255f));
 
-        // write
-        Unsafe.Add(ref MemoryMarshal.GetReference(ListHack<BlockVertexTinted>.getItems(vertices)), currentVertex++) =
-            vertex;
+        // write directly to mapped ptr with region offset
+        unsafe {
+            int regionOffset = currentRegion * maxVertices;
+            mappedPtr[regionOffset + currentVertex++] = vertex;
+        }
     }
 
     public ref BlockVertexTinted getRefE() {
-        // write
-        ref var a = ref Unsafe.Add(ref MemoryMarshal.GetReference(ListHack<BlockVertexTinted>.getItems(vertices)),
-            currentVertex++);
+        // get ref directly from mapped ptr with region offset
+        unsafe {
+            int regionOffset = currentRegion * maxVertices;
+            return ref mappedPtr[regionOffset + currentVertex++];
+        }
+    }
 
-        return ref a;
+    public new void end() {
+        if (currentVertex == 0) return;
+
+        Game.graphics.vao(VAO);
+        instantShader.use();
+
+        // set up matrices/fog
+        if (modelMatrix != null) {
+            var model = modelMatrix.top;
+            var mv = model * viewMatrix;
+            var mvp = model * viewMatrix * projMatrix;
+
+            if (uModel != -1) instantShader.setUniform(uModel, model);
+            instantShader.setUniform(uModelView, mv);
+            instantShader.setUniform(uMVP, mvp);
+        }
+
+        if (fogEnabled) {
+            instantShader.setUniform(uFogEnabled, true);
+            instantShader.setUniform(uFogColour, fogColour);
+            instantShader.setUniform(uFogStart, fogStart);
+            instantShader.setUniform(uFogEnd, fogEnd);
+            instantShader.setUniform(uFogType, (int)fogType);
+            instantShader.setUniform(uFogDensity, fogDensity);
+        }
+        else {
+            instantShader.setUniform(uFogEnabled, false);
+        }
+
+        // data already in GPU via mapped pointer, just draw
+        int regionOffset = currentRegion * maxVertices;
+
+        var effectiveMode = vertexType;
+        if (vertexType == PrimitiveType.Quads) {
+            unsafe {
+                effectiveMode = PrimitiveType.Triangles;
+                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+                Game.GL.DrawElementsBaseVertex(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedInt,
+                    (void*)0, regionOffset);
+            }
+        }
+        else {
+            GL.DrawArrays(effectiveMode, regionOffset, (uint)currentVertex);
+        }
+
+        currentVertex = 0;
+        // advance to next region
+        currentRegion = (currentRegion + 1) % regionCount;
     }
 
     /**
@@ -464,31 +574,20 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             instantShader.setUniform(uFogEnabled, false);
         }
 
-        // Upload buffer
+        // data is already in GPU memory via mapped pointer, just draw
+        int regionOffset = currentRegion * maxVertices;
 
-        if (!reused) {
-            unsafe {
-                GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-                Game.GL.InvalidateBufferData(VBO);
-                fixed (BlockVertexTinted* v = CollectionsMarshal.AsSpan(vertices)) {
-                    GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)),
-                        v);
-                }
-            }
-        }
-
-        // handle the vertex type
         var effectiveMode = vertexType;
         if (vertexType == PrimitiveType.Quads) {
             unsafe {
                 effectiveMode = PrimitiveType.Triangles;
                 GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
-                GL.DrawElements(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedInt,
-                    (void*)0);
+                Game.GL.DrawElementsBaseVertex(effectiveMode, (uint)(currentVertex * 6 / 4f), DrawElementsType.UnsignedInt,
+                    (void*)0, regionOffset);
             }
         }
         else {
-            GL.DrawArrays(effectiveMode, 0, (uint)currentVertex);
+            GL.DrawArrays(effectiveMode, regionOffset, (uint)currentVertex);
         }
 
         if (!last) {
@@ -497,8 +596,9 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
         if (last) {
             reused = false;
-            vertices.Clear();
             currentVertex = 0;
+            // advance to next region
+            currentRegion = (currentRegion + 1) % regionCount;
         }
     }
 
@@ -532,15 +632,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             instantShader.setUniform(uFogEnabled, false);
         }
 
-        // upload once
-        unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, VBO);
-            Game.GL.InvalidateBufferData(VBO);
-            fixed (BlockVertexTinted* v = CollectionsMarshal.AsSpan(vertices)) {
-                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(currentVertex * sizeof(BlockVertexTinted)), v);
-            }
-        }
-
+        // data already in GPU via mapped pointer - no upload needed
         reused = true;
     }
 
@@ -548,27 +640,31 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
     public void renderRange(int offset, int count) {
         if (count == 0) return;
 
+        // add region offset to caller's offset
+        int regionOffset = currentRegion * maxVertices;
+        int finalOffset = regionOffset + offset;
+
         var effectiveMode = vertexType;
         if (vertexType == PrimitiveType.Quads) {
             unsafe {
                 effectiveMode = PrimitiveType.Triangles;
                 GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
-                // use BaseVertex to offset all indices - starts from index 0 but adds baseVertex to each lookup
                 uint indexCount = (uint)(count * 6 / 4);
                 Game.GL.DrawElementsBaseVertex(effectiveMode, indexCount, DrawElementsType.UnsignedInt,
-                    (void*)0, offset);
+                    (void*)0, finalOffset);
             }
         }
         else {
-            GL.DrawArrays(effectiveMode, offset, (uint)count);
+            GL.DrawArrays(effectiveMode, finalOffset, (uint)count);
         }
     }
 
     /** Cleanup after range rendering */
     public void finishReuse() {
         reused = false;
-        vertices.Clear();
         currentVertex = 0;
+        // advance to next region
+        currentRegion = (currentRegion + 1) % regionCount;
     }
 }
 
