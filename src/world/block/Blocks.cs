@@ -51,4 +51,5 @@ public class Blocks {
     public const ushort INFERNO_ROCK = 62;
     public const ushort COPPER_ORE = 63;
     public const ushort FURNACE = 64;
+    public const ushort CLAY_BLOCK = 65;
 }

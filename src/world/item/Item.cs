@@ -88,7 +88,8 @@ public class Item {
     public static Item APPLE;
     public static Item MAPLE_SYRUP;
     public static Item COAL;
-
+    public static Item BRICK;
+    public static Item CLAY;
 
     public Item(int id, string name) {
         this.id = id;
@@ -314,6 +315,14 @@ public class Item {
         COAL = new Item(Items.COAL, "Coal");
         COAL.tex = new UVPair(1, 9);
         register(COAL);
+
+        BRICK = new Item(Items.BRICK, "Brick");
+        BRICK.tex = new UVPair(5, 0);
+        register(BRICK);
+
+        CLAY = new Item(Items.CLAY, "Clay");
+        CLAY.tex = new UVPair(4, 9);
+        register(CLAY);
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

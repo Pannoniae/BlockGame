@@ -148,6 +148,7 @@ public class Block {
     public static Block INFERNO_ROCK;
     public static Block GLASS;
     public static Block CALCITE;
+    public static Block CLAY_BLOCK;
     public static Block BRICK_BLOCK;
     public static Block STONE_BRICK;
     public static Block SAND_BRICK;
@@ -318,6 +319,11 @@ public class Block {
         CALCITE.setTex(cubeUVs(11, 0));
         renderType[CALCITE.id] = RenderType.CUBE;
         CALCITE.material(Material.STONE);
+
+        CLAY_BLOCK = register(new Block(Blocks.CLAY_BLOCK, "Clay Block"));
+        CLAY_BLOCK.setTex(cubeUVs(12, 0));
+        renderType[CLAY_BLOCK.id] = RenderType.CUBE;
+        CLAY_BLOCK.material(Material.EARTH);
 
         BRICK_BLOCK = register(new Block(Blocks.BRICK_BLOCK, "Brick Block"));
         BRICK_BLOCK.setTex(cubeUVs(0, 2));

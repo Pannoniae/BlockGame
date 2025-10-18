@@ -40,4 +40,6 @@ public class Items {
     public const int APPLE = 36;
     public const int MAPLE_SYRUP = 37;
     public const int COAL = 38;
+    public const int BRICK = 39;
+    public const int CLAY = 40;
  }
