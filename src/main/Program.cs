@@ -41,6 +41,9 @@ public partial class Program {
                 return;
             }
         }
+        else {
+            Log.info("NVAPI", "NVAPI not available.");
+        }
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 

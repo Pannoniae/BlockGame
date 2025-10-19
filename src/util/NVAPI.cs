@@ -16,7 +16,7 @@ namespace ppy;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 [SupportedOSPlatform("windows")]
-internal static class NVAPI {
+internal static partial class NVAPI {
     private const string filename = "blockgame.exe";
 
     // This is a good reference:
@@ -185,9 +185,9 @@ internal static class NVAPI {
 
             bool success = setSetting(NvSettingID.OGL_THREAD_CONTROL_ID, (uint)value);
 
-            Log.info(success
-                ? $"[NVAPI] Threaded optimizations set to \"{value}\"!"
-                : "[NVAPI] Threaded optimizations set failed!");
+            Log.info("NVAPI", success
+                ? $"Threaded optimizations set to \"{value}\"!"
+                : "Threaded optimizations set failed!");
         }
     }
 
@@ -202,20 +202,22 @@ internal static class NVAPI {
             bool success = setSetting(NvSettingID.SHIM_RENDERING_MODE_ID,
                 (uint)NvShimSetting.SHIM_RENDERING_MODE_ENABLE);
 
-            Log.info(success ? "[NVAPI] Dedicated GPU enabled!" : "[NVAPI] Dedicated GPU set failed!");
+            Log.info("NVAPI", success ? "Dedicated GPU enabled!" : "Dedicated GPU set failed!");
         }
     }
 
     /** Apply optimal settings for BlockGame. Returns true if restart is needed. */
     public static bool applyOptimalSettings() {
-        if (!Available)
+        if (!Available) {
+            Log.info("NVAPI", "NVAPI not available.");
             return false;
+        }
 
         bool needsRestart = false;
 
         // dedicated GPU (laptops only, requires restart)
         if (IsLaptop && !IsUsingOptimusDedicatedGpu) {
-            Log.info("[NVAPI] Configuring dedicated GPU...");
+            Log.info("NVAPI",  "Configuring dedicated GPU...");
             UseDedicatedGpu = true;
             needsRestart = true;
             setSetting(NvSettingID.SHIM_MCCOMPAT_ID, 0x80000001);
@@ -223,16 +225,16 @@ internal static class NVAPI {
 
         // threaded optimisations
         if (ThreadedOptimisations != NvThreadControlSetting.OGL_THREAD_CONTROL_ENABLE) {
-            Log.info("[NVAPI] Enabling threaded optimizations...");
+            Log.info("Enabling threaded optimizations...");
             ThreadedOptimisations = NvThreadControlSetting.OGL_THREAD_CONTROL_ENABLE;
         }
 
         // triple buffering
-        Log.info("[NVAPI] Enabling triple buffering...");
+        Log.info("NVAPI",  "Enabling triple buffering...");
         setSetting(NvSettingID.OGL_TRIPLE_BUFFER_ID, 0x01);
 
         // disable hardware anisotropic filtering (we handle it in shader)
-        Log.info("[NVAPI] Disabling hardware anisotropic filtering...");
+        Log.info("NVAPI", "Disabling hardware anisotropic filtering...");
         setSetting(NvSettingID.PREVENT_UI_AF_OVERRIDE_ID, 0x01);
 
 
@@ -403,7 +405,7 @@ internal static class NVAPI {
 
         bool hasError = status != NvStatus.OK;
         if (hasError)
-            Log.info($"[NVAPI] {caller} call failed with status code {status}");
+            Log.info("NVAPI", $"{caller} call failed with status code {status}");
 
         return hasError;
     }
@@ -454,14 +456,16 @@ internal static class NVAPI {
         newDelegate = ptr == IntPtr.Zero ? null : Marshal.GetDelegateForFunctionPointer(ptr, typeof(T)) as T;
     }
 
-    [DllImport("kernel32.dll", EntryPoint = "LoadLibrary")]
-    private static extern IntPtr loadLibrary(string dllToLoad);
+    [LibraryImport("kernel32.dll", EntryPoint = "LoadLibraryA", StringMarshalling = StringMarshalling.Utf8)]
+    private static partial IntPtr loadLibrary(string dllToLoad);
 
-    [DllImport(@"nvapi.dll", EntryPoint = "nvapi_QueryInterface", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr queryInterface32(uint id);
+    [LibraryImport(@"nvapi.dll", EntryPoint = "nvapi_QueryInterface")]
+    [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+    private static partial IntPtr queryInterface32(uint id);
 
-    [DllImport(@"nvapi64.dll", EntryPoint = "nvapi_QueryInterface", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr queryInterface64(uint id);
+    [LibraryImport(@"nvapi64.dll", EntryPoint = "nvapi_QueryInterface")]
+    [UnmanagedCallConv(CallConvs = [typeof(System.Runtime.CompilerServices.CallConvCdecl)])]
+    private static partial IntPtr queryInterface64(uint id);
 
     private delegate NvStatus InitializeDelegate();
 }
