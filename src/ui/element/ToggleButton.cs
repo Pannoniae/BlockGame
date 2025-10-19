@@ -12,6 +12,10 @@ public class ToggleButton : Button {
 
     public ToggleButton(Menu menu, string name, bool wide, int initialState, params string[] ids) : base(menu, name, wide) {
         index = initialState;
+
+        // cap index!! we might have corrupted settings
+        index = int.Clamp(index, 0, ids.Length - 1);
+
         this.ids = new List<string>(ids);
         updateDisplay();
     }

@@ -40,7 +40,7 @@ public class Recipe {
         TORCH = register(new ItemStack(Item.block(Blocks.TORCH), 4));
         TORCH.shape(01_02, 2);
         //TORCH.noShape();
-        TORCH.ingredients(Item.STICK, Item.COAL);
+        TORCH.ingredients(Item.COAL, Item.STICK);
 
         // stick (2 planks vertically)
         STICK = register(new ItemStack(Item.STICK, 4));
@@ -219,7 +219,7 @@ public class Recipe {
                         }
 
                         if (checkQty) {
-                            var requiredQty = quantitiesList.Length > 0 ? quantitiesList[patternIdx - 1] : 1;
+                            var requiredQty = (patternIdx - 1 < quantitiesList.Length) ? quantitiesList[patternIdx - 1] : 1;
                             if (slot.quantity < requiredQty) {
                                 return false;
                             }
@@ -366,7 +366,7 @@ public class Recipe {
                     int patternIdx = pattern[origPatternIdx];
 
                     if (patternIdx != 0) {
-                        var requiredQty = quantitiesList.Length > 0 ? quantitiesList[patternIdx - 1] : 1;
+                        var requiredQty = (patternIdx - 1 < quantitiesList.Length) ? quantitiesList[patternIdx - 1] : 1;
                         grid.grid[gridIdx].quantity -= requiredQty;
                         if (grid.grid[gridIdx].quantity <= 0) {
                             grid.grid[gridIdx] = ItemStack.EMPTY;

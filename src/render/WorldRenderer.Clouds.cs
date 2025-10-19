@@ -249,7 +249,7 @@ public sealed partial class WorldRenderer {
         idt.addVertex(new BlockVertexTinted(x0, y1, z1, u0, v1));
 
         // bottom face - single quad
-        idt.setColour(cc[1]);
+        idt.setColour(cc[3]);
         idt.addVertex(new BlockVertexTinted(x0, y0, z1, u0, v1));
         idt.addVertex(new BlockVertexTinted(x1, y0, z1, u1, v1));
         idt.addVertex(new BlockVertexTinted(x1, y0, z0, u1, v0));
