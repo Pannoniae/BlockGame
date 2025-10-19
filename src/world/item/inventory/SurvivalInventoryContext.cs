@@ -27,6 +27,8 @@ public class SurvivalInventoryContext : InventoryContext {
         setupSlots();
     }
 
+    public CraftingGridInventory getCraftingGrid() => craftingGrid;
+
     public void setupSlots() {
         slots.Clear();
 

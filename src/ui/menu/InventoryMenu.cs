@@ -23,6 +23,17 @@ public abstract class InventoryMenu : Menu {
         return false;
     }
 
+    public override void deactivate() {
+        base.deactivate();
+
+        // drop cursor items when closing inventory to prevent voiding
+        var player = Game.world?.player;
+        if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
+            player.dropItemStack(player.inventory.cursor, withVelocity: false);
+            player.inventory.cursor = ItemStack.EMPTY;
+        }
+    }
+
     protected abstract string getTitle();
     protected abstract BTexture2D getTexture();
 

@@ -28,29 +28,9 @@ public abstract class InventoryContext {
                 }
             }
             else {
-                var slotStack = slot.getStack();
-
-                // if cursor matches slot contents and can merge, take from slot instead
-                if (slotStack != ItemStack.EMPTY && slotStack.same(cursor)) {
-                    int totalQty = cursor.quantity + slotStack.quantity;
-                    if (totalQty <= Inventory.MAX_STACK_SIZE) {
-                        // can merge - take all from slot
-                        var taken = slot.take(slotStack.quantity);
-                        if (taken != ItemStack.EMPTY) {
-                            cursor.quantity += taken.quantity;
-                        }
-                    }
-                    else {
-                        // would exceed max stack - try to place instead
-                        var remaining = slot.place(cursor);
-                        player.inventory.cursor = remaining;
-                    }
-                }
-                else {
-                    // different items or slot empty - try to place
-                    var remaining = slot.place(cursor);
-                    player.inventory.cursor = remaining;
-                }
+                // place cursor into slot - this handles merging, swapping, etc.
+                var remaining = slot.place(cursor);
+                player.inventory.cursor = remaining;
             }
         }
         else if (click == ClickType.RIGHT) {
