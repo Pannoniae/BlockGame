@@ -39,7 +39,6 @@ public class Recipe {
         // torch (1 coal on top of 1 stick)
         TORCH = register(new ItemStack(Item.block(Blocks.TORCH), 4));
         TORCH.shape(01_02, 2);
-        //TORCH.noShape();
         TORCH.ingredients(Item.COAL, Item.STICK);
 
         // stick (2 planks vertically)
