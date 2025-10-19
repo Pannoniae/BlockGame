@@ -183,11 +183,6 @@ public partial class Game {
 
         SuperluminalPerf.Initialize(@"D:\programs\slp\API\dll\x64\PerformanceAPI.dll");
 
-        #if DEBUG
-        Log.init(minLevel: LogLevel.DEBUG);
-        #else
-        Log.init(minLevel: LogLevel.INFO);
-        #endif
         Log.log(LogLevel.INFO, "Game", "Starting game!");
 
         initDedicatedGraphics();

@@ -326,6 +326,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
     // 4-region ring buffer to avoid sync
     private int currentRegion = 0;
+    private int regionOffset = 0;
 
     // the cake is a lie
     // the NV dualcore driver has another frame worth of buffering, so this WILL flicker. Solution? use 4 regions instead.
@@ -424,7 +425,6 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
         // write directly to mapped ptr with region offset
         unsafe {
-            int regionOffset = currentRegion * maxVertices;
             mappedPtr[regionOffset + currentVertex++] = vertex;
         }
     }
@@ -452,12 +452,12 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             // remap persistently
             mappedPtr = (BlockVertexTinted*)GL.MapNamedBufferRange(VBO, 0,
                 (nuint)(newMaxVertices * regionCount * sizeof(BlockVertexTinted)),
-                (uint)(uint)(MapBufferAccessMask.PersistentBit |
-                             MapBufferAccessMask.WriteBit |
-                             //MapBufferAccessMask.CoherentBit |
-                             MapBufferAccessMask.InvalidateBufferBit |
-                             MapBufferAccessMask.UnsynchronizedBit |
-                             MapBufferAccessMask.FlushExplicitBit));
+                (uint)(MapBufferAccessMask.PersistentBit |
+                       MapBufferAccessMask.WriteBit |
+                       //MapBufferAccessMask.CoherentBit |
+                       MapBufferAccessMask.InvalidateBufferBit |
+                       MapBufferAccessMask.UnsynchronizedBit |
+                       MapBufferAccessMask.FlushExplicitBit));
 
             maxVertices = newMaxVertices;
 
@@ -495,7 +495,6 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
         // write directly to mapped ptr with region offset
         unsafe {
-            int regionOffset = currentRegion * maxVertices;
             mappedPtr[regionOffset + currentVertex++] = vertex;
         }
     }
@@ -503,7 +502,6 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
     public ref BlockVertexTinted getRefE() {
         // get ref directly from mapped ptr with region offset
         unsafe {
-            int regionOffset = currentRegion * maxVertices;
             return ref mappedPtr[regionOffset + currentVertex++];
         }
     }
@@ -538,7 +536,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         }
 
         // data already in GPU via mapped pointer, just draw
-        int regionOffset = currentRegion * maxVertices;
+        regionOffset = currentRegion * maxVertices;
 
         var effectiveMode = vertexType;
         if (vertexType == PrimitiveType.Quads) {
@@ -557,6 +555,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         currentVertex = 0;
         // advance to next region
         currentRegion = (currentRegion + 1) % regionCount;
+        regionOffset = currentRegion * maxVertices;
     }
 
     /**
@@ -597,7 +596,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         }
 
         // data is already in GPU memory via mapped pointer, just draw
-        int regionOffset = currentRegion * maxVertices;
+        regionOffset = currentRegion * maxVertices;
 
         var effectiveMode = vertexType;
         if (vertexType == PrimitiveType.Quads) {
@@ -613,13 +612,11 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             GL.DrawArrays(effectiveMode, regionOffset, (uint)currentVertex);
         }
 
-        if (!last) {
-        }
-
         if (last) {
             currentVertex = 0;
             // advance to next region
             currentRegion = (currentRegion + 1) % regionCount;
+            regionOffset = currentRegion * maxVertices;
         }
     }
 
@@ -661,7 +658,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         if (count == 0) return;
 
         // add region offset to caller's offset
-        int regionOffset = currentRegion * maxVertices;
+        regionOffset = currentRegion * maxVertices;
         int finalOffset = regionOffset + offset;
 
         var effectiveMode = vertexType;
@@ -687,6 +684,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         currentVertex = 0;
         // advance to next region
         currentRegion = (currentRegion + 1) % regionCount;
+        regionOffset = currentRegion * maxVertices;
     }
 }
 

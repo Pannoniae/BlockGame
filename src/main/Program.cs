@@ -1,23 +1,26 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Diagnostics;
-using System.Numerics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 using System.Text;
 using BlockGame.render;
 using BlockGame.util.log;
-using Silk.NET.GLFW;
+using ppy;
 
 namespace BlockGame.main;
 
-public class Program {
-
+public partial class Program {
     public static Game game = null!;
-    
+
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
+
+        #if DEBUG
+        Log.init(minLevel: LogLevel.DEBUG);
+        #else
+        Log.init(minLevel: LogLevel.INFO);
+        #endif
 
         unsafe {
             Log.info($"The correct answer is {sizeof(BlockRenderer.RenderContext)}! What was the question?");
@@ -29,12 +32,31 @@ public class Program {
         // IMPORTANT PART
         Console.OutputEncoding = Encoding.UTF8;
 
-        //Thread.Sleep(4000);
+        // thx osu/ppy!
+        if (OperatingSystem.IsWindows() && NVAPI.Available) {
+            //NVAPI.ThreadedOptimisations = NvThreadControlSetting.OGL_THREAD_CONTROL_DEFAULT;
+            if (NVAPI.applyOptimalSettings()) {
+                msgBox("NVIDIA Settings Applied",
+                    "NVIDIA GPU settings have been configured. Please restart the game for the changes to take effect.");
+                return;
+            }
+        }
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 
         game = new Game(devMode);
     }
+
+    private static void msgBox(string title, string txt) {
+        if (OperatingSystem.IsWindows()) {
+            // use windows api to show a message box
+            MessageBoxW(IntPtr.Zero, txt, title, 0);
+        }
+    }
+
+    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+    private static partial int MessageBoxW(IntPtr hWnd, string lpText, string lpCaption, uint uType);
+
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         unsafe {
             var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
@@ -72,15 +94,15 @@ public class Program {
                     Log.info(process.StandardOutput.ReadToEnd());
                 }
             }
+
             Log.error(e);
-            
+
             Console.WriteLine("Exiting...");
             Console.Out.Flush();
         }
     }
 
-    public static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
-    {
+    public static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath) {
         Console.Out.WriteLine(libraryName);
 
         // Otherwise, fallback to default import resolver.
