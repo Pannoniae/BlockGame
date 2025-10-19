@@ -313,7 +313,7 @@ public class Graphics : IDisposable {
         }
     }
 
-    private void genFatQuadIndices() {
+    public void genFatQuadIndices() {
         // max quads we can fit: 1000k quads = 4M verts, 6M indices
         const int maxQuads = 1000000;
         var indices = new uint[maxQuads * 6];

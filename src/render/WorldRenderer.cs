@@ -99,10 +99,40 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // load cloud texture
         var p = Game.textures.cloudTexture.imageData.Span;
 
-        pixels = new Rgba32[p.Length];
+        pixels = new bool[p.Length];
 
         for (int i = 0; i < p.Length; i++) {
-            pixels[i] = p[i];
+            pixels[i] = p[i].A > 0;
+        }
+
+        // pre-calc max verts for full 256x256 texture - static, never changes
+        cloudMaxVerts = 0;
+        for (int yy = 0; yy < 256; yy++) {
+            for (int xx = 0; xx < 256; xx++) {
+                if (!pixels[(yy << 8) + xx]) continue;
+
+                // top+bottom = 8 verts always
+                int fc = 8;
+
+                // check 4 adjacents for side faces (4 verts each)
+                int adj = xx - 1;
+                adj = adj < 0 ? 255 : adj;
+                if (!pixels[(yy << 8) + adj]) fc += 4;
+
+                adj = xx + 1;
+                adj = adj >= 256 ? 0 : adj;
+                if (!pixels[(yy << 8) + adj]) fc += 4;
+
+                adj = yy - 1;
+                adj = adj < 0 ? 255 : adj;
+                if (!pixels[(adj << 8) + xx]) fc += 4;
+
+                adj = yy + 1;
+                adj = adj >= 256 ? 0 : adj;
+                if (!pixels[(adj << 8) + xx]) fc += 4;
+
+                cloudMaxVerts += fc;
+            }
         }
 
         reloadRenderer(mode, mode);
@@ -358,6 +388,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         waterShader.setUniform(waterFogColour, defaultFogColour.toVec4());
         waterShader.setUniform(waterHorizonColour, defaultClearColour.toVec4());
+
+        Game.graphics.genFatQuadIndices();
 
 
         // initialize chunk UBO (16 bytes: vec3 + padding)

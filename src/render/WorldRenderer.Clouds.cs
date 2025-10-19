@@ -7,6 +7,7 @@ using BlockGame.util;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp.PixelFormats;
+using Debug = System.Diagnostics.Debug;
 
 namespace BlockGame.render;
 
@@ -24,7 +25,8 @@ public sealed partial class WorldRenderer {
     public FastInstantDrawTexture cloudidt = new(16384);
 
 
-    private Rgba32[] pixels;
+    private bool[] pixels;
+    private int cloudMaxVerts; // pre-calculated max verts
 
     private void renderClouds(double interp) {
         switch (Settings.instance.cloudMode) {
@@ -177,7 +179,7 @@ public sealed partial class WorldRenderer {
         idt.proj(proj);
 
         // get translucent
-        cloudColour.A = 128;
+        cloudColour.A = 192;
 
         idt.setColour(cloudColour);
         idt.enableFog(true);
@@ -228,11 +230,26 @@ public sealed partial class WorldRenderer {
         int w = (int)tex.width;
         int h = (int)tex.height;
 
-        // calc visible texture pixel bounds
+        // calc UVs for entire cloud area
         float u0 = x0 / scale;
         float u1 = x1 / scale;
         float v0 = (z0 + zScroll) / scale;
         float v1 = (z1 + zScroll) / scale;
+
+        // top face - single quad
+        idt.setColour(cc[0]);
+        idt.addVertex(new BlockVertexTinted(x0, y1, z0, u0, v0));
+        idt.addVertex(new BlockVertexTinted(x1, y1, z0, u1, v0));
+        idt.addVertex(new BlockVertexTinted(x1, y1, z1, u1, v1));
+        idt.addVertex(new BlockVertexTinted(x0, y1, z1, u0, v1));
+
+        // bottom face - single quad
+        idt.setColour(cc[1]);
+        idt.addVertex(new BlockVertexTinted(x0, y0, z1, u0, v1));
+        idt.addVertex(new BlockVertexTinted(x1, y0, z1, u1, v1));
+        idt.addVertex(new BlockVertexTinted(x1, y0, z0, u1, v0));
+        idt.addVertex(new BlockVertexTinted(x0, y0, z0, u0, v0));
+
 
         int x0o = (int)float.Floor(u0 * w);
         int x1o = (int)float.Ceiling(u1 * w);
@@ -253,7 +270,7 @@ public sealed partial class WorldRenderer {
                 if (yy < 0) yy += h;
 
                 var pixel = img[yy * w + xx];
-                if (pixel.A == 0) {
+                if (!pixel) {
                     continue; // transparent
                 }
 
@@ -271,27 +288,11 @@ public sealed partial class WorldRenderer {
                 // TODO don't shrink if the adjacent is also a cloud? this works but breaks at diagonals.
                 // i dont think this is solvable without subdividing or some shit, good enough for now
 
-                idt.setColour(cc[0]);
-
-                // top
-                idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
-                idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
-                idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
-                idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
-
-                idt.setColour(cc[3]);
-
-                // bottom
-                idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
-                idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
-                idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
-                idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
-
                 // north
                 idt.setColour(cc[2]);
                 int adj = yy + 1;
-                if (adj >= h) adj = 0;
-                if (img[adj * w + xx].A == 0) {
+                adj = adj >= h ? 0 : adj;
+                if (!img[adj * w + xx]) {
                     idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
                     idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
                     idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
@@ -302,8 +303,8 @@ public sealed partial class WorldRenderer {
                 // south
                 idt.setColour(cc[2]);
                 adj = yy - 1;
-                if (adj < 0) adj = h - 1;
-                if (img[adj * w + xx].A == 0) {
+                adj = adj < 0 ? h - 1 : adj;
+                if (!img[adj * w + xx]) {
                     idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
                     idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
                     idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
@@ -313,8 +314,8 @@ public sealed partial class WorldRenderer {
                 // east
                 idt.setColour(cc[1]);
                 adj = xx + 1;
-                if (adj >= w) adj = 0;
-                if (img[yy * w + adj].A == 0) {
+                adj = adj >= w ? 0 : adj;
+                if (!img[yy * w + adj]) {
                     idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
                     idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
                     idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
@@ -324,8 +325,8 @@ public sealed partial class WorldRenderer {
                 // west
                 idt.setColour(cc[1]);
                 adj = xx - 1;
-                if (adj < 0) adj = w - 1;
-                if (img[yy * w + adj].A == 0) {
+                adj = adj < 0 ? w - 1 : adj;
+                if (!img[yy * w + adj]) {
                     idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
                     idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
                     idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
@@ -338,26 +339,23 @@ public sealed partial class WorldRenderer {
     private void addCloud4D(float x0, float y0, float z0, float x1, float y1, float z1,
         float scale, float zScroll, Color cloudColour, float ex = 1f) {
         // shades
-        Span<float> shades = [
-            1.0f, // top
-            0.8f, // north/south
-            0.7f, // east/west
-            0.6f // bottom
-        ];
-
         Span<Color> cc = [
-            cloudColour * new Color(shades[0], shades[0], shades[0], 1.0f),
-            cloudColour * new Color(shades[1], shades[1], shades[1], 1.0f),
-            cloudColour * new Color(shades[2], shades[2], shades[2], 1.0f),
-            cloudColour * new Color(shades[3], shades[3], shades[3], 1.0f)
+            cloudColour * new Color(1.0f, 1.0f, 1.0f, 1.0f),
+            cloudColour * new Color(0.8f, 0.8f, 0.8f, 1.0f),
+            cloudColour * new Color(0.7f, 0.7f, 0.7f, 1.0f),
+            cloudColour * new Color(0.6f, 0.6f, 0.6f, 1.0f)
         ];
 
         Span<bool> adjs = stackalloc bool[4];
 
         var idt = cloudidt;
         var tex = Game.textures.cloudTexture;
-        int w = (int)tex.width;
-        int h = (int)tex.height;
+        //int w = (int)tex.width;
+        //int h = (int)tex.height;
+
+        // if not, this code is fucked
+        Debug.Assert(tex.width == 256);
+        Debug.Assert(tex.height == 256);
 
         // calc visible texture pixel bounds
         float u0 = x0 / scale;
@@ -365,26 +363,26 @@ public sealed partial class WorldRenderer {
         float v0 = (z0 + zScroll) / scale;
         float v1 = (z1 + zScroll) / scale;
 
-        int x0o = (int)float.Floor(u0 * w);
-        int x1o = (int)float.Ceiling(u1 * w);
-        int y0o = (int)float.Floor(v0 * h);
-        int y1o = (int)float.Ceiling(v1 * h);
+        int x0o = (int)float.Floor(u0 * 256);
+        int x1o = (int)float.Ceiling(u1 * 256);
+        int y0o = (int)float.Floor(v0 * 256);
+        int y1o = (int)float.Ceiling(v1 * 256);
 
-        float pw = scale / w;
-        float pd = scale / h;
+        float pw = scale * (1 / 256f);
+        float pd = scale * (1 / 256f);
 
         var img = pixels;
 
         for (int tx = x0o; tx < x1o; tx++) {
             for (int ty = y0o; ty < y1o; ty++) {
                 // wrap
-                int xx = tx % w;
-                int yy = ty % h;
-                if (xx < 0) xx += w;
-                if (yy < 0) yy += h;
+                int xx = tx & 0xFF;
+                int yy = ty & 0xFF;
+                xx = xx < 0 ? 256 + xx : xx;
+                yy = yy < 0 ? 256 + yy : yy;
 
-                var pixel = img[yy * w + xx];
-                if (pixel.A == 0) {
+                var pixel = img[(yy << 8) + xx];
+                if (!pixel) {
                     continue; // transparent
                 }
 
@@ -392,23 +390,23 @@ public sealed partial class WorldRenderer {
 
                 // west
                 int adj = xx - 1;
-                if (adj < 0) adj = w - 1;
-                adjs[0] = img[yy * w + adj].A == 0;
+                adj = adj < 0 ? 256 - 1 : adj;
+                adjs[0] = !img[(yy << 8) + adj];
 
                 // east
                 adj = xx + 1;
-                if (adj >= w) adj = 0;
-                adjs[1] = img[yy * w + adj].A == 0;
+                adj = adj >= 256 ? 0 : adj;
+                adjs[1] = !img[(yy << 8) + adj];
 
                 // south
                 adj = yy - 1;
-                if (adj < 0) adj = h - 1;
-                adjs[2] = img[adj * w + xx].A == 0;
+                adj = adj < 0 ? 256 - 1 : adj;
+                adjs[2] = !img[(adj << 8) + xx];
 
                 // north
                 adj = yy + 1;
-                if (adj >= h) adj = 0;
-                adjs[3] = img[adj * w + xx].A == 0;
+                adj = adj >= 256 ? 0 : adj;
+                adjs[3] = !img[(adj << 8) + xx];
 
                 float wx = tx * pw;
                 float wz = ty * pd - zScroll;
@@ -435,18 +433,14 @@ public sealed partial class WorldRenderer {
                 float wy1 = y1 - (cThickness) * ((1 - ex) / 2);
 
                 // UVs for horizontal faces (just sample centre of pixel)
-                float u = (tx + 0.5f) / w;
-                float v = (ty + 0.5f) / h;
+                float u = (tx + 0.5f) * (1 / 256f);
+                float v = (ty + 0.5f) * (1 / 256f);
 
                 // TODO don't shrink if the adjacent is also a cloud
 
                 idt.setColour(cc[0]);
 
                 // top face
-                /*idt.addVertexE(new BlockVertexTinted(wwx0, wy1, wwz0, u, v));
-                idt.addVertexE(new BlockVertexTinted(wwx1, wy1, wwz0, u, v));
-                idt.addVertexE(new BlockVertexTinted(wwx1, wy1, wwz1, u, v));
-                idt.addVertexE(new BlockVertexTinted(wwx0, wy1, wwz1, u, v));*/
 
                 ref BlockVertexTinted vt = ref idt.getRefE();
                 vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
@@ -460,10 +454,6 @@ public sealed partial class WorldRenderer {
                 idt.setColour(cc[3]);
 
                 // bottom face
-                /*idt.addVertexE(new BlockVertexTinted(wwx0, wy0, wwz1, u, v));
-                idt.addVertexE(new BlockVertexTinted(wwx1, wy0, wwz1, u, v));
-                idt.addVertexE(new BlockVertexTinted(wwx1, wy0, wwz0, u, v));
-                idt.addVertexE(new BlockVertexTinted(wwx0, wy0, wwz0, u, v));*/
                 vt = ref idt.getRefE();
                 vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
                 vt = ref idt.getRefE();
@@ -477,12 +467,8 @@ public sealed partial class WorldRenderer {
 
                 idt.setColour(cc[1]);
                 int adjX = xx - 1;
-                if (adjX < 0) adjX = w - 1;
-                if (img[yy * w + adjX].A == 0) {
-                    /*idt.addVertexE(new BlockVertexTinted(wwx0, wy0, wwz1, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx0, wy0, wwz0, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx0, wy1, wwz0, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx0, wy1, wwz1, u, v));*/
+                adjX = adjX < 0 ? 256 - 1 : adjX;
+                if (!img[(yy << 8) + adjX]) {
                     vt = ref idt.getRefE();
                     vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
                     vt = ref idt.getRefE();
@@ -497,12 +483,8 @@ public sealed partial class WorldRenderer {
 
                 idt.setColour(cc[1]);
                 adjX = xx + 1;
-                if (adjX >= w) adjX = 0;
-                if (img[yy * w + adjX].A == 0) {
-                    /*idt.addVertexE(new BlockVertexTinted(wwx1, wy0, wwz0, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy0, wwz1, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy1, wwz1, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy1, wwz0, u, v));*/
+                adjX = adjX >= 256 ? 0 : adjX;
+                if (!img[(yy << 8) + adjX]) {
                     vt = ref idt.getRefE();
                     vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
                     vt = ref idt.getRefE();
@@ -519,12 +501,8 @@ public sealed partial class WorldRenderer {
 
                 idt.setColour(cc[2]);
                 int adjY = yy - 1;
-                if (adjY < 0) adjY = h - 1;
-                if (img[adjY * w + xx].A == 0) {
-                    /*idt.addVertexE(new BlockVertexTinted(wwx0, wy0, wwz0, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy0, wwz0, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy1, wwz0, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx0, wy1, wwz0, u, v));*/
+                adjY = adjY < 0 ? 256 - 1 : adjY;
+                if (!img[(adjY << 8) + xx]) {
                     vt = ref idt.getRefE();
                     vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
                     vt = ref idt.getRefE();
@@ -539,12 +517,8 @@ public sealed partial class WorldRenderer {
 
                 idt.setColour(cc[2]);
                 adjY = yy + 1;
-                if (adjY >= h) adjY = 0;
-                if (img[adjY * w + xx].A == 0) {
-                    /*idt.addVertexE(new BlockVertexTinted(wwx0, wy1, wwz1, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy1, wwz1, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx1, wy0, wwz1, u, v));
-                    idt.addVertexE(new BlockVertexTinted(wwx0, wy0, wwz1, u, v));*/
+                adjY = adjY >= 256 ? 0 : adjY;
+                if (!img[(adjY << 8) + xx]) {
                     vt = ref idt.getRefE();
                     vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
                     vt = ref idt.getRefE();
@@ -624,18 +598,18 @@ public sealed partial class WorldRenderer {
         // build all 4 layers into one buffer, then draw with offsets
         idt.begin(PrimitiveType.Quads);
 
-        var tex = Game.textures.cloudTexture;
+        // calc visible pixel range
+        int x0o = (int)float.Floor((x0 / cscale) * 256);
+        int x1o = (int)float.Ceiling((x1 / cscale) * 256);
+        int y0o = (int)float.Floor(((z0 + zScroll) / cscale) * 256);
+        int y1o = (int)float.Ceiling(((z1 + zScroll) / cscale) * 256);
 
-        // reserve space for ALL 4 layers upfront
-        int x0o = (int)float.Floor((x0 / cscale) * (int)tex.width);
-        int x1o = (int)float.Ceiling((x1 / cscale) * (int)tex.width);
-        int y0o = (int)float.Floor(((z0 + zScroll) / cscale) * (int)tex.height);
-        int y1o = (int)float.Ceiling(((z1 + zScroll) / cscale) * (int)tex.height);
+        int visiblePixels = (x1o - x0o) * (y1o - y0o);
+        const float totalPixels = 256 * 256;
 
-        // todo some of this is unnecessary. can you find it? :D
-        // I know what it is and I didn't fix it on purpose, but if you find it, you get a free hug! <3
-        int vertsPerLayer = (x1o - x0o) * (y1o - y0o) * 24;
-        idt.reserve(vertsPerLayer * 4);
+        // scale cloudMaxVerts by visible area ratio
+        int estimatedVerts = (int)(long)(cloudMaxVerts * visiblePixels / totalPixels * 1.33f); // this shouldn't crash IN THEORY SO HIGHLY OVERALLOCATE
+        idt.reserve(estimatedVerts * 4);
 
         Span<int> counts = stackalloc int[4];
         int li = 0;

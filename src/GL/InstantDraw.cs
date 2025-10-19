@@ -456,9 +456,17 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
     /** Pre-reserve capacity for known vertex count - zero overhead addVertex after this */
     public void reserve(int count) {
-        while (count > maxVertices) {
-            resizeStorage();
+        if (count <= maxVertices) {
+            return;
         }
+
+        // find next power of 2
+        int newSize = maxVertices;
+        while (newSize < count) newSize *= 2;
+
+        // resize once!
+        maxVertices = newSize / 2; // compensate for resizeStorage doubling
+        resizeStorage();
     }
 
     public void reserve(int count, int mult) {
@@ -657,6 +665,9 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         else {
             GL.DrawArrays(effectiveMode, finalOffset, (uint)count);
         }
+
+        //Console.Out.WriteLine(maxVertices);
+        //Console.Out.WriteLine("C:" + currentVertex);
     }
 
     /** Cleanup after range rendering */
@@ -695,7 +706,7 @@ public class InstantDrawColour(int maxVertices) : InstantDraw<VertexTinted>(maxV
         uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
 
 
-        // Initialize fog as disabled
+        // Initialise fog as disabled
         instantShader.setUniform(uFogEnabled, false);
 
         // Set default fog type

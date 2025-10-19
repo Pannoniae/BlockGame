@@ -82,7 +82,7 @@ public sealed partial class WorldRenderer {
     }
 
     private void renderSkyDome(Color horizonColour, Color skyColour, Color underSkyColour) {
-        const float radius = 128f;
+        const float radius = 124f;
         const float topHeight = 16f;
         const float bottomHeight = -64f;
         const int segments = 24;
@@ -96,9 +96,9 @@ public sealed partial class WorldRenderer {
             float v = (MathF.PI * 2f / segments) * i;
             float vn = (MathF.PI * 2f / segments) * (i + 1);
 
-            var v1 = new Vector3(MathF.Sin(v) * radius, 0, MathF.Cos(v) * radius);
+            var v1 = new Vector3(float.Sin(v) * radius, 0, float.Cos(v) * radius);
             var v2 = new Vector3(0, topHeight, 0);
-            var v3 = new Vector3(MathF.Sin(vn) * radius, 0, MathF.Cos(vn) * radius);
+            var v3 = new Vector3(float.Sin(vn) * radius, 0, float.Cos(vn) * radius);
 
             idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, horizonColour));
             idc.addVertex(new VertexTinted(v2.X, v2.Y, v2.Z, skyColour));
@@ -111,8 +111,8 @@ public sealed partial class WorldRenderer {
             float vn = (MathF.PI * 2f / segments) * (i + 1);
 
             var v1 = new Vector3(0, bottomHeight, 0);
-            var v2 = new Vector3(MathF.Sin(v) * radius, 0, MathF.Cos(v) * radius);
-            var v3 = new Vector3(MathF.Sin(vn) * radius, 0, MathF.Cos(vn) * radius);
+            var v2 = new Vector3(float.Sin(v) * radius, 0, float.Cos(v) * radius);
+            var v3 = new Vector3(float.Sin(vn) * radius, 0, float.Cos(vn) * radius);
 
             idc.addVertex(new VertexTinted(v1.X, v1.Y, v1.Z, underSkyColour));
             idc.addVertex(new VertexTinted(v2.X, v2.Y, v2.Z, horizonColour));
