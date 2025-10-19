@@ -56,7 +56,7 @@ public class GUI {
     private int blockTexture = 0;
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
-    private static readonly Color bgGray = new Color(192, 192, 192, 255);
+    private static readonly Color bgGray = new Color(144, 144, 144, 255);
     private static readonly Color skyc = Color.CornflowerBlue;
 
     public static bool WIREFRAME = false;
