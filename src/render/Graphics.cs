@@ -269,7 +269,7 @@ public class Graphics : IDisposable {
 
     public void resize(Vector2D<int> size) {
         setViewport(0, 0, size.X, size.Y);
-        var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1f, 1f);
+        var ortho = Matrix4x4.CreateOrthographicOffCenter(0, size.X, size.Y, 0, -1000f, 1000f);
 
         batchShader.World = Matrix4x4.Identity;
         batchShader.View = Matrix4x4.Identity;

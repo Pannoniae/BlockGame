@@ -499,7 +499,7 @@ public class GUI {
             position.Y * guiScale,
             position.Width * guiScale,
             position.Height * guiScale);
-        immediatetb.Draw(texture, np, source, Color.White, guiScale);
+        immediatetb.Draw(texture, np, source, Color.White);
     }
 
 

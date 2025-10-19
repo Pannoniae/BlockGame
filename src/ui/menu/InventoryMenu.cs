@@ -6,6 +6,7 @@ using BlockGame.util;
 using BlockGame.world.item.inventory;
 using Molten;
 using Silk.NET.Input;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.ui.menu;
 
