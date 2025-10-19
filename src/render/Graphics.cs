@@ -34,6 +34,8 @@ public class Graphics : IDisposable {
 
     public readonly InstantShader instantEntityShader;
 
+    public readonly InstantShader cloud5DShader;
+
     // Post-processing shaders
     public readonly Shader fxaaShader;
 
@@ -90,6 +92,9 @@ public class Graphics : IDisposable {
         instantEntityShader = new InstantShader(Game.GL, nameof(instantEntityShader),
             "shaders/common/base.vert", "shaders/common/base.frag",
             [new Definition("HAS_NORMALS"), new Definition("HAS_TEXTURE")]);
+
+        cloud5DShader = new InstantShader(Game.GL, nameof(cloud5DShader),
+            "shaders/world/cloud5d.vert", "shaders/world/cloud5d.frag");
 
         fxaaShader =
             new Shader(Game.GL, nameof(fxaaShader), "shaders/postprocess/post.vert", "shaders/postprocess/fxaa_only.frag");
@@ -361,6 +366,7 @@ public class Graphics : IDisposable {
         instantTextureShader.Dispose();
         instantColourShader.Dispose();
         instantEntityShader.Dispose();
+        cloud5DShader.Dispose();
         fxaaShader.Dispose();
         ssaaShader.Dispose();
         simplePostShader.Dispose();

@@ -22,6 +22,7 @@ public sealed partial class WorldRenderer {
 
     // this is separate to not fuck the main one up!
     public FastInstantDrawTexture cloudidt = new(16384);
+    public Cloud5DInstantDraw cloud5Didt = new(16384);
 
 
     private bool[] pixels;
@@ -43,6 +44,9 @@ public sealed partial class WorldRenderer {
                 break;
             case 3:
                 renderClouds4D(interp);
+                break;
+            case 4:
+                renderClouds5D(interp);
                 break;
         }
     }
@@ -542,6 +546,207 @@ public sealed partial class WorldRenderer {
         }
     }
 
+    private void addCloud5D(float x0, float y0, float z0, float x1, float y1, float z1,
+        float scale, float zScroll, Color cloudColour, float ex = 1f) {
+        // shades
+        Span<Color> cc = [
+            cloudColour * new Color(1.0f, 1.0f, 1.0f, 1.0f),
+            cloudColour * new Color(1.0f, 1.0f, 1.0f, 1.0f),
+            cloudColour * new Color(1.0f, 1.0f, 1.0f, 1.0f),
+            cloudColour * new Color(1.0f, 1.0f, 1.0f,1.0f)
+        ];
+
+        Span<bool> adjs = stackalloc bool[4];
+
+        var idt = cloud5Didt;
+        var tex = Game.textures.cloudTexture;
+        //int w = (int)tex.width;
+        //int h = (int)tex.height;
+
+        // if not, this code is fucked
+        Debug.Assert(tex.width == 256);
+        Debug.Assert(tex.height == 256);
+
+        // calc visible texture pixel bounds
+        float u0 = x0 / scale;
+        float u1 = x1 / scale;
+        float v0 = (z0 + zScroll) / scale;
+        float v1 = (z1 + zScroll) / scale;
+
+        int x0o = (int)float.Floor(u0 * 256);
+        int x1o = (int)float.Ceiling(u1 * 256);
+        int y0o = (int)float.Floor(v0 * 256);
+        int y1o = (int)float.Ceiling(v1 * 256);
+
+        float pw = scale * (1 / 256f);
+        float pd = scale * (1 / 256f);
+
+        var img = pixels;
+
+        for (int tx = x0o; tx < x1o; tx++) {
+            for (int ty = y0o; ty < y1o; ty++) {
+                // wrap
+                int xx = tx & 0xFF;
+                int yy = ty & 0xFF;
+                xx = xx < 0 ? 256 + xx : xx;
+                yy = yy < 0 ? 256 + yy : yy;
+
+                var pixel = img[(yy << 8) + xx];
+                if (!pixel) {
+                    continue; // transparent
+                }
+
+                // set up adjacencies
+
+                // west
+                int adj = xx - 1;
+                adj = adj < 0 ? (256 - 1) : adj;
+                adjs[0] = !img[(yy << 8) + adj];
+
+                // east
+                adj = xx + 1;
+                adj = adj >= 256 ? 0 : adj;
+                adjs[1] = !img[(yy << 8) + adj];
+
+                // south
+                adj = yy - 1;
+                adj = adj < 0 ? (256 - 1) : adj;
+                adjs[2] = !img[(adj << 8) + xx];
+
+                // north
+                adj = yy + 1;
+                adj = adj >= 256 ? 0 : adj;
+                adjs[3] = !img[(adj << 8) + xx];
+
+                float wx = tx * pw;
+                float wz = ty * pd - zScroll;
+                float wx0 = wx;
+                float wx1 = wx + pw;
+                float wz0 = wz;
+                float wz1 = wz + pd;
+
+                // shrink to ex times in the pixel
+                float wwx0 = (wx + (pw * (1 - ex) / 2));
+                float wwx1 = (wx + pw - (pw * (1 - ex) / 2));
+                float wwz0 = (wz + (pd * (1 - ex) / 2));
+                float wwz1 = (wz + pd - (pd * (1 - ex) / 2));
+
+                // if adjacent is cloud, DON'T SHRINK, otherwise do
+                wwx0 = adjs[0] ? wwx0 : wx0;
+                wwx1 = adjs[1] ? wwx1 : wx1;
+                wwz0 = adjs[2] ? wwz0 : wz0;
+                wwz1 = adjs[3] ? wwz1 : wz1;
+
+
+                // also shrink y! (between cloudHeight and cloudHeight + cloudThickness)
+                float wy0 = y0 + (cThickness) * ((1 - ex) / 2);
+                float wy1 = y1 - (cThickness) * ((1 - ex) / 2);
+
+                // UVs for horizontal faces (just sample centre of pixel)
+                float u = (tx + 0.5f) * (1 / 256f);
+                float v = (ty + 0.5f) * (1 / 256f);
+
+                // TODO don't shrink if the adjacent is also a cloud
+
+                //idt.setColour();
+                var tint = cc[0];
+
+                // top face
+
+                ref BlockVertexTinted vt = ref idt.getRefE();
+                vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                vt = ref idt.getRefE();
+                vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                vt = ref idt.getRefE();
+                vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                vt = ref idt.getRefE();
+                vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+
+                //idt.setColour(cc[3]);
+                tint = cc[3];
+
+                // bottom face
+                vt = ref idt.getRefE();
+                vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                vt = ref idt.getRefE();
+                vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                vt = ref idt.getRefE();
+                vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                vt = ref idt.getRefE();
+                vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+
+                // west
+
+                idt.setColour(cc[1]);
+                int adjX = xx - 1;
+                adjX = adjX < 0 ? (256 - 1) : adjX;
+                if (!img[(yy << 8) + adjX]) {
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                }
+
+                // east
+
+                idt.setColour(cc[1]);
+                adjX = xx + 1;
+                adjX = adjX >= 256 ? 0 : adjX;
+                if (!img[(yy << 8) + adjX]) {
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                }
+
+                // check adjacent pixels for side faces
+
+                // south
+                //idt.setColour(cc[2]);
+                tint = cc[2];
+
+                idt.setColour(cc[2]);
+                int adjY = yy - 1;
+                adjY = adjY < 0 ? (256 - 1) : adjY;
+                if (!img[(adjY << 8) + xx]) {
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
+                }
+
+                // north
+
+                idt.setColour(cc[2]);
+                adjY = yy + 1;
+                adjY = adjY >= 256 ? 0 : adjY;
+                if (!img[(adjY << 8) + xx]) {
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+                    vt = ref idt.getRefE();
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
+
+                }
+            }
+        }
+    }
+
     /**
      * Same shit as 3D but hyper
      */
@@ -635,6 +840,119 @@ public sealed partial class WorldRenderer {
         // draw 4 times with offsets
         int offset = 0;
         for (int layer = 0; layer < 4; layer++) {
+            // PASS 1: depth-only
+            GL.ColorMask(false, false, false, false);
+            idt.renderRange(offset, counts[layer]);
+
+            // PASS 2: colour
+            GL.ColorMask(true, true, true, true);
+            idt.renderRange(offset, counts[layer]);
+
+            offset += counts[layer];
+        }
+
+        idt.finishReuse();
+
+        mat.pop();
+
+        idt.setColour(Color.White);
+        idt.enableFog(false);
+        GL.Enable(EnableCap.CullFace);
+    }
+
+    /** 5D clouds - shader-based parallax & noise for dense volumetric look */
+    private void renderClouds5D(double interp) {
+        GL.Disable(EnableCap.CullFace);
+
+        var idt = cloud5Didt;
+        var mat = Game.graphics.model;
+        var proj = Game.camera.getProjectionMatrix();
+        var view = Game.camera.getViewMatrix(interp);
+
+        // lighting
+        var horizonColour = world.getHorizonColour(world.worldTick);
+        var cc = getLightColour(15, 0);
+
+        var cloudColour = new Color(
+            (byte)(horizonColour.R * 0.2f + cc.R * 0.8f),
+            (byte)(horizonColour.G * 0.2f + cc.G * 0.8f),
+            (byte)(horizonColour.B * 0.2f + cc.B * 0.8f),
+            (byte)255
+        );
+
+        Game.graphics.tex(0, Game.textures.cloudTexture);
+
+        mat.push();
+        mat.loadIdentity();
+
+        // centre box on player
+        var pp = Vector3D.Lerp(Game.player.prevPosition, Game.player.position, interp);
+        float px = (float)pp.X;
+        float pz = (float)pp.Z;
+
+        float zScroll = (float)((world.worldTick + interp) * scrollSpeed);
+        zScroll %= (cscale * 2);
+
+        // cap it to render distance as usual
+        var cext = 64 + float.Min(WorldRenderer.cext, Settings.instance.renderDistance * 16);
+
+        // box bounds
+        float x0 = px - cext;
+        float x1 = px + cext;
+        float y0 = cheight;
+        float y1 = cheight + cThickness;
+        float z0 = pz - cext;
+        float z1 = pz + cext;
+
+        idt.model(mat);
+        idt.view(view);
+        idt.proj(proj);
+
+        // set shader uniforms
+        idt.setCameraPos(new Vector3(px, (float)pp.Y, pz));
+        idt.setWorldTick((float)(world.worldTick + interp));
+
+        cloudColour.A = 120;
+        idt.setColour(cloudColour);
+        idt.enableFog(true);
+        idt.fogColor(new Vector4(cloudColour.R / 255f, cloudColour.G / 255f, cloudColour.B / 255f, 0));
+        idt.setFogType(FogType.Linear);
+        idt.fogDistance(0, 64 + float.Min(Settings.instance.renderDistance * 16, 480));
+
+        // build all 4 layers into one buffer
+        idt.begin(PrimitiveType.Quads);
+
+        // calc visible pixel range
+        int x0o = (int)float.Floor((x0 * (1 / cscale * 256)));
+        int x1o = (int)float.Ceiling((x1 * (1 / cscale * 256)));
+        int y0o = (int)float.Floor(((z0 + zScroll) * (1 / cscale * 256)));
+        int y1o = (int)float.Ceiling(((z1 + zScroll) * (1 / cscale * 256)));
+
+        int visiblePixels = (x1o - x0o) * (y1o - y0o);
+        const float totalPixels = 256 * 256;
+
+        int estimatedVerts = (int)(long)(cloudMaxVerts * visiblePixels / totalPixels * 1.33f);
+        idt.reserve(estimatedVerts * 4);
+
+        Span<int> counts = stackalloc int[4];
+        int li = 0;
+
+        // 4 layers with tighter spacing than 4D
+        for (float i = 0.4f; i <= 1 + Constants.epsilonF; i += 0.2f) {
+            int startVertex = idt.currentVertex;
+            addCloud5D(x0, y0, z0, x1, y1, z1, cscale, zScroll, cloudColour, i);
+            counts[li++] = idt.currentVertex - startVertex;
+        }
+
+        // upload once
+        idt.reuseUpload();
+
+        // draw 4 times with offsets
+        int offset = 0;
+        for (int layer = 0; layer < 4; layer++) {
+            // set layer index for shader
+            idt.setLayerIndex(layer);
+
             // PASS 1: depth-only
             GL.ColorMask(false, false, false, false);
             idt.renderRange(offset, counts[layer]);

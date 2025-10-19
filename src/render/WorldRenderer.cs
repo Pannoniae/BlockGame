@@ -95,6 +95,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var mode = Settings.instance.rendererMode;
 
         cloudidt.setup();
+        cloud5Didt.setup();
 
         // load cloud texture
         var p = Game.textures.cloudTexture.imageData.Span;

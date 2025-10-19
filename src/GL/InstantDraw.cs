@@ -841,3 +841,48 @@ public class InstantDrawEntity(int maxVertices) : InstantDraw<EntityVertex>(maxV
         currentVertex++;
     }
 }
+
+/** 5D cloud renderer - extends FastInstantDrawTexture with extra uniforms for parallax and noise */
+public class Cloud5DInstantDraw(int maxVertices) : FastInstantDrawTexture(maxVertices) {
+    protected int uCameraPos;
+    protected int uLayerIndex;
+    protected int uWorldTick;
+
+    public override void setup() {
+        base.setup();
+
+        // swap to cloud5D shader and rebind uniforms
+        instantShader = Game.graphics.cloud5DShader;
+
+        instantTexture = instantShader.getUniformLocation("tex");
+        uMVP = instantShader.getUniformLocation(nameof(uMVP));
+        uModelView = instantShader.getUniformLocation(nameof(uModelView));
+        uFogColour = instantShader.getUniformLocation(nameof(fogColour));
+        uFogStart = instantShader.getUniformLocation(nameof(fogStart));
+        uFogEnd = instantShader.getUniformLocation(nameof(fogEnd));
+        uFogEnabled = instantShader.getUniformLocation(nameof(fogEnabled));
+        uFogType = instantShader.getUniformLocation(nameof(fogType));
+        uFogDensity = instantShader.getUniformLocation(nameof(fogDensity));
+
+        // cloud5d-specific uniforms
+        //uCameraPos = instantShader.getUniformLocation("cameraPos");
+        uLayerIndex = instantShader.getUniformLocation("layerIndex");
+        uWorldTick = instantShader.getUniformLocation("worldTick");
+
+        instantShader.setUniform(instantTexture, 0);
+        instantShader.setUniform(uFogType, (int)FogType.Linear);
+        instantShader.setUniform(uFogDensity, fogDensity);
+    }
+
+    public void setCameraPos(Vector3 pos) {
+        //instantShader.setUniform(uCameraPos, pos);
+    }
+
+    public void setLayerIndex(float index) {
+        instantShader.setUniform(uLayerIndex, index);
+    }
+
+    public void setWorldTick(float tick) {
+        instantShader.setUniform(uWorldTick, tick);
+    }
+}
