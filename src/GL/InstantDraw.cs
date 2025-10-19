@@ -657,8 +657,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
     public void renderRange(int offset, int count) {
         if (count == 0) return;
 
-        // add region offset to caller's offset
-        regionOffset = currentRegion * maxVertices;
+        // use existing regionOffset (set at end of previous frame / in reuseUpload!!)
         int finalOffset = regionOffset + offset;
 
         var effectiveMode = vertexType;
@@ -666,7 +665,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             unsafe {
                 effectiveMode = PrimitiveType.Triangles;
                 GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
-                uint indexCount = (uint)(count * (6 / 4));
+                uint indexCount = (uint)(count * (6 / 4f));
                 Game.GL.DrawElementsBaseVertex(effectiveMode, indexCount, DrawElementsType.UnsignedInt,
                     (void*)0, finalOffset);
             }

@@ -316,7 +316,7 @@ public class VideoSettingsMenu : Menu {
         clouds.topCentre();
         clouds.clicked += _ => { settings.cloudMode = clouds.getIndex(); };
         clouds.tooltip =
-            "Cloud rendering mode.\nOff: No clouds\nSimple: Flat clouds\nFancy: 3D clouds\nHypercube: 4D clouds (SLOW!)";
+            "Cloud rendering mode.\nOff: No clouds\nSimple: 2D clouds\nFancy: 3D clouds\nHypercube: 4D clouds (SLOW!)";
         settingElements.Add(clouds);
         addElement(clouds);
 

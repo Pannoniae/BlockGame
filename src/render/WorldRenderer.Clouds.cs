@@ -6,7 +6,6 @@ using BlockGame.ui;
 using BlockGame.util;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
-using SixLabors.ImageSharp.PixelFormats;
 using Debug = System.Diagnostics.Debug;
 
 namespace BlockGame.render;
@@ -29,6 +28,12 @@ public sealed partial class WorldRenderer {
     private int cloudMaxVerts; // pre-calculated max verts
 
     private void renderClouds(double interp) {
+
+        // if below 4 skip it
+        if (Settings.instance.renderDistance <= 4) {
+            return;
+        }
+
         switch (Settings.instance.cloudMode) {
             case 1:
                 renderClouds2D(interp);
@@ -390,7 +395,7 @@ public sealed partial class WorldRenderer {
 
                 // west
                 int adj = xx - 1;
-                adj = adj < 0 ? 256 - 1 : adj;
+                adj = adj < 0 ? (256 - 1) : adj;
                 adjs[0] = !img[(yy << 8) + adj];
 
                 // east
@@ -400,7 +405,7 @@ public sealed partial class WorldRenderer {
 
                 // south
                 adj = yy - 1;
-                adj = adj < 0 ? 256 - 1 : adj;
+                adj = adj < 0 ? (256 - 1) : adj;
                 adjs[2] = !img[(adj << 8) + xx];
 
                 // north
@@ -438,45 +443,47 @@ public sealed partial class WorldRenderer {
 
                 // TODO don't shrink if the adjacent is also a cloud
 
-                idt.setColour(cc[0]);
+                //idt.setColour();
+                var tint = cc[0];
 
                 // top face
 
                 ref BlockVertexTinted vt = ref idt.getRefE();
-                vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                 vt = ref idt.getRefE();
-                vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                 vt = ref idt.getRefE();
-                vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                 vt = ref idt.getRefE();
-                vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
 
-                idt.setColour(cc[3]);
+                //idt.setColour(cc[3]);
+                tint = cc[3];
 
                 // bottom face
                 vt = ref idt.getRefE();
-                vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                 vt = ref idt.getRefE();
-                vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                 vt = ref idt.getRefE();
-                vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                 vt = ref idt.getRefE();
-                vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
 
                 // west
 
                 idt.setColour(cc[1]);
                 int adjX = xx - 1;
-                adjX = adjX < 0 ? 256 - 1 : adjX;
+                adjX = adjX < 0 ? (256 - 1) : adjX;
                 if (!img[(yy << 8) + adjX]) {
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                 }
 
                 // east
@@ -486,31 +493,33 @@ public sealed partial class WorldRenderer {
                 adjX = adjX >= 256 ? 0 : adjX;
                 if (!img[(yy << 8) + adjX]) {
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                 }
 
                 // check adjacent pixels for side faces
 
                 // south
+                //idt.setColour(cc[2]);
+                tint = cc[2];
 
                 idt.setColour(cc[2]);
                 int adjY = yy - 1;
-                adjY = adjY < 0 ? 256 - 1 : adjY;
+                adjY = adjY < 0 ? (256 - 1) : adjY;
                 if (!img[(adjY << 8) + xx]) {
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz0; vt.u = u; vt.v = v; vt.c = tint;
                 }
 
                 // north
@@ -520,13 +529,13 @@ public sealed partial class WorldRenderer {
                 adjY = adjY >= 256 ? 0 : adjY;
                 if (!img[(adjY << 8) + xx]) {
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy1; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx1; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
                     vt = ref idt.getRefE();
-                    vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = idt.tint;
+                    vt.x = wwx0; vt.y = wy0; vt.z = wwz1; vt.u = u; vt.v = v; vt.c = tint;
 
                 }
             }
@@ -599,10 +608,10 @@ public sealed partial class WorldRenderer {
         idt.begin(PrimitiveType.Quads);
 
         // calc visible pixel range
-        int x0o = (int)float.Floor((x0 / cscale) * 256);
-        int x1o = (int)float.Ceiling((x1 / cscale) * 256);
-        int y0o = (int)float.Floor(((z0 + zScroll) / cscale) * 256);
-        int y1o = (int)float.Ceiling(((z1 + zScroll) / cscale) * 256);
+        int x0o = (int)float.Floor((x0 * (1 / cscale * 256)));
+        int x1o = (int)float.Ceiling((x1 * (1 / cscale * 256)));
+        int y0o = (int)float.Floor(((z0 + zScroll) * (1 / cscale * 256)));
+        int y1o = (int)float.Ceiling(((z1 + zScroll) * (1 / cscale * 256)));
 
         int visiblePixels = (x1o - x0o) * (y1o - y0o);
         const float totalPixels = 256 * 256;
