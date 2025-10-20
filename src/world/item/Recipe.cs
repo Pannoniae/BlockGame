@@ -11,6 +11,11 @@ public class Recipe {
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
     public static Recipe STICK;
+    public static Recipe CHEST;
+    public static Recipe GOLD_CANDY;
+    public static Recipe REALGAR_CANDY;
+    public static Recipe DIAMOND_CANDY;
+
 
 
     public static readonly List<Recipe> recipes = [];
@@ -46,29 +51,49 @@ public class Recipe {
         STICK.shape(01_01, 2);
         STICK.ingredients(Item.block(Blocks.PLANKS));
 
+        CHEST = register(new ItemStack(Item.block(Blocks.CHEST), 1));
+        CHEST.shape(111_101_111, 3);
+        CHEST.ingredients(Item.block(Blocks.PLANKS));
+
+        GOLD_CANDY = register(new ItemStack(Item.block(Blocks.GOLD_CANDY), 1));
+        GOLD_CANDY.shape(10_02, 2);
+        GOLD_CANDY.ingredients(Item.block(Blocks.CANDY), Item.GOLD_INGOT);
+
+
         // tools
         tool(Item.WOOD_PICKAXE, Item.block(Blocks.PLANKS), 111_020_020);
-        tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 011_021_020);
         tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 110_120_020);
         tool(Item.WOOD_SHOVEL, Item.block(Blocks.PLANKS), 010_020_020);
         tool(Item.WOOD_SWORD, Item.block(Blocks.PLANKS), 010_010_020);
 
         tool(Item.STONE_PICKAXE, Item.block(Blocks.STONE), 111_020_020);
-        tool(Item.STONE_AXE, Item.block(Blocks.STONE), 011_021_020);
         tool(Item.STONE_AXE, Item.block(Blocks.STONE), 110_120_020);
         tool(Item.STONE_SHOVEL, Item.block(Blocks.STONE), 010_020_020);
         tool(Item.STONE_SWORD, Item.block(Blocks.STONE), 010_010_020);
         tool(Item.STONE_HOE, Item.block(Blocks.STONE), 110_020_020);
-        tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_002_002);
+        tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_020_020);
 
         tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020);
-        tool(Item.COPPER_AXE, Item.COPPER_INGOT, 011_021_020);
         tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020);
         tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 010_020_020);
         tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 010_010_020);
+        tool(Item.COPPER_HOE, Item.COPPER_INGOT, 110_020_020);
+        tool(Item.COPPER_SCYTHE, Item.COPPER_INGOT, 111_002_002);
 
         tool(Item.IRON_PICKAXE, Item.IRON_INGOT, 111_020_020);
+        tool(Item.IRON_AXE, Item.IRON_INGOT, 110_120_020);
+        tool(Item.IRON_SHOVEL, Item.IRON_INGOT, 010_020_020);
+        tool(Item.IRON_SWORD, Item.IRON_INGOT, 010_010_020);
+        tool(Item.IRON_HOE, Item.IRON_INGOT, 110_020_020);
+        tool(Item.IRON_SCYTHE, Item.IRON_INGOT, 111_002_002);
+
         tool(Item.GOLD_PICKAXE, Item.GOLD_INGOT, 111_020_020);
+        tool(Item.GOLD_AXE, Item.GOLD_INGOT, 110_120_020);
+        tool(Item.GOLD_SHOVEL, Item.GOLD_INGOT, 010_020_020);
+        tool(Item.GOLD_SWORD, Item.GOLD_INGOT, 010_010_020);
+        tool(Item.GOLD_HOE, Item.GOLD_INGOT, 110_020_020);
+        tool(Item.GOLD_SCYTHE, Item.GOLD_INGOT, 111_002_002);
+
     }
 
 

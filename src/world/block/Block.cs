@@ -152,6 +152,9 @@ public class Block {
     public static Block BRICK_BLOCK;
     public static Block STONE_BRICK;
     public static Block SAND_BRICK;
+    public static Block GOLD_CANDY;
+    public static Block REALGAR_CANDY;
+    public static Block DIAMOND_CANDY;
 
     public static Block LANTERN;
 
@@ -339,6 +342,21 @@ public class Block {
         SAND_BRICK.setTex(cubeUVs(2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
+
+        GOLD_CANDY = register(new Block(Blocks.GOLD_CANDY, "Gold Candy"));
+        GOLD_CANDY.setTex(cubeUVs(0, 8));
+        renderType[GOLD_CANDY.id] = RenderType.CUBE;
+        GOLD_CANDY.material(Material.METAL);
+
+        REALGAR_CANDY = register(new Block(Blocks.REALGAR_CANDY, "Realgar Candy"));
+        REALGAR_CANDY.setTex(cubeUVs(1, 8));
+        renderType[REALGAR_CANDY.id] = RenderType.CUBE;
+        REALGAR_CANDY.material(Material.METAL);
+
+        DIAMOND_CANDY = register(new Block(Blocks.DIAMOND_CANDY, "Diamond Candy"));
+        DIAMOND_CANDY.setTex(cubeUVs(2, 8));
+        renderType[DIAMOND_CANDY.id] = RenderType.CUBE;
+        DIAMOND_CANDY.material(Material.METAL);
 
         LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
         LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
