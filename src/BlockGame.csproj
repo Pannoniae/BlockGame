@@ -13,7 +13,7 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <ApplicationManifest>D:\dev\cs\BlockGame\app.manifest</ApplicationManifest>
+        <ApplicationManifest>..\app.manifest</ApplicationManifest>
         <OutputPath>..\bin\$(Configuration)\</OutputPath>
     </PropertyGroup>
 

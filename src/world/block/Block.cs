@@ -153,7 +153,7 @@ public class Block {
     public static Block STONE_BRICK;
     public static Block SAND_BRICK;
     public static Block GOLD_CANDY;
-    public static Block REALGAR_CANDY;
+    public static Block CINNABAR_CANDY;
     public static Block DIAMOND_CANDY;
 
     public static Block LANTERN;
@@ -190,7 +190,7 @@ public class Block {
 
     public static Block WATER;
 
-    public static Block REALGAR;
+    public static Block CINNABAR;
     public static Block TITANIUM_ORE;
     public static Block AMBER_ORE;
     public static Block AMETHYST_ORE;
@@ -348,10 +348,10 @@ public class Block {
         renderType[GOLD_CANDY.id] = RenderType.CUBE;
         GOLD_CANDY.material(Material.METAL);
 
-        REALGAR_CANDY = register(new Block(Blocks.REALGAR_CANDY, "Realgar Candy"));
-        REALGAR_CANDY.setTex(cubeUVs(1, 8));
-        renderType[REALGAR_CANDY.id] = RenderType.CUBE;
-        REALGAR_CANDY.material(Material.METAL);
+        CINNABAR_CANDY = register(new Block(Blocks.CINNABAR_CANDY, "Cinnabar Candy"));
+        CINNABAR_CANDY.setTex(cubeUVs(1, 8));
+        renderType[CINNABAR_CANDY.id] = RenderType.CUBE;
+        CINNABAR_CANDY.material(Material.METAL);
 
         DIAMOND_CANDY = register(new Block(Blocks.DIAMOND_CANDY, "Diamond Candy"));
         DIAMOND_CANDY.setTex(cubeUVs(2, 8));
@@ -501,12 +501,12 @@ public class Block {
 
         // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
 
-        REALGAR = register(new Block(Blocks.REALGAR, "Realgar"));
-        REALGAR.setTex(cubeUVs(10, 1));
-        renderType[REALGAR.id] = RenderType.CUBE;
-        REALGAR.material(Material.FANCY_STONE);
-        REALGAR.setHardness(6.0);
-        REALGAR.setTier(MaterialTier.GOLD);
+        CINNABAR = register(new Block(Blocks.CINNABAR, "Cinnabar"));
+        CINNABAR.setTex(cubeUVs(10, 1));
+        renderType[CINNABAR.id] = RenderType.CUBE;
+        CINNABAR.material(Material.FANCY_STONE);
+        CINNABAR.setHardness(6.0);
+        CINNABAR.setTier(MaterialTier.GOLD);
 
         TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore"));
         TITANIUM_ORE.setTex(cubeUVs(11, 1));

@@ -51,7 +51,7 @@ public partial class NewWorldGenerator {
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
-    private readonly OreFeature ironOre = new(Blocks.REALGAR, 6, 12);
+    private readonly OreFeature ironOre = new(Blocks.CINNABAR, 6, 12);
     private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
 
     /**

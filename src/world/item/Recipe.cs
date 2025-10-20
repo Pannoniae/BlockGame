@@ -13,9 +13,6 @@ public class Recipe {
     public static Recipe STICK;
     public static Recipe CHEST;
     public static Recipe GOLD_CANDY;
-    public static Recipe REALGAR_CANDY;
-    public static Recipe DIAMOND_CANDY;
-
 
 
     public static readonly List<Recipe> recipes = [];

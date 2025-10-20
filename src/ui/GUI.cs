@@ -347,7 +347,7 @@ public class GUI {
         float offsetY = backgroundScrollOffset.Y % blockSize;
 
         Span<ushort> ores = [
-            Blocks.AMBER_ORE, Blocks.REALGAR, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE,
+            Blocks.AMBER_ORE, Blocks.CINNABAR, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE,
             Blocks.AMETHYST_ORE
         ];
 
