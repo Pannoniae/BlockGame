@@ -53,8 +53,16 @@ public class Recipe {
         CHEST.ingredients(Item.block(Blocks.PLANKS));
 
         GOLD_CANDY = register(new ItemStack(Item.block(Blocks.GOLD_CANDY), 1));
-        GOLD_CANDY.shape(10_02, 2);
+        GOLD_CANDY.noShape();
         GOLD_CANDY.ingredients(Item.block(Blocks.CANDY), Item.GOLD_INGOT);
+
+        //CINNABAR_CANDY = register(new ItemStack(Item.block(Blocks.CINNABAR_CANDY), 1));
+        //CINNABAR_CANDY.noShape();
+        //CINNABAR_CANDY.ingredients(Item.block(Blocks.CANDY), Item.CINNABAR_INGOT);
+
+        //DIAMOND_CANDY = register(new ItemStack(Item.block(Blocks.DIAMOND_CANDY), 1));
+        //DIAMOND_CANDY.noShape();
+        //DIAMOND_CANDY.ingredients(Item.block(Blocks.CANDY), Item.DIAMOND_INGOT);
 
 
         // tools
@@ -68,7 +76,7 @@ public class Recipe {
         tool(Item.STONE_SHOVEL, Item.block(Blocks.STONE), 010_020_020);
         tool(Item.STONE_SWORD, Item.block(Blocks.STONE), 010_010_020);
         tool(Item.STONE_HOE, Item.block(Blocks.STONE), 110_020_020);
-        tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_020_020);
+        tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_002_002);
 
         tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020);
         tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020);
