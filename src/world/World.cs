@@ -43,19 +43,19 @@ public partial class World : IDisposable {
     public string displayName;
     public string generatorName;
 
-    public readonly List<WorldListener> listeners = [];
+    public readonly XUList<WorldListener> listeners = [];
 
     public readonly Dictionary<ChunkCoord, Chunk> chunks;
 
     // used for rendering
-    public readonly List<Chunk> chunkList;
+    public readonly XUList<Chunk> chunkList;
 
 
     // Queues
     public List<ChunkLoadTicket> chunkLoadQueue = [];
     //public HashSet<ChunkLoadTicket> chunkLoadQueueSet = new();
 
-    public readonly List<BlockUpdate> blockUpdateQueue = [];
+    public readonly XUList<BlockUpdate> blockUpdateQueue = [];
 
 
     public readonly List<TickAction> actionQueue = [];
@@ -115,7 +115,7 @@ public partial class World : IDisposable {
         this.seed = seed;
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
-        chunkList = new List<Chunk>(2048);
+        chunkList = new XUList<Chunk>(2048);
 
         entities = [];
         particles = new Particles(this);

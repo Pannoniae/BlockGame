@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using BlockGame.util;
 
-[assembly: IgnoresAccessChecksTo("BlockGame")]
+//[assembly: IgnoresAccessChecksTo("BlockGame")]
 
 namespace BlockGameTesting;
 

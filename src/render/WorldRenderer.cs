@@ -638,7 +638,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
         var viewProj = Game.camera.getStaticViewMatrix(interp) * Game.camera.getProjectionMatrix();
-        var chunkList = CollectionsMarshal.AsSpan(world.chunkList);
+        var chunkList = world.chunkList.AsSpan();
 
         var cameraPos = Game.camera.renderPosition(interp);
         worldShader.setUniform(uMVP, viewProj);

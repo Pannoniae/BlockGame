@@ -13,7 +13,7 @@ public class Particles {
 
     private readonly World world;
 
-    public readonly List<Particle> particles = [];
+    public readonly XUList<Particle> particles = [];
     private readonly InstantDrawTexture drawer = new InstantDrawTexture(1024);
 
     public Particles(World world) {

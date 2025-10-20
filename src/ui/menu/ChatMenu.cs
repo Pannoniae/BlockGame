@@ -6,7 +6,6 @@ using BlockGame.ui.screen;
 using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.item.inventory;
-using CircularBuffer;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
 
@@ -16,9 +15,9 @@ public class ChatMenu : Menu {
     /// <summary>
     /// max. 24 messages
     /// </summary>
-    private readonly CircularBuffer<ChatMessage> messages = new(20);
+    private readonly XRingBuffer<ChatMessage> messages = new(20);
 
-    private readonly CircularBuffer<ChatMessage> history = new(20);
+    private readonly XRingBuffer<ChatMessage> history = new(20);
 
     public int cursorPos = 0;
 
@@ -42,7 +41,7 @@ public class ChatMenu : Menu {
         return true;
     }
     
-    public CircularBuffer<ChatMessage> getMessages() {
+    public XRingBuffer<ChatMessage> getMessages() {
         return messages;
     }
     
@@ -79,7 +78,7 @@ public class ChatMenu : Menu {
                 cursorPos--;
                 break;
             case Key.Up:
-                if (historyIndex < history.Size - 1) {
+                if (historyIndex < history.Count - 1) {
                     historyIndex++;
                     message = history[historyIndex].message;
                     cursorPos = message.Length;
@@ -359,7 +358,7 @@ public class ChatMenu : Menu {
                 cursorPos--;
                 break;
             case Key.Up:
-                if (historyIndex < history.Size - 1) {
+                if (historyIndex < history.Count - 1) {
                     historyIndex++;
                     message = history[historyIndex].message;
                     cursorPos = message.Length;

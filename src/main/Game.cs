@@ -136,7 +136,7 @@ public partial class Game {
     /// <summary>
     /// List of things to do later.
     /// </summary>
-    public static List<TimerAction> timerQueue = new();
+    public static XUList<TimerAction> timerQueue = new();
     
     public static WorldThread worldThread;
 

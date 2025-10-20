@@ -699,7 +699,7 @@ public class GameScreen : Screen {
 
             var msgLimit = currentMenu == CHAT ? 20 : 10;
             var currentTick = CHAT.tick;
-            for (int i = 0; i < CHAT.getMessages().Size && i < msgLimit; i++) {
+            for (int i = 0; i < CHAT.getMessages().Count && i < msgLimit; i++) {
                 // if 200 ticks have passed, don't show the message
                 var age = currentTick - CHAT.getMessages()[i].ticks;
                 if (age < 200 || currentMenu == CHAT) {

@@ -7,7 +7,7 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public partial class World {
-    public readonly List<Entity> entities;
+    public readonly XUList<Entity> entities;
 
     public readonly Particles particles;
     public Player player;

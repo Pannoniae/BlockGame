@@ -19,10 +19,6 @@ This is NOT fucking minecraft! South is -Z, North is +Z.
 
 
 ## Code style/guidelines/conventions
-
-- If possible, don't refer back to stuff! It creates a mess. If you have an `Entity`, don't create a `World` field for it. Methods which require *both* should live in the parent. (e.g. in `World`).
-
-  This avoids a huge spaghetti mess of references.
 - Java-style naming conventions (PascalCase for types, camelCase for variables, no IInterface). I WON'T ACCEPT C#-STYLED SLOP. This is to ensure quality control. I warned you.
 - Generally short names and abbreviations, prefer brevity to expressivity, e.g. `pos`, `xx`, `xp`, `c00`, `sp`, `title`. This is so the code doesn't get cluttered. You can leave a comment to explain it fully.
 - Comment the "why" and the "how", not the "what" - leave the tutorial-level comments out of the codebase. Prefer starting with lowercase for one-line comments.
