@@ -27,8 +27,8 @@ public class TextBox : GUIElement {
     public override void onKeyChar(char c) {
         if (!focused) return;
 
-        // only allow printable characters
-        if (c >= 32 && c < 127) {
+        // allow all printable unicode
+        if (!char.IsControl(c)) {
             if (input.Length < maxLength) {
                 input += c;
             }
