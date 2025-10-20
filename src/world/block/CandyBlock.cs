@@ -9,7 +9,7 @@ public class CandyBlock : Block {
         "White", "Gray", "Black", "Yellow",
         "Orange", "Red", "Dark Red", "Pink",
         "Purple", "Violet",  "Light Green", "Turquoise",
-        "Blue", "Sky Blue", "Dark Green", "Dark Blue",
+        "Sky Blue", "Blue", "Dark Green", "Dark Blue",
 
         // extended colours
         "Beige", "Light Orange", "Neon", "Apple Green",
@@ -29,8 +29,8 @@ public class CandyBlock : Block {
         Color.FromBgra(0xFF9d5bd7), // Violet
         Color.FromBgra(0xFF0df415), // Light Green
         Color.FromBgra(0xFF3fdccc), // Turquoise
-        Color.FromBgra(0xFF1542F8), // Blue
         Color.FromBgra(0xFF0db5e3), // Sky Blue
+        Color.FromBgra(0xFF1542F8), // Blue
         Color.FromBgra(0xFF084e0b), // Dark Green
         Color.FromBgra(0xFF0014c7), // Dark Blue
 
