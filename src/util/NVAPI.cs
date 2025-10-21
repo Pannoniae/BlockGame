@@ -224,9 +224,13 @@ internal static partial class NVAPI {
         }
 
         // threaded optimisations
-        if (ThreadedOptimisations != NvThreadControlSetting.OGL_THREAD_CONTROL_ENABLE) {
-            Log.info("Enabling threaded optimizations...");
-            ThreadedOptimisations = NvThreadControlSetting.OGL_THREAD_CONTROL_ENABLE;
+
+        // since <recently>, the NV driver seems to fucking spinloop waiting for thread exit in the main thread when you call drawCommands, if you have threaded optimisations on.
+        // idk why but I don't like it
+        // solution? we disable it lol
+        if (ThreadedOptimisations != NvThreadControlSetting.OGL_THREAD_CONTROL_DISABLE) {
+            Log.info("Disabling threaded optimizations...");
+            ThreadedOptimisations = NvThreadControlSetting.OGL_THREAD_CONTROL_DISABLE;
         }
 
         // triple buffering

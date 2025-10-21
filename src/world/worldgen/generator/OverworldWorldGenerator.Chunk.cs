@@ -98,7 +98,13 @@ public partial class OverworldWorldGenerator {
             var height = chunk.heightMap.get(x, z);
             var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
             if ((height < 64 && random.NextSingle() < 0.25) || !(height < 64)) {
-                placeOakTree(random, worldPos.X, worldPos.Y, worldPos.Z);
+                // 1/15 chance for fancy tree
+                if (random.Next(15) == 0) {
+                    TreeGenerator.placeFancyTree(world, random, worldPos.X, worldPos.Y, worldPos.Z);
+                }
+                else {
+                    TreeGenerator.placeOakTree(world, random, worldPos.X, worldPos.Y, worldPos.Z);
+                }
             }
         }
         chunk.status = ChunkStatus.POPULATED;
@@ -106,33 +112,6 @@ public partial class OverworldWorldGenerator {
 
     public XRandom getRandom(ChunkCoord coord) {
         return new XRandom(coord.GetHashCode());
-    }
-
-    public void placeOakTree(XRandom random, int x, int y, int z) {
-        int randomNumber = random.Next(5, 8);
-        for (int i = 0; i < randomNumber; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.MAPLE_LOG);
-            // leaves, thick
-            for (int x1 = -2; x1 <= 2; x1++) {
-                for (int z1 = -2; z1 <= 2; z1++) {
-                    // don't overwrite the trunk
-                    if (x1 == 0 && z1 == 0) {
-                        continue;
-                    }
-                    for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.MAPLE_LEAVES);
-                    }
-                }
-            }
-            // leaves, thin on top
-            for (int x1 = -1; x1 <= 1; x1++) {
-                for (int z1 = -1; z1 <= 1; z1++) {
-                    for (int y1 = randomNumber; y1 <= randomNumber+1; y1++) {
-                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.MAPLE_LEAVES);
-                    }
-                }
-            }
-        }
     }
     public void placeMapleTree(int x, int y, int z) {
         for (int i = 0; i < 7; i++) {

@@ -507,14 +507,21 @@ public partial class NewWorldGenerator {
             ironOre.place(world, random, x, y, z);
         }
 
-        var foliage = getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 2, 2);
-        var treeCount = foliage;
+        var foliage = getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);
+        var treeCount = foliage * 3f;
+
+        // todo this will be replaced with biomes later!!
+        // right now we just don't want trees in plains stuff for obvious reasons
         if (foliage < 0) {
             treeCount = 0;
         }
+        else {
+            treeCount += 4;
+        }
 
-        treeCount *= 10;
+        // 4..7
         treeCount *= treeCount;
+        // 16..49
 
         for (int i = 0; i < treeCount; i++) {
             placeTree(world, random, coord);
@@ -590,35 +597,16 @@ public partial class NewWorldGenerator {
             }
         }
 
-        placeOakTree(world, random, x + coord.x * Chunk.CHUNKSIZE, y + 1, z + coord.z * Chunk.CHUNKSIZE);
-    }
-
-    private static void placeOakTree(World world, XRandom random, int x, int y, int z) {
-        int randomNumber = random.Next(5, 8);
-        for (int i = 0; i < randomNumber; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
-            // leaves, thick
-            for (int x1 = -2; x1 <= 2; x1++) {
-                for (int z1 = -2; z1 <= 2; z1++) {
-                    // don't overwrite the trunk
-                    if (x1 == 0 && z1 == 0) {
-                        continue;
-                    }
-
-                    for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
-                    }
-                }
-            }
-
-            // leaves, thin on top
-            for (int x1 = -1; x1 <= 1; x1++) {
-                for (int z1 = -1; z1 <= 1; z1++) {
-                    for (int y1 = randomNumber; y1 <= randomNumber + 1; y1++) {
-                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
-                    }
-                }
-            }
+        // 1/15 chance for fancy tree
+        if (random.Next(15) == 0) {
+            TreeGenerator.placeFancyTree(world, random, xWorld, y + 1, zWorld);
+        }
+        // 1 / 20 for maple
+        else if (random.Next(20) == 0) {
+            TreeGenerator.placeMapleTree(world, random, xWorld, y + 1, zWorld);
+        }
+        else {
+            TreeGenerator.placeOakTree(world, random, xWorld, y + 1, zWorld);
         }
     }
 }

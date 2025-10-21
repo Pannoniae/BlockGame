@@ -105,9 +105,10 @@ public class IngameMenu : Menu, IDisposable {
 
             // Fixed 60 FPS threshold (16.67ms)
             const float MAX_FRAMETIME = 33.3f; // Cap display at 30 FPS for readability
+            const float MAX_FRAMETIMEI = 1 / 33.3f; // Cap display at 30 FPS for readability
 
             // Calculate y position of 60 FPS line (16.67ms)
-            float sixtyFpsY = graphY + (16.67f / MAX_FRAMETIME) * GRAPH_HEIGHT;
+            float sixtyFpsY = graphY + (16.67f * MAX_FRAMETIMEI) * GRAPH_HEIGHT;
 
             // Draw guide line
             gui.tb.Draw(gui.colourTexture,
@@ -129,10 +130,10 @@ public class IngameMenu : Menu, IDisposable {
             const float BAR_WIDTH = GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE;
 
             if (segmentedMode) {
-                DrawSegmentedBars(gui, graphX, graphY, BAR_WIDTH, MAX_FRAMETIME);
+                DrawSegmentedBars(gui, graphX, graphY, BAR_WIDTH, MAX_FRAMETIMEI);
             }
             else {
-                DrawSimpleBars(gui, graphX, graphY, BAR_WIDTH, MAX_FRAMETIME);
+                DrawSimpleBars(gui, graphX, graphY, BAR_WIDTH, MAX_FRAMETIMEI);
             }
         }
     }
@@ -151,17 +152,17 @@ public class IngameMenu : Menu, IDisposable {
             float x = graphX + (i * GRAPH_WIDTH / (float)FRAMETIME_HISTORY_SIZE);
 
             // Calculate bar height based on frametime
-            float barHeight = (frametime / maxFrametime) * GRAPH_HEIGHT;
+            float barHeight = (frametime * maxFrametime) * GRAPH_HEIGHT;
             float y = graphY + GRAPH_HEIGHT - barHeight;
 
-            // Determine color based on performance
-            Color barColor;
+            // Determine colour based on performance
+            Color barColour;
             const float SIXTY_FPS = 16.6f;
             const float THIRTY_FPS = 33.3f;
 
             if (frametime < SIXTY_FPS) {
                 float t = frametime / SIXTY_FPS; // 0 to 1
-                barColor = new Color(
+                barColour = new Color(
                     1 * t,
                     1,
                     0
@@ -169,20 +170,20 @@ public class IngameMenu : Menu, IDisposable {
             }
             else if (frametime < THIRTY_FPS) {
                 float t = (frametime - SIXTY_FPS) / (THIRTY_FPS - SIXTY_FPS); // 0 to 1
-                barColor = new Color(
+                barColour = new Color(
                     1,
                     1 * (1 - t),
                     0
                 );
             }
             else {
-                barColor = new Color(1f, 0, 0);
+                barColour = new Color(1f, 0, 0);
             }
 
             // Draw bar
             gui.tb.Draw(gui.colourTexture,
                 new RectangleF(x, y, barWidth, barHeight),
-                barColor);
+                barColour);
         }
     }
     
@@ -204,9 +205,13 @@ public class IngameMenu : Menu, IDisposable {
 
             for (int s = 0; s < ProfileSection.SECTION_COUNT; s++) {
                 float sectionTime = profile.getTime((ProfileSectionName)s);
-                if (sectionTime <= 0) continue;
+                //if (sectionTime <= 0) continue;
 
-                float segmentHeight = (sectionTime / maxFrametime) * GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER;
+                // if it's less than 1px, also skip!
+                if ((sectionTime * maxFrametime) * (GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER) < 1f)
+                    continue;
+
+                float segmentHeight = (sectionTime * maxFrametime) * (GRAPH_HEIGHT * SEGMENTED_HEIGHT_MULTIPLIER);
                 currentY -= segmentHeight;
 
                 // Draw segment

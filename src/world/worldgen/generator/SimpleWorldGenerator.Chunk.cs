@@ -39,6 +39,7 @@ public partial class SimpleWorldGenerator {
 
     public void populate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
+        var random = getRandom(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
@@ -46,8 +47,13 @@ public partial class SimpleWorldGenerator {
                 // TREES
                 if (MathF.Abs(treenoise.GetNoise(worldPos.X, worldPos.Z) - 1) < 0.01f) {
                     worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, (int)(height + 1), z);
-                    //Console.Out.WriteLine($"{worldPos} {chunk.coord.x} {chunk.coord.z} {x} {z} {chunk.GetHashCode()}");
-                    placeTree(worldPos.X, worldPos.Y, worldPos.Z);
+                    // 1/15 chance for fancy tree
+                    if (random.Next(15) == 0) {
+                        TreeGenerator.placeFancyTree(world, random, worldPos.X, worldPos.Y, worldPos.Z);
+                    }
+                    else {
+                        TreeGenerator.placeOakTree(world, random, worldPos.X, worldPos.Y, worldPos.Z);
+                    }
                 }
             }
         }
@@ -56,41 +62,5 @@ public partial class SimpleWorldGenerator {
 
     public XRandom getRandom(ChunkCoord coord) {
         return new XRandom(coord.GetHashCode());
-    }
-
-    // Can place in neighbouring chunks, so they must be loaded first
-
-    // todo the trees are cut off when they are placed in a neighbouring chunk... but only when the coords are more?
-    // 63 to 64 is fine but 32 to 31 is not, it's cut off
-    // probably something to do with the chunk position calculations?
-    private void placeTree(int x, int y, int z) {
-        // tree
-        for (int i = 0; i < 7; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
-        }
-        // leaves, thick
-        for (int x1 = -2; x1 <= 2; x1++) {
-            for (int z1 = -2; z1 <= 2; z1++) {
-                // don't overwrite the trunk
-                if (x1 == 0 && z1 == 0) {
-                    continue;
-                }
-                for (int y1 = 4; y1 < 6; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
-                }
-            }
-        }
-        // leaves, thin on top
-        for (int x2 = -1; x2 <= 1; x2++) {
-            for (int z2 = -1; z2 <= 1; z2++) {
-                for (int y2 = 6; y2 <= 7; y2++) {
-                    // don't overwrite the trunk
-                    if (x2 == 0 && z2 == 0 && y2 == 6) {
-                        continue;
-                    }
-                    world.setBlockDumb(x + x2, y + y2, z + z2, Blocks.LEAVES);
-                }
-            }
-        }
     }
 }

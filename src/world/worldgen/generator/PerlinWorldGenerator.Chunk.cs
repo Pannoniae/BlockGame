@@ -495,35 +495,12 @@ public partial class PerlinWorldGenerator {
             }
         }
 
-        placeOakTree(random, x + coord.x * Chunk.CHUNKSIZE, y + 1, z + coord.z * Chunk.CHUNKSIZE);
-    }
-
-    public void placeOakTree(XRandom random, int x, int y, int z) {
-        int randomNumber = random.Next(5, 8);
-        for (int i = 0; i < randomNumber; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
-            // leaves, thick
-            for (int x1 = -2; x1 <= 2; x1++) {
-                for (int z1 = -2; z1 <= 2; z1++) {
-                    // don't overwrite the trunk
-                    if (x1 == 0 && z1 == 0) {
-                        continue;
-                    }
-
-                    for (int y1 = randomNumber - 2; y1 <= randomNumber - 1; y1++) {
-                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
-                    }
-                }
-            }
-
-            // leaves, thin on top
-            for (int x1 = -1; x1 <= 1; x1++) {
-                for (int z1 = -1; z1 <= 1; z1++) {
-                    for (int y1 = randomNumber; y1 <= randomNumber + 1; y1++) {
-                        world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
-                    }
-                }
-            }
+        // 1/15 chance for fancy tree
+        if (random.Next(15) == 0) {
+            TreeGenerator.placeFancyTree(world, random, xWorld, y + 1, zWorld);
+        }
+        else {
+            TreeGenerator.placeOakTree(world, random, xWorld, y + 1, zWorld);
         }
     }
 }

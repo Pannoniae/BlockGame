@@ -333,7 +333,10 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
     // note: if someone complains about flickering, increase this number
     // we explicitly don't sync shit and don't map shit coherently either.
     // the good news is that this is very fast, the bad news is that if the buffer isn't large enough, well, bad things happen:tm:
-    private const int regionCount = 4;
+    // NOTE: we force-disabled it lol
+    // if we don't, change it back!
+    //private const int regionCount = 4;
+    private const int regionCount = 3;
 
     // persistent mapped pointer
     private unsafe BlockVertexTinted* mappedPtr = null;
