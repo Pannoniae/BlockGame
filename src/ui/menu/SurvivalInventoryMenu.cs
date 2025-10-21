@@ -73,14 +73,16 @@ public class SurvivalInventoryMenu : InventoryMenu {
 
         // return all items from 2x2 crafting grid to player inventory
         var player = Game.world.player;
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
 
         var craftingGrid = survivalCtx.getCraftingGrid();
 
         for (int i = 0; i < craftingGrid.grid.Length; i++) {
             var stack = craftingGrid.grid[i];
             if (stack != ItemStack.EMPTY && stack.quantity > 0) {
-                player.dropItemStack(stack, withVelocity: false);
+                player.dropItemStack(stack, withVelocity: true);
                 craftingGrid.grid[i] = ItemStack.EMPTY;
             }
         }

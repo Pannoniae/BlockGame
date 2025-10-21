@@ -75,10 +75,7 @@ public class CraftingTableMenu : InventoryMenu {
         for (int i = 0; i < craftingGrid.grid.Length; i++) {
             var stack = craftingGrid.grid[i];
             if (stack != ItemStack.EMPTY && stack.quantity > 0) {
-                // try to add to player inventory, drop if full
-                if (!player.inventory.addItem(stack)) {
-                    player.dropItemStack(stack, true);
-                }
+                player.dropItemStack(stack, true);
                 craftingGrid.grid[i] = ItemStack.EMPTY;
             }
         }

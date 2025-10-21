@@ -29,7 +29,7 @@ public abstract class InventoryMenu : Menu {
         // drop cursor items when closing inventory to prevent voiding
         var player = Game.world?.player;
         if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            player.dropItemStack(player.inventory.cursor, withVelocity: false);
+            player.dropItemStack(player.inventory.cursor, withVelocity: true);
             player.inventory.cursor = ItemStack.EMPTY;
         }
     }

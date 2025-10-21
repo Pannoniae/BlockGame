@@ -47,5 +47,7 @@ public class FurnaceMenu : InventoryMenu {
 
     public override void deactivate() {
         base.deactivate();
+
+        // todo drop slots
     }
 }

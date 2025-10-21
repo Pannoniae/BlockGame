@@ -126,4 +126,25 @@ public class CreativeInventoryContext : InventoryContext {
     }
 
     public int getCurrentPage() => currentPage;
+
+    public override void handleSlotClick(ItemSlot slot, ClickType click) {
+        var player = Game.player;
+        var cursor = player.inventory.cursor;
+
+        // left-click merge-take: allow combining items from creative slots
+        if (click == ClickType.LEFT && cursor != ItemStack.EMPTY && slot is CreativeSlot) {
+            var slotStack = slot.getStack();
+            if (slotStack != ItemStack.EMPTY && slotStack.same(cursor)) {
+                // merge-take: take full stack from creative slot and merge with cursor
+                var taken = slot.take(slotStack.quantity);
+                if (taken != ItemStack.EMPTY) {
+                    cursor.quantity += taken.quantity;
+                }
+                return;
+            }
+        }
+
+        // default behaviour for everything else
+        base.handleSlotClick(slot, click);
+    }
 }
