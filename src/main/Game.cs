@@ -11,6 +11,7 @@ using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.ui.screen;
 using BlockGame.util;
+using BlockGame.util.cmd;
 using BlockGame.util.font;
 using BlockGame.util.log;
 using BlockGame.world;
@@ -795,6 +796,9 @@ public partial class Game {
         switchTo(Menu.MAIN_MENU);
 
         Block.postLoad();
+
+        Command.register();
+
         resize(new Vector2D<int>(width, height));
 
         Spy.init();

@@ -32,6 +32,15 @@ public class PlayerRenderer : EntityRenderer<Player> {
         // render the human model with animation
         model.render(mat, player, apos, aspeed, scale, interp);
 
+        // render damage tint overlay if player is taking damage
+        if (player.dmgTime > 0) {
+            const float t = 1;
+            var tint = new Color((byte)255, (byte)0, (byte)0, (byte)(192 * t));
+            EntityRenderers.ide.setColour(tint);
+            model.render(mat, player, apos, aspeed, scale, interp);
+            EntityRenderers.ide.setColour(Color.White);
+        }
+
         // Render hand item in third person!
         // Position at right arm location and render item
         // BETTER IDEA, we just also steal the rotation from the arm too!

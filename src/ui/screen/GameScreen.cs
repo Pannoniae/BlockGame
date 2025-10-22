@@ -31,6 +31,7 @@ public class GameScreen : Screen {
     public bool music = false;
 
     public readonly PauseMenu PAUSE_MENU = new();
+    public readonly DeathMenu DEATH_MENU = new();
     public readonly IngameMenu INGAME_MENU = new();
     public readonly ChatMenu CHAT = new();
 
@@ -144,7 +145,9 @@ public class GameScreen : Screen {
         // apply time acceleration (frame-rate independent)
         if (timeAcceleration != 1.0f) {
             int additionalTicks = (int)((timeAcceleration - 1.0f) * dt * 60); // 60 TPS base
-            world.worldTick += additionalTicks;
+            for (int i = 0; i < additionalTicks; i++) {
+                world.update(dt);
+            }
         }
 
         // if user holds down alt + f10 for 5 seconds, crash the game lul
@@ -301,6 +304,12 @@ public class GameScreen : Screen {
         base.onKeyDown(keyboard, key, scancode);
 
         if (key == Key.Escape) {
+
+            // if death screen, DO NOT DO IT
+            if (currentMenu == DEATH_MENU) {
+                return;
+            }
+
             if (currentMenu == CHAT) {
                 CHAT.closeChat();
             }
@@ -730,6 +739,14 @@ public class GameScreen : Screen {
             var pauseText = "-PAUSED-";
             gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
                 Color.OrangeRed);
+        }
+
+        // draw red damage tint when taking damage
+        if (Game.player != null && Game.player.dmgTime > 0) {
+            float alpha = (float)Game.player.dmgTime / 30f * 0.3f; // max 30% opacity
+            gui.drawUI(gui.colourTexture,
+                new RectangleF(0, 0, Game.width, Game.height),
+                color: new Color(1f, 0f, 0f, alpha));
         }
     }
 

@@ -3,6 +3,7 @@ using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.cmd;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -15,7 +16,7 @@ using Silk.NET.Input;
 
 namespace BlockGame.world;
 
-public class Player : Soul {
+public class Player : Soul, CommandSource {
     public const double height = 1.75;
     public const double width = 0.625;
     public const double eyeHeight = 1.6;
@@ -72,6 +73,11 @@ public class Player : Soul {
     public double prevBreakProgress;
 
     public int breakTime;
+
+    public int dmgTime;
+    public int dieTime;
+
+    public int iframes;
 
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world, "player") {
@@ -166,6 +172,24 @@ public class Player : Soul {
 
 
     public override void update(double dt) {
+        // death check
+        if (hp <= 0 && !dead) {
+            onDeath();
+            dieTime++;
+            return; // don't update anything else when dead
+        }
+
+        // prevent movement when dead
+        if (dead) {
+            dieTime++;
+            velocity = Vector3D.Zero;
+            inputVector = Vector3D.Zero;
+            strafeVector = Vector3D.Zero;
+            return;
+        }
+
+        dieTime = 0;
+
         collx = false;
         collz = false;
 
@@ -198,7 +222,7 @@ public class Player : Soul {
             var fallSpeed = -prevVelocity.Y;
             if (fallSpeed > SAFE_FALL_SPEED) {
                 var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
-                hp -= dmg;
+                takeDamage(dmg);
                 Game.camera.applyImpact(dmg);
             }
         }
@@ -264,6 +288,11 @@ public class Player : Soul {
                     inventory.shiny[i] = 0;
                 }
             }
+        }
+
+        // decay damage time
+        if (dmgTime > 0) {
+            dmgTime--;
         }
     }
 
@@ -927,5 +956,73 @@ public class Player : Soul {
         }
 
         world.addEntity(itemEntity);
+    }
+
+    public void takeDamage(float damage) {
+        hp -= damage;
+        dmgTime = 30;
+    }
+
+    private void onDeath() {
+        dead = true;
+        // rotate entity 90 degrees to side
+        // todo animate this in the model instead!
+        rotation.Z = -90f;
+        prevRotation.Z = -90f;
+
+        // drop inventory items on death (survival only, blocks only)
+        if (Game.gamemode.gameplay) {
+            dropInventoryOnDeath();
+        }
+
+        // switch to death screen
+        Game.instance.executeOnMainThread(() => {
+            Game.instance.currentScreen.switchToMenu(Screen.GAME_SCREEN.DEATH_MENU);
+            Game.world.inMenu = true;
+            Game.world.paused = true;
+            Game.instance.unlockMouse();
+        });
+    }
+
+    private void dropInventoryOnDeath() {
+        // drop all materials (blocks used for building, not tools)
+        for (int i = 0; i < inventory.slots.Length; i++) {
+            var stack = inventory.slots[i];
+            if (stack != ItemStack.EMPTY && stack.quantity > 0) {
+                var item = stack.getItem();
+                // only drop materials (blocks), not tools
+                if (item.isBlock() && Item.material[item.idx]) {
+                    dropItemStack(stack);
+                    inventory.slots[i] = ItemStack.EMPTY;
+                }
+            }
+        }
+    }
+
+    public void respawn() {
+        dead = false;
+        hp = 100;
+        rotation.Z = 0f;
+        prevRotation.Z = 0f;
+
+        // teleport to spawn point
+        teleport(world.spawn);
+
+        // reset velocity
+        velocity = Vector3D.Zero;
+        prevVelocity = Vector3D.Zero;
+
+        // back to game
+        Game.instance.executeOnMainThread(() => {
+            Screen.GAME_SCREEN.backToGame();
+        });
+    }
+
+    public void sendMessage(string msg) {
+        Screen.GAME_SCREEN.CHAT.addMessage(msg);
+    }
+
+    public World getWorld() {
+        return world;
     }
 }

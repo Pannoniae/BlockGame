@@ -41,7 +41,7 @@ public class MainMenu : Menu {
             });
         };
 
-        var discord = new Button(this, "discord", true, "Discord");
+        var discord = new Button(this, "discord", true, "Discord (click!)");
         discord.setPosition(new Vector2I(0, 44));
         discord.centreContents();
         discord.clicked += _ => {
@@ -52,7 +52,8 @@ public class MainMenu : Menu {
                 });
             }
             catch (Exception e) {
-                Log.error("failed to open discord link: " + e.Message);
+                Log.error("failed to open discord link: ");
+                Log.error(e);
             }
         };
 

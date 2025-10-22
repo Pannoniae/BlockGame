@@ -53,15 +53,15 @@ public class TreeGenerator {
     }
 
     public static void placeMapleTree(World world, XRandom random, int x, int y, int z) {
-        int height = random.Next(3, 3 + random.Next(3));
+        int height = random.Next(5, 5 + random.Next(3));
         maple = new ProceduralTree(world, random, x, y, z, height) {
             trunkThickness = 0.8f,
             foliageDensity = 1.2f,
-            branchDensity = 0.2f,
+            branchDensity = 0.0f,
             leafMat = Blocks.MAPLE_LEAVES,
             logMat = Blocks.MAPLE_LOG
         };
-        maple.prepareCone();
+        maple.prepareMaple();
         maple.generate(roots: false, rootButtresses: false);
     }
 
@@ -285,6 +285,45 @@ public class TreeGenerator {
             prepareFoliageClusters(coneShapeFunc, (int)(foliageHeight + 0.5f));
         }
 
+        /** prepare a really spread-to-the-side maple tree */
+        public void prepareMaple() {
+            branchSlope = 0.15f;
+            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * 0.5f;
+            if (trunkRadius < 1) trunkRadius = 1;
+
+            float foliageHeight = height;
+            if (brokenTrunk) {
+                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
+            }
+
+            trunkHeight = foliageHeight;
+            foliageShape = [2f, 2f, 1f];
+
+            // add random bushy clusters
+            foliageCords.Clear();
+            int numClusters = (int)(foliageDensity * height * 2.5f);
+            for (int i = 0; i < numClusters; i++) {
+                rand: ;
+                // favour lower heights - more bushy at bottom
+                float yFac = MathF.Pow(random.NextSingle(), 0.6f); // bias toward 0
+                int cy = y + (int)(yFac * foliageHeight);
+
+                // wider spread lower down
+                float maxRadius = (1 - yFac) * height + 0.5f;
+                float r = MathF.Sqrt(random.NextSingle()) * maxRadius;
+                float theta = random.NextSingle() * 2 * PI;
+                int cx = (int)(r * MathF.Sin(theta)) + x;
+                int cz = (int)(r * MathF.Cos(theta)) + z;
+
+                // don't add it close to the ground!!
+                if (cy - y < height * 0.3f) {
+                    goto rand;
+                }
+
+                foliageCords.Add(new Vector3I(cx, cy, cz));
+            }
+        }
+
         /** prepare a rainforest tree */
         public void prepareRainforest() {
             branchSlope = 1.0f;
@@ -355,12 +394,36 @@ public class TreeGenerator {
                 return tree.height * 0.12f;
             }
 
-            if (yOff < tree.height * (0.25f + 0.05f * MathF.Sqrt(tree.random.NextSingle()))) {
+            if (yOff < tree.height * (0.25f + 0.05f * tree.random.NextSingle() * tree.random.NextSingle())){
                 return null;
             }
 
             float radius = (tree.height - yOff) * rhoF;
             return radius < 0 ? null : radius;
+        }
+
+        /** shape function for maples trees */
+        private static float? mapleShapeFunc(ProceduralTree tree, int yOff) {
+            if (yOff < tree.height * 0.3f) {
+                return null;
+            }
+
+            // occasional twigs low down
+            if (tree.random.NextSingle() < 100f / (tree.height * tree.height) && yOff < tree.trunkHeight) {
+                return tree.height * 0.12f;
+            }
+
+            if (yOff < tree.height * (0.25f + 0.05f * MathF.Sqrt(tree.random.NextSingle()))) {
+                return null;
+            }
+
+            // bushy at bottom, thin top
+            yOff -= (int)(tree.height * 0.3f);
+            float t = (tree.height - yOff) / (float)tree.height; // 1 at base, 0 at top
+            float radius = MathF.Pow(t, 3f) * tree.height * 1.8f;
+            if (radius < 1) return null;
+
+            return radius * psiF;
         }
 
         /** shape function for rainforest trees */
@@ -433,8 +496,7 @@ public class TreeGenerator {
                         float vz = offz / offlength;
 
                         // check for solid blocks (anything not air/leaves)
-                        int matDist = distToMat(world, x, startY, z, vx, vy, vz,
-                            b => b != Blocks.AIR && b != leafMat, offlength + 3);
+                        int matDist = distToMat(world, x, startY, z, vx, vy, vz, b => b != Blocks.AIR && b != leafMat, offlength + 3);
 
                         // skip this cluster if we hit terrain before reaching it
                         if (matDist < offlength + 2) {
@@ -592,7 +654,7 @@ public class TreeGenerator {
 
                         // search for air blocks (hanging roots)
                         int raydist = startdist + distToMat(world, searchx, searchy, searchz, vx, vy, vz,
-                            b => b == Blocks.AIR, offlength);
+                            static b => b == Blocks.AIR, offlength);
 
                         if (raydist < offlength) {
                             // found air, root stops here then hangs down

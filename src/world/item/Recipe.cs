@@ -107,6 +107,7 @@ public class Recipe {
         var r = register(result);
         r.shape(shape, gridSize);
         r.ingredients(material, Item.STICK);
+        r.quantities(2, 1);
         return r;
     }
 

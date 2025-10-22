@@ -14,14 +14,32 @@ public class LevelSelectMenu : ScrollableMenu {
 
     private bool load;
     private WorldEntry? selectedEntry;
+    private Button createButton = null!;
 
     protected override int viewportY => 32;
 
     protected override int viewportMargin => 64; // top + bottom
 
     public LevelSelectMenu() {
-        // create new world button (fixed at bottom)
-        var createButton = new Button(this, "createWorld", true, "Create New World") {
+
+        var backButton = new Button(this, "back", false, "Back") {
+            horizontalAnchor = HorizontalAnchor.LEFT,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
+        backButton.setPosition(new Vector2I(8, -18));
+        backButton.clicked += _ => { Game.instance.switchTo(MAIN_MENU); };
+        addElement(backButton);
+
+        var deleteButton = new Button(this, "deleteWorld", false, "Delete World") {
+            horizontalAnchor = HorizontalAnchor.RIGHT,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
+        deleteButton.setPosition(new Vector2I(-8 - deleteButton.guiPosition.Width, -18));
+        deleteButton.clicked += _ => deleteSelectedWorld();
+        addElement(deleteButton);
+
+        // the order is important. no, I won't tell you why.
+        createButton = new Button(this, "createWorld", true, "Create New World") {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.BOTTOM
         };
@@ -30,24 +48,6 @@ public class LevelSelectMenu : ScrollableMenu {
             Game.instance.switchTo(CREATE_WORLD);
         };
         addElement(createButton);
-
-        // back button (fixed at bottom)
-        var backButton = new Button(this, "back", false, "Back") {
-            horizontalAnchor = HorizontalAnchor.LEFT,
-            verticalAnchor = VerticalAnchor.BOTTOM
-        };
-        backButton.setPosition(new Vector2I(2, -18));
-        backButton.clicked += _ => { Game.instance.switchTo(MAIN_MENU); };
-        addElement(backButton);
-
-        // delete world button (fixed at bottom right)
-        var deleteButton = new Button(this, "deleteWorld", false, "Delete World") {
-            horizontalAnchor = HorizontalAnchor.RIGHT,
-            verticalAnchor = VerticalAnchor.BOTTOM
-        };
-        deleteButton.setPosition(new Vector2I(-16 - deleteButton.guiPosition.Width, -18));
-        deleteButton.clicked += _ => deleteSelectedWorld();
-        addElement(deleteButton);
     }
 
     private void loadWorld(GUIElement element) {
@@ -83,9 +83,7 @@ public class LevelSelectMenu : ScrollableMenu {
         var entry = (WorldEntry)element;
 
         // deselect previous
-        if (selectedEntry != null) {
-            selectedEntry.isSelected = false;
-        }
+        selectedEntry?.isSelected = false;
 
         selectedEntry = entry;
     }
@@ -143,7 +141,9 @@ public class LevelSelectMenu : ScrollableMenu {
         // add sorted entries to UI
         var y = 32;
         foreach (var entry in worlds) {
-            entry.guiPosition = new Rectangle(0, y, 400, 32);
+            // responsible width: 80% of screen, capped at 500px, min 200px
+            var entryWidth = Math.Clamp((int)(Game.gui.uiWidth * 0.8f), 200, 500);
+            entry.guiPosition = new Rectangle(0, y, entryWidth, 32);
             entry.setPosition(entry.guiPosition);
             entry.horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;
             entry.verticalAnchor = VerticalAnchor.TOP;
@@ -161,6 +161,28 @@ public class LevelSelectMenu : ScrollableMenu {
     public override void deactivate() {
         base.deactivate();
         load = false;
+    }
+
+    public override void resize(Vector2I newSize) {
+        base.resize(newSize);
+
+        // update world entry widths
+        var entryWidth = Math.Clamp((int)(Game.gui.uiWidth * 0.8f), 200, 500);
+        foreach (var entry in elements.Values) {
+            if (entry is WorldEntry) {
+                entry.guiPosition = new Rectangle(entry.guiPosition.X, entry.guiPosition.Y, entryWidth,
+                    entry.guiPosition.Height);
+                entry.setPosition(entry.guiPosition);
+            }
+        }
+
+        // toggle create button width based on available space
+        var wide = Game.gui.uiWidth >= 480;
+        if (createButton.wide != wide) {
+            createButton.wide = wide;
+            createButton.guiPosition.Width = wide ? 192 : 128;
+            createButton.setPosition(createButton.guiPosition);
+        }
     }
 
     public override void draw() {

@@ -175,6 +175,9 @@ public partial class World : IDisposable {
             ensurePlayerSpawnClearance();
             // give starter items
             player.inventory.initNewPlayer();
+
+            // set spawn
+            spawn = player.position;
         }
 
         // After everything is done, SAVE THE WORLD
@@ -333,6 +336,8 @@ public partial class World : IDisposable {
         }
 
         player.position = pos;
+        // set spawn point
+        spawn = pos;
     }
 
     private bool hasPlayerAABBClearance(Vector3D pos) {
@@ -709,7 +714,7 @@ public partial class World : IDisposable {
                     var coord = random.Next(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
                     var s = random.Next(Chunk.CHUNKHEIGHT);
                     var x = (coord >> 8);
-                    var y = (coord >> 4) & 0xF + s * Chunk.CHUNKSIZE;
+                    var y = ((coord >> 4) & 0xF) + s * Chunk.CHUNKSIZE;
                     var z = coord & 0xF;
                     tick(this, chunk.Key, chunk.Value, random, x, y, z);
                 }

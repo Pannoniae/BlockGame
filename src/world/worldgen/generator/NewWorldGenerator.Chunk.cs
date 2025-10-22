@@ -51,8 +51,12 @@ public partial class NewWorldGenerator {
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
-    private readonly OreFeature ironOre = new(Blocks.CINNABAR, 6, 12);
-    private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
+    private readonly OreFeature ironOre = new(Blocks.IRON_ORE, 6, 12);
+    private readonly OreFeature coalOre = new(Blocks.COAL_ORE, 8, 16);
+    private readonly OreFeature goldOre = new(Blocks.GOLD_ORE, 6, 8);
+    private readonly OreFeature diamondOre = new(Blocks.DIAMOND_ORE, 4, 6);
+    private readonly OreFeature cinnabarOre = new(Blocks.CINNABAR, 4, 6);
+
 
     /**
      * Everyone knows the meaning of life, don't they?
@@ -507,6 +511,27 @@ public partial class NewWorldGenerator {
             ironOre.place(world, random, x, y, z);
         }
 
+        for (int i = 0; i < 6; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(0, World.WORLDHEIGHT / 3);
+            goldOre.place(world, random, x, y, z);
+        }
+
+        for (int i = 0; i < 4; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(0, World.WORLDHEIGHT / 4);
+            diamondOre.place(world, random, x, y, z);
+        }
+
+        for (int i = 0; i < 4; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(0, World.WORLDHEIGHT / 4);
+            cinnabarOre.place(world, random, x, y, z);
+        }
+
         var foliage = getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);
         var treeCount = foliage * 3f;
 
@@ -561,6 +586,53 @@ public partial class NewWorldGenerator {
                 if (chunk.getBlock(x, y + 1, z) == Blocks.AIR) {
                     var grassType = random.NextSingle() > 0.7f ? Blocks.TALL_GRASS : Blocks.SHORT_GRASS;
                     chunk.setBlockFast(x, y + 1, z, grassType);
+                }
+            }
+        }
+
+        // place flower patches
+        var flowerPatchCount = random.Next(0, 3);
+        for (int p = 0; p < flowerPatchCount; p++) {
+            // pick flower type for this patch
+            var r = random.NextSingle();
+            ushort flowerType;
+            if (r < 0.25f) {
+                flowerType = Blocks.YELLOW_FLOWER;
+            }
+            else if (r < 0.5f) {
+                flowerType = Blocks.MARIGOLD;
+            }
+            else if (r < 0.75f) {
+                flowerType = Blocks.BLUE_TULIP;
+            }
+            else {
+                flowerType = Blocks.THISTLE;
+            }
+
+            // patch centre
+            var cx = random.Next(0, Chunk.CHUNKSIZE);
+            var cz = random.Next(0, Chunk.CHUNKSIZE);
+
+            // place 4-8 flowers in patch
+            // NVM FUCK THIS IT WONT SPAWN
+            var patchSize = random.Next(32, 96);
+            for (int i = 0; i < patchSize; i++) {
+                var x = cx + random.Next(-3, 4);
+                var z = cz + random.Next(-3, 4);
+
+                /*if (x < 0 || x >= Chunk.CHUNKSIZE || z < 0 || z >= Chunk.CHUNKSIZE) {
+                    continue;
+                }*/
+
+                var y = random.Next(0, World.WORLDHEIGHT - 1);
+
+                x += chunk.worldX;
+                z += chunk.worldZ;
+
+                if (world.getBlock(x, y, z) == Blocks.GRASS && y < World.WORLDHEIGHT - 1) {
+                    if (world.getBlock(x, y + 1, z) == Blocks.AIR) {
+                        world.setBlock(x, y + 1, z, flowerType);
+                    }
                 }
             }
         }

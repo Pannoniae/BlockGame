@@ -6,7 +6,11 @@ public class Net {
 
 public enum NetMode {
     NONE = 0,
-    SP,
-    MPC,
-    MPS
+    SP = 1,
+    MPC = 2,
+    MPS = 4,
+
+    BOTH = SP | MPC | MPS,
+    CL = SP | MPC,
+    SRV = SP | MPS
 }

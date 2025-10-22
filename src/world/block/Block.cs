@@ -164,8 +164,8 @@ public class Block {
 
     public static Block YELLOW_FLOWER;
     //public static Block RED_FLOWER;
-    public static Block ORANGE_WEED;
-    public static Block CYAN_TULIP;
+    public static Block MARIGOLD;
+    public static Block BLUE_TULIP;
     public static Block THISTLE;
 
 
@@ -264,7 +264,7 @@ public class Block {
 
     public static void preLoad() {
         AIR = register(new Block(Blocks.AIR, "Air").setModel(BlockModel.emptyBlock())).air();
-        GRASS = register(new Block(Blocks.GRASS, "Grass")).tick();
+        GRASS = register(new GrassBlock(Blocks.GRASS, "Grass")).tick();
         GRASS.setTex(grassUVs(0, 0, 1, 0, 2, 0));
         GRASS.setModel(BlockModel.makeCube(GRASS));
         GRASS.material(Material.EARTH);
@@ -404,24 +404,25 @@ public class Block {
         //RED_FLOWER.itemLike();
         //RED_FLOWER.material(Material.ORGANIC);
 
-        ORANGE_WEED = register(new Flower(Blocks.ORANGE_WEED, "Orange Weed"));
-        ORANGE_WEED.setTex(crossUVs(12, 5));
-        ORANGE_WEED.setModel(BlockModel.makeGrass(ORANGE_WEED));
-        ORANGE_WEED.transparency();
-        ORANGE_WEED.flowerAABB();
-        ORANGE_WEED.noCollision();
-        ORANGE_WEED.waterTransparent();
-        ORANGE_WEED.itemLike();
-        ORANGE_WEED.material(Material.ORGANIC);
+        MARIGOLD = register(new Flower(Blocks.MARIGOLD, "Marigold"));
+        MARIGOLD.setTex(crossUVs(12, 5));
+        MARIGOLD.setModel(BlockModel.makeGrass(MARIGOLD));
+        MARIGOLD.transparency();
+        MARIGOLD.flowerAABB();
+        MARIGOLD.noCollision();
+        MARIGOLD.waterTransparent();
+        MARIGOLD.itemLike();
+        MARIGOLD.material(Material.ORGANIC);
 
-        CYAN_TULIP = register(new Flower(Blocks.CYAN_TULIP, "Cyan Tulip"));
-        CYAN_TULIP.setTex(crossUVs(13, 5));
-        CYAN_TULIP.setModel(BlockModel.makeGrass(CYAN_TULIP));
-        CYAN_TULIP.transparency();
-        CYAN_TULIP.noCollision();
-        CYAN_TULIP.waterTransparent();
-        CYAN_TULIP.itemLike();
-        CYAN_TULIP.material(Material.ORGANIC);
+        // hehe
+        BLUE_TULIP = register(new Flower(Blocks.BLUE_TULIP, "Blue Tulip"));
+        BLUE_TULIP.setTex(crossUVs(13, 5));
+        BLUE_TULIP.setModel(BlockModel.makeGrass(BLUE_TULIP));
+        BLUE_TULIP.transparency();
+        BLUE_TULIP.noCollision();
+        BLUE_TULIP.waterTransparent();
+        BLUE_TULIP.itemLike();
+        BLUE_TULIP.material(Material.ORGANIC);
 
         THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
         THISTLE.setTex(crossUVs(14, 5));
@@ -459,7 +460,7 @@ public class Block {
         LOG.setModel(BlockModel.makeCube(LOG));
         LOG.material(Material.WOOD);
 
-        LEAVES = register(new Block(Blocks.LEAVES, "Leaves"));
+        LEAVES = register(new Leaves(Blocks.LEAVES, "Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
@@ -481,7 +482,7 @@ public class Block {
         MAPLE_LOG.setModel(BlockModel.makeCube(MAPLE_LOG));
         MAPLE_LOG.material(Material.WOOD);
 
-        MAPLE_LEAVES = register(new Block(Blocks.MAPLE_LEAVES, "Maple Leaves"));
+        MAPLE_LEAVES = register(new Leaves(Blocks.MAPLE_LEAVES, "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
@@ -1287,7 +1288,36 @@ public class FallingBlock(ushort id, string name) : Block(id, name) {
 
 public class GrassBlock(ushort id, string name) : Block(id, name) {
     public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
-        return (null!, 0, 0);
+        // grass drops dirt
+        return (Item.block(Blocks.DIRT), 0, 1);
+    }
+
+    public override void randomUpdate(World world, int x, int y, int z) {
+        // turn to dirt if full block above
+        if (y < World.WORLDHEIGHT - 1 && isFullBlock(world.getBlock(x, y + 1, z))) {
+            world.setBlock(x, y, z, Blocks.DIRT);
+            return;
+        }
+
+        // spread grass to nearby dirt
+        // try 3 times!
+        for (int i = 0; i < 3; i++) {
+            var r = world.random.Next(27); // 3x3x3
+            int dx = (r % 3) - 1;
+            int dy = ((r / 3) % 3) - 1;
+            int dz = (r / 9) - 1;
+
+            int nx = x + dx;
+            int ny = y + dy;
+            int nz = z + dz;
+
+            // if target is dirt with air above, spread
+            if (world.getBlock(nx, ny, nz) == Blocks.DIRT) {
+                if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == Blocks.AIR) {
+                    world.setBlock(nx, ny, nz, Blocks.GRASS);
+                }
+            }
+        }
     }
 }
 

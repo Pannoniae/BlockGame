@@ -88,6 +88,7 @@ public class Entity(World world, string type) : Persistent {
     public double prevTotalTraveled;
 
     public float hp = 100;
+    public bool dead = false;
 
     public bool flyMode;
     public bool noClip;

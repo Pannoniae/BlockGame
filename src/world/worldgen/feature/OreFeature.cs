@@ -10,7 +10,7 @@ public class OreFeature : Feature {
     public ushort block;
     public int minCount;
     public int maxCount;
-    private Queue<Vector3I> expansionQueue = new(32 * 2);
+    private readonly Queue<Vector3I> expansionQueue = new(32 * 2);
 
     public OreFeature(ushort block, int minCount, int maxCount) {
         this.block = block;

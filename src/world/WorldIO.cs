@@ -6,6 +6,7 @@ using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
 using BlockGame.world.chunk;
+using Molten.DoublePrecision;
 
 namespace BlockGame.world;
 
@@ -60,6 +61,11 @@ public class WorldIO {
         tag.addLong("lastPlayed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         tag.addString("generator", world.generatorName);
 
+        // add player spawn
+        tag.addDouble("spawnX", world.spawn.X);
+        tag.addDouble("spawnY", world.spawn.Y);
+        tag.addDouble("spawnZ", world.spawn.Z);
+
         // save full player entity data
         var playerData = new NBTCompound("player");
         world.player.write(playerData);
@@ -67,6 +73,33 @@ public class WorldIO {
 
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
         Log.info($"Saved world data to level/{world.name}/level.xnbt");
+    }
+
+    public static World load(string filename) {
+        Log.info($"Loaded data from level/{filename}/level.xnbt");
+        var tag = NBT.readFile($"level/{filename}/level.xnbt");
+        var seed = tag.getInt("seed");
+        var displayName = tag.has("displayName") ? tag.getString("displayName") : filename;
+        var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
+        var world = new World(filename, seed, displayName, generatorName);
+        world.toBeLoadedNBT = tag;
+
+        // todo load the player spawn!
+        world.spawn = new Vector3D(
+            tag.getDouble("spawnX"),
+            tag.getDouble("spawnY"),
+            tag.getDouble("spawnZ")
+        );
+
+        // dump nbt into file
+        /*var file = "dump.xnbt";
+        if (File.Exists(file)) {
+            File.Delete(file);
+        }
+
+        SNBT.writeToFile(tag, file, prettyPrint: true);*/
+
+        return world;
     }
 
     public void saveChunk(World world, Chunk chunk) {
@@ -291,26 +324,6 @@ public class WorldIO {
         if (chunk.status >= ChunkStatus.MESHED) {
             chunk.status = ChunkStatus.LIGHTED;
         }
-    }
-
-    public static World load(string filename) {
-        Log.info($"Loaded data from level/{filename}/level.xnbt");
-        var tag = NBT.readFile($"level/{filename}/level.xnbt");
-        var seed = tag.getInt("seed");
-        var displayName = tag.has("displayName") ? tag.getString("displayName") : filename;
-        var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
-        var world = new World(filename, seed, displayName, generatorName);
-        world.toBeLoadedNBT = tag;
-
-        // dump nbt into file
-        /*var file = "dump.xnbt";
-        if (File.Exists(file)) {
-            File.Delete(file);
-        }
-
-        SNBT.writeToFile(tag, file, prettyPrint: true);*/
-
-        return world;
     }
 
 

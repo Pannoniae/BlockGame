@@ -894,7 +894,7 @@ public class GUI {
 
         // show the virtual GUI coordinate space (minimum 360x270 starting from 0,0)
         const float minVirtualWidth = 360f;
-        const float minVirtualHeight = 270f;
+        const float minVirtualHeight = 240f;
 
         var w = minVirtualWidth * guiScale;
         var h = minVirtualHeight * guiScale;

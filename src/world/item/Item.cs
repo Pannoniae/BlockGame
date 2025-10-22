@@ -47,6 +47,12 @@ public class Item {
     /** is this item an accessory? */
     public static bool[] accessory = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
 
+    /**
+     * is this item a material (used for crafting or a placeable building block)
+     * if true, player drops it on death.
+     */
+    public static bool[] material = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
+
     public static int currentID = 0;
 
     public static Item AIR;
@@ -107,6 +113,7 @@ public class Item {
         var newItems = new Item[newRMaxItems];
         var newArmour = new bool[newRMaxItems];
         var newAccessory = new bool[newRMaxItems];
+        var newMaterial = new bool[newRMaxItems];
 
         // copy old data to centre of new arrays
         int offset = newMaxItems - MAXITEMS;
@@ -114,11 +121,13 @@ public class Item {
             newItems[i + offset] = items[i];
             newArmour[i + offset] = armour[i];
             newAccessory[i + offset] = accessory[i];
+            newMaterial[i + offset] = material[i];
         }
 
         items = newItems;
         armour = newArmour;
         accessory = newAccessory;
+        material = newMaterial;
         MAXITEMS = newMaxItems;
         RMAXITEMS = newRMaxItems;
     }
@@ -168,22 +177,30 @@ public class Item {
         GOLD_INGOT = new Item(Items.GOLD_INGOT, "Gold Ingot");
         GOLD_INGOT.tex = new UVPair(0, 0);
         register(GOLD_INGOT);
+        material[GOLD_INGOT.idx] = true;
 
         IRON_INGOT = new Item(Items.IRON_INGOT, "Iron Ingot");
         IRON_INGOT.tex = new UVPair(1, 0);
         register(IRON_INGOT);
+        material[IRON_INGOT.idx] = true;
 
         TIN_INGOT = new Item(Items.TIN_INGOT, "Tin Ingot");
         TIN_INGOT.tex = new UVPair(2, 0);
         register(TIN_INGOT);
+        material[TIN_INGOT.idx] = true;
+
 
         SILVER_INGOT = new Item(Items.SILVER_INGOT, "Silver Ingot");
         SILVER_INGOT.tex = new UVPair(3, 0);
         register(SILVER_INGOT);
+        material[SILVER_INGOT.idx] = true;
+
 
         COPPER_INGOT = new Item(Items.COPPER_INGOT, "Copper Ingot");
         COPPER_INGOT.tex = new UVPair(4, 0);
         register(COPPER_INGOT);
+        material[COPPER_INGOT.idx] = true;
+
 
         GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f);
         GOLD_PICKAXE.tex = new UVPair(2, 7);
@@ -236,6 +253,7 @@ public class Item {
         STICK = new Item(Items.STICK, "Stick");
         STICK.tex = new UVPair(0, 8);
         register(STICK);
+        material[STICK.idx] = true;
 
         COPPER_PICKAXE = new Tool(Items.COPPER_PICKAXE, "Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
         COPPER_PICKAXE.tex = new UVPair(2, 5);
@@ -315,14 +333,31 @@ public class Item {
         COAL = new Item(Items.COAL, "Coal");
         COAL.tex = new UVPair(1, 9);
         register(COAL);
+        material[COAL.idx] = true;
 
         BRICK = new Item(Items.BRICK, "Brick");
         BRICK.tex = new UVPair(5, 0);
         register(BRICK);
+        material[BRICK.idx] = true;
 
         CLAY = new Item(Items.CLAY, "Clay");
         CLAY.tex = new UVPair(4, 9);
         register(CLAY);
+        material[CLAY.idx] = true;
+
+        // mark materials (items that drop on death in survival)
+        // ingots and crafting materials
+
+        // all blocks are materials
+        for (int i = 0; i < Block.currentID; i++) {
+            var block = Block.get(i);
+            if (block != null) {
+                var item = Item.block(i);
+                if (item != null) {
+                    material[item.idx] = true;
+                }
+            }
+        }
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

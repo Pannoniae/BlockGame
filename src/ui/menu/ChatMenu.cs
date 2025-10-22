@@ -4,7 +4,9 @@ using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.ui.screen;
 using BlockGame.util;
+using BlockGame.util.cmd;
 using BlockGame.world;
+using BlockGame.world.block;
 using BlockGame.world.item.inventory;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
@@ -47,6 +49,23 @@ public class ChatMenu : Menu {
     
     public void addMessage(string msg) {
         messages.PushFront(new ChatMessage(msg, tick));
+    }
+
+    // parse coordinate with relative support (~, ~5, ~-3)
+    private static bool parseCoord(string arg, double playerPos, out int result) {
+        if (arg[0] == '~') {
+            if (arg.Length == 1) {
+                result = (int)playerPos;
+                return true;
+            }
+            if (int.TryParse(arg[1..], out int offset)) {
+                result = (int)playerPos + offset;
+                return true;
+            }
+            result = 0;
+            return false;
+        }
+        return int.TryParse(arg, out result);
     }
 
     public override void onKeyChar(IKeyboard keyboard, char ch) {
@@ -110,240 +129,8 @@ public class ChatMenu : Menu {
         // if command, execute
         if (msg.StartsWith('/')) {
             var args = msg[1..].Split(' ');
-            switch (args[0]) {
-                case "help":
-                    addMessage("Commands: /help, /gamemode, /tp, /clear, /cb, /fb, /fly, /time, /debug, /summon");
-                    break;
-                case "gamemode":
-                    if (args.Length == 2) {
-                        switch (args[1].ToLower()) {
-                            case "creative":
-                            case "c":
-                            case "1":
-                                Game.gamemode = GameMode.creative;
-                                // switch to creative inventory context
-                                Game.player.inventoryCtx = new CreativeInventoryContext(40);
-                                addMessage("Set gamemode to Creative");
-                                break;
-                            case "survival":
-                            case "s":
-                            case "0":
-                                Game.gamemode = GameMode.survival;
-                                // disable flying when switching to survival
-                                Game.player.flyMode = false;
-                                // switch to survival inventory context
-                                Game.player.inventoryCtx = new SurvivalInventoryContext(Game.player.inventory);
-                                addMessage("Set gamemode to Survival");
-                                break;
-                            default:
-                                addMessage("Invalid gamemode. Use: creative/c/1 or survival/s/0");
-                                break;
-                        }
-                    }
-                    else {
-                        var currentMode = Game.gamemode.name;
-                        addMessage($"Current gamemode: {currentMode}. Usage: /gamemode <creative|survival>");
-                    }
-                    break;
-                case "clear":
-                    messages.Clear();
-                    addMessage("Cleared chat!");
-                    break;
-                default:
-                    addMessage("Unknown command: " + args[0]);
-                    break;
-                case "tp":
-                    if (args.Length == 4) {
-                        int x, y, z;
 
-                        if (int.TryParse(args[1], out x) && int.TryParse(args[2], out y) &&
-                            int.TryParse(args[3], out z)) {
-                            Game.player.teleport(new Vector3D(x, y, z));
-                            addMessage($"Teleported to {x}, {y}, {z}!");
-                            break;
-                        }
-
-                        // relative coords?
-                        if (args[1][0] == '~') {
-                            x = (int)Game.player.position.X;
-                        }
-                        else {
-                            bool success = int.TryParse(args[1], out x);
-                            if (!success) {
-                                addMessage("Invalid coordinates");
-                                return;
-                            }
-                        }
-
-                        if (args[2][0] == '~') {
-                            y = (int)Game.player.position.Y;
-                        }
-                        else {
-                            bool success = int.TryParse(args[2], out y);
-                            if (!success) {
-                                addMessage("Invalid coordinates");
-                                return;
-                            }
-                        }
-
-                        if (args[3][0] == '~') {
-                            z = (int)Game.player.position.Z;
-                        }
-                        else {
-                            bool success = int.TryParse(args[3], out z);
-                            if (!success) {
-                                addMessage("Invalid coordinates");
-                                return;
-                            }
-                        }
-
-                        Game.player.teleport(new Vector3D(x, y, z));
-                        addMessage($"Teleported to {x}, {y}, {z}!");
-                    }
-                    else {
-                        addMessage("Usage: /tp <x> <y> <z>");
-                    }
-
-                    break;
-                case "cb":
-                    if (Screen.GAME_SCREEN.chunkBorders) {
-                        Screen.GAME_SCREEN.chunkBorders = false;
-                        addMessage("Chunk borders disabled");
-                    }
-                    else {
-                        Screen.GAME_SCREEN.chunkBorders = true;
-                        addMessage("Chunk borders enabled");
-                    }
-
-                    break;
-                case "fb":
-                    // enable fullbright
-                    if (Game.graphics.fullbright) {
-                        Game.graphics.fullbright = false;
-                        addMessage("Fullbright disabled");
-                    }
-                    else {
-                        Game.graphics.fullbright = true;
-                        addMessage("Fullbright enabled");
-                    }
-
-                    // remesh everything to update lighting
-                    Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
-                    break;
-                case "fly":
-                    Game.player.noClip = !Game.player.noClip;
-                    addMessage("Noclip " + (Game.player.noClip ? "enabled" : "disabled"));
-                    break;
-                case "time":
-                    if (args.Length == 1) {
-                        // display current time
-                        var currentTick = Game.world.worldTick;
-                        var dayPercent = Game.world.getDayPercentage(currentTick);
-                        var timeOfDay = (int)(dayPercent * World.TICKS_PER_DAY);
-                        addMessage($"The time is {timeOfDay} (day {currentTick / World.TICKS_PER_DAY})");
-                    }
-                    else if (args.Length == 3 && args[1] == "set") {
-                        // set time
-                        if (int.TryParse(args[2], out int newTime)) {
-                            Game.world.worldTick = newTime;
-                            addMessage($"Set time to {newTime}");
-                            
-                            // remesh world
-                            //Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
-                        }
-                        else {
-                            addMessage("Usage: /time set <time>");
-                        }
-                    }
-                    else {
-                        addMessage("Usage: /time or /time set <time>");
-                    }
-                    break;
-                case "debug":
-                    // debug commands
-                    
-                    var subCmd = args.Length > 1 ? args[1] : "";
-                    switch (subCmd) {
-                        case "":
-                            addMessage("Debug commands: /debug lightmap, /debug noise, /debug atlas");
-                            break;
-                        case "lightmap":
-                            // dump lightmap to file
-                            Game.textures.dumpLightmap();
-                            addMessage("Lightmap dumped to lightmap.png");
-                            break;
-                        case "noise":
-                            // toggle noise debug display
-                            Game.debugShowNoise = !Game.debugShowNoise;
-                            addMessage($"Noise debug display: {(Game.debugShowNoise ? "enabled" : "disabled")}");
-                            break;
-                        case "atlas":
-                            // dump texture atlas to file
-                            Game.textures.dumpAtlas();
-                            addMessage("Texture atlas dumped to atlas.png");
-                            break;
-                        default:
-                            addMessage($"Unknown debug command: {subCmd}");
-                            break;
-                    }
-                    break;
-                case "spawn":
-                    /*int eID = args.Length > 1 ? args[1] : -1;
-                    var cow = Game.world.addEntity(e);
-                    if (cow != null) {
-                        addMessage($"Spawned {cow.name} at {Game.player.position}");
-                    }
-                    else {
-                        addMessage("Failed to spawn entity");
-                    }
-                    break;*/
-                    break;
-                case "summon":
-                    if (args.Length < 2) {
-                        addMessage("Usage: /summon <entity> [x] [y] [z]");
-                        break;
-                    }
-
-                    var entityName = args[1].ToUpper();
-                    var entityField = typeof(Entities).GetField(entityName);
-
-                    if (entityField == null || !entityField.IsLiteral) {
-                        addMessage($"Unknown entity: {args[1]}");
-                        break;
-                    }
-
-                    int entityType = (int)entityField.GetValue(null)!;
-
-                    if (entityType == Entities.PLAYER || entityType == Entities.ITEM_ENTITY) {
-                        addMessage($"Cannot summon entity: {args[1]}");
-                        break;
-                    }
-
-                    var entity = Entities.create(Game.world, entityType);
-                    if (entity == null) {
-                        addMessage($"Failed to create entity: {args[1]}");
-                        break;
-                    }
-
-                    // parse position (default to player position)
-                    Vector3D spawnPos = Game.player.position;
-                    if (args.Length >= 5) {
-                        if (double.TryParse(args[2], out double sx) &&
-                            double.TryParse(args[3], out double sy) &&
-                            double.TryParse(args[4], out double sz)) {
-                            spawnPos = new Vector3D(sx, sy, sz);
-                        } else {
-                            addMessage("Invalid coords");
-                            break;
-                        }
-                    }
-
-                    entity.position = spawnPos;
-                    entity.prevPosition = spawnPos;
-                    Game.world.addEntity(entity);
-                    addMessage($"Summoned {args[1]} at {(int)spawnPos.X}, {(int)spawnPos.Y}, {(int)spawnPos.Z}");
-                    break;
-            }
+            Command.execute(Game.player, args);
         }
         // if not command, just print with player name
         else {

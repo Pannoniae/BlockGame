@@ -11,6 +11,7 @@ public partial class World {
 
     public readonly Particles particles;
     public Player player;
+    public Vector3D spawn;
 
     public static int ec = 1;
 
