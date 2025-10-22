@@ -16,8 +16,8 @@ public partial class SimpleWorldGenerator : WorldGenerator {
         this.world = world;
     }
 
-    public void setup(int seed) {
-        random = new XRandom(seed);
+    public void setup(XRandom random, int seed) {
+        this.random = random;
         noise = new FastNoiseLite(seed);
         noise2 = new FastNoiseLite(random.Next(seed));
         treenoise = new FastNoiseLite(random.Next(seed));

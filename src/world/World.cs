@@ -111,7 +111,7 @@ public partial class World : IDisposable {
         random = new XRandom(seed);
         worldTick = 0;
 
-        generator.setup(seed);
+        generator.setup(random, seed);
         this.seed = seed;
 
         chunks = new Dictionary<ChunkCoord, Chunk>();
@@ -1248,9 +1248,11 @@ public partial class World : IDisposable {
             if (!chunkAdded) {
                 c = new Chunk(this, chunkCoord.x, chunkCoord.z);
                 addChunk(chunkCoord, c);
+                chunk = c;
             }
 
             generator.generate(chunkCoord);
+            chunk.recalc();
         }
 
         if (status >= ChunkStatus.POPULATED &&
@@ -1270,7 +1272,7 @@ public partial class World : IDisposable {
                 }
             }
 
-            generator.populate(chunkCoord);
+            generator.surface(chunkCoord);
         }
 
         if (status >= ChunkStatus.LIGHTED &&

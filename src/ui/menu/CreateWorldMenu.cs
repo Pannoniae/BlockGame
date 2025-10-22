@@ -59,7 +59,7 @@ public class CreateWorldMenu : Menu {
         addElement(genLabel);
 
         // generator toggle button
-        generatorButton = new ToggleButton(this, "generator", false, 0, "generator.new", "generator.perlin", "generator.overworld", "generator.simple") {
+        generatorButton = new ToggleButton(this, "generator", false, 0, WorldGenerators.all.Select(n => "generator." + n).ToArray()) {
             horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
             verticalAnchor = VerticalAnchor.TOP
         };

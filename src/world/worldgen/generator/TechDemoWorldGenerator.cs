@@ -1,3 +1,5 @@
+using BlockGame.util;
+
 namespace BlockGame.world.worldgen.generator;
 
 public partial class TechDemoWorldGenerator : WorldGenerator {
@@ -11,7 +13,7 @@ public partial class TechDemoWorldGenerator : WorldGenerator {
         this.world = world;
     }
 
-    public void setup(int seed) {
+    public void setup(XRandom random, int seed) {
         noise = new FastNoiseLite(seed);
         noise.SetFrequency(0.003f);
     }

@@ -61,11 +61,10 @@ public partial class PerlinWorldGenerator {
     public void generate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         getDensity(buffer, coord);
-        interpolate(buffer, coord);
+        WorldgenUtil.interpolate(world, buffer, coord);
         //Console.Out.WriteLine(coord);
         generateSurface(coord);
 
-        chunk.recalc();
         chunk.status = ChunkStatus.GENERATED;
     }
 
@@ -73,14 +72,14 @@ public partial class PerlinWorldGenerator {
     public void getDensity(float[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         // get the noise
-        getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
+        WorldgenUtil.getNoise3DRegion(lowBuffer, lowNoise, coord, LOW_FREQUENCY, LOW_FREQUENCY * Y_DIVIDER,
             LOW_FREQUENCY, 12, 2f);
-        getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
+        WorldgenUtil.getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
             HIGH_FREQUENCY, 12, Meth.phiF);
         
         // get weirdness
         // only low octaves for this one, it's a glorified selector
-        getNoise3DRegion(weirdnessBuffer, weirdnessNoise, coord, WEIRDNESS_FREQUENCY, WEIRDNESS_FREQUENCY,
+        WorldgenUtil.getNoise3DRegion(weirdnessBuffer, weirdnessNoise, coord, WEIRDNESS_FREQUENCY, WEIRDNESS_FREQUENCY,
             WEIRDNESS_FREQUENCY, 4, Meth.phiF);
 
 
@@ -90,7 +89,7 @@ public partial class PerlinWorldGenerator {
         // produces the actually cool results BUT we could cook something up with maths to make it more extreme and stuff
         // basically it should be mostly 0 (flat) or 1 (quirky shit) with transitions inbetween
         // im sure we can cook something up mr white
-        getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
+        WorldgenUtil.getNoise3DRegion(selectorBuffer, selectorNoise, coord, SELECTOR_FREQUENCY, SELECTOR_FREQUENCY,
             SELECTOR_FREQUENCY, 4, Meth.etaF);
 
         for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
@@ -102,16 +101,16 @@ public partial class PerlinWorldGenerator {
                     //var z = coord.z * Chunk.CHUNKSIZE + nz * NOISE_PER_Z;
 
                     // sample lowNoise
-                    float low = lowBuffer[getIndex(nx, ny, nz)];
+                    float low = lowBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
                     // sample highNoise
-                    float high = highBuffer[getIndex(nx, ny, nz)];
+                    float high = highBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
                     // sample selectorNoise
-                    float selector = selectorBuffer[getIndex(nx, ny, nz)];
+                    float selector = selectorBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
                     
-                    float weirdness = weirdnessBuffer[getIndex(nx, ny, nz)];
+                    float weirdness = weirdnessBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
 
                     // store the value in the buffer
-                    buffer[getIndex(nx, ny, nz)] = calculateDensity(low, high, selector, weirdness, y);
+                    buffer[WorldgenUtil.getIndex(nx, ny, nz)] = calculateDensity(low, high, selector, weirdness, y);
                 }
             }
         }
@@ -196,81 +195,10 @@ public partial class PerlinWorldGenerator {
         var bias = calculateAirBias(low, high, weirdness, y);
         low -= bias;
         // combine the two with the ratio selector
-        float density = lerp(low, high, selector);
+        float density = WorldgenUtil.lerp(low, high, selector);
         density -= calculateAirBias(low, high, weirdness, y);
 
         return density;
-    }
-
-    private void interpolate(float[] buffer, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-
-        // we do this so we don't check "is chunk initialised" every single time we set a block.
-        // this cuts our asm code size by half lol from all that inlining and shit
-        // TODO it doesnt work properly, I'll fix it later
-        // Span<bool> initialised = stackalloc bool[Chunk.CHUNKHEIGHT];
-
-        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
-            var y0 = y >> NOISE_PER_Y_SHIFT;
-            var y1 = y0 + 1;
-            float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
-
-            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                var z0 = z >> NOISE_PER_Z_SHIFT;
-                var z1 = z0 + 1;
-                float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
-
-                for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
-                    // the grid cell that contains the point
-                    var x0 = x >> NOISE_PER_X_SHIFT;
-                    var x1 = x0 + 1;
-
-                    // the lerp (between 0 and 1)
-                    // float xd = (x % NOISE_PER_X) / (float)NOISE_PER_X;
-                    float xd = (x & NOISE_PER_X_MASK) * NOISE_PER_X_INV;
-                    //var ys = y >> 4;
-
-                    float value;
-                    {
-                        // the eight corner values from the buffer
-                        var c000 = buffer[getIndex(x0, y0, z0)];
-                        var c001 = buffer[getIndex(x0, y0, z1)];
-                        var c010 = buffer[getIndex(x0, y1, z0)];
-                        var c011 = buffer[getIndex(x0, y1, z1)];
-                        var c100 = buffer[getIndex(x1, y0, z0)];
-                        var c101 = buffer[getIndex(x1, y0, z1)];
-                        var c110 = buffer[getIndex(x1, y1, z0)];
-                        var c111 = buffer[getIndex(x1, y1, z1)];
-
-                        // Interpolate along x
-                        var c00 = lerp(c000, c100, xd);
-                        var c01 = lerp(c001, c101, xd);
-                        var c10 = lerp(c010, c110, xd);
-                        var c11 = lerp(c011, c111, xd);
-
-                        // Interpolate along y
-                        var c0 = lerp(c00, c10, yd);
-                        var c1 = lerp(c01, c11, yd);
-
-                        // Interpolate along z
-                        value = lerp(c0, c1, zd);
-                    }
-
-                    // if we haven't initialised the chunk yet, do so
-                    // if below sea level, water
-                    if (value > 0) {
-                        chunk.setBlockFast(x, y, z, Blocks.STONE);
-                        chunk.addToHeightMap(x, y, z);
-                    }
-                    else {
-                        if (y is < WATER_LEVEL and >= 40) {
-                            chunk.setBlockFast(x, y, z, Blocks.WATER);
-                            chunk.addToHeightMap(x, y, z);
-                        }
-                    }
-                }
-            }
-        }
     }
 
     public void generateSurface(ChunkCoord coord) {
@@ -286,9 +214,9 @@ public partial class PerlinWorldGenerator {
                     height--;
                 }
 
-                // thickness of the soil layer layer
-                var amt = getNoise2D(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
-                var blockVar = getNoise3DFBm(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
+                // thickness of the soil layer
+                var amt = WorldgenUtil.getNoise2D(auxNoise, worldPos.X, worldPos.Z, 1, 1) + 2.5;
+                var blockVar = WorldgenUtil.getNoise3DFBm(auxNoise, worldPos.X * BLOCK_VARIATION_FREQUENCY,
                     128,
                     worldPos.Z * BLOCK_VARIATION_FREQUENCY,
                     1, 1);
@@ -339,44 +267,7 @@ public partial class PerlinWorldGenerator {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int getIndex(int x, int y, int z) {
-        // THE PARENTHESES ARE IMPORTANT
-        // otherwise it does 5 * 5 for some reason??? completely useless multiplication
-        return x + z * NOISE_SIZE_X + y * (NOISE_SIZE_X * NOISE_SIZE_Z);
-    }
-
-    private static Vector128<int> getIndex4(int x, int y, int z) {
-        return Vector128.Create(x) + Vector128.Create(z) * NOISE_SIZE_X +
-               Vector128.Create(y) * NOISE_SIZE_X * NOISE_SIZE_Z;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float lerp(float a, float b, float t) {
-        return a + t * (b - a);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Vector256<double> lerp4(Vector256<double> a, Vector256<double> b, Vector256<double> t) {
-        return a + t * (b - a);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Vector128<float> lerp4(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
-        return a + t * (b - a);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Vector128<float> lerp2(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
-        return a + t * (b - a);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Vector64<float> lerp2(Vector64<float> a, Vector64<float> b, Vector64<float> t) {
-        return a + t * (b - a);
-    }
-
-    public void populate(ChunkCoord coord) {
+    public void surface(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
         var xWorld = coord.x * Chunk.CHUNKSIZE;
@@ -384,9 +275,6 @@ public partial class PerlinWorldGenerator {
 
         // set seed to chunk
         random.Seed(coord.GetHashCode());
-
-        var xChunk = coord.x * Chunk.CHUNKSIZE;
-        var zChunk = coord.z * Chunk.CHUNKSIZE;
 
         // place hellrock on bottom of the world
         // height should be between 1 and 4
@@ -396,111 +284,17 @@ public partial class PerlinWorldGenerator {
                 var zs = zWorld + z;
 
                 var height =
-                    getNoise2D(auxNoise, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
+                    WorldgenUtil.getNoise2D(auxNoise, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
                     chunk.setBlockFast(x, y, z, Blocks.HELLROCK);
                 }
             }
         }
-
-        // Do ore
-        for (int i = 0; i < 16; i++) {
-            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
-            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
-            var y = random.Next(0, World.WORLDHEIGHT);
-            coalOre.place(world, random, x, y, z);
-        }
-
-        for (int i = 0; i < 16; i++) {
-            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
-            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
-            var y = random.Next(0, World.WORLDHEIGHT / 2);
-            ironOre.place(world, random, x, y, z);
-        }
-
-        var foliage = getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 2);
-        var treeCount = foliage;
-        if (foliage < 0) {
-            treeCount = 0;
-        }
-
-        treeCount *= 10;
-        treeCount *= treeCount;
-
-        for (int i = 0; i < treeCount; i++) {
-            placeTree(random, coord);
-        }
-
-        // Do caves
-        caves.place(world, coord);
-        // Do ravines
-        ravines.place(world, coord);
-
-        // place grass
-        var grassDensity = float.Abs(getNoise2D(foliageNoise, xChunk * FOLIAGE_FREQUENCY, zChunk * FOLIAGE_FREQUENCY, 2, 1.5f));
-        var grassCount = grassDensity * World.WORLDHEIGHT;
-
-        if (grassDensity < 0) {
-            grassCount = 0;
-        }
-
-        grassCount *= grassCount;
-
-        for (int i = 0; i < grassCount; i++) {
-            var x = random.Next(0, Chunk.CHUNKSIZE);
-            var z = random.Next(0, Chunk.CHUNKSIZE);
-            // var y = chunk.heightMap.get(x, z);
-            // the problem with the heightmap approach is that you get chunks FULL of grass vs. literally nothing elsewhere
-            // STOCHASTIC RANDOMISATION FOR THE LULZ
-            var y = random.Next(0, World.WORLDHEIGHT - 1);
-
-            if (chunk.getBlock(x, y, z) == Blocks.GRASS && y < World.WORLDHEIGHT - 1) {
-                if (chunk.getBlock(x, y + 1, z) == Blocks.AIR) {
-                    var grassType = random.NextSingle() > 0.7f ? Blocks.TALL_GRASS : Blocks.SHORT_GRASS;
-                    chunk.setBlockFast(x, y + 1, z, grassType);
-                }
-            }
-        }
+        
+        surfacegen.surface(random, coord);
+        
 
         chunk.status = ChunkStatus.POPULATED;
-    }
-
-    private void placeTree(XRandom random, ChunkCoord coord) {
-        var chunk = world.getChunk(coord);
-        var x = random.Next(0, Chunk.CHUNKSIZE);
-        var z = random.Next(0, Chunk.CHUNKSIZE);
-        var y = chunk.heightMap.get(x, z);
-
-        if (y > 120) {
-            return;
-        }
-
-        // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Blocks.GRASS) {
-            return;
-        }
-
-        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
-        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
-
-        // if there's stuff in the bounding box, don't place a tree
-        for (int yd = 1; yd < 8; yd++) {
-            for (int zd = -2; zd <= 2; zd++) {
-                for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Blocks.AIR) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        // 1/15 chance for fancy tree
-        if (random.Next(15) == 0) {
-            TreeGenerator.placeFancyTree(world, random, xWorld, y + 1, zWorld);
-        }
-        else {
-            TreeGenerator.placeOakTree(world, random, xWorld, y + 1, zWorld);
-        }
     }
 }

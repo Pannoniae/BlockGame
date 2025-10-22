@@ -17,9 +17,9 @@ public partial class OverworldWorldGenerator {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
                 var worldPos = World.toWorldPos(chunk.coord.x, chunk.coord.z, x, 0, z);
 
-                var aux = getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 0.5f);
-                var mountainness = MathF.Pow((getNoise(terrainNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 1) / 2f, 2);
-                var flatNoise = getNoise(terrainNoise, worldPos.X / 3f + aux * 5 + 1, worldPos.Z / 3f + aux * 5 + 1, 5, 0.5f);
+                var aux = WorldgenUtil.getNoise(auxNoise, worldPos.X, worldPos.Z, 1, 0.5f);
+                var mountainness = MathF.Pow((WorldgenUtil.getNoise(terrainNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 1) / 2f, 2);
+                var flatNoise = WorldgenUtil.getNoise(terrainNoise, worldPos.X / 3f + aux * 5 + 1, worldPos.Z / 3f + aux * 5 + 1, 5, 0.5f);
 
                 // this rescales the noise so there's more above than below
                 flatNoise = MathF.Sin(flatNoise) * 0.8f + MathF.Sign(flatNoise) * flatNoise * 0.3f;
@@ -58,7 +58,7 @@ public partial class OverworldWorldGenerator {
                 int height = chunk.heightMap.get(x, z);
 
                 // replace top layers with dirt
-                var amt = getNoise(auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
+                var amt = WorldgenUtil.getNoise(auxNoise2, worldPos.X, worldPos.Z, 1, 0.5f) + 2.5;
                 for (int yy = height - 1; yy > height - 1 - amt; yy--) {
                     chunk.setBlockFast(x, yy, z, Blocks.DIRT);
                 }
@@ -85,7 +85,7 @@ public partial class OverworldWorldGenerator {
         chunk.status = ChunkStatus.GENERATED;
     }
 
-    public void populate(ChunkCoord coord) {
+    public void surface(ChunkCoord coord) {
         var random = getRandom(coord);
         var chunk = world.getChunk(coord);
 

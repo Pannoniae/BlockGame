@@ -21,7 +21,7 @@ public partial class TechDemoWorldGenerator {
         chunk.status = ChunkStatus.GENERATED;
     }
 
-    public void populate(ChunkCoord coord) {
+    public void surface(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         chunk.status = ChunkStatus.POPULATED;
     }

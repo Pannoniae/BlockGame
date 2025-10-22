@@ -37,7 +37,7 @@ public partial class SimpleWorldGenerator {
         chunk.status = ChunkStatus.GENERATED;
     }
 
-    public void populate(ChunkCoord coord) {
+    public void surface(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         var random = getRandom(coord);
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
