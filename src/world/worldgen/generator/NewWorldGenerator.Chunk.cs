@@ -153,7 +153,13 @@ public partial class NewWorldGenerator {
 
                     float density = lerp(t, t2, s);
 
-                    e = float.Clamp(e, 0, 1);
+                    //e = float.Clamp(e, 0, 1);
+
+                    if (e < 0) {
+                        e = -(e * e);
+                    }
+
+                    e = float.Abs(e);
                     //e = e < 0.05f ? 0 : e;
 
                     //Console.Out.WriteLine(density);
@@ -165,7 +171,8 @@ public partial class NewWorldGenerator {
                     var dd = float.Abs(e - 0.09f);
                     //var m = sh * sh * c;
                     //var m = 1 / (sh * (e / 2f));
-                    var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
+                    //var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
+                    var m = ((float.Abs(f) * 16) + 0.5f);
                     //m *= float.Clamp(g, 0, 1);
 
                     //m *= (1 / e * e);
@@ -537,7 +544,7 @@ public partial class NewWorldGenerator {
 
         // todo this will be replaced with biomes later!!
         // right now we just don't want trees in plains stuff for obvious reasons
-        if (foliage < 0) {
+        if (foliage < 0.25f) {
             treeCount = 0;
         }
         else {
