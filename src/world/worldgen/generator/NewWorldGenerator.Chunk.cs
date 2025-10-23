@@ -40,6 +40,12 @@ public partial class NewWorldGenerator {
     public const float FREQAUX = 1 / 42f;
     public const float HELLROCK_FREQUENCY = 1 / 1.5f;
 
+    public const float LOW_FREQ = 1 / 262f;
+    public const float HIGH_FREQ = 1 / 219f;
+    public const float SELECTOR_FREQ = 1 / 49f;
+    public const float ELEVATION_FREQ = 1 / 422f;
+    public const float FRACT_FREQ = 1 / 101f;
+
     public void generate(ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
@@ -132,7 +138,7 @@ public partial class NewWorldGenerator {
                     var a = 0;
                     var c = 8f;
                     // high m = flat, low m = not
-                    var sh = (e / 2f) + 1f;
+                    //var sh = (e / 2f) + 1f;
 
                     var dd = float.Abs(e - 0.09f);
                     //var m = sh * sh * c;
@@ -166,8 +172,8 @@ public partial class NewWorldGenerator {
                     d = (d is < 0.04f and > 0f) ? d * 0.4f : d;
                     d = (d < 0f) ? d * 1.5f : d;
 
-                    d = e < 0.05f ? 0 : d;
-                    d = e is < 0.05f and > 0f ? ((0.25f * (0.05f - e)) - 0.03f) : d;
+                    //d = e < 0.05f ? 0 : d;
+                    //d = e is < 0.05f and > 0f ? ((0.25f * (0.05f - e)) - 0.03f) : d;
                     // cheat
                     //d = (d > -0.03 && d < 0.03f) ? d + 0.02f : d;
                     //var d2 = float.Sqrt(float.Abs(0.08f * (e - 0.04f))) - 0.065f;
@@ -313,17 +319,17 @@ public partial class NewWorldGenerator {
     public void getDensityv2(float[] buffer, ChunkCoord coord) {
         // get the noise
         // todo cleanup this shit and give it proper constants
-        WorldgenUtil.getNoise3DRegion(tb, tn, coord, 1 / (42f * 2), 1 / (42f * 2),
-            1 / (42f * 2), 8, 1 + Meth.rhoF * 2);
-        WorldgenUtil.getNoise3DRegion(t2b, t2n, coord, 1 / (42f * 2), 1 / (42f * 2),
-            1 / (42f * 2), 8, 2 + Meth.rhoF);
+        WorldgenUtil.getNoise3DRegion(tb, tn, coord, LOW_FREQ, LOW_FREQ * 2,
+            LOW_FREQ, 10, 1 + Meth.rhoF * 2);
+        WorldgenUtil.getNoise3DRegion(t2b, t2n, coord, HIGH_FREQ, HIGH_FREQ * 2,
+            HIGH_FREQ, 10, 2 + Meth.rhoF);
 
 
-        WorldgenUtil.getNoise3DRegion(sb, sn, coord, 1 / 29f, 1 / 29f,
-            1 / 29f, 4, 2f);
+        WorldgenUtil.getNoise3DRegion(sb, sn, coord, SELECTOR_FREQ, SELECTOR_FREQ / 2,
+            SELECTOR_FREQ, 6, 2f);
 
-        WorldgenUtil.getNoise2DRegion(eb, en, coord, 1 / 342f, 1 / 342f, 8, 2f);
-        WorldgenUtil.getNoise2DRegion(fb, fn, coord, 1 / 342f, 1 / 342f, 8, 2f - Meth.d2r);
+        WorldgenUtil.getNoise2DRegion(eb, en, coord, ELEVATION_FREQ, ELEVATION_FREQ, 10, 2f);
+        WorldgenUtil.getNoise2DRegion(fb, fn, coord, FRACT_FREQ, FRACT_FREQ, 8, 2f - Meth.d2r);
 
         //getNoise2DRegion(gb, gn, coord, 1 / 342f, 1 / 342f, 8, 2f);
 
@@ -389,7 +395,7 @@ public partial class NewWorldGenerator {
                     var dd = float.Abs(e - 0.09f);
                     //var m = sh * sh * c;
                     //var m = 1 / (sh * (e / 2f));
-                    var m = ((float.Clamp(f, 0, 1) * 16) + 0.5f);
+                    var m = ((float.Abs(f) * 16) + 0.5f);
                     //m *= float.Clamp(g, 0, 1);
 
                     //m *= (1 / e * e);

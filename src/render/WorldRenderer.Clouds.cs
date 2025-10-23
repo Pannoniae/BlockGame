@@ -616,8 +616,10 @@ public sealed partial class WorldRenderer {
         int visiblePixels = (x1o - x0o) * (y1o - y0o);
         const float totalPixels = 256 * 256;
 
+        //Console.Out.WriteLine($"Cloud visible pixels: {visiblePixels} / {totalPixels} {cloudMaxVerts}");
+
         // scale cloudMaxVerts by visible area ratio
-        int estimatedVerts = (int)(long)(cloudMaxVerts * visiblePixels / totalPixels * 1.33f); // this shouldn't crash IN THEORY SO HIGHLY OVERALLOCATE
+        int estimatedVerts = (int)(((long)cloudMaxVerts * visiblePixels) / (double)totalPixels * 1.33f);
         idt.reserve(estimatedVerts * 4);
 
         Span<int> counts = stackalloc int[4];

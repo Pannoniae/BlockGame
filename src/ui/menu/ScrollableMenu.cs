@@ -108,9 +108,11 @@ public abstract class ScrollableMenu : Menu {
         // only the target element receives the event
         if (target != null) {
             target.onMouseDown(button);
-            if (button == MouseButton.Left) {
-                pressedElement = target;
+            if (button is MouseButton.Left or MouseButton.Right) {
                 playClick();
+                if (button is MouseButton.Left) {
+                    pressedElement = target;
+                }
             }
         }
     }
@@ -128,9 +130,11 @@ public abstract class ScrollableMenu : Menu {
             if (pressedElement.active) {
                 pressedElement.click(button);
             }
-            if (button == MouseButton.Left) {
+            if (button is MouseButton.Left or MouseButton.Right) {
                 playRelease();
-                pressedElement = null;
+                if (button is MouseButton.Left) {
+                    pressedElement = null;
+                }
             }
         } else {
             // no capture - check for element under cursor using effective bounds
@@ -138,7 +142,7 @@ public abstract class ScrollableMenu : Menu {
                 if (element.active && getEffectiveBounds(element).Contains((int)pos.X, (int)pos.Y)) {
                     element.onMouseUp(button);
                     element.click(button);
-                    if (button == MouseButton.Left) {
+                    if (button is MouseButton.Left or MouseButton.Right) {
                         playRelease();
                     }
                     break;

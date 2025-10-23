@@ -322,16 +322,16 @@ public class WorldgenUtil {
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;
 
-        for (int nx = 0; nx < WorldgenUtil.NOISE_SIZE_X; nx++) {
-            int x = worldX + nx * WorldgenUtil.NOISE_PER_X;
+        for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
+            int x = worldX + nx * NOISE_PER_X;
 
-            for (int nz = 0; nz < WorldgenUtil.NOISE_SIZE_Z; nz++) {
-                int z = worldZ + nz * WorldgenUtil.NOISE_PER_Z;
+            for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
+                int z = worldZ + nz * NOISE_PER_Z;
                 // For 3D noise, sample at each Y level
-                for (int ny = 0; ny < WorldgenUtil.NOISE_SIZE_Y; ny++) {
-                    int y = ny * WorldgenUtil.NOISE_PER_Y;
+                for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
+                    int y = ny * NOISE_PER_Y;
 
-                    buffer[WorldgenUtil.getIndex(nx, ny, nz)] = getNoise3D(
+                    buffer[getIndex(nx, ny, nz)] = getNoise3D(
                         noise,
                         x * xScale,
                         y * yScale,
@@ -351,15 +351,15 @@ public class WorldgenUtil {
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;
 
-        for (int nx = 0; nx < WorldgenUtil.NOISE_SIZE_X; nx++) {
-            int x = worldX + nx * WorldgenUtil.NOISE_PER_X;
+        for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
+            int x = worldX + nx * NOISE_PER_X;
 
-            for (int nz = 0; nz < WorldgenUtil.NOISE_SIZE_Z; nz++) {
-                int z = worldZ + nz * WorldgenUtil.NOISE_PER_Z;
+            for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
+                int z = worldZ + nz * NOISE_PER_Z;
                 float value = getNoise2D(noise, x * xScale, z * zScale, octaves, falloff);
 
-                for (int ny = 0; ny < WorldgenUtil.NOISE_SIZE_Y; ny++) {
-                    buffer[WorldgenUtil.getIndex(nx, ny, nz)] = value;
+                for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
+                    buffer[getIndex(nx, ny, nz)] = value;
                 }
             }
         }
@@ -372,15 +372,15 @@ public class WorldgenUtil {
         int worldX = coord.x * Chunk.CHUNKSIZE;
         int worldZ = coord.z * Chunk.CHUNKSIZE;
 
-        for (int nx = 0; nx < WorldgenUtil.NOISE_SIZE_X; nx++) {
-            int x = worldX + nx * WorldgenUtil.NOISE_PER_X;
+        for (int nx = 0; nx < NOISE_SIZE_X; nx++) {
+            int x = worldX + nx * NOISE_PER_X;
 
-            for (int nz = 0; nz < WorldgenUtil.NOISE_SIZE_Z; nz++) {
-                int z = worldZ + nz * WorldgenUtil.NOISE_PER_Z;
+            for (int nz = 0; nz < NOISE_SIZE_Z; nz++) {
+                int z = worldZ + nz * NOISE_PER_Z;
                 float value = getNoise2D(noise, x * xScale, z * zScale, octaves, falloff);
 
-                for (int ny = 0; ny < WorldgenUtil.NOISE_SIZE_Y; ny++) {
-                    buffer[WorldgenUtil.getIndex(nx, ny, nz)] = value;
+                for (int ny = 0; ny < NOISE_SIZE_Y; ny++) {
+                    buffer[getIndex(nx, ny, nz)] = value;
                 }
             }
         }

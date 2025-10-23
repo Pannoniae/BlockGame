@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.world;
 using JetBrains.Annotations;
 using Silk.NET.OpenGL.Legacy;
@@ -362,6 +363,8 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
                        MapBufferAccessMask.FlushExplicitBit));
 
             format();
+
+            Log.info($"Initialized FastInstantDrawTexture with {maxVertices} vertices per region, {regionCount} regions ({maxVertices * regionCount} total).");
         }
 
         instantShader = Game.graphics.instantTextureShader;
@@ -464,6 +467,8 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
 
             maxVertices = newMaxVertices;
 
+            Log.info($"Resized FastInstantDrawTexture to {maxVertices} vertices per region.");
+
             format();
         }
 
@@ -481,7 +486,7 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
         while (newSize < count) newSize *= 2;
 
         // resize once!
-        maxVertices = newSize / 2; // compensate for resizeStorage doubling
+        maxVertices = newSize;
         resizeStorage();
     }
 

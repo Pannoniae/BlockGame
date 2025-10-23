@@ -13,7 +13,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
     public SimplexNoise foliagen;
 
-    public const float FREQFOLIAGE = 1 / 169f;
+    public const float FREQFOLIAGE = 1 / 19f;
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
@@ -79,12 +79,19 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         }
 
         var foliage = WorldgenUtil.getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);
-        var treeCount = foliage * 3f;
+        var treeCount = foliage * 2f;
 
         // todo this will be replaced with biomes later!!
         // right now we just don't want trees in plains stuff for obvious reasons
         if (foliage < 0.25f) {
-            treeCount = 0;
+
+            // edge
+            if (foliage > 0.1f) {
+                treeCount += ((foliage - 0.1f) * 4);
+            }
+            else {
+                treeCount = 0;
+            }
         }
         else {
             treeCount += 4;

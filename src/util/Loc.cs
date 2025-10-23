@@ -16,7 +16,9 @@ public static class Loc {
         ["generator.overworld"] = "Overworld",
         ["generator.overworld.tooltip"] = "Old test generator with a boring landscape.",
         ["generator.simple"] = "Simple",
-        ["generator.simple.tooltip"] = "(Mostly) flat testing world. Good for testing and building.",
+        ["generator.simple.tooltip"] = "(Mostly) flat testing world.",
+        ["generator.flat"] = "Flat",
+        ["generator.flat.tooltip"] = "Completely flat world without any resources or features."
     };
 
     /**

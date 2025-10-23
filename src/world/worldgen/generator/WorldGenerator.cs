@@ -12,7 +12,7 @@ public interface WorldGenerator {
 }
 
 public static class WorldGenerators {
-    public static readonly string[] all = ["v2", "new", "perlin", "overworld", "simple"];
+    public static readonly string[] all = ["v2", "new", "perlin", "overworld", "simple", "flat"];
 
     public static WorldGenerator create(World world, string? name) {
         return name switch {
@@ -21,7 +21,7 @@ public static class WorldGenerators {
             "perlin" => new PerlinWorldGenerator(world),
             "overworld" => new OverworldWorldGenerator(world),
             "simple" => new SimpleWorldGenerator(world),
-
+            "flat" => new FlatWorldGenerator(world),
             _ => new PerlinWorldGenerator(world)
         };
     }
