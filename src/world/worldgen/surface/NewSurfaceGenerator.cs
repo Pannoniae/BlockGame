@@ -148,19 +148,12 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         for (int p = 0; p < flowerPatchCount; p++) {
             // pick flower type for this patch
             var r = random.NextSingle();
-            ushort flowerType;
-            if (r < 0.25f) {
-                flowerType = Blocks.YELLOW_FLOWER;
-            }
-            else if (r < 0.5f) {
-                flowerType = Blocks.MARIGOLD;
-            }
-            else if (r < 0.75f) {
-                flowerType = Blocks.BLUE_TULIP;
-            }
-            else {
-                flowerType = Blocks.THISTLE;
-            }
+            ushort flowerType = r switch {
+                < 0.25f => Blocks.YELLOW_FLOWER,
+                < 0.5f => Blocks.MARIGOLD,
+                < 0.75f => Blocks.BLUE_TULIP,
+                _ => Blocks.THISTLE
+            };
 
             // patch centre
             var cx = random.Next(0, Chunk.CHUNKSIZE);

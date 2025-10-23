@@ -229,10 +229,13 @@ public partial class NewWorldGenerator {
                 var e = WorldgenUtil.sample2D(eb, x, z);
                 var f = WorldgenUtil.sample2D(fb, x, z);
 
-                e = float.Clamp(e, 0, 1);
+                e = float.Abs(e);
+                f = float.Abs(f);
 
                 //amt -= float.Max(0, (f * 2f + 1.5f));
-                amt -= float.Max(0, (e >= 0.3 ? float.Sqrt(e - 0.3f) : 0f) * 30f);
+                //amt -= float.Max(0, (e >= 0.3 ? float.Sqrt(e - 0.3f) : 0f) * 6f);
+                amt = e >= 0.3 ? (amt - 2f) : amt;
+                amt -= float.Max(0, (f >= 0.3 ? float.Sqrt(e - 0.3f) : 0f) * 12f);
 
                 amt = float.Max(amt, 0);
 
@@ -256,7 +259,7 @@ public partial class NewWorldGenerator {
                 }
 
                 // beaches
-                else if (height > WATER_LEVEL - 3 && height < WATER_LEVEL + 1) {
+                else if (height is > WATER_LEVEL - 3 and < WATER_LEVEL + 1) {
                     if (blockVar > -0.2) {
                         topBlock = Blocks.SAND;
                         filler = Blocks.SAND;
@@ -368,8 +371,8 @@ public partial class NewWorldGenerator {
                     float w = wb[WorldgenUtil.getIndex(nx, ny, nz)];
 
                     // store the value in the buffer
-                    t = float.Tan(t);
-                    t2 = float.Tan(t2);
+                    //t = float.Tan(t);
+                    //t2 = float.Tan(t2);
 
 
                     // we select and we win
