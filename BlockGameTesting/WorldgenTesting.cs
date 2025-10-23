@@ -12,9 +12,9 @@ public class WorldgenTesting {
 
     [SetUp]
     public void Setup() {
-        gen = new NewWorldGenerator(null!, false);
-        var rand = new XRandom(1337);
-        gen.setup(rand, 1337);
+        gen = new NewWorldGenerator(null!, 3);
+        var rand = new XRandom(1338);
+        gen.setup(rand, 1338);
     }
 
     [Test]
@@ -130,11 +130,12 @@ public class WorldgenTesting {
 
         for (int x = 0; x < img.Width; x++) {
             for (int y = 0; y < img.Height; y++) {
-                var val = WorldgenUtil.getNoise2D(gen.on, x / (754 * 300f) * xs, y / (754 * 300f) * xs, 4, 1.81f);
-                var val2 = WorldgenUtil.getNoise2D(gen.mn, x / (754 * 300f) * xs, y / (754 * 300f) * xs, 4, 2f);
+                var val = WorldgenUtil.getNoise2D(gen.on, x / (4f) * xs, y / (4f) * xs, 4, 2f);
+                var val2 = WorldgenUtil.getNoise2D(gen.mn, x / (226200f) * xs, y / (226200f) * xs, 4, 2f);
 
                 //val = val is > -0.1f and < 0.15f ? (float.Abs(val - 0.025f) - 0.125f) : 1f;
-                val = val2 < -0.2f ? float.Abs(val2 + 0.6f) : 1f;
+                //val = val2 < -0.2f ? float.Abs(val2 + 0.6f) : 1f;
+                val = val2 < -0.4f ? float.Abs(val2 + 0.8f) : 1f;
 
                 //Console.Out.WriteLine(val);
                 img[x, y] = new Rgba32(

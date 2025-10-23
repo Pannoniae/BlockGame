@@ -626,7 +626,7 @@ public partial class World : IDisposable {
             }
 
             if (chunkLoadQueue.Count > 0) {
-                var ticket = chunkLoadQueue[chunkLoadQueue.Count - 1];
+                var ticket = chunkLoadQueue[^1];
                 chunkLoadQueue.RemoveAt(chunkLoadQueue.Count - 1);
 
                 // check if chunk is still relevant before loading it
@@ -1277,6 +1277,11 @@ public partial class World : IDisposable {
 
         if (status >= ChunkStatus.LIGHTED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
+            // ensure neighbors are at least GENERATED so skylight can propagate into them
+            if (!areNeighboursReady(chunkCoord, ChunkStatus.POPULATED)) {
+                loadNeighbours(chunkCoord, ChunkStatus.POPULATED);
+            }
+
             chunks[chunkCoord].lightChunk();
         }
 

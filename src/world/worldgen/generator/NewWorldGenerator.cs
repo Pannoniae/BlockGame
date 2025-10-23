@@ -17,6 +17,8 @@ public partial class NewWorldGenerator : WorldGenerator {
     public SimplexNoise sn;
     public ExpNoise en;
     public ExpNoise fn;
+    public SimplexNoise esn;
+    public SimplexNoise fsn;
     public SimplexNoise gn;
     public SimplexNoise mn;
     public SimplexNoise on;
@@ -28,13 +30,13 @@ public partial class NewWorldGenerator : WorldGenerator {
     public SimplexNoise wn;
 
     public XRandom random;
-    private readonly bool v2;
+    private readonly int version;
 
-    public NewWorldGenerator(World world, bool v2 = false) {
+    public NewWorldGenerator(World world, int version) {
         this.world = world;
         surfacegen = new NewSurfaceGenerator(this, world);
 
-        this.v2 = v2;
+        this.version = version;
     }
 
     public void setup(XRandom random, int seed) {
@@ -46,11 +48,17 @@ public partial class NewWorldGenerator : WorldGenerator {
 
         // a noobtrap is making the exp too high, so it's endless plains lol
 
+        // V2
         en = new ExpNoise(s);
         en.setExp(s, float.E, 0.1f);
         s = random.Next(seed);
         fn = new ExpNoise(s);
         fn.setExp(s, Meth.phiF, 0.1f);
+
+        // V3
+        esn = new SimplexNoise(s);
+        fsn = new SimplexNoise(random.Next(seed));
+
         gn = new SimplexNoise(random.Next(seed));
         mn = new SimplexNoise(random.Next(seed));
 

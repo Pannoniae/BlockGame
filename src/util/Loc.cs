@@ -7,8 +7,10 @@ namespace BlockGame.util;
 public static class Loc {
     private static readonly Dictionary<string, string> strings = new() {
         // world generators
-        ["generator.v2"] = "Nostalgic",
-        ["generator.v2.tooltip"] = "The good old terrain: crazy mountains and lots of overhangs. 3D glasses not bundled.",
+        ["generator.v3"] = "Nostalgic",
+        ["generator.v3.tooltip"] = "The good old terrain: crazy mountains and lots of overhangs. 3D glasses not bundled.",
+        ["generator.v2"] = "Silvery",
+        ["generator.v2.tooltip"] = "Not as good as the nostalgic one, but still pretty good, eh?",
         ["generator.new"] = "Plainly",
         ["generator.new.tooltip"] = "Varied and interesting terrain with mountains, plains and plenty of space for building.",
         ["generator.perlin"] = "Perlin",
