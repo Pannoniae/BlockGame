@@ -42,4 +42,6 @@ public class Items {
     public const int COAL = 38;
     public const int BRICK = 39;
     public const int CLAY = 40;
+    public const int DIAMOND = 41;
+    public const int CINNABAR = 42;
  }

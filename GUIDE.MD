@@ -12,7 +12,7 @@ This is NOT fucking minecraft! South is -Z, North is +Z.
 ## Terminology
 - **Level**: World folder with multiple dimensions
 - **World**: 3D dimension with blocks/entities
-- **Chunk**: 2D chunk column, 16x16x128 blocks
+- **Chunk**: 2D chunk column, 16x128x16 blocks
 - **SubChunk**: 3D chunk section, 16x16x16 blocks
 - **ChunkCoord**: 2D chunk position (x, z)
 - **SubChunkCoord**: 3D subchunk position (x, y, z)

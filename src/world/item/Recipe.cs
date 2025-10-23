@@ -65,6 +65,8 @@ public class Recipe {
         //DIAMOND_CANDY.ingredients(Item.block(Blocks.CANDY), Item.DIAMOND_INGOT);
 
 
+
+
         // tools
         tool(Item.WOOD_PICKAXE, Item.block(Blocks.PLANKS), 111_020_020);
         tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 110_120_020);
