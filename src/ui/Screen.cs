@@ -37,6 +37,12 @@ public class Screen {
         menu.screen = this;
         menu.activate();
         menu.resize(new Vector2I(Game.width, Game.height));
+
+        // update world pause state based on menu properties
+        if (Game.world != null) {
+            Game.world.paused = menu.pausesWorld();
+            Game.world.inMenu = menu.isModal() || menu.isBlockingInput();
+        }
     }
 
     public virtual void activate() {

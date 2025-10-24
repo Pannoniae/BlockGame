@@ -245,7 +245,10 @@ public class Camera {
         // Update death tilt
         prevDeathTilt = deathTilt;
         if (p.dieTime > 0) {
-            deathTilt = float.Sqrt(p.dieTime) * 20f;
+            deathTilt = float.Atan(p.dieTime * (1 / 6f)) * 6f;
+        }
+        else {
+            deathTilt = 0f;
         }
     }
 

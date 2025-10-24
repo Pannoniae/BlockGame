@@ -71,8 +71,59 @@ public class WorldIO {
         world.player.write(playerData);
         tag.add(playerData);
 
+        // save lighting queues
+        saveLightingQueues(tag);
+
         NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
         Log.info($"Saved world data to level/{world.name}/level.xnbt");
+    }
+
+    private void saveLightingQueues(NBTCompound tag) {
+        // skylight queue - just save world coords
+        var skyLightList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "skyLightQueue");
+        foreach (var node in world.skyLightQueue) {
+            var nodeTag = new NBTCompound();
+            nodeTag.addInt("x", node.x);
+            nodeTag.addInt("y", node.y);
+            nodeTag.addInt("z", node.z);
+            skyLightList.add(nodeTag);
+        }
+        tag.addListTag("skyLightQueue", skyLightList);
+
+        // skylight removal queue
+        var skyLightRemovalList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "skyLightRemovalQueue");
+        foreach (var node in world.skyLightRemovalQueue) {
+            var nodeTag = new NBTCompound();
+            nodeTag.addInt("x", node.x);
+            nodeTag.addInt("y", node.y);
+            nodeTag.addInt("z", node.z);
+            nodeTag.addByte("value", node.value);
+            skyLightRemovalList.add(nodeTag);
+        }
+        tag.addListTag("skyLightRemovalQueue", skyLightRemovalList);
+
+        // blocklight queue
+        var blockLightList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "blockLightQueue");
+        foreach (var node in world.blockLightQueue) {
+            var nodeTag = new NBTCompound();
+            nodeTag.addInt("x", node.x);
+            nodeTag.addInt("y", node.y);
+            nodeTag.addInt("z", node.z);
+            blockLightList.add(nodeTag);
+        }
+        tag.addListTag("blockLightQueue", blockLightList);
+
+        // blocklight removal queue
+        var blockLightRemovalList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "blockLightRemovalQueue");
+        foreach (var node in world.blockLightRemovalQueue) {
+            var nodeTag = new NBTCompound();
+            nodeTag.addInt("x", node.x);
+            nodeTag.addInt("y", node.y);
+            nodeTag.addInt("z", node.z);
+            nodeTag.addByte("value", node.value);
+            blockLightRemovalList.add(nodeTag);
+        }
+        tag.addListTag("blockLightRemovalQueue", blockLightRemovalList);
     }
 
     public static World load(string filename) {
@@ -100,6 +151,63 @@ public class WorldIO {
         SNBT.writeToFile(tag, file, prettyPrint: true);*/
 
         return world;
+    }
+
+    /** Load lighting queues from NBT - stores world coords with null chunk (loaded on demand) */
+    public static void loadLightingQueues(World world, NBTCompound tag) {
+        // skylight queue - store world coords with null chunk
+        if (tag.has("skyLightQueue")) {
+            var skyLightList = tag.getListTag<NBTCompound>("skyLightQueue");
+            for (int i = 0; i < skyLightList.count(); i++) {
+                var nodeTag = skyLightList.get(i);
+                var x = nodeTag.getInt("x");
+                var y = nodeTag.getInt("y");
+                var z = nodeTag.getInt("z");
+
+                world.skyLightQueue.Enqueue(new LightNode(x, y, z, null));
+            }
+        }
+
+        // skylight removal queue
+        if (tag.has("skyLightRemovalQueue")) {
+            var skyLightRemovalList = tag.getListTag<NBTCompound>("skyLightRemovalQueue");
+            for (int i = 0; i < skyLightRemovalList.count(); i++) {
+                var nodeTag = skyLightRemovalList.get(i);
+                var x = nodeTag.getInt("x");
+                var y = nodeTag.getInt("y");
+                var z = nodeTag.getInt("z");
+                var value = nodeTag.getByte("value");
+
+                world.skyLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, null));
+            }
+        }
+
+        // blocklight queue
+        if (tag.has("blockLightQueue")) {
+            var blockLightList = tag.getListTag<NBTCompound>("blockLightQueue");
+            for (int i = 0; i < blockLightList.count(); i++) {
+                var nodeTag = blockLightList.get(i);
+                var x = nodeTag.getInt("x");
+                var y = nodeTag.getInt("y");
+                var z = nodeTag.getInt("z");
+
+                world.blockLightQueue.Enqueue(new LightNode(x, y, z, null));
+            }
+        }
+
+        // blocklight removal queue
+        if (tag.has("blockLightRemovalQueue")) {
+            var blockLightRemovalList = tag.getListTag<NBTCompound>("blockLightRemovalQueue");
+            for (int i = 0; i < blockLightRemovalList.count(); i++) {
+                var nodeTag = blockLightRemovalList.get(i);
+                var x = nodeTag.getInt("x");
+                var y = nodeTag.getInt("y");
+                var z = nodeTag.getInt("z");
+                var value = nodeTag.getByte("value");
+
+                world.blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, null));
+            }
+        }
     }
 
     public void saveChunk(World world, Chunk chunk) {

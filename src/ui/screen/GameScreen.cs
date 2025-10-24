@@ -96,7 +96,7 @@ public class GameScreen : Screen {
 
     public override void update(double dt) {
         base.update(dt);
-        if (!currentMenu.isModal()) {
+        if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.update(dt);
         }
 
@@ -217,7 +217,7 @@ public class GameScreen : Screen {
         D.renderTick(interp);
         // update here because in the main menu, we don't have a world
         Game.fontLoader.renderer3D.renderTick(interp);
-        if (!currentMenu.isModal()) {
+        if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.render(dt, interp);
         }
 
@@ -231,7 +231,7 @@ public class GameScreen : Screen {
     }
 
     public override void postRender(double dt, double interp) {
-        if (!currentMenu.isModal()) {
+        if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.postRender(dt, interp);
         }
 
@@ -406,7 +406,6 @@ public class GameScreen : Screen {
                         switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
                         ((CreativeInventoryMenu)currentMenu!).setup();
                     }
-                    world.inMenu = true;
                     Game.instance.unlockMouse();
                 }
 
@@ -619,17 +618,12 @@ public class GameScreen : Screen {
 
     public void pause() {
         switchToMenu(PAUSE_MENU);
-        Game.world.inMenu = true;
-        Game.world.paused = true;
         Game.instance.unlockMouse();
     }
 
     public void backToGame() {
         switchToMenu(INGAME_MENU);
-        Game.world.inMenu = false;
-        Game.world.paused = false;
         Game.instance.lockMouse();
-        //Game.lockingMouse = true;
     }
 
     private void backToMainMenu() {
@@ -654,7 +648,7 @@ public class GameScreen : Screen {
 
     public override void draw() {
         base.draw();
-        if (!currentMenu.isModal()) {
+        if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.draw();
         }
 
@@ -888,7 +882,7 @@ public class GameScreen : Screen {
 
     public override void postDraw() {
         base.postDraw();
-        if (!currentMenu.isModal()) {
+        if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.postDraw();
         }
     }

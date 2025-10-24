@@ -6,6 +6,8 @@ using Molten;
 namespace BlockGame.ui.menu;
 
 public class DeathMenu : Menu {
+    public override bool pausesWorld() => false;
+
     public DeathMenu() {
         var respawn = new Button(this, "respawn", false, "Respawn");
         respawn.setPosition(new Vector2I(0, 0));
@@ -23,10 +25,8 @@ public class DeathMenu : Menu {
 
     public override void update(double dt) {
         base.update(dt);
-        // update ingame too!
-        if (!Game.world.paused) {
-            Screen.GAME_SCREEN.INGAME_MENU.update(dt);
-        }
+        // update ingame menu (world keeps running while dead)
+        Screen.GAME_SCREEN.INGAME_MENU.update(dt);
     }
 
     public override void draw() {

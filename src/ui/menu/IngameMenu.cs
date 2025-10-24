@@ -26,6 +26,9 @@ public class IngameMenu : Menu, IDisposable {
     public long workingSet;
     public long GCMemory;
 
+    public override bool isModal() => false;
+    public override bool pausesWorld() => false;
+
     private Utf16ValueStringBuilder debugStr;
 
     // for top right corner debug shit

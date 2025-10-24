@@ -185,6 +185,7 @@ public class Player : Soul, CommandSource {
             velocity = Vector3D.Zero;
             inputVector = Vector3D.Zero;
             strafeVector = Vector3D.Zero;
+            Game.camera.updatePosition(dt); // update death tilt
             return;
         }
 
@@ -978,8 +979,6 @@ public class Player : Soul, CommandSource {
         // switch to death screen
         Game.instance.executeOnMainThread(() => {
             Game.instance.currentScreen.switchToMenu(Screen.GAME_SCREEN.DEATH_MENU);
-            Game.world.inMenu = true;
-            Game.world.paused = true;
             Game.instance.unlockMouse();
         });
     }

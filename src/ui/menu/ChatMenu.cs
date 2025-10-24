@@ -42,6 +42,10 @@ public class ChatMenu : Menu {
     public override bool isBlockingInput() {
         return true;
     }
+
+    public override bool pausesWorld() {
+        return false;
+    }
     
     public XRingBuffer<ChatMessage> getMessages() {
         return messages;

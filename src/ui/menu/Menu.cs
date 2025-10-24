@@ -72,6 +72,14 @@ public class Menu {
         return isModal();
     }
 
+    /// <summary>
+    /// Does this menu pause the world?
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool pausesWorld() {
+        return isModal();
+    }
+
     public static void init() {
         LOADING = new LoadingMenu();
         // NOT HERE! initialised manually

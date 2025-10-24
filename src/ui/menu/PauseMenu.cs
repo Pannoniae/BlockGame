@@ -36,10 +36,7 @@ namespace BlockGame.ui.menu {
 
         public override void update(double dt) {
             base.update(dt);
-            // update ingame too!
-            if (!Game.world.paused) {
-                Screen.GAME_SCREEN.INGAME_MENU.update(dt);
-            }
+            // don't update ingame menu when paused
         }
 
         public override void draw() {
