@@ -13,6 +13,13 @@ public class Recipe {
     public static Recipe STICK;
     public static Recipe CHEST;
     public static Recipe GOLD_CANDY;
+    public static Recipe FURNACE;
+    public static Recipe STONE_FURNACE;
+    public static Recipe BRICK_BLOCK;
+    public static Recipe STONE_BRICK;
+    public static Recipe SAND_BRICK;
+    //public static Recipe CINNABAR_CANDY;
+    //public static Recipe DIAMOND_CANDY;
 
 
     public static readonly List<Recipe> recipes = [];
@@ -55,6 +62,26 @@ public class Recipe {
         GOLD_CANDY = register(new ItemStack(Item.block(Blocks.GOLD_CANDY), 1));
         GOLD_CANDY.noShape();
         GOLD_CANDY.ingredients(Item.block(Blocks.CANDY), Item.GOLD_INGOT);
+
+        FURNACE = register(new ItemStack(Item.block(Blocks.FURNACE), 1));
+        FURNACE.shape(111_121_232, 3);
+        FURNACE.ingredients(Item.BRICK, Item.IRON_INGOT, Item.block(Blocks.TORCH));
+
+        STONE_FURNACE = register(new ItemStack(Item.block(Blocks.STONE_FURNACE), 1));
+        STONE_FURNACE.shape(111_111_101, 3);
+        STONE_FURNACE.ingredients(Item.block(Blocks.STONE));
+
+        BRICK_BLOCK = register(new ItemStack(Item.block(Blocks.BRICK_BLOCK), 1));
+        BRICK_BLOCK.shape(111_111_111, 3);
+        BRICK_BLOCK.ingredients(Item.BRICK);
+
+        STONE_BRICK = register(new ItemStack(Item.block(Blocks.STONE_BRICK), 1));
+        STONE_BRICK.shape(111_111_111, 3);
+        STONE_BRICK.ingredients(Item.block(Blocks.STONE));
+
+        SAND_BRICK = register(new ItemStack(Item.block(Blocks.SAND_BRICK), 1));
+        SAND_BRICK.shape(111_111_111, 3);
+        SAND_BRICK.ingredients(Item.block(Blocks.SAND));
 
         //CINNABAR_CANDY = register(new ItemStack(Item.block(Blocks.CINNABAR_CANDY), 1));
         //CINNABAR_CANDY.noShape();

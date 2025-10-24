@@ -205,6 +205,7 @@ public class Block {
     public static Block CRAFTING_TABLE;
     public static Block CHEST;
     public static Block FURNACE;
+    public static Block STONE_FURNACE;
 
     private static void ensureCapacity(int id) {
         if (id < blocks.Length) return;
@@ -593,6 +594,12 @@ public class Block {
         FURNACE.setModel(BlockModel.makeFurnace(FURNACE));
         FURNACE.material(Material.STONE);
         FURNACE.light(15);
+
+        STONE_FURNACE = register(new Furnace(Blocks.STONE_FURNACE, "Stone Furnace"));
+        STONE_FURNACE.setTex(furnaceUVs(7, 4,  8, 4, 9, 4));
+        STONE_FURNACE.setModel(BlockModel.makeFurnace(STONE_FURNACE));
+        STONE_FURNACE.material(Material.STONE);
+        STONE_FURNACE.light(15);
 
 
         // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
