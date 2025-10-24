@@ -293,8 +293,28 @@ public partial class PerlinWorldGenerator {
         }
         
         surfacegen.surface(random, coord);
-        
+
 
         chunk.status = ChunkStatus.POPULATED;
+    }
+
+    /**
+     * Sample all noise buffers at a specific world position.
+     * Used for /noise command debugging.
+     */
+    public string sample(int wx, int wy, int wz) {
+        var coord = World.getChunkPos(wx, wz);
+
+        // run getDensity to populate buffers
+        getDensity(buffer, coord);
+        
+        var cx = wx - (coord.x << 4);
+        var cz = wz - (coord.z << 4);
+        if (cx < 0) cx += 16;
+        if (cz < 0) cz += 16;
+
+        return WorldgenUtil.sampleBuffers(this, cx, wy, cz,
+            NOISE_SIZE_X * NOISE_SIZE_Y * NOISE_SIZE_Z,
+            "perlin");
     }
 }

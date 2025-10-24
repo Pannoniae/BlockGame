@@ -1,5 +1,7 @@
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
+using System.Text;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.block;
@@ -194,7 +196,7 @@ public class WorldgenUtil {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float sample3D(float[] buffer, int x, int y, int z) {
+    public static float sample3D(float[] buffer, int x, int y, int z) {
         var x0 = x >> NOISE_PER_X_SHIFT;
         var x1 = x0 + 1;
         var y0 = y >> NOISE_PER_Y_SHIFT;
@@ -245,6 +247,18 @@ public class WorldgenUtil {
         return a + t * (b - a);
     }
 
+    /** generate deterministic octave offset from seed */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static (double x, double y, double z) getOffset(int seed, int octave) {
+        int hash = XHash.hash(seed ^ (octave * 1619));
+        double x = ((hash & 0x3FF) - 512) * 2.0; // 10 bits, range ~-1024 to 1024
+        hash >>= 10;
+        double y = ((hash & 0x3FF) - 512) * 2.0;
+        hash >>= 10;
+        double z = ((hash & 0x3FF) - 512) * 2.0;
+        return (x, y, z);
+    }
+
     public static float getNoise2D(SimplexNoise noise, double x, double y, int octaves, float falloff) {
         float result = 0.0f;
         float frequency = 1.0f;
@@ -252,8 +266,9 @@ public class WorldgenUtil {
         float gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise2((float)(x * frequency),
-                (float)(y * frequency));
+            var (ox, oy, _) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise2((float)(x * frequency + ox),
+                (float)(y * frequency + oy));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -268,8 +283,9 @@ public class WorldgenUtil {
         float gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise2((float)(x * frequency),
-                (float)(y * frequency));
+            var (ox, oy, _) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise2((float)(x * frequency + ox),
+                (float)(y * frequency + oy));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -284,9 +300,10 @@ public class WorldgenUtil {
         var gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency),
-                (float)(y * frequency),
-                (float)(z * frequency));
+            var (ox, oy, oz) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                (float)(y * frequency + oy),
+                (float)(z * frequency + oz));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -301,9 +318,10 @@ public class WorldgenUtil {
         var gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency),
-                (float)(y * frequency),
-                (float)(z * frequency));
+            var (ox, oy, oz) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                (float)(y * frequency + oy),
+                (float)(z * frequency + oz));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -453,8 +471,9 @@ public class WorldgenUtil {
             result = 0.0f;
             for (int i = 0; i < octaves; i++) {
                 frequency = (float)Math.Pow(2, i);
-                result += noise.noise2((float)(x * frequency),
-                    (float)(z * frequency)) / octaves;
+                var (ox, oz, _) = getOffset((int)noise.seed, i);
+                result += noise.noise2((float)(x * frequency + ox),
+                    (float)(z * frequency + oz)) / octaves;
             }
 
             return result;
@@ -469,8 +488,9 @@ public class WorldgenUtil {
         frequency = 1.0f;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise2((float)(x * frequency),
-                (float)(z * frequency));
+            var (ox, oz, _) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise2((float)(x * frequency + ox),
+                (float)(z * frequency + oz));
             amplitude /= falloff;
             frequency *= 2.0f;
         }
@@ -485,9 +505,10 @@ public class WorldgenUtil {
         var gain = 1 / falloff;
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency),
-                (float)(y * frequency),
-                (float)(z * frequency));
+            var (ox, oy, oz) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                (float)(y * frequency + oy),
+                (float)(z * frequency + oz));
             frequency *= falloff;
             amplitude *= gain;
         }
@@ -510,9 +531,10 @@ public class WorldgenUtil {
             result = 0.0f;
             for (int i = 0; i < octaves; i++) {
                 frequency = (float)Math.Pow(2, i);
-                result += noise.noise3_XZBeforeY((float)(x * frequency),
-                    (float)(y * frequency),
-                    (float)(z * frequency)) / octaves;
+                var (ox, oy, oz) = getOffset((int)noise.seed, i);
+                result += noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                    (float)(y * frequency + oy),
+                    (float)(z * frequency + oz)) / octaves;
             }
 
             return result;
@@ -532,9 +554,10 @@ public class WorldgenUtil {
         //Console.Out.WriteLine("initialInfluence: " + initialInfluence);
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency),
-                (float)(y * frequency),
-                (float)(z * frequency));
+            var (ox, oy, oz) = getOffset((int)noise.seed, i);
+            result += amplitude * noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                (float)(y * frequency + oy),
+                (float)(z * frequency + oz));
 
             // Each successive octave has influence 1/f of the previous
             amplitude *= ampl;
@@ -561,9 +584,10 @@ public class WorldgenUtil {
             result = 0.0f;
             for (int i = 0; i < octaves; i++) {
                 frequency = (float)Math.Pow(2, i);
-                result += (float)noise.noise3_XZBeforeY((float)(x * frequency),
-                    (float)(y * frequency),
-                    (float)(z * frequency)) / octaves;
+                var (ox, oy, oz) = getOffset((int)noise.seed, i);
+                result += (float)noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                    (float)(y * frequency + oy),
+                    (float)(z * frequency + oz)) / octaves;
             }
 
             return result;
@@ -583,9 +607,10 @@ public class WorldgenUtil {
         //Console.Out.WriteLine("initialInfluence: " + initialInfluence);
 
         for (int i = 0; i < octaves; i++) {
-            result += amplitude * (float)noise.noise3_XZBeforeY((float)(x * frequency),
-                (float)(y * frequency),
-                (float)(z * frequency));
+            var (ox, oy, oz) = getOffset((int)noise.seed, i);
+            result += amplitude * (float)noise.noise3_XZBeforeY((float)(x * frequency + ox),
+                (float)(y * frequency + oy),
+                (float)(z * frequency + oz));
 
             // Each successive octave has influence 1/f of the previous
             amplitude *= ampl;
@@ -606,12 +631,39 @@ public class WorldgenUtil {
         double maxValue = 0;
 
         for (int i = 0; i < octaves; i++) {
-            sum += noise.noise3_XYBeforeZ(x * frequency, y * frequency, z * frequency) * amplitude;
+            var (ox, oy, oz) = getOffset((int)noise.seed, i);
+            sum += noise.noise3_XYBeforeZ(x * frequency + ox, y * frequency + oy, z * frequency + oz) * amplitude;
             maxValue += amplitude;
             amplitude *= persistence;
             frequency *= lacunarity;
         }
 
         return sum / maxValue;
+    }
+
+    /**
+     * Sample all noise buffers in a generator object using reflection.
+     * Used for /noise command debugging.
+     */
+    public static string sampleBuffers(object generator, int cx, int cy, int cz, int bufferSize, string label) {
+        var result = new StringBuilder();
+        result.AppendLine($"Noise at chunk-relative ({cx}, {cy}, {cz}) [{label}]:");
+
+        // use reflection to find all float[] buffers
+        var fields = generator.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+        foreach (var field in fields) {
+            if (field.FieldType == typeof(float[])) {
+                var buffer = (float[])field.GetValue(generator);
+                if (buffer != null && buffer.Length == bufferSize) {
+                    var val = sample3D(buffer, cx, cy, cz);
+                    // skip if buffer is empty (all zeros)
+                    if (val != 0f || Array.Exists(buffer, v => v != 0f)) {
+                        result.AppendLine($"  {field.Name,-15}: {val:F4}");
+                    }
+                }
+            }
+        }
+
+        return result.ToString();
     }
 }

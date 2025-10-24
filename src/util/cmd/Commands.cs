@@ -4,6 +4,7 @@ using BlockGame.ui;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.item.inventory;
+using BlockGame.world.worldgen.generator;
 using Molten.DoublePrecision;
 
 namespace BlockGame.util.cmd;
@@ -186,17 +187,12 @@ public readonly struct Command {
 
             switch (subCmd) {
                 case "":
-                    source.sendMessage("Debug commands: /debug lightmap, /debug noise, /debug atlas");
+                    source.sendMessage("Debug commands: /debug lightmap, /debug atlas");
                     break;
                 case "lightmap":
                     // dump lightmap to file
                     Game.textures.dumpLightmap();
                     source.sendMessage("Lightmap dumped to lightmap.png");
-                    break;
-                case "noise":
-                    // toggle noise debug display
-                    Game.debugShowNoise = !Game.debugShowNoise;
-                    source.sendMessage($"Noise debug display: {(Game.debugShowNoise ? "enabled" : "disabled")}");
                     break;
                 case "atlas":
                     // dump texture atlas to file
@@ -206,6 +202,29 @@ public readonly struct Command {
                 default:
                     source.sendMessage($"Unknown debug command: {subCmd}");
                     break;
+            }
+        }));
+
+        commands.Add(new Command("noise", "Sample noise values at player position", NetMode.CL, (source, args) => {
+            var pos = Game.player.position.toBlockPos();
+
+            var gen = Game.world.generator;
+            string result;
+
+            if (gen is NewWorldGenerator nwg) {
+                result = nwg.sample(pos.X, pos.Y, pos.Z);
+            }
+            else if (gen is PerlinWorldGenerator pwg) {
+                result = pwg.sample(pos.X, pos.Y, pos.Z);
+            }
+            else {
+                source.sendMessage($"Generator '{Game.world.generatorName}' does not support noise sampling");
+                return;
+            }
+
+            // send each line separately
+            foreach (var line in result.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)) {
+                source.sendMessage(line);
             }
         }));
 

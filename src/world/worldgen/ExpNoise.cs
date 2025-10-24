@@ -6,7 +6,7 @@ namespace BlockGame.world.worldgen;
  * Wrap a OpenSimplex2F-Exp noise generator to provide a more user-friendly interface. (that one is all static)
  */
 public class ExpNoise {
-    private long seed;
+    public long seed;
 
 
     public ExpNoise(long seed) {

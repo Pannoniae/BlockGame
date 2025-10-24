@@ -1,7 +1,7 @@
 ﻿namespace BlockGame.world.worldgen;
 
 public class SimplexNoise {
-    private long seed;
+    public long seed;
 
     public SimplexNoise(long seed) {
         this.seed = seed;

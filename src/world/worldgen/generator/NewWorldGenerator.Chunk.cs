@@ -42,10 +42,10 @@ public partial class NewWorldGenerator {
     public const float LOW_FREQ = 1 / 262f;
     public const float HIGH_FREQ = 1 / 219f;
     public const float SELECTOR_FREQ = 1 / 69f; // funny number
-    public const float ELEVATION_FREQ = 1 / 422f;
+    public const float ELEVATION_FREQ = 1 / 622f;
 
     // yes this is hugely increased compared to v2 and v1. we use this to control plains vs. mountains INSTEAD of e now for the most part, e provides the base elevation
-    public const float FRACT_FREQ = 1 / 2101f;
+    public const float FRACT_FREQ = 1 / 1701f;
 
     // (tightly capped so the base doesn't overflow the heightlimit)
     //public const float LAKE_FREQ = 1 / 226200f;
@@ -279,7 +279,7 @@ public partial class NewWorldGenerator {
         WorldgenUtil.getNoise3DRegion(sb, sn, coord, SELECTOR_FREQ, SELECTOR_FREQ / 2,
             SELECTOR_FREQ, 6, 2f);
 
-        WorldgenUtil.getNoise2DRegion(eb, en, coord, ELEVATION_FREQ, ELEVATION_FREQ, 10, 2f);
+        WorldgenUtil.getNoise2DRegion(eb, en, coord, ELEVATION_FREQ, ELEVATION_FREQ, 12, 2f);
         WorldgenUtil.getNoise2DRegion(fb, fn, coord, FRACT_FREQ, FRACT_FREQ, 10, 2f - Meth.d2r);
 
         WorldgenUtil.getNoise2DRegion(mb, mn, coord, 1 / 354f, 1 / 354f, 6, 1.81f);
@@ -353,6 +353,16 @@ public partial class NewWorldGenerator {
         }
     }
 
+
+    /**
+     * Dear reader,
+     * You might be asking two things.
+     * 1. How the fuck does this work and why is 90% of the method comments?
+     * 2. Despite this method being our newest and fanciest world generator, it is also the shortest one (if you discount all the comments that is...). How could that be?
+     *
+     * I'm ashamed to admit that despite the countless attempts, this simple shit *is* the best and most interesting-looking worldgen. I'm sorry.
+     * I commented out all the previous attempts, maybe they'll be useful later.
+     */
     public void getDensityv3(float[] buffer, ChunkCoord coord) {
         // get the noise
         // todo cleanup this shit and give it proper constants
@@ -372,7 +382,7 @@ public partial class NewWorldGenerator {
 
         //getNoise2DRegion(ob, on, coord, 1 / (754 * 300f), 1 / (754 * 300f), 4, 1.81f);
 
-        WorldgenUtil.getNoise2DRegion(mb, mn, coord, LAKE_FREQ, LAKE_FREQ, 4, 2f);
+        //WorldgenUtil.getNoise2DRegion(mb, mn, coord, LAKE_FREQ, LAKE_FREQ, 4, 2f);
 
 
         //getNoise3DRegion(wb, wn, coord, FREQW, FREQW, FREQW, 4, Meth.phiF);
@@ -399,7 +409,7 @@ public partial class NewWorldGenerator {
                     float f = fb[WorldgenUtil.getIndex(nx, ny, nz)];
                     //float g = gb[WorldgenUtil.getIndex(nx, ny, nz)];
 
-                    float mm = mb[WorldgenUtil.getIndex(nx, ny, nz)];
+                    //float mm = mb[WorldgenUtil.getIndex(nx, ny, nz)];
                     //float o = ob[getIndex(nx, ny, nz)];
 
                     //float w = wb[WorldgenUtil.getIndex(nx, ny, nz)];
@@ -422,15 +432,25 @@ public partial class NewWorldGenerator {
 
                     //e = float.Clamp(e, 0, 1);
                     //e = float.Abs(e);
-                    var ee = e;
-                    e = float.Abs(float.Max(0.25f * -e, e)) - 0.121f;
+                    //var ee = e;
+                    e = float.Max(0.25f * e, e) + 0.02f;
+
+                    // 0p = -0.08f
+
                     //e = e * 2 + 0.4f;
                     //e = e > 0 ? e * (1 / 9f) : e * (1/ 4f);
                     e *= (1 / 7f);
-                    e = ee < 0 ? e * 1.5f : e;
+                    e = e < 0 ? e * 5 : e;
+                    e = float.Min(e, (1 / 5f));
+                    //e = e < 0 ? e * 4f : e;
+                    //e = e < 0.02 && e > 0 ? e * 0.5f : e;
+                    //e = e > 0.02 ? float.Min(3 * e - 0.05f, (1 / 8f)) : e;
 
                     //e = 0f;
                     //e += 0.018f;
+
+                    //e = ee < -0.01f ? e * 4f + 0.02f : e;
+                    //e = ee < 0 ? - 0.121f : e;
 
                     //e = 0.1f;
                     //e = e < 0.05f ? 0 : e;
@@ -444,7 +464,26 @@ public partial class NewWorldGenerator {
                     //var dd = float.Abs(e - 0.09f);
                     //var m = sh * sh * c;
                     //var m = 1 / (sh * (e / 2f));
-                    var m = float.Abs(f * 18) + 0.5f;
+                    //var m = (f) * 24f;
+                    //m = float.Max(m, (-1 / 3f));
+
+                    // if you change this number, you'll be in pain
+                    //var m = (float.Max((f - 0.05f) * 16, -0.99f)) + 0.5f;
+                    var m = ((f - 0.05f) * 16) + 0.5f;
+                    // we do a little trickery
+                    m = e switch {
+                        // lerp from m to 0f
+                        < 0f and > -0.055f => Meth.lerp(m, 0f, (0f - e) / 0.055f),
+                        < -0.055f => 0f,
+                        _ => m
+                    };
+
+                    //m = f < 0.08f ? m * 0.5f : m;
+                    m = f < 0f ? 0f : m;
+
+                    //var h = 1 / (0.1f + float.Pow(float.E, -5 * (e - 0.3f)));
+                    //m = e > 0.4f ? m + ((e - 0.4f) * 2f) : m;
+                    //m *= h;
                     //m *= float.Clamp(g, 0, 1);
 
                     //m *= (1 / e * e);
@@ -492,15 +531,22 @@ public partial class NewWorldGenerator {
 
                     // IF LAKE SHIT don't go crazy
                     //m = (mm < -0.4f && e < 0.065f) ? 0 : m;
-                    //m = (e < 0f) ? 0.5f : m;
+                    //m = (e < 0f) ? m - float.Abs(e * 36) : m;
+                    //m = (e < -0.05f) ? 0 : m;
+                    //m = (f < -0.3f) ? 0f : m;
+                    //m = (f < 0.1f) ? 0f : m;
 
+                    // debug
+                    //Console.Out.WriteLine($"{m} {e}");
+                    //m = 0;
                     m = 1 / (m + 0.5f);
 
                     //e = -0.2f;
 
                     e *= World.WORLDHEIGHT;
+                    //m *= World.WORLDHEIGHT;
                     // increase bias by default, mod it above
-                    var airBias = (y - ((WATER_LEVEL + 4) + e)) / (float)World.WORLDHEIGHT * 16f * m;
+                    var airBias = (y - ((WATER_LEVEL + 4) + e)) / (float)World.WORLDHEIGHT * 10 * m;
 
                     //Console.Out.WriteLine(airBias);
 
@@ -602,5 +648,35 @@ public partial class NewWorldGenerator {
                 }
             }
         }
+    }
+
+    /**
+     * Sample all noise buffers at a specific world position.
+     * Used for /noise command debugging.
+     */
+    public string sample(int wx, int wy, int wz) {
+        var coord = World.getChunkPos(wx, wz);
+
+        // run getDensity to populate buffers
+        switch (version) {
+            case 1:
+                getDensity(b, coord);
+                break;
+            case 2:
+                getDensityv2(b, coord);
+                break;
+            case 3:
+                getDensityv3(b, coord);
+                break;
+        }
+        
+        var cx = wx - (coord.x << 4);
+        var cz = wz - (coord.z << 4);
+        if (cx < 0) cx += 16;
+        if (cz < 0) cz += 16;
+
+        return WorldgenUtil.sampleBuffers(this, cx, wy, cz,
+            WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z,
+            $"v{version}");
     }
 }
