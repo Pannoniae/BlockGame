@@ -6,10 +6,11 @@ public class CandyBlock : Block {
     }
 
     public static readonly string[] colourNames = [
-        "White", "Gray", "Black", "Yellow",
-        "Orange", "Red", "Dark Red", "Pink",
-        "Purple", "Violet",  "Light Green", "Turquoise",
-        "Sky Blue", "Blue", "Dark Green", "Dark Blue",
+        "White", "Gray", "Black", "Dark Red",
+        "Red", "Orange", "Yellow", "Light Green",
+        "Dark Green", "Turquoise", "Sky Blue", "Blue",
+        "Dark Blue", "Violet", "Purple", "Pink",
+
 
         // extended colours
         "Beige", "Light Orange", "Neon", "Apple Green",
@@ -21,14 +22,17 @@ public class CandyBlock : Block {
         Color.FromBgra(0xFF858585), // Gray
         Color.FromBgra(0xFF404040), // Black
         Color.FromBgra(0xFFbe0505), // Dark Red
+
         Color.FromBgra(0xFFfe0909), // Red
         Color.FromBgra(0xFFff9e42), // Orange
         Color.FromBgra(0xFFe4e81a), // Yellow
         Color.FromBgra(0xFF0df415), // Light Green
+
         Color.FromBgra(0xFF084e0b), // Dark Green
         Color.FromBgra(0xFF3fdccc), // Turquoise
         Color.FromBgra(0xFF0db5e3), // Sky Blue
         Color.FromBgra(0xFF1542F8), // Blue
+
         Color.FromBgra(0xFF0014c7), // Dark Blue
         Color.FromBgra(0xFF9d5bd7), // Violet
         Color.FromBgra(0xFFd55df1), // Purple
@@ -43,11 +47,11 @@ public class CandyBlock : Block {
         Color.FromBgra(0xFF8018a0), // Dark Violet
         Color.FromBgra(0xFF89440b), // Brown
     ];
-    
+
     public override byte maxValidMetadata() => 23;
-    
+
     public string getName(byte metadata) => $"{colourNames[metadata]} Candy";
-    
+
     public override UVPair getTexture(int faceIdx, int metadata) {
         // handle two rows
         return new UVPair(metadata & 0xF, 6 + (metadata >> 4));

@@ -11,7 +11,8 @@ public class Recipe {
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
     public static Recipe STICK;
-    public static Recipe CHEST;
+    public static Recipe OAK_CHEST;
+    public static Recipe MAHOGANY_CHEST;
     public static Recipe GOLD_CANDY;
     public static Recipe FURNACE;
     public static Recipe STONE_FURNACE;
@@ -55,9 +56,13 @@ public class Recipe {
         STICK.shape(01_01, 2);
         STICK.ingredients(Item.block(Blocks.PLANKS));
 
-        CHEST = register(new ItemStack(Item.block(Blocks.MAHOGANY_CHEST), 1));
-        CHEST.shape(111_101_111, 3);
-        CHEST.ingredients(Item.block(Blocks.PLANKS));
+        OAK_CHEST = register(new ItemStack(Item.block(Blocks.OAK_CHEST), 1));
+        OAK_CHEST.shape(111_101_111, 3);
+        OAK_CHEST.ingredients(Item.block(Blocks.PLANKS));
+
+        MAHOGANY_CHEST = register(new ItemStack(Item.block(Blocks.MAHOGANY_CHEST), 1));
+        MAHOGANY_CHEST.shape(111_101_111, 3);
+        MAHOGANY_CHEST.ingredients(Item.block(Blocks.MAHOGANY_PLANKS));
 
         GOLD_CANDY = register(new ItemStack(Item.block(Blocks.GOLD_CANDY), 1));
         GOLD_CANDY.noShape();
