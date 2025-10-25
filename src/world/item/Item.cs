@@ -97,6 +97,7 @@ public class Item {
     public static Item BRICK;
     public static Item CLAY;
     public static Item DIAMOND;
+    public static Item CINNABAR;
 
     public Item(int id, string name) {
         this.id = id;
@@ -350,6 +351,11 @@ public class Item {
         DIAMOND.tex = new UVPair(5, 9);
         register(DIAMOND);
         material[DIAMOND.idx] = true;
+
+        CINNABAR = new Item(Items.CINNABAR, "Cinnabar");
+        CINNABAR.tex = new UVPair(6, 9);
+        register(CINNABAR);
+        material[CINNABAR.idx] = true;
 
 
         // mark materials (items that drop on death in survival)

@@ -18,8 +18,8 @@ public class Recipe {
     public static Recipe BRICK_BLOCK;
     public static Recipe STONE_BRICK;
     public static Recipe SAND_BRICK;
-    //public static Recipe CINNABAR_CANDY;
-    //public static Recipe DIAMOND_CANDY;
+    public static Recipe CINNABAR_CANDY;
+    public static Recipe DIAMOND_CANDY;
 
 
     public static readonly List<Recipe> recipes = [];
@@ -83,13 +83,13 @@ public class Recipe {
         SAND_BRICK.shape(111_111_111, 3);
         SAND_BRICK.ingredients(Item.block(Blocks.SAND));
 
-        //CINNABAR_CANDY = register(new ItemStack(Item.block(Blocks.CINNABAR_CANDY), 1));
-        //CINNABAR_CANDY.noShape();
-        //CINNABAR_CANDY.ingredients(Item.block(Blocks.CANDY), Item.CINNABAR_INGOT);
+        CINNABAR_CANDY = register(new ItemStack(Item.block(Blocks.CINNABAR_CANDY), 1));
+        CINNABAR_CANDY.noShape();
+        CINNABAR_CANDY.ingredients(Item.block(Blocks.CANDY), Item.CINNABAR);
 
-        //DIAMOND_CANDY = register(new ItemStack(Item.block(Blocks.DIAMOND_CANDY), 1));
-        //DIAMOND_CANDY.noShape();
-        //DIAMOND_CANDY.ingredients(Item.block(Blocks.CANDY), Item.DIAMOND_INGOT);
+        DIAMOND_CANDY = register(new ItemStack(Item.block(Blocks.DIAMOND_CANDY), 1));
+        DIAMOND_CANDY.noShape();
+        DIAMOND_CANDY.ingredients(Item.block(Blocks.CANDY), Item.DIAMOND);
 
 
 
