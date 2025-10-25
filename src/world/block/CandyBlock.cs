@@ -20,19 +20,19 @@ public class CandyBlock : Block {
         Color.FromBgra(0xFFf2f2f2), // White
         Color.FromBgra(0xFF858585), // Gray
         Color.FromBgra(0xFF404040), // Black
-        Color.FromBgra(0xFFe4e81a), // Yellow
-        Color.FromBgra(0xFFff9e42), // Orange
-        Color.FromBgra(0xFFfe0909), // Red
         Color.FromBgra(0xFFbe0505), // Dark Red
-        Color.FromBgra(0xFFff8ee1), // Pink
-        Color.FromBgra(0xFFd55df1), // Purple
-        Color.FromBgra(0xFF9d5bd7), // Violet
+        Color.FromBgra(0xFFfe0909), // Red
+        Color.FromBgra(0xFFff9e42), // Orange
+        Color.FromBgra(0xFFe4e81a), // Yellow
         Color.FromBgra(0xFF0df415), // Light Green
+        Color.FromBgra(0xFF084e0b), // Dark Green
         Color.FromBgra(0xFF3fdccc), // Turquoise
         Color.FromBgra(0xFF0db5e3), // Sky Blue
         Color.FromBgra(0xFF1542F8), // Blue
-        Color.FromBgra(0xFF084e0b), // Dark Green
         Color.FromBgra(0xFF0014c7), // Dark Blue
+        Color.FromBgra(0xFF9d5bd7), // Violet
+        Color.FromBgra(0xFFd55df1), // Purple
+        Color.FromBgra(0xFFff8ee1), // Pink
 
         Color.FromBgra(0xFFfdecd8), // Beige
         Color.FromBgra(0xFFffbe42), // Light Orange

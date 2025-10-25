@@ -55,7 +55,7 @@ public class Recipe {
         STICK.shape(01_01, 2);
         STICK.ingredients(Item.block(Blocks.PLANKS));
 
-        CHEST = register(new ItemStack(Item.block(Blocks.CHEST), 1));
+        CHEST = register(new ItemStack(Item.block(Blocks.MAHOGANY_CHEST), 1));
         CHEST.shape(111_101_111, 3);
         CHEST.ingredients(Item.block(Blocks.PLANKS));
 

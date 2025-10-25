@@ -51,10 +51,12 @@ public class Leaves : Block {
                 var bid = world.getBlock(nx, ny, nz);
 
                 // found log - connected!
-                if (isLog(bid)) return true;
+                if (Block.log[bid]) {
+                    return true;
+                }
 
                 // found leaf - continue search
-                if (isLeaf(bid)) {
+                if (Block.leaves[bid]) {
                     queue.Enqueue((nx, ny, nz, dist + 1));
                 }
             }
@@ -62,13 +64,5 @@ public class Leaves : Block {
 
         // no log found
         return false;
-    }
-
-    private static bool isLog(ushort block) {
-        return block == Blocks.LOG || block == Blocks.MAPLE_LOG;
-    }
-
-    private static bool isLeaf(ushort block) {
-        return block == Blocks.LEAVES || block == Blocks.MAPLE_LEAVES;
     }
 }

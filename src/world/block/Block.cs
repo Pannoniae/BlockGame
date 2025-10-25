@@ -123,6 +123,9 @@ public class Block {
     public static byte[] lightAbsorption = new byte[INITIAL_CAPACITY];
     public static double[] hardness = new double[INITIAL_CAPACITY].fill(-1);
 
+    public static bool[] log = new bool[INITIAL_CAPACITY];
+    public static bool[] leaves = new bool[INITIAL_CAPACITY];
+
     /**
      Block update delay in ticks. 0 = normal immediate block updates
     */
@@ -142,8 +145,10 @@ public class Block {
     public static Block SAND;
     public static Block BASALT;
     public static Block STONE;
+    public static Block COBBLESTONE;
     public static Block GRAVEL;
     public static Block HELLSTONE;
+    public static Block BLOODSTONE;
     public static Block HELLROCK;
     public static Block INFERNO_ROCK;
     public static Block GLASS;
@@ -163,6 +168,7 @@ public class Block {
     public static Block SHORT_GRASS;
 
     public static Block YELLOW_FLOWER;
+
     //public static Block RED_FLOWER;
     public static Block MARIGOLD;
     public static Block BLUE_TULIP;
@@ -181,8 +187,12 @@ public class Block {
     public static Block MAPLE_LOG;
 
     public static Block MAPLE_LEAVES;
-    //public static Block MAHOGANY_LOG = register(new Block(19, "Mahogany Log", BlockModel.makeCube(Block.grassUVs(7, 5, 6, 5, 8, 5))));
-    //public static Block MAHOGANY_LEAVES = register(new Block(20, "Maple Leaves", BlockModel.makeCube(Block.cubeUVs(9, 5))).transparency());
+    public static Block MAHOGANY_LOG;
+    public static Block MAHOGANY_PLANKS;
+    public static Block MAHOGANY_LEAVES;
+    public static Block MAHOGANY_STAIRS;
+    public static Block MAHOGANY_SLAB;
+    public static Block OAK_CHEST;
 
     public static Block CANDY;
 
@@ -203,7 +213,7 @@ public class Block {
 
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
-    public static Block CHEST;
+    public static Block MAHOGANY_CHEST;
     public static Block FURNACE;
     public static Block STONE_FURNACE;
 
@@ -240,6 +250,9 @@ public class Block {
         Array.Resize(ref renderType, newSize);
         Array.Resize(ref tool, newSize);
         Array.Resize(ref tier, newSize);
+
+        Array.Resize(ref log, newSize);
+        Array.Resize(ref leaves, newSize);
     }
 
     public static Block register(Block block) {
@@ -292,6 +305,12 @@ public class Block {
         renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
 
+        COBBLESTONE = register(new Block(Blocks.COBBLESTONE, "Cobblestone"));
+        COBBLESTONE.setTex(cubeUVs(6, 1));
+        //renderType[COBBLESTONE.id] = RenderType.CUBE;
+        COBBLESTONE.setModel(BlockModel.makeCube(COBBLESTONE));
+        COBBLESTONE.material(Material.STONE);
+
         GRAVEL = register(new Block(Blocks.GRAVEL, "Gravel"));
         GRAVEL.setTex(cubeUVs(7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
@@ -302,6 +321,11 @@ public class Block {
         renderType[HELLSTONE.id] = RenderType.CUBE;
         HELLSTONE.light(15);
         HELLSTONE.material(Material.HELL);
+
+        BLOODSTONE = register(new Block(Blocks.BLOODSTONE, "Bloodstone"));
+        BLOODSTONE.setTex(cubeUVs(8, 1));
+        renderType[BLOODSTONE.id] = RenderType.CUBE;
+        BLOODSTONE.material(Material.HELL);
 
         HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
         HELLROCK.setTex(cubeUVs(9, 0));
@@ -460,6 +484,7 @@ public class Block {
         LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
         LOG.setModel(BlockModel.makeCube(LOG));
         LOG.material(Material.WOOD);
+        log[LOG.id] = true;
 
         LEAVES = register(new Leaves(Blocks.LEAVES, "Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
@@ -467,6 +492,7 @@ public class Block {
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
         LEAVES.material(Material.ORGANIC);
+        leaves[LEAVES.id] = true;
 
         MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks"));
         MAPLE_PLANKS.setTex(cubeUVs(5, 5));
@@ -482,12 +508,43 @@ public class Block {
         MAPLE_LOG.setTex(grassUVs(7, 5, 6, 5, 8, 5));
         MAPLE_LOG.setModel(BlockModel.makeCube(MAPLE_LOG));
         MAPLE_LOG.material(Material.WOOD);
+        log[MAPLE_LOG.id] = true;
 
         MAPLE_LEAVES = register(new Leaves(Blocks.MAPLE_LEAVES, "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
         MAPLE_LEAVES.material(Material.ORGANIC);
+        leaves[MAPLE_LEAVES.id] = true;
+
+
+        MAHOGANY_LOG = register(new Block(Blocks.MAHOGANY_LOG, "Mahogany Log"));
+        MAHOGANY_LOG.setTex(grassUVs(5, 2, 4, 2, 6, 2));
+        MAHOGANY_LOG.setModel(BlockModel.makeCube(MAHOGANY_LOG));
+        MAHOGANY_LOG.material(Material.WOOD);
+        log[MAHOGANY_LOG.id] = true;
+
+        MAHOGANY_PLANKS = register(new Block(Blocks.MAHOGANY_PLANKS, "Mahogany Planks"));
+        MAHOGANY_PLANKS.setTex(cubeUVs(3, 2));
+        renderType[MAHOGANY_PLANKS.id] = RenderType.CUBE;
+        MAHOGANY_PLANKS.material(Material.WOOD);
+
+        MAHOGANY_LEAVES = register(new Leaves(Blocks.MAHOGANY_LEAVES, "Mahogany Leaves"));
+        MAHOGANY_LEAVES.setTex(cubeUVs(7, 2));
+        renderType[MAHOGANY_LEAVES.id] = RenderType.CUBE;
+        MAHOGANY_LEAVES.transparency();
+        MAHOGANY_LEAVES.material(Material.ORGANIC);
+        leaves[MAHOGANY_LEAVES.id] = true;
+
+        MAHOGANY_STAIRS = register(new Stairs(Blocks.MAHOGANY_STAIRS, "Mahogany Stairs"));
+        MAHOGANY_STAIRS.setTex(cubeUVs(3, 2));
+        MAHOGANY_STAIRS.partialBlock();
+        MAHOGANY_STAIRS.material(Material.WOOD);
+
+        MAHOGANY_SLAB = register(new Slabs(Blocks.MAHOGANY_SLAB, "Mahogany Slab"));
+        MAHOGANY_SLAB.setTex(cubeUVs(3, 2));
+        MAHOGANY_SLAB.material(Material.WOOD);
+
 
         CANDY = register(new CandyBlock(Blocks.CANDY, "Candy"));
         CANDY.material(Material.FOOD);
@@ -583,21 +640,21 @@ public class Block {
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
         CRAFTING_TABLE.material(Material.WOOD);
 
-        CHEST = register(new Block(Blocks.CHEST, "Chest"));
-        CHEST.setTex(CTUVs(2, 4, 1, 4, 0, 4, 3, 4));
-        CHEST.setModel(BlockModel.makeCube(CHEST));
-        CHEST.material(Material.WOOD);
-        //CHEST.transparency();
+        MAHOGANY_CHEST = register(new Chest(Blocks.MAHOGANY_CHEST, "Chest"));
+        MAHOGANY_CHEST.setTex(chestUVs(2, 4, 0, 4, 1, 4, 3, 4));
+        MAHOGANY_CHEST.material(Material.WOOD);
+
+        OAK_CHEST = register(new Chest(Blocks.OAK_CHEST, "Oak Chest"));
+        OAK_CHEST.setTex(chestUVs(2, 9, 0, 9, 1, 9, 3, 9));
+        OAK_CHEST.material(Material.WOOD);
 
         FURNACE = register(new Furnace(Blocks.FURNACE, "Furnace"));
-        FURNACE.setTex(furnaceUVs(4, 4,  5, 4, 6, 4));
-        FURNACE.setModel(BlockModel.makeFurnace(FURNACE));
+        FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4));
         FURNACE.material(Material.STONE);
         FURNACE.light(15);
 
         STONE_FURNACE = register(new Furnace(Blocks.STONE_FURNACE, "Stone Furnace"));
-        STONE_FURNACE.setTex(furnaceUVs(7, 4,  8, 4, 9, 4));
-        STONE_FURNACE.setModel(BlockModel.makeFurnace(STONE_FURNACE));
+        STONE_FURNACE.setTex(furnaceUVs(7, 4, 8, 4, 9, 4));
         STONE_FURNACE.material(Material.STONE);
         STONE_FURNACE.light(15);
 
@@ -684,7 +741,7 @@ public class Block {
         ];
     }
 
-    public static UVPair[] furnaceUVs(int frontX, int frontY, int sideX, int sideY, int top_bottomX, int top_bottomY){
+    public static UVPair[] furnaceUVs(int frontX, int frontY, int sideX, int sideY, int top_bottomX, int top_bottomY) {
         return [
             new(frontX, frontY), new(sideX, sideY), new UVPair(top_bottomX, top_bottomY)
         ];
@@ -693,6 +750,13 @@ public class Block {
     public static UVPair[] CTUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
         return [
             new(xx, xy), new(xx, xy), new(zx, zy), new(zx, zy), new(bottomX, bottomY),
+            new(topX, topY)
+        ];
+    }
+
+    public static UVPair[] chestUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
+        return [
+            new(xx, xy), new(xx, xy), new(zx, zy), new(xx, xy), new(bottomX, bottomY),
             new(topX, topY)
         ];
     }

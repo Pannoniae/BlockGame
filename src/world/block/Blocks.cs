@@ -23,6 +23,17 @@ public class Blocks {
     public const ushort MAPLE_LOG = 19;
     public const ushort MAPLE_LEAVES = 20;
     public const ushort CANDY = 21;
+    // backfill!
+    public const ushort MAHOGANY_LOG = 22;
+    public const ushort MAHOGANY_PLANKS = 24;
+    public const ushort MAHOGANY_LEAVES = 25;
+    public const ushort MAHOGANY_STAIRS = 26;
+    public const ushort MAHOGANY_SLAB = 27;
+    public const ushort OAK_CHEST = 28;
+
+    public const ushort BLOODSTONE = 29;
+    public const ushort COBBLESTONE = 30;
+
     public const ushort HEAD = 37;
     public const ushort WATER = 38;
     public const ushort CINNABAR = 39;
@@ -45,7 +56,7 @@ public class Blocks {
     public const ushort CRAFTING_TABLE = 56;
     public const ushort CALCITE = 57;
     public const ushort BRICK_BLOCK = 58;
-    public const ushort CHEST = 59;
+    public const ushort MAHOGANY_CHEST = 59;
     public const ushort STONE_BRICK = 60;
     public const ushort SAND_BRICK = 61;
     public const ushort INFERNO_ROCK = 62;

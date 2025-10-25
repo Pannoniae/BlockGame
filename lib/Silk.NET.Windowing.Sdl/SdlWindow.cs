@@ -109,6 +109,7 @@ namespace Silk.NET.Windowing.Sdl {
 
                 switch (value) {
                     case WindowState.Normal: {
+                        SDL3.SDL_SetWindowFullscreen(SdlWindow, false);
                         SDL3.SDL_RestoreWindow(SdlWindow);
                         break;
                     }

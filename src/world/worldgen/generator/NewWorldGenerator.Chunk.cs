@@ -585,7 +585,7 @@ public partial class NewWorldGenerator {
                 var amt = WorldgenUtil.getNoise2D(auxn, worldPos.X, worldPos.Z, 1, 1) + 4f;
 
                 var e = WorldgenUtil.sample2D(eb, x, z);
-                var f = WorldgenUtil.sample2D(fb, x, z);
+                //var f = WorldgenUtil.sample2D(fb, x, z);
 
                 e = float.Abs(float.Max(0.25f * -e, e)) - 0.121f;
                 e *= (1 / 7f);

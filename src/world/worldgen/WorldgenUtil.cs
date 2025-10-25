@@ -404,6 +404,38 @@ public class WorldgenUtil {
         }
     }
 
+    public static void placeRainforestTree(World world, XRandom random, ChunkCoord coord) {
+        var chunk = world.getChunk(coord);
+        var x = random.Next(0, Chunk.CHUNKSIZE);
+        var z = random.Next(0, Chunk.CHUNKSIZE);
+        var y = chunk.heightMap.get(x, z);
+
+        if (y > 120) {
+            return;
+        }
+
+        // if not on dirt, don't bother
+        if (chunk.getBlock(x, y, z) != Blocks.GRASS) {
+            return;
+        }
+
+        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
+        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
+
+        // if there's stuff in the bounding box, don't place a tree
+        for (int yd = 1; yd < 8; yd++) {
+            for (int zd = -2; zd <= 2; zd++) {
+                for (int xd = -2; xd <= 2; xd++) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) != Blocks.AIR) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        TreeGenerator.placeMahoganyTree(world, random, xWorld, y + 1, zWorld);
+    }
+
     public static void placeTree(World world, XRandom random, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         var x = random.Next(0, Chunk.CHUNKSIZE);

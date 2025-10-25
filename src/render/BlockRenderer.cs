@@ -750,20 +750,8 @@ public class BlockRenderer {
                 renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvx.X, uvx.Y, uvxm.X, uvxm.Y);
                 break;
             case RenderType.CUBE_DYNTEXTURE:
-                // cube using metadata-based dynamic texture
-                var dynTex = bl.getTexture(0, metadata);
-                var dynTexm = dynTex + 1;
-                var uvd = UVPair.texCoords(dynTex);
-                var uvdm = UVPair.texCoords(dynTexm);
-                
-                if (forceTex.u >= 0 && forceTex.v >= 0) {
-                    uvd = UVPair.texCoords(forceTex);
-                    uvdm = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
-                }
-
-                // USE LOCAL COORDS
-                renderCube(x & 0xF, y & 0xF, z & 0xF, vertices, 0, 0, 0, 1, 1, 1, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
-
+                // cube with per-face dynamic textures based on metadata
+                renderCubeDynamic(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
                 break;
             case RenderType.CROSS:
                 // todo
@@ -919,6 +907,84 @@ public class BlockRenderer {
     }
     
     /**
+     * Cube renderer with dynamic per-face textures based on metadata.
+     */
+    public void renderCubeDynamic(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+        // render each face with its own texture
+        for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
+            var tex = bl.getTexture(faceIdx, metadata);
+            var texm = tex + 1;
+
+            if (forceTex.u >= 0 && forceTex.v >= 0) {
+                tex = forceTex;
+                texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
+            }
+
+            var uvd = UVPair.texCoords(tex);
+            var uvdm = UVPair.texCoords(texm);
+
+            // render the specific face
+            renderCubeFace(x, y, z, vertices, (RawDirection)faceIdx, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
+        }
+    }
+
+    /**
+     * Render a single cube face with culling and lighting.
+     */
+    private void renderCubeFace(int x, int y, int z, List<BlockVertexPacked> vertices,
+                                RawDirection dir, float u0, float v0, float u1, float v1) {
+        var vec = Direction.getDirection(dir);
+        var nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
+
+        // check if we should render based on neighbour
+        if (Block.fullBlock[nb]) return;
+
+        applyFaceLighting(dir);
+        begin();
+
+        switch (dir) {
+            case RawDirection.WEST: // 0
+                vertex(x + 0, y + 1, z + 1, u0, v0);
+                vertex(x + 0, y + 0, z + 1, u0, v1);
+                vertex(x + 0, y + 0, z + 0, u1, v1);
+                vertex(x + 0, y + 1, z + 0, u1, v0);
+                break;
+            case RawDirection.EAST: // 1
+                vertex(x + 1, y + 1, z + 0, u0, v0);
+                vertex(x + 1, y + 0, z + 0, u0, v1);
+                vertex(x + 1, y + 0, z + 1, u1, v1);
+                vertex(x + 1, y + 1, z + 1, u1, v0);
+                break;
+            case RawDirection.SOUTH: // 2
+                vertex(x + 0, y + 1, z + 0, u0, v0);
+                vertex(x + 0, y + 0, z + 0, u0, v1);
+                vertex(x + 1, y + 0, z + 0, u1, v1);
+                vertex(x + 1, y + 1, z + 0, u1, v0);
+                break;
+            case RawDirection.NORTH: // 3
+                vertex(x + 1, y + 1, z + 1, u0, v0);
+                vertex(x + 1, y + 0, z + 1, u0, v1);
+                vertex(x + 0, y + 0, z + 1, u1, v1);
+                vertex(x + 0, y + 1, z + 1, u1, v0);
+                break;
+            case RawDirection.DOWN: // 4
+                vertex(x + 1, y + 0, z + 1, u0, v0);
+                vertex(x + 1, y + 0, z + 0, u0, v1);
+                vertex(x + 0, y + 0, z + 0, u1, v1);
+                vertex(x + 0, y + 0, z + 1, u1, v0);
+                break;
+            case RawDirection.UP: // 5
+                vertex(x + 0, y + 1, z + 1, u0, v0);
+                vertex(x + 0, y + 1, z + 0, u0, v1);
+                vertex(x + 1, y + 1, z + 0, u1, v1);
+                vertex(x + 1, y + 1, z + 1, u1, v0);
+                break;
+        }
+
+        end(vertices);
+    }
+
+    /**
      * All-in-one chungus cube renderer. Claude helped me a bit with it so it's not very great but hey, if you don't need anything fancy, it's alright.
      * (Assumptions: the lighting is what you'd expect from the faces, you need a properly culled cube, you don't need extra tint, your texture maps 1:1 with world pixels)
      */
@@ -968,10 +1034,10 @@ public class BlockRenderer {
         if (render) {
             applyFaceLighting(RawDirection.EAST);
             begin();
-            vertex(x + x1, y + y1, z + z0, eastUMax, eastVMin);
-            vertex(x + x1, y + y0, z + z0, eastUMax, eastVMax);
-            vertex(x + x1, y + y0, z + z1, eastUMin, eastVMax);
-            vertex(x + x1, y + y1, z + z1, eastUMin, eastVMin);
+            vertex(x + x1, y + y1, z + z0, eastUMin, eastVMin);
+            vertex(x + x1, y + y0, z + z0, eastUMin, eastVMax);
+            vertex(x + x1, y + y0, z + z1, eastUMax, eastVMax);
+            vertex(x + x1, y + y1, z + z1, eastUMax, eastVMin);
             end(vertices);
         }
 
@@ -1010,10 +1076,10 @@ public class BlockRenderer {
         if (render) {
             applyFaceLighting(RawDirection.NORTH);
             begin();
-            vertex(x + x1, y + y1, z + z1, northUMax, northVMin);
-            vertex(x + x1, y + y0, z + z1, northUMax, northVMax);
-            vertex(x + x0, y + y0, z + z1, northUMin, northVMax);
-            vertex(x + x0, y + y1, z + z1, northUMin, northVMin);
+            vertex(x + x1, y + y1, z + z1, northUMin, northVMin);
+            vertex(x + x1, y + y0, z + z1, northUMin, northVMax);
+            vertex(x + x0, y + y0, z + z1, northUMax, northVMax);
+            vertex(x + x0, y + y1, z + z1, northUMax, northVMin);
             end(vertices);
         }
 
@@ -1031,10 +1097,10 @@ public class BlockRenderer {
         if (render) {
             applyFaceLighting(RawDirection.DOWN);
             begin();
-            vertex(x + x1, y + y0, z + z1, downUMax, downVMin);
-            vertex(x + x1, y + y0, z + z0, downUMax, downVMax);
-            vertex(x + x0, y + y0, z + z0, downUMin, downVMax);
-            vertex(x + x0, y + y0, z + z1, downUMin, downVMin);
+            vertex(x + x1, y + y0, z + z1, downUMin, downVMin);
+            vertex(x + x1, y + y0, z + z0, downUMin, downVMax);
+            vertex(x + x0, y + y0, z + z0, downUMax, downVMax);
+            vertex(x + x0, y + y0, z + z1, downUMax, downVMin);
             end(vertices);
         }
 

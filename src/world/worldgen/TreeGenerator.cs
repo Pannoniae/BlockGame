@@ -12,6 +12,7 @@ namespace BlockGame.world.worldgen;
 public class TreeGenerator {
     private static ProceduralTree oak;
     private static ProceduralTree maple;
+    private static ProceduralTree mahogany;
 
     private const float PI = MathF.PI;
 
@@ -62,6 +63,22 @@ public class TreeGenerator {
             logMat = Blocks.MAPLE_LOG
         };
         maple.prepareMaple();
+        maple.generate(roots: false, rootButtresses: false);
+    }
+
+    public static void placeMahoganyTree(World world, XRandom random, int x, int y, int z) {
+        int height = random.Next(6, 6 + random.Next(11));
+
+        var t = random.NextSingle() * 1.25f + 1.25f; // trunk thickness 1.25 - 2.5
+
+        maple = new ProceduralTree(world, random, x, y, z, height) {
+            trunkThickness = t,
+            foliageDensity = 1.5f + t,
+            branchDensity = 0.8f + t * 0.5f,
+            leafMat = Blocks.MAHOGANY_LEAVES,
+            logMat = Blocks.MAHOGANY_LOG
+        };
+        maple.prepareMahogany();
         maple.generate(roots: false, rootButtresses: false);
     }
 
@@ -322,6 +339,22 @@ public class TreeGenerator {
 
                 foliageCords.Add(new Vector3I(cx, cy, cz));
             }
+        }
+
+        public void prepareMahogany() {
+            branchSlope = 1.0f;
+            trunkRadius = psiF * MathF.Sqrt(height * trunkThickness) * rhoF;
+            if (trunkRadius < 1) trunkRadius = 1;
+
+            float foliageHeight = height;
+            if (brokenTrunk) {
+                foliageHeight = height * (0.3f + random.NextSingle() * 0.4f);
+            }
+
+            trunkHeight = foliageHeight * psiF * 0.8f;
+            foliageShape = [3.0f, 2.5f, 2.0f, 1.5f];
+
+            prepareFoliageClusters(rainforestShapeFunc, (int)(foliageHeight + 0.5f));
         }
 
         /** prepare a rainforest tree */

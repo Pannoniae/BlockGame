@@ -101,9 +101,16 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         treeCount *= treeCount;
         // 16..49
 
+        // if dense forest, place a rainforest tree
+        if (foliage > 0.3f) {
+            WorldgenUtil.placeRainforestTree(world, random, coord);
+        }
+
         for (int i = 0; i < treeCount; i++) {
             WorldgenUtil.placeTree(world, random, coord);
         }
+
+
 
         // get e
         //var e = getNoise2D(en, 1 / 342f, 1 / 342f, 8, 2f);
