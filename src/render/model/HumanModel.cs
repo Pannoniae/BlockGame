@@ -8,11 +8,11 @@ namespace BlockGame.render.model;
 public class HumanModel : EntityModel {
 
     public const int xs = 48;
-    public const int ys = 32;
+    public const int ys = 31;
 
 
     public readonly Cube head = new Cube().pos(0, 20, 0).off(-4, 0, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
-    public readonly Cube body = new Cube().pos(0, 20, 0f).off(-3, -10, -1.5f).ext(6, 10, 3).tex(12, 16).gen(xs, ys);
+    public readonly Cube body = new Cube().pos(0, 20, 0).off(-3, -10, -1.5f).ext(6, 10, 3).tex(12, 16).gen(xs, ys);
     // same with the arms lol
     // centre of the arm should be at the shoulder!!
     public readonly Cube rightArm = new Cube().pos(4.5f, 20, 0f).off(-1.5f, -14, -1.5f).ext(3, 12, 3).tex(32, 16).mirror().gen(xs, ys);

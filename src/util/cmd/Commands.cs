@@ -238,7 +238,7 @@ public readonly struct Command {
                 var entityName = args[0].ToUpper();
                 var entityField = typeof(Entities).GetField(entityName);
 
-                if (entityField == null || !entityField.IsLiteral) {
+                if (entityField == null || !entityField.IsStatic || entityField.FieldType != typeof(int)) {
                     source.sendMessage($"Unknown entity: {args[0]}");
                     return;
                 }

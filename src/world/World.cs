@@ -149,6 +149,13 @@ public partial class World : IDisposable {
         Game.player = player as ClientPlayer;
         Game.camera.setPlayer(player);
 
+        // spawn cow at 3 blocks from player (only on new world)
+        if (!loadingSave) {
+            var cow = new entity.Cow(this);
+            cow.position = new Molten.DoublePrecision.Vector3D(9, 20, 9); // 3 blocks in +x and +z
+            addEntity(cow);
+        }
+
         if (loadingSave) {
             // if loading, actually load
             if (loadingSave) {
