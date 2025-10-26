@@ -11,7 +11,7 @@ public class CowModel : EntityModel {
     public const int ys = 46;
 
     // head at front, 8x8x8 pixels
-    public readonly Cube head = new Cube().pos(0, 18, 0).off(-4, -8, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
+    public readonly Cube head = new Cube().pos(0, 19, 0).off(-4, -8, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
 
     // body horizontal, 8x14x16 pixels
     public readonly Cube body = new Cube().pos(0, 18, -12).off(-4, -14, -8).ext(8, 14, 16).tex(8, 16).gen(xs, ys);
