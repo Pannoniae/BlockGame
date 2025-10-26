@@ -6,7 +6,7 @@ using BlockGame.util.log;
 
 namespace BlockGame.main;
 
-public class ServerProgram {
+public class ServerMain {
 
     public static Server server = null!;
 
@@ -18,6 +18,8 @@ public class ServerProgram {
         #else
         Log.init(minLevel: LogLevel.INFO);
         #endif
+
+        Log.info("Launching server...");
 
         unsafe {
             Log.info($"The correct answer is {sizeof(BlockRenderer.RenderContext)}! What was the question?");

@@ -16,7 +16,7 @@ namespace ppy;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 [SupportedOSPlatform("windows")]
-internal static partial class NVAPI {
+public static partial class NVAPI {
     private const string filename = "blockgame.exe";
 
     // This is a good reference:
@@ -475,7 +475,7 @@ internal static partial class NVAPI {
 }
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-internal struct NvSetting {
+public struct NvSetting {
     public uint Version;
 
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = NVAPI.UNICODE_STRING_MAX)]
@@ -501,7 +501,7 @@ internal struct NvSetting {
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-internal struct NvProfile {
+public struct NvProfile {
     public uint Version;
 
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = NVAPI.UNICODE_STRING_MAX)]
@@ -516,7 +516,7 @@ internal struct NvProfile {
 }
 
 [StructLayout(LayoutKind.Sequential, Pack = 8, CharSet = CharSet.Unicode)]
-internal struct NvApplication {
+public struct NvApplication {
     public uint Version;
     public uint IsPredefined;
 
@@ -536,7 +536,7 @@ internal struct NvApplication {
 }
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal enum NvStatus {
+public enum NvStatus {
     OK = 0, // Success. Request is completed.
     ERROR = -1, // Generic error
     LIBRARY_NOT_FOUND = -2, // NVAPI support library cannot be loaded.
@@ -680,21 +680,21 @@ internal enum NvStatus {
 }
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal enum NvSystemType {
+public enum NvSystemType {
     UNKNOWN = 0,
     LAPTOP = 1,
     DESKTOP = 2
 }
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal enum NvGpuType {
+public enum NvGpuType {
     UNKNOWN = 0,
     IGPU = 1, // Integrated
     DGPU = 2, // Discrete
 }
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal enum NvSettingID : uint {
+public enum NvSettingID : uint {
     OGL_AA_LINE_GAMMA_ID = 0x2089BF6C,
     OGL_DEEP_COLOR_SCANOUT_ID = 0x2097C2F6,
     OGL_DEFAULT_SWAP_INTERVAL_ID = 0x206A6582,
@@ -786,7 +786,7 @@ internal enum NvSettingID : uint {
 }
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal enum NvShimSetting : uint {
+public enum NvShimSetting : uint {
     SHIM_RENDERING_MODE_INTEGRATED = 0x00000000,
     SHIM_RENDERING_MODE_ENABLE = 0x00000001,
     SHIM_RENDERING_MODE_USER_EDITABLE = 0x00000002,
@@ -800,7 +800,7 @@ internal enum NvShimSetting : uint {
 }
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-internal enum NvThreadControlSetting : uint {
+public enum NvThreadControlSetting : uint {
     OGL_THREAD_CONTROL_ENABLE = 0x00000001,
     OGL_THREAD_CONTROL_DISABLE = 0x00000002,
     OGL_THREAD_CONTROL_NUM_VALUES = 2,
@@ -808,7 +808,7 @@ internal enum NvThreadControlSetting : uint {
 }
 
 [Flags]
-internal enum NvDrsGpuSupport : uint {
+public enum NvDrsGpuSupport : uint {
     Geforce = 1 << 0,
     Quadro = 1 << 1,
     Nvs = 1 << 2

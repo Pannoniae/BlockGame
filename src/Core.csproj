@@ -1,7 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
+        <OutputType>Library</OutputType>
+        <AssemblyName>core</AssemblyName>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -13,7 +14,6 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <ApplicationManifest>..\app.manifest</ApplicationManifest>
         <OutputPath>..\bin\$(Configuration)\</OutputPath>
     </PropertyGroup>
 
@@ -174,17 +174,22 @@
         <Message Text="Runtime Identifier: $(RuntimeIdentifier)" Importance="high" />
     </Target>
 
-    <Import Project="../NetBeauty.targets" />
+    <!-- Exclude client/server launcher subfolders from core compilation -->
+    <ItemGroup>
+        <None Remove="client\**" />
+        <None Remove="server\**" />
+        <None Remove="launch\**" />
+        <None Remove="launchsv\**" />
 
-    <PropertyGroup>
-        <PublishDir>../publish</PublishDir>
-    </PropertyGroup>
+        <Compile Remove="client\**" />
+        <Compile Remove="server\**" />
+        <Compile Remove="launch\**" />
+        <Compile Remove="launchsv\**" />
 
-    <PropertyGroup>
-        <BeautyDir>.</BeautyDir>
-        <BeautyAppHostEntry>BlockGame.dll</BeautyAppHostEntry>
-        <BeautyAppHostDir>.</BeautyAppHostDir>
-    </PropertyGroup>
-
+        <EmbeddedResource Remove="client\**" />
+        <EmbeddedResource Remove="server\**" />
+        <EmbeddedResource Remove="launch\**" />
+        <EmbeddedResource Remove="launchsv\**" />
+    </ItemGroup>
 
 </Project>

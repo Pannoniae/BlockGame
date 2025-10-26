@@ -10,7 +10,7 @@ using ppy;
 
 namespace BlockGame.main;
 
-public partial class Program {
+public partial class ClientMain {
     public static Game game = null!;
 
     public static void Main(string[] args) {
@@ -21,6 +21,8 @@ public partial class Program {
         #else
         Log.init(minLevel: LogLevel.INFO);
         #endif
+
+        Log.info("Launching client...");
 
         unsafe {
             Log.info($"The correct answer is {sizeof(BlockRenderer.RenderContext)}! What was the question?");

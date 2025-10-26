@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>server</AssemblyName>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>preview</LangVersion>
+        <AnalysisLevel>preview-recommended</AnalysisLevel>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
+        <Platforms>AnyCPU</Platforms>
+        <ApplicationManifest>..\..\app.manifest</ApplicationManifest>
+
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\server\Server.csproj" />
+    </ItemGroup>
+
+    <Import Project="..\..\NetBeauty.targets" />
+
+    <PropertyGroup>
+        <PublishDir>..\..\publishs</PublishDir>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <BeautyDir>.</BeautyDir>
+        <BeautyLibsDir>libs</BeautyLibsDir>
+        <BeautyAppHostEntry>server.dll</BeautyAppHostEntry>
+        <BeautyAppHostDir>.</BeautyAppHostDir>
+    </PropertyGroup>
+
+</Project>
