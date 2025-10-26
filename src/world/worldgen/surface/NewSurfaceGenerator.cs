@@ -53,7 +53,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             // copper spawns more on the surface!
-            var y = random.Next(World.WORLDHEIGHT / 4, World.WORLDHEIGHT * (3 / 4));
+            var y = random.Next(World.WORLDHEIGHT / 4, (int)(World.WORLDHEIGHT * (3 / 4f)));
             copperOre.place(world, random, x, y, z);
         }
 
