@@ -98,7 +98,7 @@ public sealed partial class WorldRenderer {
         idt.fogColor(new Vector4(cloudColour.R / 255f, cloudColour.G / 255f, cloudColour.B / 255f, 0));
         idt.setFogType(FogType.Linear);
         // it needs to be dependant on render distance!
-        idt.fogDistance(0, 64 + (float.Min(Settings.instance.renderDistance * 16, 480)));
+        idt.fogDistance(64, 64 + (float.Min(Settings.instance.renderDistance * 16, 480)));
 
         idt.begin(PrimitiveType.Quads);
 
@@ -190,7 +190,7 @@ public sealed partial class WorldRenderer {
         idt.enableFog(true);
         idt.fogColor(new Vector4(cloudColour.R / 255f, cloudColour.G / 255f, cloudColour.B / 255f, 0));
         idt.setFogType(FogType.Linear);
-        idt.fogDistance(0, 64 + float.Min(Settings.instance.renderDistance * 16, 480));
+        idt.fogDistance(64, 64 + float.Min(Settings.instance.renderDistance * 16, 480));
 
         // PASS 1: depth-only (write depth, no colour)
         GL.ColorMask(false, false, false, false);

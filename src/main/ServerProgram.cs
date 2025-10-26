@@ -1,17 +1,14 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using System.Diagnostics;
-using System.Reflection;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using BlockGame.render;
 using BlockGame.util.log;
-using ppy;
 
 namespace BlockGame.main;
 
-public partial class Program {
-    public static Game game = null!;
+public class ServerProgram {
+
+    public static Server server = null!;
 
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
@@ -32,33 +29,10 @@ public partial class Program {
         // IMPORTANT PART
         Console.OutputEncoding = Encoding.UTF8;
 
-        // thx osu/ppy!
-        if (OperatingSystem.IsWindows() && NVAPI.Available) {
-            //NVAPI.ThreadedOptimisations = NvThreadControlSetting.OGL_THREAD_CONTROL_DEFAULT;
-            if (NVAPI.applyOptimalSettings()) {
-                msgBox("NVIDIA Settings Applied",
-                    "NVIDIA GPU settings have been configured. Please restart the game for the changes to take effect.");
-                return;
-            }
-        }
-        else {
-            Log.info("NVAPI", "NVAPI not available.");
-        }
-
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 
-        game = new Game(devMode);
+        server = new Server(devMode);
     }
-
-    private static void msgBox(string title, string txt) {
-        if (OperatingSystem.IsWindows()) {
-            // use windows api to show a message box
-            MessageBoxW(IntPtr.Zero, txt, title, 0);
-        }
-    }
-
-    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
-    private static partial int MessageBoxW(IntPtr hWnd, string lpText, string lpCaption, uint uType);
 
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         unsafe {

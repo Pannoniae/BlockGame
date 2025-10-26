@@ -132,6 +132,20 @@ public abstract class InstantDraw<T> where T : unmanaged {
         instantShader.setUniform(uFogDensity, density);
     }
 
+    /** calculate exp2 fog density from target distance where fog should be opaque
+     * @param distance where fog reaches ~99% opacity
+     * @return density value for exp2 fog */
+    public static float calcExp2FogDensity(float distance, float threshold = 0.01f) {
+        return MathF.Sqrt(-MathF.Log(threshold)) / distance;
+    }
+
+    /** calculate exp fog density from target distance where fog should be opaque
+     * @param distance where fog reaches ~99% opacity
+     * @return density value for exp fog */
+    public static float calcExpFogDensity(float distance, float threshold = 0.01f) {
+        return -MathF.Log(threshold) / distance;
+    }
+
     public void setColour(Color c) {
         tint = c;
     }
