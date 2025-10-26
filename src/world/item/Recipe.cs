@@ -1,4 +1,5 @@
 ﻿using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.block;
 using BlockGame.world.item.inventory;
 using JetBrains.Annotations;
@@ -23,7 +24,7 @@ public class Recipe {
     public static Recipe DIAMOND_CANDY;
 
 
-    public static readonly List<Recipe> recipes = [];
+    public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
     private ItemStack result;
     private int shapePattern; // encoded pattern (e.g., 111_020_020)
@@ -34,7 +35,7 @@ public class Recipe {
 
     public static void preLoad() {
         // dye mixing (any 2 dyes -> 2 of average colour)
-        recipes.Add(new DyeRecipe());
+        Registry.RECIPES.register("dye", new DyeRecipe());
 
         // shapeless: 1 log -> 4 planks
         PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
@@ -147,13 +148,18 @@ public class Recipe {
 
     // todo add ItemStack result too for metadata items, maybe NBT items in the future too...
 
+    private static int recipeCounter = 0;
+
     public static Recipe register(Item result) {
         return register(new ItemStack(result, 1));
     }
 
     public static Recipe register(ItemStack result) {
         var recipe = new Recipe { result = result };
-        recipes.Add(recipe);
+        // generate id from result item string id + counter
+        var stringId = Registry.ITEMS.getName(result.id);
+        var id = $"{stringId}_{recipeCounter++}";
+        Registry.RECIPES.register(id, recipe);
         return recipe;
     }
 
@@ -179,7 +185,7 @@ public class Recipe {
     }
 
     public Recipe quantities(params ReadOnlySpan<int> quantities) {
-        this.quantitiesList = quantities.ToArray();
+        quantitiesList = quantities.ToArray();
         return this;
     }
 

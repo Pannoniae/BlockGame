@@ -187,7 +187,7 @@ public readonly struct Command {
 
             switch (subCmd) {
                 case "":
-                    source.sendMessage("Debug commands: /debug lightmap, /debug atlas");
+                    source.sendMessage("Debug commands: /debug lightmap, /debug atlas, /debug reg");
                     break;
                 case "lightmap":
                     // dump lightmap to file
@@ -198,6 +198,17 @@ public readonly struct Command {
                     // dump texture atlas to file
                     Game.textures.dumpAtlas();
                     source.sendMessage("Texture atlas dumped to atlas.png");
+                    break;
+                case "reg":
+                case "registry":
+                case "registries":
+                    try {
+                        var path = dumpRegistries();
+                        source.sendMessage($"Dumped registries to {path}");
+                    }
+                    catch (Exception ex) {
+                        source.sendMessage($"Failed to dump registries: {ex.Message}");
+                    }
                     break;
                 default:
                     source.sendMessage($"Unknown debug command: {subCmd}");
@@ -383,6 +394,58 @@ public readonly struct Command {
         }
 
         return int.TryParse(input, out result);
+    }
+
+    private static string dumpRegistries() {
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var path = $"registry_dump_{timestamp}.txt";
+
+        using var writer = new StreamWriter(path);
+        writer.WriteLine("=== BLOCKGAME REGISTRY DUMP ===");
+        writer.WriteLine($"Generated: {DateTime.Now}");
+        writer.WriteLine();
+        
+        var registryType = typeof(util.stuff.Registry);
+        var fields = registryType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+        foreach (var field in fields) {
+            var value = field.GetValue(null);
+            if (value == null) continue;
+
+            // check if it's a Registry<T> or ObjectRegistry<T, TFactory>
+            var fieldType = field.FieldType;
+            var baseType = fieldType;
+            while (baseType != null && !baseType.IsGenericType) {
+                baseType = baseType.BaseType;
+            }
+
+            if (baseType == null || !baseType.GetGenericTypeDefinition().Name.Contains("Registry")) {
+                continue;
+            }
+
+            writer.WriteLine($"=== {field.Name} ===");
+
+            // get count
+            var countMethod = fieldType.GetMethod("count");
+            if (countMethod != null) {
+                int count = (int)countMethod.Invoke(value, null)!;
+                writer.WriteLine($"Total: {count} entries");
+                writer.WriteLine();
+
+                // dump all entries
+                var getNameMethod = fieldType.GetMethod("getName");
+                if (getNameMethod != null) {
+                    for (int i = 0; i < count; i++) {
+                        var name = (string?)getNameMethod.Invoke(value, [i]);
+                        writer.WriteLine($"  [{i,4}] {name}");
+                    }
+                }
+            }
+
+            writer.WriteLine();
+        }
+
+        return path;
     }
 }
 
