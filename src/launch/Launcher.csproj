@@ -13,7 +13,7 @@
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
         <ApplicationManifest>..\..\app.manifest</ApplicationManifest>
-
+        <OutputPath>..\..\bin\$(Configuration)\</OutputPath>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

@@ -1,4 +1,6 @@
+using System.Reflection;
 using BlockGame.main;
+using BlockGame.util.log;
 
 namespace BlockGame.launch;
 
@@ -15,6 +17,12 @@ namespace BlockGame.launch;
 public class Program {
     public static void Main(string[] args) {
         // TODO: coremod loading and transformation goes here
+
+        Log.init("launchLogs");
+
+        // print whether dll can be loaded
+        var a = Assembly.Load("core");
+        Log.info($"Loaded core.dll: {a.FullName}");
 
         // invoke client entry point
         ClientMain.Main(args);

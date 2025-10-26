@@ -30,7 +30,7 @@ public partial class Game {
     [LibraryImport("libc", SetLastError = true)]
     private static partial int sigaction(int signum, ref sigaction_t act, IntPtr oldact);
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void sigSegvHandler(int signal) {
         // can't reliably use Console.WriteLine here, use write() syscall
         byte[] msg = "SIGSEGV caught\n"u8.ToArray();
