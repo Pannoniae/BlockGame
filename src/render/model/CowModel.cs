@@ -11,16 +11,16 @@ public class CowModel : EntityModel {
     public const int ys = 46;
 
     // head at front, 8x8x8 pixels
-    public readonly Cube head = new Cube().pos(0, 26, 0).off(-4, 0, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
+    public readonly Cube head = new Cube().pos(0, 18, 0).off(-4, -8, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);
 
-    // body horizontal, 7x14x16 pixels
-    public readonly Cube body = new Cube().pos(0, 26, -12).off(-4, -5, -8).ext(8, 14, 16).tex(8, 16).gen(xs, ys);
+    // body horizontal, 8x14x16 pixels
+    public readonly Cube body = new Cube().pos(0, 18, -12).off(-4, -14, -8).ext(8, 14, 16).tex(8, 16).gen(xs, ys);
 
     // four legs at corners, 2x4x2 pixels each
-    public readonly Cube frontRightLeg = new Cube().pos(0, 4, 0).off(-1, -6, -1).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
-    public readonly Cube frontLeftLeg = new Cube().pos(-3.5f, 6, -6).off(-1.5f, -6, -1.5f).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
-    public readonly Cube backRightLeg = new Cube().pos(3.5f, 6, 6).off(-1.5f, -6, -1.5f).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
-    public readonly Cube backLeftLeg = new Cube().pos(-3.5f, 6, 6).off(-1.5f, -6, -1.5f).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
+    public readonly Cube frontRightLeg = new Cube().pos(0, 4, 0).off(-4, -4, -6).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
+    public readonly Cube frontLeftLeg = new Cube().pos(0, 4, 0).off(2, -4, -6).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
+    public readonly Cube backLeftLeg = new Cube().pos(0, 4, 0).off(2, -4, -20).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
+    public readonly Cube backRightLeg = new Cube().pos(0, 4, 0).off(-4, -4, -20).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         // set cow texture
