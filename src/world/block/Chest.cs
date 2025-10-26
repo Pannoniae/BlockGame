@@ -3,7 +3,10 @@
 namespace BlockGame.world.block;
 
 public class Chest : Block {
-    public Chest(ushort id, string name) : base(id, name) {
+    public Chest(string name) : base(name) {
+    }
+
+    protected override void onRegister(int id) {
         renderType[id] = RenderType.CUBE_DYNTEXTURE;
     }
 

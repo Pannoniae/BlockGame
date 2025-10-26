@@ -17,12 +17,18 @@ public class Water : Block {
      * tickRate = how many ticks between updates (lower = faster flow)
      * maxFlow = maximum flow distance from source (not currently used)
      */
-    public Water(ushort id, string name, byte tickRate, byte maxFlow) : base(id, name) {
+    public Water(string name, byte tickRate, byte maxFlow) : base(name) {
+        this.maxFlow = maxFlow;
+        this.tickRate = tickRate;
+    }
+
+    private readonly byte tickRate;
+
+    protected override void onRegister(int id) {
         lightAbsorption[id] = 1;
         renderType[id] = RenderType.CUSTOM;
         customCulling[id] = true;
         updateDelay[id] = tickRate;
-        this.maxFlow = maxFlow;
     }
 
     /**
@@ -78,7 +84,7 @@ public class Water : Block {
         // is this a source? great, sleep well
         if (getWaterLevel((byte)currentLevel) == 0 && !falling) {
             data = setDynamic(data, false);
-            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)Blocks.WATER).setMetadata(data));
+            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)WATER.id).setMetadata(data));
             newLevel = 0;
             // DON'T RETURN WE CAN STILL SPREAD
         }
@@ -116,7 +122,7 @@ public class Water : Block {
             var above = world.getBlockRaw(x, y + 1, z);
             // if there is water above, this should be falling
             // WE DON'T USE GETWATER because that swallows the level for falling water...
-            if (above.getID() == Blocks.WATER) {
+            if (above.getID() ==  Block.WATER.id) {
                 byte aboveMetadata = getWaterLevel(above.getMetadata());
 
                 // if above is falling, become falling
@@ -129,7 +135,7 @@ public class Water : Block {
             int adjacentSources = 0;
             foreach (var dir in Direction.directionsHorizontal) {
                 var neighbour = pos + dir;
-                if (world.getBlock(neighbour) == Blocks.WATER) {
+                if (world.getBlock(neighbour) ==  Block.WATER.id) {
                     var neighbourMetadata = world.getBlockMetadata(neighbour);
                     // if neighbour is a source and not falling (not sure how the second one could happen but whatever)
                     if (getWaterLevel(neighbourMetadata) == 0 && !isFalling(neighbourMetadata)) {
@@ -150,20 +156,20 @@ public class Water : Block {
             if (newLevel == currentLevel) {
                 // go to sleep, goodnight!
                 data = setDynamic(data, false);
-                world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)Blocks.WATER).setMetadata(data));
+                world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)WATER.id).setMetadata(data));
             }
             else {
                 // update current level
                 currentLevel = newLevel;
                 // if newLevel is -1, remove
                 if (newLevel == -1) {
-                    world.setBlock(pos.X, pos.Y, pos.Z, Blocks.AIR);
+                    world.setBlock(pos.X, pos.Y, pos.Z,  AIR.id);
                 }
                 else {
                     data = setWaterLevel(data, (byte)newLevel);
                     data = setDynamic(data, true); // keep dynamic while changing
                     data = setFalling(data, newFalling);
-                    world.setBlockMetadata(pos.X, pos.Y, pos.Z, ((uint)Blocks.WATER).setMetadata(data));
+                    world.setBlockMetadata(pos.X, pos.Y, pos.Z, ((uint)WATER.id).setMetadata(data));
 
                     world.scheduleBlockUpdate(pos);
                     // update neighbours
@@ -246,7 +252,7 @@ public class Water : Block {
      */
     public static int getWater(World world, int x, int y, int z, ref bool hasFalling) {
         var block = world.getBlock(x, y, z);
-        if (block == Blocks.WATER) {
+        if (block ==  Block.WATER.id) {
             var data = world.getBlockMetadata(x, y, z);
 
             // if falling water, always full height
@@ -273,7 +279,7 @@ public class Water : Block {
      */
     public static int getRenderWater(World world, int x, int y, int z) {
         var block = world.getBlock(x, y, z);
-        if (block == Blocks.WATER) {
+        if (block ==  Block.WATER.id) {
             var data = world.getBlockMetadata(x, y, z);
 
             // if falling water, always full height
@@ -295,7 +301,7 @@ public class Water : Block {
     public static float getRenderHeight(World world, int x, int y, int z) {
         // if there's no water here, return 0
         var block = world.getBlock(x, y, z);
-        if (block != Blocks.WATER) {
+        if (block !=  Block.WATER.id) {
             return 0f;
         }
 
@@ -354,7 +360,7 @@ public class Water : Block {
 
     private static float sampleBlockHeight(World world, int x, int y, int z, ref int samples) {
         var block = world.getBlock(x, y, z);
-        if (block == Blocks.WATER) {
+        if (block ==  Block.WATER.id) {
             var data = world.getBlockMetadata(x, y, z);
             samples++;
             return getHeight(data);
@@ -415,7 +421,7 @@ public class Water : Block {
         }
 
         // if water above
-        if (isFalling(metadata) || world.getBlock(x, y + 1, z) == Blocks.WATER) {
+        if (isFalling(metadata) || world.getBlock(x, y + 1, z) ==  Block.WATER.id) {
             flow.Y -= 0.5f;
         }
 
@@ -425,11 +431,11 @@ public class Water : Block {
     public static bool canSpread(World world, int x, int y, int z) {
         var block = world.getBlock(x, y, z);
 
-        if (block == Blocks.AIR) {
+        if (block ==  Block.AIR.id) {
             return true; // can always spread to air
         }
 
-        if (block == Blocks.WATER) {
+        if (block ==  Block.WATER.id) {
             // can't spread to water, can you? :)
             return false;
         }
@@ -442,19 +448,19 @@ public class Water : Block {
         var metadata = setWaterLevel(0, level);
         metadata = setFalling(metadata, falling);
         metadata = setDynamic(metadata, true);
-        world.setBlockMetadata(x, y, z, ((uint)Blocks.WATER).setMetadata(metadata));
+        world.setBlockMetadata(x, y, z, ((uint)WATER.id).setMetadata(metadata));
 
         // tick it
         world.scheduleBlockUpdate(new Vector3I(x, y, z));
     }
 
     public static void wakeUpWater(World world, Vector3I pos) {
-        if (world.getBlock(pos) == Blocks.WATER) {
+        if (world.getBlock(pos) ==  Block.WATER.id) {
             var metadata = world.getBlockMetadata(pos);
             // wake up static water
             var dynamicMetadata = setDynamic(metadata, true);
             // no updates!!
-            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)Blocks.WATER).setMetadata(dynamicMetadata));
+            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)WATER.id).setMetadata(dynamicMetadata));
 
             // scheduleBlockUpdate handles duplicate protection internally
             world.scheduleBlockUpdate(pos);
@@ -541,10 +547,6 @@ public class Water : Block {
         var vo = uMid + vMid; // V offset for centering after rotation
         var vMinO = -uMin + vo; // transformed V coordinates
         var vMaxO = -uMax + vo;
-
-        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
-        Span<Vector4> colourCache = stackalloc Vector4[4];
-        Span<byte> lightColourCache = stackalloc byte[4];
 
         // local coords
         int lx = x & 15;

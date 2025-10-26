@@ -37,80 +37,80 @@ public class Recipe {
         recipes.Add(new DyeRecipe());
 
         // shapeless: 1 log -> 4 planks
-        PLANKS = register(new ItemStack(Item.block(Blocks.PLANKS), 4));
+        PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
         PLANKS.noShape();
-        PLANKS.ingredients(Item.block(Blocks.LOG));
+        PLANKS.ingredients(Block.OAK_LOG.item);
 
         // crafting table (4 planks in square)
-        CRAFTING_TABLE = register(new ItemStack(Item.block(Blocks.CRAFTING_TABLE), 1));
+        CRAFTING_TABLE = register(new ItemStack(Block.CRAFTING_TABLE.item, 1));
         CRAFTING_TABLE.shape(11_11, 2);
-        CRAFTING_TABLE.ingredients(Item.block(Blocks.PLANKS));
+        CRAFTING_TABLE.ingredients(Block.OAK_PLANKS.item);
 
         // torch (1 coal on top of 1 stick)
-        TORCH = register(new ItemStack(Item.block(Blocks.TORCH), 4));
+        TORCH = register(new ItemStack(Block.TORCH.item, 4));
         TORCH.shape(01_02, 2);
         TORCH.ingredients(Item.COAL, Item.STICK);
 
         // stick (2 planks vertically)
         STICK = register(new ItemStack(Item.STICK, 4));
         STICK.shape(01_01, 2);
-        STICK.ingredients(Item.block(Blocks.PLANKS));
+        STICK.ingredients(Block.OAK_PLANKS.item);
 
-        OAK_CHEST = register(new ItemStack(Item.block(Blocks.OAK_CHEST), 1));
+        OAK_CHEST = register(new ItemStack(Block.OAK_CHEST.item, 1));
         OAK_CHEST.shape(111_101_111, 3);
-        OAK_CHEST.ingredients(Item.block(Blocks.PLANKS));
+        OAK_CHEST.ingredients(Block.OAK_PLANKS.item);
 
-        MAHOGANY_CHEST = register(new ItemStack(Item.block(Blocks.MAHOGANY_CHEST), 1));
+        MAHOGANY_CHEST = register(new ItemStack(Block.MAHOGANY_CHEST.item, 1));
         MAHOGANY_CHEST.shape(111_101_111, 3);
-        MAHOGANY_CHEST.ingredients(Item.block(Blocks.MAHOGANY_PLANKS));
+        MAHOGANY_CHEST.ingredients(Block.MAHOGANY_PLANKS.item);
 
-        GOLD_CANDY = register(new ItemStack(Item.block(Blocks.GOLD_CANDY), 1));
+        GOLD_CANDY = register(new ItemStack(Block.GOLD_CANDY.item, 1));
         GOLD_CANDY.noShape();
-        GOLD_CANDY.ingredients(Item.block(Blocks.CANDY), Item.GOLD_INGOT);
+        GOLD_CANDY.ingredients(Block.CANDY.item, Item.GOLD_INGOT);
 
-        FURNACE = register(new ItemStack(Item.block(Blocks.FURNACE), 1));
+        FURNACE = register(new ItemStack(Block.FURNACE.item, 1));
         FURNACE.shape(111_121_232, 3);
-        FURNACE.ingredients(Item.BRICK, Item.IRON_INGOT, Item.block(Blocks.TORCH));
+        FURNACE.ingredients(Item.BRICK, Item.IRON_INGOT, Block.TORCH.item);
 
-        STONE_FURNACE = register(new ItemStack(Item.block(Blocks.STONE_FURNACE), 1));
+        STONE_FURNACE = register(new ItemStack(Block.FURNACE.item, 1));
         STONE_FURNACE.shape(111_111_101, 3);
-        STONE_FURNACE.ingredients(Item.block(Blocks.STONE));
+        STONE_FURNACE.ingredients(Block.STONE.item);
 
-        BRICK_BLOCK = register(new ItemStack(Item.block(Blocks.BRICK_BLOCK), 1));
+        BRICK_BLOCK = register(new ItemStack(Block.BRICK_BLOCK.item, 1));
         BRICK_BLOCK.shape(111_111_111, 3);
         BRICK_BLOCK.ingredients(Item.BRICK);
 
-        STONE_BRICK = register(new ItemStack(Item.block(Blocks.STONE_BRICK), 1));
+        STONE_BRICK = register(new ItemStack(Block.STONE_BRICK.item, 1));
         STONE_BRICK.shape(111_111_111, 3);
-        STONE_BRICK.ingredients(Item.block(Blocks.STONE));
+        STONE_BRICK.ingredients(Block.STONE.item);
 
-        SAND_BRICK = register(new ItemStack(Item.block(Blocks.SAND_BRICK), 1));
+        SAND_BRICK = register(new ItemStack(Block.SAND_BRICK.item, 1));
         SAND_BRICK.shape(111_111_111, 3);
-        SAND_BRICK.ingredients(Item.block(Blocks.SAND));
+        SAND_BRICK.ingredients(Block.SAND.item);
 
-        CINNABAR_CANDY = register(new ItemStack(Item.block(Blocks.CINNABAR_CANDY), 1));
+        CINNABAR_CANDY = register(new ItemStack(Block.CINNABAR_CANDY.item, 1));
         CINNABAR_CANDY.noShape();
-        CINNABAR_CANDY.ingredients(Item.block(Blocks.CANDY), Item.CINNABAR);
+        CINNABAR_CANDY.ingredients(Block.CANDY.item, Item.CINNABAR);
 
-        DIAMOND_CANDY = register(new ItemStack(Item.block(Blocks.DIAMOND_CANDY), 1));
+        DIAMOND_CANDY = register(new ItemStack(Block.DIAMOND_CANDY.item, 1));
         DIAMOND_CANDY.noShape();
-        DIAMOND_CANDY.ingredients(Item.block(Blocks.CANDY), Item.DIAMOND);
+        DIAMOND_CANDY.ingredients(Block.CANDY.item, Item.DIAMOND);
 
 
 
 
         // tools
-        tool(Item.WOOD_PICKAXE, Item.block(Blocks.PLANKS), 111_020_020);
-        tool(Item.WOOD_AXE, Item.block(Blocks.PLANKS), 110_120_020);
-        tool(Item.WOOD_SHOVEL, Item.block(Blocks.PLANKS), 010_020_020);
-        tool(Item.WOOD_SWORD, Item.block(Blocks.PLANKS), 010_010_020);
+        tool(Item.WOOD_PICKAXE, Block.OAK_PLANKS.item, 111_020_020);
+        tool(Item.WOOD_AXE, Block.OAK_PLANKS.item, 110_120_020);
+        tool(Item.WOOD_SHOVEL, Block.OAK_PLANKS.item, 010_020_020);
+        tool(Item.WOOD_SWORD, Block.OAK_PLANKS.item, 010_010_020);
 
-        tool(Item.STONE_PICKAXE, Item.block(Blocks.STONE), 111_020_020);
-        tool(Item.STONE_AXE, Item.block(Blocks.STONE), 110_120_020);
-        tool(Item.STONE_SHOVEL, Item.block(Blocks.STONE), 010_020_020);
-        tool(Item.STONE_SWORD, Item.block(Blocks.STONE), 010_010_020);
-        tool(Item.STONE_HOE, Item.block(Blocks.STONE), 110_020_020);
-        tool(Item.STONE_SCYTHE, Item.block(Blocks.STONE), 111_002_002);
+        tool(Item.STONE_PICKAXE, Block.STONE.item, 111_020_020);
+        tool(Item.STONE_AXE, Block.STONE.item, 110_120_020);
+        tool(Item.STONE_SHOVEL, Block.STONE.item, 010_020_020);
+        tool(Item.STONE_SWORD, Block.STONE.item, 010_010_020);
+        tool(Item.STONE_HOE, Block.STONE.item, 110_020_020);
+        tool(Item.STONE_SCYTHE, Block.STONE.item, 111_002_002);
 
         tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020);
         tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020);

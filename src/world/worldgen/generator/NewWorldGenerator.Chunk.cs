@@ -198,38 +198,38 @@ public partial class NewWorldGenerator {
                 // determine the top layer
                 if (height < WATER_LEVEL - 1) {
                     if (blockVar > 0) {
-                        topBlock = Blocks.DIRT;
-                        filler = Blocks.DIRT;
+                        topBlock = Block.DIRT.id;
+                        filler =  Block.DIRT.id;
                     }
                     else {
-                        topBlock = Blocks.SAND;
-                        filler = Blocks.SAND;
+                        topBlock =  Block.SAND.id;
+                        filler =  Block.SAND.id;
                     }
                 }
 
                 // beaches
                 else if (height is > WATER_LEVEL - 3 and < WATER_LEVEL + 1) {
                     if (blockVar > -0.2) {
-                        topBlock = Blocks.SAND;
-                        filler = Blocks.SAND;
+                        topBlock =  Block.SAND.id;
+                        filler =  Block.SAND.id;
                     }
                     else {
-                        topBlock = Blocks.GRAVEL;
-                        filler = Blocks.GRAVEL;
+                        topBlock =  Block.GRAVEL.id;
+                        filler =  Block.GRAVEL.id;
                     }
                 }
                 else {
-                    topBlock = Blocks.GRASS;
-                    filler = Blocks.DIRT;
+                    topBlock =  Block.GRASS.id;
+                    filler =  Block.DIRT.id;
                 }
 
-                if (chunk.getBlock(x, height, z) == Blocks.STONE && amt >= 1f) {
+                if (chunk.getBlock(x, height, z) == Block.STONE.id && amt >= 1f) {
                     for (int yy = height; yy > height - amt && yy > 0; yy--) {
                         if (yy == height) {
                             chunk.setBlockFast(x, height, z, topBlock);
                         }
                         else {
-                            if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
+                            if (chunk.getBlock(x, yy, z) ==  Block.STONE.id) {
                                 chunk.setBlockFast(x, yy, z, filler);
                             }
                         }
@@ -259,7 +259,7 @@ public partial class NewWorldGenerator {
                     WorldgenUtil.getNoise2D(auxn, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
-                    chunk.setBlockFast(x, y, z, Blocks.HELLROCK);
+                    chunk.setBlockFast(x, y, z,  Block.HELLROCK.id);
                 }
             }
         }
@@ -609,38 +609,38 @@ public partial class NewWorldGenerator {
                 // determine the top layer
                 if (height < WATER_LEVEL - 1) {
                     if (blockVar > 0) {
-                        topBlock = Blocks.DIRT;
-                        filler = Blocks.DIRT;
+                        topBlock = Block.DIRT.id;
+                        filler =  Block.DIRT.id;
                     }
                     else {
-                        topBlock = Blocks.SAND;
-                        filler = Blocks.SAND;
+                        topBlock =  Block.SAND.id;
+                        filler =  Block.SAND.id;
                     }
                 }
 
                 // beaches
                 else if (height is > WATER_LEVEL - 3 and < WATER_LEVEL + 1) {
                     if (blockVar > -0.2) {
-                        topBlock = Blocks.SAND;
-                        filler = Blocks.SAND;
+                        topBlock =  Block.SAND.id;
+                        filler =  Block.SAND.id;
                     }
                     else {
-                        topBlock = Blocks.GRAVEL;
-                        filler = Blocks.GRAVEL;
+                        topBlock =  Block.GRAVEL.id;
+                        filler =  Block.GRAVEL.id;
                     }
                 }
                 else {
-                    topBlock = Blocks.GRASS;
-                    filler = Blocks.DIRT;
+                    topBlock =  Block.GRASS.id;
+                    filler =  Block.DIRT.id;
                 }
 
-                if (chunk.getBlock(x, height, z) == Blocks.STONE && amt >= 1f) {
+                if (chunk.getBlock(x, height, z) == Block.STONE.id && amt >= 1f) {
                     for (int yy = height; yy > height - amt && yy > 0; yy--) {
                         if (yy == height) {
                             chunk.setBlockFast(x, height, z, topBlock);
                         }
                         else {
-                            if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
+                            if (chunk.getBlock(x, yy, z) ==  Block.STONE.id) {
                                 chunk.setBlockFast(x, yy, z, filler);
                             }
                         }

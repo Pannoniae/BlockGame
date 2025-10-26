@@ -4,7 +4,9 @@ using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.log;
+using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
+using BlockGame.world.block;
 using BlockGame.world.chunk;
 using Molten.DoublePrecision;
 
@@ -278,14 +280,47 @@ public class WorldIO {
             if (chunk.blocks[sectionY].inited) {
                 section.addByte("inited", 1);
 
-                // add the arrays
-                // get a new array from the pool and copy into that
+                // get block and light data
                 var freshBlocks = saveBlockPool.grab();
                 var freshLight = saveLightPool.grab();
                 chunk.blocks[sectionY].getSerializationBlocks(freshBlocks);
                 chunk.blocks[sectionY].getSerializationLight(freshLight);
-                section.addUIntArray("blocks", freshBlocks);
+
+                // build palette: collect unique block IDs
+                var paletteBuilder = new Dictionary<ushort, int>();
+                var paletteList = new List<string>();
+
+                for (int i = 0; i < freshBlocks.Length; i++) {
+                    ushort blockID = freshBlocks[i].getID();
+
+                    if (!paletteBuilder.ContainsKey(blockID)) {
+                        string stringID = Registry.BLOCKS.getName(blockID) ?? "air";
+                        paletteBuilder[blockID] = paletteList.Count;
+                        paletteList.Add(stringID);
+                    }
+                }
+
+                // convert blocks to palette indices
+                var paletteIndices = saveBlockPool.grab();
+                for (int i = 0; i < freshBlocks.Length; i++) {
+                    ushort blockID = freshBlocks[i].getID();
+                    byte metadata = freshBlocks[i].getMetadata();
+                    int paletteIdx = paletteBuilder[blockID];
+                    paletteIndices[i] = ((uint)metadata << 24) | (uint)paletteIdx;
+                }
+
+                // save palette
+                var paletteTag = new NBTList<NBTString>(NBTType.TAG_String, "palette");
+                foreach (var stringID in paletteList) {
+                    paletteTag.add(new NBTString(null, stringID));
+                }
+
+                section.addListTag("palette", paletteTag);
+                section.addUIntArray("blocks", paletteIndices);
                 section.addByteArray("light", freshLight);
+
+                // return freshBlocks to pool (we're done with it)
+                saveBlockPool.putBack(freshBlocks);
             }
             else {
                 section.addByte("inited", 0);
@@ -340,8 +375,36 @@ public class WorldIO {
             // init chunk section
             blocks.loadInit();
 
+            // load palette if it exists (new format)
+            uint[] runtimeBlocks;
+            if (section.has("palette")) {
+                var paletteTag = section.getListTag<NBTString>("palette");
+                var paletteIndices = section.getUIntArray("blocks");
+
+                // convert palette to runtime IDs
+                runtimeBlocks = new uint[paletteIndices.Length];
+                for (int i = 0; i < paletteIndices.Length; i++) {
+                    uint packedValue = paletteIndices[i];
+                    int paletteIdx = (int)(packedValue & 0xFFFFFF);
+                    byte metadata = (byte)(packedValue >> 24);
+
+                    string stringID = paletteTag.get(paletteIdx).data;
+                    int runtimeID = Registry.BLOCKS.getID(stringID);
+
+                    if (runtimeID == -1) {
+                        // Block removed from game -> use air
+                        runtimeBlocks[i] = 0;
+                    } else {
+                        runtimeBlocks[i] = ((uint)metadata << 24) | (uint)runtimeID;
+                    }
+                }
+            } else {
+                // old format without palette - assume IDs are still valid?
+                runtimeBlocks = section.getUIntArray("blocks");
+            }
+
             // blocks
-            blocks.setSerializationData(section.getUIntArray("blocks"), section.getByteArray("light"));
+            blocks.setSerializationData(runtimeBlocks, section.getByteArray("light"));
         }
 
         // load entities (skip players - they're saved with world data)
@@ -401,8 +464,36 @@ public class WorldIO {
             // init chunk section
             blocks.loadInit();
 
+            // load palette if it exists (new format)
+            uint[] runtimeBlocks;
+            if (section.has("palette")) {
+                var paletteTag = section.getListTag<NBTString>("palette");
+                var paletteIndices = section.getUIntArray("blocks");
+
+                // convert palette to runtime IDs
+                runtimeBlocks = new uint[paletteIndices.Length];
+                for (int i = 0; i < paletteIndices.Length; i++) {
+                    uint packedValue = paletteIndices[i];
+                    int paletteIdx = (int)(packedValue & 0xFFFFFF);
+                    byte metadata = (byte)(packedValue >> 24);
+
+                    string stringID = paletteTag.get(paletteIdx).data;
+                    int runtimeID = Registry.BLOCKS.getID(stringID);
+
+                    if (runtimeID == -1) {
+                        // Block removed from game -> use air
+                        runtimeBlocks[i] = 0;
+                    } else {
+                        runtimeBlocks[i] = ((uint)metadata << 24) | (uint)runtimeID;
+                    }
+                }
+            } else {
+                // old format without palette - assume IDs are still valid?
+                runtimeBlocks = section.getUIntArray("blocks");
+            }
+
             // blocks
-            blocks.setSerializationData(section.getUIntArray("blocks"), section.getByteArray("light"));
+            blocks.setSerializationData(runtimeBlocks, section.getByteArray("light"));
         }
 
         // load entities (skip players - they're saved with world data)

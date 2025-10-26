@@ -170,7 +170,7 @@ public class GUI {
     public void drawItem(ItemSlot slot, Vector2 pos) {
         var stack = slot.getStack();
 
-        if (stack == null || stack.id == Items.AIR) {
+        if (stack == null || stack.id == Item.AIR.id) {
             return;
         }
 
@@ -229,7 +229,7 @@ public class GUI {
     }
 
     public void drawCursorItem(ItemStack? cursorItem, Vector2 mousePos) {
-        if (cursorItem == null || cursorItem.id == Items.AIR) {
+        if (cursorItem == null || cursorItem.id == Item.AIR.id) {
             return;
         }
 
@@ -347,8 +347,8 @@ public class GUI {
         float offsetY = backgroundScrollOffset.Y % blockSize;
 
         Span<ushort> ores = [
-            Blocks.AMBER_ORE, Blocks.CINNABAR, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE, Blocks.TITANIUM_ORE,
-            Blocks.AMETHYST_ORE
+             Block.AMBER_ORE.id,  Block.CINNABAR_ORE.id,  Block.EMERALD_ORE.id,  Block.DIAMOND_ORE.id,  Block.TITANIUM_ORE.id,
+            Block.AMETHYST_ORE.id
         ];
 
         // Draw layered background
@@ -412,12 +412,12 @@ public class GUI {
     private static ushort getBlockTypeForDepth(int worldX, int worldY) {
         // air above surface (y < 0)
         if (worldY < 0) {
-            return Blocks.AIR;
+            return  Block.AIR.id;
         }
 
         // surface layer (y = 0) is grass
         if (worldY == 0) {
-            return Blocks.GRASS;
+            return  Block.GRASS.id;
         }
 
         // dirt percentage increases linearly from depth 1 to 7
@@ -427,12 +427,12 @@ public class GUI {
             float randomValue = XHash.hashFloat(worldX, worldY);
 
             if (randomValue < dirtPercentage) {
-                return Blocks.DIRT;
+                return  Block.DIRT.id;
             }
         }
 
         // what isn't dirt is stone
-        return Blocks.STONE;
+        return  Block.STONE.id;
     }
 
 

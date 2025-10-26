@@ -1,8 +1,17 @@
-﻿namespace BlockGame.world.block;
+﻿using BlockGame.world.item;
+
+namespace BlockGame.world.block;
 
 public class CandyBlock : Block {
-    public CandyBlock(ushort id, string name) : base(id, name) {
+    public CandyBlock(string name) : base(name) {
+    }
+
+    protected override void onRegister(int id) {
         renderType[id] = RenderType.CUBE_DYNTEXTURE;
+    }
+
+    protected override BlockItem createItem() {
+        return new CandyBlockItem(this);
     }
 
     public static readonly string[] colourNames = [

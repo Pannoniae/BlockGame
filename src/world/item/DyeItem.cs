@@ -4,7 +4,7 @@ using BlockGame.world.block;
 namespace BlockGame.world.item;
 
 public class DyeItem : Item {
-    public DyeItem(int id, string name) : base(id, name) {
+    public DyeItem(string name) : base(name) {
     }
 
     public override string getName(ItemStack stack) {
@@ -14,9 +14,11 @@ public class DyeItem : Item {
 
     public override UVPair getTexture(ItemStack stack) {
         int meta = stack.metadata & 0xF;
-        return meta < 16 ?
+        return meta < 16
+            ?
             // v=1, u=0 to 15
-            new UVPair(meta, 1) :
+            new UVPair(meta, 1)
+            :
             // v=2, u=0 to 3
             new UVPair(meta - 16, 2);
     }

@@ -13,9 +13,9 @@ public partial class TechDemoWorldGenerator {
                 // transform to the range 10 - 30
                 var height = noise.GetNoise(worldPos.X, worldPos.Z) * 20 + 20;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlockDumb(x, y, z, Blocks.DIRT);
+                    chunk.setBlockDumb(x, y, z,  Block.DIRT.id);
                 }
-                chunk.setBlockDumb(x, (int)height, z, Blocks.GRASS);
+                chunk.setBlockDumb(x, (int)height, z,  Block.GRASS.id);
             }
         }
         chunk.status = ChunkStatus.GENERATED;

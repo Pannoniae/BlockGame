@@ -7,7 +7,7 @@ using Molten;
 namespace BlockGame.world.block;
 
 public class CraftingTable : Block {
-    public CraftingTable(ushort id, string name) : base(id, name) {
+    public CraftingTable(string name) : base(name) {
     }
 
     public override bool onUse(World world, int x, int y, int z, Player player) {

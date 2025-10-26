@@ -5,7 +5,10 @@ using BlockGame.util;
 namespace BlockGame.world.block;
 
 public class Slabs : Block {
-    public Slabs(ushort id, string name) : base(id, name) {
+    public Slabs(string name) : base(name) {
+    }
+
+    protected override void onRegister(int id) {
         renderType[id] = RenderType.CUSTOM;
         customCulling[id] = true;
         customAABB[id] = true;

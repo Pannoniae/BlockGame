@@ -4,10 +4,10 @@ using BlockGame.world.block;
 namespace BlockGame.world.item;
 
 public class CandyBlockItem : BlockItem {
-    public CandyBlockItem(int id, string name) : base(id, name) {
+    public CandyBlockItem(Block block) : base(block) {
     }
 
     public override string getName(ItemStack stack) {
-        return ((CandyBlock)Block.blocks[-id]).getName((byte)stack.metadata);
+        return ((CandyBlock)block).getName((byte)stack.metadata);
     }
 }

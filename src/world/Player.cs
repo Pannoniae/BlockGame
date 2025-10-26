@@ -843,7 +843,7 @@ public class Player : Soul, CommandSource {
             var raw = world.getBlockRaw(pos);
             var bl = Block.get(raw.getID());
             if (bl != null) {
-                inventory.slots[inventory.selected] = new ItemStack(Item.blockID(bl.id), 1, raw.getMetadata());
+                inventory.slots[inventory.selected] = new ItemStack(bl.item, 1, raw.getMetadata());
             }
         }
     }
@@ -990,7 +990,7 @@ public class Player : Soul, CommandSource {
             if (stack != ItemStack.EMPTY && stack.quantity > 0) {
                 var item = stack.getItem();
                 // only drop materials (blocks), not tools
-                if (item.isBlock() && Item.material[item.idx]) {
+                if (item.isBlock() && Item.material[item.id]) {
                     dropItemStack(stack);
                     inventory.slots[i] = ItemStack.EMPTY;
                 }

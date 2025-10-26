@@ -166,10 +166,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
                 // instead, what we will do is, we'll fast forward to the bottom of the water, lighting it up as we go (decreasing the light level obviously THEN add that to the propagation)
 
                 var ll = getSkyLight(x, y + 1, z);
-                if (bl == Blocks.WATER) {
+                if (bl ==  Block.WATER.id) {
                     // if the block is water, we need to propagate downwards
                     // but we need to do it manually, because otherwise it will add 7 million entries to the queue
-                    while (y > 0 && bl == Blocks.WATER) {
+                    while (y > 0 && bl ==  Block.WATER.id) {
                         ll -= Block.lightAbsorption[bl];
                         if (ll <= 0) break;
                         y--;
@@ -616,6 +616,25 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public Vector3I getCoordInSection(int x, int y, int z) {
         return new Vector3I(x, y & 0xF, z);
+    }
+
+    public void setBlockEntity(int x, int y, int z, BlockEntity be) {
+        blockEntities[new Vector3I(x, y, z)] = be;
+    }
+
+    public void removeBlockEntity(int x, int y, int z) {
+        blockEntities.Remove(new Vector3I(x, y, z));
+    }
+
+    public BlockEntity? getBlockEntity(int x, int y, int z) {
+        blockEntities.TryGetValue(new Vector3I(x, y, z), out var be);
+        return be;
+    }
+
+    public void updateBlockEntities() {
+        foreach (var be in blockEntities.Values) {
+            be.update(world, be.pos.X, be.pos.Y, be.pos.Z);
+        }
     }
 
     public void meshChunk() {

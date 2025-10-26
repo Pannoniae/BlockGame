@@ -56,7 +56,7 @@ public class ItemSlot {
         }
 
         var takeAmount = Math.Min(count, current.quantity);
-        var taken = new ItemStack(current.id, takeAmount, current.metadata);
+        var taken = new ItemStack(current.getItem(), takeAmount, current.metadata);
 
         current.quantity -= takeAmount;
         if (current.quantity <= 0) {
@@ -99,7 +99,7 @@ public class ItemSlot {
                     return ItemStack.EMPTY; // all items placed
                 } else {
                     // return remainder - don't modify the input!
-                    return new ItemStack(stack.id, stack.quantity - addAmount, stack.metadata);
+                    return new ItemStack(stack.getItem(), stack.quantity - addAmount, stack.metadata);
                 }
             }
             else {
@@ -146,7 +146,7 @@ public class ArmourSlot : ItemSlot {
         }
 
         var item = stack.getItem();
-        return Item.armour[item.idx];
+        return Item.armour[item.id];
     }
 }
 
@@ -160,7 +160,7 @@ public class AccessorySlot : ItemSlot {
         }
 
         var item = stack.getItem();
-        return Item.accessory[item.idx];
+        return Item.accessory[item.id];
     }
 }
 
@@ -182,7 +182,7 @@ public class CraftingResultSlot : ItemSlot {
         }
 
         var takeAmount = Math.Min(count, result.quantity);
-        var taken = new ItemStack(result.id, takeAmount, result.metadata);
+        var taken = new ItemStack(result.getItem(), takeAmount, result.metadata);
 
         // find the matching recipe and consume ingredients
         var recipe = Recipe.findMatch(craftingGrid);

@@ -1,3 +1,4 @@
+using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.item;
@@ -9,7 +10,7 @@ namespace BlockGame.util;
  */
 public class ItemStack : Persistent {
 
-    public static readonly ItemStack EMPTY = new ItemStack(0, 0);
+    public static readonly ItemStack EMPTY = new ItemStack(Item.AIR, 0);
 
     public int id;
     /**
@@ -24,34 +25,29 @@ public class ItemStack : Persistent {
         this.metadata = metadata;
     }
     
-    public ItemStack(Block block, int quantity, int metadata = 0) {
-        this.id = -block.id;
-        this.quantity = quantity;
-        this.metadata = metadata;
-    }
-    
-    public ItemStack(int id, int quantity, int metadata = 0) {
-        this.id = id;
+    public ItemStack(string stringID, int quantity, int metadata = 0) {
+        var item = Item.get(stringID);
+        this.id = item?.id ?? 0;
         this.quantity = quantity;
         this.metadata = metadata;
     }
 
-    public ItemStack(NBTCompound data) {
+    public ItemStack(NBTCompound data) : this(Item.AIR, 0) {
         read(data);
     }
 
     public static ItemStack fromTag(NBTCompound data) {
-        var stack = new ItemStack(0, 0);
-        stack.read(data);
+        var stack = new ItemStack(data);
         return (stack.id == 0 || stack.quantity <= 0) ? EMPTY : stack;
     }
 
     public ItemStack copy() {
-        return new ItemStack(id, quantity, metadata);
+        var item = Item.get(id);
+        return new ItemStack(item!, quantity, metadata);
     }
-    
+
     public Item getItem() {
-        return Item.get(id);
+        return Item.get(id)!;
     }
 
     public bool same(ItemStack stack) {
@@ -59,7 +55,8 @@ public class ItemStack : Persistent {
     }
 
     public void write(NBTCompound data) {
-        data.addInt("id", id);
+        var stringID = Registry.ITEMS.getName(id);
+        data.addString("id", stringID!);
         data.addInt("qty", quantity);
         data.addInt("meta", metadata);
     }
@@ -72,7 +69,10 @@ public class ItemStack : Persistent {
             return;
         }
 
-        id = data.getInt("id");
+        var stringID = data.getString("id");
+        var item = Item.get(stringID);
+        id = item?.id ?? 0;
+
         quantity = data.has("qty") ? data.getInt("qty") : 0;
         metadata = data.has("meta") ? data.getInt("meta") : 0;
     }

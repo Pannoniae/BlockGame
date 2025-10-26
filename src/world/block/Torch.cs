@@ -8,7 +8,10 @@ using Molten.DoublePrecision;
 namespace BlockGame.world.block;
 
 public class Torch : Block {
-    public Torch(ushort id, string name) : base(id, name) {
+    public Torch( string name) : base(name) {
+    }
+
+    protected override void onRegister(int id) {
         renderType[id] = RenderType.CUSTOM;
         customCulling[id] = true;
         customAABB[id] = true;
@@ -168,53 +171,47 @@ public class Torch : Block {
         var bu1 = UVPair.texU(min.u + 9/16f);
         var bv0 = UVPair.texV(min.v + 14/16f);
         var bv1 = UVPair.texV(min.v + 1f);
-
-        Span<BlockVertexPacked> cache = stackalloc BlockVertexPacked[4];
-        Span<Vector4> colourCache = stackalloc Vector4[4];
-        Span<byte> lightColourCache = stackalloc byte[4];
         
         // torch tex is 2x10
         const float tiltAngle = MathF.PI / 8f; // 22.5
 
         switch (attachment) {
             case GROUND:
-                renderTorchCube(br, cache, x, y, z, vertices, 7/16f, 0f, 7/16f, 9/16f, 10/16f, 9/16f,
-                    su0, sv0, su1, sv1, tu0, tv0, tu1, tv1, bu0, bv0, bu1, bv1,
-                    colourCache, lightColourCache);
+                renderTorchCube(br, x, y, z, vertices, 7/16f, 0f, 7/16f, 9/16f, 10/16f, 9/16f,
+                    su0, sv0, su1, sv1, tu0, tv0, tu1, tv1, bu0, bv0, bu1, bv1);
                 break;
 
             case WEST_WALL:
-                renderTorchCube(br, cache, x, y, z, vertices, 0f, 3/16f, 7/16f, 2/16f, 13/16f, 9/16f,
+                renderTorchCube(br,  x, y, z, vertices, 0f, 3/16f, 7/16f, 2/16f, 13/16f, 9/16f,
                     su0, sv0, su1, sv1, tu0, tv0, tu1, tv1, bu0, bv0, bu1, bv1,
-                    colourCache, lightColourCache, new Vector3(0, 0, 1), -tiltAngle, new Vector3(x + 0f, y + 2/16f, z + 8/16f));
+                    new Vector3(0, 0, 1), -tiltAngle, new Vector3(x + 0f, y + 2/16f, z + 8/16f));
                 break;
 
             case EAST_WALL:
-                renderTorchCube(br, cache, x, y, z, vertices, 14/16f, 3/16f, 7/16f, 1f, 13/16f, 9/16f,
+                renderTorchCube(br, x, y, z, vertices, 14/16f, 3/16f, 7/16f, 1f, 13/16f, 9/16f,
                     su0, sv0, su1, sv1, tu0, tv0, tu1, tv1, bu0, bv0, bu1, bv1,
-                    colourCache, lightColourCache, new Vector3(0, 0, 1), tiltAngle, new Vector3(x + 1f, y + 2/16f, z + 8/16f));
+                    new Vector3(0, 0, 1), tiltAngle, new Vector3(x + 1f, y + 2/16f, z + 8/16f));
                 break;
 
             case SOUTH_WALL:
-                renderTorchCube(br, cache, x, y, z, vertices, 7/16f, 3/16f, 0/16f, 9/16f, 13/16f, 2/16f,
+                renderTorchCube(br,  x, y, z, vertices, 7/16f, 3/16f, 0/16f, 9/16f, 13/16f, 2/16f,
                     su0, sv0, su1, sv1, tu0, tv0, tu1, tv1, bu0, bv0, bu1, bv1,
-                    colourCache, lightColourCache, new Vector3(1, 0, 0), tiltAngle, new Vector3(x + 8/16f, y + 2/16f, z + 0f));
+                    new Vector3(1, 0, 0), tiltAngle, new Vector3(x + 8/16f, y + 2/16f, z + 0f));
                 break;
 
             case NORTH_WALL:
-                renderTorchCube(br, cache, x, y, z, vertices, 7/16f, 3/16f, 14/16f, 9/16f, 13/16f, 16/16f,
+                renderTorchCube(br, x, y, z, vertices, 7/16f, 3/16f, 14/16f, 9/16f, 13/16f, 16/16f,
                     su0, sv0, su1, sv1, tu0, tv0, tu1, tv1, bu0, bv0, bu1, bv1,
-                    colourCache, lightColourCache, new Vector3(1, 0, 0), -tiltAngle, new Vector3(x + 8/16f, y + 2/16f, z + 1f));
+                    new Vector3(1, 0, 0), -tiltAngle, new Vector3(x + 8/16f, y + 2/16f, z + 1f));
                 break;
         }
     }
 
-    private static void renderTorchCube(BlockRenderer br, Span<BlockVertexPacked> cache, int x, int y, int z, List<BlockVertexPacked> vertices,
+    private static void renderTorchCube(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices,
         float x0, float y0, float z0, float x1, float y1, float z1,
         float su0, float sv0, float su1, float sv1,
         float tu0, float tv0, float tu1, float tv1,
         float bu0, float bv0, float bu1, float bv1,
-        Span<Vector4> colourCache, Span<byte> lightColourCache,
         Vector3 ax = default, float angle = 0f, Vector3 pivot = default) {
 
         bool brot = angle != 0f;

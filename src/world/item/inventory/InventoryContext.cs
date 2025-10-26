@@ -23,7 +23,7 @@ public abstract class InventoryContext {
                 // try to take from slot
                 var currentStack = slot.getStack();
                 var taken = slot.take(currentStack == ItemStack.EMPTY ? 1 : currentStack.quantity);
-                if (taken != ItemStack.EMPTY && taken.id != Items.AIR) {
+                if (taken != ItemStack.EMPTY && taken.id != Item.AIR.id) {
                     player.inventory.cursor = taken;
                 }
             }
@@ -56,7 +56,7 @@ public abstract class InventoryContext {
 
                 if (slotStack == ItemStack.EMPTY) {
                     // empty slot - place 1 item
-                    var singleItem = new ItemStack(cursor.id, 1, cursor.metadata);
+                    var singleItem = new ItemStack(cursor.getItem(), 1, cursor.metadata);
                     slot.place(singleItem);
                     cursor.quantity--;
                     if (cursor.quantity <= 0) {

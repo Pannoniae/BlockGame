@@ -365,7 +365,7 @@ public partial class World : IDisposable {
             for (int y = min.Y; y <= max.Y; y++) {
                 for (int z = min.Z; z <= max.Z; z++) {
                     var bl = getBlock(x, y, z);
-                    if (bl == Blocks.AIR) {
+                    if (bl == Block.AIR.id) {
                         continue;
                     }
 
@@ -730,6 +730,8 @@ public partial class World : IDisposable {
                 }
             }
         }
+
+        updateBlockEntities();
 
         updateEntities(dt);
     }

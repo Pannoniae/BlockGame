@@ -42,13 +42,13 @@ public partial class PerlinWorldGenerator {
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
-    private readonly OreFeature ironOre = new(Blocks.CINNABAR, 6, 12);
-    private readonly OreFeature coalOre = new(Blocks.TITANIUM_ORE, 8, 16);
+    private readonly OreFeature ironOre = new(Block.CINNABAR_ORE.id, 6, 12);
+    private readonly OreFeature coalOre = new(Block.TITANIUM_ORE.id, 8, 16);
 
     public const float LOW_FREQUENCY = 1 / 167f;
     public const float HIGH_FREQUENCY = 1 / 135f;
     public const float SELECTOR_FREQUENCY = 1 / 390f;
-    
+
     public const float WEIRDNESS_FREQUENCY = 1 / 590f;
 
     public const float Y_DIVIDER = 1;
@@ -76,7 +76,7 @@ public partial class PerlinWorldGenerator {
             LOW_FREQUENCY, 12, 2f);
         WorldgenUtil.getNoise3DRegion(highBuffer, highNoise, coord, HIGH_FREQUENCY, HIGH_FREQUENCY,
             HIGH_FREQUENCY, 12, Meth.phiF);
-        
+
         // get weirdness
         // only low octaves for this one, it's a glorified selector
         WorldgenUtil.getNoise3DRegion(weirdnessBuffer, weirdnessNoise, coord, WEIRDNESS_FREQUENCY, WEIRDNESS_FREQUENCY,
@@ -106,7 +106,7 @@ public partial class PerlinWorldGenerator {
                     float high = highBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
                     // sample selectorNoise
                     float selector = selectorBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
-                    
+
                     float weirdness = weirdnessBuffer[WorldgenUtil.getIndex(nx, ny, nz)];
 
                     // store the value in the buffer
@@ -115,7 +115,7 @@ public partial class PerlinWorldGenerator {
             }
         }
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float calculateAirBias(float low, float high, float weirdness, int y) {
         // Reduce the density when too high above 64 and increase it when too low
@@ -132,7 +132,7 @@ public partial class PerlinWorldGenerator {
         // flatten out low noise
         // is this needed?
         //low -= airBias;
-        
+
         // todo when making normal terrain, raise the "sealevel" (the midpoint of the terrain) by like ~4 blocks, so there will be actual plains instead of
         // just endless beaches and shallow water everywhere  
 
@@ -140,31 +140,30 @@ public partial class PerlinWorldGenerator {
         if (y < WATER_LEVEL + 4) {
             airBias *= 4;
         }
-        
+
         // border
         if (y is < 44 and > 36) {
             // make it more extreme
             airBias *= int.Max(44 - y, y - 36) - 2;
         }
-        
+
         // under y=40
         var caveDepth = float.Max(0, float.Min(y - 6, 36 - y));
-        
+
         // combine weirdness with highnoise so the actual cave isnt just slop
         var cw = weirdness + 0.45f * high;
-        
+
         // if weirdness noise is high enough (>0.5), multiply the caveDepth bias by the remainder * 3
         var factor = float.Abs(cw) > 0.5f ? ((float.Abs(cw) - 0.5f) * 6f) + 1f : 0f;
         airBias += (caveDepth * 0.036f) * factor;
-        
-        
+
 
         // between y=120-128, taper it off to -1
         // at max should be 0.5
         // ^2 to have a better taper
         var t = float.Max((y - 120), 0) / 16f;
         airBias += t * t;
-        
+
         return airBias;
     }
 
@@ -172,7 +171,7 @@ public partial class PerlinWorldGenerator {
     private static float calculateDensity(float low, float high, float selector, float weirdness, int y) {
         low = float.Tan(low);
         high = float.Tan(high);
-        
+
         // make it more radical
         // can't sqrt a negative number so sign(abs(x))
         selector = float.Abs(selector);
@@ -226,39 +225,39 @@ public partial class PerlinWorldGenerator {
                 // determine the top layer
                 if (height < WATER_LEVEL - 1) {
                     if (blockVar > 0) {
-                        topBlock = Blocks.DIRT;
-                        filler = Blocks.DIRT;
+                        topBlock = Block.DIRT.id;
+                        filler = Block.DIRT.id;
                     }
                     else {
-                        topBlock = Blocks.SAND;
-                        filler = Blocks.SAND;
+                        topBlock = Block.SAND.id;
+                        filler = Block.SAND.id;
                     }
                 }
 
                 // beaches
                 else if (height > WATER_LEVEL - 3 && height < WATER_LEVEL + 1) {
                     if (blockVar > -0.2) {
-                        topBlock = Blocks.SAND;
-                        filler = Blocks.SAND;
+                        topBlock = Block.SAND.id;
+                        filler = Block.SAND.id;
                     }
                     else {
-                        topBlock = Blocks.GRAVEL;
-                        filler = Blocks.GRAVEL;
+                        topBlock = Block.GRAVEL.id;
+                        filler = Block.GRAVEL.id;
                     }
                 }
                 else {
-                    topBlock = Blocks.GRASS;
-                    filler = Blocks.DIRT;
+                    topBlock = Block.GRASS.id;
+                    filler = Block.DIRT.id;
                 }
 
                 // replace top layers with dirt
                 // if it's rock (otherwise it's water which we don't wanna replace)
-                if (chunk.getBlock(x, height, z) == Blocks.STONE) {
+                if (chunk.getBlock(x, height, z) == Block.STONE.id) {
                     // replace top layer with topBlock
                     chunk.setBlockFast(x, height, z, topBlock);
                     for (int yy = height - 1; yy > height - 1 - amt && yy > 0; yy--) {
                         // replace stone with dirt
-                        if (chunk.getBlock(x, yy, z) == Blocks.STONE) {
+                        if (chunk.getBlock(x, yy, z) == Block.STONE.id) {
                             chunk.setBlockFast(x, yy, z, filler);
                         }
                     }
@@ -287,11 +286,11 @@ public partial class PerlinWorldGenerator {
                     WorldgenUtil.getNoise2D(auxNoise, -xs * HELLROCK_FREQUENCY, -zs * HELLROCK_FREQUENCY, 1, 1) * 4 + 2;
                 height = float.Clamp(height, 1, 5);
                 for (int y = 0; y < height; y++) {
-                    chunk.setBlockFast(x, y, z, Blocks.HELLROCK);
+                    chunk.setBlockFast(x, y, z, Block.HELLROCK.id);
                 }
             }
         }
-        
+
         surfacegen.surface(random, coord);
 
 
@@ -307,7 +306,7 @@ public partial class PerlinWorldGenerator {
 
         // run getDensity to populate buffers
         getDensity(buffer, coord);
-        
+
         var cx = wx - (coord.x << 4);
         var cz = wz - (coord.z << 4);
         if (cx < 0) cx += 16;

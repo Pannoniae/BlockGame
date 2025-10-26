@@ -7,7 +7,6 @@ using BlockGame.world.worldgen.generator;
 namespace BlockGame.world.worldgen.surface;
 
 public class NewSurfaceGenerator : SurfaceGenerator {
-
     public WorldGenerator worldgen;
     public World world;
 
@@ -17,11 +16,12 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
-    private readonly OreFeature ironOre = new(Blocks.IRON_ORE, 6, 12);
-    private readonly OreFeature coalOre = new(Blocks.COAL_ORE, 8, 16);
-    private readonly OreFeature goldOre = new(Blocks.GOLD_ORE, 6, 8);
-    private readonly OreFeature diamondOre = new(Blocks.DIAMOND_ORE, 4, 6);
-    private readonly OreFeature cinnabarOre = new(Blocks.CINNABAR, 4, 6);
+    private readonly OreFeature copperOre = new(Block.COPPER_ORE.id, 6, 16);
+    private readonly OreFeature ironOre = new(Block.IRON_ORE.id, 6, 12);
+    private readonly OreFeature coalOre = new(Block.COAL_ORE.id, 8, 16);
+    private readonly OreFeature goldOre = new(Block.GOLD_ORE.id, 6, 8);
+    private readonly OreFeature diamondOre = new(Block.DIAMOND_ORE.id, 4, 6);
+    private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 4, 6);
 
     public NewSurfaceGenerator(WorldGenerator worldgen, World world) {
         this.worldgen = worldgen;
@@ -33,7 +33,6 @@ public class NewSurfaceGenerator : SurfaceGenerator {
     }
 
     public void surface(XRandom random, ChunkCoord coord) {
-
         var chunk = world.getChunk(coord);
 
         var xWorld = coord.x * Chunk.CHUNKSIZE;
@@ -50,7 +49,15 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             coalOre.place(world, random, x, y, z);
         }
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 20; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            // copper spawns more on the surface!
+            var y = random.Next(World.WORLDHEIGHT / 4, World.WORLDHEIGHT * (3 / 4));
+            copperOre.place(world, random, x, y, z);
+        }
+
+        for (int i = 0; i < 12; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 2);
@@ -84,7 +91,6 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         // todo this will be replaced with biomes later!!
         // right now we just don't want trees in plains stuff for obvious reasons
         if (foliage < 0.25f) {
-
             // edge
             if (foliage > 0.1f) {
                 treeCount += ((foliage - 0.1f) * 4);
@@ -109,7 +115,6 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         for (int i = 0; i < treeCount; i++) {
             WorldgenUtil.placeTree(world, random, coord);
         }
-
 
 
         // get e
@@ -142,9 +147,9 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             // STOCHASTIC RANDOMISATION FOR THE LULZ
             var y = random.Next(0, World.WORLDHEIGHT - 1);
 
-            if (chunk.getBlock(x, y, z) == Blocks.GRASS && y < World.WORLDHEIGHT - 1) {
-                if (chunk.getBlock(x, y + 1, z) == Blocks.AIR) {
-                    var grassType = random.NextSingle() > 0.7f ? Blocks.TALL_GRASS : Blocks.SHORT_GRASS;
+            if (chunk.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 1) {
+                if (chunk.getBlock(x, y + 1, z) == Block.AIR.id) {
+                    var grassType = random.NextSingle() > 0.7f ? Block.TALL_GRASS.id : Block.SHORT_GRASS.id;
                     chunk.setBlockFast(x, y + 1, z, grassType);
                 }
             }
@@ -156,10 +161,10 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             // pick flower type for this patch
             var r = random.NextSingle();
             ushort flowerType = r switch {
-                < 0.25f => Blocks.YELLOW_FLOWER,
-                < 0.5f => Blocks.MARIGOLD,
-                < 0.75f => Blocks.BLUE_TULIP,
-                _ => Blocks.THISTLE
+                < 0.25f => Block.YELLOW_FLOWER.id,
+                < 0.5f => Block.MARIGOLD.id,
+                < 0.75f => Block.BLUE_TULIP.id,
+                _ => Block.THISTLE.id
             };
 
             // patch centre
@@ -182,8 +187,8 @@ public class NewSurfaceGenerator : SurfaceGenerator {
                 x += chunk.worldX;
                 z += chunk.worldZ;
 
-                if (world.getBlock(x, y, z) == Blocks.GRASS && y < World.WORLDHEIGHT - 1) {
-                    if (world.getBlock(x, y + 1, z) == Blocks.AIR) {
+                if (world.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 1) {
+                    if (world.getBlock(x, y + 1, z) == Block.AIR.id) {
                         world.setBlock(x, y + 1, z, flowerType);
                     }
                 }

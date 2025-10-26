@@ -145,12 +145,12 @@ public class WorldgenUtil {
                     // if we haven't initialised the chunk yet, do so
                     // if below sea level, water
                     if (value > 0) {
-                        chunk.setBlockFast(x, y, z, Blocks.STONE);
+                        chunk.setBlockFast(x, y, z,  Block.STONE.id);
                         chunk.addToHeightMap(x, y, z);
                     }
                     else {
                         if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
-                            chunk.setBlockFast(x, y, z, Blocks.WATER);
+                            chunk.setBlockFast(x, y, z,  Block.WATER.id);
                             chunk.addToHeightMap(x, y, z);
                         }
                     }
@@ -415,7 +415,7 @@ public class WorldgenUtil {
         }
 
         // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Blocks.GRASS) {
+        if (chunk.getBlock(x, y, z) !=  Block.GRASS.id) {
             return;
         }
 
@@ -426,7 +426,7 @@ public class WorldgenUtil {
         for (int yd = 1; yd < 8; yd++) {
             for (int zd = -2; zd <= 2; zd++) {
                 for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Blocks.AIR) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) !=  Block.AIR.id) {
                         return;
                     }
                 }
@@ -447,7 +447,7 @@ public class WorldgenUtil {
         }
 
         // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Blocks.GRASS) {
+        if (chunk.getBlock(x, y, z) !=  Block.GRASS.id) {
             return;
         }
 
@@ -458,7 +458,7 @@ public class WorldgenUtil {
         for (int yd = 1; yd < 8; yd++) {
             for (int zd = -2; zd <= 2; zd++) {
                 for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) != Blocks.AIR) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) !=  Block.AIR.id) {
                         return;
                     }
                 }

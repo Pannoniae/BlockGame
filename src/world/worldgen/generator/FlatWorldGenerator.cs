@@ -23,11 +23,11 @@ public class FlatWorldGenerator : WorldGenerator {
 
         for (int x = 0; x < Chunk.CHUNKSIZE; x++) {
             for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
-                chunk.setBlockDumb(x, 0, z, Blocks.HELLROCK);
+                chunk.setBlockDumb(x, 0, z,  Block.HELLROCK.id);
                 for (int i = 1; i < 5; i++) {
-                    chunk.setBlockDumb(x, i, z, Blocks.DIRT);
+                    chunk.setBlockDumb(x, i, z,  Block.DIRT.id);
                 }
-                chunk.setBlockDumb(x, 5, z, Blocks.GRASS);
+                chunk.setBlockDumb(x, 5, z,  Block.GRASS.id);
             }
         }
 

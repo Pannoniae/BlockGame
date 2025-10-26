@@ -300,13 +300,13 @@ public readonly struct Command {
             else {
                 // block name
                 var blockName = args[6].ToUpper();
-                var blockField = typeof(Blocks).GetField(blockName);
-                if (blockField == null || !blockField.IsLiteral) {
+                var blockField = typeof(Block).GetField(blockName);
+                if (blockField == null || blockField.GetValue(null) is not Block) {
                     source.sendMessage($"Unknown block: {args[6]}");
                     return;
                 }
 
-                blockId = (ushort)blockField.GetValue(null)!;
+                blockId = ((Block)blockField.GetValue(null)!).id;
             }
 
             // clamp and sort coords

@@ -1,19 +1,9 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using BlockGame.util;
+﻿using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.block;
-
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world.item;
 
-/**
- * Items have IDs from 1 and up,
- * blocks have IDs from -1 and down.
- *
- * itemID = -blockID
- */
-[SuppressMessage("Compiler",
-    "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Item {
     public int id;
     public string name;
@@ -25,35 +15,11 @@ public class Item {
      */
     public virtual string getName(ItemStack stack) => name;
 
-    private const int INITIAL_ITEM_CAPACITY = 128;
-    private const int GROW_SIZE = 128;
-    private static int MAXITEMS = INITIAL_ITEM_CAPACITY;
-    private static int RMAXITEMS = MAXITEMS * 2 + 1;
+    /** compatibility: access registry property arrays */
+    public static XUList<bool> armour => Registry.ITEMS.armour;
 
-    /**
-     * Gets the index into the items arrays.
-     */
-    public int idx => id + MAXITEMS;
-
-    /**
-     * We "cheat", half of this goes for blocks (the negatives), half for items.
-     * We shift it automatically in register, shh.
-     */
-    public static Item[] items = new Item[INITIAL_ITEM_CAPACITY * 2 + 1];
-
-    /** is this item armour? */
-    public static bool[] armour = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
-
-    /** is this item an accessory? */
-    public static bool[] accessory = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
-
-    /**
-     * is this item a material (used for crafting or a placeable building block)
-     * if true, player drops it on death.
-     */
-    public static bool[] material = new bool[INITIAL_ITEM_CAPACITY * 2 + 1];
-
-    public static int currentID = 0;
+    public static XUList<bool> accessory => Registry.ITEMS.accessory;
+    public static XUList<bool> material => Registry.ITEMS.material;
 
     public static Item AIR;
     public static Item GOLD_INGOT;
@@ -99,285 +65,203 @@ public class Item {
     public static Item DIAMOND;
     public static Item CINNABAR;
 
-    public Item(int id, string name) {
-        this.id = id;
+    public Item(string name) {
         this.name = name;
     }
 
-    private static void ensureCapacity(int id) {
-        int idx = id + MAXITEMS;
-        if (idx >= 0 && idx < items.Length) return;
-
-        // need more space - grow all arrays
-        int newMaxItems = MAXITEMS + GROW_SIZE;
-        int newRMaxItems = newMaxItems * 2 + 1;
-
-        var newItems = new Item[newRMaxItems];
-        var newArmour = new bool[newRMaxItems];
-        var newAccessory = new bool[newRMaxItems];
-        var newMaterial = new bool[newRMaxItems];
-
-        // copy old data to centre of new arrays
-        int offset = newMaxItems - MAXITEMS;
-        for (int i = 0; i < items.Length; i++) {
-            newItems[i + offset] = items[i];
-            newArmour[i + offset] = armour[i];
-            newAccessory[i + offset] = accessory[i];
-            newMaterial[i + offset] = material[i];
-        }
-
-        items = newItems;
-        armour = newArmour;
-        accessory = newAccessory;
-        material = newMaterial;
-        MAXITEMS = newMaxItems;
-        RMAXITEMS = newRMaxItems;
+    /** register item with string ID */
+    public static Item register(string stringID, Item item) {
+        int id = Registry.ITEMS.register(stringID, item);
+        item.id = id;
+        item.onRegister(id);
+        return item;
     }
 
-    public static Item register(Item item) {
-        ensureCapacity(item.id);
-
-        // handles negatives correctly!
-        if (item.id >= currentID) {
-            currentID = item.id + 1;
-        }
-
-        return items[getIdx(item.id)] = item;
+    public static T register<T>(string stringID, T item) where T : Item {
+        int id = Registry.ITEMS.register(stringID, item);
+        item.id = id;
+        item.onRegister(id);
+        return item;
     }
 
-    private static int getIdx(int id) {
-        return id + MAXITEMS;
+    /** called after ID assignment, override to set properties */
+    protected virtual void onRegister(int id) {
     }
 
-    public static Item get(int i) {
-        if (i <= -MAXITEMS || i >= MAXITEMS) {
-            return null!;
-        }
+    /** lookup by runtime ID */
+    public static Item? get(int id) => Registry.ITEMS.get(id);
 
-        return items[getIdx(i)];
-    }
+    /** lookup by string ID */
+    public static Item? get(string stringID) => Registry.ITEMS.get(stringID);
 
-    public static Item block(int blockID) {
-        return get(-blockID);
-    }
+    /** get block item by block string ID */
+    public static Item? block(string blockID) => Registry.ITEMS.get(blockID);
 
-    public static int blockID(int blockID) {
-        return -blockID;
-    }
+    /** is this a block item? */
+    public bool isBlock() => this is BlockItem;
 
-    public bool isBlock() => id < 0 && -id < Block.currentID && Block.blocks[-id] != null;
+    /** is this a non-block item? */
+    public bool isItem() => !isBlock();
 
-    public bool isItem() => id > 0 && id < currentID && items[getIdx(id)] != null;
+    /** get the block if this is a block item */
+    public Block? getBlock() => (this as BlockItem)?.block;
 
-    public int getBlockID() => isBlock() ? -id : 0;
+    /** get block ID if this is a block item, 0 otherwise */
+    public int getBlockID() => getBlock()?.id ?? 0;
 
-    public Block getBlock() => isBlock() ? Block.blocks[-id] : null!;
+    /** helper for old Item.blockID(blockID) pattern - converts block ID to item ID */
+    public static int blockID(int blockID) => Block.get(blockID)?.item.id ?? 0;
 
     public static void preLoad() {
-        AIR = register(new Item(Items.AIR, "Air"));
+        AIR = register("iair", new Item("Air"));
 
-        GOLD_INGOT = new Item(Items.GOLD_INGOT, "Gold Ingot");
+        GOLD_INGOT = register("goldIngot", new Item("Gold Ingot"));
         GOLD_INGOT.tex = new UVPair(0, 0);
-        register(GOLD_INGOT);
-        material[GOLD_INGOT.idx] = true;
+        material[GOLD_INGOT.id] = true;
 
-        IRON_INGOT = new Item(Items.IRON_INGOT, "Iron Ingot");
+        IRON_INGOT = register("ironIngot", new Item("Iron Ingot"));
         IRON_INGOT.tex = new UVPair(1, 0);
-        register(IRON_INGOT);
-        material[IRON_INGOT.idx] = true;
+        material[IRON_INGOT.id] = true;
 
-        TIN_INGOT = new Item(Items.TIN_INGOT, "Tin Ingot");
+        TIN_INGOT = register("tinIngot", new Item("Tin Ingot"));
         TIN_INGOT.tex = new UVPair(2, 0);
-        register(TIN_INGOT);
-        material[TIN_INGOT.idx] = true;
+        material[TIN_INGOT.id] = true;
 
 
-        SILVER_INGOT = new Item(Items.SILVER_INGOT, "Silver Ingot");
+        SILVER_INGOT = register("silverIngot", new Item("Silver Ingot"));
         SILVER_INGOT.tex = new UVPair(3, 0);
-        register(SILVER_INGOT);
-        material[SILVER_INGOT.idx] = true;
+        material[SILVER_INGOT.id] = true;
 
 
-        COPPER_INGOT = new Item(Items.COPPER_INGOT, "Copper Ingot");
+        COPPER_INGOT = register("copperIngot", new Item("Copper Ingot"));
         COPPER_INGOT.tex = new UVPair(4, 0);
-        register(COPPER_INGOT);
-        material[COPPER_INGOT.idx] = true;
+        material[COPPER_INGOT.id] = true;
 
 
-        GOLD_PICKAXE = new Tool(Items.GOLD_PICKAXE, "Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f);
+        GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f));
         GOLD_PICKAXE.tex = new UVPair(2, 7);
-        register(GOLD_PICKAXE);
 
-        IRON_PICKAXE = new Tool(Items.IRON_PICKAXE, "Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f);
+        IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f));
         IRON_PICKAXE.tex = new UVPair(2, 6);
-        register(IRON_PICKAXE);
 
-        STONE_PICKAXE = new Tool(Items.STONE_PICKAXE, "Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25);
+        STONE_PICKAXE = register("stonePickaxe", new Tool("Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25));
         STONE_PICKAXE.tex = new UVPair(2, 3);
-        register(STONE_PICKAXE);
 
-        STONE_AXE = new Tool(Items.STONE_AXE, "Stone Axe", ToolType.AXE, MaterialTier.STONE, 1.25);
+        STONE_AXE = register("stoneAxe", new Tool("Stone Axe", ToolType.AXE, MaterialTier.STONE, 1.25));
         STONE_AXE.tex = new UVPair(3, 3);
-        register(STONE_AXE);
 
-        STONE_SHOVEL = new Tool(Items.STONE_SHOVEL, "Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 1.25);
+        STONE_SHOVEL = register("stoneShovel", new Tool("Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 1.25));
         STONE_SHOVEL.tex = new UVPair(4, 3);
-        register(STONE_SHOVEL);
 
-        STONE_SWORD = new Item(Items.STONE_SWORD, "Stone Sword");
+        STONE_SWORD = register("stoneSword", new Item("Stone Sword"));
         STONE_SWORD.tex = new UVPair(5, 3);
-        register(STONE_SWORD);
 
-        STONE_HOE = new Tool(Items.STONE_HOE, "Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25);
+        STONE_HOE = register("stoneHoe", new Tool("Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25));
         STONE_HOE.tex = new UVPair(6, 3);
-        register(STONE_HOE);
 
-        STONE_SCYTHE = new Tool(Items.STONE_SCYTHE, "Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25);
+        STONE_SCYTHE = register("stoneScythe", new Tool("Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25));
         STONE_SCYTHE.tex = new UVPair(7, 3);
-        register(STONE_SCYTHE);
 
-        WOOD_PICKAXE = new Tool(Items.WOOD_PICKAXE, "Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0);
+        WOOD_PICKAXE = register("woodPickaxe", new Tool("Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0));
         WOOD_PICKAXE.tex = new UVPair(2, 4);
-        register(WOOD_PICKAXE);
 
-        WOOD_AXE = new Tool(Items.WOOD_AXE, "Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0);
+        WOOD_AXE = register("woodAxe", new Tool("Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0));
         WOOD_AXE.tex = new UVPair(3, 4);
-        register(WOOD_AXE);
 
-        WOOD_SHOVEL = new Tool(Items.WOOD_SHOVEL, "Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0);
+        WOOD_SHOVEL = register("woodShovel", new Tool("Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0));
         WOOD_SHOVEL.tex = new UVPair(4, 4);
-        register(WOOD_SHOVEL);
 
-        WOOD_SWORD = new Item(Items.WOOD_SWORD, "Wood Sword");
+        WOOD_SWORD = register("woodSword", new Item("Wood Sword"));
         WOOD_SWORD.tex = new UVPair(5, 4);
-        register(WOOD_SWORD);
 
-        STICK = new Item(Items.STICK, "Stick");
+        STICK = register("stick", new Item("Stick"));
         STICK.tex = new UVPair(0, 8);
-        register(STICK);
-        material[STICK.idx] = true;
+        material[STICK.id] = true;
 
-        COPPER_PICKAXE = new Tool(Items.COPPER_PICKAXE, "Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
+        COPPER_PICKAXE = register("copperPickaxe", new Tool("Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5));
         COPPER_PICKAXE.tex = new UVPair(2, 5);
-        register(COPPER_PICKAXE);
 
-        COPPER_AXE = new Tool(Items.COPPER_AXE, "Copper Axe", ToolType.AXE, MaterialTier.WOOD, 1.5);
+        COPPER_AXE = register("copperAxe", new Tool("Copper Axe", ToolType.AXE, MaterialTier.WOOD, 1.5));
         COPPER_AXE.tex = new UVPair(3, 5);
-        register(COPPER_AXE);
 
-        COPPER_SHOVEL = new Tool(Items.COPPER_SHOVEL, "Copper Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.5);
+        COPPER_SHOVEL = register("copperShovel", new Tool("Copper Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.5));
         COPPER_SHOVEL.tex = new UVPair(4, 5);
-        register(COPPER_SHOVEL);
 
-        COPPER_SWORD = new Item(Items.COPPER_SWORD, "Copper Sword");
+        COPPER_SWORD = register("copperSword", new Item("Copper Sword"));
         COPPER_SWORD.tex = new UVPair(5, 5);
-        register(COPPER_SWORD);
 
-        COPPER_HOE = new Item(Items.COPPER_HOE, "Copper Hoe");
+        COPPER_HOE = register("copperHoe", new Item("Copper Hoe"));
         COPPER_HOE.tex = new UVPair(6, 5);
-        register(COPPER_HOE);
 
-        COPPER_SCYTHE = new Item(Items.COPPER_SCYTHE, "Copper Scythe");
+        COPPER_SCYTHE = register("copperScythe", new Item("Copper Scythe"));
         COPPER_SCYTHE.tex = new UVPair(7, 5);
-        register(COPPER_SCYTHE);
 
-        IRON_AXE = new Tool(Items.IRON_AXE, "Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5);
+        IRON_AXE = register("ironAxe", new Tool("Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5));
         IRON_AXE.tex = new UVPair(3, 6);
-        register(IRON_AXE);
 
-        IRON_SHOVEL = new Tool(Items.IRON_SHOVEL, "Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2.5);
+        IRON_SHOVEL = register("ironShovel", new Tool("Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2.5));
         IRON_SHOVEL.tex = new UVPair(4, 6);
-        register(IRON_SHOVEL);
 
-        IRON_SWORD = new Item(Items.IRON_SWORD, "Iron Sword");
+        IRON_SWORD = register("ironSword", new Item("Iron Sword"));
         IRON_SWORD.tex = new UVPair(5, 6);
-        register(IRON_SWORD);
 
-        IRON_HOE = new Tool(Items.IRON_HOE, "Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5);
+        IRON_HOE = register("ironHoe", new Tool("Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5));
         IRON_HOE.tex = new UVPair(6, 6);
-        register(IRON_HOE);
 
-        IRON_SCYTHE = new Tool(Items.IRON_SCYTHE, "Iron Scythe", ToolType.HOE, MaterialTier.IRON, 2.5);
+        IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.HOE, MaterialTier.IRON, 2.5));
         IRON_SCYTHE.tex = new UVPair(7, 6);
-        register(IRON_SCYTHE);
 
-        GOLD_AXE = new Tool(Items.GOLD_AXE, "Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3.0);
+        GOLD_AXE = register("goldAxe", new Tool("Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3.0));
         GOLD_AXE.tex = new UVPair(3, 7);
-        register(GOLD_AXE);
 
-        GOLD_SHOVEL = new Tool(Items.GOLD_SHOVEL, "Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3.0);
+        GOLD_SHOVEL = register("goldShovel", new Tool("Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3.0));
         GOLD_SHOVEL.tex = new UVPair(4, 7);
-        register(GOLD_SHOVEL);
 
-        GOLD_SWORD = new Item(Items.GOLD_SWORD, "Gold Sword");
+        GOLD_SWORD = register("goldSword", new Item("Gold Sword"));
         GOLD_SWORD.tex = new UVPair(5, 7);
-        register(GOLD_SWORD);
 
-        GOLD_HOE = new Tool(Items.GOLD_HOE, "Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0);
+        GOLD_HOE = register("goldHoe", new Tool("Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0));
         GOLD_HOE.tex = new UVPair(6, 7);
-        register(GOLD_HOE);
 
-        GOLD_SCYTHE = new Tool(Items.GOLD_SCYTHE, "Gold Scythe", ToolType.HOE, MaterialTier.GOLD, 3.0);
+        GOLD_SCYTHE = register("goldScythe", new Tool("Gold Scythe", ToolType.HOE, MaterialTier.GOLD, 3.0));
         GOLD_SCYTHE.tex = new UVPair(7, 7);
-        register(GOLD_SCYTHE);
 
-        DYE = new DyeItem(Items.DYE, "Dye");
-        register(DYE);
+        DYE = register("dye", new DyeItem("Dye"));
 
-        APPLE = new Item(Items.APPLE, "Apple");
+        APPLE = register("apple", new Item("Apple"));
         APPLE.tex = new UVPair(2, 9);
-        register(APPLE);
 
-        MAPLE_SYRUP = new Item(Items.MAPLE_SYRUP, "Maple Syrup");
+        MAPLE_SYRUP = register("mapleSyrup", new Item("Maple Syrup"));
         MAPLE_SYRUP.tex = new UVPair(3, 9);
-        register(MAPLE_SYRUP);
 
-        COAL = new Item(Items.COAL, "Coal");
+        COAL = register("coal", new Item("Coal"));
         COAL.tex = new UVPair(1, 9);
-        register(COAL);
-        material[COAL.idx] = true;
+        material[COAL.id] = true;
 
-        BRICK = new Item(Items.BRICK, "Brick");
+        BRICK = register("brick", new Item("Brick"));
         BRICK.tex = new UVPair(5, 0);
-        register(BRICK);
-        material[BRICK.idx] = true;
+        material[BRICK.id] = true;
 
-        CLAY = new Item(Items.CLAY, "Clay");
+        CLAY = register("clay", new Item("Clay"));
         CLAY.tex = new UVPair(4, 9);
-        register(CLAY);
-        material[CLAY.idx] = true;
+        material[CLAY.id] = true;
 
-        DIAMOND = new Item(Items.DIAMOND, "Diamond");
+        DIAMOND = register("diamond", new Item("Diamond"));
         DIAMOND.tex = new UVPair(5, 9);
-        register(DIAMOND);
-        material[DIAMOND.idx] = true;
+        material[DIAMOND.id] = true;
 
-        CINNABAR = new Item(Items.CINNABAR, "Cinnabar");
+        CINNABAR = register("cinnabar", new Item("Cinnabar"));
         CINNABAR.tex = new UVPair(6, 9);
-        register(CINNABAR);
-        material[CINNABAR.idx] = true;
+        material[CINNABAR.id] = true;
 
 
-        // mark materials (items that drop on death in survival)
-        // ingots and crafting materials
-
-        // all blocks are materials
-        for (int i = 0; i < Block.currentID; i++) {
-            var block = Block.get(i);
-            if (block != null) {
-                var item = Item.block(i);
-                if (item != null) {
-                    material[item.idx] = true;
-                }
-            }
-        }
+        // all blocks are already marked as materials during Block.register() lol
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
-        if (isBlock()) {
-            var blockID = getBlockID();
-            if (Block.renderItemLike[blockID]) {
-                return getBlock().getTexture(0, stack.metadata);
+        if (this is BlockItem bi) {
+            if (Block.renderItemLike[bi.block.id]) {
+                return bi.block.getTexture(0, stack.metadata);
             }
         }
 
@@ -422,7 +306,7 @@ public class Tool : Item {
     public MaterialTier tier;
     public double speed;
 
-    public Tool(int id, string name, ToolType type, MaterialTier tier, double speed) : base(id, name) {
+    public Tool(string name, ToolType type, MaterialTier tier, double speed) : base(name) {
         this.type = type;
         this.tier = tier;
         this.speed = speed;

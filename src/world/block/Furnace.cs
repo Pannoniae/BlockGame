@@ -8,7 +8,10 @@ using Molten;
 namespace BlockGame.world.block;
 
 public class Furnace : Block {
-    public Furnace(ushort id, string name) : base(id, name) {
+    public Furnace(string name) : base(name) {
+    }
+
+    protected override void onRegister(int id) {
         renderType[id] = RenderType.CUBE_DYNTEXTURE;
     }
 

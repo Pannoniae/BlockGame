@@ -51,7 +51,7 @@ public class OreFeature : Feature {
 
 
         // we have *count* ores, we need to distribute them somehow
-        if (world.getBlock(x, y, z) != Blocks.STONE) {
+        if (world.getBlock(x, y, z) !=  Block.STONE.id) {
             return; // Only start in stone
         }
 
@@ -76,7 +76,7 @@ public class OreFeature : Feature {
                 }
 
                 // Check if it's stone
-                if (world.getBlock(newPos.X, newPos.Y, newPos.Z) != Blocks.STONE) {
+                if (world.getBlock(newPos.X, newPos.Y, newPos.Z) !=  Block.STONE.id) {
                     continue;
                 }
                 

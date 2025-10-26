@@ -1,5 +1,6 @@
 using BlockGame.main;
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.block;
 
 namespace BlockGame.world.item.inventory;
@@ -33,28 +34,28 @@ public class CreativeInventoryContext : InventoryContext {
             }
 
             // special handling for candy block - add all 16 variants
-            if (i == Blocks.CANDY) {
+            if (i ==  Block.CANDY.id) {
                 for (byte metadata = 0; metadata < Block.CANDY.maxValidMetadata() + 1; metadata++) {
-                    allItems.Add(new ItemStack(Item.blockID(i), 1, metadata));
+                    allItems.Add(new ItemStack(Block.CANDY.item, 1, metadata));
                 }
             }
             else {
-                allItems.Add(new ItemStack(Item.blockID(i), 1));
+                allItems.Add(new ItemStack(Block.get(i)!.item, 1));
             }
         }
 
         // add all items
-        for (int i = 1; i < Item.currentID; i++) {
+        for (int i = 0; i < Registry.ITEMS.count(); i++) {
             var item = Item.get(i);
-            if (item != null && item.isItem()) {
+            if (item != null && !item.isBlock()) {
                 // special handling for dye - add all 16 colour variants
-                if (i == Items.DYE) {
+                if (item == Item.DYE) {
                     for (byte metadata = 0; metadata < 16; metadata++) {
-                        allItems.Add(new ItemStack(i, 1, metadata));
+                        allItems.Add(new ItemStack(item, 1, metadata));
                     }
                 }
                 else {
-                    allItems.Add(new ItemStack(i, 1));
+                    allItems.Add(new ItemStack(item, 1));
                 }
             }
         }

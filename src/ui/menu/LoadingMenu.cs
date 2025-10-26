@@ -74,7 +74,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public override void draw() {
         // we draw BG first! elements after
-        Game.gui.drawBG(Block.get(Blocks.STONE), 16f);
+        Game.gui.drawBG(Block.STONE, 16f);
         base.draw();
 
         // draw a random vertical line at x = 0

@@ -22,7 +22,7 @@ public class TreeGenerator {
 
         // trunk
         for (int i = 0; i < trunkHeight; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
+            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
         }
 
         // leaves, thick
@@ -30,7 +30,7 @@ public class TreeGenerator {
             for (int z1 = -2; z1 <= 2; z1++) {
                 if (x1 == 0 && z1 == 0) continue;
                 for (int y1 = trunkHeight - 2; y1 <= trunkHeight - 1; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
+                    world.setBlockDumb(x + x1, y + y1, z + z1,  Block.LEAVES.id);
                 }
             }
         }
@@ -39,7 +39,7 @@ public class TreeGenerator {
         for (int x1 = -1; x1 <= 1; x1++) {
             for (int z1 = -1; z1 <= 1; z1++) {
                 for (int y1 = trunkHeight; y1 <= trunkHeight + 1; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1, Blocks.LEAVES);
+                    world.setBlockDumb(x + x1, y + y1, z + z1,  Block.LEAVES.id);
                 }
             }
         }
@@ -59,8 +59,8 @@ public class TreeGenerator {
             trunkThickness = 0.8f,
             foliageDensity = 1.2f,
             branchDensity = 0.0f,
-            leafMat = Blocks.MAPLE_LEAVES,
-            logMat = Blocks.MAPLE_LOG
+            leafMat =  Block.MAPLE_LEAVES.id,
+            logMat = Block.MAPLE_LOG.id
         };
         maple.prepareMaple();
         maple.generate(roots: false, rootButtresses: false);
@@ -75,8 +75,8 @@ public class TreeGenerator {
             trunkThickness = t,
             foliageDensity = 1.5f + t,
             branchDensity = 0.8f + t * 0.5f,
-            leafMat = Blocks.MAHOGANY_LEAVES,
-            logMat = Blocks.MAHOGANY_LOG
+            leafMat =  Block.MAHOGANY_LEAVES.id,
+            logMat = Block.MAHOGANY_LOG.id
         };
         maple.prepareMahogany();
         maple.generate(roots: false, rootButtresses: false);
@@ -86,7 +86,7 @@ public class TreeGenerator {
     public static void placeNormalTree(World world, XRandom random, int x, int y, int z, int height = 5) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
+            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
         }
 
         // foliage bulb from (top-2) to (top+1)
@@ -103,7 +103,7 @@ public class TreeGenerator {
                         continue;
                     }
 
-                    world.setBlockDumb(x + xoff, cy, z + zoff, Blocks.LEAVES);
+                    world.setBlockDumb(x + xoff, cy, z + zoff,  Block.LEAVES.id);
                 }
             }
         }
@@ -113,7 +113,7 @@ public class TreeGenerator {
     public static void placeBambooTree(World world, XRandom random, int x, int y, int z, int height = 7) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
+            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
         }
 
         // sparse foliage adjacent to trunk from base to top+1
@@ -121,7 +121,7 @@ public class TreeGenerator {
             for (int i = 0; i < 2; i++) {
                 int xoff = random.Next(0, 2) == 0 ? -1 : 1;
                 int zoff = random.Next(0, 2) == 0 ? -1 : 1;
-                world.setBlockDumb(x + xoff, cy, z + zoff, Blocks.LEAVES);
+                world.setBlockDumb(x + xoff, cy, z + zoff,  Block.LEAVES.id);
             }
         }
     }
@@ -130,7 +130,7 @@ public class TreeGenerator {
     public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 6) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z, Blocks.LOG);
+            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
         }
 
         // fan-shaped foliage at top (diagonal pattern)
@@ -138,7 +138,7 @@ public class TreeGenerator {
         for (int xoff = -2; xoff <= 2; xoff++) {
             for (int zoff = -2; zoff <= 2; zoff++) {
                 if (Math.Abs(xoff) == Math.Abs(zoff)) {
-                    world.setBlockDumb(x + xoff, topY, z + zoff, Blocks.LEAVES);
+                    world.setBlockDumb(x + xoff, topY, z + zoff,  Block.LEAVES.id);
                 }
             }
         }
@@ -248,8 +248,8 @@ public class TreeGenerator {
         public bool brokenTrunk = false;
         public bool hollowTrunk = false;
         public bool isMangrove = false;
-        public ushort leafMat = Blocks.LEAVES;
-        public ushort logMat = Blocks.LOG;
+        public ushort leafMat = Block.LEAVES.id;
+        public ushort logMat = Block.OAK_LOG.id;
 
         private float trunkRadius;
         private float trunkHeight;
@@ -529,7 +529,7 @@ public class TreeGenerator {
                         float vz = offz / offlength;
 
                         // check for solid blocks (anything not air/leaves)
-                        int matDist = distToMat(world, x, startY, z, vx, vy, vz, b => b != Blocks.AIR && b != leafMat, offlength + 3);
+                        int matDist = distToMat(world, x, startY, z, vx, vy, vz, b => b != Block.AIR.id && b != leafMat, offlength + 3);
 
                         // skip this cluster if we hit terrain before reaching it
                         if (matDist < offlength + 2) {
@@ -687,7 +687,7 @@ public class TreeGenerator {
 
                         // search for air blocks (hanging roots)
                         int raydist = startdist + distToMat(world, searchx, searchy, searchz, vx, vy, vz,
-                            static b => b == Blocks.AIR, offlength);
+                            static b => b ==  Block.AIR.id, offlength);
 
                         if (raydist < offlength) {
                             // found air, root stops here then hangs down
@@ -732,11 +732,11 @@ public class TreeGenerator {
                 int startZ = z + random.Next(-baseOffset, baseOffset + 1);
 
                 // hollow out bottom and middle sections with taper
-                taperedCylinder(world, startX, y, startZ, x, midY, z, baseRadius, midRadius, Blocks.AIR);
+                taperedCylinder(world, startX, y, startZ, x, midY, z, baseRadius, midRadius,  Block.AIR.id);
 
                 // extend hollow above trunk top
                 int hollowTopY = (int)(topY + trunkRadius + 1.5f);
-                taperedCylinder(world, x, midY, z, x, hollowTopY, z, midRadius, topRadius, Blocks.AIR);
+                taperedCylinder(world, x, midY, z, x, hollowTopY, z, midRadius, topRadius,  Block.AIR.id);
             }
         }
 

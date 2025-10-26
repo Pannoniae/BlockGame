@@ -162,16 +162,16 @@ public class Ravine : OverlayFeature {
                     if (dist < ledgeWidth * ledgeWidth) {
                         var block = world.getBlock(xx, yy, zz);
 
-                        if (block == Blocks.GRASS) {
+                        if (block ==  Block.GRASS.id) {
                             hasGrass = true;
                         }
 
                         if (Block.fullBlock[block]) {
-                            world.setBlockDumb(xx, yy, zz, Blocks.AIR);
+                            world.setBlockDumb(xx, yy, zz,  Block.AIR.id);
 
                             // Replace exposed dirt with grass
-                            if (hasGrass && world.getBlock(xx, yy - 1, zz) == Blocks.DIRT) {
-                                world.setBlockDumb(xx, yy - 1, zz, Blocks.GRASS);
+                            if (hasGrass && world.getBlock(xx, yy - 1, zz) ==  Block.DIRT.id) {
+                                world.setBlockDumb(xx, yy - 1, zz,  Block.GRASS.id);
                             }
                         }
                     }

@@ -15,7 +15,10 @@ public class Leaves : Block {
     ];
 
 
-    public Leaves(ushort id, string name) : base(id, name) {
+    public Leaves(string name) : base(name) {
+    }
+
+    protected override void onRegister(int id) {
         transparency();
         tick();
     }
@@ -24,7 +27,7 @@ public class Leaves : Block {
         // check if connected to log within DECAY_DIST blocks
         if (!isConnectedToLog(world, x, y, z)) {
             // decay: drop nothing, just disappear
-            world.setBlock(x, y, z, Blocks.AIR);
+            world.setBlock(x, y, z, AIR.id);
         }
     }
 

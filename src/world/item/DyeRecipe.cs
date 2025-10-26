@@ -18,7 +18,7 @@ public class DyeRecipe : Recipe {
         var metas = new List<int>(2);
 
         foreach (var slot in grid.grid) {
-            if (!isEmpty(slot) && slot.id == Items.DYE) {
+            if (!isEmpty(slot) && slot.id == Item.DYE.id) {
                 metas.Add(slot.metadata);
             }
         }
@@ -26,14 +26,14 @@ public class DyeRecipe : Recipe {
         if (metas.Count != 2) return ItemStack.EMPTY;
 
         int resultMeta = DyeItem.mixColours(metas[0], metas[1]);
-        return new ItemStack(Items.DYE, 2, resultMeta);
+        return new ItemStack(Item.DYE, 2, resultMeta);
     }
 
     public override void consumeIngredients(CraftingGridInventory grid) {
         int consumed = 0;
         for (int i = 0; i < grid.grid.Length && consumed < 2; i++) {
             var slot = grid.grid[i];
-            if (!isEmpty(slot) && slot.id == Items.DYE) {
+            if (!isEmpty(slot) && slot.id == Item.DYE.id) {
                 slot.quantity--;
                 if (slot.quantity <= 0) {
                     grid.grid[i] = ItemStack.EMPTY;
@@ -46,7 +46,7 @@ public class DyeRecipe : Recipe {
     private static int countDyes(CraftingGridInventory grid) {
         int cnt = 0;
         foreach (var slot in grid.grid) {
-            if (!isEmpty(slot) && slot.id == Items.DYE) cnt++;
+            if (!isEmpty(slot) && slot.id == Item.DYE.id) cnt++;
         }
         return cnt;
     }

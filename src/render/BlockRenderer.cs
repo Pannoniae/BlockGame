@@ -642,7 +642,7 @@ public class BlockRenderer {
 
         renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
 
-        if (Block.renderType[blockID] != RenderType.MODEL) {
+        if (Block.renderType[(int)blockID] != RenderType.MODEL) {
             // now we convert it to the REAL vertices
             foreach (var vertex in _listHack) {
                 // convert to tinted vertex
@@ -881,7 +881,7 @@ public class BlockRenderer {
 
                     // if below world, pretend it's dirt (so it won't get meshed)
                     if (subChunk.coord.y == 0 && y == -1) {
-                        bl = Blocks.DIRT;
+                        bl =  Block.DIRT.id;
                     }
 
                     // set neighbours array element to block

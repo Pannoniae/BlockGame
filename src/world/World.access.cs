@@ -637,7 +637,7 @@ public partial class World {
                 for (int x = localX0; x <= localX1; x++) {
                     for (int y = y0; y <= y1; y++) {
                         for (int z = localZ0; z <= localZ1; z++) {
-                            if (chunk!.getBlock(x, y, z) == Blocks.WATER) {
+                            if (chunk!.getBlock(x, y, z) ==  Block.WATER.id) {
                                 return true;
                             }
                         }

@@ -15,22 +15,22 @@ public partial class SimpleWorldGenerator {
                 // transform to the range -25 to 25, add 80 for 50 - 105
                 var height = getNoise(worldPos.X, worldPos.Z) * 25 + 80;
                 for (int y = 0; y < height - 1; y++) {
-                    chunk.setBlockDumb(x, y, z, Blocks.DIRT);
+                    chunk.setBlockDumb(x, y, z,  Block.DIRT.id);
                 }
 
                 // water if low
                 if (height < 64) {
-                    chunk.setBlockDumb(x, (int)height, z, Blocks.DIRT);
+                    chunk.setBlockDumb(x, (int)height, z,  Block.DIRT.id);
                     for (int y2 = (int)Math.Round(height); y2 <= 64; y2++) {
-                        chunk.setBlockDumb(x, y2, z, Blocks.WATER);
+                        chunk.setBlockDumb(x, y2, z,  Block.WATER.id);
                     }
                     // put sand on the lake floors
                     if (getNoise2(x, z) > 0) {
-                        chunk.setBlockDumb(x, (int)Math.Round(height) - 1, z, Blocks.SAND);
+                        chunk.setBlockDumb(x, (int)Math.Round(height) - 1, z,  Block.SAND.id);
                     }
                 }
                 else {
-                    chunk.setBlockDumb(x, (int)height, z, Blocks.GRASS);
+                    chunk.setBlockDumb(x, (int)height, z,  Block.GRASS.id);
                 }
             }
         }

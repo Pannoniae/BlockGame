@@ -52,7 +52,7 @@ public class CraftingGridInventory : Inventory {
         if (stack == ItemStack.EMPTY || count <= 0) return ItemStack.EMPTY;
 
         var removeAmount = Math.Min(count, stack.quantity);
-        var removed = new ItemStack(stack.id, removeAmount, stack.metadata);
+        var removed = new ItemStack(stack.getItem(), removeAmount, stack.metadata);
 
         stack.quantity -= removeAmount;
         if (stack.quantity <= 0) {

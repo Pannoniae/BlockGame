@@ -1,4 +1,5 @@
 using BlockGame.util;
+using BlockGame.world.block;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 
@@ -42,7 +43,10 @@ public class PlayerInventory : Inventory {
    
     public void initNewPlayer() {
         for (int i = 0; i < 10; i++) {
-            slots[i] = new ItemStack(Item.blockID(i + 1), Random.Shared.Next(15));
+            var block = Block.get(i + 1);
+            if (block != null) {
+                slots[i] = new ItemStack(block.item, Random.Shared.Next(15));
+            }
         }
     }
 
@@ -85,7 +89,7 @@ public class PlayerInventory : Inventory {
         if (stack == ItemStack.EMPTY || count <= 0) return ItemStack.EMPTY;
 
         var removeAmount = Math.Min(count, stack.quantity);
-        var removed = new ItemStack(stack.id, removeAmount, stack.metadata);
+        var removed = new ItemStack(stack.getItem(), removeAmount, stack.metadata);
 
         stack.quantity -= removeAmount;
         if (stack.quantity <= 0) {
@@ -171,7 +175,7 @@ public class PlayerInventory : Inventory {
         for (int i = 0; i < slots.Length; i++) {
             if (slots[i] == ItemStack.EMPTY) {
                 var canAdd = Math.Min(remaining, maxStackSize);
-                slots[i] = new ItemStack(stack.id, canAdd, stack.metadata);
+                slots[i] = new ItemStack(stack.getItem(), canAdd, stack.metadata);
                 shiny[i] = 1.0f; // trigger pop animation
                 remaining -= canAdd;
                 if (remaining <= 0) {

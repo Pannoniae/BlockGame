@@ -7,6 +7,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.item;
 using Molten;
 using Silk.NET.Maths;
@@ -22,12 +23,6 @@ namespace BlockGame.world.block;
 [SuppressMessage("Compiler",
     "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Block {
-    /**
-     * The maximum block ID we have. This ID is one past the end!
-     * If you want to loop, do for (int i = 0; i &lt; currentID; i++) { ... }
-     * so you won't overread.
-     */
-    public static int currentID = 0;
 
     private const int particleCount = 4;
 
@@ -43,17 +38,12 @@ public class Block {
         private set => this.value = (this.value & 0xFF000000) | value;
     }
 
-    /*public ushort metadata {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ushort)(value >> 24);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private set => this.value = (this.value & 0xFFFFFF) | ((uint)(value << 24));
-    }*/
-
     /// <summary>
     /// Display name
     /// </summary>
     public string name;
+
+    public BlockItem item;
 
     /// <summary>
     /// Block material - defines tool requirements, hardness, and sound
@@ -85,58 +75,6 @@ public class Block {
 
     public const float atlasRatio = textureSize / (float)atlasSize;
     public const float atlasRatioInv = 1 / atlasRatio;
-
-
-    private const int INITIAL_CAPACITY = 128;
-    private const int GROW_SIZE = 64;
-
-    public static Block?[] blocks = new Block[INITIAL_CAPACITY];
-
-    /**
-     * Stores whether the block is a full, opaque block or not.
-     */
-    public static bool[] fullBlock = new bool[INITIAL_CAPACITY];
-
-    /**
-     * Is this block transparent? (glass, leaves, etc.)
-     */
-    public static bool[] transparent = new bool[INITIAL_CAPACITY];
-
-    public static bool[] translucent = new bool[INITIAL_CAPACITY];
-
-    /**
-     * If false, water can break this block (like tall grass, flowers, etc.)
-     * If true, water cannot break this block (like stone, dirt, stairs, etc.)
-     */
-    public static bool[] waterSolid = new bool[INITIAL_CAPACITY];
-
-    public static bool[] inventoryBlacklist = new bool[INITIAL_CAPACITY];
-    public static bool[] randomTick = new bool[INITIAL_CAPACITY];
-    public static bool[] renderTick = new bool[INITIAL_CAPACITY];
-    public static bool[] liquid = new bool[INITIAL_CAPACITY];
-    public static bool[] customCulling = new bool[INITIAL_CAPACITY];
-    public static bool[] renderItemLike = new bool[INITIAL_CAPACITY];
-
-    public static bool[] selection = new bool[INITIAL_CAPACITY];
-    public static bool[] collision = new bool[INITIAL_CAPACITY];
-    public static byte[] lightLevel = new byte[INITIAL_CAPACITY];
-    public static byte[] lightAbsorption = new byte[INITIAL_CAPACITY];
-    public static double[] hardness = new double[INITIAL_CAPACITY].fill(-1);
-
-    public static bool[] log = new bool[INITIAL_CAPACITY];
-    public static bool[] leaves = new bool[INITIAL_CAPACITY];
-
-    /**
-     Block update delay in ticks. 0 = normal immediate block updates
-    */
-    public static byte[] updateDelay = new byte[INITIAL_CAPACITY];
-
-    public static AABB?[] AABB = new AABB?[INITIAL_CAPACITY];
-    public static bool[] customAABB = new bool[INITIAL_CAPACITY];
-
-    public static RenderType[] renderType = new RenderType[INITIAL_CAPACITY];
-    public static ToolType[] tool = new ToolType[INITIAL_CAPACITY];
-    public static MaterialTier[] tier = new MaterialTier[INITIAL_CAPACITY];
 
 
     public static Block AIR;
@@ -175,12 +113,12 @@ public class Block {
     public static Block THISTLE;
 
 
-    public static Block PLANKS;
-    public static Block STAIRS;
+    public static Block OAK_PLANKS;
+    public static Block OAK_STAIRS;
     public static Block STONE_SLAB;
     public static Block OAK_SLAB;
-    public static Block MAPLE_PLANKS_SLAB;
-    public static Block LOG;
+    public static Block MAPLE_SLAB;
+    public static Block OAK_LOG;
     public static Block LEAVES;
     public static Block MAPLE_PLANKS;
     public static Block MAPLE_STAIRS;
@@ -200,7 +138,7 @@ public class Block {
 
     public static Block WATER;
 
-    public static Block CINNABAR;
+    public static Block CINNABAR_ORE;
     public static Block TITANIUM_ORE;
     public static Block AMBER_ORE;
     public static Block AMETHYST_ORE;
@@ -214,183 +152,196 @@ public class Block {
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
     public static Block MAHOGANY_CHEST;
+    public static Block BRICK_FURNACE;
     public static Block FURNACE;
-    public static Block STONE_FURNACE;
 
-    private static void ensureCapacity(int id) {
-        if (id < blocks.Length) return;
+    // Compatibility wrappers for old static arrays
+    public static XUList<Block> blocks => Registry.BLOCKS.values;
+    public static XUList<bool> fullBlock => Registry.BLOCKS.fullBlock;
+    public static XUList<bool> transparent => Registry.BLOCKS.transparent;
+    public static XUList<bool> translucent => Registry.BLOCKS.translucent;
+    public static XUList<bool> waterSolid => Registry.BLOCKS.waterSolid;
+    public static XUList<bool> inventoryBlacklist => Registry.BLOCKS.inventoryBlacklist;
+    public static XUList<bool> randomTick => Registry.BLOCKS.randomTick;
+    public static XUList<bool> renderTick => Registry.BLOCKS.renderTick;
+    public static XUList<bool> liquid => Registry.BLOCKS.liquid;
+    public static XUList<bool> customCulling => Registry.BLOCKS.customCulling;
+    public static XUList<bool> renderItemLike => Registry.BLOCKS.renderItemLike;
+    public static XUList<bool> selection => Registry.BLOCKS.selection;
+    public static XUList<bool> collision => Registry.BLOCKS.collision;
+    public static XUList<byte> lightLevel => Registry.BLOCKS.lightLevel;
+    public static XUList<byte> lightAbsorption => Registry.BLOCKS.lightAbsorption;
+    public static XUList<double> hardness => Registry.BLOCKS.hardness;
+    public static XUList<bool> log => Registry.BLOCKS.log;
+    public static XUList<bool> leaves => Registry.BLOCKS.leaves;
+    public static XUList<byte> updateDelay => Registry.BLOCKS.updateDelay;
+    public static XUList<AABB?> AABB => Registry.BLOCKS.AABB;
+    public static XUList<bool> customAABB => Registry.BLOCKS.customAABB;
+    public static XUList<RenderType> renderType => Registry.BLOCKS.renderType;
+    public static XUList<ToolType> tool => Registry.BLOCKS.tool;
+    public static XUList<MaterialTier> tier => Registry.BLOCKS.tier;
 
-        int newSize = Math.Max(blocks.Length + GROW_SIZE, id + 1);
-        Array.Resize(ref blocks, newSize);
-        Array.Resize(ref fullBlock, newSize);
-        Array.Resize(ref transparent, newSize);
-        Array.Resize(ref translucent, newSize);
-        Array.Resize(ref waterSolid, newSize);
-        Array.Resize(ref inventoryBlacklist, newSize);
-        Array.Resize(ref randomTick, newSize);
-        Array.Resize(ref renderTick, newSize);
-        Array.Resize(ref liquid, newSize);
-        Array.Resize(ref customCulling, newSize);
-        Array.Resize(ref renderItemLike, newSize);
-        Array.Resize(ref selection, newSize);
-        Array.Resize(ref collision, newSize);
-        Array.Resize(ref lightLevel, newSize);
-        Array.Resize(ref lightAbsorption, newSize);
+    public static int currentID => Registry.BLOCKS.count();
 
-        // resize and fill new hardness entries with -1
-        int oldSize = hardness.Length;
-        Array.Resize(ref hardness, newSize);
-        for (int i = oldSize; i < newSize; i++) {
-            hardness[i] = -1;
-        }
+    public static Block register(string stringID, Block block) {
+        int id = Registry.BLOCKS.register(stringID, block);
+        block.id = (ushort)id; // assign runtime ID to block
+        block.onRegister(id); // call hook after ID assignment
 
-        Array.Resize(ref updateDelay, newSize);
-        Array.Resize(ref AABB, newSize);
-        Array.Resize(ref customAABB, newSize);
-        Array.Resize(ref renderType, newSize);
-        Array.Resize(ref tool, newSize);
-        Array.Resize(ref tier, newSize);
+        // auto-register corresponding BlockItem with same string ID
+        var blockItem = block.createItem();
+        Item.register(stringID, blockItem);
+        Item.material[blockItem.id] = true; // all blocks are materials lol
 
-        Array.Resize(ref log, newSize);
-        Array.Resize(ref leaves, newSize);
+        block.item = blockItem;
+
+        return block;
     }
 
-    public static Block register(Block block) {
-        ensureCapacity(block.id);
+    /**
+     * Called after the block has been registered and assigned an ID.
+     * Override to set block properties that require the ID.
+     */
+    protected virtual void onRegister(int id) {
 
-        if (block.id >= currentID) {
-            currentID = block.id + 1;
-        }
-
-        return blocks[block.id] = block;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /** Override to create a custom BlockItem type for this block */
+    protected virtual BlockItem createItem() {
+        return new BlockItem(this);
+    }
+
+    /** Get the BlockItem for this block */
+    public BlockItem getItem() {
+        return item;
+    }
+
     public static Block? get(int id) {
-        return blocks[id];
+        return Registry.BLOCKS.getOrDefault(id, null);
     }
 
-    public static bool tryGet(int id, out Block block) {
-        var cond = id >= 0 && id < currentID;
-        block = (cond ? blocks[id] : blocks[1])!;
-        return cond;
+    public static Block? get(string id) {
+        return Registry.BLOCKS.getOrDefault(id, null);
     }
 
     public static void preLoad() {
-        AIR = register(new Block(Blocks.AIR, "Air").setModel(BlockModel.emptyBlock())).air();
-        GRASS = register(new GrassBlock(Blocks.GRASS, "Grass")).tick();
+        AIR = register("air", new Block( "Air"));
+        AIR.setModel(BlockModel.emptyBlock());
+        AIR.air();
+        GRASS = register("grass", new GrassBlock("Grass"));
+        GRASS.tick();
         GRASS.setTex(grassUVs(0, 0, 1, 0, 2, 0));
         GRASS.setModel(BlockModel.makeCube(GRASS));
         GRASS.material(Material.EARTH);
 
-        DIRT = register(new Block(Blocks.DIRT, "Dirt"));
+        DIRT = register("dirt", new Block( "Dirt"));
         DIRT.setTex(cubeUVs(2, 0));
         renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
 
-        SAND = register(new FallingBlock(Blocks.SAND, "Sand"));
+        SAND = register("sand", new FallingBlock( "Sand"));
         SAND.setTex(cubeUVs(3, 0));
         renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
         // less hard than dirt!
         SAND.setHardness(0.5);
 
-        BASALT = register(new Block(Blocks.BASALT, "Basalt"));
+        BASALT = register("basalt", new Block("Basalt"));
         BASALT.setTex(cubeUVs(4, 0));
         renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
 
-        STONE = register(new Block(Blocks.STONE, "Stone"));
+        STONE = register("stone", new Block("Stone"));
         STONE.setTex(cubeUVs(5, 0));
         renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
 
-        COBBLESTONE = register(new Block(Blocks.COBBLESTONE, "Cobblestone"));
+        COBBLESTONE = register("cobblestone", new Block("Cobblestone"));
         COBBLESTONE.setTex(cubeUVs(6, 1));
         //renderType[COBBLESTONE.id] = RenderType.CUBE;
         COBBLESTONE.setModel(BlockModel.makeCube(COBBLESTONE));
         COBBLESTONE.material(Material.STONE);
 
-        GRAVEL = register(new Block(Blocks.GRAVEL, "Gravel"));
+        GRAVEL = register("gravel", new Block("Gravel"));
         GRAVEL.setTex(cubeUVs(7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
         GRAVEL.material(Material.EARTH);
 
-        HELLSTONE = register(new Block(Blocks.HELLSTONE, "Hellstone"));
+        HELLSTONE = register("hellstone", new Block("Hellstone"));
         HELLSTONE.setTex(cubeUVs(8, 0));
         renderType[HELLSTONE.id] = RenderType.CUBE;
         HELLSTONE.light(15);
         HELLSTONE.material(Material.HELL);
 
-        BLOODSTONE = register(new Block(Blocks.BLOODSTONE, "Bloodstone"));
+        BLOODSTONE = register("bloodstone", new Block("Bloodstone"));
         BLOODSTONE.setTex(cubeUVs(8, 1));
         renderType[BLOODSTONE.id] = RenderType.CUBE;
         BLOODSTONE.material(Material.HELL);
 
-        HELLROCK = register(new Block(Blocks.HELLROCK, "Hellrock"));
+        HELLROCK = register("hellrock", new Block("Hellrock"));
         HELLROCK.setTex(cubeUVs(9, 0));
         renderType[HELLROCK.id] = RenderType.CUBE;
         HELLROCK.material(Material.HELL);
 
-        INFERNO_ROCK = register(new Block(Blocks.INFERNO_ROCK, "Inferno Rock"));
+        INFERNO_ROCK = register("infernoRock", new Block("Inferno Rock"));
         INFERNO_ROCK.setTex(cubeUVs(10, 0));
         renderType[INFERNO_ROCK.id] = RenderType.CUBE;
         INFERNO_ROCK.material(Material.HELL);
 
-        GLASS = register(new Block(Blocks.GLASS, "Glass"));
+        GLASS = register("glass", new Block("Glass"));
         GLASS.setTex(cubeUVs(6, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS.transparency();
         GLASS.material(Material.GLASS);
 
-        CALCITE = register(new Block(Blocks.CALCITE, "Calcite"));
+        CALCITE = register("calcite", new Block("Calcite"));
         CALCITE.setTex(cubeUVs(11, 0));
         renderType[CALCITE.id] = RenderType.CUBE;
         CALCITE.material(Material.STONE);
 
-        CLAY_BLOCK = register(new Block(Blocks.CLAY_BLOCK, "Clay Block"));
+        CLAY_BLOCK = register("clayBlock", new Block("Clay Block"));
         CLAY_BLOCK.setTex(cubeUVs(12, 0));
         renderType[CLAY_BLOCK.id] = RenderType.CUBE;
         CLAY_BLOCK.material(Material.EARTH);
 
-        BRICK_BLOCK = register(new Block(Blocks.BRICK_BLOCK, "Brick Block"));
+        BRICK_BLOCK = register("brickBlock", new Block("Brick Block"));
         BRICK_BLOCK.setTex(cubeUVs(0, 2));
         renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
 
-        STONE_BRICK = register(new Block(Blocks.STONE_BRICK, "Stone Brick"));
+        STONE_BRICK = register("stoneBrick", new Block("Stone Brick"));
         STONE_BRICK.setTex(cubeUVs(1, 2));
         renderType[STONE_BRICK.id] = RenderType.CUBE;
         STONE_BRICK.material(Material.STONE);
 
-        SAND_BRICK = register(new Block(Blocks.SAND_BRICK, "Sand Brick"));
+        SAND_BRICK = register("sandBrick", new Block("Sand Brick"));
         SAND_BRICK.setTex(cubeUVs(2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
 
-        GOLD_CANDY = register(new Block(Blocks.GOLD_CANDY, "Gold Candy"));
+        GOLD_CANDY = register("goldCandy", new Block("Gold Candy"));
         GOLD_CANDY.setTex(cubeUVs(0, 8));
         renderType[GOLD_CANDY.id] = RenderType.CUBE;
         GOLD_CANDY.material(Material.METAL);
 
-        CINNABAR_CANDY = register(new Block(Blocks.CINNABAR_CANDY, "Cinnabar Candy"));
+        CINNABAR_CANDY = register("cinnabarCandy", new Block("Cinnabar Candy"));
         CINNABAR_CANDY.setTex(cubeUVs(1, 8));
         renderType[CINNABAR_CANDY.id] = RenderType.CUBE;
         CINNABAR_CANDY.material(Material.METAL);
 
-        DIAMOND_CANDY = register(new Block(Blocks.DIAMOND_CANDY, "Diamond Candy"));
+        DIAMOND_CANDY = register("diamondCandy", new Block("Diamond Candy"));
         DIAMOND_CANDY.setTex(cubeUVs(2, 8));
         renderType[DIAMOND_CANDY.id] = RenderType.CUBE;
         DIAMOND_CANDY.material(Material.METAL);
 
-        LANTERN = register(new Block(Blocks.LANTERN, "Lantern"));
+        LANTERN = register("lantern", new Block("Lantern"));
         LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
         LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
         LANTERN.material(Material.METAL);
 
-        TALL_GRASS = register(new Grass(Blocks.TALL_GRASS, "Tall Grass"));
+        TALL_GRASS = register("tallGrass", new Grass("Tall Grass"));
         TALL_GRASS.setTex(crossUVs(11, 5));
         TALL_GRASS.setModel(BlockModel.makeGrass(TALL_GRASS));
         TALL_GRASS.transparency();
@@ -399,7 +350,7 @@ public class Block {
         TALL_GRASS.material(Material.ORGANIC);
         TALL_GRASS.setHardness(0);
 
-        SHORT_GRASS = register(new Grass(Blocks.SHORT_GRASS, "Short Grass"));
+        SHORT_GRASS = register("shortGrass", new Grass("Short Grass"));
         SHORT_GRASS.setTex(crossUVs(10, 5));
         SHORT_GRASS.setModel(BlockModel.makeGrass(SHORT_GRASS));
         SHORT_GRASS.transparency();
@@ -409,7 +360,7 @@ public class Block {
         SHORT_GRASS.material(Material.ORGANIC);
         SHORT_GRASS.setHardness(0);
 
-        YELLOW_FLOWER = register(new Flower(Blocks.YELLOW_FLOWER, "Yellow Flower"));
+        YELLOW_FLOWER = register("yellowFlower", new Flower("Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(15, 5));
         YELLOW_FLOWER.setModel(BlockModel.makeGrass(YELLOW_FLOWER));
         YELLOW_FLOWER.transparency();
@@ -419,7 +370,7 @@ public class Block {
         YELLOW_FLOWER.itemLike();
         YELLOW_FLOWER.material(Material.ORGANIC);
 
-        //RED_FLOWER = register(new Flower(Blocks.RED_FLOWER, "Red Flower"));
+        //RED_FLOWER = register("redFlower", new Flower("Red Flower"));
         //RED_FLOWER.setTex(crossUVs(11, 1));
         //RED_FLOWER.setModel(BlockModel.makeGrass(RED_FLOWER));
         //RED_FLOWER.transparency();
@@ -429,7 +380,7 @@ public class Block {
         //RED_FLOWER.itemLike();
         //RED_FLOWER.material(Material.ORGANIC);
 
-        MARIGOLD = register(new Flower(Blocks.MARIGOLD, "Marigold"));
+        MARIGOLD = register("marigold", new Flower("Marigold"));
         MARIGOLD.setTex(crossUVs(12, 5));
         MARIGOLD.setModel(BlockModel.makeGrass(MARIGOLD));
         MARIGOLD.transparency();
@@ -440,7 +391,7 @@ public class Block {
         MARIGOLD.material(Material.ORGANIC);
 
         // hehe
-        BLUE_TULIP = register(new Flower(Blocks.BLUE_TULIP, "Blue Tulip"));
+        BLUE_TULIP = register("blueTulip", new Flower("Blue Tulip"));
         BLUE_TULIP.setTex(crossUVs(13, 5));
         BLUE_TULIP.setModel(BlockModel.makeGrass(BLUE_TULIP));
         BLUE_TULIP.transparency();
@@ -449,7 +400,7 @@ public class Block {
         BLUE_TULIP.itemLike();
         BLUE_TULIP.material(Material.ORGANIC);
 
-        THISTLE = register(new Flower(Blocks.THISTLE, "Thistle"));
+        THISTLE = register("thistle", new Flower("Thistle"));
         THISTLE.setTex(crossUVs(14, 5));
         THISTLE.setModel(BlockModel.makeGrass(THISTLE));
         THISTLE.transparency();
@@ -458,35 +409,35 @@ public class Block {
         THISTLE.itemLike();
         THISTLE.material(Material.ORGANIC);
 
-        PLANKS = register(new Block(Blocks.PLANKS, "Planks"));
-        PLANKS.setTex(cubeUVs(0, 5));
-        renderType[PLANKS.id] = RenderType.CUBE;
-        PLANKS.material(Material.WOOD);
+        OAK_PLANKS = register("oakPlanks", new Block("Oak Planks"));
+        OAK_PLANKS.setTex(cubeUVs(0, 5));
+        renderType[OAK_PLANKS.id] = RenderType.CUBE;
+        OAK_PLANKS.material(Material.WOOD);
 
-        STAIRS = register(new Stairs(Blocks.STAIRS, "Stairs"));
-        STAIRS.setTex(cubeUVs(0, 5));
-        STAIRS.partialBlock();
-        STAIRS.material(Material.WOOD);
+        OAK_STAIRS = register("oakStairs", new Stairs( "Oak Stairs"));
+        OAK_STAIRS.setTex(cubeUVs(0, 5));
+        OAK_STAIRS.partialBlock();
+        OAK_STAIRS.material(Material.WOOD);
 
-        STONE_SLAB = register(new Slabs(Blocks.STONE_SLAB, "Stone Slab"));
+        STONE_SLAB = register("stoneSlab", new Slabs( "Stone Slab"));
         STONE_SLAB.setTex(cubeUVs(5, 0));
         STONE_SLAB.material(Material.STONE);
 
-        OAK_SLAB = register(new Slabs(Blocks.OAK_SLAB, "Planks Slab"));
+        OAK_SLAB = register("oakSlab", new Slabs( "Planks Slab"));
         OAK_SLAB.setTex(cubeUVs(0, 5));
         OAK_SLAB.material(Material.WOOD);
 
-        MAPLE_PLANKS_SLAB = register(new Slabs(Blocks.MAPLE_PLANKS_SLAB, "Maple Planks Slab"));
-        MAPLE_PLANKS_SLAB.setTex(cubeUVs(5, 5));
-        MAPLE_PLANKS_SLAB.material(Material.WOOD);
+        MAPLE_SLAB = register("mapleSlab", new Slabs("Maple Planks Slab"));
+        MAPLE_SLAB.setTex(cubeUVs(5, 5));
+        MAPLE_SLAB.material(Material.WOOD);
 
-        LOG = register(new Block(Blocks.LOG, "Log"));
-        LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
-        LOG.setModel(BlockModel.makeCube(LOG));
-        LOG.material(Material.WOOD);
-        log[LOG.id] = true;
+        OAK_LOG = register("oakLog", new Block("Oak Log"));
+        OAK_LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
+        OAK_LOG.setModel(BlockModel.makeCube(OAK_LOG));
+        OAK_LOG.material(Material.WOOD);
+        log[OAK_LOG.id] = true;
 
-        LEAVES = register(new Leaves(Blocks.LEAVES, "Leaves"));
+        LEAVES = register("oakLeaves", new Leaves("Oak Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
@@ -494,23 +445,23 @@ public class Block {
         LEAVES.material(Material.ORGANIC);
         leaves[LEAVES.id] = true;
 
-        MAPLE_PLANKS = register(new Block(Blocks.MAPLE_PLANKS, "Maple Planks"));
+        MAPLE_PLANKS = register("maplePlanks", new Block("Maple Planks"));
         MAPLE_PLANKS.setTex(cubeUVs(5, 5));
         renderType[MAPLE_PLANKS.id] = RenderType.CUBE;
         MAPLE_PLANKS.material(Material.WOOD);
 
-        MAPLE_STAIRS = register(new Stairs(Blocks.MAPLE_STAIRS, "Maple Stairs"));
+        MAPLE_STAIRS = register("mapleStairs", new Stairs( "Maple Stairs"));
         MAPLE_STAIRS.setTex(cubeUVs(5, 5));
         MAPLE_STAIRS.partialBlock();
         MAPLE_STAIRS.material(Material.WOOD);
 
-        MAPLE_LOG = register(new Block(Blocks.MAPLE_LOG, "Maple Log"));
+        MAPLE_LOG = register("mapleLog", new Block("Maple Log"));
         MAPLE_LOG.setTex(grassUVs(7, 5, 6, 5, 8, 5));
         MAPLE_LOG.setModel(BlockModel.makeCube(MAPLE_LOG));
         MAPLE_LOG.material(Material.WOOD);
         log[MAPLE_LOG.id] = true;
 
-        MAPLE_LEAVES = register(new Leaves(Blocks.MAPLE_LEAVES, "Maple Leaves"));
+        MAPLE_LEAVES = register("mapleLeaves", new Leaves( "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
@@ -518,157 +469,145 @@ public class Block {
         leaves[MAPLE_LEAVES.id] = true;
 
 
-        MAHOGANY_LOG = register(new Block(Blocks.MAHOGANY_LOG, "Mahogany Log"));
+        MAHOGANY_LOG = register("mahoganyLog", new Block("Mahogany Log"));
         MAHOGANY_LOG.setTex(grassUVs(5, 2, 4, 2, 6, 2));
         MAHOGANY_LOG.setModel(BlockModel.makeCube(MAHOGANY_LOG));
         MAHOGANY_LOG.material(Material.WOOD);
         log[MAHOGANY_LOG.id] = true;
 
-        MAHOGANY_PLANKS = register(new Block(Blocks.MAHOGANY_PLANKS, "Mahogany Planks"));
+        MAHOGANY_PLANKS = register("mahoganyPlanks", new Block("Mahogany Planks"));
         MAHOGANY_PLANKS.setTex(cubeUVs(3, 2));
         renderType[MAHOGANY_PLANKS.id] = RenderType.CUBE;
         MAHOGANY_PLANKS.material(Material.WOOD);
 
-        MAHOGANY_LEAVES = register(new Leaves(Blocks.MAHOGANY_LEAVES, "Mahogany Leaves"));
+        MAHOGANY_LEAVES = register("mahoganyLeaves", new Leaves("Mahogany Leaves"));
         MAHOGANY_LEAVES.setTex(cubeUVs(7, 2));
         renderType[MAHOGANY_LEAVES.id] = RenderType.CUBE;
         MAHOGANY_LEAVES.transparency();
         MAHOGANY_LEAVES.material(Material.ORGANIC);
         leaves[MAHOGANY_LEAVES.id] = true;
 
-        MAHOGANY_STAIRS = register(new Stairs(Blocks.MAHOGANY_STAIRS, "Mahogany Stairs"));
+        MAHOGANY_STAIRS = register("mahoganyStairs", new Stairs("Mahogany Stairs"));
         MAHOGANY_STAIRS.setTex(cubeUVs(3, 2));
         MAHOGANY_STAIRS.partialBlock();
         MAHOGANY_STAIRS.material(Material.WOOD);
 
-        MAHOGANY_SLAB = register(new Slabs(Blocks.MAHOGANY_SLAB, "Mahogany Slab"));
+        MAHOGANY_SLAB = register("mahoganySlab", new Slabs("Mahogany Slab"));
         MAHOGANY_SLAB.setTex(cubeUVs(3, 2));
         MAHOGANY_SLAB.material(Material.WOOD);
 
 
-        CANDY = register(new CandyBlock(Blocks.CANDY, "Candy"));
+        CANDY = register("candy", new CandyBlock("Candy"));
         CANDY.material(Material.FOOD);
 
-        HEAD = register(new Block(Blocks.HEAD, "Head"));
+        HEAD = register("head", new Block("Head"));
         HEAD.setTex(HeadUVs(0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3));
         HEAD.setModel(BlockModel.makeHalfCube(HEAD));
         HEAD.partialBlock();
 
-        WATER = register(new Water(Blocks.WATER, "Water", 15, 8));
+        WATER = register("water", new Water("Water", 15, 8));
         WATER.setTex(new UVPair(0, 13), new UVPair(1, 14));
         WATER.makeLiquid();
 
         // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
 
-        CINNABAR = register(new Block(Blocks.CINNABAR, "Cinnabar"));
-        CINNABAR.setTex(cubeUVs(10, 1));
-        renderType[CINNABAR.id] = RenderType.CUBE;
-        CINNABAR.material(Material.FANCY_STONE);
-        CINNABAR.setHardness(6.0);
-        CINNABAR.setTier(MaterialTier.GOLD);
+        CINNABAR_ORE = register("cinnabarOre", new Block("Cinnabar"));
+        CINNABAR_ORE.setTex(cubeUVs(10, 1));
+        renderType[CINNABAR_ORE.id] = RenderType.CUBE;
+        CINNABAR_ORE.material(Material.FANCY_STONE);
+        CINNABAR_ORE.setHardness(6.0);
+        CINNABAR_ORE.setTier(MaterialTier.GOLD);
 
-        TITANIUM_ORE = register(new Block(Blocks.TITANIUM_ORE, "Titanium Ore"));
+        TITANIUM_ORE = register("titaniumOre", new Block("Titanium Ore"));
         TITANIUM_ORE.setTex(cubeUVs(11, 1));
         renderType[TITANIUM_ORE.id] = RenderType.CUBE;
         TITANIUM_ORE.material(Material.FANCY_STONE);
         TITANIUM_ORE.setHardness(7.5);
         TITANIUM_ORE.setTier(MaterialTier.GOLD);
 
-        AMBER_ORE = register(new Block(Blocks.AMBER_ORE, "Amber Ore"));
+        AMBER_ORE = register("amberOre", new Block("Amber Ore"));
         AMBER_ORE.setTex(cubeUVs(12, 1));
         renderType[AMBER_ORE.id] = RenderType.CUBE;
         AMBER_ORE.material(Material.FANCY_STONE);
         AMBER_ORE.setHardness(3.0);
         AMBER_ORE.setTier(MaterialTier.STONE);
 
-        AMETHYST_ORE = register(new Block(Blocks.AMETHYST_ORE, "Amethyst Ore"));
+        AMETHYST_ORE = register("amethystOre", new Block("Amethyst Ore"));
         AMETHYST_ORE.setTex(cubeUVs(13, 1));
         renderType[AMETHYST_ORE.id] = RenderType.CUBE;
         AMETHYST_ORE.material(Material.FANCY_STONE);
         AMETHYST_ORE.setHardness(4.0);
         AMETHYST_ORE.setTier(MaterialTier.IRON);
 
-        EMERALD_ORE = register(new Block(Blocks.EMERALD_ORE, "Emerald Ore"));
+        EMERALD_ORE = register("emeraldOre", new Block("Emerald Ore"));
         EMERALD_ORE.setTex(cubeUVs(14, 1));
         renderType[EMERALD_ORE.id] = RenderType.CUBE;
         EMERALD_ORE.material(Material.FANCY_STONE);
         EMERALD_ORE.setHardness(5.0);
         EMERALD_ORE.setTier(MaterialTier.GOLD);
 
-        DIAMOND_ORE = register(new Block(Blocks.DIAMOND_ORE, "Diamond Ore"));
+        DIAMOND_ORE = register("diamondOre", new Block("Diamond Ore"));
         DIAMOND_ORE.setTex(cubeUVs(15, 1));
         renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
         DIAMOND_ORE.setTier(MaterialTier.GOLD);
 
-        GOLD_ORE = register(new Block(Blocks.GOLD_ORE, "Gold Ore"));
+        GOLD_ORE = register("goldOre", new Block("Gold Ore"));
         GOLD_ORE.setTex(cubeUVs(0, 1));
         renderType[GOLD_ORE.id] = RenderType.CUBE;
         GOLD_ORE.material(Material.FANCY_STONE);
         GOLD_ORE.setHardness(3.0);
         GOLD_ORE.setTier(MaterialTier.IRON);
 
-        IRON_ORE = register(new Block(Blocks.IRON_ORE, "Iron Ore"));
+        IRON_ORE = register("ironOre", new Block("Iron Ore"));
         IRON_ORE.setTex(cubeUVs(1, 1));
         renderType[IRON_ORE.id] = RenderType.CUBE;
         IRON_ORE.material(Material.FANCY_STONE);
         IRON_ORE.setHardness(3.0);
         IRON_ORE.setTier(MaterialTier.STONE);
 
-        COPPER_ORE = register(new Block(Blocks.COPPER_ORE, "Copper Ore"));
+        COPPER_ORE = register("copperOre", new Block("Copper Ore"));
         COPPER_ORE.setTex(cubeUVs(5, 1));
         renderType[COPPER_ORE.id] = RenderType.CUBE;
         COPPER_ORE.material(Material.FANCY_STONE);
         COPPER_ORE.setHardness(2.5);
         COPPER_ORE.setTier(MaterialTier.STONE);
 
-        COAL_ORE = register(new Block(Blocks.COAL_ORE, "Coal Ore"));
+        COAL_ORE = register("coalOre", new Block("Coal Ore"));
         COAL_ORE.setTex(cubeUVs(4, 1));
         renderType[COAL_ORE.id] = RenderType.CUBE;
         COAL_ORE.material(Material.FANCY_STONE);
         COAL_ORE.setHardness(2.0);
         COAL_ORE.setTier(MaterialTier.WOOD);
 
-        TORCH = register(new Torch(Blocks.TORCH, "Torch"));
+        TORCH = register("torch", new Torch("Torch"));
         TORCH.setTex(cubeUVs(9, 3));
         TORCH.itemLike();
         TORCH.material(Material.ORGANIC);
 
-        CRAFTING_TABLE = register(new CraftingTable(Blocks.CRAFTING_TABLE, "Crafting Table"));
+        CRAFTING_TABLE = register("craftingTable", new CraftingTable("Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4, 3, 3, 3, 2, 3, 5, 3));
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
         CRAFTING_TABLE.material(Material.WOOD);
 
-        MAHOGANY_CHEST = register(new Chest(Blocks.MAHOGANY_CHEST, "Chest"));
+        MAHOGANY_CHEST = register("mahoganyChest", new Chest("Chest"));
         MAHOGANY_CHEST.setTex(chestUVs(2, 4, 0, 4, 1, 4, 3, 4));
         MAHOGANY_CHEST.material(Material.WOOD);
 
-        OAK_CHEST = register(new Chest(Blocks.OAK_CHEST, "Oak Chest"));
+        OAK_CHEST = register("oakChest", new Chest("Oak Chest"));
         OAK_CHEST.setTex(chestUVs(2, 9, 0, 9, 1, 9, 3, 9));
         OAK_CHEST.material(Material.WOOD);
 
-        FURNACE = register(new Furnace(Blocks.FURNACE, "Furnace"));
-        FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4));
+        BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace"));
+        BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4));
+        BRICK_FURNACE.material(Material.STONE);
+        BRICK_FURNACE.light(15);
+
+        FURNACE = register("furnace", new Furnace("Furnace"));
+        FURNACE.setTex(furnaceUVs(7, 4, 8, 4, 9, 4));
         FURNACE.material(Material.STONE);
         FURNACE.light(15);
-
-        STONE_FURNACE = register(new Furnace(Blocks.STONE_FURNACE, "Stone Furnace"));
-        STONE_FURNACE.setTex(furnaceUVs(7, 4, 8, 4, 9, 4));
-        STONE_FURNACE.material(Material.STONE);
-        STONE_FURNACE.light(15);
-
-
-        // I'm lazy so we cheat! We register all the "special" items here (only the ones which require custom item classes because they have a dynamic name or other special behaviour)
-        Item.register(new CandyBlockItem(Blocks.CANDY, "Candy Block"));
-
-        // register items for all blocks
-        for (int i = 0; i < currentID; i++) {
-            if (blocks[i] != null && Item.get(-i) == null) {
-                Item.register(new BlockItem(i, blocks[i].name));
-            }
-        }
-
 
         // set default hardness for blocks that haven't set it
         for (int i = 0; i < currentID; i++) {
@@ -689,11 +628,6 @@ public class Block {
         return (ushort)(value & 0xFFFFFF);
     }
 
-    public ushort setMetadata(ushort metadata) {
-        value = value & 0xFFFFFF | (uint)(metadata << 24);
-        return getID();
-    }
-
     public ushort setID(ushort id) {
         this.value = (this.value & 0xFF000000) | id;
         return getID();
@@ -706,7 +640,7 @@ public class Block {
             }
         }
 
-        //inventoryBlacklist[Blocks.WATER] = true;
+        //inventoryBlacklist[ Block.WATER.id = true;
         //inventoryBlacklist[7] = true;
     }
 
@@ -852,19 +786,9 @@ public class Block {
         return this;
     }
 
-    public Block(ushort id, string name) {
+    public Block(string name) {
         this.id = id;
         this.name = name;
-
-        fullBlock[id] = true;
-        waterSolid[id] = true;
-        selection[id] = true;
-        collision[id] = true;
-        liquid[id] = false;
-        customCulling[id] = false;
-        randomTick[id] = false;
-
-        AABB[id] = fullBlockAABB();
     }
 
     public Block setModel(BlockModel model) {
@@ -1042,7 +966,7 @@ public class Block {
      * By default, blocks drop themselves as an item.
      */
     public virtual (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
-        return (Item.block(id), metadata, 1);
+        return (getItem(), metadata, 1);
     }
 
     /**
@@ -1308,18 +1232,18 @@ public static class BlockExtensions {
     }
 }
 
-public class Flower(ushort id, string name) : Block(id, name) {
+public class Flower(string name) : Block(name) {
     public override void update(World world, int x, int y, int z) {
         if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
-            world.setBlock(x, y, z, Blocks.AIR);
+            world.setBlock(x, y, z, AIR.id);
         }
     }
 }
 
-public class Grass(ushort id, string name) : Block(id, name) {
+public class Grass(string name) : Block(name) {
     public override void update(World world, int x, int y, int z) {
         if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
-            world.setBlock(x, y, z, Blocks.AIR);
+            world.setBlock(x, y, z, AIR.id);
         }
     }
 
@@ -1328,7 +1252,7 @@ public class Grass(ushort id, string name) : Block(id, name) {
     }
 }
 
-public class FallingBlock(ushort id, string name) : Block(id, name) {
+public class FallingBlock(string name) : Block(name) {
     public override void update(World world, int x, int y, int z) {
         var ym = y - 1;
         bool isSupported = true;
@@ -1357,16 +1281,16 @@ public class FallingBlock(ushort id, string name) : Block(id, name) {
     }
 }
 
-public class GrassBlock(ushort id, string name) : Block(id, name) {
+public class GrassBlock(string name) : Block(name) {
     public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
         // grass drops dirt
-        return (Item.block(Blocks.DIRT), 0, 1);
+        return (DIRT.getItem(), 0, 1);
     }
 
     public override void randomUpdate(World world, int x, int y, int z) {
         // turn to dirt if full block above
         if (y < World.WORLDHEIGHT - 1 && isFullBlock(world.getBlock(x, y + 1, z))) {
-            world.setBlock(x, y, z, Blocks.DIRT);
+            world.setBlock(x, y, z,  Block.DIRT.id);
             return;
         }
 
@@ -1383,9 +1307,9 @@ public class GrassBlock(ushort id, string name) : Block(id, name) {
             int nz = z + dz;
 
             // if target is dirt with air above, spread
-            if (world.getBlock(nx, ny, nz) == Blocks.DIRT) {
-                if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == Blocks.AIR) {
-                    world.setBlock(nx, ny, nz, Blocks.GRASS);
+            if (world.getBlock(nx, ny, nz) == Block.DIRT.id) {
+                if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == AIR.id) {
+                    world.setBlock(nx, ny, nz,  Block.GRASS.id);
                 }
             }
         }

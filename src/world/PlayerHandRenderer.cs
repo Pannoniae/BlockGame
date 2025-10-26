@@ -73,7 +73,7 @@ public class PlayerHandRenderer {
         Game.blockRenderer.setupStandalone();
 
         if (a) {
-            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero,
+            Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                 vertices,
                 lightOverride: l,
                 cullFaces: false);
@@ -355,7 +355,7 @@ public class PlayerHandRenderer {
     }
 
     public void renderItemInHand(ItemStack itemStack, Color lightOverride) {
-        var item = Item.get(itemStack.id);
+        var item = itemStack.getItem();
         var texUV = item.getTexture(itemStack);
 
         //Console.Out.WriteLine(lightOverride);
@@ -475,7 +475,7 @@ public class PlayerHandRenderer {
         var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
 
         if (a) {
-            Game.blockRenderer.renderBlock(Item.get(handItem.id).getBlock(), (byte)handItem.metadata, Vector3I.Zero,
+            Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                 vertices,
                 lightOverride: l,
                 cullFaces: false);

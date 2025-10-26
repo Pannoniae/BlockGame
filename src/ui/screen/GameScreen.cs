@@ -909,8 +909,8 @@ public class GameScreen : Screen {
     }
 
     public void openSettings() {
-        Screen.SETTINGS_SCREEN.prevScreen = Screen.GAME_SCREEN;
-        Game.instance.switchToScreen(Screen.SETTINGS_SCREEN);
+        SETTINGS_SCREEN.prevScreen = GAME_SCREEN;
+        Game.instance.switchToScreen(SETTINGS_SCREEN);
     }
 
     private void cycleBlockMetadata() {
@@ -924,7 +924,8 @@ public class GameScreen : Screen {
         var blockID = blockValue.getID();
         var currentMeta = blockValue.getMetadata();
 
-        if (blockID == 0 || !Block.tryGet(blockID, out var block)) {
+        var block = Block.get(blockID);
+        if (blockID == 0 || block == null) {
             return;
         }
 

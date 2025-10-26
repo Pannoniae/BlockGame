@@ -334,13 +334,13 @@ public class Cave : OverlayFeature {
                         //} 
 
                         // if it's grass, exchange below
-                        if (block == Blocks.GRASS) {
+                        if (block ==  Block.GRASS.id) {
                             hasGrass = true;
                         }
 
                         // if it's a solid block, remove it
                         if (Block.fullBlock[block]) {
-                            chunk.setBlockDumb(cxx, yy, czz, Blocks.AIR);
+                            chunk.setBlockDumb(cxx, yy, czz,  Block.AIR.id);
                             lastSetBlock = yy; // remember the last set block
                         }
                     }
@@ -348,8 +348,8 @@ public class Cave : OverlayFeature {
                 }
 
                 // if we have grass, set the block below it to grass
-                if (hasGrass && chunk.getBlock(cxx, lastSetBlock - 1, czz) == Blocks.DIRT) {
-                    chunk.setBlockDumb(cxx, lastSetBlock - 1, czz, Blocks.GRASS);
+                if (hasGrass && chunk.getBlock(cxx, lastSetBlock - 1, czz) ==  Block.DIRT.id) {
+                    chunk.setBlockDumb(cxx, lastSetBlock - 1, czz,  Block.GRASS.id);
                 }
             }
         }
