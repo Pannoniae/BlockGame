@@ -1,12 +1,13 @@
 ﻿<component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Hot Reload" type="RunDotNetWatch" factoryName="RunDotNetWatch">
-    <option name="exePath" value="$PROJECT_DIR$/bin/Release/net10.0/BlockGame.exe" />
+    <option name="exePath" value="$PROJECT_DIR$/bin/Debug/net10.0/BlockGame.exe" />
     <option name="programParameters" value="" />
     <option name="projectFilePath" value="$PROJECT_DIR$/src/launch/Launcher.csproj" />
     <option name="projectTfm" value="net10.0" />
     <option name="terminalMode" value="Auto" />
+    <option name="trackProjectWorkingDirectory" value="false" />
     <option name="watchParameters" value="" />
-    <option name="workingDirectory" value="$PROJECT_DIR$/bin/Release/net10.0" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/bin/Debug/net10.0" />
     <method v="2" />
   </configuration>
 </component>

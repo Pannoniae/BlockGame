@@ -19,8 +19,8 @@ public class CowModel : EntityModel {
     // four legs at corners, 2x4x2 pixels each
     //public readonly Cube frontRightLeg = new Cube().pos(0, 4, 0).off(-4, -4, -6).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
     //public readonly Cube frontLeftLeg = new Cube().pos(0, 4, 0).off(2, -4, -6).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
-    //public readonly Cube backLeftLeg = new Cube().pos(0, 4, 0).off(2, -4, -20).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
-    //public readonly Cube backRightLeg = new Cube().pos(0, 4, 0).off(-4, -4, -20).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
+    //public readonly Cube backLeftLeg = new Cube().pos(0, 4, 0).off(2, -4, -19).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
+    //public readonly Cube backRightLeg = new Cube().pos(0, 4, 0).off(-4, -4, -19).ext(2, 4, 2).tex(0, 16).gen(xs, ys);
 
     //smaller head, longer body
     public const int xs = 68;
@@ -33,8 +33,8 @@ public class CowModel : EntityModel {
     public readonly Cube body = new Cube().pos(0, 16, 0).off(-5, -8, -23).ext(10, 8, 20).tex(8, 12).gen(xs, ys);
 
     // four legs at corners, 3x8x3 pixels each
-    public readonly Cube frontRightLeg = new Cube().pos(0, 8, 0).off(-4, -8, -7).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
-    public readonly Cube frontLeftLeg = new Cube().pos(0, 8, 0).off(1, -8, -7).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
+    public readonly Cube frontRightLeg = new Cube().pos(0, 8, 0).off(-4, -8, -8).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
+    public readonly Cube frontLeftLeg = new Cube().pos(0, 8, 0).off(1, -8, -8).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
     public readonly Cube backLeftLeg = new Cube().pos(0, 8, 0).off(1, -8, -23).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
     public readonly Cube backRightLeg = new Cube().pos(0, 8, 0).off(-4, -8, -23).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
 
