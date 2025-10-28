@@ -536,7 +536,7 @@ public class PlayerHandRenderer {
             // we need to fixup the rotation a bit because items don't rotate somehow??
             //mat.translate(0, 0, sinSwing * -0.3f);
 
-            mat.translate(0.75f, 0.6f, 0.55f);
+            mat.translate(0.75f, 0.45f, 0.55f);
 
             // bit of fixup
             mat.translate(-0.1f * sinSwing, 0, 0);

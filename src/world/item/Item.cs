@@ -66,6 +66,10 @@ public class Item {
     public static Item CINNABAR;
     public static Item BOTTLE;
     public static Item BOTTLE_MILK;
+    public static Item STEAK_RAW;
+    public static Item STEAK_ROAST;
+
+
     public Item(string name) {
         this.name = name;
     }
@@ -230,10 +234,10 @@ public class Item {
         DYE = register("dye", new DyeItem("Dye"));
 
         APPLE = register("apple", new Item("Apple"));
-        APPLE.tex = new UVPair(2, 9);
+        APPLE.tex = new UVPair(0, 10);
 
         MAPLE_SYRUP = register("mapleSyrup", new Item("Maple Syrup"));
-        MAPLE_SYRUP.tex = new UVPair(3, 9);
+        MAPLE_SYRUP.tex = new UVPair(1, 10);
 
         COAL = register("coal", new Item("Coal"));
         COAL.tex = new UVPair(1, 9);
@@ -244,23 +248,28 @@ public class Item {
         material[BRICK.id] = true;
 
         CLAY = register("clay", new Item("Clay"));
-        CLAY.tex = new UVPair(4, 9);
+        CLAY.tex = new UVPair(2, 9);
         material[CLAY.id] = true;
 
         DIAMOND = register("diamond", new Item("Diamond"));
-        DIAMOND.tex = new UVPair(5, 9);
+        DIAMOND.tex = new UVPair(3, 9);
         material[DIAMOND.id] = true;
 
         CINNABAR = register("cinnabar", new Item("Cinnabar"));
-        CINNABAR.tex = new UVPair(6, 9);
+        CINNABAR.tex = new UVPair(4, 9);
         material[CINNABAR.id] = true;
 
         BOTTLE = register("bottle", new Item("Empty Bottle"));
-        BOTTLE.tex = new UVPair(7, 9);
+        BOTTLE.tex = new UVPair(2, 10);
 
         BOTTLE_MILK = register("milk", new Item("Bottle of Milk"));
-        BOTTLE_MILK.tex = new UVPair(8, 9);
+        BOTTLE_MILK.tex = new UVPair(3, 10);
 
+        STEAK_RAW = register("raw steak", new Item("Raw Steak"));
+        STEAK_RAW.tex = new UVPair(4, 10);
+
+        STEAK_ROAST = register("roast steak", new Item("Roast Steak"));
+        STEAK_ROAST.tex = new UVPair(5, 10);
 
         // all blocks are already marked as materials during Block.register() lol
     }
