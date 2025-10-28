@@ -64,7 +64,8 @@ public class Item {
     public static Item CLAY;
     public static Item DIAMOND;
     public static Item CINNABAR;
-
+    public static Item BOTTLE;
+    public static Item BOTTLE_MILK;
     public Item(string name) {
         this.name = name;
     }
@@ -253,6 +254,12 @@ public class Item {
         CINNABAR = register("cinnabar", new Item("Cinnabar"));
         CINNABAR.tex = new UVPair(6, 9);
         material[CINNABAR.id] = true;
+
+        BOTTLE = register("bottle", new Item("Empty Bottle"));
+        BOTTLE.tex = new UVPair(7, 9);
+
+        BOTTLE_MILK = register("milk", new Item("Bottle of Milk"));
+        BOTTLE_MILK.tex = new UVPair(8, 9);
 
 
         // all blocks are already marked as materials during Block.register() lol
