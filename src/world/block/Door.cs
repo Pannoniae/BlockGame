@@ -7,6 +7,11 @@ namespace BlockGame.world.block;
 
 public class DoorBlockItem : BlockItem {
     public DoorBlockItem(Block block) : base(block) {
+        tex = new UVPair(4, 8);
+    }
+
+    public override UVPair getTexture(ItemStack stack) {
+        return tex; // Always use item texture, not block texture
     }
 }
 
@@ -20,6 +25,7 @@ public class Door : Block {
             customAABB[id] = true;
             partialBlock();
             transparency();
+            itemLike();
         }
 
         /** bits 0-1: facing, bit 2: open, bit 3: upper, bit 4: hinge (0=left, 1=right) */
@@ -111,7 +117,16 @@ public class Door : Block {
             return new DoorBlockItem(this);
         }
 
-        public override UVPair getTexture(int faceIdx, int metadata) => uvs[0];
+        //public override UVPair getTexture(int faceIdx, int metadata) => uvs[0];
+        public override UVPair getTexture(int faceIdx, int metadata) {
+            // for item rendering, use custom item texture
+            if (faceIdx == 0 && metadata == 0) {
+                return new UVPair(4, 8);
+            }
+
+            // for block rendering in world
+            return uvs[0];
+        }
 
 
         public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
