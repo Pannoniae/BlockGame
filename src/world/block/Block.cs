@@ -601,7 +601,7 @@ public class Block {
         OAK_CHEST.material(Material.WOOD);
 
         DOOR = register("door", new Door("Door"));
-        DOOR.setTex(cubeUVs(0, 10)); // texture at (0, 160) = (0, 10) in 16px units
+        DOOR.setTex(cubeUVs(0, 10));
         DOOR.material(Material.WOOD);
         DOOR.translucency();
 
