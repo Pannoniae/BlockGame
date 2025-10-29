@@ -132,6 +132,8 @@ public class Block {
     public static Block MAHOGANY_SLAB;
     public static Block OAK_CHEST;
 
+    public static Block DOOR;
+
     public static Block CANDY;
 
     public static Block HEAD;
@@ -598,6 +600,10 @@ public class Block {
         OAK_CHEST = register("oakChest", new Chest("Oak Chest"));
         OAK_CHEST.setTex(chestUVs(2, 9, 0, 9, 1, 9, 3, 9));
         OAK_CHEST.material(Material.WOOD);
+
+        DOOR = register("door", new Door("Door"));
+        DOOR.setTex(cubeUVs(0, 10)); // texture at (0, 160) = (0, 10) in 16px units
+        DOOR.material(Material.WOOD);
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace"));
         BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4));
