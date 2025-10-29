@@ -45,7 +45,7 @@ public class Leaves : Block {
             // reached max distance
             if (dist >= DECAY_DIST) continue;
 
-            // check all 6 neighbors
+            // check all 6 neighbours
             foreach (var dir in Direction.directions) {
                 int nx = x + dir.X, ny = y + dir.Y, nz = z + dir.Z;
 
