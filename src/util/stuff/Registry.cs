@@ -1,6 +1,8 @@
-﻿using BlockGame.world;
+﻿using BlockGame.main;
+using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.item;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.util.stuff;
 
@@ -132,7 +134,7 @@ public abstract class Registry<T> : Registry {
         public XUList<U> list;
         public U dvalue;
 
-        public Lists(XUList<U> list, U defaultValue) {
+        public unsafe Lists(XUList<U> list, U defaultValue) {
             this.list = list;
             dvalue = defaultValue;
         }

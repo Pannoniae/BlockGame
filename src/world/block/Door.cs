@@ -5,8 +5,7 @@ using BlockGame.util;
 namespace BlockGame.world.block;
 
 public class Door : Block {
-    public Door(string name) : base(name) {
-    }
+    public Door(string name) : base(name) { }
 
     protected override void onRegister(int id) {
         renderType[id] = RenderType.CUSTOM;
@@ -14,176 +13,144 @@ public class Door : Block {
         customAABB[id] = true;
         partialBlock();
         transparency();
+        itemLike();
     }
 
-    /**
-     * Metadata encoding for doors:
-     * Bits 0-1: Horizontal facing direction (0=WEST, 1=EAST, 2=SOUTH, 3=NORTH)
-     * Bit 2: Open/Closed state (0=closed, 1=open)
-     * Bits 3-7: Reserved
-     */
-    public static byte getFacing(byte metadata) => (byte)(metadata & 0b11);
-    public static bool isOpen(byte metadata) => (metadata & 0b100) != 0;
+    /** bits 0-1: facing, bit 2: open, bit 3: upper, bit 4: hinge (0=left, 1=right) */
+    private static byte facing(byte m) => (byte)(m & 0b11);
 
-    public static byte setFacing(byte metadata, byte facing) => (byte)((metadata & ~0b11) | (facing & 0b11));
-    public static byte setOpen(byte metadata, bool open) => (byte)((metadata & ~0b100) | (open ? 0b100 : 0));
+    private static bool open(byte m) => (m & 0b100) != 0;
+    private static bool upper(byte m) => (m & 0b1000) != 0;
+    private static bool hinge(byte m) => (m & 0b10000) != 0;
 
     public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        // get player's horizontal facing and reverse it (door faces away from player)
-        byte facing = (byte)dir;
-        if (facing > 3) facing = 0; // clamp to horizontal only
+        byte f = (byte)dir;
+        if (f > 3) f = 0;
 
-        // reverse the direction so door faces away from player
-        facing = facing switch {
-            0 => 1, // WEST -> EAST
-            1 => 0, // EAST -> WEST
-            2 => 3, // SOUTH -> NORTH
-            3 => 2, // NORTH -> SOUTH
-            _ => 0
-        };
+        bool hingeRight = false;
+        int lx = x, lz = z, rx = x, rz = z;
 
-        // create metadata
-        byte meta = 0;
-        meta = setFacing(meta, facing);
-        meta = setOpen(meta, false);
+        switch (f) {
+            case 0: lz++; rz--; break; // WEST
+            case 1: lz--; rz++; break; // EAST
+            case 2: lx--; rx++; break; // SOUTH
+            case 3: lx++; rx--; break; // NORTH
+        }
 
-        // place single block
-        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(meta));
+        var lb = world.getBlockRaw(lx, y, lz);
+        if (lb.getID() == id && facing(lb.getMetadata()) == f) hingeRight = true;
+
+        var rb = world.getBlockRaw(rx, y, rz);
+        if (rb.getID() == id && facing(rb.getMetadata()) == f) hingeRight = false;
+
+        byte lower = (byte)(f | (hingeRight ? 0b10000 : 0));
+        byte upper = (byte)(lower | 0b1000);
+
+        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(lower));
+        world.setBlockMetadata(x, y + 1, z, ((uint)id).setMetadata(upper));
         world.blockUpdateNeighbours(x, y, z);
+        world.blockUpdateNeighbours(x, y + 1, z);
     }
 
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        // need space for door (current block + block above for rendering clearance)
-        return world.getBlock(x, y, z) == 0 && world.getBlock(x, y + 1, z) == 0;
-    }
+    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) =>
+        world.getBlock(x, y, z) == 0 && world.getBlock(x, y + 1, z) == 0;
 
     public override bool onUse(World world, int x, int y, int z, Player player) {
-        var block = world.getBlockRaw(x, y, z);
-        var metadata = block.getMetadata();
+        var m = world.getBlockRaw(x, y, z).getMetadata();
+        int ly = upper(m) ? y - 1 : y;
 
-        bool currentlyOpen = isOpen(metadata);
+        var nl = (byte)(world.getBlockRaw(x, ly, z).getMetadata() ^ 0b100);
+        var nu = (byte)(world.getBlockRaw(x, ly + 1, z).getMetadata() ^ 0b100);
 
-        // toggle open state
-        metadata = setOpen(metadata, !currentlyOpen);
-
-        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(metadata));
-
-        // play sound
-        // TODO: add door sound
-
-        return true; // interaction handled
+        world.setBlockMetadata(x, ly, z, ((uint)id).setMetadata(nl));
+        world.setBlockMetadata(x, ly + 1, z, ((uint)id).setMetadata(nu));
+        return true;
     }
+
+    public override void onBreak(World world, int x, int y, int z, byte metadata) {
+        int oy = upper(metadata) ? y - 1 : y + 1;
+        if (world.getBlock(x, oy, z) == id) world.setBlock(x, oy, z, 0);
+    }
+
+    public override void update(World world, int x, int y, int z) {
+        var m = world.getBlockRaw(x, y, z).getMetadata();
+        if (upper(m)) {
+            if (world.getBlock(x, y - 1, z) != id) world.setBlock(x, y, z, 0);
+        } else {
+            if (!fullBlock[world.getBlock(x, y - 1, z)] || world.getBlock(x, y + 1, z) != id)
+                world.setBlock(x, y, z, 0);
+        }
+    }
+
+    public override UVPair getTexture(int faceIdx, int metadata) => uvs[0];
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
+        x &= 15; y &= 15; z &= 15;
 
-        x &= 15;
-        y &= 15;
-        z &= 15;
+        var m = br.getBlock().getMetadata();
+        var f = facing(m);
+        var o = open(m);
+        var u = upper(m);
+        var h = hinge(m);
 
-        var block = br.getBlock();
-        var metadata = block.getMetadata();
-        var facing = getFacing(metadata);
-        var open = isOpen(metadata);
+        var tex = uvs[0];
+        if (!u) tex = new UVPair(tex.u, tex.v + 1);
 
-        var min = uvs[0];
-        var max = uvs[0] + 1;
+        var u0 = UVPair.texU(tex.u);
+        var v0 = UVPair.texV(tex.v);
+        var u1 = UVPair.texU(tex.u + 1);
+        var v1 = UVPair.texV(tex.v + 1);
 
-        var u0 = UVPair.texU(min.u);
-        var v0 = UVPair.texV(min.v);
-        var u1 = UVPair.texU(max.u);
-        var v1 = UVPair.texV(max.v);
+        const float t = 2f / 16f;
+        float x0, z0, x1, z1;
 
-        // door dimensions: 16 pixels X (1 block), 32 pixels Y (2 blocks), 2 pixels Z
-        const float thickness = 2f / 16f; // 2 pixels = 2/16 blocks
-
-        // calculate door bounds based on facing and open state
-        float x0, z0, x1, z1, y0, y1;
-
-        y0 = 0f;
-        y1 = 2f; // extends 2 blocks tall (32 pixels)
-
-        if (open) {
-            // rotated 90 degrees around hinge corner
-            switch (facing) {
-                case 0: // WEST facing, hinge at northeast (x=1, z=1)
-                    x0 = 1f - thickness; x1 = 1f; z0 = 0f; z1 = 1f;
-                    break;
-                case 1: // EAST facing, hinge at southwest (x=0, z=0)
-                    x0 = 0f; x1 = thickness; z0 = 0f; z1 = 1f;
-                    break;
-                case 2: // SOUTH facing, hinge at southeast (x=1, z=0)
-                    x0 = 0f; x1 = 1f; z0 = 0f; z1 = thickness;
-                    break;
-                default: // NORTH facing, hinge at northwest (x=0, z=1)
-                    x0 = 0f; x1 = 1f; z0 = 1f - thickness; z1 = 1f;
-                    break;
-            }
+        if (o) {
+            (x0, z0, x1, z1) = (f, h) switch {
+                (0, false) => (0f, 1f - t, 1f, 1f),
+                (0, true) or (1, false) => (0f, 0f, 1f, t),
+                (1, true) => (0f, 1f - t, 1f, 1f),
+                (2, false) => (0f, 0f, t, 1f),
+                (2, true) or (3, false) => (1f - t, 0f, 1f, 1f),
+                _ => (0f, 0f, t, 1f)
+            };
         } else {
-            // closed, positioned at hinge edge
-            switch (facing) {
-                case 0: // WEST facing, against north wall
-                    x0 = 0f; x1 = 1f; z0 = 1f - thickness; z1 = 1f;
-                    break;
-                case 1: // EAST facing, against south wall
-                    x0 = 0f; x1 = 1f; z0 = 0f; z1 = thickness;
-                    break;
-                case 2: // SOUTH facing, against east wall
-                    x0 = 1f - thickness; x1 = 1f; z0 = 0f; z1 = 1f;
-                    break;
-                default: // NORTH facing, against west wall
-                    x0 = 0f; x1 = thickness; z0 = 0f; z1 = 1f;
-                    break;
-            }
+            (x0, z0, x1, z1) = (f, h) switch {
+                (0, _) => (1f - t, 0f, 1f, 1f),
+                (1, _) => (0f, 0f, t, 1f),
+                (2, _) => (0f, 1f - t, 1f, 1f),
+                _ => (0f, 0f, 1f, t)
+            };
         }
 
-        br.renderCube(x, y, z, vertices, x0, y0, z0, x1, y1, z1, u0, v0, u1, v1);
+        br.renderCube(x, y, z, vertices, x0, 0f, z0, x1, 1f, z1, u0, v0, u1, v1);
     }
 
     public override void getAABBs(World world, int x, int y, int z, byte metadata, List<AABB> aabbs) {
         aabbs.Clear();
+        var f = facing(metadata);
+        var o = open(metadata);
+        var h = hinge(metadata);
+        const float t = 2f / 16f;
 
-        var facing = getFacing(metadata);
-        var open = isOpen(metadata);
-
-        const float thickness = 2f / 16f;
-
-        if (open) {
-            // rotated collision (2 blocks tall) - rotated around hinge
-            switch (facing) {
-                case 0: // WEST - against east wall
-                    aabbs.Add(new AABB(x + 1f - thickness, y, z, x + 1f, y + 2f, z + 1f));
-                    break;
-                case 1: // EAST - against west wall
-                    aabbs.Add(new AABB(x, y, z, x + thickness, y + 2f, z + 1f));
-                    break;
-                case 2: // SOUTH - against south wall
-                    aabbs.Add(new AABB(x, y, z, x + 1f, y + 2f, z + thickness));
-                    break;
-                default: // NORTH - against north wall
-                    aabbs.Add(new AABB(x, y, z + 1f - thickness, x + 1f, y + 2f, z + 1f));
-                    break;
-            }
+        if (o) {
+            aabbs.Add((f, h) switch {
+                (0, false) => new AABB(x, y, z + 1f - t, x + 1f, y + 1f, z + 1f),
+                (0, true) or (1, false) => new AABB(x, y, z, x + 1f, y + 1f, z + t),
+                (1, true) => new AABB(x, y, z + 1f - t, x + 1f, y + 1f, z + 1f),
+                (2, false) => new AABB(x, y, z, x + t, y + 1f, z + 1f),
+                (2, true) or (3, false) => new AABB(x + 1f - t, y, z, x + 1f, y + 1f, z + 1f),
+                _ => new AABB(x, y, z, x + t, y + 1f, z + 1f)
+            });
         } else {
-            // closed collision (2 blocks tall) - positioned at hinge edge
-            switch (facing) {
-                case 0: // WEST facing, against north wall
-                    aabbs.Add(new AABB(x, y, z + 1f - thickness, x + 1f, y + 2f, z + 1f));
-                    break;
-                case 1: // EAST facing, against south wall
-                    aabbs.Add(new AABB(x, y, z, x + 1f, y + 2f, z + thickness));
-                    break;
-                case 2: // SOUTH facing, against east wall
-                    aabbs.Add(new AABB(x + 1f - thickness, y, z, x + 1f, y + 2f, z + 1f));
-                    break;
-                default: // NORTH facing, against west wall
-                    aabbs.Add(new AABB(x, y, z, x + thickness, y + 2f, z + 1f));
-                    break;
-            }
+            aabbs.Add((f, h) switch {
+                (0, _) => new AABB(x + 1f - t, y, z, x + 1f, y + 1f, z + 1f),
+                (1, _) => new AABB(x, y, z, x + t, y + 1f, z + 1f),
+                (2, _) => new AABB(x, y, z + 1f - t, x + 1f, y + 1f, z + 1f),
+                _ => new AABB(x, y, z, x + 1f, y + 1f, z + t)
+            });
         }
     }
 
-    public override byte maxValidMetadata() {
-        return 7; // 3 bits used (0-7)
-    }
+    public override byte maxValidMetadata() => 31; // 5 bits
 }

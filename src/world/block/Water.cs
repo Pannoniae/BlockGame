@@ -122,7 +122,7 @@ public class Water : Block {
             var above = world.getBlockRaw(x, y + 1, z);
             // if there is water above, this should be falling
             // WE DON'T USE GETWATER because that swallows the level for falling water...
-            if (above.getID() ==  Block.WATER.id) {
+            if (above.getID() ==  WATER.id) {
                 byte aboveMetadata = getWaterLevel(above.getMetadata());
 
                 // if above is falling, become falling
@@ -135,7 +135,7 @@ public class Water : Block {
             int adjacentSources = 0;
             foreach (var dir in Direction.directionsHorizontal) {
                 var neighbour = pos + dir;
-                if (world.getBlock(neighbour) ==  Block.WATER.id) {
+                if (world.getBlock(neighbour) ==  WATER.id) {
                     var neighbourMetadata = world.getBlockMetadata(neighbour);
                     // if neighbour is a source and not falling (not sure how the second one could happen but whatever)
                     if (getWaterLevel(neighbourMetadata) == 0 && !isFalling(neighbourMetadata)) {
@@ -252,7 +252,7 @@ public class Water : Block {
      */
     public static int getWater(World world, int x, int y, int z, ref bool hasFalling) {
         var block = world.getBlock(x, y, z);
-        if (block ==  Block.WATER.id) {
+        if (block ==  WATER.id) {
             var data = world.getBlockMetadata(x, y, z);
 
             // if falling water, always full height
@@ -279,7 +279,7 @@ public class Water : Block {
      */
     public static int getRenderWater(World world, int x, int y, int z) {
         var block = world.getBlock(x, y, z);
-        if (block ==  Block.WATER.id) {
+        if (block ==  WATER.id) {
             var data = world.getBlockMetadata(x, y, z);
 
             // if falling water, always full height
@@ -301,7 +301,7 @@ public class Water : Block {
     public static float getRenderHeight(World world, int x, int y, int z) {
         // if there's no water here, return 0
         var block = world.getBlock(x, y, z);
-        if (block !=  Block.WATER.id) {
+        if (block !=  WATER.id) {
             return 0f;
         }
 
@@ -340,14 +340,14 @@ public class Water : Block {
             return 1.0f;
         }
 
-        float totalHeight = 0;
+        float h = 0;
         int samples = 0;
 
         // sample the 4 blocks around this corner
-        totalHeight += sampleBlockHeight(world, x, y, z, ref samples);
-        totalHeight += sampleBlockHeight(world, x + ox, y, z, ref samples);
-        totalHeight += sampleBlockHeight(world, x, y, z + oz, ref samples);
-        totalHeight += sampleBlockHeight(world, x + ox, y, z + oz, ref samples);
+        h += sampleBlockHeight(world, x, y, z, ref samples);
+        h += sampleBlockHeight(world, x + ox, y, z, ref samples);
+        h += sampleBlockHeight(world, x, y, z + oz, ref samples);
+        h += sampleBlockHeight(world, x + ox, y, z + oz, ref samples);
 
         if (samples == 0) {
             return 0; // no water or air found, solid blocks only
@@ -355,12 +355,12 @@ public class Water : Block {
 
         //Console.Out.WriteLine("Samples: " + samples + " TotalHeight: " + totalHeight + " Final: " + (totalHeight / samples));
 
-        return totalHeight / samples;
+        return h / samples;
     }
 
     private static float sampleBlockHeight(World world, int x, int y, int z, ref int samples) {
         var block = world.getBlock(x, y, z);
-        if (block ==  Block.WATER.id) {
+        if (block ==  WATER.id) {
             var data = world.getBlockMetadata(x, y, z);
             samples++;
             return getHeight(data);
@@ -421,7 +421,7 @@ public class Water : Block {
         }
 
         // if water above
-        if (isFalling(metadata) || world.getBlock(x, y + 1, z) ==  Block.WATER.id) {
+        if (isFalling(metadata) || world.getBlock(x, y + 1, z) ==  WATER.id) {
             flow.Y -= 0.5f;
         }
 
@@ -431,11 +431,11 @@ public class Water : Block {
     public static bool canSpread(World world, int x, int y, int z) {
         var block = world.getBlock(x, y, z);
 
-        if (block ==  Block.AIR.id) {
+        if (block ==  AIR.id) {
             return true; // can always spread to air
         }
 
-        if (block ==  Block.WATER.id) {
+        if (block ==  WATER.id) {
             // can't spread to water, can you? :)
             return false;
         }
@@ -455,7 +455,7 @@ public class Water : Block {
     }
 
     public static void wakeUpWater(World world, Vector3I pos) {
-        if (world.getBlock(pos) ==  Block.WATER.id) {
+        if (world.getBlock(pos) ==  WATER.id) {
             var metadata = world.getBlockMetadata(pos);
             // wake up static water
             var dynamicMetadata = setDynamic(metadata, true);
@@ -530,16 +530,11 @@ public class Water : Block {
         var uRel = (uMax - uMin) * 0.5f;
         var vRel = (vMax - vMin) * 0.5f;
 
-        Vector2 uv00;
-        Vector2 uv01;
-        Vector2 uv10;
-        Vector2 uv11;
-
         // top face UVs: rotate around centre
-        uv00 = rotateUV(-uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
-        uv01 = rotateUV(-uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
-        uv10 = rotateUV(uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
-        uv11 = rotateUV(uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv00 = rotateUV(-uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv01 = rotateUV(-uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv10 = rotateUV(uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv11 = rotateUV(uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
 
         // side faces: 90° rotation with proper centering
         // ??? mass confucion

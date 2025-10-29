@@ -6,7 +6,8 @@
       "Bash(rg:*)",
       "WebFetch(domain:github.com)",
       "Read(../**)",
-      "Read(/D:\\dev\\cs\\BlockGame/**)"
+      "Read(/D:\\dev\\cs\\BlockGame/**)",
+      "WebSearch"
     ],
     "deny": [],
     "additionalDirectories": [

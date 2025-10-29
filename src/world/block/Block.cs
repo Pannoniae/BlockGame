@@ -9,7 +9,6 @@ using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.item;
-using Molten;
 using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
@@ -1258,35 +1257,6 @@ public class Grass(string name) : Block(name) {
     }
 }
 
-public class FallingBlock(string name) : Block(name) {
-    public override void update(World world, int x, int y, int z) {
-        var ym = y - 1;
-        bool isSupported = true;
-        // if not supported, set flag
-        while (world.getBlock(new Vector3I(x, ym, z)) == 0) {
-            // decrement Y
-            isSupported = false;
-            ym--;
-        }
-
-        if (!isSupported) {
-            world.setBlock(x, y, z, 0);
-            world.setBlock(x, ym + 1, z, getID());
-        }
-
-        // if sand above, update
-        if (world.getBlock(new Vector3I(x, y + 1, z)) == getID()) {
-            // if you do an update immediately, it will cause a stack overflow lol
-            world.scheduleBlockUpdate(new Vector3I(x, y + 1, z), 1);
-        }
-    }
-
-    public override void scheduledUpdate(World world, int x, int y, int z) {
-        // run a normal update
-        update(world, x, y, z);
-    }
-}
-
 public class GrassBlock(string name) : Block(name) {
     public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
         // grass drops dirt
@@ -1296,7 +1266,7 @@ public class GrassBlock(string name) : Block(name) {
     public override void randomUpdate(World world, int x, int y, int z) {
         // turn to dirt if full block above
         if (y < World.WORLDHEIGHT - 1 && isFullBlock(world.getBlock(x, y + 1, z))) {
-            world.setBlock(x, y, z,  Block.DIRT.id);
+            world.setBlock(x, y, z,  DIRT.id);
             return;
         }
 
@@ -1313,9 +1283,9 @@ public class GrassBlock(string name) : Block(name) {
             int nz = z + dz;
 
             // if target is dirt with air above, spread
-            if (world.getBlock(nx, ny, nz) == Block.DIRT.id) {
+            if (world.getBlock(nx, ny, nz) == DIRT.id) {
                 if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == AIR.id) {
-                    world.setBlock(nx, ny, nz,  Block.GRASS.id);
+                    world.setBlock(nx, ny, nz,  GRASS.id);
                 }
             }
         }

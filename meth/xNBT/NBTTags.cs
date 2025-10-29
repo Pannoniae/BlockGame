@@ -277,14 +277,14 @@ public interface INBTList {
 }
 
 public class NBTList : NBTTag, INBTList {
-    public XList<NBTTag> list;
+    public readonly XList<NBTTag> list;
 
     public NBTType listType { get; set; }
 
     public override NBTType id => NBTType.TAG_List;
 
     public NBTList(NBTType listType, string? name) : base(name) {
-        list = new XList<NBTTag>();
+        list = [];
         this.listType = listType;
     }
 

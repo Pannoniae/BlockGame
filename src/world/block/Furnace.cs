@@ -20,14 +20,13 @@ public class Furnace : Block {
      * default front is -Z (SOUTH), we want it to face the player
      */
     public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        // face opposite to player (so front faces player)
         var opposite = Direction.getOpposite(dir);
         byte facing = opposite switch {
             RawDirection.WEST => 0,
             RawDirection.EAST => 1,
             RawDirection.SOUTH => 2,
             RawDirection.NORTH => 3,
-            _ => 2 // default south
+            _ => 2
         };
 
         uint blockValue = id;
@@ -39,28 +38,18 @@ public class Furnace : Block {
 
     public override byte maxValidMetadata() => 3;
 
-    /**
-     * uvs layout from furnaceUVs: [front, side, top_bottom]
-     * face indices: 0=WEST, 1=EAST, 2=SOUTH, 3=NORTH, 4=DOWN, 5=UP
-     * metadata: 0=WEST, 1=EAST, 2=SOUTH, 3=NORTH (facing direction)
-     */
+    /** uvs: [front, side, top_bottom] */
     public override UVPair getTexture(int faceIdx, int metadata) {
         var facing = (byte)(metadata & 0b11);
 
-        // determine which texture to use for this face based on facing
         return faceIdx switch {
-            0 => facing == 0 ? uvs[0] : uvs[1], // WEST: front if facing west, else side
-            1 => facing == 1 ? uvs[0] : uvs[1], // EAST: front if facing east, else side
-            2 => facing == 2 ? uvs[0] : uvs[1], // SOUTH: front if facing south, else side
-            3 => facing == 3 ? uvs[0] : uvs[1], // NORTH: front if facing north, else side
-            4 => uvs[2], // DOWN
-            5 => uvs[2], // UP
+            0 or 1 or 2 or 3 => facing == faceIdx ? uvs[0] : uvs[1],
+            4 or 5 => uvs[2],
             _ => uvs[0]
         };
     }
 
     public override bool onUse(World world, int x, int y, int z, Player player) {
-        // open the crafting table UI
         var ctx = new FurnaceMenuContext(player.inventory);
         player.currentCtx = ctx;
 

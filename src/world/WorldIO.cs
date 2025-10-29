@@ -13,12 +13,16 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class WorldIO {
-    //public static Dictionary<RegionCoord, CompoundTag> regionCache = new();
-    
-    // for saving
-    
+
     public static readonly FixedArrayPool<uint> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+
+    // palette building
+    private static readonly Dictionary<ushort, int> paletteDict = new(256);
+    private static readonly List<string> paletteList = new(256);
+
+    // blocks can change at runtime though? maybe, idk, but don't assume that plz
+
 
     public World world;
 
@@ -287,15 +291,15 @@ public class WorldIO {
                 chunk.blocks[sectionY].getSerializationLight(freshLight);
 
                 // build palette: collect unique block IDs
-                var paletteBuilder = new Dictionary<ushort, int>();
-                var paletteList = new List<string>();
+                paletteDict.Clear();
+                paletteList.Clear();
 
                 for (int i = 0; i < freshBlocks.Length; i++) {
                     ushort blockID = freshBlocks[i].getID();
 
-                    if (!paletteBuilder.ContainsKey(blockID)) {
+                    if (!paletteDict.ContainsKey(blockID)) {
                         string stringID = Registry.BLOCKS.getName(blockID) ?? "air";
-                        paletteBuilder[blockID] = paletteList.Count;
+                        paletteDict[blockID] = paletteList.Count;
                         paletteList.Add(stringID);
                     }
                 }
@@ -305,7 +309,7 @@ public class WorldIO {
                 for (int i = 0; i < freshBlocks.Length; i++) {
                     ushort blockID = freshBlocks[i].getID();
                     byte metadata = freshBlocks[i].getMetadata();
-                    int paletteIdx = paletteBuilder[blockID];
+                    int paletteIdx = paletteDict[blockID];
                     paletteIndices[i] = ((uint)metadata << 24) | (uint)paletteIdx;
                 }
 

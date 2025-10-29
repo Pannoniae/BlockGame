@@ -45,12 +45,12 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: "GL.VertexAttribDivisor is a legacy function that mixes attribute format with binding state. Use separate format/binding calls.");
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
-        ImmutableArray.Create(
-            LegacyVertexAttribPointerRule,
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [
+        LegacyVertexAttribPointerRule,
             LegacyVertexAttribIPointerRule,
             LegacyVertexAttribLPointerRule,
-            LegacyVertexAttribDivisorRule);
+            LegacyVertexAttribDivisorRule
+    ];
 
     public override void Initialize(AnalysisContext context)
     {
@@ -92,7 +92,7 @@ public class LegacyVertexAttribPointerAnalyzer : DiagnosticAnalyzer
         // Check if it's being called on GL type (from Silk.NET.OpenGL)
         if (typeSymbol.Name == "GL" && 
             (typeSymbol.ContainingNamespace?.ToDisplayString() == "Silk.NET.OpenGL" ||
-             typeSymbol.ContainingNamespace?.ToDisplayString() == "Silk.NET.Legacy.OpenGL"))
+             typeSymbol.ContainingNamespace?.ToDisplayString() == "Silk.NET.OpenGL.Legacy"))
         {
             var diagnostic = Diagnostic.Create(
                 rule,
