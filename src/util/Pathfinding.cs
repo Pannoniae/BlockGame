@@ -35,7 +35,7 @@ public class Pathfinding {
         startNode.f = startNode.h;
 
         openSet.Add(startNode);
-        openSetLookup[startNode.GetHashCode()] = startNode;
+        openSetLookup.Set(startNode.GetHashCode(), startNode);
 
         int iterations = 0;
 
@@ -79,7 +79,7 @@ public class Pathfinding {
                     neighbor.prev = current;
 
                     openSet.Add(neighbor);
-                    openSetLookup[key] = neighbor;
+                    openSetLookup.Set(key, neighbor);
                 }
             }
         }

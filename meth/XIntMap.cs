@@ -71,6 +71,10 @@ public class XIntMap<V> : IEnumerable<V> {
         Insert(key, value, false);
     }
 
+    public void Set(int key, V value) {
+        Insert(key, value, true);
+    }
+
     public bool Remove(int key) {
         int hash = GetHash(key);
         int mask = entries.Length - 1;

@@ -310,8 +310,10 @@ public class Mob(World world, string type) : Entity(world, type) {
         // hardcap at 70 degrees
         if (angleDiff is > 70 or < -70) {
             bodyRotation.Y = rotation.Y - float.CopySign(70, angleDiff);
+            angleDiff = float.CopySign(70, angleDiff); // recalculate after snap!
         }
 
+        // pull body towards head if difference exceeds threshold
         var a = Math.Abs(angleDiff);
         if (a > BODY_ROTATION_SNAP) {
             bodyRotation.Y = Meth.lerpAngle(bodyRotation.Y, rotation.Y, rotSpeed * 0.6f * (float)dt * (a / BODY_ROTATION_SNAP));
