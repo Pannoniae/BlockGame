@@ -259,6 +259,10 @@ public static partial class Meth {
         );
     }
 
+    public static float clampAngle(float a) {
+        return (a + 180f) % 360f - 180f;
+    }
+
     public static Matrix4x4 to4x4(this Matrix4F mat) {
         return Unsafe.BitCast<Matrix4F, Matrix4x4>(mat);
     }

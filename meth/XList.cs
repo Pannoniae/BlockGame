@@ -58,6 +58,15 @@ public class XList<T> : IList<T> {
         }
     }
 
+    public Span<T> this[Range r] {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get {
+            var (offset, length) = r.GetOffsetAndLength(cnt);
+            var span = new Span<T>(arr, offset, length);
+            return span;
+        }
+    }
+
     /**
      * Ref indexer - modify elements in-place without copying.
      */

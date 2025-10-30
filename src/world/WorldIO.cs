@@ -50,7 +50,7 @@ public class WorldIO {
 
         // save chunks
         if (saveChunks) {
-            foreach (var chunk in world.chunks.Values) {
+            foreach (var chunk in world.chunks) {
                 //var regionCoord = World.getRegionPos(chunk.coord);
                 saveChunk(world, chunk);
             }

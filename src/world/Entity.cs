@@ -3,15 +3,36 @@ using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.item;
 using JetBrains.Annotations;
 using Molten;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world;
 
-public class Entity(World world, string type) : Persistent {
+public partial class Entity(World world, string type) : Persistent {
     public const int MAX_SWING_TICKS = 20;
     public const int AIR_HIT_CD = 20;
+
+    // physics constants
+    public const double GRAVITY = 30;
+    public const double MAX_ACCEL = 50;
+    public const double JUMP_SPEED = 10;
+    public const double LIQUID_SWIM_UP_SPEED = 0.45;
+    public const double LIQUID_SURFACE_BOOST = 0.2;
+    public const double MAX_VSPEED = 200;
+    public const double FRICTION = 0.80;
+    public const double AIR_FRICTION = 0.80;
+    public const double FLY_FRICTION = 0.85;
+    public const double VERTICAL_FRICTION = 0.99;
+    public const double LIQUID_FRICTION = 0.92;
+    public const double EPSILON_GROUND_CHECK = 0.01;
+    public const double GROUND_MOVE_SPEED = 0.75;
+    public const double AIR_MOVE_SPEED = 0.5;
+    public const double AIR_FLY_SPEED = 1.75;
+    public const double LIQUID_MOVE_SPEED = 0.2;
+    public const double SNEAK_FACTOR = 0.28;
+    public const double STEP_HEIGHT = 0.51;
 
     public string type = type;
     public int id = World.ec++;
@@ -125,6 +146,26 @@ public class Entity(World world, string type) : Persistent {
 
     protected static readonly List<AABB> AABBList = [];
 
+    // riding system
+    public Entity? mount; // what this entity is riding
+    public Entity? rider; // who is riding this entity
+
+    // capability flags - override in subclasses
+    protected virtual bool needsPrevVars => true;
+    protected virtual bool needsPhysics => true;
+    protected virtual bool needsGravity => true;
+    protected virtual bool needsCollision => true;
+    protected virtual bool needsFriction => true;
+    protected virtual bool needsBlockInteraction => true;
+    protected virtual bool needsEntityCollision => false; // TODO
+    protected virtual bool needsBodyRotation => false;
+    protected virtual bool needsFootsteps => false;
+    protected virtual bool needsFallDamage => false;
+    protected virtual bool needsAnimation => false;
+
+    public bool isRiding() => mount != null;
+    public bool hasRider() => rider != null;
+
     public ChunkCoord getChunk(Vector3D pos) {
         var blockPos = pos.toBlockPos();
         return World.getChunkPos(new Vector2I(blockPos.X, blockPos.Z));
@@ -150,63 +191,156 @@ public class Entity(World world, string type) : Persistent {
         prevVelocity = Vector3D.Zero;
     }
 
-    // todo unfinished shit below
-    public void read(NBTCompound data) {
-        id = data.getInt("id");
+    // ============ LIFECYCLE:tm: ============
 
-        // load entity type from string ID
-        if (data.has("type")) {
-            var id = data.getString("type");
-            type = id;
+    /**
+     * Main update loop - orchestrates all entity behaviour.
+     * Subclasses should override the hook methods, not this!!!
+     */
+    public virtual void update(double dt) {
+        // 1. early exit checks (death animation, despawn, etc)
+        if (!shouldContinueUpdate(dt)) return;
+
+        // 2. store prev state for interpolation
+        if (needsPrevVars) {
+            savePrevVars();
         }
 
-        position = prevPosition = new Vector3D(
-            data.getDouble("posX"),
-            data.getDouble("posY"),
-            data.getDouble("posZ")
-        );
-        rotation = prevRotation = new Vector3(
-            data.getFloat("rotX"),
-            data.getFloat("rotY"),
-            data.getFloat("rotZ")
-        );
-        velocity = prevVelocity = new Vector3D(
-            data.getDouble("velX"),
-            data.getDouble("velY"),
-            data.getDouble("velZ")
-        );
-        accel = Vector3D.Zero;
-        readx(data);
+        // 3. decrement cooldowns and timers
+        updateTimers(dt);
+
+        // 4. AI/input sets velocities/forces
+        prePhysics(dt);
+
+        // 5. physics pipeline (unless riding)
+        if (needsPhysics && !isRiding()) {
+            updatePhysics(dt);
+        } else if (isRiding()) {
+            syncToMount();
+        }
+
+        // 6. post-physics updates (body rotation, animation, etc)
+        postPhysics(dt);
     }
 
-    protected virtual void readx(NBTCompound data) {
+    /**
+     * Full physics pipeline
+     */
+    protected virtual void updatePhysics(double dt) {
+        collx = false;
+        collz = false;
 
+        // entity collision
+        if (needsEntityCollision) {
+            handleEntityPushing(dt);
+        }
+
+        // block interactions (liquid push, etc)
+        if (needsBlockInteraction) {
+            interactBlock(dt);
+        }
+
+        // gravity
+        if (needsGravity) {
+            updateGravity(dt);
+        }
+
+        // apply acceleration
+        velocity += accel * dt;
+        clamp(dt);
+
+        // update block at feet
+        blockAtFeet = world.getBlock(feetPosition.toBlockPos());
+
+        // collision + movement
+        if (needsCollision) {
+            collide(dt);
+        } else {
+            // no collision, just move
+            position += velocity * dt;
+        }
+
+        // fall damage check
+        if (needsFallDamage) {
+            checkFallDamage(dt);
+        }
+
+        // friction
+        if (needsFriction) {
+            applyFriction();
+            clamp(dt);
+        }
     }
 
-    public void write(NBTCompound data) {
-        data.addInt("id", id);
+    // ============ LIFECYCLE HOOKS ============
 
-        // save string ID
-        data.addString("type", type);
-
-        data.addDouble("posX", position.X);
-        data.addDouble("posY", position.Y);
-        data.addDouble("posZ", position.Z);
-        data.addFloat("rotX", rotation.X);
-        data.addFloat("rotY", rotation.Y);
-        data.addFloat("rotZ", rotation.Z);
-        data.addDouble("velX", velocity.X);
-        data.addDouble("velY", velocity.Y);
-        data.addDouble("velZ", velocity.Z);
-        writex(data);
+    /**
+     * Early exit checks. Return false to skip rest of update.
+     * Override to add death animations, despawn logic, etc.
+     */
+    protected virtual bool shouldContinueUpdate(double dt) {
+        return true;
     }
 
-    public virtual void writex(NBTCompound data) {
-
+    /**
+     * Store previous state for interpolation.
+     * Override to add more vars (camera bob, swing progress, etc).
+     */
+    protected virtual void savePrevVars() {
+        prevPosition = position;
+        prevVelocity = velocity;
+        prevRotation = rotation;
+        prevBodyRotation = bodyRotation;
+        prevTotalTraveled = totalTraveled;
+        wasInLiquid = inLiquid;
+        prevSwingProgress = swingProgress;
+        papos = apos;
+        paspeed = aspeed;
     }
 
-    public virtual void update(double dt) {
+    /**
+     * Decrement cooldowns and timers.
+     * Override to add more timers (iframes, dmgTime, etc).
+     */
+    protected virtual void updateTimers(double dt) {
+        updateSwing();
     }
+
+    /**
+     * AI/input sets velocities and forces before physics.
+     * Override for mob AI or player input.
+     */
+    protected virtual void prePhysics(double dt) {
+    }
+
+    /**
+     * Post-physics updates (animation, body rotation, effects).
+     * Override for entity-specific post-physics behaviour.
+     */
+    protected virtual void postPhysics(double dt) {
+        // update feet position
+        feetPosition = new Vector3D(position.X, position.Y + 0.05, position.Z);
+
+        // update AABB
+        aabb = calcAABB(position);
+
+        // body rotation
+        if (needsBodyRotation) {
+            updateBodyRotation(dt);
+        }
+
+        // animation
+        if (needsAnimation) {
+            updateAnimation(dt);
+        }
+
+        // footsteps
+        if (needsFootsteps) {
+            updateFootsteps(dt);
+        }
+    }
+
+    // ============ PHYSICS SYSTEMS ============
 
     /**
      * Handle interactions with the block the entity is standing in.
@@ -254,242 +388,8 @@ public class Entity(World world, string type) : Persistent {
     public virtual void onChunkChanged() {
     }
 
-    /**
-     * Swept collision - adjust velocity per axis, apply movement immediately.
-     * Reduces velocity to exact contact point instead of preventing escape.
-     *
-     * This used to be YXZ order but I changed it to match the blocks' order to be YZX.
-     */
-    protected void collide(double dt) {
-        var oldPos = position;
-        var blockPos = position.toBlockPos();
-
-        // collect potential collision targets
-        collisions.Clear();
-
-        // if we aren't noclipping
-        if (!noClip) {
-            ReadOnlySpan<Vector3I> targets = [
-                blockPos, new Vector3I(blockPos.X, blockPos.Y + 1, blockPos.Z)
-            ];
-            // for each block we might collide with
-            foreach (Vector3I target in targets) {
-                // first, collide with the block the player is in
-                var blockPos2 = feetPosition.toBlockPos();
-                world.getAABBsCollision(AABBList, blockPos2.X, blockPos2.Y, blockPos2.Z);
-
-                // for each AABB of the block the player is in
-                foreach (AABB aa in AABBList) {
-                    collisions.Add(aa);
-                }
-
-                // gather neighbouring blocks
-                World.getBlocksInBox(neighbours, target + new Vector3I(-1, -1, -1),
-                    target + new Vector3I(1, 1, 1));
-                // for each neighbour block
-                foreach (var neighbour in neighbours) {
-                    var block = world.getBlock(neighbour);
-                    world.getAABBsCollision(AABBList, neighbour.X, neighbour.Y, neighbour.Z);
-                    foreach (AABB aa in AABBList) {
-                        collisions.Add(aa);
-                    }
-                }
-            }
-        }
-
-        // tl;dr: the point is that we *prevent* collisions instead of resolving them after the fact
-        // and if there's already a collision, we don't do shit. We just prevent new ones.
-        // This prevents the "ejecting out" behaviour and it also prevents stuff glitching where it REALLY shouldn't.
-
-        // hehe
-        double d = 0.0;
-
-        // Y axis
-        var p = calcAABB(position);
-
-        foreach (var b in collisions) {
-            // wtf are we even doing here then?
-            if (!AABB.isCollisionX(p, b) || !AABB.isCollisionZ(p, b)) {
-                continue;
-            }
-
-            switch (velocity.Y) {
-                case > 0: {
-                    d = b.y0 - p.y1;
-                    if (p.y1 <= b.y0 && d < velocity.Y * dt) {
-                        velocity.Y = d / dt;
-                    }
-
-                    break;
-                }
-                case < 0: {
-                    d = b.y1 - p.y0;
-                    if (p.y0 >= b.y1 && d > velocity.Y * dt) {
-                        velocity.Y = d / dt;
-                    }
-
-                    break;
-                }
-            }
-        }
-
-        position.Y += velocity.Y * dt;
-        // recalc aabb after Y movement!
-        p = calcAABB(position);
-
-        // Z axis
-        foreach (var b in collisions) {
-            if (!AABB.isCollisionX(p, b) || !AABB.isCollisionY(p, b)) {
-                continue;
-            }
-
-            // try stepping up if on ground
-            bool canStepUp = false;
-            if (onGround && velocity.Z != 0) {
-                for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += 0.1) {
-                    var stepAABB = calcAABB(new Vector3D(position.X, position.Y + stepY, position.Z + velocity.Z * dt));
-                    bool cb = false;
-
-                    foreach (var testAABB in collisions) {
-                        if (AABB.isCollision(stepAABB, testAABB)) {
-                            cb = true;
-                            break;
-                        }
-                    }
-
-                    if (!cb) {
-                        position.Y += stepY;
-                        canStepUp = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!canStepUp) {
-                switch (velocity.Z) {
-                    case > 0: {
-                        d = b.z0 - p.z1;
-                        if (p.z1 <= b.z0 && d < velocity.Z * dt) {
-                            velocity.Z = d / dt;
-                            collz = true;
-                        }
-                        break;
-                    }
-                    case < 0: {
-                        d = b.z1 - p.z0;
-                        if (p.z0 >= b.z1 && d > velocity.Z * dt) {
-                            velocity.Z = d / dt;
-                            collz = true;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        // sneaking edge prevention for Z
-        if (sneaking && onGround) {
-            var sneakAABB = calcAABB(new Vector3D(position.X, position.Y - 0.1, position.Z + velocity.Z * dt));
-            bool hasEdge = false;
-            foreach (var blockAABB in collisions) {
-                if (AABB.isCollision(sneakAABB, blockAABB)) {
-                    hasEdge = true;
-                    break;
-                }
-            }
-
-            if (!hasEdge) {
-                velocity.Z = 0;
-            }
-        }
-
-        position.Z += velocity.Z * dt;
-        // recalc aabb after Z movement!
-        p = calcAABB(position);
-
-        // X axis
-        foreach (var b in collisions) {
-            if (!AABB.isCollisionY(p, b) || !AABB.isCollisionZ(p, b)) {
-                continue;
-            }
-
-            // try stepping up if on ground
-            bool canStepUp = false;
-            if (onGround && velocity.X != 0) {
-                for (double stepY = Constants.epsilon; stepY <= Constants.stepHeight; stepY += 0.1) {
-                    var stepAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y + stepY, position.Z));
-                    bool cb = false;
-
-                    foreach (var testAABB in collisions) {
-                        if (AABB.isCollision(stepAABB, testAABB)) {
-                            cb = true;
-                            break;
-                        }
-                    }
-
-                    if (!cb) {
-                        position.Y += stepY;
-                        canStepUp = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!canStepUp) {
-                switch (velocity.X) {
-                    case > 0: {
-                        d = b.x0 - p.x1;
-                        if (p.x1 <= b.x0 && d < velocity.X * dt) {
-                            velocity.X = d / dt;
-                            collx = true;
-                        }
-                        break;
-                    }
-                    case < 0: {
-                        d = b.x1 - p.x0;
-                        if (p.x0 >= b.x1 && d > velocity.X * dt) {
-                            velocity.X = d / dt;
-                            collx = true;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        // sneaking edge prevention for X
-        if (sneaking && onGround) {
-            var sneakAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y - 0.1, position.Z));
-            bool hasEdge = false;
-            foreach (var blockAABB in collisions) {
-                if (AABB.isCollision(sneakAABB, blockAABB)) {
-                    hasEdge = true;
-                    break;
-                }
-            }
-
-            if (!hasEdge) {
-                velocity.X = 0;
-            }
-        }
-
-        position.X += velocity.X * dt;
-        // recalc aabb after X movement!
-        p = calcAABB(position);
-
-        // zero out velocity on collision?
-        //if (hasXCollision) velocity.X = 0;
-        //if (hasZCollision) velocity.Z = 0;
-
-        // is player on ground? check slightly below
-        var groundCheck = calcAABB(new Vector3D(position.X, position.Y - Constants.epsilonGroundCheck, position.Z));
-        onGround = false;
-        foreach (var blockAABB in collisions) {
-            if (AABB.isCollision(blockAABB, groundCheck)) {
-                onGround = true;
-                flyMode = false;
-            }
-        }
+    public virtual (Item item, byte metadata, int count) getDrop() {
+        throw new NotImplementedException();
     }
 
     public double getSwingProgress(double dt) {
@@ -552,107 +452,67 @@ public class Entity(World world, string type) : Persistent {
         return Vector3.Normalize(cameraDirection);
     }
 
-    protected void clamp(double dt) {
-        // clamp
-        if (Math.Abs(velocity.X) < Constants.epsilon) {
-            velocity.X = 0;
-        }
+    // ============ STUBS ============
 
-        if (Math.Abs(velocity.Y) < Constants.epsilon) {
-            velocity.Y = 0;
-        }
-
-        if (Math.Abs(velocity.Z) < Constants.epsilon) {
-            velocity.Z = 0;
-        }
-
-        // clamp fallspeed
-        if (Math.Abs(velocity.Y) > Constants.maxVSpeed) {
-            var cappedVel = Constants.maxVSpeed;
-            velocity.Y = cappedVel * Math.Sign(velocity.Y);
-        }
-
-        // clamp accel (only Y for now, other axes aren't used)
-        if (Math.Abs(accel.Y) > Constants.maxAccel) {
-            accel.Y = Constants.maxAccel * Math.Sign(accel.Y);
-        }
-
-        // world bounds check
-        //var s = world.getWorldSize();
-        //position.X = Math.Clamp(position.X, 0, s.X);
-        //position.Y = Math.Clamp(position.Y, 0, s.Y);
-        //position.Z = Math.Clamp(position.Z, 0, s.Z);
+    /**
+     * Entity pushing
+     */
+    protected virtual void handleEntityPushing(double dt) {
+        // TODO implement entity-entity collision
     }
 
-    protected void applyFriction() {
-        if (flyMode) {
-            var f = Constants.flyFriction;
-            velocity.X *= f;
-            velocity.Z *= f;
-            velocity.Y *= f;
-            return;
-        }
-
-        // ground friction
-        if (!inLiquid) {
-            var f2 = Constants.verticalFriction;
-            if (onGround) {
-                //if (sneaking) {
-                //    velocity = Vector3D.Zero;
-                //}
-                //else {
-                var f = Constants.friction;
-                velocity.X *= f;
-                velocity.Z *= f;
-                velocity.Y *= f2;
-                //}
-            }
-            else {
-                var f = Constants.airFriction;
-                velocity.X *= f;
-                velocity.Z *= f;
-                velocity.Y *= f2;
-            }
-        }
-
-        // liquid friction
-        if (inLiquid) {
-            velocity.X *= Constants.liquidFriction;
-            velocity.Z *= Constants.liquidFriction;
-            velocity.Y *= Constants.liquidFriction;
-            velocity.Y -= 0.25;
-        }
-
-        if (jumping && !wasInLiquid && inLiquid) {
-            velocity.Y -= 2.5;
-        }
-
-        //Console.Out.WriteLine(level);
-        if (jumping && (onGround || inLiquid)) {
-            velocity.Y += inLiquid ? Constants.liquidSwimUpSpeed : Constants.jumpSpeed;
-
-            // if on the edge of water, boost
-            if (inLiquid && (collx || collz)) {
-                velocity.Y += Constants.liquidSurfaceBoost;
-            }
-
-            onGround = false;
-            jumping = false;
+    /**
+     * Sync position to mount when riding
+     */
+    protected virtual void syncToMount() {
+        if (mount != null) {
+            position = mount.position;
+            velocity = mount.velocity;
         }
     }
 
-    protected void updateGravity(double dt) {
-        // if in liquid, don't apply gravity
-        if (inLiquid) {
-            accel.Y = 0;
-            return;
-        }
+    /**
+     * Check for fall damage based on fall velocity
+     */
+    protected virtual void checkFallDamage(double dt) {
+        // no-op by default, mobs/player can override this?
+    }
 
-        if (!onGround && !flyMode) {
-            accel.Y = -Constants.gravity;
+    /**
+     * Update body rotation to smoothly follow head/movement
+     * Override to customize body rotation behavior
+     */
+    protected virtual void updateBodyRotation(double dt) {
+        // default: body follows head exactly
+        bodyRotation = rotation;
+    }
+
+    /**
+     * Update animation state (apos, aspeed) based on movement
+     * Override to customize animation
+     */
+    protected virtual void updateAnimation(double dt) {
+        var vel = velocity.withoutY();
+        aspeed = (float)vel.Length() * 0.3f;
+        aspeed = Meth.clamp(aspeed, 0f, 1f);
+
+        if (aspeed > 0f) {
+            apos += aspeed * (float)dt;
         }
-        else {
-            accel.Y = 0;
-        }
+    }
+
+    /**
+     * Play footstep sounds when moving
+     * Override to customise
+     */
+    protected virtual void updateFootsteps(double dt) {
+
+    }
+
+    /**
+     * Apply knockback to the entity
+     */
+    public virtual void knockback(Vector3D force) {
+        velocity += force;
     }
 }

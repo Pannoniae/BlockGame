@@ -21,20 +21,20 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
     public ChunkStatus status;
 
-    public HeightMap heightMap;
+    public readonly HeightMap heightMap;
     public readonly ChunkCoord coord;
-    public SubChunk[] subChunks;
-    public PaletteBlockData[] blocks = new PaletteBlockData[CHUNKHEIGHT];
+    public readonly SubChunk[] subChunks;
+    public readonly PaletteBlockData[] blocks = new PaletteBlockData[CHUNKHEIGHT];
 
     /** For now, this is fixed-size, we'll cook something better up later */
-    public List<Entity>[] entities = new List<Entity>[CHUNKHEIGHT];
+    public readonly List<Entity>[] entities = new List<Entity>[CHUNKHEIGHT];
 
     /** TODO implement crafting tables and stuff
      * (does that need to be a block entity? maybe? or more like a chest or something
      */
-    public Dictionary<Vector3I, BlockEntity> blockEntities = new();
+    public readonly Dictionary<Vector3I, BlockEntity> blockEntities = new();
 
-    public World world;
+    public readonly World world;
 
     public AABB box;
 
@@ -717,6 +717,10 @@ public readonly record struct ChunkCoord(int x, int z) {
     public readonly int x = x;
     public readonly int z = z;
 
+    public ChunkCoord(long chunkKey) : this((int)(chunkKey >> 32), (int)chunkKey) {
+
+    }
+
     public double distance(ChunkCoord chunkCoord) {
         int dx = x - chunkCoord.x;
         int dz = z - chunkCoord.z;
@@ -727,6 +731,18 @@ public readonly record struct ChunkCoord(int x, int z) {
         int dx = x - chunkCoord.x;
         int dz = z - chunkCoord.z;
         return dx * dx + dz * dz;
+    }
+
+    /** pack coords into long */
+    public long toLong() {
+        return (long)x << 32 | (uint)z;
+    }
+
+    /** unpack coords from long */
+    public static ChunkCoord fromLong(long packed) {
+        int x = (int)(packed >> 32);
+        int z = (int)packed;
+        return new ChunkCoord(x, z);
     }
 
     public override int GetHashCode() {

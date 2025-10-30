@@ -16,7 +16,7 @@ using Silk.NET.Input;
 
 namespace BlockGame.world;
 
-public class Player : Soul, CommandSource {
+public class Player : Mob, CommandSource {
     public const double height = 1.75;
     public const double width = 0.625;
     public const double eyeHeight = 1.6;
@@ -73,11 +73,6 @@ public class Player : Soul, CommandSource {
     public double prevBreakProgress;
 
     public int breakTime;
-
-    public int dmgTime;
-    public int dieTime;
-
-    public int iframes;
 
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world, "player") {
@@ -171,14 +166,9 @@ public class Player : Soul, CommandSource {
     }
 
 
-    public override void update(double dt) {
-        // death check
-        if (hp <= 0 && !dead) {
-            onDeath();
-            dieTime++;
-            return; // don't update anything else when dead
-        }
+    // ============ LIFECYCLE HOOKS ============
 
+    protected override bool shouldContinueUpdate(double dt) {
         // prevent movement when dead
         if (dead) {
             dieTime++;
@@ -186,105 +176,31 @@ public class Player : Soul, CommandSource {
             inputVector = Vector3D.Zero;
             strafeVector = Vector3D.Zero;
             Game.camera.updatePosition(dt); // update death tilt
-            return;
+            return false;
         }
 
         dieTime = 0;
+        return true;
+    }
 
-        collx = false;
-        collz = false;
+    protected override void savePrevVars() {
+        base.savePrevVars();
 
-        // after everything is done
-        // calculate total traveled
-        setPrevVars();
+        // player-specific prev vars
+        Game.camera.prevBob = Game.camera.bob;
+        prevBreakProgress = breakProgress;
+        handRenderer.prevLower = handRenderer.lower;
+    }
+
+    protected override void updateTimers(double dt) {
+        base.updateTimers(dt);
+
         handRenderer.update(dt);
-        updateSwing();
-
-        interactBlock(dt);
-
-        updateInputVelocity(dt);
-        applyInputMovement(dt);
-
-        //Console.Out.WriteLine(inLiquid);
-
-        updateGravity(dt);
-
-        velocity += accel * dt;
-        //position += velocity * dt;
-        clamp(dt);
-
-        blockAtFeet = world.getBlock(feetPosition.toBlockPos());
-        //inLiquid = Block.liquid[blockAtFeet];
-
-        collide(dt);
-
-        // fall damage check
-        if (Game.gamemode.gameplay && onGround && wasInAir && !flyMode && !inLiquid) {
-            var fallSpeed = -prevVelocity.Y;
-            if (fallSpeed > SAFE_FALL_SPEED) {
-                var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
-                takeDamage(dmg);
-                Game.camera.applyImpact(dmg);
-            }
-        }
-        wasInAir = !onGround && !flyMode;
-
-        applyFriction();
-        clamp(dt);
-
-        updateBodyRotation(dt);
-
-        // don't increment if flying
-        totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
-
-        // Play footstep sounds when moving on ground
-        if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
-            if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
-                // get block below player
-                var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
-                var blockBelow = Block.get(world.getBlock(pos));
-                if (blockBelow?.mat != null) {
-                    Game.snd.playFootstep(blockBelow.mat.smat);
-                }
-                lastFootstepDistance = totalTraveled;
-            }
-        }
-
-        feetPosition = new Vector3D(position.X, position.Y + feetCheckHeight, position.Z);
-
-        // Update the camera system
-        Game.camera.updatePosition(dt);
-        calcAABB(ref aabb, position);
-
-        // update animation state
-        var vel = velocity.withoutY();
-
-
-        aspeed = (float)vel.Length() * 0.3f;
-        // cap aspeed!
-        aspeed = Meth.clamp(aspeed, 0f, 1f);
-
-        bool isMoving = aspeed > 0f;
-        if (isMoving) {
-            apos += aspeed * (float)dt;
-        }
-
-        // item pickup logic
-
-        // print number of entities
-        /*Console.Out.WriteLine("w: " + world.entities.Count);
-        var tc = world.getSubChunk(position.toBlockPos().X, position.toBlockPos().Y, position.toBlockPos().Z);
-        Console.Out.WriteLine("c: " + tc.chunk.entities[tc.coord.y].Count);
-        foreach (var e in tc.chunk.entities[tc.coord.y]) {
-            Console.Out.WriteLine(" - " + e.id + " at " + e.position + "type: " + e.GetType());
-        }*/
-
-        pickup();
 
         // decay shiny values
         for (int i = 0; i < inventory.shiny.Length; i++) {
             if (inventory.shiny[i] > 0) {
-                inventory.shiny[i] -= (float)(dt * 4.0); // historically 6, 3, probably settle at 4?
+                inventory.shiny[i] -= (float)(dt * 4.0);
                 if (inventory.shiny[i] < 0) {
                     inventory.shiny[i] = 0;
                 }
@@ -297,24 +213,52 @@ public class Player : Soul, CommandSource {
         }
     }
 
-    public void setPrevVars() {
-        prevPosition = position;
-        prevVelocity = velocity;
-        prevRotation = rotation;
-        prevBodyRotation = bodyRotation;
-        Game.camera.prevBob = Game.camera.bob;
-        prevTotalTraveled = totalTraveled;
-        wasInLiquid = inLiquid;
-        prevSwingProgress = swingProgress;
-        prevBreakProgress = breakProgress;
-        handRenderer.prevLower = handRenderer.lower;
-        papos = apos;
-        paspeed = aspeed;
+    protected override void prePhysics(double dt) {
+        updateInputVelocity(dt);
+        applyInputMovement(dt);
+    }
+
+    protected override void checkFallDamage(double dt) {
+        if (Game.gamemode.gameplay && onGround && wasInAir && !flyMode && !inLiquid) {
+            var fallSpeed = -prevVelocity.Y;
+            if (fallSpeed > SAFE_FALL_SPEED) {
+                var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
+                takeDamage(dmg);
+                Game.camera.applyImpact(dmg);
+            }
+        }
+        wasInAir = !onGround && !flyMode;
+    }
+
+    protected override void updateFootsteps(double dt) {
+        if (onGround && Math.Abs(velocity.withoutY().Length()) > 0.05 && !inLiquid) {
+            if (totalTraveled - lastFootstepDistance > FOOTSTEP_DISTANCE) {
+                // get block below player
+                var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
+                var blockBelow = Block.get(world.getBlock(pos));
+                if (blockBelow?.mat != null) {
+                    Game.snd.playFootstep(blockBelow.mat.smat);
+                }
+                lastFootstepDistance = totalTraveled;
+            }
+        }
+    }
+
+    protected override void postPhysics(double dt) {
+        base.postPhysics(dt);
+
+        // totalTraveled already updated in Mob.postPhysics()
+
+        // update camera
+        Game.camera.updatePosition(dt);
+
+        // item pickup
+        pickup();
     }
 
     // before pausing, all vars need to be updated SO THERE IS NO FUCKING JITTER ON THE PAUSE MENU
     public void catchUpOnPrevVars() {
-        setPrevVars();
+        savePrevVars();
         // camera position is now computed from player state, no need to sync
     }
 
@@ -356,17 +300,17 @@ public class Player : Soul, CommandSource {
         if (!flyMode) {
             if (strafeVector.X != 0 || strafeVector.Z != 0) {
                 // if air, lessen control
-                Constants.moveSpeed = onGround ? Constants.groundMoveSpeed : Constants.airMoveSpeed;
+                var moveSpeed = onGround ? GROUND_MOVE_SPEED : AIR_MOVE_SPEED;
                 if (inLiquid) {
-                    Constants.moveSpeed = Constants.liquidMoveSpeed;
+                    moveSpeed = LIQUID_MOVE_SPEED;
                 }
 
                 if (sneaking) {
-                    Constants.moveSpeed *= Constants.sneakFactor;
+                    moveSpeed *= SNEAK_FACTOR;
                 }
 
                 // first, normalise (v / v.length) then multiply with movespeed
-                strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
+                strafeVector = Vector3D.Normalize(strafeVector) * moveSpeed;
 
                 Vector3D moveVector = strafeVector.Z * hfacing +
                                       strafeVector.X *
@@ -380,10 +324,10 @@ public class Player : Soul, CommandSource {
         else {
             if (strafeVector.X != 0 || strafeVector.Y != 0 || strafeVector.Z != 0) {
                 // if air, lessen control
-                Constants.moveSpeed = Constants.airFlySpeed;
+                var moveSpeed = AIR_FLY_SPEED;
 
                 // first, normalise (v / v.length) then multiply with movespeed
-                strafeVector = Vector3D.Normalize(strafeVector) * Constants.moveSpeed;
+                strafeVector = Vector3D.Normalize(strafeVector) * moveSpeed;
 
                 if (fastMode) {
                     strafeVector *= 5;
@@ -587,7 +531,7 @@ public class Player : Soul, CommandSource {
 
             // spawn mining particles every 4 ticks
             if (breakTime % 4 == 0) {
-                block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face);
+                block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face, Game.raycast.hitAABB);
             }
             if (breakTime % 12 == 0) {
                 Game.snd.playBlockKnock(block.mat.smat);
@@ -871,9 +815,9 @@ public class Player : Soul, CommandSource {
 
     /**
      * Updates body rotation to face movement direction with smooth interpolation
-     * Freshly made claudeslop
+     * Player uses strafeVector input, mob uses velocity
      */
-    private void updateBodyRotation(double dt) {
+    protected override void updateBodyRotation(double dt) {
         var input = strafeVector.withoutY();
         var inputLength = input.Length();
 
@@ -964,12 +908,8 @@ public class Player : Soul, CommandSource {
         dmgTime = 30;
     }
 
-    private void onDeath() {
-        dead = true;
-        // rotate entity 90 degrees to side
-        // todo animate this in the model instead!
-        rotation.Z = -90f;
-        prevRotation.Z = -90f;
+    protected virtual void onDeath() {
+        base.onDeath();
 
         // drop inventory items on death (survival only, blocks only)
         if (Game.gamemode.gameplay) {

@@ -45,7 +45,7 @@ public partial class World : IDisposable {
 
     public readonly XUList<WorldListener> listeners = [];
 
-    public readonly Dictionary<ChunkCoord, Chunk> chunks;
+    public readonly XLongMap<Chunk> chunks;
 
     // used for rendering
     public readonly XUList<Chunk> chunkList;
@@ -114,7 +114,7 @@ public partial class World : IDisposable {
         generator.setup(random, seed);
         this.seed = seed;
 
-        chunks = new Dictionary<ChunkCoord, Chunk>();
+        chunks = [];
         chunkList = new XUList<Chunk>(2048);
 
         entities = [];
@@ -231,7 +231,7 @@ public partial class World : IDisposable {
     /// </summary>
     private void autoSaveChunks() {
         var x = 0;
-        foreach (var chunk in chunks.Values) {
+        foreach (var chunk in chunks) {
             if (chunk.status >= ChunkStatus.MESHED &&
                 chunk.lastSaved + 15 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
                 worldIO.saveChunkAsync(this, chunk);
@@ -245,7 +245,7 @@ public partial class World : IDisposable {
     }
 
     public void startMeshing() {
-        foreach (var chunk in chunks.Values) {
+        foreach (var chunk in chunks) {
             if (chunk.status < ChunkStatus.MESHED) {
                 addToChunkLoadQueue(chunk.coord, ChunkStatus.MESHED);
             }
@@ -308,7 +308,7 @@ public partial class World : IDisposable {
     }
 
     public void addChunk(ChunkCoord coord, Chunk chunk) {
-        chunks[coord] = chunk;
+        chunks.Set(coord.toLong(), chunk);
         chunkList.Add(chunk);
 
         // populate this chunk's cache and update neighbours to point to it
@@ -596,7 +596,7 @@ public partial class World : IDisposable {
                 continue; // skip chunks that are now too far away
             }
 
-            if (chunks.TryGetValue(coord, out Chunk? existingChunk) && result.Value.nbtData != null) {
+            if (chunks.TryGetValue(coord.toLong(), out Chunk? existingChunk) && result.Value.nbtData != null) {
                 WorldIO.loadChunkDataFromNBT(existingChunk, result.Value.nbtData);
                 loadedChunks++;
             }
@@ -714,7 +714,7 @@ public partial class World : IDisposable {
         SuperluminalPerf.EndEvent();
 
         // random block updates!
-        foreach (var chunk in chunks) {
+        foreach (var chunk in chunks.Pairs) {
             // distance check
             if (Vector2I.DistanceSquared(chunk.Value.centrePos,
                     new Vector2I((int)player.position.X, (int)player.position.Z)) <
@@ -726,7 +726,7 @@ public partial class World : IDisposable {
                     var x = (coord >> 8);
                     var y = ((coord >> 4) & 0xF) + s * Chunk.CHUNKSIZE;
                     var z = coord & 0xF;
-                    tick(this, chunk.Key, chunk.Value, random, x, y, z);
+                    tick(this, new ChunkCoord(chunk.Key), chunk.Value, random, x, y, z);
                 }
             }
         }
@@ -872,10 +872,10 @@ public partial class World : IDisposable {
         // load chunk if null
         var chunk = node.chunk;
         if (chunk == null || chunk.destroyed) {
-            if (!chunks.TryGetValue(chunkCoord, out chunk)) {
+            if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
                 // force-load chunk synchronously
                 loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
-                chunk = chunks[chunkCoord];
+                chunk = chunks[chunkCoord.toLong()];
             }
         }
 
@@ -962,10 +962,10 @@ public partial class World : IDisposable {
         // load chunk if null
         var chunk = node.chunk;
         if (chunk == null || chunk.destroyed) {
-            if (!chunks.TryGetValue(chunkCoord, out chunk)) {
+            if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
                 // force-load chunk synchronously
                 loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
-                chunk = chunks[chunkCoord];
+                chunk = chunks[chunkCoord.toLong()];
             }
         }
 
@@ -1035,7 +1035,7 @@ public partial class World : IDisposable {
 
         var playerChunk = player.getChunk();
         // unload chunks which are far away
-        foreach (var chunk in chunks.Values) {
+        foreach (var chunk in chunks) {
             var coord = chunk.coord;
             // if distance is greater than renderDistance + 3, unload
             if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
@@ -1067,7 +1067,7 @@ public partial class World : IDisposable {
     }
 
     public void unloadChunk(ChunkCoord coord) {
-        var chunk = chunks[coord];
+        var chunk = chunks[coord.toLong()];
         // save chunk asynchronously to prevent lagspikes
         worldIO.saveChunkAsync(this, chunk);
 
@@ -1080,12 +1080,12 @@ public partial class World : IDisposable {
 
         // ONLY DO THIS WHEN IT'S ALREADY SAVED
         chunkList.Remove(chunk);
-        chunks.Remove(coord);
+        chunks.Remove(coord.toLong());
         chunk.destroyChunk();
     }
 
     public void unloadChunkWithHammer(ChunkCoord coord) {
-        var chunk = chunks[coord];
+        var chunk = chunks[coord.toLong()];
 
         foreach (var l in listeners) {
             l.onChunkUnload(coord);
@@ -1095,13 +1095,13 @@ public partial class World : IDisposable {
         chunk.removeFromCache();
 
         chunkList.Remove(chunk);
-        chunks.Remove(coord);
+        chunks.Remove(coord.toLong());
         chunk.destroyChunk();
     }
 
     private void ReleaseUnmanagedResources() {
         // do NOT save chunks!!! this fucks the new world
-        foreach (var chunk in chunks) {
+        foreach (var chunk in chunks.Pairs) {
             chunks[chunk.Key].destroyChunk();
         }
     }
@@ -1156,7 +1156,7 @@ public partial class World : IDisposable {
         };
 
         foreach (var neighbour in neighbours) {
-            if (!chunks.TryGetValue(neighbour, out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
+            if (!chunks.TryGetValue(neighbour.toLong(), out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
                 return false;
             }
         }
@@ -1180,7 +1180,7 @@ public partial class World : IDisposable {
         ];
 
         foreach (var neighbour in neighbours) {
-            if (!chunks.TryGetValue(neighbour, out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
+            if (!chunks.TryGetValue(neighbour.toLong(), out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
                 addToChunkLoadQueue(neighbour, requiredStatus);
             }
         }
@@ -1199,7 +1199,7 @@ public partial class World : IDisposable {
         ];
 
         foreach (var neighbour in neighbours) {
-            if (!chunks.TryGetValue(neighbour, out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
+            if (!chunks.TryGetValue(neighbour.toLong(), out var neighbourChunk) || neighbourChunk.status < requiredStatus) {
                 loadChunk(neighbour, requiredStatus, true);
             }
         }
@@ -1228,7 +1228,7 @@ public partial class World : IDisposable {
         }
 
         // if it already exists and has the proper level, just return it
-        if (chunks.TryGetValue(chunkCoord, out var chunk) && chunk.status >= status) {
+        if (chunks.TryGetValue(chunkCoord.toLong(), out var chunk) && chunk.status >= status) {
             return;
         }
 
@@ -1280,7 +1280,7 @@ public partial class World : IDisposable {
 
         // if it doesn't exist, generate it
         if (status >= ChunkStatus.GENERATED &&
-            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.GENERATED))) {
+            (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.GENERATED))) {
             if (!chunkAdded) {
                 c = new Chunk(this, chunkCoord.x, chunkCoord.z);
                 addChunk(chunkCoord, c);
@@ -1292,7 +1292,7 @@ public partial class World : IDisposable {
         }
 
         if (status >= ChunkStatus.POPULATED &&
-            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.POPULATED))) {
+            (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.POPULATED))) {
             // check if neighbours are ready, if not defer this chunk
             if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED)) {
                 // queue neighbours for loading and defer this chunk
@@ -1312,17 +1312,17 @@ public partial class World : IDisposable {
         }
 
         if (status >= ChunkStatus.LIGHTED &&
-            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.LIGHTED))) {
+            (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.LIGHTED))) {
             // ensure neighbours are at least GENERATED so skylight can propagate into them
             if (!areNeighboursReady(chunkCoord, ChunkStatus.GENERATED)) {
                 loadNeighbours(chunkCoord, ChunkStatus.GENERATED);
             }
 
-            chunks[chunkCoord].lightChunk();
+            chunks[chunkCoord.toLong()].lightChunk();
         }
 
         if (status >= ChunkStatus.MESHED &&
-            (!hasChunk || (hasChunk && chunks[chunkCoord].status < ChunkStatus.MESHED))) {
+            (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.MESHED))) {
             // check if neighbours are ready, if not defer this chunk
             if (!areNeighboursReady(chunkCoord, ChunkStatus.LIGHTED)) {
                 // load neighbours SYNCHRONOUSLY
@@ -1332,7 +1332,7 @@ public partial class World : IDisposable {
                 //return;
             }
 
-            chunks[chunkCoord].meshChunk();
+            chunks[chunkCoord.toLong()].meshChunk();
         }
 
         // reassign any entities waiting for this chunk

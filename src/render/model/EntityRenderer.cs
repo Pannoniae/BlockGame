@@ -1,4 +1,6 @@
 ﻿using BlockGame.GL;
+using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.entity;
 
@@ -16,7 +18,7 @@ public interface EntityRenderer<out T> where T : Entity {
 }
 
 public static class EntityRenderers {
-    private static readonly Dictionary<int, EntityRenderer<Entity>> renderers = new();
+    private static readonly XUList<EntityRenderer<Entity>> renderers = Registry.ENTITIES.track<EntityRenderer<Entity>>();
 
     public static readonly InstantDrawEntity ide = new(2048);
 
@@ -31,8 +33,8 @@ public static class EntityRenderers {
     }
 
     /** Get renderer for an entity type */
-    public static EntityRenderer<Entity>? get(int entityID) {
-        return renderers.GetValueOrDefault(entityID);
+    public static EntityRenderer<Entity> get(int entityID) {
+        return renderers[entityID];
     }
 
     /** hot reload all entity models by recreating them */

@@ -94,7 +94,7 @@ public partial class World {
             if (!entity.inWorld && entity.subChunkCoord.toChunk().Equals(chunkCoord)) {
                 var y = entity.subChunkCoord.y;
                 if (y >= 0 && y < Chunk.CHUNKHEIGHT) {
-                    var chunk = chunks[chunkCoord];
+                    var chunk = chunks[chunkCoord.toLong()];
                     chunk.addEntity(entity);
                     entity.inWorld = true;
                 }

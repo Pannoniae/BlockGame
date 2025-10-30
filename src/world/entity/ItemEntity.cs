@@ -28,38 +28,63 @@ public class ItemEntity : Entity {
 
     /** funny sine wave */
     public float hover;
+    
+    protected override bool needsGravity => false; // custom gravity in updatePhysics
+    protected override bool needsBodyRotation => false;
+    protected override bool needsFootsteps => false;
+    protected override bool needsFallDamage => false;
+    protected override bool needsAnimation => false;
+    protected override bool needsBlockInteraction => true; // liquids!
 
-    public override void update(double dt) {
-        base.update(dt);
+    // ============ LIFECYCLE HOOKS ============
 
-        prevPosition = position;
-        prevRotation = rotation;
-        prevVelocity = velocity;
-
+    protected override bool shouldContinueUpdate(double dt) {
         // age the item
         age++;
         plotArmour--;
 
         if (age >= DESPAWN) {
             remove();
-            return;
+            return false;
         }
 
-        // update AABB for collision system
-        aabb = calcAABB(position);
+        return true;
+    }
 
-        // apply physics
-        updatePhysics(dt);
+    protected override void updatePhysics(double dt) {
+        // custom item physics - lighter gravity, terminal velocity, player attraction
+
+        // apply gravity
+        if (!onGround) {
+            velocity.Y -= 10 * dt;
+        }
+
+        // terminal velocity
+        if (velocity.Y < -20.0) {
+            velocity.Y = -20.0;
+        }
+
+        // find nearby players for attraction
+        var nearbyPlayer = findNearestPlayer();
+        if (nearbyPlayer != null) {
+            applyPlayerAttraction(nearbyPlayer, dt);
+        }
+
+        // velocity already applied
+        velocity += accel * dt;
+        clamp(dt);
+
+        // collision + movement
+        collide(dt);
 
         // if stuck in a block, try to get unstuck
         if (isStuckInBlock()) {
             yeet();
         }
 
+        // friction
         applyFriction();
-
-        // collision detection (applies movement!)
-        collide(dt);
+        clamp(dt);
     }
 
     /** If stuck in a block, apply velocity towards nearest escape */
@@ -123,24 +148,6 @@ public class ItemEntity : Entity {
         }
 
         return nearest;
-    }
-
-    private void updatePhysics(double dt) {
-        // apply gravity
-        if (!onGround) {
-            velocity.Y -= 15 * dt; // gravity
-        }
-
-        // terminal velocity
-        if (velocity.Y < -20.0) {
-            velocity.Y = -20.0;
-        }
-
-        // find nearby players for attraction
-        var nearbyPlayer = findNearestPlayer();
-        if (nearbyPlayer != null) {
-            applyPlayerAttraction(nearbyPlayer, dt);
-        }
     }
 
     private Player? findNearestPlayer() {

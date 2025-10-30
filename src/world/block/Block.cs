@@ -1062,7 +1062,7 @@ public class Block {
     }
 
     /** mining particles for when block is being broken */
-    public virtual void shatter(World world, int x, int y, int z, RawDirection hitFace) {
+    public virtual void shatter(World world, int x, int y, int z, RawDirection hitFace, AABB? hitAABB = null) {
         UVPair uv;
 
         if (model == null || model.faces.Length == 0) {
@@ -1075,48 +1075,53 @@ public class Block {
         // spawn fewer particles for mining (2-4 particles)
         var count = Game.clientRandom.Next(2, 5);
 
+        // use hit AABB if provided, otherwise default to full block
+        var bbn = hitAABB?.min ?? new Vector3D(x, y, z);
+        var bbx = hitAABB?.max ?? new Vector3D(x + 1, y + 1, z + 1);
+
         for (var i = 0; i < count; i++) {
             // spawn particles just outside the hit face to avoid collision with block
-            float particleX = 0;
-            float particleY = 0;
-            float particleZ = 0;
+            float px = 0;
+            float py = 0;
+            float pz = 0;
 
             const float offset = 0.08f;
 
+            // constrain particles to the actual AABB bounds
             switch (hitFace) {
                 case RawDirection.UP:
-                    particleX = x + Game.clientRandom.NextSingle();
-                    particleY = y + 1 + offset;
-                    particleZ = z + Game.clientRandom.NextSingle();
+                    px = (float)(bbn.X + Game.clientRandom.NextSingle() * (bbx.X - bbn.X));
+                    py = (float)bbx.Y + offset;
+                    pz = (float)(bbn.Z + Game.clientRandom.NextSingle() * (bbx.Z - bbn.Z));
                     break;
                 case RawDirection.DOWN:
-                    particleX = x + Game.clientRandom.NextSingle();
-                    particleY = y - offset;
-                    particleZ = z + Game.clientRandom.NextSingle();
+                    px = (float)(bbn.X + Game.clientRandom.NextSingle() * (bbx.X - bbn.X));
+                    py = (float)bbn.Y - offset;
+                    pz = (float)(bbn.Z + Game.clientRandom.NextSingle() * (bbx.Z - bbn.Z));
                     break;
                 case RawDirection.NORTH:
-                    particleX = x + Game.clientRandom.NextSingle();
-                    particleY = y + Game.clientRandom.NextSingle();
-                    particleZ = z + 1 + offset;
+                    px = (float)(bbn.X + Game.clientRandom.NextSingle() * (bbx.X - bbn.X));
+                    py = (float)(bbn.Y + Game.clientRandom.NextSingle() * (bbx.Y - bbn.Y));
+                    pz = (float)bbx.Z + offset;
                     break;
                 case RawDirection.SOUTH:
-                    particleX = x + Game.clientRandom.NextSingle();
-                    particleY = y + Game.clientRandom.NextSingle();
-                    particleZ = z - offset;
+                    px = (float)(bbn.X + Game.clientRandom.NextSingle() * (bbx.X - bbn.X));
+                    py = (float)(bbn.Y + Game.clientRandom.NextSingle() * (bbx.Y - bbn.Y));
+                    pz = (float)bbn.Z - offset;
                     break;
                 case RawDirection.EAST:
-                    particleX = x + 1 + offset;
-                    particleY = y + Game.clientRandom.NextSingle();
-                    particleZ = z + Game.clientRandom.NextSingle();
+                    px = (float)bbx.X + offset;
+                    py = (float)(bbn.Y + Game.clientRandom.NextSingle() * (bbx.Y - bbn.Y));
+                    pz = (float)(bbn.Z + Game.clientRandom.NextSingle() * (bbx.Z - bbn.Z));
                     break;
                 case RawDirection.WEST:
-                    particleX = x - offset;
-                    particleY = y + Game.clientRandom.NextSingle();
-                    particleZ = z + Game.clientRandom.NextSingle();
+                    px = (float)bbn.X - offset;
+                    py = (float)(bbn.Y + Game.clientRandom.NextSingle() * (bbx.Y - bbn.Y));
+                    pz = (float)(bbn.Z + Game.clientRandom.NextSingle() * (bbx.Z - bbn.Z));
                     break;
             }
 
-            var particlePosition = new Vector3D(particleX, particleY, particleZ);
+            var particlePosition = new Vector3D(px, py, pz);
             var size = Game.clientRandom.NextSingle() * 0.08f + 0.04f;
             var ttl = (int)(14f / (Game.clientRandom.NextSingle() + 0.05f));
 

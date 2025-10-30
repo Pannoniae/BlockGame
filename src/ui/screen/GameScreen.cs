@@ -518,17 +518,22 @@ public class GameScreen : Screen {
         var world = Game.world;
         Log.info("Regenerating all chunks...");
 
-        var ch = world.chunks.Keys.ToArray();
+        var ch = world.chunks.Pairs;
+
+        List<(long Key, Chunk Value)> l = [];
+        // copy
+        foreach (var chunk in ch) {
+            l.Add((chunk.Key, chunk.Value));
+        }
 
         // destroy and clear all chunks
-        foreach (var chunk in world.chunks.Values.ToList()) {
-            world.unloadChunkWithHammer(chunk.coord);
+        foreach (var chunk in l) {
+            world.unloadChunkWithHammer(chunk.Value.coord);
         }
 
         // delete chunk files from disk so they regenerate
-        var chunkCoords = ch.ToList();
-        foreach (var coord in chunkCoords) {
-            var path = WorldIO.getChunkString(world.name, coord);
+        foreach (var coord in l) {
+            var path = WorldIO.getChunkString(world.name, new ChunkCoord(coord.Key));
             if (File.Exists(path)) {
                 File.Delete(path);
             }
@@ -580,7 +585,7 @@ public class GameScreen : Screen {
 
 
         Game.renderer.setUniforms();
-        foreach (var chunk in world.chunks.Values) {
+        foreach (var chunk in world.chunks) {
             // don't set chunk if not loaded yet, else we will have broken chunkgen/lighting errors
             if (chunk.status >= ChunkStatus.LIGHTED) {
                 // mark for remeshing by clearing VAOs and dirtying

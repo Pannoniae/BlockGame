@@ -47,30 +47,40 @@ public class Raycast {
                 world.getAABBs(AABBList, blockPos.X, blockPos.Y, blockPos.Z);
                 foreach (AABB aabb in AABBList) {
                     if (AABB.isCollision(aabb, currentPos)) {
-                        //Console.Out.WriteLine("getblock:" + getBlock(blockPos.X, blockPos.Y, blockPos.Z));
-                        // the hit face is the one where the change is the greatest
-                        var dx = blockPos.X - previous.X;
-                        var dy = blockPos.Y - previous.Y;
-                        var dz = blockPos.Z - previous.Z;
-                        var adx = Math.Abs(dx);
-                        var ady = Math.Abs(dy);
-                        var adz = Math.Abs(dz);
-                        RawDirection f;
-                        if (adx > ady) {
-                            if (adx > adz) {
-                                f = dx > 0 ? RawDirection.WEST : RawDirection.EAST;
-                            }
-                            else {
-                                f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
-                            }
+                        var rayDir = playerForward;
+                        var rayOrigin = raycastPos;
+
+                        // calculate the intersection distances for each axis-aligned face
+                        var txn = (aabb.min.X - rayOrigin.X) / rayDir.X;
+                        var txx = (aabb.max.X - rayOrigin.X) / rayDir.X;
+                        var tyn = (aabb.min.Y - rayOrigin.Y) / rayDir.Y;
+                        var tyx = (aabb.max.Y - rayOrigin.Y) / rayDir.Y;
+                        var tzn = (aabb.min.Z - rayOrigin.Z) / rayDir.Z;
+                        var tzx = (aabb.max.Z - rayOrigin.Z) / rayDir.Z;
+
+                        if (txn > txx) {
+                            txn = txx;
                         }
-                        else {
-                            if (ady > adz) {
-                                f = dy > 0 ? RawDirection.DOWN : RawDirection.UP;
-                            }
-                            else {
-                                f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
-                            }
+
+                        if (tyn > tyx) {
+                            tyn = tyx;
+                        }
+
+                        if (tzn > tzx) {
+                            tzn = tzx;
+                        }
+
+                        // figure out which face was hit first (smallest t > 0)
+                        double te = Math.Max(Math.Max(txn, tyn), tzn);
+
+                        RawDirection f;
+                        const double epsilon = 0.0001;
+                        if (Math.Abs(te - txn) < epsilon) {
+                            f = rayDir.X > 0 ? RawDirection.WEST : RawDirection.EAST;
+                        } else if (Math.Abs(te - tyn) < epsilon) {
+                            f = rayDir.Y > 0 ? RawDirection.DOWN : RawDirection.UP;
+                        } else {
+                            f = rayDir.Z > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
                         }
 
                         var col = new RayCollision {
@@ -79,7 +89,8 @@ public class Raycast {
                             block = blockPos,
                             hit = true,
                             distance = dist,
-                            face = f
+                            face = f,
+                            hitAABB = aabb
                         };
                         return col;
                     }
@@ -133,5 +144,10 @@ public struct RayCollision {
     /// Did the ray hit something?
     /// </summary>
     public bool hit;
+
+    /// <summary>
+    /// The specific AABB that was hit (for blocks with multiple/custom AABBs)
+    /// </summary>
+    public AABB? hitAABB;
 
 }
