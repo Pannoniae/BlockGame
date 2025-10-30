@@ -603,7 +603,6 @@ public class Block {
         DOOR = register("door", new Door("Door"));
         DOOR.setTex(cubeUVs(0, 10));
         DOOR.material(Material.WOOD);
-        DOOR.translucency();
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace"));
         BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4));
