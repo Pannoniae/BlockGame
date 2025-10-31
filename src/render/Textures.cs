@@ -18,6 +18,7 @@ public class Textures {
 
     public Dictionary<string, BTexture2D> textures = new();
     public BTexture2D waterOverlay;
+    public BTexture2D lavaOverlay;
 
     public BTexture2D sunTexture;
     public BTexture2D moonTexture;
@@ -38,6 +39,7 @@ public class Textures {
         lightTexture = get("textures/lightmap.png");
         lightTexture2 = get("textures/lightmap.png");
         waterOverlay = get("textures/water.png");
+        lavaOverlay = get("textures/lava.png");
         sunTexture = get("textures/sun_03.png");
         moonTexture = get("textures/moon_01.png");
         cloudTexture = get("textures/clouds.png");

@@ -68,7 +68,7 @@ public class Block {
 
     protected static readonly List<AABB> AABBList = [];
 
-    public const int atlasSize = 256;
+    public const int atlasSize = 512;
     public const int textureSize = 16;
 
 
@@ -97,6 +97,7 @@ public class Block {
     public static Block GOLD_CANDY;
     public static Block CINNABAR_CANDY;
     public static Block DIAMOND_CANDY;
+    public static Block LAVA;
 
     public static Block LANTERN;
 
@@ -162,6 +163,7 @@ public class Block {
     public static XUList<bool> transparent => Registry.BLOCKS.transparent;
     public static XUList<bool> translucent => Registry.BLOCKS.translucent;
     public static XUList<bool> waterSolid => Registry.BLOCKS.waterSolid;
+    public static XUList<bool> lavaSolid => Registry.BLOCKS.lavaSolid;
     public static XUList<bool> inventoryBlacklist => Registry.BLOCKS.inventoryBlacklist;
     public static XUList<bool> randomTick => Registry.BLOCKS.randomTick;
     public static XUList<bool> renderTick => Registry.BLOCKS.renderTick;
@@ -509,6 +511,10 @@ public class Block {
         WATER = register("water", new Water("Water", 15, 8));
         WATER.setTex(new UVPair(0, 13), new UVPair(1, 14));
         WATER.makeLiquid();
+
+        LAVA = register("lava", new Lava("Lava", 30, 4));
+        LAVA.setTex(new UVPair(0, 16), new UVPair(1, 17));
+        LAVA.makeLiquid();
 
         // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
 

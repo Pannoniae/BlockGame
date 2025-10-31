@@ -21,6 +21,7 @@ public class BlockRegistry : Registry<Block> {
      * If true, water cannot break this block (like stone, dirt, stairs, etc.)
      */
     public readonly XUList<bool> waterSolid;
+    public readonly XUList<bool> lavaSolid;
 
     public readonly XUList<bool> inventoryBlacklist;
     public readonly XUList<bool> randomTick;
@@ -55,6 +56,7 @@ public class BlockRegistry : Registry<Block> {
         transparent = track(false);
         translucent = track(false);
         waterSolid = track(true);
+        lavaSolid = track(true);
         inventoryBlacklist = track(false);
         randomTick = track(false);
         renderTick = track(false);

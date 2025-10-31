@@ -1,0 +1,605 @@
+﻿using System.Numerics;
+using BlockGame.GL.vertexformats;
+using BlockGame.render;
+using BlockGame.util;
+using Molten;
+using Vector3D = Molten.DoublePrecision.Vector3D;
+
+namespace BlockGame.world.block;
+public class Lava : Block {
+    private readonly byte maxFlow;
+
+    /**
+     * tickRate = how many ticks between updates (lower = faster flow)
+     * maxFlow = maximum flow distance from source (not currently used)
+     */
+    public Lava(string name, byte tickRate, byte maxFlow) : base(name) {
+        this.maxFlow = maxFlow;
+        this.tickRate = tickRate;
+    }
+
+    private readonly byte tickRate;
+
+    protected override void onRegister(int id) {
+        lightLevel[id] = 15;
+        renderType[id] = RenderType.CUSTOM;
+        customCulling[id] = true;
+        updateDelay[id] = tickRate;
+    }
+
+    /**
+     * Metadata encoding for lava:
+     * Bits 0-2: 0=source, 1-7=flowing lava levels (1=full flow, 7=nearly empty)
+     * Bit 3: Falling flag (1=falling, 0=not falling)
+     * Bit 4: Dynamic flag (1=actively updating, 0=static)
+     * Bits 5-7: Reserved
+     */
+    public static byte getLavaLevel(byte metadata) => (byte)(metadata & 0x7);
+
+    public static bool isFalling(byte metadata) => (metadata & 0x08) != 0;
+    public static bool isDynamic(byte metadata) => (metadata & 0x10) != 0;
+    public static byte setLavaLevel(byte metadata, byte level) => (byte)((metadata & 0xF8) | (level & 0x7));
+    public static byte setFalling(byte metadata, bool falling) => (byte)((metadata & 0xF7) | (falling ? 0x08 : 0));
+    public static byte setDynamic(byte metadata, bool dynamic) => (byte)((metadata & 0xEF) | (dynamic ? 0x10 : 0));
+
+
+    public override void update(World world, int x, int y, int z) {
+        var data = world.getBlockMetadata(x, y, z);
+        var pos = new Vector3I(x, y, z);
+
+        // if static lava is being updated externally, wake it up
+        if (!isDynamic(data)) {
+            wakeUpLava(world, pos);
+            // don't worry it will update next tick!
+        }
+    }
+
+
+    /**
+     * This method has been in DIRE need of a rework. So here it is.
+     * This is a piece of shit method which breaks, gets into an infinite loop, blows your house up, etc. if you sneeze on it.
+     * I know that Rider complains that half the method is logically impossible, that the expression is always true, etc.
+     * That's right, but I'm afraid to touch it now, it's so cursed.
+     * Only touch if you're smarter than me.
+     */
+    public override void scheduledUpdate(World world, int x, int y, int z) {
+        var data = world.getBlockMetadata(x, y, z);
+        var pos = new Vector3I(x, y, z);
+
+        int currentLevel = getLavaLevel(data);
+        // includes falling!
+        currentLevel = setFalling((byte)currentLevel, isFalling(data));
+        var falling = isFalling(data);
+
+
+        bool newFalling = false;
+        int newLevel;
+
+        // is this a source? (any kind)
+        // if falling, update it anyway because we might have to remove
+        // is this a source? great, sleep well
+        if (getLavaLevel((byte)currentLevel) == 0 && !falling) {
+            data = setDynamic(data, false);
+            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)LAVA.id).setMetadata(data));
+            newLevel = 0;
+            // DON'T RETURN WE CAN STILL SPREAD
+        }
+        else {
+            var bestLevel = 999;
+            bool hasFalling = false;
+            // find the highest lava level (lowest number, since 0=source has most lava)
+            var w1  = getLava(world, x - 1, y, z, ref hasFalling);
+            var w2 = getLava(world, x + 1, y, z, ref hasFalling);
+            var w3 = getLava(world, x, y, z - 1, ref hasFalling);
+            var w4 = getLava(world, x, y, z + 1, ref hasFalling);
+
+            if (w1 >= 0) bestLevel = Math.Min(bestLevel, w1);
+            if (w2 >= 0) bestLevel = Math.Min(bestLevel, w2);
+            if (w3 >= 0) bestLevel = Math.Min(bestLevel, w3);
+            if (w4 >= 0) bestLevel = Math.Min(bestLevel, w4);
+
+            // no lava neighbours found?
+            if (bestLevel == 999) {
+                // do we still need this? IDK
+                newLevel = -1;
+            }
+
+            // EXCEPTION: if one of the neighbours is falling lava with data 7, give it one more chance so it doesn't look shite
+            if (hasFalling && bestLevel == maxFlow - 1) {
+                bestLevel = maxFlow - 2;
+            }
+
+            newLevel = bestLevel + 1;
+            if (newLevel >= maxFlow) {
+                newLevel = -1; // too weak to exist
+            }
+
+            // check above
+            var above = world.getBlockRaw(x, y + 1, z);
+            // if there is lava above, this should be falling
+            // WE DON'T USE GETLAVA because that swallows the level for falling lava...
+            if (above.getID() == LAVA.id) {
+                byte aboveMetadata = getLavaLevel(above.getMetadata());
+
+                // if above is falling, become falling
+                newLevel = setFalling(aboveMetadata, true);
+
+                newFalling = true;
+            }
+
+            // check for adjacent sources, if 2+ then become source
+            int adjacentSources = 0;
+            foreach (var dir in Direction.directionsHorizontal) {
+                var neighbour = pos + dir;
+                if (world.getBlock(neighbour) == LAVA.id) {
+                    var neighbourMetadata = world.getBlockMetadata(neighbour);
+                    // if neighbour is a source and not falling (not sure how the second one could happen but whatever)
+                    if (getLavaLevel(neighbourMetadata) == 0 && !isFalling(neighbourMetadata)) {
+                        // source block
+                        adjacentSources++;
+                    }
+                }
+            }
+
+            if (adjacentSources >= 2) {
+                newLevel = 0; // become source
+            }
+
+            // if no change needed
+            // sadly this is a bit more complex because we have schizophrenia in mixing up metadata, lava level, falling, etc.
+            // this is ALREADY a fucking mess but oh well
+            // newLevel is lava level + falling
+            if (newLevel == currentLevel) {
+                // go to sleep, goodnight!
+                data = setDynamic(data, false);
+                world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)LAVA.id).setMetadata(data));
+            }
+            else {
+                // update current level
+                currentLevel = newLevel;
+                // if newLevel is -1, remove
+                if (newLevel == -1) {
+                    world.setBlock(pos.X, pos.Y, pos.Z, AIR.id);
+                }
+                else {
+                    data = setLavaLevel(data, (byte)newLevel);
+                    data = setDynamic(data, true); // keep dynamic while changing
+                    data = setFalling(data, newFalling);
+                    world.setBlockMetadata(pos.X, pos.Y, pos.Z, ((uint)LAVA.id).setMetadata(data));
+
+                    world.scheduleBlockUpdate(pos);
+                    // update neighbours
+                    // todo do we really tho? it doesn't seem to break if we do, but also if we don't?
+                    // revisit this when more survival shit is added and see if stuff breaks hahahaha
+                    world.blockUpdateNeighboursOnly(pos.X, pos.Y, pos.Z);
+                }
+            }
+        }
+
+        // Step 10-12: Spreading logic
+        // where's the other steps? I rewrote the whole thing 4 times already, they've disappeared, sorry
+        if (currentLevel == -1) {
+            return; // Can't spread if evaporated
+        }
+
+        // okay, time to actually spread!
+        // first, down
+        // sadly currentLevel seems to be -1 sometimes?
+        // hackjob time!
+        // this is outdated but I'm afraid to touch it
+        var fallingLevel = currentLevel >= 0 ? currentLevel : 9;
+        if (canSpread(world, x, y - 1, z)) {
+            // force-fall
+            spread(world, x, y - 1, z, (byte)(fallingLevel & 0x7), true);
+        }
+
+        // didn't spread down? good, we can try sides
+        else {
+            // if == -1 now, we're gone
+            if (currentLevel == -1) {
+                return;
+            }
+
+            // only do the sides if this is either a source or there's something under it (if it can flow down, then do that instead of going to the sides lol)
+            // if it's NOT solid below, don't even bother (otherwise the fucking lavafalls will go off to the side endlessly because there's lava below)
+            var isSolid = lavaSolid[world.getBlock(x, y - 1, z)];
+            if (currentLevel == 0 || (isSolid && !canSpread(world, x, y - 1, z))) {
+                // if it's falling, it should be at least level 1 when spreading sideways
+                // todo is this really necessary?
+
+                var isFalling = Lava.isFalling((byte)currentLevel);
+
+                // alternatively, chop it down!
+                currentLevel = setFalling((byte)currentLevel, false);
+
+                newLevel = currentLevel + 1;
+
+                // EXCEPTION: if falling lava with data 7, give it one more chance so it doesn't look shite
+                if (isFalling && currentLevel == maxFlow - 1) {
+                    newLevel = maxFlow - 1;
+                }
+
+                // if >= max, don't bother
+                if (newLevel >= maxFlow) {
+                    return;
+                }
+
+                if (canSpread(world, x - 1, y, z)) {
+                    spread(world, x - 1, y, z, (byte)newLevel, false);
+                }
+
+                if (canSpread(world, x + 1, y, z)) {
+                    spread(world, x + 1, y, z, (byte)newLevel, false);
+                }
+
+                if (canSpread(world, x, y, z - 1)) {
+                    spread(world, x, y, z - 1, (byte)newLevel, false);
+                }
+
+                if (canSpread(world, x, y, z + 1)) {
+                    spread(world, x, y, z + 1, (byte)newLevel, false);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the lava level for this block. -1 if no lava :(
+     */
+    public static int getLava(World world, int x, int y, int z, ref bool hasFalling) {
+        var block = world.getBlock(x, y, z);
+        if (block == LAVA.id) {
+            var data = world.getBlockMetadata(x, y, z);
+
+            // if falling lava, always full height
+            // not anymore, we want to preserve the lava volume!
+            if (isFalling(data)) {
+                hasFalling = true;
+                return getLavaLevel(data);
+            }
+
+            // if source, full height
+            if (getLavaLevel(data) == 0) {
+                return 0;
+            }
+
+            return getLavaLevel(data);
+        }
+
+        return -1;
+    }
+
+    /**
+     * Why is this necessary to be separate? I DON'T KNOW
+     * however, this is only used by the rendering! otherwise falling lava is treated as source which is no good.
+     */
+    public static int getRenderLava(World world, int x, int y, int z) {
+        var block = world.getBlock(x, y, z);
+        if (block == LAVA.id) {
+            var data = world.getBlockMetadata(x, y, z);
+
+            // if falling lava, always full height
+            if (isFalling(data)) {
+                return 0;
+            }
+
+            // if source, full height
+            if (getLavaLevel(data) == 0) {
+                return 0;
+            }
+
+            return getLavaLevel(data);
+        }
+
+        return -1;
+    }
+
+    public static float getRenderHeight(World world, int x, int y, int z) {
+        // if there's no lava here, return 0
+        var block = world.getBlock(x, y, z);
+        if (block != LAVA.id) {
+            return 0f;
+        }
+
+        return getHeight(world.getBlockMetadata(x, y, z));
+    }
+
+    /**
+     * Get how much liquid this lava block has.
+     */
+    public static float getHeight(byte data) {
+        // if falling lava, always full height
+        if (isFalling(data)) {
+            return 1.0f;
+        }
+
+        data = getLavaLevel(data);
+        // if full, return 15/16
+        if (data == 0) {
+            return 15 / 16f;
+        }
+
+        return 1.0f - data * 0.125f;
+    }
+
+    /**
+     * What's the height of the lava at this vertex?
+     * x = -1..1 (corner x)
+     * z = -1..1 (corner z)
+     */
+    public static float getRenderHeight(World world, int x, int y, int z, sbyte ox, sbyte oz) {
+        // if there's lava above ANY of the 4 corner blocks, return full height
+        if (getRenderLava(world, x, y + 1, z) >= 0 ||
+            getRenderLava(world, x + ox, y + 1, z) >= 0 ||
+            getRenderLava(world, x, y + 1, z + oz) >= 0 ||
+            getRenderLava(world, x + ox, y + 1, z + oz) >= 0) {
+            return 1.0f;
+        }
+
+        float h = 0;
+        int samples = 0;
+
+        // sample the 4 blocks around this corner
+        h += sampleBlockHeight(world, x, y, z, ref samples);
+        h += sampleBlockHeight(world, x + ox, y, z, ref samples);
+        h += sampleBlockHeight(world, x, y, z + oz, ref samples);
+        h += sampleBlockHeight(world, x + ox, y, z + oz, ref samples);
+
+        if (samples == 0) {
+            return 0; // no lava or air found, solid blocks only
+        }
+
+        //Console.Out.WriteLine("Samples: " + samples + " TotalHeight: " + totalHeight + " Final: " + (totalHeight / samples));
+
+        return h / samples;
+    }
+
+    private static float sampleBlockHeight(World world, int x, int y, int z, ref int samples) {
+        var block = world.getBlock(x, y, z);
+        if (block == LAVA.id) {
+            var data = world.getBlockMetadata(x, y, z);
+            samples++;
+            return getHeight(data);
+        }
+
+        if (!fullBlock[block]) {
+            // air or non-full block contributes 0 height
+            // todo is this right?
+            samples++;
+            return 0f;
+        }
+
+        // solid blocks don't contribute to samples
+        return 0.0f;
+    }
+
+    public override void interact(World world, int x, int y, int z, Entity e) {
+
+    }
+
+    public override Vector3D push(World world, int x, int y, int z, Entity e) {
+        var flow = getFlow(world, x, y, z);
+        if (flow != Vector3.Zero) {
+            return flow.toVec3D() * 0.05;
+        }
+
+        return Vector3D.Zero;
+    }
+
+    /**
+     * Get the flow vector for this lava block.
+     * This is used for rendering flow direction and for pushing entities.
+     */
+    public Vector3 getFlow(World world, int x, int y, int z) {
+        var block = world.getBlock(x, y, z);
+        var metadata = world.getBlockMetadata(x, y, z);
+
+        var currentLevel = getRenderHeight(world, x, y, z);
+        var flow = Vector3.Zero;
+
+        // if full lava, no flow!
+        if (metadata == 0) {
+            return Vector3.Zero;
+        }
+
+        // Check horizontal neighbours for where to flow
+        foreach (var dir in Direction.directionsHorizontal) {
+            var neighbourLevel = getRenderHeight(world, x + dir.X, y, z + dir.Z);
+            if (neighbourLevel > 0) {
+                // Flow TO higher level numbers (less lava)
+                if (neighbourLevel > currentLevel) {
+                    flow += new Vector3(dir.X, 0, dir.Z) * (currentLevel - neighbourLevel);
+                }
+            }
+            else {
+                // do nothing? idk we'll figure it out
+            }
+        }
+
+        // if lava above
+        if (isFalling(metadata) || world.getBlock(x, y + 1, z) == LAVA.id) {
+            flow.Y -= 0.5f;
+        }
+
+        return flow.LengthSquared() > 0 ? Vector3.Normalize(flow) : Vector3.Zero;
+    }
+
+    public static bool canSpread(World world, int x, int y, int z) {
+        var block = world.getBlock(x, y, z);
+
+        if (block == AIR.id) {
+            return true; // can always spread to air
+        }
+
+        if (block == LAVA.id) {
+            // can't spread to lava, can you? :)
+            return false;
+        }
+
+        return !lavaSolid[block]; // other non-full blocks
+    }
+
+    public static void spread(World world, int x, int y, int z, byte level, bool falling) {
+        // actually do it!
+        var metadata = setLavaLevel(0, level);
+        metadata = setFalling(metadata, falling);
+        metadata = setDynamic(metadata, true);
+        world.setBlockMetadata(x, y, z, ((uint)LAVA.id).setMetadata(metadata));
+
+        // tick it
+        world.scheduleBlockUpdate(new Vector3I(x, y, z));
+    }
+
+    public static void wakeUpLava(World world, Vector3I pos) {
+        if (world.getBlock(pos) == LAVA.id) {
+            var metadata = world.getBlockMetadata(pos);
+            // wake up static lava
+            var dynamicMetadata = setDynamic(metadata, true);
+            // no updates!!
+            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)LAVA.id).setMetadata(dynamicMetadata));
+
+            // scheduleBlockUpdate handles duplicate protection internally
+            world.scheduleBlockUpdate(pos);
+        }
+    }
+
+
+    /** Lava doesn't get rendered next to lava, but always gets rendered on the top face */
+    public override bool cullFace(BlockRenderer br, int x, int y, int z, RawDirection dir) {
+        // if none, always render
+        if (dir == RawDirection.NONE) {
+            return true;
+        }
+
+        var direction = Direction.getDirection(dir);
+        var same = br.getBlockCached(direction.X, direction.Y, direction.Z).getID() == br.getBlock().getID();
+        if (same) {
+            return false;
+        }
+
+        var notTransparent = !transparent[br.getBlockCached(direction.X, direction.Y, direction.Z).getID()];
+
+        return dir == RawDirection.UP || (notTransparent && base.cullFace(br, x, y, z, dir));
+    }
+
+
+    /**
+     * Don't ask me how this shit works, I've blended it through at least 4 rounds of LLMslop because the side texture kept fucking disappearing or turning into hellstone
+     * so I did the add functionality -> fix functionality -> cleanup loop until the maths was actual mathsing
+     *
+     * The drawback is that now no one understands this code except God himself! but oh well, if you don't touch it, it can't hurt you
+     */
+    public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
+        base.render(br, x, y, z, vertices);
+
+        var block = br.getBlock();
+        var metadata = block.getMetadata();
+        var level = getLavaLevel(metadata);
+        var falling = isFalling(metadata);
+        var world = br.world;
+
+        // corner heights
+        var h00 = getRenderHeight(world, x, y, z, -1, -1); // sw
+        var h10 = getRenderHeight(world, x, y, z, 1, -1); // se
+        var h01 = getRenderHeight(world, x, y, z, -1, 1); // nw
+        var h11 = getRenderHeight(world, x, y, z, 1, 1); // ne
+
+        var flow = getFlow(world, x, y, z);
+        // todo if this shit ever gets slow / you notice it on the profiler, time to create a Meth version of atan2 which mostly calculates the right value most of the time (but its fast)
+        var flowAngle = (flow.X != 0 || flow.Z != 0) ? MathF.Atan2(flow.Z, flow.X) : 0f;
+        var flowCos = MathF.Cos(flowAngle);
+        var flowSin = -MathF.Sin(flowAngle); // negative: UV Y inverted
+
+        // texture selection
+        var isFlowing = (flow.X != 0 || flow.Z != 0) || falling || level > 0;
+        var texBase = isFlowing ? uvs[1] + 0.5f : uvs[0]; // center 16x16 for flowing
+        const float texSize = 1f;
+        var texMin = UVPair.texCoords(texBase.u, texBase.v);
+        var texMax = UVPair.texCoords((texBase + texSize).u, (texBase + texSize).v);
+
+        var uMin = texMin.X;
+        var vMin = texMin.Y;
+        var uMax = texMax.X;
+        var vMax = texMax.Y;
+        var uMid = (uMin + uMax) * 0.5f;
+        var vMid = (vMin + vMax) * 0.5f;
+        var uRel = (uMax - uMin) * 0.5f;
+        var vRel = (vMax - vMin) * 0.5f;
+
+        // top face UVs: rotate around centre
+        Vector2 uv00 = rotateUV(-uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv01 = rotateUV(-uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv10 = rotateUV(uRel, -vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+        Vector2 uv11 = rotateUV(uRel, vRel, flowCos, flowSin) + new Vector2(uMid, vMid);
+
+        // side faces: 90° rotation with proper centering
+        // ??? mass confucion
+        var uo = uMid - vMid; // U offset for centering after rotation
+        var vo = uMid + vMid; // V offset for centering after rotation
+        var vMinO = -uMin + vo; // transformed V coordinates
+        var vMaxO = -uMax + vo;
+
+        // local coords
+        int lx = x & 15;
+        int ly = y & 15;
+        int lz = z & 15;
+
+        for (RawDirection d = 0; d < RawDirection.MAX; d++) {
+            if (!cullFace(br, lx, ly, lz, d)) continue;
+
+            br.applyFaceLighting(d);
+
+            // debug tint for dynamic lava
+            //if (isDynamic(metadata)) {
+            //    colourCache.Fill(new Vector4(1f, 0.5f, 0.5f, 1f));
+            //}
+
+            br.begin();
+
+            switch (d) {
+                case RawDirection.WEST:
+                    br.vertex(lx, ly + h01, lz + 1, vMax - vRel * 2 * h01 + uo, vMinO);
+                    br.vertex(lx, ly, lz + 1, vMax + uo, vMinO);
+                    br.vertex(lx, ly, lz, vMax + uo, vMaxO);
+                    br.vertex(lx, ly + h00, lz, vMax - vRel * 2 * h00 + uo, vMaxO);
+                    break;
+                case RawDirection.EAST:
+                    br.vertex(lx + 1, ly + h10, lz, vMax - vRel * 2 * h10 + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz, vMax + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz + 1, vMax + uo, vMaxO);
+                    br.vertex(lx + 1, ly + h11, lz + 1, vMax - vRel * 2 * h11 + uo, vMaxO);
+                    break;
+                case RawDirection.SOUTH:
+                    br.vertex(lx, ly + h00, lz, vMax - vRel * 2 * h00 + uo, vMinO);
+                    br.vertex(lx, ly, lz, vMax + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz, vMax + uo, vMaxO);
+                    br.vertex(lx + 1, ly + h10, lz, vMax - vRel * 2 * h10 + uo, vMaxO);
+                    break;
+                case RawDirection.NORTH:
+                    br.vertex(lx + 1, ly + h11, lz + 1, vMax - vRel * 2 * h11 + uo, vMinO);
+                    br.vertex(lx + 1, ly, lz + 1, vMax + uo, vMinO);
+                    br.vertex(lx, ly, lz + 1, vMax + uo, vMaxO);
+                    br.vertex(lx, ly + h01, lz + 1, vMax - vRel * 2 * h01 + uo, vMaxO);
+                    break;
+                case RawDirection.DOWN:
+                    br.vertex(lx + 1, ly, lz + 1, uMin, vMin);
+                    br.vertex(lx + 1, ly, lz, uMin, vMax);
+                    br.vertex(lx, ly, lz, uMax, vMax);
+                    br.vertex(lx, ly, lz + 1, uMax, vMin);
+                    break;
+                case RawDirection.UP:
+                    br.vertex(lx, ly + h01, lz + 1, uv00.X, uv00.Y);
+                    br.vertex(lx, ly + h00, lz, uv01.X, uv01.Y);
+                    br.vertex(lx + 1, ly + h10, lz, uv10.X, uv10.Y);
+                    br.vertex(lx + 1, ly + h11, lz + 1, uv11.X, uv11.Y);
+                    break;
+            }
+
+            br.end(vertices);
+        }
+    }
+
+    private static Vector2 rotateUV(float u, float v, float cos, float sin) {
+        return new Vector2(u * cos - v * sin, u * sin + v * cos);
+    }
+}
