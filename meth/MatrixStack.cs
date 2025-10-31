@@ -14,7 +14,7 @@ namespace BlockGame.world;
  * <b>Reversed mode</b> (.reversed()):
  * - Operations are applied in reverse order of calls  
  * - First call = last transformation applied to vertices
- * - Matches OpenGL fixed-function matrix stack behavior
+ * - Matches OpenGL fixed-function matrix stack behaviour
  * - Use when building transformations hierarchically (global transforms first, local transforms last)
  * 
  * Matrix multiplication reminder: In A * B * C, C is applied first to vertices, then B, then A.

@@ -143,8 +143,8 @@ public class Mob(World world, string type) : Entity(world, type) {
             }
         }
 
-        // look at player when idle (not moving)
-        if (!isMoving) {
+        // disable temporarily, makes player's head bugged
+        if (!isMoving&&false) {
             var distToPlayer = Vector3D.Distance(position, world.player.position);
             if (distToPlayer < LOOK_AT_PLAYER_DISTANCE) {
                 lookAt(world.player.position, dt);
@@ -167,16 +167,17 @@ public class Mob(World world, string type) : Entity(world, type) {
             return;
         }
 
-        // move towards waypoint
-        var dir = Vector3D.Normalize(target - position);
-        dir.Y = 0; // only horizontal movement
+        var dir = target - position;
+        dir.Y = 0;
 
-        const double moveSpeed = GROUND_MOVE_SPEED * 0.6;
-        velocity.X += dir.X * moveSpeed;
-        velocity.Z += dir.Z * moveSpeed;
-
-        // rotate head towards movement direction
         if (dir.Length() > 0.01) {
+            dir = Vector3D.Normalize(dir);
+
+            const double moveSpeed = GROUND_MOVE_SPEED * 0.6;
+            velocity.X += dir.X * moveSpeed;
+            velocity.Z += dir.Z * moveSpeed;
+
+            // rotate head towards movement direction
             var targetYaw = Meth.rad2deg((float)Math.Atan2(dir.X, dir.Z));
             smoothRotateTowards(ref rotation.Y, targetYaw, dt);
             smoothRotateTowards(ref rotation.X, 0, dt);
@@ -195,7 +196,7 @@ public class Mob(World world, string type) : Entity(world, type) {
     }
 
     private static void smoothRotateTowards(ref float current, float target, double dt) {
-        var diff = Meth.angleDiff(target, current);
+        var diff = Meth.angleDiff(current, target);
         var maxTurn = HEAD_TURN_SPEED * (float)dt;
 
         if (Math.Abs(diff) <= maxTurn) {
@@ -292,8 +293,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         float rotSpeed;
 
         if (moving) {
-            // body faces absolute movement direction
-            targetYaw = Meth.rad2deg((float)Math.Atan2(vel.X, vel.Z));
+            targetYaw = rotation.Y;
             rotSpeed = ROTATION_SPEED * 2;
         } else {
             // idle - keep current body rotation

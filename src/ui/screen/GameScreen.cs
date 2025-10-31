@@ -28,6 +28,7 @@ public class GameScreen : Screen {
     public bool fpsOnly = false;
     public bool chunkBorders = false;
     public bool entityAABBs = false;
+    public bool mobPathfinding = false;
     public bool music = false;
 
     public readonly PauseMenu PAUSE_MENU = new();
@@ -490,9 +491,10 @@ public class GameScreen : Screen {
                 break;
             }
             case Key.X when keyboard.IsKeyPressed(Key.F3): {
-                // toggle entity AABB rendering
+                // toggle entity AABB rendering and pathfinding visualisation
                 entityAABBs = !entityAABBs;
-                Log.info("Entity AABBs: " + (entityAABBs ? "ON" : "OFF"));
+                mobPathfinding = entityAABBs;
+                Log.info("Entity AABBs & pathfinding: " + (entityAABBs ? "ON" : "OFF"));
                 break;
             }
             case Key.R when keyboard.IsKeyPressed(Key.F3): {
@@ -703,6 +705,11 @@ public class GameScreen : Screen {
                 drawEntityAABBs();
             }
 
+            // Draw mob pathfinding
+            if (mobPathfinding) {
+                drawMobPathfinding();
+            }
+
             // Draw chat
 
             var msgLimit = currentMenu == CHAT ? 20 : 10;
@@ -879,6 +886,91 @@ public class GameScreen : Screen {
             // draw the AABB wireframe
             D.drawAABB(entity.aabb, c);
 
+        }
+
+        D.idc.end();
+        mat.pop();
+    }
+
+    private void drawMobPathfinding() {
+        var world = Game.world;
+
+        var playerPos = world.player.position;
+        const double renderRange = 32.0;
+
+        var mat = Game.graphics.model;
+        mat.push();
+        mat.loadIdentity();
+
+        D.idc.begin(PrimitiveType.Lines);
+
+        foreach (var entity in world.entities) {
+            if (entity is not Mob mob) continue;
+
+            var d = (entity.position - playerPos).Length();
+            if (d > renderRange) {
+                continue;
+            }
+
+            // skip if no path
+            if (mob.path == null || mob.path.isEmpty()) {
+                continue;
+            }
+
+            var path = mob.path;
+            var nodes = path.nodes;
+
+            // draw lines between path nodes
+            for (int i = 0; i < nodes.Count - 1; i++) {
+                var current = nodes[i];
+                var next = nodes[i + 1];
+
+                // the centre of the block
+                var from = new Vector3D(current.x + 0.5, current.y + 0.5, current.z + 0.5);
+                var to = new Vector3D(next.x + 0.5, next.y + 0.5, next.z + 0.5);
+
+                // use different colours for completed vs remaining path
+                var c = i < path.current ? Color.Gray : Color.Cyan;
+
+                D.drawLine(from, to, c);
+            }
+
+            // draw current target node with a brighter colour
+            if (!path.isFinished()) {
+                var current = path.getCurrent();
+                if (current != null) {
+                    var pos = new Vector3D(current.x + 0.5, current.y + 0.5, current.z + 0.5);
+                    const double o = 0.5;
+
+                    // draw a small cube around the current target node
+                    D.drawLine(new Vector3D(pos.X - o, pos.Y - o, pos.Z - o),
+                        new Vector3D(pos.X + o, pos.Y - o, pos.Z - o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X + o, pos.Y - o, pos.Z - o),
+                        new Vector3D(pos.X + o, pos.Y + o, pos.Z - o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X + o, pos.Y + o, pos.Z - o),
+                        new Vector3D(pos.X - o, pos.Y + o, pos.Z - o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X - o, pos.Y + o, pos.Z - o),
+                        new Vector3D(pos.X - o, pos.Y - o, pos.Z - o), Color.Yellow);
+
+                    D.drawLine(new Vector3D(pos.X - o, pos.Y - o, pos.Z + o),
+                        new Vector3D(pos.X + o, pos.Y - o, pos.Z + o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X + o, pos.Y - o, pos.Z + o),
+                        new Vector3D(pos.X + o, pos.Y + o, pos.Z + o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X + o, pos.Y + o, pos.Z + o),
+                        new Vector3D(pos.X - o, pos.Y + o, pos.Z + o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X - o, pos.Y + o, pos.Z + o),
+                        new Vector3D(pos.X - o, pos.Y - o, pos.Z + o), Color.Yellow);
+
+                    D.drawLine(new Vector3D(pos.X - o, pos.Y - o, pos.Z - o),
+                        new Vector3D(pos.X - o, pos.Y - o, pos.Z + o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X + o, pos.Y - o, pos.Z - o),
+                        new Vector3D(pos.X + o, pos.Y - o, pos.Z + o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X + o, pos.Y + o, pos.Z - o),
+                        new Vector3D(pos.X + o, pos.Y + o, pos.Z + o), Color.Yellow);
+                    D.drawLine(new Vector3D(pos.X - o, pos.Y + o, pos.Z - o),
+                        new Vector3D(pos.X - o, pos.Y + o, pos.Z + o), Color.Yellow);
+                }
+            }
         }
 
         D.idc.end();
