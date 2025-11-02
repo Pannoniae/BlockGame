@@ -10,7 +10,7 @@ public abstract class Registry {
     public static readonly BlockRegistry BLOCKS = new();
     public static readonly ItemRegistry ITEMS = new();
     public static readonly Registry<Recipe> RECIPES = new RecipeRegistry();
-    public static readonly ObjectRegistry<BlockEntity, Func<World, BlockEntity>> BLOCK_ENTITIES = new();
+    public static readonly ObjectRegistry<BlockEntity, Func<BlockEntity>> BLOCK_ENTITIES = new();
     public static readonly ObjectRegistry<Entity, Func<World, Entity>> ENTITIES = new();
 }
 

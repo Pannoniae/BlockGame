@@ -59,7 +59,7 @@ public partial class World {
     }
 
     /** spawn block drop as item entity with randomised position and velocity */
-    public void spawnBlockDrop(int x, int y, int z, Item item, int count, byte metadata) {
+    public void spawnBlockDrop(int x, int y, int z, Item item, int count, int metadata) {
         if (count <= 0 || item == null) {
             return;
         }

@@ -386,6 +386,15 @@ public class WorldIO {
 
         chunkTag.addListTag("entities", entitiesTag);
 
+        // save block entities
+        var blockEntitiesTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "blockEntities");
+        foreach (var (pos, be) in chunk.blockEntities) {
+            var beData = new NBTCompound();
+            be.write(beData);
+            blockEntitiesTag.add(beData);
+        }
+        chunkTag.addListTag("blockEntities", blockEntitiesTag);
+
         return chunkTag;
     }
 
@@ -478,6 +487,31 @@ public class WorldIO {
                 }
                 else {
                     Log.warn($"loadChunkFromNBT: Failed to create entity of type {type} in chunk ({posX},{posZ})");
+                }
+            }
+        }
+
+        // load block entities
+        if (chunkTag.has("blockEntities")) {
+            var blockEntitiesTag = chunkTag.getListTag<NBTCompound>("blockEntities");
+            for (int i = 0; i < blockEntitiesTag.count(); i++) {
+                var beData = blockEntitiesTag.get(i);
+                var pos = new Vector3I(
+                    beData.getInt("x"),
+                    beData.getInt("y"),
+                    beData.getInt("z")
+                );
+
+                // get block type at position to determine BE type
+                var blockValue = chunk.getBlock(pos.X & 15, pos.Y, pos.Z & 15);
+                var blockID = ((uint)blockValue).getID();
+                var block = Block.get(blockID);
+
+                if (block is EntityBlock eb) {
+                    var be = eb.get();
+                    be.read(beData);
+                    chunk.blockEntities[new Vector3I(pos.X & 15, pos.Y, pos.Z & 15)] = be;
+                    world.blockEntities.Add(be);
                 }
             }
         }
@@ -580,6 +614,31 @@ public class WorldIO {
                     chunk.addEntity(entity);
                     //entity.inWorld = true;
                     chunk.world.entities.Add(entity);
+                }
+            }
+        }
+
+        // load block entities
+        if (nbt.has("blockEntities")) {
+            var blockEntitiesTag = nbt.getListTag<NBTCompound>("blockEntities");
+            for (int i = 0; i < blockEntitiesTag.count(); i++) {
+                var beData = blockEntitiesTag.get(i);
+                var pos = new Vector3I(
+                    beData.getInt("x"),
+                    beData.getInt("y"),
+                    beData.getInt("z")
+                );
+
+                // get block type at position to determine BE type
+                var blockValue = chunk.getBlock(pos.X & 15, pos.Y, pos.Z & 15);
+                var blockID = ((uint)blockValue).getID();
+                var block = Block.get(blockID);
+
+                if (block is EntityBlock eb) {
+                    var be = eb.get();
+                    be.read(beData);
+                    chunk.blockEntities[new Vector3I(pos.X & 15, pos.Y, pos.Z & 15)] = be;
+                    chunk.world.blockEntities.Add(be);
                 }
             }
         }

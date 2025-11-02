@@ -1,8 +1,14 @@
-﻿using BlockGame.util;
+﻿using BlockGame.main;
+using BlockGame.ui;
+using BlockGame.ui.menu;
+using BlockGame.util;
+using BlockGame.world.block.entity;
+using BlockGame.world.item.inventory;
+using Molten;
 
 namespace BlockGame.world.block;
 
-public class Chest : Block {
+public class Chest : EntityBlock {
     public Chest(string name) : base(name) {
     }
 
@@ -42,5 +48,36 @@ public class Chest : Block {
         if (faceIdx >= 4) return uvs[faceIdx]; // top/bottom
 
         return faceIdx == (metadata & 0b11) ? uvs[2] : uvs[0];
+    }
+
+    public override void onBreak(World world, int x, int y, int z, byte metadata) {
+
+        // drop contents
+        var be = world.getBlockEntity(x, y, z) as ChestBlockEntity;
+        be?.dropContents(world, x, y, z);
+
+        base.onBreak(world, x, y, z, metadata);
+
+    }
+
+    public override bool onUse(World world, int x, int y, int z, Player player) {
+        if (world.getBlockEntity(x, y, z) is not ChestBlockEntity be) {
+            return false;
+        }
+
+        var ctx = new ChestMenuContext(player.inventory, be);
+        player.currentCtx = ctx;
+
+        Screen.GAME_SCREEN.switchToMenu(new ChestMenu(new Vector2I(0, 32), ctx));
+        ((ChestMenu)Screen.GAME_SCREEN.currentMenu!).setup();
+
+        world.inMenu = true;
+        Game.instance.unlockMouse();
+
+        return true;
+    }
+
+    public override BlockEntity get() {
+        return new ChestBlockEntity();
     }
 }

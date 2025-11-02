@@ -18,8 +18,20 @@ public partial class World {
             removeBlockEntity(x, y, z);
         }
 
+        be.pos = new Molten.Vector3I(x, y, z);
         blockEntities.Add(be);
         chunk.setBlockEntity(blockPos.X, blockPos.Y, blockPos.Z, be);
+    }
+
+    public BlockEntity? getBlockEntity(int x, int y, int z) {
+        if (!inWorld(x, y, z)) {
+            return null;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+
+        return chunk.getBlockEntity(blockPos.X, blockPos.Y, blockPos.Z);
     }
 
     public void removeBlockEntity(int x, int y, int z) {

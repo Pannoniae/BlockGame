@@ -1,11 +1,13 @@
 ﻿namespace BlockGame.world.block;
 
 public abstract class EntityBlock : Block {
-    public EntityBlock(ushort id, string name) : base(name) {
+    public EntityBlock(string name) : base(name) {
     }
 
     public override void onPlace(World world, int x, int y, int z, byte metadata) {
-        world.setBlockEntity(x, y, z, get());
+        var be = get();
+        be.pos = new Molten.Vector3I(x, y, z);
+        world.setBlockEntity(x, y, z, be);
     }
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {

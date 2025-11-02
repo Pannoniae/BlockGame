@@ -379,7 +379,6 @@ public partial class Entity(World world, string type) : Persistent {
             }
         }
 
-        // apply accumulated push force with smart normalization
         if (liquid > 0 && push != Vector3D.Zero) {
             // limit maximum push strength to prevent entity getting stuck
             const double maxPushStrength = 5.6;

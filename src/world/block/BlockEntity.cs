@@ -1,5 +1,4 @@
-﻿using BlockGame.util;
-using BlockGame.util.stuff;
+﻿using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block.entity;
 using Molten;
@@ -8,12 +7,12 @@ namespace BlockGame.world.block;
 
 public abstract class BlockEntity : Persistent {
 
-    public static readonly int FURNACE = register("furnace", w => new FurnaceBlockEntity(w));
-    public static readonly int CHEST = register("chest", w => new ChestBlockEntity(w));
+    public static int FURNACE;
+    public static int CHEST;
 
     public Vector3I pos;
 
-    public BlockEntity(World world) {
+    public BlockEntity() {
 
     }
 
@@ -26,7 +25,7 @@ public abstract class BlockEntity : Persistent {
             data.getInt("z")
         );
 
-        readx();
+        readx(data);
     }
 
     public void write(NBTCompound data) {
@@ -34,18 +33,24 @@ public abstract class BlockEntity : Persistent {
         data.addInt("y", pos.Y);
         data.addInt("z", pos.Z);
 
-        writex();
+        writex(data);
     }
 
-    protected abstract void readx();
+    protected abstract void readx(NBTCompound data);
 
-    protected abstract void writex();
+    protected abstract void writex(NBTCompound data);
+
+    public static void preLoad() {
+        // force class load to register block entities
+        FURNACE = register("furnace", () => new FurnaceBlockEntity());
+        CHEST = register("chest", () => new ChestBlockEntity());
+    }
 
     /**
      * Register a block entity type with a string ID.
      * Returns runtime int ID for fast lookups.
      */
-    public static int register(string type, Func<World, BlockEntity> factory) {
+    public static int register(string type, Func<BlockEntity> factory) {
         return Registry.BLOCK_ENTITIES.register(type, factory);
     }
 
@@ -54,14 +59,14 @@ public abstract class BlockEntity : Persistent {
      */
     public static BlockEntity? create(World world, int type) {
         var factory = Registry.BLOCK_ENTITIES.factory(type);
-        return factory != null ? factory(world) : null;
+        return factory != null ? factory() : null;
     }
 
     /**
      * Create a block entity instance by string ID (used for loading saves).
      */
-    public static BlockEntity? create(World world, string type) {
+    public static BlockEntity? create(string type) {
         var factory = Registry.BLOCK_ENTITIES.factory(type);
-        return factory != null ? factory(world) : null;
+        return factory != null ? factory() : null;
     }
 }
