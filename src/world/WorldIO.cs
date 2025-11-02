@@ -394,7 +394,6 @@ public class WorldIO {
         var posZ = chunkTag.getInt("posZ");
         var status = chunkTag.getByte("status");
         var lastSaved = chunkTag.getULong("lastSaved");
-        Log.info($"Loading chunk ({posX},{posZ}) with status {(ChunkStatus)status}");
         var chunk = new Chunk(world, posX, posZ) {
             status = (ChunkStatus)status,
             lastSaved = lastSaved
@@ -557,8 +556,6 @@ public class WorldIO {
             for (int i = 0; i < entitiesTag.count(); i++) {
                 var entityData = entitiesTag.get(i);
                 var type = entityData.getString("type");
-
-                Console.Out.WriteLine("asd");
 
                 // skip players
                 if (type == "player") {
