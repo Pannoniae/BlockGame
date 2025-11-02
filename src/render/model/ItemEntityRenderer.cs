@@ -131,23 +131,21 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         // NOZ
         mat.translate(-0.5f, -0.5f, 0f);
 
-        if (vertices.Count > 0) {
+        var idt = Game.graphics.idt;
 
-            var idt = Game.graphics.idt;
+        idt.begin(PrimitiveType.Quads);
 
-            idt.begin(PrimitiveType.Quads);
+        idt.setTexture(Game.textures.itemTexture);
 
-            idt.setTexture(Game.textures.itemTexture);
+        Game.player.handRenderer.renderItemInHand(itemEntity.stack, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
 
-            Game.player.handRenderer.renderItemInHand(itemEntity.stack, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
+        idt.model(mat);
+        idt.view(Game.camera.getViewMatrix(interp));
+        idt.proj(Game.camera.getProjectionMatrix());
+        idt.applyMat();
 
-            idt.model(mat);
-            idt.view(Game.camera.getViewMatrix(interp));
-            idt.proj(Game.camera.getProjectionMatrix());
-            idt.applyMat();
+        idt.end();
 
-            idt.end();
-        }
         mat.pop();
     }
 
@@ -159,10 +157,12 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
         var skylight = (byte)(light & 0xF);
         var lightVal = Game.textures.light(blocklight, skylight);
 
-        var u0 = UVPair.texU(texUV.u);
-        var v0 = UVPair.texV(texUV.v);
-        var u1 = UVPair.texU(texUV.u + 1);
-        var v1 = UVPair.texV(texUV.v + 1);
+        var u = UVPair.texCoordsi(texUV);
+        var v = UVPair.texCoordsi(texUV + 1);
+        var u0 = u.X;
+        var v0 = v.Y;
+        var u1 = u.Y;
+        var v1 = v.X;
 
         // front face
         addQuad(0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0,

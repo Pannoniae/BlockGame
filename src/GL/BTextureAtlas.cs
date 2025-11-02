@@ -18,8 +18,9 @@ public class BTextureAtlas : BTexture2D {
     
     public Rgba32[] mipmap = null!;
 
+    public float atlasRatio => atlasSize / (float)width;
+
     public BTextureAtlas(string path, int atlasSize) : base(path) {
-        GL = Game.GL;
         this.atlasSize = atlasSize;
         this.path = path;
 
@@ -108,6 +109,7 @@ public class BTextureAtlas : BTexture2D {
     }
 
     private unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
+        var GL = Game.GL;
         fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
             GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
@@ -138,6 +140,7 @@ public class BTextureAtlas : BTexture2D {
     }
 
     public override unsafe void reload() {
+        var GL = Game.GL;
         GL.DeleteTexture(handle);
         handle = GL.CreateTexture(TextureTarget.Texture2D);
         GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
@@ -163,6 +166,11 @@ public class BTextureAtlas : BTexture2D {
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, (uint)image.Width, (uint)image.Height,
                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
         }*/
+
+        width = image.Width;
+        height = image.Height;
+        iwidth = 1.0 / width;
+        iheight = 1.0 / height;
 
         mipmap = new Rgba32[width * height];
 

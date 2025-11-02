@@ -1,4 +1,5 @@
-﻿using BlockGame.util;
+using BlockGame.main;
+using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.block;
 
@@ -278,13 +279,13 @@ public class Item {
         DOOR = register("door_item", new DoorItem("Door", Block.DOOR));
         DOOR.tex = new UVPair(4, 8);
 
-        BUCKET = register("bucket", new Item("Bucket"));
+        BUCKET = register("bucket", new BucketItem("Bucket"));
         BUCKET.tex = new UVPair(6, 4);
 
-        WATER_BUCKET = register("water_bucket", new Item("Water Bucket"));
+        WATER_BUCKET = register("water_bucket", new BucketItem("Water Bucket", Block.WATER));
         WATER_BUCKET.tex = new UVPair(7, 4);
 
-        LAVA_BUCKET = register("lava_bucket", new Item("Lava Bucket"));
+        LAVA_BUCKET = register("lava_bucket", new BucketItem("Lava Bucket", Block.LAVA));
         LAVA_BUCKET.tex = new UVPair(8, 4);
 
 
@@ -311,8 +312,10 @@ public class Item {
 
     /**
      * What a meaty method lol. Called when the player uses an item on a block.
+     * Returns an optional replacement ItemStack (e.g., empty bucket -> water bucket).
      */
-    public virtual void useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
+    public virtual ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
+        return null;
     }
 
     /**

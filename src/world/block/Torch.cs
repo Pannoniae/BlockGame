@@ -156,21 +156,26 @@ public class Torch : Block {
         }
 
         // torch texcoords (7/16 to 9/16 width, bottom 10 pixels)
-        var su0 = UVPair.texU(min.u + 7/16f);
-        var su1 = UVPair.texU(min.u + 9/16f);
-        var sv0 = UVPair.texV(min.v + 6/16f);
-        var sv1 = UVPair.texV(min.v + 1f);
+        var su = UVPair.texCoords(new UVPair(min.u + 7/16f, min.v + 6/16f));
+        var su0 = su.X;
+        var sv0 = su.Y;
+        var sv = UVPair.texCoords(new UVPair(min.u + 9/16f, min.v + 1f));
+        var su1 = sv.X;
+        var sv1 = sv.Y;
 
-        // top/bottom 2x2 pixels
-        var tu0 = UVPair.texU(min.u + 7/16f);
-        var tu1 = UVPair.texU(min.u + 9/16f);
-        var tv0 = UVPair.texV(min.v + 6/16f);
-        var tv1 = UVPair.texV(min.v + 8/16f);
+        var tu = UVPair.texCoords(new UVPair(min.u + 7/16f, min.v + 6/16f));
+        var tu0 = tu.X;
+        var tv0 = tu.Y;
+        var tv = UVPair.texCoords(new UVPair(min.u + 9/16f, min.v + 8/16f));
+        var tu1 = tv.X;
+        var tv1 = tv.Y;
 
-        var bu0 = UVPair.texU(min.u + 7/16f);
-        var bu1 = UVPair.texU(min.u + 9/16f);
-        var bv0 = UVPair.texV(min.v + 14/16f);
-        var bv1 = UVPair.texV(min.v + 1f);
+        var bu = UVPair.texCoords(new UVPair(min.u + 7/16f, min.v + 14/16f));
+        var bu0 = bu.X;
+        var bv0 = bu.Y;
+        var bv = UVPair.texCoords(new UVPair(min.u + 9/16f, min.v + 1f));
+        var bu1 = bv.X;
+        var bv1 = bv.Y;
         
         // torch tex is 2x10
         const float tiltAngle = MathF.PI / 8f; // 22.5

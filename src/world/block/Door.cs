@@ -102,10 +102,12 @@ public class Door : Block {
             tex = new UVPair(br.forceTex.u, br.forceTex.v);
         }
 
-        var u0 = UVPair.texU(tex.u);
-        var v0 = UVPair.texV(tex.v);
-        var u1 = UVPair.texU(tex.u + 1);
-        var v1 = UVPair.texV(tex.v + 1);
+        var uv0 = UVPair.texCoords(tex);
+        var uv1 = UVPair.texCoords(tex + 1);
+        var u0 = uv0.X;
+        var v0 = uv0.Y;
+        var u1 = uv1.X;
+        var v1 = uv1.Y;
 
         const float t = 2f / 16f;
         float x0, z0, x1, z1;
@@ -160,8 +162,7 @@ public class Door : Block {
     public override byte maxValidMetadata() => 31; // 5 bits
 
     public override (item.Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
-        // only drop one door from the lower block
-        if (upper(metadata)) return (Item.DOOR, 0, 0);
+        // onBreak removes the other half via setBlock which doesn't trigger getDrop!
         return (Item.DOOR, 0, 1);
     }
 }

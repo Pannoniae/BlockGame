@@ -9,19 +9,22 @@ namespace BlockGame.GL;
 public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     public uint handle;
 
-    public Silk.NET.OpenGL.Legacy.GL GL;
-
     public string? path;
+
+    public int width;
+    public int height;
+    public double iwidth;
+    public double iheight;
 
     public Memory<Rgba32> imageData;
     public Image<Rgba32> image = null!;
 
     public BTexture2D(string path) {
-        GL = Game.GL;
         this.path = path;
     }
 
     public virtual unsafe void reload() {
+        var GL = Game.GL;
         GL.DeleteTexture(handle);
         handle = GL.CreateTexture(TextureTarget.Texture2D);
         GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
@@ -51,11 +54,16 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
                 }
             });
         }
+
+        width = image.Width;
+        height = image.Height;
+        iwidth = 1.0 / width;
+        iheight = 1.0 / height;
     }
 
     public BTexture2D(uint width, uint height, bool linear = false) {
         unsafe {
-            GL = Game.GL;
+            var GL = Game.GL;
 
             handle = GL.CreateTexture(TextureTarget.Texture2D);
             GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
@@ -68,22 +76,23 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
             image = new Image<Rgba32>((int)width, (int)height);
             GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, width, height);
         }
+
+        this.width = (int)width;
+        this.height = (int)height;
+        iwidth = 1.0 / this.width;
+        iheight = 1.0 / this.height;
     }
 
     public Rgba32 getPixel(int x, int y) {
         return image[x, y];
     }
 
-    public uint width => (uint)image.Width;
-
-    public uint height => (uint)image.Height;
-
     public void bind() {
         Game.graphics.tex(0, handle);
     }
 
     public virtual void Dispose() {
-        GL.DeleteTexture(handle);
+        Game.GL.DeleteTexture(handle);
         GC.SuppressFinalize(this);
     }
     
@@ -95,17 +104,17 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
                 pixels[y * width + x] = imageData.Span[(srcY + y) * image.Width + srcX + x];
             }
         }
-        GL.InvalidateTexImage(handle, 0);
+        Game.GL.InvalidateTexImage(handle, 0);
         fixed (Rgba32* pixelsPtr = pixels) {
-            GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
+            Game.GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
         }
     }
 
     public void updateTexture<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight) where T : unmanaged {
         unsafe {
-            GL.InvalidateTexImage(handle, 0);
+            Game.GL.InvalidateTexImage(handle, 0);
             fixed (T* dataPtr = data) {
-                GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
+                Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
                     PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
             }
         }

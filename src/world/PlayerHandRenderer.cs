@@ -377,10 +377,13 @@ public class PlayerHandRenderer {
         // if you don't it z-fights?? i dont fully get why tho, its probably because of pixel boundary shit in the uv but idk
         const float epsilon = 1 / 4096f;
 
-        var u0 = UVPair.texU(texUV.u);
-        var v0 = UVPair.texV(texUV.v);
-        var u1 = UVPair.texU(texUV.u + 1);
-        var v1 = UVPair.texV(texUV.v + 1);
+        var s = UVPair.texCoordsi(texUV);
+        var t = UVPair.texCoordsi(texUV + 1);
+
+        var u0 = s.X;
+        var v0 = s.Y;
+        var u1 = t.X;
+        var v1 = t.Y;
 
 
         // Front face

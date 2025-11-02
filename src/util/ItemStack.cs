@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -75,6 +76,18 @@ public class ItemStack : Persistent {
 
         quantity = data.has("qty") ? data.getInt("qty") : 0;
         metadata = data.has("meta") ? data.getInt("meta") : 0;
+    }
+
+    /**
+     * Helper to consume items from a stack (respects creative mode).
+     */
+    public ItemStack consume(int amount) {
+        if (!Game.gamemode.gameplay) {
+            return this; // creative: no consumption
+        }
+        int newQty = quantity - amount;
+        if (newQty <= 0) return EMPTY;
+        return new ItemStack(getItem(), newQty, metadata);
     }
 }
 

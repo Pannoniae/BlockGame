@@ -46,10 +46,12 @@ public class Stairs : Block {
             max = min + 1;
         }
 
-        var u0 = UVPair.texU(min.u);
-        var v0 = UVPair.texV(min.v);
-        var u1 = UVPair.texU(max.u);
-        var v1 = UVPair.texV(max.v);
+        var uv0 = UVPair.texCoords(min);
+        var uv1 = UVPair.texCoords(max);
+        var u0 = uv0.X;
+        var v0 = uv0.Y;
+        var u1 = uv1.X;
+        var v1 = uv1.Y;
 
         var (tx1, tz1, tx2, tz2) = facing switch {
             0 => (0.5f, 0f, 1f, 1f),

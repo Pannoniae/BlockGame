@@ -110,10 +110,12 @@ public class Slabs : Block {
             max = br.forceTex + 1;
         }
 
-        var u0 = UVPair.texU(min.u);
-        var v0 = UVPair.texV(min.v);
-        var u1 = UVPair.texU(max.u);
-        var v1 = UVPair.texV(max.v);
+        var uv0 = UVPair.texCoords(min);
+        var uv1 = UVPair.texCoords(max);
+        float u0 = uv0.X;
+        float v0 = uv0.Y;
+        float u1 = uv1.X;
+        float v1 = uv1.Y;
 
         float y0;
         float y1;

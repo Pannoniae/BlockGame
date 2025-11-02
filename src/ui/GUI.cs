@@ -872,7 +872,7 @@ public class GUI {
         else {
             // normal item rendering
             var texUV = item.getTexture(stack);
-            var uv = UVPair.texCoordsI(texUV);
+            var uv = UVPair.texCoordsiI(texUV);
             var sourceRect = new Rectangle((int)uv.X, (int)uv.Y, UVPair.ATLASSIZE, UVPair.ATLASSIZE);
             drawUI(Game.textures.itemTexture, destRect, sourceRect);
         }

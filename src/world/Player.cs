@@ -610,8 +610,13 @@ public class Player : Mob, CommandSource {
 
             var metadata = (byte)stack.metadata;
 
-            // if item, fire the hook (WHICH DOESN'T EXIST YET LOL)
-            stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, getFacing());
+            // if item, fire the hook and handle replacement
+            var replacement = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, getFacing());
+            if (replacement != null) {
+                inventory.setStack(inventory.selected, replacement);
+                setSwinging(true);
+                return;
+            }
 
             // if block, place it
             if (stack.getItem().isBlock()) {

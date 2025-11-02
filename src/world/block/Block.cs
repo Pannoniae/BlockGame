@@ -2,14 +2,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.item;
-using Silk.NET.Maths;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -507,11 +505,11 @@ public class Block {
         HEAD.setModel(BlockModel.makeHalfCube(HEAD));
         HEAD.partialBlock();
 
-        WATER = register("water", new Water("Water", 15, 8));
+        WATER = register("water", new Liquid("Water", 15, 8, false));
         WATER.setTex(new UVPair(0, 13), new UVPair(1, 14));
         WATER.makeLiquid();
 
-        LAVA = register("lava", new Lava("Lava", 30, 4));
+        LAVA = register("lava", new Liquid("Lava", 30, 4, true));
         LAVA.setTex(new UVPair(0, 16), new UVPair(1, 17));
         LAVA.makeLiquid();
 
@@ -1034,8 +1032,9 @@ public class Block {
                             break;
                     }
 
-                    float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f);
-                    float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
+                    float u = uv.u + Game.clientRandom.NextSingle() * 0.75f;
+                    float v = uv.v + Game.clientRandom.NextSingle() * 0.75f;
+                    Vector2 us = UVPair.texCoords(u, v);
 
                     // break particles: explode outward from center, biased upward
                     var dx = (particleX - x - 0.5f);
@@ -1048,8 +1047,8 @@ public class Block {
                         world,
                         particlePosition);
                     particle.texture = "textures/blocks.png";
-                    particle.u = u;
-                    particle.v = v;
+                    particle.u = us.X;
+                    particle.v = us.Y;
                     particle.size = new Vector2(size);
                     particle.uvsize = new Vector2(1 / 16f * size);
                     particle.maxAge = ttl;
@@ -1139,8 +1138,9 @@ public class Block {
                     break;
             }
 
-            float u = UVPair.texU(uv.u + Game.clientRandom.NextSingle() * 0.75f);
-            float v = UVPair.texV(uv.v + Game.clientRandom.NextSingle() * 0.75f);
+            float u = uv.u + Game.clientRandom.NextSingle() * 0.75f;
+            float v = uv.v + Game.clientRandom.NextSingle() * 0.75f;
+            Vector2 us = UVPair.texCoords(u, v);
 
             // mining particles: fall down with slight horizontal drift
             var rx = (Game.clientRandom.NextSingle() - 0.5f) * 0.3f;
@@ -1149,8 +1149,8 @@ public class Block {
 
             var particle = new Particle(world, particlePosition);
             particle.texture = "textures/blocks.png";
-            particle.u = u;
-            particle.v = v;
+            particle.u = us.X;
+            particle.v = us.Y;
             particle.size = new Vector2(size);
             particle.uvsize = new Vector2(1 / 16f * size);
             particle.maxAge = ttl;
@@ -1295,99 +1295,6 @@ public class GrassBlock(string name) : Block(name) {
                 }
             }
         }
-    }
-}
-
-/// <summary>
-/// Stores UV in block coordinates (1 = 16px)
-/// </summary>
-[StructLayout(LayoutKind.Auto)]
-public readonly record struct UVPair(float u, float v) {
-    public const int ATLASSIZE = 16;
-
-    public readonly float u = u;
-    public readonly float v = v;
-
-    public static UVPair operator +(UVPair uv, float q) {
-        return new UVPair(uv.u + q, uv.v + q);
-    }
-
-    public static UVPair operator -(UVPair uv, float q) {
-        return new UVPair(uv.u - q, uv.v - q);
-    }
-
-    public static UVPair operator +(UVPair uv, UVPair other) {
-        return new UVPair(uv.u + other.u, uv.v + other.v);
-    }
-
-    /// <summary>
-    /// 0 = 0, 65535 = 1
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2D<Half> texCoordsH(int x, int y) {
-        return new Vector2D<Half>((Half)(x * Block.atlasRatio), (Half)(y * Block.atlasRatio));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2D<Half> texCoordsH(UVPair uv) {
-        return new Vector2D<Half>((Half)(uv.u * Block.atlasRatio), (Half)(uv.v * Block.atlasRatio));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 texCoords(float x, float y) {
-        return new Vector2(x * Block.atlasRatio, y * Block.atlasRatio);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 texCoords(UVPair uv) {
-        return new Vector2(uv.u * Block.atlasRatio, uv.v * Block.atlasRatio);
-    }
-
-    public static Vector2 texCoords(BTexture2D tex, float x, float y) {
-        return new Vector2(x / tex.width, y / tex.height);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Vector2 texCoordsI(UVPair uv) {
-        return new Vector2(uv.u * ATLASSIZE, uv.v * ATLASSIZE);
-    }
-
-    public static Vector2 texCoords(BTexture2D tex, UVPair uv) {
-        return new Vector2(uv.u / tex.width, uv.v / tex.height);
-    }
-
-    public static float texU(BTexture2D tex, float u) {
-        return u / tex.width;
-    }
-
-    public static float texV(BTexture2D tex, float v) {
-        return v / tex.height;
-    }
-
-    public static int texUI(float u) {
-        return (int)(u * ATLASSIZE);
-    }
-
-    public static int texUI(BTexture2D tex, float u) {
-        return (int)(u * tex.width);
-    }
-
-    public static int texVI(float v) {
-        return (int)(v * ATLASSIZE);
-    }
-
-    public static int texVI(BTexture2D tex, float v) {
-        return (int)(v * tex.height);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float texU(float u) {
-        return u * Block.atlasRatio;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float texV(float v) {
-        return v * Block.atlasRatio;
     }
 }
 
