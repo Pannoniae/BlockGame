@@ -76,4 +76,8 @@ public readonly record struct UVPair(float u, float v) {
     public static Vector2 texCoords(BTexture2D tex, UVPair uv) {
         return new Vector2(uv.u / tex.width, uv.v / tex.height);
     }
+
+    public static Vector2 texCoords(BTextureAtlas tex, UVPair uv) {
+        return new Vector2(uv.u * tex.atlasRatio, uv.v * tex.atlasRatio);
+    }
 }

@@ -60,7 +60,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
             // render as small block
             renderItemAsBlock(mat, itemEntity, interp);
         } else {
-            // render as flat item texture (placeholder)
+            // render as item
             renderItemAsTexture(mat, itemEntity, interp);
         }
 
@@ -116,7 +116,6 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
     private void renderItemAsTexture(MatrixStack mat, ItemEntity itemEntity, double interp) {
 
         var item = itemEntity.stack.getItem();
-        var texUV = item.getTexture(itemEntity.stack);
 
         var world = itemEntity.world;
         var pos = itemEntity.position.toBlockPos();

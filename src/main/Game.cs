@@ -787,6 +787,7 @@ public partial class Game {
         jankyFrame();
         Block.preLoad();
         Item.preLoad();
+        Entities.preLoad();
         Recipe.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);

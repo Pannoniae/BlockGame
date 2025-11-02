@@ -27,9 +27,6 @@ public class PlayerHandRenderer {
 
     public double lower;
 
-    private int uMVP;
-    private int tex;
-
     // Water overlay renderer
     public InstantDrawTexture waterOverlayRenderer;
 
@@ -39,8 +36,6 @@ public class PlayerHandRenderer {
         vao = new StreamingVAO<BlockVertexTinted>();
         vao.bind();
         vao.setSize(Face.MAX_FACES * 4);
-        uMVP = Game.graphics.instantTextureShader.getUniformLocation("uMVP");
-        tex = Game.graphics.instantTextureShader.getUniformLocation("tex");
 
         // Initialize water overlay renderer
         waterOverlayRenderer = new InstantDrawTexture(60);
@@ -67,7 +62,8 @@ public class PlayerHandRenderer {
 
         var itemRenderer = Game.graphics.idt;
 
-        var a = handItem.getItem().isBlock();
+        var item = handItem.getItem();
+        var a = handItem.getItem().isBlock() && !Block.renderItemLike[handItem.getItem().getBlock()!.id];
 
         Game.graphics.tex(0, Game.textures.blockTexture);
         Game.blockRenderer.setupStandalone();
@@ -75,8 +71,8 @@ public class PlayerHandRenderer {
         if (a) {
             Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                 vertices,
-                lightOverride: l,
-                cullFaces: false);
+                lightOverride:l,
+                cullFaces:false);
 
             vao.bind();
             Game.renderer.bindQuad();
@@ -85,7 +81,6 @@ public class PlayerHandRenderer {
         else {
             // render item as flat card using InstantDrawTexture
             itemRenderer.begin(PrimitiveType.Quads);
-
         }
 
 
@@ -128,9 +123,7 @@ public class PlayerHandRenderer {
         mat.translate(0.65f, -1.45f, 1f);
 
 
-
         if (a) {
-
             mat.translate(0.5f, 0.5f, 0.5f);
 
             mat.scale(0.6f);
@@ -160,7 +153,6 @@ public class PlayerHandRenderer {
         }
 
         else {
-
             mat.push();
 
 
@@ -199,8 +191,11 @@ public class PlayerHandRenderer {
             //mat.scale(0.5f);
 
 
-
-            itemRenderer.setTexture(Game.textures.itemTexture);
+            if (item.isBlock() && Block.renderItemLike[item.getBlock()!.id]) {
+                itemRenderer.setTexture(Game.textures.blockTexture);
+            } else {
+                itemRenderer.setTexture(Game.textures.itemTexture);
+            }
 
 
             //Console.Out.WriteLine((mat.top).print());
@@ -265,7 +260,6 @@ public class PlayerHandRenderer {
         //mat.rotate(interpRot.Y, 0, 1, 0);
         //mat.rotate(interpRot.Z, 1, 0, 0);
         //mat.rotate(interpBodyRot.X, 1, 0, 0);
-
 
 
         //mat.translate(sinSwingSqrt * -0.2f, ((float)-getLower(interp) + circleishThing) * 0.15f, sinSwing * 0.15f);
@@ -354,9 +348,9 @@ public class PlayerHandRenderer {
         }
     }
 
-    public void renderItemInHand(ItemStack itemStack, Color lightOverride) {
-        var item = itemStack.getItem();
-        var texUV = item.getTexture(itemStack);
+    public void renderItemInHand(ItemStack stack, Color lightOverride) {
+        var item = stack.getItem();
+        var texUV = item.getTexture(stack);
 
         //Console.Out.WriteLine(lightOverride);
 
@@ -377,8 +371,12 @@ public class PlayerHandRenderer {
         // if you don't it z-fights?? i dont fully get why tho, its probably because of pixel boundary shit in the uv but idk
         const float epsilon = 1 / 4096f;
 
-        var s = UVPair.texCoordsi(texUV);
-        var t = UVPair.texCoordsi(texUV + 1);
+        BTextureAtlas tex;
+        // we need to handle the block/item case separately!
+        tex = stack.getItem().isBlock() ? Game.textures.blockTexture : Game.textures.itemTexture;
+
+        Vector2 s = UVPair.texCoords(tex, texUV);
+        Vector2 t = UVPair.texCoords(tex, texUV + 1);
 
         var u0 = s.X;
         var v0 = s.Y;
@@ -468,7 +466,7 @@ public class PlayerHandRenderer {
 
         var itemRenderer = Game.graphics.idt;
 
-        var a = handItem.getItem().isBlock();
+        var a = handItem.getItem().isBlock() && !Block.renderItemLike[handItem.getItem().getBlock()!.id];
 
         var world = player.world;
         var pos = player.position.toBlockPos();
@@ -477,11 +475,13 @@ public class PlayerHandRenderer {
 
         var l = world.inWorld(pos.X, pos.Y, pos.Z) ? world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
 
+        var item = handItem.getItem();
+
         if (a) {
             Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                 vertices,
-                lightOverride: l,
-                cullFaces: false);
+                lightOverride:l,
+                cullFaces:false);
 
             vao.bind();
             Game.renderer.bindQuad();
@@ -576,8 +576,11 @@ public class PlayerHandRenderer {
             //mat.scale(0.5f);
 
 
-
-            itemRenderer.setTexture(Game.textures.itemTexture);
+            if (item.isBlock() && Block.renderItemLike[item.getBlock()!.id]) {
+                itemRenderer.setTexture(Game.textures.blockTexture);
+            } else {
+                itemRenderer.setTexture(Game.textures.itemTexture);
+            }
 
 
             //Console.Out.WriteLine((mat.top).print());

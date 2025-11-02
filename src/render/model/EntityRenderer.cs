@@ -25,7 +25,10 @@ public static class EntityRenderers {
 
     static EntityRenderers() {
         ide.setup();
-        reloadAll();
+    }
+
+    public static void preLoad() {
+
     }
 
     /** Register a renderer for an entity type */

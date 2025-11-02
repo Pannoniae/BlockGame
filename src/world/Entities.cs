@@ -1,3 +1,4 @@
+using BlockGame.render.model;
 using BlockGame.util.stuff;
 using BlockGame.world.entity;
 using Core.world.entity;
@@ -13,11 +14,21 @@ namespace BlockGame.world;
  */
 public class Entities {
 
-    public static readonly int PLAYER = register("player", w => new Player(w, 0, 0, 0));
-    public static readonly int ITEM_ENTITY = register("item", w => new ItemEntity(w));
+    public static int PLAYER;
+    public static int ITEM_ENTITY;
 
-    public static readonly int COW = register("cow", w => new Cow(w));
-    public static readonly int PIG = register("pig", w => new Pig(w));
+    public static int COW;
+    public static int PIG;
+
+    public static void preLoad() {
+        EntityRenderers.preLoad();
+        PLAYER = register("player", w => new Player(w, 0, 0, 0));
+        ITEM_ENTITY = register("item", w => new ItemEntity(w));
+        COW = register("cow", w => new Cow(w));
+        PIG = register("pig", w => new Pig(w));
+        EntityRenderers.reloadAll();
+
+    }
 
     /**
      * Register an entity type with a string ID.

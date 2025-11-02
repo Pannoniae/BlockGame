@@ -14,7 +14,6 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class WorldIO {
-
     public static readonly FixedArrayPool<uint> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
@@ -95,6 +94,7 @@ public class WorldIO {
             nodeTag.addInt("z", node.z);
             skyLightList.add(nodeTag);
         }
+
         tag.addListTag("skyLightQueue", skyLightList);
 
         // skylight removal queue
@@ -107,6 +107,7 @@ public class WorldIO {
             nodeTag.addByte("value", node.value);
             skyLightRemovalList.add(nodeTag);
         }
+
         tag.addListTag("skyLightRemovalQueue", skyLightRemovalList);
 
         // blocklight queue
@@ -118,6 +119,7 @@ public class WorldIO {
             nodeTag.addInt("z", node.z);
             blockLightList.add(nodeTag);
         }
+
         tag.addListTag("blockLightQueue", blockLightList);
 
         // blocklight removal queue
@@ -130,6 +132,7 @@ public class WorldIO {
             nodeTag.addByte("value", node.value);
             blockLightRemovalList.add(nodeTag);
         }
+
         tag.addListTag("blockLightRemovalQueue", blockLightRemovalList);
 
         // block update queue (scheduled block updates)
@@ -142,6 +145,7 @@ public class WorldIO {
             updateTag.addInt("tick", update.tick);
             blockUpdateList.add(updateTag);
         }
+
         tag.addListTag("blockUpdateQueue", blockUpdateList);
     }
 
@@ -379,21 +383,23 @@ public class WorldIO {
                 entitiesTag.add(entityData);
             }
         }
+
         chunkTag.addListTag("entities", entitiesTag);
 
         return chunkTag;
     }
 
-    public static Chunk loadChunkFromNBT(World world, NBTCompound nbt) {
-        var posX = nbt.getInt("posX");
-        var posZ = nbt.getInt("posZ");
-        var status = nbt.getByte("status");
-        var lastSaved = nbt.getULong("lastSaved");
+    public static Chunk loadChunkFromNBT(World world, NBTCompound chunkTag) {
+        var posX = chunkTag.getInt("posX");
+        var posZ = chunkTag.getInt("posZ");
+        var status = chunkTag.getByte("status");
+        var lastSaved = chunkTag.getULong("lastSaved");
+        Log.info($"Loading chunk ({posX},{posZ}) with status {(ChunkStatus)status}");
         var chunk = new Chunk(world, posX, posZ) {
             status = (ChunkStatus)status,
             lastSaved = lastSaved
         };
-        var sections = nbt.getListTag<NBTCompound>("sections");
+        var sections = chunkTag.getListTag<NBTCompound>("sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = sections.get(sectionY);
             var blocks = chunk.blocks[sectionY];
@@ -425,11 +431,13 @@ public class WorldIO {
                     if (runtimeID == -1) {
                         // Block removed from game -> use air
                         runtimeBlocks[i] = 0;
-                    } else {
+                    }
+                    else {
                         runtimeBlocks[i] = ((uint)metadata << 24) | (uint)runtimeID;
                     }
                 }
-            } else {
+            }
+            else {
                 // old format without palette - assume IDs are still valid?
                 runtimeBlocks = section.getUIntArray("blocks");
             }
@@ -439,8 +447,8 @@ public class WorldIO {
         }
 
         // load entities (skip players - they're saved with world data)
-        if (nbt.has("entities")) {
-            var entitiesTag = nbt.getListTag<NBTCompound>("entities");
+        if (chunkTag.has("entities")) {
+            var entitiesTag = chunkTag.getListTag<NBTCompound>("entities");
             for (int i = 0; i < entitiesTag.count(); i++) {
                 var entityData = entitiesTag.get(i);
                 var type = entityData.getString("type");
@@ -456,7 +464,21 @@ public class WorldIO {
                     entity.read(data);
                     // update global entity ID counter to prevent duplicates
                     World.ec = Math.Max(World.ec, entity.id + 1);
-                    world.addEntity(entity);
+
+                    // add directly to chunk and world entity list
+                    // (chunk not in world.chunks yet, so world.addEntity() would fail to add to chunk)
+                    // calculate subchunk coord from pos
+                    var pos = entity.position.toBlockPos();
+                    int chunkX = pos.X >> 4;
+                    int chunkZ = pos.Z >> 4;
+                    int subY = pos.Y >> 4;
+                    entity.subChunkCoord = new SubChunkCoord(chunkX, subY, chunkZ);
+                    chunk.addEntity(entity);
+                    //entity.inWorld = true;
+                    world.entities.Add(entity);
+                }
+                else {
+                    Log.warn($"loadChunkFromNBT: Failed to create entity of type {type} in chunk ({posX},{posZ})");
                 }
             }
         }
@@ -514,11 +536,13 @@ public class WorldIO {
                     if (runtimeID == -1) {
                         // Block removed from game -> use air
                         runtimeBlocks[i] = 0;
-                    } else {
+                    }
+                    else {
                         runtimeBlocks[i] = ((uint)metadata << 24) | (uint)runtimeID;
                     }
                 }
-            } else {
+            }
+            else {
                 // old format without palette - assume IDs are still valid?
                 runtimeBlocks = section.getUIntArray("blocks");
             }
@@ -534,6 +558,8 @@ public class WorldIO {
                 var entityData = entitiesTag.get(i);
                 var type = entityData.getString("type");
 
+                Console.Out.WriteLine("asd");
+
                 // skip players
                 if (type == "player") {
                     continue;
@@ -545,7 +571,18 @@ public class WorldIO {
                     entity.read(data);
                     // update global entity ID counter to prevent duplicates
                     World.ec = Math.Max(World.ec, entity.id + 1);
-                    chunk.world.addEntity(entity);
+                    // calculate subchunk coord from pos
+                    var pos = entity.position.toBlockPos();
+                    int chunkX = pos.X >> 4;
+                    int chunkZ = pos.Z >> 4;
+                    int subY = pos.Y >> 4;
+                    entity.subChunkCoord = new SubChunkCoord(chunkX, subY, chunkZ);
+
+                    // add directly to chunk and world entity list
+                    // (chunk might not be in world.chunks yet, so world.addEntity() could fail to add to chunk)
+                    chunk.addEntity(entity);
+                    //entity.inWorld = true;
+                    chunk.world.entities.Add(entity);
                 }
             }
         }
@@ -596,7 +633,6 @@ public class WorldIO {
     }
 }
 
-
 public struct ChunkSaveData(NBTCompound nbt, string path, ulong lastSave) {
     public readonly NBTCompound nbt = nbt;
     public readonly string path = path;
@@ -620,9 +656,9 @@ public struct ChunkLoadResult(ChunkCoord coord, NBTCompound? nbtData, ChunkStatu
 public sealed class ChunkSaveThread : IDisposable {
     private readonly WorldIO io;
     private readonly Thread saveThread;
-    
+
     private volatile bool isDisposed;
-    
+
     private readonly ConcurrentQueue<ChunkSaveData> saveQueue = new();
 
     public ChunkSaveThread(WorldIO io) {
@@ -637,7 +673,7 @@ public sealed class ChunkSaveThread : IDisposable {
     public void Join() {
         saveThread.Join();
     }
-    
+
     private void saveLoop() {
         try {
             while (!io.shutdownEvent.WaitOne(0)) {
@@ -651,9 +687,9 @@ public sealed class ChunkSaveThread : IDisposable {
                         var sections = saveData.nbt.getListTag<NBTCompound>("sections");
                         foreach (var section in sections.list) {
                             //print what it has
-                            
+
                             //Log.info($"Saved chunk section, inited: {section.getByte("inited")}, blocks length: {section.getUIntArray("blocks")?.Length}, light length: {section.getByteArray("light")?.Length}");
-                            
+
                             // put back the arrays into the pool, but only if they exist (i.e. section was inited)
                             if (section.getByte("inited") != 0) {
                                 WorldIO.saveBlockPool.putBack(section.getUIntArray("blocks"));
@@ -679,7 +715,7 @@ public sealed class ChunkSaveThread : IDisposable {
     public void Dispose() {
         if (isDisposed) return;
         isDisposed = true;
-        
+
         // wait for the thread to finish
         // we first do this to ensure no new saves are added
         io.shutdownEvent.Set();
@@ -689,7 +725,7 @@ public sealed class ChunkSaveThread : IDisposable {
         catch (Exception ex) {
             Log.error("Error waiting for save thread to complete", ex);
         }
-        
+
         // process remaining saves synchronously
         while (saveQueue.TryDequeue(out var saveData)) {
             try {
@@ -770,8 +806,11 @@ public sealed class ChunkLoadThread : IDisposable {
         }
 
         // clear remaining queues
-        while (loadQueue.TryDequeue(out _)) { }
-        while (resultQueue.TryDequeue(out _)) { }
+        while (loadQueue.TryDequeue(out _)) {
+        }
+
+        while (resultQueue.TryDequeue(out _)) {
+        }
     }
 
     public void queueLoad(ChunkLoadRequest request) {
