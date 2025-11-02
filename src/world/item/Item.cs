@@ -300,7 +300,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
 
         // fuel values
-        Registry.ITEMS.fuelValue[COAL.id] = 4800;                    // 80 seconds
+        Registry.ITEMS.fuelValue[COAL.id] = 3600;                    // 60 seconds
         Registry.ITEMS.fuelValue[Block.OAK_PLANKS.item.id] = 900;    // 15 seconds
         Registry.ITEMS.fuelValue[Block.MAHOGANY_PLANKS.item.id] = 900;
         Registry.ITEMS.fuelValue[Block.MAPLE_PLANKS.item.id] = 900;

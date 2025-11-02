@@ -28,23 +28,25 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
             currentRecipe = SmeltingRecipe.findRecipe(slots[0].getItem());
         }
 
-        // consume fuel if needed and recipe exists
-        if (currentRecipe != null && fuelRemaining <= 0) {
-            if (slots[1] != ItemStack.EMPTY) {
-                int fuelVal = Registry.ITEMS.fuelValue[slots[1].id];
-                if (fuelVal > 0) {
-                    fuelRemaining = fuelVal;
-                    fuelMax = fuelVal;
-                    slots[1].quantity--;
-                    if (slots[1].quantity <= 0) slots[1] = ItemStack.EMPTY;
-                }
+        // consume fuel if we're out and have fuel in the slot (mfs shouldn't overcook)
+        if (fuelRemaining <= 0 && slots[1] != ItemStack.EMPTY) {
+            int fuelVal = Registry.ITEMS.fuelValue[slots[1].id];
+            if (fuelVal > 0) {
+                fuelRemaining = fuelVal;
+                fuelMax = fuelVal;
+                slots[1].quantity--;
+                if (slots[1].quantity <= 0) slots[1] = ItemStack.EMPTY;
             }
         }
 
-        // smelt
-        if (currentRecipe != null && fuelRemaining > 0) {
-            smeltProgress++;
+        // fuel always burns down if lit, regardless of recipe lol
+        if (fuelRemaining > 0) {
             fuelRemaining--;
+        }
+
+        // smelt (only if recipe exists and fuel is burning)
+        if (currentRecipe != null && fuelRemaining >= 0) {
+            smeltProgress++;
 
             if (smeltProgress >= currentRecipe.getSmeltTime()) {
                 // smelting complete - transfer to output
@@ -57,11 +59,9 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
                 }
             }
         } else {
-            // no fuel or no recipe - reset progress
-            if (fuelRemaining <= 0) {
-                smeltProgress = 0;
-                currentRecipe = null;
-            }
+            // no recipe - reset progress
+            smeltProgress = 0;
+            currentRecipe = null;
         }
 
         // update lit state if changed

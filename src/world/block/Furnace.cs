@@ -35,7 +35,6 @@ public class Furnace : EntityBlock {
 
         uint blockValue = id;
         blockValue = blockValue.setMetadata(facing);
-        blockValue = blockValue.setMetadata(0b000); // unlit! it's by default but to make it explicit
 
         world.setBlockMetadata(x, y, z, blockValue);
         world.blockUpdateNeighbours(x, y, z);
