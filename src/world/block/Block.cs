@@ -148,6 +148,8 @@ public class Block {
     public static Block IRON_ORE;
     public static Block COAL_ORE;
     public static Block COPPER_ORE;
+    public static Block TIN_ORE;
+    public static Block SILVER_ORE;
 
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
@@ -586,6 +588,20 @@ public class Block {
         COAL_ORE.setHardness(2.0);
         COAL_ORE.setTier(MaterialTier.WOOD);
 
+        TIN_ORE = register("tinOre", new Block("Tin Ore"));
+        TIN_ORE.setTex(cubeUVs(2, 1));
+        renderType[TIN_ORE.id] = RenderType.CUBE;
+        TIN_ORE.material(Material.FANCY_STONE);
+        TIN_ORE.setHardness(2.5);
+        TIN_ORE.setTier(MaterialTier.STONE);
+
+        SILVER_ORE = register("silverOre", new Block("Silver Ore"));
+        SILVER_ORE.setTex(cubeUVs(3, 1));
+        renderType[SILVER_ORE.id] = RenderType.CUBE;
+        SILVER_ORE.material(Material.FANCY_STONE);
+        SILVER_ORE.setHardness(3.5);
+        SILVER_ORE.setTier(MaterialTier.IRON);
+
         TORCH = register("torch", new Torch("Torch"));
         TORCH.setTex(cubeUVs(9, 3));
         TORCH.itemLike();
@@ -609,12 +625,12 @@ public class Block {
         DOOR.material(Material.WOOD);
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace"));
-        BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4));
+        BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));
         BRICK_FURNACE.material(Material.STONE);
         BRICK_FURNACE.light(15);
 
         FURNACE = register("furnace", new Furnace("Furnace"));
-        FURNACE.setTex(furnaceUVs(7, 4, 8, 4, 9, 4));
+        FURNACE.setTex(furnaceUVs(8, 4, 9, 4, 10, 4, 11, 4));
         FURNACE.material(Material.STONE);
         FURNACE.light(15);
 
@@ -690,9 +706,9 @@ public class Block {
         ];
     }
 
-    public static UVPair[] furnaceUVs(int frontX, int frontY, int sideX, int sideY, int top_bottomX, int top_bottomY) {
+    public static UVPair[] furnaceUVs(int frontX, int frontY, int litX, int litY, int sideX, int sideY, int top_bottomX, int top_bottomY) {
         return [
-            new(frontX, frontY), new(sideX, sideY), new UVPair(top_bottomX, top_bottomY)
+            new(frontX, frontY), new UVPair(litX, litY), new(sideX, sideY), new UVPair(top_bottomX, top_bottomY)
         ];
     }
 

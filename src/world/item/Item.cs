@@ -67,8 +67,8 @@ public class Item {
     public static Item CINNABAR;
     public static Item BOTTLE;
     public static Item BOTTLE_MILK;
-    public static Item STEAK_RAW;
-    public static Item STEAK_ROAST;
+    public static Item RAW_BEEF;
+    public static Item STEAK;
     public static Item DOOR;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
@@ -270,22 +270,22 @@ public class Item {
         BOTTLE_MILK = register("milk", new Item("Bottle of Milk"));
         BOTTLE_MILK.tex = new UVPair(3, 10);
 
-        STEAK_RAW = register("raw steak", new Item("Raw Steak"));
-        STEAK_RAW.tex = new UVPair(4, 10);
+        RAW_BEEF = register("rawBeef", new Item("Raw Beef"));
+        RAW_BEEF.tex = new UVPair(4, 10);
 
-        STEAK_ROAST = register("roast steak", new Item("Roast Steak"));
-        STEAK_ROAST.tex = new UVPair(5, 10);
+        STEAK = register("steak", new Item("Roast Steak"));
+        STEAK.tex = new UVPair(5, 10);
 
-        DOOR = register("door_item", new DoorItem("Door", Block.DOOR));
+        DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
         DOOR.tex = new UVPair(4, 8);
 
         BUCKET = register("bucket", new BucketItem("Bucket"));
         BUCKET.tex = new UVPair(6, 4);
 
-        WATER_BUCKET = register("water_bucket", new BucketItem("Water Bucket", Block.WATER));
+        WATER_BUCKET = register("waterBucket", new BucketItem("Water Bucket", Block.WATER));
         WATER_BUCKET.tex = new UVPair(7, 4);
 
-        LAVA_BUCKET = register("lava_bucket", new BucketItem("Lava Bucket", Block.LAVA));
+        LAVA_BUCKET = register("lavaBucket", new BucketItem("Lava Bucket", Block.LAVA));
         LAVA_BUCKET.tex = new UVPair(8, 4);
 
 
@@ -298,6 +298,17 @@ public class Item {
         Registry.ITEMS.blackList[AIR.id] = true;
         Registry.ITEMS.blackList[Block.WATER.item.id] = true;
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
+
+        // fuel values
+        Registry.ITEMS.fuelValue[COAL.id] = 4800;                    // 80 seconds
+        Registry.ITEMS.fuelValue[Block.OAK_PLANKS.item.id] = 900;    // 15 seconds
+        Registry.ITEMS.fuelValue[Block.MAHOGANY_PLANKS.item.id] = 900;
+        Registry.ITEMS.fuelValue[Block.MAPLE_PLANKS.item.id] = 900;
+        Registry.ITEMS.fuelValue[STICK.id] = 300;                    // 5 seconds
+        Registry.ITEMS.fuelValue[Block.OAK_LOG.item.id] = 1800;      // 30 seconds
+        Registry.ITEMS.fuelValue[Block.MAHOGANY_LOG.item.id] = 1800;
+        Registry.ITEMS.fuelValue[Block.MAPLE_LOG.item.id] = 1800;
+        Registry.ITEMS.fuelValue[LAVA_BUCKET.id] = 12000;            // 200 seconds (lava bucket op)
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

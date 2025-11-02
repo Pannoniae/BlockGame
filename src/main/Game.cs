@@ -790,6 +790,7 @@ public partial class Game {
         Entities.preLoad();
         BlockEntity.preLoad();
         Recipe.preLoad();
+        SmeltingRecipe.preLoad();
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
         

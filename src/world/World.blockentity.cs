@@ -47,7 +47,9 @@ public partial class World {
     }
 
     public void updateBlockEntities() {
-        foreach (var be in blockEntities) {
+        // use indexed loop instead of foreach to allow modifications during iteration!:(
+        for (int i = 0; i < blockEntities.Count; i++) {
+            var be = blockEntities[i];
             be.update(this, be.pos.X, be.pos.Y, be.pos.Z);
         }
     }

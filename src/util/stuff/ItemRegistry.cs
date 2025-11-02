@@ -21,10 +21,16 @@ public class ItemRegistry : Registry<Item> {
      */
     public readonly XUList<bool> blackList;
 
+    /**
+     * Fuel burn time in ticks (0 = not fuel).
+     */
+    public readonly XUList<int> fuelValue;
+
     public ItemRegistry() {
         armour = track(false);
         accessory = track(false);
         material = track(false);
         blackList = track(false);
+        fuelValue = track(0);
     }
 }

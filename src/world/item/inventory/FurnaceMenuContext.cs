@@ -5,19 +5,23 @@ namespace BlockGame.world.item.inventory;
 
 public class FurnaceMenuContext : InventoryContext {
     private readonly PlayerInventory playerInv;
-    private readonly CraftingGridInventory craftingGrid;
+    private readonly Inventory furnaceInv;
+
+    public Inventory getFurnaceInventory() => furnaceInv;
 
     public const int hotbarX = 5;
     public const int hotbarY = 166;
     public const int mainY = 144;
-    public const int craftingGridX = 71;
-    public const int craftingGridY = 14;
-    public const int craftingResultX = 120;
-    public const int craftingResultY = 32;
+    public const int inputX = 71;
+    public const int inputY = 14;
+    public const int fuelX = 71;
+    public const int fuelY = 54;
+    public const int outputX = 120;
+    public const int outputY = 32;
 
-    public FurnaceMenuContext(PlayerInventory playerInv) {
+    public FurnaceMenuContext(PlayerInventory playerInv, Inventory furnaceInv) {
         this.playerInv = playerInv;
-        this.craftingGrid = new CraftingGridInventory(this, 2, 1);
+        this.furnaceInv = furnaceInv;
         setupSlots();
     }
 
@@ -44,17 +48,9 @@ public class FurnaceMenuContext : InventoryContext {
             }
         }
 
-        // 2x1 crafting grid
-        for (int row = 0; row < 2; row++) {
-            for (int col = 0; col < 1; col++) {
-                int slotIndex = row * 2 + col;
-                slots.Add(new ItemSlot(craftingGrid, slotIndex,
-                    craftingGridX + col * ItemSlot.SLOTSIZE,
-                    craftingGridY + row * ItemSlot.SLOTSIZE));
-            }
-        }
-
-        // crafting result slot
-        slots.Add(new CraftingResultSlot(craftingGrid, -1, craftingResultX, craftingResultY));
+        // furnace slots: input (0), fuel (1), output (2)
+        slots.Add(new ItemSlot(furnaceInv, 0, inputX, inputY));
+        slots.Add(new ItemSlot(furnaceInv, 1, fuelX, fuelY));
+        slots.Add(new ItemSlot(furnaceInv, 2, outputX, outputY));
     }
 }
