@@ -69,6 +69,9 @@ public class Item {
     public static Item STEAK_RAW;
     public static Item STEAK_ROAST;
     public static Item DOOR;
+    public static Item BUCKET;
+    public static Item WATER_BUCKET;
+    public static Item LAVA_BUCKET;
 
 
     public Item(string name) {
@@ -274,6 +277,15 @@ public class Item {
 
         DOOR = register("door_item", new DoorItem("Door", Block.DOOR));
         DOOR.tex = new UVPair(4, 8);
+
+        BUCKET = register("bucket", new Item("Bucket"));
+        BUCKET.tex = new UVPair(6, 4);
+
+        WATER_BUCKET = register("water_bucket", new Item("Water Bucket"));
+        WATER_BUCKET.tex = new UVPair(7, 4);
+
+        LAVA_BUCKET = register("lava_bucket", new Item("Lava Bucket"));
+        LAVA_BUCKET.tex = new UVPair(8, 4);
 
 
         // all blocks are already marked as materials during Block.register() lol
