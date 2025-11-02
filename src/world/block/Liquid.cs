@@ -52,6 +52,30 @@ public class Liquid : Block {
     public static byte setDynamic(byte metadata, bool dynamic) => (byte)((metadata & 0xEF) | (dynamic ? 0x10 : 0));
 
     public override void onPlace(World world, int x, int y, int z, byte metadata) {
+        var data = world.getBlockMetadata(x, y, z);
+        var pos = new Vector3I(x, y, z);
+
+        int currentLevel = getWaterLevel(data);
+        bool falling = isFalling(data);
+
+        bool waterAdjacent = world.getBlock(x - 1, y, z) == WATER.id ||
+                             world.getBlock(x + 1, y, z) == WATER.id ||
+                             world.getBlock(x, y, z - 1) == WATER.id ||
+                             world.getBlock(x, y, z + 1) == WATER.id ||
+                             world.getBlock(x, y + 1, z) == WATER.id;
+
+        // water (any) + lava source (down) -> hellstone
+        if (id == LAVA.id && waterAdjacent && isLavaSource(world, x, y, z)) {
+            world.setBlock(x, y, z, HELLSTONE.id);
+        }
+
+        // flowing lava + water (not below) -> cobblestone
+        else if (id == LAVA.id && currentLevel > 0) {
+            if (waterAdjacent) {
+                world.setBlock(x, y, z, COBBLESTONE.id);
+            }
+        }
+
         // get it started lol
         world.scheduleBlockUpdate(new Vector3I(x, y, z));
     }
@@ -70,33 +94,22 @@ public class Liquid : Block {
                              world.getBlock(x, y, z + 1) == WATER.id ||
                              world.getBlock(x, y + 1, z) == WATER.id;
 
+        // water (any) + lava source (down) -> hellstone
+        if (id == LAVA.id && waterAdjacent && isLavaSource(world, x, y, z)) {
+            world.setBlock(x, y, z, HELLSTONE.id);
+        }
+
         // flowing lava + water (not below) -> cobblestone
-        if (id == LAVA.id && currentLevel > 0) {
+        else if (id == LAVA.id && currentLevel > 0) {
             if (waterAdjacent) {
                 world.setBlock(x, y, z, COBBLESTONE.id);
-                return;
-            }
-        }
-
-        // water (any) + lava source (down) -> hellstone
-        if (id == LAVA.id) {
-            if (waterAdjacent && isLavaSource(world, x, y, z)) {
-                world.setBlock(x, y, z, HELLSTONE.id);
-                return;
-            }
-        }
-
-        // lava + water below -> stone
-        if (id == LAVA.id) {
-            if (world.getBlock(x, y - 1, z) == WATER.id) {
-                world.setBlock(x, y - 1, z, STONE.id);
-                return;
             }
         }
 
         // if static water is being updated externally, wake it up
         // but not sources - they only need to wake if something significant changed
-        if (!isDynamic(data) && !(currentLevel == 0 && !falling)) {
+        //if (!isDynamic(data) && !(currentLevel == 0 && !falling)) {
+        if (!isDynamic(data)) {
             wakeUpWater(world, pos);
             // don't worry it will update next tick!
         }
@@ -512,46 +525,10 @@ public class Liquid : Block {
     public void spread(World world, int x, int y, int z, byte level, bool falling) {
         var existing = world.getBlock(x, y, z);
 
-        // WATER spreading
-        if (id == WATER.id && existing == LAVA.id) {
-            var lavaData = world.getBlockMetadata(x, y, z);
-            // rule 3: water contacts lava source on top/sides → obsidian
-            if (getWaterLevel(lavaData) == 0 && !isFalling(lavaData)) {
-                world.setBlock(x, y, z, HELLSTONE.id);
-                return;
-            }
-            // water into flowing lava → just replace it
-        }
-
-        // LAVA spreading
-        if (id == LAVA.id && existing == WATER.id) {
-            // rule 2: lava flows down into water → water becomes stone
-            if (falling) {
-                world.setBlock(x, y, z, STONE.id);
-                return;
-            }
-            // rule 1: lava flows horizontally into water → lava becomes cobble
-            else {
-                world.setBlock(x, y, z, COBBLESTONE.id);
-                return;
-            }
-        }
-
-        // rule 1 (extended): flowing lava contacts water on sides/top → becomes cobble
-        if (id == LAVA.id && level > 0) {
-            // flowing lava only
-            bool waterAdjacent = false;
-            // check horizontal + up (not down)
-            if (world.getBlock(x - 1, y, z) == WATER.id) waterAdjacent = true;
-            if (world.getBlock(x + 1, y, z) == WATER.id) waterAdjacent = true;
-            if (world.getBlock(x, y, z - 1) == WATER.id) waterAdjacent = true;
-            if (world.getBlock(x, y, z + 1) == WATER.id) waterAdjacent = true;
-            if (world.getBlock(x, y + 1, z) == WATER.id) waterAdjacent = true;
-
-            if (waterAdjacent) {
-                world.setBlock(x, y, z, COBBLESTONE.id);
-                return;
-            }
+        // lava falling into water -> stone
+        if (id == LAVA.id && existing == WATER.id && falling) {
+            world.setBlock(x, y, z, STONE.id);
+            return;
         }
 
         // normal spread
