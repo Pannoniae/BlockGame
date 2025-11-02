@@ -69,6 +69,12 @@ public abstract class Registry<T> : Registry {
         var list = new XUList<V>();
         var l = new Lists<V>(list, dvalue!);
         trackedLists.Add(l);
+
+        // fast-forward it
+        for (int i = 0; i < c; i++) {
+            l.add();
+        }
+
         return list;
     }
 
