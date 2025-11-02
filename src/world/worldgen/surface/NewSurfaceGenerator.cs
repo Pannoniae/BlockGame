@@ -116,6 +116,11 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             WorldgenUtil.placeTree(world, random, coord);
         }
 
+        // place candy tree randomly (not near the other ones lol)
+        if (foliage < -0.2f && random.NextSingle() < 0.05f) {
+            WorldgenUtil.placeCandyTree(world, random, coord);
+        }
+
 
         // get e
         //var e = getNoise2D(en, 1 / 342f, 1 / 342f, 8, 2f);

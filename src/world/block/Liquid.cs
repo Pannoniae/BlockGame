@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
@@ -61,11 +61,51 @@ public class Liquid : Block {
         var data = world.getBlockMetadata(x, y, z);
         var pos = new Vector3I(x, y, z);
 
+        int currentLevel = getWaterLevel(data);
+        bool falling = isFalling(data);
+
+        bool waterAdjacent = world.getBlock(x - 1, y, z) == WATER.id ||
+                             world.getBlock(x + 1, y, z) == WATER.id ||
+                             world.getBlock(x, y, z - 1) == WATER.id ||
+                             world.getBlock(x, y, z + 1) == WATER.id ||
+                             world.getBlock(x, y + 1, z) == WATER.id;
+
+        // flowing lava + water (not below) -> cobblestone
+        if (id == LAVA.id && currentLevel > 0) {
+            if (waterAdjacent) {
+                world.setBlock(x, y, z, COBBLESTONE.id);
+                return;
+            }
+        }
+
+        // water (any) + lava source (down) -> hellstone
+        if (id == LAVA.id) {
+            if (waterAdjacent && isLavaSource(world, x, y, z)) {
+                world.setBlock(x, y, z, HELLSTONE.id);
+                return;
+            }
+        }
+
+        // lava + water below -> stone
+        if (id == LAVA.id) {
+            if (world.getBlock(x, y - 1, z) == WATER.id) {
+                world.setBlock(x, y - 1, z, STONE.id);
+                return;
+            }
+        }
+
         // if static water is being updated externally, wake it up
-        if (!isDynamic(data)) {
+        // but not sources - they only need to wake if something significant changed
+        if (!isDynamic(data) && !(currentLevel == 0 && !falling)) {
             wakeUpWater(world, pos);
             // don't worry it will update next tick!
         }
+    }
+
+    private static bool isLavaSource(World world, int x, int y, int z) {
+        if (world.getBlock(x, y, z) != LAVA.id) return false;
+        var data = world.getBlockMetadata(x, y, z);
+        return getWaterLevel(data) == 0 && !isFalling(data);
     }
 
 
@@ -85,7 +125,6 @@ public class Liquid : Block {
         currentLevel = setFalling((byte)currentLevel, isFalling(data));
         var falling = isFalling(data);
 
-
         bool newFalling = false;
         int newLevel;
 
@@ -103,8 +142,8 @@ public class Liquid : Block {
             bool hasFalling = false;
             // find the highest water level (lowest number, since 0=source has most water)
             var w1 = getWater(world, x - 1, y, z, id, ref hasFalling);
-            var w2 = getWater(world,x + 1, y, z, id, ref hasFalling);
-            var w3 = getWater(world,x, y, z - 1, id, ref hasFalling);
+            var w2 = getWater(world, x + 1, y, z, id, ref hasFalling);
+            var w3 = getWater(world, x, y, z - 1, id, ref hasFalling);
             var w4 = getWater(world, x, y, z + 1, id, ref hasFalling);
 
             if (w1 >= 0) bestLevel = Math.Min(bestLevel, w1);
@@ -360,7 +399,7 @@ public class Liquid : Block {
         h += sampleBlockHeight(world, x + ox, y, z + oz, id, ref samples);
 
         if (samples == 0) {
-            return 0; // no water or air found, solid blocks only
+            return 1; // no water or air found, solid blocks only
         }
 
         //Console.Out.WriteLine("Samples: " + samples + " TotalHeight: " + totalHeight + " Final: " + (totalHeight / samples));
@@ -372,18 +411,27 @@ public class Liquid : Block {
         var block = world.getBlock(x, y, z);
         if (block == id) {
             var data = world.getBlockMetadata(x, y, z);
+            float height = getHeight(data);
+
+            // weight by water amount
+            // only if src|falling ofc
+            if (isFalling(data) || getWaterLevel(data) == 0) {
+                var weight = (int)(height * 16);
+                samples += weight;
+                return height * weight;
+            }
+
             samples++;
             return getHeight(data);
         }
 
         if (!fullBlock[block]) {
-            // air or non-full block contributes 0 height
-            // todo is this right?
+            // air contributes to slope
             samples++;
             return 0f;
         }
 
-        // solid blocks don't contribute to samples
+        // solid blocks don't contribute
         return 0.0f;
     }
 
@@ -449,17 +497,69 @@ public class Liquid : Block {
             return false;
         }
 
+        // allow water spreading into lava and vice versa
+        if (id == WATER.id && block == LAVA.id) {
+            return true;
+        }
+
+        if (id == LAVA.id && block == WATER.id) {
+            return true;
+        }
+
         return !waterSolid[block]; // other non-full blocks
     }
 
     public void spread(World world, int x, int y, int z, byte level, bool falling) {
-        // actually do it!
+        var existing = world.getBlock(x, y, z);
+
+        // WATER spreading
+        if (id == WATER.id && existing == LAVA.id) {
+            var lavaData = world.getBlockMetadata(x, y, z);
+            // rule 3: water contacts lava source on top/sides → obsidian
+            if (getWaterLevel(lavaData) == 0 && !isFalling(lavaData)) {
+                world.setBlock(x, y, z, HELLSTONE.id);
+                return;
+            }
+            // water into flowing lava → just replace it
+        }
+
+        // LAVA spreading
+        if (id == LAVA.id && existing == WATER.id) {
+            // rule 2: lava flows down into water → water becomes stone
+            if (falling) {
+                world.setBlock(x, y, z, STONE.id);
+                return;
+            }
+            // rule 1: lava flows horizontally into water → lava becomes cobble
+            else {
+                world.setBlock(x, y, z, COBBLESTONE.id);
+                return;
+            }
+        }
+
+        // rule 1 (extended): flowing lava contacts water on sides/top → becomes cobble
+        if (id == LAVA.id && level > 0) {
+            // flowing lava only
+            bool waterAdjacent = false;
+            // check horizontal + up (not down)
+            if (world.getBlock(x - 1, y, z) == WATER.id) waterAdjacent = true;
+            if (world.getBlock(x + 1, y, z) == WATER.id) waterAdjacent = true;
+            if (world.getBlock(x, y, z - 1) == WATER.id) waterAdjacent = true;
+            if (world.getBlock(x, y, z + 1) == WATER.id) waterAdjacent = true;
+            if (world.getBlock(x, y + 1, z) == WATER.id) waterAdjacent = true;
+
+            if (waterAdjacent) {
+                world.setBlock(x, y, z, COBBLESTONE.id);
+                return;
+            }
+        }
+
+        // normal spread
         var metadata = setWaterLevel(0, level);
         metadata = setFalling(metadata, falling);
         metadata = setDynamic(metadata, true);
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(metadata));
 
-        // tick it
         world.scheduleBlockUpdate(new Vector3I(x, y, z));
     }
 

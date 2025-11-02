@@ -339,7 +339,7 @@ public class NBTList : NBTTag, INBTList {
 }
 
 public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
-    public List<T> list;
+    public XUList<T> list;
 
     public NBTType listType { get; set; }
 
@@ -638,6 +638,80 @@ public class NBTCompound : NBTTag {
     public byte getByte(string name, byte d) {
         return dict.TryGetValue(name, out NBTTag? value) ? ((NBTByte)value).data : d;
     }
+
+    public short getShort(string name, short d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTShort)value).data : d;
+    }
+
+    public ushort getUShort(string name, ushort d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTUShort)value).data : d;
+    }
+
+    public int getInt(string name, int d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTInt)value).data : d;
+    }
+
+    public uint getUInt(string name, uint d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTUInt)value).data : d;
+    }
+
+    public long getLong(string name, long d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTLong)value).data : d;
+    }
+
+    public ulong getULong(string name, ulong d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTULong)value).data : d;
+    }
+
+    public float getFloat(string name, float d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTFloat)value).data : d;
+    }
+
+    public double getDouble(string name, double d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTDouble)value).data : d;
+    }
+
+    public string getString(string name, string d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTString)value).data : d;
+    }
+
+    public byte[] getByteArray(string name, byte[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTByteArray)value).data : d;
+    }
+
+    public short[] getShortArray(string name, short[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTShortArray)value).data : d;
+    }
+
+    public ushort[] getUShortArray(string name, ushort[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTUShortArray)value).data : d;
+    }
+
+    public int[] getIntArray(string name, int[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTIntArray)value).data : d;
+    }
+
+    public uint[] getUIntArray(string name, uint[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTUIntArray)value).data : d;
+    }
+
+    public long[] getLongArray(string name, long[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTLongArray)value).data : d;
+    }
+
+    public ulong[] getULongArray(string name, ulong[] d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTULongArray)value).data : d;
+    }
+
+    public NBTList<NBTTag> getListTag(string name, NBTList<NBTTag> d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? (NBTList<NBTTag>)value : d;
+    }
+
+    public NBTCompound getCompoundTag(string name, NBTCompound d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? (NBTCompound)value : d;
+    }
+
+
 
 
     public override string ToString() {

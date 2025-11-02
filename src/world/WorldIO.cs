@@ -8,6 +8,7 @@ using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using Molten;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world;
@@ -18,8 +19,8 @@ public class WorldIO {
     public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     // palette building
-    private static readonly Dictionary<ushort, int> paletteDict = new(256);
-    private static readonly List<string> paletteList = new(256);
+    private static readonly XMap<ushort, int> paletteDict = new(256);
+    private static readonly XUList<string> paletteList = new(256);
 
     // blocks can change at runtime though? maybe, idk, but don't assume that plz
 
@@ -130,6 +131,18 @@ public class WorldIO {
             blockLightRemovalList.add(nodeTag);
         }
         tag.addListTag("blockLightRemovalQueue", blockLightRemovalList);
+
+        // block update queue (scheduled block updates)
+        var blockUpdateList = new NBTList<NBTCompound>(NBTType.TAG_Compound, "blockUpdateQueue");
+        foreach (var update in world.blockUpdateQueue) {
+            var updateTag = new NBTCompound();
+            updateTag.addInt("x", update.position.X);
+            updateTag.addInt("y", update.position.Y);
+            updateTag.addInt("z", update.position.Z);
+            updateTag.addInt("tick", update.tick);
+            blockUpdateList.add(updateTag);
+        }
+        tag.addListTag("blockUpdateQueue", blockUpdateList);
     }
 
     public static World load(string filename) {
@@ -212,6 +225,20 @@ public class WorldIO {
                 var value = nodeTag.getByte("value");
 
                 world.blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, null));
+            }
+        }
+
+        // block update queue (scheduled block updates)
+        if (tag.has("blockUpdateQueue")) {
+            var blockUpdateList = tag.getListTag<NBTCompound>("blockUpdateQueue");
+            for (int i = 0; i < blockUpdateList.count(); i++) {
+                var updateTag = blockUpdateList.get(i);
+                var x = updateTag.getInt("x");
+                var y = updateTag.getInt("y");
+                var z = updateTag.getInt("z");
+                var tick = updateTag.getInt("tick");
+
+                world.blockUpdateQueue.Add(new BlockUpdate(new Vector3I(x, y, z), tick));
             }
         }
     }
@@ -299,7 +326,7 @@ public class WorldIO {
 
                     if (!paletteDict.ContainsKey(blockID)) {
                         string stringID = Registry.BLOCKS.getName(blockID) ?? "air";
-                        paletteDict[blockID] = paletteList.Count;
+                        paletteDict.Set(blockID, paletteList.Count);
                         paletteList.Add(stringID);
                     }
                 }

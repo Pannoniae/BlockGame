@@ -436,13 +436,15 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     }
 
     public void setBlockMetadata(int x, int y, int z, uint block) {
-        var oldBlock = blocks[y >> 4][x, y & 0xF, z];
+        var oldBlockRaw = blocks[y >> 4].getRaw(x, y & 0xF, z);
+        var oldBlock = oldBlockRaw.getID();
+        var oldMeta = oldBlockRaw.getMetadata();
         blocks[y >> 4].setRaw(x, y & 0xF, z, block);
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
         var id = block.getID();
-        var oldMetadata = block.getMetadata();
+        var newMeta = block.getMetadata();
 
         // call onBreak callback for old block if being replaced
         if (oldBlock != 0 && oldBlock != id) {
@@ -500,7 +502,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         // call onPlace callback for new block if being placed
         if (id != 0 && oldBlock != id) {
-            Block.get(id).onPlace(world, wx, y, wz, oldMetadata);
+            Block.get(id).onPlace(world, wx, y, wz, newMeta);
         }
 
         // set neighbours dirty

@@ -1320,6 +1320,11 @@ public partial class Game {
     }
 
     private void close() {
+        // save world before closing
+        if (world != null!) {
+            world.worldIO.save(world, world.name);
+        }
+
         Log.shutdown();
         ///dev?.Dispose();
         //buffer?.Dispose();

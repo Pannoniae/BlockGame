@@ -11,9 +11,6 @@ using BlockGame.world.worldgen.generator;
 namespace BlockGame.world.worldgen;
 
 public class WorldgenUtil {
-
-
-
     public static void printNoiseResolution(float freq, int octaves, float falloff = 2f) {
         printNoiseResolution(freq, octaves, falloff, 1 / falloff);
     }
@@ -52,14 +49,16 @@ public class WorldgenUtil {
         string msg;
         if (smallestWavelength < 1f) {
             msg = "TOO MANY octaves - aliasing/waste";
-        } else if (smallestWavelength > 4f) {
+        }
+        else if (smallestWavelength > 4f) {
             msg = "TOO FEW octaves - missing detail";
-        } else {
+        }
+        else {
             msg = "GOOD";
         }
 
         Log.info("=== Noise Resolution Analysis ===");
-        Log.info($"Frequency: {freq:F6} (scale: {1f/freq:F2})");
+        Log.info($"Frequency: {freq:F6} (scale: {1f / freq:F2})");
         Log.info($"Octaves: {octaves}, Lacunarity: {lacunarity}, Gain: {gain}");
         Log.info("\n");
         Log.info($"1. Largest feature size: {baseWavelength:F2} blocks");
@@ -145,12 +144,12 @@ public class WorldgenUtil {
                     // if we haven't initialised the chunk yet, do so
                     // if below sea level, water
                     if (value > 0) {
-                        chunk.setBlockFast(x, y, z,  Block.STONE.id);
+                        chunk.setBlockFast(x, y, z, Block.STONE.id);
                         chunk.addToHeightMap(x, y, z);
                     }
                     else {
                         if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
-                            chunk.setBlockFast(x, y, z,  Block.WATER.id);
+                            chunk.setBlockFast(x, y, z, Block.WATER.id);
                             chunk.addToHeightMap(x, y, z);
                         }
                     }
@@ -415,7 +414,7 @@ public class WorldgenUtil {
         }
 
         // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) !=  Block.GRASS.id) {
+        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
             return;
         }
 
@@ -426,7 +425,7 @@ public class WorldgenUtil {
         for (int yd = 1; yd < 8; yd++) {
             for (int zd = -2; zd <= 2; zd++) {
                 for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) !=  Block.AIR.id) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
                         return;
                     }
                 }
@@ -447,7 +446,7 @@ public class WorldgenUtil {
         }
 
         // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) !=  Block.GRASS.id) {
+        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
             return;
         }
 
@@ -458,7 +457,7 @@ public class WorldgenUtil {
         for (int yd = 1; yd < 8; yd++) {
             for (int zd = -2; zd <= 2; zd++) {
                 for (int xd = -2; xd <= 2; xd++) {
-                    if (world.getBlock(xWorld, y + yd, zWorld) !=  Block.AIR.id) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
                         return;
                     }
                 }
@@ -476,6 +475,38 @@ public class WorldgenUtil {
         else {
             TreeGenerator.placeOakTree(world, random, xWorld, y + 1, zWorld);
         }
+    }
+
+    public static void placeCandyTree(World world, XRandom random, ChunkCoord coord) {
+        var chunk = world.getChunk(coord);
+        var x = random.Next(0, Chunk.CHUNKSIZE);
+        var z = random.Next(0, Chunk.CHUNKSIZE);
+        var y = chunk.heightMap.get(x, z);
+
+        if (y > 120) {
+            return;
+        }
+
+        // if not on dirt, don't bother
+        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
+            return;
+        }
+
+        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
+        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
+
+        // if there's stuff in the bounding box, don't place a tree
+        for (int yd = 1; yd < 8; yd++) {
+            for (int zd = -2; zd <= 2; zd++) {
+                for (int xd = -2; xd <= 2; xd++) {
+                    if (world.getBlock(xWorld, y + yd, zWorld) != Block.AIR.id) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        TreeGenerator.placeCandyTree(world, random, xWorld, y + 1, zWorld);
     }
 
     public static float getNoise(FastNoiseLite noise, double x, double z, int octaves, double gain) {
@@ -656,7 +687,8 @@ public class WorldgenUtil {
         return result;
     }
 
-    public static double getNoise3Dfbm3(ExpNoise noise, double x, double y, double z, int octaves, double lacunarity, double persistence) {
+    public static double getNoise3Dfbm3(ExpNoise noise, double x, double y, double z, int octaves, double lacunarity,
+        double persistence) {
         double sum = 0;
         double amplitude = 1;
         double frequency = 1;

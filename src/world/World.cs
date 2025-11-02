@@ -65,7 +65,7 @@ public partial class World : IDisposable {
     public readonly Queue<LightNode> blockLightQueue = [];
     public readonly Queue<LightRemovalNode> blockLightRemovalQueue = [];
 
-    public WorldGenerator generator;
+    public readonly WorldGenerator generator;
 
     public bool isLoading;
 
@@ -77,7 +77,7 @@ public partial class World : IDisposable {
     private int stuckIterations = 0;
 
     /**
-     * True if the world has actually been initialized, false if the init method hasn't been called yet.
+     * True if the world has actually been initialised, false if the init method hasn't been called yet.
      */
     public bool inited;
 
@@ -129,7 +129,7 @@ public partial class World : IDisposable {
             Game.clearInterval(saveWorld);
         }
 
-        saveWorld = Game.setInterval(5 * 1000, saveWorldMethod);
+        saveWorld = Game.setInterval(2 * 1000, saveWorldMethod);
     }
 
     public void preInit(bool loadingSave = false) {
@@ -214,6 +214,7 @@ public partial class World : IDisposable {
             return;
         }
 
+        // save async!
         autoSaveChunks();
         worldIO.saveWorldData();
     }
@@ -233,7 +234,7 @@ public partial class World : IDisposable {
         var x = 0;
         foreach (var chunk in chunks) {
             if (chunk.status >= ChunkStatus.MESHED &&
-                chunk.lastSaved + 15 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+                chunk.lastSaved + 5 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
                 worldIO.saveChunkAsync(this, chunk);
                 x++;
             }

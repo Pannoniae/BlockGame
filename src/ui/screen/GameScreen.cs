@@ -624,6 +624,9 @@ public class GameScreen : Screen {
     }
 
     public void pause() {
+        // save world when opening pause menu (so if the player ragequits or whatever it won't be fucked)
+        Game.world.worldIO.save(Game.world, Game.world.name);
+
         switchToMenu(PAUSE_MENU);
         Game.instance.unlockMouse();
     }

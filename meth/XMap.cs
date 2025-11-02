@@ -86,6 +86,10 @@ public class XMap<K, V> : ICollection<KeyValuePair<K, V>> where K : notnull, IEq
         Insert(key, value, false);
     }
 
+    public void Set(K key, V value) {
+        Insert(key, value, true);
+    }
+
     public bool Remove(K key) {
         int hash = GetHash(key);
         int mask = entries.Length - 1;

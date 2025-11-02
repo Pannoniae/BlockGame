@@ -22,7 +22,7 @@ public class TreeGenerator {
 
         // trunk
         for (int i = 0; i < trunkHeight; i++) {
-            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
+            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // leaves, thick
@@ -30,7 +30,7 @@ public class TreeGenerator {
             for (int z1 = -2; z1 <= 2; z1++) {
                 if (x1 == 0 && z1 == 0) continue;
                 for (int y1 = trunkHeight - 2; y1 <= trunkHeight - 1; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1,  Block.LEAVES.id);
+                    world.setBlockDumb(x + x1, y + y1, z + z1, Block.LEAVES.id);
                 }
             }
         }
@@ -39,8 +39,34 @@ public class TreeGenerator {
         for (int x1 = -1; x1 <= 1; x1++) {
             for (int z1 = -1; z1 <= 1; z1++) {
                 for (int y1 = trunkHeight; y1 <= trunkHeight + 1; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1,  Block.LEAVES.id);
+                    world.setBlockDumb(x + x1, y + y1, z + z1, Block.LEAVES.id);
                 }
+            }
+        }
+    }
+
+    /** This one is real simple and procedural. */
+    public static void placeCandyTree(World world, XRandom random, int x, int y, int z) {
+        int trunkHeight = random.Next(4, 6);
+
+        var randomColour = random.Next(0, 16);
+        var randomCandy = ((uint)Block.CANDY.id).setMetadata((byte)randomColour);
+
+        // trunk
+        for (int i = 0; i < trunkHeight; i++) {
+            world.setBlockDumb(x, y + i, z, Block.CANDY.id);
+        }
+
+        // top
+        for (int x1 = -2; x1 <= 2; x1++) {
+            for (int z1 = -2; z1 <= 2; z1++) {
+                // skip corners
+                if (Math.Abs(x1) == 2 && Math.Abs(z1) == 2) {
+                    continue;
+                }
+
+                // todo we could skip even more checks and implement a "setBlockMetadataDumb" method but this is fine for now
+                world.setBlockMetadataSilent(x + x1, y + trunkHeight, z + z1, randomCandy);
             }
         }
     }
@@ -49,8 +75,8 @@ public class TreeGenerator {
     public static void placeFancyTree(World world, XRandom random, int x, int y, int z) {
         int height = random.Next(4, 4 + random.Next(16));
         oak = new ProceduralTree(world, random, x, y, z, height);
-        oak.prepareRound(rootButtresses: false, trunkHeightMult: psiF);
-        oak.generate(roots: false, rootButtresses: false);
+        oak.prepareRound(rootButtresses:false, trunkHeightMult:psiF);
+        oak.generate(roots:false, rootButtresses:false);
     }
 
     public static void placeMapleTree(World world, XRandom random, int x, int y, int z) {
@@ -59,11 +85,11 @@ public class TreeGenerator {
             trunkThickness = 0.8f,
             foliageDensity = 1.2f,
             branchDensity = 0.0f,
-            leafMat =  Block.MAPLE_LEAVES.id,
+            leafMat = Block.MAPLE_LEAVES.id,
             logMat = Block.MAPLE_LOG.id
         };
         maple.prepareMaple();
-        maple.generate(roots: false, rootButtresses: false);
+        maple.generate(roots:false, rootButtresses:false);
     }
 
     public static void placeMahoganyTree(World world, XRandom random, int x, int y, int z) {
@@ -75,18 +101,18 @@ public class TreeGenerator {
             trunkThickness = t,
             foliageDensity = 1.5f + t,
             branchDensity = 0.8f + t * 0.5f,
-            leafMat =  Block.MAHOGANY_LEAVES.id,
+            leafMat = Block.MAHOGANY_LEAVES.id,
             logMat = Block.MAHOGANY_LOG.id
         };
         maple.prepareMahogany();
-        maple.generate(roots: false, rootButtresses: false);
+        maple.generate(roots:false, rootButtresses:false);
     }
 
     /** place a normal tree with foliage bulb */
     public static void placeNormalTree(World world, XRandom random, int x, int y, int z, int height = 5) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
+            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // foliage bulb from (top-2) to (top+1)
@@ -103,7 +129,7 @@ public class TreeGenerator {
                         continue;
                     }
 
-                    world.setBlockDumb(x + xoff, cy, z + zoff,  Block.LEAVES.id);
+                    world.setBlockDumb(x + xoff, cy, z + zoff, Block.LEAVES.id);
                 }
             }
         }
@@ -113,7 +139,7 @@ public class TreeGenerator {
     public static void placeBambooTree(World world, XRandom random, int x, int y, int z, int height = 7) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
+            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // sparse foliage adjacent to trunk from base to top+1
@@ -121,7 +147,7 @@ public class TreeGenerator {
             for (int i = 0; i < 2; i++) {
                 int xoff = random.Next(0, 2) == 0 ? -1 : 1;
                 int zoff = random.Next(0, 2) == 0 ? -1 : 1;
-                world.setBlockDumb(x + xoff, cy, z + zoff,  Block.LEAVES.id);
+                world.setBlockDumb(x + xoff, cy, z + zoff, Block.LEAVES.id);
             }
         }
     }
@@ -130,7 +156,7 @@ public class TreeGenerator {
     public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 6) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z,  Block.OAK_LOG.id);
+            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // fan-shaped foliage at top (diagonal pattern)
@@ -138,7 +164,7 @@ public class TreeGenerator {
         for (int xoff = -2; xoff <= 2; xoff++) {
             for (int zoff = -2; zoff <= 2; zoff++) {
                 if (Math.Abs(xoff) == Math.Abs(zoff)) {
-                    world.setBlockDumb(x + xoff, topY, z + zoff,  Block.LEAVES.id);
+                    world.setBlockDumb(x + xoff, topY, z + zoff, Block.LEAVES.id);
                 }
             }
         }
@@ -427,7 +453,7 @@ public class TreeGenerator {
                 return tree.height * 0.12f;
             }
 
-            if (yOff < tree.height * (0.25f + 0.05f * tree.random.NextSingle() * tree.random.NextSingle())){
+            if (yOff < tree.height * (0.25f + 0.05f * tree.random.NextSingle() * tree.random.NextSingle())) {
                 return null;
             }
 
@@ -687,7 +713,7 @@ public class TreeGenerator {
 
                         // search for air blocks (hanging roots)
                         int raydist = startdist + distToMat(world, searchx, searchy, searchz, vx, vy, vz,
-                            static b => b ==  Block.AIR.id, offlength);
+                            static b => b == Block.AIR.id, offlength);
 
                         if (raydist < offlength) {
                             // found air, root stops here then hangs down
@@ -732,11 +758,11 @@ public class TreeGenerator {
                 int startZ = z + random.Next(-baseOffset, baseOffset + 1);
 
                 // hollow out bottom and middle sections with taper
-                taperedCylinder(world, startX, y, startZ, x, midY, z, baseRadius, midRadius,  Block.AIR.id);
+                taperedCylinder(world, startX, y, startZ, x, midY, z, baseRadius, midRadius, Block.AIR.id);
 
                 // extend hollow above trunk top
                 int hollowTopY = (int)(topY + trunkRadius + 1.5f);
-                taperedCylinder(world, x, midY, z, x, hollowTopY, z, midRadius, topRadius,  Block.AIR.id);
+                taperedCylinder(world, x, midY, z, x, hollowTopY, z, midRadius, topRadius, Block.AIR.id);
             }
         }
 

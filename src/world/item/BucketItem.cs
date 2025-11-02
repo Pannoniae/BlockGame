@@ -1,5 +1,6 @@
 using BlockGame.util;
 using BlockGame.world.block;
+using Molten;
 
 namespace BlockGame.world.item;
 
@@ -38,10 +39,16 @@ public class BucketItem : Item {
             if (cb == 0 || !Block.fullBlock[cb]) {
                 // place liquid source with dynamic flag
                 world.setBlockMetadata(x, y, z, ((uint)liquidBlock.id).setMetadata(Liquid.setDynamic(0, true)));
+                // manually schedule update if replacing same liquid (onPlace won't trigger :()
+                if (cb == liquidBlock.id) {
+                    world.scheduleBlockUpdate(new Vector3I(x, y, z));
+                }
                 return new ItemStack(BUCKET, 1);
             }
         }
 
         return null;
     }
+
+    public override int getMaxStackSize() => 1;
 }
