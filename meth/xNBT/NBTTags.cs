@@ -407,21 +407,21 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
 }
 
 public class NBTCompound : NBTTag {
-    public Dictionary<string, NBTTag> dict;
+    public XMap<string, NBTTag> dict;
 
     public override NBTType id => NBTType.TAG_Compound;
 
     public NBTCompound(string? name) : base(name) {
-        dict = new Dictionary<string, NBTTag>();
+        dict = new XMap<string, NBTTag>();
     }
 
     public NBTCompound() : base() {
-        dict = new Dictionary<string, NBTTag>();
+        dict = new XMap<string, NBTTag>();
     }
 
     public override void writeContents(BinaryWriter stream) {
         // write contents
-        foreach (var item in dict.Values) {
+        foreach (var item in dict) {
             write(item, stream);
         }
         // write Tag_END
@@ -442,7 +442,7 @@ public class NBTCompound : NBTTag {
         }
     }
 
-    public ICollection<NBTTag> getTags() {
+    public XMap<string,NBTTag>.ValueEnumerable getTags() {
         return dict.Values;
     }
 
@@ -633,6 +633,12 @@ public class NBTCompound : NBTTag {
     public T get<T>(string name) where T : NBTTag {
         return (T)dict[name];
     }
+
+    /** Default functions **/
+    public byte getByte(string name, byte d) {
+        return dict.TryGetValue(name, out NBTTag? value) ? ((NBTByte)value).data : d;
+    }
+
 
     public override string ToString() {
         StringBuilder str = new StringBuilder();

@@ -5,20 +5,26 @@ namespace BlockGame.util.stuff;
 public class ItemRegistry : Registry<Item> {
 
     /** is this item armour? */
-    public XUList<bool> armour;
+    public readonly XUList<bool> armour;
 
     /** is this item an accessory? */
-    public XUList<bool> accessory;
+    public readonly XUList<bool> accessory;
 
     /**
      * is this item a material (used for crafting or a placeable building block)
      * if true, player drops it on death.
      */
-    public XUList<bool> material;
+    public readonly XUList<bool> material;
+
+    /**
+     * If true, item doesn't show up in the creative inventory (or anywhere else really)
+     */
+    public readonly XUList<bool> blackList;
 
     public ItemRegistry() {
         armour = track(false);
         accessory = track(false);
         material = track(false);
+        blackList = track(false);
     }
 }

@@ -8,7 +8,7 @@ namespace BlockGame.util;
  * Single flat array = better cache locality than BCL Dictionary in theory:tm:
  * Read-optimised for hot paths.
  */
-public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEquatable<K> {
+public class XMap<K, V> : ICollection<KeyValuePair<K, V>> where K : notnull, IEquatable<K> {
 
     private struct Entry {
         public int hash;  // 0 = empty slot, -1 = tombstone
@@ -29,7 +29,17 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
         count = 0;
     }
 
+    public bool Remove(KeyValuePair<K, V> item) {
+        if (TryGetValue(item.Key, out var existingValue)) {
+            if (EqualityComparer<V>.Default.Equals(existingValue, item.Value)) {
+                return Remove(item.Key);
+            }
+        }
+        return false;
+    }
+
     public int Count => count;
+    public bool IsReadOnly { get; }
 
     public ref V this[K key] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -44,6 +54,7 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
                     return ref entry.value;
                 }
                 idx = (idx + 1) & mask;
+                entry = ref entries[idx];
             }
 
             InputException.throwNew($"Key not found: {key}");
@@ -64,6 +75,7 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
                 return true;
             }
             idx = (idx + 1) & mask;
+            entry = ref entries[idx];
         }
 
         value = default!;
@@ -91,6 +103,7 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
                 return true;
             }
             idx = (idx + 1) & mask;
+            entry = ref entries[idx];
         }
 
         return false;
@@ -100,10 +113,47 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
         return TryGetValue(key, out _);
     }
 
+    public bool Contains(V value) {
+        foreach (ref var entry in entries.AsSpan()) {
+            if (entry.hash != 0 && entry.hash != -1) {
+                if (EqualityComparer<V>.Default.Equals(entry.value, value)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void Add(KeyValuePair<K, V> item) {
+        Add(item.Key, item.Value);
+    }
+
     public void Clear() {
         Array.Clear(entries);
         count = 0;
         tombstones = 0;
+    }
+
+    public bool Contains(KeyValuePair<K, V> item) {
+        return ContainsKey(item.Key);
+    }
+
+    public void CopyTo(KeyValuePair<K, V>[] array, int arrayIndex) {
+        ArgumentNullException.ThrowIfNull(array);
+        if (arrayIndex < 0 || arrayIndex + count > array.Length) {
+            throwArg(nameof(arrayIndex));
+        }
+
+        int idx = arrayIndex;
+        foreach (ref var entry in entries.AsSpan()) {
+            if (entry.hash != 0 && entry.hash != -1) {
+                array[idx++] = new KeyValuePair<K, V>(entry.key, entry.value);
+            }
+        }
+    }
+
+    private static void throwArg(string name) {
+        throw new ArgumentOutOfRangeException(name);
     }
 
     private void Insert(K key, V value, bool overwrite) {
@@ -131,6 +181,7 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
                 return;
             }
             idx = (idx + 1) & mask;
+            entry = ref entries[idx];
         }
 
         int insertIdx = tombstoneIdx != -1 ? tombstoneIdx : idx;
@@ -170,6 +221,8 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
 
     public Enumerator GetEnumerator() => new Enumerator(this);
     public PairEnumerable Pairs => new PairEnumerable(this);
+    public KeyEnumerable Keys => new KeyEnumerable(this);
+    public ValueEnumerable Values => new ValueEnumerable(this);
 
     IEnumerator<KeyValuePair<K, V>> IEnumerable<KeyValuePair<K, V>>.GetEnumerator() {
         for (int i = 0; i < entries.Length; i++) {
@@ -267,6 +320,89 @@ public class XMap<K, V> : IEnumerable<KeyValuePair<K, V>> where K : notnull, IEq
         public ref V Value {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref val;
+        }
+    }
+
+    public readonly struct KeyEnumerable {
+        private readonly XMap<K, V> map;
+
+        internal KeyEnumerable(XMap<K, V> map) {
+            this.map = map;
+        }
+
+        public KeyEnumerator GetEnumerator() => new KeyEnumerator(map);
+    }
+
+    public struct KeyEnumerator {
+        private readonly XMap<K, V> map;
+        private int idx;
+
+        internal KeyEnumerator(XMap<K, V> map) {
+            this.map = map;
+            idx = -1;
+        }
+
+        public bool MoveNext() {
+            idx++;
+            while (idx < map.entries.Length) {
+                var hash = map.entries[idx].hash;
+                if (hash != 0 && hash != -1) {
+                    return true;
+                }
+                idx++;
+            }
+            return false;
+        }
+
+        public K Current {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => map.entries[idx].key;
+        }
+
+        public void Reset() {
+            idx = -1;
+        }
+    }
+
+    public readonly struct ValueEnumerable {
+        private readonly XMap<K, V> map;
+
+        internal ValueEnumerable(XMap<K, V> map) {
+            this.map = map;
+        }
+
+        public ValueEnumerator GetEnumerator() => new ValueEnumerator(map);
+    }
+
+    public struct ValueEnumerator {
+        private readonly XMap<K, V> map;
+        private int idx;
+
+        internal ValueEnumerator(XMap<K, V> map) {
+            this.map = map;
+            idx = -1;
+        }
+
+        public bool MoveNext() {
+            idx++;
+            while (idx < map.entries.Length) {
+                var hash = map.entries[idx].hash;
+                if (hash != 0 && hash != -1) {
+                    return true;
+                }
+                idx++;
+            }
+            return false;
+        }
+
+        /** Returns ref to value for in-place mutation */
+        public ref V Current {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref map.entries[idx].value;
+        }
+
+        public void Reset() {
+            idx = -1;
         }
     }
 

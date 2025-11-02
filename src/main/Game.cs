@@ -130,14 +130,15 @@ public partial class Game {
     public static int globalTick = 0;
 
     public double accumTime;
-    public static readonly double fixeddt = 1 / 60d;
-    public static readonly double maxTimestep = 1 / 5f;
+    public const int tps = 60;
+    public const double fixeddt = 1 / (double)tps;
+    public const double maxTimestep = 1 / 5f;
     public double t;
 
     /// <summary>
     /// List of things to do later.
     /// </summary>
-    public static XUList<TimerAction> timerQueue = new();
+    public static XUList<TimerAction> timerQueue = [];
     
     public static WorldThread worldThread;
 
@@ -151,7 +152,7 @@ public partial class Game {
     /// </summary>
     public static bool lockingMouse;
 
-    public BlockingCollection<Action> mainThreadQueue = new();
+    public BlockingCollection<Action> mainThreadQueue = [];
 
     private Vector2D<int> preFullscreenSize;
     private Vector2D<int> preFullscreenPosition;

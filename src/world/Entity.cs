@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.GL;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -149,6 +150,7 @@ public partial class Entity(World world, string type) : Persistent {
     // riding system
     public Entity? mount; // what this entity is riding
     public Entity? rider; // who is riding this entity
+    public BTexture2D tex;
 
     // capability flags - override in subclasses
     protected virtual bool needsPrevVars => true;

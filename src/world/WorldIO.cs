@@ -294,8 +294,8 @@ public class WorldIO {
                 paletteDict.Clear();
                 paletteList.Clear();
 
-                for (int i = 0; i < freshBlocks.Length; i++) {
-                    ushort blockID = freshBlocks[i].getID();
+                foreach (var b in freshBlocks) {
+                    ushort blockID = b.getID();
 
                     if (!paletteDict.ContainsKey(blockID)) {
                         string stringID = Registry.BLOCKS.getName(blockID) ?? "air";

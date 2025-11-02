@@ -31,6 +31,7 @@ public class Textures {
     public readonly Rgba32[] lightmap = new Rgba32[256];
     public BTexture2D human;
     public BTexture2D cow;
+    public BTexture2D pig;
 
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
@@ -50,9 +51,10 @@ public class Textures {
 
         itemTexture = new BTextureAtlas("textures/items.png", 16);
 
-        human = get("textures/character.png");
+        human = get("textures/entity/character.png");
 
-        cow = get("textures/cow.png");
+        cow = get("textures/entity/cow.png");
+        pig = get("textures/entity/pig.png");
 
 
         reloadAll();

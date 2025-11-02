@@ -164,7 +164,6 @@ public class Block {
     public static XUList<bool> translucent => Registry.BLOCKS.translucent;
     public static XUList<bool> waterSolid => Registry.BLOCKS.waterSolid;
     public static XUList<bool> lavaSolid => Registry.BLOCKS.lavaSolid;
-    public static XUList<bool> inventoryBlacklist => Registry.BLOCKS.inventoryBlacklist;
     public static XUList<bool> randomTick => Registry.BLOCKS.randomTick;
     public static XUList<bool> renderTick => Registry.BLOCKS.renderTick;
     public static XUList<bool> liquid => Registry.BLOCKS.liquid;
@@ -658,10 +657,6 @@ public class Block {
 
     public static bool isFullBlock(int id) {
         return fullBlock[id];
-    }
-
-    public static bool isBlacklisted(int block) {
-        return inventoryBlacklist[block];
     }
 
     //public static Block TORCH = register(new Block(Blocks.TORCH, "Torch", BlockModel.makeTorch(grassUVs(4, 1,0, 1, 4,1))).partialBlock().torchAABB().light(8).transparency());

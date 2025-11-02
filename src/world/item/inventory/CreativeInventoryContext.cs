@@ -29,7 +29,7 @@ public class CreativeInventoryContext : InventoryContext {
 
         // add all blocks
         for (int i = 1; i < Block.currentID; i++) {
-            if (Block.blocks[i] == null || Block.isBlacklisted(i) || Block.get(i) == Block.AIR) {
+            if (Block.get(i) == null || Block.get(i) == Block.AIR && !Registry.ITEMS.blackList[Block.get(i)!.item.id]) {
                 continue;
             }
 
@@ -47,7 +47,7 @@ public class CreativeInventoryContext : InventoryContext {
         // add all items
         for (int i = 0; i < Registry.ITEMS.count(); i++) {
             var item = Item.get(i);
-            if (item != null && !item.isBlock() && item != Item.AIR) {
+            if (item != null && !item.isBlock() && item != Item.AIR && !Registry.ITEMS.blackList[i]) {
                 // special handling for dye - add all 16 colour variants
                 if (item == Item.DYE) {
                     for (byte metadata = 0; metadata < 16; metadata++) {

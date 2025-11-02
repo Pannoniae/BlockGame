@@ -102,6 +102,13 @@ public class Pathfinding {
         return new Path(pathList);
     }
 
+    private enum Type {
+        Blocked,  // solid blocks
+        Air,      // empty space
+        Water,    // water (can swim)
+        Lava      // lava (avoid)
+    }
+
     private static List<PathNode> getNeighbours(Entity e, PathNode node) {
         var neighbors = new List<PathNode>();
 
@@ -113,50 +120,83 @@ public class Pathfinding {
             new(1, 0, -1), new(-1, 0, -1),
         ];
 
+        var current = fits(e, node.x, node.y, node.z);
+
         foreach (var dir in directions) {
             var nx = node.x + dir.X;
             var ny = node.y + dir.Y;
             var nz = node.z + dir.Z;
 
+            var fit = fits(e, nx, ny, nz);
+
             // check if entity fits at this position
-            if (fits(e, nx, ny, nz)) {
+            if (fit is Type.Air or Type.Water) {
                 neighbors.Add(new PathNode(nx, ny, nz));
             }
             // try stepping up one block
-            else if (fits(e, nx, ny + 1, nz)) {
-                neighbors.Add(new PathNode(nx, ny + 1, nz));
+            else if (fit == Type.Blocked) {
+                var stepFit = fits(e, nx, ny + 1, nz);
+                if (stepFit is Type.Air or Type.Water) {
+                    neighbors.Add(new PathNode(nx, ny + 1, nz));
+                }
             }
         }
 
         // can fall down?
-        if (fits(e, node.x, node.y - 1, node.z)) {
+        var downFit = fits(e, node.x, node.y - 1, node.z);
+        if (downFit is Type.Air or Type.Water) {
             neighbors.Add(new PathNode(node.x, node.y - 1, node.z));
+        }
+
+        // can swim up through water?
+        if (current == Type.Water) {
+            var upFit = fits(e, node.x, node.y + 1, node.z);
+            if (upFit is Type.Air or Type.Water) {
+                neighbors.Add(new PathNode(node.x, node.y + 1, node.z));
+            }
         }
 
         return neighbors;
     }
 
-    private static bool fits(Entity e, int x, int y, int z) {
+    private static Type fits(Entity e, int x, int y, int z) {
         var aabb = e.calcAABB(new Molten.DoublePrecision.Vector3D(x + 0.5, y, z + 0.5));
 
         // check all blocks entity would occupy
         var min = aabb.min.toBlockPos();
         var max = aabb.max.toBlockPos();
 
+        bool hasWater = false;
+        bool hasLava = false;
+
         for (int bx = min.X; bx <= max.X; bx++) {
             for (int by = min.Y; by <= max.Y; by++) {
                 for (int bz = min.Z; bz <= max.Z; bz++) {
                     var block = e.world.getBlock(bx, by, bz);
+
                     // if block has collision, entity doesn't fit
                     if (Block.collision[block]) {
-                        return false;
+                        return Type.Blocked;
+                    }
+
+                    // check for liquids
+                    if (Block.liquid[block]) {
+                        if (block == Block.LAVA.id) {
+                            hasLava = true;
+                        } else {
+                            hasWater = true;
+                        }
                     }
                 }
             }
         }
 
+        // prioritize lava avoidance
+        if (hasLava) return Type.Lava;
+        if (hasWater) return Type.Water;
+
         // mobs are stupid and will walk off cliffs ;)
-        return true;
+        return Type.Air;
     }
 
     private static float heuristic(Vector3I a, Vector3I b) {

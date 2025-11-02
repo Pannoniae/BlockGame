@@ -15,7 +15,7 @@ public class Mob(World world, string type) : Entity(world, type) {
     private const double TARGET_REACHED_DISTANCE = 1.5;
     private const double WANDER_MIN_DISTANCE = 8.0;
     private const double WANDER_MAX_DISTANCE = 16.0;
-    private const float JUMP_CHANCE = 0.055f; // per tick
+    private const float JUMP_CHANCE = 0.015f; // per tick
     private const double SAFE_FALL_SPEED = 13.0; // velocity threshold for damage
     private const double FALL_DAMAGE_MULTIPLIER = 2.0; // damage per unit velocity over threshold
     private const double FOOTSTEP_DISTANCE = 3.0; // distance between footstep sounds
@@ -64,8 +64,13 @@ public class Mob(World world, string type) : Entity(world, type) {
      * Override to implement custom AI.
      */
     public virtual void AI(double dt) {
-        // randomly jump
+        // randomly jump on ground, continuously jump in water to stay afloat
         if (onGround && Game.random.NextSingle() < JUMP_CHANCE) {
+            jumping = true;
+        }
+
+        // keep jumping in water to stay on surface
+        if (inLiquid) {
             jumping = true;
         }
 
@@ -76,7 +81,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // random small chance: change target anyway
-        if (Game.random.NextDouble() < 0.004) {
+        if (Game.random.NextDouble() < 0.04 / Game.tps) {
             target = null;
             path = null;
             wanderTarget = null;
@@ -173,7 +178,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         if (dir.Length() > 0.01) {
             dir = Vector3D.Normalize(dir);
 
-            const double moveSpeed = GROUND_MOVE_SPEED * 0.6;
+            var moveSpeed = inLiquid ? LIQUID_MOVE_SPEED * 0.6 : GROUND_MOVE_SPEED * 0.6;
             velocity.X += dir.X * moveSpeed;
             velocity.Z += dir.Z * moveSpeed;
 

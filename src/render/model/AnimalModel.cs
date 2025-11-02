@@ -5,23 +5,32 @@ using BlockGame.world;
 
 namespace BlockGame.render.model;
 
-public class CowModel : EntityModel {
+public class AnimalModel : EntityModel {
 
     public const int xs = 68;
     public const int ys = 40;
-    public readonly Cube head = new Cube().pos(0, 12, 13).off(-3, 0, -3).ext(6, 6, 6).tex(0, 0).gen(xs, ys);
+    public readonly Cube head;
+    public readonly Cube body;
+    public readonly Cube frontRightLeg;
+    public readonly Cube frontLeftLeg;
+    public readonly Cube backLeftLeg;
+    public readonly Cube backRightLeg;
 
-    public readonly Cube body = new Cube().pos(0, 16, 0).off(-5, -8, -10).ext(10, 8, 20).tex(8, 12).gen(xs, ys);
+    public AnimalModel(int l) {
 
-    public readonly Cube frontRightLeg = new Cube().pos(-2.5f, 8, 6.5f).off(-1.5f, -8, -1.5f).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
-    public readonly Cube frontLeftLeg = new Cube().pos(2.5f, 8, 6.5f).off(-1.5f, -8, -1.5f).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
-    public readonly Cube backLeftLeg = new Cube().pos(2.5f, 8, -8.5f).off(-1.5f, -8, -1.5f).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
-    public readonly Cube backRightLeg = new Cube().pos(-2.5f, 8, -8.5f).off(-1.5f, -8, -1.5f).ext(3, 8, 3).tex(0, 12).gen(xs, ys);
+        head = new Cube().pos(0, l + 4, 13).off(-3, 0, -3).ext(6, 6, 6).tex(0, 0).gen(xs, ys);
+        body = new Cube().pos(0, l + 8, 0).off(-5, -8, -10).ext(10, 8, 20).tex(8, 12).gen(xs, ys);
+
+        frontRightLeg = new Cube().pos(-2.5f, l, 6.5f).off(-1.5f, -l, -1.5f).ext(3, l, 3).tex(0, 12).gen(xs, ys);
+        frontLeftLeg = new Cube().pos(2.5f, l, 6.5f).off(-1.5f, -l, -1.5f).ext(3, l, 3).tex(0, 12).gen(xs, ys);
+        backLeftLeg = new Cube().pos(2.5f, l, -8.5f).off(-1.5f, -l, -1.5f).ext(3, l, 3).tex(0, 12).gen(xs, ys);
+        backRightLeg = new Cube().pos(-2.5f, l, -8.5f).off(-1.5f, -l, -1.5f).ext(3, l, 3).tex(0, 12).gen(xs, ys);
+    }
 
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         // set cow texture
-        Game.graphics.tex(0, Game.textures.cow);
+        Game.graphics.tex(0, e.tex);
 
         // calculate interpolated rotations
         var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);

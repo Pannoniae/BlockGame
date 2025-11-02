@@ -41,6 +41,11 @@ public class MatrixStack {
     public Matrix4x4 top => stack.Peek();
 
     public void push() {
+        // stack guard
+        if (stack.Count >= 64) {
+            SkillIssueException.throwNew("One has skill issue?");
+        }
+
         stack.Push(stack.Peek());
     }
 

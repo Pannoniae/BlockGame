@@ -210,7 +210,7 @@ public class SNBTWriter {
         }
         
         bool first = true;
-        foreach (var kvp in compound.dict) {
+        foreach (var kvp in compound.dict.Pairs) {
             if (!first) {
                 sb.Append(',');
                 if (prettyPrint) {

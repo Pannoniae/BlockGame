@@ -1,6 +1,6 @@
-using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.entity;
+using Core.world.entity;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
@@ -13,9 +13,11 @@ namespace BlockGame.world;
  */
 public class Entities {
 
-    public static readonly int COW = register("cow", w => new Cow(w));
-    public static readonly int PLAYER = register("player", w => new Player(w,0, 0, 0));
+    public static readonly int PLAYER = register("player", w => new Player(w, 0, 0, 0));
     public static readonly int ITEM_ENTITY = register("item", w => new ItemEntity(w));
+
+    public static readonly int COW = register("cow", w => new Cow(w));
+    public static readonly int PIG = register("pig", w => new Pig(w));
 
     /**
      * Register an entity type with a string ID.

@@ -3,6 +3,7 @@ using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.entity;
+using Core.world.entity;
 
 namespace BlockGame.render.model;
 
@@ -39,7 +40,8 @@ public static class EntityRenderers {
 
     /** hot reload all entity models by recreating them */
     public static void reloadAll() {
-        register(Entities.COW, new CowRenderer());
+        register(Entities.COW, new MobRenderer<Cow>(new AnimalModel(10)));
+        register(Entities.PIG, new MobRenderer<Pig>(new AnimalModel(8)));
         register(Entities.PLAYER, new PlayerRenderer());
         register(Entities.ITEM_ENTITY, new ItemEntityRenderer());
     }

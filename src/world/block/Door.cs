@@ -1,6 +1,7 @@
 using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.world.item;
 
 namespace BlockGame.world.block;
 
@@ -157,4 +158,10 @@ public class Door : Block {
     }
 
     public override byte maxValidMetadata() => 31; // 5 bits
+
+    public override (item.Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        // only drop one door from the lower block
+        if (upper(metadata)) return (Item.DOOR, 0, 0);
+        return (Item.DOOR, 0, 1);
+    }
 }
