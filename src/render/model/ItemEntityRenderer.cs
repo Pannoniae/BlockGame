@@ -56,7 +56,7 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
 
 
-        if (item.isBlock()) {
+        if (item.isBlock() && !Block.renderItemLike[item.getBlock()!.id]) {
             // render as small block
             renderItemAsBlock(mat, itemEntity, interp);
         } else {
@@ -135,7 +135,12 @@ public class ItemEntityRenderer : EntityRenderer<ItemEntity> {
 
         idt.begin(PrimitiveType.Quads);
 
-        idt.setTexture(Game.textures.itemTexture);
+        // itemLike blocks use block texture atlas, regular items use item atlas
+        if (item.isBlock() && Block.renderItemLike[item.getBlock()!.id]) {
+            idt.setTexture(Game.textures.blockTexture);
+        } else {
+            idt.setTexture(Game.textures.itemTexture);
+        }
 
         Game.player.handRenderer.renderItemInHand(itemEntity.stack, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
 

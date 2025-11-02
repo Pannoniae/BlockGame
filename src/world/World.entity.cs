@@ -1,6 +1,9 @@
-﻿using BlockGame.render;
+﻿using BlockGame.main;
+using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
+using BlockGame.world.item;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -53,6 +56,32 @@ public partial class World {
     public void removeEntity(Entity entity) {
         doRemove(entity);
         entities.Remove(entity);
+    }
+
+    /** spawn block drop as item entity with randomised position and velocity */
+    public void spawnBlockDrop(int x, int y, int z, Item item, int count, byte metadata) {
+        if (count <= 0 || item == null) {
+            return;
+        }
+
+        var itemEntity = new ItemEntity(this);
+        itemEntity.stack = new ItemStack(item, count, metadata);
+        itemEntity.position = new Vector3D(x + 0.5, y + 0.5, z + 0.5);
+
+        // randomise pos
+        itemEntity.position.X += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
+        itemEntity.position.Z += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
+        itemEntity.position.Y += Game.clientRandom.NextSingle() * 0.15;
+
+        // add some random velocity
+        var random = Game.clientRandom;
+        itemEntity.velocity = new Vector3D(
+            (random.NextSingle() - 0.5) * 0.3,
+            random.NextSingle() * 0.3 + 0.1,
+            (random.NextSingle() - 0.5) * 0.3
+        );
+
+        addEntity(itemEntity);
     }
 
     public void getEntitiesInBox(List<Entity> result, Vector3I min, Vector3I max) {

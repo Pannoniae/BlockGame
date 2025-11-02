@@ -91,7 +91,7 @@ public class Torch : Block {
         var block = world.getBlockRaw(x, y, z);
         var metadata = block.getMetadata();
         var attachment = getAttachment(metadata);
-        
+
         RawDirection dir = attachment switch {
             GROUND => RawDirection.UP,
             WEST_WALL => RawDirection.EAST,
@@ -99,8 +99,10 @@ public class Torch : Block {
             SOUTH_WALL => RawDirection.NORTH,
             NORTH_WALL => RawDirection.SOUTH,
         };
-        
+
         if (!canAttachTo(world, x, y, z, dir)) {
+            var (item, meta, count) = getDrop(world, x, y, z, metadata);
+            world.spawnBlockDrop(x, y, z, item, count, meta);
             world.setBlock(x, y, z, 0);
         }
     }

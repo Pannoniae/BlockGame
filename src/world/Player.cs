@@ -43,6 +43,7 @@ public class Player : Mob, CommandSource {
      * The player's inventory (survival or creative)
      */
     public InventoryContext inventoryCtx;
+
     /**
      * Whatever's currently open (could be chest, workbench, etc.), or just the player's inventory if none
      */
@@ -86,7 +87,7 @@ public class Player : Mob, CommandSource {
 
         this.world = world;
         rotation = new Vector3();
-        bodyRotation = rotation;  // initialise body rotation to match head
+        bodyRotation = rotation; // initialise body rotation to match head
         prevBodyRotation = rotation;
         calcAABB(ref aabb, position);
 
@@ -134,6 +135,7 @@ public class Player : Mob, CommandSource {
             stack.write(stackData);
             slotsList.add(stackData);
         }
+
         invData.add(slotsList);
 
         // write armour
@@ -143,6 +145,7 @@ public class Player : Mob, CommandSource {
             stack.write(stackData);
             armourList.add(stackData);
         }
+
         invData.add(armourList);
 
         // write accessories
@@ -152,6 +155,7 @@ public class Player : Mob, CommandSource {
             stack.write(stackData);
             accList.add(stackData);
         }
+
         invData.add(accList);
 
         data.add(invData);
@@ -227,6 +231,7 @@ public class Player : Mob, CommandSource {
                 Game.camera.applyImpact(dmg);
             }
         }
+
         wasInAir = !onGround && !flyMode;
     }
 
@@ -239,6 +244,7 @@ public class Player : Mob, CommandSource {
                 if (blockBelow?.mat != null) {
                     Game.snd.playFootstep(blockBelow.mat.smat);
                 }
+
                 lastFootstepDistance = totalTraveled;
             }
         }
@@ -533,9 +539,11 @@ public class Player : Mob, CommandSource {
             if (breakTime % 4 == 0) {
                 block.shatter(world, pos.X, pos.Y, pos.Z, Game.raycast.face, Game.raycast.hitAABB);
             }
+
             if (breakTime % 12 == 0) {
                 Game.snd.playBlockKnock(block.mat.smat);
             }
+
             breakTime++;
 
             if (breakProgress >= 1.0) {
@@ -545,27 +553,7 @@ public class Player : Mob, CommandSource {
                 // get block drop and spawn item entity in survival mode
                 var metadata = val.getMetadata();
                 var (dropItem, meta, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, metadata);
-                    if (dropCount > 0) {
-                    var itemEntity = new ItemEntity(world);
-                    itemEntity.stack = new ItemStack(dropItem, dropCount, metadata);
-                    itemEntity.position = new Vector3D(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5);
-
-                    // randomise pos
-                    itemEntity.position.X += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
-                    itemEntity.position.Z += (Game.clientRandom.NextSingle() - 0.5) * 0.25;
-                    itemEntity.position.Y += Game.clientRandom.NextSingle() * 0.15;
-
-                    // add some random velocity
-                    var random = Game.clientRandom;
-                    itemEntity.velocity = new Vector3D(
-                        (random.NextSingle() - 0.5) * 0.3,
-                        random.NextSingle() * 0.3 + 0.1,
-                        (random.NextSingle() - 0.5) * 0.3
-                    );
-
-                    // add to world (chunk will add it to its entity list)
-                    world.addEntity(itemEntity);
-                }
+                world.spawnBlockDrop(pos.X, pos.Y, pos.Z, dropItem, dropCount, meta);
 
                 world.setBlock(pos.X, pos.Y, pos.Z, 0);
                 world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
@@ -698,7 +686,6 @@ public class Player : Mob, CommandSource {
     }
 
     public void breakBlock() {
-
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
 
         if (Game.instance.targetedPos.HasValue) {
@@ -835,12 +822,14 @@ public class Player : Mob, CommandSource {
         if (swinging) {
             targetYaw = rotation.Y;
             rotSpeed = 9.6f;
-        } else if (moving) {
+        }
+        else if (moving) {
             // Body faces movement direction relative to head
             float inputAngle = Meth.rad2deg((float)Math.Atan2(-input.X, input.Z));
             targetYaw = rotation.Y + inputAngle;
             rotSpeed = ROTATION_SPEED * 2;
-        } else {
+        }
+        else {
             // Idle - face head
             targetYaw = bodyRotation.Y;
             rotSpeed = ROTATION_SPEED * 2;
@@ -883,7 +872,7 @@ public class Player : Mob, CommandSource {
 
         // remove 1 item from stack
         var droppedStack = inventory.removeStack(inventory.selected, 1);
-        dropItemStack(droppedStack, withVelocity: true);
+        dropItemStack(droppedStack, withVelocity:true);
     }
 
     /** Drop an item stack at player position. withVelocity = throw in facing direction */
@@ -900,7 +889,8 @@ public class Player : Mob, CommandSource {
             var forward = camFacing();
             itemEntity.position = eyePos + forward.toVec3D() * 0.5;
             itemEntity.velocity = forward.toVec3D() * 8 + new Vector3D(0, 2, 0);
-        } else {
+        }
+        else {
             // drop at feet
             itemEntity.position = position + new Vector3D(0, 0.5, 0);
         }
@@ -957,9 +947,7 @@ public class Player : Mob, CommandSource {
         prevVelocity = Vector3D.Zero;
 
         // back to game
-        Game.instance.executeOnMainThread(() => {
-            Screen.GAME_SCREEN.backToGame();
-        });
+        Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.backToGame(); });
     }
 
     public void sendMessage(string msg) {

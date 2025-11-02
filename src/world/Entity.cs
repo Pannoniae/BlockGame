@@ -95,6 +95,7 @@ public partial class Entity(World world, string type) : Persistent {
     public ushort blockAtFeet;
     public bool inLiquid;
     public bool wasInLiquid;
+    public bool onLadder;
 
     // TODO implement some MovementState system so movement constants don't have to be duplicated...
     // it would store a set of values for acceleration, drag, friction, maxspeed, etc...
@@ -352,6 +353,8 @@ public partial class Entity(World world, string type) : Persistent {
         var min = aabb.min.toBlockPos();
         var max = aabb.max.toBlockPos();
         World.getBlocksInBox(neighbours, min, max);
+        
+        onLadder = false;
 
         // check if any of them are liquid and accumulate push forces
         inLiquid = false;

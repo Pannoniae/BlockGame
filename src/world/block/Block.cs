@@ -154,6 +154,7 @@ public class Block {
     public static Block MAHOGANY_CHEST;
     public static Block BRICK_FURNACE;
     public static Block FURNACE;
+    public static Block LADDER;
 
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
@@ -616,6 +617,16 @@ public class Block {
         FURNACE.setTex(furnaceUVs(7, 4, 8, 4, 9, 4));
         FURNACE.material(Material.STONE);
         FURNACE.light(15);
+
+        LADDER = register("ladder", new Ladder("Ladder"));
+        LADDER.setTex(new UVPair(10, 3));
+        LADDER.transparency();
+        LADDER.noCollision();
+        // render as item!
+        LADDER.itemLike();
+        LADDER.material(Material.WOOD);
+        LADDER.setHardness(0.5);
+
 
         // set default hardness for blocks that haven't set it
         for (int i = 0; i < currentID; i++) {
