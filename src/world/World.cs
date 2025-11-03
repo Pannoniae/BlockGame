@@ -130,7 +130,7 @@ public partial class World : IDisposable {
         }
 
         // in hot reload, don't save that much!! fucking lagspikes
-        var interval = Spy.enabled ? 40000 : 2000;
+        var interval = Spy.enabled ? 180000 : 2000;
         saveWorld = Game.setInterval(interval, saveWorldMethod);
     }
 
