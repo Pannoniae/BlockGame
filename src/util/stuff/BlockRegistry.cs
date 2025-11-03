@@ -23,7 +23,6 @@ public class BlockRegistry : Registry<Block> {
     public readonly XUList<bool> waterSolid;
     public readonly XUList<bool> lavaSolid;
 
-    public readonly XUList<bool> inventoryBlacklist;
     public readonly XUList<bool> randomTick;
     public readonly XUList<bool> renderTick;
     public readonly XUList<bool> liquid;
@@ -57,7 +56,6 @@ public class BlockRegistry : Registry<Block> {
         translucent = track(false);
         waterSolid = track(true);
         lavaSolid = track(true);
-        inventoryBlacklist = track(false);
         randomTick = track(false);
         renderTick = track(false);
         liquid = track(false);

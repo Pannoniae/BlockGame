@@ -298,6 +298,7 @@ public class Item {
         Registry.ITEMS.blackList[AIR.id] = true;
         Registry.ITEMS.blackList[Block.WATER.item.id] = true;
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
+        Registry.ITEMS.blackList[Block.FIRE.item.id] = true;
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600;                    // 60 seconds

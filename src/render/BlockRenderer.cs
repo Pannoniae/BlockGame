@@ -390,7 +390,7 @@ public class BlockRenderer {
     /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
     /// Positions are in local block coordinates (0-1 range typically).
     /// </summary>
-    public unsafe void renderQuadCull(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public void renderQuadCull(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
         float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
@@ -427,7 +427,7 @@ public class BlockRenderer {
     /// Render a quad face with custom geometry, full lighting, AO, and advanced features.
     /// Positions are in local block coordinates (0-1 range typically).
     /// </summary>
-    public unsafe void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public void renderQuad(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
         float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
@@ -445,7 +445,7 @@ public class BlockRenderer {
     /// <summary>
     /// Render a double-sided quad (visible from both sides).
     /// </summary>
-    public unsafe void renderQuadDoubleSided(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
+    public void renderQuadDoubleSided(List<BlockVertexPacked> vertices, RawDirection dir, int x, int y, int z,
         float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float uMin, float vMin, float uMax, float vMax) {
@@ -1058,20 +1058,6 @@ public class BlockRenderer {
         var uvdm = UVPair.texCoords(texm);
 
         applySimpleLightingNoDir();
-
-        begin();
-        vertex(x + topInset, y + 1f, z + topInset, uvd.X, uvd.Y);
-        vertex(x, y + 0f, z, uvd.X, uvdm.Y);
-        vertex(x + 1f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
-        vertex(x + 1f - topInset, y + 1f, z + 1f - topInset, uvdm.X, uvd.Y);
-        endTwo(vertices);
-
-        begin();
-        vertex(x + topInset, y + 1f, z + 1f - topInset, uvd.X, uvd.Y);
-        vertex(x, y + 0f, z + 1f, uvd.X, uvdm.Y);
-        vertex(x + 1f, y + 0f, z, uvdm.X, uvdm.Y);
-        vertex(x + 1f - topInset, y + 1f, z + topInset, uvdm.X, uvd.Y);
-        endTwo(vertices);
 
         begin();
         vertex(x + 0f + inset, y + 1f, z + 1f - inset, uvd.X, uvd.Y);

@@ -37,6 +37,12 @@ public class ItemStack : Persistent {
         read(data);
     }
 
+    public ItemStack(int id, int quantity, int metadata) {
+        this.id = id;
+        this.quantity = quantity;
+        this.metadata = metadata;
+    }
+
     public static ItemStack fromTag(NBTCompound data) {
         var stack = new ItemStack(data);
         return (stack.id == 0 || stack.quantity <= 0) ? EMPTY : stack;

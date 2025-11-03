@@ -5,7 +5,9 @@ using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
+using Microsoft.Win32;
 using Molten.DoublePrecision;
+using Registry = BlockGame.util.stuff.Registry;
 
 namespace BlockGame.util.cmd;
 
@@ -375,6 +377,47 @@ public readonly struct Command {
             }
 
             source.sendMessage($"Set {count} blocks to {args[6]}");
+        }));
+
+        commands.Add(new Command("give", "Gives an item to the player", NetMode.CL, (source, args) => {
+            if (args.Length < 1) {
+                source.sendMessage("Usage: /give <item> [quantity]");
+                return;
+            }
+
+            // parse item
+            int itemId;
+            if (int.TryParse(args[0], out itemId)) {
+                // numeric ID
+            }
+            else {
+                // item name
+                var itemName = args[0].ToUpper();
+
+                itemId = Registry.ITEMS.getID(itemName);
+            }
+
+            // parse quantity
+            int quantity = 1;
+            if (args.Length >= 2 && !int.TryParse(args[1], out quantity)) {
+                source.sendMessage("Invalid quantity");
+                return;
+            }
+
+            int metadata = 0;
+            if (args.Length >= 3 && !int.TryParse(args[2], out metadata)) {
+                source.sendMessage("Invalid metadata");
+                return;
+            }
+
+            // give item
+            var itemStack = new ItemStack(itemId, quantity, metadata);
+            if (Game.player.inventory.addItem(itemStack)) {
+                source.sendMessage($"Gave {quantity} of {args[0]}");
+            }
+            else {
+                source.sendMessage("Not enough space in inventory");
+            }
         }));
 
         commands.Add(new Command("chunkmuncher", "Deletes all blocks in the current chunk", NetMode.CL,

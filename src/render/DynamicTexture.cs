@@ -1,4 +1,5 @@
 ﻿using BlockGame.GL;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.worldgen;
 using SixLabors.ImageSharp.PixelFormats;
@@ -106,101 +107,240 @@ public class FlowingWaterTexture : DynamicTexture {
 }
 
 public class StillLavaTexture : DynamicTexture {
-    private readonly Rgba32[] baseTexture;
-    private readonly SimplexNoise noise;
+    private readonly float[] heat;
+    private readonly float[] nextHeat;
+    private readonly float[] activation;
+    private readonly float[] nextActivation;
+    private readonly float[] avg;
+    private readonly float[] nextAvg;
+    private readonly XRandom rng;
 
-    public override int updateFreq => 15;
+    public override int updateFreq => 3;
 
     public StillLavaTexture(BTextureAtlas parent) : base(parent, 0, 16 * 16, 16, 16) {
-        baseTexture = new Rgba32[width * height];
-        noise = new SimplexNoise(42);
+        heat = new float[width * height];
+        nextHeat = new float[width * height];
+        activation = new float[width * height];
+        nextActivation = new float[width * height];
+        avg = new float[width * height];
+        nextAvg = new float[width * height];
+        rng = new XRandom(1337);
 
-        var span = parent.imageData.Span;
-        int srcX = 0;
-        int srcY = 16 * 16;
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                baseTexture[y * width + x] = span[(srcY + y) * parent.image.Width + srcX + x];
-            }
+        for (int i = 0; i < heat.Length; i++) {
+            float r = rng.NextSingle();
+            heat[i] = r * r * 0.8f;
+            activation[i] = rng.NextSingle() * 0.6f;
         }
     }
 
     protected override void update() {
-
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int idx = y * width + x;
 
-                var n = noise.noise3_XYBeforeZ(x / 6f, y / 6f, tickCounter / 224f);
-                var b = 0.8f + (n + 1f) / 2f * 0.3f;
-                var b2 = (b + 1f) / 2f;
+                int xm = (x - 1 + width) % width;
+                int xp = (x + 1) % width;
+                int ym = (y - 1 + height) % height;
+                int yp = (y + 1) % height;
 
-                // clamp to [0,1]
-                b = Meth.clamp(b, 0f, 1f);
-                b2 = Meth.clamp(b2, 0f, 1f);
+                // blur the fuck out of it
 
-                pixels[idx] = new Rgba32(
-                    (byte)(baseTexture[idx].R * b2),
-                    (byte)(baseTexture[idx].G * b),
-                    (byte)(baseTexture[idx].B * b),
-                    255);
+                // (apply the heat to the avg array)
+
+                // blur 2x2
+                float b = heat[idx] * 0.2f +
+                          // 0.6
+                          heat[ym * width + x] * 0.15f +
+                          heat[yp * width + x] * 0.15f +
+                          heat[y * width + xm] * 0.15f +
+                          heat[y * width + xp] * 0.15f +
+                          // 0.2
+                          heat[ym * width + xm] * 0.05f +
+                          heat[yp * width + xp] * 0.05f +
+                          heat[ym * width + xm] * 0.05f +
+                          heat[yp * width + xp] * 0.05f;
+
+                nextAvg[idx] = b;
+
+                float h = heat[idx];
+                float a = activation[idx];
+
+
+                float act = a * 0.1f +
+                                (activation[ym * width + x] + activation[yp * width + x] +
+                                 activation[y * width + xm] + activation[y * width + xp]) * 0.25f;
+
+                float heatd = h * 0.98f +
+                                 (heat[ym * width + x] + heat[yp * width + x] +
+                                  heat[y * width + xm] + heat[y * width + xp]) * (0.02f / 4f);
+
+                float prod = a * (1.0f - h) * 6f; // brighter spots
+                float decay = h * a * 0.8f;
+
+                if (rng.NextSingle() < 0.4 * Game.fixeddt) {
+                    act += 0.4f;
+                }
+
+                nextActivation[idx] = Meth.clamp((act - decay) * 0.585f, 0f, 1.0f);
+                nextHeat[idx] = Meth.clamp((heatd + prod) * 0.975f, 0f, 2f);
             }
+        }
+
+        // swap
+        for (int i = 0; i < heat.Length; i++) {
+            heat[i] = nextHeat[i];
+            activation[i] = nextActivation[i];
+            avg[i] = nextAvg[i];
+        }
+
+        // render
+        for (int i = 0; i < heat.Length; i++) {
+            pixels[i] = c(avg[i]);
         }
 
         markDirty();
     }
+
+    public static Rgba32 c(float i) {
+        // 0.0: dark red
+        // 0.3: bright red
+        // 0.6: orange
+        // 0.9: yellow
+        // 1.2: white-hot
+
+        // remap from [0,1] to [0,1.5]
+        i *= 2f;
+        //i = Meth.clamp(i, 0f, 1.5f);
+
+        // mostly red
+        float r = Meth.clamp(255f * float.Min(1f, i * 1.2f), 0f, 255f);
+
+        // red -> yellow
+        float gNorm = float.Min(1f, i * (1 / 1.4f));
+        float g = 255f * gNorm * gNorm;
+        g = Meth.clamp(g, 0f, 255f);
+
+        // sparingly at very high intensity
+        const float bthreshold = 1.2f;
+        float b = i > bthreshold ? 255f * ((i - bthreshold) / (2.0f - bthreshold)) : 0f;
+        b = Meth.clamp(b, 0f, 255f);
+
+        return new Rgba32(
+            (byte)Meth.clamp(r, 0f, 255f),
+            (byte)Meth.clamp(g, 0f, 255f),
+            (byte)Meth.clamp(b, 0f, 255f),
+            255);
+    }
 }
 
 public class FlowingLavaTexture : DynamicTexture {
-    private readonly Rgba32[] baseTexture;
-    private int scrollOffset;
-    private readonly SimplexNoise noise;
+    private readonly float[] heat;
+    private readonly float[] nextHeat;
+    private readonly float[] activation;
+    private readonly float[] nextActivation;
+    private readonly float[] avg;
+    private readonly float[] avgNext;
+    private readonly XRandom rng;
 
-    public override int updateFreq => 15;
+    public override int updateFreq => 4;
 
     public FlowingLavaTexture(BTextureAtlas parent) : base(parent, 1 * 16, 17 * 16, 32, 32) {
-        baseTexture = new Rgba32[width * height];
-        noise = new SimplexNoise(42);
+        heat = new float[width * height];
+        nextHeat = new float[width * height];
+        activation = new float[width * height];
+        nextActivation = new float[width * height];
+        avg = new float[width * height];
+        avgNext = new float[width * height];
+        rng = new XRandom(1338);
 
-        var span = parent.imageData.Span;
-        int srcX = 1 * 16;
-        int srcY = 17 * 16;
-
-        // store base texture
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                baseTexture[y * width + x] = span[(srcY + y) * parent.image.Width + srcX + x];
-            }
+        for (int i = 0; i < heat.Length; i++) {
+            float r = rng.NextSingle();
+            heat[i] = r * r * 0.8f;
+            activation[i] = rng.NextSingle() * 0.6f;
         }
     }
 
     protected override void update() {
-        scrollOffset = (scrollOffset + 1) % width;
-
-        // apply noise to texture with scroll
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                int srcX = (x - scrollOffset + width) % width;
-                int srcIdx = y * width + srcX;
-                int dstIdx = y * width + x;
+                int idx = y * width + x;
 
-                // the noise scrolls with the scrolling!
-                var n = noise.noise3_XYBeforeZ(srcX / 6f, y / 6f, tickCounter / 224f);
-                var b = 0.8f + (n + 1f) / 2f * 0.3f;
-                // average between b and 1 for red channel
-                var b2 = (b + 1f) / 2f;
+                int xm = (x - 1 + width) % width;
+                int xp = (x + 1) % width;
+                int ym = (y - 1 + height) % height;
+                int yp = (y + 1) % height;
 
-                // clamp to [0,1]
-                b = Meth.clamp(b, 0f, 1f);
-                b2 = Meth.clamp(b2, 0f, 1f);
+                // blur the fuck out of it
+                // (apply the heat to the avg array)
 
-                pixels[dstIdx] = new Rgba32(
-                    (byte)(baseTexture[srcIdx].R * b2),
-                    (byte)(baseTexture[srcIdx].G * b),
-                    (byte)(baseTexture[srcIdx].B * b),
-                    255);
+                // blur 2x2
+                float b = heat[idx] * 0.2f +
+                          // 0.6
+                          heat[ym * width + x] * 0.15f +
+                          heat[yp * width + x] * 0.15f +
+                          heat[y * width + xm] * 0.15f +
+                          heat[y * width + xp] * 0.15f +
+                          // 0.2
+                          heat[ym * width + xm] * 0.05f +
+                          heat[yp * width + xp] * 0.05f +
+                          heat[ym * width + xm] * 0.05f +
+                          heat[yp * width + xp] * 0.05f;
+
+                avgNext[idx] = b;
+
+                float h = heat[idx];
+                float a = activation[idx];
+
+                float act = a * 0.1f +
+                                (activation[ym * width + x] + activation[yp * width + x] +
+                                 activation[y * width + xm] + activation[y * width + xp]) * 0.25f;
+
+                float heatd = h * 0.98f +
+                                 (heat[ym * width + x] + heat[yp * width + x] +
+                                  heat[y * width + xm] + heat[y * width + xp]) * (0.02f / 4f);
+
+
+                float prod = a * (1.0f - h) * 6f; // brighter spots
+                float decay = h * a * 0.8f;
+
+                if (rng.NextSingle() < 0.4 * Game.fixeddt) {
+                    act += 0.4f;
+                }
+
+                nextActivation[idx] = Meth.clamp((act - decay) * 0.585f, 0f, 1.0f);
+                nextHeat[idx] = Meth.clamp((heatd + prod) * 0.975f, 0f, 2f);
             }
+        }
+
+        // swap
+        for (int i = 0; i < heat.Length; i++) {
+            heat[i] = nextHeat[i];
+            activation[i] = nextActivation[i];
+        }
+
+        // scroll
+        if (tickCounter % 3 == 0) {
+            for (int y = 0; y < height; y++) {
+                float lastHeat = heat[y * width + width - 1];
+                float lastAct = activation[y * width + width - 1];
+                for (int x = width - 1; x > 0; x--) {
+                    heat[y * width + x] = heat[y * width + x - 1];
+                    activation[y * width + x] = activation[y * width + x - 1];
+                }
+
+                heat[y * width] = lastHeat;
+                activation[y * width] = lastAct;
+            }
+        }
+
+        // avg
+        for (int i = 0; i < heat.Length; i++) {
+            avg[i] = avgNext[i];
+        }
+
+        // render
+        for (int i = 0; i < heat.Length; i++) {
+            pixels[i] = StillLavaTexture.c(avg[i]);
         }
 
         markDirty();
@@ -248,7 +388,7 @@ public class FireTexture : DynamicTexture {
                 float d = rd + bias;
 
                 //if (ny > 0.9f && dist < 0.6f) {
-                    //d = 1f;
+                //d = 1f;
                 //}
 
                 float cutoff = 0.45f + (1f - ny) * 0.15f;
