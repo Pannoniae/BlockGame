@@ -47,7 +47,7 @@ public class Textures {
 
         particleTex = get("textures/particle.png");
         
-        blockTexture = new BTextureAtlas("textures/blocks.png", 16);
+        blockTexture = new BlockTextureAtlas("textures/blocks.png", 16);
 
         itemTexture = new BTextureAtlas("textures/items.png", 16);
 

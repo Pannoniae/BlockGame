@@ -32,7 +32,7 @@ public class Liquid : Block {
         updateDelay[id] = tickRate;
 
         if (lightoid) {
-            lightAbsorption[id] = 15;
+            lightLevel[id] = 15;
         }
     }
 
@@ -634,8 +634,13 @@ public class Liquid : Block {
         int ly = y & 15;
         int lz = z & 15;
 
+        var ao = br.AO;
+        br.AO = false; // no AO for liquids
+
         for (RawDirection d = 0; d < RawDirection.MAX; d++) {
-            if (!cullFace(br, lx, ly, lz, d)) continue;
+            if (!cullFace(br, lx, ly, lz, d)) {
+                continue;
+            }
 
             br.applyFaceLighting(d);
 
@@ -687,6 +692,8 @@ public class Liquid : Block {
 
             br.end(vertices);
         }
+
+        br.AO = ao;
     }
 
     private static Vector2 rotateUV(float u, float v, float cos, float sin) {

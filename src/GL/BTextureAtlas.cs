@@ -180,11 +180,14 @@ public class BTextureAtlas : BTexture2D {
         generateMipmaps(imageData.Span, image.Width, image.Height, maxLevel);
 
         if (firstLoad) {
-            addDynamicTexture(new StillWaterTexture(this));
-            addDynamicTexture(new FlowingWaterTexture(this));
+            onFirstLoad();
         }
 
         firstLoad = false;
+    }
+
+    public virtual void onFirstLoad() {
+
     }
 
     public void update(double dt) {
@@ -195,5 +198,14 @@ public class BTextureAtlas : BTexture2D {
         if (Settings.instance.mipmapping > 0) {
             generateMipmaps(imageData.Span, image.Width, image.Height, Settings.instance.mipmapping);
         }
+    }
+}
+
+public class BlockTextureAtlas(string path, int atlasSize) : BTextureAtlas(path, atlasSize) {
+    public override void onFirstLoad() {
+        addDynamicTexture(new StillWaterTexture(this));
+        addDynamicTexture(new FlowingWaterTexture(this));
+        addDynamicTexture(new StillLavaTexture(this));
+        addDynamicTexture(new FlowingLavaTexture(this));
     }
 }
