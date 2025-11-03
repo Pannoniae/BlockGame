@@ -98,8 +98,6 @@ public class Recipe {
         DIAMOND_CANDY.ingredients(Block.CANDY.item, Item.DIAMOND);
 
 
-
-
         // tools
         tool(Item.WOOD_PICKAXE, Block.OAK_PLANKS.item, 111_020_020);
         tool(Item.WOOD_AXE, Block.OAK_PLANKS.item, 110_120_020);
@@ -113,36 +111,35 @@ public class Recipe {
         tool(Item.STONE_HOE, Block.STONE.item, 110_020_020);
         tool(Item.STONE_SCYTHE, Block.STONE.item, 111_002_002);
 
-        tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020);
-        tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020);
-        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 010_020_020);
-        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 010_010_020);
-        tool(Item.COPPER_HOE, Item.COPPER_INGOT, 110_020_020);
-        tool(Item.COPPER_SCYTHE, Item.COPPER_INGOT, 111_002_002);
+        tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020, 2);
+        tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020, 2);
+        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 010_020_020, 2);
+        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 010_010_020, 2);
+        tool(Item.COPPER_HOE, Item.COPPER_INGOT, 110_020_020, 2);
+        tool(Item.COPPER_SCYTHE, Item.COPPER_INGOT, 111_002_002, 2);
 
-        tool(Item.IRON_PICKAXE, Item.IRON_INGOT, 111_020_020);
-        tool(Item.IRON_AXE, Item.IRON_INGOT, 110_120_020);
-        tool(Item.IRON_SHOVEL, Item.IRON_INGOT, 010_020_020);
-        tool(Item.IRON_SWORD, Item.IRON_INGOT, 010_010_020);
-        tool(Item.IRON_HOE, Item.IRON_INGOT, 110_020_020);
-        tool(Item.IRON_SCYTHE, Item.IRON_INGOT, 111_002_002);
+        tool(Item.IRON_PICKAXE, Item.IRON_INGOT, 111_020_020, 2);
+        tool(Item.IRON_AXE, Item.IRON_INGOT, 110_120_020, 2);
+        tool(Item.IRON_SHOVEL, Item.IRON_INGOT, 010_020_020, 2);
+        tool(Item.IRON_SWORD, Item.IRON_INGOT, 010_010_020, 2);
+        tool(Item.IRON_HOE, Item.IRON_INGOT, 110_020_020, 2);
+        tool(Item.IRON_SCYTHE, Item.IRON_INGOT, 111_002_002, 2);
 
-        tool(Item.GOLD_PICKAXE, Item.GOLD_INGOT, 111_020_020);
-        tool(Item.GOLD_AXE, Item.GOLD_INGOT, 110_120_020);
-        tool(Item.GOLD_SHOVEL, Item.GOLD_INGOT, 010_020_020);
-        tool(Item.GOLD_SWORD, Item.GOLD_INGOT, 010_010_020);
-        tool(Item.GOLD_HOE, Item.GOLD_INGOT, 110_020_020);
-        tool(Item.GOLD_SCYTHE, Item.GOLD_INGOT, 111_002_002);
-
+        tool(Item.GOLD_PICKAXE, Item.GOLD_INGOT, 111_020_020, 3);
+        tool(Item.GOLD_AXE, Item.GOLD_INGOT, 110_120_020, 3);
+        tool(Item.GOLD_SHOVEL, Item.GOLD_INGOT, 010_020_020, 3);
+        tool(Item.GOLD_SWORD, Item.GOLD_INGOT, 010_010_020, 3);
+        tool(Item.GOLD_HOE, Item.GOLD_INGOT, 110_020_020, 3);
+        tool(Item.GOLD_SCYTHE, Item.GOLD_INGOT, 111_002_002, 3);
     }
 
 
-    private static Recipe tool(Item result, Item material, int shape) {
+    private static Recipe tool(Item result, Item material, int shape, int q = 1) {
         int gridSize = shape > 9999 ? 3 : 2;
         var r = register(result);
         r.shape(shape, gridSize);
         r.ingredients(material, Item.STICK);
-        r.quantities(2, 1);
+        r.quantities(q, 1);
         return r;
     }
 

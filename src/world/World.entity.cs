@@ -172,8 +172,6 @@ public partial class World {
 
         // if it doesn't match, remove
         if (newChunkPos != oldChunkPos || !e.inWorld) {
-
-
             // has chunk at old?
             if (getChunkMaybe(oldChunkPos.toChunk(), out var oldChunk)) {
                 //Console.Out.WriteLine("yes? " + oldChunkPos + " -> " + newChunkPos);
@@ -190,7 +188,6 @@ public partial class World {
             else {
                 e.inWorld = false;
             }
-
 
             if (newChunkPos != oldChunkPos) {
                 //Console.Out.WriteLine("hi! " + oldChunkPos + " -> " + newChunkPos);

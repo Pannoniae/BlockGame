@@ -1,4 +1,5 @@
 using BlockGame.render.model;
+using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.entity;
 using Core.world.entity;
@@ -6,6 +7,12 @@ using Core.world.entity;
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 namespace BlockGame.world;
+
+public enum SpawnType {
+    NONE,      // doesn't spawn naturally
+    PASSIVE,   // animals
+    HOSTILE    // monsters
+}
 
 /**
  * Entity registry using string IDs.
@@ -20,14 +27,21 @@ public class Entities {
     public static int COW;
     public static int PIG;
 
+    /** spawn metadata for each entity type */
+    public static XUList<SpawnType> spawnType => Registry.ENTITIES.spawnType;
+
     public static void preLoad() {
         EntityRenderers.preLoad();
+
         PLAYER = register("player", w => new Player(w, 0, 0, 0));
         ITEM_ENTITY = register("item", w => new ItemEntity(w));
         COW = register("cow", w => new Cow(w));
         PIG = register("pig", w => new Pig(w));
         EntityRenderers.reloadAll();
 
+        // set spawn types
+        spawnType[COW] = SpawnType.PASSIVE;
+        spawnType[PIG] = SpawnType.PASSIVE;
     }
 
     /**

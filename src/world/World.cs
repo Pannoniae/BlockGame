@@ -734,6 +734,8 @@ public partial class World : IDisposable {
 
         updateBlockEntities();
 
+        updateSpawning();
+
         updateEntities(dt);
     }
 
@@ -1069,6 +1071,14 @@ public partial class World : IDisposable {
 
     public void unloadChunk(ChunkCoord coord) {
         var chunk = chunks[coord.toLong()];
+
+        // mark all entities in this chunk as unloaded
+        for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
+            foreach (var entity in chunk.entities[y]) {
+                entity.inWorld = false;
+            }
+        }
+
         // save chunk asynchronously to prevent lagspikes
         worldIO.saveChunkAsync(this, chunk);
 
@@ -1087,6 +1097,13 @@ public partial class World : IDisposable {
 
     public void unloadChunkWithHammer(ChunkCoord coord) {
         var chunk = chunks[coord.toLong()];
+
+        // mark all entities in this chunk as unloaded
+        for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
+            foreach (var entity in chunk.entities[y]) {
+                entity.inWorld = false;
+            }
+        }
 
         foreach (var l in listeners) {
             l.onChunkUnload(coord);

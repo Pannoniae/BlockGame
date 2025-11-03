@@ -286,6 +286,41 @@ public readonly struct Command {
                 source.sendMessage($"Summoned {args[0]} at {(int)spawnPos.X}, {(int)spawnPos.Y}, {(int)spawnPos.Z}");
             }));
 
+        commands.Add(new Command("ec", "Shows entity count stats", NetMode.BOTH, (source, args) => {
+            var world = source.getWorld();
+            var entities = world.entities;
+
+            // count by type
+            var typeCounts = new Dictionary<string, int>();
+            int totalMobs = 0;
+            int passiveMobs = 0;
+            int hostileMobs = 0;
+            int other = 0;
+
+            foreach (var e in entities) {
+                var typeName = e.type;
+                typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
+
+                if (e is Mob) {
+                    totalMobs++;
+                    var spawnType = Entities.spawnType[Entities.getID(e.type)];
+                    if (spawnType == SpawnType.PASSIVE) passiveMobs++;
+                    else if (spawnType == SpawnType.HOSTILE) hostileMobs++;
+                } else {
+                    other++;
+                }
+            }
+
+            source.sendMessage($"=== Entity Count: {entities.Count} ===");
+            source.sendMessage($"Mobs: {totalMobs} (Passive: {passiveMobs}, Hostile: {hostileMobs}) ");
+            source.sendMessage($"Other: {other}");
+            source.sendMessage("");
+            source.sendMessage("By Type:");
+            foreach (var (type, count) in typeCounts.OrderByDescending(kv => kv.Value)) {
+                source.sendMessage($"  {type}: {count}");
+            }
+        }));
+
         commands.Add(new Command("setblock", "Sets blocks in a specified region", NetMode.CL, (source, args) => {
 
             if (args.Length < 7) {

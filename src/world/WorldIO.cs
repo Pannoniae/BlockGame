@@ -482,7 +482,7 @@ public class WorldIO {
                     int subY = pos.Y >> 4;
                     entity.subChunkCoord = new SubChunkCoord(chunkX, subY, chunkZ);
                     chunk.addEntity(entity);
-                    //entity.inWorld = true;
+                    entity.inWorld = true;
                     world.entities.Add(entity);
                 }
                 else {
@@ -612,7 +612,7 @@ public class WorldIO {
                     // add directly to chunk and world entity list
                     // (chunk might not be in world.chunks yet, so world.addEntity() could fail to add to chunk)
                     chunk.addEntity(entity);
-                    //entity.inWorld = true;
+                    entity.inWorld = true;
                     chunk.world.entities.Add(entity);
                 }
             }

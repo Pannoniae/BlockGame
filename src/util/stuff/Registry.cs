@@ -11,7 +11,7 @@ public abstract class Registry {
     public static readonly ItemRegistry ITEMS = new();
     public static readonly Registry<Recipe> RECIPES = new RecipeRegistry();
     public static readonly ObjectRegistry<BlockEntity, Func<BlockEntity>> BLOCK_ENTITIES = new();
-    public static readonly ObjectRegistry<Entity, Func<World, Entity>> ENTITIES = new();
+    public static readonly EntityRegistry ENTITIES = new();
 }
 
 /**
@@ -169,5 +169,13 @@ public class ObjectRegistry<T, TFactory> : Registry<TFactory> {
      */
     public TFactory? factory(string id) {
         return getOrDefault(id, default!);
+    }
+}
+
+public class EntityRegistry : ObjectRegistry<Entity, Func<World, Entity>> {
+    public readonly XUList<SpawnType> spawnType;
+
+    public EntityRegistry() {
+        spawnType = track(SpawnType.NONE);
     }
 }

@@ -237,9 +237,20 @@ public class Mob(World world, string type) : Entity(world, type) {
         // despawn check
         if (canDespawn) {
             var distSq = Vector3D.DistanceSquared(position, world.player.position);
+
+            // instant despawn beyond 128 blocks
             if (distSq > DESPAWN_DISTANCE * DESPAWN_DISTANCE) {
                 active = false;
                 return false;
+            }
+
+            // random despawn between 32-128 blocks (prevents never despawning at low render dist lol)
+            const double RANDOM_DESPAWN_MIN = 32.0 * 32.0;
+            if (distSq > RANDOM_DESPAWN_MIN) {
+                if (Game.random.Next(20000) == 0) {
+                    active = false;
+                    return false;
+                }
             }
         }
 

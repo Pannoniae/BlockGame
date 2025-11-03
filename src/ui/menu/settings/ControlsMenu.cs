@@ -25,20 +25,16 @@ public class ControlsMenu : ScrollableMenu {
             "Mouse Wheel: Normal", "Mouse Wheel: Inverted");
         mouseInv.centreContents();
         mouseInv.verticalAnchor = VerticalAnchor.TOP;
-        mouseInv.clicked += _ => {
-            settings.mouseInv = mouseInv.getIndex() == 1 ? -1 : 1;
-        };
+        mouseInv.clicked += _ => { settings.mouseInv = mouseInv.getIndex() == 1 ? -1 : 1; };
         scrollables.Add(mouseInv);
         addScrollable(mouseInv);
 
-        for (int i = 0; i < 10; i++) {
-            foreach (var input in InputTracker.all) {
-                var button = new InputButton(this, input, input.name + i, false, input.ToString());
-                button.centreContents();
-                button.verticalAnchor = VerticalAnchor.TOP;
-                scrollables.Add(button);
-                addScrollable(button);
-            }
+        foreach (var input in InputTracker.all) {
+            var button = new InputButton(this, input, input.name, false, input.ToString());
+            button.centreContents();
+            button.verticalAnchor = VerticalAnchor.TOP;
+            scrollables.Add(button);
+            addScrollable(button);
         }
 
         layoutSettings(scrollables, new Vector2I(0, 16));
@@ -49,9 +45,7 @@ public class ControlsMenu : ScrollableMenu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         back.setPosition(new Vector2I(2, -18));
-        back.clicked += _ => {
-            parentScreen.returnToPrevScreen();
-        };
+        back.clicked += _ => { parentScreen.returnToPrevScreen(); };
         addElement(back);
     }
 
