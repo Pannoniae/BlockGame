@@ -206,3 +206,100 @@ public class FlowingLavaTexture : DynamicTexture {
         markDirty();
     }
 }
+
+/**
+ * Piece of shit code lol, this should really be fixed up..
+ */
+public class FireTexture : DynamicTexture {
+    private readonly SimplexNoise noise;
+    private const int renderHeight = 16;
+
+    public override int updateFreq => 2;
+
+    public FireTexture(BTextureAtlas parent) : base(parent, 3 * 16, 14 * 16, 16, 16) {
+        noise = new SimplexNoise(777);
+    }
+
+    protected override void update() {
+        //float t = tickCounter * 0.03f;
+        float dt = tickCounter * 0.04f;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int vy = y + (renderHeight - height);
+                float nx = x / (float)(width - 1);
+                float ny = vy / (float)(renderHeight - 1); // 0=top, 1=bottom
+
+                float sy = ny + dt * 0.8f;
+
+                float d1 = noise.noise3_XYBeforeZ(x * 0.5f, sy * 4f, dt * 0.7f * 0.05f);
+                float d2 = noise.noise3_XYBeforeZ(x * 1.5f, sy * 9f, dt * 1.3f * 0.05f);
+                float d3 = noise.noise3_XYBeforeZ(x * 3.0f, sy * 16f, dt * 2.1f * 0.05f);
+
+                float rd =
+                    (d1 + 1f) * 0.5f * 0.7f +
+                    (d2 + 1f) * 0.5f * 0.2f * ny +
+                    (d3 + 1f) * 0.5f * 0.1f * ny;
+
+                float dist = Math.Abs(nx - 0.5f) * 2f;
+                float edge = 1f - dist * dist; // reduce density at edges
+
+                float bias = ny * edge;
+                float d = rd + bias;
+
+                //if (ny > 0.9f && dist < 0.6f) {
+                    //d = 1f;
+                //}
+
+                float cutoff = 0.45f + (1f - ny) * 0.15f;
+                if (d < cutoff) {
+                    pixels[y * width + x] = new Rgba32(0, 0, 0, 0);
+                    continue;
+                }
+
+                float t1 = noise.noise3_XYBeforeZ(x * 0.6f, sy * 5f, dt * 0.6f * 0.05f);
+                float t2 = noise.noise3_XYBeforeZ(x * 1.5f, sy * 8f, dt * 1.1f * 0.05f);
+                float t3 = noise.noise3_XYBeforeZ(x * 3.2f, sy * 15f, dt * 2.2f * 0.05f);
+                float t =
+                    (t1 + 1f) * 0.5f * 0.5f +
+                    (t2 + 1f) * 0.5f * 0.3f +
+                    (t3 + 1f) * 0.5f * 0.2f;
+
+                float ri = 0.5f + ny * 0.8f + (d - cutoff) * 0.8f;
+
+                float tm = 0.3f + (1f - ny) * 1.2f;
+                float i = ri * (0.7f + t * tm * 1.0f);
+
+                float dedge = (d - cutoff) * 16f;
+                if (dedge < 1f) {
+                    i *= Meth.clamp(float.Sqrt(dedge), 0.6f, 1f);
+                }
+
+                i = Meth.clamp(i, 0f, 2.0f);
+
+                // in theory:
+                // 0.0: lowblack
+                // 0.5: red
+                // 1.0: orange-yellow
+                // 2.0: white
+
+                // mostly red
+                float r = Meth.clamp(255f * float.Min(1f, i * 1.2f), 0f, 255f);
+
+                // red -> yellow
+                float gNorm = float.Min(1f, i * (1 / 1.4f));
+                float g = 255f * gNorm * gNorm;
+                g = Meth.clamp(g, 0f, 255f);
+
+                // sparingly at very high intensity
+                const float bthreshold = 1.2f;
+                float b = i > bthreshold ? 255f * ((i - bthreshold) / (2.0f - bthreshold)) : 0f;
+                b = Meth.clamp(b, 0f, 255f);
+
+                pixels[y * width + x] = new Rgba32((byte)r, (byte)g, (byte)b, 255);
+            }
+        }
+
+        markDirty();
+    }
+}

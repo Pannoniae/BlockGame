@@ -207,5 +207,6 @@ public class BlockTextureAtlas(string path, int atlasSize) : BTextureAtlas(path,
         addDynamicTexture(new FlowingWaterTexture(this));
         addDynamicTexture(new StillLavaTexture(this));
         addDynamicTexture(new FlowingLavaTexture(this));
+        addDynamicTexture(new FireTexture(this));
     }
 }

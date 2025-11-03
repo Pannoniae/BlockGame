@@ -161,6 +161,7 @@ public class Block {
     public static Block BRICK_FURNACE;
     public static Block FURNACE;
     public static Block LADDER;
+    public static Block FIRE;
 
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
@@ -678,6 +679,15 @@ public class Block {
         LADDER.itemLike();
         LADDER.material(Material.WOOD);
         LADDER.setHardness(0.5);
+
+        FIRE = register("fire", new Block("Fire"));
+        FIRE.setTex(new UVPair(3, 14));
+        renderType[FIRE.id] = RenderType.FIRE;
+        FIRE.itemLike();
+        FIRE.transparency();
+        FIRE.noCollision();
+        FIRE.light(15);
+        FIRE.material(Material.HELL);
 
 
         // set default hardness for blocks that haven't set it
@@ -1425,6 +1435,7 @@ public enum RenderType : byte {
     CUBE,
     MODEL,
     CROSS,
+    FIRE,
     CUSTOM,
     CUBE_DYNTEXTURE
 }
