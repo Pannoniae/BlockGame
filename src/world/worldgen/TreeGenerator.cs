@@ -22,7 +22,7 @@ public class TreeGenerator {
 
         // trunk
         for (int i = 0; i < trunkHeight; i++) {
-            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
+            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // leaves, thick
@@ -30,7 +30,7 @@ public class TreeGenerator {
             for (int z1 = -2; z1 <= 2; z1++) {
                 if (x1 == 0 && z1 == 0) continue;
                 for (int y1 = trunkHeight - 2; y1 <= trunkHeight - 1; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1, Block.LEAVES.id);
+                    world.setBlockSilent(x + x1, y + y1, z + z1, Block.LEAVES.id);
                 }
             }
         }
@@ -39,7 +39,7 @@ public class TreeGenerator {
         for (int x1 = -1; x1 <= 1; x1++) {
             for (int z1 = -1; z1 <= 1; z1++) {
                 for (int y1 = trunkHeight; y1 <= trunkHeight + 1; y1++) {
-                    world.setBlockDumb(x + x1, y + y1, z + z1, Block.LEAVES.id);
+                    world.setBlockSilent(x + x1, y + y1, z + z1, Block.LEAVES.id);
                 }
             }
         }
@@ -54,7 +54,7 @@ public class TreeGenerator {
 
         // trunk
         for (int i = 0; i < trunkHeight; i++) {
-            world.setBlockDumb(x, y + i, z, Block.CANDY.id);
+            world.setBlockSilent(x, y + i, z, Block.CANDY.id);
         }
 
         // top
@@ -112,7 +112,7 @@ public class TreeGenerator {
     public static void placeNormalTree(World world, XRandom random, int x, int y, int z, int height = 5) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
+            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // foliage bulb from (top-2) to (top+1)
@@ -129,7 +129,7 @@ public class TreeGenerator {
                         continue;
                     }
 
-                    world.setBlockDumb(x + xoff, cy, z + zoff, Block.LEAVES.id);
+                    world.setBlockSilent(x + xoff, cy, z + zoff, Block.LEAVES.id);
                 }
             }
         }
@@ -139,7 +139,7 @@ public class TreeGenerator {
     public static void placeBambooTree(World world, XRandom random, int x, int y, int z, int height = 7) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
+            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // sparse foliage adjacent to trunk from base to top+1
@@ -147,7 +147,7 @@ public class TreeGenerator {
             for (int i = 0; i < 2; i++) {
                 int xoff = random.Next(0, 2) == 0 ? -1 : 1;
                 int zoff = random.Next(0, 2) == 0 ? -1 : 1;
-                world.setBlockDumb(x + xoff, cy, z + zoff, Block.LEAVES.id);
+                world.setBlockSilent(x + xoff, cy, z + zoff, Block.LEAVES.id);
             }
         }
     }
@@ -156,7 +156,7 @@ public class TreeGenerator {
     public static void placePalmTree(World world, XRandom random, int x, int y, int z, int height = 6) {
         // trunk
         for (int i = 0; i < height; i++) {
-            world.setBlockDumb(x, y + i, z, Block.OAK_LOG.id);
+            world.setBlockSilent(x, y + i, z, Block.OAK_LOG.id);
         }
 
         // fan-shaped foliage at top (diagonal pattern)
@@ -164,7 +164,7 @@ public class TreeGenerator {
         for (int xoff = -2; xoff <= 2; xoff++) {
             for (int zoff = -2; zoff <= 2; zoff++) {
                 if (Math.Abs(xoff) == Math.Abs(zoff)) {
-                    world.setBlockDumb(x + xoff, topY, z + zoff, Block.LEAVES.id);
+                    world.setBlockSilent(x + xoff, topY, z + zoff, Block.LEAVES.id);
                 }
             }
         }
@@ -195,7 +195,7 @@ public class TreeGenerator {
                     py += off2;
                 }
 
-                world.setBlockDumb(px, py, pz, block);
+                world.setBlockSilent(px, py, pz, block);
             }
         }
     }

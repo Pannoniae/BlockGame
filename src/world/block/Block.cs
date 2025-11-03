@@ -445,11 +445,10 @@ public class Block {
         LEAVES.material(Material.ORGANIC);
         leaves[LEAVES.id] = true;
 
-        OAK_SAPLING = register("oakSapling", new Leaves("Oak Sapling"));
+        OAK_SAPLING = register("oakSapling", new Sapling("Oak Sapling", SaplingType.OAK));
         OAK_SAPLING.setTex(crossUVs(16, 5));
         OAK_SAPLING.setModel(BlockModel.makeGrass(OAK_SAPLING));
         OAK_SAPLING.transparency();
-        OAK_SAPLING.flowerAABB();
         OAK_SAPLING.noCollision();
         OAK_SAPLING.waterTransparent();
         OAK_SAPLING.itemLike();
@@ -482,11 +481,10 @@ public class Block {
         MAPLE_LEAVES.material(Material.ORGANIC);
         leaves[MAPLE_LEAVES.id] = true;
 
-        MAPLE_SAPLING = register("mapleSapling", new Leaves("Maple Sapling"));
+        MAPLE_SAPLING = register("mapleSapling", new Sapling("Maple Sapling", SaplingType.MAPLE));
         MAPLE_SAPLING.setTex(crossUVs(17, 5));
         MAPLE_SAPLING.setModel(BlockModel.makeGrass(MAPLE_SAPLING));
         MAPLE_SAPLING.transparency();
-        MAPLE_SAPLING.flowerAABB();
         MAPLE_SAPLING.noCollision();
         MAPLE_SAPLING.waterTransparent();
         MAPLE_SAPLING.itemLike();
@@ -519,11 +517,10 @@ public class Block {
         MAHOGANY_LEAVES.material(Material.ORGANIC);
         leaves[MAHOGANY_LEAVES.id] = true;
 
-        MAHOGANY_SAPLING = register("mahoganySapling", new Leaves("Mahogany Sapling"));
+        MAHOGANY_SAPLING = register("mahoganySapling", new Sapling("Mahogany Sapling", SaplingType.MAHOGANY));
         MAHOGANY_SAPLING.setTex(crossUVs(18, 5));
         MAHOGANY_SAPLING.setModel(BlockModel.makeGrass(MAHOGANY_SAPLING));
         MAHOGANY_SAPLING.transparency();
-        MAHOGANY_SAPLING.flowerAABB();
         MAHOGANY_SAPLING.noCollision();
         MAHOGANY_SAPLING.waterTransparent();
         MAHOGANY_SAPLING.itemLike();

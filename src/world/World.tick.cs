@@ -13,7 +13,9 @@ public partial class World {
         var blockID = chunk.getBlock(x, y, z);
 
         // skip air and non-ticking blocks
-        if (blockID == Block.AIR.id || !Block.randomTick[blockID]) return;
+        if (blockID == Block.AIR.id || !Block.randomTick[blockID]) {
+            return;
+        }
 
         var worldPos = toWorldPos(coord.x, 0, coord.z, x, y, z);
         var block = Block.get(blockID);
