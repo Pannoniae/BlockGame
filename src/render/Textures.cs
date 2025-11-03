@@ -8,30 +8,30 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace BlockGame.render;
 
 public class Textures {
-    public Silk.NET.OpenGL.Legacy.GL GL;
+    public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
-    public BTexture2D background;
-    public BTextureAtlas blockTexture;
-    public BTextureAtlas itemTexture;
-    public BTexture2D lightTexture;
+    public readonly BTexture2D background;
+    public readonly BTextureAtlas blockTexture;
+    public readonly BTextureAtlas itemTexture;
+    public readonly BTexture2D lightTexture;
     public BTexture2D lightTexture2;
 
-    public Dictionary<string, BTexture2D> textures = new();
-    public BTexture2D waterOverlay;
-    public BTexture2D lavaOverlay;
+    public readonly Dictionary<string, BTexture2D> textures = new();
+    public readonly BTexture2D waterOverlay;
+    public readonly BTexture2D lavaOverlay;
 
-    public BTexture2D sunTexture;
-    public BTexture2D moonTexture;
-    public BTexture2D cloudTexture;
+    public readonly BTexture2D sunTexture;
+    public readonly BTexture2D moonTexture;
+    public readonly BTexture2D cloudTexture;
 
-    public BTexture2D particleTex;
+    public readonly BTexture2D particleTex;
 
     public const int LIGHTMAP_SIZE = 16;
 
     public readonly Rgba32[] lightmap = new Rgba32[256];
-    public BTexture2D human;
-    public BTexture2D cow;
-    public BTexture2D pig;
+    public readonly BTexture2D human;
+    public readonly BTexture2D cow;
+    public readonly BTexture2D pig;
 
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;

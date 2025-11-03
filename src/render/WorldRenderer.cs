@@ -48,6 +48,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int drawDistance;
     public int fogStart;
     public int fogEnd;
+    public int fogType;
+    public int fogDensity;
     public int fogColour;
     public int horizonColour;
 
@@ -58,6 +60,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int wateruCameraPos;
     public int waterFogStart;
     public int waterFogEnd;
+    public int waterFogType;
+    public int waterFogDensity;
     public int waterFogColour;
     public int waterHorizonColour;
 
@@ -272,6 +276,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
         fogStart = worldShader.getUniformLocation(nameof(fogStart));
         fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
+        fogType = worldShader.getUniformLocation(nameof(fogType));
+        fogDensity = worldShader.getUniformLocation(nameof(fogDensity));
         fogColour = worldShader.getUniformLocation(nameof(fogColour));
         horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
 
@@ -285,6 +291,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
         waterFogStart = waterShader.getUniformLocation(nameof(fogStart));
         waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
+        waterFogType = waterShader.getUniformLocation(nameof(fogType));
+        waterFogDensity = waterShader.getUniformLocation(nameof(fogDensity));
         waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
         waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
 
@@ -427,6 +435,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             uCameraPos = worldShader.getUniformLocation(nameof(uCameraPos));
             fogStart = worldShader.getUniformLocation(nameof(fogStart));
             fogEnd = worldShader.getUniformLocation(nameof(fogEnd));
+            fogType = worldShader.getUniformLocation(nameof(fogType));
+            fogDensity = worldShader.getUniformLocation(nameof(fogDensity));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
 
@@ -445,6 +455,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             wateruCameraPos = waterShader.getUniformLocation(nameof(uCameraPos));
             waterFogStart = waterShader.getUniformLocation(nameof(fogStart));
             waterFogEnd = waterShader.getUniformLocation(nameof(fogEnd));
+            waterFogType = waterShader.getUniformLocation(nameof(fogType));
+            waterFogDensity = waterShader.getUniformLocation(nameof(fogDensity));
             waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
             waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
 
@@ -493,22 +505,41 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterFogStart, fogMaxValue);
         waterShader.setUniform(waterFogEnd, fogMinValue);
 
-        if (world.player.isUnderWater()) {
+        var liquid = world.player.getBlockAtEyes();
+
+        if (liquid == Block.WATER) {
             // set fog colour to blue
             worldShader.setUniform(fogColour, Color.CornflowerBlue.toVec4());
             waterShader.setUniform(waterFogColour, Color.CornflowerBlue.toVec4());
             worldShader.setUniform(horizonColour, Color.CornflowerBlue.toVec4());
             waterShader.setUniform(waterHorizonColour, Color.CornflowerBlue.toVec4());
-            worldShader.setUniform(fogEnd, 0f);
-            waterShader.setUniform(waterFogEnd, 0f);
-            worldShader.setUniform(fogStart, 24f);
-            waterShader.setUniform(waterFogStart, 24f);
+
+            // do exp2 close
+            worldShader.setUniform(fogType, 1);
+            waterShader.setUniform(waterFogType, 1);
+            worldShader.setUniform(fogDensity, 0.15f);
+            waterShader.setUniform(waterFogDensity, 0.15f);
+        }
+        else if (liquid == Block.LAVA) {
+            // set fog colour to orange
+            worldShader.setUniform(fogColour, Color.OrangeRed.toVec4());
+            waterShader.setUniform(waterFogColour, Color.OrangeRed.toVec4());
+            worldShader.setUniform(horizonColour, Color.OrangeRed.toVec4());
+            waterShader.setUniform(waterHorizonColour, Color.OrangeRed.toVec4());
+
+            // do exp2 close
+            worldShader.setUniform(fogType, 1);
+            waterShader.setUniform(waterFogType, 1);
+            worldShader.setUniform(fogDensity, 1.5f);
+            waterShader.setUniform(waterFogDensity, 1.5f);
         }
         else {
-            // use time-based colours// regen shared quad indices for unified memory
+            // use time-based colours
             var currentFogColour = world.getFogColour(world.worldTick);
             var currentHorizonColour = world.getHorizonColour(world.worldTick);
 
+            worldShader.setUniform(fogType, 0);
+            waterShader.setUniform(waterFogType, 0);
             worldShader.setUniform(fogColour, currentFogColour.toVec4());
             waterShader.setUniform(waterFogColour, currentFogColour.toVec4());
             worldShader.setUniform(horizonColour, currentHorizonColour.toVec4());

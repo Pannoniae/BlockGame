@@ -225,11 +225,11 @@ public class Block {
     }
 
     public static Block? get(int id) {
-        return Registry.BLOCKS.getOrDefault(id, null);
+        return Registry.BLOCKS.getOrDefault(id, null!);
     }
 
     public static Block? get(string id) {
-        return Registry.BLOCKS.getOrDefault(id, null);
+        return Registry.BLOCKS.getOrDefault(id, null!);
     }
 
     public static void preLoad() {
@@ -1289,6 +1289,10 @@ public class Block {
      */
     public virtual UVPair getTexture(int faceIdx, int metadata) {
         return uvs?[Math.Min(faceIdx, uvs.Length - 1)] ?? new UVPair(0, 0);
+    }
+
+    public override string ToString() {
+        return $"Block{{id={id}, name={name}}}";
     }
 }
 

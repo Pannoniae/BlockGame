@@ -17,7 +17,7 @@ namespace BlockGame.world;
 public class PlayerHandRenderer {
     public Player player;
     public StreamingVAO<BlockVertexTinted> vao;
-    private List<BlockVertexTinted> vertices = [];
+    private readonly List<BlockVertexTinted> vertices = [];
 
     private ItemStack handItem;
     private int handSlot;
@@ -28,7 +28,7 @@ public class PlayerHandRenderer {
     public double lower;
 
     // Water overlay renderer
-    public InstantDrawTexture waterOverlayRenderer;
+    public readonly InstantDrawTexture waterOverlayRenderer;
 
     public PlayerHandRenderer(Player player) {
         this.player = player;
@@ -193,7 +193,8 @@ public class PlayerHandRenderer {
 
             if (item.isBlock() && Block.renderItemLike[item.getBlock()!.id]) {
                 itemRenderer.setTexture(Game.textures.blockTexture);
-            } else {
+            }
+            else {
                 itemRenderer.setTexture(Game.textures.itemTexture);
             }
 
@@ -213,10 +214,16 @@ public class PlayerHandRenderer {
         }
 
         mat.pop();
+        var liquid = player.getBlockAtEyes();
+
+        //Console.Out.WriteLine(liquid);
 
         // Render water overlay if player is underwater
-        if (player.isUnderWater()) {
+        if (liquid == Block.WATER) {
             renderWaterOverlay();
+        }
+        else if (liquid == Block.LAVA) {
+            renderLavaOverlay();
         }
     }
 
@@ -578,7 +585,8 @@ public class PlayerHandRenderer {
 
             if (item.isBlock() && Block.renderItemLike[item.getBlock()!.id]) {
                 itemRenderer.setTexture(Game.textures.blockTexture);
-            } else {
+            }
+            else {
                 itemRenderer.setTexture(Game.textures.itemTexture);
             }
 
@@ -619,11 +627,11 @@ public class PlayerHandRenderer {
 
         var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
         var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
-        var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
+        var tint = WorldRenderer.getLightColour(skylight, blocklight);
 
-        var r = (byte)(tint.R * 255);
-        var g = (byte)(tint.G * 255);
-        var b = (byte)(tint.B * 255);
+        var r = tint.R;
+        var g = tint.G;
+        var b = tint.B;
 
         waterOverlayRenderer.begin(PrimitiveType.Triangles);
 
@@ -649,7 +657,7 @@ public class PlayerHandRenderer {
 
 
         // Draw a full-screen quad with slightly blue tint
-        const float alpha = 0.5f;
+        const float alpha = 0.4f;
         // multiply by lighting
 
         var world = Game.world;
@@ -657,11 +665,11 @@ public class PlayerHandRenderer {
 
         var skylight = world.getSkyLight(blockPos.X, blockPos.Y, blockPos.Z);
         var blocklight = world.getBlockLight(blockPos.X, blockPos.Y, blockPos.Z);
-        var tint = Game.renderer.getLightColourDarken(skylight, blocklight);
+        var tint = WorldRenderer.getLightColour(skylight, blocklight);
 
-        var r = (byte)(tint.R * 255);
-        var g = (byte)(tint.G * 255);
-        var b = (byte)(tint.B * 255);
+        var r = tint.R;
+        var g = tint.G;
+        var b = tint.B;
 
         waterOverlayRenderer.begin(PrimitiveType.Triangles);
 

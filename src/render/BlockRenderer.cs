@@ -1051,7 +1051,7 @@ public class BlockRenderer {
             texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
         }
 
-        const float inset = 2 / 16f;
+        const float inset = 0 / 16f;
         const float topInset = 4 / 16f;
 
         var uvd = UVPair.texCoords(tex);

@@ -167,12 +167,12 @@ public class StillLavaTexture : DynamicTexture {
 
 
                 float act = a * 0.1f +
-                                (activation[ym * width + x] + activation[yp * width + x] +
-                                 activation[y * width + xm] + activation[y * width + xp]) * 0.25f;
+                            (activation[ym * width + x] + activation[yp * width + x] +
+                             activation[y * width + xm] + activation[y * width + xp]) * 0.25f;
 
                 float heatd = h * 0.98f +
-                                 (heat[ym * width + x] + heat[yp * width + x] +
-                                  heat[y * width + xm] + heat[y * width + xp]) * (0.02f / 4f);
+                              (heat[ym * width + x] + heat[yp * width + x] +
+                               heat[y * width + xm] + heat[y * width + xp]) * (0.02f / 4f);
 
                 float prod = a * (1.0f - h) * 6f; // brighter spots
                 float decay = h * a * 0.8f;
@@ -242,7 +242,7 @@ public class FlowingLavaTexture : DynamicTexture {
     private readonly float[] avgNext;
     private readonly XRandom rng;
 
-    public override int updateFreq => 4;
+    public override int updateFreq => 6;
 
     public FlowingLavaTexture(BTextureAtlas parent) : base(parent, 1 * 16, 17 * 16, 32, 32) {
         heat = new float[width * height];
@@ -275,7 +275,6 @@ public class FlowingLavaTexture : DynamicTexture {
 
                 // blur 2x2
                 float b = heat[idx] * 0.2f +
-                          // 0.6
                           heat[ym * width + x] * 0.15f +
                           heat[yp * width + x] * 0.15f +
                           heat[y * width + xm] * 0.15f +
@@ -292,12 +291,12 @@ public class FlowingLavaTexture : DynamicTexture {
                 float a = activation[idx];
 
                 float act = a * 0.1f +
-                                (activation[ym * width + x] + activation[yp * width + x] +
-                                 activation[y * width + xm] + activation[y * width + xp]) * 0.25f;
+                            (activation[ym * width + x] + activation[yp * width + x] +
+                             activation[y * width + xm] + activation[y * width + xp]) * 0.25f;
 
                 float heatd = h * 0.98f +
-                                 (heat[ym * width + x] + heat[yp * width + x] +
-                                  heat[y * width + xm] + heat[y * width + xp]) * (0.02f / 4f);
+                              (heat[ym * width + x] + heat[yp * width + x] +
+                               heat[y * width + xm] + heat[y * width + xp]) * (0.02f / 4f);
 
 
                 float prod = a * (1.0f - h) * 6f; // brighter spots
@@ -354,7 +353,7 @@ public class FireTexture : DynamicTexture {
     private readonly SimplexNoise noise;
     private const int renderHeight = 16;
 
-    public override int updateFreq => 2;
+    public override int updateFreq => 3;
 
     public FireTexture(BTextureAtlas parent) : base(parent, 3 * 16, 14 * 16, 16, 16) {
         noise = new SimplexNoise(777);
@@ -370,7 +369,7 @@ public class FireTexture : DynamicTexture {
                 float nx = x / (float)(width - 1);
                 float ny = vy / (float)(renderHeight - 1); // 0=top, 1=bottom
 
-                float sy = ny + dt * 0.8f;
+                float sy = ny + dt * 0.4f;
 
                 float d1 = noise.noise3_XYBeforeZ(x * 0.5f, sy * 4f, dt * 0.7f * 0.05f);
                 float d2 = noise.noise3_XYBeforeZ(x * 1.5f, sy * 9f, dt * 1.3f * 0.05f);
@@ -387,9 +386,9 @@ public class FireTexture : DynamicTexture {
                 float bias = ny * edge;
                 float d = rd + bias;
 
-                //if (ny > 0.9f && dist < 0.6f) {
-                //d = 1f;
-                //}
+                if (ny < 0.3f && dist > 0.8f) {
+                    d = 0f;
+                }
 
                 float cutoff = 0.45f + (1f - ny) * 0.15f;
                 if (d < cutoff) {

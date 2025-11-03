@@ -761,16 +761,23 @@ public class Player : Mob, CommandSource {
             //return false;
         }
 
-        // Calculate eye position based on sneaking state
         double currentEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
         Vector3D eyePosition = new Vector3D(position.X, position.Y + currentEyeHeight, position.Z);
 
-        // Check if the block at eye position is liquid
         Vector3I eyeBlockPos = eyePosition.toBlockPos();
         ushort blockAtEyes = world.getBlock(eyeBlockPos);
 
-        // Return true if eyes are in liquid
         return Block.liquid[blockAtEyes];
+    }
+
+    public Block? getBlockAtEyes() {
+        double currentEyeHeight = sneaking ? sneakingEyeHeight : eyeHeight;
+        Vector3D eyePosition = new Vector3D(position.X, position.Y + currentEyeHeight, position.Z);
+
+        Vector3I eyeBlockPos = eyePosition.toBlockPos();
+        ushort blockAtEyes = world.getBlock(eyeBlockPos);
+
+        return Block.get(blockAtEyes);
     }
 
     public void pickBlock() {

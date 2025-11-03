@@ -22,13 +22,13 @@ float calculateFogFactor(float fogDepth) {
         break;
 
         case 1:
-        // Exponential fog
-        fogFactor = exp(-fogDensity * fogDepth);
+        // Exponential fog (inverted: exp returns 1.0 at depth=0)
+        fogFactor = 1.0 - exp(-fogDensity * fogDepth);
         break;
 
         case 2:
-        // Exponential squared fog
-        fogFactor = exp(-fogDensity * fogDensity * fogDepth * fogDepth);
+        // Exponential squared fog (inverted: exp returns 1.0 at depth=0)
+        fogFactor = 1.0 - exp(-fogDensity * fogDensity * fogDepth * fogDepth);
         break;
     }
 
@@ -43,5 +43,5 @@ vec4 applyFog(vec4 color, vec4 viewPosition) {
 
     float fogDepth = length(viewPosition.xyz);
     float fogFactor = calculateFogFactor(fogDepth);
-    return mix(fogColour, color, fogFactor);
+    return mix(color, fogColour, fogFactor);
 }
