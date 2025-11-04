@@ -5,15 +5,28 @@ using Molten;
 
 namespace Core.util;
 
-public class Pathfinding {
+public static class Pathfinding {
 
     public static readonly PriorityQueue<PathNode, float> openSet = new();
     public static readonly HashSet<PathNode> closedSet = new();
-    public static XIntMap<PathNode> openSetLookup = new();
-    private static readonly List<PathNode> neighbourBuffer = new(10);
+    public static readonly XIntMap<PathNode> openSetLookup = new();
+    private static readonly XUList<PathNode> neighbourBuffer = new(10);
+
+
+    private static readonly XIntMap<PathNode> nodeCache = new(128);
 
     public const int MAX_PATH_LENGTH = 32;
     private const int MAX_ITERATIONS = 512;
+
+    private static PathNode get(int x, int y, int z) {
+        int hash = x * 73856093 ^ y * 19349663 ^ z * 83492791;
+        if (nodeCache.TryGetValue(hash, out var node)) {
+            return node;
+        }
+        node = new PathNode(x, y, z);
+        nodeCache.Set(hash, node);
+        return node;
+    }
 
     public static Path find(Entity e, int x, int y, int z, int max = MAX_PATH_LENGTH) {
         var start = e.position.toBlockPos();
@@ -33,8 +46,9 @@ public class Pathfinding {
         openSet.Clear();
         closedSet.Clear();
         openSetLookup.Clear();
+        nodeCache.Clear();
 
-        var startNode = new PathNode(start.X, start.Y, start.Z);
+        var startNode = get(start.X, start.Y, start.Z);
         startNode.g = 0;
         startNode.h = heuristic(start, goal);
         startNode.f = startNode.h;
@@ -114,7 +128,7 @@ public class Pathfinding {
         Lava      // lava (avoid)
     }
 
-    private static List<PathNode> getNeighbours(Entity e, PathNode node) {
+    private static XUList<PathNode> getNeighbours(Entity e, PathNode node) {
         neighbourBuffer.Clear();
 
         // 8 horizontal directions + up/down
@@ -136,13 +150,13 @@ public class Pathfinding {
 
             // check if entity fits at this position
             if (fit is Type.Air or Type.Water) {
-                neighbourBuffer.Add(new PathNode(nx, ny, nz));
+                neighbourBuffer.Add(get(nx, ny, nz));
             }
             // try stepping up one block
             else if (fit == Type.Blocked) {
                 var stepFit = fits(e, nx, ny + 1, nz);
                 if (stepFit is Type.Air or Type.Water) {
-                    neighbourBuffer.Add(new PathNode(nx, ny + 1, nz));
+                    neighbourBuffer.Add(get(nx, ny + 1, nz));
                 }
             }
         }
@@ -150,14 +164,14 @@ public class Pathfinding {
         // can fall down?
         var downFit = fits(e, node.x, node.y - 1, node.z);
         if (downFit is Type.Air or Type.Water) {
-            neighbourBuffer.Add(new PathNode(node.x, node.y - 1, node.z));
+            neighbourBuffer.Add(get(node.x, node.y - 1, node.z));
         }
 
         // can swim up through water?
         if (current == Type.Water) {
             var upFit = fits(e, node.x, node.y + 1, node.z);
             if (upFit is Type.Air or Type.Water) {
-                neighbourBuffer.Add(new PathNode(node.x, node.y + 1, node.z));
+                neighbourBuffer.Add(get(node.x, node.y + 1, node.z));
             }
         }
 

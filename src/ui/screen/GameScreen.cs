@@ -125,7 +125,7 @@ public class GameScreen : Screen {
         // time control for day/night cycle testing
         if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
             // speed up time
-            targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 64.0f);
+            targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 32.0f);
         }
         else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
             // slow down time
