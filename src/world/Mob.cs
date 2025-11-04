@@ -76,12 +76,18 @@ public class Mob(World world, string type) : Entity(world, type) {
 
         // if target died, clear target
         if (target != null && (!target.active || target.dead)) {
+            if (path != null) {
+                Pathfinding.ret(path);
+            }
             target = null;
             path = null;
         }
 
         // random small chance: change target anyway
         if (Game.random.NextDouble() < 0.04 / Game.tps) {
+            if (path != null) {
+                Pathfinding.ret(path);
+            }
             target = null;
             path = null;
             wanderTarget = null;
@@ -95,6 +101,9 @@ public class Mob(World world, string type) : Entity(world, type) {
 
             // reached target?
             if (distToTarget < TARGET_REACHED_DISTANCE) {
+                if (path != null) {
+                    Pathfinding.ret(path);
+                }
                 target = null;
                 path = null;
                 velocity = Vector3D.Zero;
@@ -103,6 +112,9 @@ public class Mob(World world, string type) : Entity(world, type) {
 
             // recompute path periodically or if no path
             if (path == null || path.isFinished()) {
+                if (path != null) {
+                    Pathfinding.ret(path);
+                }
                 path = Pathfinding.find(this, target);
             }
 
@@ -119,6 +131,9 @@ public class Mob(World world, string type) : Entity(world, type) {
 
             // random chance to stop wandering
             if (wantsToWander && Game.random.NextSingle() < CHANCE_STOP_WANDERING) {
+                if (path != null) {
+                    Pathfinding.ret(path);
+                }
                 wantsToWander = false;
                 wanderTarget = null;
                 path = null;
@@ -126,6 +141,9 @@ public class Mob(World world, string type) : Entity(world, type) {
 
             // generate new wander target
             if (wantsToWander && (wanderTarget == null || (path != null && path.isFinished()))) {
+                if (path != null) {
+                    Pathfinding.ret(path);
+                }
                 var angle = Game.random.NextSingle(0, MathF.PI * 2);
                 var dist = Game.random.NextSingle((float)WANDER_MIN_DISTANCE, (float)WANDER_MAX_DISTANCE);
                 var tx = (int)(position.X + MathF.Cos(angle) * dist);

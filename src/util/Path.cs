@@ -55,5 +55,6 @@ public class Path {
 
     public void reset() {
         current = 0;
+        nodes.Clear();
     }
 }

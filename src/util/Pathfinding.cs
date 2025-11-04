@@ -2,18 +2,21 @@
 using BlockGame.world;
 using BlockGame.world.block;
 using Molten;
+using Molten.DoublePrecision;
 
 namespace Core.util;
 
 public static class Pathfinding {
 
     public static readonly PriorityQueue<PathNode, float> openSet = new();
-    public static readonly HashSet<PathNode> closedSet = new();
-    public static readonly XIntMap<PathNode> openSetLookup = new();
+    public static readonly HashSet<PathNode> closedSet = [];
+    public static readonly XIntMap<PathNode> openSetLookup = [];
     private static readonly XUList<PathNode> neighbourBuffer = new(10);
 
 
     private static readonly XIntMap<PathNode> nodeCache = new(128);
+    private static readonly XUList<PathNode> nodePool = new(128);
+    private static readonly XUList<Path> pathPool = [];
 
     public const int MAX_PATH_LENGTH = 32;
     private const int MAX_ITERATIONS = 512;
@@ -23,6 +26,15 @@ public static class Pathfinding {
         if (nodeCache.TryGetValue(hash, out var node)) {
             return node;
         }
+
+        if (nodePool.Count > 0) {
+            node = nodePool[^1];
+            nodePool.RemoveAt(nodePool.Count - 1);
+            node.reset(x, y, z);
+            nodeCache.Set(hash, node);
+            return node;
+        }
+
         node = new PathNode(x, y, z);
         nodeCache.Set(hash, node);
         return node;
@@ -40,6 +52,23 @@ public static class Pathfinding {
         var goal = target.position.toBlockPos();
 
         return aStar(e, start, goal, max);
+    }
+
+    /**
+     * Returns path nodes to the pool for reuse.
+     * Call this after you're done with a path so we won't have to allocate new nodes next time!
+     */
+    public static void ret(Path path) {
+        // Add all the nodes
+        foreach (var node in path.nodes) {
+            nodeCache.Remove(node.GetHashCode());
+            node.reset(0, 0, 0);
+            nodePool.Add(node);
+        }
+        path.reset();
+
+        // Add the path itself
+        pathPool.Add(path);
     }
 
     private static Path aStar(Entity e, Vector3I start, Vector3I goal, int maxLength) {
@@ -108,24 +137,33 @@ public static class Pathfinding {
     }
 
     private static Path reconstructPath(PathNode goal, int maxLength) {
-        var pathList = new XList<PathNode>();
+
+        Path path;
+
+        if (pathPool.Count > 0) {
+            path = pathPool[^1];
+            pathPool.RemoveAt(pathPool.Count - 1);
+            path.reset();
+        } else {
+            path = new Path();
+        }
         var current = goal;
 
         while (current != null) {
-            pathList.Add(current);
+            path.nodes.Add(current);
             current = current.prev;
         }
 
-        pathList.Reverse();
+        path.nodes.Reverse();
 
-        return new Path(pathList);
+        return path;
     }
 
     private enum Type {
-        Blocked,  // solid blocks
-        Air,      // empty space
-        Water,    // water (can swim)
-        Lava      // lava (avoid)
+        BLOCKED,  // solid blocks
+        AIR,      // empty space
+        WATER,    // water (can swim)
+        LAVA      // lava (avoid)
     }
 
     private static XUList<PathNode> getNeighbours(Entity e, PathNode node) {
@@ -149,13 +187,13 @@ public static class Pathfinding {
             var fit = fits(e, nx, ny, nz);
 
             // check if entity fits at this position
-            if (fit is Type.Air or Type.Water) {
+            if (fit is Type.AIR or Type.WATER) {
                 neighbourBuffer.Add(get(nx, ny, nz));
             }
             // try stepping up one block
-            else if (fit == Type.Blocked) {
+            else if (fit == Type.BLOCKED) {
                 var stepFit = fits(e, nx, ny + 1, nz);
-                if (stepFit is Type.Air or Type.Water) {
+                if (stepFit is Type.AIR or Type.WATER) {
                     neighbourBuffer.Add(get(nx, ny + 1, nz));
                 }
             }
@@ -163,14 +201,14 @@ public static class Pathfinding {
 
         // can fall down?
         var downFit = fits(e, node.x, node.y - 1, node.z);
-        if (downFit is Type.Air or Type.Water) {
+        if (downFit is Type.AIR or Type.WATER) {
             neighbourBuffer.Add(get(node.x, node.y - 1, node.z));
         }
 
         // can swim up through water?
-        if (current == Type.Water) {
+        if (current == Type.WATER) {
             var upFit = fits(e, node.x, node.y + 1, node.z);
-            if (upFit is Type.Air or Type.Water) {
+            if (upFit is Type.AIR or Type.WATER) {
                 neighbourBuffer.Add(get(node.x, node.y + 1, node.z));
             }
         }
@@ -179,14 +217,14 @@ public static class Pathfinding {
     }
 
     private static Type fits(Entity e, int x, int y, int z) {
-        var aabb = e.calcAABB(new Molten.DoublePrecision.Vector3D(x + 0.5, y, z + 0.5));
+        var aabb = e.calcAABB(new Vector3D(x + 0.5, y, z + 0.5));
 
         // check all blocks entity would occupy
         var min = aabb.min.toBlockPos();
         var max = aabb.max.toBlockPos();
 
         if (min.Y < 0 || max.Y >= World.WORLDHEIGHT) {
-            return Type.Blocked;
+            return Type.BLOCKED;
         }
 
         bool hasWater = false;
@@ -200,7 +238,7 @@ public static class Pathfinding {
         // fast path: all blocks in same chunk (common case for small entities)
         if (chunkX == maxChunkX && chunkZ == maxChunkZ) {
             if (!e.world.getChunkMaybe(min.X, min.Z, out var chunk)) {
-                return Type.Blocked;
+                return Type.BLOCKED;
             }
 
             for (int bx = min.X; bx <= max.X; bx++) {
@@ -209,7 +247,7 @@ public static class Pathfinding {
                         var block = chunk!.getBlock(bx & 0xF, by, bz & 0xF);
 
                         if (Block.collision[block]) {
-                            return Type.Blocked;
+                            return Type.BLOCKED;
                         }
 
                         if (Block.liquid[block]) {
@@ -231,7 +269,7 @@ public static class Pathfinding {
                         var block = e.world.getBlock(bx, by, bz);
 
                         if (Block.collision[block]) {
-                            return Type.Blocked;
+                            return Type.BLOCKED;
                         }
 
                         if (Block.liquid[block]) {
@@ -246,9 +284,9 @@ public static class Pathfinding {
             }
         }
 
-        if (hasLava) return Type.Lava;
-        if (hasWater) return Type.Water;
-        return Type.Air;
+        if (hasLava) return Type.LAVA;
+        if (hasWater) return Type.WATER;
+        return Type.AIR;
     }
 
     private static float heuristic(Vector3I a, Vector3I b) {

@@ -11,7 +11,7 @@ public class FixedArrayPool<T> {
      */
     private readonly Queue<T[]> _objects;
     
-    private Lock _objectLock = new Lock();
+    private readonly Lock _objectLock = new();
 
     public readonly int arrayLength;
 
