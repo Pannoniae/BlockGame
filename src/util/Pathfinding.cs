@@ -7,6 +7,11 @@ namespace Core.util;
 
 public class Pathfinding {
 
+    public static PriorityQueue<PathNode, float> openSet = new PriorityQueue<PathNode, float>();
+    public static HashSet<PathNode> closedSet = new HashSet<PathNode>();
+    public static XIntMap<PathNode> openSetLookup = new XIntMap<PathNode>();
+    private static List<PathNode> neighborBuffer = new List<PathNode>(10);
+
     public const int MAX_PATH_LENGTH = 32;
     private const int MAX_ITERATIONS = 512;
 
@@ -25,16 +30,16 @@ public class Pathfinding {
     }
 
     private static Path aStar(Entity e, Vector3I start, Vector3I goal, int maxLength) {
-        var openSet = new List<PathNode>();
-        var closedSet = new HashSet<PathNode>();
-        var openSetLookup = new XIntMap<PathNode>();
+        openSet.Clear();
+        closedSet.Clear();
+        openSetLookup.Clear();
 
         var startNode = new PathNode(start.X, start.Y, start.Z);
         startNode.g = 0;
         startNode.h = heuristic(start, goal);
         startNode.f = startNode.h;
 
-        openSet.Add(startNode);
+        openSet.Enqueue(startNode, startNode.f);
         openSetLookup.Set(startNode.GetHashCode(), startNode);
 
         int iterations = 0;
@@ -43,9 +48,7 @@ public class Pathfinding {
             iterations++;
 
             // get node with lowest f score
-            openSet.Sort((a, b) => a.f.CompareTo(b.f));
-            var current = openSet[0];
-            openSet.RemoveAt(0);
+            var current = openSet.Dequeue();
             openSetLookup.Remove(current.GetHashCode());
 
             // reached goal?
@@ -55,7 +58,7 @@ public class Pathfinding {
 
             closedSet.Add(current);
 
-            // check neighbors
+            // check neighbours
             foreach (var neighbor in getNeighbours(e, current)) {
                 if (closedSet.Contains(neighbor)) continue;
 
@@ -78,7 +81,7 @@ public class Pathfinding {
                     neighbor.f = neighbor.g + neighbor.h;
                     neighbor.prev = current;
 
-                    openSet.Add(neighbor);
+                    openSet.Enqueue(neighbor, neighbor.f);
                     openSetLookup.Set(key, neighbor);
                 }
             }
@@ -110,7 +113,7 @@ public class Pathfinding {
     }
 
     private static List<PathNode> getNeighbours(Entity e, PathNode node) {
-        var neighbors = new List<PathNode>();
+        neighborBuffer.Clear();
 
         // 8 horizontal directions + up/down
         ReadOnlySpan<Vector3I> directions = [
@@ -131,13 +134,13 @@ public class Pathfinding {
 
             // check if entity fits at this position
             if (fit is Type.Air or Type.Water) {
-                neighbors.Add(new PathNode(nx, ny, nz));
+                neighborBuffer.Add(new PathNode(nx, ny, nz));
             }
             // try stepping up one block
             else if (fit == Type.Blocked) {
                 var stepFit = fits(e, nx, ny + 1, nz);
                 if (stepFit is Type.Air or Type.Water) {
-                    neighbors.Add(new PathNode(nx, ny + 1, nz));
+                    neighborBuffer.Add(new PathNode(nx, ny + 1, nz));
                 }
             }
         }
@@ -145,18 +148,18 @@ public class Pathfinding {
         // can fall down?
         var downFit = fits(e, node.x, node.y - 1, node.z);
         if (downFit is Type.Air or Type.Water) {
-            neighbors.Add(new PathNode(node.x, node.y - 1, node.z));
+            neighborBuffer.Add(new PathNode(node.x, node.y - 1, node.z));
         }
 
         // can swim up through water?
         if (current == Type.Water) {
             var upFit = fits(e, node.x, node.y + 1, node.z);
             if (upFit is Type.Air or Type.Water) {
-                neighbors.Add(new PathNode(node.x, node.y + 1, node.z));
+                neighborBuffer.Add(new PathNode(node.x, node.y + 1, node.z));
             }
         }
 
-        return neighbors;
+        return neighborBuffer;
     }
 
     private static Type fits(Entity e, int x, int y, int z) {
@@ -166,36 +169,69 @@ public class Pathfinding {
         var min = aabb.min.toBlockPos();
         var max = aabb.max.toBlockPos();
 
+        if (min.Y < 0 || max.Y >= World.WORLDHEIGHT) {
+            return Type.Blocked;
+        }
+
         bool hasWater = false;
         bool hasLava = false;
+        
+        int chunkX = min.X >> 4;
+        int chunkZ = min.Z >> 4;
+        int maxChunkX = max.X >> 4;
+        int maxChunkZ = max.Z >> 4;
 
-        for (int bx = min.X; bx <= max.X; bx++) {
-            for (int by = min.Y; by <= max.Y; by++) {
-                for (int bz = min.Z; bz <= max.Z; bz++) {
-                    var block = e.world.getBlock(bx, by, bz);
+        // fast path: all blocks in same chunk (common case for small entities)
+        if (chunkX == maxChunkX && chunkZ == maxChunkZ) {
+            if (!e.world.getChunkMaybe(min.X, min.Z, out var chunk)) {
+                return Type.Blocked;
+            }
 
-                    // if block has collision, entity doesn't fit
-                    if (Block.collision[block]) {
-                        return Type.Blocked;
+            for (int bx = min.X; bx <= max.X; bx++) {
+                for (int by = min.Y; by <= max.Y; by++) {
+                    for (int bz = min.Z; bz <= max.Z; bz++) {
+                        var block = chunk!.getBlock(bx & 0xF, by, bz & 0xF);
+
+                        if (Block.collision[block]) {
+                            return Type.Blocked;
+                        }
+
+                        if (Block.liquid[block]) {
+                            if (block == Block.LAVA.id) {
+                                hasLava = true;
+                            } else {
+                                hasWater = true;
+                            }
+                        }
                     }
+                }
+            }
+        }
+        // slow path: more chunks lol
+        else {
+            for (int bx = min.X; bx <= max.X; bx++) {
+                for (int by = min.Y; by <= max.Y; by++) {
+                    for (int bz = min.Z; bz <= max.Z; bz++) {
+                        var block = e.world.getBlock(bx, by, bz);
 
-                    // check for liquids
-                    if (Block.liquid[block]) {
-                        if (block == Block.LAVA.id) {
-                            hasLava = true;
-                        } else {
-                            hasWater = true;
+                        if (Block.collision[block]) {
+                            return Type.Blocked;
+                        }
+
+                        if (Block.liquid[block]) {
+                            if (block == Block.LAVA.id) {
+                                hasLava = true;
+                            } else {
+                                hasWater = true;
+                            }
                         }
                     }
                 }
             }
         }
 
-        // prioritize lava avoidance
         if (hasLava) return Type.Lava;
         if (hasWater) return Type.Water;
-
-        // mobs are stupid and will walk off cliffs ;)
         return Type.Air;
     }
 
