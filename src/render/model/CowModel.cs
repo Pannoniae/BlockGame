@@ -1,0 +1,27 @@
+﻿using BlockGame.world;
+
+namespace BlockGame.render.model;
+
+public class CowModel : AnimalModel {
+
+    public Cube hornYRight;
+    public Cube hornXRight;
+    public Cube hornYLeft;
+    public Cube hornXLeft;
+
+    public CowModel(int l) : base(10) {
+        hornYRight =  new Cube().pos(0, 15, 13).off(-6, 5, 2).ext(1, 1, 1).tex(24, 0).gen(xs, ys);
+        hornXRight =  new Cube().pos(0, 15, 13).off(-6, 4, 2).ext(3, 1, 1).tex(29, 0).gen(xs, ys);
+        hornYLeft =  new Cube().pos(0, 15, 13).off(5, 5, 2).ext(1, 1, 1).tex(24, 0).gen(xs, ys);
+        hornXLeft =  new Cube().pos(0, 15, 13).off(3, 4, 2).ext(3, 1, 1).tex(29, 0).gen(xs, ys);
+    }
+
+    public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
+        base.render(mat, e, apos, aspeed, scale, interp);
+
+        hornYRight.render(mat, scale);
+        hornXRight.render(mat, scale);
+        hornYLeft.render(mat, scale);
+        hornXLeft.render(mat, scale);
+    }
+}

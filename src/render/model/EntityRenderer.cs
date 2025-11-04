@@ -43,7 +43,7 @@ public static class EntityRenderers {
 
     /** hot reload all entity models by recreating them */
     public static void reloadAll() {
-        register(Entities.COW, new MobRenderer<Cow>(new AnimalModel(10)));
+        register(Entities.COW, new MobRenderer<Cow>(new CowModel(10)));
         register(Entities.PIG, new MobRenderer<Pig>(new PigModel(8)));
         register(Entities.PLAYER, new PlayerRenderer());
         register(Entities.ITEM_ENTITY, new ItemEntityRenderer());
