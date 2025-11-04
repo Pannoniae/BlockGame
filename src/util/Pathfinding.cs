@@ -7,10 +7,10 @@ namespace Core.util;
 
 public class Pathfinding {
 
-    public static PriorityQueue<PathNode, float> openSet = new PriorityQueue<PathNode, float>();
-    public static HashSet<PathNode> closedSet = new HashSet<PathNode>();
-    public static XIntMap<PathNode> openSetLookup = new XIntMap<PathNode>();
-    private static List<PathNode> neighborBuffer = new List<PathNode>(10);
+    public static readonly PriorityQueue<PathNode, float> openSet = new();
+    public static readonly HashSet<PathNode> closedSet = new();
+    public static XIntMap<PathNode> openSetLookup = new();
+    private static readonly List<PathNode> neighbourBuffer = new(10);
 
     public const int MAX_PATH_LENGTH = 32;
     private const int MAX_ITERATIONS = 512;
@@ -59,15 +59,17 @@ public class Pathfinding {
             closedSet.Add(current);
 
             // check neighbours
-            foreach (var neighbor in getNeighbours(e, current)) {
-                if (closedSet.Contains(neighbor)) continue;
+            foreach (var neighbour in getNeighbours(e, current)) {
+                if (closedSet.Contains(neighbour)) {
+                    continue;
+                }
 
-                float tentativeG = current.g + current.dist(neighbor);
+                float tentativeG = current.g + current.dist(neighbour);
 
                 // skip if path already too long
                 if (tentativeG > maxLength) continue;
 
-                var key = neighbor.GetHashCode();
+                var key = neighbour.GetHashCode();
                 if (openSetLookup.TryGetValue(key, out var existing)) {
                     if (tentativeG < existing.g) {
                         existing.g = tentativeG;
@@ -76,13 +78,13 @@ public class Pathfinding {
                     }
                 }
                 else {
-                    neighbor.g = tentativeG;
-                    neighbor.h = heuristic(new Vector3I(neighbor.x, neighbor.y, neighbor.z), goal);
-                    neighbor.f = neighbor.g + neighbor.h;
-                    neighbor.prev = current;
+                    neighbour.g = tentativeG;
+                    neighbour.h = heuristic(new Vector3I(neighbour.x, neighbour.y, neighbour.z), goal);
+                    neighbour.f = neighbour.g + neighbour.h;
+                    neighbour.prev = current;
 
-                    openSet.Enqueue(neighbor, neighbor.f);
-                    openSetLookup.Set(key, neighbor);
+                    openSet.Enqueue(neighbour, neighbour.f);
+                    openSetLookup.Set(key, neighbour);
                 }
             }
         }
@@ -113,7 +115,7 @@ public class Pathfinding {
     }
 
     private static List<PathNode> getNeighbours(Entity e, PathNode node) {
-        neighborBuffer.Clear();
+        neighbourBuffer.Clear();
 
         // 8 horizontal directions + up/down
         ReadOnlySpan<Vector3I> directions = [
@@ -134,13 +136,13 @@ public class Pathfinding {
 
             // check if entity fits at this position
             if (fit is Type.Air or Type.Water) {
-                neighborBuffer.Add(new PathNode(nx, ny, nz));
+                neighbourBuffer.Add(new PathNode(nx, ny, nz));
             }
             // try stepping up one block
             else if (fit == Type.Blocked) {
                 var stepFit = fits(e, nx, ny + 1, nz);
                 if (stepFit is Type.Air or Type.Water) {
-                    neighborBuffer.Add(new PathNode(nx, ny + 1, nz));
+                    neighbourBuffer.Add(new PathNode(nx, ny + 1, nz));
                 }
             }
         }
@@ -148,18 +150,18 @@ public class Pathfinding {
         // can fall down?
         var downFit = fits(e, node.x, node.y - 1, node.z);
         if (downFit is Type.Air or Type.Water) {
-            neighborBuffer.Add(new PathNode(node.x, node.y - 1, node.z));
+            neighbourBuffer.Add(new PathNode(node.x, node.y - 1, node.z));
         }
 
         // can swim up through water?
         if (current == Type.Water) {
             var upFit = fits(e, node.x, node.y + 1, node.z);
             if (upFit is Type.Air or Type.Water) {
-                neighborBuffer.Add(new PathNode(node.x, node.y + 1, node.z));
+                neighbourBuffer.Add(new PathNode(node.x, node.y + 1, node.z));
             }
         }
 
-        return neighborBuffer;
+        return neighbourBuffer;
     }
 
     private static Type fits(Entity e, int x, int y, int z) {

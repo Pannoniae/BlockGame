@@ -1,9 +1,9 @@
 ﻿namespace Core.util;
 
 public class PathNode : IEquatable<PathNode> {
-    public readonly int x;
-    public readonly int y;
-    public readonly int z;
+    public int x;
+    public int y;
+    public int z;
     public float f;
     public float g;
     public float h;
@@ -15,6 +15,14 @@ public class PathNode : IEquatable<PathNode> {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public void reset(int x, int y, int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        f = g = h = 0;
+        prev = next = null;
     }
 
     public float cost() {

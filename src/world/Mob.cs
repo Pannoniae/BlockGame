@@ -13,8 +13,8 @@ public class Mob(World world, string type) : Entity(world, type) {
     private const double DESPAWN_DISTANCE = 128.0;
     private const double LOOK_AT_PLAYER_DISTANCE = 12.0;
     private const double TARGET_REACHED_DISTANCE = 1.5;
-    private const double WANDER_MIN_DISTANCE = 16.0;
-    private const double WANDER_MAX_DISTANCE = 48.0;
+    private const double WANDER_MIN_DISTANCE = 8.0;
+    private const double WANDER_MAX_DISTANCE = 16.0;
     private const float JUMP_CHANCE = 0.015f; // per tick
     private const double SAFE_FALL_SPEED = 13.0; // velocity threshold for damage
     private const double FALL_DAMAGE_MULTIPLIER = 2.0; // damage per unit velocity over threshold
