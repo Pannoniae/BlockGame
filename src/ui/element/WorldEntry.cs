@@ -83,13 +83,15 @@ public class WorldEntry : GUIElement {
         if (timeSinceLastClick < DOUBLE_CLICK_MS && isSelected) {
             // double-click on selected entry - load world
             doClick();
+            lastClickTime = 0;
         } else {
-            // single-click - select
-            isSelected = true;
-            selected?.Invoke(this);
+            // single-click - select (only invoke if not already selected)
+            if (!isSelected) {
+                isSelected = true;
+                selected?.Invoke(this);
+            }
+            lastClickTime = now;
         }
-
-        lastClickTime = now;
     }
 
     private static string getTimeAgo(long unixMillis) {

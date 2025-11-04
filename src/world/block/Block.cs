@@ -132,6 +132,7 @@ public class Block {
     public static Block MAHOGANY_SAPLING;
 
     public static Block STONE_SLAB;
+    public static Block COBBLESTONE_SLAB;
 
     public static Block OAK_CHEST;
     public static Block DOOR;
@@ -180,6 +181,7 @@ public class Block {
     public static XUList<byte> lightLevel => Registry.BLOCKS.lightLevel;
     public static XUList<byte> lightAbsorption => Registry.BLOCKS.lightAbsorption;
     public static XUList<double> hardness => Registry.BLOCKS.hardness;
+    public static XUList<double> flammable => Registry.BLOCKS.flammable;
     public static XUList<bool> log => Registry.BLOCKS.log;
     public static XUList<bool> leaves => Registry.BLOCKS.leaves;
     public static XUList<byte> updateDelay => Registry.BLOCKS.updateDelay;
@@ -531,6 +533,10 @@ public class Block {
         STONE_SLAB.setTex(cubeUVs(5, 0));
         STONE_SLAB.material(Material.STONE);
 
+        COBBLESTONE_SLAB = register("cobblestoneSlab", new Slabs( "Cobblestone Slab"));
+        COBBLESTONE_SLAB.setTex(cubeUVs(6, 1));
+        COBBLESTONE_SLAB.material(Material.STONE);
+
         //ide mas kovekbol is SLAB!
         //utana stone es mas kovekbol keszult STAIR!
 
@@ -677,22 +683,26 @@ public class Block {
         LADDER.material(Material.WOOD);
         LADDER.setHardness(0.5);
 
-        FIRE = register("fire", new Block("Fire"));
+        FIRE = register("fire", new FireBlock("Fire"));
         FIRE.setTex(new UVPair(3, 14));
         renderType[FIRE.id] = RenderType.FIRE;
         FIRE.itemLike();
         FIRE.transparency();
         FIRE.noCollision();
         FIRE.light(15);
+        FIRE.tick();
         FIRE.material(Material.HELL);
 
 
         // set default hardness for blocks that haven't set it
         for (int i = 0; i < currentID; i++) {
-            if (hardness[i] == -1) {
+            if (hardness[i] == -0.1) {
                 hardness[i] = 1;
             }
         }
+
+        // unbreakable blocks (negative hardness)
+        HELLROCK.setHardness(-1);
     }
 
     // I've removed this because realistically it will always be null / 0 and it would mislead the API caller

@@ -34,6 +34,7 @@ public class BlockRegistry : Registry<Block> {
     public readonly XUList<byte> lightLevel;
     public readonly XUList<byte> lightAbsorption;
     public readonly XUList<double> hardness;
+    public readonly XUList<double> flammable;
 
     public readonly XUList<bool> log;
     public readonly XUList<bool> leaves;
@@ -66,7 +67,8 @@ public class BlockRegistry : Registry<Block> {
         collision = track(true);
         lightLevel = track((byte)0);
         lightAbsorption = track((byte)0);
-        hardness = track(-1.0);
+        hardness = track(-0.1);
+        flammable = track(0.0);
 
         log = track(false);
         leaves = track(false);

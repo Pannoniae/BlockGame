@@ -528,6 +528,15 @@ public class Player : Mob, CommandSource {
 
             // breaking logic
             var hardness = Block.hardness[block.id];
+
+            // unbreakable blocks
+            if (hardness < 0) {
+                isBreaking = false;
+                breakProgress = 0;
+                breakTime = 0;
+                return;
+            }
+
             var heldItem = inventory.getSelected().getItem();
             var toolBreakSpeed = heldItem.getBreakSpeed(inventory.getSelected(), block);
             var breakSpeed = toolBreakSpeed / hardness / 2; // why 2? idk
