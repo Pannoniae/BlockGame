@@ -69,6 +69,8 @@ public class Item {
     public static Item BOTTLE_MILK;
     public static Item RAW_BEEF;
     public static Item STEAK;
+    public static Item PORKCHOP;
+    public static Item FRIED_PORKCHOP;
     public static Item DOOR;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
@@ -275,6 +277,12 @@ public class Item {
 
         STEAK = register("steak", new Item("Roast Steak"));
         STEAK.tex = new UVPair(5, 10);
+
+        PORKCHOP = register("porkchop", new Item("PorkChop"));
+        PORKCHOP.tex = new UVPair(6, 10);
+
+        FRIED_PORKCHOP = register("fried_porkchop", new Item("Fried PorkChop"));
+        FRIED_PORKCHOP.tex = new UVPair(7, 10);
 
         DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
         DOOR.tex = new UVPair(4, 8);

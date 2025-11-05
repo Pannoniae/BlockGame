@@ -19,7 +19,7 @@ public class Pig : Mob {
     }
 
     public override (Item item, byte metadata, int count) getDrop() {
-        return (Item.AIR, 0, 1);
+        return (Item.PORKCHOP, 0, 1);
     }
     
 }
