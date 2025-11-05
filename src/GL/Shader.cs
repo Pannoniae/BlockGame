@@ -255,10 +255,14 @@ public partial class Shader : IDisposable {
             } else {
                 GL.CompileShader(shaderHandle);
             }
-        
-            string infoLog = GL.GetShaderInfoLog(shaderHandle);
+
+            GL.GetShader(shaderHandle, ShaderParameterName.InfoLogLength, out var infoLogLength);
+            Span<byte> outb = stackalloc byte[infoLogLength];
+            Span<uint> actualLength = stackalloc uint[1];
+            GL.GetShaderInfoLog(shaderHandle, (uint)infoLogLength, actualLength, outb);
+            var infoLog = Encoding.UTF8.GetString(outb[..(int)actualLength[0]]);
             if (!string.IsNullOrWhiteSpace(infoLog)) {
-                throw new InputException($"Error compiling shader of type {type}: {infoLog}");
+                throw new InputException($"Error compiling shader of type {type} {name}: {infoLog}");
             }
 
             return shaderHandle;
@@ -319,6 +323,15 @@ public partial class Shader : IDisposable {
             throw new InputException($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
         }
 
+        GL.GetProgram(programHandle, ProgramPropertyARB.InfoLogLength, out var infoLogLength);
+        Span<byte> outb = stackalloc byte[infoLogLength];
+        Span<uint> actualLength = stackalloc uint[1];
+        GL.GetProgramInfoLog(programHandle, (uint)infoLogLength, actualLength, outb);
+        var infoLog = Encoding.UTF8.GetString(outb[..(int)actualLength[0]]);
+        if (!string.IsNullOrWhiteSpace(infoLog)) {
+            throw new InputException($"Error compiling shader {name}: {infoLog}");
+        }
+
         GL.DetachShader(programHandle, vert);
         GL.DetachShader(programHandle, frag);
         GL.DeleteShader(vert);
@@ -336,6 +349,15 @@ public partial class Shader : IDisposable {
         GL.GetProgram(programHandle, GLEnum.LinkStatus, out var status);
         if (status == 0) {
             throw new InputException($"Program failed to link: {GL.GetProgramInfoLog(programHandle)}");
+        }
+
+        GL.GetProgram(programHandle, ProgramPropertyARB.InfoLogLength, out var infoLogLength);
+        Span<byte> outb = stackalloc byte[infoLogLength];
+        Span<uint> actualLength = stackalloc uint[1];
+        GL.GetProgramInfoLog(programHandle, (uint)infoLogLength, actualLength, outb);
+        var infoLog = Encoding.UTF8.GetString(outb[..(int)actualLength[0]]);
+        if (!string.IsNullOrWhiteSpace(infoLog)) {
+            throw new InputException($"Error compiling shader {name}: {infoLog}");
         }
 
         GL.DetachShader(programHandle, vert);

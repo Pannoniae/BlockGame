@@ -77,7 +77,9 @@ void main(void)
         fragColour.rgb += gradientDither(fragColour.rgb);
         return;
     }
-
+    
+    // dummy assignment
+    fragColour = vec4(0.0);
     switch (u_ssaaMode) {
         case 0:
             fragColour = ssaa(u_colorTexture, u_ssaaFactor, v_texCoord);

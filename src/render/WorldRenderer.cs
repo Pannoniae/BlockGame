@@ -500,10 +500,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         fogMinValue += (dd - 8 * Chunk.CHUNKSIZE) * 0.1f;
 
 
-        worldShader.setUniform(fogStart, fogMaxValue);
-        worldShader.setUniform(fogEnd, fogMinValue);
-        waterShader.setUniform(waterFogStart, fogMaxValue);
-        waterShader.setUniform(waterFogEnd, fogMinValue);
+        worldShader.setUniform(fogStart, fogMinValue);
+        worldShader.setUniform(fogEnd, fogMaxValue);
+        waterShader.setUniform(waterFogStart, fogMinValue);
+        waterShader.setUniform(waterFogEnd, fogMaxValue);
 
         var liquid = world.player.getBlockAtEyes();
 

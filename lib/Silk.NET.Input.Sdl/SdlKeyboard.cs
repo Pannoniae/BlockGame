@@ -1,19 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using SDL;
 using Silk.NET.SDL;
 
-namespace Silk.NET.Input.Sdl
-{
-    internal partial class SdlKeyboard : IKeyboard, ISdlDevice
-    {
+namespace Silk.NET.Input.Sdl {
+    internal partial class SdlKeyboard : IKeyboard, ISdlDevice {
         private readonly SdlInputContext _ctx;
         private List<SDL_Scancode> _scancodesDown = [];
 
-        public SdlKeyboard(SdlInputContext ctx)
-        {
+        public SdlKeyboard(SdlInputContext ctx) {
             _ctx = ctx;
         }
 
@@ -23,20 +21,24 @@ namespace Silk.NET.Input.Sdl
 
         public IReadOnlyList<Key> SupportedKeys { get; } =
             _keyMap.Values.Where(static x => x != Key.Unknown).Distinct().ToArray();
-        public string ClipboardText
-        {
+
+        public string ClipboardText {
             get => SDL3.SDL_GetClipboardText();
             set => SDL3.SDL_SetClipboardText(value);
         }
+
         public bool IsKeyPressed(Key key) {
             foreach (var scancode in _scancodesDown) {
                 if (_keyMap.TryGetValue(scancode, out Key skey) && key == skey) {
                     return true;
                 }
             }
+
             return false;
         }
-        public bool IsScancodePressed(int scancode) => _scancodesDown.Contains((SDL_Scancode) scancode);
+
+        public bool IsScancodePressed(int scancode) => _scancodesDown.Contains((SDL_Scancode)scancode);
+
         public List<Key> GetPressedKeys() {
             var keys = new List<Key>();
             foreach (var sc in _scancodesDown) {
@@ -44,6 +46,7 @@ namespace Silk.NET.Input.Sdl
                     keys.Add(key);
                 }
             }
+
             return keys;
         }
 
@@ -51,6 +54,7 @@ namespace Silk.NET.Input.Sdl
         public event Action<IKeyboard, Key, int>? KeyRepeat;
         public event Action<IKeyboard, Key, int>? KeyUp;
         public event Action<IKeyboard, char>? KeyChar;
+
         public void BeginInput() {
             unsafe {
                 SDL3.SDL_StartTextInput((SDL_Window*)_ctx.Handle);
@@ -63,69 +67,54 @@ namespace Silk.NET.Input.Sdl
             }
         }
 
-        public unsafe void DoEvent(SDL_Event @event)
-        {
-            switch (@event.Type)
-            {
-                case SDL_EventType.SDL_EVENT_KEY_DOWN:
-                {
+        public unsafe void DoEvent(SDL_Event @event) {
+            switch (@event.Type) {
+                case SDL_EventType.SDL_EVENT_KEY_DOWN: {
                     Key key;
-                    if (_keyMap.TryGetValue(@event.key.scancode, out var mappedKey))
-                    {
+                    if (_keyMap.TryGetValue(@event.key.scancode, out var mappedKey)) {
                         key = mappedKey;
                     }
-                    else
-                    {
+                    else {
                         key = Key.Unknown;
                     }
 
-                    if (!@event.key.repeat)
-                    {
+                    if (!@event.key.repeat) {
                         _scancodesDown.Add(@event.key.scancode);
-                        KeyDown?.Invoke(this, key, (int) @event.key.scancode);
+                        KeyDown?.Invoke(this, key, (int)@event.key.scancode);
                     }
-                    else
-                    {
-                        KeyRepeat?.Invoke(this, key, (int) @event.key.scancode);
+                    else {
+                        KeyRepeat?.Invoke(this, key, (int)@event.key.scancode);
                     }
 
                     break;
                 }
-                case SDL_EventType.SDL_EVENT_KEY_UP:
-                {
-                    if (!@event.key.repeat)
-                    {
+                case SDL_EventType.SDL_EVENT_KEY_UP: {
+                    if (!@event.key.repeat) {
                         Key keyUp;
-                        if (_keyMap.TryGetValue(@event.key.scancode, out var key))
-                        {
+                        if (_keyMap.TryGetValue(@event.key.scancode, out var key)) {
                             keyUp = key;
                         }
-                        else
-                        {
+                        else {
                             keyUp = Key.Unknown;
                         }
 
                         _scancodesDown.Remove(@event.key.scancode);
-                        KeyUp?.Invoke(this, keyUp, (int) @event.key.scancode);
+                        KeyUp?.Invoke(this, keyUp, (int)@event.key.scancode);
                     }
 
                     break;
                 }
-                case SDL_EventType.SDL_EVENT_TEXT_EDITING:
-                {
+                case SDL_EventType.SDL_EVENT_TEXT_EDITING: {
                     break;
                 }
-                case SDL_EventType.SDL_EVENT_TEXT_INPUT:
-                {
-                    if (KeyChar is not null)
-                    {
-                        var chars = stackalloc char[32];
-                        Encoding.UTF8.GetChars(&@event.text.text[0], 32, chars, 32);
-                            
-                        // run the KeyChar event until we get a null terminator or run out of buffer
-                        for (int i = 0; i < 32 && chars[i] != '\0'; i++)
-                        {
-                            KeyChar.Invoke(this, chars[i]);
+                case SDL_EventType.SDL_EVENT_TEXT_INPUT: {
+                    if (KeyChar is not null) {
+                        // SDL3 returns a zero-terminated UTF-8 string
+                        var text = Marshal.PtrToStringUTF8((nint)(&@event.text.text[0]));
+                        if (text != null) {
+                            foreach (var c in text) {
+                                KeyChar.Invoke(this, c);
+                            }
                         }
                     }
 

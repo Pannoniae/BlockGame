@@ -13,12 +13,12 @@ uniform float fogDensity;// For exp and exp2 fog
 
 // Calculate fog factor based on fog type and depth
 float calculateFogFactor(float fogDepth) {
-    float fogFactor = 1.0;
+    float fogFactor = 0.0;
 
     switch (fogType) {
         case 0:
         // Linear fog
-        fogFactor = (fogEnd - fogDepth) / (fogEnd - fogStart);
+        fogFactor = (fogStart - fogDepth) / (fogStart - fogEnd);
         break;
 
         case 1:
