@@ -53,6 +53,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int fogColour;
     public int horizonColour;
 
+    public int texSize;
+    public int atlasSize;
+
 
     public int waterBlockTexture;
     public int waterLightTexture;
@@ -64,6 +67,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     public int waterFogDensity;
     public int waterFogColour;
     public int waterHorizonColour;
+
+    public int waterTexSize;
+    public int waterAtlasSize;
 
     // chunk pos uniforms for non-UBO path
     public int uChunkPos;
@@ -280,6 +286,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         fogDensity = worldShader.getUniformLocation(nameof(fogDensity));
         fogColour = worldShader.getUniformLocation(nameof(fogColour));
         horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
+        texSize = worldShader.getUniformLocationOpt(nameof(texSize));
+        atlasSize = worldShader.getUniformLocationOpt(nameof(atlasSize));
 
         // dummy shader uniforms
         dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
@@ -295,6 +303,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterFogDensity = waterShader.getUniformLocation(nameof(fogDensity));
         waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
         waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
+        waterTexSize = waterShader.getUniformLocationOpt(nameof(texSize));
+        waterAtlasSize = waterShader.getUniformLocationOpt(nameof(atlasSize));
 
         // chunk position uniforms for non-UBO path
         if (Settings.instance.getActualRendererMode() < RendererMode.Instanced) {
@@ -382,6 +392,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             chunkData = null!;
         }
 
+        reloadTextures();
+
 
         worldShader.setUniform(blockTexture, 0);
         worldShader.setUniform(lightTexture, 1);
@@ -409,6 +421,17 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         currentAnisoLevel = -1;
         currentMSAA = -1;
+    }
+
+    /**
+     * Is everything backwards? Yes. This needs to be fixed!!
+     */
+    public void reloadTextures() {
+        // assign uniforms for texture sizes
+        worldShader.setUniform(texSize, new Vector2I(Game.textures.blockTexture.atlasSize));
+        worldShader.setUniform(atlasSize, new Vector2I(Game.textures.blockTexture.width, Game.textures.blockTexture.height));
+        waterShader.setUniform(waterTexSize, new Vector2I(Game.textures.blockTexture.atlasSize));
+        waterShader.setUniform(waterAtlasSize, new Vector2I(Game.textures.blockTexture.width, Game.textures.blockTexture.height));
     }
 
     public void updateAF() {
@@ -439,6 +462,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             fogDensity = worldShader.getUniformLocation(nameof(fogDensity));
             fogColour = worldShader.getUniformLocation(nameof(fogColour));
             horizonColour = worldShader.getUniformLocation(nameof(horizonColour));
+            texSize = worldShader.getUniformLocationOpt(nameof(texSize));
+            atlasSize = worldShader.getUniformLocationOpt(nameof(atlasSize));
 
             // re-bind texture units
             worldShader.setUniform(blockTexture, 0);
@@ -459,6 +484,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             waterFogDensity = waterShader.getUniformLocation(nameof(fogDensity));
             waterFogColour = waterShader.getUniformLocation(nameof(fogColour));
             waterHorizonColour = waterShader.getUniformLocation(nameof(horizonColour));
+            waterTexSize = waterShader.getUniformLocationOpt(nameof(texSize));
+            waterAtlasSize = waterShader.getUniformLocationOpt(nameof(atlasSize));
 
             // re-bind water shader texture units
             waterShader.setUniform(waterBlockTexture, 0);
@@ -475,6 +502,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 uChunkPos = worldShader.getUniformLocation("uChunkPos");
                 wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
             }
+
+            reloadTextures();
         }
     }
 

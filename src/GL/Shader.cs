@@ -6,6 +6,7 @@ using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.log;
+using Molten;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ARB;
 
@@ -412,6 +413,12 @@ public partial class Shader : IDisposable {
         return location;
     }
 
+    public int getUniformLocationOpt(string name) {
+        int location = GL.GetUniformLocation(programHandle, name);
+
+        return location;
+    }
+
     public void setUniform(int loc, int value) {
         GL.ProgramUniform1(programHandle, loc, value);
     }
@@ -430,6 +437,10 @@ public partial class Shader : IDisposable {
 
     public unsafe void setUniform(int loc, Vector2 value) {
         GL.ProgramUniform2(programHandle, loc, 1, (float*)&value);
+    }
+
+    public unsafe void setUniform(int loc, Vector2I value) {
+        GL.ProgramUniform2(programHandle, loc, 1, (int*)&value);
     }
 
     public unsafe void setUniform(int loc, Vector3 value) {

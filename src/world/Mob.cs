@@ -309,7 +309,7 @@ public class Mob(World world, string type) : Entity(world, type) {
                 var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
                 if (blockBelow?.mat != null) {
-                    Game.snd.playFootstep(blockBelow.mat.smat);
+                    Game.snd.playFootstep(blockBelow.mat.smat, position);
                 }
                 lastFootstepDistance = totalTraveled;
             }

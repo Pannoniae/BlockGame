@@ -189,6 +189,10 @@ public class Textures {
         blockTexture.reload();
         itemTexture.reload();
 
+        if (Game.renderer != null) {
+            Game.renderer.reloadTextures();
+        }
+
         // regenerate lightmap
         for (int i = 0; i < 256; i++) {
             lightmap[i] = lightTexture.getPixel(i & 15, i >> 4);

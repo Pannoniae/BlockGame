@@ -6,22 +6,26 @@ using BlockGame.world.block;
 using MiniAudioEx;
 using MiniAudioEx.Core.StandardAPI;
 using MiniAudioEx.Native;
+using Molten.DoublePrecision;
 
 namespace BlockGame.snd;
 
 public class SoundEngine : IDisposable {
     
-    private readonly Dictionary<string, AudioClip> loadedSamples = new();
-    private readonly Dictionary<string, List<AudioClip>> soundCategories = new();
+    private readonly XMap<string, AudioClip> loadedSamples = [];
+    private readonly XMap<string, List<AudioClip>> soundCategories = [];
     private readonly XRandom random = new();
-    
+
     // SFX channels (fire-and-forget)
-    private SfxChannel[] sfxChannels = new SfxChannel[16];
+    private readonly SfxChannel[] sfxChannels = new SfxChannel[16];
     private int nextChannelIndex = 0;
-    
+
     // Music sources (long-running, controllable)
-    private List<MusicSource> musicSources = [];
+    private readonly List<MusicSource> musicSources = [];
     private long lastKnock;
+
+    // Spatial audio listener
+    private readonly AudioListener listener;
 
     // The range for pitch variation (0.85 to 1.15 means 15% lower or higher pitch)
     private const float MIN_PITCH = 0.95f;
@@ -34,12 +38,18 @@ public class SoundEngine : IDisposable {
         // IF YOU CHANGE THIS stuff will jitter
         // so don't increase it too much, 2048 is crazy (like 46ms latency??)
         AudioContext.Initialize(SAMPLE_RATE, CHANNELS, 256);
-        
+
+        // initialize spatial audio listener
+        listener = new AudioListener {
+            Enabled = true,
+            WorldUp = new Vector3f(0, 1, 0)
+        };
+
         // initialize SFX channels
         for (int i = 0; i < sfxChannels.Length; i++) {
             sfxChannels[i] = new SfxChannel();
         }
-        
+
         loadSounds();
     }
 
@@ -68,7 +78,7 @@ public class SoundEngine : IDisposable {
             }
 
             if (clips.Count > 0) {
-                soundCategories[categoryName] = clips;
+                soundCategories.Set(categoryName, clips);
             }
         }
 
@@ -95,7 +105,7 @@ public class SoundEngine : IDisposable {
             var clip = new AudioClip(filepath);
             // strip ext
             var s = Path.ChangeExtension(Path.GetFileName(filepath), null);
-            loadedSamples[s] = clip;
+            loadedSamples.Set(s, clip);
             return clip;
         }
         catch (Exception ex) {
@@ -122,14 +132,30 @@ public class SoundEngine : IDisposable {
     public void plays(string sound, float pitch = 1.0f, float volume = 1.0f) {
         if (!loadedSamples.TryGetValue(sound, out var clip)) {
             clip = doLoad(sound);
-            loadedSamples[sound] = clip ?? throw new SoundException($"Failed to load sound: {sound}");
+            loadedSamples.Set(sound, clip ?? throw new SoundException($"Failed to load sound: {sound}"));
         }
 
         // find free channel or use round-robin
         var channel = getFreeChannel();
         channel.play(clip, pitch, volume);
     }
-    
+
+    /// <summary>
+    /// Play a sound from the specified category at a 3D position
+    /// </summary>
+    public void play(string category, Vector3D position, float pitch = 1.0f, float volume = 1.0f) {
+        if (!soundCategories.TryGetValue(category, out var clips) || clips.Count == 0) {
+            throw new SoundException($"No sounds loaded for category: {category}");
+        }
+
+        // pick random clip from category
+        var clip = clips[random.Next(clips.Count)];
+
+        // find free channel or use round-robin
+        var channel = getFreeChannel();
+        channel.play(clip, position, pitch, volume);
+    }
+
     private SfxChannel getFreeChannel() {
         // try to find free channel first
         foreach (var channel in sfxChannels) {
@@ -208,38 +234,69 @@ public class SoundEngine : IDisposable {
     /// </summary>
     public void update() {
         AudioContext.Update();
+
+        // update listener position/direction for spatial audio
+        if (Game.player != null! && Game.camera != null!) {
+            var pos = Game.player.position;
+            var forward = Game.camera.forward();
+
+            listener.Position = new Vector3f((float)pos.X, (float)pos.Y, (float)pos.Z);
+            listener.Direction = new Vector3f((float)forward.X, (float)forward.Y, (float)forward.Z);
+            listener.Velocity = new Vector3f(
+                (float)Game.player.velocity.X,
+                (float)Game.player.velocity.Y,
+                (float)Game.player.velocity.Z
+            );
+        }
     }
 
-    public void playFootstep(SoundMaterial mat) {
+    public void playFootstep(SoundMaterial mat, float volume = 0.4f) {
         var cat = mat.stepCategory();
-        play(cat, 1.0f, 0.4f);
+        play(cat, 1.0f, volume);
     }
 
-    public void playBlockKnock(SoundMaterial mat) {
+    public void playFootstep(SoundMaterial mat, Vector3D position, float volume = 0.4f) {
+        var cat = mat.stepCategory();
+        play(cat, position, 1.0f, volume);
+    }
 
-        // print time since last knock (debug)
-        //var now = Game.permanentStopwatch.ElapsedMilliseconds;
-        //Console.Out.WriteLine($"Knock time since last: {now - lastKnock} ms");
-
+    public void playBlockKnock(SoundMaterial mat, float volume = 0.3f) {
         var cat = mat.knockCategory();
         if (cat == mat.breakCategory()) {
-            play(cat, 0.5f, 0.3f);
+            play(cat, 0.5f, volume);
         }
         else {
-            play(cat, 1f, 0.3f);
-            //play(cat, getRandomPitch());
+            play(cat, 1f, volume);
         }
-        //lastKnock = now;
     }
 
-    public void playBlockBreak(SoundMaterial mat) {
-        var cat = mat.breakCategory();
-        if (cat == mat.stepCategory()) {
-            play(cat, (getRandomPitch() * 0.1f) + 0.8f, 0.5f);
+    public void playBlockKnock(SoundMaterial mat, Vector3D position, float volume = 0.3f) {
+        var cat = mat.knockCategory();
+        if (cat == mat.breakCategory()) {
+            play(cat, position, 0.5f, volume);
         }
         else {
-            play(cat, (getRandomPitch() * 0.1f) + 1f, 0.5f);
-            //play(cat, getRandomPitch());
+            play(cat, position, 1f, volume);
+        }
+    }
+
+    public void playBlockBreak(SoundMaterial mat, float volume = 0.5f) {
+        var cat = mat.breakCategory();
+        if (cat == mat.stepCategory()) {
+            play(cat, (getRandomPitch() * 0.1f) + 0.8f, volume);
+        }
+        else {
+            play(cat, (getRandomPitch() * 0.1f) + 1f, volume);
+        }
+    }
+
+    public void playBlockBreak(SoundMaterial mat, Vector3D position, float volume = 0.5f) {
+        var cat = mat.breakCategory();
+        if (cat == mat.stepCategory()) {
+            play(cat, position, (getRandomPitch() * 0.1f) + 0.8f, volume);
+        }
+        else {
+            play(cat, position, (getRandomPitch() * 0.1f) + 1f, volume);
         }
     }
     
@@ -296,6 +353,21 @@ public class SfxChannel {
 
     public void play(AudioClip clip, float pitch = 1.0f, float volume = 1.0f) {
         source.Stop(); // interrupt if already playing
+        source.Spatial = false; // disable spatial audio
+        source.Pitch = pitch;
+        vol = volume;
+        source.Volume = volume * Settings.instance.sfxVolume;
+        source.Play(clip);
+    }
+
+    public void play(AudioClip clip, Vector3D position, float pitch = 1.0f, float volume = 1.0f) {
+        source.Stop(); // interrupt if already playing
+        source.Spatial = true;
+        source.Position = new Vector3f((float)position.X, (float)position.Y, (float)position.Z);
+        source.MinDistance = 2.0f; // full volume within 2 blocks
+        source.MaxDistance = 30.0f; // inaudible beyond 30 blocks
+        source.AttenuationModel = AttenuationModel.Inverse;
+        source.DopplerFactor = 0.0f;
         source.Pitch = pitch;
         vol = volume;
         source.Volume = volume * Settings.instance.sfxVolume;
