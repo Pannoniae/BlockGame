@@ -491,7 +491,10 @@ public class Player : Mob, CommandSource {
 
         if (Game.inputs.middle.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
-                pickBlock();
+                if (!Game.gamemode.gameplay) {
+                    pickBlock();
+                }
+
                 lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;

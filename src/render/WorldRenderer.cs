@@ -1143,7 +1143,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         for (int i = 0; i < layers; i++) {
             float y0 = y + i * step;
-            float y1 = Math.Min(y0 + fireHeight, y + h);
+            float y1 = float.Min(y0 + fireHeight, y + h);
             float hh = y1 - y0;
 
             // adjust for partial heights

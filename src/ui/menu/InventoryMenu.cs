@@ -59,7 +59,7 @@ public abstract class InventoryMenu : Menu {
         base.draw();
         var guiBoundsPos = new RectangleF(guiBounds.X, guiBounds.Y, getWidth(), getHeight());
         Game.gui.drawUIImmediate(invTex, guiBoundsPos, new Rectangle(0, 0, getWidth(), getHeight()));
-        Game.gui.drawStringUI(getTitle(), new Vector2(guiBounds.X + getTextOffsetX(), guiBounds.Y + getTextOffsetY()), Color.White);
+        Game.gui.drawStringUIThin(getTitle(), new Vector2(guiBounds.X + getTextOffsetX(), guiBounds.Y + getTextOffsetY()), Color.White);
 
         drawSlots(new Vector2(guiBounds.X, guiBounds.Y));
 

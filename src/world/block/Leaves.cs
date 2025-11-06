@@ -1,9 +1,11 @@
 ﻿using BlockGame.util;
-using BlockGame.world.item;
+using Molten;
 
 namespace BlockGame.world.block;
 
 public class Leaves : Block {
+    private static readonly Queue<(int x, int y, int z, int dist)> queue = [];
+    private static readonly HashSet<Vector3I> visited = [];
 
     /** Max distance to search for logs */
     private const int DECAY_DIST = 5;
@@ -33,11 +35,11 @@ public class Leaves : Block {
 
     /** BFS to find if leaf is connected to a log within DECAY_DIST */
     private static bool isConnectedToLog(World world, int sx, int sy, int sz) {
-        var queue = new Queue<(int x, int y, int z, int dist)>();
-        var visited = new HashSet<(int, int, int)>();
+        queue.Clear();
+        visited.Clear();
 
         queue.Enqueue((sx, sy, sz, 0));
-        visited.Add((sx, sy, sz));
+        visited.Add(new Vector3I(sx, sy, sz));
 
         while (queue.Count > 0) {
             var (x, y, z, dist) = queue.Dequeue();
@@ -49,7 +51,9 @@ public class Leaves : Block {
             foreach (var dir in Direction.directions) {
                 int nx = x + dir.X, ny = y + dir.Y, nz = z + dir.Z;
 
-                if (!visited.Add((nx, ny, nz))) continue;
+                if (!visited.Add((nx, ny, nz))) {
+                    continue;
+                }
 
                 var bid = world.getBlock(nx, ny, nz);
 
