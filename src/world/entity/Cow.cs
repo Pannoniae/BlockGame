@@ -13,7 +13,7 @@ public class Cow : Mob {
     public override AABB calcAABB(Vector3D pos) {
         return new AABB(
             pos.X - 0.7, pos.Y, pos.Z - 0.7,
-            pos.X + 0.7, pos.Y + 1, pos.Z + 0.7
+            pos.X + 0.7, pos.Y + 1.4f, pos.Z + 0.7
         );
     }
 

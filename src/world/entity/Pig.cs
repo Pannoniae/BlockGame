@@ -14,7 +14,7 @@ public class Pig : Mob {
     public override AABB calcAABB(Vector3D pos) {
         return new AABB(
             pos.X - 0.5, pos.Y, pos.Z - 0.5,
-            pos.X + 0.5, pos.Y + 0.9, pos.Z + 0.5
+            pos.X + 0.5, pos.Y + 1.2f, pos.Z + 0.5
         );
     }
 

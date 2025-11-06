@@ -241,6 +241,12 @@ public class Mob(World world, string type) : Entity(world, type) {
 
         if (dead) {
             dieTime++;
+
+            // after 100 ticks of death, despawn
+            if (dieTime > 100) {
+                active = false;
+            }
+
             return false; // don't update anything else when dead
         }
 
