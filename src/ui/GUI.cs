@@ -886,7 +886,7 @@ public class GUI {
             var hue = rem * 120f;
             const float c = 255f;
             var xx = c * (1 - float.Abs(hue / 60f % 2 - 1));
-            var barColor = hue < 60f
+            var bc = hue < 60f
                 ? new Color((byte)c, (byte)xx, (byte)0)
                 : new Color((byte)xx, (byte)c, (byte)0);
 
@@ -896,7 +896,7 @@ public class GUI {
             // draw durability bar
             var width = ItemSlot.ITEMSIZE * rem;
             var bar = new RectangleF(x, y + ItemSlot.ITEMSIZE - 1f, width, 1f);
-            drawUI(colourTexture, bar, new Rectangle(0, 0, 1, 1), barColor);
+            drawUI(colourTexture, bar, new Rectangle(0, 0, 1, 1), bc);
         }
 
         drawQuantityText(stack, x, y);

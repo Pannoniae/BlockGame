@@ -1031,7 +1031,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render all entities
         foreach (var entity in world.entities) {
-
             // don't render player in first-person
             if (entity == world.player && Game.camera.mode == CameraMode.FirstPerson) {
                 continue;
@@ -1127,6 +1126,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var fw = w * sc;
         var fd = d * sc;
 
+        var fxn = cx - fw / 2;
+        var fxx = cx + fw / 2;
+        var fzn = cz - fd / 2;
+        var fzx = cz + fd / 2;
+
         // render fire every 0.5 blocks for denser overlapping effect, but each quad is 1 actually block tall
         const float step = 0.5f;
         const float fireHeight = 1.0f;
@@ -1146,46 +1150,46 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             float uvnx = uvn.Y;
             float uvnn = uvn.Y + (uvx.Y - uvn.Y) * (hh / fireHeight);
 
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zn, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zn, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zn, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zn, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y0, zn, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y0, zn, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y1, zn, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y1, zn, uvn.X, uvnx, t));
 
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zn, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zn, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zn, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zn, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y0, zn, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y0, zn, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y1, zn, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y1, zn, uvn.X, uvnx, t));
 
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zx, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zx, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zx, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zx, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y0, zx, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y0, zx, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y1, zx, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y1, zx, uvn.X, uvnx, t));
 
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zx, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zx, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zx, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zx, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y0, zx, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y0, zx, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(fxn, y1, zx, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(fxx, y1, zx, uvn.X, uvnx, t));
 
 
-            idt.addVertex(new BlockVertexTinted(xn, y0, cz - fd / 2, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xn, y0, cz + fd / 2, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xn, y1, cz + fd / 2, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(xn, y1, cz - fd / 2, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xn, y0, fzn, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y0, fzx, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, fzx, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, fzn, uvn.X, uvnx, t));
 
-            idt.addVertex(new BlockVertexTinted(xn, y0, cz + fd / 2, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xn, y0, cz - fd / 2, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xn, y1, cz - fd / 2, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(xn, y1, cz + fd / 2, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xn, y0, fzx, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y0, fzn, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, fzn, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, fzx, uvn.X, uvnx, t));
 
-            idt.addVertex(new BlockVertexTinted(xx, y0, cz - fd / 2, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xx, y0, cz + fd / 2, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xx, y1, cz + fd / 2, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(xx, y1, cz - fd / 2, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xx, y0, fzn, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y0, fzx, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, fzx, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, fzn, uvn.X, uvnx, t));
 
-            idt.addVertex(new BlockVertexTinted(xx, y0, cz + fd / 2, uvn.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xx, y0, cz - fd / 2, uvx.X, uvnn, t));
-            idt.addVertex(new BlockVertexTinted(xx, y1, cz - fd / 2, uvx.X, uvnx, t));
-            idt.addVertex(new BlockVertexTinted(xx, y1, cz + fd / 2, uvn.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xx, y0, fzx, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y0, fzn, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, fzn, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, fzx, uvn.X, uvnx, t));
         }
 
         idt.end();

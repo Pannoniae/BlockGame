@@ -8,13 +8,6 @@ public class Leaves : Block {
     /** Max distance to search for logs */
     private const int DECAY_DIST = 5;
 
-    /** Neighbor offsets for BFS */
-    private static readonly (int dx, int dy, int dz)[] dirs = [
-        (-1, 0, 0), (1, 0, 0),
-        (0, -1, 0), (0, 1, 0),
-        (0, 0, -1), (0, 0, 1)
-    ];
-
 
     public Leaves(string name) : base(name) {
     }
