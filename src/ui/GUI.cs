@@ -877,6 +877,28 @@ public class GUI {
             drawUI(Game.textures.itemTexture, destRect, sourceRect);
         }
 
+        var max = Item.durability[stack.id];
+        if (max > 0 && stack.metadata > 0) {
+            var dmg = (float)stack.metadata / max;
+            var rem = 1f - dmg;
+
+            // HSV
+            var hue = rem * 120f;
+            const float c = 255f;
+            var xx = c * (1 - float.Abs(hue / 60f % 2 - 1));
+            var barColor = hue < 60f
+                ? new Color((byte)c, (byte)xx, (byte)0)
+                : new Color((byte)xx, (byte)c, (byte)0);
+
+            var bg = new RectangleF(x, y + ItemSlot.ITEMSIZE - 1f, ItemSlot.ITEMSIZE, 1f);
+            drawUI(colourTexture, bg, new Rectangle(0, 0, 1, 1), new Color(64, 64, 64, 255));
+
+            // draw durability bar
+            var width = ItemSlot.ITEMSIZE * rem;
+            var bar = new RectangleF(x, y + ItemSlot.ITEMSIZE - 1f, width, 1f);
+            drawUI(colourTexture, bar, new Rectangle(0, 0, 1, 1), barColor);
+        }
+
         drawQuantityText(stack, x, y);
     }
 

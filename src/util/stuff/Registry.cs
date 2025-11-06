@@ -18,7 +18,6 @@ public abstract class Registry {
  * I will do many pushups for this ;)) Enjoy!
  */
 public abstract class Registry<T> : Registry {
-
     private int c = 0;
 
     public readonly XUList<T> values = [];
@@ -27,6 +26,7 @@ public abstract class Registry<T> : Registry {
      * Maps string IDs to runtime int IDs.
      */
     public readonly Dictionary<string, int> nameToID = [];
+
     /*
      * Maps runtime int IDs to string IDs.
      */
@@ -78,38 +78,59 @@ public abstract class Registry<T> : Registry {
         return list;
     }
 
+    /**
+     * Gets the runtime int ID for the given string ID, or -1 if not found.
+     */
     public int getID(string id) {
         return nameToID.TryGetValue(id, out int iid) ? iid : -1;
     }
 
+    /**
+     * Gets the string ID for the given runtime int ID, or null if not found.
+     */
     public string? getName(int id) {
         return idToName.TryGetValue(id, out string? str) ? str : null;
     }
 
+    /**
+     * Gets the entry for the given runtime int ID.
+     */
     public T get(int id) {
         return values[id];
     }
 
+    /**
+     * Gets the entry for the given string ID.
+     */
     public T get(string name) {
         int id = getID(name);
         if (id == -1) {
             InputException.throwNew($"{typeof(T).Name} '{name}' is not registered!");
         }
+
         return get(id);
     }
 
+    /**
+     * Gets the entry for the given string ID, or a fallback value if not found.
+     */
     public T getOrDefault(string name, T defaultValue) {
         int id = getID(name);
         if (id == -1) {
             return defaultValue;
         }
+
         return get(id);
     }
 
-    public T  getOrDefault(int id, T defaultValue) {
+    /**
+     * Gets the entry for the given runtime int ID, or a fallback value if not found.
+     */
+    public T getOrDefault(int id, T defaultValue) {
         if (id < 0 || id >= values.Count) {
             return defaultValue;
         }
+
         return get(id);
     }
 
@@ -156,7 +177,6 @@ public abstract class Registry<T> : Registry {
  * Used for entities, block entities, etc. where you can't construct them ahead of time.
  */
 public class ObjectRegistry<T, TFactory> : Registry<TFactory> {
-
     /**
      * Get the factory function for the given ID.
      */

@@ -572,13 +572,21 @@ public class Player : Mob, CommandSource {
                 // get block drop and spawn item entity in survival mode
                 var metadata = val.getMetadata();
                 var (dropItem, meta, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, metadata);
-                world.spawnBlockDrop(pos.X, pos.Y, pos.Z, dropItem, dropCount, meta);
+
+                // only spawn drops if using correct tool
+                if (heldItem.canBreak(inventory.getSelected(), block)) {
+                    world.spawnBlockDrop(pos.X, pos.Y, pos.Z, dropItem, dropCount, meta);
+                }
 
                 world.setBlock(pos.X, pos.Y, pos.Z, 0);
                 world.blockUpdateNeighbours(pos.X, pos.Y, pos.Z);
                 if (block.mat != null) {
                     Game.snd.playBlockBreak(block.mat.smat);
                 }
+
+                // dec durability
+                var stack = inventory.getSelected().damageItem(1);
+                inventory.setStack(inventory.selected, stack);
 
                 isBreaking = false;
                 breakProgress = 0;

@@ -454,7 +454,6 @@ public class Block {
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
-        LEAVES.material(Material.ORGANIC);
         leaves[LEAVES.id] = true;
         LEAVES.setFlammable(60);
 
@@ -496,7 +495,6 @@ public class Block {
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
-        MAPLE_LEAVES.material(Material.ORGANIC);
         leaves[MAPLE_LEAVES.id] = true;
         MAPLE_LEAVES.setFlammable(60);
 
@@ -538,7 +536,6 @@ public class Block {
         MAHOGANY_LEAVES.setTex(cubeUVs(7, 2));
         renderType[MAHOGANY_LEAVES.id] = RenderType.CUBE;
         MAHOGANY_LEAVES.transparency();
-        MAHOGANY_LEAVES.material(Material.ORGANIC);
         leaves[MAHOGANY_LEAVES.id] = true;
         MAHOGANY_LEAVES.setFlammable(60);
 
@@ -1504,12 +1501,13 @@ public enum ToolType : byte {
     SCYTHE,
 }
 
-public record class MaterialTier(MaterialTiers tier, double level, double speed) {
-    public static readonly MaterialTier NONE = new(MaterialTiers.NONE, 0, 1);
-    public static readonly MaterialTier WOOD = new(MaterialTiers.WOOD, 1, 1.25);
-    public static readonly MaterialTier STONE = new(MaterialTiers.STONE, 2, 1.3);
-    public static readonly MaterialTier IRON = new(MaterialTiers.IRON, 3, 1.5);
-    public static readonly MaterialTier GOLD = new(MaterialTiers.GOLD, 2.5, 2);
+public record class MaterialTier(MaterialTiers tier, double level, double speed, int durability) {
+    public static readonly MaterialTier NONE = new(MaterialTiers.NONE, 0, 1, 0);
+    public static readonly MaterialTier WOOD = new(MaterialTiers.WOOD, 1, 1.25, 32);
+    public static readonly MaterialTier STONE = new(MaterialTiers.STONE, 2, 1.3, 128);
+    public static readonly MaterialTier COPPER = new(MaterialTiers.COPPER, 2.5, 1.4, 256);
+    public static readonly MaterialTier IRON = new(MaterialTiers.IRON, 3, 1.5, 384);
+    public static readonly MaterialTier GOLD = new(MaterialTiers.GOLD, 3.5, 2, 1024);
 
     /** The index of the tier (NO GAMEPLAY EFFECT, DON'T USE IT FOR THAT), only use for sorting or indexing */
     public readonly MaterialTiers tier = tier;
@@ -1519,6 +1517,9 @@ public record class MaterialTier(MaterialTiers tier, double level, double speed)
 
     public readonly double speed = speed;
 
+    /** max durability for tools/weapons of this tier */
+    public readonly int durability = durability;
+
     // todo add more stats here like durability, damage, speed, etc. as needed
 }
 
@@ -1526,6 +1527,7 @@ public enum MaterialTiers : byte {
     NONE,
     WOOD,
     STONE,
+    COPPER,
     IRON,
     GOLD,
 }

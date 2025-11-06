@@ -95,6 +95,25 @@ public class ItemStack : Persistent {
         if (newQty <= 0) return EMPTY;
         return new ItemStack(getItem(), newQty, metadata);
     }
+
+    /**
+     * Damage an item by the specified amount (respects creative mode).
+     * Returns EMPTY if durability is depleted, otherwise returns a new stack with increased damage.
+     */
+    public ItemStack damageItem(int amt) {
+        if (!Game.gamemode.gameplay) {
+            return this;
+        }
+        int max = Item.durability[id];
+        if (max == 0) {
+            return this;
+        }
+        int d = metadata + amt;
+        if (d >= max) {
+            return EMPTY;
+        }
+        return new ItemStack(getItem(), quantity, d);
+    }
 }
 
 public static class ItemStackArrayExtensions {

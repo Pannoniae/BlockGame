@@ -21,6 +21,8 @@ public class Item {
 
     public static XUList<bool> accessory => Registry.ITEMS.accessory;
     public static XUList<bool> material => Registry.ITEMS.material;
+    
+    public static XUList<int> durability => Registry.ITEMS.durability;
 
     public static Item AIR;
     public static Item GOLD_INGOT;
@@ -33,28 +35,28 @@ public class Item {
     public static Tool STONE_PICKAXE;
     public static Tool STONE_AXE;
     public static Tool STONE_SHOVEL;
-    public static Item STONE_SWORD;
+    public static Weapon STONE_SWORD;
     public static Tool STONE_HOE;
     public static Tool STONE_SCYTHE;
     public static Tool WOOD_PICKAXE;
     public static Tool WOOD_AXE;
     public static Tool WOOD_SHOVEL;
-    public static Item WOOD_SWORD;
+    public static Weapon WOOD_SWORD;
     public static Item STICK;
-    public static Item COPPER_PICKAXE;
-    public static Item COPPER_AXE;
-    public static Item COPPER_SHOVEL;
-    public static Item COPPER_SWORD;
-    public static Item COPPER_HOE;
-    public static Item COPPER_SCYTHE;
+    public static Tool COPPER_PICKAXE;
+    public static Tool COPPER_AXE;
+    public static Tool COPPER_SHOVEL;
+    public static Weapon COPPER_SWORD;
+    public static Tool COPPER_HOE;
+    public static Tool COPPER_SCYTHE;
     public static Tool IRON_AXE;
     public static Tool IRON_SHOVEL;
-    public static Item IRON_SWORD;
+    public static Weapon IRON_SWORD;
     public static Tool IRON_HOE;
     public static Tool IRON_SCYTHE;
     public static Tool GOLD_AXE;
     public static Tool GOLD_SHOVEL;
-    public static Item GOLD_SWORD;
+    public static Weapon GOLD_SWORD;
     public static Tool GOLD_HOE;
     public static Tool GOLD_SCYTHE;
     public static DyeItem DYE;
@@ -167,7 +169,7 @@ public class Item {
         STONE_SHOVEL = register("stoneShovel", new Tool("Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 1.25));
         STONE_SHOVEL.tex = new UVPair(4, 3);
 
-        STONE_SWORD = register("stoneSword", new Item("Stone Sword"));
+        STONE_SWORD = register("stoneSword", new Weapon("Stone Sword", MaterialTier.STONE, 5.0));
         STONE_SWORD.tex = new UVPair(5, 3);
 
         STONE_HOE = register("stoneHoe", new Tool("Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25));
@@ -185,29 +187,29 @@ public class Item {
         WOOD_SHOVEL = register("woodShovel", new Tool("Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0));
         WOOD_SHOVEL.tex = new UVPair(4, 4);
 
-        WOOD_SWORD = register("woodSword", new Item("Wood Sword"));
+        WOOD_SWORD = register("woodSword", new Weapon("Wood Sword", MaterialTier.WOOD, 4.0));
         WOOD_SWORD.tex = new UVPair(5, 4);
 
         STICK = register("stick", new Item("Stick"));
         STICK.tex = new UVPair(0, 8);
         material[STICK.id] = true;
 
-        COPPER_PICKAXE = register("copperPickaxe", new Tool("Copper Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.5));
+        COPPER_PICKAXE = register("copperPickaxe", new Tool("Copper Pickaxe", ToolType.PICKAXE, MaterialTier.COPPER, 1.5));
         COPPER_PICKAXE.tex = new UVPair(2, 5);
 
-        COPPER_AXE = register("copperAxe", new Tool("Copper Axe", ToolType.AXE, MaterialTier.WOOD, 1.5));
+        COPPER_AXE = register("copperAxe", new Tool("Copper Axe", ToolType.AXE, MaterialTier.COPPER, 1.5));
         COPPER_AXE.tex = new UVPair(3, 5);
 
-        COPPER_SHOVEL = register("copperShovel", new Tool("Copper Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.5));
+        COPPER_SHOVEL = register("copperShovel", new Tool("Copper Shovel", ToolType.SHOVEL, MaterialTier.COPPER, 1.5));
         COPPER_SHOVEL.tex = new UVPair(4, 5);
 
-        COPPER_SWORD = register("copperSword", new Item("Copper Sword"));
+        COPPER_SWORD = register("copperSword", new Weapon("Copper Sword", MaterialTier.COPPER, 6.0));
         COPPER_SWORD.tex = new UVPair(5, 5);
 
-        COPPER_HOE = register("copperHoe", new Item("Copper Hoe"));
+        COPPER_HOE = register("copperHoe", new Tool("Copper Hoe", ToolType.HOE, MaterialTier.COPPER, 1.5));
         COPPER_HOE.tex = new UVPair(6, 5);
 
-        COPPER_SCYTHE = register("copperScythe", new Item("Copper Scythe"));
+        COPPER_SCYTHE = register("copperScythe", new Tool("Copper Scythe", ToolType.HOE, MaterialTier.COPPER, 1.5));
         COPPER_SCYTHE.tex = new UVPair(7, 5);
 
         IRON_AXE = register("ironAxe", new Tool("Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5));
@@ -216,7 +218,7 @@ public class Item {
         IRON_SHOVEL = register("ironShovel", new Tool("Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2.5));
         IRON_SHOVEL.tex = new UVPair(4, 6);
 
-        IRON_SWORD = register("ironSword", new Item("Iron Sword"));
+        IRON_SWORD = register("ironSword", new Weapon("Iron Sword", MaterialTier.IRON, 7.0));
         IRON_SWORD.tex = new UVPair(5, 6);
 
         IRON_HOE = register("ironHoe", new Tool("Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5));
@@ -231,7 +233,7 @@ public class Item {
         GOLD_SHOVEL = register("goldShovel", new Tool("Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3.0));
         GOLD_SHOVEL.tex = new UVPair(4, 7);
 
-        GOLD_SWORD = register("goldSword", new Item("Gold Sword"));
+        GOLD_SWORD = register("goldSword", new Weapon("Gold Sword", MaterialTier.GOLD, 8.0));
         GOLD_SWORD.tex = new UVPair(5, 7);
 
         GOLD_HOE = register("goldHoe", new Tool("Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0));
@@ -363,7 +365,8 @@ public class Item {
      * Can this item actually break the given block and get drops?
      */
     public virtual bool canBreak(ItemStack stack, Block block) {
-        return true;
+        // bare hands and random items can only break blocks with 0 tier
+        return Block.tier[block.id] == MaterialTier.NONE;
     }
 
     public virtual int getMaxStackSize() => 64;
@@ -383,6 +386,12 @@ public class Tool : Item {
         this.tier = tier;
         this.speed = speed;
     }
+
+    protected override void onRegister(int id) {
+        durability[id] = tier.durability;
+    }
+
+    public override int getMaxStackSize() => 1;
 
     public override double getBreakSpeed(ItemStack stack, Block block) {
         if (Block.tool[block.id] != type) {
@@ -404,6 +413,7 @@ public class Tool : Item {
             return tier.level >= Block.tier[block.id].level;
         }
 
-        return Block.tool[block.id] == ToolType.NONE;
+        // wrong tool... can only break if block has no tier requirement
+        return Block.tier[block.id] == MaterialTier.NONE;
     }
 }

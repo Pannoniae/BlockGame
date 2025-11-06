@@ -26,11 +26,17 @@ public class ItemRegistry : Registry<Item> {
      */
     public readonly XUList<int> fuelValue;
 
+    /**
+     * max durability, 0 = not damageable
+     */
+    public readonly XUList<int> durability;
+
     public ItemRegistry() {
         armour = track(false);
         accessory = track(false);
         material = track(false);
         blackList = track(false);
         fuelValue = track(0);
+        durability = track(0);
     }
 }

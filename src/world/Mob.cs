@@ -167,7 +167,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // disable temporarily, makes player's head bugged
-        if (!isMoving&&false) {
+        if (!isMoving) {
             var distToPlayer = Vector3D.Distance(position, world.player.position);
             if (distToPlayer < LOOK_AT_PLAYER_DISTANCE) {
                 lookAt(world.player.position, dt);

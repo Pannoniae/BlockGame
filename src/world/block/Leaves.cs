@@ -1,4 +1,5 @@
 ﻿using BlockGame.util;
+using BlockGame.world.item;
 
 namespace BlockGame.world.block;
 
@@ -21,6 +22,12 @@ public class Leaves : Block {
     protected override void onRegister(int id) {
         transparency();
         tick();
+
+        material(Material.ORGANIC);
+
+        // only broken by a scythe!
+        tool[id] = ToolType.SCYTHE;
+        tier[id] = MaterialTier.WOOD;
     }
 
     public override void randomUpdate(World world, int x, int y, int z) {
@@ -32,7 +39,7 @@ public class Leaves : Block {
     }
 
     /** BFS to find if leaf is connected to a log within DECAY_DIST */
-    private bool isConnectedToLog(World world, int sx, int sy, int sz) {
+    private static bool isConnectedToLog(World world, int sx, int sy, int sz) {
         var queue = new Queue<(int x, int y, int z, int dist)>();
         var visited = new HashSet<(int, int, int)>();
 
@@ -54,12 +61,12 @@ public class Leaves : Block {
                 var bid = world.getBlock(nx, ny, nz);
 
                 // found log - connected!
-                if (Block.log[bid]) {
+                if (log[bid]) {
                     return true;
                 }
 
                 // found leaf - continue search
-                if (Block.leaves[bid]) {
+                if (leaves[bid]) {
                     queue.Enqueue((nx, ny, nz, dist + 1));
                 }
             }

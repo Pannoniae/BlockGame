@@ -1,11 +1,11 @@
 ﻿using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.ui;
+using BlockGame.util.log;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
-using Microsoft.Win32;
 using Molten.DoublePrecision;
 using Registry = BlockGame.util.stuff.Registry;
 
@@ -57,6 +57,9 @@ public readonly struct Command {
         }
         catch (Exception e) {
             src.sendMessage($"Error executing command {cmdName}: {e.Message}");
+            // dump into console
+            Log.error($"Error executing command {cmdName}:");
+            Log.error(e);
         }
     }
 
@@ -381,20 +384,24 @@ public readonly struct Command {
 
         commands.Add(new Command("give", "Gives an item to the player", NetMode.CL, (source, args) => {
             if (args.Length < 1) {
-                source.sendMessage("Usage: /give <item> [quantity]");
+                source.sendMessage("Usage: /give <item> [quantity] [metadata]");
                 return;
             }
 
             // parse item
-            int itemId;
-            if (int.TryParse(args[0], out itemId)) {
+            if (int.TryParse(args[0], out var itemID)) {
                 // numeric ID
             }
             else {
                 // item name
-                var itemName = args[0].ToUpper();
+                var itemName = args[0];
 
-                itemId = Registry.ITEMS.getID(itemName);
+                itemID = Registry.ITEMS.getID(itemName);
+
+                if (itemID == -1) {
+                    source.sendMessage($"Unknown item: {args[0]}");
+                    return;
+                }
             }
 
             // parse quantity
@@ -411,13 +418,18 @@ public readonly struct Command {
             }
 
             // give item
-            var itemStack = new ItemStack(itemId, quantity, metadata);
+            var itemStack = new ItemStack(itemID, quantity, metadata);
             if (Game.player.inventory.addItem(itemStack)) {
                 source.sendMessage($"Gave {quantity} of {args[0]}");
             }
             else {
                 source.sendMessage("Not enough space in inventory");
             }
+        }));
+
+        commands.Add(new Command("ci", "Clears the player's inventory", NetMode.CL, (source, args) => {
+            Game.player.inventory.clearAll();
+            source.sendMessage("Cleared inventory");
         }));
 
         commands.Add(new Command("chunkmuncher", "Deletes all blocks in the current chunk", NetMode.CL,
