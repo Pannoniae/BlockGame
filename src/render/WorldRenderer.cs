@@ -1031,6 +1031,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render all entities
         foreach (var entity in world.entities) {
+
+            // don't render player in first-person
+            if (entity == world.player && Game.camera.mode == CameraMode.FirstPerson) {
+                continue;
+            }
+
             var renderer = EntityRenderers.get(Entities.getID(entity.type));
             if (renderer == null) {
                 continue;

@@ -141,11 +141,6 @@ public class Camera {
 
     public float vfov => Settings.instance.FOV;
 
-    public Entity? player1 {
-        set { player = value; }
-        get { return player; }
-    }
-
     // FOV properties
     private float normalFov = 70.0f;
     private float underwaterFov = 60.0f; // Wider FOV underwater to simulate refraction

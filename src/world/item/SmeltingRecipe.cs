@@ -11,7 +11,7 @@ public class SmeltingRecipe {
     public static SmeltingRecipe SILVER_INGOT;
     public static SmeltingRecipe BRICK;
     public static SmeltingRecipe STEAK;
-    public static SmeltingRecipe FRIED_PORKCHOP;
+    public static SmeltingRecipe COOKED_PORKCHOP;
     public static SmeltingRecipe GLASS;
 
     private static readonly List<SmeltingRecipe> recipes = [];
@@ -38,8 +38,8 @@ public class SmeltingRecipe {
         // raw steak -> steak (8 seconds = 480 ticks)
         STEAK = register(Item.RAW_BEEF, new ItemStack(Item.STEAK, 1), 480);
 
-        // porkchop -> fried porkchop (6 seconds = 360 ticks)
-        FRIED_PORKCHOP = register(Item.PORKCHOP, new ItemStack(Item.FRIED_PORKCHOP, 1), 360);
+        // porkchop -> cooked porkchop (6 seconds = 360 ticks)
+        COOKED_PORKCHOP = register(Item.PORKCHOP, new ItemStack(Item.COOKED_PORKCHOP, 1), 360);
 
         // sand -> glass (6 seconds = 360 ticks)
         GLASS = register(Block.SAND.item, new ItemStack(Block.GLASS.item, 1), 360);
