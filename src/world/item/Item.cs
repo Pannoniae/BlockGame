@@ -309,10 +309,6 @@ public class Item {
 
         // all blocks are already marked as materials during Block.register() lol
 
-        // blacklist the fucking door block item from the creative inventory
-        int doorBlock = Block.DOOR.item.id;
-        Registry.ITEMS.blackList[doorBlock] = true;
-
         Registry.ITEMS.blackList[AIR.id] = true;
         Registry.ITEMS.blackList[Block.WATER.item.id] = true;
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;

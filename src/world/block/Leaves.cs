@@ -51,7 +51,7 @@ public class Leaves : Block {
             foreach (var dir in Direction.directions) {
                 int nx = x + dir.X, ny = y + dir.Y, nz = z + dir.Z;
 
-                if (!visited.Add((nx, ny, nz))) {
+                if (!visited.Add(new Vector3I(nx, ny, nz))) {
                     continue;
                 }
 

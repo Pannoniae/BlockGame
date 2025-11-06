@@ -51,6 +51,11 @@ public class BlockRegistry : Registry<Block> {
     public readonly XUList<ToolType> tool;
     public readonly XUList<MaterialTier> tier;
 
+    /**
+     * Disable creating an item for this block.
+     */
+    public readonly XUList<bool> noItem;
+
     public BlockRegistry() {
         fullBlock = track(true);
         transparent = track(false);
@@ -78,6 +83,7 @@ public class BlockRegistry : Registry<Block> {
         renderType = track(RenderType.CUBE);
         tool = track(ToolType.NONE);
         tier = track(MaterialTier.NONE);
+        noItem = track(false);
     }
 
     public override int register(string type, Block value) {

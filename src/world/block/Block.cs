@@ -192,6 +192,8 @@ public class Block {
     public static XUList<ToolType> tool => Registry.BLOCKS.tool;
     public static XUList<MaterialTier> tier => Registry.BLOCKS.tier;
 
+    public static XUList<bool> noItem => Registry.BLOCKS.noItem;
+
     public static int currentID => Registry.BLOCKS.count();
 
     public static Block register(string stringID, Block block) {
@@ -200,6 +202,10 @@ public class Block {
         block.onRegister(id); // call hook after ID assignment
 
         // auto-register corresponding BlockItem with same string ID
+
+        if (noItem[block.id]) {
+            return block;
+        }
         var blockItem = block.createItem();
         Item.register(stringID, blockItem);
         Item.material[blockItem.id] = true; // all blocks are materials lol

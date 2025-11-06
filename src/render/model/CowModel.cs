@@ -10,7 +10,7 @@ public class CowModel : AnimalModel {
     public Cube hornYLeft;
     public Cube hornXLeft;
 
-    public CowModel(int l) : base(10) {
+    public CowModel() : base(10) {
         hornYRight =  new Cube().pos(0, 15, 13).off(-6, 5, 2).ext(1, 1, 1).tex(24, 0).gen(xs, ys);
         hornXRight =  new Cube().pos(0, 15, 13).off(-6, 4, 2).ext(3, 1, 1).tex(29, 0).gen(xs, ys);
         hornYLeft =  new Cube().pos(0, 15, 13).off(5, 5, 2).ext(1, 1, 1).tex(24, 0).gen(xs, ys);
