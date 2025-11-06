@@ -288,7 +288,7 @@ public class Item {
         DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
         DOOR.tex = new UVPair(4, 8);
 
-        MAHOGANY_DOOR= register("mahoganydoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
+        MAHOGANY_DOOR= register("doorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
         MAHOGANY_DOOR.tex = new UVPair(5, 8);
 
         BUCKET = register("bucket", new BucketItem("Bucket"));
