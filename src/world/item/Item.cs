@@ -76,6 +76,7 @@ public class Item {
     public static Item BUCKET;
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
+    public static Item LIGHTER;
 
 
     public Item(string name) {
@@ -299,6 +300,9 @@ public class Item {
 
         LAVA_BUCKET = register("lavaBucket", new BucketItem("Lava Bucket", Block.LAVA));
         LAVA_BUCKET.tex = new UVPair(8, 4);
+
+        LIGHTER = register("lighter", new Lighter("Lighter"));
+        LIGHTER.tex = new UVPair(8, 4);
 
 
         // all blocks are already marked as materials during Block.register() lol

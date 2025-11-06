@@ -113,6 +113,10 @@ public partial class Entity(World world, string type) : Persistent {
     public float hp = 100;
     public bool dead = false;
 
+    public int fireTicks = 0; // ticks remaining on fire
+
+    public int iframes;
+
     public bool flyMode;
     public bool noClip;
 
@@ -307,6 +311,24 @@ public partial class Entity(World world, string type) : Persistent {
      */
     protected virtual void updateTimers(double dt) {
         updateSwing();
+        updateFire(dt);
+    }
+
+    /**
+     * Update fire status and apply fire damage
+     */
+    protected virtual void updateFire(double dt) {
+        if (fireTicks > 0) {
+            fireTicks--;
+
+            // apply fire damage once per second (60 ticks)
+            if (fireTicks % 60 == 0) {
+                dmg(1);
+                if (hp <= 0) {
+                    die();
+                }
+            }
+        }
     }
 
     /**
@@ -353,13 +375,16 @@ public partial class Entity(World world, string type) : Persistent {
         var min = aabb.min.toBlockPos();
         var max = aabb.max.toBlockPos();
         World.getBlocksInBox(neighbours, min, max);
-        
+
         onLadder = false;
 
         // check if any of them are liquid and accumulate push forces
         inLiquid = false;
         Vector3D push = Vector3D.Zero;
         int liquid = 0;
+        bool inWater = false;
+        bool inFire = false;
+        bool inLava = false;
 
         foreach (var pos in neighbours) {
             var block = world.getBlock(pos);
@@ -367,6 +392,11 @@ public partial class Entity(World world, string type) : Persistent {
 
             // handle regular interactions (non-push effects)
             blockInstance.interact(world, pos.X, pos.Y, pos.Z, this);
+
+            // check for fire/water/lava
+            if (block == Block.FIRE.id) inFire = true;
+            if (block == Block.WATER.id) inWater = true;
+            if (block == Block.LAVA.id) inLava = true;
 
             // accumulate push forces for liquids
             if (Block.liquid[block]) {
@@ -378,6 +408,23 @@ public partial class Entity(World world, string type) : Persistent {
                 }
             }
         }
+        
+        if (inLava) {
+            fireTicks = Math.Max(fireTicks, 300);
+        }
+        
+        if (inFire) {
+            fireTicks = Math.Max(fireTicks, 160);
+        }
+
+        // guess what, standing in the dick forest makes you choke on it!
+        if (inFire || inLava) {
+            dmg(3);
+        }
+        
+        if (inWater && fireTicks > 0) {
+            fireTicks = 0;
+        }
 
         if (liquid > 0 && push != Vector3D.Zero) {
             // limit maximum push strength to prevent entity getting stuck
@@ -387,6 +434,23 @@ public partial class Entity(World world, string type) : Persistent {
 
             velocity += push * dt;
         }
+    }
+
+    public virtual void dmg(float damage) {
+        if (iframes > 0) {
+            return;
+        }
+
+        hp -= damage;
+        iframes = 10;
+    }
+
+    protected virtual void die() {
+        dead = true;
+        // rotate entity 90 degrees to side
+        // todo animate this in the model instead!
+        rotation.Z = -90f;
+        prevRotation.Z = -90f;
     }
 
     public virtual void onChunkChanged() {

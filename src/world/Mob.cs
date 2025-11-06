@@ -41,7 +41,7 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     public int dmgTime;
     public int dieTime;
-    public int iframes;
+
 
     private Vector3D? wanderTarget;
     private double lastFootstepDistance = 0;
@@ -231,20 +231,12 @@ public class Mob(World world, string type) : Entity(world, type) {
         current = Meth.clampAngle(current);
     }
 
-    protected virtual void onDeath() {
-        dead = true;
-        // rotate entity 90 degrees to side
-        // todo animate this in the model instead!
-        rotation.Z = -90f;
-        prevRotation.Z = -90f;
-    }
-
     // ============ LIFECYCLE HOOKS ============
 
     protected override bool shouldContinueUpdate(double dt) {
         // death check + animation
         if (hp <= 0 && !dead) {
-            onDeath();
+            die();
         }
 
         if (dead) {
@@ -296,7 +288,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             var fallSpeed = -prevVelocity.Y;
             if (fallSpeed > SAFE_FALL_SPEED) {
                 var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
-                takeDamage(dmg);
+                this.dmg(dmg);
             }
         }
         wasInAir = !onGround && !flyMode;
@@ -368,11 +360,8 @@ public class Mob(World world, string type) : Entity(world, type) {
         totalTraveled += onGround ? (position.withoutY() - prevPosition.withoutY()).Length() * 2f : 0;
     }
 
-    public void takeDamage(float damage) {
-        if (iframes > 0) return;
-
-        hp -= damage;
+    public override void dmg(float damage) {
+        base.dmg(damage);
         dmgTime = 30;
-        iframes = 10;
     }
 }

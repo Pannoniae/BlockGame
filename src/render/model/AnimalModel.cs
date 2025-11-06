@@ -2,6 +2,7 @@ using System.Numerics;
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render.model;
 
@@ -39,23 +40,21 @@ public class AnimalModel : EntityModel {
         // calculate head rotation relative to body
         var headRotY = interpRot.Y - interpBodyRot.Y;
 
-        // render body (no animation)
-        body.render(mat, scale);
-
-        head.rotation = new Vector3(0, headRotY, 0);
-        head.render(mat, scale);
-
         float cs = Meth.clamp(aspeed, 0, 1);
         float lr = MathF.Sin(apos * 10) * 25f * cs * Meth.phiF;
 
+        head.rotation = new Vector3(0, headRotY, 0);
         frontRightLeg.rotation = new Vector3(lr, 0, 0);
         frontLeftLeg.rotation = new Vector3(-lr, 0, 0);
         backRightLeg.rotation = new Vector3(-lr, 0, 0);
         backLeftLeg.rotation = new Vector3(lr, 0, 0);
-
-        frontRightLeg.render(mat, scale);
-        frontLeftLeg.render(mat, scale);
-        backRightLeg.render(mat, scale);
-        backLeftLeg.render(mat, scale);
+        
+        var ide = EntityRenderers.ide;
+        body.xfrender(ide, mat, scale);
+        head.xfrender(ide, mat, scale);
+        frontRightLeg.xfrender(ide, mat, scale);
+        frontLeftLeg.xfrender(ide, mat, scale);
+        backRightLeg.xfrender(ide, mat, scale);
+        backLeftLeg.xfrender(ide, mat, scale);
     }
 }

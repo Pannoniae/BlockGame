@@ -71,17 +71,12 @@ public class HumanModel : EntityModel {
 
 
 
-        // render head with additional rotation for up/down look
-        head.rotation = new Vector3(0, headRotY, 0);
-        head.render(mat, scale);
-
+        // calculate animation
         float cs = Meth.clamp(aspeed, 0, 1);
         float ar = MathF.Sin(apos * 10) * 30f * cs * Meth.phiF;
         float lr = MathF.Sin(apos * 10) * 25f * cs * Meth.phiF;
 
         // get swing animation progress
-        // TODO this is fucked
-        // fuck it circle time
         var swingProgress = (float)e.getSwingProgress(interp);
 
         var sinSwing = float.Sin(swingProgress * MathF.PI * 2f);
@@ -97,10 +92,9 @@ public class HumanModel : EntityModel {
 
         var off = armRaise ? -10 : 0;
         var sneakArmRotX = sneaking ? 5f : 0f;
-
-        // tilt body
+        
+        head.rotation = new Vector3(0, headRotY, 0);
         body.rotation = new Vector3(body.rotation.X, rasX / 2f, body.rotation.Z);
-        body.render(mat, scale);
 
         // if swinging, don't rot
         var par = ar;
@@ -119,12 +113,16 @@ public class HumanModel : EntityModel {
         leftArm.rotation = new Vector3(-ar + sneakArmRotX, rasX * 0.5f, 0);
         rightLeg.rotation = new Vector3(-lr, 0, 0);
         leftLeg.rotation = new Vector3(lr, 0, 0);
+        
+        var ide = EntityRenderers.ide;
+        head.xfrender(ide, mat, scale);
+        body.xfrender(ide, mat, scale);
+        rightArm.xfrender(ide, mat, scale);
+        leftArm.xfrender(ide, mat, scale);
+        rightLeg.xfrender(ide, mat, scale);
+        leftLeg.xfrender(ide, mat, scale);
 
-        rightArm.render(mat, scale);
-        leftArm.render(mat, scale);
-        rightLeg.render(mat, scale);
-        leftLeg.render(mat, scale);
-
+        // restore arm positions
         leftArm.position = lpos;
         rightArm.position = rpos;
     }

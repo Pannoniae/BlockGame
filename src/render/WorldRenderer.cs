@@ -341,6 +341,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 subChunk.vao = null;
                 subChunk.watervao = null;
             }
+
             chunk.status = ChunkStatus.LIGHTED;
         }
 
@@ -1068,10 +1069,121 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // render entity using its renderer
             renderer.render(mat, entity, 1f / 16f, interp);
 
+            // render fire effect if entity is on fire
+            if (entity.fireTicks > 0) {
+                renderEntityFire(mat, entity, interp);
+            }
+
             mat.pop();
         }
 
         mat.pop(); // THIS is why it was leaking
+    }
+
+    /** render fire effect on burning entities using their AABB */
+    private static void renderEntityFire(MatrixStack mat, Entity entity, double interp) {
+        var idt = Game.graphics.idt;
+        idt.setTexture(Game.textures.blockTexture);
+
+        idt.model(mat);
+        idt.view(Game.camera.getViewMatrix(interp));
+        idt.proj(Game.camera.getProjectionMatrix());
+
+        // rotate back to the head pos instead of body pos!
+        var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
+        var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
+        mat.rotate(-interpBodyRot.Y + interpRot.Y, 0, 1, 0);
+        mat.rotate(-interpBodyRot.Z + interpRot.Z, 0, 0, 1);
+
+        // fire is fullbright
+        var tint = getLightColour(15, 15);
+        idt.setColour(tint);
+
+        var uv = new UVPair(3, 14);
+        var uvn = UVPair.texCoords(Game.textures.blockTexture, uv);
+        var uvx = UVPair.texCoords(Game.textures.blockTexture, uv + 1);
+
+        var aabb = entity.aabb;
+        var w = (float)(aabb.max.X - aabb.min.X);
+        var h = (float)(aabb.max.Y - aabb.min.Y);
+        var d = (float)(aabb.max.Z - aabb.min.Z);
+
+        var cx = (float)(aabb.min.X - entity.position.X + w / 2);
+        var y = (float)(aabb.min.Y - entity.position.Y);
+        var cz = (float)(aabb.min.Z - entity.position.Z + d / 2);
+        var zn = (float)(aabb.min.Z - entity.position.Z);
+        var zx = (float)(aabb.min.Z - entity.position.Z + d);
+
+        var xn = (float)(aabb.min.X - entity.position.X);
+        var xx = (float)(aabb.min.X - entity.position.X + w);
+
+        const float sc = 1.2f;
+        var fw = w * sc;
+        var fd = d * sc;
+
+        // render fire every 0.5 blocks for denser overlapping effect, but each quad is 1 actually block tall
+        const float step = 0.5f;
+        const float fireHeight = 1.0f;
+        int layers = (int)Math.Ceiling(h / step);
+
+        idt.begin(PrimitiveType.Quads);
+
+
+        var t = new Color(tint.R, tint.G, tint.B, (byte)255);
+
+        for (int i = 0; i < layers; i++) {
+            float y0 = y + i * step;
+            float y1 = Math.Min(y0 + fireHeight, y + h);
+            float hh = y1 - y0;
+
+            // adjust for partial heights
+            float uvnx = uvn.Y;
+            float uvnn = uvn.Y + (uvx.Y - uvn.Y) * (hh / fireHeight);
+
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zn, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zn, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zn, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zn, uvn.X, uvnx, t));
+
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zn, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zn, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zn, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zn, uvn.X, uvnx, t));
+
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zx, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zx, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zx, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zx, uvn.X, uvnx, t));
+
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y0, zx, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y0, zx, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(cx - fw / 2, y1, zx, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(cx + fw / 2, y1, zx, uvn.X, uvnx, t));
+
+
+            idt.addVertex(new BlockVertexTinted(xn, y0, cz - fd / 2, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y0, cz + fd / 2, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, cz + fd / 2, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, cz - fd / 2, uvn.X, uvnx, t));
+
+            idt.addVertex(new BlockVertexTinted(xn, y0, cz + fd / 2, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y0, cz - fd / 2, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, cz - fd / 2, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xn, y1, cz + fd / 2, uvn.X, uvnx, t));
+
+            idt.addVertex(new BlockVertexTinted(xx, y0, cz - fd / 2, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y0, cz + fd / 2, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, cz + fd / 2, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, cz - fd / 2, uvn.X, uvnx, t));
+
+            idt.addVertex(new BlockVertexTinted(xx, y0, cz + fd / 2, uvn.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y0, cz - fd / 2, uvx.X, uvnn, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, cz - fd / 2, uvx.X, uvnx, t));
+            idt.addVertex(new BlockVertexTinted(xx, y1, cz + fd / 2, uvn.X, uvnx, t));
+        }
+
+        idt.end();
+        idt.setColour(Color.White);
     }
 
     /**
@@ -1133,9 +1245,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.graphics.setBlendFuncOverlay();
 
         //if (yes) {
-            //nvblend.BlendParameter(NV.BlendPremultipliedSrcNV, 1);
-            // todo add this shit as an optional feature
-            //GL.BlendEquation((BlendEquationModeEXT)NV.OverlayNV);
+        //nvblend.BlendParameter(NV.BlendPremultipliedSrcNV, 1);
+        // todo add this shit as an optional feature
+        //GL.BlendEquation((BlendEquationModeEXT)NV.OverlayNV);
         //}
 
         GL.DepthMask(false); // don't write to depth buffer

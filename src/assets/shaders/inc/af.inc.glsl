@@ -30,14 +30,14 @@ vec4 mapAniso(float h, float maxrange) {
     }
 }
 
-const vec2 i = vec2(atlasSize / texSize);
-// calculate subtexture boundaries for mirroring
-// atlas is 256x256 with 16x16 textures (16 textures per row/column)
-const vec2 subtexSize = vec2(1.0) / i; // each subtexture is 1/16 of atlas
-const vec2 texelSize = vec2(1.0) / atlasSize; // size of one texel in normalized coords
-const vec2 margin = texelSize * 0.5; // half-texel margin to prevent bleeding
-
 vec4 textureAF(sampler2D texSampler, vec2 uv) {
+    const vec2 ri = vec2(1. / atlasSize);
+    const vec2 i = vec2(texSize * (ri));
+    // calculate subtexture boundaries for mirroring
+    // atlas is 256x256 with 16x16 textures (16 textures per row/column)
+    const vec2 subtexSize = vec2(1.0) * i; // each subtexture is 1/16 of atlas
+    const vec2 texelSize = vec2(1.0) * ri; // size of one texel in normalized coords
+    const vec2 margin = texelSize * 0.5; // half-texel margin to prevent bleeding
     
     vec2 subtexIndex = floor(uv / subtexSize);
     vec2 subtexMin = subtexIndex * subtexSize;

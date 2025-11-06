@@ -51,7 +51,7 @@ public class Camera {
         var dir = Vector3D.Normalize(pos - pivot);
         var dist = (pos - pivot).Length();
         var currentPos = pivot;
-        const double stepSize = 0.003;
+        const double stepSize = 0.07;
         const double cameraRadius = 0.2; // Small buffer to avoid clipping
 
         for (double d = 0; d < dist; d += stepSize) {

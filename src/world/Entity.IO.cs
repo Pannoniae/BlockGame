@@ -30,6 +30,9 @@ public partial class Entity {
             data.getDouble("velZ")
         );
         accel = Vector3D.Zero;
+
+        fireTicks = data.getInt("fireTicks");
+
         readx(data);
     }
 
@@ -51,6 +54,7 @@ public partial class Entity {
         data.addDouble("velX", velocity.X);
         data.addDouble("velY", velocity.Y);
         data.addDouble("velZ", velocity.Z);
+        data.addInt("fireTicks", fireTicks);
         writex(data);
     }
 

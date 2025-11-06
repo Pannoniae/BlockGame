@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.util;
 using Molten;
+using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.world;
 
@@ -29,16 +30,22 @@ public class PlayerRenderer : EntityRenderer<Player> {
         var apos = float.Lerp(player.papos, player.apos, (float)interp);
         var aspeed = float.Lerp(player.paspeed, player.aspeed, (float)interp);
 
+        var ide = EntityRenderers.ide;
+
         // render the human model with animation
+        ide.begin(PrimitiveType.Quads);
         model.render(mat, player, apos, aspeed, scale, interp);
+        ide.end();
 
         // render damage tint overlay if player is taking damage
         if (player.dmgTime > 0) {
             const float t = 1;
             var tint = new Color((byte)255, (byte)0, (byte)0, (byte)(192 * t));
-            EntityRenderers.ide.setColour(tint);
+            ide.setColour(tint);
+            ide.begin(PrimitiveType.Quads);
             model.render(mat, player, apos, aspeed, scale, interp);
-            EntityRenderers.ide.setColour(Color.White);
+            ide.end();
+            ide.setColour(Color.White);
         }
 
         // Render hand item in third person!

@@ -1,4 +1,5 @@
 using System.Numerics;
+using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using BlockGame.world;
@@ -41,6 +42,9 @@ public class Cube {
 
     /** Whether to mirror the whole thing horizontally. (i'm lazy and don't wanna define the arms twice) */
     public bool hmirror;
+
+
+    private Matrix4x4 cmat;
 
     public Cube() {
 
@@ -164,6 +168,26 @@ public class Cube {
         vertices[v++] = new EntityVertex(nx.X, nx.Y, nx.Z, u1, v0, 255, 255, 255, 255, n.X, n.Y, n.Z); // top right
     }
 
+
+    public void xfrender(InstantDrawEntity ide, MatrixStack mat, float scale) {
+        if (!rendered) return;
+
+        ref var c = ref cmat;
+        c = Matrix4x4.Identity;
+
+        if (rotation != Vector3.Zero) {
+            c *= Matrix4x4.CreateRotationX(Meth.deg2rad(rotation.X));
+            c *= Matrix4x4.CreateRotationY(Meth.deg2rad(rotation.Y));
+            c *= Matrix4x4.CreateRotationZ(Meth.deg2rad(rotation.Z));
+        }
+        c *= Matrix4x4.CreateTranslation(position.X * scale, position.Y * scale, position.Z * scale);
+
+        foreach (ref EntityVertex vert in vertices.AsSpan()) {
+            var v = vert;
+            EntityVertex.mul(ref v, c, scale);
+            ide.addVertex(v);
+        }
+    }
 
     // todo if there is no rotation, we could just batch the cubes together and draw them all at once!
     // like, to vert.scale(scale).offset(position * scale) and just use the same instantdrawentity call

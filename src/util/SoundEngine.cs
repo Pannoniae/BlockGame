@@ -180,6 +180,10 @@ public class SoundEngine : IDisposable {
         return count;
     }
 
+    public int getTotalChannels() {
+        return sfxChannels.Length;
+    }
+
     /// <summary>
     /// Play music file, returns controllable MusicSource
     /// </summary>

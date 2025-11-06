@@ -1051,7 +1051,7 @@ public class BlockRenderer {
             texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
         }
 
-        const float inset = 0 / 16f;
+        float inset = 0 / 16f;
         const float topInset = 4 / 16f;
 
         var uvd = UVPair.texCoords(tex);
@@ -1059,66 +1059,108 @@ public class BlockRenderer {
 
         applySimpleLightingNoDir();
 
-        begin();
-        vertex(x + 0f + inset, y + 1f, z + 1f - inset, uvd.X, uvd.Y);
-        vertex(x + 0f, y + 0f, z + 0f, uvd.X, uvdm.Y);
-        vertex(x + 1f, y + 0f, z + 0f, uvdm.X, uvdm.Y);
-        vertex(x + 1f - inset, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
-        endTwo(vertices);
+        // check if block below can support fire (is solid)
+        uint below = getBlockCached(0, -1, 0);
+        bool b = Block.collision[below.getID()];
 
-        begin();
-        vertex(x + 0f + inset, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
-        vertex(x + 0f, y + 0f, z + 1f, uvd.X, uvdm.Y);
-        vertex(x + 1f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
-        vertex(x + 1f - inset, y + 1f, z + 0f + inset, uvdm.X, uvd.Y);
-        endTwo(vertices);
+        if (b) {
+            begin();
+            vertex(x + 0f + inset, y + 1f, z + 1f - inset, uvd.X, uvd.Y);
+            vertex(x + 0f, y + 0f, z + 0f, uvd.X, uvdm.Y);
+            vertex(x + 1f, y + 0f, z + 0f, uvdm.X, uvdm.Y);
+            vertex(x + 1f - inset, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
+            endTwo(vertices);
 
-        begin();
-        vertex(x + 1f - inset, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
-        vertex(x + 0f, y + 0f, z + 0f, uvd.X, uvdm.Y);
-        vertex(x + 0f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
-        vertex(x + 1f - inset, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
-        endTwo(vertices);
+            begin();
+            vertex(x + 0f + inset, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
+            vertex(x + 0f, y + 0f, z + 1f, uvd.X, uvdm.Y);
+            vertex(x + 1f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+            vertex(x + 1f - inset, y + 1f, z + 0f + inset, uvdm.X, uvd.Y);
+            endTwo(vertices);
 
-        begin();
-        vertex(x + 0f + inset, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
-        vertex(x + 1f, y + 0f, z + 0f, uvd.X, uvdm.Y);
-        vertex(x + 1f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
-        vertex(x + 0f + inset, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
-        endTwo(vertices);
+            begin();
+            vertex(x + 1f - inset, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
+            vertex(x + 0f, y + 0f, z + 0f, uvd.X, uvdm.Y);
+            vertex(x + 0f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+            vertex(x + 1f - inset, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
+            endTwo(vertices);
 
-        // sides
-        // north
-        begin();
-        vertex(x, y + 1f, z + 1f - inset, uvd.X, uvd.Y);
-        vertex(x, y + 0f, z + 1f, uvd.X, uvdm.Y);
-        vertex(x + 1, y + 0f, z + 1f, uvdm.X, uvdm.Y);
-        vertex(x + 1, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
-        endTwo(vertices);
+            begin();
+            vertex(x + 0f + inset, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
+            vertex(x + 1f, y + 0f, z + 0f, uvd.X, uvdm.Y);
+            vertex(x + 1f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+            vertex(x + 0f + inset, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
+            endTwo(vertices);
+        }
 
-        // south
-        begin();
-        vertex(x + 1, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
-        vertex(x + 1, y + 0f, z + 0f, uvd.X, uvdm.Y);
-        vertex(x, y + 0f, z + 0f, uvdm.X, uvdm.Y);
-        vertex(x, y + 1f, z + 0f + inset, uvdm.X, uvd.Y);
-        endTwo(vertices);
+        if (!b) {
+            inset = 1 / 16f;
+        }
 
-        // west
-        begin();
-        vertex(x + 0f + inset, y + 1f, z, uvd.X, uvd.Y);
-        vertex(x + 0f, y + 0f, z, uvd.X, uvdm.Y);
-        vertex(x + 0f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
-        vertex(x + 0f + inset, y + 1f, z + 1f, uvdm.X, uvd.Y);
-        endTwo(vertices);
+        // north (+Z)
+        uint block = getBlockCached(0, 0, 1);
+        if (b || Block.flammable[block.getID()] > 0) {
+            begin();
+            vertex(x, y + 1f, z + 1f - inset, uvd.X, uvd.Y);
+            vertex(x, y + 0f, z + 1f, uvd.X, uvdm.Y);
+            vertex(x + 1, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+            vertex(x + 1, y + 1f, z + 1f - inset, uvdm.X, uvd.Y);
+            endTwo(vertices);
+        }
 
-        // east
-        begin();
-        vertex(x + 1f - inset, y + 1f, z + 1f, uvd.X, uvd.Y);
-        vertex(x + 1f, y + 0f, z + 1f, uvd.X, uvdm.Y);
-        vertex(x + 1f, y + 0f, z + 0f, uvdm.X, uvdm.Y);
-        vertex(x + 1f - inset, y + 1f, z + 0f, uvdm.X, uvd.Y);
-        endTwo(vertices);
+        // south (-Z)
+        block = getBlockCached(0, 0, -1);
+        if (b || Block.flammable[block.getID()] > 0) {
+            begin();
+            vertex(x + 1, y + 1f, z + 0f + inset, uvd.X, uvd.Y);
+            vertex(x + 1, y + 0f, z + 0f, uvd.X, uvdm.Y);
+            vertex(x, y + 0f, z + 0f, uvdm.X, uvdm.Y);
+            vertex(x, y + 1f, z + 0f + inset, uvdm.X, uvd.Y);
+            endTwo(vertices);
+        }
+
+        // west (-X)
+        block = getBlockCached(-1, 0, 0);
+        if (b || Block.flammable[block.getID()] > 0) {
+            begin();
+            vertex(x + 0f + inset, y + 1f, z, uvd.X, uvd.Y);
+            vertex(x + 0f, y + 0f, z, uvd.X, uvdm.Y);
+            vertex(x + 0f, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+            vertex(x + 0f + inset, y + 1f, z + 1f, uvdm.X, uvd.Y);
+            endTwo(vertices);
+        }
+
+        // east (+X)
+        block = getBlockCached(1, 0, 0);
+        if (b || Block.flammable[block.getID()] > 0) {
+            begin();
+            vertex(x + 1f - inset, y + 1f, z + 1f, uvd.X, uvd.Y);
+            vertex(x + 1f, y + 0f, z + 1f, uvd.X, uvdm.Y);
+            vertex(x + 1f, y + 0f, z + 0f, uvdm.X, uvdm.Y);
+            vertex(x + 1f - inset, y + 1f, z + 0f, uvdm.X, uvd.Y);
+            endTwo(vertices);
+        }
+
+        // up (+Y)
+        block = getBlockCached(0, 1, 0);
+        if (Block.flammable[block.getID()] > 0) {
+            begin();
+            vertex(x, y + 1f - inset, z, uvd.X, uvd.Y);
+            vertex(x, y + 1f - inset, z + 1, uvd.X, uvdm.Y);
+            vertex(x + 1, y + 1f - inset, z + 1, uvdm.X, uvdm.Y);
+            vertex(x + 1, y + 1f - inset, z, uvdm.X, uvd.Y);
+            endTwo(vertices);
+        }
+
+        // down (-Y)
+        if (Block.flammable[below.getID()] > 0) {
+            begin();
+            vertex(x, y + inset, z, uvd.X, uvd.Y);
+            vertex(x + 1, y + inset, z, uvdm.X, uvd.Y);
+            vertex(x + 1, y + inset, z + 1, uvdm.X, uvdm.Y);
+            vertex(x, y + inset, z + 1, uvd.X, uvdm.Y);
+            endTwo(vertices);
+        }
     }
 
     /**

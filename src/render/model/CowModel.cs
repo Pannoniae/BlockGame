@@ -18,10 +18,11 @@ public class CowModel : AnimalModel {
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         base.render(mat, e, apos, aspeed, scale, interp);
-
-        hornYRight.render(mat, scale);
-        hornXRight.render(mat, scale);
-        hornYLeft.render(mat, scale);
-        hornXLeft.render(mat, scale);
+        
+        var ide = EntityRenderers.ide;
+        hornYRight.xfrender(ide, mat, scale);
+        hornXRight.xfrender(ide, mat, scale);
+        hornYLeft.xfrender(ide, mat, scale);
+        hornXLeft.xfrender(ide, mat, scale);
     }
 }

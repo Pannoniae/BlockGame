@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Molten;
 
@@ -142,5 +143,44 @@ public struct EntityVertex {
         y *= scale;
         z *= scale;
         return this;
+    }
+
+    /** transform position by matrix and scale, rotate normal by matrix rotation */
+    public static void mul(ref EntityVertex v, Matrix4x4 mat, float scale) {
+        var pos = new Vector3(v.x * scale, v.y * scale, v.z * scale);
+        pos = Vector3.Transform(pos, mat);
+
+        var n = v.unpackNormal();
+        // rotate normal by upper 3x3 of matrix (ignore translation)
+        var rotated = Vector3.TransformNormal(n, mat);
+
+        v.x = pos.X;
+        v.y = pos.Y;
+        v.z = pos.Z;
+
+        // repack normal
+        v.normal = pack(rotated.X, rotated.Y, rotated.Z, 0.0f);
+    }
+
+    /** unpack normal from 10/10/10/2 format */
+    private Vector3 unpackNormal() {
+        int px = (int)(normal & 0x3FF);
+        int py = (int)((normal >> 10) & 0x3FF);
+        int pz = (int)((normal >> 20) & 0x3FF);
+
+        // handle two's complement for 10-bit signed
+        if ((px & 0x200) != 0) {
+            px |= unchecked((int)0xFFFFFC00);
+        }
+
+        if ((py & 0x200) != 0) {
+            py |= unchecked((int)0xFFFFFC00);
+        }
+
+        if ((pz & 0x200) != 0) {
+            pz |= unchecked((int)0xFFFFFC00);
+        }
+
+        return new Vector3(px / 511.0f, py / 511.0f, pz / 511.0f);
     }
 }

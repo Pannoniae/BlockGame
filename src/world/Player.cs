@@ -170,9 +170,19 @@ public class Player : Mob, CommandSource {
     }
 
 
-    // ============ LIFECYCLE HOOKS ============
+    // ============ LIFECYCLE HOOKS ============die
 
     protected override bool shouldContinueUpdate(double dt) {
+
+        if (hp <= 0 && !dead) {
+            die();
+        }
+
+        if (dead) {
+            dieTime++;
+            return false; // don't update anything else when dead
+        }
+
         // prevent movement when dead
         if (dead) {
             dieTime++;
@@ -700,6 +710,17 @@ public class Player : Mob, CommandSource {
         if (Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
 
+
+            var prev = Game.instance.previousPos.Value;
+            // special fire handling lol
+            if (world.getBlock(prev.X, prev.Y, prev.Z) == Block.FIRE.id) {
+                world.setBlock(prev.X, prev.Y, prev.Z, 0);
+                Game.snd.playBlockBreak(Block.FIRE.mat.smat);
+                setSwinging(true);
+                lastMouseAction = now;
+                return;
+            }
+
             // instabreak
             // delay because we'll end up breaking blocks too fast otherwise
             if (!Game.gamemode.gameplay && now - lastMouseAction > Constants.breakDelayMs) {
@@ -907,8 +928,13 @@ public class Player : Mob, CommandSource {
             itemEntity.velocity = forward.toVec3D() * 8 + new Vector3D(0, 2, 0);
         }
         else {
-            // drop at feet
-            itemEntity.position = position + new Vector3D(0, 0.5, 0);
+            // drop at feet, radomly offset
+            var r = Game.random;
+            itemEntity.position = new Vector3D(
+                position.X + r.NextDouble() * 0.5 - 0.25,
+                position.Y + 0.5,
+                position.Z + r.NextDouble() * 0.5 - 0.25
+            );
         }
 
         world.addEntity(itemEntity);
@@ -919,8 +945,8 @@ public class Player : Mob, CommandSource {
         dmgTime = 30;
     }
 
-    protected virtual void onDeath() {
-        base.onDeath();
+    protected override void die() {
+        base.die();
 
         // drop inventory items on death (survival only, blocks only)
         if (Game.gamemode.gameplay) {
@@ -954,6 +980,8 @@ public class Player : Mob, CommandSource {
         hp = 100;
         rotation.Z = 0f;
         prevRotation.Z = 0f;
+
+        fireTicks = 0;
 
         // teleport to spawn point
         teleport(world.spawn);

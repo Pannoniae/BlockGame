@@ -360,6 +360,7 @@ public class Block {
         TALL_GRASS.waterTransparent();
         TALL_GRASS.material(Material.ORGANIC);
         TALL_GRASS.setHardness(0);
+        TALL_GRASS.setFlammable(80);
 
         SHORT_GRASS = register("shortGrass", new Grass("Short Grass"));
         SHORT_GRASS.setTex(crossUVs(10, 5));
@@ -370,6 +371,7 @@ public class Block {
         SHORT_GRASS.waterTransparent();
         SHORT_GRASS.material(Material.ORGANIC);
         SHORT_GRASS.setHardness(0);
+        SHORT_GRASS.setFlammable(80);
 
         YELLOW_FLOWER = register("yellowFlower", new Flower("Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(15, 5));
@@ -379,7 +381,7 @@ public class Block {
         YELLOW_FLOWER.noCollision();
         YELLOW_FLOWER.waterTransparent();
         YELLOW_FLOWER.itemLike();
-        YELLOW_FLOWER.material(Material.ORGANIC);
+        YELLOW_FLOWER.setFlammable(60);
 
         //RED_FLOWER = register("redFlower", new Flower("Red Flower"));
         //RED_FLOWER.setTex(crossUVs(11, 1));
@@ -399,46 +401,53 @@ public class Block {
         MARIGOLD.noCollision();
         MARIGOLD.waterTransparent();
         MARIGOLD.itemLike();
-        MARIGOLD.material(Material.ORGANIC);
+        MARIGOLD.setFlammable(60);
 
         // hehe
         BLUE_TULIP = register("blueTulip", new Flower("Blue Tulip"));
         BLUE_TULIP.setTex(crossUVs(13, 5));
         BLUE_TULIP.setModel(BlockModel.makeGrass(BLUE_TULIP));
         BLUE_TULIP.transparency();
+        BLUE_TULIP.flowerAABB();
         BLUE_TULIP.noCollision();
         BLUE_TULIP.waterTransparent();
         BLUE_TULIP.itemLike();
-        BLUE_TULIP.material(Material.ORGANIC);
+        BLUE_TULIP.setFlammable(60);
 
         THISTLE = register("thistle", new Flower("Thistle"));
         THISTLE.setTex(crossUVs(14, 5));
         THISTLE.setModel(BlockModel.makeGrass(THISTLE));
         THISTLE.transparency();
+        // slightly larger aabb..
+        AABB[THISTLE.id] = new AABB(new Vector3D(0 + 4 / 16f, 0, 0 + 4 / 16f), new Vector3D(1 - 4 / 16f, 1f, 1 - 4 / 16f));
         THISTLE.noCollision();
         THISTLE.waterTransparent();
         THISTLE.itemLike();
-        THISTLE.material(Material.ORGANIC);
+        THISTLE.setFlammable(60);
 
         OAK_LOG = register("oakLog", new Block("Oak Log"));
         OAK_LOG.setTex(grassUVs(2, 5, 1, 5, 3, 5));
         OAK_LOG.setModel(BlockModel.makeCube(OAK_LOG));
         OAK_LOG.material(Material.WOOD);
         log[OAK_LOG.id] = true;
+        OAK_LOG.setFlammable(5);
 
         OAK_PLANKS = register("oakPlanks", new Block("Oak Planks"));
         OAK_PLANKS.setTex(cubeUVs(0, 5));
         renderType[OAK_PLANKS.id] = RenderType.CUBE;
         OAK_PLANKS.material(Material.WOOD);
+        OAK_PLANKS.setFlammable(30);
 
         OAK_STAIRS = register("oakStairs", new Stairs( "Oak Stairs"));
         OAK_STAIRS.setTex(cubeUVs(0, 5));
         OAK_STAIRS.partialBlock();
         OAK_STAIRS.material(Material.WOOD);
+        OAK_STAIRS.setFlammable(30);
 
         OAK_SLAB = register("oakSlab", new Slabs( "Planks Slab"));
         OAK_SLAB.setTex(cubeUVs(0, 5));
         OAK_SLAB.material(Material.WOOD);
+        OAK_SLAB.setFlammable(30);
 
         LEAVES = register("oakLeaves", new Leaves("Oak Leaves"));
         LEAVES.setTex(cubeUVs(4, 5));
@@ -447,6 +456,7 @@ public class Block {
         LEAVES.setLightAbsorption(1);
         LEAVES.material(Material.ORGANIC);
         leaves[LEAVES.id] = true;
+        LEAVES.setFlammable(60);
 
         OAK_SAPLING = register("oakSapling", new Sapling("Oak Sapling", SaplingType.OAK));
         OAK_SAPLING.setTex(crossUVs(16, 5));
@@ -456,26 +466,31 @@ public class Block {
         OAK_SAPLING.waterTransparent();
         OAK_SAPLING.itemLike();
         OAK_SAPLING.material(Material.ORGANIC);
+        OAK_SAPLING.setFlammable(60);
 
         MAPLE_LOG = register("mapleLog", new Block("Maple Log"));
         MAPLE_LOG.setTex(grassUVs(7, 5, 6, 5, 8, 5));
         MAPLE_LOG.setModel(BlockModel.makeCube(MAPLE_LOG));
         MAPLE_LOG.material(Material.WOOD);
         log[MAPLE_LOG.id] = true;
+        MAPLE_LOG.setFlammable(5);
 
         MAPLE_PLANKS = register("maplePlanks", new Block("Maple Planks"));
         MAPLE_PLANKS.setTex(cubeUVs(5, 5));
         renderType[MAPLE_PLANKS.id] = RenderType.CUBE;
         MAPLE_PLANKS.material(Material.WOOD);
+        MAPLE_PLANKS.setFlammable(30);
 
         MAPLE_STAIRS = register("mapleStairs", new Stairs( "Maple Stairs"));
         MAPLE_STAIRS.setTex(cubeUVs(5, 5));
         MAPLE_STAIRS.partialBlock();
         MAPLE_STAIRS.material(Material.WOOD);
+        MAPLE_STAIRS.setFlammable(30);
 
         MAPLE_SLAB = register("mapleSlab", new Slabs("Maple Planks Slab"));
         MAPLE_SLAB.setTex(cubeUVs(5, 5));
         MAPLE_SLAB.material(Material.WOOD);
+        MAPLE_SLAB.setFlammable(30);
 
         MAPLE_LEAVES = register("mapleLeaves", new Leaves( "Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
@@ -483,6 +498,7 @@ public class Block {
         MAPLE_LEAVES.transparency();
         MAPLE_LEAVES.material(Material.ORGANIC);
         leaves[MAPLE_LEAVES.id] = true;
+        MAPLE_LEAVES.setFlammable(60);
 
         MAPLE_SAPLING = register("mapleSapling", new Sapling("Maple Sapling", SaplingType.MAPLE));
         MAPLE_SAPLING.setTex(crossUVs(17, 5));
@@ -492,26 +508,31 @@ public class Block {
         MAPLE_SAPLING.waterTransparent();
         MAPLE_SAPLING.itemLike();
         MAPLE_SAPLING.material(Material.ORGANIC);
+        MAPLE_SAPLING.setFlammable(60);
 
         MAHOGANY_LOG = register("mahoganyLog", new Block("Mahogany Log"));
         MAHOGANY_LOG.setTex(grassUVs(5, 2, 4, 2, 6, 2));
         MAHOGANY_LOG.setModel(BlockModel.makeCube(MAHOGANY_LOG));
         MAHOGANY_LOG.material(Material.WOOD);
         log[MAHOGANY_LOG.id] = true;
+        MAHOGANY_LOG.setFlammable(5);
 
         MAHOGANY_PLANKS = register("mahoganyPlanks", new Block("Mahogany Planks"));
         MAHOGANY_PLANKS.setTex(cubeUVs(3, 2));
         renderType[MAHOGANY_PLANKS.id] = RenderType.CUBE;
         MAHOGANY_PLANKS.material(Material.WOOD);
+        MAHOGANY_PLANKS.setFlammable(30);
 
         MAHOGANY_STAIRS = register("mahoganyStairs", new Stairs("Mahogany Stairs"));
         MAHOGANY_STAIRS.setTex(cubeUVs(3, 2));
         MAHOGANY_STAIRS.partialBlock();
         MAHOGANY_STAIRS.material(Material.WOOD);
+        MAHOGANY_STAIRS.setFlammable(30);
 
         MAHOGANY_SLAB = register("mahoganySlab", new Slabs("Mahogany Slab"));
         MAHOGANY_SLAB.setTex(cubeUVs(3, 2));
         MAHOGANY_SLAB.material(Material.WOOD);
+        MAHOGANY_SLAB.setFlammable(30);
 
         MAHOGANY_LEAVES = register("mahoganyLeaves", new Leaves("Mahogany Leaves"));
         MAHOGANY_LEAVES.setTex(cubeUVs(7, 2));
@@ -519,6 +540,7 @@ public class Block {
         MAHOGANY_LEAVES.transparency();
         MAHOGANY_LEAVES.material(Material.ORGANIC);
         leaves[MAHOGANY_LEAVES.id] = true;
+        MAHOGANY_LEAVES.setFlammable(60);
 
         MAHOGANY_SAPLING = register("mahoganySapling", new Sapling("Mahogany Sapling", SaplingType.MAHOGANY));
         MAHOGANY_SAPLING.setTex(crossUVs(18, 5));
@@ -528,6 +550,7 @@ public class Block {
         MAHOGANY_SAPLING.waterTransparent();
         MAHOGANY_SAPLING.itemLike();
         MAHOGANY_SAPLING.material(Material.ORGANIC);
+        MAHOGANY_SAPLING.setFlammable(60);
 
 
         STONE_SLAB = register("stoneSlab", new Slabs( "Stone Slab"));
@@ -652,18 +675,22 @@ public class Block {
         CRAFTING_TABLE.setTex(CTUVs(4, 3, 3, 3, 2, 3, 5, 3));
         CRAFTING_TABLE.setModel(BlockModel.makeCube(CRAFTING_TABLE));
         CRAFTING_TABLE.material(Material.WOOD);
+        CRAFTING_TABLE.setFlammable(30);
 
         MAHOGANY_CHEST = register("mahoganyChest", new Chest("Chest"));
         MAHOGANY_CHEST.setTex(chestUVs(2, 4, 0, 4, 1, 4, 3, 4));
         MAHOGANY_CHEST.material(Material.WOOD);
+        MAHOGANY_CHEST.setFlammable(30);
 
         OAK_CHEST = register("oakChest", new Chest("Oak Chest"));
         OAK_CHEST.setTex(chestUVs(2, 9, 0, 9, 1, 9, 3, 9));
         OAK_CHEST.material(Material.WOOD);
+        OAK_CHEST.setFlammable(30);
 
         DOOR = register("door", new Door("Door"));
         DOOR.setTex(cubeUVs(0, 10));
         DOOR.material(Material.WOOD);
+        DOOR.setFlammable(30);
 
         MAHOGANY_DOOR= register("mahoganydoor", new Door("Mahogany Door"));
         MAHOGANY_DOOR.setTex(cubeUVs(1, 10));
@@ -687,6 +714,7 @@ public class Block {
         LADDER.itemLike();
         LADDER.material(Material.WOOD);
         LADDER.setHardness(0.5);
+        LADDER.setFlammable(30);
 
         FIRE = register("fire", new FireBlock("Fire"));
         FIRE.setTex(new UVPair(3, 14));
@@ -694,6 +722,7 @@ public class Block {
         FIRE.itemLike();
         FIRE.transparency();
         FIRE.noCollision();
+        FIRE.noSelection();
         FIRE.light(15);
         FIRE.tick();
         FIRE.material(Material.HELL);
@@ -974,6 +1003,11 @@ public class Block {
 
     public Block setHardness(double hards) {
         hardness[id] = hards;
+        return this;
+    }
+
+    public Block setFlammable(double value) {
+        flammable[id] = value;
         return this;
     }
 
@@ -1333,6 +1367,11 @@ public static class BlockExtensions {
 }
 
 public class Flower(string name) : Block(name) {
+    protected override void onRegister(int id) {
+        material(Material.ORGANIC);
+        hardness[id] = 0;
+    }
+
     public override void update(World world, int x, int y, int z) {
         if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
             world.setBlock(x, y, z, AIR.id);
