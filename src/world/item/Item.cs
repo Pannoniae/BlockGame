@@ -72,6 +72,7 @@ public class Item {
     public static Item PORKCHOP;
     public static Item FRIED_PORKCHOP;
     public static Item DOOR;
+    public static Item MAHOGANY_DOOR;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
@@ -286,6 +287,9 @@ public class Item {
 
         DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
         DOOR.tex = new UVPair(4, 8);
+
+        MAHOGANY_DOOR= register("mahoganydoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
+        MAHOGANY_DOOR.tex = new UVPair(5, 8);
 
         BUCKET = register("bucket", new BucketItem("Bucket"));
         BUCKET.tex = new UVPair(6, 4);

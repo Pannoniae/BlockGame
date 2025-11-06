@@ -136,6 +136,7 @@ public class Block {
 
     public static Block OAK_CHEST;
     public static Block DOOR;
+    public static Block MAHOGANY_DOOR;
 
     public static Block CANDY;
 
@@ -663,6 +664,10 @@ public class Block {
         DOOR = register("door", new Door("Door"));
         DOOR.setTex(cubeUVs(0, 10));
         DOOR.material(Material.WOOD);
+
+        MAHOGANY_DOOR= register("mahoganydoor", new Door("Mahogany Door"));
+        MAHOGANY_DOOR.setTex(cubeUVs(1, 10));
+        MAHOGANY_DOOR.material(Material.WOOD);
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace"));
         BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));
