@@ -163,7 +163,7 @@ public class SignBlock : EntityBlock {
         }
         else {
             // post 2px thick
-            br.renderCube(x, y, z, vertices, 7 / 16f, 0f, 7 / 16f, 9 / 16f, 6 / 16f, 9 / 16f, pu0, pv0, pu1, pv1);
+            br.renderCube(x, y, z, vertices, 7 / 16f, 0f, 7 / 16f, 9 / 16f, 7 / 16f, 9 / 16f, pu0, pv0, pu1, pv1);
             // sign board
             br.renderSign(x, y, z, vertices, u0, v0, u1, v1, getRotation(metadata));
         }
