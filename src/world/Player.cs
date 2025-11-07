@@ -827,7 +827,27 @@ public class Player : Mob, CommandSource {
             var raw = world.getBlockRaw(pos);
             var bl = Block.get(raw.getID());
             if (bl != null) {
-                inventory.slots[inventory.selected] = new ItemStack(bl.item, 1, raw.getMetadata());
+
+                var stack = bl.getActualItem(raw.getMetadata());
+
+                // let's be a bit smarter.
+                // first check if player already has the block in their hotbar
+                // can be an item too, who knows!
+                for (ushort i = 0; i < 10; i++) {
+                    var s = inventory.slots[i];
+                    if (s != ItemStack.EMPTY) {
+                        if (s.same(stack)) {
+                            // found it!
+                            inventory.selected = i;
+                            return;
+                        }
+                    }
+                }
+
+                // second, if not found, put it in the selected slot
+                if (stack != null!) {
+                    inventory.setStack(inventory.selected, stack);
+                }
             }
         }
     }

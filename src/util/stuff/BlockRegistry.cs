@@ -55,6 +55,7 @@ public class BlockRegistry : Registry<Block> {
      * Disable creating an item for this block.
      */
     public readonly XUList<bool> noItem;
+    public readonly XUList<bool> isBlockEntity;
 
     public BlockRegistry() {
         fullBlock = track(true);
@@ -84,6 +85,7 @@ public class BlockRegistry : Registry<Block> {
         tool = track(ToolType.NONE);
         tier = track(MaterialTier.NONE);
         noItem = track(false);
+        isBlockEntity = track(false);
     }
 
     public override int register(string type, Block value) {

@@ -541,6 +541,10 @@ public class GUI {
             default);
     }
 
+    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale) {
+        DrawStringThin(text, position * guiScale, colour == default ? Color.White : colour, TEXTSCALE * scale, default);
+    }
+
 
     /// <summary>
     /// Rotation Y = yaw (horizontal rotation)
@@ -726,11 +730,11 @@ public class GUI {
 
     public Vector2 measureStringUI(ReadOnlySpan<char> text) {
         //
-        return guiFont.MeasureString(text);
+        return guiFont.MeasureString(text, new Vector2((float)TEXTSCALE / guiScale));
     }
 
     public Vector2 measureStringUIThin(ReadOnlySpan<char> text) {
-        var measurement = guiFontThin.MeasureString(text);
+        var measurement = guiFontThin.MeasureString(text, new Vector2((float)TEXTSCALE / guiScale));
         return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
     }
 
@@ -740,11 +744,11 @@ public class GUI {
 
     public Vector2 measureStringUI(ReadOnlySpan<char> text, bool thin) {
         if (thin) {
-            var measurement = guiFontThin.MeasureString(text);
+            var measurement = guiFontThin.MeasureString(text, new Vector2((float)TEXTSCALE / guiScale));
             return new Vector2(measurement.X * Game.fontLoader.thinFontAspectRatio, measurement.Y);
         }
 
-        return guiFont.MeasureString(text);
+        return guiFont.MeasureString(text, new Vector2((float)TEXTSCALE / guiScale));
     }
 
     public void drawWireframe(Rectangle bounds, Color col) {

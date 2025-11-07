@@ -1,4 +1,5 @@
-﻿using BlockGame.util.stuff;
+﻿using BlockGame.render.model;
+using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block.entity;
 using Molten;
@@ -9,11 +10,14 @@ public abstract class BlockEntity : Persistent {
 
     public static int FURNACE;
     public static int CHEST;
+    public static int SIGN;
 
     public Vector3I pos;
 
-    public BlockEntity() {
+    public string type;
 
+    public BlockEntity(string type) {
+        this.type = type;
     }
 
     public abstract void update(World world, int x, int y, int z);
@@ -44,6 +48,12 @@ public abstract class BlockEntity : Persistent {
         // force class load to register block entities
         FURNACE = register("furnace", () => new FurnaceBlockEntity());
         CHEST = register("chest", () => new ChestBlockEntity());
+        SIGN = register("sign", () => new SignBlockEntity());
+
+        // sign has a custom renderer
+        Registry.BLOCK_ENTITIES.hasRenderer[SIGN] = true;
+
+        BlockEntityRenderers.reloadAll();
     }
 
     /**

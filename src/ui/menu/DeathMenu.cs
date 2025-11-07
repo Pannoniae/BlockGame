@@ -32,10 +32,10 @@ public class DeathMenu : Menu {
     public override void draw() {
         var gui = Game.gui;
 
+        Screen.GAME_SCREEN.INGAME_MENU.draw();
+
         // draw background (just a fullscreen grey overlay)
         gui.draw(gui.colourTexture, new RectangleF(0, 0, Game.width, Game.height), null, new Color(0, 0, 0, 150));
-
-        Screen.GAME_SCREEN.INGAME_MENU.draw();
 
         base.draw();
 
@@ -43,7 +43,7 @@ public class DeathMenu : Menu {
 
         const string deathText = "YOU DED! skill issue?";
         gui.drawStringCentred(deathText, new Vector2(Game.centreX, Game.centreY - 64 * GUI.guiScale),
-            Color.DarkRed);
+            Color.Red);
     }
 
     public override void postDraw() {

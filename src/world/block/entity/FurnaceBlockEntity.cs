@@ -17,7 +17,7 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     private int fuelMax = 0;             // total fuel from current fuel item (mostly for UI % lol)
     private SmeltingRecipe? currentRecipe = null;
 
-    public FurnaceBlockEntity() : base() {
+    public FurnaceBlockEntity() : base("furnace") {
     }
 
     public override void update(World world, int x, int y, int z) {

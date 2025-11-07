@@ -1,10 +1,11 @@
-﻿using BlockGame.world.block;
+﻿using BlockGame.util;
+using BlockGame.world.block;
 
 namespace BlockGame.world;
 
 public partial class World {
 
-    public readonly List<BlockEntity> blockEntities = [];
+    public readonly XUList<BlockEntity> blockEntities = [];
 
     public void setBlockEntity(int x, int y, int z, BlockEntity be) {
         if (!inWorld(x, y, z)) {

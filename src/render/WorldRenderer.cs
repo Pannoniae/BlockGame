@@ -6,6 +6,7 @@ using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -1017,6 +1018,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         renderSkyPost(interp);
     }
 
+    /**
+     * Now also renders fancy block entities because I'm lazy to copy all the matrix code over to somewhere else.
+     */
     public void renderEntities(double interp) {
         var mat = Game.graphics.model;
         mat.push();
@@ -1049,7 +1053,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             mat.push();
             mat.loadIdentity();
 
-            // interpolate position and rotation
             var interpPos = Vector3D.Lerp(entity.prevPosition, entity.position, interp);
             var interpRot = Vector3.Lerp(entity.prevRotation, entity.rotation, (float)interp);
             var interpBodyRot = Vector3.Lerp(entity.prevBodyRotation, entity.bodyRotation, (float)interp);
@@ -1057,9 +1060,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             // translate to entity position
             mat.translate((float)interpPos.X, (float)interpPos.Y, (float)interpPos.Z);
 
-            // apply entity body rotation (no X-axis rotation for body)
             mat.rotate(interpBodyRot.Y, 0, 1, 0);
-            //mat.rotate(90, 0, 1, 0);  // investigate why this 90-degree offset is needed
             mat.rotate(interpBodyRot.Z, 0, 0, 1);
 
             // get light level at player position and look up in lightmap
@@ -1071,13 +1072,30 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             EntityRenderers.ide.setColour(new Color(lightVal.R, lightVal.G, lightVal.B, (byte)255));
 
-            // render entity using its renderer
             renderer.render(mat, entity, 1f / 16f, interp);
 
             // render fire effect if entity is on fire
             if (entity.fireTicks > 0) {
                 renderEntityFire(mat, entity, interp);
             }
+
+            mat.pop();
+        }
+
+        foreach (var be in world.blockEntities) {
+
+            var type = be.type;
+            var isRendered = Registry.BLOCK_ENTITIES.hasRenderer[Registry.BLOCK_ENTITIES.getID(type)];
+            if (!isRendered) {
+                continue;
+            }
+
+            mat.push();
+            mat.loadIdentity();
+
+            mat.translate(be.pos.X, be.pos.Y, be.pos.Z);
+            var renderer = BlockEntityRenderers.get(Registry.BLOCK_ENTITIES.getID(type));
+            renderer.render(mat, be, 1, interp);
 
             mat.pop();
         }

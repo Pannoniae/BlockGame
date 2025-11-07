@@ -1,11 +1,12 @@
 ﻿using BlockGame.util;
+using BlockGame.world.block;
 
 namespace BlockGame.world.item;
 
 public class DoorItem : Item {
-    private readonly block.Block doorBlock;
+    private readonly Block doorBlock;
 
-    public DoorItem(string name, block.Block doorBlock) : base(name) {
+    public DoorItem(string name, Block doorBlock) : base(name) {
         this.doorBlock = doorBlock;
     }
 

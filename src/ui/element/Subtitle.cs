@@ -26,7 +26,7 @@ public class Subtitle : GUIElement {
         colour = new Color(255, 255, 0, 255);
 
         textScaledSize = true;
-        var textSize = Game.gui.measureStringUI(subtitleText, thin: true) * textScale;
+        var textSize = Game.gui.measureStringUI(subtitleText, thin: true) * GUI.TEXTSCALEV * textScale;
         guiPosition.Width = (int)textSize.X;
         guiPosition.Height = (int)textSize.Y;
     }

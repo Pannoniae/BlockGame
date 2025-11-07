@@ -15,6 +15,8 @@ public class TextBox : GUIElement {
     public static readonly Vector2 padding = new(5, 4);
 
     public TextBox(Menu menu, string name) : base(menu, name) {
+        guiPosition.Height = 16;
+        guiPosition.Width = 128;
     }
 
     public override void click(MouseButton button) {
@@ -46,8 +48,8 @@ public class TextBox : GUIElement {
     }
 
     public override void draw() {
-        // draw background (different color when focused)
-        var bgColor = focused ? new Color(255, 255, 255, 60) : new Color(128, 128, 128, 128);
+        // draw background (different colour when focused)
+        //var bgColour = focused ? new Color(255, 255, 255, 60) : new Color(128, 128, 128, 128);
         Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: Button.button);
 
         // draw border if focused

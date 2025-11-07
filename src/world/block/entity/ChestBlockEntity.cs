@@ -8,7 +8,7 @@ public class ChestBlockEntity : BlockEntity, Inventory {
 
     public readonly ItemStack[] slots = new ItemStack[PlayerInventory.MAIN_SIZE].fill();
 
-    public ChestBlockEntity() : base() {
+    public ChestBlockEntity() : base("chest") {
     }
 
     public override void update(World world, int x, int y, int z) {

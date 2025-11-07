@@ -10,7 +10,7 @@ public abstract class Registry {
     public static readonly BlockRegistry BLOCKS = new();
     public static readonly ItemRegistry ITEMS = new();
     public static readonly Registry<Recipe> RECIPES = new RecipeRegistry();
-    public static readonly ObjectRegistry<BlockEntity, Func<BlockEntity>> BLOCK_ENTITIES = new();
+    public static readonly BlockEntityRegistry BLOCK_ENTITIES = new();
     public static readonly EntityRegistry ENTITIES = new();
 }
 
@@ -197,5 +197,14 @@ public class EntityRegistry : ObjectRegistry<Entity, Func<World, Entity>> {
 
     public EntityRegistry() {
         spawnType = track(SpawnType.NONE);
+    }
+}
+
+public class BlockEntityRegistry : ObjectRegistry<BlockEntity, Func<BlockEntity>> {
+
+    public readonly XUList<bool> hasRenderer;
+
+    public BlockEntityRegistry() {
+        hasRenderer = track(false);
     }
 }

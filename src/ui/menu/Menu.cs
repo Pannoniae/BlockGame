@@ -27,7 +27,7 @@ public class Menu {
     public Vector2I size;
     public Vector2I centre;
 
-    public Dictionary<string, GUIElement> elements = new();
+    public readonly Dictionary<string, GUIElement> elements = new();
 
     public GUIElement? hoveredElement;
 
@@ -175,14 +175,14 @@ public class Menu {
         var borderRect = new RectangleF(pos.X - borderSize, pos.Y - borderSize, posExt.X + borderSize * 2, posExt.Y + borderSize * 2);
         var bgRect = new RectangleF(pos.X, pos.Y, posExt.X, posExt.Y);
 
-        // draw border with gradient (vibrant purple to deep blue)
-        var borderColorTop = new Color(147, 51, 234, 255);    // bright purple
-        var borderColorBottom = new Color(59, 130, 246, 255); // bright blue
+        // draw border with gradient
+        var borderColorTop = new Color(0, 115, 226, 255);
+        var borderColorBottom = new Color(0, 151, 226, 240);
         Game.gui.drawGradientVertical(Game.gui.colourTexture, borderRect, borderColorTop, borderColorBottom);
 
         // draw background with gradient (dark purple to dark blue)
-        var bgColorTop = new Color(30, 15, 45, 240);    // dark purple
-        var bgColorBottom = new Color(15, 25, 45, 240); // dark blue
+        var bgColorTop = new Color(0, 17, 40, 255);
+        var bgColorBottom = new Color(0, 25, 40, 240);
         Game.gui.drawGradientVertical(Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
 
         Game.gui.drawStringThin(tooltip, textPos);

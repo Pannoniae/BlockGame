@@ -164,6 +164,7 @@ public class Block {
     public static Block FURNACE;
     public static Block LADDER;
     public static Block FIRE;
+    public static Block SIGN;
 
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
@@ -193,6 +194,8 @@ public class Block {
     public static XUList<MaterialTier> tier => Registry.BLOCKS.tier;
 
     public static XUList<bool> noItem => Registry.BLOCKS.noItem;
+
+    public static XUList<bool> isBlockEntity => Registry.BLOCKS.isBlockEntity;
 
     public static int currentID => Registry.BLOCKS.count();
 
@@ -231,6 +234,16 @@ public class Block {
     /** Get the BlockItem for this block */
     public BlockItem getItem() {
         return item;
+    }
+
+    /**
+     * Get the actual item associated with this block.
+     * For example, it gets the door item for door blocks and NOT the technical door block item.
+     *
+     * This is used for block picking and hopefully more things soon?
+     */
+    public virtual ItemStack getActualItem(byte metadata) {
+        return new ItemStack(item, 1, metadata);
     }
 
     public static Block? get(int id) {
@@ -729,6 +742,9 @@ public class Block {
         FIRE.light(15);
         FIRE.tick();
         FIRE.material(Material.HELL);
+
+        SIGN = register("sign", new SignBlock("Sign"));
+        SIGN.setTex(new UVPair(2, 10), new UVPair(1, 5));
 
 
         // set default hardness for blocks that haven't set it
@@ -1319,8 +1335,17 @@ public class Block {
      * Override for block-specific placement rules.
      */
     public virtual bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        // by default, non-collidable blocks can be replaced
-        return !collision[world.getBlock(x, y, z)];
+        // standard placement rules
+        // liquids can always be placed into
+        if (liquid[id]) {
+            return true;
+        }
+
+        // can be placed into
+
+        // otherwise, can't place if there's anything there lol
+        return world.getBlock(x, y, z) == 0;
+
     }
 
     /**

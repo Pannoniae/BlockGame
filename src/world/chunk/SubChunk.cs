@@ -20,6 +20,8 @@ public class SubChunk {
     
     public SharedBlockVAO? vao;
     public SharedBlockVAO? watervao;
+
+    public XUList<Vector3I> renderedBlockEntities = [];
     
     
 

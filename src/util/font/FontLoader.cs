@@ -8,6 +8,7 @@ public class FontLoader {
     public TextRenderer renderer;
     public TextRenderer rendererl;
     public TextRenderer3D renderer3D;
+    public TextRendererBlockEntity rendererBlockEntity;
     public FontSystem fontSystem;
     public FontSystem fontSystemThin;
     public FontSystem fontSystemThinl;
@@ -22,6 +23,7 @@ public class FontLoader {
         renderer = new TextRenderer();
         rendererl = new TextRenderer(linear: true);
         renderer3D = new TextRenderer3D();
+        rendererBlockEntity = new TextRendererBlockEntity();
 
         // todo hack something together in a better way
         fontSystem = new FontSystem(settings);

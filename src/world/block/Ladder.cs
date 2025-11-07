@@ -86,7 +86,9 @@ public class Ladder : Block {
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
-        x &= 15; y &= 15; z &= 15;
+        x &= 15;
+        y &= 15;
+        z &= 15;
 
         var block = br.getBlock();
         var metadata = block.getMetadata();
@@ -104,32 +106,31 @@ public class Ladder : Block {
         var u1 = uv1.X;
         var v1 = uv1.Y;
 
-        const float t = 1f / 16f; // offset from wall
+        const float t = 1f / 16f;
 
         br.applySimpleLighting(RawDirection.NONE);
         br.begin();
 
-        // render single plane facing away from wall
         switch (facing) {
-            case 0: // WEST - plane faces east
+            case 0: // WEST
                 br.vertex(x + 1 - t, y + 1, z + 1, u0, v0);
                 br.vertex(x + 1 - t, y, z + 1, u0, v1);
                 br.vertex(x + 1 - t, y, z, u1, v1);
                 br.vertex(x + 1 - t, y + 1, z, u1, v0);
                 break;
-            case 1: // EAST - plane faces west
+            case 1: // EAST
                 br.vertex(x + t, y + 1, z, u0, v0);
                 br.vertex(x + t, y, z, u0, v1);
                 br.vertex(x + t, y, z + 1, u1, v1);
                 br.vertex(x + t, y + 1, z + 1, u1, v0);
                 break;
-            case 2: // SOUTH - plane faces north
+            case 2: // SOUTH
                 br.vertex(x, y + 1, z + 1 - t, u0, v0);
                 br.vertex(x, y, z + 1 - t, u0, v1);
                 br.vertex(x + 1, y, z + 1 - t, u1, v1);
                 br.vertex(x + 1, y + 1, z + 1 - t, u1, v0);
                 break;
-            default: // NORTH - plane faces south
+            default: // NORTH
                 br.vertex(x + 1, y + 1, z + t, u0, v0);
                 br.vertex(x + 1, y, z + t, u0, v1);
                 br.vertex(x, y, z + t, u1, v1);
@@ -147,9 +148,9 @@ public class Ladder : Block {
 
         aabbs.Add(facing switch {
             0 => new AABB(x + 1f - t, y, z, x + 1f, y + 1f, z + 1f), // WEST
-            1 => new AABB(x, y, z, x + t, y + 1f, z + 1f),           // EAST
+            1 => new AABB(x, y, z, x + t, y + 1f, z + 1f), // EAST
             2 => new AABB(x, y, z + 1f - t, x + 1f, y + 1f, z + 1f), // SOUTH
-            _ => new AABB(x, y, z, x + 1f, y + 1f, z + t)            // NORTH
+            _ => new AABB(x, y, z, x + 1f, y + 1f, z + t) // NORTH
         });
     }
 

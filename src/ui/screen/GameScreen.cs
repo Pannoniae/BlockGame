@@ -96,10 +96,10 @@ public class GameScreen : Screen {
 
 
     public override void update(double dt) {
-        base.update(dt);
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.update(dt);
         }
+        base.update(dt);
 
         var world = Game.world;
 
@@ -448,6 +448,7 @@ public class GameScreen : Screen {
                 if (keyboard.IsKeyPressed(Key.F3)) {
                     // reload all entity models
                     EntityRenderers.reloadAll();
+                    BlockEntityRenderers.reloadAll();
                     Log.info("Reloaded all entity models");
                 }
                 else {
@@ -660,10 +661,10 @@ public class GameScreen : Screen {
     }
 
     public override void draw() {
-        base.draw();
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.draw();
         }
+        base.draw();
 
         var gui = Game.gui;
 
@@ -984,10 +985,10 @@ public class GameScreen : Screen {
     }
 
     public override void postDraw() {
-        base.postDraw();
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.postDraw();
         }
+        base.postDraw();
     }
 
     /// <summary>

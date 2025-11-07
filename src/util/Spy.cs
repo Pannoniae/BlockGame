@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.util.log;
@@ -82,6 +81,7 @@ public class Spy {
         Game.instance.executeOnMainThread(() => {
             Game.textures.reloadAll();
             EntityRenderers.reloadAll();
+            BlockEntityRenderers.reloadAll();
         });
         Log.info("Reloaded assets due to file change: " + e.FullPath);
     }

@@ -79,6 +79,7 @@ public class Item {
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
     public static Item LIGHTER;
+    public static Item SIGN_ITEM;
 
 
     public Item(string name) {
@@ -306,6 +307,8 @@ public class Item {
         LIGHTER = register("lighter", new Lighter("Lighter"));
         LIGHTER.tex = new UVPair(8, 4);
 
+        SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
+
 
         // all blocks are already marked as materials during Block.register() lol
 
@@ -313,6 +316,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.WATER.item.id] = true;
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
         Registry.ITEMS.blackList[Block.FIRE.item.id] = true;
+        Registry.ITEMS.blackList[Block.SIGN.item.id] = true;
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds

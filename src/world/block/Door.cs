@@ -165,4 +165,8 @@ public class Door : Block {
         // onBreak removes the other half via setBlock which doesn't trigger getDrop!
         return (Item.DOOR, 0, 1);
     }
+
+    public override ItemStack getActualItem(byte metadata) {
+        return new ItemStack(Item.DOOR, 1, 0);
+    }
 }
