@@ -53,7 +53,7 @@ public class CreativeInventoryContext : InventoryContext {
 
             // special handling for dye - add all 16 colour variants
             if (item == Item.DYE) {
-                for (byte metadata = 0; metadata < 16; metadata++) {
+                for (byte metadata = 0; metadata < Block.CANDY.maxValidMetadata() + 1; metadata++) {
                     allItems.Add(new ItemStack(item, 1, metadata));
                 }
             }
