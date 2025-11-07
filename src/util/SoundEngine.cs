@@ -32,7 +32,7 @@ public class SoundEngine : IDisposable {
     private const float MAX_PITCH = 1.05f;
 
     public SoundEngine() {
-        const uint SAMPLE_RATE = 44100;
+        const uint SAMPLE_RATE = 48000;
         const uint CHANNELS = 2;
 
         // IF YOU CHANGE THIS stuff will jitter

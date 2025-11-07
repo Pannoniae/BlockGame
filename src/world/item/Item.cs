@@ -317,6 +317,8 @@ public class Item {
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
         Registry.ITEMS.blackList[Block.FIRE.item.id] = true;
         Registry.ITEMS.blackList[Block.SIGN.item.id] = true;
+        Registry.ITEMS.blackList[Block.DOOR.item.id] = true;
+        Registry.ITEMS.blackList[Block.MAHOGANY_DOOR.item.id] = true;
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds
@@ -328,6 +330,7 @@ public class Item {
         Registry.ITEMS.fuelValue[Block.MAHOGANY_LOG.item.id] = 1800;
         Registry.ITEMS.fuelValue[Block.MAPLE_LOG.item.id] = 1800;
         Registry.ITEMS.fuelValue[LAVA_BUCKET.id] = 12000; // 200 seconds (lava bucket op)
+        Registry.ITEMS.fuelValue[SIGN_ITEM.id] = 300; // 5 seconds
     }
 
     public virtual UVPair getTexture(ItemStack stack) {

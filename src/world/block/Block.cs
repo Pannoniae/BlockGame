@@ -20,7 +20,6 @@ namespace BlockGame.world.block;
 [SuppressMessage("Compiler",
     "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Block {
-
     private const int particleCount = 4;
 
     /// <summary>
@@ -209,6 +208,7 @@ public class Block {
         if (noItem[block.id]) {
             return block;
         }
+
         var blockItem = block.createItem();
         Item.register(stringID, blockItem);
         Item.material[blockItem.id] = true; // all blocks are materials lol
@@ -223,7 +223,6 @@ public class Block {
      * Override to set block properties that require the ID.
      */
     protected virtual void onRegister(int id) {
-
     }
 
     /** Override to create a custom BlockItem type for this block */
@@ -255,7 +254,7 @@ public class Block {
     }
 
     public static void preLoad() {
-        AIR = register("air", new Block( "Air"));
+        AIR = register("air", new Block("Air"));
         AIR.setModel(BlockModel.emptyBlock());
         AIR.air();
         GRASS = register("grass", new GrassBlock("Grass"));
@@ -264,12 +263,12 @@ public class Block {
         GRASS.setModel(BlockModel.makeCube(GRASS));
         GRASS.material(Material.EARTH);
 
-        DIRT = register("dirt", new Block( "Dirt"));
+        DIRT = register("dirt", new Block("Dirt"));
         DIRT.setTex(cubeUVs(2, 0));
         renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
 
-        SAND = register("sand", new FallingBlock( "Sand"));
+        SAND = register("sand", new FallingBlock("Sand"));
         SAND.setTex(cubeUVs(3, 0));
         renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
@@ -457,13 +456,13 @@ public class Block {
         OAK_PLANKS.material(Material.WOOD);
         OAK_PLANKS.setFlammable(30);
 
-        OAK_STAIRS = register("oakStairs", new Stairs( "Oak Stairs"));
+        OAK_STAIRS = register("oakStairs", new Stairs("Oak Stairs"));
         OAK_STAIRS.setTex(cubeUVs(0, 5));
         OAK_STAIRS.partialBlock();
         OAK_STAIRS.material(Material.WOOD);
         OAK_STAIRS.setFlammable(30);
 
-        OAK_SLAB = register("oakSlab", new Slabs( "Planks Slab"));
+        OAK_SLAB = register("oakSlab", new Slabs("Planks Slab"));
         OAK_SLAB.setTex(cubeUVs(0, 5));
         OAK_SLAB.material(Material.WOOD);
         OAK_SLAB.setFlammable(30);
@@ -499,7 +498,7 @@ public class Block {
         MAPLE_PLANKS.material(Material.WOOD);
         MAPLE_PLANKS.setFlammable(30);
 
-        MAPLE_STAIRS = register("mapleStairs", new Stairs( "Maple Stairs"));
+        MAPLE_STAIRS = register("mapleStairs", new Stairs("Maple Stairs"));
         MAPLE_STAIRS.setTex(cubeUVs(5, 5));
         MAPLE_STAIRS.partialBlock();
         MAPLE_STAIRS.material(Material.WOOD);
@@ -510,7 +509,7 @@ public class Block {
         MAPLE_SLAB.material(Material.WOOD);
         MAPLE_SLAB.setFlammable(30);
 
-        MAPLE_LEAVES = register("mapleLeaves", new Leaves( "Maple Leaves"));
+        MAPLE_LEAVES = register("mapleLeaves", new Leaves("Maple Leaves"));
         MAPLE_LEAVES.setTex(cubeUVs(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
@@ -569,11 +568,11 @@ public class Block {
         MAHOGANY_SAPLING.setFlammable(60);
 
 
-        STONE_SLAB = register("stoneSlab", new Slabs( "Stone Slab"));
+        STONE_SLAB = register("stoneSlab", new Slabs("Stone Slab"));
         STONE_SLAB.setTex(cubeUVs(5, 0));
         STONE_SLAB.material(Material.STONE);
 
-        COBBLESTONE_SLAB = register("cobblestoneSlab", new Slabs( "Cobblestone Slab"));
+        COBBLESTONE_SLAB = register("cobblestoneSlab", new Slabs("Cobblestone Slab"));
         COBBLESTONE_SLAB.setTex(cubeUVs(6, 1));
         COBBLESTONE_SLAB.material(Material.STONE);
 
@@ -708,7 +707,7 @@ public class Block {
         DOOR.material(Material.WOOD);
         DOOR.setFlammable(30);
 
-        MAHOGANY_DOOR= register("mahoganydoor", new Door("Mahogany Door"));
+        MAHOGANY_DOOR = register("mahoganyDoor", new Door("Mahogany Door"));
         MAHOGANY_DOOR.setTex(cubeUVs(1, 10));
         MAHOGANY_DOOR.material(Material.WOOD);
 
@@ -1345,7 +1344,6 @@ public class Block {
 
         // otherwise, can't place if there's anything there lol
         return world.getBlock(x, y, z) == 0;
-
     }
 
     /**
@@ -1428,7 +1426,7 @@ public class GrassBlock(string name) : Block(name) {
     public override void randomUpdate(World world, int x, int y, int z) {
         // turn to dirt if full block above
         if (y < World.WORLDHEIGHT - 1 && isFullBlock(world.getBlock(x, y + 1, z))) {
-            world.setBlock(x, y, z,  DIRT.id);
+            world.setBlock(x, y, z, DIRT.id);
             return;
         }
 
@@ -1447,7 +1445,7 @@ public class GrassBlock(string name) : Block(name) {
             // if target is dirt with air above, spread
             if (world.getBlock(nx, ny, nz) == DIRT.id) {
                 if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == AIR.id) {
-                    world.setBlock(nx, ny, nz,  GRASS.id);
+                    world.setBlock(nx, ny, nz, GRASS.id);
                 }
             }
         }

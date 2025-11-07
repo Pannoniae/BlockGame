@@ -203,6 +203,20 @@ public class SignMenu : Menu {
                 cursorPos = signEntity.lines[currentLine].Length;
                 break;
 
+            case Key.V:
+                // ctrl+v for paste
+                if (keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight)) {
+                    var clipboardText = keyboard.ClipboardText;
+                    if (!string.IsNullOrEmpty(clipboardText)) {
+                        // filter to printable characters only
+                        var filtered = new string(clipboardText.Where(c => !char.IsControl(c)).ToArray());
+                        if (!string.IsNullOrEmpty(filtered)) {
+                            pasteText(filtered);
+                        }
+                    }
+                }
+                break;
+
             case Key.Escape:
                 Screen.GAME_SCREEN.backToGame();
                 break;
@@ -235,6 +249,29 @@ public class SignMenu : Menu {
         if (testwidth <= MAX_LINE_WIDTH_PX) {
             signEntity.lines[currentLine] = teststr;
             cursorPos++;
+        }
+    }
+
+    private void pasteText(string text) {
+        const float TEXT_SCALE = 2f;
+        var font = Game.fontLoader.fontSystemThin.GetFont(16);
+
+        foreach (var c in text) {
+            var line = signEntity.lines[currentLine];
+            var testString = line.Insert(cursorPos, c.ToString());
+
+            var testSizePx = font.MeasureString(testString, GUI.TEXTSCALEV * TEXT_SCALE);
+            testSizePx.X *= Game.fontLoader.thinFontAspectRatio;
+            var testWidth = testSizePx.X / GUI.guiScale;
+
+            if (testWidth <= MAX_LINE_WIDTH_PX) {
+                signEntity.lines[currentLine] = testString;
+                cursorPos++;
+            }
+            else {
+                // can't fit more text on this line, stop pasting
+                break;
+            }
         }
     }
 }
