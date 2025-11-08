@@ -20,7 +20,7 @@ public abstract class InventoryContext {
 
         if (click == ClickType.LEFT) {
             if (cursor == ItemStack.EMPTY) {
-                // try to take from slot
+                // take from slot
                 var currentStack = slot.getStack();
                 var taken = slot.take(currentStack == ItemStack.EMPTY ? 1 : currentStack.quantity);
                 if (taken != ItemStack.EMPTY && taken.id != Item.AIR.id) {
@@ -28,14 +28,29 @@ public abstract class InventoryContext {
                 }
             }
             else {
-                // place cursor into slot - this handles merging, swapping, etc.
-                var remaining = slot.place(cursor);
-                player.inventory.cursor = remaining;
+                // try to place cursor into slot
+                if (slot.canPlace()) {
+                    // normal slot - handles merging, swapping, etc.
+                    var remaining = slot.place(cursor);
+                    player.inventory.cursor = remaining;
+                }
+                else {
+                    // output-only slot - try take+merge
+                    var result = slot.getStack();
+                    if (result != ItemStack.EMPTY && result.same(cursor)) {
+                        var canMerge = Inventory.MAX_STACK_SIZE - cursor.quantity;
+                        if (canMerge >= result.quantity) {
+                            var taken = slot.take(result.quantity);
+                            player.inventory.cursor = new ItemStack(cursor.getItem(), cursor.quantity + taken.quantity, cursor.metadata);
+                        }
+                        // else cursor stack is full, do nothing :(
+                    }
+                }
             }
         }
         else if (click == ClickType.RIGHT) {
             if (cursor == ItemStack.EMPTY) {
-                // try to take half
+                // take half
                 var currentStack = slot.getStack();
                 if (currentStack != ItemStack.EMPTY && currentStack.quantity > 0) {
                     var halfQuantity = (currentStack.quantity + 1) / 2;
@@ -47,6 +62,11 @@ public abstract class InventoryContext {
             }
             else {
                 // right-click only places 1 item if slot is empty or can merge (no swapping!)
+                if (!slot.canPlace()) {
+                    // can't place into output-only slots
+                    return;
+                }
+
                 var slotStack = slot.getStack();
 
                 if (!slot.accept(cursor)) {
@@ -58,18 +78,22 @@ public abstract class InventoryContext {
                     // empty slot - place 1 item
                     var singleItem = new ItemStack(cursor.getItem(), 1, cursor.metadata);
                     slot.place(singleItem);
-                    cursor.quantity--;
-                    if (cursor.quantity <= 0) {
+                    player.inventory.cursor = new ItemStack(cursor.getItem(), cursor.quantity - 1, cursor.metadata);
+                    if (cursor.quantity <= 1) {
                         player.inventory.cursor = ItemStack.EMPTY;
                     }
                 }
                 else if (slotStack.same(cursor)) {
                     // same item - try to add 1 if there's room
                     if (slotStack.quantity < Inventory.MAX_STACK_SIZE) {
-                        slotStack.quantity++;
-                        cursor.quantity--;
-                        if (cursor.quantity <= 0) {
-                            player.inventory.cursor = ItemStack.EMPTY;
+                        var singleItem = new ItemStack(cursor.getItem(), 1, cursor.metadata);
+                        var remaining = slot.place(singleItem);
+                        if (remaining == ItemStack.EMPTY) {
+                            // successfully placed
+                            player.inventory.cursor = new ItemStack(cursor.getItem(), cursor.quantity - 1, cursor.metadata);
+                            if (cursor.quantity <= 1) {
+                                player.inventory.cursor = ItemStack.EMPTY;
+                            }
                         }
                     }
                     // else slot is full, do nothing

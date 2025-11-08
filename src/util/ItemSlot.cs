@@ -37,6 +37,13 @@ public class ItemSlot {
     }
 
     /**
+     * Checks if this slot allows placing items into it (bidirectional vs output-only).
+     */
+    public virtual bool canPlace() {
+        return true; // most slots are normal..
+    }
+
+    /**
      * Checks if this slot can accept the given stack.
      */
     public virtual bool accept(ItemStack stack) {
@@ -58,9 +65,12 @@ public class ItemSlot {
         var takeAmount = Math.Min(count, current.quantity);
         var taken = new ItemStack(current.getItem(), takeAmount, current.metadata);
 
-        current.quantity -= takeAmount;
-        if (current.quantity <= 0) {
+        var remaining = current.copy();
+        remaining.quantity -= takeAmount;
+        if (remaining.quantity <= 0) {
             inventory.setStack(index, ItemStack.EMPTY);
+        } else {
+            inventory.setStack(index, remaining);
         }
 
         return taken;
@@ -93,19 +103,20 @@ public class ItemSlot {
             var addAmount = Math.Min(canAdd, stack.quantity);
 
             if (addAmount > 0) {
-                current.quantity += addAmount;
+                // use setStack to trigger inventory
+                var merged = current.copy();
+                merged.quantity += addAmount;
+                inventory.setStack(index, merged);
 
                 if (stack.quantity <= addAmount) {
                     return ItemStack.EMPTY; // all items placed
                 } else {
-                    // return remainder - don't modify the input!
                     return new ItemStack(stack.getItem(), stack.quantity - addAmount, stack.metadata);
                 }
             }
             else {
-                // slot is full, can't merge - swap instead
-                inventory.setStack(index, stack.copy());
-                return current;
+                // slot is full, can't merge
+                return stack;
             }
         }
         else {
@@ -113,9 +124,6 @@ public class ItemSlot {
             inventory.setStack(index, stack.copy());
             return current;
         }
-
-        SkillIssueException.throwNew("something is wrong in inventoryland!");
-        return ItemStack.EMPTY;
     }
 
     /**
@@ -169,6 +177,10 @@ public class CraftingResultSlot : ItemSlot {
 
     public CraftingResultSlot(CraftingGridInventory craftingGrid, int index, int x, int y) : base(craftingGrid, index, x, y) {
         this.craftingGrid = craftingGrid;
+    }
+
+    public override bool canPlace() {
+        return false; // output-only slot
     }
 
     public override ItemStack getStack() {

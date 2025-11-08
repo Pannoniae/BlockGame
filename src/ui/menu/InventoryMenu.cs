@@ -117,7 +117,7 @@ public abstract class InventoryMenu : Menu {
         base.onKeyDown(keyboard, key, scancode);
 
         // close inventory on inventory key
-        if (key == Key.E) {
+        if (key is Key.E or Key.Escape) {
             Game.instance.executeOnMainThread(() => { ((GameScreen)screen).backToGame(); });
         }
     }
