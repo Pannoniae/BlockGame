@@ -499,9 +499,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             dummyuMVP = dummyShader.getUniformLocation(nameof(uMVP));
 
-            // re-get chunk position uniforms if needed
+            // chunk position uniforms for non-UBO path
             if (Settings.instance.getActualRendererMode() < RendererMode.Instanced) {
                 uChunkPos = worldShader.getUniformLocation("uChunkPos");
+                dummyuChunkPos = dummyShader.getUniformLocation("uChunkPos");
                 wateruChunkPos = waterShader.getUniformLocation("uChunkPos");
             }
 
