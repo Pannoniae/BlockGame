@@ -11,6 +11,7 @@ namespace BlockGame.ui.menu.settings;
 
 public class SettingsMenu : Menu {
     private readonly SettingsScreen parentScreen;
+    private TextBox nameBox;
 
     public SettingsMenu(SettingsScreen parentScreen) {
         this.parentScreen = parentScreen;
@@ -19,6 +20,7 @@ public class SettingsMenu : Menu {
 
     private void initializeButtons() {
         var elements = new List<GUIElement>();
+        var settings = Settings.instance;
 
         var videoSettings = new Button(this, "videoSettings", false, "Video Settings");
         videoSettings.clicked += _ => { parentScreen.switchToMenu(SettingsScreen.VIDEO_SETTINGS_MENU); };
@@ -38,7 +40,25 @@ public class SettingsMenu : Menu {
         elements.Add(controls);
         addElement(controls);
 
+        // playername
+        nameBox = new TextBox(this, "playerName") {
+            input = settings.playerName,
+            maxLength = 32,
+            centred = true,
+        };
+        nameBox.centreContents();
+        nameBox.tooltip = "What's your name?";
+        elements.Add(nameBox);
+        addElement(nameBox);
+
         layoutSettingsTwoCols(elements, new Vector2I(0, 16), videoSettings.GUIbounds.Width);
+    }
+
+    public override void deactivate() {
+        base.deactivate();
+        // save player name when leaving menu
+        Settings.instance.playerName = nameBox.input;
+        Settings.instance.save();
     }
     
     
@@ -47,6 +67,7 @@ public class SettingsMenu : Menu {
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyDown(keyboard, key, scancode);
         if (key == Key.Escape) {
             parentScreen.returnToPrevScreen();
         }

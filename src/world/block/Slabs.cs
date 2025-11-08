@@ -73,9 +73,9 @@ public class Slabs : Block {
         if (hitFace == RawDirection.DOWN) {
             return true; // top slab
         }
-        
+
         // for side faces, use cursor position within the block
-        var raycast = Raycast.raycast(world);
+        var raycast = Raycast.raycast(world, RaycastType.BLOCKS);
         if (raycast.hit) {
             var hitPoint = raycast.point;
             var blockY = y;

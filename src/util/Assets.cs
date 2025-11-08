@@ -10,11 +10,11 @@ public partial class Assets {
 
     }
 
-    public string getPath(string path) {
+    public static string getPath(string path) {
         return "assets/" + path;
     }
 
-    public string load(string path) {
+    public static string load(string path) {
         var fullPath = getPath(path);
         if (!File.Exists(fullPath)) {
             throw new FileNotFoundException("Asset not found: " + fullPath);
@@ -23,7 +23,7 @@ public partial class Assets {
         return File.ReadAllText(fullPath);
     }
 
-    public FileStream open(string path) {
+    public static FileStream open(string path) {
         var fullPath = getPath(path);
 
         //Console.Out.WriteLine(fullPath);

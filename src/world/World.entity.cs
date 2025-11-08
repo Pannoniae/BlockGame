@@ -111,6 +111,10 @@ public partial class World {
         }
     }
 
+    public void getEntitiesInBox(List<Entity> result, AABB box) {
+        getEntitiesInBox(result, box.min.toBlockPos(), box.max.toBlockPos());
+    }
+
     public List<Entity> getEntitiesInBox(Vector3I min, Vector3I max) {
         var result = new List<Entity>();
         getEntitiesInBox(result, min, max);

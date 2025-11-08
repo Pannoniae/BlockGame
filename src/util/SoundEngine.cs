@@ -54,7 +54,7 @@ public class SoundEngine : IDisposable {
     }
 
     private void loadSounds() {
-        var snd = Game.assets.getPath("snd");
+        var snd = Assets.getPath("snd");
         if (!Directory.Exists(snd)) {
             throw new SkillIssueException("where the fuck is the sound dir?");
         }
@@ -91,7 +91,7 @@ public class SoundEngine : IDisposable {
     }
 
     public AudioClip? load(string filepath) {
-        var f = Game.assets.getPath(filepath);
+        var f = Assets.getPath(filepath);
         return doLoad(f);
     }
 
@@ -189,7 +189,7 @@ public class SoundEngine : IDisposable {
     /// </summary>
     public MusicSource playMusic(string filepath) {
 
-        filepath = Game.assets.getPath(filepath);
+        filepath = Assets.getPath(filepath);
 
         if (!File.Exists(filepath)) {
             throw new SoundException($"Music file does not exist: {filepath}");

@@ -54,8 +54,8 @@ public partial class Shader : IDisposable {
             }
         }
 
-        vertexShader = preprocess(vertexShaderPath, Game.assets.load(vertexShaderPath));
-        fragmentShader = preprocess(fragmentShaderPath, Game.assets.load(fragmentShaderPath));
+        vertexShader = preprocess(vertexShaderPath, Assets.load(vertexShaderPath));
+        fragmentShader = preprocess(fragmentShaderPath, Assets.load(fragmentShaderPath));
 
         var vert = load(vertexShader, ShaderType.VertexShader);
         var frag = load(fragmentShader, ShaderType.FragmentShader);
@@ -76,7 +76,7 @@ public partial class Shader : IDisposable {
             }
         }
 
-        vertexShader = preprocess(vertexShaderPath, Game.assets.load(vertexShaderPath));
+        vertexShader = preprocess(vertexShaderPath, Assets.load(vertexShaderPath));
         var vert = load(vertexShader, ShaderType.VertexShader);
         link(vert);
     }
@@ -147,7 +147,7 @@ public partial class Shader : IDisposable {
     public static void initializeIncludeFiles() {
         if (!Game.hasShadingLanguageInclude) return;
         
-        var searchDirectories = new[] { Game.assets.getPath("shaders") };
+        var searchDirectories = new[] { Assets.getPath("shaders") };
         
         foreach (var dir in searchDirectories) {
             if (!Directory.Exists(dir)) continue;

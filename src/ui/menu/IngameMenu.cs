@@ -336,7 +336,7 @@ public class IngameMenu : Menu, IDisposable {
                 // calculate facing
                 var facing = cameraFacing(c.forward());
 
-                var ww = w.getBlockRaw(Raycast.raycast(w, true).block);
+                var ww = w.getBlockRaw(Raycast.raycast(w, RaycastType.BLOCKSLIQUIDS).block);
                 var wwb = ww.getID();
                 var wwm = ww.getMetadata();
                 

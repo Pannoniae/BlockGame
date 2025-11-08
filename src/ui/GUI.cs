@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
+using BlockGame.render.model;
 using BlockGame.util;
 using BlockGame.util.font;
 using BlockGame.world;
@@ -901,6 +902,66 @@ public class GUI {
 
     public void drawBlockUI(Block block, int x, int y, int size, byte metadata = 0, float depth = 0, float shiny = 0) {
         drawBlock(block, x * guiScale, y * guiScale, size, metadata, depth, shiny);
+    }
+
+    /** Render player model in UI at specified position */
+    public void drawPlayerUI(Player player, int x, int y, int width, int height, float rotationX = 0f, float rotationY = 0f) {
+        Game.GL.Enable(EnableCap.DepthTest);
+
+        var mat = Game.graphics.model;
+        mat.push();
+        mat.loadIdentity();
+
+        // translate to screen position
+        mat.translate((x + width / 2f) * guiScale, (y + height) * guiScale, 0);
+
+        // scale to fit the box (player is 28 tall)
+        var sy = (height * guiScale) / 28f;
+        var sx = (width * guiScale) / 12f;
+        var scale = float.Min(sx, sy); // use smaller scale to fit
+        mat.scale(scale, -scale, scale); // negative Y to fix the flip..
+
+        //mat.translate(0, 24, 0);
+        mat.rotate(rotationX, 1, 0, 0); // tilt
+        mat.rotate(180 + rotationY, 0, 1, 0); // face south (towards screen)
+
+        // rotate around the head!
+        //mat.translate(0, -24, 0); // move origin to feet
+
+        var ide = EntityRenderers.ide;
+
+        // set up rendering
+        ide.model(mat);
+        ide.view(Matrix4x4.Identity);
+        ide.proj(ortho);
+        ide.applyMat();
+
+        ide.enableFog(false);
+
+        ide.setColour(Color.White);
+
+        Game.graphics.instantEntityShader.use();
+        Game.graphics.tex(0, Game.textures.human);
+
+        // yeet rotation to 0 because i hate it
+        var ory = player.rotation.Y;
+        var oyb = player.bodyRotation.Y;
+        var oory = player.prevRotation.Y;
+        var ooyb = player.prevBodyRotation.Y;
+        player.bodyRotation.Y = player.rotation.Y;
+        player.prevBodyRotation.Y = player.prevRotation.Y;
+
+        // use the player's renderer with forceRender to bypass the first-person check
+        player.modelRenderer.render(mat, player, 1, 0, forceRender: true);
+
+        // restore rotation
+        player.rotation.Y = ory;
+        player.bodyRotation.Y = oyb;
+        player.prevRotation.Y = oory;
+        player.prevBodyRotation.Y = ooyb;
+
+        mat.pop();
+        Game.GL.Disable(EnableCap.DepthTest);
     }
 
     private void drawItemSprite(Item item, ItemStack stack, float x, float y, float shiny = 0) {

@@ -106,7 +106,7 @@ public class GameScreen : Screen {
         // turn on for stress testing:)
         //Utils.wasteMemory(dt, 200);
         var prevTargetedPos = Game.instance.targetedPos;
-        var col = Raycast.raycast(world);
+        var col = Raycast.raycast(world, RaycastType.ALL);
 
         Game.raycast = col;
         // previous pos
@@ -246,13 +246,14 @@ public class GameScreen : Screen {
     }
 
     public override void onMouseDown(IMouse mouse, MouseButton button) {
+        base.onMouseDown(mouse, button);
 
-        // also return if we're ingame!! so we won't handle bs "clicks"
-        if (Game.world.inMenu || currentMenu != INGAME_MENU || currentMenu == INGAME_MENU) {
+        // don't handle game clicks if in menu
+        if (Game.world.inMenu || currentMenu != INGAME_MENU) {
             return;
         }
 
-        base.onMouseDown(mouse, button);
+        // game click handling would go here
     }
 
     public override void onMouseMove(IMouse mouse, Vector2 pos) {
@@ -304,6 +305,8 @@ public class GameScreen : Screen {
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         base.onKeyDown(keyboard, key, scancode);
 
+        var world = Game.world;
+
         if (key == Key.Escape) {
 
             // if death screen, DO NOT DO IT
@@ -324,12 +327,29 @@ public class GameScreen : Screen {
             }
         }
 
+        // handle E (needs to be before isBlockingInput)
+        if (key == Key.E) {
+            if (world.inMenu) {
+                backToGame();
+                return;
+            }
+            else {
+                if (Game.gamemode == GameMode.survival) {
+                    switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
+                    ((SurvivalInventoryMenu)currentMenu!).setup();
+                } else {
+                    switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
+                    ((CreativeInventoryMenu)currentMenu!).setup();
+                }
+                Game.instance.unlockMouse();
+                return;
+            }
+        }
+
         // if there is a menu open, don't allow any other keypresses from this handler
         if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
             return;
         }
-
-        var world = Game.world;
 
         switch (key) {
             case Key.F3:
@@ -394,24 +414,6 @@ public class GameScreen : Screen {
                 break;
             }
 
-            case Key.E: {
-                if (world.inMenu) {
-                    backToGame();
-                }
-                else {
-                    // open appropriate inventory menu based on gamemode
-                    if (Game.gamemode == GameMode.survival) {
-                        switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
-                        ((SurvivalInventoryMenu)currentMenu!).setup();
-                    } else {
-                        switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
-                        ((CreativeInventoryMenu)currentMenu!).setup();
-                    }
-                    Game.instance.unlockMouse();
-                }
-
-                break;
-            }
             case Key.Space: {
                 if (Game.permanentStopwatch.ElapsedMilliseconds <
                     world.player.spacePress + Constants.flyModeDelay * 1000) {

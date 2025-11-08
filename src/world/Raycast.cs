@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using BlockGame.main;
 using BlockGame.util;
-using BlockGame.util.meth;
 using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
@@ -10,12 +9,13 @@ namespace BlockGame.world;
 
 public class Raycast {
     private static readonly List<AABB> AABBList = [];
+    private static readonly List<Entity> l = [];
 
     /// <summary>
     /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)
     /// </summary>
     /// <returns></returns>
-    public static RayCollision raycast(World world, bool liquids = false) {
+    public static RayCollision raycast(World world, RaycastType type) {
         // raycast from player eye position in player look direction (not camera direction)
         var player = Game.player;
         var basePos = player.position;
@@ -42,7 +42,51 @@ public class Raycast {
             dist += (playerForward * Constants.RAYCASTSTEP).Length();
             currentPos += playerForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();
-            if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z) || (liquids && Block.liquid[world.getBlock(blockPos.X, blockPos.Y, blockPos.Z)])) {
+
+            // if entities enabled, check that first
+            if (type is RaycastType.ALL or RaycastType.ENTITIES) {
+                world.getEntitiesInBox(l, new AABB(currentPos - new Vector3D(0.3, 0.3, 0.3), currentPos + new Vector3D(0.3, 0.3, 0.3)));
+                foreach (var entity in l) {
+                    if (entity == player) {
+                        continue;
+                    }
+
+                    // calculate hit face
+                    RawDirection f;
+                    var toEntity = Vector3D.Normalize(entity.position + new Vector3D(0, (entity.aabb.y1 - entity.aabb.y0) / 2, 0) - raycastPos);
+                    var dx = Vector3D.Dot(toEntity, new Vector3D(1, 0, 0));
+                    var dy = Vector3D.Dot(toEntity, new Vector3D(0, 1, 0));
+                    var dz = Vector3D.Dot(toEntity, new Vector3D(0, 0, 1));
+                    var adx = Math.Abs(dx);
+                    var ady = Math.Abs(dy);
+                    var adz = Math.Abs(dz);
+                    if (adx >= ady && adx >= adz) {
+                        f = dx > 0 ? RawDirection.EAST : RawDirection.WEST;
+                    } else if (ady >= adx && ady >= adz) {
+                        f = dy > 0 ? RawDirection.UP : RawDirection.DOWN;
+                    } else {
+                        f = dz > 0 ? RawDirection.SOUTH : RawDirection.NORTH;
+                    }
+
+                    var entityAABB = entity.aabb;
+                    if (AABB.isCollision(entityAABB, currentPos)) {
+                        return new RayCollision {
+                            type = Result.ENTITY,
+
+                            point = currentPos,
+                            previous = previous,
+                            block = blockPos,
+                            entity = entity,
+                            hit = true,
+                            distance = dist,
+                            face = f
+                        };
+                    }
+                }
+            }
+
+
+            if (world.isSelectableBlock(blockPos.X, blockPos.Y, blockPos.Z) || (type == RaycastType.BLOCKSLIQUIDS && Block.liquid[world.getBlock(blockPos.X, blockPos.Y, blockPos.Z)])) {
                 // we also need to check if it's inside the selection of the block
                 world.getAABBs(AABBList, blockPos.X, blockPos.Y, blockPos.Z);
                 foreach (AABB aabb in AABBList) {
@@ -84,6 +128,7 @@ public class Raycast {
                         }
 
                         var col = new RayCollision {
+                            type = Result.BLOCK,
                             point = currentPos,
                             previous = previous,
                             block = blockPos,
@@ -100,6 +145,7 @@ public class Raycast {
             previous = blockPos;
         }
         return new RayCollision {
+            type = Result.MISS,
             point = default,
             block = default,
             previous = default,
@@ -114,6 +160,11 @@ public class Raycast {
 public struct RayCollision {
 
     /// <summary>
+    /// Type of the raycast hit
+    /// </summary>
+    public Result type;
+
+    /// <summary>
     /// Point of the nearest hit
     /// </summary>
     public Vector3D point;
@@ -124,11 +175,15 @@ public struct RayCollision {
     /// </summary>
     public Vector3I block;
 
-
     /// <summary>
     /// The previous block which was hit
     /// </summary>
     public Vector3I previous;
+
+    /// <summary>
+    /// The entity that was hit (if any)
+    /// </summary>
+    public Entity? entity;
 
     /// <summary>
     /// Which face of the block was hit?
@@ -150,4 +205,17 @@ public struct RayCollision {
     /// </summary>
     public AABB? hitAABB;
 
+}
+
+public enum Result {
+    MISS,
+    BLOCK,
+    ENTITY
+}
+
+public enum RaycastType {
+    ALL,
+    BLOCKS,
+    BLOCKSLIQUIDS,
+    ENTITIES
 }

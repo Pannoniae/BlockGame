@@ -14,10 +14,14 @@ public class PlayerRenderer : EntityRenderer<Player> {
     }
 
     public void render(MatrixStack mat, Entity e, float scale, double interp) {
+        render(mat, e, scale, interp, forceRender: false);
+    }
+
+    public void render(MatrixStack mat, Entity e, float scale, double interp, bool forceRender) {
         if (e is not Player player) return;
 
-        // don't render player in first person
-        if (Game.camera.mode == CameraMode.FirstPerson) {
+        // don't render player in first person (unless actually)
+        if (!forceRender && Game.camera.mode == CameraMode.FirstPerson) {
             return;
         }
 

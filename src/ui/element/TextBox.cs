@@ -10,6 +10,7 @@ public class TextBox : GUIElement {
 
     public string input = "";
     public int maxLength = 32;
+    public bool centred;
     private bool focused => menu.focusedElement == this;
 
     public static readonly Vector2 padding = new(5, 4);
@@ -27,14 +28,17 @@ public class TextBox : GUIElement {
     }
 
     public override void onKeyChar(char c) {
-        if (!focused) return;
+        if (!focused) {
+            return;
+        }
 
-        // allow all printable unicode
         if (!char.IsControl(c)) {
             if (input.Length < maxLength) {
                 input += c;
             }
         }
+
+        // allow all printable unicode
     }
 
     public override void onKeyDown(Key key, int scancode) {
@@ -44,6 +48,16 @@ public class TextBox : GUIElement {
             input = input[..^1];
         } else if (key == Key.Delete) {
             input = "";
+        }
+    }
+
+    public override void onKeyRepeat(Key key, int scancode) {
+        if (!focused) {
+            return;
+        }
+
+        if (key == Key.Backspace && input.Length > 0) {
+            input = input[..^1];
         }
     }
 
@@ -58,13 +72,30 @@ public class TextBox : GUIElement {
         }
 
         // draw text
-        Game.gui.drawString(input, new Vector2(bounds.X, bounds.Y) + padding * GUI.guiScale);
-
+        if (centred) {
+            var textSize = Game.gui.measureString(input);
+            var textX = bounds.X + (bounds.Width - textSize.X) / 2f;
+            Game.gui.drawString(input, new Vector2(textX, bounds.Y + padding.Y * GUI.guiScale));
+        }
+        else {
+            Game.gui.drawString(input, new Vector2(bounds.X, bounds.Y) + padding * GUI.guiScale);
+        }
         // draw cursor if focused (blink every 500ms)
         if (focused && (Game.permanentStopwatch.ElapsedMilliseconds / 500) % 2 == 0) {
-            var cursorX = bounds.X + padding.X * GUI.guiScale + Game.gui.measureString(input).X;
-            var cursorY = bounds.Y + padding.Y * GUI.guiScale;
-            Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), default, new Color(255, 255, 255, 255));
+
+            if (centred) {
+                var textSize = Game.gui.measureString(input);
+                var textX = bounds.X + (bounds.Width - textSize.X) / 2f;
+                var cursorX = textX + textSize.X;
+                var cursorY = bounds.Y + padding.Y * GUI.guiScale;
+                Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), default, new Color(255, 255, 255, 255));
+            }
+            else {
+                var cursorX = bounds.X + padding.X * GUI.guiScale + Game.gui.measureString(input).X;
+                var cursorY = bounds.Y + padding.Y * GUI.guiScale;
+                Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), default,
+                    new Color(255, 255, 255, 255));
+            }
         }
     }
 }

@@ -1,146 +1,142 @@
 <Solution>
     <Configurations>
-        <BuildType Name="Analyzers (WILL BREAK) Debug"/>
-        <BuildType Name="Analyzers (WILL BREAK) Release"/>
-        <BuildType Name="Debug"/>
-        <BuildType Name="Release"/>
+        <BuildType Name="Analyzers (WILL BREAK) Debug" />
+        <BuildType Name="Analyzers (WILL BREAK) Release" />
+        <BuildType Name="Debug" />
+        <BuildType Name="Release" />
     </Configurations>
     <Project Path="Analyzers\Analyzers.Sample\Analyzers.Sample.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
-        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
-        <Build Solution="Debug|*" Project="false"/>
-        <Build Solution="Release|*" Project="false"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
+        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+        <Build Solution="Debug|*" Project="false" />
+        <Build Solution="Release|*" Project="false" />
     </Project>
     <Project Path="Analyzers\Analyzers\Analyzers.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="BlockGameTesting/BlockGameTesting.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/FontStashSharp.Base/FontStashSharp.Base.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/FontStashSharp.Rasterizers.FreeType/FontStashSharp.Rasterizers.FreeType.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
-    </Project>
-    <Project Path="lib/FontStashSharp.Rasterizers.SixLabors.Fonts/FontStashSharp.Rasterizers.SixLabors.Fonts.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/FontStashSharp.Rasterizers.StbTrueTypeSharp/FontStashSharp.Rasterizers.StbTrueTypeSharp.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/FontStashSharp/FontStashSharp.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/Silk.NET.Input.Common/Silk.NET.Input.Common.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/Silk.NET.Input.Extensions/Silk.NET.Input.Extensions.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/Silk.NET.Input.Glfw/Silk.NET.Input.Glfw.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/Silk.NET.Input/Silk.NET.Input.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="lib/TrippyGL.Fonts.Building/TrippyGL.Fonts.Building.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
-        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
     </Project>
     <Project Path="lib/TrippyGL.Fonts.Extensions/TrippyGL.Fonts.Extensions.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
-        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
     </Project>
     <Project Path="lib/TrippyGL.Fonts/TrippyGL.Fonts.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
-        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
     </Project>
     <Project Path="lib/TrippyGL.ImageSharp/TrippyGL.ImageSharp.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
-        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
     </Project>
     <Project Path="lib/TrippyGL/TrippyGL.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
-        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild"/>
-        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU|NoBuild" />
+        <Configuration Solution="Debug|Any CPU" Project="Debug|Any CPU|NoBuild" />
+        <Configuration Solution="Release|Any CPU" Project="Release|Any CPU|NoBuild" />
     </Project>
     <Project Path="lib\Silk.NET.Input.Sdl\Silk.NET.Input.Sdl.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
     <Project Path="lib\Silk.NET.Windowing.Common\Silk.NET.Windowing.Common.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
     <Project Path="lib\Silk.NET.Windowing.Glfw\Silk.NET.Windowing.Glfw.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
     <Project Path="lib\Silk.NET.Windowing.Sdl\Silk.NET.Windowing.Sdl.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
     <Project Path="lib\Silk.NET.Windowing\Silk.NET.Windowing.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
     <Project Path="meth\Meth.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
     <Project Path="NBT2SNBT\NBT2SNBT.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="SNBT2NBT\SNBT2NBT.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="src/Core.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="src/client/Client.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="src/server/Server.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="src/launch/Launcher.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="src/launchsv/LauncherServer.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Release|Any CPU" />
     </Project>
     <Project Path="win10fix\win10fix.csproj">
-        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU"/>
-        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU"/>
+        <Configuration Solution="Analyzers (WILL BREAK) Debug|Any CPU" Project="Debug|Any CPU" />
+        <Configuration Solution="Analyzers (WILL BREAK) Release|Any CPU" Project="Debug|Any CPU" />
     </Project>
 </Solution>

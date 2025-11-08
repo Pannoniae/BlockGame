@@ -27,13 +27,13 @@ public class FontLoader {
 
         // todo hack something together in a better way
         fontSystem = new FontSystem(settings);
-        using var s = Game.assets.open(name);
+        using var s = Assets.open(name);
         fontSystem.AddFont(s);
         fontSystemThin = new FontSystem(settings);
-        using FileStream s2 = Game.assets.open(name2);
+        using FileStream s2 = Assets.open(name2);
         fontSystemThin.AddFont(s2);
         fontSystemThinl = new FontSystem(settings);
-        using FileStream s3 = Game.assets.open(name2);
+        using FileStream s3 = Assets.open(name2);
         fontSystemThinl.AddFont(s3);
     }
 }

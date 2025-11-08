@@ -46,12 +46,14 @@ public class Textures {
         cloudTexture = get("textures/clouds.png");
 
         particleTex = get("textures/particle.png");
-        
+
         blockTexture = new BlockTextureAtlas("textures/blocks.png", 16);
 
         itemTexture = new BTextureAtlas("textures/items.png", 16);
 
-        human = get("textures/entity/character.png");
+        // load player skin from settings
+        human = get(ui.Settings.instance.skinPath);
+
 
         cow = get("textures/entity/cow.png");
         pig = get("textures/entity/pig.png");

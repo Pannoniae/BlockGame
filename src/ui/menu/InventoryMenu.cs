@@ -23,6 +23,10 @@ public abstract class InventoryMenu : Menu {
         return false;
     }
 
+    public override bool isBlockingInput() {
+        return true;
+    }
+
     public override void deactivate() {
         base.deactivate();
 

@@ -33,7 +33,7 @@ public class Spy {
 
         var folders = new[] { "textures", "shaders", "snd", "fonts" };
         spies = folders.Select(folder => {
-            var sourcePath = Path.Combine(projectDir, "src", Game.assets.getPath(folder));
+            var sourcePath = Path.Combine(projectDir, "src", Assets.getPath(folder));
             var watcher = new FileSystemWatcher(sourcePath, "*.*") {
                 IncludeSubdirectories = true,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Size |

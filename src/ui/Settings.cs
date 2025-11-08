@@ -59,6 +59,9 @@ public class Settings {
     public float sfxVolume = 1.0f; // 0.0 to 1.0
     public float musicVolume = 1.0f; // 0.0 to 1.0
 
+    public string playerName = "Test Subject";
+    public string skinPath = "character.png";
+
     public static readonly Settings instance = new();
 
     /// <summary>
@@ -175,6 +178,8 @@ public class Settings {
         tag.addInt("mouseInv", mouseInv);
         tag.addFloat("sfxVolume", sfxVolume);
         tag.addFloat("musicVolume", musicVolume);
+        tag.addString("playerName", playerName);
+        tag.addString("skinPath", skinPath);
 
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
@@ -231,9 +236,15 @@ public class Settings {
             if (tag.has("musicVolume")) {
                 musicVolume = tag.getFloat("musicVolume");
             }
+            if (tag.has("playerName")) {
+                playerName = tag.getString("playerName");
+            }
+            if (tag.has("skinPath")) {
+                skinPath = tag.getString("skinPath");
+            }
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);
-            
+
             // todo load default settings if loading fails
         }
     }

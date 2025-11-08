@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using BlockGame.main;
+using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -34,7 +35,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
         image?.Dispose();
-        using var s = Game.assets.open(path!);
+        using var s = Assets.open(path!);
         image = Image.Load<Rgba32>(s);
         GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
         if (image.DangerousTryGetSinglePixelMemory(out imageData)) {
