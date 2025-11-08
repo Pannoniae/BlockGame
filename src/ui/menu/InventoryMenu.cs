@@ -2,11 +2,10 @@ using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.ui.element;
+using BlockGame.ui.screen;
 using BlockGame.util;
-using BlockGame.world.item.inventory;
 using Molten;
 using Silk.NET.Input;
-using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.ui.menu;
 
@@ -92,6 +91,7 @@ public abstract class InventoryMenu : Menu {
                 if (stack != ItemStack.EMPTY && stack.id != 0) {
                     return stack.getItem().getName(stack);
                 }
+
                 break;
             }
         }
@@ -110,6 +110,15 @@ public abstract class InventoryMenu : Menu {
                 handleSlotClick(slot, button);
                 return;
             }
+        }
+    }
+
+    public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        base.onKeyDown(keyboard, key, scancode);
+
+        // close inventory on inventory key
+        if (key == Key.E) {
+            Game.instance.executeOnMainThread(() => { ((GameScreen)screen).backToGame(); });
         }
     }
 

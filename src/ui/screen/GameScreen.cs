@@ -303,9 +303,36 @@ public class GameScreen : Screen {
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+        var world = Game.world;
+
         base.onKeyDown(keyboard, key, scancode);
 
-        var world = Game.world;
+        // if there is a menu open, don't allow any other keypresses from this handler
+        if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
+            return;
+        }
+
+        // handle E
+        if (key == Key.E) {
+            // not working?
+            if (world.inMenu) {
+                backToGame();
+                return;
+            }
+            else {
+                if (Game.gamemode == GameMode.survival) {
+                    switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
+                    ((SurvivalInventoryMenu)currentMenu!).setup();
+                } else {
+                    switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
+                    ((CreativeInventoryMenu)currentMenu!).setup();
+                }
+                Game.instance.unlockMouse();
+                return;
+            }
+        }
+
+
 
         if (key == Key.Escape) {
 
@@ -327,29 +354,7 @@ public class GameScreen : Screen {
             }
         }
 
-        // handle E (needs to be before isBlockingInput)
-        if (key == Key.E) {
-            if (world.inMenu) {
-                backToGame();
-                return;
-            }
-            else {
-                if (Game.gamemode == GameMode.survival) {
-                    switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
-                    ((SurvivalInventoryMenu)currentMenu!).setup();
-                } else {
-                    switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
-                    ((CreativeInventoryMenu)currentMenu!).setup();
-                }
-                Game.instance.unlockMouse();
-                return;
-            }
-        }
 
-        // if there is a menu open, don't allow any other keypresses from this handler
-        if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
-            return;
-        }
 
         switch (key) {
             case Key.F3:
