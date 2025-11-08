@@ -33,8 +33,19 @@ uniform vec3 uChunkPos;
     #endif
 #endif
 
+
+// on AMD / intel nopersp centroid shits itself (texture sampling goes completely haywire, looks like it's dividing by zero or some shit, different tiles get different, completely nonsensical temporally artifacting texcoords, most likely reading garbage memory..)
+// best we can do is force non-centroid, this will produce the edge "lines" with anisotropic *and* MSAA *and* affine mapping enabled
+// but that's also a very unlikely schizoid combo so let's not worry about that. although AMD plz fix...
+
+// note for debugging: this only happens when the normal and nopersp texcoords are mix()'ed together, it works separately. we're probably enabling some different mode when compiling the shader with that..
+// note: identity mix also works (affine, affine), it needs to be a different value
 #if AFFINE_MAPPING == 1
+#ifdef NV_EXTENSIONS
 noperspective centroid out vec2 affineCoords;
+#else
+noperspective out vec2 affineCoords;
+#endif
 centroid out vec2 texCoords; // perspective-correct
 out vec3 worldPos;
 #else

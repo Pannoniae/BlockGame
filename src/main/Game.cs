@@ -379,7 +379,7 @@ public partial class Game {
             DebugSeverity.DebugSeverityMedium => LogLevel.WARNING,
             DebugSeverity.DebugSeverityLow => LogLevel.INFO,
             DebugSeverity.DebugSeverityNotification => LogLevel.DEBUG,
-            _ => LogLevel.DEBUG
+            _ => LogLevel.INFO
         };
 
         

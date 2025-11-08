@@ -38,7 +38,11 @@ uniform vec3 uChunkPos;
 #endif
 
 #if AFFINE_MAPPING == 1
+#ifdef NV_EXTENSIONS
 noperspective centroid out vec2 affineCoords;
+#else
+noperspective out vec2 affineCoords;
+#endif
 centroid out vec2 texCoords; // perspective-correct
 out vec3 worldPos;
 #else

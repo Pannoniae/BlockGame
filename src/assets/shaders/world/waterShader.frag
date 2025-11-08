@@ -13,7 +13,11 @@ layout(early_fragment_tests) in;
 layout(location = 0) out vec4 colour;
 
 #if AFFINE_MAPPING == 1
+#ifdef NV_EXTENSIONS
 noperspective centroid in vec2 affineCoords;
+#else
+noperspective in vec2 affineCoords;
+#endif
 centroid in vec2 texCoords;
 in vec3 worldPos;
 #else
