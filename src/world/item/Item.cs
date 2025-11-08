@@ -80,6 +80,7 @@ public class Item {
     public static Item LAVA_BUCKET;
     public static Item LIGHTER;
     public static Item SIGN_ITEM;
+    public static Item FLINT;
 
 
     public Item(string name) {
@@ -305,9 +306,13 @@ public class Item {
         LAVA_BUCKET.tex = new UVPair(8, 4);
 
         LIGHTER = register("lighter", new Lighter("Lighter"));
-        LIGHTER.tex = new UVPair(8, 4);
+        LIGHTER.tex = new UVPair(0, 7);
 
         SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
+        SIGN_ITEM.tex = new UVPair(1, 7);
+
+        FLINT = register("flint", new Item("Flint"));
+        FLINT.tex = new UVPair(0, 9);
 
 
         // all blocks are already marked as materials during Block.register() lol

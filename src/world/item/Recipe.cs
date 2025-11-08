@@ -22,6 +22,7 @@ public class Recipe {
     public static Recipe SAND_BRICK;
     public static Recipe CINNABAR_CANDY;
     public static Recipe DIAMOND_CANDY;
+    public static Recipe LIGHTER;
 
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
@@ -96,6 +97,11 @@ public class Recipe {
         DIAMOND_CANDY = register(new ItemStack(Block.DIAMOND_CANDY.item, 1));
         DIAMOND_CANDY.noShape();
         DIAMOND_CANDY.ingredients(Block.CANDY.item, Item.DIAMOND);
+
+        LIGHTER = register(new ItemStack(Item.LIGHTER, 1));
+        LIGHTER.shape(030_010_202, 3);
+        //LIGHTER.ingredients(Item.FLINT, Block.STONE.item, );
+        LIGHTER.ingredients(Item.FLINT, Item.IRON_INGOT, Block.TORCH.item);
 
 
         // tools

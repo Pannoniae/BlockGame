@@ -13,14 +13,14 @@ public class DyeItem : Item {
     }
 
     public override UVPair getTexture(ItemStack stack) {
-        int meta = stack.metadata & 0xF;
+        int meta = stack.metadata & 0x1F;
         return meta < 16
             ?
             // v=1, u=0 to 15
             new UVPair(meta, 1)
             :
-            // v=2, u=0 to 3
-            new UVPair(meta - 16, 2);
+            // v=2, u=0 to 15
+            new UVPair(meta, 2);
     }
 
     /** Find the closest dye colour to target RGB */
