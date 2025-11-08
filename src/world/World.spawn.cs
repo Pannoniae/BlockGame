@@ -6,6 +6,8 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public partial class World {
+    private readonly XUList<int> mobs = [];
+
     /** spawn attempt every N ticks */
     private const int SPAWN_INTERVAL = 60;
 
@@ -20,8 +22,8 @@ public partial class World {
     private const double Y_WEIGHT = 3.0;
 
     /** mob caps */
-    private const int MAX_PASSIVE = 20;
-    private const int MAX_HOSTILE = 70;
+    private const int MAX_PASSIVE = 12;
+    private const int MAX_HOSTILE = 64;
 
     /** min distance from player to spawn */
     private const int MIN_SPAWN_DIST = 16;
@@ -132,7 +134,7 @@ public partial class World {
 
             // pick random mob of this type from registry
             var types = Entities.spawnType;
-            var mobs = new XUList<int>();
+            mobs.Clear();
             for (int i = 0; i < types.Count; i++) {
                 if (types[i] == type) {
                     mobs.Add(i);
@@ -146,8 +148,8 @@ public partial class World {
 
             var mobType = mobs[random.Next(mobs.Count)];
 
-            // determine pack size (passives spawn in groups of 2-4, hostiles spawn solo)
-            int packSize = type == SpawnType.PASSIVE ? random.Next(2, 5) : 1;
+            // determine pack size (passives spawn in groups of 1-3, hostiles spawn solo)
+            int packSize = type == SpawnType.PASSIVE ? random.Next(1, random.Next(1, 4)) : 1;
             int spawned = 0;
 
             // spawn pack around initial position
@@ -202,8 +204,14 @@ public partial class World {
             }
 
             var type = Entities.spawnType[Entities.getID(e.type)];
-            if (type == SpawnType.PASSIVE) passives++;
-            else if (type == SpawnType.HOSTILE) hostiles++;
+            switch (type) {
+                case SpawnType.PASSIVE:
+                    passives++;
+                    break;
+                case SpawnType.HOSTILE:
+                    hostiles++;
+                    break;
+            }
         }
 
         // spawn attempts
