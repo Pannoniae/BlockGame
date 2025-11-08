@@ -44,7 +44,10 @@ public class DyeItem : Item {
         return closest;
     }
 
-    /** Convert RGB (0-255) to HSL (H: 0-360, S: 0-1, L: 0-1) */
+    /** Convert RGB (0-255) to HSL (H: 0-360, S: 0-1, L: 0-1)
+     *
+     * TODO migrate this to Meth class
+     */
     private static (float h, float s, float l) rgbToHsl(float r, float g, float b) {
         r /= 255f;
         g /= 255f;

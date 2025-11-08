@@ -58,6 +58,7 @@ public class MainMenu : Menu {
                 Log.error(e);
             }
         };
+        discord.cycle = true;
 
         var button4 = new Button(this, "quit", true, "Quit");
         button4.setPosition(new Vector2I(0, 70));

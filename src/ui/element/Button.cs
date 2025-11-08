@@ -1,12 +1,12 @@
 using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.menu;
+using BlockGame.util;
 using Molten;
 
 namespace BlockGame.ui.element;
 
 public class Button : GUIElement {
-
     public bool wide;
 
     // todo refactor these to automatically calculate coords
@@ -17,8 +17,10 @@ public class Button : GUIElement {
     public const int WIDE_OFFSET = 80;
 
     public static Rectangle buttonWide = new(0, 0, 192, 16);
-    public static Rectangle hoveredButtonWide = new(0,  16, 192, 16);
+    public static Rectangle hoveredButtonWide = new(0, 16, 192, 16);
     public static Rectangle pressedButtonWide = new(0, 16 * 2, 192, 16);
+
+    public bool cycle;
 
     public bool shadowed = false;
 
@@ -48,12 +50,29 @@ public class Button : GUIElement {
             tex = hovered ? hoveredButton : button;
             tex = pressed ? pressedButton : tex;
         }
-        Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: tex);
+
+        if (!cycle || !hovered && !pressed) {
+            Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: tex);
+        }
+        else {
+            // draw cycling button
+            var time = (Game.permanentStopwatch.ElapsedMilliseconds % 1600);
+            var hue = time / 1600f * 360f;
+            var c = Meth.HSL2RGB(hue, 1f, 0.5f);
+            c.A = 64 / 255f;
+            c.R = c.R * c.A + (1f - c.A);
+            c.G = c.G * c.A + (1f - c.A);
+            c.B = c.B * c.A + (1f - c.A);
+            c.A = 1f;
+
+            Game.gui.draw(Game.gui.guiTexture, new Vector2(bounds.X, bounds.Y), source: tex, color: c.toC());
+        }
+
         var centre = new Vector2(bounds.X + bounds.Width / 2f, bounds.Y + bounds.Height / 2f);
-        
+
         // shift centre down by 1 gui px
         //centre.Y += (int)(GUI.u2s(1) / 2f);
-        
+
         if (text != null) {
             if (shadowed) {
                 Game.gui.drawStringCentredShadowed(text, centre);

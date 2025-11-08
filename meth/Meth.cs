@@ -488,6 +488,81 @@ public static partial class Meth {
             return value ? "y" : "n";
         }
     }
+
+    /** converts HSL to RGB. h in [0,360], s,l in [0,1] */
+    public static Color4 HSL2RGB(float h, float s, float l) {
+        // normalise hue to [0,1]
+        h = (h % 360f) / 360f;
+        if (h < 0f) h += 1f;
+
+        float r, g, b;
+
+        if (s == 0f) {
+            // greyscale
+            r = g = b = l;
+        } else {
+            float c2 = l < 0.5f ? l * (1f + s) : l + s - l * s;
+            float c1 = 2f * l - c2;
+
+            // helper to convert hue to rgb component
+            float hue2rgb(float p, float q, float t) {
+                if (t < 0f) t += 1f;
+                if (t > 1f) t -= 1f;
+                if (t < 1f / 6f) return p + (q - p) * 6f * t;
+                if (t < 1f / 2f) return q;
+                if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6f;
+                return p;
+            }
+
+            r = hue2rgb(c1, c2, h + 1f / 3f);
+            g = hue2rgb(c1, c2, h);
+            b = hue2rgb(c1, c2, h - 1f / 3f);
+        }
+
+        return new Color4(r, g, b, 1f);
+    }
+
+    /** converts RGB to HSL. r,g,b in [0,1]. returns Color4 as (h,s,l,1) with h in [0,360] */
+    public static Color4 RGB2HSL(float r, float g, float b) {
+        float max = MathF.Max(r, MathF.Max(g, b));
+        float min = MathF.Min(r, MathF.Min(g, b));
+        float l = (max + min) / 2f;
+
+        if (max == min) {
+            // grayscale
+            return new Color4(0f, 0f, l, 1f);
+        }
+
+        float d = max - min;
+        float s = l > 0.5f ? d / (2f - max - min) : d / (max + min);
+
+        float h;
+        if (max == r) {
+            h = (g - b) / d + (g < b ? 6f : 0f);
+        } else if (max == g) {
+            h = (b - r) / d + 2f;
+        } else {
+            h = (r - g) / d + 4f;
+        }
+        h *= 60f; // convert to degrees
+
+        return new Color4(h, s, l, 1f);
+    }
+
+    /** converts HSL to RGB. all values in [0,255] */
+    public static Color HSL2RGB(byte h, byte s, byte l) {
+        float hf = h * 360f / 255f;
+        float sf = s / 255f;
+        float lf = l / 255f;
+        var rgb = HSL2RGB(hf, sf, lf);
+        return new Color((byte)(rgb.R * 255f), (byte)(rgb.G * 255f), (byte)(rgb.B * 255f), (byte)255);
+    }
+
+    /** converts RGB to HSL. all values in [0,255]. returns Color as (h,s,l,255) */
+    public static Color RGB2HSL(byte r, byte g, byte b) {
+        var hsl = RGB2HSL(r / 255f, g / 255f, b / 255f);
+        return new Color((byte)(hsl.R * 255f / 360f), (byte)(hsl.G * 255f), (byte)(hsl.B * 255f), (byte)255);
+    }
 }
 
 /** yesn't */
