@@ -1,10 +1,12 @@
 using System.Diagnostics;
+using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.element;
-using BlockGame.util;
 using BlockGame.util.log;
 using Molten;
+using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
+using Button = BlockGame.ui.element.Button;
 
 namespace BlockGame.ui.menu;
 
@@ -72,6 +74,35 @@ public class MainMenu : Menu {
 
     public override void clear(double dt, double interp) {
         Game.GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+    }
+
+    public override void update(double dt) {
+        Game.gui.updateDrag(Game.mousePos, dt);
+        base.update(dt);
+    }
+
+    public override void onMouseDown(IMouse mouse, MouseButton button) {
+        // check if clicking on anything of value first
+        bool c = false;
+        foreach (var element in elements.Values) {
+            if (element.active && element.bounds.Contains((int)Game.mousePos.X, (int)Game.mousePos.Y)) {
+                c = true;
+                break;
+            }
+        }
+
+        if (!c && button == MouseButton.Left) {
+            Game.gui.startDrag(Game.mousePos);
+        }
+
+        base.onMouseDown(mouse, button);
+    }
+
+    public override void onMouseUp(Vector2 pos, MouseButton button) {
+        if (button == MouseButton.Left && Game.gui.draggingBG) {
+            Game.gui.endDrag();
+        }
+        base.onMouseUp(pos, button);
     }
 
     public override void draw() {

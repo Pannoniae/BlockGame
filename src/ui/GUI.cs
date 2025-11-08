@@ -65,6 +65,13 @@ public class GUI {
     /** pixels per second */
     private const float SCROLL_SPEED = 32.0f;
 
+    // dragging state
+    public bool draggingBG = false;
+    public Vector2 dragPos = Vector2.Zero;
+    public Vector2 dragVel = Vector2.Zero;
+    private const float DRAG_DAMPING = 0.97f; // per tick
+    private const float DRAG_EPSILON = 0.1f;
+
     public const int heartX = 224;
     public const int heartY = 0;
     public const int heartNoX = 213;
@@ -126,7 +133,45 @@ public class GUI {
 
     // Call this in your update method
     public void updateBackgroundScroll(double dt) {
-        backgroundScrollOffset.Y += (float)(SCROLL_SPEED * dt); // Slower vertical scroll
+        // always auto-scroll vertically
+        backgroundScrollOffset.Y += (float)(SCROLL_SPEED * dt);
+
+        if (!draggingBG) {
+            // apply velocity with damping
+            backgroundScrollOffset += dragVel * (float)dt;
+
+            // decay velocity exponentially
+            dragVel *= DRAG_DAMPING;
+
+            // stop if velocity too small
+            if (dragVel.LengthSquared() < DRAG_EPSILON * DRAG_EPSILON) {
+                dragVel = Vector2.Zero;
+            }
+        }
+    }
+
+    public void startDrag(Vector2 mousePos) {
+        draggingBG = true;
+        dragPos = mousePos;
+        dragVel = Vector2.Zero;
+    }
+
+    public void updateDrag(Vector2 mousePos, double dt) {
+        if (!draggingBG) return;
+
+        var d = mousePos - dragPos;
+        backgroundScrollOffset.Y -= d.Y;
+
+        if (dt > 0) {
+            dragVel.Y = -d.Y / (float)dt;
+        }
+
+        dragPos = mousePos;
+    }
+
+    public void endDrag() {
+        draggingBG = false;
+        // velocity is already set from last updateDrag
     }
 
 
@@ -334,17 +379,17 @@ public class GUI {
         float blockSize = size * guiScale * 2;
 
         // Calculate visible area in blocks
-        var xCount = (int)Math.Ceiling(Game.width / blockSize) + 2; // +2 for smooth scrolling
+        var xCount = (int)Math.Ceiling(Game.width / blockSize) + 2;
         var yCount = (int)Math.Ceiling(Game.height / blockSize) + 2;
 
         // Get starting world coordinates
-        // Start 3 blocks above the grass layer so grass is visible at top of screen
+        // Start 10 blocks above the grass layer for drag headroom
         int startX = (int)Math.Floor(backgroundScrollOffset.X / blockSize);
         int startY = (int)Math.Floor(backgroundScrollOffset.Y / blockSize) - 3;
 
         // Calculate fractional offset for smooth scrolling
-        float offsetX = backgroundScrollOffset.X % blockSize;
-        float offsetY = backgroundScrollOffset.Y % blockSize;
+        float offsetX = ((backgroundScrollOffset.X % blockSize) + blockSize) % blockSize;
+        float offsetY = ((backgroundScrollOffset.Y % blockSize) + blockSize) % blockSize;
 
         Span<ushort> ores = [
              Block.AMBER_ORE.id,  Block.CINNABAR_ORE.id,  Block.EMERALD_ORE.id,  Block.DIAMOND_ORE.id,  Block.TITANIUM_ORE.id,
