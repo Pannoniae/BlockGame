@@ -99,9 +99,8 @@ public class Recipe {
         DIAMOND_CANDY.ingredients(Block.CANDY.item, Item.DIAMOND);
 
         LIGHTER = register(new ItemStack(Item.LIGHTER, 1));
-        LIGHTER.shape(030_010_202, 3);
-        //LIGHTER.ingredients(Item.FLINT, Block.STONE.item, );
-        LIGHTER.ingredients(Item.FLINT, Item.IRON_INGOT, Block.TORCH.item);
+        LIGHTER.shape(000_010_202, 3);
+        LIGHTER.ingredients(Item.FLINT, Block.STONE.item);
 
 
         // tools
