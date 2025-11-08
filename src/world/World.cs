@@ -477,7 +477,7 @@ public partial class World : IDisposable {
         const float GOLDEN_END = 10f * MathF.PI / 180f;
         const float DAY_START = 30f * MathF.PI / 180f;
 
-        // Smooth blend between sunrise/sunset colors based on time of day
+        // Smooth blend between sunrise/sunset colours based on time of day
         float isSunset;
         switch (angle) {
             // morning
@@ -534,9 +534,7 @@ public partial class World : IDisposable {
     }
 
     public Color getFogColour(int ticks) {
-        var horizon = getHorizonColour(ticks);
-        var gray = new Color(180, 180, 180);
-        return Color.Lerp(horizon, gray, 0.3f);
+        return getHorizonColour(ticks);
     }
 
     public float getSkyDarkenFloat(int ticks) {

@@ -57,7 +57,7 @@ public sealed partial class WorldRenderer {
         var view = Game.camera.getViewMatrix(interp);
 
         // get sky colour for lighting
-        var horizonColour = world.getHorizonColour(world.worldTick);
+        var horizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
 
         // clouds are in the sky!
         var cc = getLightColour(15, 0);
@@ -142,7 +142,7 @@ public sealed partial class WorldRenderer {
         var view = Game.camera.getViewMatrix(interp);
 
         // lighting
-        var horizonColour = world.getHorizonColour(world.worldTick);
+        var horizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
         // clouds are in the sky!
         var cc = getLightColour(15, 0);
 
@@ -553,8 +553,8 @@ public sealed partial class WorldRenderer {
         var proj = Game.camera.getProjectionMatrix();
         var view = Game.camera.getViewMatrix(interp);
 
-        // lighting
-        var horizonColour = world.getHorizonColour(world.worldTick);
+        // lighting with unified fog handling
+        var horizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
         // clouds are in the sky!
         var cc = getLightColour(15, 0);
 

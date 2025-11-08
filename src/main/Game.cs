@@ -159,6 +159,7 @@ public partial class Game {
     private WindowState preFullscreenState;
 
     private readonly string[] titles;
+    private readonly string[] tips;
     private readonly string title;
 
 
@@ -192,6 +193,7 @@ public partial class Game {
 
         // load titles
         titles = File.ReadAllLines("assets/titles.txt");
+        tips = File.ReadAllLines("assets/tips.txt");
 
         var windowOptions = WindowOptions.Default;
         //windowOptions.FramesPerSecond = 6000;
@@ -341,6 +343,10 @@ public partial class Game {
 
     public string getRandomTitle() {
         return titles[clientRandom.Next(titles.Length)];
+    }
+
+    public string getRandomTip() {
+        return tips[clientRandom.Next(tips.Length)];
     }
 
     public static void setTitle(string baseTitle, string splash, string addition) {

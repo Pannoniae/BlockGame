@@ -17,6 +17,7 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     private Text titleText;
     private Text statusText;
+    private Text tipText;
     private ProgressBar progressBar;
     private World world;
 
@@ -41,6 +42,12 @@ public class LoadingMenu : Menu, ProgressUpdater {
         progressBar.setPosition(new Vector2(0, 35));
         progressBar.centreContents();
         addElement(progressBar);
+
+        tipText = Text.createText(this, "tipText", new Vector2I(0, 55), "Tip: " + Game.instance.getRandomTip());
+        tipText.centreContents();
+        tipText.thin = true;
+        tipText.updateLayout();
+        addElement(tipText);
 
         counter = 0;
     }

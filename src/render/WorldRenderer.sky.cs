@@ -12,7 +12,10 @@ namespace BlockGame.render;
 public sealed partial class WorldRenderer {
     private void renderSky(double interp) {
         if (Settings.instance.renderDistance <= 4) {
-            //return;
+            var clearColour = Game.graphics.getHorizonColour(world, world.worldTick);
+            GL.ClearColor(clearColour.R / 255f, clearColour.G / 255f, clearColour.B / 255f, 1f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            return;
         }
 
         GL.Disable(EnableCap.DepthTest);
@@ -28,7 +31,7 @@ public sealed partial class WorldRenderer {
 
         float sunAngle = world.getSunAngle(world.worldTick);
 
-        var horizonColour = world.getHorizonColour(world.worldTick);
+        var horizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
         var skyColour = world.getSkyColour(world.worldTick);
         var underSkyColour = new Color(skyColour.R / 255f * 0.3f, skyColour.G / 255f * 0.3f, skyColour.B / 255f * 0.4f);
 
@@ -69,7 +72,7 @@ public sealed partial class WorldRenderer {
         mat.pop();
 
         idc.enableFog(false);
-        
+
         renderSunnyMoony(sunAngle);
         renderStars(dayPercent);
 
@@ -225,8 +228,6 @@ public sealed partial class WorldRenderer {
             return; // day
         }
 
-        const float starSize = 0.15f;
-
         var idc = Game.graphics.idc;
 
         float continuousTime = dayPercent * 360;
@@ -247,23 +248,61 @@ public sealed partial class WorldRenderer {
             var right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, toCamera));
             var up = Vector3.Cross(toCamera, right);
 
+            var hash = XHash.hash(i);
+            var colourHash = XHash.hash(hash);
+            var sizeHash = XHash.hash(colourHash);
+
+            float ss = (sizeHash & 0xFF) / 255f;
+            // 0.12 to 0.31, heavily biased to small
+            float starSize = 0.12f + ss * ss * ss * 0.19f;
 
             var v1 = starPos + (-right - up) * starSize;
             var v2 = starPos + (right - up) * starSize;
             var v3 = starPos + (right + up) * starSize;
             var v4 = starPos + (-right + up) * starSize;
 
-            // generate deterministic colour per star
-            var hash = XHash.hash(i);
-            var colourHash = XHash.hash(hash); // second hash for colour variation
-            
-            float r = 0.7f + (((colourHash >> 0) & 0xFF) / 255f) * 0.3f;
-            float g = 0.7f + (((colourHash >> 8) & 0xFF) / 255f) * 0.3f;
-            float b = 0.7f + (((colourHash >> 16) & 0xFF) / 255f) * 0.3f;
+            var type = colourHash % 100;
+            float r, g, b;
 
-            // generate flicker
-            // so we do it per star
-            var time = world.worldTick;
+
+            switch (int.Abs(type)) {
+                case < 2:
+                    // MG
+                    r = 1.0f;
+                    g = 0.4f + ((colourHash >> 0) & 0xF) / 100f;
+                    b = 0.9f + ((colourHash >> 4) & 0xF) / 150f;
+                    break;
+                case < 15:
+                    // O/B
+                    r = 0.7f + ((colourHash >> 0) & 0xF) / 60f;
+                    g = 0.8f + ((colourHash >> 4) & 0xF) / 60f;
+                    b = 1.0f;
+                    break;
+                case < 35:
+                    // A
+                    r = 0.9f + ((colourHash >> 0) & 0xF) / 150f;
+                    g = 0.9f + ((colourHash >> 4) & 0xF) / 150f;
+                    b = 1.0f;
+                    break;
+                case < 60:
+                    // F/G
+                    r = 1.0f;
+                    g = 0.9f + ((colourHash >> 0) & 0xF) / 150f;
+                    b = 0.7f + ((colourHash >> 4) & 0xF) / 60f;
+                    break;
+                case < 80:
+                    // K
+                    r = 1.0f;
+                    g = 0.7f + ((colourHash >> 0) & 0xF) / 60f;
+                    b = 0.5f + ((colourHash >> 4) & 0xF) / 90f;
+                    break;
+                default:
+                    // M
+                    r = 1.0f;
+                    g = 0.5f + ((colourHash >> 0) & 0xF) / 90f;
+                    b = 0.3f + ((colourHash >> 4) & 0xF) / 120f;
+                    break;
+            }
 
             const int TOTAL = 5000;
             const int THRESHOLD = 4950;

@@ -566,8 +566,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
         else {
             // use time-based colours
-            var currentFogColour = world.getFogColour(world.worldTick);
-            var currentHorizonColour = world.getHorizonColour(world.worldTick);
+            var currentFogColour = Game.graphics.getFogColour(world, world.worldTick);
+            var currentHorizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
 
             worldShader.setUniform(fogType, 0);
             waterShader.setUniform(waterFogType, 0);
@@ -1032,6 +1032,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         ide.model(mat);
         ide.view(Game.camera.getViewMatrix(interp));
         ide.proj(Game.camera.getProjectionMatrix());
+
+        // use unified horizon colour handling
+        var currentHorizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
+
+        // set up fog
+        ide.setFogType(FogType.Linear);
+        ide.enableFog(true);
+        ide.fogColor(currentHorizonColour.toVec4());
+        ide.fogDistance(Settings.instance.renderDistance * Chunk.CHUNKSIZE * 0.25f, Settings.instance.renderDistance * Chunk.CHUNKSIZE - 16);
 
         // render all entities
         foreach (var entity in world.entities) {

@@ -139,6 +139,39 @@ public class Graphics : IDisposable {
         GL.ClearColor(255, 255, 255, 255);
     }
 
+    /** unified fog colour:tm: */
+    public Color getFogColour(World world, int ticks) {
+        var baseColour = world.getFogColour(ticks);
+        return applyFog(baseColour);
+    }
+
+    /** unified horizon colour:tm: */
+    public Color getHorizonColour(World world, int ticks) {
+        var baseColour = world.getHorizonColour(ticks);
+        return applyFog(baseColour);
+    }
+
+    /** at low render distances, desaturate and lighten fog while keeping hue */
+    private static Color applyFog(Color colour) {
+        var rd = Settings.instance.renderDistance;
+
+        // no mod at 8+ chunks
+        if (rd >= 8) {
+            return colour;
+        }
+
+        float t = (rd - 2) / 6f; // 0 at rd=2, 1 at rd=8
+        t = Math.Clamp(t, 0f, 1f);
+
+        var lb = new Color(
+            (byte)(colour.R * 0.5f + 200 * 0.5f),
+            (byte)(colour.G * 0.5f + 210 * 0.5f),
+            (byte)(colour.B * 0.5f + 220 * 0.5f)
+        );
+
+        return Color.Lerp(lb, colour, t);
+    }
+
     /// <summary>
     /// Sets up depth testing with correct function and clear value based on reverse-Z setting.
     /// </summary>

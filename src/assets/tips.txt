@@ -1,0 +1,8 @@
+Press F5 to cycle through camera modes.
+Two water source blocks can create an infinite water source between them.
+Press E to open your inventory.
+It's faster to break blocks with the correct tool.
+Sometimes, the crafting table requires more...
+The higher you fall, the more damage you take.
+The sun rises in the east and sets in the west.
+Crouching prevents you from falling off edges.
