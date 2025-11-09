@@ -55,6 +55,10 @@ public class Particles {
         var world = this.world;
 
         foreach (var particle in particles) {
+            if (particle.customRender) {
+                continue; // skip, will render in second pass
+            }
+
             if (particle.texture != currentTexture) {
                 // draw everything!
                 drawer.end();
@@ -74,8 +78,8 @@ public class Particles {
             var lr = pos.toVec3() + right * particle.size.X / 2 - up * particle.size.Y / 2;
             var ur = pos.toVec3() + right * particle.size.X / 2 + up * particle.size.Y / 2;
             var l = world.getLightC(blockPos.X, blockPos.Y, blockPos.Z);
-            
-            
+
+
             var tint = WorldRenderer.getLightColour((byte)(l & 0xF), (byte)((l >> 4) & 0xF));
 
             var vert = new BlockVertexTinted(ul.X, ul.Y, ul.Z,
@@ -101,5 +105,12 @@ public class Particles {
         }
 
         drawer.end();
+
+        // second pass: custom render particles
+        foreach (var particle in particles) {
+            if (particle.customRender) {
+                particle.render(interp);
+            }
+        }
     }
 }

@@ -42,6 +42,7 @@ public class SettingsMenu : Menu {
 
         // playername
         nameBox = new TextBox(this, "playerName") {
+            header = "Name: ",
             input = settings.playerName,
             maxLength = 32,
             centred = true,

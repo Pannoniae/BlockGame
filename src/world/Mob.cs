@@ -58,6 +58,7 @@ public class Mob(World world, string type) : Entity(world, type) {
     protected override bool needsFootsteps => true;
     protected override bool needsFallDamage => true;
     protected override bool needsAnimation => true;
+    protected override bool needsDamageNumbers => true;
 
     /**
      * AI behaviour for the mob. Called every tick before physics update.

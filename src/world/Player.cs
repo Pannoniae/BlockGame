@@ -237,7 +237,7 @@ public class Player : Mob, CommandSource {
             var fallSpeed = -prevVelocity.Y;
             if (fallSpeed > SAFE_FALL_SPEED) {
                 var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
-                takeDamage(dmg);
+                base.dmg(dmg);
                 Game.camera.applyImpact(dmg);
             }
         }

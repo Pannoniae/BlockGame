@@ -77,7 +77,9 @@ public class Camera {
     public float renderDeathTilt(double interp) => float.Lerp(prevDeathTilt, deathTilt, (float)interp);
 
     public Vector3D forward() {
-        if (player is not Player p) return Vector3D.UnitZ;
+        if (player is not Player p) {
+            return Vector3D.UnitZ;
+        }
 
         // For front-facing camera, look at the player's eye position
         if (mode == CameraMode.ThirdPersonFront) {

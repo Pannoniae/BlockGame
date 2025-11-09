@@ -87,6 +87,9 @@ public class ChatMenu : Menu {
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         switch (key) {
+            case Key.Escape:
+                Game.instance.executeOnMainThread(closeChat);
+                break;
             case Key.Enter:
                 // if T is pressed but there's a message, don't return
                 // wait a frame so the key doesn't immediately get pressed again

@@ -11,6 +11,7 @@ public class TextBox : GUIElement {
     public string input = "";
     public int maxLength = 32;
     public bool centred;
+    public string? header;
     private bool focused => menu.focusedElement == this;
 
     public static readonly Vector2 padding = new(5, 4);
@@ -73,18 +74,18 @@ public class TextBox : GUIElement {
 
         // draw text
         if (centred) {
-            var textSize = Game.gui.measureString(input);
+            var textSize = Game.gui.measureString(header + input);
             var textX = bounds.X + (bounds.Width - textSize.X) / 2f;
-            Game.gui.drawString(input, new Vector2(textX, bounds.Y + padding.Y * GUI.guiScale));
+            Game.gui.drawString(header + input, new Vector2(textX, bounds.Y + padding.Y * GUI.guiScale));
         }
         else {
-            Game.gui.drawString(input, new Vector2(bounds.X, bounds.Y) + padding * GUI.guiScale);
+            Game.gui.drawString(header + input, new Vector2(bounds.X, bounds.Y) + padding * GUI.guiScale);
         }
         // draw cursor if focused (blink every 500ms)
         if (focused && (Game.permanentStopwatch.ElapsedMilliseconds / 500) % 2 == 0) {
 
             if (centred) {
-                var textSize = Game.gui.measureString(input);
+                var textSize = Game.gui.measureString(header + input);
                 var textX = bounds.X + (bounds.Width - textSize.X) / 2f;
                 var cursorX = textX + textSize.X;
                 var cursorY = bounds.Y + padding.Y * GUI.guiScale;

@@ -1,5 +1,7 @@
 using System.Numerics;
 using BlockGame.GL;
+using BlockGame.main;
+using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -169,6 +171,7 @@ public partial class Entity(World world, string type) : Persistent {
     protected virtual bool needsFootsteps => false;
     protected virtual bool needsFallDamage => false;
     protected virtual bool needsAnimation => false;
+    protected virtual bool needsDamageNumbers => false;
 
     public bool isRiding() => mount != null;
     public bool hasRider() => rider != null;
@@ -443,6 +446,20 @@ public partial class Entity(World world, string type) : Persistent {
 
         hp -= damage;
         iframes = 10;
+
+        // spawn damage number at top of entity with random offset
+        if (needsDamageNumbers) {
+            var rng = Game.clientRandom;
+
+            // random pos, above the entity
+            var h = aabb.y1 - position.Y;
+            var a = new Vector3D(rng.NextSingle() * 0.14f,
+                h + rng.NextSingle() * 0.17f,
+                rng.NextSingle() * 0.14f);
+
+            var np = position + a;
+            world.particles.add(new DamageNumber(world, np, damage));
+        }
     }
 
     protected virtual void die() {
