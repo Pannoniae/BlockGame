@@ -81,6 +81,8 @@ public class Item {
     public static Item LIGHTER;
     public static Item SIGN_ITEM;
     public static Item FLINT;
+    public static Item BOW_WOOD;
+    public static Item ARROW_WOOD;
 
 
     public Item(string name) {
@@ -313,6 +315,12 @@ public class Item {
 
         FLINT = register("flint", new Item("Flint"));
         FLINT.tex = new UVPair(0, 9);
+
+        BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
+        BOW_WOOD.tex = new UVPair(1, 4);
+
+        ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
+        ARROW_WOOD.tex = new UVPair(0, 4);
 
 
         // all blocks are already marked as materials during Block.register() lol
