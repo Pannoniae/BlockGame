@@ -3,6 +3,7 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.entity;

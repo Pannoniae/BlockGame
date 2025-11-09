@@ -1,6 +1,8 @@
 ﻿using System;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
+using BlockGame.world.item;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -24,6 +26,28 @@ public class ItemEntity : Entity {
     /** funny sine wave */
     public float hover;
 
+    public static ItemEntity create(World world, Vector3D pos, Item item, int count) {
+        return create(world, pos, new ItemStack(item, count));
+
+    }
+
+    public static ItemEntity create(World world, Vector3D pos, ItemStack stack) {
+        var itemEntity = new ItemEntity(world) {
+            stack = stack.copy(),
+            position = pos,
+        };
+
+        // add some random velocity
+        var random = Game.clientRandom;
+        itemEntity.velocity = new Vector3D(
+            (random.NextSingle() - 0.5) * 0.3,
+            random.NextSingle() * 0.3 + 0.1,
+            (random.NextSingle() - 0.5) * 0.3
+        );
+
+        return itemEntity;
+    }
+
     public override void update(double dt) {
         base.update(dt);
 
@@ -42,6 +66,7 @@ public class ItemEntity : Entity {
 
         // hover animation
         hover = float.Sin(age * 12f) * 0.15f;
+        velocity.Y += hover;
 
         // update AABB for collision system
         aabb = calcAABB(position);

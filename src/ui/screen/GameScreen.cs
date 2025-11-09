@@ -468,6 +468,9 @@ public class GameScreen : Screen {
                 Log.info("Entity AABBs: " + (entityAABBs ? "ON" : "OFF"));
                 break;
             }
+            case Key.Q:
+                world.player.dropSelectedItem(keyboard.IsKeyPressed(Key.ControlLeft));
+                break;
         }
 
 

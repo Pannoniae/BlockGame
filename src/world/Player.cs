@@ -389,6 +389,14 @@ public class Player : Entity {
         survivalInventory.selected = (ushort)Meth.mod(key - Key.Number1, SurvivalInventory.HOTBAR_SIZE);
     }
 
+    public void dropSelectedItem(bool dropEntireStack) {
+        var selectedStack = survivalInventory.getSelected();
+        if (dropEntireStack)
+            selectedStack.dropAll(world, position);
+        else
+            selectedStack.drop(world, position);
+    }
+
     public void handleMouseInput(float xOffset, float yOffset) {
         // why did the sign get inverted? I DUNNO TBH
         rotation.Y += xOffset; // yaw
@@ -565,18 +573,7 @@ public class Player : Entity {
                 // get block drop and spawn item entity in survival mode
                 var (dropItem, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, 0);
                 if (dropCount > 0) {
-                    var itemEntity = new ItemEntity(world);
-                    itemEntity.stack = new ItemStack(dropItem, dropCount);
-                    itemEntity.position = new Vector3D(pos.X + 0.5, pos.Y + 0.5, pos.Z + 0.5);
-
-                    // add some random velocity
-                    var random = Game.clientRandom;
-                    itemEntity.velocity = new Vector3D(
-                        (random.NextSingle() - 0.5) * 0.3,
-                        random.NextSingle() * 0.3 + 0.1,
-                        (random.NextSingle() - 0.5) * 0.3
-                    );
-
+                    var itemEntity = ItemEntity.create(world,  new Vector3D(pos.X, pos.Y, pos.Z) + new Vector3D(0.5), dropItem, dropCount);
                     // add to world (chunk will add it to its entity list)
                     world.addEntity(itemEntity);
                 }
@@ -769,13 +766,14 @@ public class Player : Entity {
     private void pickup() {
         // get nearby entities
         var entities = new List<Entity>();
-        var min = position.toBlockPos() - new Vector3I(2, 2, 2);
-        var max = position.toBlockPos() + new Vector3I(2, 2, 2);
+        const int PICKUP_RADIUS = 2;
+        var min = position.toBlockPos() - new Vector3I(PICKUP_RADIUS);
+        var max = position.toBlockPos() + new Vector3I(PICKUP_RADIUS);
         world.getEntitiesInBox(entities, min, max);
 
         // try to pickup any ItemEntities
         foreach (var entity in entities) {
-            if (entity is ItemEntity itemEntity) {
+            if (entity is ItemEntity itemEntity && Vector3D.Distance(entity.position, position) <= PICKUP_RADIUS) {
                 itemEntity.pickup(this);
             }
         }

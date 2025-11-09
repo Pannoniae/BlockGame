@@ -1,5 +1,9 @@
+using BlockGame.main;
+using BlockGame.world;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using BlockGame.world.item;
+using Molten.DoublePrecision;
 
 namespace BlockGame.util;
 
@@ -8,7 +12,7 @@ namespace BlockGame.util;
  */
 public class ItemStack {
 
-    public static readonly ItemStack EMPTY = new ItemStack(0, 0);
+    public static readonly ItemStack EMPTY = new(0, 0);
 
     public int id;
     /**
@@ -45,6 +49,30 @@ public class ItemStack {
 
     public bool same(ItemStack stack) {
         return stack != EMPTY && stack.id == id && stack.metadata == metadata;
+    }
+
+    // TODO: doesn't work properly since most comparisons to the empty item stack are done by value
+    public void setToEmpty() {
+        id = 0;
+        metadata = 0;
+        quantity = 0;
+    }
+
+    public void drop(World world, Vector3D position, int amount = 1) {
+        var droppedStack = this.copy();
+        droppedStack.quantity = amount;
+        quantity -= amount;
+
+        var droppedItem = ItemEntity.create(world, position, droppedStack);
+        world.addEntity(droppedItem);
+
+        // Dropped enough to be empty
+        if (quantity <= 0)
+            setToEmpty();
+    }
+
+    public void dropAll(World world, Vector3D position) {
+        drop(world, position, quantity);
     }
 }
 
