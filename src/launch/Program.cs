@@ -18,8 +18,6 @@ public class Program {
     public static void Main(string[] args) {
         // TODO: coremod loading and transformation goes here
 
-        Log.init("launchLogs");
-
         // print whether dll can be loaded
         var a = Assembly.Load("core");
         Log.info($"Loaded core.dll: {a.FullName}");

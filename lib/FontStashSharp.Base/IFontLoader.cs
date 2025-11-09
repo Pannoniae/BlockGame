@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace FontStashSharp.Base
+namespace FontStashSharp.Interfaces
 {
 	public interface IFontSource: IDisposable
 	{
@@ -52,6 +52,13 @@ namespace FontStashSharp.Base
 		/// <param name="fontSize"></param>
 		/// <returns></returns>
 		int GetGlyphKernAdvance(int previousGlyphId, int glyphId, float fontSize);
+
+		/// <summary>
+		/// Required for the HarfBuzz Text Shaper
+		/// </summary>
+		/// <param name="fontSize"></param>
+		/// <returns></returns>
+		float CalculateScaleForTextShaper(float fontSize);
 	}
 
 	/// <summary>

@@ -44,15 +44,13 @@ namespace FontStashSharp
 
 	public partial class StaticSpriteFont : SpriteFontBase
 	{
-		private readonly Int32Map<int> _kernings = new Int32Map<int>();
-
 		public Int32Map<FontGlyph> Glyphs { get; } = new Int32Map<FontGlyph>();
 
 		public int? DefaultCharacter { get; set; }
 
 		public bool UseKernings { get; set; } = true;
 
-		public StaticSpriteFont(int fontSize, int lineHeight): base(fontSize, lineHeight)
+		public StaticSpriteFont(int fontSize, int lineHeight) : base(fontSize, lineHeight)
 		{
 		}
 
@@ -84,26 +82,6 @@ namespace FontStashSharp
 			lineHeight = LineHeight;
 		}
 
-		private static int KerningKey(int codepoint1, int codepoint2)
-		{
-			return ((codepoint1 << 16) | (codepoint1 >> 16)) ^ codepoint2;
-		}
-
-		public int GetGlyphKernAdvance(int codepoint1, int codepoint2)
-		{
-			var key = KerningKey(codepoint1, codepoint2);
-			int result = 0;
-			_kernings.TryGetValue(key, out result);
-
-			return result;
-		}
-
-		public void SetGlyphKernAdvance(int codepoint1, int codepoint2, int value)
-		{
-			var key = KerningKey(codepoint1, codepoint2);
-			_kernings[key] = value;
-		}
-
 		internal override float GetKerning(FontGlyph glyph, FontGlyph prevGlyph)
 		{
 			if (!UseKernings)
@@ -111,7 +89,13 @@ namespace FontStashSharp
 				return 0.0f;
 			}
 
-			return GetGlyphKernAdvance(prevGlyph.Codepoint, glyph.Codepoint);
+			int result;
+			if (prevGlyph.Kernings.TryGetValue(glyph.Id, out result))
+			{
+				return result;
+			}
+
+			return 0.0f;
 		}
 
 		private static BitmapFont LoadBMFont(string data)
@@ -122,9 +106,18 @@ namespace FontStashSharp
 				// xml
 				bmFont.LoadXml(data);
 			}
+			else if (data.StartsWith("info"))
+			{
+				// text
+				bmFont.LoadText(data);
+			}
 			else
 			{
-				bmFont.LoadText(data);
+				// binary (expects base64-encoded string)
+				using (var stream = new MemoryStream(Convert.FromBase64String(data)))
+				{
+					bmFont.LoadBinary(stream);
+				}
 			}
 
 			return bmFont;
@@ -156,7 +149,11 @@ namespace FontStashSharp
 
 			foreach (var kern in bmFont.Kernings)
 			{
-				result.SetGlyphKernAdvance(kern.Key.FirstCharacter, kern.Key.SecondCharacter, kern.Value);
+				FontGlyph glyph;
+				if (result.Glyphs.TryGetValue(kern.Key.FirstCharacter, out glyph))
+				{
+					glyph.Kernings[kern.Key.SecondCharacter] = kern.Value;
+				}
 			}
 
 			return result;

@@ -1,4 +1,4 @@
-﻿using FontStashSharp.Base;
+﻿using FontStashSharp.Interfaces;
 
 namespace FontStashSharp.Rasterizers.FreeType
 {

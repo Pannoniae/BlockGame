@@ -25,6 +25,11 @@ namespace FontStashSharp
 {
 	internal static class Utility
 	{
+		/// <summary>
+		/// The value for which all absolute numbers smaller than are considered equal to zero.
+		/// </summary>
+		public const float ZeroTolerance = 1e-6f;
+
 		public static readonly Point PointZero = new Point(0, 0);
 		public static readonly Vector2 Vector2Zero = new Vector2(0, 0);
 		public static readonly Vector2 DefaultScale = new Vector2(1.0f, 1.0f);
@@ -37,10 +42,37 @@ namespace FontStashSharp
 			[FieldOffset(0)] public int i;
 		}
 
-		public static int FloatAsInt(this float f)
+        /// <param name="f">The first number to compare.</param>
+        extension(float f) {
+            public int FloatAsInt()
+            {
+                return new FloatToInt { f = f }.i;
+            }
+
+            /// <summary>
+            /// Compares two floating point numbers based on an epsilon zero tolerance.
+            /// </summary>
+            /// <param name="right">The second number to compare.</param>
+            /// <param name="epsilon">The epsilon value to use for zero tolerance.</param>
+            /// <returns><c>true</c> if <paramref name="f"/> is within epsilon of <paramref name="right"/>; otherwise, <c>false</c>.</returns>
+            public bool EpsilonEquals(float right, float epsilon = ZeroTolerance)
+            {
+                return Math.Abs(f - right) <= epsilon;
+            }
+
+            public bool IsZero()
+            {
+                return f.EpsilonEquals(0.0f);
+            }
+        }
+
+        public static bool EpsilonEquals(this Vector2 a, Vector2 b, float epsilon = ZeroTolerance)
 		{
-			return new FloatToInt { f = f }.i;
+			return a.X.EpsilonEquals(b.X, epsilon) &&
+				a.Y.EpsilonEquals(b.Y, epsilon);
 		}
+
+
 
 		/// <summary>
 		/// Restricts a value to be within a specified range.

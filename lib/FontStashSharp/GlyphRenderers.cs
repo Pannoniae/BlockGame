@@ -156,9 +156,7 @@ namespace FontStashSharp {
 
                     if (black == 0) {
                         if (col == 0) {
-                            output[ci] =
-                                output[ci + 1] =
-                                    output[ci + 2] = output[ci + 3] = 0; //black transparency to suit stroke
+                            output[ci] = output[ci + 1] = output[ci + 2] = output[ci + 3] = 0; //black transparency to suit stroke
                             continue;
                         }
 

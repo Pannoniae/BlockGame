@@ -18,14 +18,14 @@ namespace FontStashSharp
 	{
 		private class GlyphStorage
 		{
-			public Int32Map<DynamicFontGlyph> Glyphs = new Int32Map<DynamicFontGlyph>();
+			public Int32Map<DynamicFontGlyph> GlyphsByCodepoints = new Int32Map<DynamicFontGlyph>();
+			public Int32Map<DynamicFontGlyph> GlyphsByIds = new Int32Map<DynamicFontGlyph>();
 			public FontSystemEffect Effect;
 			public int EffectAmount;
 		}
 
 		private readonly Int32Map<GlyphStorage> _storages = new Int32Map<GlyphStorage>();
 		private GlyphStorage _lastStorage;
-		private readonly Int32Map<int> Kernings = new Int32Map<int>();
 		private FontMetrics[] IndexedMetrics;
 
 		public FontSystem FontSystem { get; private set; }
@@ -39,13 +39,20 @@ namespace FontStashSharp
 
 			FontSystem = system;
 			RenderFontSizeMultiplicator = FontSystem.FontResolutionFactor;
+
+			_shapedTextCache = new ShapedTextCache(system.ShapedTextCacheSize);
 		}
 
 		internal Int32Map<DynamicFontGlyph> GetGlyphs(FontSystemEffect effect, int effectAmount)
 		{
+			return GetGlyphStorage(effect, effectAmount).GlyphsByCodepoints;
+		}
+
+		private GlyphStorage GetGlyphStorage(FontSystemEffect effect, int effectAmount)
+		{
 			if (_lastStorage != null && _lastStorage.Effect == effect && _lastStorage.EffectAmount == effectAmount)
 			{
-				return _lastStorage.Glyphs;
+				return _lastStorage;
 			}
 
 			var key = (int)effect << 16 | effectAmount;
@@ -64,10 +71,10 @@ namespace FontStashSharp
 
 			_lastStorage = result;
 
-			return result.Glyphs;
+			return result;
 		}
 
-		private DynamicFontGlyph GetGlyphWithoutBitmap(int codepoint, FontSystemEffect effect, int effectAmount)
+		private DynamicFontGlyph GetGlyphByCodepointWithoutBitmap(int codepoint, FontSystemEffect effect, int effectAmount)
 		{
 			if (effect == FontSystemEffect.None)
 			{
@@ -121,12 +128,12 @@ namespace FontStashSharp
 		}
 
 #if MONOGAME || FNA || STRIDE
-		private DynamicFontGlyph GetGlyphInternal(GraphicsDevice device, int codepoint, FontSystemEffect effect, int effectAmount)
+		private DynamicFontGlyph GetGlyphByCodepointInternal(GraphicsDevice device, int codepoint, FontSystemEffect effect, int effectAmount)
 #else
-		private DynamicFontGlyph GetGlyphInternal(ITexture2DManager device, int codepoint, FontSystemEffect effect, int effectAmount)
+		private DynamicFontGlyph GetGlyphByCodepointInternal(ITexture2DManager device, int codepoint, FontSystemEffect effect, int effectAmount)
 #endif
 		{
-			var glyph = GetGlyphWithoutBitmap(codepoint, effect, effectAmount);
+			var glyph = GetGlyphByCodepointWithoutBitmap(codepoint, effect, effectAmount);
 			if (glyph == null)
 			{
 				return null;
@@ -141,15 +148,15 @@ namespace FontStashSharp
 		}
 
 #if MONOGAME || FNA || STRIDE
-		private DynamicFontGlyph GetDynamicGlyph(GraphicsDevice device, int codepoint, FontSystemEffect effect, int effectAmount)
+		private DynamicFontGlyph GetGlyphByCodepoint(GraphicsDevice device, int codepoint, FontSystemEffect effect, int effectAmount)
 #else
-		private DynamicFontGlyph GetDynamicGlyph(ITexture2DManager device, int codepoint, FontSystemEffect effect, int effectAmount)
+		private DynamicFontGlyph GetGlyphByCodepoint(ITexture2DManager device, int codepoint, FontSystemEffect effect, int effectAmount)
 #endif
 		{
-			var result = GetGlyphInternal(device, codepoint, effect, effectAmount);
+			var result = GetGlyphByCodepointInternal(device, codepoint, effect, effectAmount);
 			if (result == null && FontSystem.DefaultCharacter != null)
 			{
-				result = GetGlyphInternal(device, FontSystem.DefaultCharacter.Value, effect, effectAmount);
+				result = GetGlyphByCodepointInternal(device, FontSystem.DefaultCharacter.Value, effect, effectAmount);
 			}
 
 			return result;
@@ -161,7 +168,7 @@ namespace FontStashSharp
 		protected internal override FontGlyph GetGlyph(ITexture2DManager device, int codepoint, FontSystemEffect effect, int effectAmount)
 #endif
 		{
-			return GetDynamicGlyph(device, codepoint, effect, effectAmount);
+			return GetGlyphByCodepoint(device, codepoint, effect, effectAmount);
 		}
 
 		private void GetMetrics(int fontSourceIndex, out FontMetrics result)
@@ -195,7 +202,7 @@ namespace FontStashSharp
 					break;
 				}
 
-				var glyph = GetDynamicGlyph(null, codepoint, effect, effectAmount);
+				var glyph = GetGlyphByCodepoint(null, codepoint, effect, effectAmount);
 				if (glyph == null)
 				{
 					continue;
@@ -211,33 +218,12 @@ namespace FontStashSharp
 			source.Reset();
 		}
 
-		internal override Bounds InternalTextBounds(TextSource source, Vector2 position,
-			float characterSpacing, float lineSpacing, FontSystemEffect effect, int effectAmount)
-		{
-			if (source.IsNull)
-				return Bounds.Empty;
-
-			var result = base.InternalTextBounds(source, position, characterSpacing, lineSpacing, effect, effectAmount);
-			if (effect != FontSystemEffect.None)
-			{
-				result.X2 += effectAmount * 2;
-			}
-
-			return result;
-		}
-
-		private static int GetKerningsKey(int glyph1, int glyph2)
-		{
-			return ((glyph1 << 16) | (glyph1 >> 16)) ^ glyph2;
-		}
-
 		internal override float GetKerning(FontGlyph glyph, FontGlyph prevGlyph)
 		{
 			if (!FontSystem.UseKernings)
 			{
 				return 0.0f;
 			}
-
 
 			var dynamicGlyph = (DynamicFontGlyph)glyph;
 			var dynamicPrevGlyph = (DynamicFontGlyph)prevGlyph;
@@ -246,14 +232,13 @@ namespace FontStashSharp
 				return 0.0f;
 			}
 
-			var key = GetKerningsKey(prevGlyph.Id, dynamicGlyph.Id);
 			var result = 0;
-			if (!Kernings.TryGetValue(key, out result))
+			if (!prevGlyph.Kernings.TryGetValue(glyph.Id, out result))
 			{
 				var fontSource = FontSystem.FontSources[dynamicGlyph.FontSourceIndex];
 				result = fontSource.GetGlyphKernAdvance(prevGlyph.Id, dynamicGlyph.Id, dynamicGlyph.FontSize);
 
-				Kernings[key] = result;
+				prevGlyph.Kernings[glyph.Id] = result;
 			}
 
 			return result;

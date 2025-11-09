@@ -31,7 +31,7 @@ namespace FontStashSharp.RichText
 		{
             ArgumentNullException.ThrowIfNull(renderer);
 
-            _renderer = renderer;
+			_renderer = renderer;
 			_renderer2 = null;
 		}
 
@@ -76,8 +76,7 @@ namespace FontStashSharp.RichText
 			if (_renderer != null)
 			{
 				position = position.Transform(ref _transformation);
-				var dummy = Matrix4x4.Identity;
-				_renderer.Draw(texture, position, ref dummy, sourceRegion, color, _rotation, _scale, _layerDepth);
+				_renderer.Draw(texture, position, sourceRegion, color, _rotation, _scale, _layerDepth);
 			}
 			else
 			{

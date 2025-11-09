@@ -1,5 +1,4 @@
 ﻿using System;
-using FontStashSharp.Base;
 using FontStashSharp.Interfaces;
 
 namespace FontStashSharp
@@ -9,6 +8,7 @@ namespace FontStashSharp
 		private static int _textureWidth = 1024, _textureHeight = 1024;
 		private static float _fontResolutionFactor = 1.0f;
 		private static int _kernelWidth = 0, _kernelHeight = 0;
+		private static int _shapedTextCacheSize = 100;
 
 		public static int TextureWidth
 		{
@@ -42,7 +42,6 @@ namespace FontStashSharp
 			}
 		}
 
-		[Obsolete("Use FontSystemSettings.GlyphRenderer")]
 		public static bool PremultiplyAlpha { get; set; } = true;
 		public static bool DisableAntialiasing { get; set; } = false;
 
@@ -92,6 +91,8 @@ namespace FontStashSharp
 
 		public static bool StbTrueTypeUseOldRasterizer { get; set; }
 
+		public static ITextShaper TextShaper { get; set; }
+
 		/// <summary>
 		/// Font Rasterizer. If set to null then default rasterizer(StbTrueTypeSharp) is used.
 		/// </summary>
@@ -101,5 +102,24 @@ namespace FontStashSharp
 		public static int? DefaultCharacter { get; set; } = ' ';
 
 		public static int TextStyleLineHeight { get; set; } = 2;
+
+		/// <summary>
+		/// Maximum number of entries in the shaped text cache (for HarfBuzz text shaping)
+		/// Higher values use more memory but reduce shaping overhead for repeated text
+		/// Default: 100
+		/// </summary>
+		public static int ShapedTextCacheSize
+		{
+			get => _shapedTextCacheSize;
+			set
+			{
+				if (value < 1)
+				{
+					throw new ArgumentOutOfRangeException(nameof(value), value, "Cache size must be at least 1");
+				}
+
+				_shapedTextCacheSize = value;
+			}
+		}
 	}
 }

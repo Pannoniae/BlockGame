@@ -1,5 +1,6 @@
-﻿using System;
-using FontStashSharp.Base;
+﻿using FontStashSharp.Interfaces;
+using System;
+using System.Drawing;
 using static StbTrueTypeSharp.StbTrueType;
 
 namespace FontStashSharp.Rasterizers.StbTrueTypeSharp
@@ -119,6 +120,11 @@ namespace FontStashSharp.Rasterizers.StbTrueTypeSharp
 			}
 
 			return (int)(result * scale);
+		}
+
+		public float CalculateScaleForTextShaper(float fontSize)
+		{
+			return stbtt_ScaleForPixelHeight(_font, fontSize);
 		}
 	}
 }

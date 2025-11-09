@@ -87,7 +87,7 @@ namespace FontStashSharp
 
 		public int Count => _count - _freeCount;
 
-        public TValue this[int key]
+		public TValue this[int key]
 		{
 			get
 			{

@@ -1,4 +1,3 @@
-using FontStashSharp.Base;
 using FontStashSharp.Interfaces;
 
 namespace BlockGame.util.font;
@@ -60,5 +59,9 @@ public sealed class BDFSource : IFontSource {
 
     public int GetGlyphKernAdvance(int previousGlyphId, int glyphId, float fontSize) {
         return 0;
+    }
+
+    public float CalculateScaleForTextShaper(float fontSize) {
+        return 1.0f;
     }
 }

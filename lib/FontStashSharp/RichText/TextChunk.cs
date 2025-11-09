@@ -32,7 +32,7 @@ namespace FontStashSharp.RichText
 		{
             ArgumentNullException.ThrowIfNull(font);
 
-            Font = font;
+			Font = font;
 			Text = text;
 			_size = size;
 			Count = TextSource.CalculateLength(text);
