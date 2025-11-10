@@ -23,6 +23,10 @@ public class Recipe {
     public static Recipe CINNABAR_CANDY;
     public static Recipe DIAMOND_CANDY;
     public static Recipe LIGHTER;
+    public static Recipe BUCKET;
+    public static Recipe BOW_WOOD;
+    public static Recipe ARROW_WOOD;
+    public static Recipe STRING;
 
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
@@ -98,9 +102,25 @@ public class Recipe {
         DIAMOND_CANDY.noShape();
         DIAMOND_CANDY.ingredients(Block.CANDY.item, Item.DIAMOND);
 
+        BUCKET = register(new ItemStack(Item.BUCKET, 1));
+        BUCKET.shape(000_101_010, 3);
+        BUCKET.ingredients(Item.IRON_INGOT);
+
         LIGHTER = register(new ItemStack(Item.LIGHTER, 1));
         LIGHTER.shape(000_010_202, 3);
         LIGHTER.ingredients(Item.FLINT, Block.STONE.item);
+
+        BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
+        BOW_WOOD.shape(012_102_012, 3);
+        BOW_WOOD.ingredients(Item.STICK, Item.STRING);
+
+        ARROW_WOOD = register(new ItemStack(Item.ARROW_WOOD, 1));
+        ARROW_WOOD.shape(010_020_030, 3);
+        ARROW_WOOD.ingredients(Item.FLINT, Item.STICK, Item.FEATHER);
+
+        STRING = register(new ItemStack(Item.STRING, 9));
+        STRING.noShape();
+        STRING.ingredients(Item.IRON_INGOT);
 
 
         // tools

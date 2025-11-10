@@ -83,6 +83,8 @@ public class Item {
     public static Item FLINT;
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
+    public static Item FEATHER;
+    public static Item STRING;
 
 
     public Item(string name) {
@@ -321,6 +323,12 @@ public class Item {
 
         ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
         ARROW_WOOD.tex = new UVPair(0, 4);
+
+        FEATHER = register("feather", new Item("Feather"));
+        FEATHER.tex = new UVPair(0, 3);
+
+        STRING = register("string", new Item("String"));
+        STRING.tex = new UVPair(1, 3);
 
 
         // all blocks are already marked as materials during Block.register() lol
