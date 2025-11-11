@@ -1,8 +1,7 @@
-﻿using BlockGame.main;
-using BlockGame.world;
+﻿using BlockGame.world;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using BlockGame.world.item;
-using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.util.stuff;
 

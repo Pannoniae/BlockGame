@@ -11,7 +11,7 @@ namespace BlockGame.world.entity;
  * Floating items/blocks on the ground.
  */
 public class ItemEntity : Entity {
-    const double size = 0.25;
+    public const double size = 0.25;
 
     public ItemEntity(World world) : base(world, "item") {
     }
@@ -238,6 +238,13 @@ public class ItemEntity : Entity {
         var pp = player.nomnomPos();
         var distance = (position - pp).Length();
         return distance <= 0.8; // pickup radius
+    }
+
+    public override void dmg(double damage, Vector3D source) {
+        base.dmg(damage, source);
+
+        // revert damage, items are invincible
+        hp = 100;
     }
 
     private void remove() {

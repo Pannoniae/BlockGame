@@ -18,7 +18,7 @@ namespace BlockGame.render.model;
  * status update: nevermind
  **/
 public class Cube {
-    public readonly EntityVertex[] vertices = new EntityVertex[24];
+    public EntityVertex[] vertices = new EntityVertex[24];
 
     private static int v;
 
@@ -42,6 +42,8 @@ public class Cube {
 
     /** Whether to mirror the whole thing horizontally. (i'm lazy and don't wanna define the arms twice) */
     public bool hmirror;
+
+    public bool dside;
 
 
     private Matrix4x4 cmat;
@@ -84,6 +86,11 @@ public class Cube {
 
     public Cube mirror() {
         hmirror = !hmirror;
+        return this;
+    }
+
+    public Cube dsided() {
+        dside = true;
         return this;
     }
 
@@ -149,6 +156,28 @@ public class Cube {
                 (vertices[i + 0], vertices[i + 3]) = (vertices[i + 3], vertices[i + 0]);
                 (vertices[i + 1], vertices[i + 2]) = (vertices[i + 2], vertices[i + 1]);
             }
+        }
+
+        // if dside is set, we also render the backfaces. we need to invert the normals
+        if (dside) {
+            var originalVerts = (EntityVertex[])vertices.Clone();
+            Array.Resize(ref vertices, vertices.Length * 2);
+
+            for (int i = 0; i < originalVerts.Length; i += 4) {
+                var v0f = originalVerts[i + 3];
+                var v1f = originalVerts[i + 2];
+                var v2f = originalVerts[i + 1];
+                var v3f = originalVerts[i + 0];
+
+                var n = v0f.unpackNormal();
+                n = -n;
+                vertices[v++] = new EntityVertex(v0f.x, v0f.y, v0f.z, v0f.u, v0f.v, v0f.r, v0f.g, v0f.b, v0f.a, n.X, n.Y, n.Z);
+                vertices[v++] = new EntityVertex(v1f.x, v1f.y, v1f.z, v1f.u, v1f.v, v1f.r, v1f.g, v1f.b, v1f.a, n.X, n.Y, n.Z);
+                vertices[v++] = new EntityVertex(v2f.x, v2f.y, v2f.z, v2f.u, v2f.v, v2f.r, v2f.g, v2f.b, v2f.a, n.X, n.Y, n.Z);
+                vertices[v++] = new EntityVertex(v3f.x, v3f.y, v3f.z, v3f.u, v3f.v, v3f.r, v3f.g, v3f.b, v3f.a, n.X, n.Y, n.Z);
+            }
+
+
         }
 
         return this;

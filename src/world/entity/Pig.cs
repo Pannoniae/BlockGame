@@ -1,10 +1,9 @@
 ﻿using BlockGame.main;
 using BlockGame.util;
-using BlockGame.world;
 using BlockGame.world.item;
 using Molten.DoublePrecision;
 
-namespace Core.world.entity;
+namespace BlockGame.world.entity;
 
 public class Pig : Mob {
     public Pig(World world) : base(world, "pig") {

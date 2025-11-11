@@ -1,4 +1,4 @@
-namespace BlockGame.world;
+namespace BlockGame.world.entity;
 
 public class Human : Entity {
     public Human(World world) : base(world, "human") {

@@ -1,4 +1,4 @@
-﻿namespace Core.util;
+﻿namespace BlockGame.util.path;
 
 public class PathNode : IEquatable<PathNode> {
     public int x;

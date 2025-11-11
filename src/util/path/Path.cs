@@ -1,7 +1,6 @@
-﻿using BlockGame.util;
-using Molten.DoublePrecision;
+﻿using Molten.DoublePrecision;
 
-namespace Core.util;
+namespace BlockGame.util.path;
 
 public class Path {
     public readonly XList<PathNode> nodes;

@@ -2,7 +2,7 @@
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame.world;
+namespace BlockGame.world.entity;
 
 public partial class Entity {
     /**

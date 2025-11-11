@@ -2,6 +2,7 @@ using System.Collections;
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using Molten;
 using Molten.DoublePrecision;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;

@@ -228,10 +228,10 @@ public class FlameParticle : Particle {
 
 public class DamageNumber : Particle {
     public readonly string text;
-    public readonly float damage;
+    public readonly double damage;
     public float alpha = 1.0f;
 
-    public DamageNumber(World world, Vector3D position, float damage)
+    public DamageNumber(World world, Vector3D position, double damage)
         : base(world, position) {
         this.damage = damage;
         text = ((int)damage).ToString();
@@ -290,14 +290,14 @@ public class DamageNumber : Particle {
         mat.multiply(bb);
 
         // scale text (font is big, world is small)
-        const float scale = 1 / 128f;
+        const float scale = 1 / 64f;
         mat.scale(scale, -scale, scale); // flip text the right side up!
 
 
         var textPos = new Vector2(-textBounds.X / 2, 0);
 
         // rn it scales from 0 to 30, maybe we will need a better formula later
-        float t = Math.Min(damage / 30f, 1f);
+        float t = (float)double.Min(damage / 30f, 1f);
         t *= t;
         float hue = 60f * (1f - t); // 60° -> 0°
 

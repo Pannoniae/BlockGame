@@ -15,6 +15,7 @@
         <Configurations>Debug;Release;Analyzers (WILL BREAK) Release;Analyzers (WILL BREAK) Debug</Configurations>
         <Platforms>AnyCPU</Platforms>
         <OutputPath>..\bin\$(Configuration)\</OutputPath>
+        <RootNamespace>BlockGame</RootNamespace>
     </PropertyGroup>
 
     <!-- Give .PDBs to the poor players/modders -->

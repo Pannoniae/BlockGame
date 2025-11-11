@@ -1,12 +1,12 @@
 ﻿using BlockGame.main;
 using BlockGame.util;
+using BlockGame.util.path;
 using BlockGame.world.block;
-using Core.util;
 using Molten;
 using Molten.DoublePrecision;
-using Path = Core.util.Path;
+using Path = BlockGame.util.path.Path;
 
-namespace BlockGame.world;
+namespace BlockGame.world.entity;
 
 public class Mob(World world, string type) : Entity(world, type) {
 
@@ -38,8 +38,6 @@ public class Mob(World world, string type) : Entity(world, type) {
      * The entity that this mob is targeting (can be null)
      */
     public Entity? target;
-
-    public int dmgTime;
     public int dieTime;
 
 
@@ -59,12 +57,56 @@ public class Mob(World world, string type) : Entity(world, type) {
     protected override bool needsFallDamage => true;
     protected override bool needsAnimation => true;
     protected override bool needsDamageNumbers => true;
+    
+    protected virtual bool hostile => false;
+    protected virtual bool burnInSunlight => false;
+    protected const int sunlightThreshold = 12;
+    protected virtual double eyeHeight => 1.6;
+
+    protected virtual double reach => 3;
+
+    /**
+     * Find nearest player (excluding creative mode players) within radius
+     */
+    protected Player? findNearestPlayer(double radius) {
+        Player? nearest = null;
+        double nearestDist = radius;
+
+        foreach (var entity in world.entities) {
+            if (entity is Player p && Game.gamemode.gameplay) {
+                var dist = Vector3D.Distance(position, p.position);
+                if (dist < nearestDist) {
+                    nearest = p;
+                    nearestDist = dist;
+                }
+            }
+        }
+
+        return nearest;
+    }
+
+    /**
+     * Check if mob should burn in sunlight and apply fire damage
+     */
+    protected void updateSunlightBurn() {
+
+        var checkY = (int)(position.Y + eyeHeight);
+        var skylight = world.getSkyLight((int)position.X, checkY, (int)position.Z);
+
+        if (skylight >= sunlightThreshold && !inLiquid) {
+            fireTicks = Math.Max(fireTicks, 160);
+        }
+    }
 
     /**
      * AI behaviour for the mob. Called every tick before physics update.
      * Override to implement custom AI.
      */
     public virtual void AI(double dt) {
+        if (burnInSunlight) {
+            updateSunlightBurn();
+        }
+
         // randomly jump on ground, continuously jump in water to stay afloat
         if (onGround && Game.random.NextSingle() < JUMP_CHANCE) {
             jumping = true;
@@ -107,7 +149,6 @@ public class Mob(World world, string type) : Entity(world, type) {
                 }
                 target = null;
                 path = null;
-                velocity = Vector3D.Zero;
                 return;
             }
 
@@ -159,11 +200,6 @@ public class Mob(World world, string type) : Entity(world, type) {
             if (wantsToWander && path != null && !path.isFinished()) {
                 followPath(dt);
                 isMoving = true;
-            }
-            else {
-                // idle: zero out horizontal velocity
-                velocity.X = 0;
-                velocity.Z = 0;
             }
         }
 
@@ -241,7 +277,16 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         if (dead) {
+            prevBodyRotation = bodyRotation;
+
             dieTime++;
+
+            // animate death fall (fall to side over a sec)
+            const int deathAnimDuration = 60;
+            float t = Math.Min(dieTime / (float)deathAnimDuration, 1f);
+            // ease out for smoother animation
+            t = 1f - (1f - t) * (1f - t);
+            bodyRotation.Z = -90f * t;
 
             // after 100 ticks of death, despawn
             if (dieTime > 100) {
@@ -276,14 +321,6 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     protected override void updateTimers(double dt) {
         base.updateTimers(dt);
-
-        if (iframes > 0) {
-            iframes--;
-        }
-
-        if (dmgTime > 0) {
-            dmgTime--;
-        }
     }
 
     protected override void prePhysics(double dt) {
@@ -369,6 +406,5 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     public override void dmg(float damage) {
         base.dmg(damage);
-        dmgTime = 30;
     }
 }

@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 using Molten;
 using Molten.DoublePrecision;
 
-namespace BlockGame.world;
+namespace BlockGame.world.entity;
 
 public partial class Entity(World world, string type) : Persistent {
     public const int MAX_SWING_TICKS = 20;
@@ -112,12 +112,15 @@ public partial class Entity(World world, string type) : Persistent {
 
     public double prevTotalTraveled;
 
-    public float hp = 100;
+    public double hp = 100;
     public bool dead = false;
+    public int dmgTime = 0; // ticks remaining on damage tint
 
     public int fireTicks = 0; // ticks remaining on fire
 
     public int iframes;
+    public int invulnerability = 30; // the base
+    public double lastDmg;
 
     public bool flyMode;
     public bool noClip;
@@ -155,8 +158,8 @@ public partial class Entity(World world, string type) : Persistent {
     protected static readonly List<AABB> AABBList = [];
 
     // riding system
-    public Entity? mount; // what this entity is riding
-    public Entity? rider; // who is riding this entity
+    public entity.Entity? mount; // what this entity is riding
+    public entity.Entity? rider; // who is riding this entity
     public BTexture2D tex;
 
     // capability flags - override in subclasses
@@ -225,7 +228,8 @@ public partial class Entity(World world, string type) : Persistent {
         // 5. physics pipeline (unless riding)
         if (needsPhysics && !isRiding()) {
             updatePhysics(dt);
-        } else if (isRiding()) {
+        }
+        else if (isRiding()) {
             syncToMount();
         }
 
@@ -265,7 +269,8 @@ public partial class Entity(World world, string type) : Persistent {
         // collision + movement
         if (needsCollision) {
             collide(dt);
-        } else {
+        }
+        else {
             // no collision, just move
             position += velocity * dt;
         }
@@ -315,6 +320,14 @@ public partial class Entity(World world, string type) : Persistent {
     protected virtual void updateTimers(double dt) {
         updateSwing();
         updateFire(dt);
+
+        if (iframes > 0) {
+            iframes--;
+        }
+
+        if (dmgTime > 0) {
+            dmgTime--;
+        }
     }
 
     /**
@@ -411,11 +424,11 @@ public partial class Entity(World world, string type) : Persistent {
                 }
             }
         }
-        
+
         if (inLava) {
             fireTicks = Math.Max(fireTicks, 300);
         }
-        
+
         if (inFire) {
             fireTicks = Math.Max(fireTicks, 160);
         }
@@ -424,7 +437,7 @@ public partial class Entity(World world, string type) : Persistent {
         if (inFire || inLava) {
             dmg(3);
         }
-        
+
         if (inWater && fireTicks > 0) {
             fireTicks = 0;
         }
@@ -439,13 +452,32 @@ public partial class Entity(World world, string type) : Persistent {
         }
     }
 
+    /** damage without knockback (fall damage, fire, etc) */
     public virtual void dmg(float damage) {
-        if (iframes > 0) {
-            return;
-        }
+        double actualDmg;
 
-        hp -= damage;
-        iframes = 10;
+        if (iframes > 0) {
+            // if new damage is greater, apply difference & reset iframes
+            if (damage > lastDmg) {
+                actualDmg = damage - lastDmg;
+                hp -= actualDmg;
+                lastDmg = damage;
+                iframes = invulnerability;
+                dmgTime = 30;
+            }
+            else {
+                // ignore weaker hits during iframes
+                return;
+            }
+        }
+        else {
+            // no iframes, apply full dmg
+            actualDmg = damage;
+            hp -= damage;
+            lastDmg = damage;
+            iframes = invulnerability;
+            dmgTime = 30;
+        }
 
         // spawn damage number at top of entity with random offset
         if (needsDamageNumbers) {
@@ -458,16 +490,74 @@ public partial class Entity(World world, string type) : Persistent {
                 rng.NextSingle() * 0.14f);
 
             var np = position + a;
-            world.particles.add(new DamageNumber(world, np, damage));
+            world.particles.add(new DamageNumber(world, np, actualDmg));
+        }
+    }
+
+    /** damage with knockback from src */
+    public virtual void dmg(double damage, Vector3D source) {
+        double actualDmg;
+        bool kb = false;
+
+        if (iframes > 0) {
+            if (damage > lastDmg) {
+                actualDmg = damage - lastDmg;
+                hp -= actualDmg;
+                lastDmg = damage;
+                iframes = invulnerability;
+                kb = true;
+                dmgTime = 30;
+            }
+            else {
+                return;
+            }
+        }
+        else {
+            actualDmg = damage;
+            hp -= damage;
+            lastDmg = damage;
+            iframes = invulnerability;
+            kb = true;
+            dmgTime = 30;
+        }
+
+        // apply knockback
+        if (kb) {
+            var dir = Vector3D.Normalize(position - source);
+            var kbStrength = 9 + double.Sqrt(damage * 2);
+
+            // don't yeet into the air *too* much
+            // only apply upward force if on ground
+            const int up = 9;
+
+            if (velocity.Y > 6) {
+                velocity.Y = 6;
+            }
+
+            var force = new Vector3D(dir.X * kbStrength, up, dir.Z * kbStrength);
+            knockback(force);
+
+            if (velocity.Y > 6) {
+                velocity.Y = 6;
+            }
+        }
+
+        // spawn damage number
+        if (needsDamageNumbers) {
+            var rng = Game.clientRandom;
+
+            // random pos, above the entity
+            var h = aabb.y1 - position.Y;
+            var a = new Vector3D(rng.NextSingle() * 0.14f,
+                h + rng.NextSingle() * 0.17f,
+                rng.NextSingle() * 0.14f);
+            var np = position + a;
+            world.particles.add(new DamageNumber(world, np, actualDmg));
         }
     }
 
     protected virtual void die() {
         dead = true;
-        // rotate entity 90 degrees to side
-        // todo animate this in the model instead!
-        rotation.Z = -90f;
-        prevRotation.Z = -90f;
     }
 
     public virtual void onChunkChanged() {
@@ -540,10 +630,55 @@ public partial class Entity(World world, string type) : Persistent {
     // ============ STUBS ============
 
     /**
-     * Entity pushing
+     * Entity pushing - entities push each other apart when overlapping
      */
     protected virtual void handleEntityPushing(double dt) {
-        // TODO implement entity-entity collision
+        // expand AABB slightly to detect nearby entities
+        var expandedAABB = new AABB(
+            aabb.x0 - 0.2, aabb.y0 - 0.1, aabb.z0 - 0.2,
+            aabb.x1 + 0.2, aabb.y1 + 0.1, aabb.z1 + 0.2
+        );
+
+        List<entity.Entity> nearby = [];
+        world.getEntitiesInBox(nearby, expandedAABB);
+
+        foreach (var other in nearby) {
+            // skip self
+            if (other.id == this.id) continue;
+
+            // skip if either is riding/mounted
+            if (isRiding() || hasRider() || other.isRiding() || other.hasRider()) {
+                continue;
+            }
+
+            // check if AABBs actually overlap
+            if (!AABB.isCollision(aabb, other.aabb)) {
+                continue;
+            }
+
+            // calculate push direction (away from each other)
+            var dx = position.X - other.position.X;
+            var dz = position.Z - other.position.Z;
+            var dist = Math.Sqrt(dx * dx + dz * dz);
+
+            // avoid divide by zero if entities at exact same pos
+            if (dist < 0.01) {
+                dx = (Game.clientRandom.NextSingle() - 0.5) * 0.1;
+                dz = (Game.clientRandom.NextSingle() - 0.5) * 0.1;
+                dist = Math.Sqrt(dx * dx + dz * dz);
+            }
+
+            // normalise and apply push
+            var pushStrength = 0.15;
+            var pushX = (dx / dist) * pushStrength;
+            var pushZ = (dz / dist) * pushStrength;
+
+            // push both entities apart
+            velocity.X += pushX;
+            velocity.Z += pushZ;
+            other.velocity.X -= pushX;
+            other.velocity.Z -= pushZ;
+        }
     }
 
     /**
@@ -578,7 +713,7 @@ public partial class Entity(World world, string type) : Persistent {
      */
     protected virtual void updateAnimation(double dt) {
         var vel = velocity.withoutY();
-        aspeed = (float)vel.Length() * 0.3f;
+        aspeed = (float)vel.Length() * 0.6f;
         aspeed = Meth.clamp(aspeed, 0f, 1f);
 
         if (aspeed > 0f) {
@@ -591,7 +726,6 @@ public partial class Entity(World world, string type) : Persistent {
      * Override to customise
      */
     protected virtual void updateFootsteps(double dt) {
-
     }
 
     /**

@@ -1,10 +1,10 @@
-﻿using BlockGame.util;
-using BlockGame.world;
+﻿using BlockGame.world;
 using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
+using Entity = BlockGame.world.entity.Entity;
 
-namespace Core.util;
+namespace BlockGame.util.path;
 
 public static class Pathfinding {
 

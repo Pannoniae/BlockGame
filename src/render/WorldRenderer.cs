@@ -10,12 +10,14 @@ using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
 using SixLabors.ImageSharp.PixelFormats;
 using BoundingFrustum = BlockGame.util.meth.BoundingFrustum;
+using Entity = BlockGame.world.entity.Entity;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 using Shader = BlockGame.GL.Shader;
 
@@ -1354,10 +1356,11 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
     public void drawBlockOutline(double interp) {
-        var pos = Game.instance.targetedPos;
-        if (pos == null) return;
+        if (Game.raycast.type != Result.BLOCK) {
+            return;
+        }
 
-        var targetPos = pos.Value;
+        var targetPos = Game.raycast.block;
         world.getAABBs(AABBList, targetPos.X, targetPos.Y, targetPos.Z);
 
         if (AABBList.Count == 0) {

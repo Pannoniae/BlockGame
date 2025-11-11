@@ -67,7 +67,7 @@ public class HotbarGUI : GUIElement {
         int startY = gui.uiHeight - (BLOCKSIZE + 2) - GUI.heartH - 2;
 
         for (int i = 0; i < MAX_HEARTS; i++) {
-            float heartHP = hp - (i * HP_PER_HEART);
+            double heartHP = hp - (i * HP_PER_HEART);
             int x = startX + i * GUI.heartW;
 
             if (heartHP >= HP_PER_HEART) {
@@ -76,7 +76,7 @@ public class HotbarGUI : GUIElement {
                     new Rectangle(GUI.heartX, GUI.heartY, GUI.heartW, GUI.heartH));
             } else if (heartHP > 0) {
                 // partial heart - split horizontally
-                float fillRatio = heartHP / HP_PER_HEART;
+                double fillRatio = heartHP / HP_PER_HEART;
                 int fillWidth = (int)(GUI.heartW * fillRatio);
 
                 // left side (filled)

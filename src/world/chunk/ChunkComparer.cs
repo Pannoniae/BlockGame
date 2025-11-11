@@ -1,3 +1,4 @@
+using BlockGame.world.entity;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.chunk;

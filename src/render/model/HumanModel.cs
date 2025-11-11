@@ -2,6 +2,7 @@
 using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world;
+using BlockGame.world.entity;
 
 namespace BlockGame.render.model;
 

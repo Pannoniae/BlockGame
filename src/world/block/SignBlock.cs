@@ -5,6 +5,7 @@ using BlockGame.render;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world.block.entity;
+using BlockGame.world.entity;
 using BlockGame.world.item;
 
 namespace BlockGame.world.block;

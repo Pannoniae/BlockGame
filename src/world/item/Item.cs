@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 
 namespace BlockGame.world.item;
 
@@ -393,6 +394,13 @@ public class Item {
         return Block.tier[block.id] == MaterialTier.NONE;
     }
 
+    /**
+     * How much damage does this item deal when used as a weapon?
+     */
+    public virtual double getDamage(ItemStack stack) {
+        return 2; // base damage for non-weapon items (fists, blocks, etc)
+    }
+
     public virtual int getMaxStackSize() => 64;
 
     public override string ToString() {
@@ -439,5 +447,9 @@ public class Tool : Item {
 
         // wrong tool... can only break if block has no tier requirement
         return Block.tier[block.id] == MaterialTier.NONE;
+    }
+
+    public override double getDamage(ItemStack stack) {
+        return 2 + tier.level;
     }
 }

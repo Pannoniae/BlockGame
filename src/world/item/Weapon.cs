@@ -1,3 +1,4 @@
+using BlockGame.util;
 using BlockGame.world.block;
 
 namespace BlockGame.world.item;
@@ -16,4 +17,8 @@ public class Weapon : Item {
     }
 
     public override int getMaxStackSize() => 1;
+
+    public override double getDamage(ItemStack stack) {
+        return damage;
+    }
 }

@@ -3,7 +3,7 @@ using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.entity;
-using Core.world.entity;
+using Entity = BlockGame.world.entity.Entity;
 
 namespace BlockGame.render.model;
 
@@ -45,7 +45,10 @@ public static class EntityRenderers {
     public static void reloadAll() {
         register(Entities.COW, new MobRenderer<Cow>(new CowModel()));
         register(Entities.PIG, new MobRenderer<Pig>(new PigModel(8)));
+        register(Entities.ZOMBIE, new MobRenderer<Zombie>(new ZombieModel()));
+        register(Entities.EYE, new MobRenderer<DemonEye>(new EyeModel()));
         register(Entities.PLAYER, new PlayerRenderer());
         register(Entities.ITEM_ENTITY, new ItemEntityRenderer());
+        register(Entities.FALLING_BLOCK, new FallingBlockEntityRenderer());
     }
 }

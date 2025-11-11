@@ -59,7 +59,7 @@ public class Settings {
     public float sfxVolume = 1.0f; // 0.0 to 1.0
     public float musicVolume = 1.0f; // 0.0 to 1.0
 
-    public string playerName = "Test Subject";
+    public string playerName;
     public string skinPath = "character.png";
 
     public static readonly Settings instance = new();
@@ -147,6 +147,10 @@ public class Settings {
             RendererMode.Plain => RendererMode.Plain,
             _ => RendererMode.Plain
         };
+    }
+
+    public Settings() {
+        playerName = "TestSubject" + Game.clientRandom.Next(0, 9999);
     }
 
     public void save() {

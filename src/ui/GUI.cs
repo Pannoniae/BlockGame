@@ -8,6 +8,7 @@ using BlockGame.util;
 using BlockGame.util.font;
 using BlockGame.world;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using BlockGame.world.item;
 using FontStashSharp;
 using FontStashSharp.RichText;

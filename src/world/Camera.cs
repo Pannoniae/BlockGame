@@ -4,6 +4,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.meth;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world;
@@ -187,7 +188,7 @@ public class Camera {
         calculateFrustum(1);
     }
     
-    public void setPlayer(Entity player) {
+    public void setPlayer(entity.Entity player) {
         this.player = player;
         calculateFrustum(1);
     }

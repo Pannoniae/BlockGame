@@ -1,29 +1,31 @@
-﻿using Molten;
+﻿using BlockGame.world.entity;
+using Molten;
+using Molten.DoublePrecision;
 
 namespace BlockGame.world.block;
 
-#pragma warning disable CS8618
 public class FallingBlock(string name) : Block(name) {
     public override void update(World world, int x, int y, int z) {
-        var ym = y - 1;
-        bool isSupported = true;
-        // if not supported, set flag
-        while (world.getBlock(new Vector3I(x, ym, z)) == 0) {
-            // decrement Y
-            isSupported = false;
-            ym--;
-        }
+        // check if block below is air or non-solid
+        var blockBelow = world.getBlock(new Vector3I(x, y - 1, z));
 
-        if (!isSupported) {
+        if (blockBelow == 0 || !collision[blockBelow]) {
+            // spawn falling block entity
+            var meta = world.getBlockMetadata(x, y, z);
+            var entity = new FallingBlockEntity(world) {
+                blockID = getID(),
+                blockMeta = meta,
+                position = new Vector3D(x + 0.5, y, z + 0.5),
+                velocity = Vector3D.Zero
+            };
+
+            world.addEntity(entity);
+
             world.setBlock(x, y, z, 0);
-            world.setBlock(x, ym + 1, z, getID());
         }
 
-        // if sand above, update
-        if (world.getBlock(new Vector3I(x, y + 1, z)) == getID()) {
-            // if you do an update immediately, it will cause a stack overflow lol
-            world.scheduleBlockUpdate(new Vector3I(x, y + 1, z), 1);
-        }
+        // delayed to prevent stack overflow
+        world.scheduleBlockUpdate(new Vector3I(x, y + 1, z), 1);
     }
 
     public override void scheduledUpdate(World world, int x, int y, int z) {

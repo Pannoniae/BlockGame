@@ -1,6 +1,7 @@
 using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.world.entity;
 using BlockGame.world.item;
 
 namespace BlockGame.world.block;

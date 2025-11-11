@@ -1,6 +1,7 @@
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world;
@@ -68,8 +69,10 @@ public partial class World {
             }
         } else {
             // hostiles need darkness (block light < 4)
+            var skylight = chunk.getSkyLight(x & 15, y, z & 15);
             var blocklight = chunk.getBlockLight(x & 15, y, z & 15);
-            if (blocklight >= 4) {
+            
+            if (skylight > 8 || blocklight >= 4) {
                 return false;
             }
         }

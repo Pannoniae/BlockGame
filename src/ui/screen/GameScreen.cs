@@ -13,6 +13,7 @@ using BlockGame.util.log;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -211,9 +212,7 @@ public class GameScreen : Screen {
         //world.mesh();
         Game.camera.calculateFrustum(interp);
         Game.renderer.render(interp);
-        if (Game.instance.targetedPos.HasValue) {
-            Game.renderer.drawBlockOutline(interp);
-        }
+        Game.renderer.drawBlockOutline(interp);
 
         D.renderTick(interp);
         // update here because in the main menu, we don't have a world

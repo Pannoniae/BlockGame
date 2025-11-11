@@ -5,18 +5,21 @@ namespace BlockGame.world;
 
 /**
  * A matrix transformation stack that can operate in two modes.
- * 
+ * <br/>
+ *
  * <b>Normal mode</b> (default):
  * - Operations are applied in the order you call them
  * - First call = first transformation applied to vertices
  * - Use when converting from matrix multiplication chains: A * B * C becomes stack.A(); stack.B(); stack.C();
- * 
+ * <br/>
+ *
  * <b>Reversed mode</b> (.reversed()):
  * - Operations are applied in reverse order of calls  
  * - First call = last transformation applied to vertices
  * - Matches OpenGL fixed-function matrix stack behaviour
  * - Use when building transformations hierarchically (global transforms first, local transforms last)
- * 
+ * <br/>
+ *
  * Matrix multiplication reminder: In A * B * C, C is applied first to vertices, then B, then A.
  */
 public class MatrixStack {

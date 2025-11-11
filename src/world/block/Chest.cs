@@ -3,6 +3,7 @@ using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.world.block.entity;
+using BlockGame.world.entity;
 using BlockGame.world.item.inventory;
 using Molten;
 

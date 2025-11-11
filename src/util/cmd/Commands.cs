@@ -4,6 +4,7 @@ using BlockGame.ui;
 using BlockGame.util.log;
 using BlockGame.world;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
 using Molten.DoublePrecision;

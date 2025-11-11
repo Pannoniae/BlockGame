@@ -1,5 +1,6 @@
 using BlockGame.util;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using Molten;
 
 namespace BlockGame.world.item;

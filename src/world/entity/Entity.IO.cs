@@ -2,7 +2,7 @@
 using BlockGame.util.xNBT;
 using Molten.DoublePrecision;
 
-namespace BlockGame.world;
+namespace BlockGame.world.entity;
 
 public partial class Entity {
     public void read(NBTCompound data) {

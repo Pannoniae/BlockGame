@@ -7,14 +7,13 @@ using BlockGame.util.cmd;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
-using BlockGame.world.entity;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
 
-namespace BlockGame.world;
+namespace BlockGame.world.entity;
 
 public class Player : Mob, CommandSource {
     public const double height = 1.75;
@@ -179,13 +178,19 @@ public class Player : Mob, CommandSource {
         }
 
         if (dead) {
-            dieTime++;
-            return false; // don't update anything else when dead
-        }
+            // save prev vars for smooth interpolation
+            prevBodyRotation = bodyRotation;
 
-        // prevent movement when dead
-        if (dead) {
             dieTime++;
+
+            // animate death fall (fall to side over a sec)
+            const int deathAnimDuration = 60;
+            float t = Math.Min(dieTime / (float)deathAnimDuration, 1f);
+            // ease out for smoother animation
+            t = 1f - (1f - t) * (1f - t);
+            bodyRotation.Z = -90f * t;
+
+            // prevent movement when dead
             velocity = Vector3D.Zero;
             inputVector = Vector3D.Zero;
             strafeVector = Vector3D.Zero;
@@ -206,6 +211,22 @@ public class Player : Mob, CommandSource {
         handRenderer.prevLower = handRenderer.lower;
     }
 
+    public override void dmg(float damage) {
+        // creative mode players don't take damage
+        if (!Game.gamemode.gameplay) {
+            return;
+        }
+        base.dmg(damage);
+    }
+
+    public override void dmg(double damage, Vector3D source) {
+        // creative mode players don't take damage
+        if (!Game.gamemode.gameplay) {
+            return;
+        }
+        base.dmg(damage, source);
+    }
+
     protected override void updateTimers(double dt) {
         base.updateTimers(dt);
 
@@ -219,11 +240,6 @@ public class Player : Mob, CommandSource {
                     inventory.shiny[i] = 0;
                 }
             }
-        }
-
-        // decay damage time
-        if (dmgTime > 0) {
-            dmgTime--;
         }
     }
 
@@ -451,7 +467,12 @@ public class Player : Mob, CommandSource {
         // repeated action while held (with delay to prevent spam)
         if (Game.inputs.left.pressed()) {
             if (now - lastAirHit > Constants.airHitDelayMs) {
-                breakBlock();
+                // check what we're hitting
+                if (Game.raycast.hit && Game.raycast.type == Result.ENTITY) {
+                    attackEntity();
+                } else {
+                    breakBlock();
+                }
                 //lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
@@ -461,7 +482,12 @@ public class Player : Mob, CommandSource {
         else {
             if (Game.inputs.left.down() &&
                 now - lastAirHit > Constants.airHitDelayMs) {
-                breakBlock();
+                // check what we're hitting
+                if (Game.raycast.hit && Game.raycast.type == Result.ENTITY) {
+                    attackEntity();
+                } else {
+                    breakBlock();
+                }
                 //lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
@@ -471,6 +497,8 @@ public class Player : Mob, CommandSource {
 
         if (Game.inputs.right.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
+
+                // todo entity interact here?
                 placeBlock();
                 lastMouseAction = now;
                 if (!Game.instance.previousPos.HasValue) {
@@ -481,6 +509,8 @@ public class Player : Mob, CommandSource {
         else {
             if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
                 now - lastAirHit > Constants.airHitDelayMs) {
+
+                // todo entity interact here?
                 placeBlock();
                 lastMouseAction = now;
                 if (!Game.instance.previousPos.HasValue) {
@@ -609,9 +639,9 @@ public class Player : Mob, CommandSource {
     }
 
     public void placeBlock() {
-        // first check if player is clicking on an existing block with onUse behavior
-        if (Game.instance.targetedPos.HasValue) {
-            var targetPos = Game.instance.targetedPos.Value;
+        // first check if player is clicking on an existing block with onUse behaviour
+        if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
+            var targetPos = Game.raycast.block;
             var blockId = world.getBlock(targetPos.X, targetPos.Y, targetPos.Z);
             var block = Block.get(blockId);
             if (block != null && block != Block.AIR) {
@@ -622,8 +652,8 @@ public class Player : Mob, CommandSource {
             }
         }
 
-        if (Game.instance.previousPos.HasValue) {
-            var pos = Game.instance.previousPos.Value;
+        if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
+            var pos = Game.raycast.previous;
             var stack = inventory.getSelected();
 
             var metadata = (byte)stack.metadata;
@@ -662,7 +692,7 @@ public class Player : Mob, CommandSource {
 
                 // check entity collisions with the new block's bounding boxes
                 if (!hasCollisions && Block.collision[block.id]) {
-                    var entities = new List<Entity>();
+                    var entities = new List<entity.Entity>();
                     block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
 
                     foreach (var aabb in AABBList) {
@@ -715,14 +745,35 @@ public class Player : Mob, CommandSource {
         }
     }
 
+    public void attackEntity() {
+        var now = Game.permanentStopwatch.ElapsedMilliseconds;
+        var entity = Game.raycast.entity;
+
+        if (entity == null || now - lastMouseAction <= Constants.breakDelayMs) {
+            return;
+        }
+
+        var heldStack = inventory.getStack(inventory.selected);
+        var damage = heldStack.getItem().getDamage(heldStack);
+
+        entity.dmg(damage, position);
+        setSwinging(true);
+        lastMouseAction = now;
+        
+        if (heldStack != ItemStack.EMPTY && Item.durability[heldStack.id] > 0) {
+            var newStack = heldStack.damageItem(1);
+            inventory.setStack(inventory.selected, newStack);
+        }
+    }
+
     public void breakBlock() {
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
 
-        if (Game.instance.targetedPos.HasValue) {
-            var pos = Game.instance.targetedPos.Value;
+        if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
+            var pos = Game.raycast.block;
 
 
-            var prev = Game.instance.previousPos.Value;
+            var prev = Game.raycast.previous;
             // special fire handling lol
             if (world.getBlock(prev.X, prev.Y, prev.Z) == Block.FIRE.id) {
                 world.setBlock(prev.X, prev.Y, prev.Z, 0);
@@ -858,7 +909,7 @@ public class Player : Mob, CommandSource {
 
     private void pickup() {
         // get nearby entities
-        var entities = new List<Entity>();
+        var entities = new List<entity.Entity>();
         var min = position.toBlockPos() - new Vector3I(2, 2, 2);
         var max = position.toBlockPos() + new Vector3I(2, 2, 2);
         world.getEntitiesInBox(entities, min, max);
@@ -971,11 +1022,6 @@ public class Player : Mob, CommandSource {
         world.addEntity(itemEntity);
     }
 
-    public void takeDamage(float damage) {
-        hp -= damage;
-        dmgTime = 30;
-    }
-
     protected override void die() {
         base.die();
 
@@ -1009,8 +1055,9 @@ public class Player : Mob, CommandSource {
     public void respawn() {
         dead = false;
         hp = 100;
-        rotation.Z = 0f;
-        prevRotation.Z = 0f;
+        bodyRotation.Z = 0f;
+        prevBodyRotation.Z = 0f;
+        dieTime = 0;
 
         fireTicks = 0;
 

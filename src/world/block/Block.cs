@@ -7,6 +7,7 @@ using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.stuff;
+using BlockGame.world.entity;
 using BlockGame.world.item;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
@@ -291,7 +292,7 @@ public class Block {
         COBBLESTONE.setModel(BlockModel.makeCube(COBBLESTONE));
         COBBLESTONE.material(Material.STONE);
 
-        GRAVEL = register("gravel", new Block("Gravel"));
+        GRAVEL = register("gravel", new GravelBlock("Gravel"));
         GRAVEL.setTex(cubeUVs(7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
         GRAVEL.material(Material.EARTH);
@@ -1077,10 +1078,10 @@ public class Block {
     public virtual void renderUpdate(World world, int x, int y, int z) {
     }
 
-    public virtual void interact(World world, int x, int y, int z, Entity e) {
+    public virtual void interact(World world, int x, int y, int z, world.entity.Entity e) {
     }
 
-    public virtual Vector3D push(World world, int x, int y, int z, Entity e) {
+    public virtual Vector3D push(World world, int x, int y, int z, world.entity.Entity e) {
         return Vector3D.Zero;
     }
 
@@ -1121,7 +1122,7 @@ public class Block {
     /**
      * Called when an entity walks on the block (only if the block has collision).
      */
-    public virtual void onStepped(World world, int x, int y, int z, Entity entity) {
+    public virtual void onStepped(World world, int x, int y, int z, world.entity.Entity entity) {
     }
 
     // todo add biome tinting, later?
@@ -1449,6 +1450,14 @@ public class GrassBlock(string name) : Block(name) {
                 }
             }
         }
+    }
+}
+
+public class GravelBlock(string name) : FallingBlock(name) {
+    public override (Item, byte, int) getDrop(World world, int x, int y, int z, byte metadata) {
+        return world.random.Next(12) == 0
+            ? (Item.FLINT, (byte)0, 1)
+            : (getItem(), 0, 1);
     }
 }
 

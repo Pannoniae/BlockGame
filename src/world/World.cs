@@ -7,6 +7,7 @@ using BlockGame.util.log;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
 using Molten;

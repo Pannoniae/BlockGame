@@ -36,7 +36,7 @@ public struct EntityVertex {
      *
      * All are normalised to the range of -1.0f to 1.0f.
      */
-    private static uint pack(float x, float y, float z, float w) {
+    public static uint pack(float x, float y, float z, float w) {
 
         // convert to integer ranges: 10-bit [-512,511], 2-bit [-2,1]
         int px = (int)(x * 511.0f);
@@ -163,7 +163,7 @@ public struct EntityVertex {
     }
 
     /** unpack normal from 10/10/10/2 format */
-    private Vector3 unpackNormal() {
+    public Vector3 unpackNormal() {
         int px = (int)(normal & 0x3FF);
         int py = (int)((normal >> 10) & 0x3FF);
         int pz = (int)((normal >> 20) & 0x3FF);

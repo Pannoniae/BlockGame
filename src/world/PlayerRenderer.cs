@@ -1,23 +1,24 @@
 using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.util;
+using BlockGame.world.entity;
 using Molten;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.world;
 
-public class PlayerRenderer : EntityRenderer<Player> {
-    public HumanModel model;
+public class PlayerRenderer : MobRenderer<Player> {
+    public new HumanModel model => (HumanModel)base.model;
 
     public PlayerRenderer() {
-        model = new HumanModel();
+        base.model = new HumanModel();
     }
 
-    public void render(MatrixStack mat, Entity e, float scale, double interp) {
+    public void render(MatrixStack mat, entity.Entity e, float scale, double interp) {
         render(mat, e, scale, interp, forceRender: false);
     }
 
-    public void render(MatrixStack mat, Entity e, float scale, double interp, bool forceRender) {
+    public void render(MatrixStack mat, entity.Entity e, float scale, double interp, bool forceRender) {
         if (e is not Player player) return;
 
         // don't render player in first person (unless actually)
@@ -30,27 +31,7 @@ public class PlayerRenderer : EntityRenderer<Player> {
 
         model.sneaking = player.sneaking;
 
-        // interpolate animation state
-        var apos = float.Lerp(player.papos, player.apos, (float)interp);
-        var aspeed = float.Lerp(player.paspeed, player.aspeed, (float)interp);
-
-        var ide = EntityRenderers.ide;
-
-        // render the human model with animation
-        ide.begin(PrimitiveType.Quads);
-        model.render(mat, player, apos, aspeed, scale, interp);
-        ide.end();
-
-        // render damage tint overlay if player is taking damage
-        if (player.dmgTime > 0) {
-            const float t = 1;
-            var tint = new Color((byte)255, (byte)0, (byte)0, (byte)(192 * t));
-            ide.setColour(tint);
-            ide.begin(PrimitiveType.Quads);
-            model.render(mat, player, apos, aspeed, scale, interp);
-            ide.end();
-            ide.setColour(Color.White);
-        }
+        base.render(mat, player, scale, interp);
 
         // Render hand item in third person!
         // Position at right arm location and render item

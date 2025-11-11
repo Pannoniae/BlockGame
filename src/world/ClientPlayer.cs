@@ -1,4 +1,6 @@
-﻿namespace BlockGame.world;
+﻿using BlockGame.world.entity;
+
+namespace BlockGame.world;
 
 public class ClientPlayer : Player {
 

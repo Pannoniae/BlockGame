@@ -8,6 +8,7 @@ using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using Molten;
 using Molten.DoublePrecision;
 

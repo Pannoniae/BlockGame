@@ -32,6 +32,8 @@ public class Textures {
     public readonly BTexture2D human;
     public readonly BTexture2D cow;
     public readonly BTexture2D pig;
+    public readonly BTexture2D zombie;
+    public readonly BTexture2D eye;
 
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
@@ -54,9 +56,10 @@ public class Textures {
         // load player skin from settings
         human = get(ui.Settings.instance.skinPath);
 
-
         cow = get("textures/entity/cow.png");
         pig = get("textures/entity/pig.png");
+        zombie = get("textures/entity/zombie.png");
+        eye = get("textures/entity/eye.png");
 
 
         reloadAll();

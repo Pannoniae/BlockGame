@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using BlockGame.world;
+using BlockGame.world.entity;
 
 namespace BlockGame.render.model;
 

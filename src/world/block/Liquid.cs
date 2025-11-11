@@ -2,6 +2,7 @@ using System.Numerics;
 using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.world.entity;
 using Molten;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 
