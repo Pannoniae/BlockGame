@@ -281,7 +281,7 @@ public class Block {
         renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
 
-        STONE = register("stone", new Block("Stone"));
+        STONE = register("stone", new StoneBlock("Stone"));
         STONE.setTex(cubeUVs(5, 0));
         renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
@@ -1458,6 +1458,13 @@ public class GravelBlock(string name) : FallingBlock(name) {
         return world.random.Next(12) == 0
             ? (Item.FLINT, (byte)0, 1)
             : (getItem(), 0, 1);
+    }
+}
+
+public class StoneBlock(string name) : Block(name) {
+    public override (Item, byte, int) getDrop(World world, int x, int y, int z, byte metadata) {
+        // stone drops cobblestone
+        return (COBBLESTONE.getItem(), 0, 1);
     }
 }
 

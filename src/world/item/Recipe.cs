@@ -15,8 +15,8 @@ public class Recipe {
     public static Recipe OAK_CHEST;
     public static Recipe MAHOGANY_CHEST;
     public static Recipe GOLD_CANDY;
+    public static Recipe BRICK_FURNACE;
     public static Recipe FURNACE;
-    public static Recipe STONE_FURNACE;
     public static Recipe BRICK_BLOCK;
     public static Recipe STONE_BRICK;
     public static Recipe SAND_BRICK;
@@ -74,13 +74,13 @@ public class Recipe {
         GOLD_CANDY.noShape();
         GOLD_CANDY.ingredients(Block.CANDY.item, Item.GOLD_INGOT);
 
-        FURNACE = register(new ItemStack(Block.FURNACE.item, 1));
-        FURNACE.shape(111_121_232, 3);
-        FURNACE.ingredients(Item.BRICK, Item.IRON_INGOT, Block.TORCH.item);
+        BRICK_FURNACE = register(new ItemStack(Block.BRICK_FURNACE.item, 1));
+        BRICK_FURNACE.shape(111_121_232, 3);
+        BRICK_FURNACE.ingredients(Item.BRICK, Item.IRON_INGOT, Block.TORCH.item);
 
-        STONE_FURNACE = register(new ItemStack(Block.FURNACE.item, 1));
-        STONE_FURNACE.shape(111_111_101, 3);
-        STONE_FURNACE.ingredients(Block.STONE.item);
+        FURNACE = register(new ItemStack(Block.FURNACE.item, 1));
+        FURNACE.shape(111_101_111, 3);
+        FURNACE.ingredients(Block.COBBLESTONE.item);
 
         BRICK_BLOCK = register(new ItemStack(Block.BRICK_BLOCK.item, 1));
         BRICK_BLOCK.shape(111_111_111, 3);
