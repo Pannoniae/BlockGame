@@ -54,6 +54,9 @@ public class ItemEntity : Entity {
     protected override void updatePhysics(double dt) {
         // custom item physics - lighter gravity, terminal velocity, player attraction
 
+        // block interactions (lava/fire damage, liquid push, etc)
+        interactBlock(dt);
+
         // apply gravity
         if (!onGround) {
             velocity.Y -= 10 * dt;
@@ -241,10 +244,13 @@ public class ItemEntity : Entity {
     }
 
     public override void dmg(double damage, Vector3D source) {
+        // items take knockback but no damage from attacks
         base.dmg(damage, source);
-
-        // revert damage, items are invincible
         hp = 100;
+    }
+
+    protected override void die() {
+        remove();
     }
 
     private void remove() {

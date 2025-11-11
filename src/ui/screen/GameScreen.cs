@@ -1067,7 +1067,7 @@ public class UpdateMemoryThread(GameScreen screen) {
             updateMemoryMethod();
 
             // we're also responsible for periodically trimming SharedBlockVAO! yes this is fucked but shhhh
-            if (needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 512)) {
+            if (needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 1024)) {
                 // if 60s has passed AND we have pending ones, trim
                 MemoryUtils.cleanGC();
                 SharedBlockVAO.c = 0;

@@ -11,8 +11,8 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     public static readonly VariableArrayPool<uint> arrayPoolU = new();
 
     private uint[] vertices;
-    private ushort[] blockRefs;
     private byte[]? indices;
+    private ushort[] blockRefs;
     private int count;
     private int vertCount;
     private int vertCapacity;
@@ -20,8 +20,8 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     
     // light vertices
     private byte[] lightVertices;
-    private ushort[] lightRefs;
     private byte[]? lightIndices;
+    private ushort[] lightRefs;
     private int lightCount;
     private int lightVertCount;
     private int lightVertCapacity;
