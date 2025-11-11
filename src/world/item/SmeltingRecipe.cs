@@ -13,6 +13,8 @@ public class SmeltingRecipe {
     public static SmeltingRecipe STEAK;
     public static SmeltingRecipe COOKED_PORKCHOP;
     public static SmeltingRecipe GLASS;
+    public static SmeltingRecipe COAL;
+    public static SmeltingRecipe STONE;
 
     private static readonly List<SmeltingRecipe> recipes = [];
 
@@ -31,6 +33,7 @@ public class SmeltingRecipe {
         COPPER_INGOT = register(Block.COPPER_ORE.item, new ItemStack(Item.COPPER_INGOT, 1), 480);
         TIN_INGOT = register(Block.TIN_ORE.item, new ItemStack(Item.TIN_INGOT, 1), 480);
         SILVER_INGOT = register(Block.SILVER_ORE.item, new ItemStack(Item.SILVER_INGOT, 1), 480);
+        COAL = register(Block.COAL_ORE.item, new ItemStack(Item.COAL, 1), 480);
 
         // clay -> brick (5 seconds = 300 ticks)
         BRICK = register(Item.CLAY, new ItemStack(Item.BRICK, 1), 300);
@@ -42,7 +45,10 @@ public class SmeltingRecipe {
         COOKED_PORKCHOP = register(Item.PORKCHOP, new ItemStack(Item.COOKED_PORKCHOP, 1), 360);
 
         // sand -> glass (6 seconds = 360 ticks)
-        GLASS = register(Block.SAND.item, new ItemStack(Block.GLASS.item, 1), 360);
+        GLASS = register(Block.SAND.item, new ItemStack(Block.GLASS.item, 1), 240);
+
+        //cobblestone -> stone
+        STONE = register(Block.COBBLESTONE.item, new ItemStack(Block.STONE.item, 1), 240);
     }
 
     private static SmeltingRecipe register(Item input, ItemStack output, int smeltTime) {

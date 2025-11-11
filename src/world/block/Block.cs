@@ -1341,10 +1341,10 @@ public class Block {
             return true;
         }
 
-        // can be placed into
+        var targetBlock = world.getBlock(x, y, z);
 
-        // otherwise, can't place if there's anything there lol
-        return world.getBlock(x, y, z) == 0;
+        // can place into air or water
+        return targetBlock == 0 || targetBlock == WATER.id;
     }
 
     /**

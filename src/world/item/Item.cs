@@ -353,6 +353,8 @@ public class Item {
         Registry.ITEMS.fuelValue[Block.MAPLE_LOG.item.id] = 1800;
         Registry.ITEMS.fuelValue[LAVA_BUCKET.id] = 12000; // 200 seconds (lava bucket op)
         Registry.ITEMS.fuelValue[SIGN_ITEM.id] = 300; // 5 seconds
+        Registry.ITEMS.fuelValue[DOOR.id] = 1200; // 20 seconds
+        Registry.ITEMS.fuelValue[MAHOGANY_DOOR.id] = 1200; // 20 seconds
     }
 
     public virtual UVPair getTexture(ItemStack stack) {
