@@ -44,7 +44,7 @@ public class SmeltingRecipe {
         // porkchop -> cooked porkchop (6 seconds = 360 ticks)
         COOKED_PORKCHOP = register(Item.PORKCHOP, new ItemStack(Item.COOKED_PORKCHOP, 1), 360);
 
-        // sand -> glass (6 seconds = 360 ticks)
+        // sand -> glass (4 seconds = 240 ticks)
         GLASS = register(Block.SAND.item, new ItemStack(Block.GLASS.item, 1), 240);
 
         //cobblestone -> stone

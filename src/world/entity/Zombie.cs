@@ -13,6 +13,7 @@ public class Zombie : Mob {
     private int attackTime;
 
     protected override bool burnInSunlight => true;
+    protected override bool hostile => true;
 
     public Zombie(World world) : base(world, "zombie") {
         tex = Game.textures.zombie;

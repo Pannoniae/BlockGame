@@ -45,6 +45,8 @@ public class Mob(World world, string type) : Entity(world, type) {
     private double lastFootstepDistance = 0;
     private bool wasInAir = false;
     private bool wantsToWander = false;
+    protected int spawnTicks = 0; // ticks since spawn, used to delay burn check
+    private int fireDamageTicks = 0; // counter for fire damage timing
 
     public virtual bool canSpawn => true;
     public virtual bool canDespawn => true;
@@ -89,12 +91,23 @@ public class Mob(World world, string type) : Entity(world, type) {
      * Check if mob should burn in sunlight and apply fire damage
      */
     protected void updateSunlightBurn() {
+        // skip burn check for first 10 ticks after spawn to avoid false positives
+        if (spawnTicks < 10) {
+            return;
+        }
 
-        var checkY = (int)(position.Y + eyeHeight);
+        // check at head level - for ground mobs, use feet+1 for consistency
+        // for flying mobs with eyeHeight=0, use their actual position
+        var checkY = eyeHeight > 0
+            ? (int)position.Y + 1  // ground-based mobs: check 1 block above feet
+            : (int)position.Y;     // flying mobs: check at their actual position
         var skylight = world.getSkyLight((int)position.X, checkY, (int)position.Z);
 
         if (skylight >= sunlightThreshold && !inLiquid) {
             fireTicks = Math.Max(fireTicks, 160);
+        } else {
+            // not in sunlight - clear fire from sunlight
+            fireTicks = 0;
         }
     }
 
@@ -103,6 +116,8 @@ public class Mob(World world, string type) : Entity(world, type) {
      * Override to implement custom AI.
      */
     public virtual void AI(double dt) {
+        spawnTicks++;
+
         if (burnInSunlight) {
             updateSunlightBurn();
         }
@@ -406,5 +421,34 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     public override void dmg(float damage) {
         base.dmg(damage);
+    }
+
+    protected override void updateFire(double dt) {
+        if (fireTicks > 0) {
+            fireTicks--;
+            fireDamageTicks++;
+
+            if (hostile) {
+                // hostile mobs take 5 damage per second
+                if (fireDamageTicks >= 60) {
+                    dmg(5);
+                    fireDamageTicks = 0;
+                    if (hp <= 0) {
+                        die();
+                    }
+                }
+            } else {
+                // non-hostile mobs take normal fire damage
+                if (fireDamageTicks >= 60) {
+                    dmg(1);
+                    fireDamageTicks = 0;
+                    if (hp <= 0) {
+                        die();
+                    }
+                }
+            }
+        } else {
+            fireDamageTicks = 0;
+        }
     }
 }

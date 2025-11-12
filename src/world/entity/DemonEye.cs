@@ -20,6 +20,7 @@ public class DemonEye : Mob {
     protected override bool needsFallDamage => false;
 
     protected override bool burnInSunlight => true;
+    protected override bool hostile => true;
     protected override double eyeHeight => 0; // it's a fucking floating eye
 
     public DemonEye(World world) : base(world, "eye") {
@@ -36,8 +37,9 @@ public class DemonEye : Mob {
     }
 
     public override void AI(double dt) {
+        spawnTicks++;
         updateSunlightBurn();
-        
+
         var nearestPlayer = findNearestPlayer(DETECT_RADIUS);
 
         if (nearestPlayer != null) {
