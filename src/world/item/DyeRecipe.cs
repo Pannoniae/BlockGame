@@ -26,7 +26,7 @@ public class DyeRecipe : Recipe {
         if (metas.Count != 2) return ItemStack.EMPTY;
 
         int resultMeta = DyeItem.mixColours(metas[0], metas[1]);
-        return new ItemStack(Item.DYE, 2, resultMeta);
+        return new ItemStack(Item.DYE, 1, resultMeta);
     }
 
     public override void consumeIngredients(CraftingGridInventory grid) {

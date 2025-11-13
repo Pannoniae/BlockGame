@@ -4,6 +4,7 @@ using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.world.block.entity;
 using BlockGame.world.entity;
+using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using Molten;
 
@@ -55,6 +56,11 @@ public class Furnace : EntityBlock {
             4 or 5 => uvs[3],
             _ => frontTex
         };
+    }
+
+    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        // only the finest quality furnaces!
+        return (getItem(), 0, 1);
     }
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {

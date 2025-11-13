@@ -33,6 +33,7 @@ public class Recipe {
     public static Recipe violet_dye;
     public static Recipe beige_dye;
     public static Recipe darkgreen_dye;
+    public static Recipe MAHOGANY_PLANKS;
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
@@ -80,6 +81,9 @@ public class Recipe {
         PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
         PLANKS.noShape();
         PLANKS.ingredients(Block.OAK_LOG.item);
+        MAHOGANY_PLANKS = register(new ItemStack(Block.MAHOGANY_PLANKS.item, 4));
+        MAHOGANY_PLANKS.noShape();
+        MAHOGANY_PLANKS.ingredients(Block.MAHOGANY_LOG.item);
 
         // crafting table (4 planks in square)
         CRAFTING_TABLE = register(new ItemStack(Block.CRAFTING_TABLE.item, 1));
@@ -91,10 +95,18 @@ public class Recipe {
         TORCH.shape(01_02, 2);
         TORCH.ingredients(Item.COAL, Item.STICK);
 
-        // stick (2 planks vertically)
+        // stick (2 planks vertically) - any plank type works
         STICK = register(new ItemStack(Item.STICK, 4));
         STICK.shape(01_01, 2);
         STICK.ingredients(Block.OAK_PLANKS.item);
+
+        register(new ItemStack(Item.STICK, 4))
+            .shape(01_01, 2)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+
+        register(new ItemStack(Item.STICK, 4))
+            .shape(01_01, 2)
+            .ingredients(Block.MAPLE_PLANKS.item);
 
         OAK_CHEST = register(new ItemStack(Block.OAK_CHEST.item, 1));
         OAK_CHEST.shape(111_101_111, 3);
@@ -163,19 +175,19 @@ public class Recipe {
         tool(Item.WOOD_SHOVEL, Block.OAK_PLANKS.item, 010_020_020);
         tool(Item.WOOD_SWORD, Block.OAK_PLANKS.item, 010_010_020);
 
-        tool(Item.STONE_PICKAXE, Block.STONE.item, 111_020_020);
-        tool(Item.STONE_AXE, Block.STONE.item, 110_120_020);
-        tool(Item.STONE_SHOVEL, Block.STONE.item, 010_020_020);
-        tool(Item.STONE_SWORD, Block.STONE.item, 010_010_020);
-        tool(Item.STONE_HOE, Block.STONE.item, 110_020_020);
-        tool(Item.STONE_SCYTHE, Block.STONE.item, 111_002_002);
+        tool(Item.STONE_PICKAXE, Block.COBBLESTONE.item, 111_020_020);
+        tool(Item.STONE_AXE, Block.COBBLESTONE.item, 110_120_020);
+        tool(Item.STONE_SHOVEL, Block.COBBLESTONE.item, 010_020_020);
+        tool(Item.STONE_SWORD, Block.COBBLESTONE.item, 010_010_020);
+        tool(Item.STONE_HOE, Block.COBBLESTONE.item, 110_020_020);
+        tool(Item.STONE_SCYTHE, Block.COBBLESTONE.item, 111_002_002);
 
-        tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020, 2);
-        tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020, 2);
-        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 010_020_020, 2);
-        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 010_010_020, 2);
-        tool(Item.COPPER_HOE, Item.COPPER_INGOT, 110_020_020, 2);
-        tool(Item.COPPER_SCYTHE, Item.COPPER_INGOT, 111_002_002, 2);
+        tool(Item.COPPER_PICKAXE, Item.COPPER_INGOT, 111_020_020, 1);
+        tool(Item.COPPER_AXE, Item.COPPER_INGOT, 110_120_020, 1);
+        tool(Item.COPPER_SHOVEL, Item.COPPER_INGOT, 010_020_020, 1);
+        tool(Item.COPPER_SWORD, Item.COPPER_INGOT, 010_010_020, 1);
+        tool(Item.COPPER_HOE, Item.COPPER_INGOT, 110_020_020, 1);
+        tool(Item.COPPER_SCYTHE, Item.COPPER_INGOT, 111_002_002, 1);
 
         tool(Item.IRON_PICKAXE, Item.IRON_INGOT, 111_020_020, 2);
         tool(Item.IRON_AXE, Item.IRON_INGOT, 110_120_020, 2);

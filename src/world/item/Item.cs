@@ -223,7 +223,7 @@ public class Item {
         STONE_HOE = register("stoneHoe", new Tool("Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25));
         STONE_HOE.tex = new UVPair(6, 3);
 
-        STONE_SCYTHE = register("stoneScythe", new Tool("Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25));
+        STONE_SCYTHE = register("stoneScythe", new Tool("Stone Scythe", ToolType.SCYTHE, MaterialTier.STONE, 1.25));
         STONE_SCYTHE.tex = new UVPair(7, 3);
 
         COPPER_PICKAXE = register("copperPickaxe", new Tool("Copper Pickaxe", ToolType.PICKAXE, MaterialTier.COPPER, 1.5));
@@ -241,7 +241,7 @@ public class Item {
         COPPER_HOE = register("copperHoe", new Tool("Copper Hoe", ToolType.HOE, MaterialTier.COPPER, 1.5));
         COPPER_HOE.tex = new UVPair(6, 5);
 
-        COPPER_SCYTHE = register("copperScythe", new Tool("Copper Scythe", ToolType.HOE, MaterialTier.COPPER, 1.5));
+        COPPER_SCYTHE = register("copperScythe", new Tool("Copper Scythe", ToolType.SCYTHE, MaterialTier.COPPER, 1.5));
         COPPER_SCYTHE.tex = new UVPair(7, 5);
 
         IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f));
@@ -259,7 +259,7 @@ public class Item {
         IRON_HOE = register("ironHoe", new Tool("Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5));
         IRON_HOE.tex = new UVPair(6, 6);
 
-        IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.HOE, MaterialTier.IRON, 2.5));
+        IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.SCYTHE, MaterialTier.IRON, 2.5));
         IRON_SCYTHE.tex = new UVPair(7, 6);
 
         GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f));
@@ -277,7 +277,7 @@ public class Item {
         GOLD_HOE = register("goldHoe", new Tool("Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0));
         GOLD_HOE.tex = new UVPair(6, 7);
 
-        GOLD_SCYTHE = register("goldScythe", new Tool("Gold Scythe", ToolType.HOE, MaterialTier.GOLD, 3.0));
+        GOLD_SCYTHE = register("goldScythe", new Tool("Gold Scythe", ToolType.SCYTHE, MaterialTier.GOLD, 3.0));
         GOLD_SCYTHE.tex = new UVPair(7, 7);
 
         DYE = register("dye", new DyeItem("Dye"));

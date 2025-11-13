@@ -33,10 +33,24 @@ public class CreativeInventoryContext : InventoryContext {
                 continue;
             }
 
-            // special handling for candy block - add all 16 variants
+            // special handling for candy block - add all variants
             if (i ==  Block.CANDY.id) {
                 for (byte metadata = 0; metadata < Block.CANDY.maxValidMetadata() + 1; metadata++) {
                     allItems.Add(new ItemStack(Block.CANDY.item, 1, metadata));
+                }
+            }
+            // special handling for candy slab - add all color variants
+            else if (i == Block.CANDY_SLAB.id) {
+                for (byte color = 0; color < 24; color++) {
+                    var metadata = CandySlab.setColor(0, color);
+                    allItems.Add(new ItemStack(Block.CANDY_SLAB.item, 1, metadata));
+                }
+            }
+            // special handling for candy stairs - add all color variants
+            else if (i == Block.CANDY_STAIRS.id) {
+                for (byte color = 0; color < 24; color++) {
+                    var metadata = CandyStairs.setColor(0, color);
+                    allItems.Add(new ItemStack(Block.CANDY_STAIRS.item, 1, metadata));
                 }
             }
             else {

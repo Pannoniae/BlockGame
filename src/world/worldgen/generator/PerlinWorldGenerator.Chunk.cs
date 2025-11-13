@@ -42,8 +42,8 @@ public partial class PerlinWorldGenerator {
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
-    private readonly OreFeature ironOre = new(Block.CINNABAR_ORE.id, 6, 12);
-    private readonly OreFeature coalOre = new(Block.TITANIUM_ORE.id, 8, 16);
+    private readonly OreFeature ironOre = new(Block.IRON_ORE.id, 6, 12);
+    private readonly OreFeature coalOre = new(Block.COAL_ORE.id, 8, 16);
 
     public const float LOW_FREQUENCY = 1 / 167f;
     public const float HIGH_FREQUENCY = 1 / 135f;

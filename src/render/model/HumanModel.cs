@@ -9,7 +9,7 @@ namespace BlockGame.render.model;
 public class HumanModel : EntityModel {
 
     public const int xs = 48;
-    public const int ys = 31;
+    public const int ys = 32;
 
 
     public readonly Cube head = new Cube().pos(0, 20, 0).off(-4, 0, -4).ext(8, 8, 8).tex(0, 0).gen(xs, ys);

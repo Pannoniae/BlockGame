@@ -69,7 +69,7 @@ public class Chest : EntityBlock {
         var ctx = new ChestMenuContext(player.inventory, be);
         player.currentCtx = ctx;
 
-        Screen.GAME_SCREEN.switchToMenu(new ChestMenu(new Vector2I(0, 32), ctx));
+        Screen.GAME_SCREEN.switchToMenu(new ChestMenu(new Vector2I(0, 12), ctx));
         ((ChestMenu)Screen.GAME_SCREEN.currentMenu!).setup();
 
         world.inMenu = true;
