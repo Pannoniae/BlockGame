@@ -431,7 +431,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             if (hostile) {
                 // hostile mobs take 5 damage per second
                 if (fireDamageTicks >= 60) {
-                    dmg(5);
+                    dmg(3);
                     fireDamageTicks = 0;
                     if (hp <= 0) {
                         die();

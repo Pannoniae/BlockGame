@@ -394,8 +394,8 @@ public class GUI {
         float offsetY = ((backgroundScrollOffset.Y % blockSize) + blockSize) % blockSize;
 
         Span<ushort> ores = [
-             Block.AMBER_ORE.id,  Block.CINNABAR_ORE.id,  Block.EMERALD_ORE.id,  Block.DIAMOND_ORE.id,  Block.TITANIUM_ORE.id,
-            Block.AMETHYST_ORE.id
+             Block.IRON_ORE.id,  Block.CINNABAR_ORE.id,  Block.COAL_ORE.id,  Block.DIAMOND_ORE.id,  Block.GOLD_ORE.id,
+            Block.COPPER_ORE.id
         ];
 
         // Draw layered background

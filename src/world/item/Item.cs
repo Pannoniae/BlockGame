@@ -26,13 +26,17 @@ public class Item {
     public static XUList<int> durability => Registry.ITEMS.durability;
 
     public static Item AIR;
-    public static Item GOLD_INGOT;
-    public static Item IRON_INGOT;
-    public static Item TIN_INGOT;
-    public static Item SILVER_INGOT;
     public static Item COPPER_INGOT;
-    public static Tool GOLD_PICKAXE;
-    public static Tool IRON_PICKAXE;
+    public static Item IRON_INGOT;
+    public static Item GOLD_INGOT;
+    public static Item DIAMOND;
+    public static Item CINNABAR;
+    //public static Item TIN_INGOT;
+    //public static Item SILVER_INGOT;
+    public static Item COAL;
+    public static Item FLINT;
+    public static Item CLAY;
+    public static Item BRICK;
     public static Tool STONE_PICKAXE;
     public static Tool STONE_AXE;
     public static Tool STONE_SHOVEL;
@@ -50,11 +54,13 @@ public class Item {
     public static Weapon COPPER_SWORD;
     public static Tool COPPER_HOE;
     public static Tool COPPER_SCYTHE;
+    public static Tool IRON_PICKAXE;
     public static Tool IRON_AXE;
     public static Tool IRON_SHOVEL;
     public static Weapon IRON_SWORD;
     public static Tool IRON_HOE;
     public static Tool IRON_SCYTHE;
+    public static Tool GOLD_PICKAXE;
     public static Tool GOLD_AXE;
     public static Tool GOLD_SHOVEL;
     public static Weapon GOLD_SWORD;
@@ -63,11 +69,6 @@ public class Item {
     public static DyeItem DYE;
     public static Item APPLE;
     public static Item MAPLE_SYRUP;
-    public static Item COAL;
-    public static Item BRICK;
-    public static Item CLAY;
-    public static Item DIAMOND;
-    public static Item CINNABAR;
     public static Item BOTTLE;
     public static Item BOTTLE_MILK;
     public static Item RAW_BEEF;
@@ -76,16 +77,17 @@ public class Item {
     public static Item COOKED_PORKCHOP;
     public static Item DOOR;
     public static Item MAHOGANY_DOOR;
+    public static Item SIGN_ITEM;
     public static Item BUCKET;
     public static Item WATER_BUCKET;
     public static Item LAVA_BUCKET;
     public static Item LIGHTER;
-    public static Item SIGN_ITEM;
-    public static Item FLINT;
-    public static Item BOW_WOOD;
-    public static Item ARROW_WOOD;
-    public static Item FEATHER;
-    public static Item STRING;
+
+
+    //public static Item BOW_WOOD;
+    //public static Item ARROW_WOOD;
+    //public static Item FEATHER;
+    //public static Item STRING;
 
 
     public Item(string name) {
@@ -138,34 +140,73 @@ public class Item {
     public static void preLoad() {
         AIR = register("iair", new Item("Air"));
 
-        GOLD_INGOT = register("goldIngot", new Item("Gold Ingot"));
-        GOLD_INGOT.tex = new UVPair(0, 0);
-        material[GOLD_INGOT.id] = true;
+        STICK = register("stick", new Item("Stick"));
+        STICK.tex = new UVPair(0, 8);
+        material[STICK.id] = true;
 
-        IRON_INGOT = register("ironIngot", new Item("Iron Ingot"));
-        IRON_INGOT.tex = new UVPair(1, 0);
-        material[IRON_INGOT.id] = true;
+        SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
+        SIGN_ITEM.tex = new UVPair(1, 7);
 
-        TIN_INGOT = register("tinIngot", new Item("Tin Ingot"));
-        TIN_INGOT.tex = new UVPair(2, 0);
-        material[TIN_INGOT.id] = true;
+        DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
+        DOOR.tex = new UVPair(4, 8);
 
-
-        SILVER_INGOT = register("silverIngot", new Item("Silver Ingot"));
-        SILVER_INGOT.tex = new UVPair(3, 0);
-        material[SILVER_INGOT.id] = true;
-
+        MAHOGANY_DOOR = register("mahoganyDoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
+        MAHOGANY_DOOR.tex = new UVPair(5, 8);
 
         COPPER_INGOT = register("copperIngot", new Item("Copper Ingot"));
         COPPER_INGOT.tex = new UVPair(4, 0);
         material[COPPER_INGOT.id] = true;
 
+        IRON_INGOT = register("ironIngot", new Item("Iron Ingot"));
+        IRON_INGOT.tex = new UVPair(1, 0);
+        material[IRON_INGOT.id] = true;
 
-        GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f));
-        GOLD_PICKAXE.tex = new UVPair(2, 7);
+        GOLD_INGOT = register("goldIngot", new Item("Gold Ingot"));
+        GOLD_INGOT.tex = new UVPair(0, 0);
+        material[GOLD_INGOT.id] = true;
 
-        IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f));
-        IRON_PICKAXE.tex = new UVPair(2, 6);
+        DIAMOND = register("diamond", new Item("Diamond"));
+        DIAMOND.tex = new UVPair(3, 9);
+        material[DIAMOND.id] = true;
+
+        CINNABAR = register("cinnabar", new Item("Cinnabar"));
+        CINNABAR.tex = new UVPair(4, 9);
+        material[CINNABAR.id] = true;
+
+        COAL = register("coal", new Item("Coal"));
+        COAL.tex = new UVPair(1, 9);
+        material[COAL.id] = true;
+
+        FLINT = register("flint", new Item("Flint"));
+        FLINT.tex = new UVPair(0, 9);
+
+        CLAY = register("clay", new Item("Clay"));
+        CLAY.tex = new UVPair(2, 9);
+        material[CLAY.id] = true;
+
+        BRICK = register("brick", new Item("Brick"));
+        BRICK.tex = new UVPair(5, 0);
+        material[BRICK.id] = true;
+
+        //TIN_INGOT = register("tinIngot", new Item("Tin Ingot"));
+        //TIN_INGOT.tex = new UVPair(2, 0);
+        //material[TIN_INGOT.id] = true;
+
+        //SILVER_INGOT = register("silverIngot", new Item("Silver Ingot"));
+        //SILVER_INGOT.tex = new UVPair(3, 0);
+        //material[SILVER_INGOT.id] = true;
+
+        WOOD_PICKAXE = register("woodPickaxe", new Tool("Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0));
+        WOOD_PICKAXE.tex = new UVPair(2, 4);
+
+        WOOD_AXE = register("woodAxe", new Tool("Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0));
+        WOOD_AXE.tex = new UVPair(3, 4);
+
+        WOOD_SHOVEL = register("woodShovel", new Tool("Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0));
+        WOOD_SHOVEL.tex = new UVPair(4, 4);
+
+        WOOD_SWORD = register("woodSword", new Weapon("Wood Sword", MaterialTier.WOOD, 4.0));
+        WOOD_SWORD.tex = new UVPair(5, 4);
 
         STONE_PICKAXE = register("stonePickaxe", new Tool("Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25));
         STONE_PICKAXE.tex = new UVPair(2, 3);
@@ -185,22 +226,6 @@ public class Item {
         STONE_SCYTHE = register("stoneScythe", new Tool("Stone Scythe", ToolType.HOE, MaterialTier.STONE, 1.25));
         STONE_SCYTHE.tex = new UVPair(7, 3);
 
-        WOOD_PICKAXE = register("woodPickaxe", new Tool("Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0));
-        WOOD_PICKAXE.tex = new UVPair(2, 4);
-
-        WOOD_AXE = register("woodAxe", new Tool("Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0));
-        WOOD_AXE.tex = new UVPair(3, 4);
-
-        WOOD_SHOVEL = register("woodShovel", new Tool("Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0));
-        WOOD_SHOVEL.tex = new UVPair(4, 4);
-
-        WOOD_SWORD = register("woodSword", new Weapon("Wood Sword", MaterialTier.WOOD, 4.0));
-        WOOD_SWORD.tex = new UVPair(5, 4);
-
-        STICK = register("stick", new Item("Stick"));
-        STICK.tex = new UVPair(0, 8);
-        material[STICK.id] = true;
-
         COPPER_PICKAXE = register("copperPickaxe", new Tool("Copper Pickaxe", ToolType.PICKAXE, MaterialTier.COPPER, 1.5));
         COPPER_PICKAXE.tex = new UVPair(2, 5);
 
@@ -219,6 +244,9 @@ public class Item {
         COPPER_SCYTHE = register("copperScythe", new Tool("Copper Scythe", ToolType.HOE, MaterialTier.COPPER, 1.5));
         COPPER_SCYTHE.tex = new UVPair(7, 5);
 
+        IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f));
+        IRON_PICKAXE.tex = new UVPair(2, 6);
+
         IRON_AXE = register("ironAxe", new Tool("Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5));
         IRON_AXE.tex = new UVPair(3, 6);
 
@@ -233,6 +261,9 @@ public class Item {
 
         IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.HOE, MaterialTier.IRON, 2.5));
         IRON_SCYTHE.tex = new UVPair(7, 6);
+
+        GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f));
+        GOLD_PICKAXE.tex = new UVPair(2, 7);
 
         GOLD_AXE = register("goldAxe", new Tool("Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3.0));
         GOLD_AXE.tex = new UVPair(3, 7);
@@ -257,26 +288,6 @@ public class Item {
         MAPLE_SYRUP = register("mapleSyrup", new Item("Maple Syrup"));
         MAPLE_SYRUP.tex = new UVPair(1, 10);
 
-        COAL = register("coal", new Item("Coal"));
-        COAL.tex = new UVPair(1, 9);
-        material[COAL.id] = true;
-
-        BRICK = register("brick", new Item("Brick"));
-        BRICK.tex = new UVPair(5, 0);
-        material[BRICK.id] = true;
-
-        CLAY = register("clay", new Item("Clay"));
-        CLAY.tex = new UVPair(2, 9);
-        material[CLAY.id] = true;
-
-        DIAMOND = register("diamond", new Item("Diamond"));
-        DIAMOND.tex = new UVPair(3, 9);
-        material[DIAMOND.id] = true;
-
-        CINNABAR = register("cinnabar", new Item("Cinnabar"));
-        CINNABAR.tex = new UVPair(4, 9);
-        material[CINNABAR.id] = true;
-
         BOTTLE = register("bottle", new Item("Empty Bottle"));
         BOTTLE.tex = new UVPair(2, 10);
 
@@ -295,12 +306,6 @@ public class Item {
         COOKED_PORKCHOP = register("cookedPorkchop", new Item("Cooked Porkchop"));
         COOKED_PORKCHOP.tex = new UVPair(7, 10);
 
-        DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
-        DOOR.tex = new UVPair(4, 8);
-
-        MAHOGANY_DOOR = register("mahoganyDoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
-        MAHOGANY_DOOR.tex = new UVPair(5, 8);
-
         BUCKET = register("bucket", new BucketItem("Bucket"));
         BUCKET.tex = new UVPair(6, 4);
 
@@ -313,23 +318,18 @@ public class Item {
         LIGHTER = register("lighter", new Lighter("Lighter"));
         LIGHTER.tex = new UVPair(0, 7);
 
-        SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
-        SIGN_ITEM.tex = new UVPair(1, 7);
 
-        FLINT = register("flint", new Item("Flint"));
-        FLINT.tex = new UVPair(0, 9);
+        //BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
+        //BOW_WOOD.tex = new UVPair(1, 4);
 
-        BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
-        BOW_WOOD.tex = new UVPair(1, 4);
+        //ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
+        //ARROW_WOOD.tex = new UVPair(0, 4);
 
-        ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
-        ARROW_WOOD.tex = new UVPair(0, 4);
+        //FEATHER = register("feather", new Item("Feather"));
+        //FEATHER.tex = new UVPair(0, 3);
 
-        FEATHER = register("feather", new Item("Feather"));
-        FEATHER.tex = new UVPair(0, 3);
-
-        STRING = register("string", new Item("String"));
-        STRING.tex = new UVPair(1, 3);
+        //STRING = register("string", new Item("String"));
+        //STRING.tex = new UVPair(1, 3);
 
 
         // all blocks are already marked as materials during Block.register() lol

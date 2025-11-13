@@ -7,8 +7,8 @@ public class SmeltingRecipe {
     public static SmeltingRecipe IRON_INGOT;
     public static SmeltingRecipe GOLD_INGOT;
     public static SmeltingRecipe COPPER_INGOT;
-    public static SmeltingRecipe TIN_INGOT;
-    public static SmeltingRecipe SILVER_INGOT;
+    //public static SmeltingRecipe TIN_INGOT;
+    //public static SmeltingRecipe SILVER_INGOT;
     public static SmeltingRecipe BRICK;
     public static SmeltingRecipe STEAK;
     public static SmeltingRecipe COOKED_PORKCHOP;
@@ -31,8 +31,8 @@ public class SmeltingRecipe {
         IRON_INGOT = register(Block.IRON_ORE.item, new ItemStack(Item.IRON_INGOT, 1), 480);
         GOLD_INGOT = register(Block.GOLD_ORE.item, new ItemStack(Item.GOLD_INGOT, 1), 480);
         COPPER_INGOT = register(Block.COPPER_ORE.item, new ItemStack(Item.COPPER_INGOT, 1), 480);
-        TIN_INGOT = register(Block.TIN_ORE.item, new ItemStack(Item.TIN_INGOT, 1), 480);
-        SILVER_INGOT = register(Block.SILVER_ORE.item, new ItemStack(Item.SILVER_INGOT, 1), 480);
+        //TIN_INGOT = register(Block.TIN_ORE.item, new ItemStack(Item.TIN_INGOT, 1), 480);
+        //SILVER_INGOT = register(Block.SILVER_ORE.item, new ItemStack(Item.SILVER_INGOT, 1), 480);
         COAL = register(Block.COAL_ORE.item, new ItemStack(Item.COAL, 1), 480);
 
         // clay -> brick (5 seconds = 300 ticks)

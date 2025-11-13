@@ -27,7 +27,12 @@ public class Recipe {
     public static Recipe BOW_WOOD;
     public static Recipe ARROW_WOOD;
     public static Recipe STRING;
-
+    public static Recipe yellow_dye;
+    public static Recipe orange_dye;
+    public static Recipe sky_blue_dye;
+    public static Recipe violet_dye;
+    public static Recipe beige_dye;
+    public static Recipe darkgreen_dye;
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
@@ -41,6 +46,35 @@ public class Recipe {
     public static void preLoad() {
         // dye mixing (any 2 dyes -> 2 of average colour)
         Registry.RECIPES.register("dye", new DyeRecipe());
+
+        //dyes crafted from flowers
+        yellow_dye = register(new ItemStack(Item.DYE, 6, 6));
+        yellow_dye.noShape();
+        yellow_dye.ingredients(Block.YELLOW_FLOWER.item);
+
+        orange_dye = register(new ItemStack(Item.DYE, 6, 5));
+        orange_dye.noShape();
+        orange_dye.ingredients(Block.MARIGOLD.item);
+
+        sky_blue_dye = register(new ItemStack(Item.DYE, 6, 10));
+        sky_blue_dye.noShape();
+        sky_blue_dye.ingredients(Block.BLUE_TULIP.item);
+
+        violet_dye = register(new ItemStack(Item.DYE, 6, 13));
+        violet_dye.noShape();
+        violet_dye.ingredients(Block.THISTLE.item);
+
+        //white_dye = register(new ItemStack(Item.DYE, 6, 0));
+        //white_dye.noShape();
+        //white_dye.ingredients(Block.CALCITE.item);
+
+        beige_dye = register(new ItemStack(Item.DYE, 6, 16));
+        beige_dye.noShape();
+        beige_dye.ingredients(Item.CLAY);
+
+        darkgreen_dye = register(new ItemStack(Item.DYE, 6, 8));
+        darkgreen_dye.noShape();
+        darkgreen_dye.ingredients(Block.LEAVES.item);
 
         // shapeless: 1 log -> 4 planks
         PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
@@ -110,17 +144,17 @@ public class Recipe {
         LIGHTER.shape(000_010_202, 3);
         LIGHTER.ingredients(Item.FLINT, Block.STONE.item);
 
-        BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
-        BOW_WOOD.shape(012_102_012, 3);
-        BOW_WOOD.ingredients(Item.STICK, Item.STRING);
+        //BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
+        //BOW_WOOD.shape(012_102_012, 3);
+        //BOW_WOOD.ingredients(Item.STICK, Item.STRING);
 
-        ARROW_WOOD = register(new ItemStack(Item.ARROW_WOOD, 1));
-        ARROW_WOOD.shape(010_020_030, 3);
-        ARROW_WOOD.ingredients(Item.FLINT, Item.STICK, Item.FEATHER);
+        //ARROW_WOOD = register(new ItemStack(Item.ARROW_WOOD, 1));
+        //ARROW_WOOD.shape(010_020_030, 3);
+        //ARROW_WOOD.ingredients(Item.FLINT, Item.STICK, Item.FEATHER);
 
-        STRING = register(new ItemStack(Item.STRING, 9));
-        STRING.noShape();
-        STRING.ingredients(Item.IRON_INGOT);
+        //STRING = register(new ItemStack(Item.STRING, 9));
+        //STRING.noShape();
+        //STRING.ingredients(Item.IRON_INGOT);
 
 
         // tools
