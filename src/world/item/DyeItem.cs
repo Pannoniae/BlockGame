@@ -170,8 +170,7 @@ public class DyeItem : Item {
         var (h1, s1, l1) = rgbToHsl(c1.R, c1.G, c1.B);
         var (h2, s2, l2) = rgbToHsl(c2.R, c2.G, c2.B);
 
-        // average in HSL space
-        // weight hue by saturation (achromatic colours have meaningless hue)
+        // average in HSL space; weight hue by saturation (achromatic colours have meaningless hue)
         float avgH, avgS, avgL;
 
         bool c1Achromatic = s1 < 0.01f;
