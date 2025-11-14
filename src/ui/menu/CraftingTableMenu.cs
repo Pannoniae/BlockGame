@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
+using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world.item.inventory;
 using Molten;
@@ -44,12 +45,15 @@ public class CraftingTableMenu : InventoryMenu {
                         CraftingMatchStatus.EMPTY => Color.Transparent,
                         CraftingMatchStatus.NO_MATCH => new Color(255, 0, 0, 80),
                         CraftingMatchStatus.PARTIAL_MATCH => new Color(255, 255, 0, 80),
-                        CraftingMatchStatus.FULL_MATCH => new Color(0, 255, 0, 80),
+                        CraftingMatchStatus.FULL_MATCH => new Color(0, 255, 0, 144),
                         _ => Color.Transparent
                     };
 
                     if (tint.A > 0) {
                         Game.gui.drawSlotTint(guiBoundsPos, slot.rect, tint);
+                        // break the batch
+                        Game.graphics.mainBatch.End();
+                        Game.graphics.mainBatch.Begin();
                     }
                 }
             }

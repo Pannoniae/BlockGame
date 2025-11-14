@@ -48,6 +48,9 @@ public class Recipe {
         // dye mixing (any 2 dyes -> 2 of average colour)
         Registry.RECIPES.register("dye", new DyeRecipe());
 
+        // candy block mixing (any 2 candy blocks -> 2 of average colour)
+        Registry.RECIPES.register("candyblock", new CandyBlockRecipe());
+
         //dyes crafted from flowers
         yellow_dye =  register(new ItemStack(Item.DYE, 6, 6));
         yellow_dye.noShape();
@@ -107,9 +110,9 @@ public class Recipe {
             .ingredients(Block.MAPLE_PLANKS.item);
 
         // candy colouring (1 candy block, 1 dye)
-        register(new ItemStack(Block.CANDY.item, 1))
-            .shape(01_02, 2)
-            .ingredients(Block.CANDY.item, Item.DYE);
+        //register(new ItemStack(Block.CANDY.item, 1))
+        //  .shape(01_02, 2)
+        //  .ingredients(Block.CANDY.item, Item.DYE);
 
         OAK_CHEST = register(new ItemStack(Block.OAK_CHEST.item, 1));
         OAK_CHEST.shape(111_101_111, 3);

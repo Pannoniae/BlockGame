@@ -103,7 +103,10 @@ public class Mob(World world, string type) : Entity(world, type) {
             : (int)position.Y;     // flying mobs: check at their actual position
         var skylight = world.getSkyLight((int)position.X, checkY, (int)position.Z);
 
-        if (skylight >= sunlightThreshold && !inLiquid) {
+        // only burn during daytime (sun above horizon) with high skylight
+        bool isDaytime = world.getSunElevation(world.worldTick) > 0;
+
+        if (isDaytime && skylight >= sunlightThreshold && !inLiquid) {
             fireTicks = Math.Max(fireTicks, 160);
         } else {
             // not in sunlight - clear fire from sunlight
