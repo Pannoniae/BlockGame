@@ -67,13 +67,44 @@ public class DyeItem : Item {
             else h = ((r - g) / delta) + 4f;
 
             h *= 60f;
+            //h/= 6f;
         }
 
         return (h, s, l);
     }
 
-    /** Convert HSL (H: 0-360, S: 0-1, L: 0-1) to RGB (0-255) */
+    /** Convert HSL (H: 0-360, S: 0-1, L: 0-1) to RGB (0-255)
+     * Conversion formula adapted from https://en.wikipedia.org/wiki/HSL_color_space.
+     */
     private static (float r, float g, float b) hslToRgb(float h, float s, float l) {
+        float r, g, b;
+
+        if (s == 0f) {
+            r = g = b = l; // achromatic
+        } else {
+            float q = l < 0.5f ? l * (1f + s) : l + s - l * s;
+            float p = 2f * l - q;
+            r = hueToRgb(p, q, h + 120f);
+            g = hueToRgb(p, q, h);
+            b = hueToRgb(p, q, h - 120f);
+        }
+
+        return (MathF.Round(r * 255f), MathF.Round(g * 255f), MathF.Round(b * 255f));
+    }
+
+    private static float hueToRgb(float p, float q, float t) {
+        if (t < 0f) t += 360f;
+        if (t > 360f) t -= 360f;
+        if (t < 60f) return p + (q - p) * t / 60f;
+        if (t < 180f) return q;
+        if (t < 240f) return p + (q - p) * (240f - t) / 60f;
+        return p;
+    }
+
+    /*
+    // OLD VERSION - COMMENTED OUT FOR REFERENCE
+    /** Convert HSL (H: 0-360, S: 0-1, L: 0-1) to RGB (0-255) */
+    /*private static (float r, float g, float b) hslToRgb(float h, float s, float l) {
         float c = (1f - float.Abs(2f * l - 1f)) * s;
         float x = c * (1f - float.Abs((h / 60f) % 2f - 1f));
         float m = l - c / 2f;
@@ -111,7 +142,8 @@ public class DyeItem : Item {
         }
 
         return ((r1 + m) * 255f, (g1 + m) * 255f, (b1 + m) * 255f);
-    }
+    }*/
+
 
     /** Average two hues (0-360) with wraparound */
     private static float avgHue(float h1, float h2) {
@@ -139,13 +171,62 @@ public class DyeItem : Item {
         var (h2, s2, l2) = rgbToHsl(c2.R, c2.G, c2.B);
 
         // average in HSL space
-        float avgH = avgHue(h1, h2);
-        float avgS = (s1 + s2) / 2f;
-        float avgL = (l1 + l2) / 2f;
+        // weight hue by saturation (achromatic colours have meaningless hue)
+        float avgH, avgS, avgL;
+
+        bool c1Achromatic = s1 < 0.01f;
+        bool c2Achromatic = s2 < 0.01f;
+
+        if (c1Achromatic && c2Achromatic) {
+            // both achromatic, just average lightness
+            avgH = 0f;
+            avgS = 0f;
+            avgL = (l1 + l2) / 2f;
+        } else if (c1Achromatic) {
+            // c1 is achromatic (white/gray/black), preserve c2's hue and saturation
+            avgH = h2;
+            avgS = s2 * 0.85f; // slight desaturation when mixing with achromatic
+            avgL = (l1 + l2) / 2f;
+        } else if (c2Achromatic) {
+            // c2 is achromatic, preserve c1's hue and saturation
+            avgH = h1;
+            avgS = s1 * 0.85f; // slight desaturation when mixing with achromatic
+            avgL = (l1 + l2) / 2f;
+        } else {
+            // both chromatic, average normally
+            avgH = avgHue(h1, h2);
+            avgS = (s1 + s2) / 2f;
+            avgL = (l1 + l2) / 2f;
+        }
 
         // convert back to RGB
         var (r, g, b) = hslToRgb(avgH, avgS, avgL);
 
         return findClosestDye(r, g, b);
+    }
+
+    /** Test method to verify RGB->HSL->RGB round-trip conversion */
+    public static void testColourConversion() {
+        int[] testIndices = [0, 8, 7]; // White, Dark Green, Light Green
+        string[] names = ["White", "Dark Green", "Light Green"];
+
+        for (int i = 0; i < testIndices.Length; i++) {
+            var c = CandyBlock.colours[testIndices[i]];
+
+            Console.WriteLine($"\n{names[i]}:");
+            Console.WriteLine($"  Original RGB: ({c.R}, {c.G}, {c.B})");
+
+            // convert to HSL
+            var (h, s, l) = rgbToHsl(c.R, c.G, c.B);
+            Console.WriteLine($"  HSL: (H={h:F2}°, S={s:F3}, L={l:F3})");
+
+            // convert back to RGB
+            var (r, g, b) = hslToRgb(h, s, l);
+            Console.WriteLine($"  Back to RGB: ({r}, {g}, {b})");
+
+            // check if round-trip is accurate
+            bool match = MathF.Abs(r - c.R) < 1f && MathF.Abs(g - c.G) < 1f && MathF.Abs(b - c.B) < 1f;
+            Console.WriteLine($"  Round-trip {(match ? "OK" : "MISMATCH")}");
+        }
     }
 }

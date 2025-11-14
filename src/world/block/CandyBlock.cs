@@ -27,34 +27,52 @@ public class CandyBlock : Block {
     ];
 
     public static readonly Color[] colours = [
-        Color.FromBgra(0xFFf2f2f2), // White
-        Color.FromBgra(0xFF858585), // Gray
-        Color.FromBgra(0xFF404040), // Black
-        Color.FromBgra(0xFFbe0505), // Dark Red
+        //Color.FromBgra(0xFFf2f2f2), // White
+        Color.FromBgra(0xFFf5f5f5), // White
+        //Color.FromBgra(0xFF858585), // Gray
+        Color.FromBgra(0xFF818181), // Gray
+        //Color.FromBgra(0xFF404040), // Black
+        Color.FromBgra(0xFF242424), // Black
+        Color.FromBgra(0xFF840101), // Dark Red
 
-        Color.FromBgra(0xFFfe0909), // Red
-        Color.FromBgra(0xFFff9e42), // Orange
-        Color.FromBgra(0xFFe4e81a), // Yellow
-        Color.FromBgra(0xFF0df415), // Light Green
+        //Color.FromBgra(0xFFfe0909), // Red
+        Color.FromBgra(0xFFff1414), // Red
+        //Color.FromBgra(0xFFff9e42), // Orange
+        Color.FromBgra(0xFFff8616), //Orange
+        //Color.FromBgra(0xFFe4e81a), // Yellow
+        Color.FromBgra(0xFFf1ed1e), // Yellow
+        //Color.FromBgra(0xFF0df415), // Light Green
+        Color.FromBgra(0xFF11f019), // Light Green
 
-        Color.FromBgra(0xFF084e0b), // Dark Green
-        Color.FromBgra(0xFF3fdccc), // Turquoise
-        Color.FromBgra(0xFF0db5e3), // Sky Blue
-        Color.FromBgra(0xFF1542F8), // Blue
+        //Color.FromBgra(0xFF084e0b), // Dark Green
+        Color.FromBgra(0xFF023a04), // Dark Green
+        //Color.FromBgra(0xFF3fdccc), // Turquoise
+        Color.FromBgra(0xFF39e1d1), // Turquoise
+        //Color.FromBgra(0xFF0db5e3), // Sky Blue
+        Color.FromBgra(0xFF14bbe5), // Sky Blue
+        //Color.FromBgra(0xFF1542F8), // Blue
+        Color.FromBgra(0xFF1638f8), // Blue
 
-        Color.FromBgra(0xFF0014c7), // Dark Blue
+        //Color.FromBgra(0xFF0014c7), // Dark Blue
+        Color.FromBgra(0xFF05058f), // Dark Blue
         Color.FromBgra(0xFF9d5bd7), // Violet
-        Color.FromBgra(0xFFd55df1), // Purple
-        Color.FromBgra(0xFFff8ee1), // Pink
+        Color.FromBgra(0xFFd553f0), // Purple
+        //Color.FromBgra(0xFFff8ee1), // Pink
+        Color.FromBgra(0xFFff81dc), // Pink
 
         Color.FromBgra(0xFFfdecd8), // Beige
-        Color.FromBgra(0xFFffbe42), // Light Orange
-        Color.FromBgra(0xFFb0fa00), // Neon
-        Color.FromBgra(0xFF00f8a6), // Apple Green
-        Color.FromBgra(0xFF06e9ed), // Cyan
+        //Color.FromBgra(0xFFffbe42), // Light Orange
+        Color.FromBgra(0xFFffba38), // Light Orange
+        //Color.FromBgra(0xFFb0fa00), // Neon
+        Color.FromBgra(0xFFb8ff05), // Neon
+        //Color.FromBgra(0xFF00f8a6), // Apple Green
+        Color.FromBgra(0xFF05ffad), // Apple Green
+        //Color.FromBgra(0xFF06e9ed), // Cyan
+        Color.FromBgra(0xFF0ceef3), // Cyan
         Color.FromBgra(0xFFf3aafc), // Light Purple
         Color.FromBgra(0xFF8018a0), // Dark Violet
-        Color.FromBgra(0xFF89440b), // Brown
+        //Color.FromBgra(0xFF89440b), // Brown
+        Color.FromBgra(0xFF7c3d08), // Brown
     ];
 
     public override byte maxValidMetadata() => 23;
