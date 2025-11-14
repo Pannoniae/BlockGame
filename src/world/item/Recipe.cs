@@ -24,9 +24,9 @@ public class Recipe {
     public static Recipe DIAMOND_CANDY;
     public static Recipe LIGHTER;
     public static Recipe BUCKET;
-    public static Recipe BOW_WOOD;
-    public static Recipe ARROW_WOOD;
-    public static Recipe STRING;
+    //public static Recipe BOW_WOOD;
+    //public static Recipe ARROW_WOOD;
+    //public static Recipe STRING;
     public static Recipe yellow_dye;
     public static Recipe orange_dye;
     public static Recipe sky_blue_dye;
@@ -49,7 +49,7 @@ public class Recipe {
         Registry.RECIPES.register("dye", new DyeRecipe());
 
         //dyes crafted from flowers
-        yellow_dye = register(new ItemStack(Item.DYE, 6, 6));
+        yellow_dye =  register(new ItemStack(Item.DYE, 6, 6));
         yellow_dye.noShape();
         yellow_dye.ingredients(Block.YELLOW_FLOWER.item);
 
@@ -77,7 +77,7 @@ public class Recipe {
         darkgreen_dye.noShape();
         darkgreen_dye.ingredients(Block.LEAVES.item);
 
-        // shapeless: 1 log -> 4 planks
+      // shapeless: 1 log -> 4 planks
         PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
         PLANKS.noShape();
         PLANKS.ingredients(Block.OAK_LOG.item);
@@ -99,14 +99,17 @@ public class Recipe {
         STICK = register(new ItemStack(Item.STICK, 4));
         STICK.shape(01_01, 2);
         STICK.ingredients(Block.OAK_PLANKS.item);
-
         register(new ItemStack(Item.STICK, 4))
             .shape(01_01, 2)
             .ingredients(Block.MAHOGANY_PLANKS.item);
-
         register(new ItemStack(Item.STICK, 4))
             .shape(01_01, 2)
             .ingredients(Block.MAPLE_PLANKS.item);
+
+        // candy colouring (1 candy block, 1 dye)
+        register(new ItemStack(Block.CANDY.item, 1))
+            .shape(01_02, 2)
+            .ingredients(Block.CANDY.item, Item.DYE);
 
         OAK_CHEST = register(new ItemStack(Block.OAK_CHEST.item, 1));
         OAK_CHEST.shape(111_101_111, 3);

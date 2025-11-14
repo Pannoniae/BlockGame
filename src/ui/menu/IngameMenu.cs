@@ -284,6 +284,11 @@ public class IngameMenu : Menu, IDisposable {
         }
         
 
+        // don't draw hotbar tooltip when chest/crafting table GUI is open
+        if (Game.world.inMenu) {
+            return;
+        }
+
         // Draw block display
         var stack = Game.player.inventory.getSelected();
 
