@@ -5,13 +5,29 @@ using BlockGame.world.item.inventory;
 using JetBrains.Annotations;
 
 namespace BlockGame.world.item;
+using static item.DyeItem;
+
 
 public class Recipe {
     public static Recipe WOOD_PICKAXE;
-    public static Recipe PLANKS;
+    public static Recipe OAK_PLANKS;
+    public static Recipe MAHOGANY_PLANKS;
+    public static Recipe MAPLE_PLANKS;
+    public static Recipe OAK_SLAB;
+    public static Recipe MAHOGANY_SLAB;
+    public static Recipe MAPLE_SLAB;
+    public static Recipe STONE_SLAB;
+    public static Recipe COBBLESTONE_SLAB;
+    public static Recipe CANDY_SLAB;
+    public static Recipe OAK_STAIRS;
+    public static Recipe MAHOGANY_STAIRS;
+    public static Recipe MAPLE_STAIRS;
+    public static Recipe STONE_STAIRS;
+    public static Recipe COBBLESTONE_STAIRS;
+    public static Recipe CANDY_STAIRS;
+    public static Recipe STICK;
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
-    public static Recipe STICK;
     public static Recipe OAK_CHEST;
     public static Recipe MAHOGANY_CHEST;
     public static Recipe GOLD_CANDY;
@@ -24,6 +40,12 @@ public class Recipe {
     public static Recipe DIAMOND_CANDY;
     public static Recipe LIGHTER;
     public static Recipe BUCKET;
+    public static Recipe LADDER;
+    public static Recipe SIGN;
+    public static Recipe OAK_DOOR;
+    public static Recipe MAHOGANY_DOOR;
+    public static Recipe BOTTLE;
+
     //public static Recipe BOW_WOOD;
     //public static Recipe ARROW_WOOD;
     //public static Recipe STRING;
@@ -33,7 +55,6 @@ public class Recipe {
     public static Recipe violet_dye;
     public static Recipe beige_dye;
     public static Recipe darkgreen_dye;
-    public static Recipe MAHOGANY_PLANKS;
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
@@ -80,13 +101,91 @@ public class Recipe {
         darkgreen_dye.noShape();
         darkgreen_dye.ingredients(Block.LEAVES.item);
 
-      // shapeless: 1 log -> 4 planks
-        PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
-        PLANKS.noShape();
-        PLANKS.ingredients(Block.OAK_LOG.item);
-        MAHOGANY_PLANKS = register(new ItemStack(Block.MAHOGANY_PLANKS.item, 4));
-        MAHOGANY_PLANKS.noShape();
-        MAHOGANY_PLANKS.ingredients(Block.MAHOGANY_LOG.item);
+       // shapeless: 1 log -> 4 planks
+       OAK_PLANKS = register(new ItemStack(Block.OAK_PLANKS.item, 4));
+       OAK_PLANKS.noShape();
+       OAK_PLANKS.ingredients(Block.OAK_LOG.item);
+        register(new ItemStack(Block.MAHOGANY_PLANKS.item, 4))
+            .noShape()
+            .ingredients(Block.MAHOGANY_LOG.item);
+        register(new ItemStack(Block.MAPLE_PLANKS.item, 4))
+            .shape(01_01, 2)
+            .ingredients(Block.MAPLE_LOG.item);
+
+       // stick (2 planks vertically) - any plank type works
+        STICK = register(new ItemStack(Item.STICK, 4));
+        STICK.shape(01_01, 2);
+        STICK.ingredients(Block.OAK_PLANKS.item);
+        register(new ItemStack(Item.STICK, 4))
+            .shape(01_01, 2)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+        register(new ItemStack(Item.STICK, 4))
+            .shape(01_01, 2)
+            .ingredients(Block.MAPLE_PLANKS.item);
+
+        // ladder (3 sticks in H shape)
+        LADDER = register(new ItemStack(Block.LADDER.item, 1));
+        LADDER.shape(101_111__101, 3);
+        LADDER.ingredients(Item.STICK);
+
+        // sign (6 planks and 1 stick) - any plank type works
+        SIGN = register(new ItemStack(Block.SIGN.item, 1));
+        SIGN.shape(111_111_020, 3);
+        SIGN.ingredients(Block.OAK_PLANKS.item, Item.STICK);
+        register(new ItemStack(Block.SIGN.item, 1))
+         .shape(111_111_020, 3)
+         .ingredients(Block.MAHOGANY_PLANKS.item, Item.STICK);
+        register(new ItemStack(Block.SIGN.item, 1))
+            .shape(111_111_020, 3)
+            .ingredients(Block.MAPLE_PLANKS.item, Item.STICK);
+
+        // slab (3 planks horizontally) - any plank type works
+        OAK_SLAB = register(new ItemStack(Block.OAK_SLAB.item, 1));
+        OAK_SLAB.shape(000_000_111, 3);
+        OAK_SLAB.ingredients(Block.OAK_PLANKS.item);
+        register(new ItemStack(Block.MAHOGANY_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+        register(new ItemStack(Block.MAPLE_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.MAPLE_PLANKS.item);
+        register(new ItemStack(Block.STONE_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.STONE.item);
+        register(new ItemStack(Block.COBBLESTONE_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.COBBLESTONE.item);
+        register(new ItemStack(Block.CANDY_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.CANDY.item);
+
+        // stairs (1/2/3 planks horizontally) - any plank type works
+        OAK_STAIRS = register(new ItemStack(Block.OAK_STAIRS.item, 1));
+        OAK_STAIRS.shape(100_110_111, 3);
+        OAK_STAIRS.ingredients(Block.OAK_PLANKS.item);
+        register(new ItemStack(Block.MAHOGANY_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+        register(new ItemStack(Block.MAPLE_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.MAPLE_PLANKS.item);
+        register(new ItemStack(Block.STONE_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.STONE.item);
+        register(new ItemStack(Block.COBBLESTONE_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.COBBLESTONE.item);
+        register(new ItemStack(Block.CANDY_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.CANDY.item);
+
+        OAK_DOOR = register(new ItemStack(Item.OAK_DOOR, 1));
+        OAK_DOOR.shape(110_110_110, 3);
+        OAK_DOOR.ingredients(Block.OAK_PLANKS.item);
+            register(new ItemStack(Item.MAHOGANY_DOOR,1))
+            .shape(110_110_110, 3)
+            .ingredients(Block.MAHOGANY_PLANKS.item);
+
 
         // crafting table (4 planks in square)
         CRAFTING_TABLE = register(new ItemStack(Block.CRAFTING_TABLE.item, 1));
@@ -98,22 +197,6 @@ public class Recipe {
         TORCH.shape(01_02, 2);
         TORCH.ingredients(Item.COAL, Item.STICK);
 
-        // stick (2 planks vertically) - any plank type works
-        STICK = register(new ItemStack(Item.STICK, 4));
-        STICK.shape(01_01, 2);
-        STICK.ingredients(Block.OAK_PLANKS.item);
-        register(new ItemStack(Item.STICK, 4))
-            .shape(01_01, 2)
-            .ingredients(Block.MAHOGANY_PLANKS.item);
-        register(new ItemStack(Item.STICK, 4))
-            .shape(01_01, 2)
-            .ingredients(Block.MAPLE_PLANKS.item);
-
-        // candy colouring (1 candy block, 1 dye)
-        //register(new ItemStack(Block.CANDY.item, 1))
-        //  .shape(01_02, 2)
-        //  .ingredients(Block.CANDY.item, Item.DYE);
-
         OAK_CHEST = register(new ItemStack(Block.OAK_CHEST.item, 1));
         OAK_CHEST.shape(111_101_111, 3);
         OAK_CHEST.ingredients(Block.OAK_PLANKS.item);
@@ -121,10 +204,6 @@ public class Recipe {
         MAHOGANY_CHEST = register(new ItemStack(Block.MAHOGANY_CHEST.item, 1));
         MAHOGANY_CHEST.shape(111_101_111, 3);
         MAHOGANY_CHEST.ingredients(Block.MAHOGANY_PLANKS.item);
-
-        GOLD_CANDY = register(new ItemStack(Block.GOLD_CANDY.item, 1));
-        GOLD_CANDY.noShape();
-        GOLD_CANDY.ingredients(Block.CANDY.item, Item.GOLD_INGOT);
 
         BRICK_FURNACE = register(new ItemStack(Block.BRICK_FURNACE.item, 1));
         BRICK_FURNACE.shape(111_121_232, 3);
@@ -146,6 +225,10 @@ public class Recipe {
         SAND_BRICK.shape(111_111_111, 3);
         SAND_BRICK.ingredients(Block.SAND.item);
 
+        GOLD_CANDY = register(new ItemStack(Block.GOLD_CANDY.item, 1));
+        GOLD_CANDY.noShape();
+        GOLD_CANDY.ingredients(Block.CANDY.item, Item.GOLD_INGOT);
+
         CINNABAR_CANDY = register(new ItemStack(Block.CINNABAR_CANDY.item, 1));
         CINNABAR_CANDY.noShape();
         CINNABAR_CANDY.ingredients(Block.CANDY.item, Item.CINNABAR);
@@ -157,6 +240,10 @@ public class Recipe {
         BUCKET = register(new ItemStack(Item.BUCKET, 1));
         BUCKET.shape(000_101_010, 3);
         BUCKET.ingredients(Item.IRON_INGOT);
+
+        BOTTLE = register(new ItemStack(Item.BOTTLE, 3));
+        BOTTLE.shape(000_101_010, 3);
+        BOTTLE.ingredients(Block.GLASS.item);
 
         LIGHTER = register(new ItemStack(Item.LIGHTER, 1));
         LIGHTER.shape(000_010_202, 3);

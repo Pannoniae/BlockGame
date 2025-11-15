@@ -9,12 +9,13 @@ public class SmeltingRecipe {
     public static SmeltingRecipe COPPER_INGOT;
     //public static SmeltingRecipe TIN_INGOT;
     //public static SmeltingRecipe SILVER_INGOT;
+    public static SmeltingRecipe COAL;
+    public static SmeltingRecipe STONE;
     public static SmeltingRecipe BRICK;
     public static SmeltingRecipe STEAK;
     public static SmeltingRecipe COOKED_PORKCHOP;
     public static SmeltingRecipe GLASS;
-    public static SmeltingRecipe COAL;
-    public static SmeltingRecipe STONE;
+
 
     private static readonly List<SmeltingRecipe> recipes = [];
 

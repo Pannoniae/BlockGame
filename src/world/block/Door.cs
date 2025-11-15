@@ -164,10 +164,10 @@ public class Door : Block {
 
     public override (item.Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
         // onBreak removes the other half via setBlock which doesn't trigger getDrop!
-        return (Item.DOOR, 0, 1);
+        return (Item.OAK_DOOR, 0, 1);
     }
 
     public override ItemStack getActualItem(byte metadata) {
-        return new ItemStack(Item.DOOR, 1, 0);
+        return new ItemStack(Item.OAK_DOOR, 1, 0);
     }
 }

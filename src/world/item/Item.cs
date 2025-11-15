@@ -75,7 +75,7 @@ public class Item {
     public static Item STEAK;
     public static Item PORKCHOP;
     public static Item COOKED_PORKCHOP;
-    public static Item DOOR;
+    public static Item OAK_DOOR;
     public static Item MAHOGANY_DOOR;
     public static Item SIGN_ITEM;
     public static Item BUCKET;
@@ -147,8 +147,8 @@ public class Item {
         SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
         SIGN_ITEM.tex = new UVPair(1, 7);
 
-        DOOR = register("doorItem", new DoorItem("Door", Block.DOOR));
-        DOOR.tex = new UVPair(4, 8);
+        OAK_DOOR = register("oakdoorItem", new DoorItem("Oak Door", Block.OAK_DOOR));
+        OAK_DOOR.tex = new UVPair(4, 8);
 
         MAHOGANY_DOOR = register("mahoganyDoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
         MAHOGANY_DOOR.tex = new UVPair(5, 8);
@@ -339,7 +339,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
         Registry.ITEMS.blackList[Block.FIRE.item.id] = true;
         Registry.ITEMS.blackList[Block.SIGN.item.id] = true;
-        Registry.ITEMS.blackList[Block.DOOR.item.id] = true;
+        Registry.ITEMS.blackList[Block.OAK_DOOR.item.id] = true;
         Registry.ITEMS.blackList[Block.MAHOGANY_DOOR.item.id] = true;
 
         // fuel values
@@ -353,7 +353,7 @@ public class Item {
         Registry.ITEMS.fuelValue[Block.MAPLE_LOG.item.id] = 1800;
         Registry.ITEMS.fuelValue[LAVA_BUCKET.id] = 12000; // 200 seconds (lava bucket op)
         Registry.ITEMS.fuelValue[SIGN_ITEM.id] = 300; // 5 seconds
-        Registry.ITEMS.fuelValue[DOOR.id] = 1200; // 20 seconds
+        Registry.ITEMS.fuelValue[OAK_DOOR.id] = 1200; // 20 seconds
         Registry.ITEMS.fuelValue[MAHOGANY_DOOR.id] = 1200; // 20 seconds
     }
 

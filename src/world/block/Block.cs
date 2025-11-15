@@ -138,7 +138,7 @@ public class Block {
     public static Block COBBLESTONE_SLAB;
 
     public static Block OAK_CHEST;
-    public static Block DOOR;
+    public static Block OAK_DOOR;
     public static Block MAHOGANY_DOOR;
 
     public static Block CANDY;
@@ -724,10 +724,10 @@ public class Block {
         OAK_CHEST.material(Material.WOOD);
         OAK_CHEST.setFlammable(30);
 
-        DOOR = register("door", new Door("Door"));
-        DOOR.setTex(cubeUVs(0, 10));
-        DOOR.material(Material.WOOD);
-        DOOR.setFlammable(30);
+        OAK_DOOR = register("door", new Door("Oak Door"));
+        OAK_DOOR.setTex(cubeUVs(0, 10));
+        OAK_DOOR.material(Material.WOOD);
+        OAK_DOOR.setFlammable(30);
 
         MAHOGANY_DOOR = register("mahoganyDoor", new Door("Mahogany Door"));
         MAHOGANY_DOOR.setTex(cubeUVs(1, 10));
