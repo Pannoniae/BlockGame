@@ -104,6 +104,7 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.update(dt);
         }
+
         base.update(dt);
 
         var world = Game.world;
@@ -197,6 +198,7 @@ public class GameScreen : Screen {
             if (currentMenu == INGAME_MENU) {
                 Game.player.updateInput(dt);
             }
+
             Game.player.blockHandling(dt);
             world.update(dt);
             //world.player.update(dt);
@@ -337,21 +339,21 @@ public class GameScreen : Screen {
                 if (Game.player.gameMode == GameMode.survival) {
                     switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
                     ((SurvivalInventoryMenu)currentMenu!).setup();
-                } else {
+                }
+                else {
                     // set creative inventory ID for server sync
                     Game.player.currentInventoryID = Constants.INV_ID_CREATIVE;
                     switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
                     ((CreativeInventoryMenu)currentMenu!).setup();
                 }
+
                 Game.instance.unlockMouse();
                 return;
             }
         }
 
 
-
         if (key == Key.Escape) {
-
             // if death screen, DO NOT DO IT
             if (currentMenu == DEATH_MENU) {
                 return;
@@ -369,7 +371,6 @@ public class GameScreen : Screen {
                 backToGame();
             }
         }
-
 
 
         switch (key) {
@@ -569,7 +570,8 @@ public class GameScreen : Screen {
         }
 
         // clear renderer queues
-        while (Game.renderer.meshingQueue.TryDequeue(out _)) { }
+        while (Game.renderer.meshingQueue.TryDequeue(out _)) {
+        }
 
         // clear light queues
         world.skyLightQueue.Clear();
@@ -591,9 +593,7 @@ public class GameScreen : Screen {
         Game.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
 
         // trigger "chunk change"
-        Game.setTimeout(200, () => {
-            Game.player.onChunkChanged();
-        });
+        Game.setTimeout(200, () => { Game.player.onChunkChanged(); });
 
         Log.info("Chunk regeneration complete");
     }
@@ -626,6 +626,7 @@ public class GameScreen : Screen {
                     subChunk.watervao = null;
                     world.dirtyChunk(new SubChunkCoord(chunk.coord.x, y, chunk.coord.z));
                 }
+
                 chunk.status = ChunkStatus.LIGHTED;
             }
         }
@@ -695,6 +696,7 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.draw();
         }
+
         base.draw();
 
         var gui = Game.gui;
@@ -1008,7 +1010,6 @@ public class GameScreen : Screen {
 
         // iterate through all entities
         foreach (var entity in world.entities) {
-
             var distance = (entity.position - playerPos).Length();
             if (distance > renderRange) continue;
 
@@ -1023,7 +1024,6 @@ public class GameScreen : Screen {
 
             // draw the AABB wireframe
             D.drawAABB(entity.aabb, c);
-
         }
 
         D.idc.end();
@@ -1119,6 +1119,7 @@ public class GameScreen : Screen {
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.postDraw();
         }
+
         base.postDraw();
     }
 
@@ -1192,7 +1193,7 @@ public class UpdateMemoryThread(GameScreen screen) {
             updateMemoryMethod();
 
             // we're also responsible for periodically trimming SharedBlockVAO! yes this is fucked but shhhh
-            if ( needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 1024)) {
+            if (needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 1024)) {
                 // if 60s has passed AND we have pending ones, trim
                 MemoryUtils.cleanGC();
                 SharedBlockVAO.c = 0;

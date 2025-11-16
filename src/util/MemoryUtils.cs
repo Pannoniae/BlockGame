@@ -44,7 +44,10 @@ public static partial class MemoryUtils {
         WorldIO.saveLightPool.clear();
         HeightMap.heightPool.clear();
         // probably a noop
-        Game.GL.ReleaseShaderCompiler();
+        // it doesn't do shit except crashing some games?
+        if (false) {
+            Game.GL.ReleaseShaderCompiler();
+        }
 
 
         //Console.WriteLine("Forcing blocking GC collection and compacting of gen2 LOH and updating OS process working set size...");

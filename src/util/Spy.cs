@@ -52,6 +52,19 @@ public class Spy {
             watcher.EnableRaisingEvents = true;
             return watcher;
         }).ToArray();
+
+
+        // also watch assets/character.png... for player skin changes
+        // shit workaround but id need to rework the asset loading otherwise
+        var charWatcher = new FileSystemWatcher(Path.Combine(projectDir, "src", "assets"), "character.png") {
+            IncludeSubdirectories = false,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Size |
+                           NotifyFilters.Attributes | NotifyFilters.FileName
+        };
+        charWatcher.Changed += changed;
+        charWatcher.Created += changed;
+        charWatcher.Renamed += changed;
+        charWatcher.EnableRaisingEvents = true;
     }
 
     private static void changed(object sender, FileSystemEventArgs e) {
