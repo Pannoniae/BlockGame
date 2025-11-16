@@ -183,6 +183,28 @@ public partial class Game {
 
         Log.log(LogLevel.INFO, "Game", "Starting game!");
 
+        sdl = true;
+        if (sdl) {
+            unsafe {
+                Window.PrioritizeSdl();
+                // set hints
+                SDL3.SDL_SetHint(SDL3.SDL_HINT_APP_NAME, "BlockGame");
+                //SDL3.SDL_SetHint(SDL3.SDL_HINT_WINDOWS_GAMEINPUT, "1");
+
+                // print SDL version!
+                var a = SDL3.SDL_GetVersion();
+                Log.info(
+                    $"SDL version: {SDL3.SDL_VERSIONNUM_MAJOR(a)}.{SDL3.SDL_VERSIONNUM_MINOR(a)}.{SDL3.SDL_VERSIONNUM_MICRO(a)}");
+            }
+
+        }
+        else {
+            Window.PrioritizeGlfw();
+            #if DEBUG
+        //GlfwProvider.GLFW.Value.WindowHint(WindowHintRobustness.ContextRobustness, Robustness.LoseContextOnReset);
+            #endif
+        }
+
         initDedicatedGraphics();
         cc();
 
@@ -199,8 +221,15 @@ public partial class Game {
         title = getRandomTitle();
 
 
-        IMonitor mainMonitor = Monitor.GetMainMonitor(null);
-        Vector2D<int> windowSize = GetNewWindowSize(mainMonitor);
+        Vector2D<int> windowSize = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
+        try {
+            IMonitor mainMonitor = Monitor.GetMainMonitor(null);
+            windowSize = GetNewWindowSize(mainMonitor);
+        }
+        catch (Exception e) {
+            Log.warn("Couldn't get main monitor for window sizing: ");
+            Log.warn(e);
+        }
 
         windowOptions.Size = new Vector2D<int>(Constants.initialWidth, Constants.initialHeight);
         windowOptions.VideoMode = new VideoMode(windowSize);
@@ -228,28 +257,6 @@ public partial class Game {
 
         //windowOptions.Samples = 4;
         windowOptions.API = api;
-
-        sdl = true;
-        if (sdl) {
-            unsafe {
-                Window.PrioritizeSdl();
-                // set hints
-                SDL3.SDL_SetHint(SDL3.SDL_HINT_APP_NAME, "BlockGame");
-                //SDL3.SDL_SetHint(SDL3.SDL_HINT_WINDOWS_GAMEINPUT, "1");
-
-                // print SDL version!
-                var a = SDL3.SDL_GetVersion();
-                Log.info(
-                    $"SDL version: {SDL3.SDL_VERSIONNUM_MAJOR(a)}.{SDL3.SDL_VERSIONNUM_MINOR(a)}.{SDL3.SDL_VERSIONNUM_MICRO(a)}");
-            }
-
-        }
-        else {
-            Window.PrioritizeGlfw();
-            #if DEBUG
-        //GlfwProvider.GLFW.Value.WindowHint(WindowHintRobustness.ContextRobustness, Robustness.LoseContextOnReset);
-            #endif
-        }
 
 
 
