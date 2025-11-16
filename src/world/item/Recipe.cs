@@ -298,6 +298,8 @@ public class Recipe {
     }
 
 
+
+
     private static Recipe tool(Item result, Item material, int shape, int q = 1) {
         int gridSize = shape > 9999 ? 3 : 2;
         var r = register(result);
