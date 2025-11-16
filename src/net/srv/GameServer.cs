@@ -88,8 +88,15 @@ public class GameServer : INetEventListener {
         ip6 = properties.getString("ip6", "::");
         port = properties.getInt("port", 31337);
 
-        netManager = new NetManager(this);
-        netManager.Start(ip, ip6, port);
+        try {
+            netManager = new NetManager(this);
+            netManager.Start(ip, ip6, port);
+        }
+        catch (Exception e) {
+            Log.error("FATAL: Failed to start network!");
+            Log.error(e);
+            throw; // crash the server, don't run in a broken state
+        }
 
         Log.info($"Server listening on port {port}");
 

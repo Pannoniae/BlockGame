@@ -35,8 +35,8 @@ public class ServerMain {
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 
         // I'm tired of lagspikes
-        Thread.CurrentThread.Priority = ThreadPriority.Highest;
-        Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+        Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
+        Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
         Process.GetCurrentProcess().PriorityBoostEnabled = true;
 
         server = new GameServer(devMode);

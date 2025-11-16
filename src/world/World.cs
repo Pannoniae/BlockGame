@@ -202,6 +202,8 @@ public partial class World : IDisposable {
                         ? new SurvivalInventoryContext(player.inventory)
                         : new CreativeInventoryContext(40);
 
+                    player.currentCtx = player.inventoryCtx;
+
                     player.prevPosition = player.position;
                 }
 

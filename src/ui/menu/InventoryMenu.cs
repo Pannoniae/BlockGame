@@ -144,7 +144,25 @@ public abstract class InventoryMenu : Menu {
 
         // close inventory on inventory key
         if (key is Key.E or Key.Escape) {
-            Game.instance.executeOnMainThread(() => { ((GameScreen)screen).backToGame(); });
+
+            // close context
+            var player = Game.player;
+            player.currentCtx = player.inventoryCtx;
+
+            // clear cursor todo refund somewhere?
+            player.inventory.cursor = ItemStack.EMPTY;
+
+            // if mp, send packet to close on server
+            if (Net.mode.isMPC()) {
+                ClientConnection.instance.send(new InventoryClosePacket {
+                    invID = (byte)player.currentInventoryID
+                }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
+
+
+            Game.instance.executeOnMainThread(() => {
+                ((GameScreen)screen).backToGame();
+            });
         }
     }
 

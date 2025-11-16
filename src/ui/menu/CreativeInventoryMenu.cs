@@ -75,7 +75,7 @@ public class CreativeInventoryMenu : InventoryMenu {
     protected override string getTitle() {
         var currentPage = creativeCtx.getCurrentPage();
         var totalPages = creativeCtx.totalPages;
-        return totalPages > 1 ? $"Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
+        return totalPages > 1 ? $"Creative Inventory ({currentPage + 1}/{totalPages})" : "Inventory";
     }
 
     protected override BTexture2D getTexture() => invTex;

@@ -540,7 +540,7 @@ public class ServerPacketHandler : PacketHandler {
             }, DeliveryMethod.ReliableOrdered);
 
             // resync the whole inventory since client consumed block optimistically
-            conn.player.inventoryCtx.notifyInventorySlotsChanged(conn.player.inventory);
+            conn.player.inventoryCtx.notifyAllSlotsChanged();
             return;
         }
 
@@ -569,7 +569,7 @@ public class ServerPacketHandler : PacketHandler {
             }, DeliveryMethod.ReliableOrdered);
 
             // also resync inventory!
-            conn.player.inventoryCtx.notifyInventorySlotsChanged(conn.player.inventory);
+            conn.player.inventoryCtx.notifyAllSlotsChanged();
 
             return;
         }
@@ -607,7 +607,7 @@ public class ServerPacketHandler : PacketHandler {
             }, DeliveryMethod.ReliableOrdered);
 
             // resync the whole inventory since client consumed block optimistically
-            conn.player.inventoryCtx.notifyInventorySlotsChanged(conn.player.inventory);
+            conn.player.inventoryCtx.notifyAllSlotsChanged();
             return;
         }
 
@@ -873,18 +873,24 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // validate window ID matches currently open window
-        if (p.invID != conn.player.currentInventoryID) {
+        if (p.invID != conn.player.currentInventoryID && p.invID != Constants.INV_ID_CURSOR) {
+
             conn.send(new InventoryAckPacket {
                 invID = p.invID,
                 actionID = p.actionID,
                 acc = false
             }, DeliveryMethod.ReliableOrdered);
+            Log.warn($"Player '{conn.username}' sent invalid inventory ID {p.invID} (expected {conn.player.currentInventoryID})");
+
+            // resync entire inventory to fix desync
+            conn.player.currentCtx.notifyAllSlotsChanged();
+
             return;
         }
 
         // get the context for this window
         var ctx = conn.player.currentCtx;
-        if (ctx == null) {
+        if (ctx == null!) {
             SkillIssueException.throwNew("No inventory context for player!");
         }
 
@@ -895,6 +901,10 @@ public class ServerPacketHandler : PacketHandler {
                 actionID = p.actionID,
                 acc = false
             }, DeliveryMethod.ReliableOrdered);
+            Log.warn($"Player '{conn.username}' sent invalid slot index {p.idx} for inventory ID {p.invID}");
+
+            // resync entire inventory to fix desync
+            conn.player.currentCtx.notifyAllSlotsChanged();
             return;
         }
 
@@ -931,7 +941,8 @@ public class ServerPacketHandler : PacketHandler {
             // desync detected - resync entire inventory to fix cascading desyncs
             // (client may have done multiple optimistic updates based on wrong state)
             // todo do we still need this?
-            ctx.notifyInventorySlotsChanged(conn.player.inventory);
+            //ctx.notifyInventorySlotsChanged(conn.player.inventory);
+            ctx.notifyAllSlotsChanged();
 
             // also resync cursor
             conn.send(new SetSlotPacket {

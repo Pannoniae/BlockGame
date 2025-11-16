@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+    <assemblyIdentity version="1.0.0.0" name="BlockGame.exe"/>
+    <application>
+
+        <!-- YES THIS HAS TO BE DUPLICATED OTHERWISE IT DONT WORK -->
+        <asmv3:windowsSettings xmlns="http://schemas.microsoft.com/SMI/2020/WindowsSettings">
+            <heapType>SegmentHeap</heapType>
+        </asmv3:windowsSettings>
+    </application>
+</assembly>

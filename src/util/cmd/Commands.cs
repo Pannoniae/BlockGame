@@ -688,7 +688,7 @@ public readonly struct Command {
 
             // sync all slots!
             for (int i = 0; i < Game.player.inventory.size(); i++) {
-                player.inventoryCtx.notifyInventorySlotsChanged(player.inventory);
+                player.inventoryCtx.notifyAllSlotsChanged();
             }
             source.sendMessage("Cleared inventory");
         }, true));

@@ -64,6 +64,16 @@ public abstract class InventoryContext {
         }
     }
 
+    public void notifyAllSlotsChanged() {
+        if (viewers == null) {
+            return;
+        }
+
+        for (int i = 0; i < slots.Count; i++) {
+            notifySlotChanged(i, slots[i].getStack());
+        }
+    }
+
     public int viewerCount() => viewers?.Count ?? 0;
 
     public virtual void handleSlotClick(ItemSlot slot, ClickType click) {

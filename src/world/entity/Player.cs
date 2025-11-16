@@ -102,6 +102,7 @@ public class Player : Mob, CommandSource {
         }
 
         inventoryCtx = new CreativeInventoryContext(40);
+        currentCtx = inventoryCtx;
 
         this.world = world;
         rotation = new Vector3();
