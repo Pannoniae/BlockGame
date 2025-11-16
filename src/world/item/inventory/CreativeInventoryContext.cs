@@ -40,14 +40,14 @@ public class CreativeInventoryContext : InventoryContext {
                     allItems.Add(new ItemStack(Block.CANDY.item, 1, metadata));
                 }
             }
-            // special handling for candy slab - add all color variants
+            // special handling for candy slab - add all colour variants
             else if (i == Block.CANDY_SLAB.id) {
                 for (byte color = 0; color < 24; color++) {
-                    var metadata = CandySlab.setColor(0, color);
+                    var metadata = CandySlab.setColour(0, color);
                     allItems.Add(new ItemStack(Block.CANDY_SLAB.item, 1, metadata));
                 }
             }
-            // special handling for candy stairs - add all color variants
+            // special handling for candy stairs - add all colour variants
             else if (i == Block.CANDY_STAIRS.id) {
                 for (byte color = 0; color < 24; color++) {
                     var metadata = CandyStairs.setColor(0, color);

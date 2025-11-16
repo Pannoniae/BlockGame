@@ -26,6 +26,16 @@ public class CandyStairs : Stairs {
         return new UVPair(color & 0xF, 6 + (color >> 4));
     }
 
+    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+        var color = getColor(metadata);
+        var opposite = Direction.getOpposite(dir);
+        var finalMeta = setColor(0, color);
+        finalMeta = (byte)((finalMeta & ~0b11) | ((byte)opposite & 0b11));
+
+        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(finalMeta));
+        world.blockUpdateNeighbours(x, y, z);
+    }
+
     public override byte maxValidMetadata() {
         // 3 bits for stair state (0-7) + 5 bits for color (0-31)
         // but candy only has 24 colors, so max color is 23

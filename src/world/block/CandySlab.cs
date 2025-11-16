@@ -16,24 +16,53 @@ public class CandySlab : Slabs {
     /**
      * Metadata encoding:
      * Bits 0-1: inherited from Slabs (position/double)
-     * Bits 2-7: candy color (0-23)
+     * Bits 2-7: candy colour (0-23)
      */
-    public static byte getColor(byte metadata) => (byte)((metadata >> 2) & 0x3F);
-    public static byte setColor(byte metadata, byte color) => (byte)((metadata & 0b11) | ((color & 0x3F) << 2));
+    public static byte getColour(byte metadata) => (byte)((metadata >> 2) & 0x3F);
+    public static byte setColour(byte metadata, byte color) => (byte)((metadata & 0b11) | ((color & 0x3F) << 2));
 
     public override UVPair getTexture(int faceIdx, int metadata) {
-        var color = getColor((byte)metadata);
+        var color = getColour((byte)metadata);
         return new UVPair(color & 0xF, 6 + (color >> 4));
     }
 
     public override byte maxValidMetadata() {
-        // 2 bits for slab state (0-3) + 6 bits for color (0-63)
-        // but candy only has 24 colors, so max color is 23
-        return (byte)((23 << 2) | 3); // = 95
+        // 2 bits for slab state (0-3) + 6 bits for colour (0-63)
+        // but candy only has 24 colours, so max colour is 23
+        return (23 << 2) | 3; // = 95
+    }
+
+    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+        var color = getColour(metadata);
+        var existingBlock = world.getBlockRaw(x, y, z);
+
+        byte finalMeta;
+
+        // check if combining with existing slab of same color
+        if (existingBlock.getID() == id) {
+            var existingMeta = existingBlock.getMetadata();
+            if (!isDouble(existingMeta) && getColour(existingMeta) == color) {
+                // make double slab, preserve color
+                finalMeta = setColour(setDouble(setTop(0, false), true), color);
+            } else {
+                return; // can't place
+            }
+        } else {
+            // determine top/bottom placement
+            bool placeOnTop = dir == RawDirection.DOWN ? true :
+                              dir == RawDirection.UP ? false :
+                              (Raycast.raycast(world, RaycastType.BLOCKS).hit &&
+                               Raycast.raycast(world, RaycastType.BLOCKS).point.Y - y > 0.5);
+
+            finalMeta = setColour(setTop(0, placeOnTop), color);
+        }
+
+        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(finalMeta));
+        world.blockUpdateNeighbours(x, y, z);
     }
 
     public string getName(byte metadata) {
-        var color = getColor(metadata);
+        var color = getColour(metadata);
         return $"{CandyBlock.colourNames[color]} Candy Slab";
     }
 

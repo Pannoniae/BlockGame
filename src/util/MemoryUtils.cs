@@ -33,7 +33,7 @@ public static partial class MemoryUtils {
         *(int*)0 = 42;
     }
 
-    public static void cleanGC() {
+    public static void cleanGC(bool period = true) {
 
         ArrayBlockData.blockPool.clear();
         ArrayBlockData.lightPool.clear();
@@ -63,9 +63,13 @@ public static partial class MemoryUtils {
             WindowsMemoryUtility.ReleaseUnusedProcessWorkingSetMemory();
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-            LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMallocTrim();
-            LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_DONTNEED();
-            LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_PAGEOUT();
+
+            // todo re-enable these after testing
+            if (!period) {
+                LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMallocTrim();
+                LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_DONTNEED();
+                LinuxMemoryUtility.ReleaseUnusedProcessWorkingSetMemoryWithMadvise_MADV_PAGEOUT();
+            }
         }
 
         Log.info($"Released memory in {sw.Elapsed.TotalMilliseconds} ms");

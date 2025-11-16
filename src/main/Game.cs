@@ -829,7 +829,7 @@ public partial class Game {
         }
 
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
-        MemoryUtils.cleanGC();
+        MemoryUtils.cleanGC(true);
     }
 
     private void setIconToBlock() {

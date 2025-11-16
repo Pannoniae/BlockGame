@@ -95,8 +95,9 @@ public class GameScreen : Screen {
         Game.clearInterval(updateDebugText);
     }
 
-    public void trim() {
+    public void trim(bool force = false) {
         umt?.needTrim = true;
+        umt?.forceTrim = true;
     }
 
 
@@ -416,7 +417,7 @@ public class GameScreen : Screen {
                     break;
                 }
 
-                MemoryUtils.cleanGC();
+                MemoryUtils.cleanGC(true);
                 //Game.mm();
                 break;
             case Key.F10: {
@@ -661,7 +662,7 @@ public class GameScreen : Screen {
         }
 
         // also free up memory!
-        trim();
+        trim(true);
 
         switchToMenu(PAUSE_MENU);
         Game.instance.unlockMouse();
@@ -1183,6 +1184,7 @@ public class UpdateMemoryThread(GameScreen screen) {
     public volatile bool stopped;
 
     public volatile bool needTrim;
+    public volatile bool forceTrim;
 
     public void run() {
         while (true) {
@@ -1193,16 +1195,17 @@ public class UpdateMemoryThread(GameScreen screen) {
             updateMemoryMethod();
 
             // we're also responsible for periodically trimming SharedBlockVAO! yes this is fucked but shhhh
-            if (needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 1024)) {
+            if (needTrim || (Game.permanentStopwatch.ElapsedMilliseconds > SharedBlockVAO.lastTrim + 60000 && SharedBlockVAO.c > 1024)) {
                 // if 60s has passed AND we have pending ones, trim
-                MemoryUtils.cleanGC();
+                MemoryUtils.cleanGC(forceTrim);
                 SharedBlockVAO.c = 0;
                 SharedBlockVAO.lastTrim = Game.permanentStopwatch.ElapsedMilliseconds;
                 needTrim = false;
+                forceTrim = false;
             }
 
             // sleep 200ms
-            Thread.Sleep(200);
+            Thread.Sleep(OperatingSystem.IsLinux() ? 2000 : 200);
         }
     }
 
