@@ -22,6 +22,7 @@ public partial class World : IDisposable {
 
     // try to keep 120 FPS at least
     public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
+    public const double MAX_MESHLOAD_FRAMETIME = 1000 / 360.0;
     public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
 
 
@@ -479,7 +480,7 @@ public partial class World : IDisposable {
     /// Chunkloading and friends.
     /// </summary>
     public void renderUpdate(double dt) {
-        var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+        var start = Game.permanentStopwatch.ElapsedMilliseconds;
         var ctr = 0;
         updateChunkloading(start, loading: false, ref ctr);
 
@@ -494,7 +495,7 @@ public partial class World : IDisposable {
             limit = double.MaxValue;
         }
 
-        while (worldIO.hasChunkLoadResult() && Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
+        while (worldIO.hasChunkLoadResult() && Game.permanentStopwatch.ElapsedMilliseconds - startTime < limit) {
             var result = worldIO.getChunkLoadResult();
             if (result == null) {
                 break;
@@ -547,7 +548,8 @@ public partial class World : IDisposable {
         var limit = Net.mode == NetMode.DED ? double.MaxValue
             : loading ? MAX_CHUNKLOAD_FRAMETIME_FAST
             : MAX_CHUNKLOAD_FRAMETIME;
-        while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
+        while (Game.permanentStopwatch.ElapsedMilliseconds - startTime < limit) {
+
             // check if queue is stuck and shuffle only when needed
             var currentQueueSize = chunkLoadQueue.Count;
             if (lastQueueSize == currentQueueSize) {

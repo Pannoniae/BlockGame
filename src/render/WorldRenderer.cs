@@ -599,7 +599,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         chunksToMesh.Clear();
 
         var startTime = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
-        var limit = World.MAX_CHUNKLOAD_FRAMETIME;
+        const double limit = World.MAX_MESHLOAD_FRAMETIME;
         // empty the meshing queue
         while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit &&
                meshingQueue.TryDequeue(out var sectionCoord)) {
