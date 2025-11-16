@@ -21,8 +21,8 @@ public partial class World : IDisposable {
     public const int WORLDHEIGHT = Chunk.CHUNKHEIGHT * Chunk.CHUNKSIZE;
 
     // try to keep 120 FPS at least
-    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 180.0;
-    public const double MAX_MESHLOAD_FRAMETIME = 1000 / 360.0;
+    public const double MAX_CHUNKLOAD_FRAMETIME = 1000 / 360.0;
+    public const double MAX_MESHLOAD_FRAMETIME = 1000 / 480.0;
     public const double MAX_MESHING_FRAMETIME = 1000 / 360.0;
 
 
@@ -445,10 +445,10 @@ public partial class World : IDisposable {
     }
 
     public void sortChunksRandom() {
-        // randomize the chunk load queue so chunks can load in a more random order
+        // randomise the chunk load queue so chunks can load in a more random order
         // this helps with not getting deadlocked
         var rnd = new XRandom();
-        chunkLoadQueue = chunkLoadQueue.OrderBy(x => rnd.Next()).ToList();
+        chunkLoadQueue = chunkLoadQueue.OrderBy(_ => rnd.Next()).ToList();
     }
 
     public void loadAroundPlayer() {

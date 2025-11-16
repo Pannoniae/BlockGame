@@ -79,6 +79,10 @@ public static class NBT {
         writeCompressed(nbt, stream);
     }
 
+    public static async Task writeFileAsync(NBTCompound nbt, string name) {
+        // todo
+    }
+
     private static void saveFileAsync(NBTCompound nbt, string name) {
         using var stream = new FileStream(name, FileMode.Create, FileAccess.Write, FileShare.Read);
         writeCompressed(nbt, stream);

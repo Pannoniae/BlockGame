@@ -30,7 +30,7 @@ This one is a bit different:
 
 ## Follow development
 
-Join the [Discord server](https://discord.gg/6mmuN6JBuT).
+Join the [Discord server](https://discord.gg/TEJD5YQfuc).
 
 ## Nerd stuff
 
