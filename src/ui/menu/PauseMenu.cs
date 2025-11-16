@@ -13,25 +13,37 @@ namespace BlockGame.ui.menu {
             settings.setPosition(new Vector2I(0, 24));
             settings.centreContents();
             settings.clicked += _ => { Screen.GAME_SCREEN.openSettings(); };
+
             var mainMenu = new Button(this, "mainMenu", false, "Quit to Main Menu");
             mainMenu.setPosition(new Vector2I(0, 48));
             mainMenu.centreContents();
             mainMenu.clicked += returnToMainMenu;
+
             addElement(backToGame);
             addElement(settings);
             addElement(mainMenu);
         }
 
+        public override void activate() {
+            base.activate();
+            // show/hide disconnect button based on connection status
+            if (hasElement("disconnect")) {
+                getElement("disconnect").active = Game.client?.connected ?? false;
+            }
+        }
+
         public static void returnToMainMenu(GUIElement guiElement) {
-            Game.instance.executeOnMainThread(() => {
-                
-                // save world
-                Game.world.worldIO.save(Game.world, Game.world.name);
-                
-                // dispose world
-                Game.setWorld(null);
-                Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
-            });
+            if (Net.mode.isMPC()) {
+                // multiplayer: disconnect and return to menu
+                Game.instance.executeOnMainThread(Game.disconnectAndReturnToMenu);
+            }
+            else {
+                // singleplayer: exit world (with save) and return to menu
+                Game.instance.executeOnMainThread(() => {
+                    Game.exitWorld(save: true);
+                    Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
+                });
+            }
         }
 
         public override void update(double dt) {

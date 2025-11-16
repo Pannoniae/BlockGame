@@ -116,6 +116,7 @@ public class CreateWorldMenu : Menu {
 
         // create world
         var world = new World(folderName, seed, worldName, generatorName);
+        Net.mode = NetMode.SP;
         Game.setWorld(world);
         Game.instance.switchTo(LOADING);
         LOADING.load(world, false);

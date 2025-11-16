@@ -32,7 +32,7 @@ public class AnimalModel : EntityModel {
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
         // set cow texture
-        Game.graphics.tex(0, e.tex);
+        Game.graphics.tex(0, Game.textures.get(e.tex));
 
         // calculate interpolated rotations
         var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);

@@ -24,7 +24,7 @@ public class DemonEye : Mob {
     protected override double eyeHeight => 0; // it's a fucking floating eye
 
     public DemonEye(World world) : base(world, "eye") {
-        tex = Game.textures.eye;
+        tex = "textures/entity/eye.png";
         flyMode = true;
         hp = 30;
     }
@@ -40,8 +40,8 @@ public class DemonEye : Mob {
         spawnTicks++;
         updateSunlightBurn();
 
-        var nearestPlayer = findNearestPlayer(DETECT_RADIUS);
-
+        // find and chase nearest player
+        Entity? nearestPlayer = target ?? findNearestPlayer(DETECT_RADIUS, out _);
         if (nearestPlayer != null) {
             target = nearestPlayer;
             flyTowardsTarget(dt);
@@ -50,7 +50,8 @@ public class DemonEye : Mob {
             if (dist < reach && attackTime <= 0) {
                 attackPlayer();
             }
-        } else {
+        }
+        else {
             idleFlight(dt);
         }
 
@@ -127,6 +128,7 @@ public class DemonEye : Mob {
                 return y + 1;
             }
         }
+
         return 64;
     }
 
@@ -134,6 +136,7 @@ public class DemonEye : Mob {
         if (target is Player player) {
             player.dmg(ATTACK_DAMAGE, position);
         }
+
         attackTime = ATTACK_COOLDOWN;
     }
 

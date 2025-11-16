@@ -19,11 +19,16 @@ public class LoadingMenu : Menu, ProgressUpdater {
     private Text statusText;
     private Text tipText;
     private ProgressBar progressBar;
-    private World world;
+    private World? world;
 
     private Coroutine loadingCoroutine;
     private string currentStage = "Initializing";
     private float currentProgress;
+
+    // connection tracking
+    private bool isConnecting = false;
+    private bool wasConnected = false;
+    private bool wasAuthenticated = false;
 
     public LoadingMenu() {
         titleText = Text.createText(this, "titleText", new Vector2I(0, 0), "Loading world");
@@ -54,15 +59,112 @@ public class LoadingMenu : Menu, ProgressUpdater {
 
     public void load(World world, bool isLoading) {
         this.world = world;
+
+        titleText.text = isLoading ? "Loading world" : "Generating world";
+        titleText.updateLayout();
+
+        currentStage = "Initializing";
+
         loadingCoroutine = Game.startCoroutine(loadWorldCoroutine(isLoading));
+    }
+
+    public void connect() {
+        titleText.text = "Connecting to server";
+        titleText.updateLayout();
+
+        statusText.text = "Connecting...";
+        statusText.updateLayout();
+
+        currentStage = "Connecting";
+        isConnecting = true;
+        wasConnected = false;
+        wasAuthenticated = false;
+
+        progressBar.setProgress(0f);
     }
 
 
     public override void update(double dt) {
         base.update(dt);
-        if (loadingCoroutine.isCompleted) {
-            Game.instance.switchToScreen(Screen.GAME_SCREEN);
-            Game.instance.lockMouse();
+
+        // handle multiplayer connection state changes
+        if (isConnecting && Game.client != null) {
+
+            // check connection progress
+            if (!wasConnected && Game.client.connected) {
+                wasConnected = true;
+                currentStage = "Logging in";
+                progressBar.setProgress(0.3f);
+            }
+
+            if (!wasAuthenticated && Game.client.authenticated) {
+                wasAuthenticated = true;
+                currentStage = "Downloading chunks";
+                progressBar.setProgress(0.6f);
+            }
+
+            // update chunk loading progress
+            if (wasAuthenticated && Game.world != null && Game.player != null) {
+
+                // load world
+                var start = Game.permanentStopwatch.Elapsed.TotalMilliseconds;
+                var ctr = 0;
+                Game.world.updateChunkloading(start, loading: true, ref ctr);
+                Game.renderer.update(dt);
+
+                // count how many chunks we have in the required radius
+                var playerChunk = new ChunkCoord(
+                    (int)Game.player.position.X >> 4,
+                    (int)Game.player.position.Z >> 4
+                );
+
+                int radius = Game.client.minLoadRadius;
+                int totalNeeded = (radius * 2 + 1) * (radius * 2 + 1);
+                int loaded = 0;
+
+                for (int dx = -radius; dx <= radius; dx++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        var coord = new ChunkCoord(playerChunk.x + dx, playerChunk.z + dz);
+
+                        // circle
+                        if (!(coord.distanceSq(playerChunk) <= (radius + 1) * (radius + 1))) {
+                            totalNeeded--;
+                            continue;
+                        }
+
+                        // edge chunks only need LIGHTED, inner chunks need MESHED
+                        bool isEdge = dx == -radius || dx == radius || dz == -radius || dz == radius;
+                        var requiredStatus = isEdge ? ChunkStatus.LIGHTED : ChunkStatus.MESHED;
+
+                        if (Game.world.getChunkMaybe(coord, out var chunk) && chunk.status >= requiredStatus) {
+                            loaded++;
+                        }
+                    }
+                }
+
+                float chunkProgress = (float)loaded / totalNeeded;
+                // map 0-1 chunk progress to 0.6-0.95 on progress bar
+                float mappedProgress = 0.6f + (chunkProgress * 0.35f);
+                progressBar.setProgress(mappedProgress);
+                currentStage = $"Downloading chunks ({loaded}/{totalNeeded})";
+            }
+
+            // only transition once all initial chunks are loaded
+            if (Game.world != null && wasAuthenticated && Game.client.initialChunksLoaded) {
+                isConnecting = false;
+                currentStage = "Ready!";
+                progressBar.setProgress(1.0f);
+                Game.instance.switchToScreen(Screen.GAME_SCREEN);
+                Game.instance.lockMouse();
+            }
+        }
+
+        if (Net.mode.isSP()) {
+            // handle singleplayer world loading
+            if (loadingCoroutine?.isCompleted == true) {
+                Game.instance.switchToScreen(Screen.GAME_SCREEN);
+                Game.instance.lockMouse();
+            }
         }
     }
 

@@ -7,7 +7,7 @@ public class FixedArrayPool<T> {
 
     /**
      * IDK how to do thread-safety here but fear not, we have an overkill solution!
-     * Are we just locking everything? Yes. Do I care? no, because the chunkmuncher might come back again and I don't stand for that
+     * Are we just locking everything? Yes. Do I care? no, because the chunkmuncher might come back again
      */
     private readonly Queue<T[]> _objects;
     

@@ -1,4 +1,6 @@
 ﻿using BlockGame.main;
+using BlockGame.net.packet;
+using BlockGame.net.srv;
 using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.util;
@@ -6,6 +8,7 @@ using BlockGame.world.block.entity;
 using BlockGame.world.entity;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
+using LiteNetLib;
 using Molten;
 
 namespace BlockGame.world.block;
@@ -75,16 +78,46 @@ public class Furnace : EntityBlock {
             return false;
         }
 
-        var ctx = new FurnaceMenuContext(player.inventory, be);
-        player.currentCtx = ctx;
+        // MP client: don't do shit
+        if (Net.mode.isMPC()) {
+            return false;
+        }
 
-        Screen.GAME_SCREEN.switchToMenu(new FurnaceMenu(new Vector2I(0, 32), ctx));
-        ((FurnaceMenu)Screen.GAME_SCREEN.currentMenu!).setup();
+        // server-side: open inventory via helper
+        if (Net.mode.isDed()) {
+            var ctx = new FurnaceMenuContext(player.inventory, be);
+            return GameServer.openInventory(
+                (ServerPlayer)player,
+                ctx,
+                invType: 2, // furnace
+                title: "Furnace",
+                position: new Vector3I(x, y, z),
+                slots: be.slots,
+                additionalPackets: conn => {
+                    // send furnace state (smelting progress, fuel)
+                    conn.send(new FurnaceSyncPacket {
+                        position = new Vector3I(x, y, z),
+                        fuelRemaining = be.fuelRemaining,
+                        fuelMax = be.fuelMax,
+                        smeltProgress = be.smeltProgress
+                    }, DeliveryMethod.ReliableOrdered);
+                }
+            );
+        }
+        else {
+            var ctx = new FurnaceMenuContext(player.inventory, be);
+            player.currentCtx = ctx;
 
-        world.inMenu = true;
-        Game.instance.unlockMouse();
+            Screen.GAME_SCREEN.switchToMenu(new FurnaceMenu(new Vector2I(0, 32), ctx));
+            ((FurnaceMenu)Screen.GAME_SCREEN.currentMenu!).setup();
 
-        return true;
+            world.inMenu = true;
+            Game.instance.unlockMouse();
+
+            return true;
+        }
+
+        return false;
     }
 
     public override BlockEntity get() {

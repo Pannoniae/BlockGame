@@ -36,15 +36,29 @@ public class WorldIO {
 
     public WorldIO(World world) {
         this.world = world;
-        chunkSaveThread = new ChunkSaveThread(this);
-        chunkLoadThread = new ChunkLoadThread(this);
+        if (!world.isMP) {
+            chunkSaveThread = new ChunkSaveThread(this);
+            chunkLoadThread = new ChunkLoadThread(this);
+        }
     }
 
     public void save(World world, string filename, bool saveChunks = true) {
         // save metadata
         // create level folder
-        if (!Directory.Exists($"level/{filename}")) {
-            Directory.CreateDirectory($"level/{filename}");
+
+        if (world.isMP) {
+            SkillIssueException.throwNew("fix your fucking game");
+        }
+
+        if (Net.mode.isDed()) {
+            if (!Directory.Exists($"{filename}")) {
+                Directory.CreateDirectory($"{filename}");
+            }
+        }
+        else {
+            if (!Directory.Exists($"level/{filename}")) {
+                Directory.CreateDirectory($"level/{filename}");
+            }
         }
 
         saveWorldData();
@@ -64,7 +78,12 @@ public class WorldIO {
         tag.addInt("seed", world.seed);
         tag.addInt("time", world.worldTick);
         tag.addString("displayName", world.displayName);
-        tag.addString("gamemode", Game.gamemode == GameMode.survival ? "survival" : "creative");
+
+        // in singleplayer we add it from the player
+        if (Net.mode.isSP()) {
+            tag.addString("gamemode", world.player.gameMode == GameMode.survival ? "survival" : "creative");
+        }
+
         tag.addLong("lastPlayed", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         tag.addString("generator", world.generatorName);
 
@@ -73,16 +92,24 @@ public class WorldIO {
         tag.addDouble("spawnY", world.spawn.Y);
         tag.addDouble("spawnZ", world.spawn.Z);
 
-        // save full player entity data
-        var playerData = new NBTCompound("player");
-        world.player.write(playerData);
-        tag.add(playerData);
+        if (Net.mode.isSP()) {
+            // save full player entity data
+            var playerData = new NBTCompound("player");
+            world.player.write(playerData);
+            tag.add(playerData);
+        }
 
         // save lighting queues
         saveLightingQueues(tag);
 
-        NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
-        Log.info($"Saved world data to level/{world.name}/level.xnbt");
+        if (Net.mode.isDed()) {
+            NBT.writeFile(tag, $"{world.name}/level.xnbt");
+            Log.info($"Saved world data to {world.name}/level.xnbt");
+        }
+        else {
+            NBT.writeFile(tag, $"level/{world.name}/level.xnbt");
+            Log.info($"Saved world data to level/{world.name}/level.xnbt");
+        }
     }
 
     private void saveLightingQueues(NBTCompound tag) {
@@ -151,8 +178,17 @@ public class WorldIO {
     }
 
     public static World load(string filename) {
-        Log.info($"Loaded data from level/{filename}/level.xnbt");
-        var tag = NBT.readFile($"level/{filename}/level.xnbt");
+
+        NBTCompound tag;
+        if (Net.mode.isDed()) {
+            Log.info($"Loaded data from {filename}/level.xnbt");
+            tag = NBT.readFile($"{filename}/level.xnbt");
+        }
+        else {
+            Log.info($"Loaded data from level/{filename}/level.xnbt");
+            tag = NBT.readFile($"level/{filename}/level.xnbt");
+        }
+
         var seed = tag.getInt("seed");
         var displayName = tag.has("displayName") ? tag.getString("displayName") : filename;
         var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
@@ -299,7 +335,7 @@ public class WorldIO {
     }
 
     public static void deleteLevel(string level) {
-        Directory.Delete($"level/{level}", true);
+        Directory.Delete(Net.mode.isDed() ? $"{level}" : $"level/{level}", true);
     }
 
     public static NBTCompound serialiseChunkIntoNBT(Chunk chunk) {
@@ -661,7 +697,7 @@ public class WorldIO {
         var z = coord.z >> 5;
         var xDir = x < 0 ? $"-{-x:X}" : x.ToString("X");
         var zDir = z < 0 ? $"-{-z:X}" : z.ToString("X");
-        return $"level/{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
+        return Net.mode.isDed() ? $"{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt" : $"level/{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
     }
 
     public static bool chunkFileExists(string levelname, ChunkCoord coord) {
@@ -669,7 +705,7 @@ public class WorldIO {
     }
 
     public static bool worldExists(string level) {
-        return File.Exists($"level/{level}/level.xnbt");
+        return File.Exists(Net.mode.isDed() ? $"{level}/level.xnbt" : $"level/{level}/level.xnbt");
     }
 
     public static Chunk loadChunkFromFile(World world, ChunkCoord coord) {
@@ -722,7 +758,8 @@ public sealed class ChunkSaveThread : IDisposable {
         this.io = io;
         saveThread = new Thread(saveLoop) {
             IsBackground = true,
-            Name = "ChunkSaveThread"
+            Name = "ChunkSaveThread",
+            Priority = ThreadPriority.BelowNormal
         };
         saveThread.Start();
     }
@@ -813,7 +850,8 @@ public sealed class ChunkLoadThread : IDisposable {
         this.io = io;
         loadThread = new Thread(loadLoop) {
             IsBackground = true,
-            Name = "ChunkLoadThread"
+            Name = "ChunkLoadThread",
+            Priority = ThreadPriority.BelowNormal
         };
         loadThread.Start();
     }

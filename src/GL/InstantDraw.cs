@@ -136,28 +136,28 @@ public abstract class InstantDraw<T> where T : unmanaged {
      * @param distance where fog reaches ~99% opacity
      * @return density value for exp2 fog */
     public static float calcExp2FogDensity(float distance, float threshold = 0.01f) {
-        return MathF.Sqrt(-MathF.Log(threshold)) / distance;
+        return float.Sqrt(-float.Log(threshold)) / distance;
     }
 
     /** calculate exp fog density from target distance where fog should be opaque
      * @param distance where fog reaches ~99% opacity
      * @return density value for exp fog */
     public static float calcExpFogDensity(float distance, float threshold = 0.01f) {
-        return -MathF.Log(threshold) / distance;
+        return -float.Log(threshold) / distance;
     }
 
     public void setColour(Color c) {
         tint = c;
     }
 
-    public void setMV(Matrix4x4 modelView) {
+    public void setMV(ref Matrix4x4 modelView) {
         modelMatrix = null; // Disable automatic matrix computation
-        instantShader.setUniform(uModelView, modelView);
+        instantShader.setUniform(uModelView, ref modelView);
     }
 
-    public void setMVP(Matrix4x4 mvp) {
+    public void setMVP(ref Matrix4x4 mvp) {
         modelMatrix = null; // Disable automatic matrix computation
-        instantShader.setUniform(uMVP, mvp);
+        instantShader.setUniform(uMVP, ref mvp);
     }
 
     public void model(MatrixStack? m) {
@@ -179,9 +179,9 @@ public abstract class InstantDraw<T> where T : unmanaged {
             var model = modelMatrix.top;
             var mv = model * viewMatrix;
             var mvp = model * viewMatrix * projMatrix;
-            if (uModel != -1) instantShader.setUniform(uModel, model);
-            instantShader.setUniform(uModelView, mv);
-            instantShader.setUniform(uMVP, mvp);
+            if (uModel != -1) instantShader.setUniform(uModel, ref model);
+            instantShader.setUniform(uModelView, ref mv);
+            instantShader.setUniform(uMVP, ref mvp);
         }
     }
 
@@ -222,9 +222,9 @@ public abstract class InstantDraw<T> where T : unmanaged {
             var mv = model * viewMatrix;
             var mvp = model * viewMatrix * projMatrix;
 
-            if (uModel != -1) instantShader.setUniform(uModel, model);
-            instantShader.setUniform(uModelView, mv);
-            instantShader.setUniform(uMVP, mvp);
+            if (uModel != -1) instantShader.setUniform(uModel, ref model);
+            instantShader.setUniform(uModelView, ref mv);
+            instantShader.setUniform(uMVP, ref mvp);
         }
 
         if (fogEnabled) {
@@ -540,9 +540,9 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             var mv = model * viewMatrix;
             var mvp = model * viewMatrix * projMatrix;
 
-            if (uModel != -1) instantShader.setUniform(uModel, model);
-            instantShader.setUniform(uModelView, mv);
-            instantShader.setUniform(uMVP, mvp);
+            if (uModel != -1) instantShader.setUniform(uModel, ref model);
+            instantShader.setUniform(uModelView, ref mv);
+            instantShader.setUniform(uMVP, ref mvp);
         }
 
         if (fogEnabled) {
@@ -600,9 +600,9 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             var mv = model * viewMatrix;
             var mvp = model * viewMatrix * projMatrix;
 
-            if (uModel != -1) instantShader.setUniform(uModel, model);
-            instantShader.setUniform(uModelView, mv);
-            instantShader.setUniform(uMVP, mvp);
+            if (uModel != -1) instantShader.setUniform(uModel, ref model);
+            instantShader.setUniform(uModelView, ref mv);
+            instantShader.setUniform(uMVP, ref mvp);
         }
 
         if (fogEnabled) {
@@ -655,9 +655,9 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
             var mv = model * viewMatrix;
             var mvp = model * viewMatrix * projMatrix;
 
-            if (uModel != -1) instantShader.setUniform(uModel, model);
-            instantShader.setUniform(uModelView, mv);
-            instantShader.setUniform(uMVP, mvp);
+            if (uModel != -1) instantShader.setUniform(uModel, ref model);
+            instantShader.setUniform(uModelView, ref mv);
+            instantShader.setUniform(uMVP, ref mvp);
         }
 
         if (fogEnabled) {

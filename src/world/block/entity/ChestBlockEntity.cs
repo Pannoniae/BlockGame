@@ -1,4 +1,5 @@
-﻿using BlockGame.util;
+﻿using BlockGame.main;
+using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.item.inventory;
 
@@ -35,6 +36,11 @@ public class ChestBlockEntity : BlockEntity, Inventory {
     }
 
     public void dropContents(World world, int x, int y, int z) {
+        // server-only - only server spawns item entities
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         // drop all items when chest is broken
         for (int i = 0; i < slots.Length; i++) {
             var stack = slots[i];

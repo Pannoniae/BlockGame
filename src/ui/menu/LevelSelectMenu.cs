@@ -56,6 +56,7 @@ public class LevelSelectMenu : ScrollableMenu {
 
         var worldEntry = (WorldEntry)element;
         var world = WorldIO.load(worldEntry.folderName);
+        Net.mode = NetMode.SP;
         Game.setWorld(world);
         Game.instance.switchTo(LOADING);
         LOADING.load(world, true);

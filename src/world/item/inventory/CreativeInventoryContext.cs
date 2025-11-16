@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 
 namespace BlockGame.world.item.inventory;
 
@@ -102,7 +103,7 @@ public class CreativeInventoryContext : InventoryContext {
         }
 
         // add player hotbar slots (first 10 slots only!)
-        var player = Game.world.player;
+        var player = Game.player;
         for (int i = 0; i < 10; i++) {
             var hotbarSlot = new ItemSlot(player.inventory, i,
                 invOffsetX + i * ItemSlot.SLOTSIZE,
@@ -145,7 +146,10 @@ public class CreativeInventoryContext : InventoryContext {
     public int getCurrentPage() => currentPage;
 
     public override void handleSlotClick(ItemSlot slot, ClickType click) {
-        var player = Game.player;
+        handleSlotClick(slot, click, Game.player);
+    }
+
+    public override void handleSlotClick(ItemSlot slot, ClickType click, Player player) {
         var cursor = player.inventory.cursor;
 
         // left-click merge-take: allow combining items from creative slots
@@ -162,6 +166,6 @@ public class CreativeInventoryContext : InventoryContext {
         }
 
         // default behaviour for everything else
-        base.handleSlotClick(slot, click);
+        base.handleSlotClick(slot, click, player);
     }
 }

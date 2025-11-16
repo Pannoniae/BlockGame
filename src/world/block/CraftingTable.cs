@@ -1,4 +1,5 @@
 ﻿using BlockGame.main;
+using BlockGame.net.srv;
 using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.world.entity;
@@ -12,16 +13,37 @@ public class CraftingTable : Block {
     }
 
     public override bool onUse(World world, int x, int y, int z, Player player) {
-        // open the crafting table UI
-        var ctx = new CraftingTableContext(player.inventory);
-        player.currentCtx = ctx;
+        // MP client: server will handle opening (client sent PlaceBlockPacket, will receive InventoryOpenPacket)
+        if (Net.mode.isMPC()) {
+            return true; // return true to prevent block placement
+        }
 
-        Screen.GAME_SCREEN.switchToMenu(new CraftingTableMenu(new Vector2I(0, 32), ctx));
-        ((CraftingTableMenu)Screen.GAME_SCREEN.currentMenu!).setup();
+        // server-side: open crafting table inventory
+        if (Net.mode.isDed()) {
+            var ctx = new CraftingTableContext(player.inventory);
+            var craftingGrid = ctx.getCraftingGrid();
 
-        world.inMenu = true;
-        Game.instance.unlockMouse();
+            return GameServer.openInventory(
+                (ServerPlayer)player,
+                ctx,
+                invType: 1, // crafting table
+                title: "Crafting",
+                position: new Vector3I(x, y, z),
+                slots: craftingGrid.grid // 3x3 crafting grid (starts empty)
+            );
+        }
+        else {
+            // singleplayer - open directly
+            var ctx = new CraftingTableContext(player.inventory);
+            player.currentCtx = ctx;
 
-        return true;
+            Screen.GAME_SCREEN.switchToMenu(new CraftingTableMenu(new Vector2I(0, 32), ctx));
+            ((CraftingTableMenu)Screen.GAME_SCREEN.currentMenu!).setup();
+
+            world.inMenu = true;
+            Game.instance.unlockMouse();
+
+            return true;
+        }
     }
 }

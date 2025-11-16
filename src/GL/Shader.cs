@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -423,8 +424,8 @@ public partial class Shader : IDisposable {
         GL.ProgramUniform1(programHandle, loc, value);
     }
 
-    public unsafe void setUniform(int loc, Matrix4x4 value) {
-        GL.ProgramUniformMatrix4(programHandle, loc, 1, false, (float*)&value);
+    public unsafe void setUniform(int loc, ref Matrix4x4 value) {
+        GL.ProgramUniformMatrix4(programHandle, loc, 1, false, in Unsafe.As<Matrix4x4, float>(ref value));
     }
 
     public void setUniform(int loc, float value) {
@@ -488,21 +489,21 @@ public class InstantShader : Shader {
 
     public Matrix4x4 Projection {
         get => projection;
-        set => setProjection(value);
+        set => setProjection(ref value);
     }
 
     public Matrix4x4 View {
         get => view;
-        set => setView(value);
+        set => setView(ref value);
     }
 
     public Matrix4x4 World {
         get => world;
-        set => setWorld(value);
+        set => setWorld(ref value);
     }
 
-    private void setMVP(Matrix4x4 value) {
-        setUniform(uMVP, value);
+    private void setMVP(ref Matrix4x4 value) {
+        setUniform(uMVP, ref value);
     }
 
     public InstantShader(Silk.NET.OpenGL.Legacy.GL GL, string name, string vertexShader, string fragmentShader) : base(GL,
@@ -519,25 +520,29 @@ public class InstantShader : Shader {
         uMVP = getUniformLocation("uMVP");
     }
 
-    public void setWorld(Matrix4x4 mat) {
+    public void setWorld(ref Matrix4x4 mat) {
         world = mat;
-        setUniform(uMVP, world * view * projection);
+        var mvp = world * view * projection;
+        setUniform(uMVP, ref mvp);
     }
 
-    public void setView(Matrix4x4 mat) {
+    public void setView(ref Matrix4x4 mat) {
         view = mat;
-        setUniform(uMVP, world * view * projection);
+        var mvp = world * view * projection;
+        setUniform(uMVP, ref mvp);
     }
 
-    public void setProjection(Matrix4x4 mat) {
+    public void setProjection(ref Matrix4x4 mat) {
         projection = mat;
-        setUniform(uMVP, world * view * projection);
+        var value = world * view * projection;
+        setUniform(uMVP, ref value);
     }
 
-    public void setMVP(Matrix4x4 world, Matrix4x4 view, Matrix4x4 projection) {
+    public void setMVP(ref Matrix4x4 world, ref Matrix4x4 view, ref Matrix4x4 projection) {
         this.world = world;
         this.view = view;
         this.projection = projection;
-        setUniform(uMVP, world * view * projection);
+        var value = world * view * projection;
+        setUniform(uMVP, ref value);
     }
 }

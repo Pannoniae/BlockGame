@@ -18,6 +18,6 @@ public class DoorItem : Item {
         }
 
         doorBlock.place(world, x, y, z, 0, dir);
-        return stack.consume(1);
+        return stack.consume(player, 1);
     }
 }

@@ -1,4 +1,5 @@
-﻿using BlockGame.render.model;
+﻿using BlockGame.main;
+using BlockGame.render.model;
 using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block.entity;
@@ -53,7 +54,9 @@ public abstract class BlockEntity : Persistent {
         // sign has a custom renderer
         Registry.BLOCK_ENTITIES.hasRenderer[SIGN] = true;
 
-        BlockEntityRenderers.reloadAll();
+        if (!Net.mode.isDed()) {
+            BlockEntityRenderers.reloadAll();
+        }
     }
 
     /**

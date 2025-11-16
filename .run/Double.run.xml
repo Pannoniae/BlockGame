@@ -1,0 +1,7 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Double" type="CompoundRunConfigurationType">
+    <toRun name="BlockGame" type="DotNetProject" />
+    <toRun name="BlockGameServer" type="DotNetProject" />
+    <method v="2" />
+  </configuration>
+</component>

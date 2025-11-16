@@ -71,7 +71,7 @@ public class CraftingTableMenu : InventoryMenu {
         base.deactivate();
 
         // return all items from crafting grid to player inventory
-        var player = Game.world.player;
+        var player = Game.player;
         if (player == null) return;
 
         var craftingGrid = craftingCtx.getCraftingGrid();

@@ -26,10 +26,11 @@ public class Raycast {
         // calculate player look direction based on player rotation (not camera rotation)
         var yaw = player.rotation.Y;
         var pitch = player.rotation.X;
-        var playerForward = new Vector3D();
-        playerForward.X = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
-        playerForward.Y = MathF.Sin(Meth.deg2rad(pitch));
-        playerForward.Z = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch));
+        var playerForward = new Vector3D {
+            X = MathF.Sin(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch)),
+            Y = MathF.Sin(Meth.deg2rad(pitch)),
+            Z = MathF.Cos(Meth.deg2rad(yaw)) * MathF.Cos(Meth.deg2rad(pitch))
+        };
         playerForward = Vector3D.Normalize(playerForward);
 
         var currentPos = raycastPos;
@@ -39,7 +40,7 @@ public class Raycast {
         var dist = 0.0;
 
         var previous = currentPos.toBlockPos();
-        for (int i = 0; i < 1 / Constants.RAYCASTSTEP * Game.gamemode.reach; i++) {
+        for (int i = 0; i < 1 / Constants.RAYCASTSTEP * player.gameMode.reach; i++) {
             dist += (playerForward * Constants.RAYCASTSTEP).Length();
             currentPos += playerForward * Constants.RAYCASTSTEP;
             var blockPos = currentPos.toBlockPos();

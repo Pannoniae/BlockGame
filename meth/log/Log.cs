@@ -232,9 +232,48 @@ public static class Log {
             message,
             category
         );
-        
+
         consoleAppender?.append(logEvent);
         fileAppender?.append(logEvent);
+    }
+
+    /**
+     * Saves a crash report to crashes/ directory.
+     * Copies the current log file and appends crash details.
+     */
+    public static void saveCrashReport(Exception ex) {
+        try {
+            var crashDir = "crashes";
+            Directory.CreateDirectory(crashDir);
+
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            var crashPath = Path.Combine(crashDir, $"crash-{timestamp}.txt");
+
+            // flush current log to ensure everything is written
+            fileAppender?.Dispose();
+
+            var logPath = "logs/latest.log";
+
+            // copy log file content if it exists
+            if (File.Exists(logPath)) {
+                File.Copy(logPath, crashPath, overwrite: true);
+            }
+
+            // append crash details
+            using var writer = new StreamWriter(crashPath, append: true);
+            writer.WriteLine();
+            writer.WriteLine("---- CRASH REPORT ----");
+            writer.WriteLine($"Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            writer.WriteLine($"Exception: {ex.GetType().FullName}");
+            writer.WriteLine($"Message: {ex.Message}");
+            writer.WriteLine($"Stack trace:");
+            writer.WriteLine(ex.ToString());
+
+            info($"Crash report saved to {crashPath}");
+        } catch (Exception ce) {
+            // if crash reporting fails, at least log it
+            error($"Failed to save crash report: {ce}");
+        }
     }
 }
 

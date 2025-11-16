@@ -1,4 +1,5 @@
 ﻿using BlockGame.main;
+using BlockGame.net.srv;
 using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.util;
@@ -52,13 +53,11 @@ public class Chest : EntityBlock {
     }
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {
-
         // drop contents
         var be = world.getBlockEntity(x, y, z) as ChestBlockEntity;
         be?.dropContents(world, x, y, z);
 
         base.onBreak(world, x, y, z, metadata);
-
     }
 
     public override bool onUse(World world, int x, int y, int z, Player player) {
@@ -66,16 +65,35 @@ public class Chest : EntityBlock {
             return false;
         }
 
-        var ctx = new ChestMenuContext(player.inventory, be);
-        player.currentCtx = ctx;
+        // MP client: server will handle opening (client sent PlaceBlockPacket, will receive InventoryOpenPacket)
+        if (Net.mode.isMPC()) {
+            return true; // return true to prevent block placement
+        }
 
-        Screen.GAME_SCREEN.switchToMenu(new ChestMenu(new Vector2I(0, 12), ctx));
-        ((ChestMenu)Screen.GAME_SCREEN.currentMenu!).setup();
+        // server-side: open inventory via helper
+        if (Net.mode.isDed()) {
+            var ctx = new ChestMenuContext(player.inventory, be);
+            return GameServer.openInventory(
+                (ServerPlayer)player,
+                ctx,
+                invType: 0, // chest
+                title: "Chest",
+                position: new Vector3I(x, y, z),
+                slots: be.slots
+            );
+        }
+        else {
+            var ctx = new ChestMenuContext(player.inventory, be);
+            player.currentCtx = ctx;
 
-        world.inMenu = true;
-        Game.instance.unlockMouse();
+            Screen.GAME_SCREEN.switchToMenu(new ChestMenu(new Vector2I(0, 12), ctx));
+            ((ChestMenu)Screen.GAME_SCREEN.currentMenu!).setup();
 
-        return true;
+            world.inMenu = true;
+            Game.instance.unlockMouse();
+
+            return true;
+        }
     }
 
     public override BlockEntity get() {

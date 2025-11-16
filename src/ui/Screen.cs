@@ -9,7 +9,6 @@ namespace BlockGame.ui;
 
 // It's like a menu but fullscreen!
 public class Screen {
-
     public Vector2I size;
     public Vector2I centre;
 
@@ -39,18 +38,20 @@ public class Screen {
         menu.resize(new Vector2I(Game.width, Game.height));
 
         // update world pause state based on menu properties
-        if (Game.world != null) {
+        // not in mp tho
+        if (Game.world != null && !Net.mode.isMPC()) {
             Game.world.paused = menu.pausesWorld();
+        }
+
+        if (Game.world != null) {
             Game.world.inMenu = menu.isModal() || menu.isBlockingInput();
         }
     }
 
     public virtual void activate() {
-
     }
 
     public virtual void deactivate() {
-
     }
 
     public void exitMenu() {

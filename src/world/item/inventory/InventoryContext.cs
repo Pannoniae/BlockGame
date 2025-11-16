@@ -1,5 +1,9 @@
 using BlockGame.main;
+using BlockGame.net.packet;
+using BlockGame.net.srv;
 using BlockGame.util;
+using BlockGame.world.entity;
+using LiteNetLib;
 
 namespace BlockGame.world.item.inventory;
 
@@ -12,10 +16,61 @@ namespace BlockGame.world.item.inventory;
 public abstract class InventoryContext {
     protected readonly List<ItemSlot> slots = [];
 
+    // server-side: track viewers for broadcasting changes
+    private List<ServerConnection>? viewers;
+    private byte invID;
+
     public List<ItemSlot> getSlots() => slots;
 
+    /** server-side: add a viewer to this context */
+    public void addViewer(ServerConnection conn, byte inventoryID) {
+        viewers ??= [];
+        if (!viewers.Contains(conn)) {
+            viewers.Add(conn);
+        }
+        invID = inventoryID;
+    }
+
+    /** server-side: remove a viewer from this context */
+    public void removeViewer(ServerConnection conn) {
+        viewers?.Remove(conn);
+    }
+
+    /** server-side: broadcast slot change to all viewers */
+    public void notifySlotChanged(int slotIndex, ItemStack newStack) {
+        if (viewers == null) {
+            return;
+        }
+
+        foreach (var viewer in viewers) {
+            viewer.send(new SetSlotPacket {
+                invID = invID,
+                slotIndex = (ushort)slotIndex,
+                stack = newStack
+            }, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    /** server-side: broadcast all slots belonging to a specific inventory */
+    public void notifyInventorySlotsChanged(Inventory inv) {
+        if (viewers == null) {
+            return;
+        }
+
+        for (int i = 0; i < slots.Count; i++) {
+            if (slots[i].inventory == inv) {
+                notifySlotChanged(i, slots[i].getStack());
+            }
+        }
+    }
+
+    public int viewerCount() => viewers?.Count ?? 0;
+
     public virtual void handleSlotClick(ItemSlot slot, ClickType click) {
-        var player = Game.player;
+        handleSlotClick(slot, click, Game.player);
+    }
+
+    public virtual void handleSlotClick(ItemSlot slot, ClickType click, Player player) {
         var cursor = player.inventory.cursor;
 
         if (click == ClickType.LEFT) {

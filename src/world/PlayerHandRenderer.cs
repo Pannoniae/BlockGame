@@ -48,6 +48,7 @@ public class PlayerHandRenderer {
 
     // This method is held together with duct tape and prayers, send help
     public void render(double interp) {
+        var handItem = this.handItem ?? ItemStack.EMPTY;
         var renderHand = handItem == ItemStack.EMPTY;
 
         var world = player.world;
@@ -70,8 +71,8 @@ public class PlayerHandRenderer {
             if (a) {
                 Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                     vertices,
-                    lightOverride:l,
-                    cullFaces:false);
+                    lightOverride: l,
+                    cullFaces: false);
 
                 vao.bind();
                 Game.renderer.bindQuad();
@@ -199,8 +200,10 @@ public class PlayerHandRenderer {
 
 
                 //Console.Out.WriteLine((mat.top).print());
-                itemRenderer.setMVP(mat.top * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix());
-                itemRenderer.setMV(mat.top * Game.camera.getHandViewMatrix(interp));
+                var m = mat.top * Game.camera.getHandViewMatrix(interp) * Game.camera.getFixedProjectionMatrix();
+                var m2 = mat.top * Game.camera.getHandViewMatrix(interp);
+                itemRenderer.setMVP(ref m);
+                itemRenderer.setMV(ref m2);
 
 
                 renderItemInHand(handItem, WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4)));
@@ -472,6 +475,7 @@ public class PlayerHandRenderer {
 
     // Render held item in third person (called from HumanModel)
     public void renderThirdPerson(MatrixStack mat, double interp) {
+        var handItem = this.handItem ?? ItemStack.EMPTY;
         if (handItem == ItemStack.EMPTY) {
             return;
         }
@@ -492,8 +496,8 @@ public class PlayerHandRenderer {
         if (a) {
             Game.blockRenderer.renderBlock(handItem.getItem().getBlock()!, (byte)handItem.metadata, Vector3I.Zero,
                 vertices,
-                lightOverride:l,
-                cullFaces:false);
+                lightOverride: l,
+                cullFaces: false);
 
             vao.bind();
             Game.renderer.bindQuad();
@@ -620,7 +624,7 @@ public class PlayerHandRenderer {
 
         // Set identity MVP matrix (screen space coordinates)
         var identityMVP = Matrix4x4.Identity;
-        waterOverlayRenderer.setMVP(identityMVP);
+        waterOverlayRenderer.setMVP(ref identityMVP);
 
 
         // Draw a full-screen quad with slightly blue tint
@@ -658,7 +662,7 @@ public class PlayerHandRenderer {
 
         // Set identity MVP matrix (screen space coordinates)
         var identityMVP = Matrix4x4.Identity;
-        waterOverlayRenderer.setMVP(identityMVP);
+        waterOverlayRenderer.setMVP(ref identityMVP);
 
 
         // Draw a full-screen quad with slightly blue tint
@@ -695,7 +699,7 @@ public class PlayerHandRenderer {
         waterOverlayRenderer.setTexture(Game.textures.blockTexture);
 
         var identityMVP = Matrix4x4.Identity;
-        waterOverlayRenderer.setMVP(identityMVP);
+        waterOverlayRenderer.setMVP(ref identityMVP);
 
         const float alpha = 0.8f;
 
@@ -705,7 +709,7 @@ public class PlayerHandRenderer {
         var r = tint.R;
         var g = tint.G;
         var b = tint.B;
-        
+
         var fireUV = new UVPair(3, 14);
         var uvMin = UVPair.texCoords(Game.textures.blockTexture, fireUV);
         var uvMax = UVPair.texCoords(Game.textures.blockTexture, fireUV + 1);

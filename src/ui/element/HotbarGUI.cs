@@ -30,7 +30,7 @@ public class HotbarGUI : GUIElement {
     public override void draw() {
         // draw hotbar
         var world = Game.world;
-        var inventory = world.player.inventory;
+        var inventory = Game.player.inventory;
         var gui = Game.gui;
 
         Game.gui.drawUIImmediate(Game.gui.guiTexture, new Vector2(GUIbounds.X, GUIbounds.Y), hotbarTexture);
@@ -49,14 +49,14 @@ public class HotbarGUI : GUIElement {
         }
 
         // draw hearts in survival
-        if (Game.gamemode.gameplay) {
+        if (Game.player.gameMode.gameplay) {
             drawHearts();
         }
     }
 
     private static void drawHearts() {
         var gui = Game.gui;
-        var player = Game.world.player;
+        var player = Game.player;
         var hp = player.hp;
 
         const int MAX_HEARTS = 10;

@@ -12,6 +12,7 @@ public class TextBox : GUIElement {
     public int maxLength = 32;
     public bool centred;
     public string? header;
+    public bool isPassword;
     private bool focused => menu.focusedElement == this;
 
     public static readonly Vector2 padding = new(5, 4);
@@ -72,29 +73,33 @@ public class TextBox : GUIElement {
             Game.gui.drawBorderUI(GUIbounds.X, GUIbounds.Y, GUIbounds.Width, GUIbounds.Height, 1, new Color(100, 150, 255, 255));
         }
 
+        // prepare text
+        var displayInput = isPassword ? new string('*', input.Length) : input;
+        var headerText = header ?? "";
+
         // draw text
         if (centred) {
             var textSize = Game.gui.measureString(header + input);
             var textX = bounds.X + (bounds.Width - textSize.X) / 2f;
-            Game.gui.drawString(header + input, new Vector2(textX, bounds.Y + padding.Y * GUI.guiScale));
+            Game.gui.drawString(headerText + displayInput, new Vector2(textX, bounds.Y + padding.Y * GUI.guiScale));
         }
         else {
-            Game.gui.drawString(header + input, new Vector2(bounds.X, bounds.Y) + padding * GUI.guiScale);
+            Game.gui.drawString(headerText + displayInput, new Vector2(bounds.X, bounds.Y) + padding * GUI.guiScale);
         }
         // draw cursor if focused (blink every 500ms)
         if (focused && (Game.permanentStopwatch.ElapsedMilliseconds / 500) % 2 == 0) {
 
             if (centred) {
-                var textSize = Game.gui.measureString(header + input);
+                var textSize = Game.gui.measureString(headerText + displayInput);
                 var textX = bounds.X + (bounds.Width - textSize.X) / 2f;
                 var cursorX = textX + textSize.X;
                 var cursorY = bounds.Y + padding.Y * GUI.guiScale;
-                Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), default, new Color(255, 255, 255, 255));
+                Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), null, new Color(255, 255, 255, 255));
             }
             else {
-                var cursorX = bounds.X + padding.X * GUI.guiScale + Game.gui.measureString(input).X;
+                var cursorX = bounds.X + padding.X * GUI.guiScale + Game.gui.measureString(displayInput).X;
                 var cursorY = bounds.Y + padding.Y * GUI.guiScale;
-                Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), default,
+                Game.gui.draw(Game.gui.colourTexture, new RectangleF(cursorX, cursorY, 1 * GUI.guiScale, 8 * GUI.guiScale), null,
                     new Color(255, 255, 255, 255));
             }
         }

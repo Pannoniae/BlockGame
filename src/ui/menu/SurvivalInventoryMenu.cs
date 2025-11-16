@@ -162,7 +162,7 @@ public class SurvivalInventoryMenu : InventoryMenu {
         base.deactivate();
 
         // return all items from 2x2 crafting grid to player inventory
-        var player = Game.world.player;
+        var player = Game.player;
         if (player == null) {
             return;
         }

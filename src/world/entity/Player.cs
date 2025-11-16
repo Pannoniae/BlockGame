@@ -1,6 +1,10 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
+using BlockGame.logic;
 using BlockGame.main;
+using BlockGame.net;
+using BlockGame.net.packet;
+using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.cmd;
@@ -9,6 +13,7 @@ using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
+using LiteNetLib;
 using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
@@ -26,6 +31,8 @@ public class Player : Mob, CommandSource {
 
     public PlayerHandRenderer handRenderer;
     public PlayerRenderer modelRenderer;
+
+    public GameMode gameMode;
 
     // sound stuff
     private double lastFootstepDistance = 0;
@@ -47,6 +54,13 @@ public class Player : Mob, CommandSource {
      * Whatever's currently open (could be chest, workbench, etc.), or just the player's inventory if none
      */
     public InventoryContext currentCtx;
+
+    /**
+     * Current inventory ID for packet validation.
+     * Incremented each time a new inventory is opened.
+     * Window ID -1 = player inventory (always open)
+     */
+    public int currentInventoryID = -1;
 
     public Vector3D strafeVector = new(0, 0, 0);
 
@@ -79,8 +93,13 @@ public class Player : Mob, CommandSource {
         position = new Vector3D(x, y, z);
         prevPosition = position;
         inventory = new PlayerInventory();
-        handRenderer = new PlayerHandRenderer(this);
-        modelRenderer = new PlayerRenderer();
+
+
+        if (!Net.mode.isDed()) {
+            handRenderer = new PlayerHandRenderer(this);
+            // get from registry
+            modelRenderer = (PlayerRenderer)EntityRenderers.get(Entities.getID("player"));
+        }
 
         inventoryCtx = new CreativeInventoryContext(40);
 
@@ -122,6 +141,10 @@ public class Player : Mob, CommandSource {
                 }
             }
         }
+
+        // gamemode
+        var gamemodeID = data.getInt("gamemode", 1);
+        this.gameMode = GameMode.fromID((GameModeID)gamemodeID);
     }
 
     public override void writex(NBTCompound data) {
@@ -158,6 +181,9 @@ public class Player : Mob, CommandSource {
         invData.add(accList);
 
         data.add(invData);
+
+        // gamemode
+        data.addInt("gamemode", (int)gameMode.id);
     }
 
     public void render(double dt, double interp) {
@@ -172,7 +198,6 @@ public class Player : Mob, CommandSource {
     // ============ LIFECYCLE HOOKS ============die
 
     protected override bool shouldContinueUpdate(double dt) {
-
         if (hp <= 0 && !dead) {
             die();
         }
@@ -194,7 +219,11 @@ public class Player : Mob, CommandSource {
             velocity = Vector3D.Zero;
             inputVector = Vector3D.Zero;
             strafeVector = Vector3D.Zero;
-            Game.camera.updatePosition(dt); // update death tilt
+
+            if (!Net.mode.isDed()) {
+                Game.camera.updatePosition(dt); // update death tilt
+            }
+
             return false;
         }
 
@@ -206,31 +235,41 @@ public class Player : Mob, CommandSource {
         base.savePrevVars();
 
         // player-specific prev vars
-        Game.camera.prevBob = Game.camera.bob;
+
+        if (!Net.mode.isDed()) {
+            Game.camera.prevBob = Game.camera.bob;
+        }
+
         prevBreakProgress = breakProgress;
-        handRenderer.prevLower = handRenderer.lower;
+        if (!Net.mode.isDed()) {
+            handRenderer.prevLower = handRenderer.lower;
+        }
     }
 
     public override void dmg(float damage) {
         // creative mode players don't take damage
-        if (!Game.gamemode.gameplay) {
+        if (!gameMode.gameplay) {
             return;
         }
+
         base.dmg(damage);
     }
 
     public override void dmg(double damage, Vector3D source) {
         // creative mode players don't take damage
-        if (!Game.gamemode.gameplay) {
+        if (!gameMode.gameplay) {
             return;
         }
+
         base.dmg(damage, source);
     }
 
     protected override void updateTimers(double dt) {
         base.updateTimers(dt);
 
-        handRenderer.update(dt);
+        if (!Net.mode.isDed()) {
+            handRenderer.update(dt);
+        }
 
         // decay shiny values
         for (int i = 0; i < inventory.shiny.Length; i++) {
@@ -249,12 +288,14 @@ public class Player : Mob, CommandSource {
     }
 
     protected override void checkFallDamage(double dt) {
-        if (Game.gamemode.gameplay && onGround && wasInAir && !flyMode && !inLiquid) {
+        if (gameMode.gameplay && onGround && wasInAir && !flyMode && !inLiquid) {
             var fallSpeed = -prevVelocity.Y;
             if (fallSpeed > SAFE_FALL_SPEED) {
                 var dmg = (float)((fallSpeed - SAFE_FALL_SPEED) * FALL_DAMAGE_MULTIPLIER);
                 base.dmg(dmg);
-                Game.camera.applyImpact(dmg);
+                if (!Net.mode.isDed()) {
+                    Game.camera.applyImpact(dmg);
+                }
             }
         }
 
@@ -267,7 +308,7 @@ public class Player : Mob, CommandSource {
                 // get block below player
                 var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
-                if (blockBelow?.mat != null) {
+                if (!Net.mode.isDed() && blockBelow?.mat != null) {
                     Game.snd.playFootstep(blockBelow.mat.smat);
                 }
 
@@ -282,7 +323,9 @@ public class Player : Mob, CommandSource {
         // totalTraveled already updated in Mob.postPhysics()
 
         // update camera
-        Game.camera.updatePosition(dt);
+        if (!Net.mode.isDed()) {
+            Game.camera.updatePosition(dt);
+        }
 
         // item pickup
         pickup();
@@ -316,7 +359,10 @@ public class Player : Mob, CommandSource {
     public override void onChunkChanged() {
         base.onChunkChanged();
         //Console.Out.WriteLine("chunk changed");
-        loadChunksAroundThePlayer(Settings.instance.renderDistance);
+
+        if (!Net.mode.isDed() && !Net.mode.isMPC()) {
+            loadChunksAroundThePlayer(Settings.instance.renderDistance);
+        }
     }
 
     private void applyInputMovement(double dt) {
@@ -391,6 +437,13 @@ public class Player : Mob, CommandSource {
     public void updatePickBlock(IKeyboard keyboard, Key key, int scancode) {
         if (key >= Key.Number0 && key <= Key.Number9) {
             inventory.selected = key > Key.Number0 ? (ushort)(key - Key.Number0 - 1) : 9;
+
+            // notify server of held item change in multiplayer
+            if (Net.mode.isMPC()) {
+                ClientConnection.instance.send(new PlayerHeldItemChangePacket {
+                    slot = (byte)inventory.selected
+                }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
         }
     }
 
@@ -405,10 +458,13 @@ public class Player : Mob, CommandSource {
         // body rotation is updated separately in updateBodyRotation() based on movement
     }
 
-    public void updateInput(double dt) {
+    public virtual void updateInput(double dt) {
         if (world.inMenu) {
             return;
         }
+
+        // reset strafe vector at start of each frame
+        strafeVector = Vector3D.Zero;
 
         if (Game.inputs.shift.down()) {
             if (flyMode) {
@@ -470,9 +526,11 @@ public class Player : Mob, CommandSource {
                 // check what we're hitting
                 if (Game.raycast.hit && Game.raycast.type == Result.ENTITY) {
                     attackEntity();
-                } else {
+                }
+                else {
                     breakBlock();
                 }
+
                 //lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
@@ -485,9 +543,11 @@ public class Player : Mob, CommandSource {
                 // check what we're hitting
                 if (Game.raycast.hit && Game.raycast.type == Result.ENTITY) {
                     attackEntity();
-                } else {
+                }
+                else {
                     breakBlock();
                 }
+
                 //lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
                     lastAirHit = now;
@@ -497,7 +557,6 @@ public class Player : Mob, CommandSource {
 
         if (Game.inputs.right.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
-
                 // todo entity interact here?
                 placeBlock();
                 lastMouseAction = now;
@@ -509,7 +568,6 @@ public class Player : Mob, CommandSource {
         else {
             if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
                 now - lastAirHit > Constants.airHitDelayMs) {
-
                 // todo entity interact here?
                 placeBlock();
                 lastMouseAction = now;
@@ -521,7 +579,7 @@ public class Player : Mob, CommandSource {
 
         if (Game.inputs.middle.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
-                if (!Game.gamemode.gameplay) {
+                if (!gameMode.gameplay) {
                     pickBlock();
                 }
 
@@ -544,7 +602,7 @@ public class Player : Mob, CommandSource {
     //    base.interactBlock(dt);
     //}
 
-    public void blockHandling(double dt) {
+    public virtual void blockHandling(double dt) {
         // handle block breaking progress
         if (isBreaking && Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
@@ -582,7 +640,8 @@ public class Player : Mob, CommandSource {
 
             var heldItem = inventory.getSelected().getItem();
             var toolBreakSpeed = heldItem.getBreakSpeed(inventory.getSelected(), block);
-            var breakSpeed = toolBreakSpeed / hardness / 2; // why 2? idk
+            //var breakSpeed = toolBreakSpeed / hardness / 2; // why 2? idk
+            var breakSpeed = toolBreakSpeed / hardness * 0.5; // why 2? idk
 
             prevBreakProgress = breakProgress;
             breakProgress += breakSpeed * dt;
@@ -618,7 +677,7 @@ public class Player : Mob, CommandSource {
                 }
 
                 // dec durability
-                var stack = inventory.getSelected().damageItem(1);
+                var stack = inventory.getSelected().damageItem(this, 1);
                 inventory.setStack(inventory.selected, stack);
 
                 isBreaking = false;
@@ -638,7 +697,7 @@ public class Player : Mob, CommandSource {
         }
     }
 
-    public void placeBlock() {
+    public virtual void placeBlock() {
         // first check if player is clicking on an existing block with onUse behaviour
         if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
             var targetPos = Game.raycast.block;
@@ -646,6 +705,17 @@ public class Player : Mob, CommandSource {
             var block = Block.get(blockId);
             if (block != null && block != Block.AIR) {
                 if (block.onUse(world, targetPos.X, targetPos.Y, targetPos.Z, this)) {
+                    // send packet
+                    if (Net.mode.isMPC()) {
+                        ClientConnection.instance.send(
+                            new PlaceBlockPacket {
+                                position = targetPos,
+                                face = (byte)Game.raycast.face
+                            },
+                            DeliveryMethod.ReliableOrdered);
+                    }
+
+
                     // if block has custom behaviour, stop here (don't place)
                     return;
                 }
@@ -659,10 +729,21 @@ public class Player : Mob, CommandSource {
             var metadata = (byte)stack.metadata;
 
             // if item, fire the hook and handle replacement
-            var replacement = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, getFacing());
+            var replacement = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, Game.raycast.face);
             if (replacement != null) {
                 inventory.setStack(inventory.selected, replacement);
                 setSwinging(true);
+
+
+                if (Net.mode.isMPC()) {
+                    ClientConnection.instance.send(
+                        new PlaceBlockPacket {
+                            position = pos,
+                            face = (byte)Game.raycast.face
+                        },
+                        DeliveryMethod.ReliableOrdered);
+                }
+
                 return;
             }
 
@@ -712,7 +793,7 @@ public class Player : Mob, CommandSource {
 
                 if (!hasCollisions) {
                     // in survival mode, check if player has blocks to place
-                    if (Game.gamemode.gameplay) {
+                    if (gameMode.gameplay) {
                         if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
                             setSwinging(false);
                             return;
@@ -722,7 +803,7 @@ public class Player : Mob, CommandSource {
                     block.place(world, pos.X, pos.Y, pos.Z, metadata, dir);
 
                     // consume block from inventory in survival mode
-                    if (Game.gamemode.gameplay) {
+                    if (gameMode.gameplay) {
                         inventory.removeStack(inventory.selected, 1);
                     }
 
@@ -732,6 +813,16 @@ public class Player : Mob, CommandSource {
                     }
 
                     setSwinging(true);
+
+                    // send packet
+                    if (Net.mode.isMPC()) {
+                        ClientConnection.instance.send(
+                            new PlaceBlockPacket {
+                                position = pos,
+                                face = (byte)Game.raycast.face
+                            },
+                            DeliveryMethod.ReliableOrdered);
+                    }
                 }
                 else {
                     setSwinging(false);
@@ -740,12 +831,18 @@ public class Player : Mob, CommandSource {
         }
         else {
             var stack = inventory.getSelected();
-            stack.getItem().use(stack, world, this);
+            var result = stack.getItem().use(stack, world, this);
+            if (result != null!) {
+                inventory.setStack(inventory.selected, result);
+                setSwinging(true);
+                return;
+            }
+
             setSwinging(false);
         }
     }
 
-    public void attackEntity() {
+    public virtual void attackEntity() {
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
         var entity = Game.raycast.entity;
 
@@ -759,14 +856,14 @@ public class Player : Mob, CommandSource {
         entity.dmg(damage, position);
         setSwinging(true);
         lastMouseAction = now;
-        
+
         if (heldStack != ItemStack.EMPTY && Item.durability[heldStack.id] > 0) {
-            var newStack = heldStack.damageItem(1);
+            var newStack = heldStack.damageItem(this, 1);
             inventory.setStack(inventory.selected, newStack);
         }
     }
 
-    public void breakBlock() {
+    public virtual void breakBlock() {
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
 
         if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
@@ -785,7 +882,7 @@ public class Player : Mob, CommandSource {
 
             // instabreak
             // delay because we'll end up breaking blocks too fast otherwise
-            if (!Game.gamemode.gameplay && now - lastMouseAction > Constants.breakDelayMs) {
+            if (!gameMode.gameplay && now - lastMouseAction > Constants.breakDelayMs) {
                 var block = Block.get(world.getBlock(pos));
                 if (block != null && block.id != 0) {
                     block.shatter(world, pos.X, pos.Y, pos.Z);
@@ -801,7 +898,7 @@ public class Player : Mob, CommandSource {
                 return;
             }
 
-            if (Game.gamemode.gameplay) {
+            if (gameMode.gameplay) {
                 // survival mode - start breaking process
                 if (!isBreaking || breaking != pos) {
                     isBreaking = true;
@@ -878,7 +975,6 @@ public class Player : Mob, CommandSource {
             var raw = world.getBlockRaw(pos);
             var bl = Block.get(raw.getID());
             if (bl != null) {
-
                 var stack = bl.getActualItem(raw.getMetadata());
 
                 // let's be a bit smarter.
@@ -890,6 +986,15 @@ public class Player : Mob, CommandSource {
                         if (s.same(stack)) {
                             // found it!
                             inventory.selected = i;
+
+                            // sync with server
+
+                            if (Net.mode.isMPC()) {
+                                ClientConnection.instance.send(new PlayerHeldItemChangePacket {
+                                    slot = (byte)inventory.selected
+                                }, DeliveryMethod.ReliableOrdered);
+                            }
+
                             return;
                         }
                     }
@@ -898,6 +1003,23 @@ public class Player : Mob, CommandSource {
                 // second, if not found, put it in the selected slot
                 if (stack != null!) {
                     inventory.setStack(inventory.selected, stack);
+
+                    // sync with server, since we are in creative, we can bullshit and server will accept it
+                    if (Net.mode.isMPC()) {
+                        // creative inventory hotbar is slots 40-49 (map from player inventory slots 0-9)
+                        ClientConnection.instance.send(new InventorySlotClickPacket {
+                            invID = Constants.INV_ID_CREATIVE,
+                            idx = (ushort)(inventory.selected + 40),
+                            button = 2,
+                            actionID = ClientConnection.instance.nextActionID++,
+                            mode = 0, // normal click
+                            expectedSlot = inventory.getStack(inventory.selected)
+                        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+
+                        ClientConnection.instance.send(new PlayerHeldItemChangePacket {
+                            slot = (byte)inventory.selected
+                        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                    }
                 }
             }
         }
@@ -909,7 +1031,7 @@ public class Player : Mob, CommandSource {
 
     private void pickup() {
         // get nearby entities
-        var entities = new List<entity.Entity>();
+        var entities = new List<Entity>();
         var min = position.toBlockPos() - new Vector3I(2, 2, 2);
         var max = position.toBlockPos() + new Vector3I(2, 2, 2);
         world.getEntitiesInBox(entities, min, max);
@@ -989,14 +1111,29 @@ public class Player : Mob, CommandSource {
             return;
         }
 
-        // remove 1 item from stack
+        // in multiplayer client, send packet to server
+        if (Net.mode.isMPC()) {
+            Game.client.send(new DropItemPacket {
+                slotIndex = (byte)inventory.selected,
+                quantity = 1
+            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            return;
+        }
+
+        // singleplayer - drop directly
         var droppedStack = inventory.removeStack(inventory.selected, 1);
-        dropItemStack(droppedStack, withVelocity:true);
+        dropItemStack(droppedStack, withVelocity: true);
     }
 
     /** Drop an item stack at player position. withVelocity = throw in facing direction */
     public void dropItemStack(ItemStack stack, bool withVelocity = false) {
-        if (stack == ItemStack.EMPTY || stack.quantity <= 0) return;
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
+        if (stack == ItemStack.EMPTY || stack.quantity <= 0) {
+            return;
+        }
 
         var itemEntity = new ItemEntity(world);
         itemEntity.stack = stack;
@@ -1026,7 +1163,7 @@ public class Player : Mob, CommandSource {
         base.die();
 
         // drop inventory items on death (survival only, blocks only)
-        if (Game.gamemode.gameplay) {
+        if (gameMode.gameplay) {
             dropInventoryOnDeath();
         }
 
@@ -1072,11 +1209,21 @@ public class Player : Mob, CommandSource {
         Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.backToGame(); });
     }
 
-    public void sendMessage(string msg) {
+    public virtual void sendMessage(string msg) {
         Screen.GAME_SCREEN.CHAT.addMessage(msg);
     }
 
     public World getWorld() {
         return world;
+    }
+
+    public override void syncState() {
+        base.syncState();
+        state.setBool(EntityState.FLYING, flyMode);
+    }
+
+    public override void applyState() {
+        base.applyState();
+        flyMode = state.getBool(EntityState.FLYING);
     }
 }

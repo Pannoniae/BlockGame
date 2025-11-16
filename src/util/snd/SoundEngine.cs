@@ -5,7 +5,7 @@ using BlockGame.world.block;
 using MiniAudioEx.Core.StandardAPI;
 using Molten.DoublePrecision;
 
-namespace BlockGame.util;
+namespace BlockGame.util.snd;
 
 public class SoundEngine : IDisposable {
     

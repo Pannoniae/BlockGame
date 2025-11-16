@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 using BlockGame.logic;
+using BlockGame.net;
 using BlockGame.render;
 using BlockGame.ui;
 using BlockGame.ui.menu;
@@ -13,6 +14,7 @@ using BlockGame.util;
 using BlockGame.util.cmd;
 using BlockGame.util.font;
 using BlockGame.util.log;
+using BlockGame.util.snd;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -100,6 +102,8 @@ public partial class Game {
     public static ClientPlayer player;
     public static WorldRenderer renderer = null!;
 
+    public static ClientConnection? client;
+
     private static Coroutines cs;
 
     public static IMouse mouse;
@@ -111,8 +115,6 @@ public partial class Game {
     public Vector3I? previousPos;
 
     public static RayCollision raycast;
-
-    public static GameMode gamemode;
 
     public int fps;
     public double ft;
@@ -169,13 +171,6 @@ public partial class Game {
     /** debug flag for showing noise information in F3 screen */
     public static bool debugShowNoise = false;
 
-
-    #if DEBUG
-    public static string VERSION = "BlockGame v0.0.2 DEBUG";
-    #else
-    public static string VERSION = "BlockGame v0.0.2";
-    #endif
-
     public static int centreX => width / 2;
     public static int centreY => height / 2;
 
@@ -190,6 +185,8 @@ public partial class Game {
 
         initDedicatedGraphics();
         cc();
+
+        Net.mode = NetMode.SP;
 
         // load titles
         titles = File.ReadAllLines("assets/titles.txt");
@@ -813,9 +810,6 @@ public partial class Game {
 
         Spy.init();
 
-        // initialize game mode (default to creative for now)
-        gamemode = new CreativeMode();
-
         // apply fullscreen setting
         setFullscreen(Settings.instance.fullscreen);
 
@@ -882,13 +876,13 @@ public partial class Game {
      * Optionally, unloads everything if you pass null.
      */
     public static void setWorld(World? world) {
-        
+
         // dispose of everything before
-        
+
         Game.world?.Dispose();
         renderer.setWorld(null);
         blockRenderer.setWorld(null);
-        
+
         // clear up the chunk cache!
         ArrayBlockData.blockPool.clear();
         ArrayBlockData.lightPool.clear();
@@ -900,6 +894,49 @@ public partial class Game {
             renderer.setWorld(world);
             blockRenderer.setWorld(world);
         }
+    }
+
+    /**
+     * Centralized method to cleanly exit the current world.
+     * Handles saving (if requested), disposal, and Net.mode transitions.
+     */
+    public static void exitWorld(bool save = true, bool nodel = false) {
+        // save world (only for singleplayer)
+        if (save && world != null && !world.isMP) {
+            world.worldIO.save(world, world.name);
+        }
+
+        // dispose world BEFORE changing mode!
+        if (!nodel) {
+            setWorld(null);
+        }
+
+        // transition Net.mode appropriately:
+        // MPC -> SP (back to main menu state)
+        // SP -> SP (stay in main menu state)
+        // DED shouldn't call this
+        if (Net.mode.isMPC()) {
+            Net.mode = NetMode.SP;
+        }
+    }
+
+    /**
+     * Centralized method to disconnect from server and return to main menu.
+     * Handles both voluntary disconnects and server-initiated disconnects.
+     */
+    public static void disconnectAndReturnToMenu() {
+        // disconnect from server if connected
+        if (client != null) {
+            client.disconnect();
+            client.stop();
+            client = null;
+        }
+
+        // exit world (don't save multiplayer worlds)
+        exitWorld(save: false);
+
+        // return to main menu
+        instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
     }
 
     public static Coroutine startCoroutine(IEnumerator coroutine) {
@@ -1047,10 +1084,12 @@ public partial class Game {
     private void update(double dt) {
         globalTick++;
         mousePos = mouse.Position;
-        
+
         // reset events
         inputs.reset();
         
+        client?.update();
+
         textures.update(dt);
         currentScreen.update(dt);
         gui.update(dt);
@@ -1329,11 +1368,19 @@ public partial class Game {
     }
 
     private void close() {
-        // save world before closing
-        if (world != null!) {
-            world.worldIO.save(world, world.name);
-        }
+        // remember if we were in MP before disconnect
+        bool wasMP = Net.mode.isMPC();
 
+        // disconnect
+        client?.stop();
+        client = null;
+
+        // exit world (with save if singleplayer only)
+        // todo if we null out shit here, it will still crash in the event handlers afterwards? not sure why but we can just not.
+        exitWorld(save: !wasMP, nodel: true);
+
+        // final cleanup
+        //Net.mode = NetMode.NONE;
         Log.shutdown();
         ///dev?.Dispose();
         //buffer?.Dispose();

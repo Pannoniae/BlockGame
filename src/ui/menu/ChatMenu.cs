@@ -2,6 +2,8 @@ using System.Drawing;
 using System.Numerics;
 using BlockGame.logic;
 using BlockGame.main;
+using BlockGame.net;
+using BlockGame.net.packet;
 using BlockGame.ui.screen;
 using BlockGame.util;
 using BlockGame.util.cmd;
@@ -133,15 +135,47 @@ public class ChatMenu : Menu {
     }
 
     private void doChat(string msg) {
-        // if command, execute
+        // if command, execute locally or send to server
         if (msg.StartsWith('/')) {
             var args = msg[1..].Split(' ');
+            var cmdName = args[0];
 
-            Command.execute(Game.player, args);
+            // find command to check if it's client-only
+            var cmd = Command.find(cmdName);
+
+            // unknown command or singleplayer - execute locally
+            if (Net.mode == NetMode.SP) {
+                Command.execute(Game.player, args);
+            }
+            // multiplayer client
+            else if (Net.mode.isMPC()) {
+                // client-only commands execute locally
+                if (cmd != null && cmd.Value.side == NetMode.CL) {
+                    Command.execute(Game.player, args);
+                }
+                // server commands go to server
+                else {
+                    ClientConnection.instance.send(
+                        new CommandPacket { command = msg[1..] },
+                        LiteNetLib.DeliveryMethod.ReliableOrdered
+                    );
+                }
+            }
+            else {
+                // not connected - execute locally (will show errors if needed)
+                Command.execute(Game.player, args);
+            }
         }
-        // if not command, just print with player name
+        // if not command, send to server or display locally
         else {
-            addMessage($"<Player> {msg}");
+            // multiplayer: send to server
+            if (Net.mode.isMPC()) {
+                ClientConnection.instance.send(new ChatMessagePacket { message = msg }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
+            // singleplayer: just print with player name
+            else {
+                addMessage($"<{Game.player.name}> {msg}");
+            }
         }
     }
 
@@ -208,4 +242,6 @@ public class ChatMenu : Menu {
 /// A chat message which contains the contents and when it was sent.
 /// </summary>
 public record struct ChatMessage(string message, int ticks) {
+    public string message = message;
+    public int ticks = ticks;
 }

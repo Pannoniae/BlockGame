@@ -1,5 +1,8 @@
+using BlockGame.main;
 using BlockGame.util;
+using BlockGame.world.entity;
 using BlockGame.world.worldgen;
+using Molten;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.block;
@@ -34,8 +37,12 @@ public class Sapling : Block {
         }
 
         int growth = GROWTH_CHANCE;
-        var dist = Vector3D.Distance(world.player.position, new Vector3D(x + 0.5, y + 0.5, z + 0.5));
-        if (dist < RADIUS) {
+        // shit SP code
+        //var dist = Vector3D.Distance(Game.player.position, new Vector3D(x + 0.5, y + 0.5, z + 0.5));
+
+        var player = findNearestPlayer(world, new Vector3I(x, y, z), RADIUS, out var sq);
+
+        if (sq < RADIUS * RADIUS) {
             growth *= OBSERVE;
         }
 
@@ -93,6 +100,28 @@ public class Sapling : Block {
                 TreeGenerator.placeMahoganyTree(world, random, x, y, z);
                 break;
         }
+    }
+    public static Player? findNearestPlayer(World world, Vector3I pos, double radius, out double nearestDistSq) {
+        Player? nearest = null;
+        nearestDistSq = radius * radius;
+
+        foreach (var entity in world.players) {
+            if (entity.gameMode == null) {
+                // todo this is a horrible hack, find out why it's not initialised fully yet
+                continue;
+            }
+
+
+            if (entity.gameMode.gameplay) {
+                var distSq = Vector3I.DistanceSquared(pos, entity.position.toBlockPos());
+                if (distSq < nearestDistSq) {
+                    nearest = entity;
+                    nearestDistSq = distSq;
+                }
+            }
+        }
+
+        return nearest;
     }
 }
 

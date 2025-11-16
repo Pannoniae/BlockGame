@@ -11,7 +11,6 @@ namespace BlockGame.ui.menu.settings;
 
 public class SettingsMenu : Menu {
     private readonly SettingsScreen parentScreen;
-    private TextBox nameBox;
 
     public SettingsMenu(SettingsScreen parentScreen) {
         this.parentScreen = parentScreen;
@@ -40,26 +39,11 @@ public class SettingsMenu : Menu {
         elements.Add(controls);
         addElement(controls);
 
-        // playername
-        nameBox = new TextBox(this, "playerName") {
-            header = "Name: ",
-            input = settings.playerName,
-            maxLength = 32,
-            centred = true,
-        };
-        nameBox.centreContents();
-        nameBox.tooltip = "What's your name?";
-        elements.Add(nameBox);
-        addElement(nameBox);
-
         layoutSettingsTwoCols(elements, new Vector2I(0, 16), videoSettings.GUIbounds.Width);
     }
 
     public override void deactivate() {
         base.deactivate();
-        // save player name when leaving menu
-        Settings.instance.playerName = nameBox.input;
-        Settings.instance.save();
     }
     
     

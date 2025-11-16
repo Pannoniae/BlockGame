@@ -6,6 +6,7 @@ using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.block;
@@ -198,7 +199,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                     // section coord
                     var coord = World.getChunkSectionPos(x, y, z);
                     world!.getSubChunkMaybe(coord, out SubChunk? subChunk);
-                    if (subChunk != null && !subChunk.isEmpty) {
+                    if (subChunk != null) {
                         // add to meshing list
                         chunksToMesh.Add(coord);
                     }
@@ -539,7 +540,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         waterShader.setUniform(waterFogStart, fogMinValue);
         waterShader.setUniform(waterFogEnd, fogMaxValue);
 
-        var liquid = world.player.getBlockAtEyes();
+        var liquid = Game.player.getBlockAtEyes();
 
         if (liquid == Block.WATER) {
             // set fog colour to blue
@@ -581,12 +582,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
     }
 
-    public void mesh(SubChunkCoord coord) {
-        if (!meshingQueue.Contains(coord)) {
-            meshingQueue.Enqueue(coord);
-        }
-    }
-
     /**
      * This runs once every tick
      * <param name="dt"></param>
@@ -614,8 +609,49 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 continue;
             }
 
+            /*var anyMissing = false;
+
+            Span<ChunkCoord> neighbours = [
+                new(sectionCoord.x - 1, sectionCoord.z),
+                new(sectionCoord.x + 1, sectionCoord.z),
+                new(sectionCoord.x, sectionCoord.z - 1),
+                new(sectionCoord.x, sectionCoord.z + 1),
+                new(sectionCoord.x - 1, sectionCoord.z - 1),
+                new(sectionCoord.x - 1, sectionCoord.z + 1),
+                new(sectionCoord.x + 1, sectionCoord.z - 1),
+                new(sectionCoord.x + 1, sectionCoord.z + 1)
+            ];
+
+            foreach (var neighbourCoord in neighbours) {
+                // if isn't at least LIGHTED, then skip meshing for now
+                if (!world.getChunkMaybe(neighbourCoord, out var neighbourChunk) ||
+                    neighbourChunk.status < ChunkStatus.LIGHTED) {
+                    anyMissing = true;
+                    break;
+                }
+            }
+
+            // if neighbouring chunks are not loaded, re-queue for later
+            if (anyMissing) {
+                // add back to chunksToMesh so it gets retried next tick
+                chunksToMesh.Add(sectionCoord);
+                continue;
+            }*/
+
             var section = world.getSubChunk(sectionCoord);
+            var chunk = section.chunk;
+
+            // mesh the subchunk
             Game.blockRenderer.meshChunk(section);
+
+            //Console.Out.WriteLine($"MESHED {sectionCoord}, chunk status: {chunk.status}");
+
+            // update chunk status to MESHED (once per chunk, not per subchunk)
+            // this makes the chunk visible in the renderer
+            if (chunk.status < ChunkStatus.MESHED && Net.mode.isMPC()) {
+                chunk.status = ChunkStatus.MESHED;
+                //Console.Out.WriteLine($"  -> Updated status to MESHED");
+            }
         }
     }
 
@@ -706,7 +742,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var chunkList = world.chunkList.AsSpan();
 
         var cameraPos = Game.camera.renderPosition(interp);
-        worldShader.setUniform(uMVP, viewProj);
+        worldShader.setUniform(uMVP, ref viewProj);
         worldShader.setUniform(uCameraPos, new Vector3(0));
 
         // chunkData index
@@ -853,12 +889,12 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // if integrated shit, don't do depth pre-pass
         if (Game.isAMDIntegratedCard || Game.isIntelIntegratedCard) {
             waterShader.use();
-            waterShader.setUniform(wateruMVP, viewProj);
+            waterShader.setUniform(wateruMVP, ref viewProj);
             waterShader.setUniform(wateruCameraPos, new Vector3(0));
         }
         else {
             dummyShader.use();
-            dummyShader.setUniform(dummyuMVP, viewProj);
+            dummyShader.setUniform(dummyuMVP, ref viewProj);
         }
 
         GL.ColorMask(false, false, false, false);
@@ -926,7 +962,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // TRANSLUCENT PASS
 
         waterShader.use();
-        waterShader.setUniform(wateruMVP, viewProj);
+        waterShader.setUniform(wateruMVP, ref viewProj);
         waterShader.setUniform(wateruCameraPos, new Vector3(0));
 
         GL.ColorMask(true, true, true, true);
@@ -1048,7 +1084,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // render all entities
         foreach (var entity in world.entities) {
             // don't render player in first-person
-            if (entity == world.player && Game.camera.mode == CameraMode.FirstPerson) {
+            if (entity == Game.player && Game.camera.mode == CameraMode.FirstPerson) {
                 continue;
             }
 
@@ -1375,8 +1411,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         var view = Game.camera.getViewMatrix(interp);
         var viewProj = view * Game.camera.getProjectionMatrix();
 
-        idc.setMV(view);
-        idc.setMVP(viewProj);
+        idc.setMV(ref view);
+        idc.setMVP(ref viewProj);
         idc.begin(PrimitiveType.Lines);
 
         var outlineColor = new Color(0, 0, 0, 255);

@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using BlockGame.world.item;
 
 namespace BlockGame.util;
@@ -87,8 +88,8 @@ public class ItemStack : Persistent {
     /**
      * Helper to consume items from a stack (respects creative mode).
      */
-    public ItemStack consume(int amount) {
-        if (!Game.gamemode.gameplay) {
+    public ItemStack consume(Player player, int amount) {
+        if (!player.gameMode.gameplay) {
             return this; // creative: no consumption
         }
         int newQty = quantity - amount;
@@ -100,8 +101,8 @@ public class ItemStack : Persistent {
      * Damage an item by the specified amount (respects creative mode).
      * Returns EMPTY if durability is depleted, otherwise returns a new stack with increased damage.
      */
-    public ItemStack damageItem(int amt) {
-        if (!Game.gamemode.gameplay) {
+    public ItemStack damageItem(Player player, int amt) {
+        if (!player.gameMode.gameplay) {
             return this;
         }
         int max = Item.durability[id];

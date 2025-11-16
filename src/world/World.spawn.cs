@@ -91,105 +91,109 @@ public partial class World {
         }
     }
 
-    /** attempt to spawn one mob */
-    private bool spawnMob(SpawnType type) {
-        var px = (int)player.position.X;
-        var py = (int)player.position.Y;
-        var pz = (int)player.position.Z;
+    /** attempt to spawn one mob (returns count spawned) */
+    private int spawnMob(SpawnType type) {
+        foreach (var player in players) {
 
-        // try a few positions, hope it works out
-        for (int a = 0; a < 8; a++) {
-            var xo = random.Next(-SPAWN_RADIUS, SPAWN_RADIUS + 1);
-            var yo = random.Next(-SPAWN_RADIUS_Y, SPAWN_RADIUS_Y + 1);
-            var zo = random.Next(-SPAWN_RADIUS, SPAWN_RADIUS + 1);
 
-            var x = px + xo;
-            var y = py + yo;
-            var z = pz + zo;
+            var px = (int)player.position.X;
+            var py = (int)player.position.Y;
+            var pz = (int)player.position.Z;
 
-            // check weighted distance (Y matters more, biases against vertical spawns)
-            var dx = x - player.position.X;
-            var dy = (y - player.position.Y) * Y_WEIGHT;
-            var dz = z - player.position.Z;
-            var dsq = dx * dx + dy * dy + dz * dz;
+            // try a few positions, hope it works out
+            for (int a = 0; a < 8; a++) {
+                var xo = random.Next(-SPAWN_RADIUS, SPAWN_RADIUS + 1);
+                var yo = random.Next(-SPAWN_RADIUS_Y, SPAWN_RADIUS_Y + 1);
+                var zo = random.Next(-SPAWN_RADIUS, SPAWN_RADIUS + 1);
 
-            // too close?
-            if (dsq < MIN_SPAWN_DIST * MIN_SPAWN_DIST) {
-                continue;
-            }
+                var x = px + xo;
+                var y = py + yo;
+                var z = pz + zo;
 
-            // too far?
-            if (dsq > SPAWN_RADIUS * SPAWN_RADIUS) {
-                continue;
-            }
+                // check weighted distance (Y matters more, biases against vertical spawns)
+                var dx = x - player.position.X;
+                var dy = (y - player.position.Y) * Y_WEIGHT;
+                var dz = z - player.position.Z;
+                var dsq = dx * dx + dy * dy + dz * dz;
 
-            // valid spawn pos?
-            bool needsLight = type == SpawnType.PASSIVE;
-            if (!spawnAt(x, y, z, needsLight)) {
-                continue;
-            }
-
-            // valid surface?
-            var below = getBlock(x, y - 1, z);
-            if (!spawnOn(below, needsLight)) {
-                continue;
-            }
-
-            // pick random mob of this type from registry
-            var types = Entities.spawnType;
-            mobs.Clear();
-            for (int i = 0; i < types.Count; i++) {
-                if (types[i] == type) {
-                    mobs.Add(i);
-                }
-            }
-
-            if (mobs.Count == 0) {
-                Log.warn($"No candidates for spawn type {type}!");
-                return false;
-            }
-
-            var mobType = mobs[random.Next(mobs.Count)];
-
-            // determine pack size (passives spawn in groups of 1-3, hostiles spawn solo)
-            int packSize = type == SpawnType.PASSIVE ? random.Next(1, random.Next(1, 4)) : 1;
-            int spawned = 0;
-
-            // spawn pack around initial position
-            for (int p = 0; p < packSize; p++) {
-
-                // offset for pack members (first one at exact spot)
-                int nx = x, ny = y, nz = z;
-                if (p > 0) {
-                    nx += random.Next(-4, 5);
-                    nz += random.Next(-4, 5);
-                    ny += random.Next(-1, 2);
-
-                    if (!spawnAt(nx, ny, nz, type == SpawnType.PASSIVE)) {
-                        continue;
-                    }
-
-                    var nbelow = getBlock(nx, ny - 1, nz);
-                    if (!spawnOn(nbelow, type == SpawnType.PASSIVE)) {
-                        continue;
-                    }
-                }
-
-                var mob = Entities.create(this, mobType);
-                if (mob == null) {
-                    if (p == 0) Log.warn($"Failed to create mob of type ID {mobType} for spawning.");
+                // too close?
+                if (dsq < MIN_SPAWN_DIST * MIN_SPAWN_DIST) {
                     continue;
                 }
 
-                mob.position = new Vector3D(nx + 0.5, ny, nz + 0.5);
-                addEntity(mob);
-                spawned++;
-            }
+                // too far?
+                if (dsq > SPAWN_RADIUS * SPAWN_RADIUS) {
+                    continue;
+                }
 
-            return spawned > 0;
+                // valid spawn pos?
+                bool needsLight = type == SpawnType.PASSIVE;
+                if (!spawnAt(x, y, z, needsLight)) {
+                    continue;
+                }
+
+                // valid surface?
+                var below = getBlock(x, y - 1, z);
+                if (!spawnOn(below, needsLight)) {
+                    continue;
+                }
+
+                // pick random mob of this type from registry
+                var types = Entities.spawnType;
+                mobs.Clear();
+                for (int i = 0; i < types.Count; i++) {
+                    if (types[i] == type) {
+                        mobs.Add(i);
+                    }
+                }
+
+                if (mobs.Count == 0) {
+                    Log.warn($"No candidates for spawn type {type}!");
+                    return 0;
+                }
+
+                var mobType = mobs[random.Next(mobs.Count)];
+
+                // determine pack size (passives spawn in groups of 1-3, hostiles spawn solo)
+                int packSize = type == SpawnType.PASSIVE ? random.Next(1, random.Next(1, 4)) : 1;
+                int spawned = 0;
+
+                // spawn pack around initial position
+                for (int p = 0; p < packSize; p++) {
+
+                    // offset for pack members (first one at exact spot)
+                    int nx = x, ny = y, nz = z;
+                    if (p > 0) {
+                        nx += random.Next(-4, 5);
+                        nz += random.Next(-4, 5);
+                        ny += random.Next(-1, 2);
+
+                        if (!spawnAt(nx, ny, nz, type == SpawnType.PASSIVE)) {
+                            continue;
+                        }
+
+                        var nbelow = getBlock(nx, ny - 1, nz);
+                        if (!spawnOn(nbelow, type == SpawnType.PASSIVE)) {
+                            continue;
+                        }
+                    }
+
+                    var mob = Entities.create(this, mobType);
+                    if (mob == null) {
+                        if (p == 0) Log.warn($"Failed to create mob of type ID {mobType} for spawning.");
+                        continue;
+                    }
+
+                    mob.position = new Vector3D(nx + 0.5, ny, nz + 0.5);
+                    addEntity(mob);
+                    spawned++;
+                }
+
+                return spawned;
+            }
         }
 
-        return false;
+        return 0;
     }
 
     public void updateSpawning() {
@@ -198,15 +202,21 @@ public partial class World {
             return;
         }
 
-        // count loaded mobs
+        // count ALL mobs (including those in unloaded chunks)
         int passives = 0;
         int hostiles = 0;
         foreach (var e in entities) {
-            if (e is not Mob || !e.inWorld) {
+            if (e is not Mob) {
                 continue;
             }
 
-            var type = Entities.spawnType[Entities.getID(e.type)];
+            var id = Entities.getID(e.type);
+            if (id < 0 || id >= Entities.spawnType.Count) {
+                Log.warn($"Invalid entity type for spawn counting: {e.type} (id={id})");
+                continue;
+            }
+
+            var type = Entities.spawnType[id];
             switch (type) {
                 case SpawnType.PASSIVE:
                     passives++;
@@ -230,7 +240,15 @@ public partial class World {
                 continue;
             }
 
-            spawnMob(type);
+            int spawned = spawnMob(type);
+            if (spawned > 0) {
+                // update counts by actual spawn count
+                if (type == SpawnType.PASSIVE) {
+                    passives += spawned;
+                } else {
+                    hostiles += spawned;
+                }
+            }
         }
     }
 }

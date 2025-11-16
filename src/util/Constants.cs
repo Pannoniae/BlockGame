@@ -42,4 +42,21 @@ public static class Constants {
     public const double placeDelayMs = 267; // ~16 ticks at 60fps
     public const double airHitDelayMs = 67; // 4 ticks at 60fps - additional delay when hitting air
     public const double flyModeDelay = 0.4;
+
+    // Networking
+    public const int netVersion = 3;
+    public const string connectionKey = "BlockGame";
+
+    // Inventory
+    public const byte INV_ID_CURSOR = 255;  // special invID for cursor
+    public const byte INV_ID_CREATIVE = 254; // creative mode inventory (client-side UI, server validates)
+    public const byte INV_ID_PLAYER = 0;    // player inventory
+    
+    #if DEBUG
+    public static string VERSION => _ver + " DEBUG";
+    #else
+    public static string VERSION => _ver;
+    #endif
+
+    private const string _ver = "BlockGame v0.0.3-pre2";
 }

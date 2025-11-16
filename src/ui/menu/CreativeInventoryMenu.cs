@@ -59,6 +59,14 @@ public class CreativeInventoryMenu : InventoryMenu {
         addElement(downButton);
     }
 
+    public override void deactivate() {
+        base.deactivate();
+        // reset to default player inventory ID
+        if (Game.player != null) {
+            Game.player.currentInventoryID = -1;
+        }
+    }
+
     public void setup() {
         creativeCtx.setupSlots(rows, cols, invOffsetX, invOffsetY);
         slots = creativeCtx.getSlots();

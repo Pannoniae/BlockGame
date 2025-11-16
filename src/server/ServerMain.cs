@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.util.log;
 
@@ -8,7 +9,7 @@ namespace BlockGame.main;
 
 public class ServerMain {
 
-    public static Server server = null!;
+    public static GameServer server = null!;
 
     public static void Main(string[] args) {
         var devMode = args.Length > 0 && args[0] == "--dev";
@@ -33,7 +34,12 @@ public class ServerMain {
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 
-        server = new Server(devMode);
+        // I'm tired of lagspikes
+        Thread.CurrentThread.Priority = ThreadPriority.Highest;
+        Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+        Process.GetCurrentProcess().PriorityBoostEnabled = true;
+
+        server = new GameServer(devMode);
     }
 
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
@@ -41,40 +47,11 @@ public class ServerMain {
             var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
 
             Log.info("Your game crashed! Here are some relevant details:");
-            if (!Game.devMode) {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
-                    // call glxinfo
-                    using var process = new Process {
-                        StartInfo = new ProcessStartInfo {
-                            FileName = "glxinfo",
-                            RedirectStandardOutput = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        }
-                    };
-                    // read its output
-                    process.Start();
-                    Log.info("OpenGL info:");
-                    Log.info(process.StandardOutput.ReadToEnd());
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                    // call wglinfo
-                    using var process = new Process {
-                        StartInfo = new ProcessStartInfo {
-                            FileName = "wglinfo64.exe",
-                            RedirectStandardOutput = true,
-                            UseShellExecute = false,
-                            CreateNoWindow = true
-                        }
-                    };
-                    // read its output
-                    process.Start();
-                    Log.info("OpenGL info:");
-                    Log.info(process.StandardOutput.ReadToEnd());
-                }
-            }
 
             Log.error(e);
+
+            // save crash report to crashes/
+            Log.saveCrashReport(e);
 
             Console.WriteLine("Exiting...");
             Console.Out.Flush();

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Numerics;
 using BlockGame.main;
+using BlockGame.net;
 using BlockGame.ui.element;
 using BlockGame.util.log;
 using Molten;
@@ -30,9 +31,12 @@ public class MainMenu : Menu {
             Game.instance.executeOnMainThread(() => { Game.instance.switchTo(LEVEL_SELECT); });
         };
         Log.debug("sp:" + sp.bounds);
-        var button2 = new Button(this, "multiplayer", true, "Multiplayer (soon)");
+        var button2 = new Button(this, "multiplayer", true, "Multiplayer");
         button2.setPosition(new Vector2I(0, -8));
         button2.centreContents();
+        button2.clicked += _ => {
+            Game.instance.executeOnMainThread(() => { Game.instance.switchTo(MULTIPLAYER_MENU); });
+        };
         var settings = new Button(this, "settings", true, "Settings");
         settings.setPosition(new Vector2I(0, 18));
         settings.centreContents();

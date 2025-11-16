@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using BlockGame.net.packet;
 using BlockGame.util;
 using BlockGame.world.block;
 
@@ -834,5 +835,51 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
 
     ~PaletteBlockData() {
         ReleaseUnmanagedResources();
+    }
+    
+    public ChunkDataPacket.SubChunkData write(byte y) {
+        return new ChunkDataPacket.SubChunkData {
+            y = y,
+            vertices = vertices,
+            blockRefs = blockRefs,
+            indices = indices,
+            count = count,
+            vertCount = vertCount,
+            density = density,
+            lightVertices = lightVertices,
+            lightRefs = lightRefs,
+            lightIndices = lightIndices,
+            lightCount = lightCount,
+            lightVertCount = lightVertCount,
+            lightDensity = lightDensity,
+            blockCount = blockCount,
+            translucentCount = translucentCount,
+            fullBlockCount = fullBlockCount,
+            randomTickCount = randomTickCount,
+            renderTickCount = renderTickCount
+        };
+    }
+    
+    public void read(ChunkDataPacket.SubChunkData data) {
+        vertices = data.vertices;
+        blockRefs = data.blockRefs;
+        indices = data.indices;
+        count = data.count;
+        vertCount = data.vertCount;
+        density = data.density;
+        lightVertices = data.lightVertices;
+        lightRefs = data.lightRefs;
+        lightIndices = data.lightIndices;
+        lightCount = data.lightCount;
+        lightVertCount = data.lightVertCount;
+        lightDensity = data.lightDensity;
+        blockCount = data.blockCount;
+        translucentCount = data.translucentCount;
+        fullBlockCount = data.fullBlockCount;
+        vertCapacity = vertices.Length;
+        lightVertCapacity = lightVertices.Length;
+        randomTickCount = data.randomTickCount;
+        renderTickCount = data.renderTickCount;
+        inited = true;
     }
 }

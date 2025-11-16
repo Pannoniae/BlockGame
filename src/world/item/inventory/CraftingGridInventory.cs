@@ -134,4 +134,9 @@ public class CraftingGridInventory : Inventory {
         matchStatus = CraftingMatchStatus.NO_MATCH;
         result = ItemStack.EMPTY;
     }
+
+    /** notify parent context that grid slots changed (for multiplayer sync) */
+    public void notifyChanged() {
+        parentCtx.notifyInventorySlotsChanged(this);
+    }
 }

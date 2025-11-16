@@ -51,9 +51,11 @@ public class Menu {
     public static LoadingMenu LOADING;
     public static StartupLoadingMenu STARTUP_LOADING;
     public static MainMenu MAIN_MENU;
+    public static MultiplayerMenu MULTIPLAYER_MENU;
     public static LevelSelectMenu LEVEL_SELECT;
     public static CreateWorldMenu CREATE_WORLD;
     public static ConfirmDialog CONFIRM_DIALOG;
+    public static DisconnectedMenu DISCONNECTED_MENU;
 
 
     /// <summary>
@@ -85,9 +87,11 @@ public class Menu {
         // NOT HERE! initialised manually
         //STARTUP_LOADING = new StartupLoadingMenu();
         MAIN_MENU = new MainMenu();
+        MULTIPLAYER_MENU = new MultiplayerMenu();
         LEVEL_SELECT = new LevelSelectMenu();
         CREATE_WORLD = new CreateWorldMenu();
         CONFIRM_DIALOG = new ConfirmDialog();
+        DISCONNECTED_MENU = new DisconnectedMenu();
     }
 
     // there is no activate/deactivate here to manage elements here because multiple menus can exist (there no generic system for that; it's on a case-by-case basis)

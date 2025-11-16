@@ -44,3 +44,24 @@ public class InputException : ArgumentException {
         throw new InputException(message);
     }
 }
+
+/**
+ * For when a network error occurs.
+ * This could be due to bad input, but could also be due to external factors like connectivity issues.
+ * As a developer, you should catch these and handle them gracefully, informing the user of the issue.
+ */
+public class NetworkException : InputException {
+    public NetworkException(string message) : base(message) {
+    }
+
+    public NetworkException(string message, Exception ex) : base(message, ex) {
+    }
+
+    public static void throwNew() {
+        throw new NetworkException("A network error has occurred.");
+    }
+
+    public static void throwNew(string message) {
+        throw new NetworkException(message);
+    }
+}

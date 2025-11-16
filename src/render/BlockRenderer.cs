@@ -1405,7 +1405,9 @@ public class BlockRenderer {
         var nb = getBlockCached(vec.X, vec.Y, vec.Z).getID();
 
         // check if we should render based on neighbour
-        if (Block.fullBlock[nb]) return;
+        if (Block.fullBlock[nb]) {
+            return;
+        }
 
         applyFaceLighting(dir);
         begin();

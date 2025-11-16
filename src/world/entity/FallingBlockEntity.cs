@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -5,7 +6,9 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
 
-/** Animated falling block entity (sand, gravel, etc.) */
+/** Animated falling block entity (sand, gravel, etc.)
+ *  TODO this kinda desyncs in multiplayer, also sync velocity in the EntityTracker maybe? or not sure
+ */
 public class FallingBlockEntity : Entity {
     const double size = 1 - EPSILON_GROUND_CHECK;
 
@@ -28,8 +31,8 @@ public class FallingBlockEntity : Entity {
     protected override bool shouldContinueUpdate(double dt) {
         fallTime++;
 
-        // if falling for too long (100 blocks = ~5 sec), remove
-        if (fallTime > 100) {
+        // if falling for too long (300 ticks = ~5 sec), remove
+        if (fallTime > 300) {
             remove();
             return false;
         }
@@ -52,7 +55,7 @@ public class FallingBlockEntity : Entity {
         collide(dt);
 
         // if landed, place block
-        if (onGround) {
+        if (onGround && !Net.mode.isMPC()) {
             landAndPlace();
         }
     }

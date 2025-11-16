@@ -147,7 +147,7 @@ public class Liquid : Block {
         // is this a source? great, sleep well
         if (getWaterLevel((byte)currentLevel) == 0 && !falling) {
             data = setDynamic(data, false);
-            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)id).setMetadata(data));
+            world.setMetadataSilent(pos.X, pos.Y, pos.Z, data);
             newLevel = 0;
             // DON'T RETURN WE CAN STILL SPREAD
         }
@@ -219,7 +219,7 @@ public class Liquid : Block {
             if (newLevel == currentLevel) {
                 // go to sleep, goodnight!
                 data = setDynamic(data, false);
-                world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)id).setMetadata(data));
+                world.setMetadataSilent(pos.X, pos.Y, pos.Z, data);
             }
             else {
                 // update current level
@@ -232,13 +232,15 @@ public class Liquid : Block {
                     data = setWaterLevel(data, (byte)newLevel);
                     data = setDynamic(data, true); // keep dynamic while changing
                     data = setFalling(data, newFalling);
-                    world.setBlockMetadata(pos.X, pos.Y, pos.Z, ((uint)id).setMetadata(data));
+                    world.setMetadata(pos.X, pos.Y, pos.Z, data);
+
+                    // NOTE: this used to set BOTH the block and the metadata. Problem is, placing water triggers update, making instant updates.
 
                     world.scheduleBlockUpdate(pos);
                     // update neighbours
                     // todo do we really tho? it doesn't seem to break if we do, but also if we don't?
                     // revisit this when more survival shit is added and see if stuff breaks hahahaha
-                    world.blockUpdateNeighboursOnly(pos.X, pos.Y, pos.Z);
+                    //world.blockUpdateNeighboursOnly(pos.X, pos.Y, pos.Z);
                 }
             }
         }
@@ -536,7 +538,7 @@ public class Liquid : Block {
         var metadata = setWaterLevel(0, level);
         metadata = setFalling(metadata, falling);
         metadata = setDynamic(metadata, true);
-        world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(metadata));
+        world.setBlockMetadataSilent(x, y, z, ((uint)id).setMetadata(metadata));
 
         world.scheduleBlockUpdate(new Vector3I(x, y, z));
     }
@@ -547,7 +549,7 @@ public class Liquid : Block {
             // wake up static water
             var dynamicMetadata = setDynamic(metadata, true);
             // no updates!!
-            world.setBlockMetadataSilent(pos.X, pos.Y, pos.Z, ((uint)id).setMetadata(dynamicMetadata));
+            world.setMetadataSilent(pos.X, pos.Y, pos.Z, dynamicMetadata);
 
             // scheduleBlockUpdate handles duplicate protection internally
             world.scheduleBlockUpdate(pos);

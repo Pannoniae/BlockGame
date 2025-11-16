@@ -49,6 +49,11 @@ public partial class ClientMain {
 
         AppDomain.CurrentDomain.UnhandledException += handleCrash;
 
+        // I'm tired of lagspikes
+        Thread.CurrentThread.Priority = ThreadPriority.Highest;
+        Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High;
+        Process.GetCurrentProcess().PriorityBoostEnabled = true;
+
         game = new Game(devMode);
     }
 
@@ -101,6 +106,9 @@ public partial class ClientMain {
             }
 
             Log.error(e);
+
+            // save crash report to crashes/
+            Log.saveCrashReport(e);
 
             Console.WriteLine("Exiting...");
             Console.Out.Flush();

@@ -39,7 +39,7 @@ public class TextRenderer3D : IFontStashRenderer {
         // set combined VP matrix
         var mat = Game.camera.getViewMatrix(interp)
                   * Game.camera.getProjectionMatrix();
-        batchShader3D.setUniform(uMVP, mat);
+        batchShader3D.setUniform(uMVP, ref mat);
     }
 
     public void begin() {

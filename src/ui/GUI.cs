@@ -434,8 +434,8 @@ public class GUI {
                 }
 
                 var block = Block.get(blockId);
-                var texCoords_ = UVPair.texCoords(block.uvs[0]);
-                var texCoordsMax_ = UVPair.texCoords(block.uvs[0] + 1);
+                var texCoords_ = UVPair.texCoords(block.uvs[1]);
+                var texCoordsMax_ = UVPair.texCoords(block.uvs[1] + 1);
                 var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                 var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
 
@@ -590,6 +590,27 @@ public class GUI {
 
     public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale) {
         DrawStringThin(text, position * guiScale, colour == default ? Color.White : colour, TEXTSCALE * scale, default);
+    }
+
+    /**
+     * draw text with &-code color support.
+     * &a = green, &c = red, etc.
+     * alpha is multiplied with each segment's color.
+     */
+    public void drawColoredStringUIThin(string text, Vector2 position, float alpha = 1f) {
+        var segments = TextColours.parse(text);
+        var xOffset = 0f;
+
+        foreach (var segment in segments) {
+            var color = segment.color;
+            color.A = (byte)(alpha * 255);
+
+            drawStringUIThin(segment.text, new Vector2(position.X + xOffset, position.Y), color);
+
+            // measure width in GUI coordinates
+            var measurement = measureStringUIThin(segment.text);
+            xOffset += measurement.X;
+        }
     }
 
 

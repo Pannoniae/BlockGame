@@ -1,5 +1,7 @@
 ﻿using System.Numerics;
 using BlockGame.main;
+using BlockGame.net;
+using BlockGame.net.packet;
 using BlockGame.ui.element;
 using BlockGame.util;
 using BlockGame.world.block;
@@ -39,7 +41,21 @@ public class SignMenu : Menu {
         doneButton.setPosition(new Vector2I(0, 60));
         doneButton.centreContents();
         doneButton.clicked += _ => {
-            // changes are already in signEntity.lines, just close
+            // changes are already in signEntity.lines
+            // in multiplayer, send update to server
+            if (Net.mode.isMPC()) {
+                var nbt = new util.xNBT.NBTCompound();
+                signEntity.write(nbt);
+                var nbtBytes = util.xNBT.NBT.write(nbt);
+
+                ClientConnection.instance.send(new UpdateBlockEntityPacket {
+                    position = signEntity.pos,
+                    type = 0,
+                    nbt = nbtBytes
+                }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }
+
+            // close menu
             Game.world.inMenu = false;
             Screen.GAME_SCREEN.backToGame();
         };

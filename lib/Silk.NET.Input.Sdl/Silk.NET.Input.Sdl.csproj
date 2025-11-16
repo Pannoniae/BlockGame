@@ -8,10 +8,10 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="ppy.SDL3-CS" Version="2025.920.0" />
-        <PackageReference Include="ppy.SDL3_image-CS" Version="2025.920.0" />
+        <PackageReference Include="ppy.SDL3-CS" Version="2025.1115.0" />
+        <PackageReference Include="ppy.SDL3_image-CS" Version="2025.1115.0" />
         <PackageReference Include="ppy.SDL3_mixer-CS" Version="2025.920.0" />
-        <PackageReference Include="ppy.SDL3_ttf-CS" Version="2025.920.0" />
+        <PackageReference Include="ppy.SDL3_ttf-CS" Version="2025.1115.0" />
         <ProjectReference Include="..\Silk.NET.Windowing.Sdl\Silk.NET.Windowing.Sdl.csproj" />
         <ProjectReference Include="..\Silk.NET.Input.Common\Silk.NET.Input.Common.csproj" />
     </ItemGroup>

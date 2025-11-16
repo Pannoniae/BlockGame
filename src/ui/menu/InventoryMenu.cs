@@ -1,6 +1,8 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
+using BlockGame.net;
+using BlockGame.net.packet;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
@@ -67,14 +69,14 @@ public abstract class InventoryMenu : Menu {
         drawSlots(new Vector2(guiBounds.X, guiBounds.Y));
 
         // draw cursor item
-        var player = Game.world.player;
+        var player = Game.player;
         if (player?.inventory?.cursor != null) {
             Game.gui.drawCursorItem(player.inventory.cursor, Game.mousePos);
         }
     }
 
     protected override string? getTooltipText() {
-        var player = Game.world.player;
+        var player = Game.player;
 
         // if holding an item in cursor, show its tooltip
         if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
@@ -107,9 +109,33 @@ public abstract class InventoryMenu : Menu {
         foreach (var slot in slots) {
             var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
             if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
-                handleSlotClick(slot, button);
+                handleSlotClickAndSync(slot, button);
                 return;
             }
+        }
+    }
+
+    /** handle slot click and sync to server if multiplayer */
+    private void handleSlotClickAndSync(ItemSlot slot, MouseButton button) {
+        var player = Game.world?.player;
+        if (player == null) return;
+
+        var slotIdx = slots.IndexOf(slot);
+        if (slotIdx < 0) return;
+
+        // do optimistic local update
+        handleSlotClick(slot, button);
+
+        // send to server if multiplayer
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(new InventorySlotClickPacket {
+                invID = (byte)player.currentInventoryID,
+                idx = (ushort)slotIdx,
+                button = (byte)(button == MouseButton.Left ? 0 : 1),
+                actionID = ClientConnection.instance.nextActionID++,
+                mode = 0, // normal click
+                expectedSlot = slot.getStack()
+            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
         }
     }
 

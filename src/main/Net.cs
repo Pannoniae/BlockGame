@@ -1,6 +1,6 @@
 ﻿namespace BlockGame.main;
 
-public class Net {
+public static class Net {
     public static NetMode mode;
 }
 
@@ -9,11 +9,11 @@ public enum NetMode {
     NONE = 0,
     SP = 1,
     MPC = 2,
-    MPS = 4,
+    DED = 4,
 
-    BOTH = SP | MPC | MPS,
+    BOTH = SP | MPC | DED,
     CL = SP | MPC,
-    SRV = SP | MPS
+    SRV = SP | DED
 }
 
 public static class NetModeExt {
@@ -26,8 +26,8 @@ public static class NetModeExt {
             return (mode & NetMode.MPC) != 0;
         }
 
-        public bool isMPS() {
-            return (mode & NetMode.MPS) != 0;
+        public bool isDed() {
+            return (mode & NetMode.DED) != 0;
         }
 
         public bool isCL() {

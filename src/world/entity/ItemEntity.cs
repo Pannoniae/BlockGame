@@ -1,4 +1,5 @@
 ﻿using System;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -14,6 +15,7 @@ public class ItemEntity : Entity {
     public const double size = 0.25;
 
     public ItemEntity(World world) : base(world, "item") {
+
     }
 
     /** item entities don't block block placement */
@@ -68,9 +70,14 @@ public class ItemEntity : Entity {
         }
 
         // find nearby players for attraction
-        var nearbyPlayer = findNearestPlayer();
-        if (nearbyPlayer != null) {
-            applyPlayerAttraction(nearbyPlayer, dt);
+        // todo optimise this lol
+
+        // don't apply attraction, it will desync and make you think you picked it up when you didn't
+        if (!Net.mode.isMPC()) {
+            var nearbyPlayer = findNearestPlayer();
+            if (nearbyPlayer != null) {
+                applyPlayerAttraction(nearbyPlayer, dt);
+            }
         }
 
         // velocity already applied
@@ -158,22 +165,20 @@ public class ItemEntity : Entity {
             return null; // no attraction during grace period
         }
 
-        var entities = new List<Entity>();
+        var entities = new List<Player>();
         var min = position.toBlockPos() - new Vector3I(2, 2, 2);
         var max = position.toBlockPos() + new Vector3I(2, 2, 2);
-        world.getEntitiesInBox(entities, min, max);
+        world.getPlayersInBox(entities, min, max);
 
         Player? nearest = null;
         double nearestDist = double.MaxValue;
 
         foreach (var entity in entities) {
-            if (entity is Player player) {
-                var pp = player.nomnomPos();
-                var dist = (position - pp).Length();
-                if (dist < nearestDist && dist <= 2.0) {
-                    nearest = player;
-                    nearestDist = dist;
-                }
+            var pp = entity.nomnomPos();
+            var dist = (position - pp).Length();
+            if (dist < nearestDist && dist <= 2.0) {
+                nearest = entity;
+                nearestDist = dist;
             }
         }
 

@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.util;
 using BlockGame.util.stuff;
@@ -32,7 +33,10 @@ public class Entities {
     public static XUList<SpawnType> spawnType => Registry.ENTITIES.spawnType;
 
     public static void preLoad() {
-        EntityRenderers.preLoad();
+
+        if (!Net.mode.isDed()) {
+            EntityRenderers.preLoad();
+        }
 
         PLAYER = register("player", w => new Player(w, 0, 0, 0));
         ITEM_ENTITY = register("item", w => new ItemEntity(w));
@@ -41,7 +45,10 @@ public class Entities {
         PIG = register("pig", w => new Pig(w));
         ZOMBIE = register("zombie", w => new Zombie(w));
         EYE = register("eye", w => new DemonEye(w));
-        EntityRenderers.reloadAll();
+
+        if (!Net.mode.isDed()) {
+            EntityRenderers.reloadAll();
+        }
 
         // set spawn types
         spawnType[COW] = SpawnType.PASSIVE;
@@ -61,7 +68,7 @@ public class Entities {
     /**
      * Create an entity instance by runtime int ID.
      */
-    public static entity.Entity? create(World world, int type) {
+    public static Entity? create(World world, int type) {
         var factory = Registry.ENTITIES.factory(type);
         return factory?.Invoke(world);
     }
@@ -69,7 +76,7 @@ public class Entities {
     /**
      * Create an entity instance by string ID (used for loading saves).
      */
-    public static entity.Entity? create(World world, string type) {
+    public static Entity? create(World world, string type) {
         var factory = Registry.ENTITIES.factory(type);
         return factory?.Invoke(world);
     }

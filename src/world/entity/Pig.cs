@@ -7,7 +7,7 @@ namespace BlockGame.world.entity;
 
 public class Pig : Mob {
     public Pig(World world) : base(world, "pig") {
-        tex = Game.textures.pig;
+        tex = "textures/entity/pig.png";
     }
 
     public override AABB calcAABB(Vector3D pos) {

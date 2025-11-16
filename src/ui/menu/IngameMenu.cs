@@ -2,6 +2,8 @@ using System.Numerics;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
+using BlockGame.net;
+using BlockGame.net.packet;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
@@ -36,8 +38,8 @@ public class IngameMenu : Menu, IDisposable {
 
     // Frametime graph data
     private const int FRAMETIME_HISTORY_SIZE = 400;
-    private float[] frametimeHistory = new float[FRAMETIME_HISTORY_SIZE];
-    private ProfileData[] profileHistory = new ProfileData[FRAMETIME_HISTORY_SIZE];
+    private readonly XRingBuffer<float> frametimeHistory = new XRingBuffer<float>(FRAMETIME_HISTORY_SIZE);
+    private readonly XRingBuffer<ProfileData> profileHistory = new XRingBuffer<ProfileData>(FRAMETIME_HISTORY_SIZE);
     private int frametimeHistoryIndex = 0;
     private float minFrametime = float.MaxValue;
     private float maxFrametime = float.MinValue;
@@ -47,13 +49,16 @@ public class IngameMenu : Menu, IDisposable {
     private bool frametimeGraphEnabled = true;
     private bool segmentedMode = false;
 
+    // network stats reset timer
+    private long lastNetReset = 0;
+
     public IngameMenu() {
         debugStr.Dispose();
         debugStr = ZString.CreateStringBuilder();
         debugStrG.Dispose();
         debugStrG = ZString.CreateStringBuilder();
         // then add the GUI
-        var version = Text.createText(this, "version", new Vector2I(2, 2), Game.VERSION);
+        var version = Text.createText(this, "version", new Vector2I(2, 2), Constants.VERSION);
         version.shadowed = true;
         addElement(version);
         rendererText = new RichTextLayout {
@@ -64,8 +69,8 @@ public class IngameMenu : Menu, IDisposable {
 
         // Initialize frametime history
         for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
-            frametimeHistory[i] = 0f;
-            profileHistory[i] = new ProfileData();
+            frametimeHistory.PushFront(0f);
+            profileHistory.PushFront(new ProfileData());
         }
     }
 
@@ -86,6 +91,13 @@ public class IngameMenu : Menu, IDisposable {
         var newSelection = Game.player.inventory.selected + y;
         newSelection = Meth.mod(newSelection, 10);
         Game.player.inventory.selected = newSelection;
+
+        // notify server of held item change in multiplayer
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(new PlayerHeldItemChangePacket {
+                slot = (byte)newSelection
+            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }
     }
 
     // No longer needed - we're using fixed thresholds
@@ -293,7 +305,7 @@ public class IngameMenu : Menu, IDisposable {
         var stack = Game.player.inventory.getSelected();
 
         // DON'T DRAW AIR
-        if (stack == ItemStack.EMPTY) {
+        if (stack == null || stack == ItemStack.EMPTY) {
             return;
         }
 
@@ -387,8 +399,24 @@ public class IngameMenu : Menu, IDisposable {
             debugStr.AppendFormat("lC:{0} lCs:{1}\n", loadedChunks, loadedChunks * Chunk.CHUNKHEIGHT);
 
             debugStr.AppendFormat("FPS:{0} Chunk updates: {1}\n", i.fps, m.chunksUpdated);
+            debugStr.AppendFormat("cc:{0}\n", chunk?.status.ToString() ?? "N/A");
+
+            // network stats (only if connected)
+            if (Net.mode == NetMode.MPC && ClientConnection.instance != null) {
+                debugStr.AppendFormat("Net: \u2191{0:0.0}KB/s ({1}/s) \u2193{2:0.0}KB/s ({3}/s) ping:{4}ms\n",
+                    m.bytesSent / 1024.0, m.packetsSent,
+                    m.bytesReceived / 1024.0, m.packetsReceived,
+                    ClientConnection.instance.ping);
+            }
             // clear chunk updates after displaying for next measurement period
             m.clearChunkUpdates();
+
+            // reset netstats every second
+            var now = Game.permanentStopwatch.ElapsedMilliseconds;
+            if (now - lastNetReset >= 1000) {
+                m.clearNet();
+                lastNetReset = now;
+            }
 
             debugStr.AppendFormat("{0}/{1} chan\n", Game.snd.getUsedChannels(), Game.snd.getTotalChannels());
 

@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -6,6 +7,9 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world;
 
+/**
+ * TODO I just fucking spammed revalidate on every single block set except the worldgen ones. Optimize this. Or not lol
+ */
 public partial class World {
     public static bool isMisalignedBlock(Vector3I position) {
         return position.X < 0 || position.X > 15 || position.Z < 0 || position.Z > 15;
@@ -149,6 +153,10 @@ public partial class World {
         if (success) {
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     public void setSkyLightRemesh(int x, int y, int z, byte level) {
@@ -161,6 +169,10 @@ public partial class World {
         if (success) {
             chunk!.setSkyLight(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     public void setSkyLightAndPropagate(int x, int y, int z, byte level) {
@@ -175,6 +187,10 @@ public partial class World {
             skyLightQueue.Enqueue(new LightNode(x, y, z, chunk));
             //processSkyLightQueue();
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     public void removeSkyLightAndPropagate(int x, int y, int z) {
@@ -189,6 +205,10 @@ public partial class World {
             skyLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, chunk!));
             chunk!.setSkyLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     public void setBlockLight(int x, int y, int z, byte level) {
@@ -201,6 +221,10 @@ public partial class World {
         if (success) {
             chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     public void setBlockLightRemesh(int x, int y, int z, byte level) {
@@ -213,6 +237,10 @@ public partial class World {
         if (success) {
             chunk!.setBlockLight(blockPos.X, blockPos.Y, blockPos.Z, level);
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     public void removeBlockLightAndPropagate(int x, int y, int z) {
@@ -227,6 +255,10 @@ public partial class World {
             blockLightRemovalQueue.Enqueue(new LightRemovalNode(x, y, z, value, chunk!));
             chunk!.setBlockLightDumb(blockPos.X, blockPos.Y, blockPos.Z, 0);
         }
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
 
     /// <summary>
@@ -249,18 +281,18 @@ public partial class World {
     }
 
     public void getAABBs(List<AABB> result, int x, int y, int z) {
-        
+
         var b = getBlockRaw(x, y, z);
         var id = b.getID();
         var metadata = b.getMetadata();
-        
+
         result.Clear();
 
         if (Block.customAABB[id]) {
             Block.get(id).getAABBs(this, x, y, z, metadata, result);
             return;
         }
-        
+
         var aabb = Block.AABB[id];
         if (aabb == null) {
             return;
@@ -269,7 +301,7 @@ public partial class World {
         result.Add(new AABB(new Vector3D(x + aabb.Value.x0, y + aabb.Value.y0, z + aabb.Value.z0),
             new Vector3D(x + aabb.Value.x1, y + aabb.Value.y1, z + aabb.Value.z1)));
     }
-    
+
     public List<AABB> getAABBsCollision(int x, int y, int z) {
         var result = new List<AABB>();
         getAABBs(result, x, y, z);
@@ -277,13 +309,13 @@ public partial class World {
     }
 
     public void getAABBsCollision(List<AABB> result, int x, int y, int z) {
-        
+
         var b = getBlockRaw(x, y, z);
         var id = b.getID();
         var metadata = b.getMetadata();
-        
+
         result.Clear();
-        
+
         if (!Block.collision[id]) {
             return;
         }
@@ -292,7 +324,7 @@ public partial class World {
             Block.get(id).getAABBs(this, x, y, z, metadata, result);
             return;
         }
-        
+
         var aabb = Block.AABB[id];
         if (aabb == null) {
             return;
@@ -321,8 +353,12 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
-    
+
     public void setBlock(int x, int y, int z, ushort block) {
         if (!inWorld(x, y, z)) {
             return;
@@ -331,11 +367,17 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlock(blockPos.X, blockPos.Y, blockPos.Z, block);
-        
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
+
         // update neighbours
-        blockUpdateNeighboursOnly(x, y, z);
+        if (!Net.mode.isMPC()) {
+            blockUpdateNeighboursOnly(x, y, z);
+        }
     }
-    
+
     public void setBlockMetadataSilent(int x, int y, int z, uint block) {
         if (!inWorld(x, y, z)) {
             return;
@@ -344,8 +386,12 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlockMetadata(blockPos.X, blockPos.Y, blockPos.Z, block);
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
     }
-    
+
     public void setBlockMetadata(int x, int y, int z, uint block) {
         if (!inWorld(x, y, z)) {
             return;
@@ -354,9 +400,48 @@ public partial class World {
         var blockPos = getPosInChunk(x, y, z);
         var chunk = getChunk(x, z);
         chunk.setBlockMetadata(blockPos.X, blockPos.Y, blockPos.Z, block);
-        
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
+
         // update neighbours
-        blockUpdateNeighboursOnly(x, y, z);
+        if (!Net.mode.isMPC()) {
+            blockUpdateNeighboursOnly(x, y, z);
+        }
+    }
+
+    public void setMetadataSilent(int x, int y, int z, byte metadata) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setMetadata(blockPos.X, blockPos.Y, blockPos.Z, metadata);
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
+    }
+
+    public void setMetadata(int x, int y, int z, byte metadata) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setMetadata(blockPos.X, blockPos.Y, blockPos.Z, metadata);
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
+
+        // update neighbours
+        if (!Net.mode.isMPC()) {
+            blockUpdateNeighboursOnly(x, y, z);
+        }
     }
 
     /// <summary>
@@ -441,7 +526,7 @@ public partial class World {
     }
 
     public bool isChunkSectionInWorld(SubChunkCoord pos) {
-        return chunks.ContainsKey(new ChunkCoord(pos.x, pos.z).toLong()) && pos.y >= 0 && pos.y < Chunk.CHUNKHEIGHT;
+        return chunks.ContainsKey(new ChunkCoord(pos.x, pos.z).toLong()) && pos.y is >= 0 and < Chunk.CHUNKHEIGHT;
     }
     
     public bool isChunkInWorld(ChunkCoord pos) {

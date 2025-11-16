@@ -16,7 +16,8 @@ public class SignItem : Item {
     }
 
     public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
-        var face = Game.raycast.face;
+        // use dir parameter instead of Game.raycast.face for MP compatibility
+        var face = dir;
 
         // determine if wall sign or standing sign based on placement face
         bool isWall = face is RawDirection.NORTH or RawDirection.SOUTH or RawDirection.EAST or RawDirection.WEST;
@@ -47,6 +48,6 @@ public class SignItem : Item {
         }
 
         signBlock.place(world, x, y, z, metadata, dir);
-        return stack.consume(1);
+        return stack.consume(player, 1);
     }
 }

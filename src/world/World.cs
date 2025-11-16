@@ -12,8 +12,6 @@ using BlockGame.world.item.inventory;
 using BlockGame.world.worldgen.generator;
 using Molten;
 using Molten.DoublePrecision;
-using Silk.NET.GLFW;
-using Silk.NET.Windowing.Glfw;
 
 namespace BlockGame.world;
 
@@ -70,6 +68,8 @@ public partial class World : IDisposable {
 
     public bool isLoading;
 
+    public readonly XUList<Player> players = [];
+
     /**
      * Tracking for stuck queue detection (used for shuffling the chunkload queue only when stuck)
      */
@@ -85,10 +85,16 @@ public partial class World : IDisposable {
     public bool paused;
     public bool inMenu;
 
+    private volatile bool disposing;
+
     public WorldIO worldIO;
 
     public int seed;
 
+    public bool isMP;
+
+    /** if true, suppress network packet broadcasts (used during worldgen/chunk loading) */
+    public bool nosend;
 
     public int worldTick;
 
@@ -97,6 +103,7 @@ public partial class World : IDisposable {
     public XRandom random;
     private TimerAction saveWorld;
     public NBTCompound toBeLoadedNBT;
+
     private static readonly List<AABB> listAABB = [];
 
     public World(string name, int seed, string? displayName = null, string? generatorName = null) {
@@ -107,12 +114,22 @@ public partial class World : IDisposable {
         inited = false;
         worldIO = new WorldIO(this);
 
-        generator = WorldGenerators.create(this, generatorName);
+        if (name != "__multiplayer") {
+            generator = WorldGenerators.create(this, generatorName);
+        }
+
+        if (name == "__multiplayer") {
+            // it's a mp world, no saving and shit!
+            isMP = true;
+        }
 
         random = new XRandom(seed);
         worldTick = 0;
 
-        generator.setup(random, seed);
+        if (name != "__multiplayer") {
+            generator.setup(random, seed);
+        }
+
         this.seed = seed;
 
         chunks = [];
@@ -130,9 +147,12 @@ public partial class World : IDisposable {
             Game.clearInterval(saveWorld);
         }
 
-        // in hot reload, don't save that much!! fucking lagspikes
-        var interval = Spy.enabled ? 180000 : 2000;
-        saveWorld = Game.setInterval(interval, saveWorldMethod);
+        // only setup autosave timer on client
+        if (Net.mode.isSP()) {
+            // in hot reload, don't save that much!! fucking lagspikes
+            var interval = Spy.enabled ? 180000 : 2000;
+            saveWorld = Game.setInterval(interval, saveWorldMethod);
+        }
     }
 
     public void preInit(bool loadingSave = false) {
@@ -147,16 +167,20 @@ public partial class World : IDisposable {
     }
 
     public void init(bool loadingSave = false) {
-        player = new ClientPlayer(this, 6, 20, 6);
-        addEntity(player);
-        Game.player = player as ClientPlayer;
-        Game.camera.setPlayer(player);
+        if (Net.mode.isSP()) {
+            Log.info("Initializing singleplayer world...");
+            player = new ClientPlayer(this, 6, 20, 6);
+            player.name = Settings.instance.playerName;
+            addEntity(player);
+            Game.player = (ClientPlayer)player;
+            Game.camera.setPlayer(player);
 
-        // spawn cow at 3 blocks from player (only on new world)
-        if (!loadingSave) {
-            var cow = new entity.Cow(this);
-            cow.position = new Molten.DoublePrecision.Vector3D(9, 20, 9); // 3 blocks in +x and +z
-            addEntity(cow);
+            // spawn cow at 3 blocks from player (only on new world)
+            if (!loadingSave) {
+                var cow = new Cow(this);
+                cow.position = new Vector3D(9, 20, 9); // 3 blocks in +x and +z
+                addEntity(cow);
+            }
         }
 
         if (loadingSave) {
@@ -166,37 +190,53 @@ public partial class World : IDisposable {
                 worldTick = tag.has("time") ? tag.getInt("time") : 0;
 
                 // load full player data
-                if (tag.has("player")) {
+                if (Net.mode.isSP() && tag.has("player")) {
                     player.read(tag.getCompoundTag("player"));
                 }
 
                 // load gamemode
-                var gmStr = tag.getString("gamemode");
-                Game.gamemode = gmStr == "survival" ? GameMode.survival : GameMode.creative;
-                player.inventoryCtx = Game.gamemode == GameMode.survival
-                    ? new SurvivalInventoryContext(player.inventory)
-                    : new CreativeInventoryContext(40);
+                if (Net.mode.isSP()) {
+                    var gmStr = tag.getString("gamemode", "survival");
+                    player.gameMode = gmStr == "survival" ? GameMode.survival : GameMode.creative;
+                    player.inventoryCtx = player.gameMode == GameMode.survival
+                        ? new SurvivalInventoryContext(player.inventory)
+                        : new CreativeInventoryContext(40);
 
-                player.prevPosition = player.position;
+                    player.prevPosition = player.position;
+                }
 
-                // load lighting queues (after chunks are loaded)
-                WorldIO.loadLightingQueues(this, tag);
+                if (true || !Net.mode.isMPC()) {
+                    // load lighting queues (after chunks are loaded)
+                    WorldIO.loadLightingQueues(this, tag);
+                }
             }
         }
         else {
             // find safe spawn position with proper AABB clearance
-            ensurePlayerSpawnClearance();
-            // give starter items
-            player.inventory.initNewPlayer();
+            if (Net.mode.isSP()) {
+                ensurePlayerSpawnClearance();
+                // give starter items
+                player.inventory.initNewPlayer();
 
-            // set spawn
-            spawn = player.position;
+                // set spawn
+                spawn = player.position;
+
+                // set player gamemode
+                player.gameMode = GameMode.creative;
+            }
+            // in the multiplayer server, find a safe spawn position for the player
+            else if (Net.mode.isDed()) {
+                ensureSpawnClearance();
+            }
         }
 
         // After everything is done, SAVE THE WORLD
         // if we don't save the world, some of the chunks might get saved but no level.xnbt
         // so the world is corrupted and we have horrible chunkglitches
-        worldIO.save(this, name, false);
+
+        if (!isMP) {
+            worldIO.save(this, name, false);
+        }
 
 
         foreach (var l in listeners) {
@@ -212,8 +252,8 @@ public partial class World : IDisposable {
     }
 
     private void saveWorldMethod() {
-        if (!inited) {
-            // don't save the world if it hasn't been initialized yet
+        if (!inited || disposing) {
+            // don't save the world if it hasn't been initialized yet or is being disposed
             return;
         }
 
@@ -245,14 +285,6 @@ public partial class World : IDisposable {
 
         if (x > 0) {
             Log.info($"Queued {x} chunks for async save");
-        }
-    }
-
-    public void startMeshing() {
-        foreach (var chunk in chunks) {
-            if (chunk.status < ChunkStatus.MESHED) {
-                addToChunkLoadQueue(chunk.coord, ChunkStatus.MESHED);
-            }
         }
     }
 
@@ -354,6 +386,18 @@ public partial class World : IDisposable {
         spawn = pos;
     }
 
+    private void ensureSpawnClearance() {
+        var pos = spawn;
+
+        // move up until we find a position with proper clearance
+        while (pos.Y > WORLDHEIGHT - Player.height || !hasPlayerAABBClearance(pos)) {
+            pos.Y += 1;
+        }
+
+        // set spawn point
+        spawn = pos;
+    }
+
     private bool hasPlayerAABBClearance(Vector3D pos) {
         const double sizehalf = Player.width / 2;
         var playerAABB = new AABB(
@@ -392,7 +436,9 @@ public partial class World : IDisposable {
         // don't reorder across statuses though
 
         // note: removal is faster from the end so we sort by the reverse - closest entries are at the end of the list
-        chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
+        if (Net.mode.isSP()) {
+            chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
+        }
     }
 
     public void sortChunksRandom() {
@@ -406,11 +452,15 @@ public partial class World : IDisposable {
         // create terrain
         //genTerrainNoise();
         // separate loop so all data is there
-        player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+        if (Net.mode.isSP()) {
+            player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+        }
     }
 
     public void loadAroundPlayer(ChunkStatus status) {
-        player.loadChunksAroundThePlayer(Settings.instance.renderDistance, status);
+        if (Net.mode.isSP()) {
+            player.loadChunksAroundThePlayer(Settings.instance.renderDistance, status);
+        }
     }
 
     public int getBrightness(byte skylight, byte skyDarken) {
@@ -420,144 +470,6 @@ public partial class World : IDisposable {
 
     public float getDayPercentage(int ticks) {
         return (ticks % TICKS_PER_DAY) / (float)TICKS_PER_DAY;
-    }
-
-    private const float TWILIGHT_ANGLE = -12f * MathF.PI / 180f; // -6 degrees WHICH WE DON'T HAVE
-    private const float SUNRISE_ANGLE = 0f;
-    private const float SOLAR_NOON_ANGLE = MathF.PI / 2f;
-    private const float SUNSET_ANGLE = MathF.PI;
-
-    public float getSunAngle(int ticks) {
-        float dayPercent = getDayPercentage(ticks);
-        // Maps 0-1 to 0-2π (full rotation)
-        return dayPercent * MathF.PI * 2f;
-    }
-
-    public float getSunElevation(int ticks) {
-        float angle = getSunAngle(ticks);
-        return MathF.Sin(angle);
-    }
-
-    public Color getSkyColour(int ticks) {
-        float e = getSunElevation(ticks);
-        float angle = getSunAngle(ticks);
-
-        var nightSky = new Color(5, 5, 15);
-        var daySky = new Color(100, 180, 255);
-
-        if (e < TWILIGHT_ANGLE) {
-            // night
-            return nightSky;
-        }
-        else if (e < SUNRISE_ANGLE) {
-            // civil twilight
-            float t = (e - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
-            return Color.Lerp(nightSky, new Color(20, 35, 80), t);
-        }
-        else if (e < MathF.PI / 12f) {
-            // 15 deg, sunrise/sunset
-            float t = e / (MathF.PI / 12f);
-            return Color.Lerp(new Color(20, 35, 80), daySky, t);
-        }
-        else {
-            // Full day
-            return daySky;
-        }
-    }
-
-    public Color getHorizonColour(int ticks) {
-        float e = getSunElevation(ticks);
-        float angle = getSunAngle(ticks);
-
-        var nightHorizon = new Color(15, 15, 40);
-        var dayHorizon = new Color(135, 206, 235);
-
-        const float NIGHT_START = -18f * MathF.PI / 180f;
-        const float TWILIGHT_START = -12f * MathF.PI / 180f;
-        const float GOLDEN_START = -0f * MathF.PI / 180f;
-        const float GOLDEN_END = 10f * MathF.PI / 180f;
-        const float DAY_START = 30f * MathF.PI / 180f;
-
-        // Smooth blend between sunrise/sunset colours based on time of day
-        float isSunset;
-        switch (angle) {
-            // morning
-            case < MathF.PI / 2f:
-                isSunset = angle / (MathF.PI / 2f) * 0.5f;
-                break;
-            // evening
-            case < MathF.PI:
-                isSunset = 0.5f + (angle - MathF.PI / 2f) / (MathF.PI / 2f) * 0.5f;
-                break;
-            // night
-            case < 3f * MathF.PI / 2f:
-                isSunset = 1f - (angle - MathF.PI) / (MathF.PI / 2f) * 0.5f;
-                break;
-            // sunrise
-            default:
-                isSunset = 0.5f - (angle - 3f * MathF.PI / 2f) / (MathF.PI / 2f) * 0.5f;
-                break;
-        }
-
-        var twilightColor = Color.Lerp(
-            new Color(80, 40, 100), // dawn purple
-            new Color(120, 50, 90), // sunset purple=pink
-            isSunset);
-
-        var goldenColor = Color.Lerp(
-            new Color(255, 140, 80), // dawn orange
-            new Color(255, 80, 50), // sunset red-orange-ish thingie
-            isSunset);
-
-        switch (e) {
-            case <= NIGHT_START:
-                return nightHorizon;
-            case <= TWILIGHT_START: {
-                float t = (e - NIGHT_START) / (TWILIGHT_START - NIGHT_START);
-                return Color.Lerp(nightHorizon, twilightColor, t);
-            }
-            case <= GOLDEN_START: {
-                float t = (e - TWILIGHT_START) / (GOLDEN_START - TWILIGHT_START);
-                return Color.Lerp(twilightColor, goldenColor, t);
-            }
-            case <= GOLDEN_END: {
-                float t = (e - GOLDEN_START) / (GOLDEN_END - GOLDEN_START);
-                // ???
-                return goldenColor;
-            }
-            case <= DAY_START: {
-                float t = (e - GOLDEN_END) / (DAY_START - GOLDEN_END);
-                return Color.Lerp(goldenColor, dayHorizon, t);
-            }
-            default:
-                return dayHorizon;
-        }
-    }
-
-    public Color getFogColour(int ticks) {
-        return getHorizonColour(ticks);
-    }
-
-    public float getSkyDarkenFloat(int ticks) {
-        float elevation = getSunElevation(ticks);
-
-        float darken;
-
-        switch (elevation) {
-            case > SUNRISE_ANGLE:
-                darken = 0f;
-                break;
-            case > TWILIGHT_ANGLE: {
-                float t = (elevation - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
-                darken = 11f * (1f - t);
-                break;
-            }
-            default:
-                darken = 11f;
-                break;
-        }
-
-        return !Settings.instance.smoothDayNight ? (float)Math.Round(darken) : darken;
     }
 
 
@@ -574,6 +486,11 @@ public partial class World : IDisposable {
 
     private void processAsyncChunkLoads(double startTime, bool loading, ref int loadedChunks) {
         var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
+
+        // if server, process all results without limit
+        if (Net.mode.isDed()) {
+            limit = double.MaxValue;
+        }
 
         while (worldIO.hasChunkLoadResult() && Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
             var result = worldIO.getChunkLoadResult();
@@ -612,14 +529,22 @@ public partial class World : IDisposable {
     /** This is separate so this can be called from the outside without updating the whole (still nonexistent) world. */
     public void updateChunkloading(double startTime, bool loading, ref int loadedChunks) {
         // process async chunk load results first
-        processAsyncChunkLoads(startTime, loading, ref loadedChunks);
+        if (!Net.mode.isMPC()) {
+            processAsyncChunkLoads(startTime, loading, ref loadedChunks);
+        }
+        else {
+            goto mesh;
+        }
 
         // if is loading, don't throttle
         // consume the chunk queue
         // ONLY IF THERE ARE CHUNKS
         // otherwise don't wait for nothing
         // yes I was an idiot
-        var limit = loading ? MAX_CHUNKLOAD_FRAMETIME_FAST : MAX_CHUNKLOAD_FRAMETIME;
+        // dedicated server has no rendering, use 80% of tick budget for chunk loading
+        var limit = Net.mode == NetMode.DED ? double.MaxValue
+            : loading ? MAX_CHUNKLOAD_FRAMETIME_FAST
+            : MAX_CHUNKLOAD_FRAMETIME;
         while (Game.permanentStopwatch.Elapsed.TotalMilliseconds - startTime < limit) {
             // check if queue is stuck and shuffle only when needed
             var currentQueueSize = chunkLoadQueue.Count;
@@ -655,21 +580,32 @@ public partial class World : IDisposable {
             }
         }
 
-        if (!loading) {
+        if (!loading && !Net.mode.isMPC()) {
             return;
         }
 
-        // if we're loading, we can also mesh chunks
-        // empty the meshing queue
-        while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
-            // if this chunk doesn't exist anymore (because we unloaded it)
-            // then don't mesh! otherwise we'll fucking crash
-            if (!isChunkSectionInWorld(sectionCoord)) {
-                continue;
-            }
+        mesh: ;
 
-            var section = getSubChunk(sectionCoord);
-            Game.blockRenderer.meshChunk(section);
+        // meshing (client only)
+        if (!Net.mode.isDed()) {
+            // if we're loading, we can also mesh chunks
+            // empty the meshing queue
+            while (Game.renderer.meshingQueue.TryDequeue(out var sectionCoord)) {
+                // if this chunk doesn't exist anymore (because we unloaded it)
+                // then don't mesh! otherwise we'll fucking crash
+                if (!isChunkSectionInWorld(sectionCoord)) {
+                    continue;
+                }
+
+                var section = getSubChunk(sectionCoord);
+                Game.blockRenderer.meshChunk(section);
+
+                // set chunk status to meshed
+                var chunk = getChunk(new ChunkCoord(sectionCoord.x, sectionCoord.z));
+                if (chunk.status < ChunkStatus.MESHED) {
+                    chunk.status = ChunkStatus.MESHED;
+                }
+            }
         }
 
         // debug
@@ -690,52 +626,62 @@ public partial class World : IDisposable {
         }*/
 
         // execute tick actions
-        for (int i = actionQueue.Count - 1; i >= 0; i--) {
-            var action = actionQueue[i];
-            if (action.tick <= worldTick) {
-                action.action();
-                actionQueue.RemoveAt(i);
+        if (!Net.mode.isMPC()) {
+            for (int i = actionQueue.Count - 1; i >= 0; i--) {
+                var action = actionQueue[i];
+                if (action.tick <= worldTick) {
+                    action.action();
+                    actionQueue.RemoveAt(i);
+                }
+            }
+
+            // execute block updates
+            for (int i = blockUpdateQueue.Count - 1; i >= 0; i--) {
+                var update = blockUpdateQueue[i];
+                if (update.tick <= worldTick) {
+                    blockScheduledUpdate(update.position.X, update.position.Y, update.position.Z);
+                    blockUpdateQueue.RemoveAt(i);
+                }
             }
         }
 
-        // execute block updates
-        for (int i = blockUpdateQueue.Count - 1; i >= 0; i--) {
-            var update = blockUpdateQueue[i];
-            if (update.tick <= worldTick) {
-                blockScheduledUpdate(update.position.X, update.position.Y, update.position.Z);
-                blockUpdateQueue.RemoveAt(i);
-            }
-        }
-
-        // execute lighting updates
+        // execute lighting updates ONLY IN SP
         SuperluminalPerf.BeginEvent("light");
+        //if (!Net.mode.isMPC()) {
         processSkyLightRemovalQueue();
         processSkyLightQueue();
         processBlockLightRemovalQueue();
         processBlockLightQueue();
+        //}
         SuperluminalPerf.EndEvent();
 
-        // random block updates!
-        foreach (var chunk in chunks.Pairs) {
-            // distance check
-            if (Vector2I.DistanceSquared(chunk.Value.centrePos,
-                    new Vector2I((int)player.position.X, (int)player.position.Z)) <
-                MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE) {
-                for (int i = 0; i < numTicks * Chunk.CHUNKHEIGHT; i++) {
-                    // I pray this is random
-                    var coord = random.Next(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
-                    var s = random.Next(Chunk.CHUNKHEIGHT);
-                    var x = (coord >> 8);
-                    var y = ((coord >> 4) & 0xF) + s * Chunk.CHUNKSIZE;
-                    var z = coord & 0xF;
-                    tick(this, new ChunkCoord(chunk.Key), chunk.Value, random, x, y, z);
+        if (!Net.mode.isMPC()) {
+            // random block updates!
+            foreach (var chunk in chunks.Pairs) {
+                // distance check
+                bool shouldTick = Net.mode.isDed() || Vector2I.DistanceSquared(chunk.Value.centrePos,
+                        new Vector2I((int)player.position.X, (int)player.position.Z)) <
+                    MAX_TICKING_DISTANCE * MAX_TICKING_DISTANCE;
+
+                if (shouldTick) {
+                    for (int i = 0; i < numTicks * Chunk.CHUNKHEIGHT; i++) {
+                        // I pray this is random
+                        var coord = random.Next(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+                        var s = random.Next(Chunk.CHUNKHEIGHT);
+                        var x = (coord >> 8);
+                        var y = ((coord >> 4) & 0xF) + s * Chunk.CHUNKSIZE;
+                        var z = coord & 0xF;
+                        tick(this, new ChunkCoord(chunk.Key), chunk.Value, random, x, y, z);
+                    }
                 }
             }
         }
 
         updateBlockEntities();
 
-        updateSpawning();
+        if (!Net.mode.isMPC()) {
+            updateSpawning();
+        }
 
         updateEntities(dt);
     }
@@ -875,12 +821,18 @@ public partial class World : IDisposable {
 
         // load chunk if null
         var chunk = node.chunk;
-        if (chunk == null || chunk.destroyed) {
+        // don't load in MP!!
+        if (!Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
             if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
                 // force-load chunk synchronously
                 loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
                 chunk = chunks[chunkCoord.toLong()];
             }
+        }
+
+        // if multiplayer client and chunk is null, just don't bother
+        if (Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
+            return;
         }
 
         byte level = chunk.getLight(relX, relY, relZ);
@@ -965,12 +917,17 @@ public partial class World : IDisposable {
 
         // load chunk if null
         var chunk = node.chunk;
-        if (chunk == null || chunk.destroyed) {
+        if (!Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
             if (!chunks.TryGetValue(chunkCoord.toLong(), out chunk)) {
                 // force-load chunk synchronously
                 loadChunk(chunkCoord, ChunkStatus.LIGHTED, true);
                 chunk = chunks[chunkCoord.toLong()];
             }
+        }
+
+        // if multiplayer client and chunk is null, just don't bother
+        if (Net.mode.isMPC() && (chunk == null || chunk.destroyed)) {
+            return;
         }
 
         foreach (var dir in Direction.directionsLight) {
@@ -1011,9 +968,34 @@ public partial class World : IDisposable {
     }
 
     public void addToChunkLoadQueue(ChunkCoord chunkCoord, ChunkStatus level) {
+        // MP client gets chunks from server packets, not chunk loading
+        if (Net.mode.isMPC()) {
+            SkillIssueException.throwNew("Tried to queue chunk on the MP client, wtf?");
+        }
+
+        // if server & meshed, crash
+        if (Net.mode.isDed() && level == ChunkStatus.MESHED) {
+            SkillIssueException.throwNew("Tried to queue chunk for meshing on dedicated server, wtf?");
+        }
+
+        if (chunks.TryGetValue(chunkCoord.toLong(), out var chunk)) {
+            if (chunk.status < level) {
+                //Log.info($"Re-queuing {chunkCoord}: current={chunk.status}, target={level}");
+            }
+        }
+
+        // don't queue if chunk already exists at required status
+        if (chunk?.status >= level) {
+            // chunk already loaded at required status
+            return;
+        }
+
         var ticket = new ChunkLoadTicket(chunkCoord, level);
         if (!chunkLoadQueue.Contains(ticket)) {
             chunkLoadQueue.Add(ticket);
+            /*if (Net.mode.isDed()) {
+                Log.info($"Queued chunk {chunkCoord} for loading (current status: {(chunk != null ? chunk.status.ToString() : "not loaded")}, target: {level})");
+            }*/
         }
     }
 
@@ -1037,13 +1019,15 @@ public partial class World : IDisposable {
             }
         }
 
-        var playerChunk = player.getChunk();
         // unload chunks which are far away
-        foreach (var chunk in chunks) {
-            var coord = chunk.coord;
-            // if distance is greater than renderDistance + 3, unload
-            if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
-                unloadChunk(coord);
+        if (Net.mode.isSP()) {
+            var playerChunk = player.getChunk();
+            foreach (var chunk in chunks) {
+                var coord = chunk.coord;
+                // if distance is greater than renderDistance + 3, unload
+                if (playerChunk.distanceSq(coord) >= (renderDistance + 3) * (renderDistance + 3)) {
+                    unloadChunk(coord);
+                }
             }
         }
     }
@@ -1054,7 +1038,7 @@ public partial class World : IDisposable {
             for (int z = chunkCoord.z - renderDistance; z <= chunkCoord.z + renderDistance; z++) {
                 var coord = new ChunkCoord(x, z);
                 if (coord.distanceSq(chunkCoord) <= renderDistance * renderDistance) {
-                    loadChunk(coord, ChunkStatus.MESHED, true);
+                    loadChunk(coord, Net.mode.isDed() ? ChunkStatus.LIGHTED : ChunkStatus.MESHED, true);
                 }
             }
         }
@@ -1077,11 +1061,19 @@ public partial class World : IDisposable {
         for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
             foreach (var entity in chunk.entities[y]) {
                 entity.inWorld = false;
+                // kill these entities too IF NOT PLAYERS
+                if (entity is not Player) {
+                    removeEntity(entity);
+                }
             }
         }
 
         // save chunk asynchronously to prevent lagspikes
-        worldIO.saveChunkAsync(this, chunk);
+        // DON'T DO IT ON THE SERVER, we don't do async there.
+        // we might in the future but we'd get the save clashes so idk :\
+        if (!isMP && !Net.mode.isDed()) {
+            worldIO.saveChunkAsync(this, chunk);
+        }
 
         foreach (var l in listeners) {
             l.onChunkUnload(coord);
@@ -1103,6 +1095,10 @@ public partial class World : IDisposable {
         for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
             foreach (var entity in chunk.entities[y]) {
                 entity.inWorld = false;
+                // kill these entities too IF NOT PLAYERS
+                if (entity is not Player) {
+                    removeEntity(entity);
+                }
             }
         }
 
@@ -1130,21 +1126,28 @@ public partial class World : IDisposable {
     }
 
     public void Dispose() {
+        disposing = true;
+
         foreach (var l in listeners) {
             l.onWorldUnload();
         }
 
-        // stop automatic saves
-        saveWorld.enabled = false;
-        Game.clearInterval(saveWorld);
-        saveWorld = null!;
+        // stop automatic saves - don't check Net.mode as it may have changed!
+        if (saveWorld != null) {
+            saveWorld.enabled = false;
+            Game.clearInterval(saveWorld);
+            saveWorld = null!;
+        }
 
         // stop the chunksave queue and save pending chunks
-        worldIO.Dispose();
+        if (!isMP) {
+            worldIO.Dispose();
 
-        // of course, we can save it here since WE call it and not the GC
-        // save the whole thing
-        worldIO.save(this, name);
+            // of course, we can save it here since WE call it and not the GC
+            // save the whole thing
+
+            worldIO.save(this, name);
+        }
 
 
         ReleaseUnmanagedResources();
@@ -1228,6 +1231,11 @@ public partial class World : IDisposable {
     /// Check if a chunk is still within loading distance of the player
     /// </summary>
     private bool isChunkRelevant(ChunkCoord chunkCoord) {
+        // server: all chunks are relevant
+        if (Net.mode.isDed()) {
+            return true;
+        }
+
         var playerChunk = player.getChunk();
         var maxDistance = Settings.instance.renderDistance + 2; // bit more buffer than unload distance
         return playerChunk.distanceSq(chunkCoord) < maxDistance * maxDistance;
@@ -1240,6 +1248,22 @@ public partial class World : IDisposable {
         // TODO emergency switch! if players complain about chunk errors & lost data / crashes, flip this switch! it should make things better
         // it will make chunk loading synchronous and thus laggy / especially on shit HDDs, but it will prevent chunk errors until we can fix things:tm:
         //immediately = true;
+
+        // on the server, all is sync! we don't have a frame yk
+        // we *can* make it async later but for now it's less buggy to make it so
+        if (Net.mode.isDed()) {
+            immediately = true;
+            // server never meshes - cap to LIGHTED
+            if (status > ChunkStatus.LIGHTED) {
+                status = ChunkStatus.LIGHTED;
+            }
+        }
+
+        // on MP client, chunks come from server already LIGHTED - don't try to generate/light them
+        // meshing happens via dirtyChunk, not loadChunk :(
+        if (Net.mode.isMPC() && status > ChunkStatus.LIGHTED) {
+            status = ChunkStatus.LIGHTED;
+        }
 
         // early exit if chunk is too far from player (unless forced immediate load)
         if (!immediately && !isChunkRelevant(chunkCoord)) {
@@ -1297,6 +1321,9 @@ public partial class World : IDisposable {
             }
         }
 
+        // save nosend state (need for recursive loadChunk calls..)
+        bool oldNosend = nosend;
+
         // if it doesn't exist, generate it
         if (status >= ChunkStatus.GENERATED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.GENERATED))) {
@@ -1305,9 +1332,16 @@ public partial class World : IDisposable {
                 addChunk(chunkCoord, c);
                 chunk = c;
             }
+            // if we ever reach here we're fucked
+            if (Net.mode.isMPC()) {
+                SkillIssueException.throwNew("fix your fucking MP chunk handling");
+                return;
+            }
 
+            nosend = true; // suppress network updates during terrain generation
             generator.generate(chunkCoord);
             chunk.recalc();
+            nosend = oldNosend; // restore
         }
 
         if (status >= ChunkStatus.POPULATED &&
@@ -1320,6 +1354,7 @@ public partial class World : IDisposable {
                 if (false && !immediately) {
                     queueNeighboursForLoading(chunkCoord, ChunkStatus.GENERATED);
                     addToChunkLoadQueue(chunkCoord, status);
+                    nosend = oldNosend; // restore before early return
                     return;
                 }
                 else {
@@ -1327,7 +1362,9 @@ public partial class World : IDisposable {
                 }
             }
 
+            nosend = true; // suppress network updates during surface generation (trees, etc.)
             generator.surface(chunkCoord);
+            nosend = oldNosend; // restore
         }
 
         if (status >= ChunkStatus.LIGHTED &&
@@ -1338,24 +1375,53 @@ public partial class World : IDisposable {
             }
 
             chunks[chunkCoord.toLong()].lightChunk();
+
+            // trigger remeshing of neighbours now that this chunk is LIGHTED
+            if (!Net.mode.isDed()) {
+                Span<ChunkCoord> neighbours = [
+                    new(chunkCoord.x - 1, chunkCoord.z),
+                    new(chunkCoord.x + 1, chunkCoord.z),
+                    new(chunkCoord.x, chunkCoord.z - 1),
+                    new(chunkCoord.x, chunkCoord.z + 1),
+                    new(chunkCoord.x - 1, chunkCoord.z - 1),
+                    new(chunkCoord.x - 1, chunkCoord.z + 1),
+                    new(chunkCoord.x + 1, chunkCoord.z - 1),
+                    new(chunkCoord.x + 1, chunkCoord.z + 1)
+                ];
+
+                foreach (var neighbour in neighbours) {
+                    if (chunks.TryGetValue(neighbour.toLong(), out var neighbourChunk) &&
+                        neighbourChunk.status >= ChunkStatus.LIGHTED) {
+                        // neighbour is loaded and lighted, dirty it to trigger remesh attempt
+                        for (int y = 0; y < Chunk.CHUNKHEIGHT; y++) {
+                            dirtyChunk(new SubChunkCoord(neighbour.x, y, neighbour.z));
+                        }
+                    }
+                }
+            }
+
+            // reassign any entities waiting for this chunk (needs to happen at LIGHTED for servers)
+            loadEntitiesIntoChunk(chunkCoord);
         }
 
         if (status >= ChunkStatus.MESHED &&
             (!hasChunk || (hasChunk && chunks[chunkCoord.toLong()].status < ChunkStatus.MESHED))) {
             // check if neighbours are ready, if not defer this chunk
             if (!areNeighboursReady(chunkCoord, ChunkStatus.LIGHTED)) {
-                // load neighbours SYNCHRONOUSLY
+                if (Net.mode.isMPC()) {
+                    // in multiplayer client, can't generate neighbours - re-queue and wait for server to send them
+                    addToChunkLoadQueue(chunkCoord, status);
+                    return;
+                }
+
+                // load neighbours SYNCHRONOUSLY (singleplayer/server can generate)
                 loadNeighbours(chunkCoord, ChunkStatus.LIGHTED);
-                // DON'T DO THIS, IT MESSES THE QUEUE UP
-                //addToChunkLoadQueue(chunkCoord, status);
-                //return;
             }
 
-            chunks[chunkCoord.toLong()].meshChunk();
+            if (!Net.mode.isDed()) {
+                chunks[chunkCoord.toLong()].meshChunk();
+            }
         }
-
-        // reassign any entities waiting for this chunk
-        loadEntitiesIntoChunk(chunkCoord);
     }
 
     // MAKE IT SO ONLY THE ORIGINAL BLOCK IS UPDATED
@@ -1370,6 +1436,11 @@ public partial class World : IDisposable {
     }
 
     public void blockUpdateNeighbours(int x, int y, int z) {
+
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         Block.get(getBlock(x, y, z)).update(this, x, y, z);
         foreach (var dir in Direction.directions) {
             var neighbourBlock = new Vector3I(x, y, z) + dir;
@@ -1378,6 +1449,11 @@ public partial class World : IDisposable {
     }
 
     public void blockUpdateNeighboursOnly(int x, int y, int z) {
+
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         foreach (var dir in Direction.directions) {
             var neighbourBlock = new Vector3I(x, y, z) + dir;
             Block.get(getBlock(neighbourBlock)).update(this, neighbourBlock.X, neighbourBlock.Y, neighbourBlock.Z);
@@ -1385,6 +1461,12 @@ public partial class World : IDisposable {
     }
 
     public void scheduleBlockUpdate(Vector3I pos, int delay = -1) {
+
+        // todo is this correct?
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         var blockId = getBlockRaw(pos).getID();
         var actualDelay = delay != -1 ? delay : Block.updateDelay[blockId];
         var update = new BlockUpdate(pos, worldTick + actualDelay);

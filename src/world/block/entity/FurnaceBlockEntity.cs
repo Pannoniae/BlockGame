@@ -12,15 +12,20 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     public readonly ItemStack[] slots = new ItemStack[3].fill(); // input, fuel, output
 
     // smelting state
-    private int smeltProgress = 0;       // current smelting time in ticks
-    private int fuelRemaining = 0;       // fuel ticks left
-    private int fuelMax = 0;             // total fuel from current fuel item (mostly for UI % lol)
+    public int smeltProgress = 0;       // current smelting time in ticks
+    public int fuelRemaining = 0;       // fuel ticks left
+    public int fuelMax = 0;             // total fuel from current fuel item (mostly for UI % lol)
     private SmeltingRecipe? currentRecipe = null;
 
     public FurnaceBlockEntity() : base("furnace") {
     }
 
     public override void update(World world, int x, int y, int z) {
+        // server-only logic - smelting, fuel consumption, item manipulation
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         bool wasLit = fuelRemaining > 0;
 
         // try to start new recipe if idle
@@ -140,6 +145,11 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     }
 
     public void dropContents(World world, int x, int y, int z) {
+        // server-only - only server spawns item entities
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         for (int i = 0; i < slots.Length; i++) {
             var stack = slots[i];
             if (stack != ItemStack.EMPTY && stack.quantity > 0) {

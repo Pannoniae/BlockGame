@@ -1,6 +1,9 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
+using BlockGame.net;
+using BlockGame.net.packet;
+using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.xNBT;
@@ -8,6 +11,7 @@ using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.item;
 using JetBrains.Annotations;
+using LiteNetLib;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -39,6 +43,8 @@ public partial class Entity(World world, string type) : Persistent {
 
     public string type = type;
     public int id = World.ec++;
+
+    public string name;
 
     public World world = world;
 
@@ -158,9 +164,12 @@ public partial class Entity(World world, string type) : Persistent {
     protected static readonly List<AABB> AABBList = [];
 
     // riding system
-    public entity.Entity? mount; // what this entity is riding
-    public entity.Entity? rider; // who is riding this entity
-    public BTexture2D tex;
+    public Entity? mount; // what this entity is riding
+    public Entity? rider; // who is riding this entity
+    public string tex;
+
+    // network state sync
+    public EntityState state = new();
 
     // capability flags - override in subclasses
     protected virtual bool needsPrevVars => true;
@@ -212,7 +221,9 @@ public partial class Entity(World world, string type) : Persistent {
      */
     public virtual void update(double dt) {
         // 1. early exit checks (death animation, despawn, etc)
-        if (!shouldContinueUpdate(dt)) return;
+        if (!shouldContinueUpdate(dt)) {
+            return;
+        }
 
         // 2. store prev state for interpolation
         if (needsPrevVars) {
@@ -556,6 +567,21 @@ public partial class Entity(World world, string type) : Persistent {
         }
     }
 
+    /** heal entity */
+    public virtual void heal(double amount) {
+        hp += amount;
+        if (hp > 100) {
+            hp = 100;
+        }
+    }
+
+    public virtual void sethp(double amount) {
+        hp = amount;
+        if (hp > 100) {
+            hp = 100;
+        }
+    }
+
     protected virtual void die() {
         dead = true;
     }
@@ -595,18 +621,44 @@ public partial class Entity(World world, string type) : Persistent {
         }
     }
 
-    public void setSwinging(bool hit) {
+    public virtual void setSwinging(bool hit) {
         if (hit) {
             swinging = true;
             swingTicks = 0;
+
+            // send swing action to server when starting swing (only for local player)
+            if (Net.mode.isMPC() && this == Game.player) {
+                if (ClientConnection.instance != null && ClientConnection.instance.connected) {
+                    ClientConnection.instance.send(
+                        new EntityActionPacket {
+                            entityID = id,
+                            action = EntityActionPacket.Action.SWING
+                        },
+                        DeliveryMethod.ReliableOrdered
+                    );
+                }
+            }
         }
         else {
             if (airHitCD == 0) {
                 swinging = true;
                 swingTicks = 0;
                 airHitCD = AIR_HIT_CD;
+                if (Net.mode.isMPC() && this == Game.player) {
+                    // send swing action to server when starting swing (only for local player)
+                    if (ClientConnection.instance != null && ClientConnection.instance.connected) {
+                        ClientConnection.instance.send(
+                            new EntityActionPacket {
+                                entityID = id,
+                                action = EntityActionPacket.Action.SWING
+                            },
+                            DeliveryMethod.ReliableOrdered
+                        );
+                    }
+                }
             }
         }
+
     }
 
     public Vector3 facing() {
@@ -639,7 +691,7 @@ public partial class Entity(World world, string type) : Persistent {
             aabb.x1 + 0.2, aabb.y1 + 0.1, aabb.z1 + 0.2
         );
 
-        List<entity.Entity> nearby = [];
+        List<Entity> nearby = [];
         world.getEntitiesInBox(nearby, expandedAABB);
 
         foreach (var other in nearby) {
@@ -669,7 +721,7 @@ public partial class Entity(World world, string type) : Persistent {
             }
 
             // normalise and apply push
-            var pushStrength = 0.15;
+            const double pushStrength = 0.15;
             var pushX = (dx / dist) * pushStrength;
             var pushZ = (dz / dist) * pushStrength;
 
@@ -733,5 +785,51 @@ public partial class Entity(World world, string type) : Persistent {
      */
     public virtual void knockback(Vector3D force) {
         velocity += force;
+
+        // broadcast velocity to all clients when entity gets knocked back
+        if (Net.mode.isDed()) {
+            GameServer.instance.send(
+                position,
+                128.0,
+                new EntityVelocityPacket {
+                    entityID = id,
+                    velocity = velocity
+                },
+                // todo is this right? maybe ReliableUnordered instead?
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+    }
+
+    // ============ STATE SYNC ============
+
+    /** sync entity fields to state buffer (server-side, before sending) */
+    public virtual void syncState() {
+        state.setBool(EntityState.ON_FIRE, fireTicks > 0);
+        state.setBool(EntityState.SNEAKING, sneaking);
+        state.setInt(EntityState.RIDING, mount?.id ?? -1);
+    }
+
+    /** apply state buffer to entity fields (client-side, after receiving) */
+    public virtual void applyState() {
+        sneaking = state.getBool(EntityState.SNEAKING);
+        fireTicks = state.getBool(EntityState.ON_FIRE) ? 300 : 0;
+
+        // riding sync
+        int mountID = state.getInt(EntityState.RIDING, -1);
+        if (mountID >= 0) {
+            // todo mount handling later
+            // find mount entity and set entity.mount
+            var mount = world.entities.FirstOrDefault(e => e.id == mountID);
+            if (mount != null) {
+                this.mount = mount;
+                mount.rider = this;
+            }
+        }
+        else if (mountID == -1 && this.mount != null) {
+            // dismount
+            this.mount.rider = null;
+            this.mount = null;
+        }
     }
 }

@@ -374,8 +374,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wz = coord.z * CHUNKSIZE + z;
 
         // call onBreak callback for old block if being replaced
-        if (oldBlock != 0 && oldBlock != block) {
-            Block.get(oldBlock).onBreak(world, wx, y, wz, 0);
+        if (!Net.mode.isMPC()) {
+            if (oldBlock != 0 && oldBlock != block) {
+                Block.get(oldBlock).onBreak(world, wx, y, wz, 0);
+            }
         }
 
         // if block broken, add sunlight from neighbours
@@ -427,9 +429,21 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
 
-        // call onPlace callback for new block if being placed
-        if (block != 0 && oldBlock != block) {
-            Block.get(block).onPlace(world, wx, y, wz, 0);
+        if (!Net.mode.isMPC()) {
+            // call onPlace callback for new block if being placed
+            if (block != 0 && oldBlock != block) {
+                Block.get(block).onPlace(world, wx, y, wz, 0);
+            }
+        }
+
+        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
+        //  which isn't tracked by the chunk tracking
+        //  "the spec is what happens"
+
+        if (Net.mode.isDed()) {
+            // notify listeners
+            var pos = new Vector3I(x, y, z);
+            world.dirtyArea(pos, pos);
         }
 
         // set neighbours dirty
@@ -506,6 +520,36 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             Block.get(id).onPlace(world, wx, y, wz, newMeta);
         }
 
+        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
+        //  which isn't tracked by the chunk tracking
+        //  "the spec is what happens"
+
+        if (Net.mode.isDed()) {
+            // notify listeners
+            var pos = new Vector3I(x, y, z);
+            world.dirtyArea(pos, pos);
+        }
+
+        // set neighbours dirty
+        world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
+    }
+
+    public void setMetadata(int x, int y, int z, byte metadata) {
+        var oldBlockRaw = blocks[y >> 4].getRaw(x, y & 0xF, z);
+        blocks[y >> 4].setMetadata(x, y & 0xF, z, metadata);
+        var wx = coord.x * CHUNKSIZE + x;
+        var wz = coord.z * CHUNKSIZE + z;
+
+        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
+        //  which isn't tracked by the chunk tracking
+        //  "the spec is what happens"
+
+        if (Net.mode.isDed()) {
+            // notify listeners
+            var pos = new Vector3I(x, y, z);
+            world.dirtyArea(pos, pos);
+        }
+
         // set neighbours dirty
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
@@ -533,6 +577,16 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
 
+        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
+        //  which isn't tracked by the chunk tracking
+        //  "the spec is what happens"
+
+        if (Net.mode.isDed()) {
+            // notify listeners
+            var pos = new Vector3I(x, y, z);
+            world.dirtyArea(pos, pos);
+        }
+
 
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
@@ -551,6 +605,16 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
 
         var wx = coord.x * CHUNKSIZE + x;
         var wz = coord.z * CHUNKSIZE + z;
+
+        // todo remove this hack when we handle shit properly - we need to dirtyArea on the server because we use dirtyChunksBatch in setBlockNeighboursDirty
+        //  which isn't tracked by the chunk tracking
+        //  "the spec is what happens"
+
+        if (Net.mode.isDed()) {
+            // notify listeners
+            var pos = new Vector3I(x, y, z);
+            world.dirtyArea(pos, pos);
+        }
 
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
@@ -738,7 +802,7 @@ public readonly record struct ChunkCoord(int x, int z) {
 
     /** pack coords into long */
     public long toLong() {
-        return (long)x << 32 | (uint)z;
+        return ((long)x) << 32 | (uint)z;
     }
 
     /** unpack coords from long */

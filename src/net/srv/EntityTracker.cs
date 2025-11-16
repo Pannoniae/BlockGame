@@ -1,0 +1,276 @@
+using System.Numerics;
+using BlockGame.net.packet;
+using BlockGame.util;
+using BlockGame.util.log;
+using BlockGame.world.entity;
+using BlockGame.world.item;
+using LiteNetLib;
+using Molten.DoublePrecision;
+
+namespace BlockGame.net.srv;
+
+/**
+ * tracks which entities each client can see and broadcasts updates
+ * TODO open questions. Should we sync the bodyrot or drop it + recalculate on client?
+ *
+ */
+public class EntityTracker {
+    private readonly Dictionary<int, TrackedEntity> tracked = new();
+    private readonly GameServer server;
+
+    public class TrackedEntity {
+        public Entity entity;
+        public Vector3D lastSentPos;
+        public Vector3 lastSentRot;
+        public int ticksSinceUpdate;
+
+        public bool sendVelocity = true;
+
+        /** clients that have this entity loaded */
+        public readonly HashSet<ServerConnection> viewers = [];
+    }
+
+    public EntityTracker(GameServer server) {
+        this.server = server;
+    }
+
+    /** start tracking an entity (broadcasts spawn to clients in range) */
+    public void trackEntity(Entity entity) {
+        if (tracked.ContainsKey(entity.id)) {
+            return; // already tracking
+        }
+
+        var t = new TrackedEntity {
+            entity = entity,
+            lastSentPos = entity.position,
+            lastSentRot = entity.rotation,
+            ticksSinceUpdate = 0,
+            sendVelocity = shouldSendVelocity(entity),
+        };
+
+        // updateViewers handles sending spawn packets to all viewers
+        tracked[entity.id] = t;
+        updateViewers(t);
+    }
+
+    private bool shouldSendVelocity(Entity entity) {
+        // only send velocity for entities that actually move
+        return entity switch {
+            ItemEntity => true,
+            FallingBlockEntity => true,
+            _ => false
+        };
+    }
+
+    /** stop tracking an entity (broadcasts despawn to clients) */
+    public void untrackEntity(int entityID) {
+        if (!tracked.Remove(entityID, out var t)) {
+            return; // not tracking
+        }
+
+        // send despawn to all viewers
+        var despawnPacket = new DespawnEntityPacket { entityID = entityID };
+        foreach (var viewer in t.viewers) {
+            viewer.send(despawnPacket, DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    /** update all tracked entities - called every tick */
+    public void update() {
+        // update tracked entities
+        foreach (var t in tracked.Values) {
+            updateEntity(t);
+        }
+
+        // periodically refresh viewers (every 60 ticks = 1 second)
+        if (server.world.worldTick % 60 == 0) {
+            foreach (var t in tracked.Values) {
+                updateViewers(t);
+            }
+        }
+    }
+
+    private void updateEntity(TrackedEntity t) {
+        var entity = t.entity;
+
+        // position threshold: 0.01 blocks OR 20 ticks without update
+        bool movedEnough = Vector3D.DistanceSquared(entity.position, t.lastSentPos) > 0.01;
+        bool rotatedEnough = Vector3.DistanceSquared(entity.rotation, t.lastSentRot) > 0.5f;
+        t.ticksSinceUpdate++;
+
+        if (movedEnough || rotatedEnough || t.ticksSinceUpdate >= 60) {
+            // send combined packet (fewer packets = less overhead)
+            var packet = new EntityPositionRotationPacket {
+                entityID = entity.id,
+                position = entity.position,
+                rotation = entity.rotation,
+            };
+
+            foreach (var viewer in t.viewers) {
+                viewer.send(packet, DeliveryMethod.ReliableOrdered);
+            }
+
+            if (t.sendVelocity) {
+                // send velocity packet too
+                var velPacket = new EntityVelocityPacket {
+                    entityID = entity.id,
+                    velocity = entity.velocity
+                };
+                foreach (var viewer in t.viewers) {
+                    viewer.send(velPacket, DeliveryMethod.ReliableOrdered);
+                }
+            }
+
+
+            t.lastSentPos = entity.position;
+            t.lastSentRot = entity.rotation;
+            t.ticksSinceUpdate = 0;
+        }
+    }
+
+    /** recalculate which clients can see this entity (based on distance) */
+    private void updateViewers(TrackedEntity t) {
+        var oldViewers = new HashSet<ServerConnection>(t.viewers);
+        var newViewers = new HashSet<ServerConnection>();
+
+        // find all connections in range
+        foreach (var conn in server.connections.Values) {
+            if (conn.player == null) {
+                continue;
+            }
+
+            // don't send player's own entity to themselves (they have ClientPlayer)
+            if (t.entity == conn.player) continue;
+
+            if (conn.isInRange(t.entity.position)) {
+                newViewers.Add(conn);
+            }
+        }
+
+        // send spawn to new viewers
+        var added = newViewers.Except(oldViewers);
+        foreach (var viewer in added) {
+            if (t.entity is Player sp) {
+
+                // DON'T SEND SPAWNS, we send them in finishLogin!
+                continue;
+
+                Log.info($"[EntityTracker] Sending spawn for player {sp.name} (ID={t.entity.id}) to viewer {viewer.username}");
+                /*viewer.send(new SpawnPlayerPacket {
+                    entityID = t.entity.id,
+                    username = sp.name,
+                    position = t.entity.position,
+                    rotation = t.entity.rotation
+                }, DeliveryMethod.ReliableOrdered);*/
+
+                GameServer.instance.send(
+                    new SpawnPlayerPacket {
+                        entityID = sp.id,
+                        username = sp.name,
+                        position = sp.position,
+                        rotation = sp.rotation,
+                        sneaking = sp.sneaking,
+                        flying = sp.flyMode
+                    },
+                    DeliveryMethod.ReliableOrdered,
+                    exclude: viewer
+                );
+
+                // broadcast initial entity state to all existing clients
+                sp.state.markAllDirty();
+                GameServer.instance.send(
+                    new EntityStatePacket {
+                        entityID = sp.id,
+                        data = sp.state.serializeAll()
+                    },
+                    DeliveryMethod.ReliableOrdered,
+                    exclude: viewer
+                );
+
+                // send their held item
+                viewer.send(new HeldItemChangePacket {
+                    entityID = t.entity.id,
+                    slotIndex = (byte)sp.inventory.selected,
+                    heldItem = sp.inventory.getSelected()
+                }, DeliveryMethod.ReliableOrdered);
+            }
+            else {
+                viewer.send(new SpawnEntityPacket {
+                    entityID = t.entity.id,
+                    entityType = Entities.getID(t.entity.type),
+                    position = t.entity.position,
+                    rotation = t.entity.rotation,
+                    velocity = t.entity.velocity,
+                    extraData = serializeExtraData(t.entity)
+                }, DeliveryMethod.ReliableOrdered);
+            }
+
+            // send current state to new viewer
+            t.entity.syncState();
+            var stateData = t.entity.state.serializeAll();
+            var statePacket = new EntityStatePacket {
+                entityID = t.entity.id,
+                data = stateData
+            };
+            viewer.send(statePacket, DeliveryMethod.ReliableOrdered);
+        }
+
+        // send despawn to old viewers no longer in range
+        var removed = oldViewers.Except(newViewers);
+        foreach (var viewer in removed) {
+            var despawnPacket = new DespawnEntityPacket { entityID = t.entity.id };
+            viewer.send(despawnPacket, DeliveryMethod.ReliableOrdered);
+        }
+
+        t.viewers.Clear();
+        foreach (var viewer in newViewers) {
+            t.viewers.Add(viewer);
+        }
+    }
+
+    /** serialize entity-specific data for spawn packet */
+    public static byte[] serializeExtraData(Entity entity) {
+        using var ms = new MemoryStream();
+        using var bs = new BinaryWriter(ms);
+        var buf = new PacketBuffer(bs);
+
+        switch (entity) {
+            case ItemEntity item:
+                buf.writeInt(item.stack.id);
+                buf.writeInt(item.stack.metadata);
+                buf.writeInt(item.stack.quantity);
+                break;
+
+            case FallingBlockEntity fb:
+                buf.writeUShort(fb.blockID);
+                buf.writeByte(fb.blockMeta);
+                break;
+
+            case Mob:
+                // mobs don't need extraData (state handled by EntityState)
+                break;
+        }
+
+        return ms.ToArray();
+    }
+
+    /** deserialize entity-specific data from spawn packet (client-side helper) */
+    public static void deserializeExtraData(Entity entity, byte[] data) {
+        using var ms = new MemoryStream(data);
+        var buf = new PacketBuffer(new BinaryReader(ms));
+
+        switch (entity) {
+            case ItemEntity item:
+                var itemID = buf.readInt();
+                var metadata = buf.readInt();
+                var quantity = buf.readInt();
+                item.stack = new ItemStack(Item.get(itemID), quantity, metadata);
+                break;
+
+            case FallingBlockEntity fb:
+                fb.blockID = buf.readUShort();
+                fb.blockMeta = buf.readByte();
+                break;
+        }
+    }
+}

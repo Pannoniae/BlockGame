@@ -75,17 +75,17 @@ public static class NBT {
         // we don't need it to complete immediately anyway....
         // todo disable this until saving is fixed
         //_ = Task.Run(() => saveFileAsync(nbt, name));
-        using var stream = new FileStream(name, FileMode.Create, FileAccess.Write);
+        using var stream = new FileStream(name, FileMode.Create, FileAccess.Write, FileShare.Read);
         writeCompressed(nbt, stream);
     }
-    
+
     private static void saveFileAsync(NBTCompound nbt, string name) {
-        using var stream = new FileStream(name, FileMode.Create, FileAccess.Write);
+        using var stream = new FileStream(name, FileMode.Create, FileAccess.Write, FileShare.Read);
         writeCompressed(nbt, stream);
     }
 
     public static NBTCompound readFile(string name) {
-        using var stream = new FileStream(name, FileMode.Open, FileAccess.Read);
+        using var stream = new FileStream(name, FileMode.Open, FileAccess.Read, FileShare.Read);
         return readCompressed(stream);
     }
 }

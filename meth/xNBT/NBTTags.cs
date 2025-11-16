@@ -352,7 +352,7 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
         // if this thing is EVER a generic NBTTag, throw an exception. This should never happen and it's a result of skill-issue programming.
         // We "specialise" the lists by a huge fucking switch statement when constructing them. This is not *good* but better than reflection shit.
         if (typeof(T) == typeof(NBTTag)) {
-            throw new SkillIssueException($"Overly generic NBTList was constructed with name {name} and type {listType} ({list.Count} values)");
+            SkillIssueException.throwNew($"Overly generic NBTList was constructed with name {name} and type {listType} ({list.Count} values)");
         }
     }
 

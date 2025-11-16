@@ -265,8 +265,8 @@ public class Block {
         AIR.air();
         GRASS = register("grass", new GrassBlock("Grass"));
         GRASS.tick();
-        GRASS.setTex(grassUVs(0, 0, 1, 0, 2, 0));
-        GRASS.setModel(BlockModel.makeCube(GRASS));
+        GRASS.setTex(new(0, 0), new(1, 0), new(2, 0));
+        renderType[GRASS.id] = RenderType.CUBE_DYNTEXTURE;
         GRASS.material(Material.EARTH);
 
         DIRT = register("dirt", new Block("Dirt"));
@@ -1471,6 +1471,15 @@ public class GrassBlock(string name) : Block(name) {
                 }
             }
         }
+    }
+
+    public override UVPair getTexture(int faceIdx, int metadata) {
+        return faceIdx switch {
+            // top: uv[0], bottom: uv[1], sides: uv[2]
+            5 => uvs[0],
+            4 => uvs[2],
+            _ => uvs[1]
+        };
     }
 }
 

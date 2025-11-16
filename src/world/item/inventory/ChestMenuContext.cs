@@ -5,7 +5,7 @@ namespace BlockGame.world.item.inventory;
 
 public class ChestMenuContext : InventoryContext {
     private readonly PlayerInventory playerInv;
-    private readonly Inventory chestInv;
+    public readonly Inventory chestInv;
 
     public const int hotbarX = 5;
     public const int hotbarY = 183;

@@ -1,4 +1,5 @@
 ﻿using BlockGame.main;
+using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world.chunk;
@@ -13,6 +14,8 @@ public partial class World {
     public readonly XUList<Entity> entities;
 
     public readonly Particles particles;
+
+    /** This only exists on the a client side world!! */
     public Player player;
     public Vector3D spawn;
 
@@ -34,11 +37,38 @@ public partial class World {
         }
 
         entities.Add(entity);
+
+        // if player add to the players list
+        if (entity is Player p) {
+            // only set world.player for local player (ClientPlayer), not remote players (Humanoid)
+            if (p is ClientPlayer) {
+                player = p;
+            }
+            players.Add(p);
+        }
+
+        // notify entity tracker on server
+        if (Net.mode.isDed()) {
+            GameServer.instance.entityTracker.trackEntity(entity);
+        }
     }
 
     public void removeEntity(Entity entity, int i) {
+        // notify entity tracker on server BEFORE removal
+        if (Net.mode.isDed()) {
+            GameServer.instance.entityTracker.untrackEntity(entity.id);
+        }
+
         doRemove(entity);
         entities.RemoveAt(i);
+
+        // if player remove from players list
+        if (entity is Player p) {
+            players.Remove(p);
+            if (player == p) {
+                player = null!;
+            }
+        }
     }
 
     private void doRemove(Entity entity) {
@@ -54,12 +84,30 @@ public partial class World {
     }
 
     public void removeEntity(Entity entity) {
+        // notify entity tracker on server BEFORE removal
+        if (Net.mode.isDed()) {
+            GameServer.instance.entityTracker.untrackEntity(entity.id);
+        }
+
         doRemove(entity);
         entities.Remove(entity);
+
+        // if player remove from players list
+        if (entity is Player p) {
+            players.Remove(p);
+            if (player == p) {
+                player = null!;
+            }
+        }
     }
 
     /** spawn block drop as item entity with randomised position and velocity */
     public void spawnBlockDrop(int x, int y, int z, Item item, int count, int metadata) {
+
+        if (Net.mode.isMPC()) {
+            return;
+        }
+
         if (count <= 0 || item == null) {
             return;
         }
@@ -82,6 +130,21 @@ public partial class World {
         );
 
         addEntity(itemEntity);
+    }
+
+    public void getPlayersInBox(List<Player> result, Vector3I min, Vector3I max) {
+        result.Clear();
+
+        // create query AABB from min/max bounds
+        var queryAABB = new AABB(new Vector3D(min.X, min.Y, min.Z), new Vector3D(max.X + 1, max.Y + 1, max.Z + 1));
+
+        // don't query, check players array because there are usually few players
+        foreach (var entity in players) {
+            // get entity's AABB and check intersection with the box
+            if (AABB.isCollision(queryAABB, entity.aabb)) {
+                result.Add(entity);
+            }
+        }
     }
 
     public void getEntitiesInBox(List<Entity> result, Vector3I min, Vector3I max) {

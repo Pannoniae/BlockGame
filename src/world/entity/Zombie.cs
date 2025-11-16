@@ -16,7 +16,7 @@ public class Zombie : Mob {
     protected override bool hostile => true;
 
     public Zombie(World world) : base(world, "zombie") {
-        tex = Game.textures.zombie;
+        tex = "textures/entity/zombie.png";
     }
 
     public override AABB calcAABB(Vector3D pos) {
@@ -28,7 +28,9 @@ public class Zombie : Mob {
 
     public override void AI(double dt) {
         // find and chase nearest player
-        var nearestPlayer = findNearestPlayer(DETECT_RADIUS);
+
+
+        var nearestPlayer = target ?? findNearestPlayer(DETECT_RADIUS, out _);
         if (nearestPlayer != null) {
             target = nearestPlayer;
 
@@ -42,7 +44,7 @@ public class Zombie : Mob {
     }
 
     private void attackPlayer() {
-        world.player.dmg(ATTACK_DAMAGE, position);
+        target?.dmg(ATTACK_DAMAGE, position);
         attackTime = ATTACK_COOLDOWN;
     }
 

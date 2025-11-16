@@ -15,7 +15,7 @@ public class MobRenderer<T> : EntityRenderer<T> where T : Mob {
         this.model = model;
     }
 
-    public void render(MatrixStack mat, Entity e, float scale, double interp) {
+    public virtual void render(MatrixStack mat, Entity e, float scale, double interp) {
         if (e is not Mob mob) return;
 
         // interpolate animation state

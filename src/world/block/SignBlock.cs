@@ -105,11 +105,14 @@ public class SignBlock : EntityBlock {
             return false;
         }
 
-        Screen.GAME_SCREEN.switchToMenu(new ui.menu.SignMenu(be));
-        //((ui.menu.SignMenu)Screen.GAME_SCREEN.currentMenu!).setup();
+        // only open GUI on client
+        if (!Net.mode.isDed()) {
+            Screen.GAME_SCREEN.switchToMenu(new ui.menu.SignMenu(be));
+            //((ui.menu.SignMenu)Screen.GAME_SCREEN.currentMenu!).setup();
 
-        world.inMenu = true;
-        Game.instance.unlockMouse();
+            world.inMenu = true;
+            Game.instance.unlockMouse();
+        }
 
         return true;
     }

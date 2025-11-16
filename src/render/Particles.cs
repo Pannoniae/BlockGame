@@ -14,11 +14,17 @@ public class Particles {
     private readonly World world;
 
     public readonly XUList<Particle> particles = [];
-    private readonly InstantDrawTexture drawer = new InstantDrawTexture(1024);
+    private readonly InstantDrawTexture drawer;
 
     public Particles(World world) {
+
+        // on the server we just don't bother about rendering
         this.world = world;
-        drawer.setup();
+
+        if (!Net.mode.isDed()) {
+            drawer = new InstantDrawTexture(1024);
+            drawer.setup();
+        }
     }
 
     public void add(Particle particle) {
@@ -50,7 +56,8 @@ public class Particles {
         Game.graphics.tex(0, Game.textures.blockTexture);
 
         drawer.begin(PrimitiveType.Triangles);
-        drawer.setMVP(Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix());
+        Matrix4x4 mat = Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix();
+        drawer.setMVP(ref mat);
 
         var world = this.world;
 

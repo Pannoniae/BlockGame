@@ -1,4 +1,5 @@
-﻿using BlockGame.main;
+﻿using System.Numerics;
+using BlockGame.main;
 using BlockGame.util;
 using BlockGame.util.path;
 using BlockGame.world.block;
@@ -9,7 +10,6 @@ using Path = BlockGame.util.path.Path;
 namespace BlockGame.world.entity;
 
 public class Mob(World world, string type) : Entity(world, type) {
-
     private const double DESPAWN_DISTANCE = 128.0;
     private const double LOOK_AT_PLAYER_DISTANCE = 12.0;
     private const double TARGET_REACHED_DISTANCE = 1.5;
@@ -30,10 +30,16 @@ public class Mob(World world, string type) : Entity(world, type) {
     private const float CHANCE_START_WANDERING = 0.008f; // when idle
     private const float CHANCE_STOP_WANDERING = 0.005f; // when moving
 
+    // mp interpolation
+    public Vector3D targetPos;
+    public Vector3 targetRot;
+    public int interpolationTicks;
+
     /*
      * The path that this mob is currently following (can be null)
      */
     public Path? path;
+
     /*
      * The entity that this mob is targeting (can be null)
      */
@@ -59,27 +65,34 @@ public class Mob(World world, string type) : Entity(world, type) {
     protected override bool needsFallDamage => true;
     protected override bool needsAnimation => true;
     protected override bool needsDamageNumbers => true;
-    
+
     protected virtual bool hostile => false;
     protected virtual bool burnInSunlight => false;
-    protected const int sunlightThreshold = 15;
+    protected const int sunlightThreshold = 12;
     protected virtual double eyeHeight => 1.6;
 
     protected virtual double reach => 3;
 
     /**
      * Find nearest player (excluding creative mode players) within radius
+     * Returns squared distance for performance
      */
-    protected Player? findNearestPlayer(double radius) {
+    protected Player? findNearestPlayer(double radius, out double nearestDistSq) {
         Player? nearest = null;
-        double nearestDist = radius;
+        nearestDistSq = radius * radius;
 
-        foreach (var entity in world.entities) {
-            if (entity is Player p && Game.gamemode.gameplay) {
-                var dist = Vector3D.Distance(position, p.position);
-                if (dist < nearestDist) {
-                    nearest = p;
-                    nearestDist = dist;
+        foreach (var entity in world.players) {
+            if (entity.gameMode == null) {
+                // todo this is a horrible hack, find out why it's not initialised fully yet
+                continue;
+            }
+
+
+            if (entity.gameMode.gameplay) {
+                var distSq = Vector3D.DistanceSquared(position, entity.position);
+                if (distSq < nearestDistSq) {
+                    nearest = entity;
+                    nearestDistSq = distSq;
                 }
             }
         }
@@ -99,8 +112,8 @@ public class Mob(World world, string type) : Entity(world, type) {
         // check at head level - for ground mobs, use feet+1 for consistency
         // for flying mobs with eyeHeight=0, use their actual position
         var checkY = eyeHeight > 0
-            ? (int)position.Y + 1  // ground-based mobs: check 1 block above feet
-            : (int)position.Y;     // flying mobs: check at their actual position
+            ? (int)position.Y + 1 // ground-based mobs: check 1 block above feet
+            : (int)position.Y; // flying mobs: check at their actual position
         var skylight = world.getSkyLight((int)position.X, checkY, (int)position.Z);
 
         // only burn during daytime (sun above horizon) with high skylight
@@ -108,7 +121,8 @@ public class Mob(World world, string type) : Entity(world, type) {
 
         if (isDaytime && skylight >= sunlightThreshold && !inLiquid) {
             fireTicks = Math.Max(fireTicks, 160);
-        } else {
+        }
+        else {
             // not in sunlight - clear fire from sunlight
             fireTicks = 0;
         }
@@ -140,6 +154,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             if (path != null) {
                 Pathfinding.ret(path);
             }
+
             target = null;
             path = null;
         }
@@ -149,6 +164,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             if (path != null) {
                 Pathfinding.ret(path);
             }
+
             target = null;
             path = null;
             wanderTarget = null;
@@ -165,17 +181,21 @@ public class Mob(World world, string type) : Entity(world, type) {
                 if (path != null) {
                     Pathfinding.ret(path);
                 }
+
                 target = null;
                 path = null;
                 return;
             }
 
             // recompute path periodically or if no path
-            if (path == null || path.isFinished()) {
+            if ((path == null || path.isFinished())) {
                 if (path != null) {
                     Pathfinding.ret(path);
                 }
-                path = Pathfinding.find(this, target);
+
+                if (Game.random.NextDouble() < 0.02 * Game.fixeddt) {
+                    path = Pathfinding.find(this, target);
+                }
             }
 
             followPath(dt);
@@ -194,6 +214,7 @@ public class Mob(World world, string type) : Entity(world, type) {
                 if (path != null) {
                     Pathfinding.ret(path);
                 }
+
                 wantsToWander = false;
                 wanderTarget = null;
                 path = null;
@@ -204,6 +225,7 @@ public class Mob(World world, string type) : Entity(world, type) {
                 if (path != null) {
                     Pathfinding.ret(path);
                 }
+
                 var angle = Game.random.NextSingle(0, MathF.PI * 2);
                 var dist = Game.random.NextSingle((float)WANDER_MIN_DISTANCE, (float)WANDER_MAX_DISTANCE);
                 var tx = (int)(position.X + MathF.Cos(angle) * dist);
@@ -222,10 +244,11 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // disable temporarily, makes player's head bugged
-        if (!isMoving) {
-            var distToPlayer = Vector3D.Distance(position, world.player.position);
-            if (distToPlayer < LOOK_AT_PLAYER_DISTANCE) {
-                lookAt(world.player.position, dt);
+        // todo this was laggy as fuck in multiplayer because it iterates over all entities. optimise??
+        if (false && !isMoving) {
+            var player = findNearestPlayer(LOOK_AT_PLAYER_DISTANCE, out var distToPlayerSq);
+            if (distToPlayerSq < LOOK_AT_PLAYER_DISTANCE * LOOK_AT_PLAYER_DISTANCE) {
+                lookAt(player.position, dt);
             }
         }
     }
@@ -279,7 +302,8 @@ public class Mob(World world, string type) : Entity(world, type) {
 
         if (Math.Abs(diff) <= maxTurn) {
             current = target;
-        } else {
+        }
+        else {
             current += float.CopySign(maxTurn, diff);
         }
 
@@ -316,7 +340,10 @@ public class Mob(World world, string type) : Entity(world, type) {
 
         // despawn check
         if (canDespawn) {
-            var distSq = Vector3D.DistanceSquared(position, world.player.position);
+
+            // get closest player
+            double distSq;
+            var player = findNearestPlayer(DESPAWN_DISTANCE, out distSq);
 
             // instant despawn beyond 128 blocks
             if (distSq > DESPAWN_DISTANCE * DESPAWN_DISTANCE) {
@@ -327,7 +354,7 @@ public class Mob(World world, string type) : Entity(world, type) {
             // random despawn between 32-128 blocks (prevents never despawning at low render dist lol)
             const double RANDOM_DESPAWN_MIN = 32.0 * 32.0;
             if (distSq > RANDOM_DESPAWN_MIN) {
-                if (Game.random.Next(20000) == 0) {
+                if (Game.random.Next(8000) == 0) {
                     active = false;
                     return false;
                 }
@@ -341,8 +368,49 @@ public class Mob(World world, string type) : Entity(world, type) {
         base.updateTimers(dt);
     }
 
+    public override void update(double dt) {
+        // multiplayer client: skip AI and physics for NON-PLAYER mobs, just interpolate
+        // NOTE: Player extends Mob, so we need to exclude Player subclasses!
+        if (Net.mode.isMPC() && this is not Player) {
+            // set prev
+            savePrevVars();
+
+            // interpolate towards target position/rotation
+            if (interpolationTicks > 0) {
+                var t = 1.0 / interpolationTicks;
+                position = Vector3D.Lerp(position, targetPos, t);
+                rotation = Vector3.Lerp(rotation, targetRot, (float)t);
+                interpolationTicks--;
+            }
+
+            // derive velocity from movement for animation
+            if (dt > 0) {
+                velocity = (position - prevPosition) / dt;
+            }
+
+            // update body rotation, animation, timers
+            updateBodyRotation(dt);
+            updateAnimation(dt);
+            updateTimers(dt);
+
+            // update AABB
+            aabb = calcAABB(position);
+            return;
+        }
+
+        // server/singleplayer OR player: run normal update with AI and physics
+        base.update(dt);
+    }
+
     protected override void prePhysics(double dt) {
         AI(dt);
+    }
+
+    /** called when receiving position update from server (client-side) */
+    public void mpInterpolate(Vector3D pos, Vector3 rot) {
+        targetPos = pos;
+        targetRot = rot;
+        interpolationTicks = 4; // interpolate over 4 ticks (~67ms)
     }
 
     protected override void checkFallDamage(double dt) {
@@ -353,6 +421,7 @@ public class Mob(World world, string type) : Entity(world, type) {
                 this.dmg(dmg);
             }
         }
+
         wasInAir = !onGround && !flyMode;
     }
 
@@ -362,9 +431,10 @@ public class Mob(World world, string type) : Entity(world, type) {
                 // get block below entity
                 var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
-                if (blockBelow?.mat != null) {
+                if (!Net.mode.isDed() && blockBelow?.mat != null) {
                     Game.snd.playFootstep(blockBelow.mat.smat, position);
                 }
+
                 lastFootstepDistance = totalTraveled;
             }
         }
@@ -383,7 +453,8 @@ public class Mob(World world, string type) : Entity(world, type) {
         if (moving) {
             targetYaw = rotation.Y;
             rotSpeed = ROTATION_SPEED * 2;
-        } else {
+        }
+        else {
             // idle - keep current body rotation
             targetYaw = bodyRotation.Y;
             rotSpeed = ROTATION_SPEED * 2;
@@ -431,26 +502,16 @@ public class Mob(World world, string type) : Entity(world, type) {
             fireTicks--;
             fireDamageTicks++;
 
-            if (hostile) {
-                // hostile mobs take 5 damage per second
-                if (fireDamageTicks >= 60) {
-                    dmg(3);
-                    fireDamageTicks = 0;
-                    if (hp <= 0) {
-                        die();
-                    }
-                }
-            } else {
-                // non-hostile mobs take normal fire damage
-                if (fireDamageTicks >= 60) {
-                    dmg(1);
-                    fireDamageTicks = 0;
-                    if (hp <= 0) {
-                        die();
-                    }
+            // non-hostile mobs take normal fire damage
+            if (fireDamageTicks >= 60) {
+                dmg(4);
+                fireDamageTicks = 0;
+                if (hp <= 0) {
+                    die();
                 }
             }
-        } else {
+        }
+        else {
             fireDamageTicks = 0;
         }
     }

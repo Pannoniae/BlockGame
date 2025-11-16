@@ -294,16 +294,16 @@ public class Item {
         BOTTLE_MILK = register("milk", new Item("Bottle of Milk"));
         BOTTLE_MILK.tex = new UVPair(3, 10);
 
-        RAW_BEEF = register("rawBeef", new Item("Raw Beef"));
+        RAW_BEEF = register("rawBeef", new Food("Raw Beef", 5));
         RAW_BEEF.tex = new UVPair(4, 10);
 
-        STEAK = register("steak", new Item("Steak"));
+        STEAK = register("steak", new Food("Steak", 25));
         STEAK.tex = new UVPair(5, 10);
 
-        PORKCHOP = register("porkchop", new Item("Porkchop"));
+        PORKCHOP = register("porkchop", new Food("Porkchop", 5));
         PORKCHOP.tex = new UVPair(6, 10);
 
-        COOKED_PORKCHOP = register("cookedPorkchop", new Item("Cooked Porkchop"));
+        COOKED_PORKCHOP = register("cookedPorkchop", new Food("Cooked Porkchop", 20));
         COOKED_PORKCHOP.tex = new UVPair(7, 10);
 
         BUCKET = register("bucket", new BucketItem("Bucket"));
@@ -378,7 +378,8 @@ public class Item {
     /**
      * Called when the player uses an item in the air (not on a block).
      */
-    public virtual void use(ItemStack stack, World world, Player player) {
+    public virtual ItemStack use(ItemStack stack, World world, Player player) {
+        return stack;
     }
 
     /**

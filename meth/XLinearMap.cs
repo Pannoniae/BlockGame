@@ -52,6 +52,31 @@ public class XLinearMap<K, V> : IEnumerable<V> where K : notnull, IEquatable<K> 
         return false;
     }
 
+    /** Gets an entry if it exists, or adds a new entry and returns it */
+    public ref V GetOrAdd(K key, V defaultValue, out bool added) {
+        for (int i = 0; i < count; i++) {
+            if (entries[i].key.Equals(key)) {
+                added = false;
+                return ref entries[i].value;
+            }
+        }
+
+        Add(key, defaultValue);
+        added = true;
+        return ref entries[count - 1].value;
+    }
+
+    public void Set(K key, V value) {
+        for (int i = 0; i < count; i++) {
+            if (entries[i].key.Equals(key)) {
+                entries[i].value = value;
+                return;
+            }
+        }
+
+        Add(key, value);
+    }
+
     public void Add(K key, V value) {
         // check for duplicate
         for (int i = 0; i < count; i++) {

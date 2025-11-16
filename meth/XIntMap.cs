@@ -67,6 +67,48 @@ public class XIntMap<V> : IEnumerable<V> {
         return false;
     }
 
+    /** Gets an entry if it exists, or adds a new entry and returns it */
+    public ref V GetOrAdd(int key, out bool added) {
+        return ref GetOrAdd(key, default!, out added);
+    }
+
+    /** Gets an entry if it exists, or adds a new entry and returns it */
+    public ref V GetOrAdd(int key, V defaultValue, out bool added) {
+        added = false;
+        if (count + tombstones >= entries.Length * LOAD_FACTOR) {
+            Resize();
+        }
+
+        int hash = GetHash(key);
+        int mask = entries.Length - 1;
+        int idx = hash & mask;
+        int tombstoneIdx = -1;
+
+        while (entries[idx].hash != 0) {
+            if (entries[idx].hash == -1) {
+                if (tombstoneIdx == -1) {
+                    tombstoneIdx = idx;
+                }
+            }
+            else if (entries[idx].hash == hash && entries[idx].key == key) {
+                return ref entries[idx].value;
+            }
+            idx = (idx + 1) & mask;
+        }
+
+        int insertIdx = tombstoneIdx != -1 ? tombstoneIdx : idx;
+        if (tombstoneIdx != -1) {
+            tombstones--;
+        }
+        entries[insertIdx].hash = hash;
+        entries[insertIdx].key = key;
+        entries[insertIdx].value = defaultValue;
+        count++;
+        added = true;
+        return ref entries[insertIdx].value;
+    }
+
+
     public void Add(int key, V value) {
         Insert(key, value, false);
     }

@@ -4,6 +4,7 @@ using System.Runtime;
 using BlockGame.GL;
 using BlockGame.logic;
 using BlockGame.main;
+using BlockGame.net;
 using BlockGame.render;
 using BlockGame.render.model;
 using BlockGame.ui.element;
@@ -52,6 +53,9 @@ public class GameScreen : Screen {
     private long altF10Press;
     private long altF7Press;
     private long f3Press = -1;
+
+    // player list (tab menu)
+    private bool showPlayerList = false;
 
     public override void activate() {
         D = new Debug();
@@ -186,8 +190,8 @@ public class GameScreen : Screen {
         // we update input here (shit doesn't work in non-main thread)
 
 
-        world.player.strafeVector = new Vector3D(0, 0, 0);
-        world.player.inputVector = new Vector3D(0, 0, 0);
+        Game.player.strafeVector = new Vector3D(0, 0, 0);
+        Game.player.inputVector = new Vector3D(0, 0, 0);
 
         if (!world.paused && !Game.lockingMouse) {
             if (currentMenu == INGAME_MENU) {
@@ -240,7 +244,7 @@ public class GameScreen : Screen {
 
         // since we have 3d items, we don't bother with disabling because it will be fucked. HOWEVER, we do a bit of depth clearing...
         Game.GL.Clear(ClearBufferMask.DepthBufferBit);
-        Game.world.player.render(dt, interp);
+        Game.player.render(dt, interp);
         //Game.GL.Enable(EnableCap.DepthTest);
     }
 
@@ -291,6 +295,11 @@ public class GameScreen : Screen {
         if (currentMenu.isBlockingInput() && currentMenu != INGAME_MENU) {
             return;
         }
+
+        // handle Tab release for player list
+        if (key == Key.Tab) {
+            showPlayerList = false;
+        }
     }
 
     public override void onKeyChar(IKeyboard keyboard, char c) {
@@ -311,6 +320,12 @@ public class GameScreen : Screen {
             return;
         }
 
+        // handle Tab for player list
+        if (key == Key.Tab) {
+            showPlayerList = true;
+            return;
+        }
+
         // handle E
         if (key == Key.E) {
             // not working?
@@ -319,10 +334,12 @@ public class GameScreen : Screen {
                 return;
             }
             else {
-                if (Game.gamemode == GameMode.survival) {
+                if (Game.player.gameMode == GameMode.survival) {
                     switchToMenu(new SurvivalInventoryMenu(new Vector2I(0, 32)));
                     ((SurvivalInventoryMenu)currentMenu!).setup();
                 } else {
+                    // set creative inventory ID for server sync
+                    Game.player.currentInventoryID = Constants.INV_ID_CREATIVE;
                     switchToMenu(new CreativeInventoryMenu(new Vector2I(0, 32)));
                     ((CreativeInventoryMenu)currentMenu!).setup();
                 }
@@ -381,7 +398,10 @@ public class GameScreen : Screen {
                 remeshWorld(Settings.instance.renderDistance);
                 break;
             case Key.F:
-                world.worldIO.save(world, world.name);
+                if (Net.mode.isSP()) {
+                    world.worldIO.save(world, world.name);
+                }
+
                 break;
             case Key.F8 when keyboard.IsKeyPressed(Key.ShiftLeft):
                 Game.noUpdate = !Game.noUpdate;
@@ -420,13 +440,13 @@ public class GameScreen : Screen {
 
             case Key.Space: {
                 if (Game.permanentStopwatch.ElapsedMilliseconds <
-                    world.player.spacePress + Constants.flyModeDelay * 1000) {
-                    if (Game.gamemode.flying) {
+                    Game.player.spacePress + Constants.flyModeDelay * 1000) {
+                    if (Game.player.gameMode.flying) {
                         world.player.flyMode = !world.player.flyMode;
                     }
                 }
 
-                world.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
+                Game.player.spacePress = Game.permanentStopwatch.ElapsedMilliseconds;
                 break;
             }
             case Key.T: {
@@ -519,7 +539,7 @@ public class GameScreen : Screen {
             }
         }
         else {
-            world.player.updatePickBlock(keyboard, key, scancode);
+            Game.player.updatePickBlock(keyboard, key, scancode);
         }
     }
 
@@ -568,11 +588,11 @@ public class GameScreen : Screen {
         HeightMap.heightPool.clear();
 
         // reload around player
-        world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+        Game.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
 
         // trigger "chunk change"
         Game.setTimeout(200, () => {
-            world.player.onChunkChanged();
+            Game.player.onChunkChanged();
         });
 
         Log.info("Chunk regeneration complete");
@@ -610,7 +630,9 @@ public class GameScreen : Screen {
             }
         }
 
-        world.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+        if (!Net.mode.isMPC()) {
+            Game.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
+        }
 
         // queue up ANOTHER freeing because we'll be saving a lot of chunks now
         // todo is this REALLY needed??
@@ -632,7 +654,10 @@ public class GameScreen : Screen {
 
     public void pause() {
         // save world when opening pause menu (so if the player ragequits or whatever it won't be fucked)
-        Game.world.worldIO.save(Game.world, Game.world.name);
+
+        if (Net.mode.isSP()) {
+            Game.world.worldIO.save(Game.world, Game.world.name);
+        }
 
         // also free up memory!
         trim();
@@ -747,8 +772,7 @@ public class GameScreen : Screen {
 
                         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 9),
                             color: new Color(0, 0, 0, MathF.Min(a, 0.5f)));
-                        gui.drawStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight),
-                            new Color(1, 1, 1, a));
+                        gui.drawColoredStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight), a);
                     }
                 }
             }
@@ -767,13 +791,114 @@ public class GameScreen : Screen {
                 new RectangleF(0, 0, Game.width, Game.height),
                 color: new Color(1f, 0f, 0f, alpha));
         }
+
+        // draw player list (tab menu) when Tab is held
+        if (showPlayerList && ClientConnection.instance != null && currentMenu == INGAME_MENU) {
+            drawPlayerList(gui);
+        }
+    }
+
+    private void drawPlayerList(GUI gui) {
+        var conn = ClientConnection.instance;
+        if (conn == null) {
+            return;
+        }
+
+        // sort players by name
+        var players = conn.playerList.Values.OrderBy(p => p.username).ToList();
+
+        // dimensions
+        const int entryHeight = 12;
+        const int padding = 8;
+        const int headerHeight = 6;
+        int listHeight = players.Count * entryHeight + headerHeight + padding * 2;
+        const int listWidth = 128;
+
+        // position (centered, bit down from top)
+        int x = (Game.gui.uiWidth - listWidth) / 2;
+        const int y = 16;
+
+        // background
+        gui.drawUI(gui.colourTexture,
+            new RectangleF(x - 1, y - 1, listWidth + 2, listHeight + 2),
+            color: new Color(64, 64, 64, 200));
+
+        gui.drawUI(gui.colourTexture,
+            new RectangleF(x, y, listWidth, listHeight),
+            color: new Color(0, 0, 0, 128));
+
+        // header
+        gui.drawStringCentredUI("Players (" + players.Count + ")",
+            new Vector2(x + listWidth / 2, y + padding),
+            Color.White);
+
+        // player entries
+        int yPos = y + padding + headerHeight;
+        foreach (var player in players) {
+            // player name (left aligned)
+            gui.drawStringUIThin(player.username,
+                new Vector2(x + padding, yPos),
+                Color.White);
+
+            // ping bars (right aligned)
+            drawPingBars(gui, player.ping, x + listWidth - padding - 12, yPos);
+
+            yPos += entryHeight;
+        }
+    }
+
+    /** draw visual ping indicator (5 bars) */
+    private static void drawPingBars(GUI gui, int ping, int x, int y) {
+        // determine ping quality: 0-5 bars filled
+        int filledBars;
+        Color barColor;
+
+        switch (ping) {
+            case < 128:
+                filledBars = 5;
+                barColor = Color.SpringGreen;
+                break;
+            case < 256:
+                filledBars = 4;
+                barColor = Color.Green;
+                break;
+            case < 512:
+                filledBars = 3;
+                barColor = Color.Yellow;
+                break;
+            case < 1024:
+                filledBars = 2;
+                barColor = new Color(255, 165, 0); // orange
+                break;
+            case < 2048:
+                filledBars = 1;
+                barColor = Color.Red;
+                break;
+            default:
+                filledBars = 0;
+                barColor = Color.DarkRed;
+                break;
+        }
+
+        // draw 5 bars with increasing height
+        for (int i = 0; i < 5; i++) {
+            int barHeight = 2 + i * 2; // heights: 2, 4, 6, 8, 10
+            int barX = x + i * 3;
+            int barY = y + 10 - barHeight; // align to bottom
+
+            Color color = i < filledBars ? barColor : new Color(64, 64, 64); // gray for empty
+
+            gui.drawUI(gui.colourTexture,
+                new RectangleF(barX, barY, 2, barHeight),
+                color: color);
+        }
     }
 
     private void drawChunkBorders() {
         var world = Game.world;
 
         // draw chunk borders
-        var playerPos = world.player.position;
+        var playerPos = Game.player.position;
         var playerChunkPos = World.getChunkPos((int)playerPos.X, (int)playerPos.Z);
         var chunkPos = new ChunkCoord(playerChunkPos.x, playerChunkPos.z);
         world.getChunkMaybe(new ChunkCoord(chunkPos.x, chunkPos.z), out var chunk);
@@ -872,7 +997,7 @@ public class GameScreen : Screen {
     private void drawEntityAABBs() {
         var world = Game.world;
 
-        var playerPos = world.player.position;
+        var playerPos = Game.player.position;
         const double renderRange = 32.0;
 
         var mat = Game.graphics.model;
@@ -908,7 +1033,7 @@ public class GameScreen : Screen {
     private void drawMobPathfinding() {
         var world = Game.world;
 
-        var playerPos = world.player.position;
+        var playerPos = Game.player.position;
         const double renderRange = 32.0;
 
         var mat = Game.graphics.model;
@@ -1067,7 +1192,7 @@ public class UpdateMemoryThread(GameScreen screen) {
             updateMemoryMethod();
 
             // we're also responsible for periodically trimming SharedBlockVAO! yes this is fucked but shhhh
-            if (needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 1024)) {
+            if ( needTrim || (SharedBlockVAO.lastTrim + 60000 < Game.permanentStopwatch.ElapsedMilliseconds && SharedBlockVAO.c > 1024)) {
                 // if 60s has passed AND we have pending ones, trim
                 MemoryUtils.cleanGC();
                 SharedBlockVAO.c = 0;
@@ -1090,7 +1215,8 @@ public class UpdateMemoryThread(GameScreen screen) {
         // run thread
         var thread = new Thread(run) {
             IsBackground = true,
-            Name = "UpdateMemoryThread"
+            Name = "UpdateMemoryThread",
+            Priority = ThreadPriority.BelowNormal
         };
         thread.Start();
     }
