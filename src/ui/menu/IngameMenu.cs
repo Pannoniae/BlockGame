@@ -7,6 +7,7 @@ using BlockGame.net.packet;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -17,7 +18,6 @@ using FontStashSharp.RichText;
 using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.Input;
-using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.ui.menu;
 
@@ -134,7 +134,7 @@ public class IngameMenu : Menu, IDisposable {
             gui.drawStringThin("60 FPS",
                 new Vector2(graphX + 5, sixtyFpsY - 12),
                 new Color(0, 255, 0));
-                
+
             // Draw mode indicator
             string modeText = segmentedMode ? "[F4] Segmented" : "[F4] Simple";
             gui.drawStringThin(modeText,
@@ -152,7 +152,7 @@ public class IngameMenu : Menu, IDisposable {
             }
         }
     }
-    
+
     private void DrawSimpleBars(GUI gui, int graphX, int graphY, float barWidth, float maxFrametime) {
         for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
             int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
@@ -201,11 +201,11 @@ public class IngameMenu : Menu, IDisposable {
                 barColour);
         }
     }
-    
+
     private void DrawSegmentedBars(GUI gui, int graphX, int graphY, float barWidth, float maxFrametime) {
         // Make segmented mode 4x taller for better visibility
         const float SEGMENTED_HEIGHT_MULTIPLIER = 4.0f;
-        
+
         for (int i = 0; i < FRAMETIME_HISTORY_SIZE; i++) {
             int idx = (frametimeHistoryIndex + i) % FRAMETIME_HISTORY_SIZE;
             var profile = profileHistory[idx];
@@ -235,13 +235,12 @@ public class IngameMenu : Menu, IDisposable {
                     ProfileData.getColour((ProfileSectionName)s));
             }
         }
-        
+
         // Draw legend in top-right corner of graph
         DrawSegmentedLegend(gui, graphX + GRAPH_WIDTH - 100, graphY - 5);
     }
-    
+
     private void DrawSegmentedLegend(GUI gui, float legendX, float legendY) {
-        
         float yOffset = 10;
         for (int i = 0; i < ProfileSection.SECTION_COUNT; i++) {
             // Draw color square
@@ -250,7 +249,7 @@ public class IngameMenu : Menu, IDisposable {
                 ProfileData.getColour((ProfileSectionName)i));
             yOffset += 24;
         }
-        
+
         // Draw section names
         yOffset = 10;
         for (int i = 0; i < ProfileSection.SECTION_COUNT; i++) {
@@ -270,11 +269,11 @@ public class IngameMenu : Menu, IDisposable {
         frametimeHistory[frametimeHistoryIndex] = frametime;
         frametimeHistoryIndex = (frametimeHistoryIndex + 1) % FRAMETIME_HISTORY_SIZE;
     }
-    
+
     public void UpdateProfileHistory(ProfileData profileData) {
         profileHistory[frametimeHistoryIndex] = profileData;
     }
-    
+
     public void ToggleSegmentedMode() {
         segmentedMode = !segmentedMode;
     }
@@ -294,7 +293,7 @@ public class IngameMenu : Menu, IDisposable {
         if (frametimeGraphEnabled) {
             DrawFrametimeGraph();
         }
-        
+
 
         // don't draw hotbar tooltip when chest/crafting table GUI is open
         if (Game.world.inMenu) {
@@ -317,7 +316,6 @@ public class IngameMenu : Menu, IDisposable {
     public void Dispose() {
         debugStr.Dispose();
         debugStrG.Dispose();
-        
     }
 
     public void updateDebugTextMethod() {
@@ -349,15 +347,17 @@ public class IngameMenu : Menu, IDisposable {
 
             debugStr.Clear();
             debugStrG.Clear();
+
+            // calculate facing
+            var facing = cameraFacing(c.forward());
+
+            var ww = w.getBlockRaw(Raycast.raycast(w, RaycastType.BLOCKSLIQUIDS).block);
+            var wwb = ww.getID();
+            var wwm = ww.getMetadata();
+
+            var wwbn = Registry.BLOCKS.getName(ww.getID());
+
             if (Game.devMode) {
-                // calculate facing
-                var facing = cameraFacing(c.forward());
-
-                var ww = w.getBlockRaw(Raycast.raycast(w, RaycastType.BLOCKSLIQUIDS).block);
-                var wwb = ww.getID();
-                var wwm = ww.getMetadata();
-                
-
                 debugStr.AppendFormat("{0:0.000}, {1:0.000}, {2:0.000}\n", p.position.X, p.position.Y, p.position.Z);
                 debugStr.AppendFormat("v:{0:0.000} {1:0.000} {2:0.000} {3:0.000}\n", p.velocity.X,
                     p.velocity.Y, p.velocity.Z, p.velocity.Length());
@@ -365,33 +365,35 @@ public class IngameMenu : Menu, IDisposable {
                 var forwardVec = c.forward();
                 debugStr.AppendFormat("c: {0:0.000} {1:0.000} {2:0.000} {3}\n", forwardVec.X, forwardVec.Y, forwardVec.Z,
                     facing);
-                debugStr.AppendFormat("sl:{0}, bl:{1}, i:{2}\n", sl, bl, inited);
-                debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
-                if (i.targetedPos.HasValue) {
-                    debugStr.AppendFormat("{0} {1} {2}, {3} {4} {5} {6} {7} {8} {9}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z, 
-                        i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z, 
-                        w.getBlock(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z), 
-                        w.getBlockMetadata(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z),
-                        wwb,
-                        wwm);
-                    
-                    // noise debug info if enabled
-                    if (Game.debugShowNoise) {
-                        var targetedPos = i.targetedPos.Value;
-                        if (w.generator is PerlinWorldGenerator pwg) {
-                            var noiseInfo = pwg.getNoiseInfoAtBlock(targetedPos.X, targetedPos.Y, targetedPos.Z);
-                            debugStr.Append("Noise:\n");
-                            foreach (var kvp in noiseInfo) {
-                                debugStr.AppendFormat("  {0}: {1:0.000}\n", kvp.Key, kvp.Value);
-                            }
-                        }
-                        else {
-                            debugStr.Append("Noise: N/A (not PerlinWorldGenerator)\n");
+            }
+
+            debugStr.AppendFormat("sl:{0}, bl:{1}, i:{2}\n", sl, bl, inited);
+            debugStr.AppendFormat("{0}{1}\n", p.onGround ? 'g' : '-', p.jumping ? 'j' : '-');
+            if (i.targetedPos.HasValue) {
+                debugStr.AppendFormat("{0} {1} {2}, {3} {4} {5} {6} {7} {8}({9}) {10}\n", i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z,
+                    i.previousPos!.Value.X, i.previousPos.Value.Y, i.previousPos.Value.Z,
+                    w.getBlock(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z),
+                    w.getBlockMetadata(i.targetedPos.Value.X, i.targetedPos.Value.Y, i.targetedPos.Value.Z),
+                    wwb, wwbn,
+                    wwm);
+
+                // noise debug info if enabled
+                if (Game.debugShowNoise) {
+                    var targetedPos = i.targetedPos.Value;
+                    if (w.generator is PerlinWorldGenerator pwg) {
+                        var noiseInfo = pwg.getNoiseInfoAtBlock(targetedPos.X, targetedPos.Y, targetedPos.Z);
+                        debugStr.Append("Noise:\n");
+                        foreach (var kvp in noiseInfo) {
+                            debugStr.AppendFormat("  {0}: {1:0.000}\n", kvp.Key, kvp.Value);
                         }
                     }
+                    else {
+                        debugStr.Append("Noise: N/A (not PerlinWorldGenerator)\n");
+                    }
                 }
-                else
-                    debugStr.Append("No target\n");
+            }
+            else {
+                debugStr.Append("No target\n");
             }
 
             debugStr.AppendFormat("rC:{0} rSC:{1} rV:{2}k\n", m.renderedChunks, m.renderedSubChunks,
@@ -408,6 +410,7 @@ public class IngameMenu : Menu, IDisposable {
                     m.bytesReceived / 1024.0, m.packetsReceived,
                     ClientConnection.instance.ping);
             }
+
             // clear chunk updates after displaying for next measurement period
             m.clearChunkUpdates();
 
@@ -450,7 +453,10 @@ public class IngameMenu : Menu, IDisposable {
                 var cloudBufSize = Game.renderer.cloudidt.maxVertices * 4 * sizeof(BlockVertexTinted);
                 debugStrG.AppendFormat("cbuf: {0:0.##}MB ({1}v×4)\n", cloudBufSize / Constants.MEGABYTES, Game.renderer.cloudidt.maxVertices);
             }
-            debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2} IUBO:{3} BMDI:{4} CMDL:{5} rZ:{6} r:{7}", Game.hasSBL.yes(), Game.hasVBUM.yes(), Game.hasUBUM.yes(), Game.hasInstancedUBO.yes(), Game.hasBindlessMDI.yes(), Game.hasCMDL.yes(), Settings.instance.reverseZ.yes(), Settings.instance.rendererMode.yes()); 
+
+            debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2} IUBO:{3} BMDI:{4} CMDL:{5} rZ:{6} r:{7}", Game.hasSBL.yes(), Game.hasVBUM.yes(),
+                Game.hasUBUM.yes(), Game.hasInstancedUBO.yes(), Game.hasBindlessMDI.yes(), Game.hasCMDL.yes(), Settings.instance.reverseZ.yes(),
+                Settings.instance.rendererMode.yes());
             // calculate textwidth
             rendererText = new RichTextLayout {
                 Font = gui.guiFontThin,

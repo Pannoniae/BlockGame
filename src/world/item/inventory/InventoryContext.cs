@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.net.packet;
 using BlockGame.net.srv;
 using BlockGame.util;
+using BlockGame.world.block;
 using BlockGame.world.entity;
 using LiteNetLib;
 
@@ -89,7 +90,7 @@ public abstract class InventoryContext {
                 // take from slot
                 var currentStack = slot.getStack();
                 var taken = slot.take(currentStack == ItemStack.EMPTY ? 1 : currentStack.quantity);
-                if (taken != ItemStack.EMPTY && taken.id != Item.AIR.id) {
+                if (taken != ItemStack.EMPTY && taken.id != Item.AIR.id && taken.id != Block.AIR.getItem().id) {
                     player.inventory.cursor = taken;
                 }
             }

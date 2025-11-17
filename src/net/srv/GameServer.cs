@@ -905,7 +905,7 @@ public class GameServer : INetEventListener {
             if (conn.player?.currentCtx == null) continue;
 
             // check if viewing a furnace
-            if (conn.player.currentInventoryID > 0 && conn.player.currentCtx is FurnaceMenuContext furnaceCtx) {
+            if (conn.player.currentInventoryID >= 0 && conn.player.currentCtx is FurnaceMenuContext furnaceCtx) {
                 if (furnaceCtx.getFurnaceInventory() is FurnaceBlockEntity furnace) {
                     conn.send(new FurnaceSyncPacket {
                         position = furnace.pos,

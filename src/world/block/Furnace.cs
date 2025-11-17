@@ -78,9 +78,9 @@ public class Furnace : EntityBlock {
             return false;
         }
 
-        // MP client: don't do shit
+        // MP client: server will handle opening (client sent PlaceBlockPacket, will receive InventoryOpenPacket)
         if (Net.mode.isMPC()) {
-            return false;
+            return true;
         }
 
         // server-side: open inventory via helper

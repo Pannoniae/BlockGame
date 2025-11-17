@@ -415,18 +415,19 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
             world.removeBlockLightAndPropagate(wx, y, wz);
         }
 
+        // if the old block had light, remove the light
+        var newLightLevel = block == 0 ? 0 : Block.lightLevel[block];
+        if (newLightLevel != Block.lightLevel[oldBlock]) {
+            // remove lightsource
+            world.removeBlockLightAndPropagate(wx, y, wz);
+        }
+
         // if the new block has light, add the light
         if (Block.lightLevel[block] > 0) {
             // add lightsource
             setBlockLightDumb(x, y, z, Block.lightLevel[block]);
             //Console.Out.WriteLine(Block.get(block).lightLevel);
             world.blockLightQueue.Enqueue(new LightNode(wx, y, wz, this));
-        }
-
-        // if the old block had light, remove the light
-        if (block == 0 && Block.lightLevel[oldBlock] > 0) {
-            // remove lightsource
-            world.removeBlockLightAndPropagate(wx, y, wz);
         }
 
         if (!Net.mode.isMPC()) {

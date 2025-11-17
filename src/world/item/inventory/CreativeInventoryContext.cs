@@ -69,7 +69,7 @@ public class CreativeInventoryContext : InventoryContext {
         // add all items
         for (int i = 0; i < Registry.ITEMS.count(); i++) {
             var item = Item.get(i);
-            if (item == null || item.isBlock() || item == Item.AIR || Registry.ITEMS.blackList[i]) {
+            if (item == null || item.isBlock() || item == Item.AIR || item.id == Block.AIR.getItem().id || Registry.ITEMS.blackList[i]) {
                 continue;
             }
 

@@ -420,6 +420,12 @@ public partial class World : IDisposable {
                         continue;
                     }
 
+                    // if no light, also skip (underground!)
+                    var skylight = getSkyLight(x, y, z);
+                    if (skylight == 0) {
+                        continue;
+                    }
+
 
                     getAABBsCollision(listAABB, x, y, z);
                     foreach (var aabb in listAABB) {
