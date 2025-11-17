@@ -183,6 +183,10 @@ public partial class Game {
 
         Log.log(LogLevel.INFO, "Game", "Starting game!");
 
+        // wayland is crashing shit again
+        SDL3.SDL_SetHint("SDL_VIDEO_DRIVER", "x11");
+        SDL3.SDL_SetHintWithPriority("SDL_VIDEO_DRIVER", "x11", SDL_HintPriority.SDL_HINT_OVERRIDE);
+
         sdl = true;
         if (sdl) {
             unsafe {
@@ -468,6 +472,9 @@ public partial class Game {
 
     private void init() {
         GL = window.CreateLegacyOpenGL();
+
+        // wayland is crashing shit again
+        SDL3.SDL_SetHintWithPriority("SDL_VIDEO_DRIVER", "x11", SDL_HintPriority.SDL_HINT_OVERRIDE);
 
         if (sdl) {
             unsafe {

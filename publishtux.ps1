@@ -5,10 +5,10 @@ Remove-Item -Recurse -Force .\publish\ -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force .\publishs\ -ErrorAction SilentlyContinue
 
 # publish client to publish/
-dotnet publish src/launch/Launcher.csproj -r "linux-x64" -c Release
+dotnet publish src/launch/Launcher.csproj -r "linux-x64" -c Release --sc
 
 # publish server to publishs/
-dotnet publish src/launchsv/LauncherServer.csproj -r "linux-x64" -c Release
+dotnet publish src/launchsv/LauncherServer.csproj -r "linux-x64" -c Release --sc
 
 # copy server exe and dll to main publish folder
 Copy-Item -Force .\publishs\server.exe .\publish\
