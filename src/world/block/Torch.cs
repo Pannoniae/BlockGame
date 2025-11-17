@@ -3,6 +3,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.world.item;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.block;
@@ -104,6 +105,11 @@ public class Torch : Block {
             world.spawnBlockDrop(x, y, z, item, count, meta);
             world.setBlock(x, y, z, 0);
         }
+    }
+
+    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+        // no metadata!
+        return base.getDrop(world, x, y, z, 0);
     }
 
 

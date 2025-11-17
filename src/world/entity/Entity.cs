@@ -711,13 +711,13 @@ public partial class Entity(World world, string type) : Persistent {
             // calculate push direction (away from each other)
             var dx = position.X - other.position.X;
             var dz = position.Z - other.position.Z;
-            var dist = Math.Sqrt(dx * dx + dz * dz);
+            var dist = double.Sqrt(dx * dx + dz * dz);
 
             // avoid divide by zero if entities at exact same pos
             if (dist < 0.01) {
                 dx = (Game.clientRandom.NextSingle() - 0.5) * 0.1;
                 dz = (Game.clientRandom.NextSingle() - 0.5) * 0.1;
-                dist = Math.Sqrt(dx * dx + dz * dz);
+                dist = double.Sqrt(dx * dx + dz * dz);
             }
 
             // normalise and apply push
@@ -726,10 +726,16 @@ public partial class Entity(World world, string type) : Persistent {
             var pushZ = (dz / dist) * pushStrength;
 
             // push both entities apart
+
+
             velocity.X += pushX;
             velocity.Z += pushZ;
-            other.velocity.X -= pushX;
-            other.velocity.Z -= pushZ;
+
+            // todo quickhack to prevent item entities pushing you away
+            if (this is not ItemEntity) {
+                other.velocity.X -= pushX;
+                other.velocity.Z -= pushZ;
+            }
         }
     }
 

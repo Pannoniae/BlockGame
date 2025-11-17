@@ -988,13 +988,14 @@ public partial class Game {
 
     public void lockMouse() {
         mouse.Cursor.CursorMode = CursorMode.Raw;
-        //mouse.Position = new Vector2(centre.X, centre.Y);
+        mouse.Position = new Vector2(width / 2.0f, height / 2.0f);
         focused = true;
         firstFrame = true;
     }
 
     public void unlockMouse() {
         mouse.Cursor.CursorMode = CursorMode.Normal;
+        mouse.Position = new Vector2(width / 2.0f, height / 2.0f);
         focused = false;
     }
 

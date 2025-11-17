@@ -208,13 +208,12 @@ public class Camera {
         // Update bob (ground movement)
         prevBob = bob;
         if (Math.Abs(p.velocity.withoutY().Length()) > 0.0001 && p.onGround) {
-            bob = Math.Clamp((float)(p.velocity.Length() / 4), 0, 1) * 0.935f;
+            bob = Math.Clamp((float)(p.velocity.withoutY().Length() / 4), 0, 1) * 0.935f;
         } else {
             bob *= 0.935f;
         }
 
         // Update airBob (air movement affecting pitch)
-        prevAirBob = airBob;
         if (!p.onGround && !p.flyMode) {
             // Base on vertical velocity, stronger effect when falling/jumping
             float verticalSpeed = (float)p.velocity.Y * 0.6f;
@@ -230,10 +229,14 @@ public class Camera {
             airBob += verticalSpeed;
 
             //Console.Out.WriteLine(airBob);
-        }
 
-        // Faster decay than regular bob
-        airBob *= 0.46f;
+            // decay while in air
+            airBob *= 0.46f;
+        } else {
+            // instant reset when on ground
+            //airBob = 0f;
+            airBob *= 0.46f;
+        }
 
         // Update impact tilt
         prevImpactTilt = impactTilt;
@@ -293,8 +296,8 @@ public class Camera {
         var interpPos = renderPosition(interp);
         var interpForward = forward(interp);
         var interpUp = up(interp);
-        var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
+        var iBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderBob(interp)) : 0f;
+        var iAirBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderAirBob(interp) * 0.2f) : 0f;
         var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var dTilt = float.DegreesToRadians(renderDeathTilt(interp));
         var tt = 0f;
@@ -320,8 +323,8 @@ public class Camera {
         var interpPos = Vector3.Zero;
         var interpForward = forward(interp);
         var interpUp = up(interp);
-        var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
+        var iBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderBob(interp)) : 0f;
+        var iAirBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderAirBob(interp) * 0.2f) : 0f;
         var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var dTilt = float.DegreesToRadians(renderDeathTilt(interp));
         var tt = 0f;
@@ -341,8 +344,8 @@ public class Camera {
     /// Gets the view matrix for the held hand/block.
     /// </summary>
     public Matrix4x4 getHandViewMatrix(double interp) {
-        var iBob = float.DegreesToRadians(renderBob(interp));
-        var iAirBob = float.DegreesToRadians(renderAirBob(interp) * 0.2f);
+        var iBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderBob(interp)) : 0f;
+        var iAirBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderAirBob(interp) * 0.2f) : 0f;
         var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var dTilt = float.DegreesToRadians(renderDeathTilt(interp));
 

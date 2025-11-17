@@ -239,6 +239,7 @@ public class Player : Mob, CommandSource {
 
         if (!Net.mode.isDed()) {
             Game.camera.prevBob = Game.camera.bob;
+            Game.camera.prevAirBob = Game.camera.airBob;
         }
 
         prevBreakProgress = breakProgress;

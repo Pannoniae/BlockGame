@@ -109,7 +109,7 @@ public class Recipe {
             .noShape()
             .ingredients(Block.MAHOGANY_LOG.item);
         register(new ItemStack(Block.MAPLE_PLANKS.item, 4))
-            .shape(01_01, 2)
+            .noShape()
             .ingredients(Block.MAPLE_LOG.item);
 
        // stick (2 planks vertically) - any plank type works

@@ -1049,9 +1049,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
 
         // no depth writes!
-        GL.DepthMask(false);
+        //GL.DepthMask(false);
         world.particles.render(interp);
-        GL.DepthMask(true);
+        //GL.DepthMask(true);
 
         // last thing!
         renderSkyPost(interp);

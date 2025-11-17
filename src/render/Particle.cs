@@ -272,7 +272,6 @@ public class DamageNumber : Particle {
         mat.push();
         mat.loadIdentity();
 
-
         mat.translate((float)pos.X, (float)pos.Y, (float)pos.Z);
 
         var fwd = Game.camera.forward(interp).toVec3();
@@ -293,7 +292,6 @@ public class DamageNumber : Particle {
         const float scale = 1 / 64f;
         mat.scale(scale, -scale, scale); // flip text the right side up!
 
-
         var textPos = new Vector2(-textBounds.X / 2, 0);
 
         // rn it scales from 0 to 30, maybe we will need a better formula later
@@ -310,7 +308,12 @@ public class DamageNumber : Particle {
 
         var c = new FSColor(r, g, b, (int)(alpha * 255));
         var worldMatrix = mat.top;
-        font.DrawText(renderer, text, textPos, c, ref worldMatrix);
+
+        // on purpose!! we already begun in the renderloop
+        renderer.set(interp);
+        font.DrawText(renderer, text, textPos, c, ref worldMatrix, layerDepth: 0f);
+        renderer.end();
+        renderer.begin();
 
         mat.pop();
     }

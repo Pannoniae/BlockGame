@@ -218,12 +218,12 @@ public class GameScreen : Screen {
 
         //world.mesh();
         Game.camera.calculateFrustum(interp);
+        // update VP matrix before rendering world
+        Game.fontLoader.renderer3D.renderTick(interp);
         Game.renderer.render(interp);
         Game.renderer.drawBlockOutline(interp);
 
         D.renderTick(interp);
-        // update here because in the main menu, we don't have a world
-        Game.fontLoader.renderer3D.renderTick(interp);
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.render(dt, interp);
         }

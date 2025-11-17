@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
+using BlockGame.world;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Molten;
@@ -37,9 +38,14 @@ public class TextRenderer3D : IFontStashRenderer {
         //shaderProgram.Projection = Game.world.player.camera.getProjectionMatrix();
 
         // set combined VP matrix
-        var mat = Game.camera.getViewMatrix(interp)
+        /*var mat = Game.camera.getViewMatrix(interp)
                   * Game.camera.getProjectionMatrix();
-        batchShader3D.setUniform(uMVP, ref mat);
+        batchShader3D.setUniform(uMVP, ref mat);*/
+    }
+
+    public void set(double interp) {
+        var mvp = Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix();
+        batchShader3D.setUniform(uMVP, ref mvp);
     }
 
     public void begin() {

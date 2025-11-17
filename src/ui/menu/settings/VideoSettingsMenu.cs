@@ -254,6 +254,14 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(FOV);
         addElement(FOV);
 
+        var viewBobbing = new ToggleButton(this, "viewBobbing", false, settings.viewBobbing ? 1 : 0,
+            "View Bobbing: OFF", "View Bobbing: ON");
+        viewBobbing.topCentre();
+        viewBobbing.clicked += _ => { settings.viewBobbing = viewBobbing.getIndex() == 1; };
+        viewBobbing.tooltip = "Camera bobbing when moving.";
+        settingElements.Add(viewBobbing);
+        addElement(viewBobbing);
+
         var frustumCulling = new ToggleButton(this, "frustumCulling", false, settings.frustumCulling ? 1 : 0,
             "Frustum Culling: OFF", "Frustum Culling: ON");
         frustumCulling.topCentre();

@@ -54,6 +54,7 @@ public class Settings {
      */
     internal RendererMode rendererMode = RendererMode.Auto;
 
+    public bool viewBobbing = true;
     public int mouseInv = 1; // 1 = normal, -1 = inverted
 
     public float sfxVolume = 1.0f; // 0.0 to 1.0
@@ -177,6 +178,7 @@ public class Settings {
         tag.addByte("affineMapping", (byte)(affineMapping ? 1 : 0));
         tag.addByte("vertexJitter", (byte)(vertexJitter ? 1 : 0));
         tag.addInt("cloudMode", cloudMode);
+        tag.addByte("viewBobbing", (byte)(viewBobbing ? 1 : 0));
 
         tag.addInt("rendererMode", (int)rendererMode);
         tag.addInt("mouseInv", mouseInv);
@@ -226,6 +228,9 @@ public class Settings {
             }
             if (tag.has("cloudMode")) {
                 cloudMode = tag.getInt("cloudMode");
+            }
+            if (tag.has("viewBobbing")) {
+                viewBobbing = tag.getByte("viewBobbing") != 0;
             }
 
             if (tag.has("rendererMode")) {
