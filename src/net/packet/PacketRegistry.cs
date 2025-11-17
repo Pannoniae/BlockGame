@@ -24,6 +24,7 @@ public class PacketRegistry {
         register(0x07, typeof(PlayerListRemovePacket));
         register(0x08, typeof(PlayerListUpdatePingPacket));
 
+        
         register(0x0A, typeof(AuthRequiredPacket));
         register(0x0B, typeof(AuthPacket));
 
@@ -45,6 +46,7 @@ public class PacketRegistry {
         register(0x27, typeof(EntityStatePacket));
         register(0x28, typeof(PlayerHealthPacket));
         register(0x29, typeof(EntityActionPacket));
+        register(0x2A, typeof(TeleportPacket));
 
         // player actions (0x30-0x3F)
         register(0x30, typeof(PlayerPositionPacket));

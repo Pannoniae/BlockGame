@@ -1072,10 +1072,15 @@ public partial class World : IDisposable {
             }
         }
 
-        // save chunk asynchronously to prevent lagspikes
-        // DON'T DO IT ON THE SERVER, we don't do async there.
-        // we might in the future but we'd get the save clashes so idk :\
-        if (!isMP && !Net.mode.isDed()) {
+        // save chunk before unloading
+        if (Net.mode.isDed()) {
+            // dedicated server: save sync
+            worldIO.saveChunk(this, chunk);
+        }
+        else if (!isMP) {
+            // save chunk asynchronously to prevent lagspikes
+            // DON'T DO IT ON THE SERVER, we don't do async there.
+            // we might in the future but we'd get the save clashes so idk :\
             worldIO.saveChunkAsync(this, chunk);
         }
 

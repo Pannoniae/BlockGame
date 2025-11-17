@@ -2,6 +2,7 @@
 using BlockGame.net.srv;
 using BlockGame.util;
 using BlockGame.world.item;
+using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
 
@@ -84,6 +85,18 @@ public class ServerPlayer : Player {
     public override void blockHandling(double dt) { }
     public override void placeBlock() { }
     public override void breakBlock() { }
+
+    public override void teleport(Vector3D pos) {
+        base.teleport(pos);
+
+        // send teleport packet to client
+        if (conn != null) {
+            conn.send(new TeleportPacket {
+                position = pos,
+                rotation = rotation
+            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }
+    }
 
     protected override void die() {
         base.die();

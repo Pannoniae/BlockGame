@@ -113,6 +113,18 @@ public class ClientPacketHandler : PacketHandler {
         });
     }
 
+    public void handleTeleport(TeleportPacket p) {
+        if (Game.player == null) {
+            return;
+        }
+
+        // snap player to new position (no interp)
+        Game.player.teleport(p.position);
+        Game.player.rotation = p.rotation;
+
+        Log.info($"Teleported to {p.position}");
+    }
+
     public void handleChunkData(ChunkDataPacket p) {
         //Console.Out.WriteLine($"CLIENT: Received ChunkDataPacket for {p.coord}");
 
@@ -420,6 +432,9 @@ public class ClientPacketHandler : PacketHandler {
                 break;
             case DisconnectPacket p:
                 handleDisconnect(p);
+                break;
+            case TeleportPacket p:
+                handleTeleport(p);
                 break;
             case ChunkDataPacket p:
                 handleChunkData(p);
