@@ -86,9 +86,7 @@ public class ClientConnection : INetEventListener {
     }
 
     public void send<T>(T packet, DeliveryMethod method) where T : Packet {
-        var ms = new MemoryStream();
-        var writer = new BinaryWriter(ms);
-        var buf = new PacketBuffer(writer);
+        var buf = PacketWriter.get();
 
         // write packet ID first
         int packetID = PacketRegistry.getID(packet.GetType());
@@ -98,7 +96,7 @@ public class ClientConnection : INetEventListener {
         packet.write(buf);
 
         // send to peer
-        var bytes = ms.ToArray();
+        var bytes = PacketWriter.getBytesUnsafe();
         peer.Send(bytes, method);
 
         // track metrics

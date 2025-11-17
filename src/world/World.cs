@@ -440,7 +440,7 @@ public partial class World : IDisposable {
 
         // note: removal is faster from the end so we sort by the reverse - closest entries are at the end of the list
         if (Net.mode.isSP()) {
-            chunkLoadQueue.Sort(new ChunkTicketComparerReverse(player.position.toBlockPos()));
+            chunkLoadQueue.Sort(new ChunkTicketComparerSegregated(player.position.toBlockPos()));
         }
     }
 

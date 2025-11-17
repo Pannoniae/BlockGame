@@ -39,9 +39,7 @@ public class ServerConnection {
     }
 
     public void send<T>(T packet, DeliveryMethod method) where T : Packet {
-        using var ms = new MemoryStream();
-        using var writer = new BinaryWriter(ms);
-        var buf = new PacketBuffer(writer);
+        var buf = PacketWriter.get();
 
         // write packet ID first
         int packetID = PacketRegistry.getID(packet.GetType());
@@ -51,7 +49,7 @@ public class ServerConnection {
         packet.write(buf);
 
         // send to peer
-        var bytes = ms.ToArray();
+        var bytes = PacketWriter.getBytesUnsafe();
         peer.Send(bytes, method);
 
         // track metrics

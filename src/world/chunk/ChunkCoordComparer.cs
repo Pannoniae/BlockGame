@@ -46,3 +46,21 @@ public class ChunkTicketComparerReverse : IComparer<ChunkLoadTicket> {
         return comparison + statusDiff * 10000;
     }
 }
+
+public class ChunkTicketComparerSegregated : IComparer<ChunkLoadTicket> {
+    public Vector3I position;
+
+    public ChunkTicketComparerSegregated(Vector3I position) {
+        this.position = position;
+    }
+    public int Compare(ChunkLoadTicket x, ChunkLoadTicket y) {
+        var comparison = Vector2D.Distance(new Vector2D<int>(y.chunkCoord.x * Chunk.CHUNKSIZE, y.chunkCoord.z * Chunk.CHUNKSIZE), new Vector2D<int>(position.X, position.Z)) -
+                         Vector2D.Distance(new Vector2D<int>(x.chunkCoord.x * Chunk.CHUNKSIZE, x.chunkCoord.z * Chunk.CHUNKSIZE), new Vector2D<int>(position.X, position.Z));
+
+        // sort by distance, but merge same level together
+        if (x.level == y.level) {
+            return comparison;
+        }
+        return (int)x.level - (int)y.level;
+    }
+}

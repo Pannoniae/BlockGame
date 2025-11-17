@@ -27,7 +27,10 @@ public class EntityTracker {
         public bool sendVelocity = true;
 
         /** clients that have this entity loaded */
-        public readonly HashSet<ServerConnection> viewers = [];
+        public HashSet<ServerConnection> viewers = [];
+
+        /** reusable temp set for updateViewers, totally not an implementation detail */
+        public HashSet<ServerConnection> tempViewers = [];
     }
 
     public EntityTracker(GameServer server) {
@@ -107,7 +110,7 @@ public class EntityTracker {
             };
 
             foreach (var viewer in t.viewers) {
-                viewer.send(packet, DeliveryMethod.ReliableOrdered);
+                viewer.send(packet, DeliveryMethod.ReliableSequenced);
             }
 
             if (t.sendVelocity) {
@@ -117,7 +120,7 @@ public class EntityTracker {
                     velocity = entity.velocity
                 };
                 foreach (var viewer in t.viewers) {
-                    viewer.send(velPacket, DeliveryMethod.ReliableOrdered);
+                    viewer.send(velPacket, DeliveryMethod.ReliableSequenced);
                 }
             }
 
@@ -130,8 +133,8 @@ public class EntityTracker {
 
     /** recalculate which clients can see this entity (based on distance) */
     private void updateViewers(TrackedEntity t) {
-        var oldViewers = new HashSet<ServerConnection>(t.viewers);
-        var newViewers = new HashSet<ServerConnection>();
+        // reuse temp set instead of allocating a new one ALL THE TIME
+        t.tempViewers.Clear();
 
         // find all connections in range
         foreach (var conn in server.connections.Values) {
@@ -143,13 +146,13 @@ public class EntityTracker {
             if (t.entity == conn.player) continue;
 
             if (conn.isInRange(t.entity.position)) {
-                newViewers.Add(conn);
+                t.tempViewers.Add(conn);
             }
         }
 
-        // send spawn to new viewers
-        var added = newViewers.Except(oldViewers);
-        foreach (var viewer in added) {
+        // send spawn to new viewers (in tempViewers but not in viewers)
+        foreach (var viewer in t.tempViewers) {
+            if (t.viewers.Contains(viewer)) continue;
             if (t.entity is Player sp) {
 
                 // DON'T SEND SPAWNS, we send them in finishLogin!
@@ -215,24 +218,21 @@ public class EntityTracker {
             viewer.send(statePacket, DeliveryMethod.ReliableOrdered);
         }
 
-        // send despawn to old viewers no longer in range
-        var removed = oldViewers.Except(newViewers);
-        foreach (var viewer in removed) {
+        // send despawn to old viewers no longer in range (in viewers but not in tempViewers)
+        foreach (var viewer in t.viewers) {
+            if (t.tempViewers.Contains(viewer)) continue;
+
             var despawnPacket = new DespawnEntityPacket { entityID = t.entity.id };
             viewer.send(despawnPacket, DeliveryMethod.ReliableOrdered);
         }
 
-        t.viewers.Clear();
-        foreach (var viewer in newViewers) {
-            t.viewers.Add(viewer);
-        }
+        // swap: viewers becomes tempViewers, tempViewers becomes old viewers (reused next time)
+        (t.viewers, t.tempViewers) = (t.tempViewers, t.viewers);
     }
 
     /** serialize entity-specific data for spawn packet */
     public static byte[] serializeExtraData(Entity entity) {
-        using var ms = new MemoryStream();
-        using var bs = new BinaryWriter(ms);
-        var buf = new PacketBuffer(bs);
+        var buf = PacketWriter.get();
 
         switch (entity) {
             case ItemEntity item:
@@ -251,7 +251,7 @@ public class EntityTracker {
                 break;
         }
 
-        return ms.ToArray();
+        return PacketWriter.getBytes();
     }
 
     /** deserialize entity-specific data from spawn packet (client-side helper) */

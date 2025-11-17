@@ -748,7 +748,7 @@ public class GameServer : INetEventListener {
                     entityID = conn.entityID,
                     ping = conn.metrics.ping
                 },
-                DeliveryMethod.ReliableOrdered
+                DeliveryMethod.Unreliable
             );
         }
     }

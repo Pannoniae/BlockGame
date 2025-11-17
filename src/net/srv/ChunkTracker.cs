@@ -9,7 +9,6 @@ namespace BlockGame.net.srv;
 
 /**
  * tracks which players are subscribed to a chunk and batches block changes
-
  */ 
 public class ChunkTracker {
     public readonly ChunkCoord coord;
