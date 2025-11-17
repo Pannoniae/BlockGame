@@ -144,7 +144,7 @@ public class ServerPlayer : Player {
             inventorySlots.AddRange(inventory.accessories);
 
             conn.send(new InventorySyncPacket {
-                windowID = 0,
+                invID = Constants.INV_ID_PLAYER,
                 items = inventorySlots.ToArray()
             }, LiteNetLib.DeliveryMethod.ReliableOrdered);
         }
@@ -174,7 +174,7 @@ public class ServerPlayer : Player {
                         inventorySlots.AddRange(inventory.accessories);
 
                         conn.send(new InventorySyncPacket {
-                            windowID = 0,
+                            invID = Constants.INV_ID_PLAYER,
                             items = inventorySlots.ToArray()
                         }, LiteNetLib.DeliveryMethod.ReliableOrdered);
                     }

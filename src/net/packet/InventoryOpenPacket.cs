@@ -6,14 +6,14 @@ namespace BlockGame.net.packet;
  * S→C: 0x44 - open inventory window
  */
 public class InventoryOpenPacket : Packet {
-    public byte invID;
+    public int invID;
     public byte invType;  // inventory type ID
     public string title;
     public byte slotCount;
     public Vector3I? position;       // for block entities
 
     public void write(PacketBuffer buf) {
-        buf.writeByte(invID);
+        buf.writeInt(invID);
         buf.writeByte(invType);
         buf.writeString(title);
         buf.writeByte(slotCount);
@@ -24,7 +24,7 @@ public class InventoryOpenPacket : Packet {
     }
 
     public void read(PacketBuffer buf) {
-        invID = buf.readByte();
+        invID = buf.readInt();
         invType = buf.readByte();
         title = buf.readString();
         slotCount = buf.readByte();

@@ -60,7 +60,7 @@ public class Player : Mob, CommandSource {
      * Incremented each time a new inventory is opened.
      * Window ID -1 = player inventory (always open)
      */
-    public int currentInventoryID = -1;
+    public int currentInventoryID = Constants.INV_ID_PLAYER;
 
     public Vector3D strafeVector = new(0, 0, 0);
 
@@ -101,7 +101,7 @@ public class Player : Mob, CommandSource {
             modelRenderer = (PlayerRenderer)EntityRenderers.get(Entities.getID("player"));
         }
 
-        inventoryCtx = new CreativeInventoryContext(40);
+        inventoryCtx = new CreativeInventoryContext(inventory, 40);
         currentCtx = inventoryCtx;
 
         this.world = world;

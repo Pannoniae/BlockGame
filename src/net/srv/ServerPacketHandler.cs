@@ -225,8 +225,13 @@ public class ServerPacketHandler : PacketHandler {
         inventorySlots.AddRange(player.inventory.armour);
         inventorySlots.AddRange(player.inventory.accessories);
 
+        // also sync crafting grid if in survival mode
+        if (player.inventoryCtx is SurvivalInventoryContext survCtx) {
+            inventorySlots.AddRange(survCtx.getCraftingGrid().grid);
+        }
+
         conn.send(new InventorySyncPacket {
-            windowID = 0,
+            invID = Constants.INV_ID_PLAYER,
             items = inventorySlots.ToArray()
         }, DeliveryMethod.ReliableOrdered);
 
@@ -901,7 +906,7 @@ public class ServerPacketHandler : PacketHandler {
                 actionID = p.actionID,
                 acc = false
             }, DeliveryMethod.ReliableOrdered);
-            Log.warn($"Player '{conn.username}' sent invalid slot index {p.idx} for inventory ID {p.invID}");
+            Log.warn($"Player '{conn.username}' sent invalid slot index {p.idx} for inventory ID {p.invID} (type={ctx.GetType()})");
 
             // resync entire inventory to fix desync
             conn.player.currentCtx.notifyAllSlotsChanged();
@@ -936,7 +941,7 @@ public class ServerPacketHandler : PacketHandler {
                 acc = false
             }, DeliveryMethod.ReliableOrdered);
 
-            Log.warn($"Inventory desync detected for player '{conn.username}' (invID={p.invID}, actionID={p.actionID}) - resyncing entire inventory");
+            Log.warn($"Inventory desync detected for player '{conn.username}' (invID={p.invID}, actionID={p.actionID}) - resyncing entire inventory. Expected slot {p.idx} to be {p.expectedSlot}, but was {slotAfter}");
 
             // desync detected - resync entire inventory to fix cascading desyncs
             // (client may have done multiple optimistic updates based on wrong state)
@@ -1164,7 +1169,7 @@ public class ServerPacketHandler : PacketHandler {
         inventorySlots.AddRange(player.inventory.accessories);
 
         conn.send(new InventorySyncPacket {
-            windowID = 0,
+            invID = Constants.INV_ID_PLAYER,
             items = inventorySlots.ToArray()
         }, DeliveryMethod.ReliableOrdered);
 

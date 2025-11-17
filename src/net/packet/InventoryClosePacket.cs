@@ -8,13 +8,13 @@
  * Also don't let shit remain in the cursor.
  */
 public class InventoryClosePacket : Packet {
-    public byte invID;
+    public int invID;
 
     public void write(PacketBuffer buf) {
-        buf.writeByte(invID);
+        buf.writeInt(invID);
     }
 
     public void read(PacketBuffer buf) {
-        invID = buf.readByte();
+        invID = buf.readInt();
     }
 }

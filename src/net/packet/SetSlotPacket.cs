@@ -8,18 +8,18 @@ namespace BlockGame.net.packet;
 //  We could probably get rid of all the explicit sending of this packet type from other places in the code, and just have the inventory system handle it automatically when changes occur....
 //
 public struct SetSlotPacket : Packet {
-    public byte invID;
+    public int invID;
     public ushort slotIndex;
     public ItemStack stack;
 
     public void write(PacketBuffer buf) {
-        buf.writeByte(invID);
+        buf.writeInt(invID);
         buf.writeUShort(slotIndex);
         buf.writeItemStack(stack);
     }
 
     public void read(PacketBuffer buf) {
-        invID = buf.readByte();
+        invID = buf.readInt();
         slotIndex = buf.readUShort();
         stack = buf.readItemStack();
     }

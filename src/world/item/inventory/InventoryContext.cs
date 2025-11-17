@@ -18,12 +18,13 @@ public abstract class InventoryContext {
 
     // server-side: track viewers for broadcasting changes
     private List<ServerConnection>? viewers;
-    private byte invID;
+
+    private int invID;
 
     public List<ItemSlot> getSlots() => slots;
 
     /** server-side: add a viewer to this context */
-    public void addViewer(ServerConnection conn, byte inventoryID) {
+    public void addViewer(ServerConnection conn, int inventoryID) {
         viewers ??= [];
         if (!viewers.Contains(conn)) {
             viewers.Add(conn);

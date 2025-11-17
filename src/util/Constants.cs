@@ -44,13 +44,14 @@ public static class Constants {
     public const double flyModeDelay = 0.4;
 
     // Networking
-    public const int netVersion = 3;
+    public const int netVersion = 4;
     public const string connectionKey = "BlockGame";
 
     // Inventory
-    public const byte INV_ID_CURSOR = 255;  // special invID for cursor
-    public const byte INV_ID_CREATIVE = 254; // creative mode inventory (client-side UI, server validates)
-    public const byte INV_ID_PLAYER = 0;    // player inventory
+    // note changed these from 255/254 to -1/-2 because the whole system was fucked, it was sending TYPES (byte) instead of INT IDs (sequential and different for each inv opened)
+    public const int INV_ID_CURSOR = -3;  // special invID for cursor
+    public const int INV_ID_CREATIVE = -2; // creative mode inventory (client-side UI, server validates)
+    public const int INV_ID_PLAYER = -1;    // player inventory
     
     #if DEBUG
     public static string VERSION => _ver + " DEBUG";

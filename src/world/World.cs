@@ -201,7 +201,7 @@ public partial class World : IDisposable {
                     player.gameMode = gmStr == "survival" ? GameMode.survival : GameMode.creative;
                     player.inventoryCtx = player.gameMode == GameMode.survival
                         ? new SurvivalInventoryContext(player.inventory)
-                        : new CreativeInventoryContext(40);
+                        : new CreativeInventoryContext(player.inventory, 40);
 
                     player.currentCtx = player.inventoryCtx;
 

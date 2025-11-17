@@ -32,10 +32,14 @@ public abstract class InventoryMenu : Menu {
         base.deactivate();
 
         // drop cursor items when closing inventory to prevent voiding
+        // (only in singleplayer - server handles it in multiplayer)
+        // it's guarded in dropItemStack but BUG AVOIDANCE
         var player = Game.world?.player;
         if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            player.dropItemStack(player.inventory.cursor, withVelocity: true);
-            player.inventory.cursor = ItemStack.EMPTY;
+            if (!Net.mode.isMPC()) {
+                player.dropItemStack(player.inventory.cursor, withVelocity: true);
+                player.inventory.cursor = ItemStack.EMPTY;
+            }
         }
     }
 
@@ -129,7 +133,7 @@ public abstract class InventoryMenu : Menu {
         // send to server if multiplayer
         if (Net.mode.isMPC()) {
             ClientConnection.instance.send(new InventorySlotClickPacket {
-                invID = (byte)player.currentInventoryID,
+                invID = player.currentInventoryID,
                 idx = (ushort)slotIdx,
                 button = (byte)(button == MouseButton.Left ? 0 : 1),
                 actionID = ClientConnection.instance.nextActionID++,
@@ -145,20 +149,21 @@ public abstract class InventoryMenu : Menu {
         // close inventory on inventory key
         if (key is Key.E or Key.Escape) {
 
-            // close context
             var player = Game.player;
-            player.currentCtx = player.inventoryCtx;
 
-            // clear cursor todo refund somewhere?
-            player.inventory.cursor = ItemStack.EMPTY;
-
-            // if mp, send packet to close on server
+            // if mp, send packet to close on server BEFORE resetting state
             if (Net.mode.isMPC()) {
                 ClientConnection.instance.send(new InventoryClosePacket {
-                    invID = (byte)player.currentInventoryID
+                    invID = player.currentInventoryID
                 }, LiteNetLib.DeliveryMethod.ReliableOrdered);
             }
 
+            // close context - reset to player inventory
+            player.currentInventoryID = -1;
+            player.currentCtx = player.inventoryCtx;
+
+            // don't clear the cursor here - server handles it and sends SetSlotPacket back
+            // (clearing here causes a race condition with server-side drop i think)
 
             Game.instance.executeOnMainThread(() => {
                 ((GameScreen)screen).backToGame();

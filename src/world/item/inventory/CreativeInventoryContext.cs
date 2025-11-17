@@ -1,4 +1,5 @@
 using BlockGame.main;
+using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.block;
@@ -11,18 +12,24 @@ namespace BlockGame.world.item.inventory;
  * Uses CreativeSlots for the item grid and regular slots for the player hotbar.
  */
 public class CreativeInventoryContext : InventoryContext {
+    private readonly PlayerInventory playerInv;
+
     private readonly List<ItemStack> allItems;
     private int currentPage = 0;
     private readonly int itemsPerPage;
 
     public int totalPages;
 
-    public CreativeInventoryContext(int itemsPerPage) {
+    public CreativeInventoryContext(PlayerInventory playerInv, int itemsPerPage) {
+        this.playerInv = playerInv;
         this.itemsPerPage = itemsPerPage;
         this.allItems = [];
 
         collectAllItems();
         calculatePages();
+
+
+        setupSlots(CreativeInventoryMenu.rows, CreativeInventoryMenu.cols, CreativeInventoryMenu.invOffsetX, CreativeInventoryMenu.invOffsetY);
     }
 
     private void collectAllItems() {
@@ -103,9 +110,8 @@ public class CreativeInventoryContext : InventoryContext {
         }
 
         // add player hotbar slots (first 10 slots only!)
-        var player = Game.player;
         for (int i = 0; i < 10; i++) {
-            var hotbarSlot = new ItemSlot(player.inventory, i,
+            var hotbarSlot = new ItemSlot(playerInv, i,
                 invOffsetX + i * ItemSlot.SLOTSIZE,
                 invOffsetY + rows * ItemSlot.SLOTSIZE + 2); // 2 pixel padding
             slots.Add(hotbarSlot);

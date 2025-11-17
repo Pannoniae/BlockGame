@@ -196,17 +196,19 @@ public class CraftingResultSlot : ItemSlot {
         var takeAmount = Math.Min(count, result.quantity);
         var taken = new ItemStack(result.getItem(), takeAmount, result.metadata);
 
-        // find the matching recipe and consume ingredients
-        var recipe = Recipe.findMatch(craftingGrid);
-        if (recipe != null) {
+        // use cached recipe from updateResult() to prevent double lookup
+        var recipe = craftingGrid.lastMatchedRecipe;
+        if (recipe != null && recipe.matches(craftingGrid)) {
+            // recipe still valid - consume ingredients
             recipe.consumeIngredients(craftingGrid);
             craftingGrid.updateResult(); // recalculate to see if we can craft again
             craftingGrid.notifyChanged(); // notify parent context for multiplayer sync
         }
         else {
-            // shouldn't happen, but clear grid as fallback
+            // recipe no longer matches (grid changed or desync) - clear grid and don't give items
             craftingGrid.clearAll();
             craftingGrid.notifyChanged();
+            return ItemStack.EMPTY;  // prevent item duping by returning nothing
         }
 
         return taken;

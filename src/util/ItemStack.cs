@@ -59,7 +59,7 @@ public class ItemStack : Persistent {
     }
 
     public bool same(ItemStack stack) {
-        return stack != EMPTY && stack.id == id && stack.metadata == metadata;
+        return stack.id == id && stack.metadata == metadata;
     }
 
     public void write(NBTCompound data) {
@@ -114,6 +114,11 @@ public class ItemStack : Persistent {
             return EMPTY;
         }
         return new ItemStack(getItem(), quantity, d);
+    }
+
+    public override string ToString() {
+        var item = getItem();
+        return $"ItemStack{{item={item?.GetType().Name ?? "null"}(id={id}), qty={quantity}, meta={metadata}}}";
     }
 }
 

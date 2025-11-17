@@ -429,6 +429,7 @@ public class GameServer : INetEventListener {
     /**
      * helper to open an inventory for a player (server-side)
      * eliminates boilerplate from block entity onUse handlers
+     * TODO I switched everything to int IDs to not have to worry about overflows and stuff ever, but this should be cleaned up later
      */
     public static bool openInventory(
         ServerPlayer player,
@@ -456,7 +457,7 @@ public class GameServer : INetEventListener {
 
         // send open packet
         conn.send(new InventoryOpenPacket {
-            invID = (byte)player.currentInventoryID,
+            invID = player.currentInventoryID,
             invType = invType,
             title = title,
             slotCount = (byte)slots.Length,
@@ -465,15 +466,24 @@ public class GameServer : INetEventListener {
 
         // send inventory sync
         conn.send(new InventorySyncPacket {
-            windowID = (byte)player.currentInventoryID,
+            invID = player.currentInventoryID,
             items = slots
+        }, DeliveryMethod.ReliableOrdered);
+
+        // send cursor state (the client needs to know what's in cursor when switching inventories, desync alert!!)
+        conn.send(new SetSlotPacket {
+            invID = Constants.INV_ID_CURSOR,
+            slotIndex = 0,
+            stack = player.inventory.cursor
         }, DeliveryMethod.ReliableOrdered);
 
         // send any additional packets (e.g., FurnaceSyncPacket)
         additionalPackets?.Invoke(conn);
 
         // add player as viewer for broadcasting changes
-        ctx.addViewer(conn, invType);
+        // IMPORTANT: we pass currentInventoryID, not invType!
+        // invType is 0/1/2 (chest/crafting/furnace), but invID is the actual window ID and we keep fucking it up
+        ctx.addViewer(conn, player.currentInventoryID);
 
         return true;
     }
@@ -659,6 +669,8 @@ public class GameServer : INetEventListener {
 
             // close any open invs
             if (conn.player != null) {
+                // remove from viewer list before context reset
+                conn.player.currentCtx?.removeViewer(conn);
                 conn.player.currentInventoryID = -1;
                 conn.player.currentCtx = conn.player.inventoryCtx;
             }

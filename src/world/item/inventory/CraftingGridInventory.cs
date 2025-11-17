@@ -16,6 +16,9 @@ public class CraftingGridInventory : Inventory {
     public ItemStack result = ItemStack.EMPTY;
     public CraftingMatchStatus matchStatus = CraftingMatchStatus.EMPTY;
 
+    /** cached matched recipe (null if no match) */
+    public Recipe? lastMatchedRecipe = null;
+
     private readonly InventoryContext parentCtx;
 
     public readonly int rows;
@@ -111,6 +114,7 @@ public class CraftingGridInventory : Inventory {
         if (isEmpty()) {
             matchStatus = CraftingMatchStatus.EMPTY;
             result = ItemStack.EMPTY;
+            lastMatchedRecipe = null;
             return;
         }
 
@@ -119,6 +123,7 @@ public class CraftingGridInventory : Inventory {
         if (fullMatch != null) {
             matchStatus = CraftingMatchStatus.FULL_MATCH;
             result = fullMatch.getResult(this);
+            lastMatchedRecipe = fullMatch;  // for use in CraftingResultSlot.take()
             return;
         }
 
@@ -127,12 +132,14 @@ public class CraftingGridInventory : Inventory {
         if (shapeMatch != null) {
             matchStatus = CraftingMatchStatus.PARTIAL_MATCH;
             result = ItemStack.EMPTY;
+            lastMatchedRecipe = null;  // partial match = can't craft yet
             return;
         }
 
         // no match at all
         matchStatus = CraftingMatchStatus.NO_MATCH;
         result = ItemStack.EMPTY;
+        lastMatchedRecipe = null;
     }
 
     /** notify parent context that grid slots changed (for multiplayer sync) */

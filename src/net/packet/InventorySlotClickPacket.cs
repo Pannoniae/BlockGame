@@ -6,7 +6,7 @@ namespace BlockGame.net.packet;
  * Client does optimistic update locally, then sends expected result for server validation.
  */
 public struct InventorySlotClickPacket : Packet {
-    public byte invID;
+    public int invID;
     public ushort idx;
     public byte button;           // 0=left, 1=right, 2=middle
     public ushort actionID;       // transaction ID for ordering/desync detection
@@ -14,7 +14,7 @@ public struct InventorySlotClickPacket : Packet {
     public ItemStack expectedSlot; // what the clicked slot should contain after the operation
 
     public void write(PacketBuffer buf) {
-        buf.writeByte(invID);
+        buf.writeInt(invID);
         buf.writeUShort(idx);
         buf.writeByte(button);
         buf.writeUShort(actionID);
@@ -23,7 +23,7 @@ public struct InventorySlotClickPacket : Packet {
     }
 
     public void read(PacketBuffer buf) {
-        invID = buf.readByte();
+        invID = buf.readInt();
         idx = buf.readUShort();
         button = buf.readByte();
         actionID = buf.readUShort();

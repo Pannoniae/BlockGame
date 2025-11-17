@@ -499,6 +499,9 @@ public class ClientPacketHandler : PacketHandler {
             case InventoryOpenPacket p:
                 handleInventoryOpen(p);
                 break;
+            case InventoryClosePacket p:
+                handleInventoryClose(p);
+                break;
             case FurnaceSyncPacket p:
                 handleFurnaceSync(p);
                 break;
@@ -626,7 +629,7 @@ public class ClientPacketHandler : PacketHandler {
         if (p.invID == Constants.INV_ID_CURSOR) {
             // cursor update
             Game.player.inventory.cursor = p.stack;
-        } else if (p.invID == 0) {
+        } else if (p.invID == Constants.INV_ID_PLAYER) {
             // player inventory
             if (p.slotIndex < Game.player.inventory.size()) {
                 Game.player.inventory.setStack((int)p.slotIndex, p.stack);
@@ -639,6 +642,12 @@ public class ClientPacketHandler : PacketHandler {
                     var slot = slots[p.slotIndex];
                     if (slot.inventory != null) {
                         slot.inventory.setStack(slot.index, p.stack);
+
+                        // if this is a crafting grid slot, recalculate the result
+                        // todo this is a shit hack but works for now. Handle this in the context instead to autosync?
+                        if (slot.inventory is CraftingGridInventory grid) {
+                            grid.updateResult();
+                        }
                     }
                 }
             }
@@ -651,9 +660,9 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // full inventory sync from server (on login or inventory opening)
-        if (p.windowID == 0) {
+        if (p.invID == Constants.INV_ID_PLAYER) {
             // player inventory
-            // split array back into slots, armour, accessories
+            // split array back into slots, armour, accessories, and crafting grid (if survival)
             int idx = 0;
             for (int i = 0; i < Game.player.inventory.slots.Length && idx < p.items.Length; i++, idx++) {
                 Game.player.inventory.slots[i] = p.items[idx];
@@ -667,11 +676,20 @@ public class ClientPacketHandler : PacketHandler {
                 Game.player.inventory.accessories[i] = p.items[idx];
             }
 
+            // if survival mode, also sync crafting grid (2x2 = 4 slots)
+            if (Game.player.inventoryCtx is SurvivalInventoryContext survCtx) {
+                var grid = survCtx.getCraftingGrid();
+                for (int i = 0; i < grid.grid.Length && idx < p.items.Length; i++, idx++) {
+                    grid.grid[i] = p.items[idx];
+                }
+                grid.updateResult();
+            }
+
             Log.info("Received full inventory sync from server");
         }
         else {
             // inventory - sync to currentCtx
-            if (Game.player.currentCtx != null && p.windowID == Game.player.currentInventoryID) {
+            if (Game.player.currentCtx != null && p.invID == Game.player.currentInventoryID) {
                 // currentCtx has references to the block entity's inventory
                 // the InventorySyncPacket contains just the inventory slots
                 // we need to update the underlying inventory that currentCtx points to
@@ -694,7 +712,7 @@ public class ClientPacketHandler : PacketHandler {
                     grid.updateResult();
                 }
 
-                Log.info($"Received invsync (invID={p.windowID})");
+                Log.info($"Received invsync (invID={p.invID})");
             }
         }
     }
@@ -711,13 +729,23 @@ public class ClientPacketHandler : PacketHandler {
             return;
         }
 
+        // close any open menu before switching contexts
+        // (prevents fuckup changing game modes with the playing somehow hacing chest/crafting table open??? you cant write in a chatbox like that but someone else might switch you like the console)
+        if (Screen.GAME_SCREEN.currentMenu != null) {
+            Screen.GAME_SCREEN.backToGame();
+        }
+
+        // close context - reset to player inventory
+        Game.player.currentInventoryID = -1;
+        Game.player.currentCtx = Game.player.inventoryCtx;
+
         // update local player's game mode
         var id = p.gamemode;
         Game.player.gameMode = GameMode.fromID(id);
 
         // update both inventoryCtx and currentCtx (SurvivalInventoryMenu reads from inventoryCtx!)
         if (Game.player.gameMode == GameMode.creative) {
-            Game.player.inventoryCtx = new CreativeInventoryContext(40);
+            Game.player.inventoryCtx = new CreativeInventoryContext(Game.player.inventory, 40);
             Game.player.currentCtx = Game.player.inventoryCtx;
         }
         else {
@@ -809,6 +837,28 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         Log.info($"Opened inventory type={p.invType} title='{p.title}' at {p.position}");
+    }
+
+    public void handleInventoryClose(InventoryClosePacket p) {
+        if (Game.player == null) {
+            return;
+        }
+
+        // clear cursor
+        Game.player.inventory.cursor = ItemStack.EMPTY;
+
+        // close current inventory
+        Game.player.currentInventoryID = -1;
+        Game.player.currentCtx = Game.player.inventoryCtx;
+
+        // close menu on main thread if it's open
+        Game.instance.executeOnMainThread(() => {
+            if (Screen.GAME_SCREEN.currentMenu != null) {
+                Screen.GAME_SCREEN.backToGame();
+            }
+        });
+
+        Log.info("Closed inventory");
     }
 
     public void handleFurnaceSync(FurnaceSyncPacket p) {

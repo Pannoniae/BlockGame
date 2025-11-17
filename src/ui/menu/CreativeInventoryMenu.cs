@@ -68,7 +68,6 @@ public class CreativeInventoryMenu : InventoryMenu {
     }
 
     public void setup() {
-        creativeCtx.setupSlots(rows, cols, invOffsetX, invOffsetY);
         slots = creativeCtx.getSlots();
     }
 
