@@ -34,6 +34,7 @@ public class Textures {
     public readonly BTexture2D pig;
     public readonly BTexture2D zombie;
     public readonly BTexture2D eye;
+    public readonly BTexture2D mummy;
 
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
@@ -60,6 +61,7 @@ public class Textures {
         pig = get("textures/entity/pig.png");
         zombie = get("textures/entity/zombie.png");
         eye = get("textures/entity/eye.png");
+        mummy = get("textures/entity/mummy.png");
 
 
         reloadAll();

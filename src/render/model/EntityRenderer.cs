@@ -50,5 +50,6 @@ public static class EntityRenderers {
         register(Entities.PLAYER, new PlayerRenderer());
         register(Entities.ITEM_ENTITY, new ItemEntityRenderer());
         register(Entities.FALLING_BLOCK, new FallingBlockEntityRenderer());
+        register(Entities.MUMMY, new MobRenderer<Mummy>(new MummyModel()));
     }
 }

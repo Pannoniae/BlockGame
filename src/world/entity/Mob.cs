@@ -68,7 +68,7 @@ public class Mob(World world, string type) : Entity(world, type) {
 
     protected virtual bool hostile => false;
     protected virtual bool burnInSunlight => false;
-    protected const int sunlightThreshold = 12;
+    protected const int sunlightThreshold = 13;
     protected virtual double eyeHeight => 1.6;
 
     protected virtual double reach => 3;

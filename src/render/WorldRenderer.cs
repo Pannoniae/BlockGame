@@ -1213,7 +1213,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         // render fire every 0.5 blocks for denser overlapping effect, but each quad is 1 actually block tall
         const float step = 0.5f;
-        const float fireHeight = 1.0f;
+        const float fireHeight = 1f;
         int layers = (int)Math.Ceiling(h / step);
 
         idt.begin(PrimitiveType.Quads);
@@ -1223,7 +1223,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         for (int i = 0; i < layers; i++) {
             float y0 = y + i * step;
-            float y1 = float.Min(y0 + fireHeight, y + h);
+            float y1 = float.Min(y0 + fireHeight, y + h*0.9f);
             float hh = y1 - y0;
 
             // adjust for partial heights
