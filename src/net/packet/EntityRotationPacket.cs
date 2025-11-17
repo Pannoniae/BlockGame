@@ -8,6 +8,8 @@ public struct EntityRotationPacket : Packet {
     public Vector3 rotation;
     public Vector3 bodyRotation;
 
+    public byte channel => 1;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeVec3(rotation);

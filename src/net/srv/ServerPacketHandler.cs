@@ -187,6 +187,15 @@ public class ServerPacketHandler : PacketHandler {
                 "creative" or "c" or "1" => GameMode.creative,
                 _ => GameMode.survival
             };
+
+            // set correct inventory context to match gamemode
+            if (player.gameMode == GameMode.creative) {
+                player.inventoryCtx = new CreativeInventoryContext(player.inventory, 40);
+            } else {
+                player.inventoryCtx = new SurvivalInventoryContext(player.inventory);
+            }
+            player.currentCtx = player.inventoryCtx;
+
             Log.info($"Created new player data for '{conn.username}' at spawn {spawnPos}");
         }
         else {
@@ -195,6 +204,19 @@ public class ServerPacketHandler : PacketHandler {
             // fix up players with no game mode set
             if (player.gameMode == null!) {
                 player.gameMode = GameMode.survival;
+            }
+
+            // ensure inventoryCtx matches gamemode (fix for old saves or corrupted data HOPEFULLY)
+            bool needsCtxFix = (player.gameMode == GameMode.creative && player.inventoryCtx is not CreativeInventoryContext)
+                            || (player.gameMode == GameMode.survival && player.inventoryCtx is not SurvivalInventoryContext);
+
+            if (needsCtxFix) {
+                if (player.gameMode == GameMode.creative) {
+                    player.inventoryCtx = new CreativeInventoryContext(player.inventory, 40);
+                } else {
+                    player.inventoryCtx = new SurvivalInventoryContext(player.inventory);
+                }
+                player.currentCtx = player.inventoryCtx;
             }
         }
 

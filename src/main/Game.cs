@@ -534,6 +534,11 @@ public partial class Game {
                                   vendor.Contains("HD Graphics", StringComparison.OrdinalIgnoreCase));
         
         Log.info($"(Intel integrated: {isIntelIntegratedCard})");
+
+        isIntegratedCard = isAMDIntegratedCard || isIntelIntegratedCard;
+
+        Log.info($"(Integrated GPU: {isIntegratedCard})");
+
         
         // check for NV shader buffer load support
         hasSBL = GL.TryGetExtension(out NVShaderBufferLoad nvShaderBufferLoad);
@@ -597,6 +602,18 @@ public partial class Game {
         nvdt = nvDrawTexture;
         Log.info($"NV_draw_texture supported: {hasNVDT}");
         //hasNVDT = false;
+
+
+        // if integrated, fall back to simple GL!
+        if (isIntegratedCard) {
+            Log.info("Disabling advanced extensions on integrated GPUs! (perf)");
+            //hasInstancedUBO = false;
+            //hasSBL = false;
+            //hasVBUM = false;
+            //hasUBUM = false;
+            //hasCMDL = false;
+            //hasBindlessMDI = false;
+        }
         
         // print all valid anti-aliasing modes
         printAntiAliasingModes();

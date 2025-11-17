@@ -8,6 +8,8 @@ public struct EntityPositionPacket : Packet {
     public Vector3D position;
     public bool onGround;
 
+    public byte channel => 1;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeVec3D(position);

@@ -56,6 +56,8 @@ public class Menu {
     public static CreateWorldMenu CREATE_WORLD;
     public static ConfirmDialog CONFIRM_DIALOG;
     public static DisconnectedMenu DISCONNECTED_MENU;
+    public static LoginMenu LOGIN_MENU;
+    public static RegisterMenu REGISTER_MENU;
 
 
     /// <summary>
@@ -92,6 +94,8 @@ public class Menu {
         CREATE_WORLD = new CreateWorldMenu();
         CONFIRM_DIALOG = new ConfirmDialog();
         DISCONNECTED_MENU = new DisconnectedMenu();
+        LOGIN_MENU = new LoginMenu();
+        REGISTER_MENU = new RegisterMenu();
     }
 
     // there is no activate/deactivate here to manage elements here because multiple menus can exist (there no generic system for that; it's on a case-by-case basis)

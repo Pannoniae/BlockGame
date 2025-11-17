@@ -7,6 +7,8 @@ public struct EntityVelocityPacket : Packet {
     public int entityID;
     public Vector3D velocity;
 
+    public byte channel => 1;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeVec3D(velocity);

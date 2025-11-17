@@ -518,7 +518,7 @@ public class Player : Mob, CommandSource {
             breakTime = 0;
         }
 
-        fastMode = Game.inputs.ctrl.down();
+        fastMode = Game.inputs.ctrl.down() && Game.devMode;
 
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
 

@@ -130,11 +130,11 @@ public class GameScreen : Screen {
         CHAT.tick++;
 
         // time control for day/night cycle testing
-        if (Game.keyboard.IsKeyPressed(Key.KeypadAdd)) {
+        if (Game.keyboard.IsKeyPressed(Key.KeypadAdd) && Game.devMode) {
             // speed up time
             targetTimeAcceleration = Math.Min(targetTimeAcceleration * 2.0f, 32.0f);
         }
-        else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract)) {
+        else if (Game.keyboard.IsKeyPressed(Key.KeypadSubtract) && Game.devMode) {
             // slow down time
             targetTimeAcceleration = Math.Max(targetTimeAcceleration / 2.0f, 0.25f);
         }
@@ -172,7 +172,7 @@ public class GameScreen : Screen {
                 SkillIssueException.throwNew("Alt + F7 pressed for 5 seconds, SKILL ISSUE BITCH!"));
         }
 
-        // check for F3 release behavior
+        // check for F3 release behaviour
         if (f3Press != -1 && !Game.keyboard.IsKeyPressed(Key.F3)) {
             // F3 was released - check if it was a short press
             var pressDuration = Game.permanentStopwatch.ElapsedMilliseconds - f3Press;
@@ -495,20 +495,20 @@ public class GameScreen : Screen {
             }
 
             // time control for day/night cycle testing
-            case Key.KeypadMultiply: {
+            case Key.KeypadMultiply when Game.devMode: {
                 // reset time speed
                 targetTimeAcceleration = 1.0f;
                 Log.info("Time acceleration: 1x (normal)");
                 break;
             }
-            case Key.KeypadDivide: {
+            case Key.KeypadDivide when Game.devMode: {
                 // pause time
                 targetTimeAcceleration = 0.0f;
                 Log.info("Time paused");
                 break;
             }
 
-            case Key.B when keyboard.IsKeyPressed(Key.F3): {
+            case Key.B when keyboard.IsKeyPressed(Key.F3) && Game.devMode: {
                 // cycle metadata of targeted block
                 cycleBlockMetadata();
                 break;
@@ -526,7 +526,7 @@ public class GameScreen : Screen {
                 Log.info("Entity AABBs & pathfinding: " + (entityAABBs ? "ON" : "OFF"));
                 break;
             }
-            case Key.R when keyboard.IsKeyPressed(Key.F3): {
+            case Key.R when keyboard.IsKeyPressed(Key.F3) && Game.devMode: {
                 // regenerate all chunks (worldgen testing!)
                 regenAllChunks();
                 break;

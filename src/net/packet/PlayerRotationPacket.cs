@@ -6,6 +6,8 @@ namespace BlockGame.net.packet;
 public struct PlayerRotationPacket : Packet {
     public Vector3 rotation;
 
+    public byte channel => 1;
+
     public void write(PacketBuffer buf) {
         buf.writeVec3(rotation);
     }

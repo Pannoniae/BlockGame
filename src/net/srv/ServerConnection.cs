@@ -48,9 +48,9 @@ public class ServerConnection {
         // write packet data
         packet.write(buf);
 
-        // send to peer
+        // send to peer with packet's channel
         var bytes = PacketWriter.getBytesUnsafe();
-        peer.Send(bytes, method);
+        peer.Send(bytes, packet.channel, method);
 
         // track metrics
         metrics.bytesSent += bytes.Length;

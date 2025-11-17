@@ -31,13 +31,16 @@ public class ClientPacketHandler : PacketHandler {
     public void handleAuthRequired(AuthRequiredPacket p) {
         Log.info($"Auth required, needsRegister={p.needsRegister}");
 
-        // TODO: show login/register screen
-        // for now, just send a test password
-        if (ClientConnection.instance != null) {
-            ClientConnection.instance.send(new AuthPacket {
-                password = "test123"
-            }, DeliveryMethod.ReliableOrdered);
-        }
+        // route to appropriate auth menu
+        Game.instance.executeOnMainThread(() => {
+            if (p.needsRegister) {
+                Menu.REGISTER_MENU.username = ClientConnection.instance?.username ?? "Player";
+                Game.instance.switchTo(Menu.REGISTER_MENU);
+            } else {
+                Menu.LOGIN_MENU.username = ClientConnection.instance?.username ?? "Player";
+                Game.instance.switchTo(Menu.LOGIN_MENU);
+            }
+        });
     }
 
     public void handleLoginSuccess(LoginSuccessPacket p) {
@@ -90,12 +93,20 @@ public class ClientPacketHandler : PacketHandler {
     public void handleLoginFailed(LoginFailedPacket p) {
         Log.error($"Login failed: {p.reason}");
 
-        // disconnect and show error menu
-        ClientConnection.instance?.disconnect();
+        // if we're on an auth menu, show inline error instead of just dcing immediately
         Game.instance.executeOnMainThread(() => {
-            Game.disconnectAndReturnToMenu();
-            Menu.DISCONNECTED_MENU.show(p.reason, kicked: false);
-            Game.instance.switchTo(Menu.DISCONNECTED_MENU);
+            var currentMenu = Game.instance.currentScreen.currentMenu;
+            if (currentMenu == Menu.LOGIN_MENU) {
+                Menu.LOGIN_MENU.showError(p.reason);
+            } else if (currentMenu == Menu.REGISTER_MENU) {
+                Menu.REGISTER_MENU.showError(p.reason);
+            } else {
+                // not on auth menu? disconnect and show error
+                ClientConnection.instance?.disconnect();
+                Game.disconnectAndReturnToMenu();
+                Menu.DISCONNECTED_MENU.show(p.reason, kicked: false);
+                Game.instance.switchTo(Menu.DISCONNECTED_MENU);
+            }
         });
     }
 

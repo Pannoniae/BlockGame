@@ -10,6 +10,8 @@ public struct EntityPositionRotationPacket : Packet {
     public Vector3 rotation;
     public bool onGround;
 
+    public byte channel => 1;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeVec3D(position);
