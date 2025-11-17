@@ -668,12 +668,7 @@ public class ClientPacketHandler : PacketHandler {
                     var slot = slots[p.slotIndex];
                     if (slot.inventory != null) {
                         slot.inventory.setStack(slot.index, p.stack);
-
-                        // if this is a crafting grid slot, recalculate the result
-                        // todo this is a shit hack but works for now. Handle this in the context instead to autosync?
-                        if (slot.inventory is CraftingGridInventory grid) {
-                            grid.updateResult();
-                        }
+                        
                     }
                 }
             }

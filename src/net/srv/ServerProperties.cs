@@ -52,7 +52,7 @@ public class ServerProperties {
         props.addString("levelName", "mplevel");
         props.addInt("renderDistance", 8);
         props.addByte("devMode", 0);
-        props.addString("gamemode", "survival");
+        props.addString("gamemode", "creative");
     }
 
     public string getString(string key, string defaultValue = "") {

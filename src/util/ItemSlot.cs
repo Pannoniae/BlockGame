@@ -202,12 +202,10 @@ public class CraftingResultSlot : ItemSlot {
             // recipe still valid - consume ingredients
             recipe.consumeIngredients(craftingGrid);
             craftingGrid.updateResult(); // recalculate to see if we can craft again
-            craftingGrid.notifyChanged(); // notify parent context for multiplayer sync
         }
         else {
             // recipe no longer matches (grid changed or desync) - clear grid and don't give items
             craftingGrid.clearAll();
-            craftingGrid.notifyChanged();
             return ItemStack.EMPTY;  // prevent item duping by returning nothing
         }
 

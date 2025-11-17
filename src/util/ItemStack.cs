@@ -118,7 +118,8 @@ public class ItemStack : Persistent {
 
     public override string ToString() {
         var item = getItem();
-        return $"ItemStack{{item={item?.GetType().Name ?? "null"}(id={id}), qty={quantity}, meta={metadata}}}";
+        var registryName = item != null ? Registry.ITEMS.getName(item.id) : null;
+        return $"ItemStack{{item={registryName ?? "null"}(id={id}), qty={quantity}, meta={metadata}}}";
     }
 }
 
