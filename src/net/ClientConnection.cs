@@ -52,6 +52,7 @@ public class ClientConnection : INetEventListener {
         instance = this;
         handler = new ClientPacketHandler(this);
         netManager = new NetManager(this);
+        netManager.ChannelsCount = 4;  // 0-3 for different packet priorities
         netManager.Start();
         Log.info("GameClient initialized");
     }

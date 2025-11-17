@@ -90,6 +90,7 @@ public class GameServer : INetEventListener {
 
         try {
             netManager = new NetManager(this);
+            netManager.ChannelsCount = 4;  // 0-3 for different packet priorities
             netManager.Start(ip, ip6, port);
         }
         catch (Exception e) {

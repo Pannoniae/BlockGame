@@ -813,7 +813,7 @@ public readonly struct Command {
         }));
 
         commands.Add(new Command("netstats", "Shows network statistics", NetMode.BOTH, (source, args) => {
-            if (!source.isPlayer()) {
+            if (!source.isPlayer() && Net.mode.isDed()) {
                 // server side - show all connected players' stats
                 if (GameServer.instance.connections.Count == 0) {
                     source.sendMessage("No players connected");
