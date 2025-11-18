@@ -1,4 +1,5 @@
-﻿using BlockGame.util;
+﻿using BlockGame.main;
+using BlockGame.util;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -238,12 +239,18 @@ public partial class Entity {
         //if (hasZCollision) velocity.Z = 0;
 
         // is player on ground? check slightly below
-        var groundCheck = calcAABB(new Vector3D(position.X, position.Y - EPSILON_GROUND_CHECK, position.Z));
-        onGround = false;
-        foreach (var blockAABB in collisions) {
-            if (AABB.isCollision(blockAABB, groundCheck)) {
-                onGround = true;
-                flyMode = false;
+        // on multiplayer clients, trust server's onGround for remote entities (not local player)
+        if (Net.mode.isMPC() && this is not ClientPlayer) {
+            // skip recalculation, use server's synced value
+        }
+        else {
+            var groundCheck = calcAABB(new Vector3D(position.X, position.Y - EPSILON_GROUND_CHECK, position.Z));
+            onGround = false;
+            foreach (var blockAABB in collisions) {
+                if (AABB.isCollision(blockAABB, groundCheck)) {
+                    onGround = true;
+                    flyMode = false;
+                }
             }
         }
     }

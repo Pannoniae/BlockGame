@@ -572,7 +572,7 @@ public partial class Game {
         // if AMD integrated, disable it too because it doesn't work
         if (isIntelIntegratedCard) {
             Log.info("Disabling gl_BaseInstance UBO rendering on integrated GPUs!");
-            hasInstancedUBO = false;
+            //hasInstancedUBO = false;
         }
         
         GL.TryGetExtension(out extbu);

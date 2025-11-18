@@ -49,6 +49,7 @@ public class Settings {
     public bool affineMapping = false; // SO LIMINAL UWU
     public bool vertexJitter = false; // SO LIMINAL UWU
     public int cloudMode = 1; // 0=off, 1=simple, 2=fancy, 3=smooth fancy, 4=hypercube
+    public bool opaqueWater = false;
     /**
      * Don't use this! Use getActualRendererMode() instead.
      */
@@ -179,6 +180,7 @@ public class Settings {
         tag.addByte("vertexJitter", (byte)(vertexJitter ? 1 : 0));
         tag.addInt("cloudMode", cloudMode);
         tag.addByte("viewBobbing", (byte)(viewBobbing ? 1 : 0));
+        tag.addByte("opaqueWater", (byte)(opaqueWater ? 1 : 0));
 
         tag.addInt("rendererMode", (int)rendererMode);
         tag.addInt("mouseInv", mouseInv);
@@ -232,6 +234,9 @@ public class Settings {
             if (tag.has("viewBobbing")) {
                 viewBobbing = tag.getByte("viewBobbing") != 0;
             }
+
+            // if first load and igpu, true
+            opaqueWater = tag.getByte("opaqueWater", 0) != 0 || (!tag.has("opaqueWater") && Game.isIntegratedCard);
 
             if (tag.has("rendererMode")) {
                 rendererMode = (RendererMode)tag.getInt("rendererMode");

@@ -839,6 +839,11 @@ public class GameServer : INetEventListener {
     /** sync entity state changes (sneaking, on fire, flying, etc.) */
     private void syncEntityStates() {
         foreach (var entity in world.entities) {
+            // skip removed entities (e.g. FallingBlockEntity that just landed and removed itself)
+            if (!entity.active) {
+                continue;
+            }
+
             // sync state from entity properties to EntityState
             entity.syncState();
 

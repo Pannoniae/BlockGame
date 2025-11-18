@@ -72,7 +72,7 @@ void main() {
     // Alpha stays unchanged for A2C
 #else
     // Traditional alpha test mode
-    if (colour.a < 1.0) {
+    if (colour.a <= 0.0) {
         discard;
     }
     // make it always opaque (for mipmapping)

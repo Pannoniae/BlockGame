@@ -328,6 +328,21 @@ public class VideoSettingsMenu : Menu {
         settingElements.Add(clouds);
         addElement(clouds);
 
+        // add opaque water mode
+        var opaqueWater = new ToggleButton(this, "opaqueWater", false, settings.opaqueWater ? 1 : 0,
+            "Opaque Water: OFF", "Opaque Water: ON");
+        opaqueWater.topCentre();
+        opaqueWater.clicked += _ => {
+            settings.opaqueWater = opaqueWater.getIndex() == 1;
+            // refresh the WHOLE renderer for this one
+            Game.renderer?.reloadRenderer(settings.rendererMode, settings.rendererMode);
+            remeshIfRequired(settings.renderDistance);
+        };
+        opaqueWater.tooltip =
+            "Renders water as an opaque block instead of transparent.\nImproves performance on integrated GPUs.";
+        settingElements.Add(opaqueWater);
+        addElement(opaqueWater);
+
         // build renderer options based on hardware support
         var rendererOptions = new List<string> { "Renderer: Auto", "Renderer: Plain" };
         var rendererModeValues = new List<RendererMode> { RendererMode.Auto, RendererMode.Plain };

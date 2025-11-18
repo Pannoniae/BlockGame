@@ -65,6 +65,7 @@ public abstract class InventoryMenu : Menu {
     }
 
     public override void draw() {
+
         base.draw();
         var guiBoundsPos = new RectangleF(guiBounds.X, guiBounds.Y, getWidth(), getHeight());
         Game.gui.drawUIImmediate(invTex, guiBoundsPos, new Rectangle(0, 0, getWidth(), getHeight()));

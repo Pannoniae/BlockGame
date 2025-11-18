@@ -693,13 +693,24 @@ public class GameScreen : Screen {
     }
 
     public override void draw() {
+        var gui = Game.gui;
+
         if (!currentMenu.isModal() && currentMenu != INGAME_MENU) {
             INGAME_MENU.draw();
         }
 
+        // note stupid hack: draw overlay when inventorymenu. This is because inventorymenu is not modal so too much effort, but the overlay needs to be drawn FIRST.
+
+        // draw background (just a fullscreen grey overlay)
+        if (currentMenu is InventoryMenu) {
+            gui.draw(gui.colourTexture, new RectangleF(0, 0, Game.width, Game.height), null, new Color(0, 0, 0, 150));
+            // break the batch
+            gui.tb.End();
+            gui.tb.Begin();
+        }
+
         base.draw();
 
-        var gui = Game.gui;
 
         // clear depth buffer so the gui can use it properly
         //Game.GL.Clear(ClearBufferMask.DepthBufferBit);

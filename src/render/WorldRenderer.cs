@@ -36,6 +36,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     private bool currentAffineMapping;
     private bool currentVertexJitter;
 
+    public bool opaqueWater = false;
+
     public Silk.NET.OpenGL.Legacy.GL GL;
 
     public Shader worldShader = null!;
@@ -416,6 +418,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         Game.graphics.genFatQuadIndices();
 
+        // see if we should enable opaque water, currently on igpu
+        opaqueWater = Settings.instance.opaqueWater;
 
         // initialize chunk UBO (16 bytes: vec3 + padding)
         //chunkUBO = new UniformBuffer(GL, 256, 0);
@@ -887,6 +891,10 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         }
 
         //goto skip;
+        // if opaque water is enabled, skip the whole transclucent pass for water
+        if (opaqueWater) {
+            goto skip;
+        }
 
         // TRANSLUCENT DEPTH PRE-PASS
 
@@ -964,6 +972,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         GL.Disable(EnableCap.CullFace);
 
         // TRANSLUCENT PASS
+
+        translucent: ;
 
         waterShader.use();
         waterShader.setUniform(wateruMVP, ref viewProj);

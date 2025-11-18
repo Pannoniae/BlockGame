@@ -6,9 +6,7 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
 
-/** Animated falling block entity (sand, gravel, etc.)
- *  TODO this kinda desyncs in multiplayer, also sync velocity in the EntityTracker maybe? or not sure
- */
+/** Animated falling block entity (sand, gravel, etc.) */
 public class FallingBlockEntity : Entity {
     const double size = 1 - EPSILON_GROUND_CHECK;
 
@@ -61,14 +59,27 @@ public class FallingBlockEntity : Entity {
     }
 
     private void landAndPlace() {
+        // defensive shitcoding: validate position before placing
+        if (double.IsNaN(position.Y) || double.IsInfinity(position.Y) ||
+            position.Y < -64 || position.Y > 256) {
+            remove();
+            return;
+        }
+
         var landPos = position.toBlockPos();
 
-        // check if can place block at landing position
-        var blockBelow = world.getBlock(landPos);
+        // check block at landing position
+        var blockAtPos = world.getBlock(landPos);
 
-        // if there's a solid block below, place on top of it
-        if (Block.collision[blockBelow]) {
+        // if there's a solid block at landing pos, place on top of it
+        if (Block.collision[blockAtPos]) {
             landPos.Y += 1;
+        }
+
+        // bounds check after Y adjustment
+        if (landPos.Y is < 0 or >= World.WORLDHEIGHT) {
+            remove();
+            return;
         }
 
         remove();

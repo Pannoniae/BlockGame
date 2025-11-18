@@ -28,9 +28,14 @@ public class Leaves : Block {
     }
 
     public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        // 1 in 20 chance to drop apple
-        if (Game.random.Next(20) == 0) {
+        // oak: 1 in 20 chance to drop apple
+        if (id == LEAVES.id && Game.random.Next(20) == 0) {
             return (Item.APPLE, 0, 1);
+        }
+
+        // maple leaves: 1 in 16 chance to drop maple syrup
+        if (id == MAPLE_LEAVES.id && Game.random.Next(16) == 0) {
+            return (Item.MAPLE_SYRUP, 0, 1);
         }
         return base.getDrop(world, x, y, z, metadata, canBreak);
     }

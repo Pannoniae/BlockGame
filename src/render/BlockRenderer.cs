@@ -891,7 +891,7 @@ public class BlockRenderer {
             subChunk.hasRenderOpaque = false;
         }
 
-        if (subChunk.blocks.hasTranslucentBlocks()) {
+        if (subChunk.blocks.hasTranslucentBlocks() && !Settings.instance.opaqueWater) {
             constructVertices(subChunk, RenderLayer.TRANSLUCENT, chunkVertices);
             if (chunkVertices.Count > 0) {
                 subChunk.hasRenderTranslucent = true;
@@ -1799,7 +1799,9 @@ public class BlockRenderer {
             var blockID = neighbourRef.getID();
             var bl = Block.get(blockID);
 
-            if (blockID == 0 || bl?.layer != layer) {
+            // if water and we're opaque water and this is solid, do it anyway
+            var opaqueWater = Settings.instance.opaqueWater && blockID == Block.WATER.id;
+            if (blockID == 0 || (bl?.layer != layer && !opaqueWater)) {
                 continue;
             }
 
