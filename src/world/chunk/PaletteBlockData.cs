@@ -43,6 +43,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     public int yCoord;
 
     private const int TOTAL_BLOCKS = Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE;
+    private const int TOTAL_BIOMES = Chunk.BIOMESIZE * Chunk.BIOMESIZE * Chunk.BIOMESIZE;
     private const int INITIAL_SIZE = 2;
     private const int SMALL_ARRAY = 16;
     private const int INITIAL_LIGHT_SIZE = 2;

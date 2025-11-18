@@ -39,6 +39,17 @@ public class SettingsMenu : Menu {
         elements.Add(controls);
         addElement(controls);
 
+        var back = new Button(this, "back", false, "Back") {
+            horizontalAnchor = HorizontalAnchor.LEFT,
+            verticalAnchor = VerticalAnchor.BOTTOM
+        };
+        back.setPosition(new Vector2I(2, -18));
+        back.clicked += _ => {
+            deactivate();
+            parentScreen.returnToPrevScreen();
+        };
+        addElement(back);
+
         layoutSettingsTwoCols(elements, new Vector2I(0, 16), videoSettings.GUIbounds.Width);
     }
 

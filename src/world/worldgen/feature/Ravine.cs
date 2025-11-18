@@ -167,7 +167,15 @@ public class Ravine : OverlayFeature {
                         }
 
                         if (Block.fullBlock[block]) {
-                            world.setBlockDumb(xx, yy, zz,  Block.AIR.id);
+                            // if y low, LAVA TIME
+                            if (yy < 12) {
+                                world.setBlockDumb(xx, yy, zz,  Block.LAVA.id);
+                                // we have to unironically place light here though.
+                                world.setBlockLight(xx, yy, zz, Block.lightLevel[Block.LAVA.id]);
+                            }
+                            else {
+                                world.setBlockDumb(xx, yy, zz, Block.AIR.id);
+                            }
 
                             // Replace exposed dirt with grass
                             if (hasGrass && world.getBlock(xx, yy - 1, zz) ==  Block.DIRT.id) {

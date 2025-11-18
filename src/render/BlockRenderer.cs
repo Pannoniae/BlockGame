@@ -95,6 +95,8 @@ public class BlockRenderer {
 
         public int vertexCount;
 
+        public Color currentTint;
+
         public bool shouldFlipVertices;
 
         public readonly uint getBlock() {
@@ -504,6 +506,27 @@ public class BlockRenderer {
     /// Add a vertex to the current face being built.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void vertex(float x, float y, float z, float u, float v, Vector4 tint) {
+        // multiply tint by the stored colour
+        var c = tint * ctx.colourCache[ctx.vertexCount];
+
+        var col = Meth.f2b(c);
+
+        ref var vert = ref ctx.vertexCache[ctx.vertexCount];
+        vert.x = (ushort)((x + 16f) * 256f);
+        vert.y = (ushort)((y + 16f) * 256f);
+        vert.z = (ushort)((z + 16f) * 256f);
+        vert.u = (ushort)(u * 32768);
+        vert.v = (ushort)(v * 32768);
+        vert.light = ctx.lightColourCache[ctx.vertexCount];
+        vert.cu = col;
+        ctx.vertexCount++;
+    }
+
+    /// <summary>
+    /// Add a vertex to the current face being built.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void vertex(float x, float y, float z, float u, float v, byte light) {
         // multiply tint by the stored colour
         // there is no tint though!
@@ -813,6 +836,10 @@ public class BlockRenderer {
                 // cube with per-face dynamic textures based on metadata
                 renderCubeDynamic(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
                 break;
+            case RenderType.GRASS:
+                // same but also get grass colour
+                renderGrass(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
+                break;
             case RenderType.CROSS:
                 renderCross(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
                 break;
@@ -999,6 +1026,25 @@ public class BlockRenderer {
 
             // render the specific face
             renderCubeFace(x, y, z, vertices, (RawDirection)faceIdx, uvd.X, uvd.Y, uvdm.X, uvdm.Y);
+        }
+    }
+
+    /**
+     * Cube renderer with dynamic per-face textures based on metadata. Also applies grass tinting.
+     */
+    public void renderGrass(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+        // render each face with its own texture
+        for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
+            var tex = bl.getTexture(faceIdx, metadata);
+            var texm = tex + 1;
+
+            if (forceTex.u >= 0 && forceTex.v >= 0) {
+                tex = forceTex;
+                texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
+            }
+
+            var uvd = UVPair.texCoords(tex);
+            var uvdm = UVPair.texCoords(texm);
         }
     }
 
@@ -1603,7 +1649,7 @@ public class BlockRenderer {
         bool render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applySimpleLighting(RawDirection.NONE);
+            applySimpleLighting(RawDirection.WEST);
             begin();
             vertex(x + x0, y + y1, z + z1, westUMin, westVMin);
             vertex(x + x0, y + y0, z + z1, westUMin, westVMax);
@@ -1623,7 +1669,7 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applySimpleLighting(RawDirection.NONE);
+            applySimpleLighting(RawDirection.EAST);
             begin();
             vertex(x + x1, y + y1, z + z0, eastUMin, eastVMin);
             vertex(x + x1, y + y0, z + z0, eastUMin, eastVMax);
@@ -1643,7 +1689,7 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applySimpleLighting(RawDirection.NONE);
+            applySimpleLighting(RawDirection.SOUTH);
             begin();
             vertex(x + x0, y + y1, z + z0, southUMin, southVMin);
             vertex(x + x0, y + y0, z + z0, southUMin, southVMax);
@@ -1663,7 +1709,7 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applySimpleLighting(RawDirection.NONE);
+            applySimpleLighting(RawDirection.NORTH);
             begin();
             vertex(x + x1, y + y1, z + z1, northUMin, northVMin);
             vertex(x + x1, y + y0, z + z1, northUMin, northVMax);
@@ -1683,7 +1729,7 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applySimpleLighting(RawDirection.NONE);
+            applySimpleLighting(RawDirection.DOWN);
             begin();
             vertex(x + x1, y + y0, z + z1, downUMin, downVMin);
             vertex(x + x1, y + y0, z + z0, downUMin, downVMax);
@@ -1703,7 +1749,7 @@ public class BlockRenderer {
         render = !Block.fullBlock[nb] || !edge;
 
         if (render) {
-            applySimpleLighting(RawDirection.NONE);
+            applySimpleLighting(RawDirection.UP);
             begin();
             vertex(x + x0, y + y1, z + z1, upUMin, upVMin);
             vertex(x + x0, y + y1, z + z0, upUMin, upVMax);

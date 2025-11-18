@@ -340,7 +340,16 @@ public class Cave : OverlayFeature {
 
                         // if it's a solid block, remove it
                         if (Block.fullBlock[block]) {
-                            chunk.setBlockDumb(cxx, yy, czz,  Block.AIR.id);
+                            // if y low, LAVA TIME
+                            if (yy < 12) {
+                                chunk.setBlockDumb(cxx, yy, czz,  Block.LAVA.id);
+                                // we have to unironically place light here though.
+                                chunk.setBlockLight(cxx, yy, czz, Block.lightLevel[Block.LAVA.id]);
+                            }
+                            else {
+                                chunk.setBlockDumb(cxx, yy, czz, Block.AIR.id);
+                            }
+
                             lastSetBlock = yy; // remember the last set block
                         }
                     }

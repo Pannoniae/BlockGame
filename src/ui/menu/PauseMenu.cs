@@ -51,7 +51,9 @@ namespace BlockGame.ui.menu {
         public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
             base.onKeyDown(keyboard, key, scancode);
             if (key == Key.Escape) {
-                Screen.GAME_SCREEN.backToGame();
+                Game.instance.executeOnMainThread(() => {
+                    Screen.GAME_SCREEN.backToGame();
+                });
             }
         }
 

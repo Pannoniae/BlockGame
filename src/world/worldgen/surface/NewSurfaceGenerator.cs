@@ -22,10 +22,13 @@ public class NewSurfaceGenerator : SurfaceGenerator {
     private readonly OreFeature goldOre = new(Block.GOLD_ORE.id, 6, 8);
     private readonly OreFeature diamondOre = new(Block.DIAMOND_ORE.id, 4, 6);
     private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 4, 6);
+    private readonly OreFeature clayOre = new(Block.CLAY_BLOCK.id, 12, 24);
 
     public NewSurfaceGenerator(WorldGenerator worldgen, World world) {
         this.worldgen = worldgen;
         this.world = world;
+
+        clayOre.stoneMode = false;
     }
 
     public void setup(XRandom random, int seed) {
@@ -83,6 +86,15 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 4);
             cinnabarOre.place(world, random, x, y, z);
+        }
+
+
+        // place clay in hills
+        for (int i = 0; i < 24; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(72, World.WORLDHEIGHT);
+            clayOre.place(world, random, x, y, z);
         }
 
         var foliage = WorldgenUtil.getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);

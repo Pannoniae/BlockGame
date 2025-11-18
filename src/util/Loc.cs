@@ -7,6 +7,8 @@ namespace BlockGame.util;
 public static class Loc {
     private static readonly Dictionary<string, string> strings = new() {
         // world generators
+        ["generator.v4"] = "Biosphere",
+        ["generator.v4.tooltip"] = "The good old terrain: crazy mountains and lots of overhangs. Now with biomes!",
         ["generator.v3"] = "Nostalgic",
         ["generator.v3.tooltip"] = "The good old terrain: crazy mountains and lots of overhangs. 3D glasses not bundled.",
         ["generator.v2"] = "Alpine",
@@ -24,7 +26,7 @@ public static class Loc {
     };
 
     /**
-     * Get localized string for key. Returns key itself if not found.
+     * Get localised string for key. Returns key itself if not found.
      */
     public static string get(string key) {
         return strings.TryGetValue(key, out var value) ? value : key;

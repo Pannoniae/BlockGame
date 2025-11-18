@@ -687,6 +687,8 @@ public class Liquid : Block {
                     br.vertex(lx, ly, lz + 1, uMax, vMin);
                     break;
                 case RawDirection.UP:
+                    // apply brightness HERE instead of the neighbour.
+                    br.applySimpleLighting(RawDirection.NONE);
                     br.vertex(lx, ly + h01, lz + 1, uv00.X, uv00.Y);
                     br.vertex(lx, ly + h00, lz, uv01.X, uv01.Y);
                     br.vertex(lx + 1, ly + h10, lz, uv10.X, uv10.Y);

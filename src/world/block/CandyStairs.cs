@@ -28,7 +28,7 @@ public class CandyStairs : Stairs {
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         var color = getColor(metadata);
-        var opposite = Direction.getOpposite(info.face);
+        var opposite = Direction.getOpposite(info.hfacing);
         var finalMeta = setColor(0, color);
         finalMeta = (byte)((finalMeta & ~0b11) | ((byte)opposite & 0b11));
 

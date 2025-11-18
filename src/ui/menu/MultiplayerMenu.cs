@@ -38,25 +38,8 @@ public class MultiplayerMenu : Menu {
         usernameInput.setPosition(new Rectangle(0, 50 + labelspacing, 128, 16));
         addElement(usernameInput);
 
-        // password label
-        var passwordLabel = Text.createText(this, "passwordLabel", new Vector2I(0, 50 + labelspacing + spacing), "Password:");
-        passwordLabel.horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;
-        passwordLabel.verticalAnchor = VerticalAnchor.TOP;
-        addElement(passwordLabel);
-
-        // password input
-        var passwordInput = new TextBox(this, "passwordInput") {
-            horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS,
-            verticalAnchor = VerticalAnchor.TOP,
-            maxLength = 32,
-            isPassword = true
-        };
-        passwordInput.tooltip = "Server password (leave blank if none)";
-        passwordInput.setPosition(new Rectangle(0, 50 + labelspacing + spacing + labelspacing, 128, 16));
-        addElement(passwordInput);
-
         // server address label
-        var addressLabel = Text.createText(this, "addressLabel", new Vector2I(0, 50 + labelspacing + spacing + labelspacing + spacing), "Server Address:");
+        var addressLabel = Text.createText(this, "addressLabel", new Vector2I(0, 50 + labelspacing + spacing), "Server Address:");
         addressLabel.horizontalAnchor = HorizontalAnchor.CENTREDCONTENTS;
         addressLabel.verticalAnchor = VerticalAnchor.TOP;
         addElement(addressLabel);
@@ -67,7 +50,7 @@ public class MultiplayerMenu : Menu {
             verticalAnchor = VerticalAnchor.TOP,
             maxLength = 64
         };
-        addressInput.setPosition(new Rectangle(0, 50 + labelspacing + spacing + labelspacing + spacing + labelspacing, 128, 16));
+        addressInput.setPosition(new Rectangle(0, 50 + labelspacing + spacing + labelspacing, 128, 16));
         addElement(addressInput);
 
         // connect button

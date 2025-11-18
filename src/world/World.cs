@@ -420,13 +420,6 @@ public partial class World : IDisposable {
                         continue;
                     }
 
-                    // if no light, also skip (underground!)
-                    var skylight = getSkyLight(x, y, z);
-                    if (skylight == 0) {
-                        continue;
-                    }
-
-
                     getAABBsCollision(listAABB, x, y, z);
                     foreach (var aabb in listAABB) {
                         if (AABB.isCollision(playerAABB, aabb)) {
@@ -435,6 +428,13 @@ public partial class World : IDisposable {
                     }
                 }
             }
+        }
+
+        // check skylight at spawn position to avoid caves
+        var spawnBlockPos = pos.toBlockPos();
+        var skylight = getSkyLight(spawnBlockPos.X, (int)pos.Y, spawnBlockPos.Z);
+        if (skylight == 0) {
+            return false;
         }
 
         return true;

@@ -12,6 +12,8 @@ public class OreFeature : Feature {
     public int maxCount;
     private readonly Queue<Vector3I> expansionQueue = new(32 * 2);
 
+    public bool stoneMode = true; // only place in stone
+
     public OreFeature(ushort block, int minCount, int maxCount) {
         this.block = block;
         this.minCount = minCount;
@@ -51,8 +53,13 @@ public class OreFeature : Feature {
 
 
         // we have *count* ores, we need to distribute them somehow
-        if (world.getBlock(x, y, z) !=  Block.STONE.id) {
+        if (stoneMode && world.getBlock(x, y, z) !=  Block.STONE.id) {
             return; // Only start in stone
+        }
+
+        // don't place in air tho
+        if (world.getBlock(x, y, z) == Block.AIR.id) {
+            return;
         }
 
         // Place first ore block at origin point

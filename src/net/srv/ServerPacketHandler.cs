@@ -104,6 +104,7 @@ public class ServerPacketHandler : PacketHandler {
             conn.send(new LoginFailedPacket {
                 reason = $"Version mismatch (server: {Constants.netVersion}, client: {p.netVersion})"
             }, DeliveryMethod.ReliableOrdered);
+            Log.info($"{p.username} tried to join with version {p.netVersion}, we are on {Constants.netVersion}");
             // let client disconnect gracefully after receiving LoginFailedPacket
             return;
         }
@@ -113,6 +114,7 @@ public class ServerPacketHandler : PacketHandler {
             conn.send(new LoginFailedPacket {
                 reason = "Server full"
             }, DeliveryMethod.ReliableOrdered);
+            Log.info($"Rejected {p.username} - server full");
             // let client disconnect gracefully after receiving LoginFailedPacket
             return;
         }
@@ -123,6 +125,7 @@ public class ServerPacketHandler : PacketHandler {
                 conn.send(new LoginFailedPacket {
                     reason = "User already connected!"
                 }, DeliveryMethod.ReliableOrdered);
+                Log.info($"Rejected {p.username} - already connected");
                 // let client disconnect gracefully after receiving LoginFailedPacket
                 return;
             }

@@ -66,6 +66,9 @@ public partial class NewWorldGenerator {
             case 3:
                 getDensityv3(b, coord);
                 break;
+            case 4:
+                getDensityBiomes(b, coord);
+                break;
         }
 
         WorldgenUtil.interpolate(world, b, coord);
@@ -79,6 +82,9 @@ public partial class NewWorldGenerator {
                 break;
             case 3:
                 generateSurfacev3(coord);
+                break;
+            case 4:
+                generateSurfaceBiomes(coord);
                 break;
         }
 

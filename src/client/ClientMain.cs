@@ -24,6 +24,14 @@ public partial class ClientMain {
 
         Log.info("Launching client...");
 
+        // check for sudo/root - game doesn't work under elevated privileges
+        if (isSudo()) {
+            Log.error("ERROR: This game cannot be run as root/sudo or with elevated privileges!");
+            Log.error("Please run without sudo or administrator privileges.");
+            Environment.Exit(1);
+            return;
+        }
+
         unsafe {
             Log.info($"The correct answer is {sizeof(BlockRenderer.RenderContext)}! What was the question?");
         }
@@ -98,6 +106,25 @@ public partial class ClientMain {
             MessageBoxW(IntPtr.Zero, txt, title, 0);
         }
     }
+
+    private static bool isSudo() {
+        if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS()) {
+            // check EUID = 0 or SUDO_USER env var
+            if (Environment.GetEnvironmentVariable("SUDO_USER") != null) return true;
+
+            try {
+                return geteuid() == 0;
+            }
+            catch {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    [LibraryImport("libc", SetLastError = true)]
+    private static partial uint geteuid();
 
     [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
     private static partial int MessageBoxW(IntPtr hWnd, string lpText, string lpCaption, uint uType);

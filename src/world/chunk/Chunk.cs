@@ -12,6 +12,7 @@ namespace BlockGame.world.chunk;
 public class Chunk : IDisposable, IEquatable<Chunk> {
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
+    public const int BIOMESIZE = 4;
     public const int CHUNKSIZESQ = 16 * 16;
     public const int MAXINDEX = 16 * 16 * 16;
     public const int CHUNKSIZEEX = 18;

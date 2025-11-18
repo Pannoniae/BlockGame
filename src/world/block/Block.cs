@@ -349,7 +349,7 @@ public class Block {
         //renderType[CALCITE.id] = RenderType.CUBE;
         //CALCITE.material(Material.STONE);
 
-        CLAY_BLOCK = register("clayBlock", new Block("Clay Block"));
+        CLAY_BLOCK = register("clayBlock", new Block("Clay"));
         CLAY_BLOCK.setTex(cubeUVs(12, 0));
         renderType[CLAY_BLOCK.id] = RenderType.CUBE;
         CLAY_BLOCK.material(Material.EARTH);
@@ -1564,7 +1564,8 @@ public enum RenderType : byte {
     CROSS,
     FIRE,
     CUSTOM,
-    CUBE_DYNTEXTURE
+    CUBE_DYNTEXTURE,
+    GRASS
 }
 
 public enum ToolType : byte {
