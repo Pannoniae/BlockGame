@@ -32,6 +32,7 @@ public class EntityState {
     public const byte ON_FIRE = 1;
     public const byte FLYING = 2;
     public const byte RIDING = 3; // int: entity ID of mount, or -1
+    public const byte ON_GROUND = 4;
 
     // player-specific (32-63)
     public const byte PLAYER_GAMEMODE = 32; // byte: 0=survival, 1=creative

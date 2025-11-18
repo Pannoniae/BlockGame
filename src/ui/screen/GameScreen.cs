@@ -729,7 +729,7 @@ public class GameScreen : Screen {
                 new Color(240, 240, 240));
 
             // Draw debug lines
-            if (debugScreen && !fpsOnly) {
+            if (debugScreen && !fpsOnly && Game.devMode) {
                 D.idc.begin(PrimitiveType.Lines);
                 D.drawLine(new Vector3D(0, 0, 0), new Vector3D(1, 1, 1), Color.Red);
                 D.drawLine(new Vector3D(1, 1, 1), new Vector3D(24, 24, 24), Color.Red);
@@ -755,6 +755,8 @@ public class GameScreen : Screen {
 
             var msgLimit = currentMenu == CHAT ? 20 : 10;
             var currentTick = CHAT.tick;
+            var yOffset = 0f; // cumulative vertical offset for wrapped lines
+
             for (int i = 0; i < CHAT.getMessages().Count && i < msgLimit; i++) {
                 // if 200 ticks have passed, don't show the message
                 var age = currentTick - CHAT.getMessages()[i].ticks;
@@ -771,11 +773,22 @@ public class GameScreen : Screen {
                     }
 
                     if (a > 0) {
-                        var msgHeight = gui.uiHeight - 42 - (8 * i);
+                        var msg = CHAT.getMessages()[i].message;
+                        var wrappedLines = wrapChatMessage(msg, 310); // max width 310 pixels (320 - padding)
 
-                        gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + 320, msgHeight + 9),
-                            color: new Color(0, 0, 0, MathF.Min(a, 0.5f)));
-                        gui.drawColoredStringUIThin(CHAT.getMessages()[i].message, new Vector2(6, msgHeight), a);
+                        // draw from bottom to top for each wrapped line
+                        for (int lineIdx = wrappedLines.Count - 1; lineIdx >= 0; lineIdx--) {
+                            var msgHeight = gui.uiHeight - 42 - yOffset;
+
+                            // measure actual width for this line
+                            var lineWidth = measureChatLineWidth(wrappedLines[lineIdx]);
+
+                            gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, msgHeight, 4 + lineWidth + 4, msgHeight + 9),
+                                color: new Color(0, 0, 0, MathF.Min(a, 0.5f)));
+                            gui.drawColouredStringUIThin(wrappedLines[lineIdx], new Vector2(6, msgHeight), a);
+
+                            yOffset += 8;
+                        }
                     }
                 }
             }
@@ -799,6 +812,66 @@ public class GameScreen : Screen {
         if (showPlayerList && ClientConnection.instance != null && currentMenu == INGAME_MENU) {
             drawPlayerList(gui);
         }
+    }
+
+    /** wrap chat message into lines that fit within maxWidth */
+    private List<string> wrapChatMessage(string message, float maxWidth) {
+        var lines = new List<string>();
+
+        // strip color codes to measure actual text width
+        var plainText = TextColours.strip(message);
+        var fullWidth = Game.gui.measureStringUIThin(plainText).X;
+
+        // if it fits, no wrapping needed
+        if (fullWidth <= maxWidth) {
+            lines.Add(message);
+            return lines;
+        }
+
+        // need to wrap - split by words
+        var words = message.Split(' ');
+        var currentLine = "";
+        var currentColor = ""; // track last color code
+
+        foreach (var word in words) {
+            var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
+            var testPlain = TextColours.strip(testLine);
+            var testWidth = Game.gui.measureStringUIThin(testPlain).X;
+
+            if (testWidth <= maxWidth) {
+                currentLine = testLine;
+
+                // extract last color code from word
+                for (int i = word.Length - 2; i >= 0; i--) {
+                    if (word[i] == '&' && i + 1 < word.Length) {
+                        currentColor = word.Substring(i, 2);
+                        break;
+                    }
+                }
+            }
+            else {
+                // line too long, flush current line
+                if (currentLine.Length > 0) {
+                    lines.Add(currentLine);
+                }
+
+                // start new line with color code continuation + word
+                currentLine = currentColor + word;
+            }
+        }
+
+        // flush remaining line
+        if (currentLine.Length > 0) {
+            lines.Add(currentLine);
+        }
+
+        return lines;
+    }
+
+    /** measure width of chat line including color codes */
+    private float measureChatLineWidth(string line) {
+        var plain = TextColours.strip(line);
+        return Game.gui.measureStringUIThin(plain).X;
     }
 
     private void drawPlayerList(GUI gui) {

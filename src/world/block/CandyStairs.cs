@@ -26,9 +26,9 @@ public class CandyStairs : Stairs {
         return new UVPair(color & 0xF, 6 + (color >> 4));
     }
 
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         var color = getColor(metadata);
-        var opposite = Direction.getOpposite(dir);
+        var opposite = Direction.getOpposite(info.face);
         var finalMeta = setColor(0, color);
         finalMeta = (byte)((finalMeta & ~0b11) | ((byte)opposite & 0b11));
 

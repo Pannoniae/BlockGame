@@ -4,8 +4,13 @@ level/
 # Random debugging files
 debug/
 
+# Game server
+server/
+
 # Publish output
 publish/
+BlockGame-win/
+BlockGame-linux/
 
 renderdoc.cap
 

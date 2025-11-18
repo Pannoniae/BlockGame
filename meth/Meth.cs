@@ -668,6 +668,16 @@ public readonly record struct Direction(int x, int y, int z) {
     public Vector3I toVec() {
         return Unsafe.BitCast<Direction, Vector3I>(this);
     }
+
+    public static RawDirectionH getOpposite(RawDirectionH dir) {
+        return dir switch {
+            RawDirectionH.WEST => RawDirectionH.EAST,
+            RawDirectionH.EAST => RawDirectionH.WEST,
+            RawDirectionH.SOUTH => RawDirectionH.NORTH,
+            RawDirectionH.NORTH => RawDirectionH.SOUTH,
+            _ => RawDirectionH.NONE
+        };
+    }
 }
 
 public static class DirectionExtensions {
@@ -711,6 +721,17 @@ public static class UnsafeListAccessor<T> {
     public static Span<T> AsUnsafeSpanOnBackingArray(List<T> list) {
         return new Span<T>(getItems(list));
     }
+}
+
+/** Like RawDirection but horizontal only, used for player facing */
+public enum RawDirectionH : byte {
+    WEST = 0,
+    EAST = 1,
+    SOUTH = 2,
+    NORTH = 3,
+    /** NOT A REAL DIRECTION, just a loop terminator */
+    MAX = 4,
+    NONE = 13 // 13 is 5 with the 4th bit set to 1
 }
 
 public enum RawDirection : byte {

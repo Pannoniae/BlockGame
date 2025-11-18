@@ -2,11 +2,8 @@
 using BlockGame.util.stuff;
 using BlockGame.world.block;
 using BlockGame.world.item.inventory;
-using JetBrains.Annotations;
 
 namespace BlockGame.world.item;
-using static item.DyeItem;
-
 
 public class Recipe {
     public static Recipe WOOD_PICKAXE;
@@ -129,7 +126,7 @@ public class Recipe {
         LADDER.ingredients(Item.STICK);
 
         // sign (6 planks and 1 stick) - any plank type works
-        SIGN = register(new ItemStack(Block.SIGN.item, 1));
+        SIGN = register(new ItemStack(Item.SIGN_ITEM, 1));
         SIGN.shape(111_111_020, 3);
         SIGN.ingredients(Block.OAK_PLANKS.item, Item.STICK);
         register(new ItemStack(Block.SIGN.item, 1))

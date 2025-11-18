@@ -25,8 +25,8 @@ public class Stairs : Block {
     static byte setFacing(byte metadata, byte facing) => (byte)((metadata & ~0b11) | (facing & 0b11));
     static byte setUpsideDown(byte metadata, bool upsideDown) => (byte)((metadata & ~0b100) | (upsideDown ? 0b100 : 0));
     
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        var opposite = Direction.getOpposite(dir);
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
+        var opposite = Direction.getOpposite(info.hfacing);
         byte meta = setFacing(0, (byte)opposite);
 
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(meta));
@@ -77,7 +77,7 @@ public class Stairs : Block {
         });
     }
     
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
         var existingId = world.getBlockRaw(x, y, z).getID();
         // prevent placing stairs into existing stairs
         return existingId != id && existingId != MAPLE_STAIRS.id;

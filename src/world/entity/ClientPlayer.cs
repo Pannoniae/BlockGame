@@ -42,7 +42,6 @@ public class ClientPlayer : Player {
                     new PlayerPositionRotationPacket {
                         position = position,
                         rotation = rotation,
-                        onGround = onGround
                     },
                     DeliveryMethod.ReliableOrdered
                 );

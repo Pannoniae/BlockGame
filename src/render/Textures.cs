@@ -180,6 +180,19 @@ public class Textures {
 
         using var image = Image.WrapMemory<Rgba32>(pixels, width, height);
         image.Save("atlas.png");
+
+        // dump 2-3-4 mipmaps too
+        for (int lvl = 1; lvl <= 4; lvl++) {
+            int mipWidth = Math.Max(1, width >> lvl);
+            int mipHeight = Math.Max(1, height >> lvl);
+            var mipPixels = new Rgba32[mipWidth * mipHeight];
+            fixed (Rgba32* mipPixelPtr = mipPixels) {
+                GL.GetTextureImage(blockTexture.handle, lvl, PixelFormat.Rgba, PixelType.UnsignedByte, (uint)(mipWidth * mipHeight * 4), mipPixelPtr);
+            }
+
+            using var mipImage = Image.WrapMemory<Rgba32>(mipPixels, mipWidth, mipHeight);
+            mipImage.Save($"atlas_mip_{lvl}.png");
+        }
     }
 
     /** reload all textures from disk */

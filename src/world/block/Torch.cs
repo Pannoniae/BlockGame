@@ -72,9 +72,8 @@ public class Torch : Block {
         return fullBlock[supportBlock];
     }
 
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        dir = Game.raycast.face;
-        var meta = calculatePlacementMetadata(world, x, y, z, dir);
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
+        var meta = calculatePlacementMetadata(world, x, y, z, info.face);
         if (meta == 255) {
             return; // can't place
         }
@@ -245,9 +244,8 @@ public class Torch : Block {
         }
     }
 
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        dir = Game.raycast.face;
-        return base.canPlace(world, x, y, z, dir) && calculatePlacementMetadata(world, x, y, z, dir) != 255;
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
+        return base.canPlace(world, x, y, z, info) && calculatePlacementMetadata(world, x, y, z, info.face) != 255;
     }
 
     public override byte maxValidMetadata() {

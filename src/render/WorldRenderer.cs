@@ -609,34 +609,38 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 continue;
             }
 
-            /*var anyMissing = false;
+            // in multiplayer, wait for neighbors before meshing
+            // otherwise we mesh against air/null and create holes
+            if (Net.mode.isMPC()) {
+                var anyMissing = false;
 
-            Span<ChunkCoord> neighbours = [
-                new(sectionCoord.x - 1, sectionCoord.z),
-                new(sectionCoord.x + 1, sectionCoord.z),
-                new(sectionCoord.x, sectionCoord.z - 1),
-                new(sectionCoord.x, sectionCoord.z + 1),
-                new(sectionCoord.x - 1, sectionCoord.z - 1),
-                new(sectionCoord.x - 1, sectionCoord.z + 1),
-                new(sectionCoord.x + 1, sectionCoord.z - 1),
-                new(sectionCoord.x + 1, sectionCoord.z + 1)
-            ];
+                Span<ChunkCoord> neighbours = [
+                    new(sectionCoord.x - 1, sectionCoord.z),
+                    new(sectionCoord.x + 1, sectionCoord.z),
+                    new(sectionCoord.x, sectionCoord.z - 1),
+                    new(sectionCoord.x, sectionCoord.z + 1),
+                    new(sectionCoord.x - 1, sectionCoord.z - 1),
+                    new(sectionCoord.x - 1, sectionCoord.z + 1),
+                    new(sectionCoord.x + 1, sectionCoord.z - 1),
+                    new(sectionCoord.x + 1, sectionCoord.z + 1)
+                ];
 
-            foreach (var neighbourCoord in neighbours) {
-                // if isn't at least LIGHTED, then skip meshing for now
-                if (!world.getChunkMaybe(neighbourCoord, out var neighbourChunk) ||
-                    neighbourChunk.status < ChunkStatus.LIGHTED) {
-                    anyMissing = true;
-                    break;
+                foreach (var neighbourCoord in neighbours) {
+                    // if isn't at least LIGHTED, then skip meshing for now
+                    if (!world.getChunkMaybe(neighbourCoord, out var neighbourChunk) ||
+                        neighbourChunk.status < ChunkStatus.LIGHTED) {
+                        anyMissing = true;
+                        break;
+                    }
+                }
+
+                // if neighbouring chunks are not loaded, re-queue for later
+                if (anyMissing) {
+                    // add back to chunksToMesh so it gets retried next tick
+                    chunksToMesh.Add(sectionCoord);
+                    continue;
                 }
             }
-
-            // if neighbouring chunks are not loaded, re-queue for later
-            if (anyMissing) {
-                // add back to chunksToMesh so it gets retried next tick
-                chunksToMesh.Add(sectionCoord);
-                continue;
-            }*/
 
             var section = world.getSubChunk(sectionCoord);
             var chunk = section.chunk;

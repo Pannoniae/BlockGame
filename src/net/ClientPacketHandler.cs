@@ -13,6 +13,7 @@ using BlockGame.world.block;
 using BlockGame.world.block.entity;
 using BlockGame.world.chunk;
 using BlockGame.world.entity;
+using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using LiteNetLib;
 using Molten;
@@ -26,6 +27,117 @@ public class ClientPacketHandler : PacketHandler {
 
     public ClientPacketHandler(ClientConnection conn) {
         this.conn = conn;
+    }
+
+    public void handle(Packet packet) {
+
+        switch (packet) {
+            case AuthRequiredPacket p:
+                handleAuthRequired(p);
+                break;
+            case LoginSuccessPacket p:
+                handleLoginSuccess(p);
+                break;
+            case LoginFailedPacket p:
+                handleLoginFailed(p);
+                break;
+            case DisconnectPacket p:
+                handleDisconnect(p);
+                break;
+            case TeleportPacket p:
+                handleTeleport(p);
+                break;
+            case ChunkDataPacket p:
+                handleChunkData(p);
+                break;
+            case UnloadChunkPacket p:
+                handleUnloadChunk(p);
+                break;
+            case BlockChangePacket p:
+                handleBlockChange(p);
+                break;
+            case MultiBlockChangePacket p:
+                handleMultiBlockChange(p);
+                break;
+            case BlockBreakProgressPacket p:
+                handleBlockBreakProgress(p);
+                break;
+            case SpawnEntityPacket p:
+                handleSpawnEntity(p);
+                break;
+            case DespawnEntityPacket p:
+                handleDespawnEntity(p);
+                break;
+            case SpawnPlayerPacket p:
+                handleSpawnPlayer(p);
+                break;
+            case EntityPositionPacket p:
+                handleEntityPosition(p);
+                break;
+            case EntityRotationPacket p:
+                handleEntityRotation(p);
+                break;
+            case EntityPositionRotationPacket p:
+                handleEntityPositionRotation(p);
+                break;
+            case EntityVelocityPacket p:
+                handleEntityVelocity(p);
+                break;
+            case EntityStatePacket p:
+                handleEntityState(p);
+                break;
+            case EntityActionPacket p:
+                handleEntityAction(p);
+                break;
+            case PlayerHealthPacket p:
+                handlePlayerHealth(p);
+                break;
+            case ChatMessagePacket p:
+                handleChatMessage(p);
+                break;
+            case PlayerListAddPacket p:
+                handlePlayerListAdd(p);
+                break;
+            case PlayerListRemovePacket p:
+                handlePlayerListRemove(p);
+                break;
+            case PlayerListUpdatePingPacket p:
+                handlePlayerListUpdatePing(p);
+                break;
+            case TimeUpdatePacket p:
+                handleTimeUpdate(p);
+                break;
+            case UpdateBlockEntityPacket p:
+                handleUpdateBlockEntity(p);
+                break;
+            case SetSlotPacket p:
+                handleSetSlot(p);
+                break;
+            case InventorySyncPacket p:
+                handleInventorySync(p);
+                break;
+            case InventoryAckPacket p:
+                handleInventoryAck(p);
+                break;
+            case HeldItemChangePacket p:
+                handleHeldItemChange(p);
+                break;
+            case InventoryOpenPacket p:
+                handleInventoryOpen(p);
+                break;
+            case InventoryClosePacket p:
+                handleInventoryClose(p);
+                break;
+            case FurnaceSyncPacket p:
+                handleFurnaceSync(p);
+                break;
+            case GamemodePacket p:
+                handleGamemode(p);
+                break;
+            default:
+                Log.warn($"Unhandled packet type: {packet.GetType().Name}");
+                break;
+        }
     }
 
     public void handleAuthRequired(AuthRequiredPacket p) {
@@ -294,7 +406,7 @@ public class ClientPacketHandler : PacketHandler {
 
         // add to world
         Game.world.addEntity(entity);
-        Log.info($"Spawned entity type={Entities.getName(p.entityType)} id={p.entityID}");
+        //Log.info($"Spawned entity type={Entities.getName(p.entityType)} id={p.entityID}");
     }
 
     public void handleDespawnEntity(DespawnEntityPacket p) {
@@ -353,11 +465,10 @@ public class ClientPacketHandler : PacketHandler {
         if (entity != null) {
             if (entity is Humanoid humanoid) {
                 // use packet's position with current target rotation
-                humanoid.mpInterpolate(p.position, humanoid.targetRot, p.onGround);
+                humanoid.mpInterpolate(p.position, humanoid.targetRot);
             }
             else {
                 entity.position = p.position;
-                entity.onGround = p.onGround;
             }
         }
     }
@@ -390,16 +501,14 @@ public class ClientPacketHandler : PacketHandler {
         var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
         if (entity != null) {
             if (entity is Humanoid humanoid) {
-                humanoid.mpInterpolate(p.position, p.rotation, p.onGround);
+                humanoid.mpInterpolate(p.position, p.rotation);
             }
             else if (entity is Mob mob) {
                 mob.mpInterpolate(p.position, p.rotation);
-                mob.onGround = p.onGround;
             }
             else {
                 entity.position = p.position;
                 entity.rotation = p.rotation;
-                entity.onGround = p.onGround;
             }
         }
     }
@@ -427,116 +536,6 @@ public class ClientPacketHandler : PacketHandler {
         if (entity != null) {
             entity.state.deserialize(p.data);
             entity.applyState();
-        }
-    }
-
-    public void handle(Packet packet) {
-        switch (packet) {
-            case AuthRequiredPacket p:
-                handleAuthRequired(p);
-                break;
-            case LoginSuccessPacket p:
-                handleLoginSuccess(p);
-                break;
-            case LoginFailedPacket p:
-                handleLoginFailed(p);
-                break;
-            case DisconnectPacket p:
-                handleDisconnect(p);
-                break;
-            case TeleportPacket p:
-                handleTeleport(p);
-                break;
-            case ChunkDataPacket p:
-                handleChunkData(p);
-                break;
-            case UnloadChunkPacket p:
-                handleUnloadChunk(p);
-                break;
-            case BlockChangePacket p:
-                handleBlockChange(p);
-                break;
-            case MultiBlockChangePacket p:
-                handleMultiBlockChange(p);
-                break;
-            case BlockBreakProgressPacket p:
-                handleBlockBreakProgress(p);
-                break;
-            case SpawnEntityPacket p:
-                handleSpawnEntity(p);
-                break;
-            case DespawnEntityPacket p:
-                handleDespawnEntity(p);
-                break;
-            case SpawnPlayerPacket p:
-                handleSpawnPlayer(p);
-                break;
-            case EntityPositionPacket p:
-                handleEntityPosition(p);
-                break;
-            case EntityRotationPacket p:
-                handleEntityRotation(p);
-                break;
-            case EntityPositionRotationPacket p:
-                handleEntityPositionRotation(p);
-                break;
-            case EntityVelocityPacket p:
-                handleEntityVelocity(p);
-                break;
-            case EntityStatePacket p:
-                handleEntityState(p);
-                break;
-            case EntityActionPacket p:
-                handleEntityAction(p);
-                break;
-            case PlayerHealthPacket p:
-                handlePlayerHealth(p);
-                break;
-            case ChatMessagePacket p:
-                handleChatMessage(p);
-                break;
-            case PlayerListAddPacket p:
-                handlePlayerListAdd(p);
-                break;
-            case PlayerListRemovePacket p:
-                handlePlayerListRemove(p);
-                break;
-            case PlayerListUpdatePingPacket p:
-                handlePlayerListUpdatePing(p);
-                break;
-            case TimeUpdatePacket p:
-                handleTimeUpdate(p);
-                break;
-            case UpdateBlockEntityPacket p:
-                handleUpdateBlockEntity(p);
-                break;
-            case SetSlotPacket p:
-                handleSetSlot(p);
-                break;
-            case InventorySyncPacket p:
-                handleInventorySync(p);
-                break;
-            case InventoryAckPacket p:
-                handleInventoryAck(p);
-                break;
-            case HeldItemChangePacket p:
-                handleHeldItemChange(p);
-                break;
-            case InventoryOpenPacket p:
-                handleInventoryOpen(p);
-                break;
-            case InventoryClosePacket p:
-                handleInventoryClose(p);
-                break;
-            case FurnaceSyncPacket p:
-                handleFurnaceSync(p);
-                break;
-            case GamemodePacket p:
-                handleGamemode(p);
-                break;
-            default:
-                Log.warn($"Unhandled packet type: {packet.GetType().Name}");
-                break;
         }
     }
 
@@ -576,6 +575,9 @@ public class ClientPacketHandler : PacketHandler {
         // add to chat UI
         if (Game.instance.currentScreen is GameScreen gs) {
             gs.CHAT.addMessage(p.message);
+
+            // log to console as well
+            Log.info($"{p.message}");
 
             // also open chat
         }
@@ -893,6 +895,10 @@ public class ClientPacketHandler : PacketHandler {
             furnace.fuelRemaining = p.fuelRemaining;
             furnace.fuelMax = p.fuelMax;
             furnace.smeltProgress = p.smeltProgress;
+
+            // update currentRecipe on client (needed for getSmeltProgress() calculation)
+            // server sets this during update(), but client doesn't run update() :)
+            furnace.currentRecipe = furnace.slots[0] != ItemStack.EMPTY ? SmeltingRecipe.findRecipe(furnace.slots[0].getItem()) : null;
         }
     }
 }

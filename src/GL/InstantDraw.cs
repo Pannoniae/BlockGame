@@ -336,7 +336,7 @@ public class InstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted
     }
 }
 
-public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTinted>(maxVertices) {
+public class FastInstantDrawTexture : InstantDraw<BlockVertexTinted> {
     public int instantTexture;
 
     // 4-region ring buffer to avoid sync
@@ -351,10 +351,16 @@ public class FastInstantDrawTexture(int maxVertices) : InstantDraw<BlockVertexTi
     // NOTE: we force-disabled it lol
     // if we don't, change it back!
     //private const int regionCount = 4;
-    private const int regionCount = 3;
+    private static int regionCount = 3;
 
     // persistent mapped pointer
     private unsafe BlockVertexTinted* mappedPtr = null;
+
+    public FastInstantDrawTexture(int maxVertices) : base(maxVertices) {
+        if (Game.isIntegratedCard) {
+            regionCount = 4;
+        }
+    }
 
     public override void setup() {
         // allocate 3x buffer for ring buffering with persistent mapping

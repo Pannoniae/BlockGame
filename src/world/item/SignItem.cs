@@ -1,5 +1,4 @@
-﻿using BlockGame.main;
-using BlockGame.util;
+﻿using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.entity;
 
@@ -15,9 +14,8 @@ public class SignItem : Item {
         signBlock = block;
     }
 
-    public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
-        // use dir parameter instead of Game.raycast.face for MP compatibility
-        var face = dir;
+    public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, Placement info) {
+        var face = info.face;
 
         // determine if wall sign or standing sign based on placement face
         bool isWall = face is RawDirection.NORTH or RawDirection.SOUTH or RawDirection.EAST or RawDirection.WEST;
@@ -43,11 +41,11 @@ public class SignItem : Item {
             metadata = rotation;
         }
 
-        if (!signBlock.canPlace(world, x, y, z, dir)) {
+        if (!signBlock.canPlace(world, x, y, z, info)) {
             return null;
         }
 
-        signBlock.place(world, x, y, z, metadata, dir);
+        signBlock.place(world, x, y, z, metadata, info);
         return stack.consume(player, 1);
     }
 }

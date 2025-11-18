@@ -48,7 +48,7 @@ public class Settings {
     public bool reverseZ = true; // reverse-Z depth buffer for improved precision
     public bool affineMapping = false; // SO LIMINAL UWU
     public bool vertexJitter = false; // SO LIMINAL UWU
-    public int cloudMode = 1; // 0=off, 1=simple, 2=fancy, 3=hypercube
+    public int cloudMode = 1; // 0=off, 1=simple, 2=fancy, 3=smooth fancy, 4=hypercube
     /**
      * Don't use this! Use getActualRendererMode() instead.
      */

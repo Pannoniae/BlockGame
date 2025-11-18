@@ -925,6 +925,33 @@ public readonly struct Command {
                 }
             }
         }, true));
+
+        commands.Add(new Command("setspawn", "Sets the world spawn point", NetMode.DED, (source, args) => {
+            var world = source.getWorld();
+            Vector3D newSpawn;
+
+            if (args.Length == 3) {
+                // /setspawn <x> <y> <z>
+                if (!double.TryParse(args[0], out double x) ||
+                    !double.TryParse(args[1], out double y) ||
+                    !double.TryParse(args[2], out double z)) {
+                    source.sendMessage("Invalid coordinates");
+                    return;
+                }
+                newSpawn = new Vector3D(x, y, z);
+            }
+            else if (args.Length == 0 && source.isPlayer()) {
+                // /setspawn - use player position
+                newSpawn = (source as Player)!.position;
+            }
+            else {
+                source.sendMessage("Usage: /setspawn [x] [y] [z]");
+                return;
+            }
+
+            world.spawn = newSpawn;
+            source.sendMessage($"Set spawn to {(int)newSpawn.X}, {(int)newSpawn.Y}, {(int)newSpawn.Z}");
+        }, true));
     }
 
     private static bool parseCoord(string input, double current, out int result) {

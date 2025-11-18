@@ -92,7 +92,7 @@ public class MultiplayerMenu : Menu {
     private void connect() {
 
         Net.mode = NetMode.MPC;
-        var username = usernameInput.input.Trim();
+        var username = usernameInput.getInput().Trim();
         if (string.IsNullOrEmpty(username)) {
             username = "Player";
         }
@@ -101,7 +101,7 @@ public class MultiplayerMenu : Menu {
         Settings.instance.playerName = username;
         Settings.instance.save();
 
-        var address = addressInput.input.Trim();
+        var address = addressInput.getInput().Trim();
         if (string.IsNullOrEmpty(address)) {
             Log.warn("No server address specified");
             return;
@@ -133,11 +133,11 @@ public class MultiplayerMenu : Menu {
 
     public override void activate() {
         // set defaults
-        if (string.IsNullOrEmpty(usernameInput.input)) {
-            usernameInput.input = Settings.instance.playerName;
+        if (string.IsNullOrEmpty(usernameInput.getInput())) {
+            usernameInput.setInput(Settings.instance.playerName);
         }
-        if (string.IsNullOrEmpty(addressInput.input)) {
-            addressInput.input = "localhost:31337";
+        if (string.IsNullOrEmpty(addressInput.getInput())) {
+            addressInput.setInput("localhost:31337");
         }
     }
 

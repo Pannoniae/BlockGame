@@ -32,7 +32,7 @@ public class CandySlab : Slabs {
         return (23 << 2) | 3; // = 95
     }
 
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         var color = getColour(metadata);
         var existingBlock = world.getBlockRaw(x, y, z);
 
@@ -48,11 +48,9 @@ public class CandySlab : Slabs {
                 return; // can't place
             }
         } else {
-            // determine top/bottom placement
-            bool placeOnTop = dir == RawDirection.DOWN ? true :
-                              dir == RawDirection.UP ? false :
-                              (Raycast.raycast(world, RaycastType.BLOCKS).hit &&
-                               Raycast.raycast(world, RaycastType.BLOCKS).point.Y - y > 0.5);
+
+            var hitPoint = info.hitPoint;
+            bool placeOnTop = info.face == RawDirection.DOWN || info.face != RawDirection.UP && (hitPoint.Y - y) > 0.5;
 
             finalMeta = setColour(setTop(0, placeOnTop), color);
         }

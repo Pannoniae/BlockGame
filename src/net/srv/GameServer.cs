@@ -137,7 +137,7 @@ public class GameServer : INetEventListener {
 
         // 60 TPS game loop
         sw.Restart();
-        long lastUpdate = sw.ElapsedMilliseconds;
+        double lastUpdate = sw.ElapsedMilliseconds;
 
         while (running) {
             long now = sw.ElapsedMilliseconds;
@@ -147,7 +147,7 @@ public class GameServer : INetEventListener {
 
             if (now - lastUpdate >= mspt) {
                 update();
-                lastUpdate += (long)mspt;
+                lastUpdate += mspt;
             }
             else {
                 // sleep for remaining time to avoid busy-waiting
@@ -212,7 +212,7 @@ public class GameServer : INetEventListener {
         if (sw.ElapsedMilliseconds - lastLogTime >= 1000) {
             Log.info($"TPS: {updateCounter} (expected 60)");
             updateCounter = 0;
-            lastLogTime = sw.ElapsedMilliseconds;
+            lastLogTime += 1000;
         }
 
         netManager.PollEvents();
@@ -247,7 +247,7 @@ public class GameServer : INetEventListener {
             world.loadChunksAroundChunk(playerChunk, conn.renderDistance + 1, ChunkStatus.LIGHTED);
             int queueAfter = world.chunkLoadQueue.Count;
             if (queueAfter - queueBefore > 0) {
-                Log.info($"Queued {queueAfter - queueBefore} chunks for {conn.username} at {playerChunk}, queue now: {queueAfter}");
+                //Log.info($"Queued {queueAfter - queueBefore} chunks for {conn.username} at {playerChunk}, queue now: {queueAfter}");
             }
         }
 
@@ -256,7 +256,7 @@ public class GameServer : INetEventListener {
         int queueSize = world.chunkLoadQueue.Count;
         world.updateChunkloading(sw.ElapsedMilliseconds, loading: false, ref loadedChunks);
         if (loadedChunks > 0 || world.chunkLoadQueue.Count > 0) {
-            Log.info($"Loaded {loadedChunks} chunks, queue: {queueSize} -> {world.chunkLoadQueue.Count}");
+            //Log.info($"Loaded {loadedChunks} chunks, queue: {queueSize} -> {world.chunkLoadQueue.Count}");
         }
 
         // update world, entities, lighting, etc
@@ -907,6 +907,7 @@ public class GameServer : INetEventListener {
             // check if viewing a furnace
             if (conn.player.currentInventoryID >= 0 && conn.player.currentCtx is FurnaceMenuContext furnaceCtx) {
                 if (furnaceCtx.getFurnaceInventory() is FurnaceBlockEntity furnace) {
+                    // sync progress bars
                     conn.send(new FurnaceSyncPacket {
                         position = furnace.pos,
                         smeltProgress = furnace.smeltProgress,
@@ -914,6 +915,19 @@ public class GameServer : INetEventListener {
                         fuelMax = furnace.fuelMax,
                         lit = furnace.isLit()
                     }, DeliveryMethod.Unreliable); // unreliable is fine, sent every 2 ticks
+
+                    // sync slots (input/fuel/output) - these change during smelting but aren't auto-notified sadly
+                    // since furnace modifies its own slots during update(), not just through user interaction
+                    var slots = furnaceCtx.getSlots();
+                    // furnace slots at the end. TODO have better slot handling this is fucked!!
+                    int furnaceSlotStart = slots.Count - 3;
+                    for (int i = 0; i < 3; i++) {
+                        int slotIdx = furnaceSlotStart + i;
+                        if (slotIdx < slots.Count) {
+                            var slot = slots[slotIdx];
+                            furnaceCtx.notifySlotChanged(slotIdx, slot.getStack());
+                        }
+                    }
                 }
             }
         }

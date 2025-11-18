@@ -700,6 +700,18 @@ public class Player : Mob, CommandSource {
     }
 
     public virtual void placeBlock() {
+
+        var facing = getFacing();
+        var hfacing = getHFacing();
+
+        // construct placement info
+        var info = new Placement {
+            face = Game.raycast.face,
+            facing = facing,
+            hfacing = hfacing,
+            hitPoint = Game.raycast.point
+        };
+
         // first check if player is clicking on an existing block with onUse behaviour
         if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
             var targetPos = Game.raycast.block;
@@ -712,11 +724,10 @@ public class Player : Mob, CommandSource {
                         ClientConnection.instance.send(
                             new PlaceBlockPacket {
                                 position = targetPos,
-                                face = (byte)Game.raycast.face
+                                info = info
                             },
                             DeliveryMethod.ReliableOrdered);
                     }
-
 
                     // if block has custom behaviour, stop here (don't place)
                     return;
@@ -731,7 +742,7 @@ public class Player : Mob, CommandSource {
             var metadata = (byte)stack.metadata;
 
             // if item, fire the hook and handle replacement
-            var replacement = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, Game.raycast.face);
+            var replacement = stack.getItem().useBlock(stack, world, this, pos.X, pos.Y, pos.Z, info);
             if (replacement != null) {
                 inventory.setStack(inventory.selected, replacement);
                 setSwinging(true);
@@ -741,7 +752,7 @@ public class Player : Mob, CommandSource {
                     ClientConnection.instance.send(
                         new PlaceBlockPacket {
                             position = pos,
-                            face = (byte)Game.raycast.face
+                            info = info
                         },
                         DeliveryMethod.ReliableOrdered);
                 }
@@ -751,12 +762,11 @@ public class Player : Mob, CommandSource {
 
             // if block, place it
             if (stack.getItem().isBlock()) {
+
                 var block = Block.get(stack.getItem().getBlockID());
 
-                RawDirection dir = getFacing();
-
                 // check block-specific placement rules first
-                if (!block.canPlace(world, pos.X, pos.Y, pos.Z, dir)) {
+                if (!block.canPlace(world, pos.X, pos.Y, pos.Z, info)) {
                     setSwinging(false);
                     return;
                 }
@@ -775,7 +785,7 @@ public class Player : Mob, CommandSource {
 
                 // check entity collisions with the new block's bounding boxes
                 if (!hasCollisions && Block.collision[block.id]) {
-                    var entities = new List<entity.Entity>();
+                    var entities = new List<Entity>();
                     block.getAABBs(world, pos.X, pos.Y, pos.Z, metadata, AABBList);
 
                     foreach (var aabb in AABBList) {
@@ -802,7 +812,7 @@ public class Player : Mob, CommandSource {
                         }
                     }
 
-                    block.place(world, pos.X, pos.Y, pos.Z, metadata, dir);
+                    block.place(world, pos.X, pos.Y, pos.Z, metadata, info);
 
                     // consume block from inventory in survival mode
                     if (gameMode.gameplay) {
@@ -821,7 +831,7 @@ public class Player : Mob, CommandSource {
                         ClientConnection.instance.send(
                             new PlaceBlockPacket {
                                 position = pos,
-                                face = (byte)Game.raycast.face
+                                info = info
                             },
                             DeliveryMethod.ReliableOrdered);
                     }
@@ -946,6 +956,19 @@ public class Player : Mob, CommandSource {
         }
     }
 
+    public RawDirectionH getHFacing() {
+        // Get the forward vector from the camera
+        Vector3 forward = facing();
+
+        // Determine the horizontal facing direction based on the forward vector
+        if (Math.Abs(forward.X) > Math.Abs(forward.Z)) {
+            return forward.X > 0 ? RawDirectionH.EAST : RawDirectionH.WEST;
+        }
+        else {
+            return forward.Z > 0 ? RawDirectionH.NORTH : RawDirectionH.SOUTH;
+        }
+    }
+
     public bool isUnderWater() {
         // If not in liquid at all, definitely not underwater
         if (!inLiquid) {
@@ -972,8 +995,9 @@ public class Player : Mob, CommandSource {
     }
 
     public void pickBlock() {
-        if (Game.instance.targetedPos.HasValue) {
-            var pos = Game.instance.targetedPos.Value;
+        var raycast = Game.raycast;
+        if (raycast.hit && raycast.type == Result.BLOCK) {
+            var pos = raycast.block;
             var raw = world.getBlockRaw(pos);
             var bl = Block.get(raw.getID());
             if (bl != null) {

@@ -30,6 +30,17 @@ public class Sapling : Block {
         AABB[id] = new AABB(0.25f, 0.0f, 0.25f, 0.75f, 0.75f, 0.75f);
     }
 
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
+        return canSurvive(world, x, y, z);
+    }
+
+    public override void update(World world, int x, int y, int z) {
+        if (!canSurvive(world, x, y, z)) {
+            world.setBlock(x, y, z, AIR.id);
+        }
+    }
+
+
     public override void randomUpdate(World world, int x, int y, int z) {
         // check if there's enough space above
         if (!canGrow(world, x, y, z)) {
@@ -101,6 +112,28 @@ public class Sapling : Block {
                 break;
         }
     }
+
+    /** checks if sapling can survive at this position */
+    public static bool canSurvive(World world, int x, int y, int z) {
+        // must be in air
+        ushort block = world.getBlock(x, y, z);
+        if (block != AIR.id) {
+            return false;
+        }
+
+        // check ground block below
+        if (y <= 0 || !world.inWorld(x, y - 1, z)) {
+            return false;
+        }
+
+        var below = world.getBlock(x, y - 1, z);
+        if (below != GRASS.id && below != DIRT.id) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static Player? findNearestPlayer(World world, Vector3I pos, double radius, out double nearestDistSq) {
         Player? nearest = null;
         nearestDistSq = radius * radius;

@@ -371,7 +371,7 @@ public class Item {
      * What a meaty method lol. Called when the player uses an item on a block.
      * Returns an optional replacement ItemStack (e.g., empty bucket -> water bucket).
      */
-    public virtual ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
+    public virtual ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, Placement info) {
         return null;
     }
 

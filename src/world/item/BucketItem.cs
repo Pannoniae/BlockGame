@@ -18,7 +18,7 @@ public class BucketItem : Item {
         this.liquidBlock = liquidBlock;
     }
 
-    public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, RawDirection dir) {
+    public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, Placement info) {
         var cb = world.getBlock(x, y, z);
         var metadata = world.getBlockMetadata(x, y, z);
 

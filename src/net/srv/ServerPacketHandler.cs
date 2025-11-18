@@ -375,7 +375,6 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         conn.player.position = p.position;
-        conn.player.onGround = p.onGround;
 
         // broadcast to other players
         GameServer.instance.send(
@@ -384,7 +383,6 @@ public class ServerPacketHandler : PacketHandler {
             new EntityPositionPacket {
                 entityID = conn.entityID,
                 position = p.position,
-                onGround = p.onGround
             },
             DeliveryMethod.ReliableOrdered,
             exclude: conn
@@ -419,7 +417,6 @@ public class ServerPacketHandler : PacketHandler {
 
         conn.player.position = p.position;
         conn.player.rotation = p.rotation;
-        conn.player.onGround = p.onGround;
 
         // broadcast to other players (combined packet for efficiency)
         GameServer.instance.send(
@@ -429,7 +426,6 @@ public class ServerPacketHandler : PacketHandler {
                 entityID = conn.entityID,
                 position = p.position,
                 rotation = p.rotation,
-                onGround = p.onGround
             },
             DeliveryMethod.ReliableOrdered,
             exclude: conn
@@ -443,7 +439,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // validate reach distance (max 5 blocks)
         var dist = Vector3D.Distance(conn.player.position, new Vector3D(p.position.X, p.position.Y, p.position.Z));
-        if (dist > 6.5) {
+        if (dist > 7.5) {
             return; // too far
         }
 
@@ -473,7 +469,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // validate reach distance
         var dist = Vector3D.Distance(conn.player.position, new Vector3D(p.position.X, p.position.Y, p.position.Z));
-        if (dist > 6.5) {
+        if (dist > 7.5) {
             // too far - send revert (restore block to client)
             var currentBlock = world.getBlock(p.position.X, p.position.Y, p.position.Z);
             var currentMeta = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z).getMetadata();
@@ -547,6 +543,9 @@ public class ServerPacketHandler : PacketHandler {
         conn.breakProgress = 0;
     }
 
+    /**
+     * TODO unify the handling with the client-side PlaceBlock logic?? this is a fucking mess
+     */
     private void handlePlaceBlock(PlaceBlockPacket p) {
         if (!conn.authenticated || conn.player == null) {
             return;
@@ -556,7 +555,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // validate reach distance
         var dist = Vector3D.Distance(conn.player.position, new Vector3D(p.position.X, p.position.Y, p.position.Z));
-        if (dist > 6.5) {
+        if (dist > 7.5) {
             // too far - send revert (restore current block state)
             var currentBlock = world.getBlock(p.position.X, p.position.Y, p.position.Z);
             var currentMeta = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z).getMetadata();
@@ -602,8 +601,9 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // if item has useBlock hook, call it (use face from packet for correct placement)
-        var dir = (RawDirection)p.face;
-        var replacement = stack.getItem().useBlock(stack, world, conn.player, p.position.X, p.position.Y, p.position.Z, dir);
+        var info = p.info;
+        var dir = p.info.face;
+        var replacement = stack.getItem().useBlock(stack, world, conn.player, p.position.X, p.position.Y, p.position.Z, info);
         if (replacement != null) {
             conn.player.inventory.setStack(conn.player.inventory.selected, replacement);
 
@@ -623,7 +623,7 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // check if block can be placed
-        if (!block.canPlace(world, p.position.X, p.position.Y, p.position.Z, dir)) {
+        if (!block.canPlace(world, p.position.X, p.position.Y, p.position.Z, info)) {
             // can't place - send revert (restore current block state)
             var currentBlock = world.getBlock(p.position.X, p.position.Y, p.position.Z);
             var currentMeta = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z).getMetadata();
@@ -640,7 +640,10 @@ public class ServerPacketHandler : PacketHandler {
 
         // place block
         var metadata = (byte)stack.metadata;
-        block.place(world, p.position.X, p.position.Y, p.position.Z, metadata, dir);
+        block.place(world, p.position.X, p.position.Y, p.position.Z, metadata, info);
+
+        // read back actual metadata that was set (blocks like stairs calculate their own from the itemstack..)
+        metadata = world.getBlockMetadata(p.position.X, p.position.Y, p.position.Z);
 
         // consume block in survival
         if (conn.player.gameMode.gameplay) {
@@ -782,7 +785,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // validate reach distance (max 5 blocks)
         var dist = Vector3D.Distance(conn.player.position, target.position);
-        if (dist > 6.5) {
+        if (dist > 7.5) {
             return; // too far
         }
 
@@ -865,7 +868,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // validate reach distance
         var dist = Vector3D.Distance(conn.player.position, new Vector3D(p.position.X, p.position.Y, p.position.Z));
-        if (dist > 6.5) {
+        if (dist > 7.5) {
             return; // too far
         }
 

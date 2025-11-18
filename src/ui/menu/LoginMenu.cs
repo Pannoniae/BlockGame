@@ -78,7 +78,7 @@ public class LoginMenu : Menu {
     }
 
     private void login() {
-        var password = passwordInput.input.Trim();
+        var password = passwordInput.getInput().Trim();
         if (string.IsNullOrEmpty(password)) {
             showError("Password cannot be empty");
             return;
@@ -117,7 +117,7 @@ public class LoginMenu : Menu {
 
     public override void activate() {
         // clear password and error on activation
-        passwordInput.input = "";
+        passwordInput.setInput("");
         hideError();
         focusedElement = passwordInput;
         usernameText.text = username;

@@ -8,7 +8,6 @@ public struct EntityPositionRotationPacket : Packet {
     public int entityID;
     public Vector3D position;
     public Vector3 rotation;
-    public bool onGround;
 
     public byte channel => 1;
 
@@ -16,13 +15,11 @@ public struct EntityPositionRotationPacket : Packet {
         buf.writeInt(entityID);
         buf.writeVec3D(position);
         buf.writeVec3(rotation);
-        buf.writeBool(onGround);
     }
 
     public void read(PacketBuffer buf) {
         entityID = buf.readInt();
         position = buf.readVec3D();
         rotation = buf.readVec3();
-        onGround = buf.readBool();
     }
 }

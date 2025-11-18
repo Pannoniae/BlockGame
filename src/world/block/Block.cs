@@ -1334,7 +1334,7 @@ public class Block {
         return !fullBlock[neighbourBlock];
     }
 
-    public virtual void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+    public virtual void place(World world, int x, int y, int z, byte metadata, Placement info) {
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(metadata));
         world.blockUpdateNeighbours(x, y, z);
     }
@@ -1355,7 +1355,7 @@ public class Block {
      * Entity collision checking is handled by the placement method.
      * Override for block-specific placement rules.
      */
-    public virtual bool canPlace(World world, int x, int y, int z, RawDirection dir) {
+    public virtual bool canPlace(World world, int x, int y, int z, Placement info) {
         // standard placement rules
         // liquids can always be placed into
         if (liquid[id]) {

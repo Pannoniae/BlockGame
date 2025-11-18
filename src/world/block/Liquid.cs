@@ -565,14 +565,15 @@ public class Liquid : Block {
         }
 
         var direction = Direction.getDirection(dir);
-        var same = br.getBlockCached(direction.X, direction.Y, direction.Z).getID() == br.getBlock().getID();
-        if (same) {
+        var neighbourId = br.getBlockCached(direction.X, direction.Y, direction.Z).getID();
+
+        // don't render between same liquid
+        if (neighbourId == br.getBlock().getID()) {
             return false;
         }
 
-        var notTransparent = !transparent[br.getBlockCached(direction.X, direction.Y, direction.Z).getID()];
-
-        return dir == RawDirection.UP || (notTransparent && base.cullFace(br, x, y, z, dir));
+        // render if: UP face, transparent neighbour, or not a full block
+        return dir == RawDirection.UP || transparent[neighbourId] || !fullBlock[neighbourId];
     }
 
 

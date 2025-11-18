@@ -25,8 +25,8 @@ public class Door : Block {
     private static bool upper(byte m) => (m & 0b1000) != 0;
     private static bool hinge(byte m) => (m & 0b10000) != 0;
 
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        byte f = (byte)dir;
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
+        byte f = (byte)info.face;
         if (f > 3) f = 0;
 
         bool hingeRight = false;
@@ -54,7 +54,7 @@ public class Door : Block {
         world.blockUpdateNeighbours(x, y + 1, z);
     }
 
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) =>
+    public override bool canPlace(World world, int x, int y, int z, Placement info) =>
         world.getBlock(x, y, z) == 0 && world.getBlock(x, y + 1, z) == 0;
 
     public override bool onUse(World world, int x, int y, int z, Player player) {

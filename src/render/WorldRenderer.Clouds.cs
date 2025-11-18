@@ -42,6 +42,9 @@ public sealed partial class WorldRenderer {
                 renderClouds3D(interp);
                 break;
             case 3:
+                renderClouds3DSmooth(interp);
+                break;
+            case 4:
                 renderClouds4D(interp);
                 break;
         }
@@ -213,6 +216,86 @@ public sealed partial class WorldRenderer {
         GL.Enable(EnableCap.CullFace);
     }
 
+    private void renderClouds3DSmooth(double interp) {
+        GL.Disable(EnableCap.CullFace);
+
+        var idt = cloudidt;
+        var mat = Game.graphics.model;
+        var proj = Game.camera.getProjectionMatrix();
+        var view = Game.camera.getViewMatrix(interp);
+
+        // lighting
+        var horizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
+        // clouds are in the sky!
+        var cc = getLightColour(15, 0);
+
+        var cloudColour = new Color(
+            (byte)(horizonColour.R * 0.2f + cc.R * 0.8f),
+            (byte)(horizonColour.G * 0.2f + cc.G * 0.8f),
+            (byte)(horizonColour.B * 0.2f + cc.B * 0.8f),
+            (byte)255
+        );
+
+        Game.graphics.tex(0, Game.textures.cloudTexture);
+
+        mat.push();
+        mat.loadIdentity();
+
+        // centre box on player
+        var pp = Vector3D.Lerp(Game.player.prevPosition, Game.player.position, interp);
+        float px = (float)pp.X;
+        float pz = (float)pp.Z;
+
+        float zScroll = (float)((world.worldTick + interp) * scrollSpeed);
+
+        // tile zScroll so we don't get precision issues at extreme distances
+        zScroll %= (cscale * 2);
+
+        // cap it to render distance as usual
+        var cext = 64 + float.Min(WorldRenderer.cext, Settings.instance.renderDistance * 16);
+
+        // box bounds - actually centred on player this time!
+        float x0 = px - cext;
+        float x1 = px + cext;
+        float y0 = cheight;
+        float y1 = cheight + cThickness;
+        float z0 = pz - cext;
+        float z1 = pz + cext;
+
+        idt.model(mat);
+        idt.view(view);
+        idt.proj(proj);
+
+        // get translucent
+        cloudColour.A = 192;
+
+        idt.setColour(cloudColour);
+        idt.enableFog(true);
+        idt.fogColor(new Vector4(cloudColour.R / 255f, cloudColour.G / 255f, cloudColour.B / 255f, 0));
+        idt.setFogType(FogType.Linear);
+        idt.fogDistance(64, 64 + float.Min(Settings.instance.renderDistance * 16, 480));
+
+        // PASS 1: depth-only (write depth, no colour)
+        GL.ColorMask(false, false, false, false);
+
+        idt.begin(PrimitiveType.Quads);
+        addCloudSmooth(x0, y0, z0, x1, y1, z1, cscale, zScroll, cloudColour);
+        idt.endReuse(false);
+
+        // PASS 2: colour (with depth test)
+        GL.ColorMask(true, true, true, true);
+
+        //idt.begin(PrimitiveType.Quads);
+        //addCloud(x0, y0, z0, x1, y1, z1, cloudScale, zScroll, cloudColour);
+        idt.endReuse(true);
+
+        mat.pop();
+
+        idt.setColour(Color.White);
+        idt.enableFog(false);
+        GL.Enable(EnableCap.CullFace);
+    }
+
     private void addCloud(float x0, float y0, float z0, float x1, float y1, float z1,
         float scale, float zScroll, Color cloudColour) {
         // shades
@@ -334,6 +417,138 @@ public sealed partial class WorldRenderer {
                 if (!img[yy * w + adj]) {
                     idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
                     idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
+                }
+            }
+        }
+    }
+
+    private void addCloudSmooth(float x0, float y0, float z0, float x1, float y1, float z1,
+        float scale, float zScroll, Color cloudColour) {
+        // shades
+        Span<float> shades = [
+            1.0f, // top
+            0.8f, // north/south
+            0.7f, // east/west
+            0.6f // bottom
+        ];
+
+        Span<Color> cc = [
+            cloudColour * new Color(1f, 1f, 1f, 0.01f),
+            cloudColour * new Color(shades[1], shades[1], shades[1], 1.0f),
+            cloudColour * new Color(shades[2], shades[2], shades[2], 1.0f),
+            cloudColour * new Color(shades[3], shades[3], shades[3], 1.0f)
+        ];
+
+        var idt = cloudidt;
+        var tex = Game.textures.cloudTexture;
+        int w = (int)tex.width;
+        int h = (int)tex.height;
+
+        // calc UVs for entire cloud area
+        float u0 = x0 / scale;
+        float u1 = x1 / scale;
+        float v0 = (z0 + zScroll) / scale;
+        float v1 = (z1 + zScroll) / scale;
+
+        // top face - single quad
+        idt.setColour(cc[0]);
+        idt.addVertex(new BlockVertexTinted(x0, y1, z0, u0, v0));
+        idt.addVertex(new BlockVertexTinted(x1, y1, z0, u1, v0));
+        idt.addVertex(new BlockVertexTinted(x1, y1, z1, u1, v1));
+        idt.addVertex(new BlockVertexTinted(x0, y1, z1, u0, v1));
+
+        // bottom face - single quad
+        idt.setColour(cc[3]);
+        idt.addVertex(new BlockVertexTinted(x0, y0, z1, u0, v1));
+        idt.addVertex(new BlockVertexTinted(x1, y0, z1, u1, v1));
+        idt.addVertex(new BlockVertexTinted(x1, y0, z0, u1, v0));
+        idt.addVertex(new BlockVertexTinted(x0, y0, z0, u0, v0));
+
+
+        int x0o = (int)float.Floor(u0 * w);
+        int x1o = (int)float.Ceiling(u1 * w);
+        int y0o = (int)float.Floor(v0 * h);
+        int y1o = (int)float.Ceiling(v1 * h);
+
+        float pw = scale / w;
+        float pd = scale / h;
+
+        var img = pixels;
+
+        for (int tx = x0o; tx < x1o; tx++) {
+            for (int ty = y0o; ty < y1o; ty++) {
+                // wrap
+                int xx = tx % w;
+                int yy = ty % h;
+                if (xx < 0) xx += w;
+                if (yy < 0) yy += h;
+
+                var pixel = img[yy * w + xx];
+                if (!pixel) {
+                    continue; // transparent
+                }
+
+                // worldpos
+                float wx = tx * pw;
+                float wz = ty * pd - zScroll;
+                float wx0 = wx;
+                float wx1 = wx + pw;
+                float wz0 = wz;
+                float wz1 = wz + pd;
+
+                float u = (tx + 0.5f) / w;
+                float v = (ty + 0.5f) / h;
+
+                // TODO don't shrink if the adjacent is also a cloud? this works but breaks at diagonals.
+                // i dont think this is solvable without subdividing or some shit, good enough for now
+
+                // north
+                idt.setColour(cc[2]);
+                int adj = yy + 1;
+                adj = adj >= h ? 0 : adj;
+                if (!img[adj * w + xx]) {
+                    idt.setColour(cc[0]);
+                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
+                    idt.setColour(cc[2]);
+                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
+                }
+
+                // south
+                idt.setColour(cc[2]);
+                adj = yy - 1;
+                adj = adj < 0 ? h - 1 : adj;
+                if (!img[adj * w + xx]) {
+                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
+                    idt.setColour(cc[0]);
+                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
+                }
+
+                // east
+                idt.setColour(cc[1]);
+                adj = xx + 1;
+                adj = adj >= w ? 0 : adj;
+                if (!img[yy * w + adj]) {
+                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz0, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx1, y0, wz1, u, v));
+                    idt.setColour(cc[0]);
+                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz1, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx1, y1, wz0, u, v));
+                }
+
+                // west
+                idt.setColour(cc[1]);
+                adj = xx - 1;
+                adj = adj < 0 ? w - 1 : adj;
+                if (!img[yy * w + adj]) {
+                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz1, u, v));
+                    idt.addVertex(new BlockVertexTinted(wx0, y0, wz0, u, v));
+                    idt.setColour(cc[0]);
                     idt.addVertex(new BlockVertexTinted(wx0, y1, wz0, u, v));
                     idt.addVertex(new BlockVertexTinted(wx0, y1, wz1, u, v));
                 }

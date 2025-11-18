@@ -21,28 +21,27 @@ public partial class World {
 
     public Color getSkyColour(int ticks) {
         float e = getSunElevation(ticks);
-        float angle = getSunAngle(ticks);
 
         var nightSky = new Color(5, 5, 15);
         var daySky = new Color(100, 180, 255);
 
-        if (e < TWILIGHT_ANGLE) {
-            // night
-            return nightSky;
-        }
-        else if (e < SUNRISE_ANGLE) {
-            // civil twilight
-            float t = (e - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
-            return Color.Lerp(nightSky, new Color(20, 35, 80), t);
-        }
-        else if (e < MathF.PI / 12f) {
-            // 15 deg, sunrise/sunset
-            float t = e / (MathF.PI / 12f);
-            return Color.Lerp(new Color(20, 35, 80), daySky, t);
-        }
-        else {
-            // Full day
-            return daySky;
+        switch (e) {
+            case < TWILIGHT_ANGLE:
+                // night
+                return nightSky;
+            case < SUNRISE_ANGLE: {
+                // civil twilight
+                float t = (e - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
+                return Color.Lerp(nightSky, new Color(20, 35, 80), t);
+            }
+            case < MathF.PI / 12f: {
+                // 15 deg, sunrise/sunset
+                float t = e / (MathF.PI / 12f);
+                return Color.Lerp(new Color(20, 35, 80), daySky, t);
+            }
+            default:
+                // Full day
+                return daySky;
         }
     }
 

@@ -11,6 +11,10 @@ public class FireBlock(string name) : Block(name) {
         }
     }
 
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
+        return canSurvive(world, x, y, z);
+    }
+
     public override void randomUpdate(World world, int x, int y, int z) {
         byte age = world.getBlockMetadata(x, y, z);
 
@@ -91,6 +95,18 @@ public class FireBlock(string name) : Block(name) {
 
     /** checks if fire can survive at this position */
     public static bool canSurvive(World world, int x, int y, int z) {
+        // always in air
+        ushort block = world.getBlock(x, y, z);
+        if (block != AIR.id) {
+            return false;
+        }
+
+        // can't be in water
+        if (liquid[block]) {
+            return false;
+        }
+
+
         // fire needs either a solid block beneath or adjacent flammable
         var blockBelow = world.getBlock(x, y - 1, z);
 

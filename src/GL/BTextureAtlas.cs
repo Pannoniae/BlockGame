@@ -35,6 +35,15 @@ public class BTextureAtlas : BTexture2D {
     }
     
     public void updateTexture(int x, int y, int width, int height, Rgba32[] pixels) {
+        // update CPU-side imageData so the fucking mipmaps regenerate correctly
+        var span = imageData.Span;
+        for (int py = 0; py < height; py++) {
+            for (int px = 0; px < width; px++) {
+                span[(y + py) * image.Width + (x + px)] = pixels[py * width + px];
+            }
+        }
+
+        // update the actual GPU texture
         updateTexture(pixels, x, y, (uint)width, (uint)height);
     }
 
@@ -47,8 +56,8 @@ public class BTextureAtlas : BTexture2D {
                 int y1 = ySrc + 1;
 
                 var c00 = prevMipmap[ySrc * width * 2 + xSrc];
-                var c01 = prevMipmap[y1 * width * 2 + x1];
-                var c10 = prevMipmap[ySrc * width * 2 + xSrc];
+                var c01 = prevMipmap[ySrc * width * 2 + x1];
+                var c10 = prevMipmap[y1 * width * 2 + xSrc];
                 var c11 = prevMipmap[y1 * width * 2 + x1];
 
                 mipmap[y * width + x] = avgColourWeighted(c00, c01, c10, c11);
@@ -104,7 +113,7 @@ public class BTextureAtlas : BTexture2D {
             (byte)(r + 0.5f),
             (byte)(g + 0.5f),
             (byte)(b + 0.5f),
-            (byte)(totalAlpha * 63.75f + 0.5f)  // 63.75 = 255/4
+            (byte)(totalAlpha > 0 ? 255 : 0)  // 63.75 = 255/4
         );
     }
 

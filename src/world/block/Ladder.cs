@@ -21,29 +21,31 @@ public class Ladder : Block {
      */
     private static byte getFacing(byte metadata) => (byte)(metadata & 0b11);
 
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        dir = Game.raycast.face;
-        byte facing = dir switch {
-            RawDirection.WEST => 0,
-            RawDirection.EAST => 1,
-            RawDirection.SOUTH => 2,
-            RawDirection.NORTH => 3,
-            _ => 2
-        };
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
+        var facing = info.face;
+
+        // can't place on top or bottom faces, but just in case, don't place
+        if (facing is RawDirection.UP or RawDirection.DOWN) {
+            return;
+        }
+
+
         uint blockValue = id;
-        blockValue = blockValue.setMetadata(facing);
+        blockValue = blockValue.setMetadata((byte)facing);
         world.setBlockMetadata(x, y, z, blockValue);
         world.blockUpdateNeighbours(x, y, z);
     }
 
     public override byte maxValidMetadata() => 3;
 
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        if (!base.canPlace(world, x, y, z, dir)) return false;
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
+        if (!base.canPlace(world, x, y, z, info)) return false;
+
+        // can't place on top or bottom faces
+        if (info.face is RawDirection.UP or RawDirection.DOWN) return false;
 
         // check if there's a solid block behind where the ladder would be placed
-        dir = Game.raycast.face;
-        var o = Direction.getDirection(dir.opposite());
+        var o = Direction.getDirection(info.face.opposite());
         var sx = x + o.X;
         var sy = y + o.Y;
         var sz = z + o.Z;

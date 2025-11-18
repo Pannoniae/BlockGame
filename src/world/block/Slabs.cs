@@ -26,7 +26,7 @@ public class Slabs : Block {
     public static byte setTop(byte metadata, bool top) => (byte)((metadata & ~0b1) | (top ? 0b1 : 0));
     public static byte setDouble(byte metadata, bool doubleSlab) => (byte)((metadata & ~0b10) | (doubleSlab ? 0b10 : 0));
 
-    private byte calculatePlacement(World world, int x, int y, int z, RawDirection dir) {
+    private byte calculatePlacement(World world, int x, int y, int z, Placement info) {
         var existingBlock = world.getBlockRaw(x, y, z);
         var existingBlockId = existingBlock.getID();
         
@@ -45,7 +45,7 @@ public class Slabs : Block {
             return metadata;
         }
         
-        bool placeOnTop = determinePlacement(world, x, y, z, dir);
+        bool placeOnTop = determinePlacement(world, x, y, z, info);
         
         byte newMetadata = 0;
         newMetadata = setTop(newMetadata, placeOnTop);
@@ -53,8 +53,8 @@ public class Slabs : Block {
         return newMetadata;
     }
 
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        var meta = calculatePlacement(world, x, y, z, dir);
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
+        var meta = calculatePlacement(world, x, y, z, info);
         
         uint blockValue = id;
         blockValue = blockValue.setMetadata(meta);
@@ -63,31 +63,24 @@ public class Slabs : Block {
         world.blockUpdateNeighbours(x, y, z);
     }
 
-    private bool determinePlacement(World world, int x, int y, int z, RawDirection hitFace) {
+    private bool determinePlacement(World world, int x, int y, int z, Placement info) {
         // if placing on top face of a block, place as bottom slab
-        if (hitFace == RawDirection.UP) {
+        if (info.face == RawDirection.UP) {
             return false; // bottom slab
         }
         
         // if placing on bottom face of a block, place as top slab
-        if (hitFace == RawDirection.DOWN) {
+        if (info.face == RawDirection.DOWN) {
             return true; // top slab
         }
 
         // for side faces, use cursor position within the block
-        var raycast = Raycast.raycast(world, RaycastType.BLOCKS);
-        if (raycast.hit) {
-            var hitPoint = raycast.point;
-            var blockY = y;
-            var relativeY = hitPoint.Y - blockY;
-            
-            // if hit in upper half of block, place top slab
-            // if hit in lower half of block, place bottom slab
-            return relativeY > 0.5;
-        }
-        
-        // fallback to bottom slab
-        return false;
+        var hitPoint = info.hitPoint;
+        var relativeY = hitPoint.Y - y;
+
+        // if hit in upper half of block, place top slab
+        // if hit in lower half of block, place bottom slab
+        return relativeY > 0.5;
     }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
@@ -149,8 +142,8 @@ public class Slabs : Block {
         }
     }
     
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        var meta = calculatePlacement(world, x, y, z, dir);
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
+        var meta = calculatePlacement(world, x, y, z, info);
         
         // if trying to place on existing double slab, can't place
         if (meta == 0) {

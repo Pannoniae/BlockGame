@@ -150,7 +150,7 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         // if target died, clear target
-        if (target != null && (!target.active || target.dead)) {
+        if (target != null && target.active && !target.dead) {
             if (path != null) {
                 Pathfinding.ret(path);
             }

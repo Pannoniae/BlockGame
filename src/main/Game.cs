@@ -528,10 +528,14 @@ public partial class Game {
         //isAMDIntegratedCard = true;
         
         // check if this is an Intel iGPU
-        isIntelIntegratedCard = vendor.Contains("Intel", StringComparison.OrdinalIgnoreCase) &&
+        isIntelIntegratedCard = (vendor.Contains("Intel", StringComparison.OrdinalIgnoreCase) &&
                                  (vendor.Contains("UHD", StringComparison.OrdinalIgnoreCase) ||
                                   vendor.Contains("Iris", StringComparison.OrdinalIgnoreCase) ||
-                                  vendor.Contains("HD Graphics", StringComparison.OrdinalIgnoreCase));
+                                  vendor.Contains("HD Graphics", StringComparison.OrdinalIgnoreCase))) ||
+                                rendererS.Contains("Intel", StringComparison.OrdinalIgnoreCase) &&
+                                (rendererS.Contains("UHD", StringComparison.OrdinalIgnoreCase) ||
+                                 rendererS.Contains("Iris", StringComparison.OrdinalIgnoreCase) ||
+                                 rendererS.Contains("HD Graphics", StringComparison.OrdinalIgnoreCase));
         
         Log.info($"(Intel integrated: {isIntelIntegratedCard})");
 
@@ -761,8 +765,10 @@ public partial class Game {
 
         cs = new Coroutines();
 
-        var music = snd.playMusic("snd/tests.ogg");
-        music.loop = true;
+        if (!snd.nosound) {
+            var music = snd.playMusic("snd/tests.ogg");
+            music.loop = true;
+        }
 
         snd.muteMusic();
 
@@ -1041,13 +1047,13 @@ public partial class Game {
 
 
         // gui bounds debug - ctrl+numpad9
-        if (key == Key.Keypad9 && keyboard.IsKeyPressed(Key.ControlLeft)) {
+        if (devMode && key == Key.Keypad9 && keyboard.IsKeyPressed(Key.ControlLeft)) {
             GUI.SHOW_GUI_BOUNDS = !GUI.SHOW_GUI_BOUNDS;
             Log.info("Enabled GUI bounds: " + GUI.SHOW_GUI_BOUNDS);
         }
 
         else {
-            if (key == Key.Keypad9) {
+            if (devMode && key == Key.Keypad9) {
                 GUI.WIREFRAME = !GUI.WIREFRAME;
                 Log.info("Enabled GUI wireframe: " + GUI.WIREFRAME);
             }

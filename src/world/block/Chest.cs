@@ -22,19 +22,12 @@ public class Chest : EntityBlock {
      * metadata bits 0-1: horizontal facing (0=WEST, 1=EAST, 2=SOUTH, 3=NORTH)
      * default front is -Z (SOUTH), we want it to face the player
      */
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         // face opposite to player (so front faces player)
-        var opposite = Direction.getOpposite(dir);
-        byte facing = opposite switch {
-            RawDirection.WEST => 0,
-            RawDirection.EAST => 1,
-            RawDirection.SOUTH => 2,
-            RawDirection.NORTH => 3,
-            _ => 2 // default south
-        };
+        var facing = Direction.getOpposite(info.hfacing);
 
         uint blockValue = id;
-        blockValue = blockValue.setMetadata(facing);
+        blockValue = blockValue.setMetadata((byte)facing);
 
         world.setBlockMetadata(x, y, z, blockValue);
         world.blockUpdateNeighbours(x, y, z);

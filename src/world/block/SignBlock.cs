@@ -47,20 +47,37 @@ public class SignBlock : EntityBlock {
     };
 
     public override void update(World world, int x, int y, int z) {
-        if (!canSurvive(world, x, y, z)) {
-            var metadata = world.getBlockRaw(x, y, z).getMetadata();
+        var metadata = world.getBlockRaw(x, y, z).getMetadata();
+        if (!canSurvive(world, x, y, z, metadata)) {
             var (dropItem, dropMeta, dropCount) = getDrop(world, x, y, z, metadata);
             world.spawnBlockDrop(x, y, z, dropItem, dropCount, dropMeta);
             world.setBlock(x, y, z, AIR.id);
         }
     }
 
-    public override bool canPlace(World world, int x, int y, int z, RawDirection dir) {
-        return canSurvive(world, x, y, z);
+    public override bool canPlace(World world, int x, int y, int z, Placement info) {
+        byte metadata = calculatePlacementMetadata(info);
+        return canSurvive(world, x, y, z, metadata);
     }
 
-    private static bool canSurvive(World world, int x, int y, int z) {
-        var metadata = world.getBlockRaw(x, y, z).getMetadata();
+    private static byte calculatePlacementMetadata(Placement info) {
+        var face = info.face;
+        bool isWall = face is RawDirection.NORTH or RawDirection.SOUTH or RawDirection.EAST or RawDirection.WEST;
+
+        if (isWall) {
+            byte rotation = face switch {
+                RawDirection.SOUTH => 2,
+                RawDirection.WEST => 3,
+                RawDirection.NORTH => 4,
+                RawDirection.EAST => 5,
+                _ => 0
+            };
+            return (byte)(rotation | 0x10);
+        }
+        return 0; // standing sign, rotation doesn't matter for survival check
+    }
+
+    private static bool canSurvive(World world, int x, int y, int z, byte metadata) {
         if (isWall(metadata)) {
             // wall sign - check block behind
             var rot = getRotation(metadata);

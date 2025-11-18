@@ -861,6 +861,11 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
     
     public void read(ChunkDataPacket.SubChunkData data) {
+        // dispose old arrays if they exist (to prevent a nice memory leak)
+        if (inited) {
+            ReleaseUnmanagedResources();
+        }
+
         vertices = data.vertices;
         blockRefs = data.blockRefs;
         indices = data.indices;

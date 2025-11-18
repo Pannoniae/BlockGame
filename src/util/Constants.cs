@@ -24,7 +24,7 @@ public static class Constants {
     public const double liquidFriction = 0.92;
     public const double epsilon = 0.0001;
     public const float epsilonF = 0.0001f;
-    public const double epsilonGroundCheck = 0.01;
+    public const double epsilonGroundCheck = 0.0001;
 
     public static double moveSpeed = 1.25;
     public const double groundMoveSpeed = 0.75;
@@ -44,7 +44,7 @@ public static class Constants {
     public const double flyModeDelay = 0.4;
 
     // Networking
-    public const int netVersion = 5;
+    public const int netVersion = 6;
     public const string connectionKey = "BlockGame";
 
     // Inventory
@@ -59,5 +59,5 @@ public static class Constants {
     public static string VERSION => _ver;
     #endif
 
-    private const string _ver = "BlockGame v0.0.3-pre8";
+    private const string _ver = "BlockGame v0.0.3";
 }

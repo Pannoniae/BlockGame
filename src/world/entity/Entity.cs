@@ -339,6 +339,16 @@ public partial class Entity(World world, string type) : Persistent {
         if (dmgTime > 0) {
             dmgTime--;
         }
+
+        // void
+        if (position.Y < -64) {
+            dmg(20);
+            iframes = 60;
+        }
+
+        if (position.Y < -128) {
+            die();
+        }
     }
 
     /**
@@ -814,6 +824,7 @@ public partial class Entity(World world, string type) : Persistent {
         state.setBool(EntityState.ON_FIRE, fireTicks > 0);
         state.setBool(EntityState.SNEAKING, sneaking);
         state.setInt(EntityState.RIDING, mount?.id ?? -1);
+        state.setBool(EntityState.ON_GROUND, onGround);
     }
 
     /** apply state buffer to entity fields (client-side, after receiving) */
@@ -837,5 +848,7 @@ public partial class Entity(World world, string type) : Persistent {
             this.mount.rider = null;
             this.mount = null;
         }
+
+        onGround = state.getBool(EntityState.ON_GROUND);
     }
 }

@@ -15,7 +15,7 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
     public int smeltProgress = 0;       // current smelting time in ticks
     public int fuelRemaining = 0;       // fuel ticks left
     public int fuelMax = 0;             // total fuel from current fuel item (mostly for UI % lol)
-    private SmeltingRecipe? currentRecipe = null;
+    public SmeltingRecipe? currentRecipe = null;
 
     public FurnaceBlockEntity() : base("furnace") {
     }

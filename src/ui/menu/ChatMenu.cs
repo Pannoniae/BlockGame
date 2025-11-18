@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
 using BlockGame.logic;
 using BlockGame.main;
@@ -101,9 +102,12 @@ public class ChatMenu : Menu {
                 cursorPos = 0;
                 Game.instance.executeOnMainThread(closeChat);
                 break;
-            case Key.Backspace when message.Length > 0:
+            case Key.Backspace when cursorPos > 0:
                 message = message.Remove(cursorPos - 1, 1);
                 cursorPos--;
+                break;
+            case Key.Delete when cursorPos < message.Length:
+                message = message.Remove(cursorPos, 1);
                 break;
             case Key.Up:
                 if (historyIndex < history.Count - 1) {
@@ -119,17 +123,33 @@ public class ChatMenu : Menu {
                     cursorPos = message.Length;
                 }
                 break;
-            case Key.Left:
-                if (cursorPos > 0) {
-                    cursorPos--;
-                }
-
+            case Key.Left when cursorPos > 0:
+                cursorPos--;
                 break;
-            case Key.Right:
-                if (cursorPos < message.Length) {
-                    cursorPos++;
+            case Key.Right when cursorPos < message.Length:
+                cursorPos++;
+                break;
+            case Key.Home:
+                cursorPos = 0;
+                break;
+            case Key.End:
+                cursorPos = message.Length;
+                break;
+            case Key.C when keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight):
+                if (!string.IsNullOrEmpty(message)) {
+                    keyboard.ClipboardText = message;
                 }
-
+                break;
+            case Key.V when keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight):
+                var clipboardText = keyboard.ClipboardText;
+                if (!string.IsNullOrEmpty(clipboardText)) {
+                    // filter to printable characters only
+                    var filtered = new string(clipboardText.Where(c => !char.IsControl(c)).ToArray());
+                    if (!string.IsNullOrEmpty(filtered)) {
+                        message = message.Insert(cursorPos, filtered);
+                        cursorPos += filtered.Length;
+                    }
+                }
                 break;
         }
     }
@@ -181,9 +201,12 @@ public class ChatMenu : Menu {
 
     public override void onKeyRepeat(IKeyboard keyboard, Key key, int scancode) {
         switch (key) {
-            case Key.Backspace when message.Length > 0:
+            case Key.Backspace when cursorPos > 0:
                 message = message.Remove(cursorPos - 1, 1);
                 cursorPos--;
+                break;
+            case Key.Delete when cursorPos < message.Length:
+                message = message.Remove(cursorPos, 1);
                 break;
             case Key.Up:
                 if (historyIndex < history.Count - 1) {
@@ -199,15 +222,11 @@ public class ChatMenu : Menu {
                     cursorPos = message.Length;
                 }
                 break;
-            case Key.Left:
-                if (cursorPos > 0) {
-                    cursorPos--;
-                }
+            case Key.Left when cursorPos > 0:
+                cursorPos--;
                 break;
-            case Key.Right:
-                if (cursorPos < message.Length) {
-                    cursorPos++;
-                }
+            case Key.Right when cursorPos < message.Length:
+                cursorPos++;
                 break;
         }
     }
@@ -223,7 +242,23 @@ public class ChatMenu : Menu {
         var gui = Game.gui;
         var cursor = Game.permanentStopwatch.ElapsedMilliseconds % 1000 < 500 ? "|" : " ";
 
+        // calculate available width for text (subtract margins + prompt)
+        const float leftMargin = 6;
+        const float rightMargin = 6;
+        var promptWidth = gui.measureStringUIThin("> ").X;
+        var availableWidth = gui.uiWidth - leftMargin - rightMargin - promptWidth;
 
+        // calculate text up to cursor for scroll offset
+        var textBeforeCursor = message[..cursorPos];
+        var cursorXOffset = gui.measureStringUIThin(textBeforeCursor).X;
+
+        // calculate scroll offset to keep cursor visible
+        float scrollOffset = 0;
+        if (cursorXOffset > availableWidth) {
+            scrollOffset = cursorXOffset - availableWidth + 4;
+        }
+
+        // build display string with cursor
         string msgWithCursor;
         if (cursorPos >= message.Length) {
             msgWithCursor = message + cursor;
@@ -232,9 +267,31 @@ public class ChatMenu : Menu {
             msgWithCursor = message.Insert(cursorPos, cursor);
         }
 
+        // draw background
         gui.drawUI(gui.colourTexture, RectangleF.FromLTRB(4, gui.uiHeight - 16, gui.uiWidth - 4, gui.uiHeight - 4),
             color: new Color(0, 0, 0, 128));
-        gui.drawStringUIThin("> " + msgWithCursor, new Vector2(6, Game.gui.uiHeight - 14));
+
+        // draw prompt
+        gui.drawStringUIThin("> ", new Vector2(leftMargin, gui.uiHeight - 14));
+
+        // draw text with clipping
+        var textX = leftMargin + promptWidth - scrollOffset;
+        var textY = gui.uiHeight - 14;
+
+        // use scissor test to clip overflowing text
+        var scissorX = (int)(leftMargin + promptWidth);
+        var scissorY = (int)(gui.uiHeight - 16);
+        var scissorW = (int)(gui.uiWidth - leftMargin - rightMargin - promptWidth);
+        var scissorH = 12;
+        Game.graphics.mainBatch.End();
+        Game.graphics.mainBatch.Begin();
+
+        Game.graphics.scissorUI(scissorX, scissorY, scissorW, scissorH);
+        gui.drawStringUIThin(msgWithCursor, new Vector2(textX, textY));
+        // break batch!
+        Game.graphics.mainBatch.End();
+        Game.graphics.mainBatch.Begin();
+        Game.graphics.noScissor();
     }
 }
 

@@ -7,19 +7,16 @@ namespace BlockGame.net.packet;
 public struct PlayerPositionRotationPacket : Packet {
     public Vector3D position;
     public Vector3 rotation;
-    public bool onGround;
 
     public byte channel => 1;
 
     public void write(PacketBuffer buf) {
         buf.writeVec3D(position);
         buf.writeVec3(rotation);
-        buf.writeBool(onGround);
     }
 
     public void read(PacketBuffer buf) {
         position = buf.readVec3D();
         rotation = buf.readVec3();
-        onGround = buf.readBool();
     }
 }

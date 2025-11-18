@@ -86,11 +86,11 @@ public class CreateWorldMenu : Menu {
     }
 
     private void createWorld() {
-        var worldName = nameInput.input.Trim();
+        var worldName = nameInput.getInput().Trim();
         //Console.Out.WriteLine("world name: " + worldName);
         if (string.IsNullOrEmpty(worldName)) {
             worldName = "New World";
-            nameInput.input = worldName;
+            nameInput.setInput(worldName);
         }
 
         // generate folder name (replace spaces with underscores)
@@ -106,9 +106,9 @@ public class CreateWorldMenu : Menu {
 
         // parse seed (or generate random)
         int seed;
-        if (string.IsNullOrEmpty(seedInput.input) || !int.TryParse(seedInput.input, out seed)) {
+        if (string.IsNullOrEmpty(seedInput.getInput()) || !int.TryParse(seedInput.getInput(), out seed)) {
             // if seed is string, hash to int
-            seed = !string.IsNullOrEmpty(seedInput.input) ? seedInput.input.GetHashCode() : Game.random.Next();
+            seed = !string.IsNullOrEmpty(seedInput.getInput()) ? seedInput.getInput().GetHashCode() : Game.random.Next();
         }
 
         // get generator name (strip "generator." prefix)
@@ -124,8 +124,8 @@ public class CreateWorldMenu : Menu {
 
     public override void activate() {
         // reset inputs
-        nameInput.input = "New World";
-        seedInput.input = "";
+        nameInput.setInput("New World");
+        seedInput.setInput("");
     }
 
     public override void draw() {

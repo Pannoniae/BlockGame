@@ -23,6 +23,7 @@ public class SoundEngine : IDisposable {
 
     // Spatial audio listener
     private readonly AudioListener listener;
+    public readonly bool nosound;
 
     // The range for pitch variation (0.85 to 1.15 means 15% lower or higher pitch)
     private const float MIN_PITCH = 0.95f;
@@ -34,7 +35,15 @@ public class SoundEngine : IDisposable {
 
         // IF YOU CHANGE THIS stuff will jitter
         // so don't increase it too much, 2048 is crazy (like 46ms latency??)
-        AudioContext.Initialize(SAMPLE_RATE, CHANNELS, 256);
+        try {
+            AudioContext.Initialize(SAMPLE_RATE, CHANNELS, 256);
+        }
+        catch (Exception ex) {
+            nosound = true;
+            Log.warn("Failed to initialize audio context! There will be no sound.");
+            Log.warn(ex);
+            return;
+        }
 
         // initialize spatial audio listener
         listener = new AudioListener {
@@ -114,6 +123,10 @@ public class SoundEngine : IDisposable {
     /// Play a sound from the specified category using channel system
     /// </summary>
     public void play(string category, float pitch = 1.0f, float volume = 1.0f) {
+        if (nosound) {
+            return;
+        }
+
         if (!soundCategories.TryGetValue(category, out var clips) || clips.Count == 0) {
             throw new SoundException($"No sounds loaded for category: {category}");
         }
@@ -127,6 +140,10 @@ public class SoundEngine : IDisposable {
     }
 
     public void plays(string sound, float pitch = 1.0f, float volume = 1.0f) {
+        if (nosound) {
+            return;
+        }
+
         if (!loadedSamples.TryGetValue(sound, out var clip)) {
             clip = doLoad(sound);
             loadedSamples.Set(sound, clip ?? throw new SoundException($"Failed to load sound: {sound}"));
@@ -141,6 +158,10 @@ public class SoundEngine : IDisposable {
     /// Play a sound from the specified category at a 3D position
     /// </summary>
     public void play(string category, Vector3D position, float pitch = 1.0f, float volume = 1.0f) {
+        if (nosound) {
+            return;
+        }
+
         if (!soundCategories.TryGetValue(category, out var clips) || clips.Count == 0) {
             throw new SoundException($"No sounds loaded for category: {category}");
         }
@@ -168,6 +189,10 @@ public class SoundEngine : IDisposable {
     }
 
     public int getUsedChannels() {
+        if (nosound) {
+            return 0;
+        }
+
         int count = 0;
         foreach (var channel in sfxChannels) {
             if (!channel.isFree) {
@@ -178,13 +203,20 @@ public class SoundEngine : IDisposable {
     }
 
     public int getTotalChannels() {
+        if (nosound) {
+            return 0;
+        }
+
         return sfxChannels.Length;
     }
 
     /// <summary>
     /// Play music file, returns controllable MusicSource
     /// </summary>
-    public MusicSource playMusic(string filepath) {
+    public MusicSource? playMusic(string filepath) {
+        if (nosound) {
+            return null;
+        }
 
         filepath = Assets.getPath(filepath);
 
@@ -203,24 +235,40 @@ public class SoundEngine : IDisposable {
     }
 
     public void muteMusic() {
+        if (nosound) {
+            return;
+        }
+
         foreach (var music in musicSources) {
             music.volume = 0.0f;
         }
     }
     
     public void unmuteMusic() {
+        if (nosound) {
+            return;
+        }
+
         foreach (var music in musicSources) {
             music.volume = 1.0f;
         }
     }
 
     public void updateSfxVolumes() {
+        if (nosound) {
+            return;
+        }
+
         foreach (var channel in sfxChannels) {
             channel.updateVolume();
         }
     }
 
     public void updateMusicVolumes() {
+        if (nosound) {
+            return;
+        }
+
         foreach (var music in musicSources) {
             music.updateVolume();
         }
@@ -234,6 +282,10 @@ public class SoundEngine : IDisposable {
     /// Must be called regularly from the main thread for audio callbacks to work
     /// </summary>
     public void update() {
+        if (nosound) {
+            return;
+        }
+
         AudioContext.Update();
 
         // update listener position/direction for spatial audio
@@ -252,16 +304,28 @@ public class SoundEngine : IDisposable {
     }
 
     public void playFootstep(SoundMaterial mat, float volume = 0.4f) {
+        if (nosound) {
+            return;
+        }
+
         var cat = mat.stepCategory();
         play(cat, 1.0f, volume);
     }
 
     public void playFootstep(SoundMaterial mat, Vector3D position, float volume = 0.4f) {
+        if (nosound) {
+            return;
+        }
+
         var cat = mat.stepCategory();
         play(cat, position, 1.0f, volume);
     }
 
     public void playBlockKnock(SoundMaterial mat, float volume = 0.3f) {
+        if (nosound) {
+            return;
+        }
+
         var cat = mat.knockCategory();
         if (cat == mat.breakCategory()) {
             play(cat, 0.5f, volume);
@@ -272,6 +336,10 @@ public class SoundEngine : IDisposable {
     }
 
     public void playBlockKnock(SoundMaterial mat, Vector3D position, float volume = 0.3f) {
+        if (nosound) {
+            return;
+        }
+
         var cat = mat.knockCategory();
         if (cat == mat.breakCategory()) {
             play(cat, position, 0.5f, volume);
@@ -282,6 +350,10 @@ public class SoundEngine : IDisposable {
     }
 
     public void playBlockBreak(SoundMaterial mat, float volume = 0.5f) {
+        if (nosound) {
+            return;
+        }
+
         var cat = mat.breakCategory();
         if (cat == mat.stepCategory()) {
             play(cat, (getRandomPitch() * 0.1f) + 0.8f, volume);
@@ -292,6 +364,10 @@ public class SoundEngine : IDisposable {
     }
 
     public void playBlockBreak(SoundMaterial mat, Vector3D position, float volume = 0.5f) {
+        if (nosound) {
+            return;
+        }
+
         var cat = mat.breakCategory();
         if (cat == mat.stepCategory()) {
             play(cat, position, (getRandomPitch() * 0.1f) + 0.8f, volume);
@@ -307,6 +383,10 @@ public class SoundEngine : IDisposable {
     }
 
     private void ReleaseUnmanagedResources() {
+        if (nosound) {
+            return;
+        }
+
         // dispose all SFX channels
         foreach (var channel in sfxChannels) {
             channel.dispose();

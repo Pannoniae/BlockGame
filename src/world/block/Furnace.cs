@@ -26,20 +26,13 @@ public class Furnace : EntityBlock {
      * bit 2: lit (1=lit, 0=unlit)
      * default front is -Z (SOUTH), we want it to face the player
      */
-    public override void place(World world, int x, int y, int z, byte metadata, RawDirection dir) {
-        var opposite = Direction.getOpposite(dir);
-        byte facing = opposite switch {
-            RawDirection.WEST => 0,
-            RawDirection.EAST => 1,
-            RawDirection.SOUTH => 2,
-            RawDirection.NORTH => 3,
-            _ => 2
-        };
+    public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
+        var facing = Direction.getOpposite(info.hfacing);
 
         // todo place unlit
 
         uint blockValue = id;
-        blockValue = blockValue.setMetadata(facing);
+        blockValue = blockValue.setMetadata((byte)facing);
 
         world.setBlockMetadata(x, y, z, blockValue);
         world.blockUpdateNeighbours(x, y, z);

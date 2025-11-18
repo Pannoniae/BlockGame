@@ -143,7 +143,9 @@ public class EntityTracker {
             }
 
             // don't send player's own entity to themselves (they have ClientPlayer)
-            if (t.entity == conn.player) continue;
+            if (t.entity == conn.player) {
+                continue;
+            }
 
             if (conn.isInRange(t.entity.position)) {
                 t.tempViewers.Add(conn);
@@ -221,6 +223,11 @@ public class EntityTracker {
         // send despawn to old viewers no longer in range (in viewers but not in tempViewers)
         foreach (var viewer in t.viewers) {
             if (t.tempViewers.Contains(viewer)) continue;
+
+            // DON'T SEND DESPAWNS for players either (todo players never despawn until disconnect, this needs to be improved later)
+            if (t.entity is Player) {
+                continue;
+            }
 
             var despawnPacket = new DespawnEntityPacket { entityID = t.entity.id };
             viewer.send(despawnPacket, DeliveryMethod.ReliableOrdered);

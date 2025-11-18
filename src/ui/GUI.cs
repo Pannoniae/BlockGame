@@ -593,11 +593,11 @@ public class GUI {
     }
 
     /**
-     * draw text with &-code color support.
-     * &a = green, &c = red, etc.
-     * alpha is multiplied with each segment's color.
+     * draw text with &amp;-code colour support.
+     * &amp;a = green, &amp;c = red, etc.
+     * alpha is multiplied with each segment's colour.
      */
-    public void drawColoredStringUIThin(string text, Vector2 position, float alpha = 1f) {
+    public void drawColouredStringUIThin(string text, Vector2 position, float alpha = 1f) {
         var segments = TextColours.parse(text);
         var xOffset = 0f;
 

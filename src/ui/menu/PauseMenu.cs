@@ -1,6 +1,8 @@
 using BlockGame.main;
 using BlockGame.ui.element;
 using Molten;
+using Silk.NET.Input;
+using Button = BlockGame.ui.element.Button;
 
 namespace BlockGame.ui.menu {
     public class PauseMenu : Menu {
@@ -43,6 +45,13 @@ namespace BlockGame.ui.menu {
                     Game.exitWorld(save: true);
                     Game.instance.switchToScreen(Screen.MAIN_MENU_SCREEN);
                 });
+            }
+        }
+
+        public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
+            base.onKeyDown(keyboard, key, scancode);
+            if (key == Key.Escape) {
+                Screen.GAME_SCREEN.backToGame();
             }
         }
 

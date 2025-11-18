@@ -69,10 +69,10 @@ public partial class World {
             }
         } else {
             // hostiles need darkness (block light < 4)
-            var skylight = chunk.getSkyLight(x & 15, y, z & 15);
+            var notDay = getDayPercentage(worldTick) > 0.5f;
             var blocklight = chunk.getBlockLight(x & 15, y, z & 15);
             
-            if (skylight > 8 || blocklight >= 4) {
+            if (blocklight >= 4 && notDay) {
                 return false;
             }
         }

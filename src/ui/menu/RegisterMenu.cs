@@ -95,8 +95,8 @@ public class RegisterMenu : Menu {
     }
 
     private void register() {
-        var password = passwordInput.input.Trim();
-        var confirm = confirmInput.input.Trim();
+        var password = passwordInput.getInput().Trim();
+        var confirm = confirmInput.getInput().Trim();
 
         if (string.IsNullOrEmpty(password)) {
             showError("Password cannot be empty");
@@ -141,8 +141,8 @@ public class RegisterMenu : Menu {
 
     public override void activate() {
         // clear fields and error on activation
-        passwordInput.input = "";
-        confirmInput.input = "";
+        passwordInput.setInput("");
+        confirmInput.setInput("");
         hideError();
         focusedElement = passwordInput;
         usernameDisplay.text = username;
