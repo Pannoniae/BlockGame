@@ -56,7 +56,7 @@ public class EntityTracker {
         updateViewers(t);
     }
 
-    private bool shouldSendVelocity(Entity entity) {
+    private static bool shouldSendVelocity(Entity entity) {
         // only send velocity for entities that actually move
         return entity switch {
             ItemEntity => true,
