@@ -233,6 +233,7 @@ public class ChatMenu : Menu {
 
     public void closeChat() {
         message = "";
+        cursorPos = 0;
         Game.instance.lockMouse();
         screen.switchToMenu(((GameScreen)screen).INGAME_MENU);
     }
@@ -241,6 +242,9 @@ public class ChatMenu : Menu {
         base.draw();
         var gui = Game.gui;
         var cursor = Game.permanentStopwatch.ElapsedMilliseconds % 1000 < 500 ? "|" : " ";
+
+        // clamp cursor to valid range
+        cursorPos = Math.Clamp(cursorPos, 0, message.Length);
 
         // calculate available width for text (subtract margins + prompt)
         const float leftMargin = 6;

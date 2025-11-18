@@ -49,7 +49,7 @@ public class SignBlock : EntityBlock {
     public override void update(World world, int x, int y, int z) {
         var metadata = world.getBlockRaw(x, y, z).getMetadata();
         if (!canSurvive(world, x, y, z, metadata)) {
-            var (dropItem, dropMeta, dropCount) = getDrop(world, x, y, z, metadata);
+            var (dropItem, dropMeta, dropCount) = getDrop(world, x, y, z, metadata, true);
             world.spawnBlockDrop(x, y, z, dropItem, dropCount, dropMeta);
             world.setBlock(x, y, z, AIR.id);
         }
@@ -113,7 +113,7 @@ public class SignBlock : EntityBlock {
         }
     }
 
-    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         return (Item.SIGN_ITEM, 0, 1);
     }
 

@@ -100,15 +100,15 @@ public class Torch : Block {
         };
 
         if (!canAttachTo(world, x, y, z, dir)) {
-            var (item, meta, count) = getDrop(world, x, y, z, metadata);
+            var (item, meta, count) = getDrop(world, x, y, z, metadata, true);
             world.spawnBlockDrop(x, y, z, item, count, meta);
             world.setBlock(x, y, z, 0);
         }
     }
 
-    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         // no metadata!
-        return base.getDrop(world, x, y, z, 0);
+        return base.getDrop(world, x, y, z, 0, canBreak);
     }
 
 

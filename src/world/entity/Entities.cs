@@ -10,7 +10,12 @@ namespace BlockGame.world.entity;
 public enum SpawnType {
     NONE,      // doesn't spawn naturally
     PASSIVE,   // animals
-    HOSTILE    // monsters
+    HOSTILE,    // monsters
+    CAVE       // hostile but only spawns in caves
+}
+
+public static class SpawnTypeExt {
+    public static bool isHostile(this SpawnType type) => type is SpawnType.HOSTILE or SpawnType.CAVE;
 }
 
 /**

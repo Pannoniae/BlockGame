@@ -71,6 +71,8 @@ public class FallingBlockEntity : Entity {
             landPos.Y += 1;
         }
 
+        remove();
+
         // try to place the block
         var existing = world.getBlock(landPos);
         if (existing == 0 || !Block.collision[existing]) {
@@ -86,8 +88,6 @@ public class FallingBlockEntity : Entity {
                 world.spawnBlockDrop(landPos.X, landPos.Y, landPos.Z, block.getItem(), 1, blockMeta);
             }
         }
-
-        remove();
     }
 
     private void remove() {

@@ -52,13 +52,14 @@ public class OreFeature : Feature {
         var count = random.Next(minCount, maxCount + 1);
 
 
+        var bl = world.getBlock(x, y, z);
         // we have *count* ores, we need to distribute them somehow
-        if (stoneMode && world.getBlock(x, y, z) !=  Block.STONE.id) {
+        if (stoneMode && bl !=  Block.STONE.id) {
             return; // Only start in stone
         }
 
-        // don't place in air tho
-        if (world.getBlock(x, y, z) == Block.AIR.id) {
+        // don't place in air tho, only natural blocks
+        if (bl !=  Block.STONE.id && bl !=  Block.DIRT.id && bl !=  Block.GRASS.id && bl !=  Block.HELLSTONE.id) {
             return;
         }
 

@@ -1,4 +1,6 @@
-﻿using BlockGame.util;
+﻿using BlockGame.main;
+using BlockGame.util;
+using BlockGame.world.item;
 using Molten;
 
 namespace BlockGame.world.block;
@@ -23,6 +25,14 @@ public class Leaves : Block {
         // only broken by a scythe!
         tool[id] = ToolType.SCYTHE;
         tier[id] = MaterialTier.WOOD;
+    }
+
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+        // 1 in 20 chance to drop apple
+        if (Game.random.Next(20) == 0) {
+            return (Item.APPLE, 0, 1);
+        }
+        return base.getDrop(world, x, y, z, metadata, canBreak);
     }
 
     public override void randomUpdate(World world, int x, int y, int z) {

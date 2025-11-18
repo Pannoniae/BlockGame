@@ -31,7 +31,10 @@ public partial class World {
 
 
     /** check if position is valid for spawning */
-    private bool spawnAt(int x, int y, int z, bool needsLight) {
+    private bool spawnAt(int x, int y, int z, SpawnType type) {
+
+        bool needsLight = type == SpawnType.PASSIVE;
+
         if (y is <= 0 or >= WORLDHEIGHT - 2) {
             return false;
         }
@@ -61,13 +64,13 @@ public partial class World {
         }
 
         // skillcheck
-        if (needsLight) {
+        if (type == SpawnType.PASSIVE) {
             // animals need light (skylight > 8)
             var skylight = chunk.getSkyLight(x & 15, y, z & 15);
             if (skylight <= 8) {
                 return false;
             }
-        } else {
+        } else if (type == SpawnType.HOSTILE) {
             // hostiles need darkness (block light < 4)
             var notDay = getDayPercentage(worldTick) > 0.5f;
             var blocklight = chunk.getBlockLight(x & 15, y, z & 15);
@@ -75,6 +78,21 @@ public partial class World {
             if (blocklight >= 4 && notDay) {
                 return false;
             }
+        }
+        else if (type == SpawnType.CAVE) {
+            // cave mobs need darkness (block light < 0) AND no skylight
+            var blocklight = chunk.getBlockLight(x & 15, y, z & 15);
+            if (blocklight > 0) {
+                return false;
+            }
+
+            var skylight = chunk.getSkyLight(x & 15, y, z & 15);
+            if (skylight > 0) {
+                return false;
+            }
+        }
+        else {
+            SkillIssueException.throwNew("Bullshit spawntype?");
         }
 
         return true;
@@ -127,14 +145,14 @@ public partial class World {
                 }
 
                 // valid spawn pos?
-                bool needsLight = type == SpawnType.PASSIVE;
-                if (!spawnAt(x, y, z, needsLight)) {
+
+                if (!spawnAt(x, y, z, type)) {
                     continue;
                 }
 
                 // valid surface?
                 var below = getBlock(x, y - 1, z);
-                if (!spawnOn(below, needsLight)) {
+                if (!spawnOn(below, type == SpawnType.PASSIVE)) {
                     continue;
                 }
 
@@ -168,7 +186,7 @@ public partial class World {
                         nz += random.Next(-4, 5);
                         ny += random.Next(-1, 2);
 
-                        if (!spawnAt(nx, ny, nz, type == SpawnType.PASSIVE)) {
+                        if (!spawnAt(nx, ny, nz, type)) {
                             continue;
                         }
 
@@ -232,11 +250,16 @@ public partial class World {
             // decide passive vs hostile (75% hostile, 25% passive)
             var type = random.Next(4) == 0 ? SpawnType.PASSIVE : SpawnType.HOSTILE;
 
+            // if hostile, 1/3 for cave
+            if (type == SpawnType.HOSTILE && random.Next(3) == 0) {
+                type = SpawnType.CAVE;
+            }
+
             // check caps
             if (type == SpawnType.PASSIVE && passives >= MAX_PASSIVE) {
                 continue;
             }
-            if (type == SpawnType.HOSTILE && hostiles >= MAX_HOSTILE) {
+            if (type.isHostile() && hostiles >= MAX_HOSTILE) {
                 continue;
             }
 
@@ -245,8 +268,11 @@ public partial class World {
                 // update counts by actual spawn count
                 if (type == SpawnType.PASSIVE) {
                     passives += spawned;
-                } else {
+                } else if (type.isHostile()) {
                     hostiles += spawned;
+                }
+                else {
+                    SkillIssueException.throwNew("Bullshit spawntype?");
                 }
             }
         }

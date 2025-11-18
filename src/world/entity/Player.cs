@@ -665,10 +665,11 @@ public class Player : Mob, CommandSource {
 
                 // get block drop and spawn item entity in survival mode
                 var metadata = val.getMetadata();
-                var (dropItem, meta, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, metadata);
 
                 // only spawn drops if using correct tool
-                if (heldItem.canBreak(inventory.getSelected(), block)) {
+                var (dropItem, meta, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, metadata, heldItem.canBreak(inventory.getSelected(), block));
+
+                if (dropItem != null && dropCount > 0 && gameMode.gameplay) {
                     world.spawnBlockDrop(pos.X, pos.Y, pos.Z, dropItem, dropCount, meta);
                 }
 
@@ -700,7 +701,6 @@ public class Player : Mob, CommandSource {
     }
 
     public virtual void placeBlock() {
-
         var facing = getFacing();
         var hfacing = getHFacing();
 
@@ -762,7 +762,6 @@ public class Player : Mob, CommandSource {
 
             // if block, place it
             if (stack.getItem().isBlock()) {
-
                 var block = Block.get(stack.getItem().getBlockID());
 
                 // check block-specific placement rules first
@@ -1186,18 +1185,20 @@ public class Player : Mob, CommandSource {
     }
 
     protected override void die() {
-        base.die();
+        dead = true;
 
         // drop inventory items on death (survival only, blocks only)
         if (gameMode.gameplay) {
             dropInventoryOnDeath();
         }
 
-        // switch to death screen
-        Game.instance.executeOnMainThread(() => {
-            Game.instance.currentScreen.switchToMenu(Screen.GAME_SCREEN.DEATH_MENU);
-            Game.instance.unlockMouse();
-        });
+        if (!Net.mode.isDed()) {
+            // switch to death screen
+            Game.instance.executeOnMainThread(() => {
+                Game.instance.currentScreen.switchToMenu(Screen.GAME_SCREEN.DEATH_MENU);
+                Game.instance.unlockMouse();
+            });
+        }
     }
 
     private void dropInventoryOnDeath() {

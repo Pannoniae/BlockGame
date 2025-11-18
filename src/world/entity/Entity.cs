@@ -594,6 +594,7 @@ public partial class Entity(World world, string type) : Persistent {
 
     protected virtual void die() {
         dead = true;
+        active = false;
     }
 
     public virtual void onChunkChanged() {

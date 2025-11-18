@@ -50,7 +50,7 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
         }
 
         // smelt (only if recipe exists and fuel is burning)
-        if (currentRecipe != null && fuelRemaining >= 0) {
+        if (currentRecipe != null && fuelRemaining > 0) {
             smeltProgress++;
 
             if (smeltProgress >= currentRecipe.getSmeltTime()) {

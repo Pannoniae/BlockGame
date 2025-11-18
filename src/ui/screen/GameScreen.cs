@@ -465,8 +465,7 @@ public class GameScreen : Screen {
                         });
                     }
                     else if (currentMenu == CHAT) {
-                        Game.instance.lockMouse();
-                        switchToMenu(INGAME_MENU);
+                        CHAT.closeChat();
                     }
                 }
 

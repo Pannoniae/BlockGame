@@ -586,13 +586,19 @@ public readonly struct Command {
                 var typeName = e.type;
                 typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
 
-                if (!e.inWorld) notInWorld++;
+                if (!e.inWorld) {
+                    notInWorld++;
+                }
 
                 if (e is Mob) {
                     totalMobs++;
                     var spawnType = Entities.spawnType[Entities.getID(e.type)];
-                    if (spawnType == SpawnType.PASSIVE) passiveMobs++;
-                    else if (spawnType == SpawnType.HOSTILE) hostileMobs++;
+                    if (spawnType == SpawnType.PASSIVE) {
+                        passiveMobs++;
+                    }
+                    else if (spawnType.isHostile()) {
+                        hostileMobs++;
+                    }
                 } else {
                     other++;
                 }

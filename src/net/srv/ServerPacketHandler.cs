@@ -506,12 +506,14 @@ public class ServerPacketHandler : PacketHandler {
         if (conn.player.gameMode.gameplay) {
             var val = world.getBlockRaw(p.position.X, p.position.Y, p.position.Z);
             var metadata = val.getMetadata();
-            var (dropItem, meta, dropCount) = block.getDrop(world, p.position.X, p.position.Y, p.position.Z, metadata);
 
             // check if player has correct tool
             var heldStack = conn.player.inventory.getSelected();
             var heldItem = heldStack.getItem();
-            if (heldItem.canBreak(heldStack, block)) {
+
+            var canBreak = heldItem.canBreak(heldStack, block);
+            var (dropItem, meta, dropCount) = block.getDrop(world, p.position.X, p.position.Y, p.position.Z, metadata, canBreak);
+            if (dropItem != null && dropCount > 0) {
                 world.spawnBlockDrop(p.position.X, p.position.Y, p.position.Z, dropItem, dropCount, meta);
             }
 

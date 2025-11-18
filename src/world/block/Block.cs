@@ -1128,8 +1128,8 @@ public class Block {
      * Returns the item drops when this block is broken.
      * By default, blocks drop themselves as an item.
      */
-    public virtual (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
-        return (getItem(), metadata, 1);
+    public virtual (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+        return canBreak ? (getItem(), metadata, 1) : (null, 0, 0);
     }
 
     /**
@@ -1143,7 +1143,7 @@ public class Block {
     /**
      * Called when an entity walks on the block (only if the block has collision).
      */
-    public virtual void onStepped(World world, int x, int y, int z, world.entity.Entity entity) {
+    public virtual void onStepped(World world, int x, int y, int z, Entity entity) {
     }
 
     // todo add biome tinting, later?
@@ -1434,13 +1434,13 @@ public class Grass(string name) : Block(name) {
         }
     }
 
-    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         return (null!, 0, 0);
     }
 }
 
 public class GrassBlock(string name) : Block(name) {
-    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         // grass drops dirt
         return (DIRT.getItem(), 0, 1);
     }
@@ -1484,7 +1484,7 @@ public class GrassBlock(string name) : Block(name) {
 }
 
 public class GravelBlock(string name) : FallingBlock(name) {
-    public override (Item, byte, int) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         return world.random.Next(12) == 0
             ? (Item.FLINT, (byte)0, 1)
             : (getItem(), 0, 1);
@@ -1492,7 +1492,7 @@ public class GravelBlock(string name) : FallingBlock(name) {
 }
 
 public class StoneBlock(string name) : Block(name) {
-    public override (Item, byte, int) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         // stone drops cobblestone
         return (COBBLESTONE.getItem(), 0, 1);
     }

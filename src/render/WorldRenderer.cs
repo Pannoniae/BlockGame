@@ -592,7 +592,6 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         foreach (var subChunk in chunksToMesh) {
             if (!meshingQueue.Contains(subChunk)) {
                 meshingQueue.Enqueue(subChunk);
-                Game.metrics.chunksUpdated++;
             }
         }
 
@@ -647,6 +646,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // mesh the subchunk
             Game.blockRenderer.meshChunk(section);
+            Game.metrics.chunksUpdated++;
 
             //Console.Out.WriteLine($"MESHED {sectionCoord}, chunk status: {chunk.status}");
 

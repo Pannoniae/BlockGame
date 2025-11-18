@@ -175,6 +175,11 @@ public class ClientConnection : INetEventListener {
         connected = false;
         entityID = -1;
 
+        // unlock the mouse!
+        Game.instance.executeOnMainThread(() => {
+            Game.instance.unlockMouse();
+        });
+
         // if we already received a DisconnectPacket with custom reason, don't show generic message :(
         if (receivedDisconnectPacket) {
             receivedDisconnectPacket = false;

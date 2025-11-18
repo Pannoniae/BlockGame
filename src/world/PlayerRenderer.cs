@@ -122,7 +122,7 @@ public class PlayerRenderer : MobRenderer<Player> {
         renderer.set(interp);
         renderer.Draw(Game.gui.colourTexture, new Vector2(bgRect.X, bgRect.Y), ref worldMatrix,
             new Rectangle(0, 0, bgRect.Width, bgRect.Height), bgColor, 0,
-            new Vector2(1, 1), -0.01f);
+            new Vector2(1, 1), -0.05f);
 
         // draw text
         var color = new FSColor(255, 255, 255, 255);

@@ -54,9 +54,12 @@ public class Furnace : EntityBlock {
         };
     }
 
-    public override (Item item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         // only the finest quality furnaces!
-        return (getItem(), 0, 1);
+        if (canBreak) {
+            return (getItem(), 0, 1);
+        }
+        return (null, 0, 0);
     }
 
     public override void onBreak(World world, int x, int y, int z, byte metadata) {
