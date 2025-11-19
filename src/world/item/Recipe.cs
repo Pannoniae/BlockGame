@@ -202,7 +202,7 @@ public class Recipe {
             .ingredients(Block.BASALT.item);
         register(new ItemStack(Block.BRICKBLOCK_STAIRS.item, 1))
             .shape(100_110_111, 3)
-            .ingredients(Block.BRICKBLOCK.item);
+            .ingredients(Block.BRICK_BLOCK.item);
         register(new ItemStack(Block.STONE_BRICK_STAIRS.item, 1))
             .shape(100_110_111, 3)
             .ingredients(Block.STONE_BRICK.item);
@@ -245,7 +245,7 @@ public class Recipe {
         FURNACE.shape(111_101_111, 3);
         FURNACE.ingredients(Block.COBBLESTONE.item);
 
-        BRICKBLOCK = register(new ItemStack(Block.BRICKBLOCK.item, 1));
+        BRICKBLOCK = register(new ItemStack(Block.BRICK_BLOCK.item, 1));
         BRICKBLOCK.shape(111_111_111, 3);
         BRICKBLOCK.ingredients(Item.BRICK);
 
