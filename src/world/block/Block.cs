@@ -302,6 +302,7 @@ public class Block {
         AIR = register("air", new Block("Air"));
         AIR.setModel(BlockModel.emptyBlock());
         AIR.air();
+
         GRASS = register("grass", new GrassBlock("Grass"));
         GRASS.tick();
         GRASS.setTex(new(0, 0), new(1, 0), new(2, 0));
@@ -379,9 +380,6 @@ public class Block {
         COBBLESTONE_STAIRS.setTex(cubeUVs(6, 1));
         COBBLESTONE_STAIRS.partialBlock();
         COBBLESTONE_STAIRS.material(Material.STONE);
-
-        //ide mas kovekbol is SLAB!
-        //utana mas kovekbol keszult STAIRS!
 
         GRAVEL = register("gravel", new GravelBlock("Gravel"));
         GRAVEL.setTex(new UVPair(7, 0));
