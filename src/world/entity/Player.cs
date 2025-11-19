@@ -381,6 +381,19 @@ public class Player : Mob, CommandSource {
             if (strafeVector.X != 0 || strafeVector.Z != 0) {
                 // if air, lessen control
                 var moveSpeed = onGround ? GROUND_MOVE_SPEED : AIR_MOVE_SPEED;
+
+                // on non-natural blocks, go 15% faster
+                var blockBelowPos = position.toBlockPos() + new Vector3I(0, -1, 0);
+                var blockBelow = Block.get(world.getBlock(blockBelowPos));
+                if (blockBelow != null && !Block.natural[blockBelow.id]) {
+                    moveSpeed *= 1.15;
+                }
+
+                // debuff movement speed on ice so we don't go superfast note this should be refactored into something more general / less of a clusterfuck later
+                if (blockBelow != null && blockBelow.id == Block.ICE.id) {
+                    moveSpeed *= 1 / 6f;
+                }
+
                 if (inLiquid) {
                     moveSpeed = LIQUID_MOVE_SPEED;
                 }

@@ -28,7 +28,8 @@ public class ServerProperties {
             Log.info($"Loaded {filePath}");
         }
         catch (Exception e) {
-            Log.error($"Error loading {filePath}: {e.Message}");
+            Log.error($"Error loading {filePath}:");
+            Log.error(e);
             setDefaults();
         }
     }
@@ -39,7 +40,8 @@ public class ServerProperties {
             Log.info($"Saved {filePath}");
         }
         catch (Exception e) {
-            Log.error($"Error saving {filePath}: {e.Message}");
+            Log.error($"Error saving {filePath}:");
+            Log.error(e);
         }
     }
 

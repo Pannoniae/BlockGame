@@ -29,6 +29,7 @@ public partial class NewWorldGenerator : WorldGenerator {
     public SimplexNoise humn;
     public SimplexNoise agen;
     public SimplexNoise wn;
+    public SimplexNoise detailn;
 
     public XRandom random;
     private readonly int version;
@@ -71,6 +72,7 @@ public partial class NewWorldGenerator : WorldGenerator {
 
         agen = new SimplexNoise(random.Next(seed));
         wn = new SimplexNoise(random.Next(seed));
+        detailn = new SimplexNoise(random.Next(seed));
 
         surfacegen.setup(random, seed);
     }

@@ -50,6 +50,8 @@ public class BlockRegistry : Registry<Block> {
     public readonly XUList<RenderType> renderType;
     public readonly XUList<ToolType> tool;
     public readonly XUList<MaterialTier> tier;
+    public readonly XUList<float> friction;
+    public readonly XUList<bool> natural;
 
     /**
      * Disable creating an item for this block.
@@ -86,6 +88,9 @@ public class BlockRegistry : Registry<Block> {
         tier = track(MaterialTier.NONE);
         noItem = track(false);
         isBlockEntity = track(false);
+
+        friction = track(0.8f);
+        natural = track(false);
     }
 
     public override int register(string type, Block value) {

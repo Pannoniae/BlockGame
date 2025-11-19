@@ -441,6 +441,12 @@ public class Liquid : Block {
             return getHeight(data);
         }
 
+        // ice is counted as water for slope purposes
+        if (block == ICE.id) {
+            samples++;
+            return 1.0f;
+        }
+
         if (!fullBlock[block]) {
             // air contributes to slope
             samples++;

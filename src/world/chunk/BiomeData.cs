@@ -1,22 +1,30 @@
 using System.Runtime.CompilerServices;
+using BlockGame.world.worldgen;
+using BlockGame.world.worldgen.generator;
 
 namespace BlockGame.world.chunk;
 
 public class BiomeData {
     private const int BIOME_X = 4;
-    private const int BIOME_Y = 32; // 4 per subchunk * 8 subchunks
+    private const int BIOME_Y = 32;
     private const int BIOME_Z = 4;
-    private const int TOTAL = BIOME_X * BIOME_Y * BIOME_Z; // 512
+    private const int TOTAL = BIOME_X * BIOME_Y * BIOME_Z; // 512x
 
     public readonly sbyte[] hum = new sbyte[TOTAL];
     public readonly sbyte[] temp = new sbyte[TOTAL];
     public readonly sbyte[] age = new sbyte[TOTAL];
     public readonly sbyte[] w = new sbyte[TOTAL];
 
-    /** convert biome coords to array index (YZX ordering) */
+    private Chunk? chunk;
+
+    public void setChunk(Chunk chunk) {
+        this.chunk = chunk;
+    }
+
+    /** convert biome coords to array index (YZX) */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int idx(int bx, int by, int bz) {
-        return (by << 4) + (bz << 2) + bx; // y*16 + z*4 + x
+        return (by << 4) + (bz << 2) + bx;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -41,19 +49,42 @@ public class BiomeData {
 
 
     public float getHum(int x, int y, int z) {
-        return interpolate(hum, x, y, z);
+        var value = interpolate(hum, x, y, z);
+        return applyDetailAndRemap(value, x, y, z);
     }
 
     public float getTemp(int x, int y, int z) {
-        return interpolate(temp, x, y, z);
+        var value = interpolate(temp, x, y, z);
+        return applyDetailAndRemap(value, x, y, z);
     }
 
     public float getAge(int x, int y, int z) {
-        return interpolate(age, x, y, z);
+        var value = interpolate(age, x, y, z);
+        return applyDetailAndRemap(value, x, y, z);
     }
 
     public float getWeirdness(int x, int y, int z) {
-        return interpolate(w, x, y, z);
+        var value = interpolate(w, x, y, z);
+        return applyDetailAndRemap(value, x, y, z);
+    }
+
+    private float applyDetailAndRemap(float value, int x, int y, int z) {
+        if (chunk == null || chunk.world.generator is not NewWorldGenerator gen) {
+            return value;
+        }
+
+        int wx = chunk.worldX + x;
+        int wz = chunk.worldZ + z;
+
+        var detail = WorldgenUtil.getNoise3D(gen.detailn, wx * NewWorldGenerator.DETAIL_FREQ,
+            y * NewWorldGenerator.DETAIL_FREQ, wz * NewWorldGenerator.DETAIL_FREQ, 2, 2f);
+
+        value += detail * NewWorldGenerator.DETAIL_STRENGTH;
+
+        // remap with sqrt to normalise the simplex noise and push values toward extremes
+        value = float.Sign(value) * float.Sqrt(float.Abs(value));
+
+        return value;
     }
 
     /** trilinear interpolation from block coords to biome values */

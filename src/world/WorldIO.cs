@@ -34,6 +34,9 @@ public class WorldIO {
     public readonly ManualResetEvent shutdownEvent = new(false);
     private volatile bool isDisposed;
 
+    // lock file to prevent multiple instances
+    private FileStream? lockFile;
+
     public WorldIO(World world) {
         this.world = world;
         if (!world.isMP) {
@@ -178,6 +181,11 @@ public class WorldIO {
     }
 
     public static World load(string filename) {
+        // check for lock file
+        var lockPath = getLockFilePath(filename);
+        if (File.Exists(lockPath)) {
+            throw new IOException($"World '{filename}' is already open in another instance! Close the other instance first.");
+        }
 
         NBTCompound tag;
         if (Net.mode.isDed()) {
@@ -194,6 +202,15 @@ public class WorldIO {
         var generatorName = tag.has("generator") ? tag.getString("generator") : "perlin";
         var world = new World(filename, seed, displayName, generatorName);
         world.toBeLoadedNBT = tag;
+
+        // create lock file
+        try {
+            world.worldIO.lockFile = File.Open(lockPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            Log.info($"Created lock file for world '{filename}'");
+        }
+        catch (Exception e) {
+            throw new IOException($"Failed to create lock file for world '{filename}': {e.Message}", e);
+        }
 
         // todo load the player spawn!
         world.spawn = new Vector3D(
@@ -332,10 +349,33 @@ public class WorldIO {
         chunkSaveThread.Dispose();
         chunkLoadThread.Dispose();
         shutdownEvent.Dispose();
+
+        // release and delete lock file
+        if (lockFile != null) {
+            var lockPath = getLockFilePath(world.name);
+            try {
+                lockFile.Close();
+                lockFile.Dispose();
+                if (File.Exists(lockPath)) {
+                    File.Delete(lockPath);
+                    Log.info($"Removed lock file for world '{world.name}'");
+                }
+            }
+            catch (Exception e) {
+                Log.error("Failed to remove lock file:");
+                Log.error(e);
+            }
+
+            lockFile = null;
+        }
     }
 
     public static void deleteLevel(string level) {
         Directory.Delete(Net.mode.isDed() ? $"{level}" : $"level/{level}", true);
+    }
+
+    private static string getLockFilePath(string worldName) {
+        return Net.mode.isDed() ? $"{worldName}/session.lock" : $"level/{worldName}/session.lock";
     }
 
     public static NBTCompound serialiseChunkIntoNBT(Chunk chunk) {

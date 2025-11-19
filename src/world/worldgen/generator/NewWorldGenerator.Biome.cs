@@ -11,6 +11,9 @@ public partial class NewWorldGenerator {
     public const float AGE_FREQ = 1 / 601f;
     public const float W_FREQ = 1 / 551f;
 
+    public const float DETAIL_FREQ = 1 / 42f;
+    public const float DETAIL_STRENGTH = 0.05f;
+
     /** v4 density - same as v3 but generates biomes too */
     private void getDensityBiomes(float[] buffer, ChunkCoord coord) {
         WorldgenUtil.getNoise3DRegion(tb, tn, coord, LOW_FREQ, LOW_FREQ * 2,
@@ -29,13 +32,32 @@ public partial class NewWorldGenerator {
         const int biomeNY = 33; // 0,4,8,...,124,128
         const int biomeNZ = 5;
 
-        WorldgenUtil.getNoise3DRegionBiome(tempb, tempn, coord, TEMP_FREQ, TEMP_FREQ, TEMP_FREQ, 6, 2f, biomeNX, biomeNY, biomeNZ);
-        WorldgenUtil.getNoise3DRegionBiome(humb, humn, coord, HUM_FREQ, HUM_FREQ, HUM_FREQ, 6, 1.5f, biomeNX, biomeNY, biomeNZ);
-        WorldgenUtil.getNoise3DRegionBiome(ageb, agen, coord, AGE_FREQ, AGE_FREQ, AGE_FREQ, 6, Meth.phiF, biomeNX, biomeNY, biomeNZ);
-        WorldgenUtil.getNoise3DRegionBiome(wb, wn, coord, W_FREQ, W_FREQ, W_FREQ, 6, Meth.etaF, biomeNX, biomeNY, biomeNZ);
 
-        // fill chunk biome data
+        int worldX = coord.x * Chunk.CHUNKSIZE;
+        int worldZ = coord.z * Chunk.CHUNKSIZE;
+
+        for (int nx = 0; nx < biomeNX; nx++) {
+            int x = worldX + nx * 4;
+
+            for (int nz = 0; nz < biomeNZ; nz++) {
+                int z = worldZ + nz * 4;
+
+                for (int ny = 0; ny < biomeNY; ny++) {
+                    int y = ny * 4;
+
+                    int idx = (ny * biomeNZ + nz) * biomeNX + nx;
+
+                    tempb[idx] = WorldgenUtil.getNoise3D(tempn, x * TEMP_FREQ, y * TEMP_FREQ, z * TEMP_FREQ, 4, 2f);
+                    humb[idx] = WorldgenUtil.getNoise3D(humn, x * HUM_FREQ, y * HUM_FREQ, z * HUM_FREQ, 4, 1.5f);
+                    ageb[idx] = WorldgenUtil.getNoise3D(agen, x * AGE_FREQ, y * AGE_FREQ, z * AGE_FREQ, 4, Meth.phiF);
+                    wb[idx] = WorldgenUtil.getNoise3D(wn, x * W_FREQ, y * W_FREQ, z * W_FREQ, 4, Meth.etaF);
+                }
+            }
+        }
+
+        // fill chunk biome data todo optimise this by batch-inserting!
         var chunk = world.getChunk(coord);
+        chunk.biomeData.setChunk(chunk);
         for (int by = 0; by < 32; by++) {
             for (int bz = 0; bz < 4; bz++) {
                 for (int bx = 0; bx < 4; bx++) {
@@ -124,77 +146,9 @@ public partial class NewWorldGenerator {
                     worldPos.Z * FREQAUX,
                     1, 1);
 
-                ushort topBlock;
-                ushort filler;
-
-                // simple biome selection based on temp/humidity
-                if (height < WATER_LEVEL - 1) {
-                    // underwater
-                    if (blockVar > 0) {
-                        topBlock = Block.DIRT.id;
-                        filler = Block.DIRT.id;
-                    }
-                    else {
-                        topBlock = Block.SAND.id;
-                        filler = Block.SAND.id;
-                    }
-                }
-                else if (height is > WATER_LEVEL - 3 and < WATER_LEVEL + 1) {
-                    // beaches
-                    if (blockVar > -0.2) {
-                        topBlock = Block.SAND.id;
-                        filler = Block.SAND.id;
-                    }
-                    else {
-                        topBlock = Block.GRAVEL.id;
-                        filler = Block.GRAVEL.id;
-                    }
-                }
-                else {
-                    // above water - use biomes
-                    // cold + dry = plains/tundra
-                    // cold + wet = forest
-                    // hot + dry = desert
-                    // hot + wet = jungle
-
-                    switch (temp) {
-                        case < -0.25f: {
-                            // cold biomes
-                            if (hum > 0.25f) {
-                                // snowy forest
-                                topBlock = Block.SNOW_GRASS.id;
-                                filler = Block.DIRT.id;
-                            }
-                            else {
-                                // tundra/plains
-                                topBlock = Block.SNOW_GRASS.id;
-                                filler = Block.DIRT.id;
-                            }
-
-                            break;
-                        }
-                        case > 0.25f: {
-                            // hot biomes
-                            if (hum > 0.25f) {
-                                // jungle todo
-                                topBlock = Block.GRASS.id;
-                                filler = Block.DIRT.id;
-                            }
-                            else {
-                                // desert
-                                topBlock = Block.SAND.id;
-                                filler = Block.SAND.id;
-                            }
-
-                            break;
-                        }
-                        default:
-                            // temperate
-                            topBlock = Block.GRASS.id;
-                            filler = Block.DIRT.id;
-                            break;
-                    }
-                }
+                // biome-based surface selection
+                var biome = Biomes.getType(temp, hum, height, blockVar);
+                var (topBlock, filler) = Biomes.getBlocks(biome, blockVar);
 
                 if (chunk.getBlock(x, height, z) == Block.STONE.id && amt >= 1f) {
                     for (int yy = height; yy > height - amt && yy > 0; yy--) {

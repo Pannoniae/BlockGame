@@ -1,5 +1,6 @@
 ﻿using BlockGame.main;
 using BlockGame.util;
+using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -311,8 +312,13 @@ public partial class Entity {
                 //    velocity = Vector3D.Zero;
                 //}
                 //else {
-                velocity.X *= FRICTION;
-                velocity.Z *= FRICTION;
+
+                var belowPos = feetPosition.toBlockPos() + new Vector3I(0, -1, 0);
+                var below = world.getBlock(belowPos);
+                var f = Block.friction[below];
+
+                velocity.X *= f;
+                velocity.Z *= f;
                 velocity.Y *= VERTICAL_FRICTION;
                 //}
             }

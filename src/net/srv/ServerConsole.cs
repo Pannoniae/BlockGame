@@ -63,7 +63,8 @@ public class ServerConsole : CommandSource {
                 }
             }
             catch (Exception e) {
-                Log.error($"Error reading console: {e.Message}");
+                Log.error($"Error reading console:");
+                Log.error(e);
             }
         }
     }

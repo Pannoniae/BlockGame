@@ -142,13 +142,23 @@ public class WorldgenUtil {
                     }
 
                     // if we haven't initialised the chunk yet, do so
-                    // if below sea level, water
+                    // if below sea level, water (or ice if cold)
                     if (value > 0) {
                         chunk.setBlockFast(x, y, z, Block.STONE.id);
                         chunk.addToHeightMap(x, y, z);
                     }
                     else {
                         if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
+                            // check if water should be ice (frozen)
+                            if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
+                                var temp = chunk.biomeData.getTemp(x, y, z);
+                                if (temp < -0.5f) {
+                                    chunk.setBlockFast(x, y, z, Block.ICE.id);
+                                    chunk.addToHeightMap(x, y, z);
+                                    continue;
+                                }
+                            }
+
                             chunk.setBlockFast(x, y, z, Block.WATER.id);
                             chunk.addToHeightMap(x, y, z);
                         }

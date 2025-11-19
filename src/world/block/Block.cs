@@ -155,6 +155,8 @@ public class Block {
     public static Block PINE_LEAVES;
     public static Block PINE_SAPLING;
 
+    public static Block ICE;
+
     public static Block CACTUS;
 
     public static Block OAK_CHEST;
@@ -229,6 +231,12 @@ public class Block {
     public static XUList<ToolType> tool => Registry.BLOCKS.tool;
     public static XUList<MaterialTier> tier => Registry.BLOCKS.tier;
 
+    public static XUList<float> friction => Registry.BLOCKS.friction;
+
+    public static XUList<bool> natural => Registry.BLOCKS.natural;
+
+
+
     public static XUList<bool> noItem => Registry.BLOCKS.noItem;
 
     public static XUList<bool> isBlockEntity => Registry.BLOCKS.isBlockEntity;
@@ -299,11 +307,13 @@ public class Block {
         GRASS.setTex(new(0, 0), new(1, 0), new(2, 0));
         renderType[GRASS.id] = RenderType.CUBE_DYNTEXTURE;
         GRASS.material(Material.EARTH);
+        natural[GRASS.id] = true;
 
         DIRT = register("dirt", new Block("Dirt"));
         DIRT.setTex(new UVPair(2, 0));
         renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
+        natural[DIRT.id] = true;
 
         SAND = register("sand", new FallingBlock("Sand"));
         SAND.setTex(new UVPair(3, 0));
@@ -311,18 +321,21 @@ public class Block {
         SAND.material(Material.EARTH);
         // less hard than dirt!
         SAND.setHardness(0.5);
+        natural[SAND.id] = true;
 
         SNOW_GRASS = register("snowGrass", new GrassBlock("Snowy Grass"));
         SNOW_GRASS.tick();
         SNOW_GRASS.setTex(new(13, 0), new(14, 0), new(2, 0));
         renderType[SNOW_GRASS.id] = RenderType.CUBE_DYNTEXTURE;
         SNOW_GRASS.material(Material.EARTH);
+        natural[SNOW_GRASS.id] = true;
 
         SNOW = register("snow", new Block("Snow"));
         SNOW.setTex(new UVPair(15, 0));
         renderType[SNOW.id] = RenderType.CUBE;
         SNOW.material(Material.EARTH);
         SNOW.setHardness(0.3);
+        natural[SNOW.id] = true;
 
         BASALT = register("basalt", new Block("Basalt"));
         BASALT.setTex(new UVPair(4, 0));
@@ -342,6 +355,7 @@ public class Block {
         STONE.setTex(new UVPair(5, 0));
         renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
+        natural[STONE.id] = true;
 
         STONE_SLAB = register("stoneSlab", new Slabs("Stone Slab"));
         STONE_SLAB.setTex(cubeUVs(5, 0));
@@ -373,12 +387,14 @@ public class Block {
         GRAVEL.setTex(new UVPair(7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
         GRAVEL.material(Material.EARTH);
+        natural[GRAVEL.id] = true;
 
         HELLSTONE = register("hellstone", new Block("Hellstone"));
         HELLSTONE.setTex(new UVPair(8, 0));
         renderType[HELLSTONE.id] = RenderType.CUBE;
         HELLSTONE.light(15);
         HELLSTONE.material(Material.HELL);
+        // todo assign naturalness to hell blocks when we add them
 
         //BLOODSTONE = register("bloodstone", new Block("Bloodstone"));
         //BLOODSTONE.setTex(cubeUVs(8, 1));
@@ -404,6 +420,7 @@ public class Block {
         CLAY_BLOCK.setTex(new UVPair(12, 0));
         renderType[CLAY_BLOCK.id] = RenderType.CUBE;
         CLAY_BLOCK.material(Material.EARTH);
+        natural[CLAY_BLOCK.id] = true;
 
         GLASS = register("glass", new Block("Glass"));
         GLASS.setTex(new UVPair(6, 0));
@@ -459,6 +476,7 @@ public class Block {
         COAL_ORE.material(Material.FANCY_STONE);
         COAL_ORE.setHardness(2.0);
         COAL_ORE.setTier(MaterialTier.WOOD);
+        natural[COAL_ORE.id] = true;
 
         COPPER_ORE = register("copperOre", new Block("Copper Ore"));
         COPPER_ORE.setTex(new UVPair(5, 1));
@@ -466,6 +484,7 @@ public class Block {
         COPPER_ORE.material(Material.FANCY_STONE);
         COPPER_ORE.setHardness(2.5);
         COPPER_ORE.setTier(MaterialTier.STONE);
+        natural[COPPER_ORE.id] = true;
 
         IRON_ORE = register("ironOre", new Block("Iron Ore"));
         IRON_ORE.setTex(new UVPair(1, 1));
@@ -473,6 +492,7 @@ public class Block {
         IRON_ORE.material(Material.FANCY_STONE);
         IRON_ORE.setHardness(3.0);
         IRON_ORE.setTier(MaterialTier.STONE);
+        natural[IRON_ORE.id] = true;
 
         GOLD_ORE = register("goldOre", new Block("Gold Ore"));
         GOLD_ORE.setTex(new UVPair(0, 1));
@@ -480,6 +500,7 @@ public class Block {
         GOLD_ORE.material(Material.FANCY_STONE);
         GOLD_ORE.setHardness(3.0);
         GOLD_ORE.setTier(MaterialTier.IRON);
+        natural[GOLD_ORE.id] = true;
 
         //TIN_ORE = register("tinOre", new Block("Tin Ore"));
         //TIN_ORE.setTex(cubeUVs(2, 1));
@@ -487,6 +508,7 @@ public class Block {
         //TIN_ORE.material(Material.FANCY_STONE);
         //TIN_ORE.setHardness(2.5);
         //TIN_ORE.setTier(MaterialTier.STONE);
+        //natural[TIN_ORE.id] = true;
 
         //SILVER_ORE = register("silverOre", new Block("Silver Ore"));
         //SILVER_ORE.setTex(cubeUVs(3, 1));
@@ -494,6 +516,7 @@ public class Block {
         //SILVER_ORE.material(Material.FANCY_STONE);
         //SILVER_ORE.setHardness(3.5);
         //SILVER_ORE.setTier(MaterialTier.IRON);
+        //natural[SILVER_ORE.id] = true;
 
         DIAMOND_ORE = register("diamondOre", new Block("Diamond Ore"));
         DIAMOND_ORE.setTex(new UVPair(15, 1));
@@ -501,6 +524,7 @@ public class Block {
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
         DIAMOND_ORE.setTier(MaterialTier.GOLD);
+        natural[DIAMOND_ORE.id] = true;
 
         CINNABAR_ORE = register("cinnabarOre", new GlowingOre("Cinnabar"));
         CINNABAR_ORE.setTex(new UVPair(9, 1));
@@ -508,6 +532,7 @@ public class Block {
         CINNABAR_ORE.material(Material.FANCY_STONE);
         CINNABAR_ORE.setHardness(6.0);
         CINNABAR_ORE.setTier(MaterialTier.GOLD);
+        natural[CINNABAR_ORE.id] = true;
 
         //TITANIUM_ORE = register("titaniumOre", new Block("Titanium Ore"));
         //TITANIUM_ORE.setTex(cubeUVs(11, 1));
@@ -515,6 +540,7 @@ public class Block {
         //TITANIUM_ORE.material(Material.FANCY_STONE);
         //TITANIUM_ORE.setHardness(7.5);
         //TITANIUM_ORE.setTier(MaterialTier.GOLD);
+        //natural[TITANIUM_ORE.id] = true;
 
         //AMBER_ORE = register("amberOre", new Block("Amber Ore"));
         //AMBER_ORE.setTex(cubeUVs(12, 1));
@@ -522,6 +548,7 @@ public class Block {
         //AMBER_ORE.material(Material.FANCY_STONE);
         //AMBER_ORE.setHardness(3.0);
         //AMBER_ORE.setTier(MaterialTier.STONE);
+        //natural[AMBER_ORE.id] = true;
 
         //AMETHYST_ORE = register("amethystOre", new Block("Amethyst Ore"));
         //AMETHYST_ORE.setTex(cubeUVs(13, 1));
@@ -529,6 +556,7 @@ public class Block {
         //AMETHYST_ORE.material(Material.FANCY_STONE);
         //AMETHYST_ORE.setHardness(4.0);
         //AMETHYST_ORE.setTier(MaterialTier.IRON);
+        //natural[AMETHYST_ORE.id] = true;
 
         //EMERALD_ORE = register("emeraldOre", new Block("Emerald Ore"));
         //EMERALD_ORE.setTex(cubeUVs(14, 1));
@@ -536,6 +564,7 @@ public class Block {
         //EMERALD_ORE.material(Material.FANCY_STONE);
         //EMERALD_ORE.setHardness(5.0);
         //EMERALD_ORE.setTier(MaterialTier.GOLD);
+        //natural[EMERALD_ORE.id] = true;
 
         //LANTERN = register("lantern", new Block("Lantern"));
         //LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
@@ -826,6 +855,14 @@ public class Block {
         PINE_SAPLING.itemLike();
         PINE_SAPLING.material(Material.ORGANIC);
         PINE_SAPLING.setFlammable(60);
+
+        ICE = register("ice", new Block("Ice"));
+        ICE.setTex(new UVPair(16, 0));
+        renderType[ICE.id] = RenderType.CUBE;
+        ICE.translucency();
+        ICE.material(Material.GLASS);
+        ICE.setHardness(0.5);
+        ICE.setFriction(0.96f);
 
         GOLD_CANDY = register("goldCandy", new Block("Gold Candy"));
         GOLD_CANDY.setTex(new UVPair(0, 8));
@@ -1234,6 +1271,10 @@ public class Block {
     public Block setTier(MaterialTier t) {
         tier[id] = t;
         return this;
+    }
+
+    private void setFriction(float f) {
+        friction[id] = f;
     }
 
     // CUSTOM BEHAVIOURS

@@ -176,13 +176,14 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
         }
 
-        // place cactus in deserts - check biome at chunk centre
+        // check biome at chunk centre
         var centerHeight = chunk.heightMap.get(8, 8);
         var temp = chunk.biomeData.getTemp(8, centerHeight, 8);
         var hum = chunk.biomeData.getHum(8, centerHeight, 8);
+        var cb = Biomes.getType(temp, hum, centerHeight, 0);
 
-        // hot + dry = desert
-        if (temp > 0.3f && hum < 0.3f) {
+        // place cactus in deserts
+        if (Biomes.canPlaceCactus(cb)) {
             var cactusCount = random.Next(0, 96);
             for (int i = 0; i < cactusCount; i++) {
                 var x = random.Next(0, Chunk.CHUNKSIZE);
@@ -212,13 +213,12 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             }
         }
 
+        // tree placement based on foliage noise and biome
         var foliage = WorldgenUtil.getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);
         var treeCount = foliage * 2f;
 
-        // todo this will be replaced with biomes later!!
-        // right now we just don't want trees in plains stuff for obvious reasons
         if (foliage < 0.25f) {
-            // edge
+            // sparse edge
             if (foliage > 0.1f) {
                 treeCount += ((foliage - 0.1f) * 4);
             }
@@ -230,48 +230,89 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             treeCount += 4;
         }
 
-        // 4..7
-        treeCount *= treeCount;
-        // 16..49
+        treeCount *= treeCount; // 16..49
 
-        var taiga = false;
+        // apply biome density multiplier
+        var biomeDensity = Biomes.getTreeDensity(cb);
+        treeCount *= biomeDensity;
 
-        // place pine trees in snowy biomes
-        if (temp < -0.25f) {
-            taiga = true;
-            if (hum > 0.05f) {
-                var pineCount = (int)(treeCount * 0.8f);
-                for (int i = 0; i < pineCount; i++) {
+        // place trees based on biome type
+        var finalTreeCount = (int)treeCount;
+        switch (cb) {
+            case BiomeType.Taiga:
+                for (int i = 0; i < finalTreeCount; i++) {
                     WorldgenUtil.placePineTree(world, random, coord);
                 }
-            }
+
+                break;
+
+            case BiomeType.Jungle:
+                for (int i = 0; i < finalTreeCount; i++) {
+                    WorldgenUtil.placeRainforestTree(world, random, coord);
+                }
+
+                break;
+
+            case BiomeType.Forest:
+                // dense forest - add occasional large tree
+                if (foliage > 0.3f) {
+                    WorldgenUtil.placeRainforestTree(world, random, coord);
+                }
+
+                for (int i = 0; i < finalTreeCount; i++) {
+                    WorldgenUtil.placeTree(world, random, coord);
+                }
+
+                break;
         }
 
-        var jungle = false;
-
-        // place mahogany trees in jungles
-        if (temp > 0.25f && hum > 0.3f) {
-            jungle = true;
-            var mahoganyCount = (int)(treeCount * 0.6f);
-            for (int i = 0; i < mahoganyCount; i++) {
-                WorldgenUtil.placeRainforestTree(world, random, coord);
-            }
-        }
-
-        // if dense forest, place a rainforest tree
-        if (!taiga && !jungle) {
-            if (foliage > 0.3f) {
-                WorldgenUtil.placeRainforestTree(world, random, coord);
-            }
-
-            for (int i = 0; i < treeCount; i++) {
-                WorldgenUtil.placeTree(world, random, coord);
-            }
-        }
-
-        // place candy tree randomly (not near the other ones lol)
+        // place candy tree randomly in sparse areas
         if (foliage < -0.2f && random.NextSingle() < 0.05f) {
             WorldgenUtil.placeCandyTree(world, random, coord);
+        }
+
+        // place undergrowth in jungles
+        if (cb == BiomeType.Jungle && finalTreeCount > 1) {
+            var undergrowthCount = random.Next(96, 160);
+            for (int i = 0; i < undergrowthCount; i++) {
+                var x = random.Next(0, Chunk.CHUNKSIZE);
+                var z = random.Next(0, Chunk.CHUNKSIZE);
+                var y = random.Next(64, World.WORLDHEIGHT - 1);
+
+                // place on grass
+                if (chunk.getBlock(x, y, z) == Block.GRASS.id && y < World.WORLDHEIGHT - 2) {
+                    if (chunk.getBlock(x, y + 1, z) == Block.AIR.id) {
+                        var wx = x + chunk.worldX;
+                        var wz = z + chunk.worldZ;
+
+                        // centre log
+                        world.setBlockSilent(wx, y + 1, wz, Block.OAK_LOG.id);
+
+                        // leaves in 4-block radius (9x9 area)
+                        for (int xo = -4; xo <= 4; xo++) {
+                            for (int zo = -4; zo <= 4; zo++) {
+                                // circular-ish shape
+                                if (xo * xo + zo * zo > 18 + random.Next(0, 4)) {
+                                    continue;
+                                }
+
+                                // todo implement proper tags and not this hackjob!!
+                                if (world.getBlock(wx + xo, y + 1, wz + zo) == Block.AIR.id ||
+                                    world.getBlock(wx + xo, y + 1, wz + zo) == Block.LEAVES.id ||
+                                    world.getBlock(wx + xo, y + 1, wz + zo) == Block.SHORT_GRASS.id ||
+                                    world.getBlock(wx + xo, y + 1, wz + zo) == Block.TALL_GRASS.id) {
+                                    world.setBlockSilent(wx + xo, y + 1, wz + zo, Block.MAHOGANY_LEAVES.id);
+                                }
+                            }
+                        }
+
+                        // leaves on top of log
+                        if (world.getBlock(wx, y + 2, wz) == Block.AIR.id) {
+                            world.setBlockSilent(wx, y + 2, wz, Block.MAHOGANY_LEAVES.id);
+                        }
+                    }
+                }
+            }
         }
     }
 }
