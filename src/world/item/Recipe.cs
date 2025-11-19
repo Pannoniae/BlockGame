@@ -16,12 +16,18 @@ public class Recipe {
     public static Recipe STONE_SLAB;
     public static Recipe COBBLESTONE_SLAB;
     public static Recipe CANDY_SLAB;
+    public static Recipe BASALT_SLAB;
+    public static Recipe BRICKBLOCK_SLAB;
+
     public static Recipe OAK_STAIRS;
     public static Recipe MAHOGANY_STAIRS;
     public static Recipe MAPLE_STAIRS;
     public static Recipe STONE_STAIRS;
     public static Recipe COBBLESTONE_STAIRS;
     public static Recipe CANDY_STAIRS;
+    public static Recipe BASALT_STAIRS;
+    public static Recipe BRICKBLOCK_STAIRS;
+
     public static Recipe STICK;
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
@@ -30,9 +36,13 @@ public class Recipe {
     public static Recipe GOLD_CANDY;
     public static Recipe BRICK_FURNACE;
     public static Recipe FURNACE;
-    public static Recipe BRICK_BLOCK;
+    public static Recipe BRICKBLOCK;
     public static Recipe STONE_BRICK;
+    public static Recipe STONE_BRICK_SLAB;
+    public static Recipe STONE_BRICK_STAIRS;
     public static Recipe SAND_BRICK;
+    public static Recipe SAND_BRICK_SLAB;
+    public static Recipe SAND_BRICK_STAIRS;
     public static Recipe CINNABAR_CANDY;
     public static Recipe DIAMOND_CANDY;
     public static Recipe LIGHTER;
@@ -42,7 +52,6 @@ public class Recipe {
     public static Recipe OAK_DOOR;
     public static Recipe MAHOGANY_DOOR;
     public static Recipe BOTTLE;
-
     //public static Recipe BOW_WOOD;
     //public static Recipe ARROW_WOOD;
     //public static Recipe STRING;
@@ -52,6 +61,7 @@ public class Recipe {
     public static Recipe violet_dye;
     public static Recipe beige_dye;
     public static Recipe darkgreen_dye;
+    public static Recipe LANTERN;
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
@@ -155,6 +165,18 @@ public class Recipe {
         register(new ItemStack(Block.CANDY_SLAB.item, 1))
             .shape(000_000_111, 3)
             .ingredients(Block.CANDY.item);
+        register(new ItemStack(Block.BASALT_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.BASALT.item);
+        register(new ItemStack(Block.BRICKBLOCK_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.BRICK_BLOCK.item);
+        register(new ItemStack(Block.STONE_BRICK_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.STONE_BRICK.item);
+        register(new ItemStack(Block.SAND_BRICK_SLAB.item, 1))
+            .shape(000_000_111, 3)
+            .ingredients(Block.SAND_BRICK.item);
 
         // stairs (1/2/3 planks horizontally) - any plank type works
         OAK_STAIRS = register(new ItemStack(Block.OAK_STAIRS.item, 1));
@@ -175,7 +197,20 @@ public class Recipe {
         register(new ItemStack(Block.CANDY_STAIRS.item, 1))
             .shape(100_110_111, 3)
             .ingredients(Block.CANDY.item);
+        register(new ItemStack(Block.BASALT_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.BASALT.item);
+        register(new ItemStack(Block.BRICKBLOCK_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.BRICKBLOCK.item);
+        register(new ItemStack(Block.STONE_BRICK_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.STONE_BRICK.item);
+        register(new ItemStack(Block.SAND_BRICK_STAIRS.item, 1))
+            .shape(100_110_111, 3)
+            .ingredients(Block.SAND_BRICK.item);
 
+        // door (6 planks in 2x3)
         OAK_DOOR = register(new ItemStack(Item.OAK_DOOR, 1));
         OAK_DOOR.shape(110_110_110, 3);
         OAK_DOOR.ingredients(Block.OAK_PLANKS.item);
@@ -210,9 +245,9 @@ public class Recipe {
         FURNACE.shape(111_101_111, 3);
         FURNACE.ingredients(Block.COBBLESTONE.item);
 
-        BRICK_BLOCK = register(new ItemStack(Block.BRICK_BLOCK.item, 1));
-        BRICK_BLOCK.shape(111_111_111, 3);
-        BRICK_BLOCK.ingredients(Item.BRICK);
+        BRICKBLOCK = register(new ItemStack(Block.BRICKBLOCK.item, 1));
+        BRICKBLOCK.shape(111_111_111, 3);
+        BRICKBLOCK.ingredients(Item.BRICK);
 
         STONE_BRICK = register(new ItemStack(Block.STONE_BRICK.item, 1));
         STONE_BRICK.shape(111_111_111, 3);

@@ -88,13 +88,24 @@ public class Block {
     //public static Block INFERNO_ROCK;
     public static Block GLASS;
     //public static Block CALCITE;
+    public static Block STONE_SLAB;
+    public static Block COBBLESTONE_SLAB;
+    public static Block BASALT_SLAB;
+    public static Block BRICKBLOCK_SLAB;
+
     public static Block STONE_STAIRS;
     public static Block COBBLESTONE_STAIRS;
+    public static Block BASALT_STAIRS;
+    public static Block BRICKBLOCK_STAIRS;
 
     public static Block CLAY_BLOCK;
     public static Block BRICK_BLOCK;
     public static Block STONE_BRICK;
+    public static Block STONE_BRICK_SLAB;
+    public static Block STONE_BRICK_STAIRS;
     public static Block SAND_BRICK;
+    public static Block SAND_BRICK_SLAB;
+    public static Block SAND_BRICK_STAIRS;
     public static Block GOLD_CANDY;
     public static Block CINNABAR_CANDY;
     public static Block DIAMOND_CANDY;
@@ -133,9 +144,6 @@ public class Block {
     public static Block MAHOGANY_SLAB;
     public static Block MAHOGANY_LEAVES;
     public static Block MAHOGANY_SAPLING;
-
-    public static Block STONE_SLAB;
-    public static Block COBBLESTONE_SLAB;
 
     public static Block OAK_CHEST;
     public static Block OAK_DOOR;
@@ -288,6 +296,15 @@ public class Block {
         renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
 
+        BASALT_SLAB = register("basaltSlab", new Slabs("Basalt Slab"));
+        BASALT_SLAB.setTex(cubeUVs(4, 0));
+        BASALT_SLAB.material(Material.STONE);
+
+        BASALT_STAIRS = register("basaltStairs", new Stairs("Basalt Stairs"));
+        BASALT_STAIRS.setTex(cubeUVs(4, 0));
+        BASALT_STAIRS.partialBlock();
+        BASALT_STAIRS.material(Material.STONE);
+
         STONE = register("stone", new StoneBlock("Stone"));
         STONE.setTex(new UVPair(5, 0));
         renderType[STONE.id] = RenderType.CUBE;
@@ -362,19 +379,46 @@ public class Block {
         GLASS.material(Material.GLASS);
 
         BRICK_BLOCK = register("brickBlock", new Block("Brick Block"));
-        BRICK_BLOCK.setTex(new UVPair(0, 2));
+        BRICK_BLOCK.setTex(cubeUVs(0, 2));
         renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
+
+        BRICKBLOCK_SLAB = register("brickBlockSlab", new Slabs("Brick Block Slab"));
+        BRICKBLOCK_SLAB.setTex(cubeUVs(0, 2));
+        BRICKBLOCK_SLAB.material(Material.STONE);
+
+        BRICKBLOCK_STAIRS = register("brickBlockStairs", new Stairs("Brick Block Stairs"));
+        BRICKBLOCK_STAIRS.setTex(cubeUVs(0, 2));
+        BRICKBLOCK_STAIRS.partialBlock();
+        BRICKBLOCK_STAIRS.material(Material.STONE);
 
         STONE_BRICK = register("stoneBrick", new Block("Stone Brick"));
         STONE_BRICK.setTex(new UVPair(1, 2));
         renderType[STONE_BRICK.id] = RenderType.CUBE;
         STONE_BRICK.material(Material.STONE);
 
+        STONE_BRICK_SLAB = register("stoneBrickSlab", new Slabs("Stone Brick Slab"));
+        STONE_BRICK_SLAB.setTex(cubeUVs(1, 2));
+        STONE_BRICK_SLAB.material(Material.STONE);
+
+        STONE_BRICK_STAIRS = register("stoneBrickStairs", new Stairs("Stone Brick Stairs"));
+        STONE_BRICK_STAIRS.setTex(cubeUVs(1, 2));
+        STONE_BRICK_STAIRS.partialBlock();
+        STONE_BRICK_STAIRS.material(Material.STONE);
+
         SAND_BRICK = register("sandBrick", new Block("Sand Brick"));
         SAND_BRICK.setTex(new UVPair(2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
+
+        SAND_BRICK_SLAB = register("sandBrickSlab", new Slabs("Sand Brick Slab"));
+        SAND_BRICK_SLAB.setTex(cubeUVs(2, 2));
+        SAND_BRICK_SLAB.material(Material.STONE);
+        SAND_BRICK_STAIRS = register("sandBrickStairs", new Stairs("Sand Brick Stairs"));
+        SAND_BRICK_STAIRS.setTex(cubeUVs(2, 2));
+        SAND_BRICK_STAIRS.partialBlock();
+        SAND_BRICK_STAIRS.material(Material.STONE);
+
 
         COAL_ORE = register("coalOre", new Block("Coal Ore"));
         COAL_ORE.setTex(new UVPair(4, 1));
