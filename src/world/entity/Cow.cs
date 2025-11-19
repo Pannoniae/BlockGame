@@ -21,7 +21,7 @@ public class Cow : Mob {
     public override (Item item, byte metadata, int count) getDrop() {
         return (Item.RAW_BEEF, 0, 1);
     }
-    
+
 
     // todo milk?
 }
