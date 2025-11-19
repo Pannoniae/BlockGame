@@ -518,8 +518,10 @@ public partial class Entity(World world, string type) : Persistent {
             world.particles.add(new DamageNumber(world, np, actualDmg));
         }
 
-        // still do some camera tilt even without knockback
-
+        // check if dead
+        if (hp <= 0) {
+            die();
+        }
     }
 
     /** damage with knockback from src */
@@ -586,6 +588,11 @@ public partial class Entity(World world, string type) : Persistent {
             var np = position + a;
             world.particles.add(new DamageNumber(world, np, actualDmg));
         }
+
+        // check if dead
+        if (hp <= 0) {
+            die();
+        }
     }
 
     /** heal entity */
@@ -603,7 +610,7 @@ public partial class Entity(World world, string type) : Persistent {
         }
     }
 
-    protected virtual void die() {
+    public virtual void die() {
         dead = true;
         active = false;
     }
@@ -836,7 +843,6 @@ public partial class Entity(World world, string type) : Persistent {
         state.setBool(EntityState.ON_FIRE, fireTicks > 0);
         state.setBool(EntityState.SNEAKING, sneaking);
         state.setInt(EntityState.RIDING, mount?.id ?? -1);
-        state.setBool(EntityState.ON_GROUND, onGround);
     }
 
     /** apply state buffer to entity fields (client-side, after receiving) */
@@ -860,7 +866,5 @@ public partial class Entity(World world, string type) : Persistent {
             this.mount.rider = null;
             this.mount = null;
         }
-
-        onGround = state.getBool(EntityState.ON_GROUND);
     }
 }

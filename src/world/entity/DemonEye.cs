@@ -19,9 +19,9 @@ public class DemonEye : Mob {
     // don't take fall damage
     protected override bool needsFallDamage => false;
 
-    protected override bool burnInSunlight => true;
-    protected override bool hostile => true;
-    protected override double eyeHeight => 0; // it's a fucking floating eye
+    public override bool burnInSunlight => true;
+    public override bool hostile => true;
+    public override double eyeHeight => 0; // it's a fucking floating eye
 
     public DemonEye(World world) : base(world, "eye") {
         tex = "textures/entity/eye.png";
@@ -47,7 +47,7 @@ public class DemonEye : Mob {
             flyTowardsTarget(dt);
 
             var dist = Vector3D.Distance(position, nearestPlayer.position);
-            if (dist < reach && attackTime <= 0) {
+            if (dist < reach && attackTime <= 0 && hasLineOfSight(nearestPlayer)) {
                 attackPlayer();
             }
         }

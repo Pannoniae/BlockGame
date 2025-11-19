@@ -13,6 +13,9 @@ public class Metrics {
     public int packetsReceived;
     public int ping;
 
+    // packet type tracking (received/sec)
+    public readonly Dictionary<Type, int> packets = new();
+
     public void clear() {
         renderedVerts = 0;
         renderedChunks = 0;
@@ -29,5 +32,6 @@ public class Metrics {
         bytesReceived = 0;
         packetsSent = 0;
         packetsReceived = 0;
+        packets.Clear();
     }
 }

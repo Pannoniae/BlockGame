@@ -66,12 +66,12 @@ public class Mob(World world, string type) : Entity(world, type) {
     protected override bool needsAnimation => true;
     protected override bool needsDamageNumbers => true;
 
-    protected virtual bool hostile => false;
-    protected virtual bool burnInSunlight => false;
-    protected const int sunlightThreshold = 13;
-    protected virtual double eyeHeight => 1.6;
+    public virtual bool hostile => false;
+    public virtual bool burnInSunlight => false;
+    public const int sunlightThreshold = 13;
+    public virtual double eyeHeight => 1.6;
 
-    protected virtual double reach => 3;
+    public virtual double reach => 3;
 
     /**
      * Find nearest player (excluding creative mode players) within radius
@@ -98,6 +98,37 @@ public class Mob(World world, string type) : Entity(world, type) {
         }
 
         return nearest;
+    }
+
+    /**
+     * Check if there's line of sight between this mob and target entity
+     * Returns false if there are solid blocks in the way
+     */
+    protected bool hasLineOfSight(Entity target) {
+        var start = position + new Vector3D(0, eyeHeight, 0);
+        var end = target.position + new Vector3D(0, target is Mob m ? m.eyeHeight : 1.6, 0);
+        var dir = Vector3D.Normalize(end - start);
+        var dist = Vector3D.Distance(start, end);
+
+        // step along the ray and check for solid blocks
+        const double step = 0.25;
+        var steps = (int)(dist / step);
+
+        for (int i = 1; i < steps; i++) {
+            var checkPos = start + dir * (i * step);
+            var bx = (int)double.Floor(checkPos.X);
+            var by = (int)double.Floor(checkPos.Y);
+            var bz = (int)double.Floor(checkPos.Z);
+
+            if (world.inWorld(bx, by, bz)) {
+                var block = world.getBlock(bx, by, bz);
+                if (Block.collision[block]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

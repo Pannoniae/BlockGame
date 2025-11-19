@@ -47,6 +47,7 @@ public class PacketRegistry {
         register(0x28, typeof(PlayerHealthPacket));
         register(0x29, typeof(EntityActionPacket));
         register(0x2A, typeof(TeleportPacket));
+        register(0x2B, typeof(EntityPositionDeltaPacket));
 
         // player actions (0x30-0x3F)
         register(0x30, typeof(PlayerPositionPacket));

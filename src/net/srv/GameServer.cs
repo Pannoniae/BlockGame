@@ -33,6 +33,7 @@ public class GameServer : INetEventListener {
 
     public readonly bool devMode;
     public bool running;
+    private bool stopping; // prevent double-call of stop()
     public NetManager netManager;
 
     public readonly Stopwatch sw = Stopwatch.StartNew();
@@ -946,6 +947,24 @@ public class GameServer : INetEventListener {
     }
 
     public void stop() {
+        if (stopping) {
+            return; // already stopping, don't do it twice :(
+        }
+
+        // kick everyone with message
+        send(
+            new ChatMessagePacket { message = "&cServer is shutting down..." },
+            DeliveryMethod.ReliableOrdered
+        );
+
+        foreach (var conn in connections.Values) {
+            conn.send(
+                new DisconnectPacket { reason = "Server is shutting down" },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+
+        stopping = true;
         running = false;
 
         Log.info("Stopping server...");
@@ -966,5 +985,20 @@ public class GameServer : INetEventListener {
         saveUsers();
         Net.mode = NetMode.NONE;
         Log.info("Server stopped");
+
+        // delete world.lock!!
+        var lockPath = Path.Combine(world.name, "world.lock");
+        try {
+            if (File.Exists(lockPath)) {
+                File.Delete(lockPath);
+                Log.info("Deleted world.lock");
+            }
+        }
+        catch (Exception e) {
+            Log.error("Error deleting world.lock:");
+            Log.error(e);
+        }
+
+        Environment.Exit(0);
     }
 }

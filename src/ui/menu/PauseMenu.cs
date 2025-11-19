@@ -35,6 +35,9 @@ namespace BlockGame.ui.menu {
         }
 
         public static void returnToMainMenu(GUIElement guiElement) {
+
+            Screen.GAME_SCREEN.trim(true);
+
             if (Net.mode.isMPC()) {
                 // multiplayer: disconnect and return to menu
                 Game.instance.executeOnMainThread(Game.disconnectAndReturnToMenu);

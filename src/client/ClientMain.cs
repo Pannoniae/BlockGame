@@ -68,31 +68,36 @@ public partial class ClientMain {
             Log.warn(e);
 
             if (OperatingSystem.IsLinux()) {
-                var exePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+                try {
+                    var exePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
 
-                // Check if we have the capability
-                var check = Process.Start(new ProcessStartInfo {
-                    FileName = "getcap",
-                    Arguments = exePath,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false
-                });
-                check?.WaitForExit();
-                var output = check?.StandardOutput.ReadToEnd();
-
-                if (!output?.Contains("cap_sys_nice") ?? true) {
-                    Log.info("Need to set capabilities. Please enter password:");
-                    var setcap = Process.Start(new ProcessStartInfo {
-                        FileName = "sudo",
-                        Arguments = $"setcap cap_sys_nice=eip {exePath}",
+                    // Check if we have the capability
+                    var check = Process.Start(new ProcessStartInfo {
+                        FileName = "getcap",
+                        Arguments = exePath,
+                        RedirectStandardOutput = true,
                         UseShellExecute = false
                     });
-                    setcap.WaitForExit();
+                    check?.WaitForExit();
+                    var output = check?.StandardOutput.ReadToEnd();
 
-                    if (setcap.ExitCode == 0) {
-                        Log.info("Capabilities set. Please restart the game.");
-                        Environment.Exit(0);
+                    if (!output?.Contains("cap_sys_nice") ?? true) {
+                        Log.info("Need to set capabilities. Please enter password:");
+                        var setcap = Process.Start(new ProcessStartInfo {
+                            FileName = "sudo",
+                            Arguments = $"setcap cap_sys_nice=eip {exePath}",
+                            UseShellExecute = false
+                        });
+                        setcap.WaitForExit();
+
+                        if (setcap.ExitCode == 0) {
+                            Log.info("Capabilities set. Please restart the game.");
+                            Environment.Exit(0);
+                        }
                     }
+                }
+                catch (Exception capEx) {
+                    Log.debug("Could not check/set capabilities (missing getcap/setcap?): " + capEx.Message);
                 }
             }
         }

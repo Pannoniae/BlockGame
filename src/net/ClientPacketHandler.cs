@@ -31,6 +31,8 @@ public class ClientPacketHandler : PacketHandler {
 
     public void handle(Packet packet) {
 
+        //Log.info($"[Client] Received packet of type {packet.GetType().Name}");
+
         switch (packet) {
             case AuthRequiredPacket p:
                 handleAuthRequired(p);
@@ -79,6 +81,9 @@ public class ClientPacketHandler : PacketHandler {
                 break;
             case EntityPositionRotationPacket p:
                 handleEntityPositionRotation(p);
+                break;
+            case EntityPositionDeltaPacket p:
+                handleEntityPositionDelta(p);
                 break;
             case EntityVelocityPacket p:
                 handleEntityVelocity(p);
@@ -401,6 +406,13 @@ public class ClientPacketHandler : PacketHandler {
         entity.rotation = p.rotation;
         entity.velocity = p.velocity;
 
+        // initialize interpolation targets for mobs (delta packets apply to these...)
+        if (entity is Mob mob) {
+            mob.targetPos = p.position;
+            mob.targetRot = p.rotation;
+            mob.interpolationTicks = 0;
+        }
+
         // deserialize entity-specific data
         EntityTracker.deserializeExtraData(entity, p.extraData);
 
@@ -483,7 +495,7 @@ public class ClientPacketHandler : PacketHandler {
         if (entity != null) {
             if (entity is Humanoid humanoid) {
                 // use packet's rotation with current target position
-                humanoid.mpInterpolate(humanoid.targetPos, p.rotation, humanoid.onGround);
+                humanoid.mpInterpolate(humanoid.targetPos, p.rotation);
             }
             else {
                 entity.rotation = p.rotation;
@@ -509,6 +521,30 @@ public class ClientPacketHandler : PacketHandler {
             else {
                 entity.position = p.position;
                 entity.rotation = p.rotation;
+            }
+        }
+    }
+
+    public void handleEntityPositionDelta(EntityPositionDeltaPacket p) {
+        if (Game.world == null) {
+            return;
+        }
+
+        // find entity and apply delta to last received position+rotation
+        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        if (entity != null) {
+            if (entity is Humanoid humanoid) {
+                p.applyDelta(humanoid.targetPos, humanoid.targetRot, out var newPos, out var newRot);
+                humanoid.mpInterpolate(newPos, newRot);
+            }
+            else if (entity is Mob mob) {
+                p.applyDelta(mob.targetPos, mob.targetRot, out var newPos, out var newRot);
+                mob.mpInterpolate(newPos, newRot);
+            }
+            else {
+                p.applyDelta(entity.position, entity.rotation, out var newPos, out var newRot);
+                entity.position = newPos;
+                entity.rotation = newRot;
             }
         }
     }
@@ -568,6 +604,11 @@ public class ClientPacketHandler : PacketHandler {
         if (Game.player != null) {
             Game.player.hp = p.health;
             Game.player.dmgTime = p.damageTime;
+
+            // check if player died (health <= 0)
+            if (p.health <= 0 && !Game.player.dead) {
+                Game.player.die();
+            }
         }
     }
 

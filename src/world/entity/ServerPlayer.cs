@@ -80,6 +80,26 @@ public class ServerPlayer : Player {
         rotation = Meth.clampAngle(rotation);
     }
 
+    // sync HP to client on damage
+    public override void dmg(float damage) {
+        base.dmg(damage);
+        syncHealth();
+    }
+
+    public override void dmg(double damage, Vector3D source) {
+        base.dmg(damage, source);
+        syncHealth();
+    }
+
+    private void syncHealth() {
+        if (conn != null && !dead) {
+            conn.send(new PlayerHealthPacket {
+                health = hp,
+                damageTime = dmgTime
+            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }
+    }
+
     // disable client-only behaviour
     public override void updateInput(double dt) { }
     public override void blockHandling(double dt) { }
@@ -98,7 +118,7 @@ public class ServerPlayer : Player {
         }
     }
 
-    protected override void die() {
+    public override void die() {
         base.die();
 
         // close any open inv

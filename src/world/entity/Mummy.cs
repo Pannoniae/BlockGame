@@ -12,8 +12,8 @@ public class Mummy : Mob {
 
     private int attackTime;
 
-    protected override bool burnInSunlight => true;
-    protected override bool hostile => true;
+    public override bool burnInSunlight => true;
+    public override bool hostile => true;
 
     public Mummy(World world) : base(world, "mummy") {
         tex = "textures/entity/mummy.png";
@@ -35,7 +35,7 @@ public class Mummy : Mob {
             target = nearestPlayer;
 
             var dist = Vector3D.Distance(position, nearestPlayer.position);
-            if (dist < ATTACK_RANGE && attackTime <= 0) {
+            if (dist < ATTACK_RANGE && attackTime <= 0 && hasLineOfSight(nearestPlayer)) {
                 attackPlayer();
             }
         }

@@ -1,8 +1,6 @@
 namespace BlockGame.net.packet;
 
-/** S→C: 0x28 - player's own health update
- * TODO wire this up properly..
- */
+/** S→C: 0x28 - player's own health update */
 public struct PlayerHealthPacket : Packet {
     public double health;
     public int damageTime;

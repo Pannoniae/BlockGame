@@ -113,9 +113,8 @@ public class Humanoid : Player {
         rotation = Meth.clampAngle(rotation);
     }
 
-    public void mpInterpolate(Vector3D pos, Vector3 rot, bool onGround) {
+    public void mpInterpolate(Vector3D pos, Vector3 rot) {
         targetPos = pos;
-        this.onGround = onGround;
         targetRot = rot;
         interpolationTicks = 4; // interpolate over 3 ticks (~50ms)
     }

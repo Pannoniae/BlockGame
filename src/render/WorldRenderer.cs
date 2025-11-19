@@ -1125,8 +1125,9 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             mat.rotate(interpBodyRot.Y, 0, 1, 0);
             mat.rotate(interpBodyRot.Z, 0, 0, 1);
 
-            // get light level at player position and look up in lightmap
-            var pos = entity.position.toBlockPos();
+            // get light level at entity centre
+            var spos = new Vector3D(entity.position.X, entity.position.Y + 1.0, entity.position.Z);
+            var pos = spos.toBlockPos();
             var light = entity.world.inWorld(pos.X, pos.Y, pos.Z) ? entity.world.getLight(pos.X, pos.Y, pos.Z) : (byte)15;
             var blocklight = (byte)((light >> 4) & 0xF);
             var skylight = (byte)(light & 0xF);

@@ -12,8 +12,8 @@ public class Zombie : Mob {
 
     private int attackTime;
 
-    protected override bool burnInSunlight => true;
-    protected override bool hostile => true;
+    public override bool burnInSunlight => true;
+    public override bool hostile => true;
 
     public Zombie(World world) : base(world, "zombie") {
         tex = "textures/entity/zombie.png";
@@ -36,11 +36,11 @@ public class Zombie : Mob {
             target = nearestPlayer;
 
             var dist = Vector3D.Distance(position, nearestPlayer.position);
-            if (dist < ATTACK_RANGE && attackTime <= 0) {
+            if (dist < ATTACK_RANGE && attackTime <= 0 && hasLineOfSight(nearestPlayer)) {
                 attackPlayer();
             }
         }
-        
+
         base.AI(dt);
     }
 

@@ -1,5 +1,6 @@
 ﻿using BlockGame.world;
 using BlockGame.world.block;
+using BlockGame.world.entity;
 using Molten;
 using Molten.DoublePrecision;
 using Entity = BlockGame.world.entity.Entity;
@@ -169,6 +170,9 @@ public static class Pathfinding {
     private static XUList<PathNode> getNeighbours(Entity e, PathNode node) {
         neighbourBuffer.Clear();
 
+        // hostile mobs shouldn't pathfind to water
+        bool isHostile = e is Mob mob && mob.hostile;
+
         // 8 horizontal directions + up/down
         ReadOnlySpan<Vector3I> directions = [
             new(1, 0, 0), new(-1, 0, 0),
@@ -187,13 +191,13 @@ public static class Pathfinding {
             var fit = fits(e, nx, ny, nz);
 
             // check if entity fits at this position
-            if (fit is Type.AIR or Type.WATER) {
+            if (fit == Type.AIR || (fit == Type.WATER && !isHostile)) {
                 neighbourBuffer.Add(get(nx, ny, nz));
             }
             // try stepping up one block
             else if (fit == Type.BLOCKED) {
                 var stepFit = fits(e, nx, ny + 1, nz);
-                if (stepFit is Type.AIR or Type.WATER) {
+                if (stepFit == Type.AIR || (stepFit == Type.WATER && !isHostile)) {
                     neighbourBuffer.Add(get(nx, ny + 1, nz));
                 }
             }
@@ -201,12 +205,12 @@ public static class Pathfinding {
 
         // can fall down?
         var downFit = fits(e, node.x, node.y - 1, node.z);
-        if (downFit is Type.AIR or Type.WATER) {
+        if (downFit == Type.AIR || (downFit == Type.WATER && !isHostile)) {
             neighbourBuffer.Add(get(node.x, node.y - 1, node.z));
         }
 
         // can swim up through water?
-        if (current == Type.WATER) {
+        if (current == Type.WATER && !isHostile) {
             var upFit = fits(e, node.x, node.y + 1, node.z);
             if (upFit is Type.AIR or Type.WATER) {
                 neighbourBuffer.Add(get(node.x, node.y + 1, node.z));

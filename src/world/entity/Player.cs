@@ -594,9 +594,7 @@ public class Player : Mob, CommandSource {
 
         if (Game.inputs.middle.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
-                if (!gameMode.gameplay) {
-                    pickBlock();
-                }
+                pickBlock();
 
                 lastMouseAction = now;
                 if (!Game.instance.targetedPos.HasValue) {
@@ -1038,25 +1036,27 @@ public class Player : Mob, CommandSource {
                     }
                 }
 
-                // second, if not found, put it in the selected slot
-                if (stack != null!) {
-                    inventory.setStack(inventory.selected, stack);
+                if (!gameMode.gameplay) {
+                    // second, if not found, put it in the selected slot
+                    if (stack != null!) {
+                        inventory.setStack(inventory.selected, stack);
 
-                    // sync with server, since we are in creative, we can bullshit and server will accept it
-                    if (Net.mode.isMPC()) {
-                        // creative inventory hotbar is slots 40-49 (map from player inventory slots 0-9)
-                        ClientConnection.instance.send(new InventorySlotClickPacket {
-                            invID = Constants.INV_ID_CREATIVE,
-                            idx = (ushort)(inventory.selected + 40),
-                            button = 2,
-                            actionID = ClientConnection.instance.nextActionID++,
-                            mode = 0, // normal click
-                            expectedSlot = inventory.getStack(inventory.selected)
-                        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                        // sync with server, since we are in creative, we can bullshit and server will accept it
+                        if (Net.mode.isMPC()) {
+                            // creative inventory hotbar is slots 40-49 (map from player inventory slots 0-9)
+                            ClientConnection.instance.send(new InventorySlotClickPacket {
+                                invID = Constants.INV_ID_CREATIVE,
+                                idx = (ushort)(inventory.selected + 40),
+                                button = 2,
+                                actionID = ClientConnection.instance.nextActionID++,
+                                mode = 0, // normal click
+                                expectedSlot = inventory.getStack(inventory.selected)
+                            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
 
-                        ClientConnection.instance.send(new PlayerHeldItemChangePacket {
-                            slot = (byte)inventory.selected
-                        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                            ClientConnection.instance.send(new PlayerHeldItemChangePacket {
+                                slot = (byte)inventory.selected
+                            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                        }
                     }
                 }
             }
@@ -1197,7 +1197,7 @@ public class Player : Mob, CommandSource {
         world.addEntity(itemEntity);
     }
 
-    protected override void die() {
+    public override void die() {
         dead = true;
 
         // drop inventory items on death (survival only, blocks only)

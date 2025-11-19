@@ -237,6 +237,10 @@ public class ClientConnection : INetEventListener {
             var packet = (Packet)Activator.CreateInstance(type)!;
             packet.read(buf);
 
+            // track by packet type
+            Game.metrics.packets.TryAdd(type, 0);
+            Game.metrics.packets[type]++;
+
             // queue for game thread processing
             incomingPackets.Enqueue(packet);
         }

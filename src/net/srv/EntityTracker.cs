@@ -96,21 +96,36 @@ public class EntityTracker {
     private void updateEntity(TrackedEntity t) {
         var entity = t.entity;
 
-        // position threshold: 0.01 blocks OR 20 ticks without update
-        bool movedEnough = Vector3D.DistanceSquared(entity.position, t.lastSentPos) > 0.01;
-        bool rotatedEnough = Vector3.DistanceSquared(entity.rotation, t.lastSentRot) > 0.5f;
+        // threshold: 0.0625 blocks (1/16) or 0.5rad
+        const double MOVE_THRESHOLD_SQ = 0.0625 * 0.0625;
+        const float ROT_THRESHOLD_SQ = 0.5f * 0.5f;
+
+        bool movedEnough = Vector3D.DistanceSquared(entity.position, t.lastSentPos) > MOVE_THRESHOLD_SQ;
+        bool rotatedEnough = Vector3.DistanceSquared(entity.rotation, t.lastSentRot) > ROT_THRESHOLD_SQ;
         t.ticksSinceUpdate++;
 
-        if (movedEnough || rotatedEnough || t.ticksSinceUpdate >= 60) {
-            // send combined packet (fewer packets = less overhead)
-            var packet = new EntityPositionRotationPacket {
-                entityID = entity.id,
-                position = entity.position,
-                rotation = entity.rotation,
-            };
+        if (movedEnough || rotatedEnough) {
+            // try to use delta packet for small movements
+            bool usedDelta = false;
+            if (EntityPositionDeltaPacket.tryCreate(entity.id, entity.position, t.lastSentPos, entity.rotation, t.lastSentRot, out var deltaPacket)) {
+                // send delta
+                foreach (var viewer in t.viewers) {
+                    viewer.send(deltaPacket, DeliveryMethod.Unreliable);
+                }
+                usedDelta = true;
+            }
 
-            foreach (var viewer in t.viewers) {
-                viewer.send(packet, DeliveryMethod.ReliableSequenced);
+            if (!usedDelta) {
+                // delta too large, send full position packet
+                var packet = new EntityPositionRotationPacket {
+                    entityID = entity.id,
+                    position = entity.position,
+                    rotation = entity.rotation,
+                };
+
+                foreach (var viewer in t.viewers) {
+                    viewer.send(packet, DeliveryMethod.Unreliable);
+                }
             }
 
             if (t.sendVelocity) {
@@ -120,10 +135,9 @@ public class EntityTracker {
                     velocity = entity.velocity
                 };
                 foreach (var viewer in t.viewers) {
-                    viewer.send(velPacket, DeliveryMethod.ReliableSequenced);
+                    viewer.send(velPacket, DeliveryMethod.Unreliable);
                 }
             }
-
 
             t.lastSentPos = entity.position;
             t.lastSentRot = entity.rotation;

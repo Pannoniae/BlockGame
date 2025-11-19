@@ -852,6 +852,29 @@ public readonly struct Command {
             }
         }));
 
+        commands.Add(new Command("packetstats", "Shows packet statistics by type", NetMode.CL, (source, args) => {
+            if (Net.mode != NetMode.MPC || ClientConnection.instance == null || !ClientConnection.instance.connected) {
+                source.sendMessage("Not connected to a server");
+                return;
+            }
+
+            var stats = Game.metrics.packets;
+            if (stats.Count == 0) {
+                source.sendMessage("No packets received in the last second");
+                return;
+            }
+
+            // sort by count descending
+            var sorted = stats.OrderByDescending(kvp => kvp.Value).ToList();
+
+            source.sendMessage("=== Packet Stats (last second) ===");
+            foreach (var kvp in sorted) {
+                var typeName = kvp.Key.Name.Replace("Packet", "");
+                source.sendMessage($"{typeName}: {kvp.Value}/s");
+            }
+            source.sendMessage($"Total: {Game.metrics.packetsReceived}/s");
+        }));
+
         var stopAction = (CommandSource source, string[] args) => {
             source.sendMessage("Stopping server...");
             GameServer.instance.stop();

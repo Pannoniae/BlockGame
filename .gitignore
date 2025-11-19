@@ -11,6 +11,8 @@ server/
 publish/
 BlockGame-win/
 BlockGame-linux/
+BlockGame-win*/
+BlockGame-linux*/
 
 renderdoc.cap
 

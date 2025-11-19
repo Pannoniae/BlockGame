@@ -64,14 +64,20 @@ public class WorldIO {
             }
         }
 
-        saveWorldData();
+        try {
+            saveWorldData();
 
-        // save chunks
-        if (saveChunks) {
-            foreach (var chunk in world.chunks) {
-                //var regionCoord = World.getRegionPos(chunk.coord);
-                saveChunk(world, chunk);
+            // save chunks
+            if (saveChunks) {
+                foreach (var chunk in world.chunks) {
+                    //var regionCoord = World.getRegionPos(chunk.coord);
+                    saveChunk(world, chunk);
+                }
             }
+        }
+        catch (Exception e) {
+            Log.error("Error saving world:");
+            Log.error(e);
         }
         //regionCache.Clear();
     }
@@ -375,7 +381,7 @@ public class WorldIO {
     }
 
     private static string getLockFilePath(string worldName) {
-        return Net.mode.isDed() ? $"{worldName}/session.lock" : $"level/{worldName}/session.lock";
+        return Net.mode.isDed() ? $"{worldName}/world.lock" : $"level/{worldName}/world.lock";
     }
 
     public static NBTCompound serialiseChunkIntoNBT(Chunk chunk) {

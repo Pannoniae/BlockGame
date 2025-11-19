@@ -77,6 +77,9 @@ public class GameScreen : Screen {
 
         //updateMemory = Game.setInterval(200, updateMemoryMethod);
         updateDebugText = Game.setInterval(100, INGAME_MENU.updateDebugTextMethod);
+
+        // trim!
+        trim(true);
     }
 
 
@@ -661,7 +664,10 @@ public class GameScreen : Screen {
         }
 
         // also free up memory!
-        trim(true);
+        // note maybe not on PCs integrated graphics bc performance hit? this needs to be handled better, temp fix...
+        if (!Game.isIntegratedCard) {
+            trim(true);
+        }
 
         switchToMenu(PAUSE_MENU);
         Game.instance.unlockMouse();

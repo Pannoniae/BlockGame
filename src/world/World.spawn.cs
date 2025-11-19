@@ -59,6 +59,13 @@ public partial class World {
             return false;
         }
 
+        // hostile mobs shouldn't spawn in water (only passives)
+        if (type != SpawnType.PASSIVE) {
+            if (at == Block.WATER.id || above == Block.WATER.id) {
+                return false;
+            }
+        }
+
         if (!getChunkMaybe(x, z, out var chunk)) {
             return false;
         }
@@ -71,11 +78,14 @@ public partial class World {
                 return false;
             }
         } else if (type == SpawnType.HOSTILE) {
-            // hostiles need darkness (block light < 4)
-            var notDay = getDayPercentage(worldTick) > 0.5f;
+            // hostiles need darkness (block light < 4) AND nighttime
             var blocklight = chunk.getBlockLight(x & 15, y, z & 15);
-            
-            if (blocklight >= 4 && notDay) {
+            if (blocklight >= 4) {
+                return false;
+            }
+
+            var isDay = getDayPercentage(worldTick) <= 0.5f;
+            if (isDay) {
                 return false;
             }
         }

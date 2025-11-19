@@ -1909,8 +1909,8 @@ public class BlockRenderer {
             var blockID = neighbourRef.getID();
             var bl = Block.get(blockID);
 
-            // if water and we're opaque water and this is solid, do it anyway
-            var opaqueWater = Settings.instance.opaqueWater && blockID == Block.WATER.id;
+            // if translucent and we're opaque water and this is solid, do it anyway
+            var opaqueWater = Settings.instance.opaqueWater && Block.translucent[blockID];
             if (blockID == 0 || (bl?.layer != layer && !opaqueWater)) {
                 continue;
             }

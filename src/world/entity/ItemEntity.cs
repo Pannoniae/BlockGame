@@ -254,7 +254,7 @@ public class ItemEntity : Entity {
         hp = 100;
     }
 
-    protected override void die() {
+    public override void die() {
         remove();
     }
 
