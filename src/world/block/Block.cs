@@ -113,8 +113,7 @@ public class Block {
     public static Block CINNABAR_CANDY;
     public static Block DIAMOND_CANDY;
     public static Block LAVA;
-
-    //public static Block LANTERN;
+    public static Block LANTERN;
 
     public static Block TALL_GRASS;
 
@@ -564,12 +563,12 @@ public class Block {
         //EMERALD_ORE.setTier(MaterialTier.GOLD);
         //natural[EMERALD_ORE.id] = true;
 
-        //LANTERN = register("lantern", new Block("Lantern"));
-        //LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
-        //LANTERN.setModel(BlockModel.makeLantern(LANTERN));
-        //LANTERN.light(15);
-        //LANTERN.partialBlock();
-        //LANTERN.material(Material.METAL);
+        LANTERN = register("lantern", new Block("Lantern"));
+        LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
+        LANTERN.setModel(BlockModel.makeLantern(LANTERN));
+        LANTERN.light(15);
+        LANTERN.partialBlock();
+        LANTERN.material(Material.METAL);
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));

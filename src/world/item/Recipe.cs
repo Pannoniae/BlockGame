@@ -281,6 +281,10 @@ public class Recipe {
         LIGHTER.shape(000_010_202, 3);
         LIGHTER.ingredients(Item.FLINT, Block.STONE.item);
 
+        LANTERN = register(new ItemStack(Block.LANTERN.item, 1));
+        LANTERN.shape(141_222_131, 3);
+        LANTERN.ingredients(Item.IRON_INGOT, Block.GLASS.item, Block.TORCH.item, Item.DYE); // any dye
+
         //BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
         //BOW_WOOD.shape(012_102_012, 3);
         //BOW_WOOD.ingredients(Item.STICK, Item.STRING);
