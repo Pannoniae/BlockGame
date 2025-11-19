@@ -27,6 +27,7 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public readonly ChunkCoord coord;
     public readonly SubChunk[] subChunks;
     public readonly PaletteBlockData[] blocks = new PaletteBlockData[CHUNKHEIGHT];
+    public readonly BiomeData biomeData = new();
 
     /** For now, this is fixed-size, we'll cook something better up later */
     public readonly List<Entity>[] entities = new List<Entity>[CHUNKHEIGHT];

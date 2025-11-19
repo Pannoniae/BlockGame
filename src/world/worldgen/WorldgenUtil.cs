@@ -413,8 +413,9 @@ public class WorldgenUtil {
             return;
         }
 
-        // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
+        // must be on grass or snow grass
+        var surface = chunk.getBlock(x, y, z);
+        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
             return;
         }
 
@@ -445,8 +446,9 @@ public class WorldgenUtil {
             return;
         }
 
-        // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
+        // must be on grass or snow grass
+        var surface = chunk.getBlock(x, y, z);
+        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
             return;
         }
 
@@ -477,6 +479,39 @@ public class WorldgenUtil {
         }
     }
 
+    public static void placePineTree(World world, XRandom random, ChunkCoord coord) {
+        var chunk = world.getChunk(coord);
+        var x = random.Next(0, Chunk.CHUNKSIZE);
+        var z = random.Next(0, Chunk.CHUNKSIZE);
+        var y = chunk.heightMap.get(x, z);
+
+        if (y > 120) {
+            return;
+        }
+
+        // must be on grass or snow grass
+        var surface = chunk.getBlock(x, y, z);
+        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
+            return;
+        }
+
+        var xWorld = coord.x * Chunk.CHUNKSIZE + x;
+        var zWorld = coord.z * Chunk.CHUNKSIZE + z;
+
+        // if there's stuff in the bounding box, don't place a tree
+        for (int yd = 1; yd < 8; yd++) {
+            for (int zd = -2; zd <= 2; zd++) {
+                for (int xd = -2; xd <= 2; xd++) {
+                    if (world.getBlock(xWorld + xd, y + yd, zWorld + zd) != Block.AIR.id) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        TreeGenerator.placePineTree(world, random, xWorld, y + 1, zWorld);
+    }
+
     public static void placeCandyTree(World world, XRandom random, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
         var x = random.Next(0, Chunk.CHUNKSIZE);
@@ -487,8 +522,9 @@ public class WorldgenUtil {
             return;
         }
 
-        // if not on dirt, don't bother
-        if (chunk.getBlock(x, y, z) != Block.GRASS.id) {
+        // must be on grass or snow grass
+        var surface = chunk.getBlock(x, y, z);
+        if (surface != Block.GRASS.id && surface != Block.SNOW_GRASS.id) {
             return;
         }
 
@@ -729,5 +765,28 @@ public class WorldgenUtil {
         }
 
         return result.ToString();
+    }
+
+    /** generate 3D noise for biome data (5x40x5 grid covering chunk + boundaries) */
+    public static void getNoise3DRegionBiome(float[] buffer, SimplexNoise noise, ChunkCoord coord,
+        double xScale, double yScale, double zScale, int octaves, float falloff,
+        int sizeX, int sizeY, int sizeZ) {
+        int worldX = coord.x * Chunk.CHUNKSIZE;
+        int worldZ = coord.z * Chunk.CHUNKSIZE;
+
+        for (int nx = 0; nx < sizeX; nx++) {
+            int x = worldX + nx * 4; // biome grid spacing is 4 blocks
+
+            for (int nz = 0; nz < sizeZ; nz++) {
+                int z = worldZ + nz * 4;
+
+                for (int ny = 0; ny < sizeY; ny++) {
+                    int y = ny * 4; // biome grid spacing is 4 blocks vertically
+
+                    int idx = (ny * sizeZ + nz) * sizeX + nx;
+                    buffer[idx] = getNoise3D(noise, x * xScale, y * yScale, z * zScale, octaves, falloff);
+                }
+            }
+        }
     }
 }

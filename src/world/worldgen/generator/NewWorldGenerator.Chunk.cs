@@ -1,9 +1,6 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
-using BlockGame.world.worldgen.feature;
 
 namespace BlockGame.world.worldgen.generator;
 
@@ -23,6 +20,7 @@ public partial class NewWorldGenerator {
     private readonly float[] foliageb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
     private readonly float[] tempb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
     private readonly float[] humb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
+    private readonly float[] ageb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
     private readonly float[] wb = new float[WorldgenUtil.NOISE_SIZE_X * WorldgenUtil.NOISE_SIZE_Y * WorldgenUtil.NOISE_SIZE_Z];
 
 

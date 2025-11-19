@@ -327,6 +327,28 @@ public class Recipe {
         tool(Item.GOLD_SWORD, Item.GOLD_INGOT, 010_010_020, 3);
         tool(Item.GOLD_HOE, Item.GOLD_INGOT, 110_020_020, 3);
         tool(Item.GOLD_SCYTHE, Item.GOLD_INGOT, 111_002_002, 3);
+
+        // ore blocks
+        register(new ItemStack(Block.COPPER_BLOCK.item, 1))
+            .shape(111_111_111, 3)
+            .ingredients(Item.COPPER_INGOT);
+
+        register(new ItemStack(Block.IRON_BLOCK.item, 1))
+            .shape(111_111_111, 3)
+            .ingredients(Item.IRON_INGOT);
+
+        register(new ItemStack(Block.GOLD_BLOCK.item, 1))
+            .shape(111_111_111, 3)
+            .ingredients(Item.GOLD_INGOT);
+
+        register(new ItemStack(Block.DIAMOND_BLOCK.item, 1))
+            .shape(111_111_111, 3)
+            .ingredients(Item.DIAMOND);
+
+        register(new ItemStack(Block.COAL_BLOCK.item, 1))
+            .shape(111_111_111, 3)
+            .ingredients(Item.COAL);
+
     }
 
 

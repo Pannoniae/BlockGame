@@ -73,7 +73,7 @@ public class Sapling : Block {
         }
 
         var below = world.getBlock(x, y - 1, z);
-        if (below != GRASS.id && below != DIRT.id) {
+        if (below != GRASS.id && below != DIRT.id && below != SNOW_GRASS.id) {
             return false;
         }
 
@@ -110,24 +110,21 @@ public class Sapling : Block {
             case SaplingType.MAHOGANY:
                 TreeGenerator.placeMahoganyTree(world, random, x, y, z);
                 break;
+
+            case SaplingType.PINE:
+                TreeGenerator.placePineTree(world, random, x, y, z);
+                break;
         }
     }
 
     /** checks if sapling can survive at this position */
     public static bool canSurvive(World world, int x, int y, int z) {
-        // must be in air
-        ushort block = world.getBlock(x, y, z);
-        if (block != AIR.id) {
-            return false;
-        }
-
-        // check ground block below
         if (y <= 0 || !world.inWorld(x, y - 1, z)) {
             return false;
         }
 
         var below = world.getBlock(x, y - 1, z);
-        if (below != GRASS.id && below != DIRT.id) {
+        if (below != GRASS.id && below != DIRT.id && below != SNOW_GRASS.id) {
             return false;
         }
 
@@ -162,5 +159,6 @@ public class Sapling : Block {
 public enum SaplingType {
     OAK,
     MAPLE,
-    MAHOGANY
+    MAHOGANY,
+    PINE
 }

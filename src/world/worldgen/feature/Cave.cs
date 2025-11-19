@@ -293,7 +293,7 @@ public class Cave : OverlayFeature {
             var czz = zz & 0xF;
             for (int xx = xMin; xx < xMax; xx++) {
                 var cxx = xx & 0xF;
-                bool hasGrass = false;
+                int hasGrass = -1;
 
                 // this is needed so we don't set (grass) blocks over and over.
                 // we store the last set block (which we have set to air) then we set the block below it to grass
@@ -335,7 +335,7 @@ public class Cave : OverlayFeature {
 
                         // if it's grass, exchange below
                         if (block ==  Block.GRASS.id) {
-                            hasGrass = true;
+                            hasGrass = Block.GRASS.id;
                         }
 
                         // if it's a solid block, remove it
@@ -357,8 +357,8 @@ public class Cave : OverlayFeature {
                 }
 
                 // if we have grass, set the block below it to grass
-                if (hasGrass && chunk.getBlock(cxx, lastSetBlock - 1, czz) ==  Block.DIRT.id) {
-                    chunk.setBlockDumb(cxx, lastSetBlock - 1, czz,  Block.GRASS.id);
+                if (hasGrass != -1 && chunk.getBlock(cxx, lastSetBlock - 1, czz) ==  Block.DIRT.id) {
+                    chunk.setBlockDumb(cxx, lastSetBlock - 1, czz, (ushort)hasGrass);
                 }
             }
         }

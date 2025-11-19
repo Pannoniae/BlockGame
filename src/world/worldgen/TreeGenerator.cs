@@ -108,6 +108,49 @@ public class TreeGenerator {
         maple.generate(roots:false, rootButtresses:false);
     }
 
+    public static void placePineTree(World world, XRandom random, int x, int y, int z) {
+        int height = random.Next(6, 10);
+
+        // trunk
+        for (int i = 0; i < height; i++) {
+            world.setBlockSilent(x, y + i, z, Block.PINE_LOG.id);
+        }
+
+        int startY = y + 2;
+        int foliageHeight = height - 2;
+
+        for (int dy = 0; dy < foliageHeight; dy++) {
+            int currentY = startY + dy;
+            // alternate: even layers wide (2), odd layers narrow (1)
+            int radius = (dy % 2 == 0) ? 2 : 0;
+
+            // taper at top - reduce radius
+            if (dy >= foliageHeight - 2) {
+                radius = 1;
+            }
+
+            for (int xo = -radius; xo <= radius; xo++) {
+                for (int zo = -radius; zo <= radius; zo++) {
+                    // skip centre where trunk is
+                    if (xo == 0 && zo == 0) {
+                        continue;
+                    }
+
+                    // skip corners on wide layers for more natural look
+                    if (radius == 2 && Math.Abs(xo) == 2 && Math.Abs(zo) == 2) {
+                        continue;
+                    }
+
+                    world.setBlockSilent(x + xo, currentY, z + zo, Block.PINE_LEAVES.id);
+                }
+            }
+        }
+
+        // pointy top
+        world.setBlockSilent(x, y + height, z, Block.PINE_LEAVES.id);
+        world.setBlockSilent(x, y + height + 1, z, Block.PINE_LEAVES.id);
+    }
+
     /** place a normal tree with foliage bulb */
     public static void placeNormalTree(World world, XRandom random, int x, int y, int z, int height = 5) {
         // trunk

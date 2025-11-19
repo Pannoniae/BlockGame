@@ -24,7 +24,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
     private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 4, 6);
     private readonly OreFeature clayOre = new(Block.CLAY_BLOCK.id, 24, 36);
 
-    public NewSurfaceGenerator(WorldGenerator worldgen, World world) {
+    public NewSurfaceGenerator(WorldGenerator worldgen, World world, int version) {
         this.worldgen = worldgen;
         this.world = world;
 
@@ -95,42 +95,6 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(72, World.WORLDHEIGHT);
             clayOre.place(world, random, x, y, z);
-        }
-
-        var foliage = WorldgenUtil.getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);
-        var treeCount = foliage * 2f;
-
-        // todo this will be replaced with biomes later!!
-        // right now we just don't want trees in plains stuff for obvious reasons
-        if (foliage < 0.25f) {
-            // edge
-            if (foliage > 0.1f) {
-                treeCount += ((foliage - 0.1f) * 4);
-            }
-            else {
-                treeCount = 0;
-            }
-        }
-        else {
-            treeCount += 4;
-        }
-
-        // 4..7
-        treeCount *= treeCount;
-        // 16..49
-
-        // if dense forest, place a rainforest tree
-        if (foliage > 0.3f) {
-            WorldgenUtil.placeRainforestTree(world, random, coord);
-        }
-
-        for (int i = 0; i < treeCount; i++) {
-            WorldgenUtil.placeTree(world, random, coord);
-        }
-
-        // place candy tree randomly (not near the other ones lol)
-        if (foliage < -0.2f && random.NextSingle() < 0.05f) {
-            WorldgenUtil.placeCandyTree(world, random, coord);
         }
 
 
@@ -210,6 +174,104 @@ public class NewSurfaceGenerator : SurfaceGenerator {
                     }
                 }
             }
+        }
+
+        // place cactus in deserts - check biome at chunk centre
+        var centerHeight = chunk.heightMap.get(8, 8);
+        var temp = chunk.biomeData.getTemp(8, centerHeight, 8);
+        var hum = chunk.biomeData.getHum(8, centerHeight, 8);
+
+        // hot + dry = desert
+        if (temp > 0.3f && hum < 0.3f) {
+            var cactusCount = random.Next(0, 96);
+            for (int i = 0; i < cactusCount; i++) {
+                var x = random.Next(0, Chunk.CHUNKSIZE);
+                var z = random.Next(0, Chunk.CHUNKSIZE);
+                var y = random.Next(0, World.WORLDHEIGHT - 1);
+
+                // place on sand
+                if (chunk.getBlock(x, y, z) == Block.SAND.id && y < World.WORLDHEIGHT - 1) {
+                    if (chunk.getBlock(x, y + 1, z) == Block.AIR.id) {
+
+                        // check if root can survive
+                        var cactus = (Cactus)Block.CACTUS;
+                        if (!cactus.canSurvive(world, x + chunk.worldX, y + 1, z + chunk.worldZ)) {
+                            continue;
+                        }
+
+                        var h = random.Next(2, 4);
+                        for (int yy = 0; yy < h; yy++) {
+                            if (y + 1 + yy >= World.WORLDHEIGHT) {
+                                break;
+                            }
+
+                            chunk.setBlockFast(x, y + 1 + yy, z, Block.CACTUS.id);
+                        }
+                    }
+                }
+            }
+        }
+
+        var foliage = WorldgenUtil.getNoise2D(foliagen, xChunk * FREQFOLIAGE, zChunk * FREQFOLIAGE, 4, 2);
+        var treeCount = foliage * 2f;
+
+        // todo this will be replaced with biomes later!!
+        // right now we just don't want trees in plains stuff for obvious reasons
+        if (foliage < 0.25f) {
+            // edge
+            if (foliage > 0.1f) {
+                treeCount += ((foliage - 0.1f) * 4);
+            }
+            else {
+                treeCount = 0;
+            }
+        }
+        else {
+            treeCount += 4;
+        }
+
+        // 4..7
+        treeCount *= treeCount;
+        // 16..49
+
+        var taiga = false;
+
+        // place pine trees in snowy biomes
+        if (temp < -0.25f) {
+            taiga = true;
+            if (hum > 0.05f) {
+                var pineCount = (int)(treeCount * 0.8f);
+                for (int i = 0; i < pineCount; i++) {
+                    WorldgenUtil.placePineTree(world, random, coord);
+                }
+            }
+        }
+
+        var jungle = false;
+
+        // place mahogany trees in jungles
+        if (temp > 0.25f && hum > 0.3f) {
+            jungle = true;
+            var mahoganyCount = (int)(treeCount * 0.6f);
+            for (int i = 0; i < mahoganyCount; i++) {
+                WorldgenUtil.placeRainforestTree(world, random, coord);
+            }
+        }
+
+        // if dense forest, place a rainforest tree
+        if (!taiga && !jungle) {
+            if (foliage > 0.3f) {
+                WorldgenUtil.placeRainforestTree(world, random, coord);
+            }
+
+            for (int i = 0; i < treeCount; i++) {
+                WorldgenUtil.placeTree(world, random, coord);
+            }
+        }
+
+        // place candy tree randomly (not near the other ones lol)
+        if (foliage < -0.2f && random.NextSingle() < 0.05f) {
+            WorldgenUtil.placeCandyTree(world, random, coord);
         }
     }
 }

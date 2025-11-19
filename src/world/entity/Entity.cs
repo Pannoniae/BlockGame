@@ -498,6 +498,10 @@ public partial class Entity(World world, string type) : Persistent {
             lastDmg = damage;
             iframes = invulnerability;
             dmgTime = 30;
+
+            if (this is Player && !Net.mode.isDed()) {
+                Game.camera.applyImpact(damage * 4);
+            }
         }
 
         // spawn damage number at top of entity with random offset
@@ -513,6 +517,9 @@ public partial class Entity(World world, string type) : Persistent {
             var np = position + a;
             world.particles.add(new DamageNumber(world, np, actualDmg));
         }
+
+        // still do some camera tilt even without knockback
+
     }
 
     /** damage with knockback from src */
@@ -540,6 +547,10 @@ public partial class Entity(World world, string type) : Persistent {
             iframes = invulnerability;
             kb = true;
             dmgTime = 30;
+
+            if (this is Player && !Net.mode.isDed()) {
+                Game.camera.applyImpact((float)damage * 4);
+            }
         }
 
         // apply knockback

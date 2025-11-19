@@ -23,7 +23,7 @@ public partial class PerlinWorldGenerator : WorldGenerator {
 
     public PerlinWorldGenerator(World world) {
         this.world = world;
-        surfacegen = new NewSurfaceGenerator(this, world);
+        surfacegen = new NewSurfaceGenerator(this, world, 1); // old generator, use version 1
     }
 
     public void setup(XRandom random, int seed) {

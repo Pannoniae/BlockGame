@@ -1138,7 +1138,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
             // render fire effect if entity is on fire
             if (entity.fireTicks > 0) {
-                renderEntityFire(mat, entity, interp);
+                renderEntityFire(world, mat, entity, interp);
             }
 
             mat.pop();
@@ -1166,7 +1166,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     /** render fire effect on burning entities using their AABB */
-    private static void renderEntityFire(MatrixStack mat, Entity entity, double interp) {
+    private static void renderEntityFire(World world, MatrixStack mat, Entity entity, double interp) {
         var idt = Game.graphics.idt;
         idt.setTexture(Game.textures.blockTexture);
 
@@ -1183,6 +1183,14 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         // fire is fullbright
         var tint = getLightColour(15, 15);
         idt.setColour(tint);
+
+        // use unified horizon colour handling
+        var currentHorizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
+
+        idt.setFogType(FogType.Linear);
+        idt.enableFog(true);
+        idt.fogColor(currentHorizonColour.toVec4());
+        idt.fogDistance(Settings.instance.renderDistance * Chunk.CHUNKSIZE * 0.25f, Settings.instance.renderDistance * Chunk.CHUNKSIZE - 16);
 
         var uv = new UVPair(3, 14);
         var uvn = UVPair.texCoords(Game.textures.blockTexture, uv);

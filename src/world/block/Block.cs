@@ -83,6 +83,9 @@ public class Block {
     public static Block COBBLESTONE;
     public static Block GRAVEL;
     public static Block HELLSTONE;
+
+    public static Block SNOW_GRASS;
+    public static Block SNOW;
     //public static Block BLOODSTONE;
     public static Block HELLROCK;
     //public static Block INFERNO_ROCK;
@@ -145,6 +148,15 @@ public class Block {
     public static Block MAHOGANY_LEAVES;
     public static Block MAHOGANY_SAPLING;
 
+    public static Block PINE_LOG;
+    public static Block PINE_PLANKS;
+    public static Block PINE_STAIRS;
+    public static Block PINE_SLAB;
+    public static Block PINE_LEAVES;
+    public static Block PINE_SAPLING;
+
+    public static Block CACTUS;
+
     public static Block OAK_CHEST;
     public static Block OAK_DOOR;
     public static Block MAHOGANY_DOOR;
@@ -169,6 +181,15 @@ public class Block {
     public static Block COPPER_ORE;
     //public static Block TIN_ORE;
     //public static Block SILVER_ORE;
+
+    public static Block GOLD_BLOCK;
+    public static Block IRON_BLOCK;
+    public static Block COPPER_BLOCK;
+    //public static Block TITANIUM_BLOCK;
+    //public static Block SILVER_BLOCK;
+    //public static Block TIN_BLOCK;
+    public static Block DIAMOND_BLOCK;
+    public static Block COAL_BLOCK;
 
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
@@ -290,6 +311,18 @@ public class Block {
         SAND.material(Material.EARTH);
         // less hard than dirt!
         SAND.setHardness(0.5);
+
+        SNOW_GRASS = register("snowGrass", new GrassBlock("Snowy Grass"));
+        SNOW_GRASS.tick();
+        SNOW_GRASS.setTex(new(13, 0), new(14, 0), new(2, 0));
+        renderType[SNOW_GRASS.id] = RenderType.CUBE_DYNTEXTURE;
+        SNOW_GRASS.material(Material.EARTH);
+
+        SNOW = register("snow", new Block("Snow"));
+        SNOW.setTex(new UVPair(15, 0));
+        renderType[SNOW.id] = RenderType.CUBE;
+        SNOW.material(Material.EARTH);
+        SNOW.setHardness(0.3);
 
         BASALT = register("basalt", new Block("Basalt"));
         BASALT.setTex(new UVPair(4, 0));
@@ -511,6 +544,43 @@ public class Block {
         //LANTERN.partialBlock();
         //LANTERN.material(Material.METAL);
 
+        // the blocks
+        COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
+        COAL_BLOCK.setTex(cubeUVs(8, 8));
+        renderType[COAL_BLOCK.id] = RenderType.CUBE;
+        COAL_BLOCK.material(Material.METAL);
+        COAL_BLOCK.setHardness(5.0);
+        COAL_BLOCK.setTier(MaterialTier.STONE);
+
+        COPPER_BLOCK = register("copperBlock", new Block("Block of Copper"));
+        COPPER_BLOCK.setTex(cubeUVs(9, 8));
+        renderType[COPPER_BLOCK.id] = RenderType.CUBE;
+        COPPER_BLOCK.material(Material.METAL);
+        COPPER_BLOCK.setHardness(6.0);
+        COPPER_BLOCK.setTier(MaterialTier.IRON);
+
+        IRON_BLOCK = register("ironBlock", new Block("Block of Iron"));
+        IRON_BLOCK.setTex(cubeUVs(6, 8));
+        renderType[IRON_BLOCK.id] = RenderType.CUBE;
+        IRON_BLOCK.material(Material.METAL);
+        IRON_BLOCK.setHardness(7.0);
+        IRON_BLOCK.setTier(MaterialTier.IRON);
+
+        GOLD_BLOCK = register("goldBlock", new Block("Block of Gold"));
+        GOLD_BLOCK.setTex(cubeUVs(4, 8));
+        renderType[GOLD_BLOCK.id] = RenderType.CUBE;
+        GOLD_BLOCK.material(Material.METAL);
+        GOLD_BLOCK.setHardness(8.0);
+        GOLD_BLOCK.setTier(MaterialTier.GOLD);
+
+        DIAMOND_BLOCK = register("diamondBlock", new Block("Block of Diamond"));
+        DIAMOND_BLOCK.setTex(cubeUVs(10, 8));
+        renderType[DIAMOND_BLOCK.id] = RenderType.CUBE;
+        DIAMOND_BLOCK.material(Material.METAL);
+        DIAMOND_BLOCK.setHardness(10.0);
+        DIAMOND_BLOCK.setTier(MaterialTier.GOLD);
+
+
         TALL_GRASS = register("tallGrass", new Grass("Tall Grass"));
         TALL_GRASS.setTex(crossUVs(11, 5));
         TALL_GRASS.setModel(BlockModel.makeGrass(TALL_GRASS));
@@ -707,6 +777,55 @@ public class Block {
         MAHOGANY_SAPLING.itemLike();
         MAHOGANY_SAPLING.material(Material.ORGANIC);
         MAHOGANY_SAPLING.setFlammable(60);
+
+        CACTUS = register("cactus", new Cactus("Cactus"));
+        CACTUS.setTex(grassUVs(1, 3, 0, 3, 1, 3));
+        CACTUS.setModel(BlockModel.makeCube(CACTUS));
+        CACTUS.material(Material.ORGANIC);
+        CACTUS.setHardness(0.4);
+        CACTUS.setFlammable(10);
+        CACTUS.tick();
+
+        PINE_LOG = register("pineLog", new Block("Pine Log"));
+        PINE_LOG.setTex(grassUVs(10, 2, 9, 2, 11, 2));
+        PINE_LOG.setModel(BlockModel.makeCube(PINE_LOG));
+        PINE_LOG.material(Material.WOOD);
+        log[PINE_LOG.id] = true;
+        PINE_LOG.setFlammable(5);
+
+        PINE_PLANKS = register("pinePlanks", new Block("Pine Planks"));
+        PINE_PLANKS.setTex(new UVPair(8, 2));
+        renderType[PINE_PLANKS.id] = RenderType.CUBE;
+        PINE_PLANKS.material(Material.WOOD);
+        PINE_PLANKS.setFlammable(30);
+
+        PINE_STAIRS = register("pineStairs", new Stairs("Pine Stairs"));
+        PINE_STAIRS.setTex(cubeUVs(8, 2));
+        PINE_STAIRS.partialBlock();
+        PINE_STAIRS.material(Material.WOOD);
+        PINE_STAIRS.setFlammable(30);
+
+        PINE_SLAB = register("pineSlab", new Slabs("Pine Slab"));
+        PINE_SLAB.setTex(cubeUVs(8, 2));
+        PINE_SLAB.material(Material.WOOD);
+        PINE_SLAB.setFlammable(30);
+
+        PINE_LEAVES = register("pineLeaves", new Leaves("Pine Leaves"));
+        PINE_LEAVES.setTex(new UVPair(12, 2));
+        renderType[PINE_LEAVES.id] = RenderType.CUBE;
+        PINE_LEAVES.transparency();
+        leaves[PINE_LEAVES.id] = true;
+        PINE_LEAVES.setFlammable(60);
+
+        PINE_SAPLING = register("pineSapling", new Sapling("Pine Sapling", SaplingType.PINE));
+        PINE_SAPLING.setTex(crossUVs(19, 5));
+        PINE_SAPLING.setModel(BlockModel.makeGrass(PINE_SAPLING));
+        PINE_SAPLING.transparency();
+        PINE_SAPLING.noCollision();
+        PINE_SAPLING.waterTransparent();
+        PINE_SAPLING.itemLike();
+        PINE_SAPLING.material(Material.ORGANIC);
+        PINE_SAPLING.setFlammable(60);
 
         GOLD_CANDY = register("goldCandy", new Block("Gold Candy"));
         GOLD_CANDY.setTex(new UVPair(0, 8));
