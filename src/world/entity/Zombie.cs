@@ -17,6 +17,7 @@ public class Zombie : Mob {
 
     public Zombie(World world) : base(world, "zombie") {
         tex = "textures/entity/zombie.png";
+        hp = 30;
     }
 
     public override AABB calcAABB(Vector3D pos) {

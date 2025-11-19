@@ -648,6 +648,20 @@ public class BlockRenderer {
         }
     }
 
+    /** totally not a gross hack */
+    public void renderBlock(Block block, byte metadata, Vector3I worldPos, List<BlockVertexLighted> vertices,
+        VertexConstructionMode mode = VertexConstructionMode.OPAQUE,
+        byte lightOverride = 255,
+        Color tintOverride = default,
+        bool cullFaces = true) {
+        // SETUP CACHE
+        RenderContext c = new();
+        setCtx(ref c);
+
+        vertices.Clear();
+        renderBlockStandalone(block, worldPos, vertices, lightOverride, tintOverride, metadata);
+    }
+
     [SkipLocalsInit]
     private unsafe void renderBlockWorld(Block block, Vector3I worldPos, List<BlockVertexTinted> vertices, VertexConstructionMode mode,
         bool cullFaces) {
@@ -699,6 +713,102 @@ public class BlockRenderer {
             tempVertices[1] = new BlockVertexTinted(x2, y2, z2, tex.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
             tempVertices[2] = new BlockVertexTinted(x3, y3, z3, texMax.X, texMax.Y, tint.R, tint.G, tint.B, tint.A);
             tempVertices[3] = new BlockVertexTinted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A);
+
+            vertices.AddRange(tempVertices);
+        }
+    }
+
+    [SkipLocalsInit]
+    private void renderBlockStandalone(Block block, Vector3I worldPos, List<BlockVertexLighted> vertices, byte lightOverride,
+        Color tintOverride, byte metadata = 0) {
+        Span<BlockVertexLighted> tempVertices = stackalloc BlockVertexLighted[4];
+
+        uint blockID = block.getID();
+        var bl = Block.get(blockID.getID());
+
+        // we render to a temp list
+        _listHack.Clear();
+
+        // turn off AO and smooth lighting for standalone rendering! it won't work properly and it will mess the lighting up
+        // because we don't have a proper cache
+
+        setupStandalone();
+
+        // setup (fake) cache
+        fillCacheStandalone(blockID.setMetadata(metadata), lightOverride);
+
+        renderBlockSwitch(bl, 0, 0, 0, metadata, _listHack);
+
+        if (Block.renderType[(int)blockID] != RenderType.MODEL) {
+            // now we convert it to the REAL vertices
+            foreach (var vertex in _listHack) {
+                // convert to tinted vertex
+                // we need to restore the UVs (so multiply by inverse atlas)
+                // and we need to uncompress the positions
+                var lightedVertex = new BlockVertexLighted {
+                    x = vertex.x / 256f - 16f,
+                    y = vertex.y / 256f - 16f,
+                    z = vertex.z / 256f - 16f,
+                    u = vertex.u / 32768f,
+                    v = vertex.v / 32768f,
+                    cu = vertex.cu,
+                    light = vertex.light
+                };
+
+                vertices.Add(lightedVertex);
+            }
+
+            return;
+        }
+
+        var faces = block.model.faces;
+
+        for (int d = 0; d < faces.Length; d++) {
+            var face = faces[d];
+            var dir = face.direction;
+
+            // texture coordinates
+            var texCoords = face.min;
+            var texCoordsMax = face.max;
+            var tex = UVPair.texCoords(texCoords);
+            var texMax = UVPair.texCoords(texCoordsMax);
+
+            // check for forced texture override (for breaking overlay)
+            if (forceTex.u >= 0 && forceTex.v >= 0) {
+                tex = UVPair.texCoords(forceTex);
+                texMax = UVPair.texCoords(new UVPair(forceTex.u + 1, forceTex.v + 1));
+            }
+
+            // vertex positions
+            float x1 = worldPos.X + face.x1;
+            float y1 = worldPos.Y + face.y1;
+            float z1 = worldPos.Z + face.z1;
+            float x2 = worldPos.X + face.x2;
+            float y2 = worldPos.Y + face.y2;
+            float z2 = worldPos.Z + face.z2;
+            float x3 = worldPos.X + face.x3;
+            float y3 = worldPos.Y + face.y3;
+            float z3 = worldPos.Z + face.z3;
+            float x4 = worldPos.X + face.x4;
+            float y4 = worldPos.Y + face.y4;
+            float z4 = worldPos.Z + face.z4;
+
+            // calculate tint
+            Color tint;
+            if (tintOverride != default) {
+                // use provided tint
+                tint = tintOverride * WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
+            }
+            else {
+                // calculate tint based on direction and light
+                tint = WorldRenderer.calculateTint((byte)dir, 0, lightOverride);
+            }
+
+            // create vertices
+            tempVertices[0] = new BlockVertexLighted(x1, y1, z1, tex.X, tex.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
+            tempVertices[1] = new BlockVertexLighted(x2, y2, z2, tex.X, texMax.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
+            tempVertices[2] = new BlockVertexLighted(x3, y3, z3, texMax.X, texMax.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
+            tempVertices[3] = new BlockVertexLighted(x4, y4, z4, texMax.X, tex.Y, tint.R, tint.G, tint.B, tint.A, lightOverride);
 
             vertices.AddRange(tempVertices);
         }

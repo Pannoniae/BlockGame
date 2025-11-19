@@ -270,24 +270,24 @@ public class Block {
         GRASS.material(Material.EARTH);
 
         DIRT = register("dirt", new Block("Dirt"));
-        DIRT.setTex(cubeUVs(2, 0));
+        DIRT.setTex(new UVPair(2, 0));
         renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
 
         SAND = register("sand", new FallingBlock("Sand"));
-        SAND.setTex(cubeUVs(3, 0));
+        SAND.setTex(new UVPair(3, 0));
         renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
         // less hard than dirt!
         SAND.setHardness(0.5);
 
         BASALT = register("basalt", new Block("Basalt"));
-        BASALT.setTex(cubeUVs(4, 0));
+        BASALT.setTex(new UVPair(4, 0));
         renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
 
         STONE = register("stone", new StoneBlock("Stone"));
-        STONE.setTex(cubeUVs(5, 0));
+        STONE.setTex(new UVPair(5, 0));
         renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
 
@@ -301,9 +301,8 @@ public class Block {
         STONE_STAIRS.material(Material.STONE);
 
         COBBLESTONE = register("cobblestone", new Block("Cobblestone"));
-        COBBLESTONE.setTex(cubeUVs(6, 1));
-        //renderType[COBBLESTONE.id] = RenderType.CUBE;
-        COBBLESTONE.setModel(BlockModel.makeCube(COBBLESTONE));
+        COBBLESTONE.setTex(new UVPair(6, 1));
+        renderType[COBBLESTONE.id] = RenderType.CUBE;
         COBBLESTONE.material(Material.STONE);
 
         COBBLESTONE_SLAB = register("cobblestoneSlab", new Slabs("Cobblestone Slab"));
@@ -319,12 +318,12 @@ public class Block {
         //utana mas kovekbol keszult STAIRS!
 
         GRAVEL = register("gravel", new GravelBlock("Gravel"));
-        GRAVEL.setTex(cubeUVs(7, 0));
+        GRAVEL.setTex(new UVPair(7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
         GRAVEL.material(Material.EARTH);
 
         HELLSTONE = register("hellstone", new Block("Hellstone"));
-        HELLSTONE.setTex(cubeUVs(8, 0));
+        HELLSTONE.setTex(new UVPair(8, 0));
         renderType[HELLSTONE.id] = RenderType.CUBE;
         HELLSTONE.light(15);
         HELLSTONE.material(Material.HELL);
@@ -335,7 +334,7 @@ public class Block {
         //BLOODSTONE.material(Material.HELL);
 
         HELLROCK = register("hellrock", new Block("Hellrock"));
-        HELLROCK.setTex(cubeUVs(9, 0));
+        HELLROCK.setTex(new UVPair(9, 0));
         renderType[HELLROCK.id] = RenderType.CUBE;
         HELLROCK.material(Material.HELL);
 
@@ -350,54 +349,54 @@ public class Block {
         //CALCITE.material(Material.STONE);
 
         CLAY_BLOCK = register("clayBlock", new Block("Clay"));
-        CLAY_BLOCK.setTex(cubeUVs(12, 0));
+        CLAY_BLOCK.setTex(new UVPair(12, 0));
         renderType[CLAY_BLOCK.id] = RenderType.CUBE;
         CLAY_BLOCK.material(Material.EARTH);
 
         GLASS = register("glass", new Block("Glass"));
-        GLASS.setTex(cubeUVs(6, 0));
+        GLASS.setTex(new UVPair(6, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS.transparency();
         GLASS.material(Material.GLASS);
 
         BRICK_BLOCK = register("brickBlock", new Block("Brick Block"));
-        BRICK_BLOCK.setTex(cubeUVs(0, 2));
+        BRICK_BLOCK.setTex(new UVPair(0, 2));
         renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
 
         STONE_BRICK = register("stoneBrick", new Block("Stone Brick"));
-        STONE_BRICK.setTex(cubeUVs(1, 2));
+        STONE_BRICK.setTex(new UVPair(1, 2));
         renderType[STONE_BRICK.id] = RenderType.CUBE;
         STONE_BRICK.material(Material.STONE);
 
         SAND_BRICK = register("sandBrick", new Block("Sand Brick"));
-        SAND_BRICK.setTex(cubeUVs(2, 2));
+        SAND_BRICK.setTex(new UVPair(2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
 
         COAL_ORE = register("coalOre", new Block("Coal Ore"));
-        COAL_ORE.setTex(cubeUVs(4, 1));
+        COAL_ORE.setTex(new UVPair(4, 1));
         renderType[COAL_ORE.id] = RenderType.CUBE;
         COAL_ORE.material(Material.FANCY_STONE);
         COAL_ORE.setHardness(2.0);
         COAL_ORE.setTier(MaterialTier.WOOD);
 
         COPPER_ORE = register("copperOre", new Block("Copper Ore"));
-        COPPER_ORE.setTex(cubeUVs(5, 1));
+        COPPER_ORE.setTex(new UVPair(5, 1));
         renderType[COPPER_ORE.id] = RenderType.CUBE;
         COPPER_ORE.material(Material.FANCY_STONE);
         COPPER_ORE.setHardness(2.5);
         COPPER_ORE.setTier(MaterialTier.STONE);
 
         IRON_ORE = register("ironOre", new Block("Iron Ore"));
-        IRON_ORE.setTex(cubeUVs(1, 1));
+        IRON_ORE.setTex(new UVPair(1, 1));
         renderType[IRON_ORE.id] = RenderType.CUBE;
         IRON_ORE.material(Material.FANCY_STONE);
         IRON_ORE.setHardness(3.0);
         IRON_ORE.setTier(MaterialTier.STONE);
 
         GOLD_ORE = register("goldOre", new Block("Gold Ore"));
-        GOLD_ORE.setTex(cubeUVs(0, 1));
+        GOLD_ORE.setTex(new UVPair(0, 1));
         renderType[GOLD_ORE.id] = RenderType.CUBE;
         GOLD_ORE.material(Material.FANCY_STONE);
         GOLD_ORE.setHardness(3.0);
@@ -418,15 +417,15 @@ public class Block {
         //SILVER_ORE.setTier(MaterialTier.IRON);
 
         DIAMOND_ORE = register("diamondOre", new Block("Diamond Ore"));
-        DIAMOND_ORE.setTex(cubeUVs(15, 1));
+        DIAMOND_ORE.setTex(new UVPair(15, 1));
         renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
         DIAMOND_ORE.setTier(MaterialTier.GOLD);
 
-        CINNABAR_ORE = register("cinnabarOre", new Block("Cinnabar"));
-        CINNABAR_ORE.setTex(cubeUVs(10, 1));
-        renderType[CINNABAR_ORE.id] = RenderType.CUBE;
+        CINNABAR_ORE = register("cinnabarOre", new GlowingOre("Cinnabar"));
+        CINNABAR_ORE.setTex(new UVPair(9, 1));
+        renderType[CINNABAR_ORE.id] = RenderType.CUBE_DYNTEXTURE;
         CINNABAR_ORE.material(Material.FANCY_STONE);
         CINNABAR_ORE.setHardness(6.0);
         CINNABAR_ORE.setTier(MaterialTier.GOLD);
@@ -547,7 +546,7 @@ public class Block {
         OAK_LOG.setFlammable(5);
 
         OAK_PLANKS = register("oakPlanks", new Block("Oak Planks"));
-        OAK_PLANKS.setTex(cubeUVs(0, 5));
+        OAK_PLANKS.setTex(new UVPair(0, 5));
         renderType[OAK_PLANKS.id] = RenderType.CUBE;
         OAK_PLANKS.material(Material.WOOD);
         OAK_PLANKS.setFlammable(30);
@@ -564,7 +563,7 @@ public class Block {
         OAK_SLAB.setFlammable(30);
 
         LEAVES = register("oakLeaves", new Leaves("Oak Leaves"));
-        LEAVES.setTex(cubeUVs(4, 5));
+        LEAVES.setTex(new UVPair(4, 5));
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
@@ -589,7 +588,7 @@ public class Block {
         MAPLE_LOG.setFlammable(5);
 
         MAPLE_PLANKS = register("maplePlanks", new Block("Maple Planks"));
-        MAPLE_PLANKS.setTex(cubeUVs(5, 5));
+        MAPLE_PLANKS.setTex(new UVPair(5, 5));
         renderType[MAPLE_PLANKS.id] = RenderType.CUBE;
         MAPLE_PLANKS.material(Material.WOOD);
         MAPLE_PLANKS.setFlammable(30);
@@ -606,7 +605,7 @@ public class Block {
         MAPLE_SLAB.setFlammable(30);
 
         MAPLE_LEAVES = register("mapleLeaves", new Leaves("Maple Leaves"));
-        MAPLE_LEAVES.setTex(cubeUVs(9, 5));
+        MAPLE_LEAVES.setTex(new UVPair(9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
         leaves[MAPLE_LEAVES.id] = true;
@@ -630,7 +629,7 @@ public class Block {
         MAHOGANY_LOG.setFlammable(5);
 
         MAHOGANY_PLANKS = register("mahoganyPlanks", new Block("Mahogany Planks"));
-        MAHOGANY_PLANKS.setTex(cubeUVs(3, 2));
+        MAHOGANY_PLANKS.setTex(new UVPair(3, 2));
         renderType[MAHOGANY_PLANKS.id] = RenderType.CUBE;
         MAHOGANY_PLANKS.material(Material.WOOD);
         MAHOGANY_PLANKS.setFlammable(30);
@@ -664,17 +663,17 @@ public class Block {
         MAHOGANY_SAPLING.setFlammable(60);
 
         GOLD_CANDY = register("goldCandy", new Block("Gold Candy"));
-        GOLD_CANDY.setTex(cubeUVs(0, 8));
+        GOLD_CANDY.setTex(new UVPair(0, 8));
         renderType[GOLD_CANDY.id] = RenderType.CUBE;
         GOLD_CANDY.material(Material.METAL);
 
         CINNABAR_CANDY = register("cinnabarCandy", new Block("Cinnabar Candy"));
-        CINNABAR_CANDY.setTex(cubeUVs(1, 8));
+        CINNABAR_CANDY.setTex(new UVPair(1, 8));
         renderType[CINNABAR_CANDY.id] = RenderType.CUBE;
         CINNABAR_CANDY.material(Material.METAL);
 
         DIAMOND_CANDY = register("diamondCandy", new Block("Diamond Candy"));
-        DIAMOND_CANDY.setTex(cubeUVs(2, 8));
+        DIAMOND_CANDY.setTex(new UVPair(2, 8));
         renderType[DIAMOND_CANDY.id] = RenderType.CUBE;
         DIAMOND_CANDY.material(Material.METAL);
 

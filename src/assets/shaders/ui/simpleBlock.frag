@@ -2,20 +2,19 @@
 
 // don't, glass will be fucked
 //layout(early_fragment_tests) in;
-layout(location = 0) out vec4 color;
+layout(location = 0) out vec4 colour;
 
 centroid in vec2 texCoords;
 in vec4 tint;
-
-in vec3 vertexPos;
+in vec4 lightColour;
 
 uniform sampler2D blockTexture;
 
 void main() {
     vec4 blockColour = texture(blockTexture, texCoords);
-    color = vec4(blockColour.rgb * tint.rgb, blockColour.a);
-    if (color.a <= 0) {
+    colour = vec4(mix(blockColour.rgb, blockColour.rgb * lightColour.rgb * tint.rgb, blockColour.a), blockColour.a);
+    if (colour.a <= 0) {
         discard;
     }
-    color.a = max(color.a, 1);
+    colour.a = max(colour.a, 1);
 }

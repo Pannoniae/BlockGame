@@ -42,6 +42,7 @@ public class CreativeInventoryContext : InventoryContext {
             }
 
             // special handling for candy block - add all variants
+            // todo this is a gross hack. can we move this to a better place? maybe a virtual method on Block or something to get all valid variants
             if (i ==  Block.CANDY.id) {
                 for (byte metadata = 0; metadata < Block.CANDY.maxValidMetadata() + 1; metadata++) {
                     allItems.Add(new ItemStack(Block.CANDY.item, 1, metadata));
@@ -61,6 +62,10 @@ public class CreativeInventoryContext : InventoryContext {
                     allItems.Add(new ItemStack(Block.CANDY_STAIRS.item, 1, metadata));
                 }
             }
+            /*else if (i == Block.CINNABAR_ORE.id) {
+                allItems.Add(new ItemStack(Block.CINNABAR_ORE.item, 1, 0));
+                allItems.Add(new ItemStack(Block.CINNABAR_ORE.item, 1, 1));
+            }*/
             else {
                 allItems.Add(new ItemStack(Block.get(i)!.item, 1));
             }

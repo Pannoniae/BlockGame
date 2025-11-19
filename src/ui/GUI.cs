@@ -41,7 +41,7 @@ public class GUI {
     /// <summary>
     /// Like the normal shader but it's simple (doesn't need fog/lighting/anything)
     /// </summary>
-    public Shader guiBlockShader;
+    public readonly Shader guiBlockShader;
 
     public DynamicSpriteFont guiFont = null!;
     public DynamicSpriteFont guiFontThin = null!;
@@ -50,12 +50,13 @@ public class GUI {
     public Rectangle scrollbarRect = new(199, 0, 6, 20);
 
     public static GUI instance;
-    private StreamingVAO<BlockVertexTinted> buffer;
+    private readonly StreamingVAO<BlockVertexLighted> buffer;
     private Matrix4x4 ortho;
 
-    private List<BlockVertexTinted> guiBlock;
+    private readonly List<BlockVertexLighted> guiBlock;
     private int uMVP;
     private int blockTexture = 0;
+    private int lightTexture = 0;
 
     private Vector2 backgroundScrollOffset = Vector2.Zero;
     private static readonly Color bgGray = new Color(192, 192, 192, 255);
@@ -92,14 +93,18 @@ public class GUI {
         instance = this;
         guiBlockShader = new Shader(Game.GL, nameof(guiBlockShader), "shaders/ui/simpleBlock.vert",
             "shaders/ui/simpleBlock.frag");
-        buffer = new StreamingVAO<BlockVertexTinted>();
+        buffer = new StreamingVAO<BlockVertexLighted>();
         buffer.bind();
-        buffer.setSize(Face.MAX_FACES * 4);
+        buffer.setSizeLighted(Face.MAX_FACES * 4);
         // GD, 4 * Face.MAX_FACES, 6 * Face.MAX_FACES, ElementType.UnsignedShort, BufferUsage.StreamDraw
         guiBlock = [];
 
         uMVP = guiBlockShader.getUniformLocation("uMVP");
-        blockTexture = guiBlockShader.getUniformLocation("blockTexture");
+        blockTexture = guiBlockShader.getUniformLocation(nameof(blockTexture));
+        lightTexture = guiBlockShader.getUniformLocation(nameof(lightTexture));
+
+        guiBlockShader.setUniform(blockTexture, 0);
+        guiBlockShader.setUniform(lightTexture, 1);
     }
 
     public void loadFont(int size) {
@@ -434,8 +439,20 @@ public class GUI {
                 }
 
                 var block = Block.get(blockId);
-                var texCoords_ = UVPair.texCoords(block.uvs[1]);
-                var texCoordsMax_ = UVPair.texCoords(block.uvs[1] + 1);
+
+                // GROSS HACK TIME, uvs[0] but uvs[1] for grass lol
+                Vector2 texCoords_;
+                Vector2 texCoordsMax_;
+
+                if (blockId == Block.GRASS.id) {
+                    texCoords_ = UVPair.texCoords(block.uvs[1]);
+                    texCoordsMax_ = UVPair.texCoords(block.uvs[1] + 1);
+                }
+                else {
+                    texCoords_ = UVPair.texCoords(block.uvs[0]);
+                    texCoordsMax_ = UVPair.texCoords(block.uvs[0] + 1);
+                }
+
                 var texCoords = new Vector2(texCoords_.X, texCoords_.Y);
                 var texCoordsMax = new Vector2(texCoordsMax_.X, texCoordsMax_.Y);
 
@@ -898,21 +915,27 @@ public class GUI {
         buffer.bind();
         Game.renderer.bindQuad();
 
-        Game.graphics.instantTextureShader.use();
+        guiBlockShader.use();
 
         Game.graphics.tex(0, Game.textures.blockTexture);
+        Game.graphics.tex(1, Game.textures.lightTexture);
         var sp = CollectionsMarshal.AsSpan(guiBlock);
         buffer.upload(sp);
 
-        idt.model(mat);
-        idt.view(viewMatrix);
-        idt.proj(ortho);
+        //idt.model(mat);
+        //idt.view(viewMatrix);
+        //idt.proj(ortho);
         //idt.proj(Matrix4x4.CreateOrthographicOffCenterLeftHanded(-0.75f, 0.75f, 0.75f, -0.75f, -10, 10));
-        idt.applyMat();
+        //idt.applyMat();
         //Game.graphics.setViewport(x, Game.height - y - sSize, sSize, sSize);
 
+
+        // apply uMVP to the simpleBlock shader
+        Matrix4x4 m = mat.top * viewMatrix * ortho;
+        guiBlockShader.setUniform(uMVP, ref m);
+
         // use shader
-        Game.graphics.instantTextureShader.use();
+        //guiBlockShader.use();
 
         buffer.render();
 

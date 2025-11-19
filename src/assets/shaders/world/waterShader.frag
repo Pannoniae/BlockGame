@@ -27,7 +27,6 @@ in vec4 tint;
 in float vertexDist;
 
 uniform sampler2D blockTexture;
-uniform sampler2D lightTexture;
 uniform vec3 uCameraPos;
 
 void main() {

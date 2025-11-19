@@ -92,6 +92,7 @@ void main() {
     ivec2 lightCoords = ivec2((light >> 4) & 0xFu, light & 0xFu);
     vec4 lightColour = texelFetch(lightTexture, lightCoords, 0);
     
+    // we don't do emissive here!
     tint = colour * lightColour;
     
     vertexDist = length(pos - uCameraPos);

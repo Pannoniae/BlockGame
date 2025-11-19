@@ -52,6 +52,7 @@ out vec3 worldPos;
 centroid out vec2 texCoords;
 #endif
 out vec4 tint;
+out vec4 lightColour;
 out float vertexDist;
 
 uniform sampler2D lightTexture;
@@ -93,9 +94,9 @@ void main() {
     
     // extract skylight and blocklight from packed light data (0-15)
     ivec2 lightCoords = ivec2((light >> 4) & 0xFu, light & 0xFu);
-    vec4 lightColour = texelFetch(lightTexture, lightCoords, 0);
+    lightColour = texelFetch(lightTexture, lightCoords, 0);
     
-    tint = colour * lightColour;
+    tint = colour;
     
     vertexDist = length(pos - uCameraPos);
 }

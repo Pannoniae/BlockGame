@@ -31,10 +31,10 @@ in vec3 worldPos;
 centroid in vec2 texCoords;
 #endif
 in vec4 tint;
+in vec4 lightColour;
 in float vertexDist;
 
 uniform sampler2D blockTexture;
-uniform sampler2D lightTexture;
 uniform vec3 uCameraPos;
 
 void main() {
@@ -58,8 +58,8 @@ void main() {
 #endif
     float ratio = calculateFogFactor(vertexDist);
     
-    // combine block color with lighting and base tint
-    colour = vec4(blockColour.rgb * tint.rgb, blockColour.a);
+    // combine with lightColour, 1 = unlit, 0 = fully lit based on alpha
+    colour = vec4(mix(blockColour.rgb, blockColour.rgb * lightColour.rgb * tint.rgb, blockColour.a), blockColour.a);
 
 #if ALPHA_TO_COVERAGE == 1
     // A2C mode: let fragments through with their alpha values for coverage conversion

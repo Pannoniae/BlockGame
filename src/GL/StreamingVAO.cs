@@ -29,6 +29,16 @@ public class StreamingVAO<T> where T : unmanaged {
         format();
     }
 
+    public void setSizeLighted(int size) {
+        unsafe {
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(size * sizeof(T)), (void*)0,
+                BufferStorageMask.DynamicStorageBit);
+        }
+        formatLighted();
+    }
+
     public void upload(Span<T> data) {
         unsafe {
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
@@ -57,6 +67,26 @@ public class StreamingVAO<T> where T : unmanaged {
         GL.VertexAttribBinding(2, 0);
 
         GL.BindVertexBuffer(0, vbo, 0, 12 * sizeof(ushort));
+    }
+
+    public void formatLighted() {
+        // 26 bytes in total
+        GL.EnableVertexAttribArray(0);
+        GL.EnableVertexAttribArray(1);
+        GL.EnableVertexAttribArray(2);
+        GL.EnableVertexAttribArray(3);
+
+        GL.VertexAttribFormat(0, 3, VertexAttribType.Float, false, 0);
+        GL.VertexAttribFormat(1, 2, VertexAttribType.Float, false, 0 + 6 * sizeof(ushort));
+        GL.VertexAttribFormat(2, 4, VertexAttribType.UnsignedByte, true, 0 + 10 * sizeof(ushort));
+        GL.VertexAttribIFormat(3, 2, VertexAttribIType.UnsignedByte, 0 + 12 * sizeof(ushort));
+
+        GL.VertexAttribBinding(0, 0);
+        GL.VertexAttribBinding(1, 0);
+        GL.VertexAttribBinding(2, 0);
+        GL.VertexAttribBinding(3, 0);
+
+        GL.BindVertexBuffer(0, vbo, 0, 13 * sizeof(ushort));
     }
 
     public void bind() {

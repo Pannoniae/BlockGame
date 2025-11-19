@@ -22,7 +22,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
     private readonly OreFeature goldOre = new(Block.GOLD_ORE.id, 6, 8);
     private readonly OreFeature diamondOre = new(Block.DIAMOND_ORE.id, 4, 6);
     private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 4, 6);
-    private readonly OreFeature clayOre = new(Block.CLAY_BLOCK.id, 12, 24);
+    private readonly OreFeature clayOre = new(Block.CLAY_BLOCK.id, 24, 36);
 
     public NewSurfaceGenerator(WorldGenerator worldgen, World world) {
         this.worldgen = worldgen;

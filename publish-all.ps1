@@ -55,10 +55,23 @@ function Build-Platform {
     Write-Host "Created $archiveName" -ForegroundColor Green
 }
 
+# Extract version from Constants.cs omg this is such a stupid hack but im lazy
+$constantsFile = ".\src\util\Constants.cs"
+$versionLine = Select-String -Path $constantsFile -Pattern 'private const string _ver = "(.+)"'
+if ($versionLine -and $versionLine.Matches.Groups[1].Success) {
+    $rawVersion = $versionLine.Matches.Groups[1].Value
+    # Extract just the version number (e.g., "BlockGame v0.0.3_01" -> "0.0.3_01")
+    $version = $rawVersion -replace "^BlockGame v", ""
+    Write-Host "Detected version: $version" -ForegroundColor Cyan
+} else {
+    Write-Host "Warning: Could not extract version from Constants.cs, using 'unknown'" -ForegroundColor Yellow
+    $version = "unknown"
+}
+
 # Build both platforms
-Build-Platform -runtime "win-x64" -outputDir "BlockGame-win" -selfContained $false
-Build-Platform -runtime "linux-x64" -outputDir "BlockGame-linux" -selfContained $true
+Build-Platform -runtime "win-x64" -outputDir "BlockGame-win-$version" -selfContained $false
+Build-Platform -runtime "linux-x64" -outputDir "BlockGame-linux-$version" -selfContained $true
 
 Write-Host "`nAll builds complete!" -ForegroundColor Green
-Write-Host "Windows: .\publish-win\ (.\BlockGame-win.7z)" -ForegroundColor Yellow
-Write-Host "Linux:   .\publish-linux\ (.\BlockGame-linux.7z)" -ForegroundColor Yellow
+Write-Host "Windows: .\BlockGame-win-$version\ (.\BlockGame-win-$version.7z)" -ForegroundColor Yellow
+Write-Host "Linux:   .\BlockGame-linux-$version\ (.\BlockGame-linux-$version.7z)" -ForegroundColor Yellow

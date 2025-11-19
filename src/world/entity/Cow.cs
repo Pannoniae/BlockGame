@@ -8,6 +8,7 @@ namespace BlockGame.world.entity;
 public class Cow : Mob {
     public Cow(World world) : base(world, "cow") {
         tex = "textures/entity/cow.png";
+        hp = 20;
     }
 
     public override AABB calcAABB(Vector3D pos) {
