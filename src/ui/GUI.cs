@@ -31,6 +31,7 @@ public class GUI {
     public SpriteBatch immediatetb;
     public BTexture2D guiTexture;
     public BTexture2D colourTexture;
+    public BTexture2D nullTexture;
 
     public int uiWidth;
     public int uiHeight;
@@ -88,6 +89,7 @@ public class GUI {
         immediatetb = Game.graphics.immediateBatch;
         guiTexture = new BTexture2D("textures/gui.png");
         colourTexture = new BTexture2D("textures/debug.png");
+        nullTexture = new BTexture2D("textures/empty.png");
         guiTexture.reload();
         colourTexture.reload();
         instance = this;

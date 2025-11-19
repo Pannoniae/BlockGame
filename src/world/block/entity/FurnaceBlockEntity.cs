@@ -93,16 +93,44 @@ public class FurnaceBlockEntity : BlockEntity, Inventory {
 
     private static void setLit(World world, int x, int y, int z, bool lit) {
         uint block = world.getBlockRaw(x, y, z);
+        ushort id = block.getID();
         var metadata = block.getMetadata();
-        if (lit) {
-            metadata |= 0b100; // set bit 2
+
+        ushort lv;
+        if (id == Block.FURNACE.id || id == Block.FURNACE_LIT.id) {
+            lv = lit ? Block.FURNACE_LIT.id : Block.FURNACE.id;
+        } else if (id == Block.BRICK_FURNACE.id || id == Block.BRICK_FURNACE_LIT.id) {
+            lv = lit ? Block.BRICK_FURNACE_LIT.id : Block.BRICK_FURNACE.id;
         } else {
-            metadata &= 0b011; // clear bit 2
+            // not a furnace?
+            return;
         }
-        block = block.setMetadata(metadata);
+
+        uint ll = ((uint)lv).setMetadata(metadata);
+
         // we cheat! we save&restore the BE
         var be = world.getBlockEntity(x, y, z);
-        world.setBlockMetadataSilent(x, y, z, block);
+        // don't trigger hooks!!
+        world.setBlockMetadataSilentDumb(x, y, z, ll);
+
+        // since we did it manually, we have to add the light ourselves
+        world.setBlockLightRemesh(x, y, z, Block.lightLevel[lv] > 0 ? Block.lightLevel[lv] : (byte)0);
+
+        // todo cook something up to update lighting quickly? like, something better than this GROSS hack below, like a nice method in World or something?
+        var unlit = Block.lightLevel[id] > 0 && Block.lightLevel[lv] == 0;
+        if (unlit) {
+            // remove lightsource
+            world.removeBlockLightAndPropagate(x, y, z);
+        }
+
+        var llit = Block.lightLevel[lv] > 0 && Block.lightLevel[id] == 0;
+        if (llit) {
+            // add lightsource
+            world.setBlockLight(x, y, z, Block.lightLevel[lv]);
+            var chunk = world.getChunk(x, z);
+            world.blockLightQueue.Enqueue(new LightNode(x, y, z, chunk));
+        }
+
         if (be != null) {
             world.setBlockEntity(x, y, z, be);
         }

@@ -392,6 +392,20 @@ public partial class World {
         dirtyArea(pos, pos);
     }
 
+    public void setBlockMetadataSilentDumb(int x, int y, int z, uint block) {
+        if (!inWorld(x, y, z)) {
+            return;
+        }
+
+        var blockPos = getPosInChunk(x, y, z);
+        var chunk = getChunk(x, z);
+        chunk.setBlockMetadataDumb(blockPos.X, blockPos.Y, blockPos.Z, block);
+
+        // notify listeners
+        var pos = new Vector3I(x, y, z);
+        dirtyArea(pos, pos);
+    }
+
     public void setBlockMetadata(int x, int y, int z, uint block) {
         if (!inWorld(x, y, z)) {
             return;

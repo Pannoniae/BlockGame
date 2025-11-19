@@ -341,6 +341,10 @@ public class Item {
         Registry.ITEMS.blackList[Block.SIGN.item.id] = true;
         Registry.ITEMS.blackList[Block.OAK_DOOR.item.id] = true;
         Registry.ITEMS.blackList[Block.MAHOGANY_DOOR.item.id] = true;
+        Registry.ITEMS.blackList[Block.FURNACE_LIT.item.id] = true;
+        Registry.ITEMS.blackList[Block.BRICK_FURNACE_LIT.item.id] = true;
+
+
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds

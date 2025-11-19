@@ -536,6 +536,10 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
         world.setBlockNeighboursDirty(new Vector3I(wx, y, wz));
     }
 
+    public void setBlockMetadataDumb(int x, int y, int z, uint block) {
+        blocks[y >> 4].setRaw(x, y & 0xF, z, block);
+    }
+
     public void setMetadata(int x, int y, int z, byte metadata) {
         var oldBlockRaw = blocks[y >> 4].getRaw(x, y & 0xF, z);
         blocks[y >> 4].setMetadata(x, y & 0xF, z, metadata);

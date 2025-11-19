@@ -14,7 +14,11 @@ using Molten;
 namespace BlockGame.world.block;
 
 public class Furnace : EntityBlock {
-    public Furnace(string name) : base(name) {
+
+    public bool lit;
+
+    public Furnace(string name, bool lit) : base(name) {
+        this.lit = lit;
     }
 
     protected override void onRegister(int id) {
@@ -23,7 +27,6 @@ public class Furnace : EntityBlock {
 
     /**
      * metadata bits 0-1: horizontal facing (0=WEST, 1=EAST, 2=SOUTH, 3=NORTH)
-     * bit 2: lit (1=lit, 0=unlit)
      * default front is -Z (SOUTH), we want it to face the player
      */
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
@@ -43,7 +46,6 @@ public class Furnace : EntityBlock {
     /** uvs: [front_unlit, front_lit, side, top_bottom] */
     public override UVPair getTexture(int faceIdx, int metadata) {
         var facing = (byte)(metadata & 0b11);
-        var lit = (metadata & 0b100) != 0;
 
         var frontTex = lit ? uvs[1] : uvs[0]; // lit front vs unlit front
 

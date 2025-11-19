@@ -166,7 +166,9 @@ public class Block {
     public static Block CRAFTING_TABLE;
     public static Block MAHOGANY_CHEST;
     public static Block BRICK_FURNACE;
+    public static Block BRICK_FURNACE_LIT;
     public static Block FURNACE;
+    public static Block FURNACE_LIT;
     public static Block LADDER;
     public static Block FIRE;
     public static Block SIGN;
@@ -732,15 +734,23 @@ public class Block {
         MAHOGANY_DOOR.setTex(cubeUVs(1, 10));
         MAHOGANY_DOOR.material(Material.WOOD);
 
-        BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace"));
+        BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace", false));
         BRICK_FURNACE.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));
         BRICK_FURNACE.material(Material.STONE);
-        BRICK_FURNACE.light(8);
 
-        FURNACE = register("furnace", new Furnace("Furnace"));
+        BRICK_FURNACE_LIT = register("brickFurnaceLit", new Furnace("Brick Furnace", true));
+        BRICK_FURNACE_LIT.setTex(furnaceUVs(4, 4, 5, 4, 6, 4, 7, 4));
+        BRICK_FURNACE_LIT.material(Material.STONE);
+        BRICK_FURNACE_LIT.light(8);
+
+        FURNACE = register("furnace", new Furnace("Furnace", false));
         FURNACE.setTex(furnaceUVs(8, 4, 9, 4, 10, 4, 11, 4));
         FURNACE.material(Material.STONE);
-        FURNACE.light(8);
+
+        FURNACE_LIT = register("furnaceLit", new Furnace("Furnace", true));
+        FURNACE_LIT.setTex(furnaceUVs(8, 4, 9, 4, 10, 4, 11, 4));
+        FURNACE_LIT.material(Material.STONE);
+        FURNACE_LIT.light(8);
 
         LADDER = register("ladder", new Ladder("Ladder"));
         LADDER.setTex(new UVPair(10, 3));
