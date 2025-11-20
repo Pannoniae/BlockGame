@@ -18,25 +18,25 @@ public class Cow : Mob {
         );
     }
 
-    //public override (Item item, byte metadata, int count) getDrop() {
-    //    return (Item.RAW_BEEF, 0, 1);
-    //}
+    public override (Item item, byte metadata, int count) getDrop() {
+        return (Item.RAW_BEEF, 0, 1);
+    }
 
 
     // todo milk?
 
-    public override (Item? item, byte metadata, int count) getDrop() {
+    //public override (Item? item, byte metadata, int count) getDrop() {
         // 1 in 5 chance to drop beef
-        if (id == Entities.COW && Game.random.Next(5) == 0) {
-            return (Item.RAW_BEEF, 0, 1);
-        }
+     //   if (id == Entities.COW && Game.random.Next(5) == 0) {
+     //       return (Item.RAW_BEEF, 0, 1);
+     //   }
 
         // 1 in 5 chance to drop milk
-        if (id == Entities.COW && Game.random.Next(5) == 0) {
-            return (Item.BOTTLE_MILK, 0, 1);
-        }
+     //  if (id == Entities.COW && Game.random.Next(5) == 0) {
+     //       return (Item.BOTTLE_MILK, 0, 1);
+      //  }
 
-        return (null, 0, 0);
-    }
+     //   return (null, 0, 0);
+    //}
 
 }
