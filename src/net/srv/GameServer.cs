@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices.Swift;
 using BlockGame.main;
 using BlockGame.net.packet;
 using BlockGame.util;
@@ -56,6 +58,8 @@ public class GameServer : INetEventListener {
     public readonly string ip6;
     public readonly int port;
 
+    public Discord? discord = null;
+
     // game state
     public World world;
     public long lastProgress;
@@ -110,6 +114,35 @@ public class GameServer : INetEventListener {
         loop();
     }
 
+    private void initDiscord()
+    {
+        var discordSettings = properties.getCompound("discord");
+
+        if (discordSettings != null)
+        {
+            var token = discordSettings.getString("token", "");
+            if (token == "")
+            {
+                return;
+            }
+
+            UInt64 channelId;
+
+            try
+            {
+                channelId = UInt64.Parse(discordSettings.getString("channelId", "0"));
+            }
+            catch
+            {
+                Log.warn("failed to parse channelId in server properties, not starting Discord bot.");
+                return;
+            }
+
+            discord = new Discord(token, channelId);
+            discord.start();
+        }
+    }
+
     public void start() {
         loadUsers();
         loadOps();
@@ -124,6 +157,8 @@ public class GameServer : INetEventListener {
         Block.postLoad();
 
         Command.register();
+
+        this.initDiscord();
 
         loadWorld();
     }
@@ -662,6 +697,8 @@ public class GameServer : INetEventListener {
                     DeliveryMethod.ReliableOrdered
                 );
 
+                discord?.sendMessage($"**{conn.username}** left the game");
+
                 // remove from player list
                 send(
                     new PlayerListRemovePacket { entityID = conn.entityID },
@@ -986,6 +1023,7 @@ public class GameServer : INetEventListener {
         Net.mode = NetMode.NONE;
         Log.info("Server stopped");
 
+<<<<<<< Updated upstream
         // delete world.lock!!
         var lockPath = Path.Combine(world.name, "world.lock");
         try {
@@ -1000,5 +1038,8 @@ public class GameServer : INetEventListener {
         }
 
         Environment.Exit(0);
+=======
+        discord?.stop();
+>>>>>>> Stashed changes
     }
 }

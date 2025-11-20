@@ -1,5 +1,6 @@
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
+using System.ComponentModel;
 
 namespace BlockGame.net.srv;
 
@@ -55,6 +56,12 @@ public class ServerProperties {
         props.addInt("renderDistance", 8);
         props.addByte("devMode", 0);
         props.addString("gamemode", "creative");
+
+        var discord = new NBTCompound();
+        discord.addString("token", "");
+        discord.addString("channelId", "0");
+
+        props.addCompoundTag("discord", discord);
     }
 
     public string getString(string key, string defaultValue = "") {
@@ -67,6 +74,10 @@ public class ServerProperties {
 
     public bool getBool(string key, bool defaultValue = false) {
         return props.has(key) ? props.getByte(key) != 0 : defaultValue;
+    }
+
+    public NBTCompound? getCompound(string key) {
+        return props.has(key) ? props.getCompoundTag(key) : null;
     }
 
     public void add(string key, string value) {
