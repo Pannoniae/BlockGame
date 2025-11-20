@@ -1,3 +1,4 @@
+using BlockGame.main;
 using BlockGame.world;
 using BlockGame.world.entity;
 using BlockGame.world.worldgen;
@@ -15,8 +16,7 @@ namespace BlockGame.util;
  * - Menu vs playing
  * - Singleplayer/Multiplayer
  * - Current biome
- *
- * todo implement MP detection / playercount (7 / 20 players)
+ * - Player count in multiplayer
  */
 public class DiscordPresence : IDisposable {
     private const string APP_ID = "1440954871858728981";
@@ -80,8 +80,14 @@ public class DiscordPresence : IDisposable {
         lastBiome = biome;
 
         // determine if SP or MP
-        // TODO: check multiplayer too im lazy rn
-        var state = "Singleplayer";
+        string state;
+        if (Net.mode.isMPC()) {
+            var playerCount = Game.client?.playerList.Count ?? 0;
+            state = $"Multiplayer ({playerCount} players)";
+        }
+        else {
+            state = "Singleplayer";
+        }
 
         client.SetPresence(new RichPresence {
             Details = $"In {biome}",

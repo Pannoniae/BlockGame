@@ -30,6 +30,9 @@ public class ServerConnection {
     public Vector3I? breakingBlock;
     public double breakProgress;
 
+    // inventory sync state
+    public bool outOfSync = false;
+
     // network stats
     public readonly Metrics metrics = new();
 

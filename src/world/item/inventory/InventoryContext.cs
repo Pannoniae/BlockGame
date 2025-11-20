@@ -71,8 +71,19 @@ public abstract class InventoryContext {
             return;
         }
 
+        // todo optimise this by reusing array (maybe a list?) and get rid of the ItemStack[] in the packet itself? idk
+        // build array of all slot stacks
+        var allSlots = new ItemStack[slots.Count];
         for (int i = 0; i < slots.Count; i++) {
-            notifySlotChanged(i, slots[i].getStack());
+            allSlots[i] = slots[i].getStack();
+        }
+
+        // send one InventorySyncPacket per viewer instead of 68+ individual SetSlotPackets for fuck's sake
+        foreach (var viewer in viewers) {
+            viewer.send(new InventorySyncPacket {
+                invID = invID,
+                items = allSlots
+            }, DeliveryMethod.ReliableOrdered);
         }
     }
 

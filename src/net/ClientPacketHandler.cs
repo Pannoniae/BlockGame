@@ -124,6 +124,9 @@ public class ClientPacketHandler : PacketHandler {
             case InventoryAckPacket p:
                 handleInventoryAck(p);
                 break;
+            case ResyncCompletePacket p:
+                handleResyncComplete(p);
+                break;
             case HeldItemChangePacket p:
                 handleHeldItemChange(p);
                 break;
@@ -796,8 +799,18 @@ public class ClientPacketHandler : PacketHandler {
     public void handleInventoryAck(InventoryAckPacket p) {
         if (!p.acc) {
             Log.warn($"Server rejected inventory transaction (invID={p.invID}, actionID={p.actionID})");
+            // set flag to stop sending clicks until resync completes
+            ClientConnection.instance.waitingForResync = true;
         }
-        // todo not entirely sure what to do here? I ran out of ideas :D
+    }
+
+    public void handleResyncComplete(ResyncCompletePacket p) {
+        // resync complete - send acknowledgment and resume sending clicks
+        ClientConnection.instance.send(new ResyncAckPacket {
+            actionID = p.actionID
+        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+
+        ClientConnection.instance.waitingForResync = false;
     }
 
     public void handleGamemode(GamemodePacket p) {

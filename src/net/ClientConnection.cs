@@ -36,6 +36,7 @@ public class ClientConnection : INetEventListener {
 
     // inventory transaction tracking
     public ushort nextActionID = 0;
+    public bool waitingForResync = false;
 
     // chunk loading tracking
     public int minLoadRadius = 7;  // minimum chunk radius around player before we can load in

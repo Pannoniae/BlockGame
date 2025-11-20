@@ -78,6 +78,9 @@ public class ServerPacketHandler : PacketHandler {
             case InventoryAckPacket p:
                 handleInventoryAck(p);
                 break;
+            case ResyncAckPacket p:
+                handleResyncAck(p);
+                break;
             case HeldItemChangePacket p:
                 handleHeldItemChange(p);
                 break;
@@ -922,6 +925,11 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
+        // discard clicks while out of sync (waiting for resync acknowledgment)
+        if (conn.outOfSync) {
+            return;
+        }
+
         // validate window ID matches currently open window
         if (p.invID != conn.player.currentInventoryID && p.invID != Constants.INV_ID_CURSOR) {
 
@@ -980,26 +988,36 @@ public class ServerPacketHandler : PacketHandler {
 
             conn.player.inventory.cursor = cursorBefore;
 
+            // set out-of-sync flag to discard further clicks until resync completes
+            conn.outOfSync = true;
+
+            // send NACK
             conn.send(new InventoryAckPacket {
                 invID = p.invID,
                 actionID = p.actionID,
                 acc = false
             }, DeliveryMethod.ReliableOrdered);
 
-            Log.warn($"Inventory desync detected for player '{conn.username}' (invID={p.invID}, actionID={p.actionID}) - resyncing entire inventory. Expected slot {p.idx} to be {p.expectedSlot}, but was {slotAfter}");
+            Log.warn($"Inventory desync detected for player '{conn.username}' (invID={p.invID}, actionID={p.actionID}). Expected slot {p.idx} to be {p.expectedSlot}, but was {slotAfter}");
 
-            // desync detected - resync entire inventory to fix cascading desyncs
-            // (client may have done multiple optimistic updates based on wrong state)
-            // todo do we still need this?
-            //ctx.notifyInventorySlotsChanged(conn.player.inventory);
-            ctx.notifyAllSlotsChanged();
+            // send minimal resync (only affected slots, not entire inventory)
+            conn.send(new SetSlotPacket {
+                invID = p.invID,
+                slotIndex = p.idx,
+                stack = slotBefore
+            }, DeliveryMethod.ReliableOrdered);
 
-            // also resync cursor
             conn.send(new SetSlotPacket {
                 invID = Constants.INV_ID_CURSOR,
                 slotIndex = 0,
                 stack = cursorBefore
             }, DeliveryMethod.ReliableOrdered);
+
+            // signal end of resync
+            conn.send(new ResyncCompletePacket {
+                actionID = p.actionID
+            }, DeliveryMethod.ReliableOrdered);
+
             return;
         }
 
@@ -1067,6 +1085,15 @@ public class ServerPacketHandler : PacketHandler {
 
     private void handleInventoryAck(InventoryAckPacket p) {
         // todo not entirely sure what to do here? I ran out of ideas :D
+    }
+
+    private void handleResyncAck(ResyncAckPacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        // client confirmed resync received - clear OOS flag to resume processing clicks
+        conn.outOfSync = false;
     }
 
     private void handlePlayerHeldItemChange(PlayerHeldItemChangePacket p) {
@@ -1203,7 +1230,7 @@ public class ServerPacketHandler : PacketHandler {
     }
 
     /** sync player's full inventory + cursor */
-    private void syncPlayerInventory(ServerPlayer player) {
+    private static void syncPlayerInventory(ServerPlayer player) {
         var conn = player.conn;
         if (conn == null) return;
 

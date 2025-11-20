@@ -200,7 +200,7 @@ public class ServerPlayer : Player {
                     if (conn != null) {
                         // find which slot was updated and send SetSlotPacket
                         // (inventory.addItem already modified the inventory)
-                        // for now, just sync the entire inventory - optimization later
+                        // for now, just sync the entire inventory - optimise later..
                         var inventorySlots = new List<ItemStack>();
                         inventorySlots.AddRange(inventory.slots);
                         inventorySlots.AddRange(inventory.armour);

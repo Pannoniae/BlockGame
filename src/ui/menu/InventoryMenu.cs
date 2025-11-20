@@ -128,6 +128,11 @@ public abstract class InventoryMenu : Menu {
         var slotIdx = slots.IndexOf(slot);
         if (slotIdx < 0) return;
 
+        // if waiting for resync, don't process clicks
+        if (Net.mode.isMPC() && ClientConnection.instance.waitingForResync) {
+            return;
+        }
+
         // do optimistic local update
         handleSlotClick(slot, button);
 
