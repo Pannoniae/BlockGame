@@ -7,6 +7,7 @@ using System.Text;
 using BlockGame.logic;
 using BlockGame.net;
 using BlockGame.render;
+using BlockGame.world.worldgen;
 using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.ui.screen;
@@ -97,6 +98,7 @@ public partial class Game {
 
     public static FontLoader fontLoader;
     public static SoundEngine snd;
+    public static DiscordPresence? discord;
 
     public static World world;
     public static ClientPlayer player;
@@ -777,6 +779,15 @@ public partial class Game {
         gui = new GUI();
         gui.loadFont(16);
 
+        // initialize Discord Rich Presence
+        try {
+            discord = new DiscordPresence();
+        }
+        catch (Exception e) {
+            Log.warn("Failed to initialize Discord Rich Presence:");
+            Log.warn(e);
+        }
+
         // NOW we can show the startup loading screen
         currentScreen = new MainMenuScreen();
         Menu.STARTUP_LOADING = new StartupLoadingMenu();
@@ -929,6 +940,13 @@ public partial class Game {
             // setup auxiliary
             renderer.setWorld(world);
             blockRenderer.setWorld(world);
+
+            // update Discord presence (initial biome will always be Plains, updated later)
+            discord?.updateWorld(world, BiomeType.Plains);
+        }
+        else {
+            // back to menu
+            discord?.updateMenu();
         }
     }
 
@@ -1124,8 +1142,12 @@ public partial class Game {
 
         // reset events
         inputs.reset();
-        
+
         client?.update();
+
+        if (globalTick % 60 == 0) {
+            discord?.checkBiomeUpdate(player);
+        }
 
         textures.update(dt);
         currentScreen.update(dt);
@@ -1420,6 +1442,8 @@ public partial class Game {
         // exit world (with save if singleplayer only)
         // todo if we null out shit here, it will still crash in the event handlers afterwards? not sure why but we can just not.
         exitWorld(save: !wasMP, nodel: true);
+
+        discord?.Dispose();
 
         // final cleanup
         //Net.mode = NetMode.NONE;
