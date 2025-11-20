@@ -591,6 +591,15 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
      * <param name="dt"></param>
      */
     public void update(double dt) {
+
+        // update fancy sky stuff
+
+        targetSkyColour = world.getSkyColour(world.worldTick);
+        currentSkyColour = Color.Lerp(currentSkyColour, targetSkyColour, 0.01f);
+
+        targetHorizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
+        currentHorizonColour = Color.Lerp(currentHorizonColour, targetHorizonColour, 0.01f);
+
         // enqueue the to-be-meshed-list
         // this can *probably* be eliminated in the future but yk, keeping it for now
         foreach (var subChunk in chunksToMesh) {

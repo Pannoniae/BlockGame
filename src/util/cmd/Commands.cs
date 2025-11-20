@@ -981,6 +981,23 @@ public readonly struct Command {
             world.spawn = newSpawn;
             source.sendMessage($"Set spawn to {(int)newSpawn.X}, {(int)newSpawn.Y}, {(int)newSpawn.Z}");
         }, true));
+
+        commands.Add(new Command("say", "Broadcasts a message to all players", NetMode.DED, (source, args) => {
+            if (args.Length < 1) {
+                source.sendMessage("Usage: /say <message>");
+                return;
+            }
+
+            var msg = string.Join(' ', args);
+            var formatted = $"&d[Server]&r {msg}";
+
+            GameServer.instance.send(
+                new ChatMessagePacket { message = formatted },
+                DeliveryMethod.ReliableOrdered
+            );
+
+            source.sendMessage($"[Server] {msg}");
+        }));
     }
 
     private static bool parseCoord(string input, double current, out int result) {

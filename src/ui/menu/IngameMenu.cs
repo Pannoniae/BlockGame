@@ -320,12 +320,25 @@ public class IngameMenu : Menu, IDisposable {
 
     public void updateDebugTextMethod() {
         var screen = Screen.GAME_SCREEN;
+
+        // this was moved *here* because if you don't have f3 open, chunk updates/packet stats aren't cleared, leading you to think there were like 20000 packets/sec when you finally open f3
+        var m = Game.metrics;
+
+        // clear chunk updates after displaying for next measurement period
+        m.clearChunkUpdates();
+
+        // reset netstats every second
+        var now = Game.permanentStopwatch.ElapsedMilliseconds;
+        if (now - lastNetReset >= 1000) {
+            m.clearNet();
+            lastNetReset = now;
+        }
+
         if (screen.debugScreen && !screen.fpsOnly) {
             var gui = Game.gui;
             var i = Game.instance;
             var p = Game.player!;
             var c = Game.camera;
-            var m = Game.metrics;
             var w = Game.world!;
             var loadedChunks = Game.world.chunks.Count;
             var pos = p.position.toBlockPos();
@@ -409,16 +422,6 @@ public class IngameMenu : Menu, IDisposable {
                     m.bytesSent / 1024.0, m.packetsSent,
                     m.bytesReceived / 1024.0, m.packetsReceived,
                     ClientConnection.instance.ping);
-            }
-
-            // clear chunk updates after displaying for next measurement period
-            m.clearChunkUpdates();
-
-            // reset netstats every second
-            var now = Game.permanentStopwatch.ElapsedMilliseconds;
-            if (now - lastNetReset >= 1000) {
-                m.clearNet();
-                lastNetReset = now;
             }
 
             debugStr.AppendFormat("{0}/{1} chan\n", Game.snd.getUsedChannels(), Game.snd.getTotalChannels());

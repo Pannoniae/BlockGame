@@ -1412,6 +1412,11 @@ public partial class Game {
         client?.stop();
         client = null;
 
+        // release world lock before exiting (prevents stuck lock files)
+        if (!wasMP && world != null) {
+            world.worldIO.releaseLock();
+        }
+
         // exit world (with save if singleplayer only)
         // todo if we null out shit here, it will still crash in the event handlers afterwards? not sure why but we can just not.
         exitWorld(save: !wasMP, nodel: true);

@@ -356,6 +356,10 @@ public class WorldIO {
         chunkLoadThread.Dispose();
         shutdownEvent.Dispose();
 
+        releaseLock();
+    }
+
+    public void releaseLock() {
         // release and delete lock file
         if (lockFile != null) {
             var lockPath = getLockFilePath(world.name);
@@ -478,6 +482,12 @@ public class WorldIO {
         }
         chunkTag.addListTag("blockEntities", blockEntitiesTag);
 
+        // save biome data
+        chunkTag.addSByteArray("biomeTemp", chunk.biomeData.temp);
+        chunkTag.addSByteArray("biomeHum", chunk.biomeData.hum);
+        chunkTag.addSByteArray("biomeAge", chunk.biomeData.age);
+        chunkTag.addSByteArray("biomeW", chunk.biomeData.w);
+
         return chunkTag;
     }
 
@@ -598,6 +608,16 @@ public class WorldIO {
                 }
             }
         }
+
+        // load biome data
+        if (chunkTag.has("biomeTemp")) {
+            chunk.biomeData.temp = chunkTag.getSByteArray("biomeTemp");
+            chunk.biomeData.hum = chunkTag.getSByteArray("biomeHum");
+            chunk.biomeData.age = chunkTag.getSByteArray("biomeAge");
+            chunk.biomeData.w = chunkTag.getSByteArray("biomeW");
+        }
+
+        chunk.biomeData.setChunk(chunk);
 
         /*var file = "chunk.xnbt";
         if (File.Exists(file)) {
@@ -725,6 +745,16 @@ public class WorldIO {
                 }
             }
         }
+
+        // load biome data
+        if (nbt.has("biomeTemp")) {
+            chunk.biomeData.temp = nbt.getSByteArray("biomeTemp");
+            chunk.biomeData.hum = nbt.getSByteArray("biomeHum");
+            chunk.biomeData.age = nbt.getSByteArray("biomeAge");
+            chunk.biomeData.w = nbt.getSByteArray("biomeW");
+        }
+
+        chunk.biomeData.setChunk(chunk);
 
         // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
         if (chunk.status >= ChunkStatus.MESHED) {

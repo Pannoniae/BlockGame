@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
+using BlockGame.world.worldgen;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -762,5 +763,27 @@ public partial class World {
         var result = new List<Vector3I>();
         getBlocksInBox(result, min, max);
         return result;
+    }
+
+    private BiomeType getBiomeAtPlayer() {
+        var playerPos = Game.player.position;
+        // clamp!!
+        playerPos.Y = double.Clamp(playerPos.Y, 0, WORLDHEIGHT - 1);
+
+        if (!inWorld(playerPos.toBlockPos().X, playerPos.toBlockPos().Y, playerPos.toBlockPos().Z)) {
+            return BiomeType.Plains;
+        }
+
+        var chunkPos = getChunkPos(playerPos.X.toBlockPos(), playerPos.Z.toBlockPos());
+        var chunk = getChunk(chunkPos);
+        var blockPos = getPosInChunk(playerPos.X.toBlockPos(), playerPos.Y.toBlockPos(), playerPos.Z.toBlockPos());
+        var data = chunk.biomeData;
+
+        //Console.Out.WriteLine(data.getTemp(blockPos.X, blockPos.Y, blockPos.Z));
+
+
+        return Biomes.getType(data.getTemp(blockPos.X, blockPos.Y, blockPos.Z),
+            data.getHum(blockPos.X, blockPos.Y, blockPos.Z),
+            playerPos.Y.toBlockPos());
     }
 }

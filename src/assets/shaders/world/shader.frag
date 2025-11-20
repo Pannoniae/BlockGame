@@ -52,14 +52,24 @@ void main() {
 #if ANISO_LEVEL == 0
     // no anisotropic filtering, use regular texture lookup
     blockColour = texture(blockTexture, finalCoords);
-#else
-    // use anisotropic filtering
-    blockColour = textureAF(blockTexture, finalCoords);
-#endif
+    
     float ratio = calculateFogFactor(vertexDist);
     
     // combine with lightColour, 1 = unlit, 0 = fully lit based on alpha
     colour = vec4(mix(blockColour.rgb, blockColour.rgb * lightColour.rgb * tint.rgb, blockColour.a), blockColour.a);
+#else
+    // use anisotropic filtering
+    vec4 og = texture(blockTexture, finalCoords);
+    blockColour = textureAF(blockTexture, finalCoords);
+    
+    float ratio = calculateFogFactor(vertexDist);
+
+    // combine with lightColour, 1 = unlit, 0 = fully lit based on alpha
+    // use og.a for emissive pixels (no AF bleed), blockColour.a for lit pixels (smooth edges)
+    float mask = 1.0 - og.a;
+    float finalAlpha = mix(blockColour.a, og.a, mask);
+    colour = vec4(mix(og.rgb, blockColour.rgb * lightColour.rgb * tint.rgb, og.a), finalAlpha);
+#endif
 
 #if ALPHA_TO_COVERAGE == 1
     // A2C mode: let fragments through with their alpha values for coverage conversion

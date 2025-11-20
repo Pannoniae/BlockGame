@@ -16,7 +16,7 @@ public enum BiomeType {
 public static class Biomes {
 
     /** get biome type from temp/humidity/height */
-    public static BiomeType getType(float temp, float hum, int height, float blockVar) {
+    public static BiomeType getType(float temp, float hum, int height) {
         // underwater
         if (height < NewWorldGenerator.WATER_LEVEL - 1) {
             return BiomeType.Ocean;

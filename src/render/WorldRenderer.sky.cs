@@ -10,6 +10,13 @@ using Silk.NET.OpenGL.Legacy;
 namespace BlockGame.render;
 
 public sealed partial class WorldRenderer {
+
+    public Color currentSkyColour = new Color(100, 180, 255);
+    public Color targetSkyColour = new Color(100, 180, 255);
+
+    public Color currentHorizonColour = new Color(120, 200, 255);
+    public Color targetHorizonColour = new Color(120, 200, 255);
+
     private void renderSky(double interp) {
         if (Settings.instance.renderDistance <= 4) {
             var clearColour = Game.graphics.getHorizonColour(world, world.worldTick);
@@ -31,8 +38,7 @@ public sealed partial class WorldRenderer {
 
         float sunAngle = world.getSunAngle(world.worldTick);
 
-        var horizonColour = Game.graphics.getHorizonColour(world, world.worldTick);
-        var skyColour = world.getSkyColour(world.worldTick);
+        var skyColour = currentSkyColour;
         var underSkyColour = new Color(skyColour.R / 255f * 0.3f, skyColour.G / 255f * 0.3f, skyColour.B / 255f * 0.4f);
 
         // Setup fog
@@ -45,7 +51,7 @@ public sealed partial class WorldRenderer {
         idc.setColour(Color.White);
 
         idc.enableFog(true);
-        idc.fogColor(horizonColour.toVec4());
+        idc.fogColor(currentHorizonColour.toVec4());
         idc.setFogType(FogType.Linear);
         //idc.setFogDensity(0.002f);
         idc.fogDistance(0f, 128f);
@@ -67,7 +73,7 @@ public sealed partial class WorldRenderer {
         idt.view(modelView);
         idt.proj(proj);
 
-        renderSkyDome(horizonColour, skyColour, underSkyColour);
+        renderSkyDome(currentHorizonColour, currentSkyColour, underSkyColour);
 
         mat.pop();
 

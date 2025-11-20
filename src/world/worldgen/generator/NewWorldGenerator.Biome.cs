@@ -147,7 +147,7 @@ public partial class NewWorldGenerator {
                     1, 1);
 
                 // biome-based surface selection
-                var biome = Biomes.getType(temp, hum, height, blockVar);
+                var biome = Biomes.getType(temp, hum, height);
                 var (topBlock, filler) = Biomes.getBlocks(biome, blockVar);
 
                 if (chunk.getBlock(x, height, z) == Block.STONE.id && amt >= 1f) {

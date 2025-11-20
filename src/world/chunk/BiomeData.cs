@@ -10,10 +10,10 @@ public class BiomeData {
     private const int BIOME_Z = 4;
     private const int TOTAL = BIOME_X * BIOME_Y * BIOME_Z; // 512x
 
-    public readonly sbyte[] hum = new sbyte[TOTAL];
-    public readonly sbyte[] temp = new sbyte[TOTAL];
-    public readonly sbyte[] age = new sbyte[TOTAL];
-    public readonly sbyte[] w = new sbyte[TOTAL];
+    public sbyte[] hum = new sbyte[TOTAL];
+    public sbyte[] temp = new sbyte[TOTAL];
+    public sbyte[] age = new sbyte[TOTAL];
+    public sbyte[] w = new sbyte[TOTAL];
 
     private Chunk? chunk;
 

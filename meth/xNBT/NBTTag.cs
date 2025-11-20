@@ -76,6 +76,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
         return tag switch {
             NBTType.TAG_End => new NBTEnd(),
             NBTType.TAG_Byte => new NBTByte(name),
+            NBTType.TAG_SByte => new NBTSByte(name),
             NBTType.TAG_Short => new NBTShort(name),
             NBTType.TAG_UShort => new NBTUShort(name),
             NBTType.TAG_Int => new NBTInt(name),
@@ -88,6 +89,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_List => throw new ArgumentException("Cannot create a TAG_List without a type", nameof(tag)),
             NBTType.TAG_Compound => new NBTCompound(name),
             NBTType.TAG_Byte_Array => new NBTByteArray(name),
+            NBTType.TAG_SByte_Array => new NBTSByteArray(name),
             NBTType.TAG_Short_Array => new NBTShortArray(name),
             NBTType.TAG_UShort_Array => new NBTUShortArray(name),
             NBTType.TAG_Int_Array => new NBTIntArray(name),
@@ -102,6 +104,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
         return listType switch {
             NBTType.TAG_End => new NBTList<NBTEnd>(listType, name),
             NBTType.TAG_Byte => new NBTList<NBTByte>(listType, name),
+            NBTType.TAG_SByte => new NBTList<NBTSByte>(listType, name),
             NBTType.TAG_Short => new NBTList<NBTShort>(listType, name),
             NBTType.TAG_UShort => new NBTList<NBTUShort>(listType, name),
             NBTType.TAG_Int => new NBTList<NBTInt>(listType, name),
@@ -114,6 +117,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_List => new NBTList<NBTList<NBTTag>>(listType, name),
             NBTType.TAG_Compound => new NBTList<NBTCompound>(listType, name),
             NBTType.TAG_Byte_Array => new NBTList<NBTByteArray>(listType, name),
+            NBTType.TAG_SByte_Array => new NBTList<NBTSByteArray>(listType, name),
             NBTType.TAG_Short_Array => new NBTList<NBTShortArray>(listType, name),
             NBTType.TAG_UShort_Array => new NBTList<NBTUShortArray>(listType, name),
             NBTType.TAG_Int_Array => new NBTList<NBTIntArray>(listType, name),
@@ -128,6 +132,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
         return id switch {
             NBTType.TAG_End => "TAG_End",
             NBTType.TAG_Byte => "TAG_Byte",
+            NBTType.TAG_SByte => "TAG_SByte",
             NBTType.TAG_Short => "TAG_Short",
             NBTType.TAG_UShort => "TAG_UShort",
             NBTType.TAG_Int => "TAG_Int",
@@ -140,10 +145,13 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_List => "TAG_List",
             NBTType.TAG_Compound => "TAG_Compound",
             NBTType.TAG_Byte_Array => "TAG_Byte_Array",
+            NBTType.TAG_SByte_Array => "TAG_SByte_Array",
             NBTType.TAG_Short_Array => "TAG_Short_Array",
             NBTType.TAG_UShort_Array => "TAG_UShort_Array",
             NBTType.TAG_Int_Array => "TAG_Int_Array",
             NBTType.TAG_UInt_Array => "TAG_UInt_Array",
+            NBTType.TAG_Long_Array => "TAG_Long_Array",
+            NBTType.TAG_ULong_Array => "TAG_ULong_Array",
             _ => "UNKNOWN"
         };
     }
@@ -194,5 +202,7 @@ public enum NBTType : byte {
     TAG_Int_Array,
     TAG_UInt_Array,
     TAG_Long_Array,
-    TAG_ULong_Array
+    TAG_ULong_Array,
+    TAG_SByte,
+    TAG_SByte_Array
 }

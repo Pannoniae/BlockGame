@@ -26,7 +26,7 @@ public class Door : Block {
     private static bool hinge(byte m) => (m & 0b10000) != 0;
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
-        byte f = (byte)info.face;
+        byte f = (byte)info.hfacing;
         if (f > 3) f = 0;
 
         bool hingeRight = false;
@@ -40,16 +40,34 @@ public class Door : Block {
         }
 
         var lb = world.getBlockRaw(lx, y, lz);
-        if (lb.getID() == id && facing(lb.getMetadata()) == f) hingeRight = true;
+        bool hasLeft = lb.getID() == id && facing(lb.getMetadata()) == f;
+        if (hasLeft) hingeRight = true;
 
         var rb = world.getBlockRaw(rx, y, rz);
-        if (rb.getID() == id && facing(rb.getMetadata()) == f) hingeRight = false;
+        bool hasRight = rb.getID() == id && facing(rb.getMetadata()) == f;
+        if (hasRight) hingeRight = false;
 
         byte lower = (byte)(f | (hingeRight ? 0b10000 : 0));
         byte upper = (byte)(lower | 0b1000);
 
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(lower));
         world.setBlockMetadata(x, y + 1, z, ((uint)id).setMetadata(upper));
+
+        // update neighbour door hinge if we just placed next to it
+        if (hasLeft) {
+            var lm = lb.getMetadata();
+            var newLower = (byte)((lm & ~0b10000) | 0); // hinge left
+            var newUpper = (byte)(newLower | 0b1000);
+            world.setBlockMetadata(lx, y, lz, ((uint)id).setMetadata(newLower));
+            world.setBlockMetadata(lx, y + 1, lz, ((uint)id).setMetadata(newUpper));
+        } else if (hasRight) {
+            var rm = rb.getMetadata();
+            var newLower = (byte)((rm & ~0b10000) | 0b10000); // hinge right
+            var newUpper = (byte)(newLower | 0b1000);
+            world.setBlockMetadata(rx, y, rz, ((uint)id).setMetadata(newLower));
+            world.setBlockMetadata(rx, y + 1, rz, ((uint)id).setMetadata(newUpper));
+        }
+
         world.blockUpdateNeighbours(x, y, z);
         world.blockUpdateNeighbours(x, y + 1, z);
     }
@@ -66,6 +84,26 @@ public class Door : Block {
 
         world.setBlockMetadata(x, ly, z, ((uint)id).setMetadata(nl));
         world.setBlockMetadata(x, ly + 1, z, ((uint)id).setMetadata(nu));
+
+        // toggle neighbour door if it's a double door
+        byte f = facing(m);
+        int nx = x, nz = z;
+
+        switch (f) {
+            case 0: nz = hinge(m) ? z - 1 : z + 1; break; // WEST
+            case 1: nz = hinge(m) ? z + 1 : z - 1; break; // EAST
+            case 2: nx = hinge(m) ? x + 1 : x - 1; break; // SOUTH
+            case 3: nx = hinge(m) ? x - 1 : x + 1; break; // NORTH
+        }
+
+        var nb = world.getBlockRaw(nx, ly, nz);
+        if (nb.getID() == id && facing(nb.getMetadata()) == f) {
+            var nnl = (byte)(world.getBlockRaw(nx, ly, nz).getMetadata() ^ 0b100);
+            var nnu = (byte)(world.getBlockRaw(nx, ly + 1, nz).getMetadata() ^ 0b100);
+            world.setBlockMetadata(nx, ly, nz, ((uint)id).setMetadata(nnl));
+            world.setBlockMetadata(nx, ly + 1, nz, ((uint)id).setMetadata(nnu));
+        }
+
         return true;
     }
 

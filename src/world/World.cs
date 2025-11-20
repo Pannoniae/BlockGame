@@ -1140,6 +1140,8 @@ public partial class World : IDisposable {
         foreach (var chunk in chunks.Pairs) {
             chunks[chunk.Key].destroyChunk();
         }
+
+        worldIO.releaseLock();
     }
 
     public void unload() {

@@ -180,7 +180,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
         var centerHeight = chunk.heightMap.get(8, 8);
         var temp = chunk.biomeData.getTemp(8, centerHeight, 8);
         var hum = chunk.biomeData.getHum(8, centerHeight, 8);
-        var cb = Biomes.getType(temp, hum, centerHeight, 0);
+        var cb = Biomes.getType(temp, hum, centerHeight);
 
         // place cactus in deserts
         if (Biomes.canPlaceCactus(cb)) {

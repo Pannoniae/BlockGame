@@ -90,6 +90,9 @@ public class ServerPacketHandler : PacketHandler {
             case DropItemPacket p:
                 handleDropItem(p);
                 break;
+            case RespawnRequestPacket p:
+                handleRespawnRequest(p);
+                break;
             default:
                 Log.warn($"Unhandled packet type: {packet.GetType().Name}");
                 break;
@@ -265,6 +268,12 @@ public class ServerPacketHandler : PacketHandler {
             invID = Constants.INV_ID_CURSOR,
             slotIndex = 0,
             stack = player.inventory.cursor
+        }, DeliveryMethod.ReliableOrdered);
+
+        // send initial health
+        conn.send(new PlayerHealthPacket {
+            health = player.hp,
+            damageTime = 0
         }, DeliveryMethod.ReliableOrdered);
 
         GameServer.instance.connections[conn.entityID] = conn;
@@ -1209,5 +1218,64 @@ public class ServerPacketHandler : PacketHandler {
             slotIndex = 0,
             stack = player.inventory.cursor
         }, DeliveryMethod.ReliableOrdered);
+    }
+
+    private void handleRespawnRequest(RespawnRequestPacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        var player = conn.player;
+
+        // check if player is actually dead
+        if (!player.dead) {
+            Log.warn($"Player '{conn.username}' tried to respawn but is not dead!");
+            return;
+        }
+
+        // respawn the player
+        player.dead = false;
+        player.hp = 100;
+        player.bodyRotation = new Vector3(0, 0, 0);
+        player.prevBodyRotation = new Vector3(0, 0, 0);
+        player.rotation = new Vector3(0, 0, 0);
+        player.prevRotation = new Vector3(0, 0, 0);
+        player.dieTime = 0;
+        player.fireTicks = 0;
+
+        // teleport to spawn
+        var spawnPos = GameServer.instance.world.spawn;
+        player.position = spawnPos;
+        player.prevPosition = spawnPos;
+        player.velocity = Vector3D.Zero;
+        player.prevVelocity = Vector3D.Zero;
+
+        Log.info($"Player '{conn.username}' respawned at {spawnPos}");
+
+        // send respawn packet to client (position + rotation)
+        conn.send(new RespawnPacket {
+            spawnPosition = spawnPos,
+            rotation = player.rotation
+        }, DeliveryMethod.ReliableOrdered);
+
+        // send health update
+        conn.send(new PlayerHealthPacket {
+            health = player.hp,
+            damageTime = 0
+        }, DeliveryMethod.ReliableOrdered);
+
+        // broadcast to other players that this player is alive again
+        // send position update
+        GameServer.instance.send(
+            player.position,
+            128.0,
+            new EntityPositionRotationPacket {
+                entityID = conn.entityID,
+                position = player.position,
+                rotation = player.rotation
+            },
+            DeliveryMethod.ReliableOrdered,
+            exclude: conn
+        );
     }
 }

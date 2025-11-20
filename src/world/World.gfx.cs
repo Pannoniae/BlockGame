@@ -1,4 +1,5 @@
 ﻿using BlockGame.ui;
+using BlockGame.world.worldgen;
 
 namespace BlockGame.world;
 
@@ -25,24 +26,61 @@ public partial class World {
         var nightSky = new Color(5, 5, 15);
         var daySky = new Color(100, 180, 255);
 
+        Color skyc;
+
         switch (e) {
             case < TWILIGHT_ANGLE:
                 // night
-                return nightSky;
+                skyc = nightSky;
+                break;
             case < SUNRISE_ANGLE: {
                 // civil twilight
                 float t = (e - TWILIGHT_ANGLE) / (SUNRISE_ANGLE - TWILIGHT_ANGLE);
-                return Color.Lerp(nightSky, new Color(20, 35, 80), t);
+                skyc = Color.Lerp(nightSky, new Color(20, 35, 80), t);
+                break;
             }
             case < MathF.PI / 12f: {
                 // 15 deg, sunrise/sunset
                 float t = e / (MathF.PI / 12f);
-                return Color.Lerp(new Color(20, 35, 80), daySky, t);
+                skyc = Color.Lerp(new Color(20, 35, 80), daySky, t);
+                break;
             }
             default:
                 // Full day
-                return daySky;
+                skyc = daySky;
+                break;
         }
+
+        // biome switch
+        var biome = getBiomeAtPlayer();
+
+        //Console.Out.WriteLine(biome);
+
+        switch (biome) {
+            case BiomeType.Ocean:
+                skyc += new Color(-10, 0, 25, 0);
+                break;
+            case BiomeType.Beach:
+                break;
+            case BiomeType.Desert:
+                skyc += new Color(42, 24, -24, 0);
+                break;
+            case BiomeType.Plains:
+                break;
+            case BiomeType.Forest:
+                break;
+            case BiomeType.Taiga:
+                skyc += new Color(5, 10, 10, 0);
+                break;
+            case BiomeType.Jungle:
+                // warm
+                skyc += new Color(35, 32, -16, 0);
+                break;
+            default:
+                break;
+        }
+
+        return skyc;
     }
 
     public Color getHorizonColour(int ticks) {
@@ -89,29 +127,66 @@ public partial class World {
             new Color(255, 80, 50), // sunset red-orange-ish thingie
             isSunset);
 
+        Color c;
+
         switch (e) {
             case <= NIGHT_START:
-                return nightHorizon;
+                c = nightHorizon;
+                break;
             case <= TWILIGHT_START: {
                 float t = (e - NIGHT_START) / (TWILIGHT_START - NIGHT_START);
-                return Color.Lerp(nightHorizon, twilightColor, t);
+                c = Color.Lerp(nightHorizon, twilightColor, t);
+                break;
             }
             case <= GOLDEN_START: {
                 float t = (e - TWILIGHT_START) / (GOLDEN_START - TWILIGHT_START);
-                return Color.Lerp(twilightColor, goldenColor, t);
+                c = Color.Lerp(twilightColor, goldenColor, t);
+                break;
             }
             case <= GOLDEN_END: {
                 float t = (e - GOLDEN_START) / (GOLDEN_END - GOLDEN_START);
                 // ???
-                return goldenColor;
+                c = goldenColor;
+                break;
             }
             case <= DAY_START: {
                 float t = (e - GOLDEN_END) / (DAY_START - GOLDEN_END);
-                return Color.Lerp(goldenColor, dayHorizon, t);
+                c = Color.Lerp(goldenColor, dayHorizon, t);
+                break;
             }
             default:
-                return dayHorizon;
+                c = dayHorizon;
+                break;
         }
+
+        // biome switch
+        var biome = getBiomeAtPlayer();
+
+        switch (biome) {
+            case BiomeType.Ocean:
+                c += new Color(-10, 0, 25, 0);
+                break;
+            case BiomeType.Beach:
+                break;
+            case BiomeType.Desert:
+                c += new Color(24, 6, -24, 0);
+                break;
+            case BiomeType.Plains:
+                break;
+            case BiomeType.Forest:
+                break;
+            case BiomeType.Taiga:
+                c += new Color(5, 10, 10, 0);
+                break;
+            case BiomeType.Jungle:
+                // warm
+                c += new Color(20, 10, -10, 0);
+                break;
+            default:
+                break;
+        }
+
+        return c;
     }
 
     public Color getFogColour(int ticks) {

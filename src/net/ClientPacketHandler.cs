@@ -139,6 +139,9 @@ public class ClientPacketHandler : PacketHandler {
             case GamemodePacket p:
                 handleGamemode(p);
                 break;
+            case RespawnPacket p:
+                handleRespawn(p);
+                break;
             default:
                 Log.warn($"Unhandled packet type: {packet.GetType().Name}");
                 break;
@@ -594,7 +597,16 @@ public class ClientPacketHandler : PacketHandler {
                     // trigger damage flash/animation on entity
                     entity.dmgTime = 10;
                     break;
-                // todo other actions (DEATH, EAT, CRITICAL_HIT)
+                case EntityActionPacket.Action.DEATH:
+                    // mark entity as dead (starts death animation)
+                    if (!entity.dead) {
+                        entity.dead = true;
+                        if (entity is Mob mob) {
+                            mob.dieTime = 0;
+                        }
+                    }
+                    break;
+                // todo other actions (EAT, CRITICAL_HIT)
             }
         }
     }
@@ -941,5 +953,34 @@ public class ClientPacketHandler : PacketHandler {
             // server sets this during update(), but client doesn't run update() :)
             furnace.currentRecipe = furnace.slots[0] != ItemStack.EMPTY ? SmeltingRecipe.findRecipe(furnace.slots[0].getItem()) : null;
         }
+    }
+
+    public void handleRespawn(RespawnPacket p) {
+        if (Game.player == null) {
+            return;
+        }
+
+        Log.info($"Respawned at {p.spawnPosition}");
+
+        // respawn the player locally
+        Game.player.dead = false;
+        Game.player.hp = 100;
+        Game.player.bodyRotation.Z = 0f;
+        Game.player.prevBodyRotation.Z = 0f;
+        Game.player.dieTime = 0;
+        Game.player.fireTicks = 0;
+
+        // teleport to spawn position from server
+        Game.player.teleport(p.spawnPosition);
+        Game.player.rotation = p.rotation;
+
+        // reset velocity
+        Game.player.velocity = Vector3D.Zero;
+        Game.player.prevVelocity = Vector3D.Zero;
+
+        // close death menu and return to game
+        Game.instance.executeOnMainThread(() => {
+            Screen.GAME_SCREEN.backToGame();
+        });
     }
 }

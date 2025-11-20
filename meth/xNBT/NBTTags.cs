@@ -44,6 +44,31 @@ public class NBTByte : NBTTag {
     }
 }
 
+public class NBTSByte : NBTTag {
+    public sbyte data;
+
+    public override NBTType id => NBTType.TAG_SByte;
+
+    public NBTSByte(string? name) : base(name) {
+    }
+
+    public NBTSByte(string? name, sbyte data) : base(name) {
+        this.data = data;
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        stream.Write(data);
+    }
+
+    public override void readContents(BinaryReader stream) {
+        data = stream.ReadSByte();
+    }
+
+    public override string ToString() {
+        return data.ToString();
+    }
+}
+
 public class NBTShort : NBTTag {
     public short data;
 
@@ -500,6 +525,10 @@ public class NBTCompound : NBTTag {
         dict.Add(name, new NBTByteArray(name, value));
     }
 
+    public void addSByteArray(string name, sbyte[] value) {
+        dict.Add(name, new NBTSByteArray(name, value));
+    }
+
     public void addShortArray(string name, short[] value) {
         dict.Add(name, new NBTShortArray(name, value));
     }
@@ -580,6 +609,10 @@ public class NBTCompound : NBTTag {
 
     public byte[] getByteArray(string name) {
         return ((NBTByteArray)dict[name]).data;
+    }
+
+    public sbyte[] getSByteArray(string name) {
+        return ((NBTSByteArray)dict[name]).data;
     }
 
     public short[] getShortArray(string name) {
@@ -750,6 +783,35 @@ public class NBTByteArray : NBTTag {
 
     public override string ToString() {
         return "[" + data.Length + " bytes]";
+    }
+}
+
+public class NBTSByteArray : NBTTag {
+    public sbyte[] data;
+
+    public override NBTType id => NBTType.TAG_SByte_Array;
+
+    public NBTSByteArray(string? name) : base(name) {
+    }
+
+    public NBTSByteArray(string? name, sbyte[] data) : base(name) {
+        this.data = data;
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        stream.Write(data.Length);
+        stream.Write(MemoryMarshal.AsBytes(data.AsSpan()));
+    }
+
+    public override void readContents(BinaryReader stream) {
+        int length = stream.ReadInt32();
+        data = new sbyte[length];
+        var span = MemoryMarshal.AsBytes(data.AsSpan());
+        stream.ReadExactly(span);
+    }
+
+    public override string ToString() {
+        return "[" + data.Length + " sbytes]";
     }
 }
 

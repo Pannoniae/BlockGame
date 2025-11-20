@@ -467,7 +467,7 @@ public class Block {
         SAND_BRICK_STAIRS.material(Material.STONE);
 
 
-        COAL_ORE = register("coalOre", new Block("Coal Ore"));
+        COAL_ORE = register("coalOre", new CoalOreBlock("Coal Ore"));
         COAL_ORE.setTex(new UVPair(4, 1));
         renderType[COAL_ORE.id] = RenderType.CUBE;
         COAL_ORE.material(Material.FANCY_STONE);
@@ -1705,6 +1705,12 @@ public class StoneBlock(string name) : Block(name) {
     public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
         // stone drops cobblestone
         return (COBBLESTONE.getItem(), 0, 1);
+    }
+}
+
+public class CoalOreBlock(string name) : Block(name) {
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+        return (Item.COAL, 0, 1);
     }
 }
 

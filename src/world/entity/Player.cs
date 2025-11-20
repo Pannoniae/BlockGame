@@ -1230,6 +1230,13 @@ public class Player : Mob, CommandSource {
     }
 
     public void respawn() {
+        // in multiplayer client, send respawn request to server instead of respawning locally
+        if (Net.mode.isMPC() && ClientConnection.instance != null) {
+            ClientConnection.instance.send(new RespawnRequestPacket(), LiteNetLib.DeliveryMethod.ReliableOrdered);
+            return;
+        }
+
+        // singleplayer or server - respawn locally
         dead = false;
         hp = 100;
         bodyRotation.Z = 0f;

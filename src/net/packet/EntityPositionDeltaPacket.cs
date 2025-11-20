@@ -22,8 +22,8 @@ public struct EntityPositionDeltaPacket : Packet {
     public const double MAX_POS_DELTA = 32767.0 / POS_SCALE; // 4.0 blocks
 
     // rotation: ±178° range, 1.4° precision (256 units per 360°)
-    private const float ROT_SCALE = 256.0f / (float.Pi * 2.0f);
-    public const float MAX_ROT_DELTA = 127.0f / ROT_SCALE;
+    private const float ROT_SCALE = 256.0f / 360.0f;
+    public const float MAX_ROT_DELTA = 127.0f / ROT_SCALE; // ~178°
 
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
@@ -50,7 +50,7 @@ public struct EntityPositionDeltaPacket : Packet {
         var posDelta = currentPos - lastPos;
         var rotDelta = currentRot - lastRot;
 
-        // normalise rotation delta to [-pi, pi] (wraparound)
+        // normalise rotation delta to [-180, 180] (wraparound)
         rotDelta.X = normalizeAngle(rotDelta.X);
         rotDelta.Y = normalizeAngle(rotDelta.Y);
         rotDelta.Z = normalizeAngle(rotDelta.Z);
@@ -78,20 +78,17 @@ public struct EntityPositionDeltaPacket : Packet {
         return true;
     }
 
-    /** normalise angle to [-pi, pi] for shortest rotation path */
+    /** normalise angle to [-180, 180] for shortest rotation path */
     private static float normalizeAngle(float angle) {
-        const float PI = MathF.PI;
-        const float TWO_PI = PI * 2.0f;
-
-        // wrap to [0, 2pi]
-        angle %= TWO_PI;
+        // wrap to [0, 360]
+        angle %= 360f;
         if (angle < 0) {
-            angle += TWO_PI;
+            angle += 360f;
         }
 
-        // convert to [-pi, pi] (shortest path)
-        if (angle > PI) {
-            angle -= TWO_PI;
+        // convert to [-180, 180] (shortest path)
+        if (angle > 180f) {
+            angle -= 360f;
         }
 
         return angle;
@@ -104,7 +101,7 @@ public struct EntityPositionDeltaPacket : Packet {
             lastPos.Y + deltaY / POS_SCALE,
             lastPos.Z + deltaZ / POS_SCALE
         );
-        
+
         newRot = new Vector3(
             normalizeAngle(lastRot.X + deltaYaw / ROT_SCALE),
             normalizeAngle(lastRot.Y + deltaPitch / ROT_SCALE),
