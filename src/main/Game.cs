@@ -186,7 +186,7 @@ public partial class Game {
         Log.log(LogLevel.INFO, "Game", "Starting game!");
 
         // wayland is crashing shit again
-        SDL3.SDL_SetHint("SDL_VIDEO_DRIVER", "x11,windows,wayland");
+        //SDL3.SDL_SetHint("SDL_VIDEO_DRIVER", "x11,windows,wayland");
 
         sdl = true;
         if (sdl) {
