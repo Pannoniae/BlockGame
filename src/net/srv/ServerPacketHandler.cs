@@ -382,6 +382,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // send message to Discord bridge if up
         GameServer.instance.discord?.sendMessage($"**{conn.username}** joined the game");
+        GameServer.instance.discord?.updatePlayerCountStatus();
     }
 
     private void handlePlayerPosition(PlayerPositionPacket p) {

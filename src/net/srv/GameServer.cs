@@ -688,6 +688,7 @@ public class GameServer : INetEventListener {
                 );
 
                 discord?.sendMessage($"**{conn.username}** left the game");
+                discord?.updatePlayerCountStatus();
 
                 // remove from player list
                 send(
