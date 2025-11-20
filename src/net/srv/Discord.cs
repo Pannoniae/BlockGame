@@ -4,8 +4,10 @@ using NetCord;
 using NetCord.Gateway;
 using NetCord.Logging;
 using SDL;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace BlockGame.net.srv
@@ -42,6 +44,12 @@ namespace BlockGame.net.srv
             client.Ready += async ready =>
             {
                 await client.Rest.SendMessageAsync(this.channelId, "**Server Started!**");
+                await client.UpdatePresenceAsync(
+                    new PresenceProperties(UserStatusType.DoNotDisturb)
+                    .WithActivities([
+                        new UserActivityProperties("BlockGame", UserActivityType.Playing)
+                    ])
+                );
             };
 
             cts = new CancellationTokenSource();
@@ -63,6 +71,16 @@ namespace BlockGame.net.srv
         public void sendMessage(String message)
         {
             client.Rest.SendMessageAsync(this.channelId, message);
+        }
+
+        public void updatePlayerCountStatus()
+        {
+            var players = GameServer.instance.connections.Count;
+            var max = GameServer.instance.maxPlayers;
+
+            client.UpdatePresenceAsync(
+                new PresenceProperties(UserStatusType.DoNotDisturb)
+                    .WithActivities([new UserActivityProperties($"{players}/{max} Players Online", UserActivityType.Watching)]));
         }
     }
 }
