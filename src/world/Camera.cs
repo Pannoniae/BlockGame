@@ -178,8 +178,8 @@ public class Camera {
         this.viewportHeight = viewportHeight;
         aspectRatio = this.viewportWidth / this.viewportHeight;
 
-        currentFov = normalFov;
-        targetFov = normalFov;
+        currentFov = vfov;
+        targetFov = vfov;
 
         var view = getViewMatrix(1);
         var proj = getProjectionMatrix();
@@ -277,7 +277,7 @@ public class Camera {
 
     public void updateFOV(bool isUnderwater, double dt) {
         // Set target FOV based on underwater status
-        targetFov = isUnderwater ? underwaterFov : normalFov;
+        targetFov = isUnderwater ? underwaterFov : vfov;
         
         // Smooth transition between FOVs
         const float speed = 12.0f;
@@ -390,10 +390,10 @@ public class Camera {
         
         if (Settings.instance.reverseZ) {
             // reverse-Z: swap near and far, use infinite far plane
-            return createReverseZProjectionMatrix(Meth.deg2rad(normalFov), aspectRatio, nearPlane, maxPlane);
+            return createReverseZProjectionMatrix(Meth.deg2rad(vfov), aspectRatio, nearPlane, maxPlane);
         }
         
-        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(normalFov), aspectRatio, nearPlane, maxPlane);
+        return Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(Meth.deg2rad(vfov), aspectRatio, nearPlane, maxPlane);
     }
 
 

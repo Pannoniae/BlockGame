@@ -18,16 +18,16 @@ public class CandyStairs : Stairs {
      * Bits 0-2: inherited from Stairs (facing, upside-down)
      * Bits 3-7: candy color (0-23)
      */
-    public static byte getColor(byte metadata) => (byte)((metadata >> 3) & 0x1F);
+    public static byte getColour(byte metadata) => (byte)((metadata >> 3) & 0x1F);
     public static byte setColor(byte metadata, byte color) => (byte)((metadata & 0b111) | ((color & 0x1F) << 3));
 
     public override UVPair getTexture(int faceIdx, int metadata) {
-        var color = getColor((byte)metadata);
+        var color = getColour((byte)metadata);
         return new UVPair(color & 0xF, 6 + (color >> 4));
     }
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
-        var color = getColor(metadata);
+        var color = getColour(metadata);
         var opposite = Direction.getOpposite(info.hfacing);
         var finalMeta = setColor(0, color);
         finalMeta = (byte)((finalMeta & ~0b11) | ((byte)opposite & 0b11));
@@ -37,13 +37,17 @@ public class CandyStairs : Stairs {
     }
 
     public override byte maxValidMetadata() {
-        // 3 bits for stair state (0-7) + 5 bits for color (0-31)
-        // but candy only has 24 colors, so max color is 23
-        return (byte)((23 << 3) | 7); // = 191
+        // 3 bits for stair state (0-7) + 5 bits for colour (0-31)
+        // but candy only has 24 colours, so max colour is 23
+        return (23 << 3) | 7; // = 191
+    }
+
+    public override bool same(ItemStack self, ItemStack other) {
+        return other.id == self.id && getColour((byte)other.metadata) == getColour((byte)self.metadata);
     }
 
     public string getName(byte metadata) {
-        var color = getColor(metadata);
+        var color = getColour(metadata);
         return $"{CandyBlock.colourNames[color]} Candy Stairs";
     }
 

@@ -1019,7 +1019,7 @@ public class Player : Mob, CommandSource {
                 for (ushort i = 0; i < 10; i++) {
                     var s = inventory.slots[i];
                     if (s != ItemStack.EMPTY) {
-                        if (s.same(stack)) {
+                        if (bl.same(s, stack)) {
                             // found it!
                             inventory.selected = i;
 

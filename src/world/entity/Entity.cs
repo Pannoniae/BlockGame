@@ -760,8 +760,8 @@ public partial class Entity(World world, string type) : Persistent {
             velocity.X += pushX;
             velocity.Z += pushZ;
 
-            // todo quickhack to prevent item entities pushing you away
-            if (this is not ItemEntity) {
+            // don't push item entities
+            if (other is not ItemEntity) {
                 other.velocity.X -= pushX;
                 other.velocity.Z -= pushZ;
             }

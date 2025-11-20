@@ -10,30 +10,25 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace BlockGame.net.srv
-{
-    public class Discord
-    {
+namespace BlockGame.net.srv {
+    public class Discord {
         private GatewayClient client;
         private Task? process = null;
         private CancellationTokenSource cts;
 
-        private UInt64 channelId;
+        private ulong channelId;
 
-        public Discord(string token, UInt64 channelId)
-        {
-            client = new(new BotToken(token), new GatewayClientConfiguration
-            {
+        public Discord(string token, ulong channelId) {
+            client = new GatewayClient(new BotToken(token), new GatewayClientConfiguration {
                 Logger = new ConsoleLogger(),
                 Intents = GatewayIntents.GuildMessages | GatewayIntents.MessageContent,
             });
 
-            client.MessageCreate += async message =>
-            {
+            client.MessageCreate += async message => {
                 if (message.Author.IsBot || message.ChannelId != channelId)
                     return;
 
-                var msg = $"[Discord] <{message.Author.Username}> {message.Content}";
+                var msg = $"&d[Discord] &r<{message.Author.Username}> {message.Content}";
 
                 GameServer.instance.send(
                     new ChatMessagePacket { message = msg },
@@ -41,14 +36,13 @@ namespace BlockGame.net.srv
                 );
             };
 
-            client.Ready += async ready =>
-            {
+            client.Ready += async ready => {
                 await client.Rest.SendMessageAsync(this.channelId, "**Server Started!**");
                 await client.UpdatePresenceAsync(
                     new PresenceProperties(UserStatusType.DoNotDisturb)
-                    .WithActivities([
-                        new UserActivityProperties("BlockGame", UserActivityType.Playing)
-                    ])
+                        .WithActivities([
+                            new UserActivityProperties("BlockGame", UserActivityType.Playing)
+                        ])
                 );
             };
 
@@ -56,25 +50,21 @@ namespace BlockGame.net.srv
             this.channelId = channelId;
         }
 
-        public void start()
-        {
+        public void start() {
             process = Task.Run(() => client.StartAsync(cancellationToken: this.cts.Token));
         }
 
-        public void stop()
-        {
+        public void stop() {
             // wait for server stop message to send before shutting down client
             client.Rest.SendMessageAsync(this.channelId, "**Server Stopped!**").GetAwaiter().GetResult();
             cts.Cancel();
         }
 
-        public void sendMessage(String message)
-        {
+        public void sendMessage(string message) {
             client.Rest.SendMessageAsync(this.channelId, message);
         }
 
-        public void updatePlayerCountStatus()
-        {
+        public void updatePlayerCountStatus() {
             var players = GameServer.instance.connections.Count;
             var max = GameServer.instance.maxPlayers;
 

@@ -989,14 +989,19 @@ public readonly struct Command {
             }
 
             var msg = string.Join(' ', args);
-            var formatted = $"&d[Server]&r {msg}";
+            var formatted = $"&h[Server]&r {msg}";
 
             GameServer.instance.send(
                 new ChatMessagePacket { message = formatted },
                 DeliveryMethod.ReliableOrdered
             );
 
-            source.sendMessage($"[Server] {msg}");
+            source.sendMessage($"&h[Server] {msg}");
+
+            // also send it on discord
+            var discordMsg = TextColours.strip(msg);
+
+            GameServer.instance.discord?.sendMessage($"**[Server]** {discordMsg}");
         }));
     }
 

@@ -413,7 +413,7 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
-        conn.player.rotation = p.rotation;
+        conn.player.rotation = normrot(p.rotation);
 
         // broadcast to other players
         GameServer.instance.send(
@@ -421,7 +421,7 @@ public class ServerPacketHandler : PacketHandler {
             128.0,
             new EntityRotationPacket {
                 entityID = conn.entityID,
-                rotation = p.rotation,
+                rotation = conn.player.rotation,
                 bodyRotation = conn.player.bodyRotation
             },
             DeliveryMethod.ReliableOrdered,
@@ -435,7 +435,7 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         conn.player.position = p.position;
-        conn.player.rotation = p.rotation;
+        conn.player.rotation = normrot(p.rotation);
 
         // broadcast to other players (combined packet for efficiency)
         GameServer.instance.send(
@@ -443,8 +443,8 @@ public class ServerPacketHandler : PacketHandler {
             128.0,
             new EntityPositionRotationPacket {
                 entityID = conn.entityID,
-                position = p.position,
-                rotation = p.rotation,
+                position = conn.player.position,
+                rotation = conn.player.rotation,
             },
             DeliveryMethod.ReliableOrdered,
             exclude: conn
@@ -728,7 +728,10 @@ public class ServerPacketHandler : PacketHandler {
             DeliveryMethod.ReliableOrdered
         );
 
-        GameServer.instance.discord?.sendMessage(formattedMsg);
+        // strip the colour from the message
+        var discordMsg = TextColours.strip(formattedMsg);
+
+        GameServer.instance.discord?.sendMessage(discordMsg);
     }
 
     private void handleCommand(CommandPacket p) {
@@ -1310,5 +1313,29 @@ public class ServerPacketHandler : PacketHandler {
             DeliveryMethod.ReliableOrdered,
             exclude: conn
         );
+    }
+
+    /** normalise rotation angles to [-180, 180] NO SPINNING */
+    private static Vector3 normrot(Vector3 rot) {
+        return new Vector3(
+            norma(rot.X),
+            norma(rot.Y),
+            norma(rot.Z)
+        );
+    }
+
+    private static float norma(float angle) {
+        // wrap to [0, 360]
+        angle %= 360f;
+        if (angle < 0) {
+            angle += 360f;
+        }
+
+        // convert to [-180, 180]
+        if (angle > 180f) {
+            angle -= 360f;
+        }
+
+        return angle;
     }
 }

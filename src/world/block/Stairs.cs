@@ -83,5 +83,9 @@ public class Stairs : Block {
         return existingId != id && existingId != MAPLE_STAIRS.id;
     }
 
+    public override bool same(ItemStack self, ItemStack other) {
+        return self.id == other.id;
+    }
+
     public override byte maxValidMetadata() => 3;
 }

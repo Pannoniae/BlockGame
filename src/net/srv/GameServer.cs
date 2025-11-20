@@ -95,7 +95,8 @@ public class GameServer : INetEventListener {
 
         try {
             netManager = new NetManager(this);
-            netManager.ChannelsCount = 4;  // 0-3 for different packet priorities
+            netManager.ChannelsCount = 4; // 0-3 for different packet priorities
+            netManager.UseNativeSockets = true;
             netManager.Start(ip, ip6, port);
         }
         catch (Exception e) {
@@ -114,17 +115,14 @@ public class GameServer : INetEventListener {
         loop();
     }
 
-    private void initDiscord()
-    {
+    private void initDiscord() {
         var discordSettings = properties.getCompound("discord");
 
-        if (discordSettings != null)
-        {
+        if (discordSettings != null) {
             var token = discordSettings.getString("token", "");
-            UInt64 channelId = discordSettings.getULong("channelId", 0);
+            var channelId = discordSettings.getULong("channelId", 0);
 
-            if (token == "" || channelId == 0)
-            {
+            if (token == "" || channelId == 0) {
                 return;
             }
 
@@ -160,6 +158,11 @@ public class GameServer : INetEventListener {
 
         // TODO: load world, initialize systems
         start();
+
+        Console.CancelKeyPress += (sender, e) => {
+            e.Cancel = true; // prevent immediate termination
+            running = false; // trigger close()
+        };
 
         // 60 TPS game loop
         sw.Restart();
@@ -200,7 +203,8 @@ public class GameServer : INetEventListener {
                 world = WorldIO.load(levelName);
                 Log.info($"Loaded existing world: {world.displayName}");
                 loading = true;
-            } else {
+            }
+            else {
                 // create new world
                 var seed = properties.getInt("seed", new Random().Next());
                 var generator = properties.getString("generator", "v3");
@@ -218,7 +222,7 @@ public class GameServer : INetEventListener {
             }
 
             Log.info($"World '{world.displayName}' loaded! (seed: {world.seed})");
-            
+
             world.listen(new ServerWorldListener(this));
         }
         catch (Exception e) {
@@ -339,6 +343,7 @@ public class GameServer : INetEventListener {
             foreach (var conn in connections.Values) {
                 conn.metrics.clearNet();
             }
+
             lastNetStats = sw.ElapsedMilliseconds;
         }
 
@@ -358,7 +363,6 @@ public class GameServer : INetEventListener {
     }
 
     private IEnumerator loadWorldCoroutine(bool isLoading) {
-
         Log.info("Setting up world...");
         progress(0.05f); // Setup complete: 5%
         Log.info("Loading spawn chunks...");
@@ -654,8 +658,12 @@ public class GameServer : INetEventListener {
                 saved++;
             }
         }
+
         if (saved > 0) {
             Log.info($"Saved {saved} player(s)");
+        }
+        else {
+            Log.info("No players to save");
         }
     }
 
@@ -676,7 +684,9 @@ public class GameServer : INetEventListener {
     }
 
     public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo) {
-        Log.info($"Player disconnected: {peer}, reason: {disconnectInfo.Reason}");
+
+        var playerName = peerToConnection.TryGetValue(peer, out var c) && !string.IsNullOrEmpty(c.username) ? c.username : "Unknown";
+        Log.info($"{playerName} disconnected: {peer}, reason: {disconnectInfo.Reason}");
         if (peerToConnection.Remove(peer, out var conn)) {
             connections.Remove(conn.entityID);
 
@@ -929,6 +939,7 @@ public class GameServer : INetEventListener {
         if (added) {
             tracker = new ChunkTracker(coord, this);
         }
+
         return tracker;
     }
 

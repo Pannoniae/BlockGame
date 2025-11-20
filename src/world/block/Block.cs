@@ -1587,6 +1587,15 @@ public class Block {
     }
 
     /**
+     * Are these two item stacks the same item?
+     * Return true if they shouldn't be treated as the same item (for pick block, etc.)
+     * For example, different coloured candy items would return false, but different stack sizes or stair orientations would return true.
+     */
+    public virtual bool same(ItemStack self, ItemStack other) {
+        return self.id == other.id && self.metadata == other.metadata;
+    }
+
+    /**
      * Returns the texture for a specific face index and metadata.
      * Default implementation returns the static texture.
      * Override for dynamic texture selection based on metadata.
