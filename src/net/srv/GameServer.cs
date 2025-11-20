@@ -978,6 +978,8 @@ public class GameServer : INetEventListener {
             return; // already stopping, don't do it twice :(
         }
 
+        discord?.stop();
+
         // kick everyone with message
         send(
             new ChatMessagePacket { message = "&cServer is shutting down..." },
@@ -1027,6 +1029,5 @@ public class GameServer : INetEventListener {
         }
 
         Environment.Exit(0);
-        discord?.stop();
     }
 }
