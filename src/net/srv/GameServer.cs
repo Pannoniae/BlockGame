@@ -121,20 +121,10 @@ public class GameServer : INetEventListener {
         if (discordSettings != null)
         {
             var token = discordSettings.getString("token", "");
-            if (token == "")
-            {
-                return;
-            }
+            UInt64 channelId = discordSettings.getULong("channelId", 0);
 
-            UInt64 channelId;
-
-            try
+            if (token == "" || channelId == 0)
             {
-                channelId = UInt64.Parse(discordSettings.getString("channelId", "0"));
-            }
-            catch
-            {
-                Log.warn("failed to parse channelId in server properties, not starting Discord bot.");
                 return;
             }
 

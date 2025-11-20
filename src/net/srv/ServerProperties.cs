@@ -59,7 +59,7 @@ public class ServerProperties {
 
         var discord = new NBTCompound();
         discord.addString("token", "");
-        discord.addString("channelId", "0");
+        discord.addULong("channelId", 0);
 
         props.addCompoundTag("discord", discord);
     }
@@ -70,6 +70,11 @@ public class ServerProperties {
 
     public int getInt(string key, int defaultValue = 0) {
         return props.has(key) ? props.getInt(key) : defaultValue;
+    }
+
+    public ulong getULong(string key, ulong defaultValue = 0)
+    {
+        return props.has(key) ? props.getULong(key) : defaultValue;
     }
 
     public bool getBool(string key, bool defaultValue = false) {
