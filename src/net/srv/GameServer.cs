@@ -1023,7 +1023,6 @@ public class GameServer : INetEventListener {
         Net.mode = NetMode.NONE;
         Log.info("Server stopped");
 
-<<<<<<< Updated upstream
         // delete world.lock!!
         var lockPath = Path.Combine(world.name, "world.lock");
         try {
@@ -1038,8 +1037,6 @@ public class GameServer : INetEventListener {
         }
 
         Environment.Exit(0);
-=======
         discord?.stop();
->>>>>>> Stashed changes
     }
 }
