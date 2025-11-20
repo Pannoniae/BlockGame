@@ -379,6 +379,9 @@ public class ServerPacketHandler : PacketHandler {
             new ChatMessagePacket { message = $"&e{conn.username} &ajoined the game" },
             DeliveryMethod.ReliableOrdered
         );
+
+        // send message to Discord bridge if up
+        GameServer.instance.discord?.sendMessage($"**{conn.username}** joined the game");
     }
 
     private void handlePlayerPosition(PlayerPositionPacket p) {
@@ -720,6 +723,8 @@ public class ServerPacketHandler : PacketHandler {
             new ChatMessagePacket { message = formattedMsg },
             DeliveryMethod.ReliableOrdered
         );
+
+        GameServer.instance.discord?.sendMessage(formattedMsg);
     }
 
     private void handleCommand(CommandPacket p) {
