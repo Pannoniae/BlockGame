@@ -34,7 +34,7 @@ public class XBiMap<K, V> : IEnumerable<XBiMap<K, V>.Pair> where K : notnull whe
     private const float LOAD_FACTOR = 0.75f;
 
     public XBiMap(int capacity = DEFAULT_CAPACITY) {
-        int size = NextPow2(Math.Max(capacity, DEFAULT_CAPACITY));
+        int size = Meth.nxtpow2(Math.Max(capacity, DEFAULT_CAPACITY));
         forward = new FwdEntry[size];
         reverse = new RevEntry[size];
         count = 0;
@@ -385,15 +385,5 @@ public class XBiMap<K, V> : IEnumerable<XBiMap<K, V>.Pair> where K : notnull whe
             Key = key;
             Value = value;
         }
-    }
-
-    private static int NextPow2(int n) {
-        n--;
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-        return n + 1;
     }
 }

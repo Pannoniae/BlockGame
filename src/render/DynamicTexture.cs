@@ -45,15 +45,21 @@ public abstract class DynamicTexture {
     }
 }
 
-public class StillWaterTexture(BTextureAtlas parent) : DynamicTexture(parent, 0, 13 * 16, 16, 16) {
+public class StillWaterTexture : DynamicTexture {
     private int frameIndex;
 
     public override int updateFreq => 12;
 
+    // NEW: constructor with explicit position (for stitched atlases)
+    public StillWaterTexture(BTextureAtlas parent, int x, int y) : base(parent, x, y, 16, 16) { }
+
+    // OLD: constructor with hardcoded position (for legacy system)
+    public StillWaterTexture(BTextureAtlas parent) : base(parent, 0, 13 * 16, 16, 16) { }
+
     protected override void update() {
         if (parent?.imageData.IsEmpty == false) {
-            int srcX = (frameIndex % 16) * 16;
-            int srcY = 13 * 16;
+            int srcX = (frameIndex % 16) * 16 + atlasX;
+            int srcY = atlasY;
 
             var span = parent.imageData.Span;
             for (int y = 0; y < height; y++) {
@@ -73,15 +79,25 @@ public class FlowingWaterTexture : DynamicTexture {
 
     public override int updateFreq => 8;
 
+    // NEW: constructor with explicit position
+    public FlowingWaterTexture(BTextureAtlas parent, int x, int y) : base(parent, x, y, 32, 32) {
+        src = new Rgba32[width * height];
+        initSrc();
+    }
+
+    // OLD: constructor with hardcoded position
     public FlowingWaterTexture(BTextureAtlas parent) : base(parent, 1 * parent.atlasSize, 14 * parent.atlasSize, 32, 32) {
         src = new Rgba32[width * height];
-        var span = parent.imageData.Span;
-        int srcX = 1 * parent.atlasSize;
-        int srcY = 14 * parent.atlasSize;
+        initSrc();
+    }
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                src[y * width + x] = span[(srcY + y) * parent.image.Width + (srcX + x)];
+    void initSrc() {
+        if (parent?.imageData.IsEmpty == false) {
+            var span = parent.imageData.Span;
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    src[y * width + x] = span[(atlasY + y) * parent.image.Width + (atlasX + x)];
+                }
             }
         }
     }
@@ -107,17 +123,27 @@ public class FlowingWaterTexture : DynamicTexture {
 }
 
 public class StillLavaTexture : DynamicTexture {
-    private readonly float[] heat;
-    private readonly float[] nextHeat;
-    private readonly float[] activation;
-    private readonly float[] nextActivation;
-    private readonly float[] avg;
-    private readonly float[] nextAvg;
-    private readonly XRandom rng;
+    private float[] heat;
+    private float[] nextHeat;
+    private float[] activation;
+    private float[] nextActivation;
+    private float[] avg;
+    private float[] nextAvg;
+    private XRandom rng;
 
     public override int updateFreq => 3;
 
+    // NEW: constructor with explicit position
+    public StillLavaTexture(BTextureAtlas parent, int x, int y) : base(parent, x, y, 16, 16) {
+        initArrays();
+    }
+
+    // OLD: constructor with hardcoded position
     public StillLavaTexture(BTextureAtlas parent) : base(parent, 0, 16 * 16, 16, 16) {
+        initArrays();
+    }
+
+    void initArrays() {
         heat = new float[width * height];
         nextHeat = new float[width * height];
         activation = new float[width * height];
@@ -234,17 +260,27 @@ public class StillLavaTexture : DynamicTexture {
 }
 
 public class FlowingLavaTexture : DynamicTexture {
-    private readonly float[] heat;
-    private readonly float[] nextHeat;
-    private readonly float[] activation;
-    private readonly float[] nextActivation;
-    private readonly float[] avg;
-    private readonly float[] avgNext;
-    private readonly XRandom rng;
+    private float[] heat;
+    private float[] nextHeat;
+    private float[] activation;
+    private float[] nextActivation;
+    private float[] avg;
+    private float[] avgNext;
+    private XRandom rng;
 
     public override int updateFreq => 6;
 
+    // NEW: constructor with explicit position
+    public FlowingLavaTexture(BTextureAtlas parent, int x, int y) : base(parent, x, y, 32, 32) {
+        initArrays();
+    }
+
+    // OLD: constructor with hardcoded position
     public FlowingLavaTexture(BTextureAtlas parent) : base(parent, 1 * 16, 17 * 16, 32, 32) {
+        initArrays();
+    }
+
+    void initArrays() {
         heat = new float[width * height];
         nextHeat = new float[width * height];
         activation = new float[width * height];
@@ -355,6 +391,12 @@ public class FireTexture : DynamicTexture {
 
     public override int updateFreq => 3;
 
+    // NEW: constructor with explicit position
+    public FireTexture(BTextureAtlas parent, int x, int y) : base(parent, x, y, 16, 16) {
+        noise = new SimplexNoise(777);
+    }
+
+    // OLD: constructor with hardcoded position
     public FireTexture(BTextureAtlas parent) : base(parent, 3 * 16, 14 * 16, 16, 16) {
         noise = new SimplexNoise(777);
     }

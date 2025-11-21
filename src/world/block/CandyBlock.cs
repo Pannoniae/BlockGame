@@ -8,6 +8,15 @@ public class CandyBlock : Block {
 
     protected override void onRegister(int id) {
         renderType[id] = RenderType.CUBE_DYNTEXTURE;
+
+        // set uvs
+        // return new UVPair(metadata & 0xF, 6 + (metadata >> 4));
+        uvs = new UVPair[maxValidMetadata() + 1];
+        for (int i = 0; i <= maxValidMetadata(); i++) {
+            int row = i / 16;
+            int col = i % 16;
+            uvs[i] = atlas.uv("blocks.png", col, 6 + row);
+        }
     }
 
     protected override BlockItem createItem() {
@@ -81,6 +90,6 @@ public class CandyBlock : Block {
 
     public override UVPair getTexture(int faceIdx, int metadata) {
         // handle two rows
-        return new UVPair(metadata & 0xF, 6 + (metadata >> 4));
+        return uvs[metadata];
     }
 }

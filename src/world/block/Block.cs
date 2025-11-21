@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.render;
@@ -64,15 +65,25 @@ public class Block {
      */
     public UVPair[]? uvs;
 
+    public static BlockTextureAtlas atlas;
+
     protected static readonly List<AABB> AABBList = [];
 
-    public const int atlasSize = 512;
+    // atlas dimensions - updated when texture pack is loaded
+    public static int atlasSize = 512;
     public const int textureSize = 16;
 
+    public static float atlasRatio = textureSize / (float)atlasSize;
+    public static float atlasRatioInv = 1 / atlasRatio;
 
-    public const float atlasRatio = textureSize / (float)atlasSize;
-    public const float atlasRatioInv = 1 / atlasRatio;
-
+    /// <summary>
+    /// Update atlas size after loading texture pack. Recalculates atlasRatio.
+    /// </summary>
+    public static void updateAtlasSize(int newAtlasSize) {
+        atlasSize = newAtlasSize;
+        atlasRatio = textureSize / (float)atlasSize;
+        atlasRatioInv = 1 / atlasRatio;
+    }
 
     public static Block AIR;
     public static Block GRASS;
@@ -298,25 +309,27 @@ public class Block {
     }
 
     public static void preLoad() {
+        atlas = (BlockTextureAtlas)Game.textures.blockTexture;
+
         AIR = register("air", new Block("Air"));
         AIR.setModel(BlockModel.emptyBlock());
         AIR.air();
 
         GRASS = register("grass", new GrassBlock("Grass"));
         GRASS.tick();
-        GRASS.setTex(new(0, 0), new(1, 0), new(2, 0));
+        GRASS.setTex(atlas.uv("blocks.png", 0, 0), atlas.uv("blocks.png", 1, 0), atlas.uv("blocks.png", 2, 0));
         renderType[GRASS.id] = RenderType.CUBE_DYNTEXTURE;
         GRASS.material(Material.EARTH);
         natural[GRASS.id] = true;
 
         DIRT = register("dirt", new Block("Dirt"));
-        DIRT.setTex(new UVPair(2, 0));
+        DIRT.setTex(atlas.uv("blocks.png", 2, 0));
         renderType[DIRT.id] = RenderType.CUBE;
         DIRT.material(Material.EARTH);
         natural[DIRT.id] = true;
 
         SAND = register("sand", new FallingBlock("Sand"));
-        SAND.setTex(new UVPair(3, 0));
+        SAND.setTex(atlas.uv("blocks.png", 3, 0));
         renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
         // less hard than dirt!
@@ -325,20 +338,20 @@ public class Block {
 
         SNOW_GRASS = register("snowGrass", new GrassBlock("Snowy Grass"));
         SNOW_GRASS.tick();
-        SNOW_GRASS.setTex(new(13, 0), new(14, 0), new(2, 0));
+        SNOW_GRASS.setTex(atlas.uv("blocks.png", 13, 0), atlas.uv("blocks.png", 14, 0), atlas.uv("blocks.png", 2, 0));
         renderType[SNOW_GRASS.id] = RenderType.CUBE_DYNTEXTURE;
         SNOW_GRASS.material(Material.EARTH);
         natural[SNOW_GRASS.id] = true;
 
         SNOW = register("snow", new Block("Snow"));
-        SNOW.setTex(new UVPair(15, 0));
+        SNOW.setTex(atlas.uv("blocks.png", 15, 0));
         renderType[SNOW.id] = RenderType.CUBE;
         SNOW.material(Material.EARTH);
         SNOW.setHardness(0.3);
         natural[SNOW.id] = true;
 
         BASALT = register("basalt", new Block("Basalt"));
-        BASALT.setTex(new UVPair(4, 0));
+        BASALT.setTex(atlas.uv("blocks.png", 4, 0));
         renderType[BASALT.id] = RenderType.CUBE;
         BASALT.material(Material.STONE);
 
@@ -352,7 +365,7 @@ public class Block {
         BASALT_STAIRS.material(Material.STONE);
 
         STONE = register("stone", new StoneBlock("Stone"));
-        STONE.setTex(new UVPair(5, 0));
+        STONE.setTex(atlas.uv("blocks.png", 5, 0));
         renderType[STONE.id] = RenderType.CUBE;
         STONE.material(Material.STONE);
         natural[STONE.id] = true;
@@ -367,7 +380,7 @@ public class Block {
         STONE_STAIRS.material(Material.STONE);
 
         COBBLESTONE = register("cobblestone", new Block("Cobblestone"));
-        COBBLESTONE.setTex(new UVPair(6, 1));
+        COBBLESTONE.setTex(atlas.uv("blocks.png", 6, 1));
         renderType[COBBLESTONE.id] = RenderType.CUBE;
         COBBLESTONE.material(Material.STONE);
 
@@ -381,13 +394,13 @@ public class Block {
         COBBLESTONE_STAIRS.material(Material.STONE);
 
         GRAVEL = register("gravel", new GravelBlock("Gravel"));
-        GRAVEL.setTex(new UVPair(7, 0));
+        GRAVEL.setTex(atlas.uv("blocks.png", 7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
         GRAVEL.material(Material.EARTH);
         natural[GRAVEL.id] = true;
 
         HELLSTONE = register("hellstone", new Block("Hellstone"));
-        HELLSTONE.setTex(new UVPair(8, 0));
+        HELLSTONE.setTex(atlas.uv("blocks.png", 8, 0));
         renderType[HELLSTONE.id] = RenderType.CUBE;
         HELLSTONE.light(15);
         HELLSTONE.material(Material.HELL);
@@ -399,7 +412,7 @@ public class Block {
         //BLOODSTONE.material(Material.HELL);
 
         HELLROCK = register("hellrock", new Block("Hellrock"));
-        HELLROCK.setTex(new UVPair(9, 0));
+        HELLROCK.setTex(atlas.uv("blocks.png", 9, 0));
         renderType[HELLROCK.id] = RenderType.CUBE;
         HELLROCK.material(Material.HELL);
 
@@ -414,13 +427,13 @@ public class Block {
         //CALCITE.material(Material.STONE);
 
         CLAY_BLOCK = register("clayBlock", new Block("Clay"));
-        CLAY_BLOCK.setTex(new UVPair(12, 0));
+        CLAY_BLOCK.setTex(atlas.uv("blocks.png", 12, 0));
         renderType[CLAY_BLOCK.id] = RenderType.CUBE;
         CLAY_BLOCK.material(Material.EARTH);
         natural[CLAY_BLOCK.id] = true;
 
         GLASS = register("glass", new Block("Glass"));
-        GLASS.setTex(new UVPair(6, 0));
+        GLASS.setTex(atlas.uv("blocks.png", 6, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS.transparency();
         GLASS.material(Material.GLASS);
@@ -440,7 +453,7 @@ public class Block {
         BRICKBLOCK_STAIRS.material(Material.STONE);
 
         STONE_BRICK = register("stoneBrick", new Block("Stone Brick"));
-        STONE_BRICK.setTex(new UVPair(1, 2));
+        STONE_BRICK.setTex(atlas.uv("blocks.png", 1, 2));
         renderType[STONE_BRICK.id] = RenderType.CUBE;
         STONE_BRICK.material(Material.STONE);
 
@@ -454,7 +467,7 @@ public class Block {
         STONE_BRICK_STAIRS.material(Material.STONE);
 
         SAND_BRICK = register("sandBrick", new Block("Sand Brick"));
-        SAND_BRICK.setTex(new UVPair(2, 2));
+        SAND_BRICK.setTex(atlas.uv("blocks.png", 2, 2));
         renderType[SAND_BRICK.id] = RenderType.CUBE;
         SAND_BRICK.material(Material.STONE);
 
@@ -468,7 +481,7 @@ public class Block {
 
 
         COAL_ORE = register("coalOre", new CoalOreBlock("Coal Ore"));
-        COAL_ORE.setTex(new UVPair(4, 1));
+        COAL_ORE.setTex(atlas.uv("blocks.png", 4, 1));
         renderType[COAL_ORE.id] = RenderType.CUBE;
         COAL_ORE.material(Material.FANCY_STONE);
         COAL_ORE.setHardness(2.0);
@@ -476,7 +489,7 @@ public class Block {
         natural[COAL_ORE.id] = true;
 
         COPPER_ORE = register("copperOre", new Block("Copper Ore"));
-        COPPER_ORE.setTex(new UVPair(5, 1));
+        COPPER_ORE.setTex(atlas.uv("blocks.png", 5, 1));
         renderType[COPPER_ORE.id] = RenderType.CUBE;
         COPPER_ORE.material(Material.FANCY_STONE);
         COPPER_ORE.setHardness(2.5);
@@ -484,7 +497,7 @@ public class Block {
         natural[COPPER_ORE.id] = true;
 
         IRON_ORE = register("ironOre", new Block("Iron Ore"));
-        IRON_ORE.setTex(new UVPair(1, 1));
+        IRON_ORE.setTex(atlas.uv("blocks.png", 1, 1));
         renderType[IRON_ORE.id] = RenderType.CUBE;
         IRON_ORE.material(Material.FANCY_STONE);
         IRON_ORE.setHardness(3.0);
@@ -492,7 +505,7 @@ public class Block {
         natural[IRON_ORE.id] = true;
 
         GOLD_ORE = register("goldOre", new Block("Gold Ore"));
-        GOLD_ORE.setTex(new UVPair(0, 1));
+        GOLD_ORE.setTex(atlas.uv("blocks.png", 0, 1));
         renderType[GOLD_ORE.id] = RenderType.CUBE;
         GOLD_ORE.material(Material.FANCY_STONE);
         GOLD_ORE.setHardness(3.0);
@@ -516,7 +529,7 @@ public class Block {
         //natural[SILVER_ORE.id] = true;
 
         DIAMOND_ORE = register("diamondOre", new Block("Diamond Ore"));
-        DIAMOND_ORE.setTex(new UVPair(15, 1));
+        DIAMOND_ORE.setTex(atlas.uv("blocks.png", 15, 1));
         renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
         DIAMOND_ORE.setHardness(4.0);
@@ -524,7 +537,7 @@ public class Block {
         natural[DIAMOND_ORE.id] = true;
 
         CINNABAR_ORE = register("cinnabarOre", new GlowingOre("Cinnabar"));
-        CINNABAR_ORE.setTex(new UVPair(9, 1));
+        CINNABAR_ORE.setTex(atlas.uv("blocks.png", 9, 1));
         renderType[CINNABAR_ORE.id] = RenderType.CUBE_DYNTEXTURE;
         CINNABAR_ORE.material(Material.FANCY_STONE);
         CINNABAR_ORE.setHardness(6.0);
@@ -564,7 +577,7 @@ public class Block {
         //natural[EMERALD_ORE.id] = true;
 
         LANTERN = register("lantern", new Block("Lantern"));
-        LANTERN.setTex(new UVPair(6, 3), new UVPair(7, 3), new UVPair(8, 3));
+        LANTERN.setTex(atlas.uv("blocks.png", 6, 3), atlas.uv("blocks.png", 7, 3), atlas.uv("blocks.png", 8, 3));
         LANTERN.setModel(BlockModel.makeLantern(LANTERN));
         LANTERN.light(15);
         LANTERN.partialBlock();
@@ -688,7 +701,7 @@ public class Block {
         OAK_LOG.setFlammable(5);
 
         OAK_PLANKS = register("oakPlanks", new Block("Oak Planks"));
-        OAK_PLANKS.setTex(new UVPair(0, 5));
+        OAK_PLANKS.setTex(atlas.uv("blocks.png", 0, 5));
         renderType[OAK_PLANKS.id] = RenderType.CUBE;
         OAK_PLANKS.material(Material.WOOD);
         OAK_PLANKS.setFlammable(30);
@@ -705,7 +718,7 @@ public class Block {
         OAK_SLAB.setFlammable(30);
 
         LEAVES = register("oakLeaves", new Leaves("Oak Leaves"));
-        LEAVES.setTex(new UVPair(4, 5));
+        LEAVES.setTex(atlas.uv("blocks.png", 4, 5));
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
@@ -730,7 +743,7 @@ public class Block {
         MAPLE_LOG.setFlammable(5);
 
         MAPLE_PLANKS = register("maplePlanks", new Block("Maple Planks"));
-        MAPLE_PLANKS.setTex(new UVPair(5, 5));
+        MAPLE_PLANKS.setTex(atlas.uv("blocks.png", 5, 5));
         renderType[MAPLE_PLANKS.id] = RenderType.CUBE;
         MAPLE_PLANKS.material(Material.WOOD);
         MAPLE_PLANKS.setFlammable(30);
@@ -747,7 +760,7 @@ public class Block {
         MAPLE_SLAB.setFlammable(30);
 
         MAPLE_LEAVES = register("mapleLeaves", new Leaves("Maple Leaves"));
-        MAPLE_LEAVES.setTex(new UVPair(9, 5));
+        MAPLE_LEAVES.setTex(atlas.uv("blocks.png", 9, 5));
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
         leaves[MAPLE_LEAVES.id] = true;
@@ -771,7 +784,7 @@ public class Block {
         MAHOGANY_LOG.setFlammable(5);
 
         MAHOGANY_PLANKS = register("mahoganyPlanks", new Block("Mahogany Planks"));
-        MAHOGANY_PLANKS.setTex(new UVPair(3, 2));
+        MAHOGANY_PLANKS.setTex(atlas.uv("blocks.png", 3, 2));
         renderType[MAHOGANY_PLANKS.id] = RenderType.CUBE;
         MAHOGANY_PLANKS.material(Material.WOOD);
         MAHOGANY_PLANKS.setFlammable(30);
@@ -820,7 +833,7 @@ public class Block {
         PINE_LOG.setFlammable(5);
 
         PINE_PLANKS = register("pinePlanks", new Block("Pine Planks"));
-        PINE_PLANKS.setTex(new UVPair(8, 2));
+        PINE_PLANKS.setTex(atlas.uv("blocks.png", 8, 2));
         renderType[PINE_PLANKS.id] = RenderType.CUBE;
         PINE_PLANKS.material(Material.WOOD);
         PINE_PLANKS.setFlammable(30);
@@ -837,7 +850,7 @@ public class Block {
         PINE_SLAB.setFlammable(30);
 
         PINE_LEAVES = register("pineLeaves", new Leaves("Pine Leaves"));
-        PINE_LEAVES.setTex(new UVPair(12, 2));
+        PINE_LEAVES.setTex(atlas.uv("blocks.png", 12, 2));
         renderType[PINE_LEAVES.id] = RenderType.CUBE;
         PINE_LEAVES.transparency();
         leaves[PINE_LEAVES.id] = true;
@@ -854,7 +867,7 @@ public class Block {
         PINE_SAPLING.setFlammable(60);
 
         ICE = register("ice", new Block("Ice"));
-        ICE.setTex(new UVPair(16, 0));
+        ICE.setTex(atlas.uv("blocks.png", 16, 0));
         renderType[ICE.id] = RenderType.CUBE;
         ICE.translucency();
         ICE.material(Material.GLASS);
@@ -862,17 +875,17 @@ public class Block {
         ICE.setFriction(0.96f);
 
         GOLD_CANDY = register("goldCandy", new Block("Gold Candy"));
-        GOLD_CANDY.setTex(new UVPair(0, 8));
+        GOLD_CANDY.setTex(atlas.uv("blocks.png", 0, 8));
         renderType[GOLD_CANDY.id] = RenderType.CUBE;
         GOLD_CANDY.material(Material.METAL);
 
         CINNABAR_CANDY = register("cinnabarCandy", new Block("Cinnabar Candy"));
-        CINNABAR_CANDY.setTex(new UVPair(1, 8));
+        CINNABAR_CANDY.setTex(atlas.uv("blocks.png", 1, 8));
         renderType[CINNABAR_CANDY.id] = RenderType.CUBE;
         CINNABAR_CANDY.material(Material.METAL);
 
         DIAMOND_CANDY = register("diamondCandy", new Block("Diamond Candy"));
-        DIAMOND_CANDY.setTex(new UVPair(2, 8));
+        DIAMOND_CANDY.setTex(atlas.uv("blocks.png", 2, 8));
         renderType[DIAMOND_CANDY.id] = RenderType.CUBE;
         DIAMOND_CANDY.material(Material.METAL);
 
@@ -892,11 +905,11 @@ public class Block {
         //HEAD.partialBlock();
 
         WATER = register("water", new Liquid("Water", 15, 8, false));
-        WATER.setTex(new UVPair(0, 13), new UVPair(1, 14));
+        WATER.setTex(atlas.uv("blocks.png", 0, 13), atlas.uv("blocks.png", 1, 14));
         WATER.makeLiquid();
 
         LAVA = register("lava", new Liquid("Lava", 30, 4, true));
-        LAVA.setTex(new UVPair(0, 16), new UVPair(1, 17));
+        LAVA.setTex(atlas.uv("blocks.png", 0, 16), atlas.uv("blocks.png", 1, 17));
         LAVA.makeLiquid();
 
         // idk the tiers, these are just placeholders!! stop looking at my ore class lmao
@@ -923,12 +936,12 @@ public class Block {
         OAK_CHEST.setFlammable(30);
 
         OAK_DOOR = register("door", new Door("Oak Door"));
-        OAK_DOOR.setTex(cubeUVs(0, 10));
+        OAK_DOOR.setTex(atlas.uv("blocks.png", 0, 10), atlas.uv("blocks.png", 0, 11));
         OAK_DOOR.material(Material.WOOD);
         OAK_DOOR.setFlammable(30);
 
         MAHOGANY_DOOR = register("mahoganyDoor", new Door("Mahogany Door"));
-        MAHOGANY_DOOR.setTex(cubeUVs(1, 10));
+        MAHOGANY_DOOR.setTex(atlas.uv("blocks.png", 1, 10), atlas.uv("blocks.png", 1, 11));
         MAHOGANY_DOOR.material(Material.WOOD);
 
         BRICK_FURNACE = register("brickFurnace", new Furnace("Brick Furnace", false));
@@ -950,7 +963,7 @@ public class Block {
         FURNACE_LIT.light(8);
 
         LADDER = register("ladder", new Ladder("Ladder"));
-        LADDER.setTex(new UVPair(10, 3));
+        LADDER.setTex(atlas.uv("blocks.png", 10, 3));
         LADDER.transparency();
         LADDER.noCollision();
         // render as item!
@@ -960,7 +973,7 @@ public class Block {
         LADDER.setFlammable(30);
 
         FIRE = register("fire", new FireBlock("Fire"));
-        FIRE.setTex(new UVPair(3, 14));
+        FIRE.setTex(atlas.uv("blocks.png", 3, 14));
         renderType[FIRE.id] = RenderType.FIRE;
         FIRE.itemLike();
         FIRE.transparency();
@@ -971,7 +984,7 @@ public class Block {
         FIRE.material(Material.HELL);
 
         SIGN = register("sign", new SignBlock("Sign"));
-        SIGN.setTex(new UVPair(2, 10), new UVPair(1, 5));
+        SIGN.setTex(atlas.uv("blocks.png", 2, 10), atlas.uv("blocks.png", 1, 5));
 
 
         // set default hardness for blocks that haven't set it
@@ -1029,45 +1042,63 @@ public class Block {
 
 
     public static UVPair[] cubeUVs(int x, int y) {
-        return [new(x, y), new(x, y), new(x, y), new(x, y), new(x, y), new(x, y)];
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
+        var uv = atlas.uv("blocks.png", x, y);
+        return [uv, uv, uv, uv, uv, uv];
     }
 
     public static UVPair[] grassUVs(int topX, int topY, int sideX, int sideY, int bottomX, int bottomY) {
-        return [
-            new(sideX, sideY), new(sideX, sideY), new(sideX, sideY), new(sideX, sideY), new(bottomX, bottomY),
-            new(topX, topY)
-        ];
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
+        var side = atlas.uv("blocks.png", sideX, sideY);
+        var bottom = atlas.uv("blocks.png", bottomX, bottomY);
+        var top = atlas.uv("blocks.png", topX, topY);
+        return [side, side, side, side, bottom, top];
     }
 
     public static UVPair[] furnaceUVs(int frontX, int frontY, int litX, int litY, int sideX, int sideY, int top_bottomX, int top_bottomY) {
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
         return [
-            new(frontX, frontY), new UVPair(litX, litY), new(sideX, sideY), new UVPair(top_bottomX, top_bottomY)
+            atlas.uv("blocks.png", frontX, frontY),
+            atlas.uv("blocks.png", litX, litY),
+            atlas.uv("blocks.png", sideX, sideY),
+            atlas.uv("blocks.png", top_bottomX, top_bottomY)
         ];
     }
 
     public static UVPair[] CTUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
-        return [
-            new(xx, xy), new(xx, xy), new(zx, zy), new(zx, zy), new(bottomX, bottomY),
-            new(topX, topY)
-        ];
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
+        var x = atlas.uv("blocks.png", xx, xy);
+        var z = atlas.uv("blocks.png", zx, zy);
+        var bottom = atlas.uv("blocks.png", bottomX, bottomY);
+        var top = atlas.uv("blocks.png", topX, topY);
+        return [x, x, z, z, bottom, top];
     }
 
     public static UVPair[] chestUVs(int topX, int topY, int xx, int xy, int zx, int zy, int bottomX, int bottomY) {
-        return [
-            new(xx, xy), new(xx, xy), new(zx, zy), new(xx, xy), new(bottomX, bottomY),
-            new(topX, topY)
-        ];
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
+        var x = atlas.uv("blocks.png", xx, xy);
+        var z = atlas.uv("blocks.png", zx, zy);
+        var bottom = atlas.uv("blocks.png", bottomX, bottomY);
+        var top = atlas.uv("blocks.png", topX, topY);
+        return [x, x, z, x, bottom, top];
     }
 
     public static UVPair[] crossUVs(int x, int y) {
-        return [new(x, y), new(x, y)];
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
+        var uv = atlas.uv("blocks.png", x, y);
+        return [uv, uv];
     }
 
     public static UVPair[] HeadUVs(int leftX, int leftY, int rightX, int rightY, int frontX, int frontY, int backX,
         int backY, int bottomX, int bottomY, int topX, int topY) {
+        var atlas = (BlockTextureAtlas)Game.textures.blockTexture;
         return [
-            new(leftX, leftY), new(rightX, rightY), new(frontX, frontY), new(backX, backY), new(bottomX, bottomY),
-            new(topX, topY)
+            atlas.uv("blocks.png", leftX, leftY),
+            atlas.uv("blocks.png", rightX, rightY),
+            atlas.uv("blocks.png", frontX, frontY),
+            atlas.uv("blocks.png", backX, backY),
+            atlas.uv("blocks.png", bottomX, bottomY),
+            atlas.uv("blocks.png", topX, topY)
         ];
     }
 

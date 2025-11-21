@@ -2,6 +2,7 @@ using BlockGame.main;
 using BlockGame.render;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.world.block;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
@@ -9,14 +10,17 @@ using Image = SixLabors.ImageSharp.Image;
 namespace BlockGame.GL;
 
 public class BTextureAtlas : BTexture2D {
-    
+
     public int atlasSize;
-    
+
     public bool firstLoad = true;
-    
+
     public List<DynamicTexture> dtextures = [];
-    
+
     public Rgba32[] mipmap = null!;
+
+    // tile positions for stitched atlases (null if loaded from single file)
+    public Dictionary<(string source, int tx, int ty), SixLabors.ImageSharp.Rectangle>? tilePositions;
 
     public float atlasRatio => atlasSize / (float)width;
 
@@ -29,7 +33,80 @@ public class BTextureAtlas : BTexture2D {
         //GL.BindTexture(TextureTarget.Texture2DArray, handle2);
         //GL.TexImage3D(TextureTarget.Texture2DArray, 0, InternalFormat.Rgba8, 16, 16, 2048, 0, PixelFormat.Rgba, PixelType.Byte, null);
     }
-    
+
+    // Constructor for pre-loaded images (from stitched atlases)
+    public BTextureAtlas(SixLabors.ImageSharp.Image<Rgba32> img, int width, int height, int atlasSize = 16, bool delayInit = false) : base("") {
+        this.atlasSize = atlasSize;
+        this.image = img;
+        // use actual image dimensions, not passed parameters
+        this.width = img.Width;
+        this.height = img.Height;
+        this.iwidth = 1.0 / img.Width;
+        this.iheight = 1.0 / img.Height;
+        if (!delayInit) {
+            uploadToGPU();
+        }
+    }
+
+    public BTextureAtlas(StitchResult itemResult, int atlasSize = 16) : base("") {
+        this.tilePositions = itemResult.tilePositions;
+        this.atlasSize = atlasSize;
+        this.image = itemResult.image;
+        // use actual image dimensions, not passed parameters
+        this.width = itemResult.width;
+        this.height = itemResult.height;
+        this.iwidth = 1.0 / itemResult.width;
+        this.iheight = 1.0 / itemResult.height;
+        uploadToGPU();
+    }
+
+    /**
+     * Look up final UV for a tile from a source atlas
+     */
+    public UVPair uv(string sourcePath, int tx, int ty) {
+        if (tilePositions == null)
+            throw new InvalidOperationException("Not a stitched atlas! Use the StitchResult constructor.");
+
+        // Add textures/ prefix if not already present
+        if (!sourcePath.StartsWith("textures/"))
+            sourcePath = "textures/" + sourcePath;
+
+        var rect = tilePositions[(sourcePath, tx, ty)];
+        float u = rect.X * atlasSize / (float)width;
+        float v = rect.Y * atlasSize / (float)height;
+        return new UVPair(u, v);
+    }
+
+    // NEW: Upload pre-loaded image to GPU
+    protected unsafe void uploadToGPU() {
+        var GL = Game.GL;
+        handle = GL.CreateTexture(TextureTarget.Texture2D);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.NearestMipmapLinear);
+        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+
+        var maxLevel = Settings.instance.mipmapping;
+        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, maxLevel);
+
+        const uint maxPossibleLevels = 5u;
+        GL.TextureStorage2D(handle, maxPossibleLevels, SizedInternalFormat.Rgba8, (uint)width, (uint)height);
+
+        if (!image.DangerousTryGetSinglePixelMemory(out imageData)) {
+            throw new SkillIssueException("Couldn't load the atlas contiguously!");
+        }
+
+        mipmap = new Rgba32[width * height];
+        generateMipmaps(imageData.Span, width, height, maxLevel);
+
+        if (firstLoad) {
+            onFirstLoad();
+        }
+
+        firstLoad = false;
+    }
+
     public void addDynamicTexture(DynamicTexture dt) {
         dtextures.Add(dt);
     }
@@ -37,6 +114,12 @@ public class BTextureAtlas : BTexture2D {
     public void updateTexture(int x, int y, int width, int height, Rgba32[] pixels) {
         // update CPU-side imageData so the fucking mipmaps regenerate correctly
         var span = imageData.Span;
+
+        // Validate bounds - if out of range, this is a bug that needs fixing
+        if (x < 0 || y < 0 || x + width > image.Width || y + height > image.Height) {
+            throw new InvalidOperationException($"DynamicTexture out of bounds! pos=({x},{y}) size=({width},{height}) atlas=({image.Width},{image.Height}). Protected region was placed incorrectly or atlas is too small.");
+        }
+
         for (int py = 0; py < height; py++) {
             for (int px = 0; px < width; px++) {
                 span[(y + py) * image.Width + (x + px)] = pixels[py * width + px];
@@ -149,6 +232,11 @@ public class BTextureAtlas : BTexture2D {
     }
 
     public override unsafe void reload() {
+        // Skip reload for stitched atlases (they're already loaded from memory)
+        if (string.IsNullOrEmpty(path)) {
+            return;
+        }
+
         var GL = Game.GL;
         GL.DeleteTexture(handle);
         handle = GL.CreateTexture(TextureTarget.Texture2D);
@@ -210,12 +298,55 @@ public class BTextureAtlas : BTexture2D {
     }
 }
 
-public class BlockTextureAtlas(string path, int atlasSize) : BTextureAtlas(path, atlasSize) {
+public class BlockTextureAtlas : BTextureAtlas {
+    Dictionary<string, SixLabors.ImageSharp.Rectangle>? protectedRegions;
+
+    // constructor for loading from file path
+    public BlockTextureAtlas(string path, int atlasSize) : base(path, atlasSize) { }
+
+    // NEW: constructor for stitched atlases
+    public BlockTextureAtlas(StitchResult result)
+        : base(result.image, result.width, result.height, 16, delayInit: true) {
+        this.tilePositions = result.tilePositions;
+        this.protectedRegions = result.protectedRegions;
+        // Now upload to GPU after protected regions are set
+        uploadToGPU();
+    }
+
+    /**
+     * Get protected region rectangle (for DynamicTextures)
+     */
+    public SixLabors.ImageSharp.Rectangle getRegion(string name) {
+        if (protectedRegions == null)
+            throw new InvalidOperationException("Not a stitched atlas!");
+        return protectedRegions[name];
+    }
+
     public override void onFirstLoad() {
-        addDynamicTexture(new StillWaterTexture(this));
-        addDynamicTexture(new FlowingWaterTexture(this));
-        addDynamicTexture(new StillLavaTexture(this));
-        addDynamicTexture(new FlowingLavaTexture(this));
-        addDynamicTexture(new FireTexture(this));
+        // if we have protected regions, use them to position dynamic textures
+        if (protectedRegions != null) {
+            var waterStillRect = getRegion("waterStill");
+            addDynamicTexture(new StillWaterTexture(this, waterStillRect.X, waterStillRect.Y));
+
+            var waterFlowRect = getRegion("waterFlowing");
+            addDynamicTexture(new FlowingWaterTexture(this, waterFlowRect.X, waterFlowRect.Y));
+
+            var lavaStillRect = getRegion("lavaStill");
+            addDynamicTexture(new StillLavaTexture(this, lavaStillRect.X, lavaStillRect.Y));
+
+            var lavaFlowRect = getRegion("lavaFlowing");
+            addDynamicTexture(new FlowingLavaTexture(this, lavaFlowRect.X, lavaFlowRect.Y));
+
+            var fireRect = getRegion("fire");
+            addDynamicTexture(new FireTexture(this, fireRect.X, fireRect.Y));
+        }
+        else {
+            // fallback to hardcoded positions (old system)
+            addDynamicTexture(new StillWaterTexture(this));
+            addDynamicTexture(new FlowingWaterTexture(this));
+            addDynamicTexture(new StillLavaTexture(this));
+            addDynamicTexture(new FlowingLavaTexture(this));
+            addDynamicTexture(new FireTexture(this));
+        }
     }
 }

@@ -1,6 +1,9 @@
 using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.util;
+using BlockGame.util.log;
+using BlockGame.world.block;
+using BlockGame.world.item;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -50,9 +53,42 @@ public class Textures {
 
         particleTex = get("textures/particle.png");
 
-        blockTexture = new BlockTextureAtlas("textures/blocks.png", 16);
+        // Register texture sources (mods would do this too via events)
+        TextureSources.addBlockSource("blocks.png");
+        TextureSources.addItemSource("items.png");
 
-        itemTexture = new BTextureAtlas("textures/items.png", 16);
+        // Stitch block atlas
+        var blockSources = TextureSources.getBlockSources();
+        var blockProtectedRegions = new List<ProtectedRegion> {
+            new("waterStill", "textures/blocks.png", 0, 13*16, 256, 16),
+            new("waterFlowing", "textures/blocks.png", 16, 14*16, 32, 32),
+            new("lavaStill", "textures/blocks.png", 0, 16*16, 16, 16),
+            new("lavaFlowing", "textures/blocks.png", 16, 17*16, 32, 32),
+            new("fire", "textures/blocks.png", 48, 14*16, 16, 16)
+        };
+
+        var blockResult = AtlasStitcher.stitch(blockSources, blockProtectedRegions);
+        blockTexture = new BlockTextureAtlas(blockResult);
+
+        // Update Block.atlasSize to match stitched atlas
+        Block.updateAtlasSize(blockResult.width);
+
+        // Dispose source images (no longer needed)
+        foreach (var src in blockSources) {
+            src.dispose();
+        }
+
+        // Stitch item atlas (no protected regions)
+        var itemSources = TextureSources.getItemSources();
+        var itemResult = AtlasStitcher.stitch(itemSources, []);
+        itemTexture = new BTextureAtlas(itemResult);
+
+        // Dispose source images
+        foreach (var src in itemSources) {
+            src.dispose();
+        }
+
+        Log.info("Textures", $"Stitched atlases: blocks={blockResult.width}x{blockResult.height}, items={itemResult.width}x{itemResult.height}");
 
         // load player skin from game directory (not assets/!)
         human = new BTexture2D(ui.Settings.instance.skinPath);

@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.GL;
@@ -8,9 +8,9 @@ using Silk.NET.Maths;
 namespace BlockGame.world.block;
 
 #pragma warning disable CS8618
-/// <summary>
-/// Stores UV in block coordinates (1 = 16px)
-/// </summary>
+/**
+ * Stores UV in normalised coordinates (0.0 to 1.0)
+ */
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct UVPair(float u, float v) {
     public const int ATLASSIZE = 16;
@@ -30,9 +30,9 @@ public readonly record struct UVPair(float u, float v) {
         return new UVPair(uv.u + other.u, uv.v + other.v);
     }
 
-    /// <summary>
-    /// 0 = 0, 65535 = 1
-    /// </summary>
+    /**
+     * 0 = 0, 65535 = 1
+     */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector2D<Half> texCoordsH(int x, int y) {
         return new Vector2D<Half>((Half)(x * Block.atlasRatio), (Half)(y * Block.atlasRatio));

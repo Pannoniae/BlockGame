@@ -122,7 +122,9 @@ public class Door : Block {
         }
     }
 
-    public override UVPair getTexture(int faceIdx, int metadata) => uvs[0];
+    public override UVPair getTexture(int faceIdx, int metadata) {
+        return upper((byte)metadata) ? uvs[0] : uvs[1];
+    }
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
@@ -134,15 +136,14 @@ public class Door : Block {
         var u = upper(m);
         var h = hinge(m);
 
-        var tex = uvs[0];
-        if (!u) tex = new UVPair(tex.u, tex.v + 1);
+        UVPair tex = u ? uvs[0] : uvs[1];
 
         if (br.forceTex.u >= 0 && br.forceTex.v >= 0) {
             tex = new UVPair(br.forceTex.u, br.forceTex.v);
         }
 
-        var uv0 = UVPair.texCoords(tex);
-        var uv1 = UVPair.texCoords(tex + 1);
+        var uv0 = UVPair.texCoordsi(tex);
+        var uv1 = UVPair.texCoordsi(tex + 1);
         var u0 = uv0.X;
         var v0 = uv0.Y;
         var u1 = uv1.X;

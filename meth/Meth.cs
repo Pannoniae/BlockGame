@@ -359,6 +359,17 @@ public static partial class Meth {
         return new AABB(bb.Min.toVec3D(), bb.Max.toVec3D());
     }
 
+    public static int nxtpow2(int n) {
+        if (n <= 0) return 1;
+        n--;
+        n |= n >> 1;
+        n |= n >> 2;
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+        return n + 1;
+    }
+
     extension(byte b) {
         public byte skylight() {
             return (byte)(b & 0xF);

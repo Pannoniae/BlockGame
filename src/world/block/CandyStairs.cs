@@ -13,6 +13,20 @@ public class CandyStairs : Stairs {
         return new CandyStairsItem(this);
     }
 
+    protected override void onRegister(int id) {
+        base.onRegister(id);
+
+        // set uvs
+        // return new UVPair(color & 0xF, 6 + (color >> 4));
+        uvs = new UVPair[maxValidMetadata() + 1];
+        for (int i = 0; i <= maxValidMetadata(); i++) {
+            int color = getColour((byte)i);
+            int row = color / 16;
+            int col = color % 16;
+            uvs[i] = atlas.uv("blocks.png", col, 6 + row);
+        }
+    }
+
     /**
      * Metadata encoding:
      * Bits 0-2: inherited from Stairs (facing, upside-down)
@@ -22,8 +36,7 @@ public class CandyStairs : Stairs {
     public static byte setColor(byte metadata, byte color) => (byte)((metadata & 0b111) | ((color & 0x1F) << 3));
 
     public override UVPair getTexture(int faceIdx, int metadata) {
-        var color = getColour((byte)metadata);
-        return new UVPair(color & 0xF, 6 + (color >> 4));
+        return uvs[metadata];
     }
 
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {

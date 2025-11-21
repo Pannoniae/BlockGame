@@ -24,7 +24,7 @@ public class XLongMap<V> : IEnumerable<V> {
     private const float LOAD_FACTOR = 0.75f;
 
     public XLongMap(int capacity = DEFAULT_CAPACITY) {
-        int size = NextPow2(Math.Max(capacity, DEFAULT_CAPACITY));
+        int size = Meth.nxtpow2(Math.Max(capacity, DEFAULT_CAPACITY));
         entries = new Entry[size];
         count = 0;
     }
@@ -315,15 +315,5 @@ public class XLongMap<V> : IEnumerable<V> {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref val;
         }
-    }
-
-    private static int NextPow2(int n) {
-        n--;
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-        return n + 1;
     }
 }

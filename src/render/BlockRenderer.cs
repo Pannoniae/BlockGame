@@ -385,7 +385,7 @@ public class BlockRenderer {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector128<float> getAtlasCoords(float uMin, float vMin, float uMax, float vMax) {
         var tex = Vector128.Create(uMin, vMin, uMax, vMax);
-        const float factor = Block.atlasRatio * 32768f;
+        var factor = Block.atlasRatio * 32768f;
         return Vector128.Multiply(tex, factor);
     }
 
@@ -2058,7 +2058,7 @@ public class BlockRenderer {
                     }
 
                     // divide by texture size / atlas size, multiply by scaling factor
-                    const float factor = Block.atlasRatio * 32768f;
+                    var factor = Block.atlasRatio * 32768f;
                     tex = Vector128.Multiply(tex, factor);
 
                     /*Vector256<float> vec = Vector256.Create(

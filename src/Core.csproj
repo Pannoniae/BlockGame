@@ -167,6 +167,7 @@
         <ProjectReference Include="..\lib\FontStashSharp\FontStashSharp.csproj" />
         <ProjectReference Include="..\lib\Silk.NET.Input\Silk.NET.Input.csproj" />
         <ProjectReference Include="..\lib\Silk.NET.Windowing\Silk.NET.Windowing.csproj" />
+        <ProjectReference Include="..\lib\TrippyGL.Fonts\TrippyGL.Fonts.csproj" />
         <ProjectReference Include="..\meth\Meth.csproj" />
     </ItemGroup>
 
