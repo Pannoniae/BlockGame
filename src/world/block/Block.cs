@@ -202,6 +202,7 @@ public class Block {
     //public static Block TIN_BLOCK;
     public static Block DIAMOND_BLOCK;
     public static Block COAL_BLOCK;
+    public static Block CINNABAR_BLOCK;
 
     public static Block TORCH;
     public static Block CRAFTING_TABLE;
@@ -618,6 +619,13 @@ public class Block {
         DIAMOND_BLOCK.material(Material.METAL);
         DIAMOND_BLOCK.setHardness(10.0);
         DIAMOND_BLOCK.setTier(MaterialTier.GOLD);
+
+        CINNABAR_BLOCK = register("cinnabarBlock", new Block("Block of Cinnabar"));
+        CINNABAR_BLOCK.setTex(cubeUVs(11, 8));
+        renderType[CINNABAR_BLOCK.id] = RenderType.CUBE;
+        CINNABAR_BLOCK.material(Material.METAL);
+        CINNABAR_BLOCK.setHardness(10.0);
+        CINNABAR_BLOCK.setTier(MaterialTier.GOLD);
 
 
         TALL_GRASS = register("tallGrass", new Grass("Tall Grass"));
