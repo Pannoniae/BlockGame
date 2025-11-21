@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
+using SixLabors.ImageSharp;
 using System.Numerics;
 
 #pragma warning disable CA1816 // Dispose methods should call SuppressFinalize

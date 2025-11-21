@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Stride.Core.Mathematics;
 using Stride.Graphics;
 #else
-using System.Drawing;
+using SixLabors.ImageSharp;
 using System.Numerics;
 #endif
 

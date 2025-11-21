@@ -146,6 +146,11 @@
         <None Update="..\runtimes\linux-x64\native\libminiaudioex.so">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
+
+
+        <None Update="character.png">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

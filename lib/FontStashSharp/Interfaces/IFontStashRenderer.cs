@@ -6,10 +6,10 @@ using Stride.Core.Mathematics;
 using Stride.Graphics;
 using Texture2D = Stride.Graphics.Texture;
 #else
-using System.Drawing;
 using System.Numerics;
 using Color = FontStashSharp.FSColor;
 using Texture2D = System.Object;
+using SixLabors.ImageSharp;
 #endif
 
 namespace FontStashSharp.Interfaces

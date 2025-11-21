@@ -72,7 +72,7 @@ namespace TrippyGL.Fonts
         /// <remarks>
         /// A size of zero means a glyph does not need drawing (for example, a space character).
         /// </remarks>
-        public System.Drawing.Point GetGlyphSize(int charCode);
+        public Point GetGlyphSize(int charCode);
 
         /// <summary>
         /// Draws a character into the given image, at the specified location.
@@ -81,6 +81,6 @@ namespace TrippyGL.Fonts
         /// This operation shouldn't touch anything outside the area defined by the given location
         /// and the size provided for the same character in <see cref="GetGlyphSize(int)"/>.
         /// </remarks>
-        public void DrawGlyphToImage(int charCode, System.Drawing.Point location, Image<Rgba32> image);
+        public void DrawGlyphToImage(int charCode, Point location, Image<Rgba32> image);
     }
 }

@@ -66,7 +66,7 @@ namespace TrippyGL.Fonts
                 for (int c = fontDatas[i].FirstChar; c <= fontDatas[i].LastChar; c++)
                 {
                     // We get the size. If it is positive, we add a PackingRectangle to represent it.
-                    System.Drawing.Point size = glyphSources[i].GetGlyphSize(c);
+                    Point size = glyphSources[i].GetGlyphSize(c);
                     if (size.X > 0 && size.Y > 0)
                     {
                         // We add 2 to the width and height of the rectangle so chars have an empty border.
@@ -93,7 +93,7 @@ namespace TrippyGL.Fonts
 
                 // We create the source rectangles arrays for all the fontDatas.
                 for (int i = 0; i < fontDatas.Length; i++)
-                    fontDatas[i].SourceRectangles = new System.Drawing.Rectangle[fontDatas[i].CharCount];
+                    fontDatas[i].SourceRectangles = new Rectangle[fontDatas[i].CharCount];
 
                 // We go through all the packing rectangles.
                 for (int i = 0; i < packingRects.Length; i++)
@@ -110,10 +110,10 @@ namespace TrippyGL.Fonts
                     int charCode = charIndex + fontDatas[glyphSourceIndex].FirstChar;
 
                     // We draw the glyph onto the image at this rectangle's location.
-                    glyphSources[glyphSourceIndex].DrawGlyphToImage(charCode, new System.Drawing.Point((int)rect.X + 1, (int)rect.Y + 1), image);
+                    glyphSources[glyphSourceIndex].DrawGlyphToImage(charCode, new Point((int)rect.X + 1, (int)rect.Y + 1), image);
 
                     // We set the glyph's source to match this rectangle.
-                    fontDatas[glyphSourceIndex].SourceRectangles![charIndex] = new System.Drawing.Rectangle((int)rect.X + 1, (int)rect.Y + 1, (int)rect.Width - 2, (int)rect.Height - 2);
+                    fontDatas[glyphSourceIndex].SourceRectangles![charIndex] = new Rectangle((int)rect.X + 1, (int)rect.Y + 1, (int)rect.Width - 2, (int)rect.Height - 2);
                 }
 
                 // We go through all the fontDatas and set the remaining information.

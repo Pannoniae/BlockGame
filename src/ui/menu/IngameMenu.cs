@@ -115,7 +115,7 @@ public class IngameMenu : Menu, IDisposable {
 
             // Background rectangle with transparency
             gui.tb.Draw(gui.colourTexture,
-                new System.Drawing.RectangleF(graphX, graphY, GRAPH_WIDTH, GRAPH_HEIGHT),
+                new RectangleF(graphX, graphY, GRAPH_WIDTH, GRAPH_HEIGHT),
                 new Color(0, 0, 0, 180));
 
             // Fixed 60 FPS threshold (16.67ms)
@@ -127,7 +127,7 @@ public class IngameMenu : Menu, IDisposable {
 
             // Draw guide line
             gui.tb.Draw(gui.colourTexture,
-                new System.Drawing.RectangleF(graphX, sixtyFpsY, GRAPH_WIDTH, 1),
+                new RectangleF(graphX, sixtyFpsY, GRAPH_WIDTH, 1),
                 new Color(0, 255, 0, 150)); // 60 FPS line (green)
 
             // Draw FPS marker
@@ -245,7 +245,7 @@ public class IngameMenu : Menu, IDisposable {
         for (int i = 0; i < ProfileSection.SECTION_COUNT; i++) {
             // Draw color square
             gui.tb.Draw(gui.colourTexture,
-                new System.Drawing.RectangleF(legendX, legendY + yOffset, 8, 8),
+                new RectangleF(legendX, legendY + yOffset, 8, 8),
                 ProfileData.getColour((ProfileSectionName)i));
             yOffset += 24;
         }

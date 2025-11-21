@@ -41,7 +41,7 @@ namespace TrippyGL.Fonts.Building
         public Color DefaultGlyphColor = Color.White;
 
         /// <summary>The sizes for all characters.</summary>
-        private readonly System.Drawing.Point[] glyphSizes;
+        private readonly Point[] glyphSizes;
 
         /// <summary>The render offsets for all characters.</summary>
         private readonly Vector2[] renderOffsets;
@@ -97,7 +97,7 @@ namespace TrippyGL.Fonts.Building
         /// Creates the <see cref="IPathCollection"/> for all the characters, also getting their colors,
         /// glyph sizes and render offsets.
         /// </summary>
-        private IPathCollection[] CreatePaths(out Color?[][]? colors, out System.Drawing.Point[] sizes, out Vector2[] offsets)
+        private IPathCollection[] CreatePaths(out Color?[][]? colors, out Point[] sizes, out Vector2[] offsets)
         {
             FontMetrics fontMetrics = Font.FontMetrics;
             ColorGlyphRenderer glyphRenderer = new ColorGlyphRenderer();
@@ -107,7 +107,7 @@ namespace TrippyGL.Fonts.Building
             Span<char> singleCharSpan = stackalloc char[1];
 
             IPathCollection[] paths = new IPathCollection[CharCount];
-            sizes = new System.Drawing.Point[paths.Length];
+            sizes = new Point[paths.Length];
             offsets = new Vector2[paths.Length];
             colors = null;
 
@@ -130,7 +130,7 @@ namespace TrippyGL.Fonts.Building
                 if (float.IsFinite(area) && area != 0 && (c > char.MaxValue || !char.IsWhiteSpace(c)))
                 {
                     paths[i] = p;
-                    sizes[i] = new System.Drawing.Point((int)Math.Ceiling(bounds.Width), (int)Math.Ceiling(bounds.Height));
+                    sizes[i] = new Point((int)Math.Ceiling(bounds.Width), (int)Math.Ceiling(bounds.Height));
                     renderOffsets[i] = new Vector2(bounds.X, bounds.Y);
                 }
 
@@ -230,7 +230,7 @@ namespace TrippyGL.Fonts.Building
             return kerningOffsets != null;
         }
 
-        public System.Drawing.Point GetGlyphSize(int charCode)
+        public Point GetGlyphSize(int charCode)
         {
             return glyphSizes[charCode - FirstChar];
         }
@@ -240,7 +240,7 @@ namespace TrippyGL.Fonts.Building
             return renderOffsets;
         }
 
-        public void DrawGlyphToImage(int charCode, System.Drawing.Point location, Image<Rgba32> image)
+        public void DrawGlyphToImage(int charCode, Point location, Image<Rgba32> image)
         {
             int charIndex = charCode - FirstChar;
             IPathCollection paths = glyphPaths[charIndex];

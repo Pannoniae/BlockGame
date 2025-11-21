@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
+using SixLabors.ImageSharp;
 using System.Numerics;
 using Silk.NET.Input;
 using Silk.NET.Maths;

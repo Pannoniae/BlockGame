@@ -10,7 +10,7 @@ using Stride.Core.Mathematics;
 using Stride.Graphics;
 #else
 using System.Numerics;
-using System.Drawing;
+using SixLabors.ImageSharp;
 using Matrix = System.Numerics.Matrix3x2;
 using Color = FontStashSharp.FSColor;
 #endif

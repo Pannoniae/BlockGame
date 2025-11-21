@@ -1,6 +1,6 @@
 ﻿#if PLATFORM_AGNOSTIC
 
-using System.Drawing;
+using SixLabors.ImageSharp;
 
 namespace FontStashSharp.Interfaces
 {

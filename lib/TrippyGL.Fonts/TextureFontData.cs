@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Numerics;
+using SixLabors.ImageSharp;
 
 namespace TrippyGL.Fonts
 {
@@ -46,7 +47,7 @@ namespace TrippyGL.Fonts
         public Vector2[]? RenderOffsets;
 
         /// <summary>The areas in the font's image/texture where each character is located.</summary>
-        public System.Drawing.Rectangle[]? SourceRectangles;
+        public Rectangle[]? SourceRectangles;
 
         /// <summary>
         /// Writes the data of this <see cref="TextureFontData"/> into a stream.
@@ -231,13 +232,13 @@ namespace TrippyGL.Fonts
                 }
             }
 
-            System.Drawing.Rectangle[] sources = new System.Drawing.Rectangle[charCount];
+            Rectangle[] sources = new Rectangle[charCount];
             for (int i = 0; i < sources.Length; i++)
             {
                 short x = streamReader.ReadInt16();
                 short y = streamReader.ReadInt16();
                 short wid = streamReader.ReadInt16();
-                sources[i] = new System.Drawing.Rectangle(x, y, wid, streamReader.ReadInt16());
+                sources[i] = new Rectangle(x, y, wid, streamReader.ReadInt16());
             }
 
             Vector2[] renderOffsets = new Vector2[charCount];

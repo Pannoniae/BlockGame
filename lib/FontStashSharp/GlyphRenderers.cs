@@ -8,7 +8,7 @@ using static Microsoft.Xna.Framework.Graphics.SpriteFont;
 using Stride.Core.Mathematics;
 using Stride.Graphics;
 #else
-using System.Drawing;
+using SixLabors.ImageSharp;
 using Color = FontStashSharp.FSColor;
 #endif
 
