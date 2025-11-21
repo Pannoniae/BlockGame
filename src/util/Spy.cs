@@ -1,5 +1,6 @@
 ﻿using System.Reflection.Metadata;
 using BlockGame.main;
+using BlockGame.net;
 using BlockGame.render.model;
 using BlockGame.util.log;
 
@@ -54,16 +55,15 @@ public class Spy {
         }).ToArray();
 
 
-        // also watch assets/character.png... for player skin changes
-        // shit workaround but id need to rework the asset loading otherwise
-        var charWatcher = new FileSystemWatcher(Path.Combine(projectDir, "src", "assets"), "character.png") {
+        // watch character.png in game root directory for player skin changes
+        var charWatcher = new FileSystemWatcher(projectDir, "character.png") {
             IncludeSubdirectories = false,
             NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.Size |
                            NotifyFilters.Attributes | NotifyFilters.FileName
         };
-        charWatcher.Changed += changed;
-        charWatcher.Created += changed;
-        charWatcher.Renamed += changed;
+        charWatcher.Changed += skinChanged;
+        charWatcher.Created += skinChanged;
+        charWatcher.Renamed += skinChanged;
         charWatcher.EnableRaisingEvents = true;
     }
 
@@ -97,5 +97,40 @@ public class Spy {
             BlockEntityRenderers.reloadAll();
         });
         Log.info("Reloaded assets due to file change: " + e.FullPath);
+    }
+
+    private static void skinChanged(object sender, FileSystemEventArgs e) {
+        Thread.Sleep(1000);
+
+        Log.info("Player skin changed, reloading...");
+
+        Game.instance.executeOnMainThread(() => {
+            if (Game.textures != null && File.Exists(e.FullPath)) {
+                try {
+                    Game.textures.human.loadFromFile(e.FullPath);
+                    Log.info("Reloaded local player skin");
+
+                    // in SMP, send updated skin to server
+                    if (Net.mode.isMPC() && ClientConnection.instance.authenticated) {
+                        var skinData = File.ReadAllBytes(e.FullPath);
+
+                        if (skinData.Length > 65536) {
+                            Log.warn("Skin too large to send to server");
+                            return;
+                        }
+
+                        ClientConnection.instance.send(new net.packet.PlayerSkinPacket {
+                            entityID = ClientConnection.instance.entityID,
+                            skinData = skinData
+                        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+
+                        Log.info("Sent updated skin to server");
+                    }
+                } catch (Exception ex) {
+                    Log.warn("Failed to reload skin:");
+                    Log.warn(ex);
+                }
+            }
+        });
     }
 }

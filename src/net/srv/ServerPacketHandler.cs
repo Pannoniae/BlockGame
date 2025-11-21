@@ -11,6 +11,8 @@ using BlockGame.world.item.inventory;
 using LiteNetLib;
 using Molten;
 using Molten.DoublePrecision;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace BlockGame.net.srv;
 
@@ -95,6 +97,9 @@ public class ServerPacketHandler : PacketHandler {
                 break;
             case RespawnRequestPacket p:
                 handleRespawnRequest(p);
+                break;
+            case PlayerSkinPacket p:
+                handlePlayerSkin(p);
                 break;
             default:
                 Log.warn($"Unhandled packet type: {packet.GetType().Name}");
@@ -320,6 +325,12 @@ public class ServerPacketHandler : PacketHandler {
                 slotIndex = (byte)existingConn.player.inventory.selected,
                 heldItem = existingConn.player.inventory.getSelected()
             }, DeliveryMethod.ReliableOrdered);
+
+            // send their skin
+            conn.send(new PlayerSkinPacket {
+                entityID = existingConn.entityID,
+                skinData = existingConn.skinData
+            }, DeliveryMethod.ReliableOrdered);
         }
 
         // broadcast the new player to all existing clients
@@ -363,6 +374,14 @@ public class ServerPacketHandler : PacketHandler {
             entityID = conn.entityID,
             slotIndex = (byte)player.inventory.selected,
             heldItem = player.inventory.getSelected()
+        }, DeliveryMethod.ReliableOrdered,
+            exclude: conn
+        );
+
+        // broadcast their skin to all existing clients
+        GameServer.instance.send(new PlayerSkinPacket {
+            entityID = conn.entityID,
+            skinData = conn.skinData
         }, DeliveryMethod.ReliableOrdered,
             exclude: conn
         );
@@ -1337,5 +1356,43 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         return angle;
+    }
+
+    private void handlePlayerSkin(PlayerSkinPacket p) {
+        if (conn.player == null) {
+            return;
+        }
+
+        // validate size (max 64KB)
+        if (p.skinData.Length > 65536) {
+            Log.warn($"Rejected oversized skin from {conn.username}: {p.skinData.Length} bytes");
+            return;
+        }
+
+        // validate transparency if not default skin
+        if (p.skinData.Length > 0) {
+            try {
+                using var ms = new MemoryStream(p.skinData);
+                var img = Image.Load<Rgba32>(ms);
+
+                if (!GL.BTexture2D.validateTransparency(img)) {
+                    Log.warn($"Rejected transparent skin from {conn.username}");
+                    return;
+                }
+
+                Log.info($"Received skin from {conn.username} ({p.skinData.Length} bytes, {img.Width}x{img.Height})");
+            } catch (Exception e) {
+                Log.warn($"Invalid skin data from {conn.username}:");
+                Log.warn(e);
+                return;
+            }
+        }
+
+        conn.skinData = p.skinData;
+
+        GameServer.instance.send(new PlayerSkinPacket {
+            entityID = conn.entityID,
+            skinData = p.skinData
+        }, DeliveryMethod.ReliableOrdered, exclude: conn);
     }
 }

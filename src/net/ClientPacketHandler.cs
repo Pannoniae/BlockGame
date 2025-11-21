@@ -18,6 +18,8 @@ using BlockGame.world.item.inventory;
 using LiteNetLib;
 using Molten;
 using Molten.DoublePrecision;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace BlockGame.net;
 
@@ -108,6 +110,9 @@ public class ClientPacketHandler : PacketHandler {
                 break;
             case PlayerListUpdatePingPacket p:
                 handlePlayerListUpdatePing(p);
+                break;
+            case PlayerSkinPacket p:
+                handlePlayerSkin(p);
                 break;
             case TimeUpdatePacket p:
                 handleTimeUpdate(p);
@@ -210,7 +215,54 @@ public class ClientPacketHandler : PacketHandler {
         // mark world as initialised so meshing/updates work
         world.inited = true;
 
+        // send your local skin to server
+        sendLocalSkin();
+
         Log.info("Multiplayer world initialized, waiting for chunks...");
+    }
+
+    /** send local character.png skin to server */
+    private static void sendLocalSkin() {
+        if (ClientConnection.instance == null) {
+            return;
+        }
+
+        var skinPath = Settings.instance.skinPath;
+        byte[] skinData = [];
+
+        // try to load local skin file
+        if (File.Exists(skinPath)) {
+            try {
+                skinData = File.ReadAllBytes(skinPath);
+
+                // validate size
+                if (skinData.Length > 65536) {
+                    Log.warn($"Local skin too large ({skinData.Length} bytes), using default");
+                    skinData = [];
+                } else {
+                    // validate it's a valid PNG with transparency
+                    using var ms = new MemoryStream(skinData);
+                    var img = Image.Load<Rgba32>(ms);
+
+                    if (!GL.BTexture2D.validateTransparency(img)) {
+                        Log.warn("Local skin is too transparent, using default");
+                        skinData = [];
+                    } else {
+                        Log.info($"Sending local skin to server ({skinData.Length} bytes, {img.Width}x{img.Height})");
+                    }
+                }
+            } catch (Exception e) {
+                Log.warn("Failed to load local skin, using default");
+                Log.warn(e);
+                skinData = [];
+            }
+        }
+
+        // send skin packet to server (empty = default)
+        ClientConnection.instance.send(new PlayerSkinPacket {
+            entityID = ClientConnection.instance.entityID,
+            skinData = skinData
+        }, DeliveryMethod.ReliableOrdered);
     }
 
     public void handleLoginFailed(LoginFailedPacket p) {
@@ -669,6 +721,51 @@ public class ClientPacketHandler : PacketHandler {
         // update ping for player
         if (ClientConnection.instance.playerList.TryGetValue(p.entityID, out var entry)) {
             entry.ping = p.ping;
+        }
+    }
+
+    public void handlePlayerSkin(PlayerSkinPacket p) {
+        if (Game.world == null) {
+            return;
+        }
+
+        // find player entity
+        var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
+        if (entity is not Player player) {
+            return;
+        }
+
+        // empty skin data = use default
+        if (p.skinData.Length == 0) {
+            player.skinTex?.Dispose();
+            player.skinTex = null;
+            return;
+        }
+
+        // validate size (max 64KB)
+        if (p.skinData.Length > 65536) {
+            Log.warn($"Rejected oversized skin for player {p.entityID}: {p.skinData.Length} bytes");
+            return;
+        }
+
+        try {
+            // load and validate skin
+            using var ms = new MemoryStream(p.skinData);
+            var img = Image.Load<Rgba32>(ms);
+
+            if (!GL.BTexture2D.validateTransparency(img)) {
+                Log.warn($"Rejected transparent skin for player {p.entityID}");
+                return;
+            }
+
+            // create texture and load from bytes
+            player.skinTex?.Dispose();
+            player.skinTex = new GL.BTexture2D("");
+            player.skinTex.loadFromBytes(p.skinData);
+
+            Log.info($"Loaded skin for player {p.entityID} ({p.skinData.Length} bytes, {img.Width}x{img.Height})");
+        } catch (Exception e) {
+            Log.warn($"Failed to load skin for player {p.entityID}: {e.Message}");
         }
     }
 

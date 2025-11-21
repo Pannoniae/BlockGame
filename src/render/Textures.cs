@@ -54,8 +54,14 @@ public class Textures {
 
         itemTexture = new BTextureAtlas("textures/items.png", 16);
 
-        // load player skin from settings
-        human = get(ui.Settings.instance.skinPath);
+        // load player skin from game directory (not assets/!)
+        human = new BTexture2D(ui.Settings.instance.skinPath);
+        if (File.Exists(ui.Settings.instance.skinPath)) {
+            human.loadFromFile(ui.Settings.instance.skinPath);
+        } else {
+            // fallback to the default skin in assets
+            human = get("character.png");
+        }
 
         cow = get("textures/entity/cow.png");
         pig = get("textures/entity/pig.png");

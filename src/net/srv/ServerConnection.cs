@@ -17,6 +17,9 @@ public class ServerConnection {
     public int entityID;
     public int ping;
 
+    /** player skin data (PNG bytes, empty = default) */
+    public byte[] skinData = [];
+
     public ServerPacketHandler handler;
 
     /** player entity in world (server ticks this) */

@@ -23,8 +23,9 @@ public class PacketRegistry {
         register(0x06, typeof(PlayerListAddPacket));
         register(0x07, typeof(PlayerListRemovePacket));
         register(0x08, typeof(PlayerListUpdatePingPacket));
+        register(0x09, typeof(PlayerSkinPacket));
 
-        
+
         register(0x0A, typeof(AuthRequiredPacket));
         register(0x0B, typeof(AuthPacket));
 

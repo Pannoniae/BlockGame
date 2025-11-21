@@ -26,8 +26,11 @@ public class HumanModel : EntityModel {
     public bool sneaking = false;
 
     public override void render(MatrixStack mat, Entity e, float apos, float aspeed, float scale, double interp) {
-        // texture
-        Game.graphics.tex(0, Game.textures.human);
+        var tex = Game.textures.human;
+        if (e is Player player && player.skinTex != null) {
+            tex = player.skinTex;
+        }
+        Game.graphics.tex(0, tex);
 
         // calculate interpolated rotations
         var interpRot = Vector3.Lerp(e.prevRotation, e.rotation, (float)interp);

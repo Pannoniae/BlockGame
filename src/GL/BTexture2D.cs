@@ -37,16 +37,69 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         image?.Dispose();
         using var s = Assets.open(path!);
         image = Image.Load<Rgba32>(s);
-        GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)image.Width, (uint)image.Height);
-        if (image.DangerousTryGetSinglePixelMemory(out imageData)) {
-            //Console.Out.WriteLine("Loading textures the proper way!");
+        uploadImage(GL, image);
+    }
+
+    /** load from absolute path (not assets/) */
+    public unsafe void loadFromFile(string absolutePath) {
+        var GL = Game.GL;
+        GL.DeleteTexture(handle);
+        handle = GL.CreateTexture(TextureTarget.Texture2D);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
+        image?.Dispose();
+        image = Image.Load<Rgba32>(absolutePath);
+        uploadImage(GL, image);
+    }
+
+    /** load from PNG byte array (for network-received skins) */
+    public unsafe void loadFromBytes(byte[] pngData) {
+        var GL = Game.GL;
+        GL.DeleteTexture(handle);
+        handle = GL.CreateTexture(TextureTarget.Texture2D);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
+        image?.Dispose();
+        using var ms = new MemoryStream(pngData);
+        image = Image.Load<Rgba32>(ms);
+        uploadImage(GL, image);
+    }
+
+    /** check if image has enough opaque pixels (not invisible) */
+    public static bool validateTransparency(Image<Rgba32> img) {
+        int totalPixels = img.Width * img.Height;
+        int opaquePixels = 0;
+
+        for (int y = 0; y < img.Height; y++) {
+            for (int x = 0; x < img.Width; x++) {
+                if (img[x, y].A > 128) {
+                    opaquePixels++;
+                }
+            }
+        }
+
+        // require at least 30% opaque pixels
+        return opaquePixels >= totalPixels * 0.3f;
+    }
+
+    private unsafe void uploadImage(Silk.NET.OpenGL.Legacy.GL GL, Image<Rgba32> img) {
+        GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)img.Width, (uint)img.Height);
+        if (img.DangerousTryGetSinglePixelMemory(out imageData)) {
             fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
-                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)image.Width, (uint)image.Height,
+                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)img.Width, (uint)img.Height,
                     PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
             }
         }
         else {
-            image.ProcessPixelRows(accessor => {
+            img.ProcessPixelRows(accessor => {
                 for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
                     fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
                         GL.TextureSubImage2D(handle, 0, 0, rowIndex, (uint)accessor.Width, 1U,
@@ -56,8 +109,8 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
             });
         }
 
-        width = image.Width;
-        height = image.Height;
+        width = img.Width;
+        height = img.Height;
         iwidth = 1.0 / width;
         iheight = 1.0 / height;
     }

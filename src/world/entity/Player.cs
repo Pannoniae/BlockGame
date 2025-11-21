@@ -1,5 +1,6 @@
 using System.Diagnostics.Contracts;
 using System.Numerics;
+using BlockGame.GL;
 using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.net;
@@ -33,6 +34,9 @@ public class Player : Mob, CommandSource {
     public PlayerRenderer modelRenderer;
 
     public GameMode gameMode;
+
+    /** custom skin texture for this player (null = use default skin) */
+    public BTexture2D? skinTex;
 
     // sound stuff
     private double lastFootstepDistance = 0;
