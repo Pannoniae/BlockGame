@@ -333,9 +333,24 @@ public class Recipe {
 
         // tools
         tool(Item.WOOD_PICKAXE, Block.OAK_PLANKS.item, 111_020_020);
+        tool(Item.WOOD_PICKAXE, Block.MAPLE_PLANKS.item, 111_020_020);
+        tool(Item.WOOD_PICKAXE, Block.MAHOGANY_PLANKS.item, 111_020_020);
+        tool(Item.WOOD_PICKAXE, Block.PINE_PLANKS.item, 111_020_020);
+
         tool(Item.WOOD_AXE, Block.OAK_PLANKS.item, 110_120_020);
+        tool(Item.WOOD_AXE, Block.MAPLE_PLANKS.item, 110_120_020);
+        tool(Item.WOOD_AXE, Block.MAHOGANY_PLANKS.item, 110_120_020);
+        tool(Item.WOOD_AXE, Block.PINE_PLANKS.item, 110_120_020);
+
         tool(Item.WOOD_SHOVEL, Block.OAK_PLANKS.item, 010_020_020);
+        tool(Item.WOOD_SHOVEL, Block.MAPLE_PLANKS.item, 010_020_020);
+        tool(Item.WOOD_SHOVEL, Block.MAHOGANY_PLANKS.item, 010_020_020);
+        tool(Item.WOOD_SHOVEL, Block.PINE_PLANKS.item, 010_020_020);
+
         tool(Item.WOOD_SWORD, Block.OAK_PLANKS.item, 010_010_020);
+        tool(Item.WOOD_SWORD, Block.MAPLE_PLANKS.item, 010_010_020);
+        tool(Item.WOOD_SWORD, Block.MAHOGANY_PLANKS.item, 010_010_020);
+        tool(Item.WOOD_SWORD, Block.PINE_PLANKS.item, 010_010_020);
 
         tool(Item.STONE_PICKAXE, Block.COBBLESTONE.item, 111_020_020);
         tool(Item.STONE_AXE, Block.COBBLESTONE.item, 110_120_020);
