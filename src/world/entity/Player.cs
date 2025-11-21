@@ -1048,7 +1048,10 @@ public class Player : Mob, CommandSource {
                 if (!gameMode.gameplay) {
                     // second, if not found, put it in the selected slot
                     if (stack != null!) {
-                        inventory.setStack(inventory.selected, stack);
+
+                        // we have to zero the metadata so we don't get fucked over by things like stairs
+                        var normalisedItem = bl.getCanonical(raw.getMetadata());
+                        inventory.setStack(inventory.selected, normalisedItem);
 
                         // sync with server, since we are in creative, we can bullshit and server will accept it
                         if (Net.mode.isMPC()) {
@@ -1281,5 +1284,16 @@ public class Player : Mob, CommandSource {
     public override void applyState() {
         base.applyState();
         flyMode = state.getBool(EntityState.FLYING);
+    }
+
+    public void openInventory(int invID, InventoryContext ctx) {
+        currentInventoryID = invID;
+        currentCtx = ctx;
+    }
+
+    public void closeInventory() {
+        currentCtx.close();
+        currentInventoryID = -1;
+        currentCtx = inventoryCtx;
     }
 }

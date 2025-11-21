@@ -1202,7 +1202,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         idt.fogColor(currentHorizonColour.toVec4());
         idt.fogDistance(Settings.instance.renderDistance * Chunk.CHUNKSIZE * 0.25f, Settings.instance.renderDistance * Chunk.CHUNKSIZE - 16);
 
-        var uv = new UVPair(3, 14);
+        var uv = Block.uv("blocks.png", 3, 14);
         var uvn = UVPair.texCoords(Game.textures.blockTexture, uv);
         var uvx = UVPair.texCoords(Game.textures.blockTexture, uv + 1);
 
@@ -1330,7 +1330,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.blockRenderer.setupStandalone();
 
         // force the breaking texture
-        Game.blockRenderer.forceTex = new UVPair(breakStage, 12);
+        Game.blockRenderer.forceTex = Block.atlas.uv("blocks.png", breakStage, 12);
 
         // render the block using BlockRenderer
         breakVertices.Clear();

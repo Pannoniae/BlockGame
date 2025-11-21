@@ -58,7 +58,7 @@ public class CreativeInventoryContext : InventoryContext {
             // special handling for candy stairs - add all colour variants
             else if (i == Block.CANDY_STAIRS.id) {
                 for (byte color = 0; color < 24; color++) {
-                    var metadata = CandyStairs.setColor(0, color);
+                    var metadata = CandyStairs.setColour(0, color);
                     allItems.Add(new ItemStack(Block.CANDY_STAIRS.item, 1, metadata));
                 }
             }

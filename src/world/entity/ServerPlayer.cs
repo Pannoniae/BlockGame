@@ -123,8 +123,7 @@ public class ServerPlayer : Player {
 
         // close any open inv
         if (currentInventoryID != -1) {
-            currentInventoryID = -1;
-            currentCtx = inventoryCtx;
+            closeInventory();
         }
 
         // drop inventory items on death (survival only, blocks only)

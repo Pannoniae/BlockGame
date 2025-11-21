@@ -1636,6 +1636,11 @@ public class Block {
         return self.id == other.id && self.metadata == other.metadata;
     }
 
+
+    public virtual ItemStack getCanonical(byte metadata) {
+        return new ItemStack(getItem(), 1, metadata);
+    }
+
     /**
      * Returns the texture for a specific face index and metadata.
      * Default implementation returns the static texture.

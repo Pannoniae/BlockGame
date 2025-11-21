@@ -63,7 +63,7 @@ public class CreativeInventoryMenu : InventoryMenu {
         base.deactivate();
         // reset to default player inventory ID
         if (Game.player != null) {
-            Game.player.currentInventoryID = -1;
+            Game.player.closeInventory();
         }
     }
 

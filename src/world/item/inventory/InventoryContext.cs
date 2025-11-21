@@ -15,6 +15,9 @@ namespace BlockGame.world.item.inventory;
  * This is needed because the player can interact with multiple inventories at once, and we can't just yeet this onto the menu itself (there will be server code!)
  */
 public abstract class InventoryContext {
+
+    protected Player player;
+
     protected readonly List<ItemSlot> slots = [];
 
     // server-side: track viewers for broadcasting changes
@@ -179,6 +182,10 @@ public abstract class InventoryContext {
                 // else different item - do nothing (no swap on right-click)
             }
         }
+    }
+
+    public virtual void close() {
+
     }
 }
 

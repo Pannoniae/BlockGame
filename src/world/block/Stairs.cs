@@ -1,6 +1,7 @@
 ﻿using BlockGame.GL.vertexformats;
 using BlockGame.render;
 using BlockGame.util;
+using BlockGame.world.item;
 
 namespace BlockGame.world.block;
 
@@ -85,6 +86,14 @@ public class Stairs : Block {
 
     public override bool same(ItemStack self, ItemStack other) {
         return self.id == other.id;
+    }
+
+    public override ItemStack getCanonical(byte metadata) {
+        return new ItemStack(getItem(), 1, 0);
+    }
+
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+        return (getItem(), 0, 1);
     }
 
     public override byte maxValidMetadata() => 3;

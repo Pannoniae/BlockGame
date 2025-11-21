@@ -33,7 +33,7 @@ public class CandyStairs : Stairs {
      * Bits 3-7: candy color (0-23)
      */
     public static byte getColour(byte metadata) => (byte)((metadata >> 3) & 0x1F);
-    public static byte setColor(byte metadata, byte color) => (byte)((metadata & 0b111) | ((color & 0x1F) << 3));
+    public static byte setColour(byte metadata, byte color) => (byte)((metadata & 0b111) | ((color & 0x1F) << 3));
 
     public override UVPair getTexture(int faceIdx, int metadata) {
         return uvs[metadata];
@@ -42,7 +42,7 @@ public class CandyStairs : Stairs {
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         var color = getColour(metadata);
         var opposite = Direction.getOpposite(info.hfacing);
-        var finalMeta = setColor(0, color);
+        var finalMeta = setColour(0, color);
         finalMeta = (byte)((finalMeta & ~0b11) | ((byte)opposite & 0b11));
 
         world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(finalMeta));
@@ -57,6 +57,14 @@ public class CandyStairs : Stairs {
 
     public override bool same(ItemStack self, ItemStack other) {
         return other.id == self.id && getColour((byte)other.metadata) == getColour((byte)self.metadata);
+    }
+
+    public override ItemStack getCanonical(byte metadata) {
+        return new ItemStack(id, 1, setColour(0, getColour(metadata)));
+    }
+
+    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+        return (getItem(), setColour(0, getColour(metadata)), 1);
     }
 
     public string getName(byte metadata) {

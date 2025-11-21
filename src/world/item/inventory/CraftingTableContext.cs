@@ -1,5 +1,6 @@
-using BlockGame.ui.menu;
+using BlockGame.main;
 using BlockGame.util;
+using BlockGame.world.entity;
 
 namespace BlockGame.world.item.inventory;
 
@@ -15,8 +16,9 @@ public class CraftingTableContext : InventoryContext {
     public const int craftingResultX = 140;
     public const int craftingResultY = 33;
 
-    public CraftingTableContext(PlayerInventory playerInv) {
-        this.playerInv = playerInv;
+    public CraftingTableContext(Player player) {
+        this.player = player;
+        this.playerInv = player.inventory;
         this.craftingGrid = new CraftingGridInventory(this, 3, 3);
         setupSlots();
     }
@@ -59,4 +61,16 @@ public class CraftingTableContext : InventoryContext {
     }
 
     public CraftingGridInventory getCraftingGrid() => craftingGrid;
+
+    public override void close() {
+        if (!Net.mode.isMPC()) {
+            for (int i = 0; i < craftingGrid.grid.Length; i++) {
+                var stack = craftingGrid.grid[i];
+                if (stack != ItemStack.EMPTY && stack.quantity > 0) {
+                    player.dropItemStack(stack, true);
+                    craftingGrid.grid[i] = ItemStack.EMPTY;
+                }
+            }
+        }
+    }
 }

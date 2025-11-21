@@ -711,8 +711,7 @@ public class GameServer : INetEventListener {
             if (conn.player != null) {
                 // remove from viewer list before context reset
                 conn.player.currentCtx?.removeViewer(conn);
-                conn.player.currentInventoryID = -1;
-                conn.player.currentCtx = conn.player.inventoryCtx;
+                conn.player.closeInventory();
             }
 
             // save player data before removing

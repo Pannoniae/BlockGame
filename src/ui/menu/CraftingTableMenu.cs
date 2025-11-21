@@ -69,19 +69,5 @@ public class CraftingTableMenu : InventoryMenu {
 
     public override void deactivate() {
         base.deactivate();
-
-        // return all items from crafting grid to player inventory
-        var player = Game.player;
-        if (player == null) return;
-
-        var craftingGrid = craftingCtx.getCraftingGrid();
-
-        for (int i = 0; i < craftingGrid.grid.Length; i++) {
-            var stack = craftingGrid.grid[i];
-            if (stack != ItemStack.EMPTY && stack.quantity > 0) {
-                player.dropItemStack(stack, true);
-                craftingGrid.grid[i] = ItemStack.EMPTY;
-            }
-        }
     }
 }

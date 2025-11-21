@@ -165,8 +165,7 @@ public abstract class InventoryMenu : Menu {
             }
 
             // close context - reset to player inventory
-            player.currentInventoryID = -1;
-            player.currentCtx = player.inventoryCtx;
+            player.closeInventory();
 
             // don't clear the cursor here - server handles it and sends SetSlotPacket back
             // (clearing here causes a race condition with server-side drop i think)

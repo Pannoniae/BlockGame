@@ -1205,8 +1205,7 @@ public class ServerPacketHandler : PacketHandler {
         }
 
         // close the window - reset to player inventory context
-        conn.player.currentInventoryID = -1;
-        conn.player.currentCtx = conn.player.inventoryCtx;
+        conn.player.closeInventory();
 
         Log.info($"Player '{conn.username}' closed inventory window {p.invID}");
     }

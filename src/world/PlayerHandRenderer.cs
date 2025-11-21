@@ -710,7 +710,7 @@ public class PlayerHandRenderer {
         var g = tint.G;
         var b = tint.B;
 
-        var fireUV = new UVPair(3, 14);
+        var fireUV = Block.uv("blocks.png", 3, 14);
         var uvMin = UVPair.texCoords(Game.textures.blockTexture, fireUV);
         var uvMax = UVPair.texCoords(Game.textures.blockTexture, fireUV + 1);
 

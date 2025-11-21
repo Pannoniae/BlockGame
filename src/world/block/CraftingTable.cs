@@ -20,7 +20,7 @@ public class CraftingTable : Block {
 
         // server-side: open crafting table inventory
         if (Net.mode.isDed()) {
-            var ctx = new CraftingTableContext(player.inventory);
+            var ctx = new CraftingTableContext(player);
             var craftingGrid = ctx.getCraftingGrid();
 
             return GameServer.openInventory(
@@ -34,7 +34,7 @@ public class CraftingTable : Block {
         }
         else {
             // singleplayer - open directly
-            var ctx = new CraftingTableContext(player.inventory);
+            var ctx = new CraftingTableContext(player);
             player.currentCtx = ctx;
 
             Screen.GAME_SCREEN.switchToMenu(new CraftingTableMenu(new Vector2I(0, 32), ctx));

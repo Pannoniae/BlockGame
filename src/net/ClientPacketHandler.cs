@@ -928,8 +928,7 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // close context - reset to player inventory
-        Game.player.currentInventoryID = -1;
-        Game.player.currentCtx = Game.player.inventoryCtx;
+        Game.player.closeInventory();
 
         // update local player's game mode
         var id = p.gamemode;
@@ -1001,7 +1000,7 @@ public class ClientPacketHandler : PacketHandler {
             }
             case 1: {
                 // crafting table (no block entity, temporary crafting grid)
-                var ctx = new CraftingTableContext(Game.player.inventory);
+                var ctx = new CraftingTableContext(Game.player);
                 Game.player.currentCtx = ctx;
 
                 Screen.GAME_SCREEN.switchToMenu(new CraftingTableMenu(new Vector2I(0, 32), ctx));
@@ -1040,8 +1039,7 @@ public class ClientPacketHandler : PacketHandler {
         Game.player.inventory.cursor = ItemStack.EMPTY;
 
         // close current inventory
-        Game.player.currentInventoryID = -1;
-        Game.player.currentCtx = Game.player.inventoryCtx;
+        Game.player.closeInventory();
 
         // close menu on main thread if it's open
         Game.instance.executeOnMainThread(() => {
