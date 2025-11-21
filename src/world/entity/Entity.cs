@@ -169,7 +169,7 @@ public partial class Entity(World world, string type) : Persistent {
     public string tex;
 
     // network state sync
-    public EntityState state = new();
+    public readonly EntityState state = new();
 
     // capability flags - override in subclasses
     protected virtual bool needsPrevVars => true;
@@ -178,7 +178,7 @@ public partial class Entity(World world, string type) : Persistent {
     protected virtual bool needsCollision => true;
     protected virtual bool needsFriction => true;
     protected virtual bool needsBlockInteraction => true;
-    protected virtual bool needsEntityCollision => false; // TODO
+    protected virtual bool needsEntityCollision => false;
     protected virtual bool needsBodyRotation => false;
     protected virtual bool needsFootsteps => false;
     protected virtual bool needsFallDamage => false;

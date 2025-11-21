@@ -18,7 +18,7 @@ public class NewSurfaceGenerator : SurfaceGenerator {
     private readonly Ravine ravines = new();
     private readonly OreFeature copperOre = new(Block.COPPER_ORE.id, 6, 16);
     private readonly OreFeature ironOre = new(Block.IRON_ORE.id, 6, 12);
-    private readonly OreFeature coalOre = new(Block.COAL_ORE.id, 8, 16);
+    private readonly OreFeature coalOre = new(Block.COAL_ORE.id, 12, 18);
     private readonly OreFeature goldOre = new(Block.GOLD_ORE.id, 6, 8);
     private readonly OreFeature diamondOre = new(Block.DIAMOND_ORE.id, 4, 6);
     private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 4, 6);

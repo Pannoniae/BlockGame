@@ -286,8 +286,9 @@ public class ClientPacketHandler : PacketHandler {
         }
 
         // mark chunk as ready (skip worldgen, already lighted by server)
-        // but only if it doesn't exist! if its an update, obviously don't
-        if (!existing) {
+        // always set to LIGHTED when receiving chunk data from server (even for updates)
+        // this ensures neighbor checks pass during meshing
+        if (!existing || chunk.status < ChunkStatus.LIGHTED) {
             chunk.status = ChunkStatus.LIGHTED;
         }
 
@@ -598,7 +599,7 @@ public class ClientPacketHandler : PacketHandler {
                     break;
                 case EntityActionPacket.Action.TAKE_DAMAGE:
                     // trigger damage flash/animation on entity
-                    entity.dmgTime = 10;
+                    entity.dmgTime = 30;
                     break;
                 case EntityActionPacket.Action.DEATH:
                     // mark entity as dead (starts death animation)
@@ -726,7 +727,12 @@ public class ClientPacketHandler : PacketHandler {
                     var slot = slots[p.slotIndex];
                     if (slot.inventory != null) {
                         slot.inventory.setStack(slot.index, p.stack);
-                        
+
+                        // if furnace input slot changed, recalculate recipe
+                        // todo we could make this more general but this will do for now...
+                        if (Game.player.currentCtx is FurnaceMenuContext && slot.inventory is FurnaceBlockEntity furnace && slot.index == 0) {
+                            furnace.currentRecipe = p.stack != ItemStack.EMPTY ? SmeltingRecipe.findRecipe(p.stack.getItem()) : null;
+                        }
                     }
                 }
             }
@@ -964,7 +970,13 @@ public class ClientPacketHandler : PacketHandler {
 
             // update currentRecipe on client (needed for getSmeltProgress() calculation)
             // server sets this during update(), but client doesn't run update() :)
-            furnace.currentRecipe = furnace.slots[0] != ItemStack.EMPTY ? SmeltingRecipe.findRecipe(furnace.slots[0].getItem()) : null;
+            if (p.smeltProgress > 0 && furnace.slots[0] != ItemStack.EMPTY) {
+                // only update recipe if we don't have one or input changed
+                furnace.currentRecipe ??= SmeltingRecipe.findRecipe(furnace.slots[0].getItem());
+            } else {
+                // no progress or no item = no recipe
+                furnace.currentRecipe = null;
+            }
         }
     }
 

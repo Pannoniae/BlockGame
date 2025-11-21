@@ -952,17 +952,9 @@ public class GameServer : INetEventListener {
             // check if viewing a furnace
             if (conn.player.currentInventoryID >= 0 && conn.player.currentCtx is FurnaceMenuContext furnaceCtx) {
                 if (furnaceCtx.getFurnaceInventory() is FurnaceBlockEntity furnace) {
-                    // sync progress bars
-                    conn.send(new FurnaceSyncPacket {
-                        position = furnace.pos,
-                        smeltProgress = furnace.smeltProgress,
-                        fuelRemaining = furnace.fuelRemaining,
-                        fuelMax = furnace.fuelMax,
-                        lit = furnace.isLit()
-                    }, DeliveryMethod.Unreliable); // unreliable is fine, sent every 2 ticks
-
-                    // sync slots (input/fuel/output) - these change during smelting but aren't auto-notified sadly
+                    // sync slots FIRST (input/fuel/output) - these change during smelting but aren't auto-notified sadly
                     // since furnace modifies its own slots during update(), not just through user interaction
+                    // IMPORTANT: send slots before progress so client has correct recipe info!
                     var slots = furnaceCtx.getSlots();
                     // furnace slots at the end. TODO have better slot handling this is fucked!!
                     int furnaceSlotStart = slots.Count - 3;
@@ -973,6 +965,15 @@ public class GameServer : INetEventListener {
                             furnaceCtx.notifySlotChanged(slotIdx, slot.getStack());
                         }
                     }
+
+                    // sync progress bars
+                    conn.send(new FurnaceSyncPacket {
+                        position = furnace.pos,
+                        smeltProgress = furnace.smeltProgress,
+                        fuelRemaining = furnace.fuelRemaining,
+                        fuelMax = furnace.fuelMax,
+                        lit = furnace.isLit()
+                    }, DeliveryMethod.Unreliable); // unreliable is fine, sent every 2 ticks
                 }
             }
         }

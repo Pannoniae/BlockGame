@@ -1,4 +1,6 @@
-﻿namespace BlockGame.world.block;
+﻿using Molten;
+
+namespace BlockGame.world.block;
 
 public abstract class EntityBlock : Block {
     public EntityBlock(string name) : base(name) {
@@ -10,7 +12,7 @@ public abstract class EntityBlock : Block {
 
     public override void onPlace(World world, int x, int y, int z, byte metadata) {
         var be = get();
-        be.pos = new Molten.Vector3I(x, y, z);
+        be.pos = new Vector3I(x, y, z);
         world.setBlockEntity(x, y, z, be);
     }
 

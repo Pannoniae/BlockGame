@@ -146,6 +146,9 @@ public class Player : Mob, CommandSource {
         // gamemode
         var gamemodeID = data.getInt("gamemode", 1);
         this.gameMode = GameMode.fromID((GameModeID)gamemodeID);
+
+        // health
+        hp = data.getDouble("hp", 100);
     }
 
     public override void writex(NBTCompound data) {
@@ -185,6 +188,8 @@ public class Player : Mob, CommandSource {
 
         // gamemode
         data.addInt("gamemode", (int)gameMode.id);
+        // health
+        data.addDouble("hp", hp);
     }
 
     public void render(double dt, double interp) {
@@ -1178,11 +1183,11 @@ public class Player : Mob, CommandSource {
         itemEntity.plotArmour = 144;
 
         if (withVelocity) {
-            // throw in facing direction
+            // throw in horizontal facing direction
             var eyePos = new Vector3D(position.X, position.Y + eyeHeight, position.Z);
-            var forward = camFacing();
+            var forward = facing(); // horizontal facing only, ignore pitch
             itemEntity.position = eyePos + forward.toVec3D() * 0.5;
-            itemEntity.velocity = forward.toVec3D() * 8 + new Vector3D(0, 2, 0);
+            itemEntity.velocity = forward.toVec3D() * 3.5 + new Vector3D(0, 1.5, 0);
         }
         else {
             // drop at feet, radomly offset
