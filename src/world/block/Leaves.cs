@@ -28,28 +28,28 @@ public class Leaves : Block {
     }
 
     public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        // oak: 1 in 20 chance to drop apple
+        // oak: 1 in 10 chance to drop apple
         if (id == LEAVES.id && Game.random.Next(10) == 0) {
             return (Item.APPLE, 0, 1);
         }
 
-        // oak: 1 in 10 chance to drop sampling
-        if (id == LEAVES.id && Game.random.Next(10) == 0){
+        // oak: 1 in 15 chance to drop sapling
+        if (id == LEAVES.id && Game.random.Next(15) == 0){
             return (Block.OAK_SAPLING.item, 0, 1);
         }
 
-        // maple leaves: 1 in 16 chance to drop maple syrup
-        if (id == MAPLE_LEAVES.id && Game.random.Next(10) == 0) {
+        // maple leaves: 1 in 15 chance to drop sapling
+        if (id == MAPLE_LEAVES.id && Game.random.Next(15) == 0) {
             return (Block.MAPLE_SAPLING.item, 0, 1);
         }
 
-        // maple leaves: 1 in 16 chance to drop maple syrup
-        if (id == MAPLE_LEAVES.id && Game.random.Next(16) == 0) {
+        // maple leaves: 1 in 20 chance to drop maple syrup
+        if (id == MAPLE_LEAVES.id && Game.random.Next(20) == 0) {
             return (Item.MAPLE_SYRUP, 0, 1);
         }
 
-        // maple leaves: 1 in 10 chance to drop maple syrup
-        if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
+        // mahogany leaves: 1 in 15 chance to drop sapling
+        if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
             return (Block.MAHOGANY_SAPLING.item, 0, 1);
         }
 

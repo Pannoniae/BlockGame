@@ -63,6 +63,15 @@ public class Recipe {
     public static Recipe darkgreen_dye;
     public static Recipe LANTERN;
 
+    public static Recipe GOLD_BLOCK;
+    public static Recipe IRON_BLOCK;
+    public static Recipe COPPER_BLOCK;
+    public static Recipe COAL_BLOCK;
+    public static Recipe COPPER_INGOT;
+    public static Recipe IRON_INGOT;
+    public static Recipe GOLD_INGOT;
+    public static Recipe COAL;
+
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
     private ItemStack result;
@@ -147,7 +156,7 @@ public class Recipe {
             .ingredients(Block.MAPLE_PLANKS.item, Item.STICK);
 
         // slab (3 planks horizontally) - any plank type works
-        OAK_SLAB = register(new ItemStack(Block.OAK_SLAB.item, 1));
+        OAK_SLAB = register(new ItemStack(Block.OAK_SLAB.item, 3));
         OAK_SLAB.shape(000_000_111, 3);
         OAK_SLAB.ingredients(Block.OAK_PLANKS.item);
         register(new ItemStack(Block.MAHOGANY_SLAB.item, 1))
@@ -179,7 +188,7 @@ public class Recipe {
             .ingredients(Block.SAND_BRICK.item);
 
         // stairs (1/2/3 planks horizontally) - any plank type works
-        OAK_STAIRS = register(new ItemStack(Block.OAK_STAIRS.item, 1));
+        OAK_STAIRS = register(new ItemStack(Block.OAK_STAIRS.item, 6));
         OAK_STAIRS.shape(100_110_111, 3);
         OAK_STAIRS.ingredients(Block.OAK_PLANKS.item);
         register(new ItemStack(Block.MAHOGANY_STAIRS.item, 1))
@@ -332,7 +341,7 @@ public class Recipe {
         tool(Item.GOLD_HOE, Item.GOLD_INGOT, 110_020_020, 3);
         tool(Item.GOLD_SCYTHE, Item.GOLD_INGOT, 111_002_002, 3);
 
-        // ore blocks
+        // blocks from ingots
         register(new ItemStack(Block.COPPER_BLOCK.item, 1))
             .shape(111_111_111, 3)
             .ingredients(Item.COPPER_INGOT);
@@ -345,18 +354,27 @@ public class Recipe {
             .shape(111_111_111, 3)
             .ingredients(Item.GOLD_INGOT);
 
-        register(new ItemStack(Block.DIAMOND_BLOCK.item, 1))
-            .shape(111_111_111, 3)
-            .ingredients(Item.DIAMOND);
-
         register(new ItemStack(Block.COAL_BLOCK.item, 1))
             .shape(111_111_111, 3)
             .ingredients(Item.COAL);
 
+        //ingots from blocks
+        register(new ItemStack(Item.COPPER_INGOT, 9))
+            .shape(01_00,2)
+            .ingredients(Block.COPPER_BLOCK.item);
+
+        register(new ItemStack(Item.IRON_INGOT, 9))
+            .shape(01_00,2)
+            .ingredients(Block.IRON_BLOCK.item);
+
+        register(new ItemStack(Item.GOLD_INGOT, 9))
+            .shape(01_00,2)
+            .ingredients(Block.GOLD_BLOCK.item);
+
+        register(new ItemStack(Item.COAL, 9))
+            .shape(01_00,2)
+            .ingredients(Block.COAL_BLOCK.item);
     }
-
-
-
 
     private static Recipe tool(Item result, Item material, int shape, int q = 1) {
         int gridSize = shape > 9999 ? 3 : 2;

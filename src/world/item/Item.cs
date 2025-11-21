@@ -282,7 +282,7 @@ public class Item {
 
         DYE = register("dye", new DyeItem("Dye"));
 
-        APPLE = register("apple", new Food("Apple", 1));
+        APPLE = register("apple", new Food("Apple", 5));
         APPLE.tex = new UVPair(0, 10);
 
         MAPLE_SYRUP = register("mapleSyrup", new Food("Maple Syrup", 10));
@@ -294,13 +294,13 @@ public class Item {
         BOTTLE_MILK = register("milk", new Food("Bottle of Milk", 10));
         BOTTLE_MILK.tex = new UVPair(3, 10);
 
-        RAW_BEEF = register("rawBeef", new Food("Raw Beef", 5));
+        RAW_BEEF = register("rawBeef", new Food("Raw Beef", 10));
         RAW_BEEF.tex = new UVPair(4, 10);
 
-        STEAK = register("steak", new Food("Steak", 25));
+        STEAK = register("steak", new Food("Steak", 30));
         STEAK.tex = new UVPair(5, 10);
 
-        PORKCHOP = register("porkchop", new Food("Porkchop", 5));
+        PORKCHOP = register("porkchop", new Food("Porkchop", 10));
         PORKCHOP.tex = new UVPair(6, 10);
 
         COOKED_PORKCHOP = register("cookedPorkchop", new Food("Cooked Porkchop", 20));
