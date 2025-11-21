@@ -586,7 +586,7 @@ public class Block {
         COPPER_BLOCK.setTier(MaterialTier.IRON);
 
         IRON_BLOCK = register("ironBlock", new Block("Block of Iron"));
-        IRON_BLOCK.setTex(cubeUVs(6, 8));
+        IRON_BLOCK.setTex(cubeUVs(5, 8));
         renderType[IRON_BLOCK.id] = RenderType.CUBE;
         IRON_BLOCK.material(Material.METAL);
         IRON_BLOCK.setHardness(7.0);
