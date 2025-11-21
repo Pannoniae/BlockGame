@@ -15,7 +15,7 @@ public class CandyBlock : Block {
         for (int i = 0; i <= maxValidMetadata(); i++) {
             int row = i / 16;
             int col = i % 16;
-            uvs[i] = atlas.uv("blocks.png", col, 6 + row);
+            uvs[i] = uv("blocks.png", col, 6 + row);
         }
     }
 

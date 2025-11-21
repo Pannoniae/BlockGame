@@ -96,6 +96,13 @@ public class Item {
     //public static Item FEATHER;
     //public static Item STRING;
 
+    public static UVPair uv(string source, int x, int y) {
+        if (Net.mode.isDed()) {
+            return new UVPair(0, 0);
+        }
+        return atlas.uv(source, x, y);
+    }
+
 
     public Item(string name) {
         this.name = name;
@@ -145,201 +152,202 @@ public class Item {
     public static int blockID(int blockID) => Block.get(blockID)?.item.id ?? 0;
 
     public static void preLoad() {
-
-        atlas = Game.textures.itemTexture;
+        if (!Net.mode.isDed()) {
+            atlas = Game.textures.itemTexture;
+        }
 
         AIR = register("iair", new Item("Air"));
 
         STICK = register("stick", new Item("Stick"));
-        STICK.tex = atlas.uv("items.png", 0, 8);
+        STICK.tex = uv("items.png", 0, 8);
         material[STICK.id] = true;
 
         SIGN_ITEM = register("signItem", new SignItem("Sign", Block.SIGN));
-        SIGN_ITEM.tex = atlas.uv("items.png", 1, 7);
+        SIGN_ITEM.tex = uv("items.png", 1, 7);
 
         OAK_DOOR = register("oakdoorItem", new DoorItem("Oak Door", Block.OAK_DOOR));
-        OAK_DOOR.tex = atlas.uv("items.png", 4, 8);
+        OAK_DOOR.tex = uv("items.png", 4, 8);
 
         MAHOGANY_DOOR = register("mahoganyDoorItem", new DoorItem("Mahogany Door", Block.MAHOGANY_DOOR));
-        MAHOGANY_DOOR.tex = atlas.uv("items.png", 5, 8);
+        MAHOGANY_DOOR.tex = uv("items.png", 5, 8);
 
         COPPER_INGOT = register("copperIngot", new Item("Copper Ingot"));
-        COPPER_INGOT.tex = atlas.uv("items.png", 4, 0);
+        COPPER_INGOT.tex = uv("items.png", 4, 0);
         material[COPPER_INGOT.id] = true;
 
         IRON_INGOT = register("ironIngot", new Item("Iron Ingot"));
-        IRON_INGOT.tex = atlas.uv("items.png", 1, 0);
+        IRON_INGOT.tex = uv("items.png", 1, 0);
         material[IRON_INGOT.id] = true;
 
         GOLD_INGOT = register("goldIngot", new Item("Gold Ingot"));
-        GOLD_INGOT.tex = atlas.uv("items.png", 0, 0);
+        GOLD_INGOT.tex = uv("items.png", 0, 0);
         material[GOLD_INGOT.id] = true;
 
         DIAMOND = register("diamond", new Item("Diamond"));
-        DIAMOND.tex = atlas.uv("items.png", 3, 9);
+        DIAMOND.tex = uv("items.png", 3, 9);
         material[DIAMOND.id] = true;
 
         CINNABAR = register("cinnabar", new Item("Cinnabar"));
-        CINNABAR.tex = atlas.uv("items.png", 4, 9);
+        CINNABAR.tex = uv("items.png", 4, 9);
         material[CINNABAR.id] = true;
 
         COAL = register("coal", new Item("Coal"));
-        COAL.tex = atlas.uv("items.png", 1, 9);
+        COAL.tex = uv("items.png", 1, 9);
         material[COAL.id] = true;
 
         FLINT = register("flint", new Item("Flint"));
-        FLINT.tex = atlas.uv("items.png", 0, 9);
+        FLINT.tex = uv("items.png", 0, 9);
 
         CLAY = register("clay", new Item("Clay"));
-        CLAY.tex = atlas.uv("items.png", 2, 9);
+        CLAY.tex = uv("items.png", 2, 9);
         material[CLAY.id] = true;
 
         BRICK = register("brick", new Item("Brick"));
-        BRICK.tex = atlas.uv("items.png", 5, 0);
+        BRICK.tex = uv("items.png", 5, 0);
         material[BRICK.id] = true;
 
         //TIN_INGOT = register("tinIngot", new Item("Tin Ingot"));
-        //TIN_INGOT.tex = atlas.uv("items.png", 2, 0);
+        //TIN_INGOT.tex = uv("items.png", 2, 0);
         //material[TIN_INGOT.id] = true;
 
         //SILVER_INGOT = register("silverIngot", new Item("Silver Ingot"));
-        //SILVER_INGOT.tex = atlas.uv("items.png", 3, 0);
+        //SILVER_INGOT.tex = uv("items.png", 3, 0);
         //material[SILVER_INGOT.id] = true;
 
         WOOD_PICKAXE = register("woodPickaxe", new Tool("Wood Pickaxe", ToolType.PICKAXE, MaterialTier.WOOD, 1.0));
-        WOOD_PICKAXE.tex = atlas.uv("items.png", 2, 4);
+        WOOD_PICKAXE.tex = uv("items.png", 2, 4);
 
         WOOD_AXE = register("woodAxe", new Tool("Wood Axe", ToolType.AXE, MaterialTier.WOOD, 1.0));
-        WOOD_AXE.tex = atlas.uv("items.png", 3, 4);
+        WOOD_AXE.tex = uv("items.png", 3, 4);
 
         WOOD_SHOVEL = register("woodShovel", new Tool("Wood Shovel", ToolType.SHOVEL, MaterialTier.WOOD, 1.0));
-        WOOD_SHOVEL.tex = atlas.uv("items.png", 4, 4);
+        WOOD_SHOVEL.tex = uv("items.png", 4, 4);
 
         WOOD_SWORD = register("woodSword", new Weapon("Wood Sword", MaterialTier.WOOD, 4.0));
-        WOOD_SWORD.tex = atlas.uv("items.png", 5, 4);
+        WOOD_SWORD.tex = uv("items.png", 5, 4);
 
         STONE_PICKAXE = register("stonePickaxe", new Tool("Stone Pickaxe", ToolType.PICKAXE, MaterialTier.STONE, 1.25));
-        STONE_PICKAXE.tex = atlas.uv("items.png", 2, 3);
+        STONE_PICKAXE.tex = uv("items.png", 2, 3);
 
         STONE_AXE = register("stoneAxe", new Tool("Stone Axe", ToolType.AXE, MaterialTier.STONE, 1.25));
-        STONE_AXE.tex = atlas.uv("items.png", 3, 3);
+        STONE_AXE.tex = uv("items.png", 3, 3);
 
         STONE_SHOVEL = register("stoneShovel", new Tool("Stone Shovel", ToolType.SHOVEL, MaterialTier.STONE, 1.25));
-        STONE_SHOVEL.tex = atlas.uv("items.png", 4, 3);
+        STONE_SHOVEL.tex = uv("items.png", 4, 3);
 
         STONE_SWORD = register("stoneSword", new Weapon("Stone Sword", MaterialTier.STONE, 5.0));
-        STONE_SWORD.tex = atlas.uv("items.png", 5, 3);
+        STONE_SWORD.tex = uv("items.png", 5, 3);
 
         STONE_HOE = register("stoneHoe", new Tool("Stone Hoe", ToolType.HOE, MaterialTier.STONE, 1.25));
-        STONE_HOE.tex = atlas.uv("items.png", 6, 3);
+        STONE_HOE.tex = uv("items.png", 6, 3);
 
         STONE_SCYTHE = register("stoneScythe", new Tool("Stone Scythe", ToolType.SCYTHE, MaterialTier.STONE, 1.25));
-        STONE_SCYTHE.tex = atlas.uv("items.png", 7, 3);
+        STONE_SCYTHE.tex = uv("items.png", 7, 3);
 
         COPPER_PICKAXE = register("copperPickaxe", new Tool("Copper Pickaxe", ToolType.PICKAXE, MaterialTier.COPPER, 1.5));
-        COPPER_PICKAXE.tex = atlas.uv("items.png", 2, 5);
+        COPPER_PICKAXE.tex = uv("items.png", 2, 5);
 
         COPPER_AXE = register("copperAxe", new Tool("Copper Axe", ToolType.AXE, MaterialTier.COPPER, 1.5));
-        COPPER_AXE.tex = atlas.uv("items.png", 3, 5);
+        COPPER_AXE.tex = uv("items.png", 3, 5);
 
         COPPER_SHOVEL = register("copperShovel", new Tool("Copper Shovel", ToolType.SHOVEL, MaterialTier.COPPER, 1.5));
-        COPPER_SHOVEL.tex = atlas.uv("items.png", 4, 5);
+        COPPER_SHOVEL.tex = uv("items.png", 4, 5);
 
         COPPER_SWORD = register("copperSword", new Weapon("Copper Sword", MaterialTier.COPPER, 6.0));
-        COPPER_SWORD.tex = atlas.uv("items.png", 5, 5);
+        COPPER_SWORD.tex = uv("items.png", 5, 5);
 
         COPPER_HOE = register("copperHoe", new Tool("Copper Hoe", ToolType.HOE, MaterialTier.COPPER, 1.5));
-        COPPER_HOE.tex = atlas.uv("items.png", 6, 5);
+        COPPER_HOE.tex = uv("items.png", 6, 5);
 
         COPPER_SCYTHE = register("copperScythe", new Tool("Copper Scythe", ToolType.SCYTHE, MaterialTier.COPPER, 1.5));
-        COPPER_SCYTHE.tex = atlas.uv("items.png", 7, 5);
+        COPPER_SCYTHE.tex = uv("items.png", 7, 5);
 
         IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f));
-        IRON_PICKAXE.tex = atlas.uv("items.png", 2, 6);
+        IRON_PICKAXE.tex = uv("items.png", 2, 6);
 
         IRON_AXE = register("ironAxe", new Tool("Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5));
-        IRON_AXE.tex = atlas.uv("items.png", 3, 6);
+        IRON_AXE.tex = uv("items.png", 3, 6);
 
         IRON_SHOVEL = register("ironShovel", new Tool("Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2.5));
-        IRON_SHOVEL.tex = atlas.uv("items.png", 4, 6);
+        IRON_SHOVEL.tex = uv("items.png", 4, 6);
 
         IRON_SWORD = register("ironSword", new Weapon("Iron Sword", MaterialTier.IRON, 7.0));
-        IRON_SWORD.tex = atlas.uv("items.png", 5, 6);
+        IRON_SWORD.tex = uv("items.png", 5, 6);
 
         IRON_HOE = register("ironHoe", new Tool("Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5));
-        IRON_HOE.tex = atlas.uv("items.png", 6, 6);
+        IRON_HOE.tex = uv("items.png", 6, 6);
 
         IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.SCYTHE, MaterialTier.IRON, 2.5));
-        IRON_SCYTHE.tex = atlas.uv("items.png", 7, 6);
+        IRON_SCYTHE.tex = uv("items.png", 7, 6);
 
         GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f));
-        GOLD_PICKAXE.tex = atlas.uv("items.png", 2, 7);
+        GOLD_PICKAXE.tex = uv("items.png", 2, 7);
 
         GOLD_AXE = register("goldAxe", new Tool("Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3.0));
-        GOLD_AXE.tex = atlas.uv("items.png", 3, 7);
+        GOLD_AXE.tex = uv("items.png", 3, 7);
 
         GOLD_SHOVEL = register("goldShovel", new Tool("Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3.0));
-        GOLD_SHOVEL.tex = atlas.uv("items.png", 4, 7);
+        GOLD_SHOVEL.tex = uv("items.png", 4, 7);
 
         GOLD_SWORD = register("goldSword", new Weapon("Gold Sword", MaterialTier.GOLD, 8.0));
-        GOLD_SWORD.tex = atlas.uv("items.png", 5, 7);
+        GOLD_SWORD.tex = uv("items.png", 5, 7);
 
         GOLD_HOE = register("goldHoe", new Tool("Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0));
-        GOLD_HOE.tex = atlas.uv("items.png", 6, 7);
+        GOLD_HOE.tex = uv("items.png", 6, 7);
 
         GOLD_SCYTHE = register("goldScythe", new Tool("Gold Scythe", ToolType.SCYTHE, MaterialTier.GOLD, 3.0));
-        GOLD_SCYTHE.tex = atlas.uv("items.png", 7, 7);
+        GOLD_SCYTHE.tex = uv("items.png", 7, 7);
 
         DYE = register("dye", new DyeItem("Dye"));
 
         APPLE = register("apple", new Food("Apple", 5));
-        APPLE.tex = atlas.uv("items.png", 0, 10);
+        APPLE.tex = uv("items.png", 0, 10);
 
         MAPLE_SYRUP = register("mapleSyrup", new Food("Maple Syrup", 10));
-        MAPLE_SYRUP.tex = atlas.uv("items.png", 1, 10);
+        MAPLE_SYRUP.tex = uv("items.png", 1, 10);
 
         BOTTLE = register("bottle", new Item("Empty Bottle"));
-        BOTTLE.tex = atlas.uv("items.png", 2, 10);
+        BOTTLE.tex = uv("items.png", 2, 10);
 
         BOTTLE_MILK = register("milk", new Food("Bottle of Milk", 10));
-        BOTTLE_MILK.tex = atlas.uv("items.png", 3, 10);
+        BOTTLE_MILK.tex = uv("items.png", 3, 10);
 
         RAW_BEEF = register("rawBeef", new Food("Raw Beef", 10));
-        RAW_BEEF.tex = atlas.uv("items.png", 4, 10);
+        RAW_BEEF.tex = uv("items.png", 4, 10);
 
         STEAK = register("steak", new Food("Steak", 30));
-        STEAK.tex = atlas.uv("items.png", 5, 10);
+        STEAK.tex = uv("items.png", 5, 10);
 
         PORKCHOP = register("porkchop", new Food("Porkchop", 10));
-        PORKCHOP.tex = atlas.uv("items.png", 6, 10);
+        PORKCHOP.tex = uv("items.png", 6, 10);
 
         COOKED_PORKCHOP = register("cookedPorkchop", new Food("Cooked Porkchop", 20));
-        COOKED_PORKCHOP.tex = atlas.uv("items.png", 7, 10);
+        COOKED_PORKCHOP.tex = uv("items.png", 7, 10);
 
         BUCKET = register("bucket", new BucketItem("Bucket"));
-        BUCKET.tex = atlas.uv("items.png", 6, 4);
+        BUCKET.tex = uv("items.png", 6, 4);
 
         WATER_BUCKET = register("waterBucket", new BucketItem("Water Bucket", Block.WATER));
-        WATER_BUCKET.tex = atlas.uv("items.png", 7, 4);
+        WATER_BUCKET.tex = uv("items.png", 7, 4);
 
         LAVA_BUCKET = register("lavaBucket", new BucketItem("Lava Bucket", Block.LAVA));
-        LAVA_BUCKET.tex = atlas.uv("items.png", 8, 4);
+        LAVA_BUCKET.tex = uv("items.png", 8, 4);
 
         LIGHTER = register("lighter", new Lighter("Lighter"));
-        LIGHTER.tex = atlas.uv("items.png", 0, 7);
+        LIGHTER.tex = uv("items.png", 0, 7);
 
 
         //BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
-        //BOW_WOOD.tex = atlas.uv("items.png", 1, 4);
+        //BOW_WOOD.tex = uv("items.png", 1, 4);
 
         //ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
-        //ARROW_WOOD.tex = atlas.uv("items.png", 0, 4);
+        //ARROW_WOOD.tex = uv("items.png", 0, 4);
 
         //FEATHER = register("feather", new Item("Feather"));
-        //FEATHER.tex = atlas.uv("items.png", 0, 3);
+        //FEATHER.tex = uv("items.png", 0, 3);
 
         //STRING = register("string", new Item("String"));
-        //STRING.tex = atlas.uv("items.png", 1, 3);
+        //STRING.tex = uv("items.png", 1, 3);
 
 
         // all blocks are already marked as materials during Block.register() lol

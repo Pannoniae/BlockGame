@@ -18,10 +18,10 @@ public class DyeItem : Item {
         return meta < 16
             ?
             // v=1, u=0 to 15
-            atlas.uv("items.png", meta, 1)
+            uv("items.png", meta, 1)
             :
             // v=2, u=0 to 15
-            atlas.uv("items.png", meta - 16, 2);
+            uv("items.png", meta - 16, 2);
     }
 
     /** Find the closest dye colour to target RGB */

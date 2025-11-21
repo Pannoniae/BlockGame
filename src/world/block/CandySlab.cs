@@ -23,7 +23,7 @@ public class CandySlab : Slabs {
             int color = getColour((byte)i);
             int row = color / 16;
             int col = color % 16;
-            uvs[i] = atlas.uv("blocks.png", col, 6 + row);
+            uvs[i] = uv("blocks.png", col, 6 + row);
         }
     }
 
