@@ -111,7 +111,7 @@ public class Block {
     public static Block GLASS_FRAMED_X;
     public static Block GLASS_FRAMED_R;
     public static Block GLASS_FRAMED_T;
-
+    public static Block GLASS_FRAMED_C;
 
     //public static Block CALCITE;
     public static Block STONE_SLAB;
@@ -453,13 +453,13 @@ public class Block {
         GLASS.transparency();
         GLASS.material(Material.GLASS);
 
-        GLASS_FRAMED_X = register("framedXglass", new Block("X Framed Glass"));
+        GLASS_FRAMED_X = register("framedXglass", new Block("X-Framed Glass"));
         GLASS_FRAMED_X.setTex(uv("blocks.png", 17, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS_FRAMED_X.transparency();
         GLASS_FRAMED_X.material(Material.GLASS);
 
-        GLASS_FRAMED_R = register("framedRglass", new Block("Rombus Framed Glass"));
+        GLASS_FRAMED_R = register("framedRglass", new Block("Rhombus Framed Glass"));
         GLASS_FRAMED_R.setTex(uv("blocks.png", 18, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS_FRAMED_R.transparency();
@@ -471,7 +471,11 @@ public class Block {
         GLASS_FRAMED_T.transparency();
         GLASS_FRAMED_T.material(Material.GLASS);
 
-
+        GLASS_FRAMED_C = register("framedCglass", new Block("Cross Framed Glass"));
+        GLASS_FRAMED_C.setTex(uv("blocks.png", 20, 0));
+        renderType[GLASS.id] = RenderType.CUBE;
+        GLASS_FRAMED_C.transparency();
+        GLASS_FRAMED_C.material(Material.GLASS);
 
         BRICK_BLOCK = register("brickBlock", new Block("Brick Block"));
         BRICK_BLOCK.setTex(cubeUVs(0, 2));
@@ -620,14 +624,14 @@ public class Block {
 
         // the blocks
         COAL_BLOCK = register("coalBlock", new Block("Block of Coal"));
-        COAL_BLOCK.setTex(cubeUVs(8, 8));
+        COAL_BLOCK.setTex(cubeUVs(6, 8));
         renderType[COAL_BLOCK.id] = RenderType.CUBE;
         COAL_BLOCK.material(Material.METAL);
         COAL_BLOCK.setHardness(5.0);
         COAL_BLOCK.setTier(MaterialTier.STONE);
 
         COPPER_BLOCK = register("copperBlock", new Block("Block of Copper"));
-        COPPER_BLOCK.setTex(cubeUVs(9, 8));
+        COPPER_BLOCK.setTex(cubeUVs(7, 8));
         renderType[COPPER_BLOCK.id] = RenderType.CUBE;
         COPPER_BLOCK.material(Material.METAL);
         COPPER_BLOCK.setHardness(6.0);
@@ -648,14 +652,14 @@ public class Block {
         GOLD_BLOCK.setTier(MaterialTier.GOLD);
 
         DIAMOND_BLOCK = register("diamondBlock", new Block("Block of Diamond"));
-        DIAMOND_BLOCK.setTex(cubeUVs(10, 8));
+        DIAMOND_BLOCK.setTex(cubeUVs(8, 8));
         renderType[DIAMOND_BLOCK.id] = RenderType.CUBE;
         DIAMOND_BLOCK.material(Material.METAL);
         DIAMOND_BLOCK.setHardness(10.0);
         DIAMOND_BLOCK.setTier(MaterialTier.GOLD);
 
         CINNABAR_BLOCK = register("cinnabarBlock", new Block("Block of Cinnabar"));
-        CINNABAR_BLOCK.setTex(cubeUVs(11, 8));
+        CINNABAR_BLOCK.setTex(cubeUVs(9, 8));
         renderType[CINNABAR_BLOCK.id] = RenderType.CUBE;
         CINNABAR_BLOCK.material(Material.METAL);
         CINNABAR_BLOCK.setHardness(10.0);
