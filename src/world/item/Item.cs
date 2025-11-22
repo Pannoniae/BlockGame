@@ -37,7 +37,7 @@ public class Item {
 
     public static Item CINNABAR;
 
-    //public static Item TIN_INGOT;
+    public static Item TIN_INGOT;
     //public static Item SILVER_INGOT;
     public static Item COAL;
     public static Item FLINT;
@@ -205,9 +205,9 @@ public class Item {
         BRICK.tex = uv("items.png", 5, 0);
         material[BRICK.id] = true;
 
-        //TIN_INGOT = register("tinIngot", new Item("Tin Ingot"));
-        //TIN_INGOT.tex = uv("items.png", 2, 0);
-        //material[TIN_INGOT.id] = true;
+        TIN_INGOT = register("tinIngot", new Item("Tin Ingot"));
+        TIN_INGOT.tex = uv("items.png", 2, 0);
+        material[TIN_INGOT.id] = true;
 
         //SILVER_INGOT = register("silverIngot", new Item("Silver Ingot"));
         //SILVER_INGOT.tex = uv("items.png", 3, 0);

@@ -198,7 +198,7 @@ public class Block {
     public static Block IRON_ORE;
     public static Block COAL_ORE;
     public static Block COPPER_ORE;
-    //public static Block TIN_ORE;
+    public static Block TIN_ORE;
     //public static Block SILVER_ORE;
 
     public static Block GOLD_BLOCK;
@@ -522,13 +522,13 @@ public class Block {
         GOLD_ORE.setTier(MaterialTier.IRON);
         natural[GOLD_ORE.id] = true;
 
-        //TIN_ORE = register("tinOre", new Block("Tin Ore"));
-        //TIN_ORE.setTex(cubeUVs(2, 1));
-        //renderType[TIN_ORE.id] = RenderType.CUBE;
-        //TIN_ORE.material(Material.FANCY_STONE);
-        //TIN_ORE.setHardness(2.5);
-        //TIN_ORE.setTier(MaterialTier.STONE);
-        //natural[TIN_ORE.id] = true;
+        TIN_ORE = register("tinOre", new Block("Tin Ore"));
+        TIN_ORE.setTex(cubeUVs(2, 1));
+        renderType[TIN_ORE.id] = RenderType.CUBE;
+        TIN_ORE.material(Material.FANCY_STONE);
+        TIN_ORE.setHardness(2.5);
+        TIN_ORE.setTier(MaterialTier.STONE);
+        natural[TIN_ORE.id] = true;
 
         //SILVER_ORE = register("silverOre", new Block("Silver Ore"));
         //SILVER_ORE.setTex(cubeUVs(3, 1));
