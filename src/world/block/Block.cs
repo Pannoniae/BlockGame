@@ -108,6 +108,11 @@ public class Block {
     public static Block HELLROCK;
     //public static Block INFERNO_ROCK;
     public static Block GLASS;
+    public static Block GLASS_FRAMED_X;
+    public static Block GLASS_FRAMED_R;
+    public static Block GLASS_FRAMED_T;
+
+
     //public static Block CALCITE;
     public static Block STONE_SLAB;
     public static Block COBBLESTONE_SLAB;
@@ -447,6 +452,26 @@ public class Block {
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS.transparency();
         GLASS.material(Material.GLASS);
+
+        GLASS_FRAMED_X = register("framedXglass", new Block("X Framed Glass"));
+        GLASS_FRAMED_X.setTex(uv("blocks.png", 17, 0));
+        renderType[GLASS.id] = RenderType.CUBE;
+        GLASS_FRAMED_X.transparency();
+        GLASS_FRAMED_X.material(Material.GLASS);
+
+        GLASS_FRAMED_R = register("framedRglass", new Block("Rombus Framed Glass"));
+        GLASS_FRAMED_R.setTex(uv("blocks.png", 18, 0));
+        renderType[GLASS.id] = RenderType.CUBE;
+        GLASS_FRAMED_R.transparency();
+        GLASS_FRAMED_R.material(Material.GLASS);
+
+        GLASS_FRAMED_T = register("framedTglass", new Block("Tulip Framed Glass"));
+        GLASS_FRAMED_T.setTex(uv("blocks.png", 19, 0));
+        renderType[GLASS.id] = RenderType.CUBE;
+        GLASS_FRAMED_T.transparency();
+        GLASS_FRAMED_T.material(Material.GLASS);
+
+
 
         BRICK_BLOCK = register("brickBlock", new Block("Brick Block"));
         BRICK_BLOCK.setTex(cubeUVs(0, 2));
