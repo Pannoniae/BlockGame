@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using SDL;
-using Silk.NET.SDL;
 
 namespace Silk.NET.Input.Sdl
 {

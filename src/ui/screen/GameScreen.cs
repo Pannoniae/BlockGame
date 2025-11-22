@@ -17,7 +17,6 @@ using BlockGame.world.chunk;
 using BlockGame.world.entity;
 using Molten;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
 using Vector3D = Molten.DoublePrecision.Vector3D;
 

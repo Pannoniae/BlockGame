@@ -3,8 +3,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Text;
-using BlockGame.logic;
 using BlockGame.net;
 using BlockGame.render;
 using BlockGame.world.worldgen;
@@ -1327,7 +1325,7 @@ public partial class Game {
                 goto esc;
             }
 
-            Game.graphics.vao(throwawayVAO);
+            graphics.vao(throwawayVAO);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
         }
 

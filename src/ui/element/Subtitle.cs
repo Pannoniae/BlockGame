@@ -1,8 +1,6 @@
-using SixLabors.ImageSharp;
 using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.menu;
-using BlockGame.util;
 using BlockGame.util.font;
 using FontStashSharp;
 using Molten;

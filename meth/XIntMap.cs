@@ -303,8 +303,8 @@ public class XIntMap<V> : IEnumerable<V> {
         private readonly ref V val;
 
         internal Pair(int key, ref V value) {
-            this.Key = key;
-            this.val = ref value;
+            Key = key;
+            val = ref value;
         }
 
         /** Returns ref to value for in-place mutation */

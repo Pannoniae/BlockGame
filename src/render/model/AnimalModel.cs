@@ -3,7 +3,6 @@ using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.entity;
-using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render.model;
 

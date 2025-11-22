@@ -1,7 +1,6 @@
 ﻿using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
-using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
@@ -38,6 +37,16 @@ public class SettingsMenu : Menu {
         controls.centreContents();
         elements.Add(controls);
         addElement(controls);
+
+        // texture packs button
+        var texturePacksButton = new Button(this, "texturePacks", false, "Texture Packs...");
+        texturePacksButton.clicked += _ => {
+            var packMenu = new TexturePackMenu(parentScreen);
+            parentScreen.switchToMenu(packMenu);
+        };
+        texturePacksButton.centreContents();
+        elements.Add(texturePacksButton);
+        addElement(texturePacksButton);
 
         var back = new Button(this, "back", false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,

@@ -17,6 +17,9 @@ namespace ppy;
 [SuppressMessage("ReSharper", "InconsistentNaming")]
 [SupportedOSPlatform("windows")]
 public static partial class NVAPI {
+
+    public static bool errored = false;
+
     private const string filename = "blockgame.exe";
 
     // This is a good reference:
@@ -217,7 +220,7 @@ public static partial class NVAPI {
 
         // dedicated GPU (laptops only, requires restart)
         if (IsLaptop && !IsUsingOptimusDedicatedGpu) {
-            Log.info("NVAPI",  "Configuring dedicated GPU...");
+            Log.info("NVAPI", "Configuring dedicated GPU...");
             UseDedicatedGpu = true;
             needsRestart = true;
             setSetting(NvSettingID.SHIM_MCCOMPAT_ID, 0x80000001);
@@ -234,7 +237,7 @@ public static partial class NVAPI {
         }
 
         // triple buffering
-        Log.info("NVAPI",  "Enabling triple buffering...");
+        Log.info("NVAPI", "Enabling triple buffering...");
         setSetting(NvSettingID.OGL_TRIPLE_BUFFER_ID, 0x01);
 
         // disable hardware anisotropic filtering (we handle it in shader)
@@ -348,13 +351,14 @@ public static partial class NVAPI {
 
         if (!isApplicationSpecific) {
             // try to create a profile, or find existing one if it already exists
-            if (!createProfile(out profileHandle)) {
-                return false;
+            bool result = createProfile(out profileHandle);
 
+            if (!result) {
                 // profile might already exist, try to find it by name
                 if (checkError(FindProfileByName(sessionHandle, PROFILE_NAME, out profileHandle),
-                        nameof(FindProfileByName)))
+                        nameof(FindProfileByName))) {
                     return false;
+                }
             }
         }
 
@@ -408,8 +412,10 @@ public static partial class NVAPI {
         Status = status;
 
         bool hasError = status != NvStatus.OK;
-        if (hasError)
+        if (hasError) {
             Log.info("NVAPI", $"{caller} call failed with status code {status}");
+            errored = true;
+        }
 
         return hasError;
     }

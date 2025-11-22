@@ -1,4 +1,3 @@
-using SixLabors.ImageSharp;
 using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.menu;

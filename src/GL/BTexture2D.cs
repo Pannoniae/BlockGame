@@ -73,18 +73,37 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         uploadImage(GL, image);
     }
 
+    /** load from Image<Rgba32> (for texture pack icons) */
+    public unsafe void loadFromImage(Image<Rgba32> img) {
+        var GL = Game.GL;
+        GL.DeleteTexture(handle);
+        handle = GL.CreateTexture(TextureTarget.Texture2D);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapS, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureWrapT, (int)GLEnum.Repeat);
+        GL.TextureParameter(handle, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+        GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
+        GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
+        image?.Dispose();
+        image = img; // take ownership
+        uploadImage(GL, image);
+    }
+
     /** check if image has enough opaque pixels (not invisible) */
     public static bool validateTransparency(Image<Rgba32> img) {
         int totalPixels = img.Width * img.Height;
         int opaquePixels = 0;
 
-        for (int y = 0; y < img.Height; y++) {
-            for (int x = 0; x < img.Width; x++) {
-                if (img[x, y].A > 128) {
-                    opaquePixels++;
+        img.ProcessPixelRows(accessor => {
+            for (int y = 0; y < accessor.Height; y++) {
+                var row = accessor.GetRowSpan(y);
+                for (int x = 0; x < row.Length; x++) {
+                    if (row[x].A >= 128) {
+                        opaquePixels++;
+                    }
                 }
             }
-        }
+        });
 
         // require at least 30% opaque pixels
         return opaquePixels >= totalPixels * 0.3f;

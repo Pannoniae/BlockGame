@@ -1,9 +1,7 @@
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.ui;
-using BlockGame.ui.screen;
 using BlockGame.util;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;

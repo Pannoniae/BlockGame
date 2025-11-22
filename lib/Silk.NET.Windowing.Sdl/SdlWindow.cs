@@ -4,16 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using SDL;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
 using Silk.NET.Maths;
-using Silk.NET.SDL;
-using Point = System.Drawing.Point;
 using RawImage = Silk.NET.Core.RawImage;
-using Size = System.Drawing.Size;
 
 namespace Silk.NET.Windowing.Sdl {
     internal unsafe class SdlWindow : SdlView, IWindow {

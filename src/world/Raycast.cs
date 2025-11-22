@@ -10,7 +10,7 @@ namespace BlockGame.world;
 
 public class Raycast {
     private static readonly List<AABB> AABBList = [];
-    private static readonly List<entity.Entity> l = [];
+    private static readonly List<Entity> l = [];
 
     /// <summary>
     /// This piece of shit raycast breaks when the player goes outside the world. Solution? Don't go outside the world (will be prevented in the future with barriers)

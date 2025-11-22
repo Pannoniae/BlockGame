@@ -2,7 +2,7 @@ using BlockGame.util;
 
 namespace BlockGame.world.item;
 
-using BlockGame.world.item.inventory;
+using inventory;
 
 /** Recipe for mixing any 2 dyes into their average colour */
 public class DyeRecipe : Recipe {

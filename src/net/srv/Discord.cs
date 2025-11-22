@@ -3,12 +3,6 @@ using LiteNetLib;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Logging;
-using SDL;
-using Spectre.Console;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
 
 namespace BlockGame.net.srv {
     public class Discord {

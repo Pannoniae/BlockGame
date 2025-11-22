@@ -1,6 +1,5 @@
 using BlockGame.GL;
 using BlockGame.util;
-using BlockGame.world.block;
 using Molten;
 using Molten.DoublePrecision;
 

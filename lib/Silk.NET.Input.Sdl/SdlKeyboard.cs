@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using SDL;
-using Silk.NET.SDL;
 
 namespace Silk.NET.Input.Sdl {
     internal partial class SdlKeyboard : IKeyboard, ISdlDevice {

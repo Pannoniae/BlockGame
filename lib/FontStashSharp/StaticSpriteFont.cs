@@ -16,7 +16,6 @@ using Texture2D = Stride.Graphics.Texture;
 #else
 using SixLabors.ImageSharp;
 using Texture2D = System.Object;
-using Color = FontStashSharp.FSColor;
 #endif
 
 namespace FontStashSharp

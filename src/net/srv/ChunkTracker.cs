@@ -1,5 +1,4 @@
 using BlockGame.net.packet;
-using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
 using LiteNetLib;

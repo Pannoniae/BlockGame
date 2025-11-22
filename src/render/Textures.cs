@@ -1,9 +1,9 @@
 using BlockGame.GL;
 using BlockGame.main;
+using BlockGame.render.texpack;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.block;
-using BlockGame.world.item;
 using Silk.NET.OpenGL.Legacy;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -53,18 +53,41 @@ public class Textures {
 
         particleTex = get("textures/particle.png");
 
-        // Register texture sources (mods would do this too via events)
-        TextureSources.addBlockSource("blocks.png");
-        TextureSources.addItemSource("items.png");
+        // Discover and load texture packs
+        TexturePackManager.discoverPacks();
+
+        // Load the configured pack (or vanilla fallback)
+        var packName = ui.Settings.instance.texturePack;
+        var packs = TexturePackManager.getAvailablePacks();
+        var pack = packs.FirstOrDefault(p => p.name == packName);
+
+        if (pack == null) {
+            // fallback to vanilla or first available
+            pack = packs.FirstOrDefault(p => p.name == "vanilla") ?? packs.FirstOrDefault();
+            if (pack == null) {
+                Log.warn("Textures", "No texture packs found! Using direct file loading.");
+                // fallback to old system
+                TextureSources.addBlockSource("blocks.png");
+                TextureSources.addItemSource("items.png");
+            } else {
+                Log.info("Textures", $"Pack '{packName}' not found, using '{pack.name}' instead.");
+                pack.registerSources();
+            }
+        } else {
+            Log.info("Textures", $"Loading texture pack: {pack.name}");
+            pack.registerSources();
+        }
 
         // Stitch block atlas
         var blockSources = TextureSources.getBlockSources();
+        // todo is this a hack?
+        var blockSourceId = blockSources.Count > 0 ? blockSources[0].filepath : "textures/blocks.png";
         var blockProtectedRegions = new List<ProtectedRegion> {
-            new("waterStill", "textures/blocks.png", 0, 13*16, 256, 16),
-            new("waterFlowing", "textures/blocks.png", 16, 14*16, 32, 32),
-            new("lavaStill", "textures/blocks.png", 0, 16*16, 16, 16),
-            new("lavaFlowing", "textures/blocks.png", 16, 17*16, 32, 32),
-            new("fire", "textures/blocks.png", 48, 14*16, 16, 16)
+            new("waterStill", blockSourceId, 0, 13*16, 256, 16),
+            new("waterFlowing", blockSourceId, 16, 14*16, 32, 32),
+            new("lavaStill", blockSourceId, 0, 16*16, 16, 16),
+            new("lavaFlowing", blockSourceId, 16, 17*16, 32, 32),
+            new("fire", blockSourceId, 48, 14*16, 16, 16)
         };
 
         var blockResult = AtlasStitcher.stitch(blockSources, blockProtectedRegions);

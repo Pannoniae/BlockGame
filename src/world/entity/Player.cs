@@ -149,7 +149,7 @@ public class Player : Mob, CommandSource {
 
         // gamemode
         var gamemodeID = data.getInt("gamemode", 1);
-        this.gameMode = GameMode.fromID((GameModeID)gamemodeID);
+        gameMode = GameMode.fromID((GameModeID)gamemodeID);
 
         // health
         hp = data.getDouble("hp", 100);
@@ -320,7 +320,7 @@ public class Player : Mob, CommandSource {
                 var pos = position.toBlockPos() + new Vector3I(0, -1, 0);
                 var blockBelow = Block.get(world.getBlock(pos));
                 if (!Net.mode.isDed() && blockBelow?.mat != null) {
-                    Game.snd.playFootstep(blockBelow.mat.smat);
+                    Game.snd.playFootstep(blockBelow.mat.smat, position);
                 }
 
                 lastFootstepDistance = totalTraveled;
@@ -466,7 +466,7 @@ public class Player : Mob, CommandSource {
             if (Net.mode.isMPC()) {
                 ClientConnection.instance.send(new PlayerHeldItemChangePacket {
                     slot = (byte)inventory.selected
-                }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                }, DeliveryMethod.ReliableOrdered);
             }
         }
     }
@@ -1063,11 +1063,11 @@ public class Player : Mob, CommandSource {
                                 actionID = ClientConnection.instance.nextActionID++,
                                 mode = 0, // normal click
                                 expectedSlot = inventory.getStack(inventory.selected)
-                            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                            }, DeliveryMethod.ReliableOrdered);
 
                             ClientConnection.instance.send(new PlayerHeldItemChangePacket {
                                 slot = (byte)inventory.selected
-                            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+                            }, DeliveryMethod.ReliableOrdered);
                         }
                     }
                 }
@@ -1166,7 +1166,7 @@ public class Player : Mob, CommandSource {
             Game.client.send(new DropItemPacket {
                 slotIndex = (byte)inventory.selected,
                 quantity = 1
-            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+            }, DeliveryMethod.ReliableOrdered);
             return;
         }
 
@@ -1244,7 +1244,7 @@ public class Player : Mob, CommandSource {
     public void respawn() {
         // in multiplayer client, send respawn request to server instead of respawning locally
         if (Net.mode.isMPC() && ClientConnection.instance != null) {
-            ClientConnection.instance.send(new RespawnRequestPacket(), LiteNetLib.DeliveryMethod.ReliableOrdered);
+            ClientConnection.instance.send(new RespawnRequestPacket(), DeliveryMethod.ReliableOrdered);
             return;
         }
 

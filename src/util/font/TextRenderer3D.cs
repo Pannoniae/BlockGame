@@ -1,7 +1,6 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
-using BlockGame.world;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using Molten;

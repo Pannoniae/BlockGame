@@ -3,7 +3,6 @@ using Silk.NET.OpenGL.Legacy;
 using System.Runtime.InteropServices;
 using BlockGame.main;
 using BlockGame.util;
-using Molten;
 using PrimitiveType = Silk.NET.OpenGL.Legacy.PrimitiveType;
 
 namespace BlockGame.GL;

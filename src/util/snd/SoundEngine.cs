@@ -300,16 +300,9 @@ public class SoundEngine : IDisposable {
                 (float)Game.player.velocity.Y,
                 (float)Game.player.velocity.Z
             );
+            listener.WorldUp = new Vector3f(0, 1, 0);
+            listener.Enabled = true;
         }
-    }
-
-    public void playFootstep(SoundMaterial mat, float volume = 0.4f) {
-        if (nosound) {
-            return;
-        }
-
-        var cat = mat.stepCategory();
-        play(cat, 1.0f, volume);
     }
 
     public void playFootstep(SoundMaterial mat, Vector3D position, float volume = 0.4f) {
@@ -446,7 +439,7 @@ public class SfxChannel {
         source.Spatial = true;
         source.Position = new Vector3f((float)position.X, (float)position.Y, (float)position.Z);
         source.MinDistance = 16.0f; // full volume within 16
-        source.MaxDistance = 96.0f; // inaudible beyond 96 blocks
+        source.MaxDistance = 64.0f; // inaudible beyond 96 blocks
         source.AttenuationModel = AttenuationModel.Inverse;
         source.DopplerFactor = 0.0f;
         source.Pitch = pitch;

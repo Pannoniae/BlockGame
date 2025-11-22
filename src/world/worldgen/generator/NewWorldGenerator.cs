@@ -1,5 +1,4 @@
 using BlockGame.util;
-using BlockGame.world.chunk;
 using BlockGame.world.worldgen.surface;
 
 namespace BlockGame.world.worldgen.generator;

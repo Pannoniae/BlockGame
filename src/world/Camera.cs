@@ -188,7 +188,7 @@ public class Camera {
         calculateFrustum(1);
     }
     
-    public void setPlayer(entity.Entity player) {
+    public void setPlayer(Entity player) {
         this.player = player;
         calculateFrustum(1);
     }

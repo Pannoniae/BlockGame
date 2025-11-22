@@ -69,7 +69,7 @@ public class Entities {
      * Register an entity type with a string ID.
      * Returns runtime int ID for fast lookups.
      */
-    public static int register(string type, Func<World, entity.Entity> factory) {
+    public static int register(string type, Func<World, Entity> factory) {
         return Registry.ENTITIES.register(type, factory);
     }
 

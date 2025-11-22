@@ -4,7 +4,6 @@ using BlockGame.render.model;
 using BlockGame.util;
 using BlockGame.world.entity;
 using FontStashSharp;
-using Molten;
 using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 

@@ -1,6 +1,5 @@
 using BlockGame.util;
 using BlockGame.world.block;
-using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 
 namespace BlockGame.world;

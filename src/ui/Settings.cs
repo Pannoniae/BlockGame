@@ -1,5 +1,4 @@
 using BlockGame.main;
-using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
 
@@ -63,6 +62,7 @@ public class Settings {
 
     public string playerName;
     public string skinPath = "character.png";
+    public string texturePack = "vanilla";
 
     public static readonly Settings instance = new();
 
@@ -188,6 +188,7 @@ public class Settings {
         tag.addFloat("musicVolume", musicVolume);
         tag.addString("playerName", playerName);
         tag.addString("skinPath", skinPath);
+        tag.addString("texturePack", texturePack);
 
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
@@ -255,6 +256,9 @@ public class Settings {
             }
             if (tag.has("skinPath")) {
                 skinPath = tag.getString("skinPath");
+            }
+            if (tag.has("texturePack")) {
+                texturePack = tag.getString("texturePack");
             }
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);

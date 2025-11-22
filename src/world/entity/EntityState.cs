@@ -271,7 +271,7 @@ public class EntityState {
     public void clearDirty() {
         // use CollectionsMarshal to get ref and modify in-place (zero-copy)
         foreach (var key in fields.Keys) {
-            ref var field = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrNullRef(fields, key);
+            ref var field = ref CollectionsMarshal.GetValueRefOrNullRef(fields, key);
             if (!Unsafe.IsNullRef(ref field)) {
                 field.dirty = false;
             }
@@ -281,7 +281,7 @@ public class EntityState {
     /** mark all fields dirty (for initial sync on spawn) */
     public void markAllDirty() {
         foreach (var key in fields.Keys) {
-            ref var field = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrNullRef(fields, key);
+            ref var field = ref CollectionsMarshal.GetValueRefOrNullRef(fields, key);
             if (!Unsafe.IsNullRef(ref field)) {
                 field.dirty = true;
             }

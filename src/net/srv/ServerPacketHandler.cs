@@ -9,7 +9,6 @@ using BlockGame.world.entity;
 using BlockGame.world.item;
 using BlockGame.world.item.inventory;
 using LiteNetLib;
-using Molten;
 using Molten.DoublePrecision;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;

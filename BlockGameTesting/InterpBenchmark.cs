@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using BlockGame.util;
 
 //[assembly: IgnoresAccessChecksTo("BlockGame")]

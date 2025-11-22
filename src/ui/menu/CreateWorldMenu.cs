@@ -1,6 +1,5 @@
 using BlockGame.main;
 using BlockGame.ui.element;
-using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.worldgen.generator;
 using Molten;

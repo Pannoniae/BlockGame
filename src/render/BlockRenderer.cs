@@ -167,8 +167,8 @@ public class BlockRenderer {
 
     // setup for standalone context
     public void setupStandalone() {
-        this.smoothLighting = false;
-        this.AO = false;
+        smoothLighting = false;
+        AO = false;
         isRenderingWorld = false;
     }
 

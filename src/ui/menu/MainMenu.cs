@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
 using BlockGame.main;
-using BlockGame.net;
 using BlockGame.ui.element;
 using BlockGame.util.log;
 using Molten;

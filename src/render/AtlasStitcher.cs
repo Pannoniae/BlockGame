@@ -14,12 +14,12 @@ public struct StitchResult {
     public Image<Rgba32> image;
     public int width;
     public int height;
-    public Dictionary<(string source, int tx, int ty), SixLabors.ImageSharp.Rectangle> tilePositions;
-    public Dictionary<string, SixLabors.ImageSharp.Rectangle> protectedRegions;
+    public Dictionary<(string source, int tx, int ty), Rectangle> tilePositions;
+    public Dictionary<string, Rectangle> protectedRegions;
 }
 
 /**
- * Stitches multiple source atlases into a single optimized atlas
+ * Stitches multiple source atlases into a single optimised atlas
  */
 public static class AtlasStitcher {
     /**
@@ -41,7 +41,7 @@ public static class AtlasStitcher {
             };
             rects.Add(rect);
             rectMetadata.Add(new RectMetadata {
-                type = RectType.ProtectedRegion,
+                type = RectType.PROTECTED_REGION,
                 protectedRegion = pr
             });
         }
@@ -73,7 +73,7 @@ public static class AtlasStitcher {
                     };
                     rects.Add(rect);
                     rectMetadata.Add(new RectMetadata {
-                        type = RectType.Tile,
+                        type = RectType.TILE,
                         source = source,
                         tileX = tx,
                         tileY = ty
@@ -87,7 +87,7 @@ public static class AtlasStitcher {
             Id = nextId++
         });
         rectMetadata.Add(new RectMetadata {
-            type = RectType.EmptyTile
+            type = RectType.EMPTY_TILE
         });
 
         // 4. Pack using RectanglePacker
@@ -104,19 +104,19 @@ public static class AtlasStitcher {
         var finalImage = new Image<Rgba32>(finalWidth, finalHeight);
 
         // 7. Create result structures
-        var tilePositions = new Dictionary<(string, int, int), SixLabors.ImageSharp.Rectangle>();
-        var protectedPositions = new Dictionary<string, SixLabors.ImageSharp.Rectangle>();
-        SixLabors.ImageSharp.Rectangle sharedEmptyTile = default;
+        var tilePositions = new Dictionary<(string, int, int), Rectangle>();
+        var protectedPositions = new Dictionary<string, Rectangle>();
+        Rectangle sharedEmptyTile = default;
 
         // 8. Blit all rectangles to final atlas & record mappings
         for (int i = 0; i < rectsArray.Length; i++) {
             var rect = rectsArray[i];
             var meta = rectMetadata[rect.Id];  // Use Id, not index!
 
-            var destRect = new SixLabors.ImageSharp.Rectangle((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
+            var destRect = new Rectangle((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
             switch (meta.type) {
-                case RectType.ProtectedRegion:
+                case RectType.PROTECTED_REGION:
                     // blit entire protected region
                     var pr = meta.protectedRegion;
                     var prSource = sources.Find(s => s.filepath == pr.sourceFile)!;
@@ -132,7 +132,7 @@ public static class AtlasStitcher {
                         for (int tx = 0; tx < tilesWide; tx++) {
                             int srcTileX = pr.srcRect.X / tileSize + tx;
                             int srcTileY = pr.srcRect.Y / tileSize + ty;
-                            var tileDestRect = new SixLabors.ImageSharp.Rectangle(
+                            var tileDestRect = new Rectangle(
                                 destRect.X + tx * tileSize,
                                 destRect.Y + ty * tileSize,
                                 tileSize,
@@ -143,9 +143,9 @@ public static class AtlasStitcher {
                     }
                     break;
 
-                case RectType.Tile:
+                case RectType.TILE:
                     // blit single tile
-                    var srcRect = new SixLabors.ImageSharp.Rectangle(
+                    var srcRect = new Rectangle(
                         meta.tileX * meta.source!.tileSize,
                         meta.tileY * meta.source.tileSize,
                         meta.source.tileSize,
@@ -155,7 +155,7 @@ public static class AtlasStitcher {
                     tilePositions[(meta.source.filepath, meta.tileX, meta.tileY)] = destRect;
                     break;
 
-                case RectType.EmptyTile:
+                case RectType.EMPTY_TILE:
                     // fill with transparent pixels (already is by default)
                     sharedEmptyTile = destRect;
                     break;
@@ -179,7 +179,7 @@ public static class AtlasStitcher {
     /**
      * Check if a tile rectangle is inside any protected region
      */
-    static bool isInProtectedRegion(Rectangle tileRect, string sourceFile, List<ProtectedRegion> protectedRegions) {
+    private static bool isInProtectedRegion(Rectangle tileRect, string sourceFile, List<ProtectedRegion> protectedRegions) {
         foreach (var pr in protectedRegions) {
             if (pr.sourceFile != sourceFile)
                 continue;
@@ -199,7 +199,7 @@ public static class AtlasStitcher {
     /**
      * Blit a region from source to destination
      */
-    static void blitRegion(Image<Rgba32> srcImage, SixLabors.ImageSharp.Rectangle srcRect, Image<Rgba32> dstImage, SixLabors.ImageSharp.Rectangle dstRect) {
+    private static void blitRegion(Image<Rgba32> srcImage, Rectangle srcRect, Image<Rgba32> dstImage, Rectangle dstRect) {
         // extract source region
         using var region = srcImage.Clone(ctx => ctx.Crop(srcRect));
 
@@ -215,16 +215,16 @@ public static class AtlasStitcher {
     /**
      * Metadata for tracking what each packed rectangle represents
      */
-    enum RectType {
-        Tile,            // individual tile from source
-        ProtectedRegion, // protected region that can't be split
-        EmptyTile        // the shared empty tile
+    public enum RectType {
+        TILE,            // individual tile from source
+        PROTECTED_REGION, // protected region that can't be split
+        EMPTY_TILE        // the shared empty tile
     }
 
-    struct RectMetadata {
+    private struct RectMetadata {
         public RectType type;
         public AtlasSource? source;
         public int tileX, tileY;  // for Tile type
-        public ProtectedRegion protectedRegion;  // for ProtectedRegion type
+        public ProtectedRegion protectedRegion;  // for PROTECTED_REGION type
     }
 }

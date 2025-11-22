@@ -1,5 +1,3 @@
-using Spectre.Console;
-
 using ColorS = Spectre.Console.Color;
 
 namespace BlockGame.util.log;

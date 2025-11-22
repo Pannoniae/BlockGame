@@ -1,7 +1,5 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
-using BlockGame.util;
-using Molten;
 
 namespace BlockGame.GL.vertexformats;
 

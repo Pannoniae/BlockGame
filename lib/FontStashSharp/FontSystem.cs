@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using FontStashSharp.Rasterizers.StbTrueTypeSharp;
-using System.Runtime.InteropServices;
 
 #if MONOGAME || FNA
 using Microsoft.Xna.Framework.Graphics;

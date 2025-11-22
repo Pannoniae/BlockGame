@@ -1,7 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using BlockGame.main;
-using BlockGame.util;
 using BlockGame.util.log;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;
@@ -335,11 +334,11 @@ public unsafe class CommandBuffer : IDisposable {
         uint* sizes = stackalloc uint[1];
         sizes[0] = (uint)size;
 
-        uint* fbos = stackalloc uint[1];
-        fbos[0] = 0;
+        //uint* fbos = stackalloc uint[1];
+        //fbos[0] = 0;
 
-        uint* states = stackalloc uint[1];
-        states[0] = state;
+        //uint* states = stackalloc uint[1];
+        //states[0] = state;
 
         //GL.MemoryBarrier(MemoryBarrierMask.CommandBarrierBit);
 

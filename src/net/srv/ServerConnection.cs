@@ -1,7 +1,6 @@
 ﻿using BlockGame.net.packet;
 using BlockGame.util;
 using BlockGame.util.xNBT;
-using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.entity;
 using LiteNetLib;

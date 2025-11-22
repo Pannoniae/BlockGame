@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework.Graphics;
 #elif STRIDE
 using Stride.Core.Mathematics;
 #else
-using SixLabors.ImageSharp;
 #endif
 
 namespace FontStashSharp.RichText

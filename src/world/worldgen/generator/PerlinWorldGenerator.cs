@@ -1,6 +1,4 @@
 using BlockGame.util;
-using BlockGame.util.meth.noise;
-using BlockGame.world.chunk;
 using BlockGame.world.worldgen.surface;
 
 namespace BlockGame.world.worldgen.generator;

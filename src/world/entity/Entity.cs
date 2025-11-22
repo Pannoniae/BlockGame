@@ -1,5 +1,4 @@
 using System.Numerics;
-using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.net;
 using BlockGame.net.packet;
@@ -725,7 +724,7 @@ public partial class Entity(World world, string type) : Persistent {
 
         foreach (var other in nearby) {
             // skip self
-            if (other.id == this.id) continue;
+            if (other.id == id) continue;
 
             // skip if either is riding/mounted
             if (isRiding() || hasRider() || other.isRiding() || other.hasRider()) {
@@ -863,8 +862,8 @@ public partial class Entity(World world, string type) : Persistent {
         }
         else if (mountID == -1 && this.mount != null) {
             // dismount
-            this.mount.rider = null;
-            this.mount = null;
+            mount.rider = null;
+            mount = null;
         }
     }
 }

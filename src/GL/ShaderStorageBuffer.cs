@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using BlockGame.main;
 using BlockGame.ui;
-using BlockGame.util;
 using BlockGame.util.log;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.NV;

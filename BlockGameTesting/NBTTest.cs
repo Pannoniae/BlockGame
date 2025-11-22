@@ -4,7 +4,6 @@ namespace BlockGameTesting;
 
 using System;
 using System.IO;
-using NUnit;
 using NUnit.Framework;
 
 public class NBTTest {

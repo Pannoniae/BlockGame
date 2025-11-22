@@ -10,7 +10,6 @@ using Stride.Core.Mathematics;
 using Texture2D = Stride.Graphics.Texture;
 #else
 using Texture2D = System.Object;
-using SixLabors.ImageSharp;
 #endif
 
 

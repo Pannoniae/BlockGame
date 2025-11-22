@@ -3,7 +3,6 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.util;
 using BlockGame.world;
-using Molten;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render.model;

@@ -7,7 +7,6 @@ using Silk.NET.GLFW;
 using Silk.NET.Input.Internals;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Glfw;
-using Silk.NET.Windowing.Internals;
 
 namespace Silk.NET.Input.Glfw
 {

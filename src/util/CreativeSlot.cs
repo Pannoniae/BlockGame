@@ -1,5 +1,3 @@
-using BlockGame.world.item.inventory;
-
 namespace BlockGame.util;
 
 public class CreativeSlot : ItemSlot {

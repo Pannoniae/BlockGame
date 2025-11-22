@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using SDL;
 using Silk.NET.Input.Internals;
-using Silk.NET.SDL;
 
 namespace Silk.NET.Input.Sdl
 {

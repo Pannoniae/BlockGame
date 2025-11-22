@@ -1,4 +1,3 @@
-using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.element;
 using Molten;
@@ -26,7 +25,7 @@ public class DisconnectedMenu : Menu {
         mainMenu.centreContents();
         mainMenu.clicked += _ => {
             Game.instance.executeOnMainThread(() => {
-                Game.instance.switchTo(Menu.MAIN_MENU);
+                Game.instance.switchTo(MAIN_MENU);
             });
         };
 

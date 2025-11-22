@@ -1,9 +1,7 @@
-using BlockGame.main;
 using BlockGame.util;
 using BlockGame.world.entity;
 using BlockGame.world.worldgen;
 using Molten;
-using Molten.DoublePrecision;
 
 namespace BlockGame.world.block;
 

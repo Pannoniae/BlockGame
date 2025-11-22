@@ -1,7 +1,6 @@
 using System.Numerics;
 using BlockGame.GL;
 using BlockGame.main;
-using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world.item.inventory;
 using Molten;

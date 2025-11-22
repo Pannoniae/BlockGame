@@ -1,4 +1,3 @@
-using BlockGame.main;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using Silk.NET.Input;

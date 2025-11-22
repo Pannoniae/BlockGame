@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using BlockGame.main;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
-using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;

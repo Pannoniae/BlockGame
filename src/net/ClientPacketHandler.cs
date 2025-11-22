@@ -911,7 +911,7 @@ public class ClientPacketHandler : PacketHandler {
         // resync complete - send acknowledgment and resume sending clicks
         ClientConnection.instance.send(new ResyncAckPacket {
             actionID = p.actionID
-        }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }, DeliveryMethod.ReliableOrdered);
 
         ClientConnection.instance.waitingForResync = false;
     }

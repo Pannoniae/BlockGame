@@ -6,9 +6,7 @@ using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.entity;
-using BlockGame.world.item;
 using Molten;
-using Molten.DoublePrecision;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render.model;

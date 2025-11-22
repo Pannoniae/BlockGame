@@ -35,12 +35,12 @@ public class Leaves : Block {
 
         // oak: 1 in 15 chance to drop sapling
         if (id == LEAVES.id && Game.random.Next(15) == 0){
-            return (Block.OAK_SAPLING.item, 0, 1);
+            return (OAK_SAPLING.item, 0, 1);
         }
 
         // maple leaves: 1 in 15 chance to drop sapling
         if (id == MAPLE_LEAVES.id && Game.random.Next(15) == 0) {
-            return (Block.MAPLE_SAPLING.item, 0, 1);
+            return (MAPLE_SAPLING.item, 0, 1);
         }
 
         // maple leaves: 1 in 20 chance to drop maple syrup
@@ -50,7 +50,7 @@ public class Leaves : Block {
 
         // mahogany leaves: 1 in 15 chance to drop sapling
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
-            return (Block.MAHOGANY_SAPLING.item, 0, 1);
+            return (MAHOGANY_SAPLING.item, 0, 1);
         }
 
         return base.getDrop(world, x, y, z, metadata, canBreak);

@@ -1,5 +1,4 @@
-﻿using BlockGame.main;
-using BlockGame.util;
+﻿using BlockGame.util;
 using BlockGame.world.item;
 using Molten.DoublePrecision;
 

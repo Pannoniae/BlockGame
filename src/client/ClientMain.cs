@@ -45,7 +45,7 @@ public partial class ClientMain {
         // thx osu/ppy!
         if (OperatingSystem.IsWindows() && NVAPI.Available) {
             //NVAPI.ThreadedOptimisations = NvThreadControlSetting.OGL_THREAD_CONTROL_DEFAULT;
-            if (NVAPI.applyOptimalSettings()) {
+            if (NVAPI.applyOptimalSettings() && !NVAPI.errored) {
                 msgBox("NVIDIA Settings Applied",
                     "NVIDIA GPU settings have been configured. Please restart the game for the changes to take effect.");
                 return;

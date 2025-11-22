@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using BlockGame.main;
 using BlockGame.net.packet;
-using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -253,7 +252,7 @@ public class ClientConnection : INetEventListener {
         }
     }
 
-    public void OnNetworkError(System.Net.IPEndPoint endPoint, System.Net.Sockets.SocketError socketError) {
+    public void OnNetworkError(System.Net.IPEndPoint endPoint, SocketError socketError) {
         Log.error($"Network error: {socketError}");
     }
 

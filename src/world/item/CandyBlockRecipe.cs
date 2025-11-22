@@ -1,11 +1,11 @@
 ﻿using BlockGame.util;
 using BlockGame.world.block;
+using BlockGame.world.item.inventory;
 
 namespace BlockGame.world.item;
 
-using BlockGame.world.item.inventory;
-using BlockGame.world.item;
-using static item.DyeItem;
+
+using static DyeItem;
 
 /** Recipe for mixing any 2 candyblocks into their average colour */
 
@@ -29,7 +29,7 @@ public class CandyBlockRecipe : Recipe {
 
         if (metas.Count != 2) return ItemStack.EMPTY;
 
-        int resultMeta = DyeItem.mixColours(metas[0], metas[1]);
+        int resultMeta = mixColours(metas[0], metas[1]);
         return new ItemStack(Block.CANDY.item, 1, resultMeta);
     }
 

@@ -1,5 +1,4 @@
-﻿using BlockGame;
-using BlockGame.util;
+﻿using BlockGame.util;
 using BlockGame.world.worldgen;
 using BlockGame.world.worldgen.generator;
 using SixLabors.ImageSharp;

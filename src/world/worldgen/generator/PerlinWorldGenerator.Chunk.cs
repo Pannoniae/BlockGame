@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics;
 using BlockGame.util;
 using BlockGame.world.block;
 using BlockGame.world.chunk;

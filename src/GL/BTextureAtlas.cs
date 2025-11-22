@@ -20,7 +20,7 @@ public class BTextureAtlas : BTexture2D {
     public Rgba32[] mipmap = null!;
 
     // tile positions for stitched atlases (null if loaded from single file)
-    public Dictionary<(string source, int tx, int ty), SixLabors.ImageSharp.Rectangle>? tilePositions;
+    public Dictionary<(string source, int tx, int ty), Rectangle>? tilePositions;
 
     public float atlasRatio => atlasSize / (float)width;
 
@@ -37,26 +37,26 @@ public class BTextureAtlas : BTexture2D {
     // Constructor for pre-loaded images (from stitched atlases)
     public BTextureAtlas(SixLabors.ImageSharp.Image<Rgba32> img, int width, int height, int atlasSize = 16, bool delayInit = false) : base("") {
         this.atlasSize = atlasSize;
-        this.image = img;
+        image = img;
         // use actual image dimensions, not passed parameters
         this.width = img.Width;
         this.height = img.Height;
-        this.iwidth = 1.0 / img.Width;
-        this.iheight = 1.0 / img.Height;
+        iwidth = 1.0 / img.Width;
+        iheight = 1.0 / img.Height;
         if (!delayInit) {
             uploadToGPU();
         }
     }
 
     public BTextureAtlas(StitchResult itemResult, int atlasSize = 16) : base("") {
-        this.tilePositions = itemResult.tilePositions;
+        tilePositions = itemResult.tilePositions;
         this.atlasSize = atlasSize;
-        this.image = itemResult.image;
+        image = itemResult.image;
         // use actual image dimensions, not passed parameters
-        this.width = itemResult.width;
-        this.height = itemResult.height;
-        this.iwidth = 1.0 / itemResult.width;
-        this.iheight = 1.0 / itemResult.height;
+        width = itemResult.width;
+        height = itemResult.height;
+        iwidth = 1.0 / itemResult.width;
+        iheight = 1.0 / itemResult.height;
         uploadToGPU();
     }
 
@@ -296,10 +296,35 @@ public class BTextureAtlas : BTexture2D {
             generateMipmaps(imageData.Span, image.Width, image.Height, Settings.instance.mipmapping);
         }
     }
+
+    /**
+     * Update atlas from a new stitch result (for texture pack hot-reloading)
+     */
+    public void updateFromStitch(StitchResult result) {
+        // dispose old image
+        image?.Dispose();
+
+        // update tile positions
+        tilePositions = result.tilePositions;
+
+        // update dimensions
+        width = result.width;
+        height = result.height;
+        iwidth = 1.0 / width;
+        iheight = 1.0 / height;
+
+        // update image
+        image = result.image;
+
+        // re-upload to GPU
+        var GL = Game.GL;
+        GL.DeleteTexture(handle);
+        uploadToGPU();
+    }
 }
 
 public class BlockTextureAtlas : BTextureAtlas {
-    Dictionary<string, SixLabors.ImageSharp.Rectangle>? protectedRegions;
+    Dictionary<string, Rectangle>? protectedRegions;
 
     // constructor for loading from file path
     public BlockTextureAtlas(string path, int atlasSize) : base(path, atlasSize) { }
@@ -307,8 +332,8 @@ public class BlockTextureAtlas : BTextureAtlas {
     // NEW: constructor for stitched atlases
     public BlockTextureAtlas(StitchResult result)
         : base(result.image, result.width, result.height, 16, delayInit: true) {
-        this.tilePositions = result.tilePositions;
-        this.protectedRegions = result.protectedRegions;
+        tilePositions = result.tilePositions;
+        protectedRegions = result.protectedRegions;
         // Now upload to GPU after protected regions are set
         uploadToGPU();
     }
@@ -316,10 +341,21 @@ public class BlockTextureAtlas : BTextureAtlas {
     /**
      * Get protected region rectangle (for DynamicTextures)
      */
-    public SixLabors.ImageSharp.Rectangle getRegion(string name) {
+    public Rectangle getRegion(string name) {
         if (protectedRegions == null)
             throw new InvalidOperationException("Not a stitched atlas!");
         return protectedRegions[name];
+    }
+
+    /**
+     * Update from stitch result (for texture pack reloading)
+     */
+    public void updateFromStitch(StitchResult result) {
+        // update protected regions
+        protectedRegions = result.protectedRegions;
+
+        // call base updateFromStitch
+        ((BTextureAtlas)this).updateFromStitch(result);
     }
 
     public override void onFirstLoad() {

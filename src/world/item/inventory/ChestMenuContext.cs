@@ -1,4 +1,3 @@
-using BlockGame.ui.menu;
 using BlockGame.util;
 
 namespace BlockGame.world.item.inventory;

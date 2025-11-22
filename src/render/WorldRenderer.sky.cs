@@ -4,7 +4,6 @@ using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.ui;
 using BlockGame.util;
-using Molten;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BlockGame.render;

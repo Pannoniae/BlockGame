@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
 using SDL;

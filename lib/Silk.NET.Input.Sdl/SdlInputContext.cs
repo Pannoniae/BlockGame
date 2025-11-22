@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using SDL;
 using Silk.NET.Input.Internals;
-using Silk.NET.SDL;
-using Silk.NET.Windowing;
 using Silk.NET.Windowing.Sdl;
 
 namespace Silk.NET.Input.Sdl {

@@ -9,7 +9,6 @@ using Stride.Core.Mathematics;
 using Stride.Graphics;
 #else
 using SixLabors.ImageSharp;
-using System.Numerics;
 #endif
 
 namespace FontStashSharp

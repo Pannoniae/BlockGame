@@ -18,8 +18,8 @@ public class CraftingTableContext : InventoryContext {
 
     public CraftingTableContext(Player player) {
         this.player = player;
-        this.playerInv = player.inventory;
-        this.craftingGrid = new CraftingGridInventory(this, 3, 3);
+        playerInv = player.inventory;
+        craftingGrid = new CraftingGridInventory(this, 3, 3);
         setupSlots();
     }
 

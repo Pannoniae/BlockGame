@@ -84,7 +84,7 @@ namespace FontStashSharp
 
 		public bool IsNull => TextSource.IsNull;
 
-		[System.Obsolete("Possible phase out.")]
+		[Obsolete("Possible phase out.")]
 		public bool GetNextCodepoint(out int codepoint, out Color color)
 		{
 			color = Color.Transparent;

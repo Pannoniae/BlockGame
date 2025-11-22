@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Silk.NET.GLFW;
 using Silk.NET.Windowing;
 using Silk.NET.Windowing.Glfw;

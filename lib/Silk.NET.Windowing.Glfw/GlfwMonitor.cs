@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using Silk.NET.GLFW;
 using Silk.NET.Maths;
-using VideoMode = Silk.NET.Windowing.VideoMode;
 using NativeMonitor = Silk.NET.GLFW.Monitor;
 
 namespace Silk.NET.Windowing.Glfw

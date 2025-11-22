@@ -1,8 +1,6 @@
-using System.Linq;
 using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.menu;
-using Molten;
 using Silk.NET.Input;
 
 namespace BlockGame.ui.element;

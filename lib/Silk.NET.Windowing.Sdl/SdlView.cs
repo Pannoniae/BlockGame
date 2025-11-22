@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
@@ -57,10 +55,10 @@ namespace Silk.NET.Windowing.Sdl
         }
 
         // Events
-        public override event System.Action<Vector2D<int>>? Resize;
-        public override event System.Action<Vector2D<int>>? FramebufferResize;
-        public override event System.Action? Closing;
-        public override event System.Action<bool>? FocusChanged;
+        public override event Action<Vector2D<int>>? Resize;
+        public override event Action<Vector2D<int>>? FramebufferResize;
+        public override event Action? Closing;
+        public override event Action<bool>? FocusChanged;
 
         // Properties
         protected override IGLContext? CoreGLContext => API.API == ContextAPI.OpenGL || API.API == ContextAPI.OpenGLES
@@ -254,7 +252,7 @@ namespace Silk.NET.Windowing.Sdl
                         {
                             ContextProfile.Core => SDL_GLProfile.SDL_GL_CONTEXT_PROFILE_CORE,
                             ContextProfile.Compatability => SDL_GLProfile.SDL_GL_CONTEXT_PROFILE_COMPATIBILITY,
-                            _ => throw new System.ArgumentOutOfRangeException(nameof(opts), "Bad ContextProfile")
+                            _ => throw new ArgumentOutOfRangeException(nameof(opts), "Bad ContextProfile")
                         })
                 ),
                 (SDL_GLAttr.SDL_GL_CONTEXT_FLAGS, (int) opts.API.Flags),

@@ -1033,7 +1033,7 @@ public readonly struct Command {
         writer.WriteLine($"Generated: {DateTime.Now}");
         writer.WriteLine();
         
-        var registryType = typeof(util.stuff.Registry);
+        var registryType = typeof(Registry);
         var fields = registryType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 
         foreach (var field in fields) {

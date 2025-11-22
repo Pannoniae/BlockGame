@@ -544,6 +544,12 @@ public class GUI {
             depth);
     }
 
+    public void drawUI(BTexture2D texture, Vector2 position, Vector2 scale, Rectangle? source = null,
+        Color color = default, Vector2 origin = default, float depth = 0f) {
+        tb.Draw(texture, position * guiScale, source, color == default ? Color.White : color, guiScale * (scale == default ? 1f : scale.X), 0f,
+            origin, depth);
+    }
+
     public void drawUI(BTexture2D texture, RectangleF dest, Rectangle? source = null, Color color = default,
         float depth = 0f) {
         tb.Draw(texture, new RectangleF(
@@ -591,6 +597,11 @@ public class GUI {
     public void drawRString(RichTextLayout layout, Vector2 position, TextHorizontalAlignment alignment,
         Color color = default) {
         DrawRString(layout, position, color == default ? Color.White : color, new Vector2(TEXTSCALE), alignment);
+    }
+
+    public void drawRStringUI(RichTextLayout layout, Vector2 position, TextHorizontalAlignment alignment,
+        Color color = default) {
+        DrawRString(layout, position * guiScale, color == default ? Color.White : color, new Vector2(TEXTSCALE), alignment);
     }
 
     public void drawStringUI(ReadOnlySpan<char> text, Vector2 position, Color color = default) {
@@ -1225,4 +1236,6 @@ public class GUI {
         // right
         drawUI(colourTexture, new Rectangle(x + width - borderWidth, y, borderWidth, height), null, color);
     }
+
+
 }

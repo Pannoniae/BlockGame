@@ -1027,7 +1027,7 @@ public class Block {
     }
 
     public ushort setID(ushort id) {
-        this.value = (this.value & 0xFF000000) | id;
+        value = (value & 0xFF000000) | id;
         return getID();
     }
 
@@ -1192,7 +1192,7 @@ public class Block {
     }
 
     public Block(string name) {
-        this.id = id;
+        id = id;
         this.name = name;
     }
 
@@ -1350,10 +1350,10 @@ public class Block {
     public virtual void renderUpdate(World world, int x, int y, int z) {
     }
 
-    public virtual void interact(World world, int x, int y, int z, world.entity.Entity e) {
+    public virtual void interact(World world, int x, int y, int z, Entity e) {
     }
 
-    public virtual Vector3D push(World world, int x, int y, int z, world.entity.Entity e) {
+    public virtual Vector3D push(World world, int x, int y, int z, Entity e) {
         return Vector3D.Zero;
     }
 

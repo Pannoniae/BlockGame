@@ -1,8 +1,6 @@
 using System.Numerics;
 using BlockGame.main;
-using BlockGame.render;
 using BlockGame.ui.element;
-using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;

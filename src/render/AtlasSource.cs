@@ -22,7 +22,13 @@ public class AtlasSource {
         this.filepath = filepath;
         this.tileSize = tileSize;
         using var stream = Assets.open(filepath);
-        this.image = Image.Load<Rgba32>(stream);
+        image = Image.Load<Rgba32>(stream);
+    }
+
+    public AtlasSource(string identifier, Image<Rgba32> image, int tileSize) {
+        this.filepath = identifier;
+        this.image = image;
+        this.tileSize = tileSize;
     }
 
     /**
@@ -59,9 +65,9 @@ public struct ProtectedRegion {
     public string sourceFile;
 
     /** Pixel rectangle in source atlas */
-    public SixLabors.ImageSharp.Rectangle srcRect;
+    public Rectangle srcRect;
 
-    public ProtectedRegion(string name, string sourceFile, SixLabors.ImageSharp.Rectangle srcRect) {
+    public ProtectedRegion(string name, string sourceFile, Rectangle srcRect) {
         this.name = name;
         this.sourceFile = sourceFile;
         this.srcRect = srcRect;
@@ -70,6 +76,6 @@ public struct ProtectedRegion {
     public ProtectedRegion(string name, string sourceFile, int x, int y, int width, int height) {
         this.name = name;
         this.sourceFile = sourceFile;
-        this.srcRect = new SixLabors.ImageSharp.Rectangle(x, y, width, height);
+        srcRect = new Rectangle(x, y, width, height);
     }
 }

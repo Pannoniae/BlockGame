@@ -1,17 +1,10 @@
-using SixLabors.ImageSharp;
-using System.Linq;
 using System.Numerics;
-using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.net;
 using BlockGame.net.packet;
 using BlockGame.ui.screen;
 using BlockGame.util;
 using BlockGame.util.cmd;
-using BlockGame.world;
-using BlockGame.world.block;
-using BlockGame.world.item.inventory;
-using Molten.DoublePrecision;
 using Silk.NET.Input;
 
 namespace BlockGame.ui.menu;
