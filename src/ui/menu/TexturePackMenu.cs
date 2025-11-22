@@ -28,7 +28,7 @@ public class TexturePackMenu : Menu {
 
     public const int LIST_WIDTH = 135;
     public const int PREVIEW_WIDTH = 155;
-    public const int GAP = 10; // gap between list and preview
+    public const int GAP = 6; // gap between list and preview
     public const int MARGIN_Y = 20;
 
     // calculate centred pos
@@ -154,11 +154,25 @@ public class TexturePackMenu : Menu {
 
     public override void draw() {
         Game.gui.drawBG(16);
+
+        // update pack entry positions for window resize
+        updatePackPositions();
+
         base.draw();
 
         // draw preview panel if a pack is selected
         if (selectedEntry != null) {
             drawPreviewPanel();
+        }
+    }
+
+    void updatePackPositions() {
+        int listX = listx();
+        int y = MARGIN_Y;
+        foreach (var entry in packEntries) {
+            entry.guiPosition = new Rectangle(listX, y, LIST_WIDTH, 24);
+            entry.setPosition(entry.guiPosition);
+            y += 28;
         }
     }
 
@@ -218,7 +232,7 @@ public class TexturePackMenu : Menu {
         // description box
         const int descY = contentY + (iconSize + 32);
         const int descW = (PREVIEW_WIDTH - padding * 2);
-        const int descH = 140;
+        const int descH = 156 - 12;
 
         // description box background (darker inset)
         Game.gui.draw9PatchUI(contentX, descY, descW, descH,
