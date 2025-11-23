@@ -91,6 +91,7 @@ public class Item {
 
     public static Item SEEDS;
     public static Item WHEAT;
+    public static Item BREAD;
 
 
     //public static Item BOW_WOOD;
@@ -352,6 +353,10 @@ public class Item {
         material[WHEAT.id] = true;
         ((Crop)Block.CROP_WHEAT).product = WHEAT;
         ((Crop)Block.CROP_WHEAT).seedItem = SEEDS;
+
+        BREAD = register("bread", new Food("Bread", 25));
+        BREAD.tex = uv("items.png", 10, 10);
+        material[BREAD.id] = true;
 
 
         //BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));

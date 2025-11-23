@@ -91,6 +91,7 @@ public class Recipe {
     public static Recipe GLASS_FRAMED_T;
     public static Recipe GLASS_FRAMED_C;
 
+    public static Recipe BREAD;
 
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
@@ -477,6 +478,10 @@ public class Recipe {
         register(new ItemStack(Item.COAL, 9))
             .shape(01_00,2)
             .ingredients(Block.COAL_BLOCK.item);
+
+        BREAD = register(new ItemStack(Item.BREAD, 1));
+        BREAD.shape(200_100_200, 3);
+        BREAD.ingredients(Item.WATER_BUCKET, Item.WHEAT);
     }
 
     private static Recipe tool(Item result, Item material, int shape, int q = 1) {

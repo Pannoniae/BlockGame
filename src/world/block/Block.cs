@@ -1852,9 +1852,11 @@ public class GrassBlock(string name) : Block(name) {
             int ny = y + dy;
             int nz = z + dz;
 
-            // if target is dirt with air above, spread
-            if (world.getBlock(nx, ny, nz) == DIRT.id) {
+            // spread to dirt or unseeded farmland (with air above)
+            var targetBlock = world.getBlock(nx, ny, nz);
+            if (targetBlock == DIRT.id || targetBlock == FARMLAND.id) {
                 if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == AIR.id) {
+                    // only spreads if air above (crops block spreading to seeded farmland)
                     world.setBlock(nx, ny, nz, GRASS.id);
                 }
             }

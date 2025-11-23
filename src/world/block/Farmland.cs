@@ -29,10 +29,10 @@ public class Farmland : Block {
 
         if (hasWater && currentMeta == 0) {
             // hydrate
-            world.setBlockMetadata(x, y, z, 1);
+            world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(1));
         } else if (!hasWater && currentMeta > 0) {
             // dry out
-            world.setBlockMetadata(x, y, z, 0);
+            world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(0));
         }
     }
 

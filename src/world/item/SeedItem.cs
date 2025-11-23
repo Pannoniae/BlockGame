@@ -19,8 +19,8 @@ public class SeedItem : Item {
         if (targetBlock == farmland.id) {
             // plant the crop
             world.setBlock(x, y + 1, z, crop.id);
-            // reduce seed count
-            stack.damageItem(player, 1);
+            // consume one seed
+            return stack.consume(player, 1);
         }
         return stack;
     }
