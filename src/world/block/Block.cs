@@ -232,6 +232,11 @@ public class Block {
     public static Block PINE_FENCE;
     public static Block MAPLE_FENCE;
 
+    public static Block OAK_GATE;
+    public static Block MAHOGANY_GATE;
+    public static Block PINE_GATE;
+    public static Block MAPLE_GATE;
+
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
     public static XUList<bool> fullBlock => Registry.BLOCKS.fullBlock;
@@ -1056,6 +1061,26 @@ public class Block {
         PINE_FENCE.setTex(uv("blocks.png", 14, 3));
         PINE_FENCE.material(Material.WOOD);
         PINE_FENCE.setFlammable(30);
+
+        OAK_GATE = register("oakGate", new Gate("Oak Gate"));
+        OAK_GATE.setTex(uv("blocks.png", 15, 3));
+        OAK_GATE.material(Material.WOOD);
+        OAK_GATE.setFlammable(30);
+
+        MAHOGANY_GATE = register("mahoganyGate", new Gate("Mahogany Gate"));
+        MAHOGANY_GATE.setTex(uv("blocks.png", 16, 3));
+        MAHOGANY_GATE.material(Material.WOOD);
+        MAHOGANY_GATE.setFlammable(30);
+
+        MAPLE_GATE = register("mapleGate", new Gate("Maple Gate"));
+        MAPLE_GATE.setTex(uv("blocks.png", 17, 3));
+        MAPLE_GATE.material(Material.WOOD);
+        MAPLE_GATE.setFlammable(30);
+
+        PINE_GATE = register("pineGate", new Gate("Pine Gate"));
+        PINE_GATE.setTex(uv("blocks.png", 18, 3));
+        PINE_GATE.material(Material.WOOD);
+        PINE_GATE.setFlammable(30);
 
 
         // set default hardness for blocks that haven't set it
