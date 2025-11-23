@@ -22,10 +22,11 @@ public class Stairs : Block {
      * Bits 3-7: Reserved
      */
     static byte getFacing(byte metadata) => (byte)(metadata & 0b11);
+
     static bool isUpsideDown(byte metadata) => (metadata & 0b100) != 0;
     static byte setFacing(byte metadata, byte facing) => (byte)((metadata & ~0b11) | (facing & 0b11));
     static byte setUpsideDown(byte metadata, bool upsideDown) => (byte)((metadata & ~0b100) | (upsideDown ? 0b100 : 0));
-    
+
     public override void place(World world, int x, int y, int z, byte metadata, Placement info) {
         var opposite = Direction.getOpposite(info.hfacing);
         byte meta = setFacing(0, (byte)opposite);
@@ -36,7 +37,9 @@ public class Stairs : Block {
 
     public override void render(BlockRenderer br, int x, int y, int z, List<BlockVertexPacked> vertices) {
         base.render(br, x, y, z, vertices);
-        x &= 15; y &= 15; z &= 15;
+        x &= 15;
+        y &= 15;
+        z &= 15;
 
         var facing = getFacing(br.getBlock().getMetadata());
 
@@ -77,7 +80,7 @@ public class Stairs : Block {
             _ => new AABB(x, y + 0.5f, z, x + 1f, y + 1f, z + 0.5f)
         });
     }
-    
+
     public override bool canPlace(World world, int x, int y, int z, Placement info) {
         var existingId = world.getBlockRaw(x, y, z).getID();
         // prevent placing stairs into existing stairs
@@ -92,8 +95,10 @@ public class Stairs : Block {
         return new ItemStack(getItem(), 1, 0);
     }
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return (getItem(), 0, 1);
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+        if (canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, 0));
+        }
     }
 
     public override byte maxValidMetadata() => 3;

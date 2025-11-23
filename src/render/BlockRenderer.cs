@@ -950,6 +950,9 @@ public class BlockRenderer {
                 // same but also get grass colour
                 renderGrass(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
                 break;
+            case RenderType.CROP:
+                renderCrop(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
+                break;
             case RenderType.CROSS:
                 renderCross(bl, x & 0xF, y & 0xF, z & 0xF, vertices, metadata);
                 break;
@@ -1156,6 +1159,58 @@ public class BlockRenderer {
             var uvd = UVPair.texCoords(tex);
             var uvdm = UVPair.texCoords(texm);
         }
+    }
+
+    public void renderCrop(Block bl, int x, int y, int z, List<BlockVertexPacked> vertices, byte metadata) {
+        var tex = bl.getTexture(0, metadata);
+        var texm = tex + 1;
+
+        if (forceTex.u >= 0 && forceTex.v >= 0) {
+            tex = forceTex;
+            texm = new UVPair(forceTex.u + 1, forceTex.v + 1);
+        }
+
+        var uvd = UVPair.texCoords(tex);
+        var uvdm = UVPair.texCoords(texm);
+
+        // 2x2 planes, "hash" pattern
+        float d = 0.25f;  // offset from edge
+
+        // north-south plane at x=0.25 (west side)
+        applySimpleLighting(RawDirection.NONE);
+        begin();
+        vertex(x + d, y + 1f, z + 0f, uvd.X, uvd.Y);
+        vertex(x + d, y + 0f, z + 0f, uvd.X, uvdm.Y);
+        vertex(x + d, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+        vertex(x + d, y + 1f, z + 1f, uvdm.X, uvd.Y);
+        endTwo(vertices);
+
+        // north-south plane at x=0.75 (east side)
+        applySimpleLighting(RawDirection.NONE);
+        begin();
+        vertex(x + 1f - d, y + 1f, z + 0f, uvd.X, uvd.Y);
+        vertex(x + 1f - d, y + 0f, z + 0f, uvd.X, uvdm.Y);
+        vertex(x + 1f - d, y + 0f, z + 1f, uvdm.X, uvdm.Y);
+        vertex(x + 1f - d, y + 1f, z + 1f, uvdm.X, uvd.Y);
+        endTwo(vertices);
+
+        // east-west plane at z=0.25 (south side)
+        applySimpleLighting(RawDirection.NONE);
+        begin();
+        vertex(x + 0f, y + 1f, z + d, uvd.X, uvd.Y);
+        vertex(x + 0f, y + 0f, z + d, uvd.X, uvdm.Y);
+        vertex(x + 1f, y + 0f, z + d, uvdm.X, uvdm.Y);
+        vertex(x + 1f, y + 1f, z + d, uvdm.X, uvd.Y);
+        endTwo(vertices);
+
+        // east-west plane at z=0.75 (north side)
+        applySimpleLighting(RawDirection.NONE);
+        begin();
+        vertex(x + 0f, y + 1f, z + 1f - d, uvd.X, uvd.Y);
+        vertex(x + 0f, y + 0f, z + 1f - d, uvd.X, uvdm.Y);
+        vertex(x + 1f, y + 0f, z + 1f - d, uvdm.X, uvdm.Y);
+        vertex(x + 1f, y + 1f, z + 1f - d, uvdm.X, uvd.Y);
+        endTwo(vertices);
     }
 
     /**

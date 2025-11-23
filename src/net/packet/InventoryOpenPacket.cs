@@ -12,6 +12,8 @@ public class InventoryOpenPacket : Packet {
     public byte slotCount;
     public Vector3I? position;       // for block entities
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(invID);
         buf.writeByte(invType);

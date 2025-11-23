@@ -4,6 +4,8 @@ namespace BlockGame.net.packet;
 public struct LoginFailedPacket : Packet {
     public string reason;  // "Version mismatch", "Server full", etc.
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeString(reason);
     }

@@ -13,6 +13,8 @@ public struct SpawnEntityPacket : Packet {
     public Vector3D velocity;
     public byte[] extraData;  // entity-specific data
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeInt(entityType);

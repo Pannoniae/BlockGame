@@ -28,6 +28,8 @@ public class Player : Mob, CommandSource {
     public const double sneakingEyeHeight = 1.45;
     public const double feetCheckHeight = 0.05;
 
+    public static List<ItemStack> drops = [];
+
     public Vector3D inputVector;
 
     public PlayerHandRenderer handRenderer;
@@ -662,8 +664,22 @@ public class Player : Mob, CommandSource {
 
             var heldItem = inventory.getSelected().getItem();
             var toolBreakSpeed = heldItem.getBreakSpeed(inventory.getSelected(), block);
-            //var breakSpeed = toolBreakSpeed / hardness / 2; // why 2? idk
-            var breakSpeed = toolBreakSpeed / hardness * 0.5; // why 2? idk
+            var breakSpeed = toolBreakSpeed / hardness * 0.5;
+            var canBreak = heldItem.canBreak(inventory.getSelected(), block);
+
+            // jumping penalty (4x slower while airborne)
+            if (!onGround) {
+                breakSpeed *= 0.25;
+            }
+
+            if (inLiquid) {
+                breakSpeed *= 0.25;
+            }
+
+            if (!canBreak) {
+                breakSpeed *= 0.25;
+            }
+
 
             prevBreakProgress = breakProgress;
             breakProgress += breakSpeed * dt;
@@ -687,10 +703,17 @@ public class Player : Mob, CommandSource {
                 var metadata = val.getMetadata();
 
                 // only spawn drops if using correct tool
-                var (dropItem, meta, dropCount) = block.getDrop(world, pos.X, pos.Y, pos.Z, metadata, heldItem.canBreak(inventory.getSelected(), block));
+                drops.Clear();
+                block.getDrop(drops, world, pos.X, pos.Y, pos.Z, metadata, canBreak);
 
-                if (dropItem != null && dropCount > 0 && gameMode.gameplay) {
-                    world.spawnBlockDrop(pos.X, pos.Y, pos.Z, dropItem, dropCount, meta);
+                //if (dropItem != null && dropCount > 0 && gameMode.gameplay) {
+                if (gameMode.gameplay) {
+                    foreach (var drop in drops) {
+                        var dropItem = drop.getItem();
+                        var dropCount = drop.quantity;
+                        var meta = (byte)drop.metadata;
+                        world.spawnBlockDrop(pos.X, pos.Y, pos.Z, dropItem, dropCount, meta);
+                    }
                 }
 
                 world.setBlock(pos.X, pos.Y, pos.Z, 0);

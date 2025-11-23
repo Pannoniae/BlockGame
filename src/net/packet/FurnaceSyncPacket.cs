@@ -12,6 +12,8 @@ public class FurnaceSyncPacket : Packet {
     public int fuelMax;
     public bool lit;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeVec3I(position);
         buf.writeInt(smeltProgress);

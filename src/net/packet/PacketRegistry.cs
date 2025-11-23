@@ -74,8 +74,8 @@ public class PacketRegistry {
         register(0x46, typeof(HeldItemChangePacket));
         register(0x47, typeof(FurnaceSyncPacket));
         register(0x48, typeof(PlayerHeldItemChangePacket));
-        register(0x49, typeof(ResyncCompletePacket));
-        register(0x4A, typeof(ResyncAckPacket));
+        register(0x49, typeof(InventoryResyncTermPacket));
+        register(0x4A, typeof(InventoryResyncAckPacket));
 
         // block entities (0x50-0x5F)
         register(0x50, typeof(UpdateBlockEntityPacket));

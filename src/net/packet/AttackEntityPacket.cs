@@ -4,6 +4,8 @@ namespace BlockGame.net.packet;
 public struct AttackEntityPacket : Packet {
     public int targetEntityID;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(targetEntityID);
     }

@@ -7,6 +7,8 @@ namespace BlockGame.net.packet;
 public struct CommandPacket : Packet {
     public string command;  // full command with args (without leading /)
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeString(command);
     }

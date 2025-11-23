@@ -5,6 +5,8 @@ public class DropItemPacket : Packet {
     public byte slotIndex;
     public byte quantity;  // how many to drop (ctrl+Q drops stack)
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeByte(slotIndex);
         buf.writeByte(quantity);

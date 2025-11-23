@@ -1,115 +1,91 @@
 using System.Numerics;
 using BlockGame.util;
 using BlockGame.world.block;
-using Molten;
 
 namespace BlockGame.world.worldgen.feature;
 
 public class OreFeature : Feature {
 
     public ushort block;
-    public int minCount;
-    public int maxCount;
-    private readonly Queue<Vector3I> expansionQueue = new(32 * 2);
-
+    public int minSteps;
+    public int maxSteps;
+    public float radius;
     public bool stoneMode = true; // only place in stone
 
-    public OreFeature(ushort block, int minCount, int maxCount) {
+    public OreFeature(ushort block, int steps, bool stoneMode = true) {
         this.block = block;
-        this.minCount = minCount;
-        this.maxCount = maxCount;
+        this.stoneMode = stoneMode;
+
+        // derive step variation
+        minSteps = steps - 2;
+        maxSteps = steps + 2;
+
+        radius = 1f + steps * (1 / 24f);
     }
 
     public override void place(World world, XRandom random, int x, int y, int z) {
-        // so we need a somewhat coherent shape
-
-        /*// the size of the shape is a base sigma + slightly bigger if we have more ores
-        var s = 1f + count / 8f;
-
-        // get a random offset, biased towards the original
-        for (int i = 0; i < count; i++) {
-            var xo = random.ApproxGaussian(s);
-            var yo = random.ApproxGaussian(s);
-            var zo = random.ApproxGaussian(s);
-            // cap
-            xo = Math.Clamp(xo, -8, 8);
-            yo = Math.Clamp(yo, -8, 8);
-            zo = Math.Clamp(zo, -8, 8);
-
-            var x1 = x + (int)xo;
-            var y1 = y + (int)yo;
-            var z1 = z + (int)zo;
-
-            // check if in bounds
-            if (y1 < 0 || y1 >= World.WORLDHEIGHT) {
-                continue;
-            }
-            if (world.getBlock(x1, y1, z1) == Block.STONE.id) {
-                world.setBlockDumb(x1, y1, z1, block);
-            }
-        }*/
-        
-        var count = random.Next(minCount, maxCount + 1);
-
-
         var bl = world.getBlock(x, y, z);
-        // we have *count* ores, we need to distribute them somehow
-        if (stoneMode && bl != Block.STONE.id) {
-            return; // Only start in stone
-        }
 
-        // don't place in air tho, only natural blocks
-        if (bl != Block.STONE.id && bl != Block.DIRT.id && bl != Block.HELLSTONE.id) {
+        // only start in valid blocks
+        if (stoneMode && bl != Block.STONE.id) {
             return;
         }
 
-        // Place first ore block at origin point
-        world.setBlockDumb(x, y, z, block);
-        
-        expansionQueue.Clear();
-        expansionQueue.Enqueue(new Vector3I(x, y, z));
+        if (!stoneMode && bl != Block.STONE.id && bl != Block.DIRT.id && bl != Block.HELLSTONE.id) {
+            return;
+        }
 
-        int placedCount = 1;
+        // pick random direction
+        var hAngle = random.NextSingle() * float.Pi * 2;
+        var vAngle = (random.NextSingle() - 0.5f) * float.Pi * 0.3f;
 
-        // Continue until we've placed enough ore blocks or run out of valid positions
-        while (placedCount < count && expansionQueue.Count > 0) {
-            Vector3I current = expansionQueue.Dequeue();
+        float vCos = MathF.Cos(vAngle);
+        var dir = new Vector3(
+            float.Cos(hAngle) * vCos,
+            float.Sin(vAngle),
+            float.Sin(hAngle) * vCos
+        );
 
-            foreach (var dir in Direction.directions) {
-                Vector3I newPos = current + dir;
+        // walk straight line with random radius at each step
+        var steps = random.Next(minSteps, maxSteps + 1);
+        var pos = new Vector3(x, y, z);
 
-                // Check world bounds
-                if (newPos.Y is < 0 or >= World.WORLDHEIGHT) {
-                    continue;
-                }
+        for (int i = 0; i < steps; i++) {
+            var radius = random.NextSingle() * this.radius;
+            placeSphere(world, pos, radius);
+            pos += dir;
+        }
+    }
 
-                // Check if it's stone
-                if (stoneMode && world.getBlock(newPos.X, newPos.Y, newPos.Z) != Block.STONE.id) {
-                    continue;
-                }
+    private void placeSphere(World world, Vector3 center, float radius) {
+        int xMin = (int)(center.X - radius);
+        int xMax = (int)(center.X + radius) + 1;
+        int yMin = (int)(center.Y - radius);
+        int yMax = (int)(center.Y + radius) + 1;
+        int zMin = (int)(center.Z - radius);
+        int zMax = (int)(center.Z + radius) + 1;
 
-                if (!stoneMode) {
-                    // don't place in air tho, only natural blocks
-                    var targetBlock = world.getBlock(newPos.X, newPos.Y, newPos.Z);
-                    if (targetBlock != Block.STONE.id && targetBlock != Block.DIRT.id && targetBlock != Block.HELLSTONE.id) {
-                        continue;
-                    }
-                }
-                
-                
-                float chance = 0.7f - (Vector3.Distance(new Vector3(x, y, z), new Vector3(newPos.X, newPos.Y, newPos.Z)) * 0.05f);
-                chance = Math.Max(0.1f, chance);
+        // clamp to world bounds
+        yMin = Math.Max(0, yMin);
+        yMax = Math.Min(World.WORLDHEIGHT, yMax);
 
-                if (random.NextSingle() < chance) {
-                    // Place ore (may place over existing ore, but we don't care)
-                    world.setBlockDumb(newPos.X, newPos.Y, newPos.Z, block);
-                    placedCount++;
+        float radSq = radius * radius;
+        for (int zz = zMin; zz < zMax; zz++) {
+            for (int yy = yMin; yy < yMax; yy++) {
+                for (int xx = xMin; xx < xMax; xx++) {
+                    float dx = xx - center.X;
+                    float dy = yy - center.Y;
+                    float dz = zz - center.Z;
+                    float distSq = dx * dx + dy * dy + dz * dz;
 
-                    // Add to expansion queue
-                    expansionQueue.Enqueue(newPos);
+                    if (distSq <= radSq) {
+                        var bl = world.getBlock(xx, yy, zz);
 
-                    if (placedCount >= count) {
-                        break;
+                        // only replace valid blocks
+                        if (stoneMode && bl != Block.STONE.id) continue;
+                        if (!stoneMode && bl != Block.STONE.id && bl != Block.DIRT.id && bl != Block.HELLSTONE.id) continue;
+
+                        world.setBlockDumb(xx, yy, zz, block);
                     }
                 }
             }

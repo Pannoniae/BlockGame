@@ -96,6 +96,7 @@ public partial class Game {
 
     public static FontLoader fontLoader;
     public static SoundEngine snd;
+    public static MusicPlayer musicPlayer;
     public static DiscordPresence? discord;
 
     public static World world;
@@ -762,15 +763,9 @@ public partial class Game {
         globalTick = 0;
 
         snd = new SoundEngine();
+        musicPlayer = new MusicPlayer(snd);
 
         cs = new Coroutines();
-
-        if (!snd.nosound) {
-            var music = snd.playMusic("snd/tests.ogg");
-            music.loop = true;
-        }
-
-        snd.muteMusic();
 
         // initialize the GUI first
         fontLoader = new FontLoader("fonts/BmPlus_IBM_VGA_9x16.otb", "fonts/BmPlus_IBM_VGA_9x16.otb");
@@ -1204,6 +1199,7 @@ public partial class Game {
         handleTimers();
         cs.updateFrame(dt);
         snd.update();
+        musicPlayer.update(dt);
 
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;

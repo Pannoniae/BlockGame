@@ -246,4 +246,27 @@ public class BlockModel {
         model.faces = [];
         return model;
     }
+
+    public static BlockModel makeFarmland(Block bl) {
+        var uvs = bl.uvs;
+        var model = new BlockModel();
+        // cube but top at 15/16th
+        model.faces = new Face[6];
+
+        var minext = new UVPair(0, 1 / 16f);
+
+        // west
+        model.faces[0] = new(0, 15 / 16f, 1, 0, 0, 1, 0, 0, 0, 0, 15 / 16f, 0, uvs[0] + minext, uvs[0] + 1, RawDirection.WEST);
+        // east
+        model.faces[1] = new(1, 15 / 16f, 0, 1, 0, 0, 1, 0, 1, 1, 15 / 16f, 1, uvs[1] + minext, uvs[1] + 1, RawDirection.EAST);
+        // south
+        model.faces[2] = new(0, 15 / 16f, 0, 0, 0, 0, 1, 0, 0, 1, 15 / 16f, 0, uvs[2] + minext, uvs[2] + 1, RawDirection.SOUTH);
+        // north
+        model.faces[3] = new(1, 15 / 16f, 1, 1, 0, 1, 0, 0, 1, 0, 15 / 16f, 1, uvs[3] + minext, uvs[3] + 1, RawDirection.NORTH);
+        // down
+        model.faces[4] = new(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, uvs[4], uvs[4] + 1, RawDirection.DOWN);
+        // up
+        model.faces[5] = new(0, 15 / 16f, 1, 0, 15 / 16f, 0, 1, 15 / 16f, 0, 1, 15 / 16f, 1, uvs[5], uvs[5] + 1, RawDirection.UP);
+        return model;
+    }
 }

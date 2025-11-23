@@ -11,6 +11,8 @@ public struct LoginSuccessPacket : Packet {
     public int worldTick;
     public bool creative;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeVec3D(spawnPos);

@@ -9,6 +9,8 @@ public class ChunkDataPacket : Packet {
     public ChunkCoord coord;
     public SubChunkData[] subChunks;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(coord.x);
         buf.writeInt(coord.z);

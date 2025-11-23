@@ -1,3 +1,4 @@
+using BlockGame.util;
 using BlockGame.world.entity;
 using BlockGame.world.item;
 
@@ -45,8 +46,10 @@ public class Cactus(string name) : Block(name) {
         }
     }
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return (getItem(), 0, 1);
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+        if (canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, 0));
+        }
     }
 
     /** damage entities that touch the cactus */

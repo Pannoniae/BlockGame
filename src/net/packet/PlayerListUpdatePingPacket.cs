@@ -5,6 +5,8 @@ public struct PlayerListUpdatePingPacket : Packet {
     public int entityID;
     public int ping;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeInt(ping);

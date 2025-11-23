@@ -8,6 +8,8 @@ public struct BlockChangePacket : Packet {
     public ushort blockID;
     public byte metadata;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buffer) {
         buffer.writeVec3I(position);
         buffer.writeUShort(blockID);

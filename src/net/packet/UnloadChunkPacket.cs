@@ -6,6 +6,8 @@ namespace BlockGame.net.packet;
 public class UnloadChunkPacket : Packet {
     public ChunkCoord coord;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(coord.x);
         buf.writeInt(coord.z);

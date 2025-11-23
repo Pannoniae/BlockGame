@@ -12,6 +12,8 @@ public struct SpawnPlayerPacket : Packet {
     public bool sneaking;
     public bool flying;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeString(username);

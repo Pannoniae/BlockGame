@@ -7,6 +7,8 @@ public class BlockEntityDataPacket : Packet {
     public Vector3I position;
     public byte[] data;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeVec3I(position);
         buf.writeInt(data.Length);

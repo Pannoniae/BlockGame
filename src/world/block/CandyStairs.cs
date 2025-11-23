@@ -63,8 +63,10 @@ public class CandyStairs : Stairs {
         return new ItemStack(id, 1, setColour(0, getColour(metadata)));
     }
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return (getItem(), setColour(0, getColour(metadata)), 1);
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+        if (canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, setColour(0, getColour(metadata))));
+        }
     }
 
     public string getName(byte metadata) {

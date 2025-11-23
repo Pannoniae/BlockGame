@@ -79,7 +79,7 @@ public class ServerPacketHandler : PacketHandler {
             case InventoryAckPacket p:
                 handleInventoryAck(p);
                 break;
-            case ResyncAckPacket p:
+            case InventoryResyncAckPacket p:
                 handleResyncAck(p);
                 break;
             case HeldItemChangePacket p:
@@ -546,9 +546,10 @@ public class ServerPacketHandler : PacketHandler {
             var heldItem = heldStack.getItem();
 
             var canBreak = heldItem.canBreak(heldStack, block);
-            var (dropItem, meta, dropCount) = block.getDrop(world, p.position.X, p.position.Y, p.position.Z, metadata, canBreak);
-            if (dropItem != null && dropCount > 0) {
-                world.spawnBlockDrop(p.position.X, p.position.Y, p.position.Z, dropItem, dropCount, meta);
+            Player.drops.Clear();
+            block.getDrop(Player.drops, world, p.position.X, p.position.Y, p.position.Z, metadata, canBreak);
+            foreach (var drop in Player.drops) {
+                world.spawnBlockDrop(p.position.X, p.position.Y, p.position.Z, drop.getItem(), drop.quantity, drop.metadata);
             }
 
             // damage tool
@@ -1035,7 +1036,7 @@ public class ServerPacketHandler : PacketHandler {
             }, DeliveryMethod.ReliableOrdered);
 
             // signal end of resync
-            conn.send(new ResyncCompletePacket {
+            conn.send(new InventoryResyncTermPacket {
                 actionID = p.actionID
             }, DeliveryMethod.ReliableOrdered);
 
@@ -1108,7 +1109,7 @@ public class ServerPacketHandler : PacketHandler {
         // todo not entirely sure what to do here? I ran out of ideas :D
     }
 
-    private void handleResyncAck(ResyncAckPacket p) {
+    private void handleResyncAck(InventoryResyncAckPacket p) {
         if (!conn.authenticated || conn.player == null) {
             return;
         }

@@ -89,6 +89,9 @@ public class Item {
     public static Item LAVA_BUCKET;
     public static Item LIGHTER;
 
+    public static Item SEEDS;
+    public static Item WHEAT;
+
 
     //public static Item BOW_WOOD;
     //public static Item ARROW_WOOD;
@@ -261,55 +264,60 @@ public class Item {
         COPPER_SCYTHE = register("copperScythe", new Tool("Copper Scythe", ToolType.SCYTHE, MaterialTier.COPPER, 1.5));
         COPPER_SCYTHE.tex = uv("items.png", 7, 5);
 
-        IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 1.7f));
+        IRON_PICKAXE = register("ironPickaxe", new Tool("Iron Pickaxe", ToolType.PICKAXE, MaterialTier.IRON, 2f));
         IRON_PICKAXE.tex = uv("items.png", 2, 6);
 
-        IRON_AXE = register("ironAxe", new Tool("Iron Axe", ToolType.AXE, MaterialTier.IRON, 2.5));
+        IRON_AXE = register("ironAxe", new Tool("Iron Axe", ToolType.AXE, MaterialTier.IRON, 2f));
         IRON_AXE.tex = uv("items.png", 3, 6);
 
-        IRON_SHOVEL = register("ironShovel", new Tool("Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2.5));
+        IRON_SHOVEL = register("ironShovel", new Tool("Iron Shovel", ToolType.SHOVEL, MaterialTier.IRON, 2f));
         IRON_SHOVEL.tex = uv("items.png", 4, 6);
 
         IRON_SWORD = register("ironSword", new Weapon("Iron Sword", MaterialTier.IRON, 7.0));
         IRON_SWORD.tex = uv("items.png", 5, 6);
 
-        IRON_HOE = register("ironHoe", new Tool("Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2.5));
+        IRON_HOE = register("ironHoe", new Tool("Iron Hoe", ToolType.HOE, MaterialTier.IRON, 2f));
         IRON_HOE.tex = uv("items.png", 6, 6);
 
-        IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.SCYTHE, MaterialTier.IRON, 2.5));
+        IRON_SCYTHE = register("ironScythe", new Tool("Iron Scythe", ToolType.SCYTHE, MaterialTier.IRON, 2f));
         IRON_SCYTHE.tex = uv("items.png", 7, 6);
 
-        GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 2f));
+        GOLD_PICKAXE = register("goldPickaxe", new Tool("Gold Pickaxe", ToolType.PICKAXE, MaterialTier.GOLD, 3f));
         GOLD_PICKAXE.tex = uv("items.png", 2, 7);
 
-        GOLD_AXE = register("goldAxe", new Tool("Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3.0));
+        GOLD_AXE = register("goldAxe", new Tool("Gold Axe", ToolType.AXE, MaterialTier.GOLD, 3f));
         GOLD_AXE.tex = uv("items.png", 3, 7);
 
-        GOLD_SHOVEL = register("goldShovel", new Tool("Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3.0));
+        GOLD_SHOVEL = register("goldShovel", new Tool("Gold Shovel", ToolType.SHOVEL, MaterialTier.GOLD, 3f));
         GOLD_SHOVEL.tex = uv("items.png", 4, 7);
 
         GOLD_SWORD = register("goldSword", new Weapon("Gold Sword", MaterialTier.GOLD, 8.0));
         GOLD_SWORD.tex = uv("items.png", 5, 7);
 
-        GOLD_HOE = register("goldHoe", new Tool("Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3.0));
+        GOLD_HOE = register("goldHoe", new Tool("Gold Hoe", ToolType.HOE, MaterialTier.GOLD, 3f));
         GOLD_HOE.tex = uv("items.png", 6, 7);
 
-        GOLD_SCYTHE = register("goldScythe", new Tool("Gold Scythe", ToolType.SCYTHE, MaterialTier.GOLD, 3.0));
+        GOLD_SCYTHE = register("goldScythe", new Tool("Gold Scythe", ToolType.SCYTHE, MaterialTier.GOLD, 3f));
         GOLD_SCYTHE.tex = uv("items.png", 7, 7);
 
         DYE = register("dye", new DyeItem("Dye"));
+        material[DYE.id] = true;
 
         APPLE = register("apple", new Food("Apple", 5));
         APPLE.tex = uv("items.png", 0, 10);
+        material[APPLE.id] = true;
 
         MAPLE_SYRUP = register("mapleSyrup", new Food("Maple Syrup", 10));
         MAPLE_SYRUP.tex = uv("items.png", 1, 10);
+        material[MAPLE_SYRUP.id] = true;
 
         BOTTLE = register("bottle", new Item("Empty Bottle"));
         BOTTLE.tex = uv("items.png", 2, 10);
+        material[BOTTLE.id] = true;
 
         BOTTLE_MILK = register("milk", new Food("Bottle of Milk", 10));
         BOTTLE_MILK.tex = uv("items.png", 3, 10);
+        material[BOTTLE_MILK.id] = true;
 
         RAW_BEEF = register("rawBeef", new Food("Raw Beef", 10));
         RAW_BEEF.tex = uv("items.png", 4, 10);
@@ -334,6 +342,16 @@ public class Item {
 
         LIGHTER = register("lighter", new Lighter("Lighter"));
         LIGHTER.tex = uv("items.png", 0, 7);
+
+        SEEDS = register("seeds", new SeedItem("Wheat Seeds", Block.CROP_WHEAT, Block.FARMLAND));
+        SEEDS.tex = uv("items.png", 8, 10);
+        material[SEEDS.id] = true;
+
+        WHEAT = register("wheat", new Item("Wheat"));
+        WHEAT.tex = uv("items.png", 9, 10);
+        material[WHEAT.id] = true;
+        ((Crop)Block.CROP_WHEAT).product = WHEAT;
+        ((Crop)Block.CROP_WHEAT).seedItem = SEEDS;
 
 
         //BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
@@ -449,18 +467,15 @@ public class Tool : Item {
     public override int getMaxStackSize() => 1;
 
     public override double getBreakSpeed(ItemStack stack, Block block) {
-        if (Block.tool[block.id] != type) {
-            return 1.0;
+        bool rightTool = Block.tool[block.id] == type || Block.tool[block.id] == ToolType.NONE;
+        bool rightTier = tier.level >= Block.tier[block.id].level;
+
+        // Right tool + right tier = full speed
+        if (rightTool && rightTier) {
+            return speed;
         }
 
-        double basePower = 1.0 + double.Log(1 + tier.level);
-        double targetPower = 1.0 + double.Log(1 + Block.tier[block.id].level);
-
-        if (tier.level < Block.tier[block.id].level) {
-            return double.Max(1.0, basePower / targetPower); // Penalty but never < 1.0!!
-        }
-
-        return speed * (basePower / targetPower); // Efficiency bonus for overtiered tools
+        return 1;
     }
 
     public override bool canBreak(ItemStack stack, Block block) {
@@ -474,5 +489,44 @@ public class Tool : Item {
 
     public override double getDamage(ItemStack stack) {
         return 2 + tier.level;
+    }
+
+    public override ItemStack? useBlock(ItemStack stack, World world, Player player, int x, int y, int z, Placement info) {
+        // hoe tilling: dirt/grass -> farmland
+        // todo move this to a more appropriate place later maybe?
+        if (type == ToolType.HOE) {
+
+            // problem is, x y z are the *prev* block coords, we need to get the block being clicked
+            switch (info.face) {
+                case RawDirection.UP:
+                    y -= 1;
+                    break;
+                case RawDirection.DOWN:
+                    y += 1;
+                    break;
+                case RawDirection.WEST:
+                    x += 1;
+                    break;
+                case RawDirection.EAST:
+                    x -= 1;
+                    break;
+                case RawDirection.NORTH:
+                    z -= 1;
+                    break;
+                case RawDirection.SOUTH:
+                    z += 1;
+                    break;
+            }
+
+            var block = world.getBlock(x, y, z);
+            if (block == Block.DIRT.id || block == Block.GRASS.id || block == Block.SNOW_GRASS.id) {
+                world.setBlock(x, y, z, Block.FARMLAND.id);
+                // damage hoe
+                stack.damageItem(player, 1);
+                return stack;
+            }
+        }
+
+        return null;
     }
 }

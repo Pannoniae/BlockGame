@@ -254,6 +254,12 @@ public partial class Entity {
                 }
             }
         }
+
+        // call onStepped for block we're standing on
+        if (onGround) {
+            var feetPos = feetPosition.toBlockPos();
+            Block.get(world.getBlock(feetPos.X, feetPos.Y - 1, feetPos.Z)).onStepped(world, feetPos.X, feetPos.Y - 1, feetPos.Z, this);
+        }
     }
 
     protected virtual void clamp(double dt) {

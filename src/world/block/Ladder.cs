@@ -75,8 +75,16 @@ public class Ladder : Block {
 
         var sb = world.getBlock(sx, sy, sz);
         if (!fullBlock[sb]) {
-            var (dropItem, dropMeta, dropCount) = getDrop(world, x, y, z, metadata, true);
-            world.spawnBlockDrop(x, y, z, dropItem, dropCount, dropMeta);
+            drops.Clear();
+            getDrop(drops, world, x, y, z, metadata, true);
+
+            foreach (var drop in drops) {
+                var dropItem = drop.getItem();
+                var dropCount = drop.quantity;
+                var dropMeta = drop.metadata;
+                world.spawnBlockDrop(x, y, z, dropItem, dropCount, dropMeta);
+            }
+
             world.setBlock(x, y, z, 0);
         }
     }

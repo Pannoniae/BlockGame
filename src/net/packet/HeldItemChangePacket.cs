@@ -8,6 +8,8 @@ public struct HeldItemChangePacket : Packet {
     public byte slotIndex;      // 0-8 hotbar slot
     public ItemStack heldItem; // item in that slot (null = empty)
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeByte(slotIndex);

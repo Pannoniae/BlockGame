@@ -129,7 +129,7 @@ public class ClientPacketHandler : PacketHandler {
             case InventoryAckPacket p:
                 handleInventoryAck(p);
                 break;
-            case ResyncCompletePacket p:
+            case InventoryResyncTermPacket p:
                 handleResyncComplete(p);
                 break;
             case HeldItemChangePacket p:
@@ -907,9 +907,9 @@ public class ClientPacketHandler : PacketHandler {
         }
     }
 
-    public void handleResyncComplete(ResyncCompletePacket p) {
+    public void handleResyncComplete(InventoryResyncTermPacket p) {
         // resync complete - send acknowledgment and resume sending clicks
-        ClientConnection.instance.send(new ResyncAckPacket {
+        ClientConnection.instance.send(new InventoryResyncAckPacket {
             actionID = p.actionID
         }, DeliveryMethod.ReliableOrdered);
 

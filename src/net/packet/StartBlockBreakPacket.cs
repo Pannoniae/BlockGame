@@ -5,6 +5,8 @@ namespace BlockGame.net.packet;
 public struct StartBlockBreakPacket : Packet {
     public Vector3I position;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buffer) {
         buffer.writeVec3I(position);
     }

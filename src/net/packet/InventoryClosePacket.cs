@@ -10,6 +10,8 @@
 public class InventoryClosePacket : Packet {
     public int invID;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(invID);
     }

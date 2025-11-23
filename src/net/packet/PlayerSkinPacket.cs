@@ -5,6 +5,8 @@ public struct PlayerSkinPacket : Packet {
     public int entityID;
     public byte[] skinData; // PNG file bytes, or empty array for default skin
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeBytes(skinData);

@@ -201,9 +201,11 @@ public class Door : Block {
 
     public override byte maxValidMetadata() => 31; // 5 bits
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
         // onBreak removes the other half via setBlock which doesn't trigger getDrop!
-        return canBreak ? ((Item? item, byte metadata, int count))(Item.OAK_DOOR, 0, 1) : (null, 0, 0);
+        if (!upper(metadata) && canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, 0));
+        }
     }
 
     public override ItemStack getActualItem(byte metadata) {

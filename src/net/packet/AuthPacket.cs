@@ -4,6 +4,8 @@ namespace BlockGame.net.packet;
 public struct AuthPacket : Packet {
     public string password;  // plaintext (hashed on server)
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeString(password);
     }

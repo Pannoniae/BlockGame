@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
@@ -23,6 +22,8 @@ namespace BlockGame.world.block;
     "CS8618:Non-nullable field must contain a non-null value when exiting constructor. Consider adding the \'required\' modifier or declaring as nullable.")]
 public class Block {
     private const int particleCount = 4;
+
+    public static List<ItemStack> drops = [];
 
     /// <summary>
     /// Block ID
@@ -90,6 +91,18 @@ public class Block {
             return new UVPair(0, 0);
         }
         return atlas.uv(source, x, y);
+    }
+
+    public static UVPair[] uvRange(string source, int x, int y, int i) {
+        if (Net.mode.isDed()) {
+            return new UVPair[i];
+        }
+
+        var uvs = new UVPair[i];
+        for (int j = 0; j < i; j++) {
+            uvs[j] = atlas.uv(source, x + j, y);
+        }
+        return uvs;
     }
 
     public static Block AIR;
@@ -237,6 +250,9 @@ public class Block {
     public static Block PINE_GATE;
     public static Block MAPLE_GATE;
 
+    public static Block FARMLAND;
+    public static Block CROP_WHEAT;
+
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
     public static XUList<bool> fullBlock => Registry.BLOCKS.fullBlock;
@@ -358,7 +374,7 @@ public class Block {
         renderType[SAND.id] = RenderType.CUBE;
         SAND.material(Material.EARTH);
         // less hard than dirt!
-        SAND.setHardness(0.5);
+        SAND.setHardness(0.3);
         natural[SAND.id] = true;
 
         SNOW_GRASS = register("snowGrass", new GrassBlock("Snowy Grass"));
@@ -533,7 +549,7 @@ public class Block {
         COAL_ORE.setTex(uv("blocks.png", 4, 1));
         renderType[COAL_ORE.id] = RenderType.CUBE;
         COAL_ORE.material(Material.FANCY_STONE);
-        COAL_ORE.setHardness(2.0);
+        COAL_ORE.setHardness(1.5);
         COAL_ORE.setTier(MaterialTier.WOOD);
         natural[COAL_ORE.id] = true;
 
@@ -541,7 +557,7 @@ public class Block {
         COPPER_ORE.setTex(uv("blocks.png", 5, 1));
         renderType[COPPER_ORE.id] = RenderType.CUBE;
         COPPER_ORE.material(Material.FANCY_STONE);
-        COPPER_ORE.setHardness(2.5);
+        COPPER_ORE.setHardness(1.75);
         COPPER_ORE.setTier(MaterialTier.STONE);
         natural[COPPER_ORE.id] = true;
 
@@ -549,7 +565,7 @@ public class Block {
         IRON_ORE.setTex(uv("blocks.png", 1, 1));
         renderType[IRON_ORE.id] = RenderType.CUBE;
         IRON_ORE.material(Material.FANCY_STONE);
-        IRON_ORE.setHardness(3.0);
+        IRON_ORE.setHardness(2.0);
         IRON_ORE.setTier(MaterialTier.STONE);
         natural[IRON_ORE.id] = true;
 
@@ -557,7 +573,7 @@ public class Block {
         GOLD_ORE.setTex(uv("blocks.png", 0, 1));
         renderType[GOLD_ORE.id] = RenderType.CUBE;
         GOLD_ORE.material(Material.FANCY_STONE);
-        GOLD_ORE.setHardness(3.0);
+        GOLD_ORE.setHardness(2.5);
         GOLD_ORE.setTier(MaterialTier.IRON);
         natural[GOLD_ORE.id] = true;
 
@@ -581,7 +597,7 @@ public class Block {
         DIAMOND_ORE.setTex(uv("blocks.png", 15, 1));
         renderType[DIAMOND_ORE.id] = RenderType.CUBE;
         DIAMOND_ORE.material(Material.FANCY_STONE);
-        DIAMOND_ORE.setHardness(4.0);
+        DIAMOND_ORE.setHardness(3.0);
         DIAMOND_ORE.setTier(MaterialTier.GOLD);
         natural[DIAMOND_ORE.id] = true;
 
@@ -589,7 +605,7 @@ public class Block {
         CINNABAR_ORE.setTex(uv("blocks.png", 9, 1));
         renderType[CINNABAR_ORE.id] = RenderType.CUBE_DYNTEXTURE;
         CINNABAR_ORE.material(Material.FANCY_STONE);
-        CINNABAR_ORE.setHardness(6.0);
+        CINNABAR_ORE.setHardness(4.0);
         CINNABAR_ORE.setTier(MaterialTier.GOLD);
         natural[CINNABAR_ORE.id] = true;
 
@@ -637,42 +653,42 @@ public class Block {
         COAL_BLOCK.setTex(cubeUVs(6, 8));
         renderType[COAL_BLOCK.id] = RenderType.CUBE;
         COAL_BLOCK.material(Material.METAL);
-        COAL_BLOCK.setHardness(5.0);
+        COAL_BLOCK.setHardness(3.0);
         COAL_BLOCK.setTier(MaterialTier.STONE);
 
         COPPER_BLOCK = register("copperBlock", new Block("Block of Copper"));
         COPPER_BLOCK.setTex(cubeUVs(7, 8));
         renderType[COPPER_BLOCK.id] = RenderType.CUBE;
         COPPER_BLOCK.material(Material.METAL);
-        COPPER_BLOCK.setHardness(6.0);
+        COPPER_BLOCK.setHardness(3.5);
         COPPER_BLOCK.setTier(MaterialTier.IRON);
 
         IRON_BLOCK = register("ironBlock", new Block("Block of Iron"));
         IRON_BLOCK.setTex(cubeUVs(5, 8));
         renderType[IRON_BLOCK.id] = RenderType.CUBE;
         IRON_BLOCK.material(Material.METAL);
-        IRON_BLOCK.setHardness(7.0);
+        IRON_BLOCK.setHardness(3.5);
         IRON_BLOCK.setTier(MaterialTier.IRON);
 
         GOLD_BLOCK = register("goldBlock", new Block("Block of Gold"));
         GOLD_BLOCK.setTex(cubeUVs(4, 8));
         renderType[GOLD_BLOCK.id] = RenderType.CUBE;
         GOLD_BLOCK.material(Material.METAL);
-        GOLD_BLOCK.setHardness(8.0);
+        GOLD_BLOCK.setHardness(4.0);
         GOLD_BLOCK.setTier(MaterialTier.GOLD);
 
         DIAMOND_BLOCK = register("diamondBlock", new Block("Block of Diamond"));
         DIAMOND_BLOCK.setTex(cubeUVs(8, 8));
         renderType[DIAMOND_BLOCK.id] = RenderType.CUBE;
         DIAMOND_BLOCK.material(Material.METAL);
-        DIAMOND_BLOCK.setHardness(10.0);
+        DIAMOND_BLOCK.setHardness(4.0);
         DIAMOND_BLOCK.setTier(MaterialTier.GOLD);
 
         CINNABAR_BLOCK = register("cinnabarBlock", new Block("Block of Cinnabar"));
         CINNABAR_BLOCK.setTex(cubeUVs(9, 8));
         renderType[CINNABAR_BLOCK.id] = RenderType.CUBE;
         CINNABAR_BLOCK.material(Material.METAL);
-        CINNABAR_BLOCK.setHardness(10.0);
+        CINNABAR_BLOCK.setHardness(4.0);
         CINNABAR_BLOCK.setTier(MaterialTier.GOLD);
 
 
@@ -685,6 +701,7 @@ public class Block {
         TALL_GRASS.material(Material.ORGANIC);
         TALL_GRASS.setHardness(0);
         TALL_GRASS.setFlammable(80);
+        tool[TALL_GRASS.id] = ToolType.SCYTHE;
 
         SHORT_GRASS = register("shortGrass", new Grass("Short Grass"));
         SHORT_GRASS.setTex(crossUVs(10, 5));
@@ -696,6 +713,7 @@ public class Block {
         SHORT_GRASS.material(Material.ORGANIC);
         SHORT_GRASS.setHardness(0);
         SHORT_GRASS.setFlammable(80);
+        tool[SHORT_GRASS.id] = ToolType.SCYTHE;
 
         YELLOW_FLOWER = register("yellowFlower", new Flower("Yellow Flower"));
         YELLOW_FLOWER.setTex(crossUVs(15, 5));
@@ -933,17 +951,17 @@ public class Block {
         GOLD_CANDY = register("goldCandy", new Block("Gold Candy"));
         GOLD_CANDY.setTex(uv("blocks.png", 0, 8));
         renderType[GOLD_CANDY.id] = RenderType.CUBE;
-        GOLD_CANDY.material(Material.METAL);
+        GOLD_CANDY.material(Material.FOOD);
 
         CINNABAR_CANDY = register("cinnabarCandy", new Block("Cinnabar Candy"));
         CINNABAR_CANDY.setTex(uv("blocks.png", 1, 8));
         renderType[CINNABAR_CANDY.id] = RenderType.CUBE;
-        CINNABAR_CANDY.material(Material.METAL);
+        CINNABAR_CANDY.material(Material.FOOD);
 
         DIAMOND_CANDY = register("diamondCandy", new Block("Diamond Candy"));
         DIAMOND_CANDY.setTex(uv("blocks.png", 2, 8));
         renderType[DIAMOND_CANDY.id] = RenderType.CUBE;
-        DIAMOND_CANDY.material(Material.METAL);
+        DIAMOND_CANDY.material(Material.FOOD);
 
         CANDY = register("candy", new CandyBlock("Candy"));
         CANDY.material(Material.FOOD);
@@ -1081,6 +1099,26 @@ public class Block {
         PINE_GATE.setTex(uv("blocks.png", 18, 3));
         PINE_GATE.material(Material.WOOD);
         PINE_GATE.setFlammable(30);
+
+        FARMLAND = register("farmland", new Farmland("Farmland"));
+        var farmlandUVs = grassUVs(26, 5, 2, 0, 2, 0);
+        var wetUVs = new UVPair(27, 5);
+        FARMLAND.setTex(farmlandUVs[0], farmlandUVs[1], farmlandUVs[2], farmlandUVs[3], farmlandUVs[4], farmlandUVs[5], wetUVs);
+        renderType[FARMLAND.id] = RenderType.CUBE_DYNTEXTURE;
+        FARMLAND.setModel(BlockModel.makeFarmland(FARMLAND));
+        FARMLAND.partialBlock();
+        FARMLAND.material(Material.EARTH);
+        FARMLAND.setHardness(0.6);
+
+        CROP_WHEAT = register("wheatCrop", new Crop("Wheat", 6));
+        CROP_WHEAT.setTex(uvRange("blocks.png", 20, 5, 6));
+        renderType[CROP_WHEAT.id] = RenderType.CROP;
+        CROP_WHEAT.transparency();
+        CROP_WHEAT.noCollision();
+        CROP_WHEAT.itemLike();
+        CROP_WHEAT.waterTransparent();
+        CROP_WHEAT.material(Material.ORGANIC);
+
 
 
         // set default hardness for blocks that haven't set it
@@ -1458,8 +1496,11 @@ public class Block {
      * Returns the item drops when this block is broken.
      * By default, blocks drop themselves as an item.
      */
-    public virtual (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return canBreak ? (getItem(), metadata, 1) : (null, 0, 0);
+    public virtual void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
+        //return canBreak ? (getItem(), metadata, 1) : (null, 0, 0);
+        if (canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, metadata));
+        }
     }
 
     /**
@@ -1778,15 +1819,18 @@ public class Grass(string name) : Block(name) {
         }
     }
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return (null!, 0, 0);
+    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
+        // drop seeds if broken with scythe
+        if (canBreak && world.random.NextDouble() < 0.125) {
+            drops.Add(new ItemStack(Item.SEEDS, 1, 0));
+        }
     }
 }
 
 public class GrassBlock(string name) : Block(name) {
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
         // grass drops dirt
-        return (DIRT.getItem(), 0, 1);
+        drops.Add(new ItemStack(DIRT.getItem(), 1, 0));
     }
 
     public override void randomUpdate(World world, int x, int y, int z) {
@@ -1828,70 +1872,29 @@ public class GrassBlock(string name) : Block(name) {
 }
 
 public class GravelBlock(string name) : FallingBlock(name) {
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return world.random.Next(12) == 0
-            ? (Item.FLINT, (byte)0, 1)
-            : (getItem(), 0, 1);
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+        drops.Add(world.random.Next(12) == 0 ? new ItemStack(Item.FLINT, 1, 0) : new ItemStack(getItem(), 1, 0));
     }
 }
 
 public class StoneBlock(string name) : Block(name) {
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
         // stone drops cobblestone
-        return (COBBLESTONE.getItem(), 0, 1);
+        if (canBreak) {
+            drops.Add(new ItemStack(COBBLESTONE.getItem(), 1, 0));
+        }
+        else {
+            // if can't break, drop nothing
+        }
     }
 }
 
 public class CoalOreBlock(string name) : Block(name) {
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
-        return (Item.COAL, 0, 1);
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
+        if (canBreak) {
+            drops.Add(new ItemStack(Item.COAL, 1, 0));
+        }
     }
-}
-
-/// <summary>
-/// Represents a block face. If noAO, don't let AO cast on this face.
-/// If it's not a full face, it's always drawn to ensure it's drawn even when there's a solid block next to it.
-/// </summary>
-[StructLayout(LayoutKind.Auto)]
-public readonly record struct Face(
-    float x1,
-    float y1,
-    float z1,
-    float x2,
-    float y2,
-    float z2,
-    float x3,
-    float y3,
-    float z3,
-    float x4,
-    float y4,
-    float z4,
-    UVPair min,
-    UVPair max,
-    RawDirection direction,
-    bool noAO = false,
-    bool nonFullFace = false) {
-    public const int MAX_FACES = 12;
-
-    public readonly float x1 = x1;
-    public readonly float y1 = y1;
-    public readonly float z1 = z1;
-    public readonly float x2 = x2;
-    public readonly float y2 = y2;
-    public readonly float z2 = z2;
-    public readonly float x3 = x3;
-    public readonly float y3 = y3;
-    public readonly float z3 = z3;
-    public readonly float x4 = x4;
-    public readonly float y4 = y4;
-    public readonly float z4 = z4;
-    public readonly UVPair min = min;
-    public readonly UVPair max = max;
-    public readonly RawDirection direction = direction;
-    public readonly byte flags = (byte)(nonFullFace.toByte() | noAO.toByte() << 1);
-
-    public bool nonFullFace => (flags & (byte)FaceFlags.NON_FULL_FACE) != 0;
-    public bool noAO => (flags & (byte)FaceFlags.NO_AO) != 0;
 }
 
 [Flags]
@@ -1915,135 +1918,6 @@ public enum RenderType : byte {
     FIRE,
     CUSTOM,
     CUBE_DYNTEXTURE,
-    GRASS
-}
-
-public enum ToolType : byte {
-    NONE,
-    PICKAXE,
-    AXE,
-    SHOVEL,
-    HOE,
-    SCYTHE,
-}
-
-public record class MaterialTier(MaterialTiers tier, double level, double speed, int durability) {
-    public static readonly MaterialTier NONE = new(MaterialTiers.NONE, 0, 1, 0);
-    public static readonly MaterialTier WOOD = new(MaterialTiers.WOOD, 1, 1.25, 32);
-    public static readonly MaterialTier STONE = new(MaterialTiers.STONE, 2, 1.3, 128);
-    public static readonly MaterialTier COPPER = new(MaterialTiers.COPPER, 2.5, 1.4, 256);
-    public static readonly MaterialTier IRON = new(MaterialTiers.IRON, 3, 1.5, 384);
-    public static readonly MaterialTier GOLD = new(MaterialTiers.GOLD, 3.5, 2, 1024);
-
-    /** The index of the tier (NO GAMEPLAY EFFECT, DON'T USE IT FOR THAT), only use for sorting or indexing */
-    public readonly MaterialTiers tier = tier;
-
-    /** The "tier value", should roughly be increasing but can be the same or less than the previous. Used for determining stats */
-    public readonly double level = level;
-
-    public readonly double speed = speed;
-
-    /** max durability for tools/weapons of this tier */
-    public readonly int durability = durability;
-
-    // todo add more stats here like durability, damage, speed, etc. as needed
-}
-
-public enum MaterialTiers : byte {
-    NONE,
-    WOOD,
-    STONE,
-    COPPER,
-    IRON,
-    GOLD,
-}
-
-public enum SoundMaterial : byte {
-    WOOD,
-    STONE,
-    METAL,
-    DIRT,
     GRASS,
-    SAND,
-    GLASS,
-    ORGANIC
-}
-
-public static class SoundMaterialExtensions {
-    extension(SoundMaterial mat) {
-        public string stepCategory() => mat switch {
-            SoundMaterial.GRASS => "step/grass",
-            SoundMaterial.DIRT => "step/grass",
-            SoundMaterial.SAND => "step",
-            SoundMaterial.WOOD => "step/wood",
-            SoundMaterial.STONE => "step",
-            SoundMaterial.METAL => "step",
-            SoundMaterial.GLASS => "step",
-            SoundMaterial.ORGANIC => "step/grass",
-            _ => "step"
-        };
-
-        public string breakCategory() => mat switch {
-            SoundMaterial.WOOD => "break/wood",
-            SoundMaterial.STONE => "break/stone",
-            SoundMaterial.SAND => "break/sand",
-            SoundMaterial.METAL => "break/stone",
-            SoundMaterial.DIRT => "break/grass",
-            SoundMaterial.GRASS => "break/grass",
-            SoundMaterial.GLASS => "break/stone",
-            SoundMaterial.ORGANIC => "break/grass",
-            _ => "step"
-        };
-
-        public string knockCategory() => mat switch {
-            SoundMaterial.WOOD => "knock/wood",
-            SoundMaterial.STONE => "break/stone",
-            SoundMaterial.SAND => "break/sand",
-            SoundMaterial.METAL => "break/stone",
-            SoundMaterial.DIRT => "knock/grass",
-            SoundMaterial.GRASS => "knock/grass",
-            SoundMaterial.GLASS => "break/stone",
-            SoundMaterial.ORGANIC => "knock/grass",
-            _ => "step"
-        };
-    }
-}
-
-/**
- * Block hardness: 0.5 to 30+ (wide range)
- * Tool speed: something like 1.0 to 4.0 (narrow range)
- * Tier scaling: Handles the actual progression via the fancy-ass logarithmic formula
- */
-public class Material {
-    public static readonly Material WOOD = new Material(SoundMaterial.WOOD, ToolType.AXE, MaterialTier.NONE, 2);
-    public static readonly Material STONE = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.WOOD, 1.5);
-    public static readonly Material METAL = new Material(SoundMaterial.METAL, ToolType.PICKAXE, MaterialTier.STONE, 4);
-    public static readonly Material EARTH = new Material(SoundMaterial.DIRT, ToolType.SHOVEL, MaterialTier.NONE, 0.6);
-
-    public static readonly Material ORGANIC =
-        new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.25);
-
-    /** Yummy! */
-    public static readonly Material FOOD = new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0.8);
-
-    public static readonly Material GLASS = new Material(SoundMaterial.GLASS, ToolType.NONE, MaterialTier.NONE, 0.2);
-
-    /** Mostly ores */
-    public static readonly Material FANCY_STONE =
-        new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.STONE, 3);
-
-    /** TODO */
-    public static readonly Material HELL = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.NONE, 2);
-
-    public SoundMaterial smat;
-    public ToolType toolType;
-    public MaterialTier tier;
-    public double hardness;
-
-    public Material(SoundMaterial smat, ToolType toolType, MaterialTier tier, double hardness) {
-        this.smat = smat;
-        this.toolType = toolType;
-        this.tier = tier;
-        this.hardness = hardness;
-    }
+    CROP
 }

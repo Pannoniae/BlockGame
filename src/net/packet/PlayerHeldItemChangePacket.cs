@@ -4,6 +4,8 @@
 public class PlayerHeldItemChangePacket : Packet {
     public byte slot;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeByte(slot);
     }

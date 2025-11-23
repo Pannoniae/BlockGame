@@ -5,6 +5,8 @@ public struct PlayerHealthPacket : Packet {
     public double health;
     public int damageTime;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeDouble(health);
         buf.writeInt(damageTime);

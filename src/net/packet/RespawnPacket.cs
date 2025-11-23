@@ -8,6 +8,8 @@ public class RespawnPacket : Packet {
     public Vector3D spawnPosition;
     public Vector3 rotation;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeVec3D(spawnPosition);
         buf.writeVec3(rotation);

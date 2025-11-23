@@ -384,7 +384,7 @@ public class WorldIO {
         Directory.Delete(Net.mode.isDed() ? $"{level}" : $"level/{level}", true);
     }
 
-    private static string getLockFilePath(string worldName) {
+    public static string getLockFilePath(string worldName) {
         return Net.mode.isDed() ? $"{worldName}/world.lock" : $"level/{worldName}/world.lock";
     }
 

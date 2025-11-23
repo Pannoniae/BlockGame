@@ -1239,11 +1239,12 @@ public class GameScreen : Screen {
     }
 
     private void cycleBlockMetadata() {
-        if (!Game.instance.targetedPos.HasValue) {
+        if (!Game.raycast.hit || Game.raycast.type != Result.BLOCK) {
+            Log.info("Cannot cycle metadata: no block targeted");
             return;
         }
 
-        var pos = Game.instance.targetedPos.Value;
+        var pos = Game.raycast.block;
         var world = Game.world;
         var blockValue = world.getBlockRaw(pos.X, pos.Y, pos.Z);
         var blockID = blockValue.getID();
@@ -1251,11 +1252,13 @@ public class GameScreen : Screen {
 
         var block = Block.get(blockID);
         if (blockID == 0 || block == null) {
+            Log.info("Cannot cycle metadata: no block targeted");
             return;
         }
 
         var maxMeta = block.maxValidMetadata();
         if (maxMeta == 0) {
+            Log.info("Cannot cycle metadata: block has no metadata");
             return;
         }
 

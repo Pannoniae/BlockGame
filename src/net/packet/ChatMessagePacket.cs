@@ -8,6 +8,8 @@ namespace BlockGame.net.packet;
 public struct ChatMessagePacket : Packet {
     public string message;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeString(message);
     }

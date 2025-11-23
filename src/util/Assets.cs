@@ -33,4 +33,8 @@ public partial class Assets {
 
         return File.OpenRead(fullPath);
     }
+
+    public static string getRelativePath(string path) {
+        return path["assets/".Length..];
+    }
 }

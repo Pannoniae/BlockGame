@@ -8,6 +8,8 @@ public struct TeleportPacket : Packet {
     public Vector3D position;
     public Vector3 rotation;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeVec3D(position);
         buf.writeVec3(rotation);

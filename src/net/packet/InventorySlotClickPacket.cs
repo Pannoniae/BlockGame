@@ -13,6 +13,8 @@ public struct InventorySlotClickPacket : Packet {
     public byte mode;             // 0=normal click, 1=shift-click, 2=drop
     public ItemStack expectedSlot; // what the clicked slot should contain after the operation
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(invID);
         buf.writeUShort(idx);

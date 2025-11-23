@@ -13,6 +13,8 @@ public struct EntityActionPacket : Packet {
         CRITICAL_HIT = 4
     }
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeByte((byte)action);

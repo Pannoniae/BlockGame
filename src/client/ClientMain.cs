@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using BlockGame.render;
 using BlockGame.util.log;
+using BlockGame.world;
 using ppy;
 
 namespace BlockGame.main;
@@ -137,6 +138,12 @@ public partial class ClientMain {
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         unsafe {
             var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
+
+            // delete world lock file!!
+            var path = WorldIO.getLockFilePath(Game.world.name);
+            if (File.Exists(path)) {
+                File.Delete(path);
+            }
 
             Log.info("Your game crashed! Here are some relevant details:");
             if (!Game.devMode) {

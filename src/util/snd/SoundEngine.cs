@@ -234,6 +234,27 @@ public class SoundEngine : IDisposable {
         }
     }
 
+    public MusicSource? playMusic(string filepath, float volume) {
+        if (nosound) {
+            return null;
+        }
+
+        filepath = Assets.getPath(filepath);
+
+        if (!File.Exists(filepath)) {
+            throw new SoundException($"Music file does not exist: {filepath}");
+        }
+
+        try {
+            var musicSource = new MusicSource(filepath, volume);
+            musicSources.Add(musicSource);
+            return musicSource;
+        }
+        catch (Exception ex) {
+            throw new SoundException($"Failed to play music {filepath}: {ex}");
+        }
+    }
+
     public void muteMusic() {
         if (nosound) {
             return;
@@ -467,6 +488,7 @@ public class MusicSource : IDisposable {
     private readonly AudioClip clip;
     private float vol = 1.0f;
     public bool isMusic => true;
+    public event Action? End;
 
     public MusicSource(string filepath) {
         clip = new AudioClip(filepath);
@@ -474,6 +496,18 @@ public class MusicSource : IDisposable {
         source.Volume = vol * Settings.instance.musicVolume;
         source.Play(clip);
         source.End += () => {
+            End?.Invoke();
+        };
+    }
+
+    public MusicSource(string filepath, float volume) {
+        clip = new AudioClip(filepath);
+        source = new AudioSource();
+        vol = volume;
+        source.Volume = vol * Settings.instance.musicVolume;
+        source.Play(clip);
+        source.End += () => {
+            End?.Invoke();
         };
     }
 

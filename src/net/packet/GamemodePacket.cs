@@ -6,6 +6,8 @@ namespace BlockGame.net.packet;
 public class GamemodePacket : Packet {
     public GameModeID gamemode;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeByte((byte)gamemode);
     }

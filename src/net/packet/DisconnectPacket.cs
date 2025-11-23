@@ -4,6 +4,8 @@ namespace BlockGame.net.packet;
 public struct DisconnectPacket : Packet {
     public string reason;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeString(reason);
     }

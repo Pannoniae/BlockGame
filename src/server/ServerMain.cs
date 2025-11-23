@@ -4,6 +4,7 @@ using System.Text;
 using BlockGame.net.srv;
 using BlockGame.render;
 using BlockGame.util.log;
+using BlockGame.world;
 
 namespace BlockGame.main;
 
@@ -80,6 +81,12 @@ public class ServerMain {
     public static void handleCrash(object sender, UnhandledExceptionEventArgs unhandledExceptionEventArgs) {
         unsafe {
             var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
+
+            // delete world lock file!!
+            var path = WorldIO.getLockFilePath(GameServer.instance.world.name);
+            if (File.Exists(path)) {
+                File.Delete(path);
+            }
 
             Log.info("Your game crashed! Here are some relevant details:");
 

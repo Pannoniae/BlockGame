@@ -134,6 +134,11 @@ public class DiscordPresence : IDisposable {
                 return BiomeType.Plains;
             }
 
+            // if outside world bounds, return plains (stop IndexOutOfRangeException in the array!)
+            if (y is < 0 or >= World.WORLDHEIGHT) {
+                return BiomeType.Plains;
+            }
+
             // get local coords
             int lx = x & 15;
             int lz = z & 15;

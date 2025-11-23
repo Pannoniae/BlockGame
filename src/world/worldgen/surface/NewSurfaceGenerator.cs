@@ -16,19 +16,21 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
     private readonly Cave caves = new();
     private readonly Ravine ravines = new();
-    private readonly OreFeature copperOre = new(Block.COPPER_ORE.id, 6, 16);
-    private readonly OreFeature ironOre = new(Block.IRON_ORE.id, 6, 12);
-    private readonly OreFeature coalOre = new(Block.COAL_ORE.id, 12, 18);
-    private readonly OreFeature goldOre = new(Block.GOLD_ORE.id, 6, 8);
-    private readonly OreFeature diamondOre = new(Block.DIAMOND_ORE.id, 4, 6);
-    private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 4, 6);
-    private readonly OreFeature clayOre = new(Block.CLAY_BLOCK.id, 24, 36);
+    private readonly OreFeature copperOre = new(Block.COPPER_ORE.id, 12);
+    private readonly OreFeature tinOre = new(Block.TIN_ORE.id, 8);
+    private readonly OreFeature ironOre = new(Block.IRON_ORE.id, 8);
+    private readonly OreFeature coalOre = new(Block.COAL_ORE.id, 16);
+    private readonly OreFeature goldOre = new(Block.GOLD_ORE.id, 8);
+    private readonly OreFeature diamondOre = new(Block.DIAMOND_ORE.id, 8);
+    private readonly OreFeature cinnabarOre = new(Block.CINNABAR_ORE.id, 6);
+    private readonly OreFeature clayOre = new(Block.CLAY_BLOCK.id, 24, stoneMode: false);
+    private readonly OreFeature dirtOre = new(Block.DIRT.id, 32, stoneMode: false);
+    private readonly OreFeature gravelOre = new(Block.GRAVEL.id, 32, stoneMode: false);
+    private readonly OreFeature sandOre = new(Block.SAND.id, 32, stoneMode: false);
 
     public NewSurfaceGenerator(WorldGenerator worldgen, World world, int version) {
         this.worldgen = worldgen;
         this.world = world;
-
-        clayOre.stoneMode = false;
     }
 
     public void setup(XRandom random, int seed) {
@@ -52,7 +54,8 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             coalOre.place(world, random, x, y, z);
         }
 
-        for (int i = 0; i < 20; i++) {
+        // same frequency but distributed on less surface area = denser veins
+        for (int i = 0; i < 16; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             // copper spawns more on the surface!
@@ -64,24 +67,35 @@ public class NewSurfaceGenerator : SurfaceGenerator {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 2);
+            tinOre.place(world, random, x, y, z);
+        }
+
+        // iron ore spawns smaller but still frequent..
+        for (int i = 0; i < 16; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(0, World.WORLDHEIGHT / 2);
             ironOre.place(world, random, x, y, z);
         }
 
-        for (int i = 0; i < 6; i++) {
+
+        for (int i = 0; i < 4; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 3);
             goldOre.place(world, random, x, y, z);
         }
 
-        for (int i = 0; i < 4; i++) {
+
+        // cosmetic shit!
+        for (int i = 0; i < 2; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 4);
             diamondOre.place(world, random, x, y, z);
         }
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 2; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(0, World.WORLDHEIGHT / 4);
@@ -90,11 +104,35 @@ public class NewSurfaceGenerator : SurfaceGenerator {
 
 
         // place clay in hills
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 16; i++) {
             var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
             var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
             var y = random.Next(72, World.WORLDHEIGHT);
             clayOre.place(world, random, x, y, z);
+        }
+
+        // place dirt pockets underground
+        for (int i = 0; i < 16; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(16, World.WORLDHEIGHT - 16);
+            dirtOre.place(world, random, x, y, z);
+        }
+
+        // place gravel pockets underground
+        for (int i = 0; i < 8; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(16, World.WORLDHEIGHT - 16);
+            gravelOre.place(world, random, x, y, z);
+        }
+
+        // place sand pockets underground (le funny)
+        for (int i = 0; i < 6; i++) {
+            var x = xWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var z = zWorld + random.Next(0, Chunk.CHUNKSIZE);
+            var y = random.Next(16, World.WORLDHEIGHT - 16);
+            sandOre.place(world, random, x, y, z);
         }
 
 

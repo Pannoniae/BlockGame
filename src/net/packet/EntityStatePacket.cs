@@ -5,6 +5,8 @@ public struct EntityStatePacket : Packet {
     public int entityID;
     public byte[] data; // serialized state stream with terminator
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeBytes(data);

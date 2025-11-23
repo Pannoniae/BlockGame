@@ -8,6 +8,8 @@ public struct MultiBlockChangePacket : Packet {
     public ushort[] blockIDs;
     public byte[] metadata;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buffer) {
         // write count
         int count = pos.Length;

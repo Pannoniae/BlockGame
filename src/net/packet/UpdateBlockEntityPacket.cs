@@ -10,6 +10,8 @@ public struct UpdateBlockEntityPacket : Packet {
     public byte type;
     public byte[] nbt;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeVec3I(position);
         buf.writeByte(type);

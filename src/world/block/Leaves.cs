@@ -27,39 +27,40 @@ public class Leaves : Block {
         tier[id] = MaterialTier.WOOD;
     }
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
         // oak: 1 in 10 chance to drop apple
         if (id == LEAVES.id && Game.random.Next(10) == 0) {
-            return (Item.APPLE, 0, 1);
+            drops.Add(new ItemStack(Item.APPLE, 1, 0));
         }
 
         // oak: 1 in 15 chance to drop sapling
-        if (id == LEAVES.id && Game.random.Next(15) == 0){
-            return (OAK_SAPLING.item, 0, 1);
+        if (id == LEAVES.id && Game.random.Next(15) == 0) {
+            drops.Add(new ItemStack(OAK_SAPLING.item, 1, 0));
         }
 
         // maple leaves: 1 in 15 chance to drop sapling
         if (id == MAPLE_LEAVES.id && Game.random.Next(15) == 0) {
-            return (MAPLE_SAPLING.item, 0, 1);
+            drops.Add(new ItemStack(MAPLE_SAPLING.item, 1, 0));
         }
 
         // maple leaves: 1 in 20 chance to drop maple syrup
         if (id == MAPLE_LEAVES.id && Game.random.Next(20) == 0) {
-            return (Item.MAPLE_SYRUP, 0, 1);
+            drops.Add(new ItemStack(Item.MAPLE_SYRUP, 1, 0));
         }
 
         // mahogany leaves: 1 in 15 chance to drop sapling
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(15) == 0) {
-            return (MAHOGANY_SAPLING.item, 0, 1);
+            drops.Add(new ItemStack(MAHOGANY_SAPLING.item, 1, 0));
         }
 
         // mahogany: 1 in 10 chance to drop apple
         if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
-            return (Item.APPLE, 0, 1);
+            drops.Add(new ItemStack(Item.APPLE, 1, 0));
         }
 
-
-        return base.getDrop(world, x, y, z, metadata, canBreak);
+        if (canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, 0));
+        }
     }
 
     public override void randomUpdate(World world, int x, int y, int z) {

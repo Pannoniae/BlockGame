@@ -8,6 +8,8 @@ public struct HugPacket : Packet {
     public string username;
     public string version;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(netVersion);
         buf.writeString(username);

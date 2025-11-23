@@ -100,15 +100,24 @@ public class Torch : Block {
         };
 
         if (!canAttachTo(world, x, y, z, dir)) {
-            var (item, meta, count) = getDrop(world, x, y, z, metadata, true);
-            world.spawnBlockDrop(x, y, z, item, count, meta);
+            drops.Clear();
+            getDrop(drops, world, x, y, z, metadata, true);
+            foreach (var drop in drops) {
+                var item = drop.getItem();
+                var count = drop.quantity;
+                var meta = drop.metadata;
+                world.spawnBlockDrop(x, y, z, item, count, meta);
+            }
+
             world.setBlock(x, y, z, 0);
         }
     }
 
-    public override (Item? item, byte metadata, int count) getDrop(World world, int x, int y, int z, byte metadata, bool canBreak) {
+    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
         // no metadata!
-        return base.getDrop(world, x, y, z, 0, canBreak);
+        if (canBreak) {
+            drops.Add(new ItemStack(getItem(), 1, 0));
+        }
     }
 
 

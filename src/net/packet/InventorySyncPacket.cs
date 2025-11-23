@@ -7,6 +7,8 @@ public struct InventorySyncPacket : Packet {
     public int invID;
     public ItemStack[] items;
 
+    public byte channel => 0;
+
     public void write(PacketBuffer buf) {
         buf.writeInt(invID);
         buf.writeUShort((ushort)items.Length);
