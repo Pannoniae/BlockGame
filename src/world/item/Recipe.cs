@@ -481,7 +481,7 @@ public class Recipe {
             .ingredients(Block.COAL_BLOCK.item);
 
         BREAD = register(new ItemStack(Item.BREAD, 1));
-        BREAD.shape(200_100_200, 3);
+        BREAD.shape(000_000_212, 3);
         BREAD.ingredients(Item.WATER_BUCKET, Item.WHEAT);
 
         APPLE_PIE = register(new ItemStack(Item.APPLE_PIE, 1));
