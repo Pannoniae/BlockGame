@@ -80,6 +80,11 @@ public class Recipe {
     public static Recipe GOLD_INGOT;
     public static Recipe COAL;
 
+    public static Recipe GLASS_FRAMED_X;
+    public static Recipe GLASS_FRAMED_R;
+    public static Recipe GLASS_FRAMED_T;
+    public static Recipe GLASS_FRAMED_C;
+
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
     private ItemStack result;
@@ -334,6 +339,23 @@ public class Recipe {
         LANTERN = register(new ItemStack(Block.LANTERN.item, 1));
         LANTERN.shape(141_222_131, 3);
         LANTERN.ingredients(Item.IRON_INGOT, Block.GLASS.item, Block.TORCH.item, Item.DYE); // any dye
+
+        GLASS_FRAMED_C = register(new ItemStack(Block.GLASS_FRAMED_C.item, 4));
+        GLASS_FRAMED_C.shape(020_212_020, 3);
+        GLASS_FRAMED_C.ingredients(Item.TIN_INGOT, Block.GLASS.item);
+
+        GLASS_FRAMED_X = register(new ItemStack(Block.GLASS_FRAMED_X.item, 4));
+        GLASS_FRAMED_X.shape(121_202_121, 3);
+        GLASS_FRAMED_X.ingredients(Item.TIN_INGOT, Block.GLASS.item);
+
+        GLASS_FRAMED_R = register(new ItemStack(Block.GLASS_FRAMED_R.item, 4));
+        GLASS_FRAMED_R.shape(121_212_121, 3);
+        GLASS_FRAMED_R.ingredients(Item.TIN_INGOT, Block.GLASS.item);
+
+        GLASS_FRAMED_T = register(new ItemStack(Block.GLASS_FRAMED_T.item, 4));
+        GLASS_FRAMED_T.shape(121_222_121, 3);
+        GLASS_FRAMED_T.ingredients(Item.TIN_INGOT, Block.GLASS.item);
+
 
         //BOW_WOOD = register(new ItemStack(Item.BOW_WOOD, 1));
         //BOW_WOOD.shape(012_102_012, 3);
