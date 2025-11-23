@@ -92,12 +92,14 @@ public class Item {
     public static Item SEEDS;
     public static Item WHEAT;
     public static Item BREAD;
-
+    public static Item CARROT;
+    //public static Item SUGAR;
+    public static Item APPLE_PIE;
 
     //public static Item BOW_WOOD;
     //public static Item ARROW_WOOD;
     //public static Item FEATHER;
-    //public static Item STRING;
+    public static Item STRING;
 
     public static UVPair uv(string source, int x, int y) {
         if (Net.mode.isDed()) {
@@ -358,6 +360,17 @@ public class Item {
         BREAD.tex = uv("items.png", 10, 10);
         material[BREAD.id] = true;
 
+        CARROT = register("carrot", new Food("Carrot", 10));
+        CARROT.tex = uv("items.png", 11, 10);
+        material[CARROT.id] = true;
+
+        //SUGAR = register("sugar", new Item("Sugar"));
+        //SUGAR.tex = uv("items.png", 12, 10);
+        //material[SUGAR.id] = true;
+
+        APPLE_PIE = register("applePie", new Food("Apple Pie", 40));
+        APPLE_PIE.tex = uv("items.png", 13, 10);
+        material[APPLE_PIE.id] = true;
 
         //BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
         //BOW_WOOD.tex = uv("items.png", 1, 4);
@@ -368,8 +381,8 @@ public class Item {
         //FEATHER = register("feather", new Item("Feather"));
         //FEATHER.tex = uv("items.png", 0, 3);
 
-        //STRING = register("string", new Item("String"));
-        //STRING.tex = uv("items.png", 1, 3);
+        STRING = register("string", new Item("String"));
+        STRING.tex = uv("items.png", 1, 3);
 
 
         // all blocks are already marked as materials during Block.register() lol
