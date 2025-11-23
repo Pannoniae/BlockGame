@@ -53,6 +53,12 @@ public class Leaves : Block {
             return (MAHOGANY_SAPLING.item, 0, 1);
         }
 
+        // mahogany: 1 in 10 chance to drop apple
+        if (id == MAHOGANY_LEAVES.id && Game.random.Next(10) == 0) {
+            return (Item.APPLE, 0, 1);
+        }
+
+
         return base.getDrop(world, x, y, z, metadata, canBreak);
     }
 

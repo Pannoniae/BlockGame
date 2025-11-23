@@ -31,6 +31,11 @@ public class Recipe {
     public static Recipe BASALT_STAIRS;
     public static Recipe BRICKBLOCK_STAIRS;
 
+    public static Recipe OAK_FENCE;
+    public static Recipe MAHOGANY_FENCE;
+    public static Recipe MAPLE_FENCE;
+    public static Recipe PINE_FENCE;
+
     public static Recipe STICK;
     public static Recipe CRAFTING_TABLE;
     public static Recipe TORCH;
@@ -242,6 +247,18 @@ public class Recipe {
             .shape(110_110_110, 3)
             .ingredients(Block.MAHOGANY_PLANKS.item);
 
+        OAK_FENCE = register(new ItemStack(Block.OAK_FENCE.item, 4));
+        OAK_FENCE.shape(000_101_101, 3);
+        OAK_FENCE.ingredients(Block.OAK_PLANKS.item, Item.STICK);
+            register(new ItemStack(Block.MAHOGANY_FENCE.item,4))
+            .shape(000_101_101, 3)
+            .ingredients(Block.MAHOGANY_PLANKS.item, Item.STICK);
+            register(new ItemStack(Block.MAPLE_FENCE.item,4))
+            .shape(000_101_101, 3)
+            .ingredients(Block.MAPLE_PLANKS.item, Item.STICK);
+            register(new ItemStack(Block.PINE_FENCE.item,4))
+            .shape(000_101_101, 3)
+            .ingredients(Block.PINE_PLANKS.item, Item.STICK);
 
         // crafting table (4 planks in square)
         CRAFTING_TABLE = register(new ItemStack(Block.CRAFTING_TABLE.item, 1));
