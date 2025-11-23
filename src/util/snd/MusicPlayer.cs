@@ -51,8 +51,6 @@ public class MusicPlayer {
             musicFiles.AddRange(file);
         }
 
-        Console.Out.WriteLine(musicFiles[0]);
-
         if (musicFiles.Count == 0) {
             Log.warn("No music files found in music directory");
         } else {

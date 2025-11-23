@@ -44,7 +44,7 @@ public class Farmland : Block {
 
         // trample (unless sneaking)
         if (!entity.sneaking) {
-            if (world.random.NextDouble() < 1 / 3f) {
+            if (world.random.NextDouble() < 1 / 16f) {
                 world.setBlock(x, y, z, DIRT.id);
             }
         }

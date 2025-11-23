@@ -240,7 +240,7 @@ public class Block {
     public static Block FIRE;
     public static Block SIGN;
 
-    public static Block OAK_FENCE;
+    /*public static Block OAK_FENCE;
     public static Block MAHOGANY_FENCE;
     public static Block PINE_FENCE;
     public static Block MAPLE_FENCE;
@@ -248,7 +248,7 @@ public class Block {
     public static Block OAK_GATE;
     public static Block MAHOGANY_GATE;
     public static Block PINE_GATE;
-    public static Block MAPLE_GATE;
+    public static Block MAPLE_GATE;*/
 
     public static Block FARMLAND;
     public static Block CROP_WHEAT;
@@ -1060,7 +1060,7 @@ public class Block {
         SIGN = register("sign", new SignBlock("Sign"));
         SIGN.setTex(uv("blocks.png", 2, 10), uv("blocks.png", 1, 5));
 
-        OAK_FENCE = register("oakFence", new Fence("Oak Fence"));
+        /*OAK_FENCE = register("oakFence", new Fence("Oak Fence"));
         OAK_FENCE.setTex(uv("blocks.png", 11, 3));
         OAK_FENCE.material(Material.WOOD);
         OAK_FENCE.setFlammable(30);
@@ -1098,7 +1098,7 @@ public class Block {
         PINE_GATE = register("pineGate", new Gate("Pine Gate"));
         PINE_GATE.setTex(uv("blocks.png", 18, 3));
         PINE_GATE.material(Material.WOOD);
-        PINE_GATE.setFlammable(30);
+        PINE_GATE.setFlammable(30);*/
 
         FARMLAND = register("farmland", new Farmland("Farmland"));
         var farmlandUVs = grassUVs(26, 5, 2, 0, 2, 0);

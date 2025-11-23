@@ -109,6 +109,8 @@ public class Recipe {
         // candy block mixing (any 2 candy blocks -> 2 of average colour)
         Registry.RECIPES.register("candyblock", new CandyBlockRecipe());
 
+        Registry.RECIPES.register("candydying", new CandyDyeRecipe());
+
         //dyes crafted from flowers
         yellow_dye =  register(new ItemStack(Item.DYE, 6, 6));
         yellow_dye.noShape();
@@ -253,7 +255,7 @@ public class Recipe {
             .ingredients(Block.SAND_BRICK.item);
 
         // door (6 planks in 2x3)
-        OAK_DOOR = register(new ItemStack(Item.OAK_DOOR, 1));
+        /*OAK_DOOR = register(new ItemStack(Item.OAK_DOOR, 1));
         OAK_DOOR.shape(110_110_110, 3);
         OAK_DOOR.ingredients(Block.OAK_PLANKS.item);
             register(new ItemStack(Item.MAHOGANY_DOOR,1))
@@ -284,7 +286,7 @@ public class Recipe {
             .ingredients(Block.MAPLE_PLANKS.item, Item.STICK);
             register(new ItemStack(Block.PINE_GATE.item,2))
             .shape(111_222_111, 3)
-            .ingredients(Block.PINE_PLANKS.item, Item.STICK);
+            .ingredients(Block.PINE_PLANKS.item, Item.STICK);*/
 
 
 
@@ -720,7 +722,7 @@ public class Recipe {
         return digits;
     }
 
-    private static bool isEmpty(ItemStack slot) => slot == ItemStack.EMPTY || slot.quantity <= 0;
+    public static bool isEmpty(ItemStack slot) => slot == ItemStack.EMPTY || slot.quantity <= 0;
 
     public ItemStack getResult() => result.copy();
 
