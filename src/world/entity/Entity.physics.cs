@@ -97,9 +97,17 @@ public partial class Entity {
                 continue;
             }
 
-            // try stepping up if on ground
+            // check if actually colliding in Z direction before attempting step-up
+            bool wcz = false;
+            if (velocity.Z > 0) {
+                wcz = p.z1 <= b.z0 && (b.z0 - p.z1) < velocity.Z * dt;
+            } else if (velocity.Z < 0) {
+                wcz = p.z0 >= b.z1 && (b.z1 - p.z0) > velocity.Z * dt;
+            }
+
+            // try stepping up if on ground and actually colliding
             bool canStepUp = false;
-            if (onGround && velocity.Z != 0) {
+            if (onGround && wcz) {
                 for (double stepY = Constants.epsilon; stepY <= STEP_HEIGHT; stepY += 0.1) {
                     var stepAABB = calcAABB(new Vector3D(position.X, position.Y + stepY, position.Z + velocity.Z * dt));
                     bool cb = false;
@@ -169,9 +177,17 @@ public partial class Entity {
                 continue;
             }
 
-            // try stepping up if on ground
+            // check if actually colliding in X direction before attempting step-up
+            bool wcx = false;
+            if (velocity.X > 0) {
+                wcx = p.x1 <= b.x0 && (b.x0 - p.x1) < velocity.X * dt;
+            } else if (velocity.X < 0) {
+                wcx = p.x0 >= b.x1 && (b.x1 - p.x0) > velocity.X * dt;
+            }
+
+            // try stepping up if on ground and actually colliding
             bool canStepUp = false;
-            if (onGround && velocity.X != 0) {
+            if (onGround && wcx) {
                 for (double stepY = Constants.epsilon; stepY <= STEP_HEIGHT; stepY += 0.1) {
                     var stepAABB = calcAABB(new Vector3D(position.X + velocity.X * dt, position.Y + stepY, position.Z));
                     bool cb = false;

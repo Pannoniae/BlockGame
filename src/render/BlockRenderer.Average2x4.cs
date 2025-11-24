@@ -196,9 +196,9 @@ public partial class BlockRenderer {
         // is4 is implicit (else)
 
         // r = is1 ? divBy1 : (is2 ? divBy2 : (is3 ? divBy3 : divBy4))
-        var r = Sse41.BlendVariable(div4.AsSingle(), div3.AsSingle(), is3.AsSingle()).AsUInt32();
-        r = Sse41.BlendVariable(r.AsSingle(), div2.AsSingle(), is2.AsSingle()).AsUInt32();
-        r = Sse41.BlendVariable(r.AsSingle(), div1.AsSingle(), is1.AsSingle()).AsUInt32();
+        var r = Sse41.BlendVariable(div4, div3, is3);
+        r = Sse41.BlendVariable(r, div2, is2);
+        r = Sse41.BlendVariable(r, div1, is1);
 
         return r;
     }
