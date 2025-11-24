@@ -81,23 +81,35 @@ public static class TexturePackManager {
     public static void loadPack(TexturePack pack) {
         Log.info("TexturePack", $"Loading texture pack: {pack.name}");
 
+
+
+        // re-stitch atlases
+        doReloadAtlases();
+
+        currentPack = pack;
+        Log.info("TexturePack", $"Texture pack loaded: {pack.name}");
+    }
+
+    public static void reloadAtlases() {
+        var pack = currentPack;
+        if (pack == null) {
+            Log.warn("TexturePack", "No texture pack loaded, cannot reload atlases");
+            return;
+        }
+
         // clear old sources
         TextureSources.clear();
 
         // register new sources
         pack.registerSources();
 
-        // re-stitch atlases
-        reloadAtlases();
-
-        currentPack = pack;
-        Log.info("TexturePack", $"Texture pack loaded: {pack.name}");
+        doReloadAtlases();
     }
 
     /**
      * Reload atlases after source changes
      */
-    public static void reloadAtlases() {
+    private static void doReloadAtlases() {
         // re-stitch block atlas (copied from Textures.cs)
         // TODO STOP COPYPASTING SHIT and make it real clean lol
         var blockSources = TextureSources.getBlockSources();
@@ -112,13 +124,33 @@ public static class TexturePackManager {
 
         var blockResult = AtlasStitcher.stitch(blockSources, blockProtectedRegions);
 
+        // update Block.atlasSize
+        Block.updateAtlasSize(blockResult.width);
+
+        // todo this is a giant hack, do something better?
+        // post-process: force leaf alpha = 255 if fastLeaves enabled
+        if (Settings.instance.fastLeaves) {
+            foreach (var (source, tx, ty) in Block.leafTextureTiles) {
+                if (blockResult.tilePositions.TryGetValue((source, tx, ty), out var rect)) {
+                    blockResult.image.ProcessPixelRows(accessor => {
+                        for (int y = rect.Y; y < rect.Y + rect.Height; y++) {
+                            var row = accessor.GetRowSpan(y);
+                            for (int x = rect.X; x < rect.X + rect.Width; x++) {
+                                row[x].A = 255;
+                            }
+                        }
+                    });
+                }
+                else {
+                    Log.warn("TexturePack", $"Failed to find leaf texture tile in atlas: {source} ({tx}, {ty})");
+                }
+            }
+        }
+
         // update existing texture
         if (Game.textures?.blockTexture != null) {
             ((BlockTextureAtlas)Game.textures.blockTexture).updateFromStitch(blockResult);
         }
-
-        // update Block.atlasSize
-        Block.updateAtlasSize(blockResult.width);
 
         // dispose source images
         foreach (var src in blockSources) {

@@ -40,7 +40,7 @@ public class Settings {
     public int ssaaMode = 0; // 0=Normal, 1=Weighted, 2=Per-sample
     public float resolutionScale = 1.0f; // 0.25, 0.5, 0.75, 1.0
     public bool resolutionScaleLinear = true; // true = linear filtering, false = nearest
-    public bool fullscreen = false;
+    public FullscreenState fullscreen = FullscreenState.WINDOWED;
     public bool smoothDayNight = false; // false = classic/stepped, true = dynamic/smooth
     public bool frustumCulling = true;
     public bool crtEffect = false;
@@ -48,7 +48,9 @@ public class Settings {
     public bool affineMapping = false; // SO LIMINAL UWU
     public bool vertexJitter = false; // SO LIMINAL UWU
     public int cloudMode = 1; // 0=off, 1=simple, 2=fancy, 3=smooth fancy, 4=hypercube
-    public bool opaqueWater = false;
+    public bool fastWater = false;
+    public bool fastLeaves = false;
+    public bool noAnimation = false;
     /**
      * Don't use this! Use getActualRendererMode() instead.
      */
@@ -56,6 +58,7 @@ public class Settings {
 
     public bool viewBobbing = true;
     public int mouseInv = 1; // 1 = normal, -1 = inverted
+    public float mouseSensitivity = 1.0f; // 0.1 to 3.0
 
     public float sfxVolume = 1.0f; // 0.0 to 1.0
     public float musicVolume = 1.0f; // 0.0 to 1.0
@@ -171,7 +174,7 @@ public class Settings {
         tag.addInt("ssaaMode", ssaaMode);
         tag.addFloat("resolutionScale", resolutionScale);
         tag.addByte("resolutionScaleLinear", (byte)(resolutionScaleLinear ? 1 : 0));
-        tag.addByte("fullscreen", (byte)(fullscreen ? 1 : 0));
+        tag.addByte("fullscreen", (byte)(fullscreen));
         tag.addByte("smoothDayNight", (byte)(smoothDayNight ? 1 : 0));
         tag.addByte("frustumCulling", (byte)(frustumCulling ? 1 : 0));
         tag.addByte("crtEffect", (byte)(crtEffect ? 1 : 0));
@@ -180,10 +183,13 @@ public class Settings {
         tag.addByte("vertexJitter", (byte)(vertexJitter ? 1 : 0));
         tag.addInt("cloudMode", cloudMode);
         tag.addByte("viewBobbing", (byte)(viewBobbing ? 1 : 0));
-        tag.addByte("opaqueWater", (byte)(opaqueWater ? 1 : 0));
+        tag.addByte("fastWater", (byte)(fastWater ? 1 : 0));
+        tag.addByte("fastLeaves", (byte)(fastLeaves ? 1 : 0));
+        tag.addByte("noAnimation", (byte)(noAnimation ? 1 : 0));
 
         tag.addInt("rendererMode", (int)rendererMode);
         tag.addInt("mouseInv", mouseInv);
+        tag.addFloat("mouseSensitivity", mouseSensitivity);
         tag.addFloat("sfxVolume", sfxVolume);
         tag.addFloat("musicVolume", musicVolume);
         tag.addString("playerName", playerName);
@@ -218,7 +224,8 @@ public class Settings {
             if (tag.has("resolutionScaleLinear")) {
                 resolutionScaleLinear = tag.getByte("resolutionScaleLinear") != 0;
             }
-            fullscreen = tag.getByte("fullscreen") != 0;
+
+            fullscreen = (FullscreenState)tag.getByte("fullscreen");
             smoothDayNight = tag.getByte("smoothDayNight") != 0;
             frustumCulling = tag.getByte("frustumCulling") != 0;
             crtEffect = tag.getByte("crtEffect") != 0;
@@ -237,13 +244,18 @@ public class Settings {
             }
 
             // if first load and igpu, true
-            opaqueWater = tag.getByte("opaqueWater", 0) != 0 || (!tag.has("opaqueWater") && Game.isIntegratedCard);
+            fastWater = tag.getByte("fastWater", 0) != 0 || (!tag.has("fastWater") && Game.isIntegratedCard);
+            fastLeaves = tag.getByte("fastLeaves", 0) != 0 || (!tag.has("fastLeaves") && Game.isIntegratedCard);
+            noAnimation = tag.getByte("noAnimation", 0) != 0 || (!tag.has("noAnimation") && Game.isIntegratedCard);
 
             if (tag.has("rendererMode")) {
                 rendererMode = (RendererMode)tag.getInt("rendererMode");
             }
             if (tag.has("mouseInv")) {
                 mouseInv = tag.getInt("mouseInv");
+            }
+            if (tag.has("mouseSensitivity")) {
+                mouseSensitivity = tag.getFloat("mouseSensitivity");
             }
             if (tag.has("sfxVolume")) {
                 sfxVolume = tag.getFloat("sfxVolume");

@@ -257,6 +257,14 @@ public class Mob(World world, string type) : Entity(world, type) {
                     Pathfinding.ret(path);
                 }
 
+                if (path != null && path.isFinished()) {
+                    // stop wandering if reached target
+                    wantsToWander = false;
+                    wanderTarget = null;
+                    path = null;
+                    return;
+                }
+
                 var angle = Game.random.NextSingle(0, MathF.PI * 2);
                 var dist = Game.random.NextSingle((float)WANDER_MIN_DISTANCE, (float)WANDER_MAX_DISTANCE);
                 var tx = (int)(position.X + MathF.Cos(angle) * dist);

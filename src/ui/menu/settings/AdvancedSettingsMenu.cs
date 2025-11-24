@@ -8,10 +8,10 @@ using Button = BlockGame.ui.element.Button;
 
 namespace BlockGame.ui.menu.settings;
 
-public class AudioSettingsMenu : Menu {
+public class AdvancedSettingsMenu : Menu {
     private readonly SettingsScreen parentScreen;
 
-    public AudioSettingsMenu(SettingsScreen parentScreen) {
+    public AdvancedSettingsMenu(SettingsScreen parentScreen) {
         this.parentScreen = parentScreen;
         initializeSettings();
     }
@@ -20,29 +20,7 @@ public class AudioSettingsMenu : Menu {
         var settings = Settings.instance;
         var settingElements = new List<GUIElement>();
 
-        static string sfxText(float value) => $"SFX Volume: {value}%";
-        var sfxVolume = new Slider(this, "sfxVolume", 0, 100, 1, (int)(settings.sfxVolume * 100), sfxText);
-        sfxVolume.setPosition(new Rectangle(0, 0, 128, 16));
-        sfxVolume.centreContents();
-        sfxVolume.applied += () => {
-            settings.sfxVolume = sfxVolume.value / 100f;
-            Game.snd?.updateSfxVolumes();
-        };
-        sfxVolume.tooltip = "Controls the volume of sound effects.";
-        settingElements.Add(sfxVolume);
-        addElement(sfxVolume);
 
-        static string musicText(float value) => $"Music Volume: {value}%";
-        var musicVolume = new Slider(this, "musicVolume", 0, 100, 1, (int)(settings.musicVolume * 100), musicText);
-        musicVolume.setPosition(new Rectangle(0, 0, 128, 16));
-        musicVolume.centreContents();
-        musicVolume.applied += () => {
-            settings.musicVolume = musicVolume.value / 100f;
-            Game.snd?.updateMusicVolumes();
-        };
-        musicVolume.tooltip = "Controls the volume of music.";
-        settingElements.Add(musicVolume);
-        addElement(musicVolume);
 
         var back = new Button(this, "back", false, "Back") {
             horizontalAnchor = HorizontalAnchor.LEFT,
@@ -55,7 +33,7 @@ public class AudioSettingsMenu : Menu {
         };
         addElement(back);
 
-        layoutSettingsTwoCols(settingElements, new Vector2I(0, 16), sfxVolume.GUIbounds.Width);
+        layoutSettingsTwoCols(settingElements, new Vector2I(0, 16), back.GUIbounds.Width);
     }
 
     public override void deactivate() {

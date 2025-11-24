@@ -22,8 +22,8 @@ public unsafe class ShaderStorageBuffer : IDisposable {
     public ShaderStorageBuffer(Silk.NET.OpenGL.Legacy.GL GL, int initialCapacity, uint bindingPoint) {
         this.GL = GL;
         this.bindingPoint = bindingPoint;
-        this.capacity = initialCapacity;
-        this.size = 0;
+        capacity = initialCapacity;
+        size = 0;
 
         // create buffer
         handle = GL.GenBuffer();

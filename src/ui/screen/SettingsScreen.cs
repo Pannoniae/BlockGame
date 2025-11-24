@@ -23,12 +23,7 @@ public class SettingsScreen : Screen {
     }
 
     public void returnToPrevScreen() {
-        if (prevScreen != null) {
-            Game.instance.switchToScreen(prevScreen);
-        }
-        else {
-            // fallback to main menu screen if no previous screen
-            Game.instance.switchToScreen(MAIN_MENU_SCREEN);
-        }
+        // fallback to main menu screen if no previous screen
+        Game.instance.switchToScreen(prevScreen ?? MAIN_MENU_SCREEN);
     }
 }

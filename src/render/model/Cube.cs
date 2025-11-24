@@ -197,7 +197,7 @@ public class Cube {
     }
 
 
-    public void xfrender(InstantDrawEntity ide, MatrixStack mat, float scale) {
+    public void xfrender(FastInstantDrawEntity ide, MatrixStack mat, float scale) {
         if (!rendered) return;
 
         ref var c = ref cmat;

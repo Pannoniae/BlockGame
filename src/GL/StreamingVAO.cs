@@ -21,9 +21,8 @@ public class StreamingVAO<T> where T : unmanaged {
 
     public void setSize(int size) {
         unsafe {
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(size * sizeof(T)), (void*)0,
+            vbo = GL.CreateBuffer();
+            GL.NamedBufferStorage(vbo, (uint)(size * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
         }
         format();
@@ -31,9 +30,8 @@ public class StreamingVAO<T> where T : unmanaged {
 
     public void setSizeLighted(int size) {
         unsafe {
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(size * sizeof(T)), (void*)0,
+            vbo = GL.CreateBuffer();
+            GL.NamedBufferStorage(vbo, (uint)(size * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
         }
         formatLighted();
@@ -41,11 +39,10 @@ public class StreamingVAO<T> where T : unmanaged {
 
     public void upload(Span<T> data) {
         unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
             Game.GL.InvalidateBufferData(vbo);
             count = (uint)data.Length;
             fixed (T* d = data) {
-                GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0, (uint)(data.Length * sizeof(T)), d);
+                GL.NamedBufferSubData(vbo, 0, (uint)(data.Length * sizeof(T)), d);
             }
         }
 
@@ -86,7 +83,7 @@ public class StreamingVAO<T> where T : unmanaged {
         GL.VertexAttribBinding(2, 0);
         GL.VertexAttribBinding(3, 0);
 
-        GL.BindVertexBuffer(0, vbo, 0, 13 * sizeof(ushort));
+        GL.BindVertexBuffer(0, vbo, 0, 14 * sizeof(ushort));
     }
 
     public void bind() {

@@ -26,25 +26,23 @@ public sealed class ExtremelySharedBlockVAO : VAO {
     public ExtremelySharedBlockVAO(uint VAOHandle) {
         this.VAOHandle = VAOHandle;
         GL = Game.GL;
-        buffer = GL.GenBuffer();
+        buffer = GL.CreateBuffer();
     }
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
             count = (uint)indices.Length;
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
             var indexSize = (uint)(indices.Length * sizeof(ushort));
             // index buffer comes after the vertex data
             indexOffset = vertexSize;
             fixed (BlockVertexPacked* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize + indexSize, d,
+                GL.NamedBufferStorage(buffer, vertexSize + indexSize, d,
                     BufferStorageMask.None);
             }
 
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, buffer);
             fixed (ushort* d = indices) {
-                GL.BufferSubData(BufferTargetARB.ElementArrayBuffer, (nint)indexOffset, indexSize, d);
+                GL.NamedBufferSubData(buffer, (nint)indexOffset, indexSize, d);
             }
         }
 
@@ -58,18 +56,16 @@ public sealed class ExtremelySharedBlockVAO : VAO {
             var indexSize = (uint)(indices.Length * sizeof(ushort));
             // index buffer comes after the vertex data
             indexOffset = vertexSize;
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
             var c = ArrayPool<byte>.Shared.Rent(data.Length * sizeof(BlockVertexPacked) + indices.Length * sizeof(ushort));
             var cs = c.AsSpan();
             var c2 = c.AsSpan(data.Length * sizeof(BlockVertexPacked));
             MemoryMarshal.AsBytes(data).CopyTo(cs);
             MemoryMarshal.AsBytes(indices).CopyTo(c2);
             fixed (byte* ptr = c) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize + indexSize, ptr,
+                GL.NamedBufferStorage(buffer, vertexSize + indexSize, ptr,
                     BufferStorageMask.None);
 
             }
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, buffer);
             ArrayPool<byte>.Shared.Return(c);
 
         }

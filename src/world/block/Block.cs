@@ -5,6 +5,7 @@ using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.render;
+using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.entity;
@@ -274,6 +275,10 @@ public class Block {
     public static XUList<bool> log => Registry.BLOCKS.log;
     public static XUList<bool> leaves => Registry.BLOCKS.leaves;
     public static XUList<byte> updateDelay => Registry.BLOCKS.updateDelay;
+
+    // track leaf texture tiles for atlas post-processing
+    // TODO maybe dont have this array, just iterate over all block tiles and if leaves[id] is true then go to the uvs[0], make opaque? or is that worse? IDK
+    public static readonly HashSet<(string source, int tx, int ty)> leafTextureTiles = [];
     public static XUList<AABB?> AABB => Registry.BLOCKS.AABB;
     public static XUList<bool> customAABB => Registry.BLOCKS.customAABB;
     public static XUList<RenderType> renderType => Registry.BLOCKS.renderType;
@@ -485,34 +490,34 @@ public class Block {
         GLASS_FRAMED_X.transparency();
         GLASS_FRAMED_X.material(Material.GLASS);
 
-        GLASS_FRAMED_R = register("framedRglass", new Block("Rhombus Framed Glass"));
+        GLASS_FRAMED_R = register("framedRglass", new Block("Rhombus-Framed Glass"));
         GLASS_FRAMED_R.setTex(uv("blocks.png", 18, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS_FRAMED_R.transparency();
         GLASS_FRAMED_R.material(Material.GLASS);
 
-        GLASS_FRAMED_T = register("framedTglass", new Block("Tulip Framed Glass"));
+        GLASS_FRAMED_T = register("framedTglass", new Block("Tulip-Framed Glass"));
         GLASS_FRAMED_T.setTex(uv("blocks.png", 19, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS_FRAMED_T.transparency();
         GLASS_FRAMED_T.material(Material.GLASS);
 
-        GLASS_FRAMED_C = register("framedCglass", new Block("Cross Framed Glass"));
+        GLASS_FRAMED_C = register("framedCglass", new Block("Cross-Framed Glass"));
         GLASS_FRAMED_C.setTex(uv("blocks.png", 20, 0));
         renderType[GLASS.id] = RenderType.CUBE;
         GLASS_FRAMED_C.transparency();
         GLASS_FRAMED_C.material(Material.GLASS);
 
-        BRICK_BLOCK = register("brickBlock", new Block("Brick Block"));
+        BRICK_BLOCK = register("brickBlock", new Block("Brick"));
         BRICK_BLOCK.setTex(cubeUVs(0, 2));
         renderType[BRICK_BLOCK.id] = RenderType.CUBE;
         BRICK_BLOCK.material(Material.STONE);
 
-        BRICKBLOCK_SLAB = register("brickBlockSlab", new Slabs("Brick Block Slab"));
+        BRICKBLOCK_SLAB = register("brickBlockSlab", new Slabs("Brick Slab"));
         BRICKBLOCK_SLAB.setTex(cubeUVs(0, 2));
         BRICKBLOCK_SLAB.material(Material.STONE);
 
-        BRICKBLOCK_STAIRS = register("brickBlockStairs", new Stairs("Brick Block Stairs"));
+        BRICKBLOCK_STAIRS = register("brickBlockStairs", new Stairs("Brick Stairs"));
         BRICKBLOCK_STAIRS.setTex(cubeUVs(0, 2));
         BRICKBLOCK_STAIRS.partialBlock();
         BRICKBLOCK_STAIRS.material(Material.STONE);
@@ -793,6 +798,7 @@ public class Block {
 
         LEAVES = register("oakLeaves", new Leaves("Oak Leaves"));
         LEAVES.setTex(uv("blocks.png", 4, 5));
+        registerLeafTexture("blocks.png", 4, 5);
         renderType[LEAVES.id] = RenderType.CUBE;
         LEAVES.transparency();
         LEAVES.setLightAbsorption(1);
@@ -835,6 +841,7 @@ public class Block {
 
         MAPLE_LEAVES = register("mapleLeaves", new Leaves("Maple Leaves"));
         MAPLE_LEAVES.setTex(uv("blocks.png", 9, 5));
+        registerLeafTexture("blocks.png", 9, 5);
         renderType[MAPLE_LEAVES.id] = RenderType.CUBE;
         MAPLE_LEAVES.transparency();
         leaves[MAPLE_LEAVES.id] = true;
@@ -876,6 +883,7 @@ public class Block {
 
         MAHOGANY_LEAVES = register("mahoganyLeaves", new Leaves("Mahogany Leaves"));
         MAHOGANY_LEAVES.setTex(cubeUVs(7, 2));
+        registerLeafTexture("blocks.png", 7, 2);
         renderType[MAHOGANY_LEAVES.id] = RenderType.CUBE;
         MAHOGANY_LEAVES.transparency();
         leaves[MAHOGANY_LEAVES.id] = true;
@@ -925,6 +933,7 @@ public class Block {
 
         PINE_LEAVES = register("pineLeaves", new Leaves("Pine Leaves"));
         PINE_LEAVES.setTex(uv("blocks.png", 12, 2));
+        registerLeafTexture("blocks.png", 12, 2);
         renderType[PINE_LEAVES.id] = RenderType.CUBE;
         PINE_LEAVES.transparency();
         leaves[PINE_LEAVES.id] = true;
@@ -1157,6 +1166,30 @@ public class Block {
 
         //inventoryBlacklist[ Block.WATER.id = true;
         //inventoryBlacklist[7] = true;
+
+        updateLeafRenderMode();
+
+        // apply fastLeaves alpha processing now that leafTextureTiles is populated...
+        if (Settings.instance.fastLeaves) {
+            atlas.applyFastLeaves();
+        }
+    }
+
+    public static void updateLeafRenderMode() {
+        bool fast = Settings.instance.fastLeaves;
+        for (int i = 0; i < currentID; i++) {
+            if (leaves[i]) {
+                fullBlock[i] = fast;
+            }
+        }
+    }
+
+    // todo this is a giant hack, do something better?
+    public static void registerLeafTexture(string source, int x, int y) {
+        if (!source.StartsWith("textures/")) {
+            source = "textures/" + source;
+        }
+        leafTextureTiles.Add((source, x, y));
     }
 
 

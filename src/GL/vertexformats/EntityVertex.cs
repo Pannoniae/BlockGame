@@ -62,7 +62,7 @@ public struct EntityVertex {
         this.g = g;
         this.b = b;
         this.a = a;
-        this.normal = pack(xn, yn, zn, 0.0f);
+        normal = pack(xn, yn, zn, 0.0f);
     }
 
     public EntityVertex(float x, float y, float z, float u, float v) {
@@ -75,7 +75,7 @@ public struct EntityVertex {
         g = 255;
         b = 255;
         a = 255;
-        this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
+        normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     public EntityVertex(float x, float y, float z, float u, float v, Color c, float xn, float yn, float zn) {
@@ -85,7 +85,7 @@ public struct EntityVertex {
         this.u = u;
         this.v = v;
         this.c = c;
-        this.normal = pack(xn, yn, zn, 0.0f);
+        normal = pack(xn, yn, zn, 0.0f);
     }
 
     public EntityVertex(float x, float y, float z, float u, float v, Color c) {
@@ -95,7 +95,7 @@ public struct EntityVertex {
         this.u = u;
         this.v = v;
         this.c = c;
-        this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
+        normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     public EntityVertex(ushort x, ushort y, ushort z, float u, float v, byte r, byte g, byte b, byte a) {
@@ -108,7 +108,7 @@ public struct EntityVertex {
         this.g = g;
         this.b = b;
         this.a = a;
-        this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
+        normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     public EntityVertex(float x, float y, float z, float u, float v, byte r, byte g, byte b, byte a) {
@@ -121,7 +121,7 @@ public struct EntityVertex {
         this.g = g;
         this.b = b;
         this.a = a;
-        this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
+        normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     public EntityVertex(float x, float y, float z, float u, float v, float r, float g, float b, float a) {
@@ -134,7 +134,7 @@ public struct EntityVertex {
         this.g = (byte)(g * 255);
         this.b = (byte)(b * 255);
         this.a = (byte)(a * 255);
-        this.normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
+        normal = pack(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     public EntityVertex scale(float scale) {

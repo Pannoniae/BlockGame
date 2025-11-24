@@ -261,7 +261,7 @@ public class TexturePackMenu : Menu {
 
     public override void deactivate() {
         base.deactivate();
-        ui.Settings.instance.save();
+        Settings.instance.save();
     }
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {

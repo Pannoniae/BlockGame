@@ -21,14 +21,21 @@ public class MobRenderer<T> : EntityRenderer<T> where T : Mob {
         // interpolate animation state
         var apos = float.Lerp(mob.papos, mob.apos, (float)interp);
         var aspeed = float.Lerp(mob.paspeed, mob.aspeed, (float)interp);
+
+
+
         
         var ide = EntityRenderers.ide;
+
+        // we need to set the matrixstack here again to dirty it! stupid system I know but shhh
+        ide.model(mat);
+
         ide.begin(PrimitiveType.Quads);
         model.render(mat, mob, apos, aspeed, scale, interp);
 
 
         // render damage tint overlay if player is taking damage
-        if (mob.dmgTime > 0) {
+        if (false && mob.dmgTime > 0) {
             const float t = 1;
             var tint = new Color((byte)255, (byte)0, (byte)0, (byte)(128 * t));
             ide.setColour(tint);

@@ -22,7 +22,7 @@ public class BlockVAO : VAO {
 
     public void upload(float[] data) {
         unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.graphics.vertex(vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
@@ -35,7 +35,7 @@ public class BlockVAO : VAO {
 
     public void upload(Span<float> data) {
         unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.graphics.vertex(vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
@@ -48,14 +48,14 @@ public class BlockVAO : VAO {
 
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.graphics.vertex(vbo);
             count = (uint)indices.Length;
             fixed (BlockVertexPacked* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
                     BufferUsageARB.DynamicDraw);
             }
 
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            Game.graphics.index(ibo);
             fixed (ushort* d = indices) {
                 GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
                     BufferUsageARB.DynamicDraw);
@@ -67,14 +67,14 @@ public class BlockVAO : VAO {
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {
         unsafe {
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.graphics.vertex(vbo);
             count = (uint)indices.Length;
             fixed (BlockVertexPacked* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(BlockVertexPacked)), d,
                     BufferUsageARB.DynamicDraw);
             }
             
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, ibo);
+            Game.graphics.index(ibo);
             fixed (ushort* d = indices) {
                 GL.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(ushort)), d,
                     BufferUsageARB.DynamicDraw);

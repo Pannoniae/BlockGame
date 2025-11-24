@@ -386,7 +386,7 @@ public partial class Game {
             DebugSeverity.DebugSeverityHigh => LogLevel.ERROR,
             DebugSeverity.DebugSeverityMedium => LogLevel.WARNING,
             DebugSeverity.DebugSeverityLow => LogLevel.INFO,
-            DebugSeverity.DebugSeverityNotification => LogLevel.DEBUG,
+            DebugSeverity.DebugSeverityNotification => LogLevel.INFO,
             _ => LogLevel.INFO
         };
 
@@ -1050,7 +1050,7 @@ public partial class Game {
         }
 
         if (key == Key.F11) {
-            Settings.instance.fullscreen = !Settings.instance.fullscreen;
+            Settings.instance.fullscreen = (FullscreenState)(((int)Settings.instance.fullscreen + 1) % 3);
             setFullscreen(Settings.instance.fullscreen);
         }
         

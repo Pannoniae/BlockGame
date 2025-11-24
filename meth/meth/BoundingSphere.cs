@@ -32,8 +32,8 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
         get
         {
             return string.Concat(
-                "Center( ", this.Center.ToString(), " )  \r\n",
-                "Radius( ", this.Radius.ToString(), " )"
+                "Center( ", Center.ToString(), " )  \r\n",
+                "Radius( ", Radius.ToString(), " )"
             );
         }
     }
@@ -49,8 +49,8 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <param name="radius">The sphere radius.</param>
     public BoundingSphere(Vector3 center, float radius)
     {
-        this.Center = center;
-        this.Radius = radius;
+        Center = center;
+        Radius = radius;
     }
 
     #endregion
@@ -70,7 +70,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
         bool inside = true;
         foreach (Vector3 corner in box.GetCorners())
         {
-            if (this.Contains(corner) == ContainmentType.Disjoint)
+            if (Contains(corner) == ContainmentType.Disjoint)
             {
                 inside = false;
                 break;
@@ -115,7 +115,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <param name="result">The containment type as an output parameter.</param>
     public void Contains(ref BoundingBox box, out ContainmentType result)
     {
-        result = this.Contains(box);
+        result = Contains(box);
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
         Vector3[] corners = frustum.GetCorners();
         foreach (Vector3 corner in corners)
         {
-            if (this.Contains(corner) == ContainmentType.Disjoint)
+            if (Contains(corner) == ContainmentType.Disjoint)
             {
                 inside = false;
                 break;
@@ -158,7 +158,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <param name="result">The containment type as an output parameter.</param>
     public void Contains(ref BoundingFrustum frustum,out ContainmentType result)
     {
-        result = this.Contains(frustum);
+        result = Contains(frustum);
     }
 
     /// <summary>
@@ -409,7 +409,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <returns><c>true</c> if the instances are equal; <c>false</c> otherwise.</returns>
     public bool Equals(BoundingSphere other)
     {
-        return this.Center == other.Center && this.Radius == other.Radius;
+        return Center == other.Center && Radius == other.Radius;
     }
 
     /// <summary>
@@ -420,7 +420,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     public override bool Equals(object obj)
     {
         if (obj is BoundingSphere)
-            return this.Equals((BoundingSphere)obj);
+            return Equals((BoundingSphere)obj);
 
         return false;
     }
@@ -431,7 +431,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <returns>Hash code of this <see cref="BoundingSphere"/>.</returns>
     public override int GetHashCode()
     {
-        return this.Center.GetHashCode() + this.Radius.GetHashCode();
+        return Center.GetHashCode() + Radius.GetHashCode();
     }
 
     #region Intersects
@@ -509,7 +509,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     {
         var result = default(PlaneIntersectionType);
         // TODO: we might want to inline this for performance reasons
-        this.Intersects(ref plane, out result);
+        Intersects(ref plane, out result);
         return result;
     }
 
@@ -521,11 +521,11 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     public void Intersects(ref Plane plane, out PlaneIntersectionType result)
     {
         // TODO: we might want to inline this for performance reasons
-        var distance = Vector3.Dot(plane.Normal, this.Center);
+        var distance = Vector3.Dot(plane.Normal, Center);
         distance += plane.D;
-        if (distance > this.Radius)
+        if (distance > Radius)
             result = PlaneIntersectionType.Front;
-        else if (distance < -this.Radius)
+        else if (distance < -Radius)
             result = PlaneIntersectionType.Back;
         else
             result = PlaneIntersectionType.Intersecting;
@@ -560,7 +560,7 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <returns>A <see cref="String"/> representation of this <see cref="BoundingSphere"/>.</returns>
     public override string ToString()
     {
-        return "{Center:" + this.Center + " Radius:" + this.Radius + "}";
+        return "{Center:" + Center + " Radius:" + Radius + "}";
     }
 
     #region Transform
@@ -573,8 +573,8 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     public BoundingSphere Transform(Matrix4x4 matrix)
     {
         BoundingSphere sphere = new BoundingSphere();
-        sphere.Center = Vector3.Transform(this.Center, matrix);
-        sphere.Radius = this.Radius * ((float)Math.Sqrt((double)Math.Max(((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12)) + (matrix.M13 * matrix.M13), Math.Max(((matrix.M21 * matrix.M21) + (matrix.M22 * matrix.M22)) + (matrix.M23 * matrix.M23), ((matrix.M31 * matrix.M31) + (matrix.M32 * matrix.M32)) + (matrix.M33 * matrix.M33)))));
+        sphere.Center = Vector3.Transform(Center, matrix);
+        sphere.Radius = Radius * ((float)Math.Sqrt((double)Math.Max(((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12)) + (matrix.M13 * matrix.M13), Math.Max(((matrix.M21 * matrix.M21) + (matrix.M22 * matrix.M22)) + (matrix.M23 * matrix.M23), ((matrix.M31 * matrix.M31) + (matrix.M32 * matrix.M32)) + (matrix.M33 * matrix.M33)))));
         return sphere;
     }
 
@@ -585,8 +585,8 @@ public struct BoundingSphere : IEquatable<BoundingSphere>
     /// <param name="result">Transformed <see cref="BoundingSphere"/> as an output parameter.</param>
     public void Transform(ref Matrix4x4 matrix, out BoundingSphere result)
     {
-        result.Center = Vector3.Transform(this.Center, matrix);
-        result.Radius = this.Radius * ((float)Math.Sqrt((double)Math.Max(((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12)) + (matrix.M13 * matrix.M13), Math.Max(((matrix.M21 * matrix.M21) + (matrix.M22 * matrix.M22)) + (matrix.M23 * matrix.M23), ((matrix.M31 * matrix.M31) + (matrix.M32 * matrix.M32)) + (matrix.M33 * matrix.M33)))));
+        result.Center = Vector3.Transform(Center, matrix);
+        result.Radius = Radius * ((float)Math.Sqrt((double)Math.Max(((matrix.M11 * matrix.M11) + (matrix.M12 * matrix.M12)) + (matrix.M13 * matrix.M13), Math.Max(((matrix.M21 * matrix.M21) + (matrix.M22 * matrix.M22)) + (matrix.M23 * matrix.M23), ((matrix.M31 * matrix.M31) + (matrix.M32 * matrix.M32)) + (matrix.M33 * matrix.M33)))));
     }
 
     #endregion

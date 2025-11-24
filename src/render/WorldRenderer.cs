@@ -34,7 +34,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     private bool currentAffineMapping;
     private bool currentVertexJitter;
 
-    public bool opaqueWater = false;
+    public bool fastWater = false;
 
     public Silk.NET.OpenGL.Legacy.GL GL;
 
@@ -215,7 +215,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
     }
 
     public void bindQuad() {
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+        Game.graphics.index(Game.graphics.fatQuadIndices);
     }
 
     private Shader createWorldShader() {
@@ -417,7 +417,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         Game.graphics.genFatQuadIndices();
 
         // see if we should enable opaque water, currently on igpu
-        opaqueWater = Settings.instance.opaqueWater;
+        fastWater = Settings.instance.fastWater;
 
         // initialize chunk UBO (16 bytes: vec3 + padding)
         //chunkUBO = new UniformBuffer(GL, 256, 0);
@@ -899,7 +899,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         //goto skip;
         // if opaque water is enabled, skip the whole transclucent pass for water
-        if (opaqueWater) {
+        if (fastWater) {
             goto skip;
         }
 
@@ -1170,6 +1170,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             mat.pop();
         }
 
+        ide.endFrame();
         mat.pop(); // THIS is why it was leaking
     }
 

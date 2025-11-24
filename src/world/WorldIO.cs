@@ -35,7 +35,7 @@ public class WorldIO {
     private volatile bool isDisposed;
 
     // lock file to prevent multiple instances
-    private FileStream? lockFile;
+    public FileStream? lockFile;
 
     public WorldIO(World world) {
         this.world = world;
@@ -314,6 +314,20 @@ public class WorldIO {
         var pathStr = getChunkString(world.name, chunk.coord);
         Directory.CreateDirectory(Path.GetDirectoryName(pathStr) ?? string.Empty);
         NBT.writeFile(nbt, pathStr);
+
+        // we can return the pooled arrays now
+        // todo is this safe?
+        /*for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
+            var freshBlocks = nbt.getListTag<NBTCompound>("sections").get(sectionY).getUIntArray("blocks");
+            if (freshBlocks != null) {
+                saveBlockPool.putBack(freshBlocks);
+            }
+
+            var freshLight = nbt.getListTag<NBTCompound>("sections").get(sectionY).getByteArray("light");
+            if (freshLight != null) {
+                saveLightPool.putBack(freshLight);
+            }
+        }*/
     }
 
     public void saveChunkAsync(World world, Chunk chunk) {
@@ -443,6 +457,10 @@ public class WorldIO {
 
                 // return freshBlocks to pool (we're done with it)
                 saveBlockPool.putBack(freshBlocks);
+
+                // we can't return these because we're still using it
+                //saveBlockPool.putBack(paletteIndices);
+                //saveLightPool.putBack(freshLight);
             }
             else {
                 section.addByte("inited", 0);

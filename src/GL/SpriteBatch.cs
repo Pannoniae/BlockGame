@@ -65,7 +65,7 @@ public sealed class SpriteBatch : IDisposable {
         Game.graphics.vao(vao);
 
         vbo = GL.CreateBuffer();
-        GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+        Game.graphics.vertex(vbo);
         GL.ObjectLabel(ObjectIdentifier.Buffer, vbo, uint.MaxValue, "SpriteBatch Vertex Buffer");
 
         // Set up vertex attributes
@@ -101,7 +101,7 @@ public sealed class SpriteBatch : IDisposable {
 
         // Create vertices
         unsafe {
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
+            GL.NamedBufferStorage(vbo,
                 (nuint)(vertices.Length * sizeof(VertexColorTexture)),
                 null, BufferStorageMask.DynamicStorageBit);
         }
@@ -465,7 +465,7 @@ public sealed class SpriteBatch : IDisposable {
             // Upload vertex data
             unsafe {
                 fixed (VertexColorTexture* ptr = vertices) {
-                    GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                    Game.graphics.vertex(vbo);
                     GL.InvalidateBufferData(vbo);
                     GL.BufferSubData(BufferTargetARB.ArrayBuffer,
                         0,
@@ -478,7 +478,7 @@ public sealed class SpriteBatch : IDisposable {
             currentTexture.bind();
 
             // Bind indices
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+            Game.graphics.index(Game.graphics.fatQuadIndices);
 
             /*Console.Out.WriteLine(
                 $"itemStarIndex: {itemStartIndex}, itemEndIndex: {itemEndIndex}, itemCount: {itemCount}, vertexIndex: {vertexIndex}," +
@@ -559,14 +559,14 @@ public sealed class SpriteBatch : IDisposable {
             // upload vertices
             unsafe {
                 fixed (VertexColorTexture* ptr = vertices) {
-                    GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                    Game.graphics.vertex(vbo);
                     GL.InvalidateBufferData(vbo);
                     GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
                         (uint)(vertexIndex * sizeof(VertexColorTexture)), ptr);
                 }
             }
 
-            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+            Game.graphics.index(Game.graphics.fatQuadIndices);
 
             // draw batched by texture
             uint itemIdx = 0;
@@ -656,14 +656,14 @@ public sealed class SpriteBatch : IDisposable {
                 // upload vertices
                 unsafe {
                     fixed (VertexColorTexture* ptr = vertices) {
-                        GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+                        Game.graphics.vertex(vbo);
                         GL.InvalidateBufferData(vbo);
                         GL.BufferSubData(BufferTargetARB.ArrayBuffer, 0,
                             (uint)(vertexIndex * sizeof(VertexColorTexture)), ptr);
                     }
                 }
 
-                GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+                Game.graphics.index(Game.graphics.fatQuadIndices);
 
                 // batch by texture
                 uint texBatchStart = runStart;
@@ -706,8 +706,7 @@ public sealed class SpriteBatch : IDisposable {
                 fixed (VertexColorTexture* ptr = vertices) {
                     GL.DeleteBuffer(vbo);
                     vbo = GL.CreateBuffer();
-                    GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
-                    GL.BufferStorage(BufferStorageTarget.ArrayBuffer,
+                    GL.NamedBufferStorage(vbo,
                         (nuint)(newCapacity * sizeof(VertexColorTexture)),
                         ptr, BufferStorageMask.DynamicStorageBit);
                     GL.ObjectLabel(ObjectIdentifier.Buffer, vbo, uint.MaxValue, "SpriteBatch Vertex Buffer");

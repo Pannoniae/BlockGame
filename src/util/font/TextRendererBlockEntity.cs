@@ -16,7 +16,7 @@ public class TextRendererBlockEntity : IFontStashRenderer {
     /**
      * This will be assigned! (If it's not, you fucked up)
      */
-    public InstantDrawEntity ide;
+    public FastInstantDrawEntity ide;
 
     public ITexture2DManager TextureManager => _textureManager;
 

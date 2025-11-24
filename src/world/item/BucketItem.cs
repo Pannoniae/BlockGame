@@ -10,7 +10,7 @@ public class BucketItem : Item {
 
     /** empty bucket */
     public BucketItem(string name) : base(name) {
-        this.liquidBlock = null;
+        liquidBlock = null;
     }
 
     /** filled bucket */

@@ -4,6 +4,7 @@ using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.world.block;
 using Silk.NET.OpenGL.Legacy;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -35,7 +36,7 @@ public class BTextureAtlas : BTexture2D {
     }
 
     // Constructor for pre-loaded images (from stitched atlases)
-    public BTextureAtlas(SixLabors.ImageSharp.Image<Rgba32> img, int width, int height, int atlasSize = 16, bool delayInit = false) : base("") {
+    public BTextureAtlas(Image<Rgba32> img, int width, int height, int atlasSize = 16, bool delayInit = false) : base("") {
         this.atlasSize = atlasSize;
         image = img;
         // use actual image dimensions, not passed parameters
@@ -68,8 +69,9 @@ public class BTextureAtlas : BTexture2D {
             throw new InvalidOperationException("Not a stitched atlas! Use the StitchResult constructor.");
 
         // Add textures/ prefix if not already present
-        if (!sourcePath.StartsWith("textures/"))
+        if (!sourcePath.StartsWith("textures/")) {
             sourcePath = "textures/" + sourcePath;
+        }
 
         var rect = tilePositions[(sourcePath, tx, ty)];
         float u = rect.X * atlasSize / (float)width;
@@ -200,7 +202,7 @@ public class BTextureAtlas : BTexture2D {
         );
     }
 
-    private unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
+    public unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
         var GL = Game.GL;
         fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
             GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
@@ -324,7 +326,7 @@ public class BTextureAtlas : BTexture2D {
 }
 
 public class BlockTextureAtlas : BTextureAtlas {
-    Dictionary<string, Rectangle>? protectedRegions;
+    public Dictionary<string, Rectangle>? protectedRegions;
 
     // constructor for loading from file path
     public BlockTextureAtlas(string path, int atlasSize) : base(path, atlasSize) { }
@@ -358,8 +360,41 @@ public class BlockTextureAtlas : BTextureAtlas {
         ((BTextureAtlas)this).updateFromStitch(result);
     }
 
+    /**
+     * Apply fastLeaves setting by forcing leaf texture alpha to 255
+     * Called after blocks are loaded so leafTextureTiles is populated
+     * todo this is a giant hack, do something better?
+     */
+    public void applyFastLeaves() {
+        if (tilePositions == null || image == null) {
+            return;
+        }
+
+        // modify image alpha
+        foreach (var (source, tx, ty) in Block.leafTextureTiles) {
+            if (tilePositions.TryGetValue((source, tx, ty), out var rect)) {
+                image.ProcessPixelRows(accessor => {
+                    for (int y = rect.Y; y < rect.Y + rect.Height; y++) {
+                        var row = accessor.GetRowSpan(y);
+                        for (int x = rect.X; x < rect.X + rect.Width; x++) {
+                            row[x].A = 255;
+                        }
+                    }
+                });
+            }
+        }
+
+        // re-upload
+        var maxLevel = Settings.instance.mipmapping;
+        generateMipmaps(imageData.Span, width, height, maxLevel);
+    }
+
     public override void onFirstLoad() {
         // if we have protected regions, use them to position dynamic textures
+        if (Settings.instance.noAnimation) {
+            return;
+        }
+
         if (protectedRegions != null) {
             var waterStillRect = getRegion("waterStill");
             addDynamicTexture(new StillWaterTexture(this, waterStillRect.X, waterStillRect.Y));

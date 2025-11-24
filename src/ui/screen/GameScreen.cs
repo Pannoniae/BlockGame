@@ -274,13 +274,14 @@ public class GameScreen : Screen {
             Game.instance.lastMousePos = pos;
         }
         else {
-            const float lookSensitivity = 0.1f;
+            const float baseSensitivity = 0.1f;
             if (Game.instance.lastMousePos == default) {
                 Game.instance.lastMousePos = pos;
             }
             else {
-                var xOffset = (pos.X - Game.instance.lastMousePos.X) * lookSensitivity;
-                var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * lookSensitivity;
+                var sens = baseSensitivity * Settings.instance.mouseSensitivity;
+                var xOffset = (pos.X - Game.instance.lastMousePos.X) * sens;
+                var yOffset = (pos.Y - Game.instance.lastMousePos.Y) * sens;
                 Game.instance.lastMousePos = pos;
 
                 Game.player.handleMouseInput(xOffset, yOffset);

@@ -21,7 +21,7 @@ public interface EntityRenderer<out T> where T : Entity {
 public static class EntityRenderers {
     private static readonly XUList<EntityRenderer<Entity>> renderers = Registry.ENTITIES.track<EntityRenderer<Entity>>();
 
-    public static readonly InstantDrawEntity ide = new(2048);
+    public static readonly FastInstantDrawEntity ide = new(2048);
 
     static EntityRenderers() {
         ide.setup();

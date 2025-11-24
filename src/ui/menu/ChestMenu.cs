@@ -15,7 +15,7 @@ public class ChestMenu : InventoryMenu {
 
     public ChestMenu(Vector2I guiPos, ChestMenuContext ctx) {
         this.guiPos = guiPos;
-        this.chestCtx = ctx;
+        chestCtx = ctx;
 
         invTex?.Dispose();
         invTex = new BTexture2D("textures/chest_inventory.png");

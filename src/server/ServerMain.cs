@@ -83,9 +83,30 @@ public class ServerMain {
             var e = (Exception)unhandledExceptionEventArgs.ExceptionObject;
 
             // delete world lock file!!
-            var path = WorldIO.getLockFilePath(GameServer.instance.world.name);
-            if (File.Exists(path)) {
-                File.Delete(path);
+            try {
+                if (GameServer.instance.world != null) {
+                    var lockFile = GameServer.instance.world.worldIO.lockFile;
+                    if (lockFile != null) {
+                        var lockPath = WorldIO.getLockFilePath(GameServer.instance.world.name);
+                        try {
+                            lockFile.Close();
+                            lockFile.Dispose();
+                            if (File.Exists(lockPath)) {
+                                File.Delete(lockPath);
+                                Log.info($"Removed lock file for world '{GameServer.instance.world.name}'");
+                            }
+                        }
+                        catch (Exception ee) {
+                            Log.error("Failed to remove lock file:");
+                            Log.error(ee);
+                        }
+
+                        lockFile = null;
+                    }
+                }
+            }
+            catch (Exception ex) {
+                Log.error("Failed to delete lock file during crash:", ex);
             }
 
             Log.info("Your game crashed! Here are some relevant details:");

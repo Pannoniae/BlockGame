@@ -35,12 +35,11 @@ public sealed class SharedBlockVAO : VAO {
     public void upload(BlockVertexPacked[] data, ushort[] indices) {
         unsafe {
             GL.DeleteBuffer(buffer);
-            buffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
+            buffer = GL.CreateBuffer();
             count = (uint)indices.Length;
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
             fixed (BlockVertexPacked* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize, d,
+                GL.NamedBufferStorage(buffer, vertexSize, d,
                     BufferStorageMask.None);
             }
         }
@@ -60,9 +59,8 @@ public sealed class SharedBlockVAO : VAO {
             //count = (uint)(_count * (elementsMode ? 1.5 : 1)); // 1.5 for elements mode, 1 for arrays mode
             count = (uint)(_count * 1.5);
             var vertexSize = (uint)(data.Length * sizeof(BlockVertexPacked));
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
             fixed (BlockVertexPacked* d = data) {
-                GL.BufferStorage(BufferStorageTarget.ArrayBuffer, vertexSize, d,
+                GL.NamedBufferStorage(buffer, vertexSize, d,
                     BufferStorageMask.None);
             }
 

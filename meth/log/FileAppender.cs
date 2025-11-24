@@ -19,7 +19,7 @@ public class FileAppender : IDisposable {
     
     public FileAppender(string logDir) {
         this.logDir = logDir;
-        this.latestLogPath = Path.Combine(logDir, "latest.log");
+        latestLogPath = Path.Combine(logDir, "latest.log");
         
         Directory.CreateDirectory(logDir);
         rotateIfNeeded();

@@ -1004,7 +1004,7 @@ public class BlockRenderer {
             subChunk.hasRenderOpaque = false;
         }
 
-        if (subChunk.blocks.hasTranslucentBlocks() && !Settings.instance.opaqueWater) {
+        if (subChunk.blocks.hasTranslucentBlocks() && !Settings.instance.fastWater) {
             constructVertices(subChunk, RenderLayer.TRANSLUCENT, chunkVertices);
             if (chunkVertices.Count > 0) {
                 subChunk.hasRenderTranslucent = true;
@@ -1174,7 +1174,7 @@ public class BlockRenderer {
         var uvdm = UVPair.texCoords(texm);
 
         // 2x2 planes, "hash" pattern
-        float d = 0.25f;  // offset from edge
+        const float d = 0.25f;  // offset from edge
 
         // north-south plane at x=0.25 (west side)
         applySimpleLighting(RawDirection.NONE);
@@ -1965,8 +1965,8 @@ public class BlockRenderer {
             var bl = Block.get(blockID);
 
             // if translucent and we're opaque water and this is solid, do it anyway
-            var opaqueWater = Settings.instance.opaqueWater && Block.translucent[blockID];
-            if (blockID == 0 || (bl?.layer != layer && !opaqueWater)) {
+            var fastWater = Settings.instance.fastWater && Block.translucent[blockID];
+            if (blockID == 0 || (bl?.layer != layer && !fastWater)) {
                 continue;
             }
 

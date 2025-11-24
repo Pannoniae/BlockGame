@@ -3,6 +3,8 @@ using System.Text;
 using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.ui;
+using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.world;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
@@ -49,8 +51,11 @@ public class Graphics : IDisposable {
     public bool fullbright;
 
     // state tracking
+    // init to MaxValue so first bind always happens (0 is valid "no buffer" handle..)
     private uint cshader = 0;
-    private uint cvao = 0;
+    private uint cvao = uint.MaxValue;
+    private uint cvbo = uint.MaxValue;
+    private uint cibo = uint.MaxValue;
 
     // samplers
     public uint noMipmapSampler;
@@ -287,7 +292,28 @@ public class Graphics : IDisposable {
         }
     }
 
+    public void vertex(uint handle) {
+        // GL_ARRAY_BUFFER is global state
+        if (cvbo != handle) {
+            cvbo = handle;
+            GL.BindBuffer(BufferTargetARB.ArrayBuffer, handle);
+        }
+    }
+
+    public void index(uint handle) {
+        // GL_ELEMENT_ARRAY_BUFFER is per-VAO, but we track globally and invalidate on VAO change
+        if (cibo != handle) {
+            cibo = handle;
+            GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, handle);
+        }
+    }
+
     public void vao(uint handle) {
+        // always invalidate buffers - state may have changed??? idk why
+        // note: investigate this! this shouldn't happen :(
+        cvbo = uint.MaxValue;
+        cibo = uint.MaxValue;
+
         if (cvao != handle) {
             cvao = handle;
             GL.BindVertexArray(handle);
@@ -337,7 +363,7 @@ public class Graphics : IDisposable {
 
     public unsafe void pushGroup(string group, Color colour) {
         groupCount++;
-        Span<byte> buffer = stackalloc byte[128];
+        Span<byte> buffer = stackalloc byte[32];
         int bytesWritten = Encoding.UTF8.GetBytes(group, buffer);
         fixed (byte* ptr = buffer) {
             GL.PushDebugGroup(DebugSource.DebugSourceApplication, 0, (uint)bytesWritten, ptr);
@@ -362,8 +388,8 @@ public class Graphics : IDisposable {
         GL.DeleteBuffer(Game.graphics.fatQuadIndices);
         Game.graphics.fatQuadIndices = 0;
         Game.graphics.fatQuadIndicesLen = 0;
-        Game.graphics.fatQuadIndices = GL.GenBuffer();
-        GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, Game.graphics.fatQuadIndices);
+        Game.graphics.fatQuadIndices = GL.CreateBuffer();
+        Game.graphics.index(Game.graphics.fatQuadIndices);
         unsafe {
             fixed (uint* pIndices = indices) {
                 GL.BufferStorage(BufferStorageTarget.ElementArrayBuffer, (uint)(indices.Length * sizeof(uint)),

@@ -3,7 +3,8 @@
 using System.Runtime.InteropServices;
 using Molten;
 
-[StructLayout(LayoutKind.Explicit, Size = 26)]
+[StructLayout(LayoutKind.Explicit, Size = 28)]
+//[StructLayout(LayoutKind.Explicit, Size = 32)]
 public struct BlockVertexLighted {
     [FieldOffset(0)] public float x;
     [FieldOffset(4)] public float y;
@@ -21,6 +22,9 @@ public struct BlockVertexLighted {
 
     [FieldOffset(24)] public byte light;
     [FieldOffset(25)] public byte unused;
+
+    // both AMD and NV likes 4-byte padded vertex sizes. We don't have misaligned starts in the pos/uv/col/light but since the last member is 2 bytes, the next vertex would start at an unaligned offset. So we add 2 bytes of padding here.
+    [FieldOffset(26)] public ushort padding;
 
 
 

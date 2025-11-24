@@ -44,7 +44,7 @@ public class ControlsMenu : ScrollableMenu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         back.setPosition(new Vector2I(2, -18));
-        back.clicked += _ => { parentScreen.returnToPrevScreen(); };
+        back.clicked += _ => { SettingsScreen.SETTINGS_MENU.pop(); };
         addElement(back);
     }
 
@@ -54,7 +54,7 @@ public class ControlsMenu : ScrollableMenu {
 
     public override void onKeyDown(IKeyboard keyboard, Key key, int scancode) {
         if (key == Key.Escape) {
-            parentScreen.returnToPrevScreen();
+            SettingsScreen.SETTINGS_MENU.pop();
         }
 
         if (awaitingInput != null) {

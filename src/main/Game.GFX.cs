@@ -424,8 +424,10 @@ public partial class Game {
         Log.info($"  Max integer samples: {maxIntSamples}");
     }
 
-    public void setFullscreen(bool fullscreen) {
-        if (fullscreen == (window.WindowState == WindowState.Fullscreen)) {
+    public void setFullscreen(FullscreenState fullscreen) {
+        var currentState = window.WindowState == WindowState.Fullscreen ? FullscreenState.FULLSCREEN :
+                          (window.WindowBorder == WindowBorder.Hidden ? FullscreenState.BORDERLESS : FullscreenState.WINDOWED);
+        if (fullscreen == currentState) {
             return;
         }
 
@@ -437,7 +439,7 @@ public partial class Game {
         // temporarily remove resize handler to prevent issues during switch
         window.FramebufferResize -= resize;
 
-        if (fullscreen) {
+        if (fullscreen == FullscreenState.FULLSCREEN) {
             var screenSize = windowMonitor.VideoMode.Resolution ?? windowMonitor.Bounds.Size;
             preFullscreenSize = window.Size;
             preFullscreenPosition = window.Position;
@@ -452,23 +454,42 @@ public partial class Game {
             window.Size = screenSize;
         }
         else {
-            if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
-                preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
-                preFullscreenPosition = windowMonitor.Bounds.Origin + new Vector2D<int>(50);
-                preFullscreenState = WindowState.Normal;
+            if (fullscreen == FullscreenState.WINDOWED) {
+                if (preFullscreenSize.X < 10 || preFullscreenSize.Y < 10 || preFullscreenState == WindowState.Fullscreen) {
+                    preFullscreenSize = windowMonitor.Bounds.Size * 2 / 3;
+                    preFullscreenPosition = windowMonitor.Bounds.Origin + new Vector2D<int>(50);
+                    preFullscreenState = WindowState.Normal;
+                }
+
+                // Always go to Normal first, then to the desired state
+                window.WindowState = WindowState.Normal;
+                window.WindowBorder = WindowBorder.Resizable;
+                window.Size = preFullscreenSize;
+                window.Position = preFullscreenPosition;
+                if (preFullscreenState != WindowState.Normal) {
+                    window.WindowState = preFullscreenState;
+                }
+            }
+            else if (fullscreen == FullscreenState.BORDERLESS) {
+                var screenSize = windowMonitor.VideoMode.Resolution ?? windowMonitor.Bounds.Size;
+                var screenPos = windowMonitor.Bounds.Origin;
+
+                window.WindowState = WindowState.Normal;
+                window.WindowBorder = WindowBorder.Hidden;
+                window.Position = screenPos;
+                window.Size = screenSize;
             }
 
-            // Always go to Normal first, then to the desired state
-            window.WindowState = WindowState.Normal;
-            window.Size = preFullscreenSize;
-            window.Position = preFullscreenPosition;
-            if (preFullscreenState != WindowState.Normal) {
-                window.WindowState = preFullscreenState;
-            }
         }
 
         // restore resize handler and trigger resize
         window.FramebufferResize += resize;
         resize(window.FramebufferSize);
     }
+}
+
+public enum FullscreenState {
+    WINDOWED = 0,
+    FULLSCREEN = 1,
+    BORDERLESS = 2
 }

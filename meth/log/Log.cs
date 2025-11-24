@@ -288,7 +288,7 @@ public readonly struct LogEvent {
     public LogEvent(DateTime timestamp, LogLevel level, string threadId, string message, string? category) {
         this.timestamp = timestamp;
         this.level = level;
-        this.threadID = threadId;
+        threadID = threadId;
         this.message = message;
         this.category = category;
     }

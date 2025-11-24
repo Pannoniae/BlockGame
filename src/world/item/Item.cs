@@ -396,6 +396,8 @@ public class Item {
         Registry.ITEMS.blackList[Block.MAHOGANY_DOOR.item.id] = true;
         Registry.ITEMS.blackList[Block.FURNACE_LIT.item.id] = true;
         Registry.ITEMS.blackList[Block.BRICK_FURNACE_LIT.item.id] = true;
+        Registry.ITEMS.blackList[Block.CROP_WHEAT.item.id] = true;
+        Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
 
 
         // fuel values

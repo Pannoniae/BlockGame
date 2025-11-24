@@ -311,9 +311,14 @@ public class Menu {
     }
 
     public static void layoutSettingsTwoCols(List<GUIElement> elements, Vector2I startPos, int buttonWidth) {
+        // calculate vertical centre (elements use CENTREDCONTENTS anchor, so position is relative to centre)
+        var rows = (elements.Count + 1) / 2;
+        // centre the group: first element offset from centre
+        var centredY = -((rows - 1) * 18) / 2;
+
         // to the left/right
         var offset = buttonWidth / 2 + 8;
-        var pos = startPos;
+        var pos = new Vector2I(startPos.X, centredY);
         for (int i = 0; i < elements.Count; i++) {
             var element = elements[i];
             int o;

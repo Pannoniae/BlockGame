@@ -144,7 +144,7 @@ public class GameServer : INetEventListener {
 
         Command.register();
 
-        this.initDiscord();
+        initDiscord();
 
         loadWorld();
     }

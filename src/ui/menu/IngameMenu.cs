@@ -4,6 +4,7 @@ using BlockGame.GL.vertexformats;
 using BlockGame.main;
 using BlockGame.net;
 using BlockGame.net.packet;
+using BlockGame.render.model;
 using BlockGame.ui.element;
 using BlockGame.ui.screen;
 using BlockGame.util;
@@ -454,7 +455,9 @@ public class IngameMenu : Menu, IDisposable {
             // cloud buffer size
             unsafe {
                 var cloudBufSize = Game.renderer.cloudidt.maxVertices * 4 * sizeof(BlockVertexTinted);
+                var entityBufSize = EntityRenderers.ide.maxVertices * 4 * sizeof(EntityVertex);
                 debugStrG.AppendFormat("cbuf: {0:0.##}MB ({1}v×4)\n", cloudBufSize / Constants.MEGABYTES, Game.renderer.cloudidt.maxVertices);
+                debugStrG.AppendFormat("ebuf: {0:0.##}MB ({1}v×4)\n", entityBufSize / Constants.MEGABYTES, EntityRenderers.ide.maxVertices);
             }
 
             debugStrG.AppendFormat("SBL:{0} VBUM:{1} UBUM:{2} IUBO:{3} BMDI:{4} CMDL:{5} rZ:{6} r:{7}", Game.hasSBL.yes(), Game.hasVBUM.yes(),

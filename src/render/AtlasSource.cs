@@ -26,7 +26,7 @@ public class AtlasSource {
     }
 
     public AtlasSource(string identifier, Image<Rgba32> image, int tileSize) {
-        this.filepath = identifier;
+        filepath = identifier;
         this.image = image;
         this.tileSize = tileSize;
     }

@@ -21,7 +21,7 @@ public class FloatVAO {
     public void upload(float[] data) {
         unsafe {
             vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.graphics.vertex(vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,
@@ -35,7 +35,7 @@ public class FloatVAO {
     public void upload(Span<float> data) {
         unsafe {
             vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+            Game.graphics.vertex(vbo);
             count = (uint)data.Length;
             fixed (float* d = data) {
                 GL.BufferData(BufferTargetARB.ArrayBuffer, (uint)(data.Length * sizeof(float)), d,

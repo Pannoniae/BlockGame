@@ -20,14 +20,14 @@ public class ItemStack : Persistent {
     public int quantity;
 
     public ItemStack(Item item, int quantity, int metadata = 0) {
-        this.id = item.id;
+        id = item.id;
         this.quantity = quantity;
         this.metadata = metadata;
     }
     
     public ItemStack(string stringID, int quantity, int metadata = 0) {
         var item = Item.get(stringID);
-        this.id = item?.id ?? 0;
+        id = item?.id ?? 0;
         this.quantity = quantity;
         this.metadata = metadata;
     }

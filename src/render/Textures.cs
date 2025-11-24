@@ -1,6 +1,7 @@
 using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.render.texpack;
+using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.block;
@@ -60,20 +61,24 @@ public class Textures {
         var packName = ui.Settings.instance.texturePack;
         var packs = TexturePackManager.getAvailablePacks();
         var pack = packs.FirstOrDefault(p => p.name == packName);
+        TexturePackManager.currentPack = pack;
 
         if (pack == null) {
             // fallback to vanilla or first available
             pack = packs.FirstOrDefault(p => p.name == "vanilla") ?? packs.FirstOrDefault();
+            TexturePackManager.currentPack = pack;
             if (pack == null) {
                 Log.warn("Textures", "No texture packs found! Using direct file loading.");
                 // fallback to old system
                 TextureSources.addBlockSource("blocks.png");
                 TextureSources.addItemSource("items.png");
-            } else {
+            }
+            else {
                 Log.info("Textures", $"Pack '{packName}' not found, using '{pack.name}' instead.");
                 pack.registerSources();
             }
-        } else {
+        }
+        else {
             Log.info("Textures", $"Loading texture pack: {pack.name}");
             pack.registerSources();
         }
@@ -83,14 +88,18 @@ public class Textures {
         // todo is this a hack?
         var blockSourceId = blockSources.Count > 0 ? blockSources[0].filepath : "textures/blocks.png";
         var blockProtectedRegions = new List<ProtectedRegion> {
-            new("waterStill", blockSourceId, 0, 13*16, 256, 16),
-            new("waterFlowing", blockSourceId, 16, 14*16, 32, 32),
-            new("lavaStill", blockSourceId, 0, 16*16, 16, 16),
-            new("lavaFlowing", blockSourceId, 16, 17*16, 32, 32),
-            new("fire", blockSourceId, 48, 14*16, 16, 16)
+            new("waterStill", blockSourceId, 0, 13 * 16, 256, 16),
+            new("waterFlowing", blockSourceId, 16, 14 * 16, 32, 32),
+            new("lavaStill", blockSourceId, 0, 16 * 16, 16, 16),
+            new("lavaFlowing", blockSourceId, 16, 17 * 16, 32, 32),
+            new("fire", blockSourceId, 48, 14 * 16, 16, 16)
         };
 
         var blockResult = AtlasStitcher.stitch(blockSources, blockProtectedRegions);
+
+        // NOTE: fastLeaves alpha processing happens later in Block.postLoad()
+        // after blocks are registered and leafTextureTiles is populated
+
         blockTexture = new BlockTextureAtlas(blockResult);
 
         // Update Block.atlasSize to match stitched atlas
@@ -117,7 +126,8 @@ public class Textures {
         human = new BTexture2D(ui.Settings.instance.skinPath);
         if (File.Exists(ui.Settings.instance.skinPath)) {
             human.loadFromFile(ui.Settings.instance.skinPath);
-        } else {
+        }
+        else {
             // fallback to the default skin in assets
             human = get("character.png");
         }
@@ -262,7 +272,6 @@ public class Textures {
         }
     }
 
-    /** reload all textures from disk */
     public void reloadAll() {
         Game.graphics.invalidateTextures();
         // reload all cached textures
