@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
@@ -28,7 +29,7 @@ namespace BlockGame.render;
 /// We *do* check the world though before accessing, that can change out underneath us. The block cache won't, though, that's always setup before rendering.
 /// TODO do we even need the world? Maybe for fancy shit, we will see!
 /// </summary>
-public class BlockRenderer {
+public partial class BlockRenderer {
     // in the future when we want multithreaded meshing, we can just allocate like 4-8 of these and it will still be in the ballpark of 10MB
     public static readonly List<BlockVertexPacked> chunkVertices = new(2048);
 
@@ -289,7 +290,13 @@ public class BlockRenderer {
         }
 
         else {
-            getDirectionOffsetsAndData(dir, lb, out light, out FourBytes o);
+            FourBytes o;
+            if (Avx2.IsSupported) {
+                getDirectionOffsetsAndData_simd(dir, lb, out light, out o);
+            }
+            else {
+                getDirectionOffsetsAndData(dir, lb, out light, out o);
+            }
 
             if (AO) {
                 ao.First = (byte)(o.First == 3 ? 3 : byte.PopCount(o.First));
@@ -2082,7 +2089,12 @@ public class BlockRenderer {
                         ao.Whole = 0;
 
                         FourBytes o;
-                        getDirectionOffsetsAndData(dir, lb, out light, out o);
+                        if (Avx2.IsSupported) {
+                            getDirectionOffsetsAndData_simd(dir, lb, out light, out o);
+                        }
+                        else {
+                            getDirectionOffsetsAndData(dir, lb, out light, out o);
+                        }
 
                         // if no smooth lighting, leave it be! we've just calculated a bunch of useless stuff but i dont wanna create another vaguely similar function lol
                         if (!smoothLighting) {

@@ -22,7 +22,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Spectre.Console" Version="0.54.1-alpha.0.6" />
+        <PackageReference Include="Spectre.Console" Version="0.54.1-alpha.0.7" />
         <PackageReference Include="Spectre.Console.Analyzer" Version="1.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -708,7 +708,7 @@ public class GameScreen : Screen {
         // note stupid hack: draw overlay when inventorymenu. This is because inventorymenu is not modal so too much effort, but the overlay needs to be drawn FIRST.
 
         // draw background (just a fullscreen grey overlay)
-        if (currentMenu is InventoryMenu) {
+        if (currentMenu is InventoryMenu || currentMenu == PAUSE_MENU) {
             gui.draw(gui.colourTexture, new RectangleF(0, 0, Game.width, Game.height), null, new Color(0, 0, 0, 150));
             // break the batch
             gui.tb.End();
@@ -812,7 +812,7 @@ public class GameScreen : Screen {
 
         if (Game.world.paused && currentMenu == PAUSE_MENU) {
             var pauseText = "-PAUSED-";
-            gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 16 * GUI.guiScale),
+            gui.drawStringCentred(pauseText, new Vector2(Game.centreX, Game.centreY - 48 * GUI.guiScale),
                 Color.OrangeRed);
         }
 

@@ -35,7 +35,7 @@ public class MobRenderer<T> : EntityRenderer<T> where T : Mob {
 
 
         // render damage tint overlay if player is taking damage
-        if (false && mob.dmgTime > 0) {
+        if (mob.dmgTime > 0) {
             const float t = 1;
             var tint = new Color((byte)255, (byte)0, (byte)0, (byte)(128 * t));
             ide.setColour(tint);
