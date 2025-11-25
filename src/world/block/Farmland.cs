@@ -1,5 +1,6 @@
 ﻿using BlockGame.util;
 using BlockGame.world.entity;
+using Molten;
 
 namespace BlockGame.world.block;
 
@@ -20,6 +21,24 @@ public class Farmland : Block {
         var above = world.getBlock(x, y + 1, z);
         if (above != 0 && get(above) is Crop) {
             world.setBlock(x, y + 1, z, AIR.id);
+        }
+    }
+
+    public override void onPlace(World world, int x, int y, int z, byte metadata) {
+        // schedule update after 2 ticks to check for nearby water
+        world.scheduleBlockUpdate(new Vector3I(x, y, z), 2);
+    }
+
+    public override void scheduledUpdate(World world, int x, int y, int z) {
+        byte currentMeta = world.getBlockMetadata(x, y, z);
+        bool hasWater = isNearWater(world, x, y, z);
+
+        if (hasWater && currentMeta == 0) {
+            // hydrate
+            world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(1));
+        } else if (!hasWater && currentMeta > 0) {
+            // dry out
+            world.setBlockMetadata(x, y, z, ((uint)id).setMetadata(0));
         }
     }
 

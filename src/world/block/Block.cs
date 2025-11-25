@@ -253,6 +253,7 @@ public class Block {
 
     public static Block FARMLAND;
     public static Block CROP_WHEAT;
+    public static Block CROP_CARROT;
 
     // Compatibility wrappers for old static arrays
     public static XUList<Block> blocks => Registry.BLOCKS.values;
@@ -1128,6 +1129,15 @@ public class Block {
         CROP_WHEAT.waterTransparent();
         CROP_WHEAT.material(Material.ORGANIC);
 
+        CROP_CARROT = register("carrotCrop", new Crop("Carrot", 6));
+        CROP_CARROT.setTex(uvRange("blocks.png", 20, 6, 6));
+        renderType[CROP_CARROT.id] = RenderType.CROP;
+        CROP_CARROT.transparency();
+        CROP_CARROT.noCollision();
+        CROP_CARROT.itemLike();
+        CROP_CARROT.waterTransparent();
+        CROP_CARROT.material(Material.ORGANIC);
+
 
 
         // set default hardness for blocks that haven't set it
@@ -1853,9 +1863,13 @@ public class Grass(string name) : Block(name) {
     }
 
     public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
-        // drop seeds if broken with scythe
+        // 12.5% total drop chance, split 50-50 between wheat and carrot seeds
         if (canBreak && world.random.NextDouble() < 0.125) {
-            drops.Add(new ItemStack(Item.SEEDS, 1, 0));
+            if (world.random.NextDouble() < 0.5) {
+                drops.Add(new ItemStack(Item.WHEAT_SEEDS, 1, 0));
+            } else {
+                drops.Add(new ItemStack(Item.CARROT_SEEDS, 1, 0));
+            }
         }
     }
 }

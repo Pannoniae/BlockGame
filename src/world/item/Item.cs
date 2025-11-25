@@ -89,9 +89,10 @@ public class Item {
     public static Item LAVA_BUCKET;
     public static Item LIGHTER;
 
-    public static Item SEEDS;
+    public static Item WHEAT_SEEDS;
     public static Item WHEAT;
     public static Item BREAD;
+    public static Item CARROT_SEEDS;
     public static Item CARROT;
     //public static Item SUGAR;
     public static Item APPLE_PIE;
@@ -346,26 +347,33 @@ public class Item {
         LIGHTER = register("lighter", new Lighter("Lighter"));
         LIGHTER.tex = uv("items.png", 0, 7);
 
-        SEEDS = register("seeds", new SeedItem("Wheat Seeds", Block.CROP_WHEAT, Block.FARMLAND));
-        SEEDS.tex = uv("items.png", 8, 10);
-        material[SEEDS.id] = true;
+        WHEAT_SEEDS = register("wheatseeds", new SeedItem("Wheat Seeds", Block.CROP_WHEAT, Block.FARMLAND));
+        WHEAT_SEEDS.tex = uv("items.png", 8, 10);
+        material[WHEAT_SEEDS.id] = true;
 
         WHEAT = register("wheat", new Item("Wheat"));
         WHEAT.tex = uv("items.png", 9, 10);
         material[WHEAT.id] = true;
         ((Crop)Block.CROP_WHEAT).product = WHEAT;
-        ((Crop)Block.CROP_WHEAT).seedItem = SEEDS;
+        ((Crop)Block.CROP_WHEAT).seedItem = WHEAT_SEEDS;
+
+        CARROT_SEEDS = register("carrotseeds", new SeedItem("Carrot Seeds", Block.CROP_CARROT, Block.FARMLAND));
+        CARROT_SEEDS.tex = uv("items.png", 12, 10);
+        material[CARROT_SEEDS.id] = true;
+
+        CARROT = register("carrot", new Item("Carrot"));
+        CARROT.tex = uv("items.png", 11, 10);
+        material[CARROT.id] = true;
+        ((Crop)Block.CROP_CARROT).product = CARROT;
+        ((Crop)Block.CROP_CARROT).seedItem = CARROT_SEEDS;
+
 
         BREAD = register("bread", new Food("Bread", 25));
         BREAD.tex = uv("items.png", 10, 10);
         material[BREAD.id] = true;
 
-        CARROT = register("carrot", new Food("Carrot", 10));
-        CARROT.tex = uv("items.png", 11, 10);
-        material[CARROT.id] = true;
-
         //SUGAR = register("sugar", new Item("Sugar"));
-        //SUGAR.tex = uv("items.png", 12, 10);
+        //SUGAR.tex = uv("items.png", 12, 11);
         //material[SUGAR.id] = true;
 
         APPLE_PIE = register("applePie", new Food("Apple Pie", 40));
