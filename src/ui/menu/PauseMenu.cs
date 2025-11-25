@@ -9,23 +9,9 @@ namespace BlockGame.ui.menu {
     public class PauseMenu : Menu {
         public PauseMenu() {
             var backToGame = new Button(this, "backToGame", false, "Back to the game");
-            backToGame.setPosition(new Vector2I(0, -24));
+            backToGame.setPosition(new Vector2I(0, 0));
             backToGame.centreContents();
             backToGame.clicked += _ => { Screen.GAME_SCREEN.backToGame(); };
-
-            var browseAddons = new Button(this, "browseAddons", false, "Browse Add-ons!");
-            browseAddons.setPosition(new Vector2I(0, 0));
-            browseAddons.centreContents();
-            browseAddons.clicked += _ => {
-                // just open the texture pack screen lol
-                // switch to settings screen
-                Game.instance.executeOnMainThread(() => {
-                    Screen.GAME_SCREEN.openSettings();
-                    // then open the texture pack screen
-                    var packMenu = new TexturePackMenu(Screen.SETTINGS_SCREEN);
-                    SettingsScreen.SETTINGS_MENU.push(packMenu);
-                });
-            };
 
             var settings = new Button(this, "settings", false, "Settings");
             settings.setPosition(new Vector2I(0, 24));
@@ -38,7 +24,6 @@ namespace BlockGame.ui.menu {
             mainMenu.clicked += returnToMainMenu;
 
             addElement(backToGame);
-            addElement(browseAddons);
             addElement(settings);
             addElement(mainMenu);
         }

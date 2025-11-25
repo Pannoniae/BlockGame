@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using BlockGame.net;
 using BlockGame.render;
@@ -814,6 +815,14 @@ public partial class Game {
         Menu.STARTUP_LOADING.updateProgress(0.3f, "Loading textures");
         textures = new Textures(GL);
         Screen.init();
+
+        // wire up atlas reload callback to remesh world
+        textures.onAtlasReloaded += () => {
+            if (world != null && renderer != null) {
+                Screen.GAME_SCREEN?.remeshWorld(Settings.instance.renderDistance);
+            }
+        };
+
         Menu.init();
         
         Menu.STARTUP_LOADING.updateProgress(0.4f, "Loading fonts");
@@ -865,6 +874,8 @@ public partial class Game {
 
         // GC after the whole font business - stitching takes hundreds of megs of heap, the game doesn't need that much
         MemoryUtils.cleanGC(true);
+
+        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
     }
 
     private void setIconToBlock() {

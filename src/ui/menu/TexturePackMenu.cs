@@ -74,7 +74,7 @@ public class TexturePackMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         openFolder.setPosition(new Vector2I(-6 - openFolder.guiPosition.Width, -18));
-        openFolder.clicked += _ => TexturePackManager.openPackFolder();
+        openFolder.clicked += _ => Game.textures.openPackFolder();
         addElement(openFolder);
     }
 
@@ -93,7 +93,8 @@ public class TexturePackMenu : Menu {
         selectedEntry = null;
 
         // discover packs
-        var packs = TexturePackManager.discoverPacks();
+        Game.textures.discoverPacks();
+        var packs = Game.textures.getAvailablePacks();
 
         // create entries
         int listX = listx();
@@ -149,7 +150,7 @@ public class TexturePackMenu : Menu {
         Settings.instance.save();
 
         // load the pack
-        TexturePackManager.loadPack(selectedEntry.pack);
+        Game.textures.loadPack(selectedEntry.pack.name);
     }
 
     public override void draw() {

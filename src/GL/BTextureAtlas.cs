@@ -360,34 +360,6 @@ public class BlockTextureAtlas : BTextureAtlas {
         ((BTextureAtlas)this).updateFromStitch(result);
     }
 
-    /**
-     * Apply fastLeaves setting by forcing leaf texture alpha to 255
-     * Called after blocks are loaded so leafTextureTiles is populated
-     * todo this is a giant hack, do something better?
-     */
-    public void applyFastLeaves() {
-        if (tilePositions == null || image == null) {
-            return;
-        }
-
-        // modify image alpha
-        foreach (var (source, tx, ty) in Block.leafTextureTiles) {
-            if (tilePositions.TryGetValue((source, tx, ty), out var rect)) {
-                image.ProcessPixelRows(accessor => {
-                    for (int y = rect.Y; y < rect.Y + rect.Height; y++) {
-                        var row = accessor.GetRowSpan(y);
-                        for (int x = rect.X; x < rect.X + rect.Width; x++) {
-                            row[x].A = 255;
-                        }
-                    }
-                });
-            }
-        }
-
-        // re-upload
-        var maxLevel = Settings.instance.mipmapping;
-        generateMipmaps(imageData.Span, width, height, maxLevel);
-    }
 
     public override void onFirstLoad() {
         // if we have protected regions, use them to position dynamic textures

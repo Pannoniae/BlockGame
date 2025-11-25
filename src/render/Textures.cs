@@ -15,8 +15,8 @@ public class Textures {
     public readonly Silk.NET.OpenGL.Legacy.GL GL;
 
     public readonly BTexture2D background;
-    public readonly BTextureAtlas blockTexture;
-    public readonly BTextureAtlas itemTexture;
+    public BlockTextureAtlas blockTexture = null!;
+    public BTextureAtlas itemTexture = null!;
     public readonly BTexture2D lightTexture;
     public BTexture2D lightTexture2;
 
@@ -40,6 +40,19 @@ public class Textures {
     public readonly BTexture2D eye;
     public readonly BTexture2D mummy;
 
+    // texture pack management (instance, not static)
+    private readonly List<TexturePack> availablePacks = [];
+    private TexturePack? currentPack;
+
+    // source registry (instance, not static)
+    private readonly List<AtlasSource> blockSources = [];
+    private readonly List<AtlasSource> itemSources = [];
+
+    // callback for dependents (instead of reaching into Game.world, etc.)
+    public event Action? onAtlasReloaded;
+
+    public const string PACK_DIR = "texturepacks";
+
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
 
@@ -54,73 +67,10 @@ public class Textures {
 
         particleTex = get("textures/particle.png");
 
-        // Discover and load texture packs
-        TexturePackManager.discoverPacks();
-
-        // Load the configured pack (or vanilla fallback)
+        // discover and load texture pack
+        discoverPacks();
         var packName = ui.Settings.instance.texturePack;
-        var packs = TexturePackManager.getAvailablePacks();
-        var pack = packs.FirstOrDefault(p => p.name == packName);
-        TexturePackManager.currentPack = pack;
-
-        if (pack == null) {
-            // fallback to vanilla or first available
-            pack = packs.FirstOrDefault(p => p.name == "vanilla") ?? packs.FirstOrDefault();
-            TexturePackManager.currentPack = pack;
-            if (pack == null) {
-                Log.warn("Textures", "No texture packs found! Using direct file loading.");
-                // fallback to old system
-                TextureSources.addBlockSource("blocks.png");
-                TextureSources.addItemSource("items.png");
-            }
-            else {
-                Log.info("Textures", $"Pack '{packName}' not found, using '{pack.name}' instead.");
-                pack.registerSources();
-            }
-        }
-        else {
-            Log.info("Textures", $"Loading texture pack: {pack.name}");
-            pack.registerSources();
-        }
-
-        // Stitch block atlas
-        var blockSources = TextureSources.getBlockSources();
-        // todo is this a hack?
-        var blockSourceId = blockSources.Count > 0 ? blockSources[0].filepath : "textures/blocks.png";
-        var blockProtectedRegions = new List<ProtectedRegion> {
-            new("waterStill", blockSourceId, 0, 13 * 16, 256, 16),
-            new("waterFlowing", blockSourceId, 16, 14 * 16, 32, 32),
-            new("lavaStill", blockSourceId, 0, 16 * 16, 16, 16),
-            new("lavaFlowing", blockSourceId, 16, 17 * 16, 32, 32),
-            new("fire", blockSourceId, 48, 14 * 16, 16, 16)
-        };
-
-        var blockResult = AtlasStitcher.stitch(blockSources, blockProtectedRegions);
-
-        // NOTE: fastLeaves alpha processing happens later in Block.postLoad()
-        // after blocks are registered and leafTextureTiles is populated
-
-        blockTexture = new BlockTextureAtlas(blockResult);
-
-        // Update Block.atlasSize to match stitched atlas
-        Block.updateAtlasSize(blockResult.width);
-
-        // Dispose source images (no longer needed)
-        foreach (var src in blockSources) {
-            src.dispose();
-        }
-
-        // Stitch item atlas (no protected regions)
-        var itemSources = TextureSources.getItemSources();
-        var itemResult = AtlasStitcher.stitch(itemSources, []);
-        itemTexture = new BTextureAtlas(itemResult);
-
-        // Dispose source images
-        foreach (var src in itemSources) {
-            src.dispose();
-        }
-
-        Log.info("Textures", $"Stitched atlases: blocks={blockResult.width}x{blockResult.height}, items={itemResult.width}x{itemResult.height}");
+        loadPack(packName);
 
         // load player skin from game directory (not assets/!)
         human = new BTexture2D(ui.Settings.instance.skinPath);
@@ -138,8 +88,233 @@ public class Textures {
         eye = get("textures/entity/eye.png");
         mummy = get("textures/entity/mummy.png");
 
-
         reloadAll();
+    }
+
+    /**
+     * Discover all available texture packs (folders and zips)
+     */
+    public void discoverPacks() {
+        // dispose old pack sources
+        foreach (var pack in availablePacks) {
+            pack.dispose();
+        }
+        availablePacks.Clear();
+
+        if (!Directory.Exists(PACK_DIR)) {
+            Directory.CreateDirectory(PACK_DIR);
+        }
+
+        // discover folders
+        foreach (var dir in Directory.GetDirectories(PACK_DIR)) {
+            try {
+                var source = new FolderPackSource(dir);
+                var pack = TexturePack.load(source);
+                availablePacks.Add(pack);
+                Log.info("Textures", $"Found pack: {pack.name} (folder)");
+            } catch (Exception e) {
+                Log.warn("Textures", $"Failed to load pack from {dir}: {e.Message}");
+            }
+        }
+
+        // discover zips
+        foreach (var zip in Directory.GetFiles(PACK_DIR, "*.zip")) {
+            try {
+                var source = new ZipPackSource(zip);
+                var pack = TexturePack.load(source);
+                availablePacks.Add(pack);
+                Log.info("Textures", $"Found pack: {pack.name} (zip)");
+            } catch (Exception e) {
+                Log.warn("Textures", $"Failed to load pack from {zip}: {e.Message}");
+            }
+        }
+    }
+
+    /**
+     * Load and apply a texture pack
+     */
+    public void loadPack(string packName) {
+        var pack = availablePacks.FirstOrDefault(p => p.name == packName);
+
+        if (pack == null) {
+            // fallback to vanilla or first available
+            pack = availablePacks.FirstOrDefault(p => p.name == "vanilla") ?? availablePacks.FirstOrDefault();
+            if (pack != null) {
+                Log.info("Textures", $"Pack '{packName}' not found, using '{pack.name}' instead.");
+            }
+        }
+
+        currentPack = pack;
+        reloadAtlases();
+    }
+
+    /**
+     * Reload atlases from current pack (for hot-reload or settings changes)
+     */
+    public void reloadAtlases() {
+        // clear old sources
+        clearSources();
+
+        // register new sources
+        if (currentPack == null) {
+            Log.warn("Textures", "No texture pack loaded! Using direct file loading.");
+            addBlockSource("blocks.png");
+            addItemSource("items.png");
+        } else {
+            Log.info("Textures", $"Loading texture pack: {currentPack.name}");
+            currentPack.registerSources(this);
+        }
+
+        // stitch atlases
+        var (blockResult, itemResult) = stitchAtlases();
+
+        // first load vs reload
+        if (blockTexture == null) {
+            blockTexture = new BlockTextureAtlas(blockResult);
+            itemTexture = new BTextureAtlas(itemResult);
+        } else {
+            blockTexture.updateFromStitch(blockResult);
+            itemTexture.updateFromStitch(itemResult);
+        }
+
+        Log.info("Textures", $"Stitched atlases: blocks={blockResult.width}x{blockResult.height}, items={itemResult.width}x{itemResult.height}");
+
+        // notify dependents
+        onAtlasReloaded?.Invoke();
+    }
+
+    /**
+     * SINGLE SOURCE OF TRUTH for stitching atlases
+     */
+    private (StitchResult blocks, StitchResult items) stitchAtlases() {
+        // stitch block atlas
+        var blockSourceId = blockSources.Count > 0 ? blockSources[0].filepath : "textures/blocks.png";
+        var blockProtected = getProtectedRegions(blockSourceId);
+        var blockResult = AtlasStitcher.stitch(blockSources, blockProtected);
+
+        // apply fastLeaves alpha processing
+        if (Settings.instance.fastLeaves) {
+            applyFastLeaves(blockResult);
+        }
+
+        // update Block.atlasSize
+        Block.updateAtlasSize(blockResult.width);
+
+        // dispose block sources
+        foreach (var src in blockSources) {
+            src.dispose();
+        }
+        blockSources.Clear();
+
+        // stitch item atlas (no protected regions)
+        var itemResult = AtlasStitcher.stitch(itemSources, []);
+
+        // dispose item sources
+        foreach (var src in itemSources) {
+            src.dispose();
+        }
+        itemSources.Clear();
+
+        return (blockResult, itemResult);
+    }
+
+    /**
+     * Get protected regions for dynamic textures (water, lava, fire)
+     * Defined ONCE instead of duplicated everywhere
+     */
+    private List<ProtectedRegion> getProtectedRegions(string blockSourceId) {
+        return [
+            new("waterStill", blockSourceId, 0, 13 * 16, 256, 16),
+            new("waterFlowing", blockSourceId, 16, 14 * 16, 32, 32),
+            new("lavaStill", blockSourceId, 0, 16 * 16, 16, 16),
+            new("lavaFlowing", blockSourceId, 16, 17 * 16, 32, 32),
+            new("fire", blockSourceId, 48, 14 * 16, 16, 16)
+        ];
+    }
+
+    /**
+     * Apply fastLeaves setting by forcing leaf texture alpha to 255
+     * Defined ONCE instead of duplicated in BlockTextureAtlas and TexturePackManager
+     */
+    private void applyFastLeaves(StitchResult result) {
+        foreach (var (source, tx, ty) in Block.leafTextureTiles) {
+            if (result.tilePositions.TryGetValue((source, tx, ty), out var rect)) {
+                result.image.ProcessPixelRows(accessor => {
+                    for (int y = rect.Y; y < rect.Y + rect.Height; y++) {
+                        var row = accessor.GetRowSpan(y);
+                        for (int x = rect.X; x < rect.X + rect.Width; x++) {
+                            row[x].A = 255;
+                        }
+                    }
+                });
+            } else {
+                Log.warn("Textures", $"Failed to find leaf texture tile in atlas: {source} ({tx}, {ty})");
+            }
+        }
+    }
+
+    /**
+     * Register a block atlas source from file
+     */
+    public void addBlockSource(string filename, int tileSize = 16) {
+        blockSources.Add(new AtlasSource("textures/" + filename, tileSize));
+    }
+
+    /**
+     * Register a block atlas source from an image
+     */
+    public void addBlockSource(string filename, Image<Rgba32> image, int tileSize = 16) {
+        blockSources.Add(new AtlasSource("textures/" + filename, image, tileSize));
+    }
+
+    /**
+     * Register an item atlas source from file
+     */
+    public void addItemSource(string filename, int tileSize = 16) {
+        itemSources.Add(new AtlasSource("textures/" + filename, tileSize));
+    }
+
+    /**
+     * Register an item atlas source from an image
+     */
+    public void addItemSource(string filename, Image<Rgba32> image, int tileSize = 16) {
+        itemSources.Add(new AtlasSource("textures/" + filename, image, tileSize));
+    }
+
+    /**
+     * Clear all registered sources
+     */
+    private void clearSources() {
+        foreach (var src in blockSources) src.dispose();
+        foreach (var src in itemSources) src.dispose();
+        blockSources.Clear();
+        itemSources.Clear();
+    }
+
+    /**
+     * Get available texture packs
+     */
+    public List<TexturePack> getAvailablePacks() => availablePacks;
+
+    /**
+     * Get currently loaded pack
+     */
+    public TexturePack? getCurrentPack() => currentPack;
+
+    /**
+     * Open the texture packs folder in file explorer
+     */
+    public void openPackFolder() {
+        if (!Directory.Exists(PACK_DIR)) {
+            Directory.CreateDirectory(PACK_DIR);
+        }
+
+        try {
+            System.Diagnostics.Process.Start("explorer", Path.GetFullPath(PACK_DIR));
+        } catch {
+            // works on Linux, right? needs testing :D
+            System.Diagnostics.Process.Start("open", Path.GetFullPath(PACK_DIR));
+        }
     }
 
     public BTexture2D get(string path) {

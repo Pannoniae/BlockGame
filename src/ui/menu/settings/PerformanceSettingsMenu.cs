@@ -100,7 +100,7 @@ public class PerformanceSettingsMenu : Menu {
             Block.updateLeafRenderMode();
 
             // rebuild block atlas with new alpha values
-            TexturePackManager.reloadAtlases();
+            Game.textures.reloadAtlases();
             // refresh the WHOLE renderer for this one
             Game.renderer?.reloadRenderer(settings.rendererMode, settings.rendererMode);
             remeshIfRequired(settings.renderDistance);
@@ -117,7 +117,7 @@ public class PerformanceSettingsMenu : Menu {
             settings.noAnimation = noAnimation.getIndex() == 1;
             Game.textures.blockTexture.firstLoad = true;
             Game.textures.blockTexture.dtextures.Clear();
-            TexturePackManager.reloadAtlases();
+            Game.textures.reloadAtlases();
         };
         noAnimation.tooltip =
             "Toggle animated textures such as water, lava, and fire.\nTurning this off will improve performance.";

@@ -37,18 +37,18 @@ public class TexturePack {
     }
 
     /**
-     * Register this pack's texture sources with TextureSources.
+     * Register this pack's texture sources with the given Textures instance.
      * Called before stitching.
      */
-    public void registerSources() {
+    public void registerSources(Textures textures) {
         if (source.exists("textures/blocks.png")) {
             var img = source.loadImage("textures/blocks.png");
-            TextureSources.addBlockSource("blocks.png", img, tileSize);
+            textures.addBlockSource("blocks.png", img, tileSize);
         }
 
         if (source.exists("textures/items.png")) {
             var img = source.loadImage("textures/items.png");
-            TextureSources.addItemSource("items.png", img, tileSize);
+            textures.addItemSource("items.png", img, tileSize);
         }
     }
 

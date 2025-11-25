@@ -9,6 +9,8 @@ public class Cactus(string name) : Block(name) {
     public override void update(World world, int x, int y, int z) {
         if (!canSurvive(world, x, y, z)) {
             world.setBlock(x, y, z, AIR.id);
+            // drop as item
+            world.spawnBlockDrop(x, y, z, getItem(), 1, 0);
         }
     }
 

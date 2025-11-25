@@ -1177,11 +1177,6 @@ public class Block {
         //inventoryBlacklist[7] = true;
 
         updateLeafRenderMode();
-
-        // apply fastLeaves alpha processing now that leafTextureTiles is populated...
-        if (Settings.instance.fastLeaves) {
-            atlas.applyFastLeaves();
-        }
     }
 
     public static void updateLeafRenderMode() {

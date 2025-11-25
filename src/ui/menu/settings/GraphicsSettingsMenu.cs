@@ -33,7 +33,7 @@ public class GraphicsSettingsMenu : Menu {
         mipmapping.centreContents();
         mipmapping.applied += () => {
             settings.mipmapping = (int)mipmapping.value;
-            TexturePackManager.reloadAtlases();
+            Game.textures.reloadAtlases();
         };
         mipmapping.tooltip = "Mipmapping reduces the flickering of textures at a distance.";
         settingElements.Add(mipmapping);
@@ -52,7 +52,7 @@ public class GraphicsSettingsMenu : Menu {
             settings.anisotropy = anisotropy.getIndex() switch {
                 0 => 0, 1 => 1, 2 => 2, 3 => 4, 4 => 8, 5 => 16, 6 => 32, 7 => 64, 8 => 128, _ => 8
             };
-            TexturePackManager.reloadAtlases();
+            Game.textures.reloadAtlases();
             Game.renderer?.updateAF();
         };
         anisotropy.tooltip =
