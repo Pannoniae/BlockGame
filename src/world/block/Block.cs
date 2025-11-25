@@ -1112,10 +1112,9 @@ public class Block {
 
         FARMLAND = register("farmland", new Farmland("Farmland"));
         var farmlandUVs = grassUVs(26, 5, 2, 0, 2, 0);
-        var wetUVs = new UVPair(27, 5);
+        var wetUVs = uv("blocks.png", 27, 5);
         FARMLAND.setTex(farmlandUVs[0], farmlandUVs[1], farmlandUVs[2], farmlandUVs[3], farmlandUVs[4], farmlandUVs[5], wetUVs);
-        renderType[FARMLAND.id] = RenderType.CUBE_DYNTEXTURE;
-        FARMLAND.setModel(BlockModel.makeFarmland(FARMLAND));
+        renderType[FARMLAND.id] = RenderType.CUSTOM;
         FARMLAND.partialBlock();
         FARMLAND.material(Material.EARTH);
         FARMLAND.setHardness(0.6);
