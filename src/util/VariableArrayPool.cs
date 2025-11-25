@@ -53,18 +53,4 @@ public class VariableArrayPool<T> {
             _pools.Clear();
         }
     }
-
-    /**
-     * gets stats about the pool usage for debugging
-     */
-    public Dictionary<int, (int grabbed, int putBack)> getStats() {
-        lock (_poolsLock) {
-            var stats = new Dictionary<int, (int, int)>();
-            foreach (var kvp in _pools) {
-                var pool = kvp.Value;
-                stats[kvp.Key] = (pool.grabCtr, pool.putBackCtr);
-            }
-            return stats;
-        }
-    }
 }
