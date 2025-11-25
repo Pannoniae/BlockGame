@@ -32,7 +32,7 @@ public struct BlockVertexPacked {
         this.g = g;
         this.b = b;
         this.a = a;
-        this.light = 0;
+        light = 0;
     }
     
     public BlockVertexPacked(float x, float y, float z, float u, float v, uint c) {
@@ -41,8 +41,8 @@ public struct BlockVertexPacked {
         this.z = (ushort)((z + 16) * 256);
         this.u = (ushort)(u * 32768);
         this.v = (ushort)(v * 32768);
-        this.cu = c;
-        this.light = 0;
+        cu = c;
+        light = 0;
     }
 
     public BlockVertexPacked(float x, float y, float z, float u, float v, Color c) {
@@ -52,7 +52,7 @@ public struct BlockVertexPacked {
         this.u = (ushort)(u * 32768);
         this.v = (ushort)(v * 32768);
         this.c = c;
-        this.light = 0;
+        light = 0;
     }
 
     public BlockVertexPacked(ushort x, ushort y, ushort z, ushort u, ushort v, Color c) {
@@ -62,7 +62,7 @@ public struct BlockVertexPacked {
         this.u = u;
         this.v = v;
         this.c = c;
-        this.light = 0;
+        light = 0;
     }
 
     public BlockVertexPacked(float x, float y, float z, float u, float v, Color c, byte skylight, byte blocklight) {
@@ -72,6 +72,6 @@ public struct BlockVertexPacked {
         this.u = (ushort)(u * 32768);
         this.v = (ushort)(v * 32768);
         this.c = c;
-        this.light = (byte)((skylight & 0xF) | ((blocklight & 0xF) << 4));
+        light = (byte)((skylight & 0xF) | ((blocklight & 0xF) << 4));
     }
 }

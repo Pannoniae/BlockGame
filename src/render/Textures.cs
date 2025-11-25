@@ -40,15 +40,14 @@ public class Textures {
     public readonly BTexture2D eye;
     public readonly BTexture2D mummy;
 
-    // texture pack management (instance, not static)
+    // texture pack management
     private readonly List<TexturePack> availablePacks = [];
     private TexturePack? currentPack;
 
-    // source registry (instance, not static)
+    // source registry
     private readonly List<AtlasSource> blockSources = [];
     private readonly List<AtlasSource> itemSources = [];
 
-    // callback for dependents (instead of reaching into Game.world, etc.)
     public event Action? onAtlasReloaded;
 
     public const string PACK_DIR = "texturepacks";
@@ -69,13 +68,13 @@ public class Textures {
 
         // discover and load texture pack
         discoverPacks();
-        var packName = ui.Settings.instance.texturePack;
+        var packName = Settings.instance.texturePack;
         loadPack(packName);
 
         // load player skin from game directory (not assets/!)
-        human = new BTexture2D(ui.Settings.instance.skinPath);
-        if (File.Exists(ui.Settings.instance.skinPath)) {
-            human.loadFromFile(ui.Settings.instance.skinPath);
+        human = new BTexture2D(Settings.instance.skinPath);
+        if (File.Exists(Settings.instance.skinPath)) {
+            human.loadFromFile(Settings.instance.skinPath);
         }
         else {
             // fallback to the default skin in assets
@@ -184,7 +183,7 @@ public class Textures {
     }
 
     /**
-     * SINGLE SOURCE OF TRUTH for stitching atlases
+     * Stitch block and item atlases from registered sources
      */
     private (StitchResult blocks, StitchResult items) stitchAtlases() {
         // stitch block atlas
@@ -220,9 +219,8 @@ public class Textures {
 
     /**
      * Get protected regions for dynamic textures (water, lava, fire)
-     * Defined ONCE instead of duplicated everywhere
      */
-    private List<ProtectedRegion> getProtectedRegions(string blockSourceId) {
+    private static List<ProtectedRegion> getProtectedRegions(string blockSourceId) {
         return [
             new("waterStill", blockSourceId, 0, 13 * 16, 256, 16),
             new("waterFlowing", blockSourceId, 16, 14 * 16, 32, 32),
@@ -234,9 +232,8 @@ public class Textures {
 
     /**
      * Apply fastLeaves setting by forcing leaf texture alpha to 255
-     * Defined ONCE instead of duplicated in BlockTextureAtlas and TexturePackManager
      */
-    private void applyFastLeaves(StitchResult result) {
+    private static void applyFastLeaves(StitchResult result) {
         foreach (var (source, tx, ty) in Block.leafTextureTiles) {
             if (result.tilePositions.TryGetValue((source, tx, ty), out var rect)) {
                 result.image.ProcessPixelRows(accessor => {
@@ -304,7 +301,7 @@ public class Textures {
     /**
      * Open the texture packs folder in file explorer
      */
-    public void openPackFolder() {
+    public static void openPackFolder() {
         if (!Directory.Exists(PACK_DIR)) {
             Directory.CreateDirectory(PACK_DIR);
         }

@@ -74,7 +74,7 @@ public class TexturePackMenu : Menu {
             verticalAnchor = VerticalAnchor.BOTTOM
         };
         openFolder.setPosition(new Vector2I(-6 - openFolder.guiPosition.Width, -18));
-        openFolder.clicked += _ => Game.textures.openPackFolder();
+        openFolder.clicked += _ => BlockGame.render.Textures.openPackFolder();
         addElement(openFolder);
     }
 
