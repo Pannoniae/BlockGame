@@ -821,7 +821,7 @@ public class GameServer : INetEventListener {
         foreach (var chunk in world.chunks) {
             // save chunks that have been modified and not recently saved
             if (chunk.status >= ChunkStatus.LIGHTED &&
-                chunk.lastSaved + 5000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+                chunk.lastSaved + 20000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
                 world.worldIO.saveChunk(world, chunk);
                 saved++;
             }

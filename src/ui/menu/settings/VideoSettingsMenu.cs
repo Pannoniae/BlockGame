@@ -175,6 +175,7 @@ public class VideoSettingsMenu : Menu {
 
     public override void deactivate() {
         base.deactivate();
+        Settings.instance.save();
     }
 
     public override void clear(double dt, double interp) {

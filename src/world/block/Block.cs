@@ -1001,7 +1001,7 @@ public class Block {
         TORCH = register("torch", new Torch("Torch"));
         TORCH.setTex(cubeUVs(9, 3));
         TORCH.itemLike();
-        TORCH.material(Material.ORGANIC);
+        TORCH.material(Material.WOOD);
 
         CRAFTING_TABLE = register("craftingTable", new CraftingTable("Crafting Table"));
         CRAFTING_TABLE.setTex(CTUVs(4, 3, 3, 3, 2, 3, 5, 3));

@@ -88,12 +88,7 @@ public sealed class SharedBlockVAO : VAO {
 
         format();
 
-        // better idea. instead of crashing our process by skill issuing free(), we just trim the process after a certain number of new buffers
-        // so the stupid driver which will never touch the buffer again doesn't keep it in main memory forever
-        if (++c >= 1024 && lastTrim + 20000 < Game.permanentStopwatch.ElapsedMilliseconds) {
-            // we used to trim here but better to trim off-thread
-            Screen.GAME_SCREEN.trim();
-        }
+        c++;
     }
 
     public void upload(Span<BlockVertexPacked> data, Span<ushort> indices) {

@@ -296,7 +296,7 @@ public class NBTString : NBTTag {
 
 // has a typename
 public interface INBTList {
-    public NBTType listType { get; set; }
+    public NBTType listType { get; }
     
     public int count();
 }
@@ -563,6 +563,15 @@ public class NBTCompound : NBTTag {
 
     public void addListTag<T>(string name, NBTList<T> value) where T : NBTTag {
         dict.Add(name, value);
+    }
+
+    // Direct list writing (fastpath for chunk serialization)
+    public void addStringListUnsafe(string name, XUList<string> values) {
+        dict.Add(name, new NBTDStringList(name, values.ToArray()));
+    }
+
+    public void addByteListUnsafe(string name, XUList<byte> values) {
+        dict.Add(name, new NBTDByteList(name, values.ToArray()));
     }
 
     // Get functions
@@ -1034,5 +1043,62 @@ public class NBTULongArray : NBTTag {
 
     public override string ToString() {
         return "[" + data.Length + " ulongs]";
+    }
+}
+
+public class NBTDStringList : NBTTag, INBTList {
+    private readonly string[] data;
+
+    public NBTType listType => NBTType.TAG_String;
+    public override NBTType id => NBTType.TAG_List;
+
+    public int count() => data.Length;
+
+    public NBTDStringList(string? name, string[] source) : base(name) {
+        data = source;
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        stream.Write(data.Length);
+        foreach (var s in data) {
+            if (s == null) {
+                throw new InvalidOperationException("Palette contains null string");
+            }
+            stream.Write(s);
+        }
+    }
+
+    public override void readContents(BinaryReader stream) {
+        throw new NotSupportedException("NBTDStringList is write-only");
+    }
+
+    public override string ToString() {
+        return "[" + data.Length + " strings]";
+    }
+}
+
+public class NBTDByteList : NBTTag, INBTList {
+    private readonly byte[] data;
+
+    public NBTType listType => NBTType.TAG_Byte;
+    public override NBTType id => NBTType.TAG_List;
+
+    public int count() => data.Length;
+
+    public NBTDByteList(string? name, byte[] source) : base(name) {
+        data = source;
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        stream.Write(data.Length);
+        stream.Write(data);
+    }
+
+    public override void readContents(BinaryReader stream) {
+        throw new NotSupportedException("NBTDByteList is write-only");
+    }
+
+    public override string ToString() {
+        return "[" + data.Length + " bytes]";
     }
 }

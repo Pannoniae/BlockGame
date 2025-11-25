@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using BlockGame.util;
 using BlockGame.util.log;
@@ -95,6 +96,15 @@ public class WorldgenUtil {
         // TODO it doesnt work properly, I'll fix it later
         // Span<bool> initialised = stackalloc bool[Chunk.CHUNKHEIGHT];
 
+        if (Avx2.IsSupported) {
+            interpolateAVX2(world, chunk, buffer);
+        }
+        else {
+            interpolateScalar(world, chunk, buffer);
+        }
+    }
+
+    private static void interpolateScalar(World world, Chunk chunk, float[] buffer) {
         for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
             var y0 = y >> NOISE_PER_Y_SHIFT;
             var y1 = y0 + 1;
@@ -161,6 +171,108 @@ public class WorldgenUtil {
 
                             chunk.setBlockFast(x, y, z, Block.WATER.id);
                             chunk.addToHeightMap(x, y, z);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<float> lerp(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
+        // a + t * (b - a)
+        return Fma.MultiplyAdd(Avx.Subtract(b, a), t, a);
+    }
+
+    private static void interpolateAVX2(World world, Chunk chunk, float[] buffer) {
+
+        Span<float> results = stackalloc float[4];
+
+        for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
+            var y0 = y >> NOISE_PER_Y_SHIFT;
+            var y1 = y0 + 1;
+            float yd = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+            var yd_vec = Vector128.Create(yd);
+
+            for (int z = 0; z < Chunk.CHUNKSIZE; z++) {
+                var z0 = z >> NOISE_PER_Z_SHIFT;
+                var z1 = z0 + 1;
+                float zd = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+                var zd_vec = Vector128.Create(zd);
+
+                // process 4 x-values at once
+                for (int x = 0; x < Chunk.CHUNKSIZE; x += 4) {
+                    // compute x0, x1, xd for 4 consecutive x values
+                    var x0 = x >> NOISE_PER_X_SHIFT;
+                    var x1 = x0 + 1;
+
+                    // xd values: [0.0, 0.25, 0.5, 0.75] or [0.25, 0.5, 0.75, 1.0], etc.
+                    var xds = Vector128.Create(
+                        ((x + 0) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+                        ((x + 1) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+                        ((x + 2) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+                        ((x + 3) & NOISE_PER_X_MASK) * NOISE_PER_X_INV
+                    );
+
+                    // load 8 corners for x0 (shared by all 4 blocks)
+                    var c000 = buffer[getIndex(x0, y0, z0)];
+                    var c001 = buffer[getIndex(x0, y0, z1)];
+                    var c010 = buffer[getIndex(x0, y1, z0)];
+                    var c011 = buffer[getIndex(x0, y1, z1)];
+                    var c100 = buffer[getIndex(x1, y0, z0)];
+                    var c101 = buffer[getIndex(x1, y0, z1)];
+                    var c110 = buffer[getIndex(x1, y1, z0)];
+                    var c111 = buffer[getIndex(x1, y1, z1)];
+
+                    // broadcast (same corner for all 4)
+                    var c000_vec = Vector128.Create(c000);
+                    var c001_vec = Vector128.Create(c001);
+                    var c010_vec = Vector128.Create(c010);
+                    var c011_vec = Vector128.Create(c011);
+                    var c100_vec = Vector128.Create(c100);
+                    var c101_vec = Vector128.Create(c101);
+                    var c110_vec = Vector128.Create(c110);
+                    var c111_vec = Vector128.Create(c111);
+
+                    // interpolate along x
+                    var c00 = lerp(c000_vec, c100_vec, xds);
+                    var c01 = lerp(c001_vec, c101_vec, xds);
+                    var c10 = lerp(c010_vec, c110_vec, xds);
+                    var c11 = lerp(c011_vec, c111_vec, xds);
+
+                    // interpolate along y
+                    var c0 = lerp(c00, c10, yd_vec);
+                    var c1 = lerp(c01, c11, yd_vec);
+
+                    // interpolate along z
+                    var values = lerp(c0, c1, zd_vec);
+
+                    // extract and process each of the 4 results
+                    values.StoreUnsafe(ref results[0]);
+
+                    for (int i = 0; i < 4; i++) {
+                        float value = results[i];
+                        int xi = x + i;
+
+                        if (value > 0) {
+                            chunk.setBlockFast(xi, y, z, Block.STONE.id);
+                            chunk.addToHeightMap(xi, y, z);
+                        }
+                        else {
+                            if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
+                                // check if water should be ice (frozen)
+                                if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
+                                    var temp = chunk.biomeData.getTemp(xi, y, z);
+                                    if (temp < -0.5f) {
+                                        chunk.setBlockFast(xi, y, z, Block.ICE.id);
+                                        chunk.addToHeightMap(xi, y, z);
+                                        continue;
+                                    }
+                                }
+
+                                chunk.setBlockFast(xi, y, z, Block.WATER.id);
+                                chunk.addToHeightMap(xi, y, z);
+                            }
                         }
                     }
                 }

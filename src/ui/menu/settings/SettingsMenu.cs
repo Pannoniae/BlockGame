@@ -75,10 +75,12 @@ public class SettingsMenu : Menu {
             var prevMenu = menuStack.Pop();
             parentScreen.switchToMenu(prevMenu);
         }
+        Settings.instance.save();
     }
 
     public override void deactivate() {
         base.deactivate();
+        Settings.instance.save();
     }
     
     

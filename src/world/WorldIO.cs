@@ -19,8 +19,8 @@ public class WorldIO {
     public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     // palette building
-    private static readonly XMap<ushort, int> paletteDict = new(256);
     private static readonly XUList<string> paletteList = new(256);
+    private static readonly XUList<byte> lightPaletteList = new(256);
 
     // blocks can change at runtime though? maybe, idk, but don't assume that plz
 
@@ -408,7 +408,7 @@ public class WorldIO {
         chunkTag.addInt("posZ", chunk.coord.z);
         chunkTag.addByte("status", (byte)chunk.status);
         chunkTag.addULong("lastSaved", chunk.lastSaved);
-        // using YXZ order
+        // YXZ
         var sectionsTag = new NBTList<NBTCompound>(NBTType.TAG_Compound, "sections");
         for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
             var section = new NBTCompound();
@@ -416,51 +416,66 @@ public class WorldIO {
             if (chunk.blocks[sectionY].inited) {
                 section.addByte("inited", 1);
 
-                // get block and light data
-                var freshBlocks = saveBlockPool.grab();
-                var freshLight = saveLightPool.grab();
-                chunk.blocks[sectionY].getSerializationBlocks(freshBlocks);
-                chunk.blocks[sectionY].getSerializationLight(freshLight);
+                var blockData = chunk.blocks[sectionY];
 
-                // build palette: collect unique block IDs
-                paletteDict.Clear();
+                // build NBT block palette directly from internal palette (no unpacking)
                 paletteList.Clear();
+                var internalVerts = blockData.skillIssueVertices();
+                var internalRefs = blockData.skillIssueBlockRefs();
+                var internalVertCount = blockData.skillIssueVertCount();
 
-                foreach (var b in freshBlocks) {
-                    ushort blockID = b.getID();
+                // map: internal palette index -> NBT palette index
+                Span<int> indexRemap = stackalloc int[internalVertCount];
 
-                    if (!paletteDict.ContainsKey(blockID)) {
+                for (int i = 0; i < internalVertCount; i++) {
+                    if (internalRefs[i] > 0) {
+                        uint bl = internalVerts[i];
+                        ushort blockID = bl.getID();
                         string stringID = Registry.BLOCKS.getName(blockID) ?? "air";
-                        paletteDict.Set(blockID, paletteList.Count);
+                        indexRemap[i] = paletteList.Count;
                         paletteList.Add(stringID);
                     }
                 }
 
-                // convert blocks to palette indices
+                // remap internal block indices to NBT indices
                 var paletteIndices = saveBlockPool.grab();
-                for (int i = 0; i < freshBlocks.Length; i++) {
-                    ushort blockID = freshBlocks[i].getID();
-                    byte metadata = freshBlocks[i].getMetadata();
-                    int paletteIdx = paletteDict[blockID];
-                    paletteIndices[i] = ((uint)metadata << 24) | (uint)paletteIdx;
+                for (int i = 0; i < Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE; i++) {
+                    int idx = blockData.skillIssueIndexRaw(i);
+                    uint bl = internalVerts[idx];
+                    byte metadata = bl.getMetadata();
+                    int nbtidx = indexRemap[idx];
+                    paletteIndices[i] = ((uint)metadata << 24) | (uint)nbtidx;
                 }
 
-                // save palette
-                var paletteTag = new NBTList<NBTString>(NBTType.TAG_String, "palette");
-                foreach (var stringID in paletteList) {
-                    paletteTag.add(new NBTString(null, stringID));
+                // build NBT light palette from internal light palette
+                var internalLightVerts = blockData.skillIssueLightVertices();
+                var internalLightRefs = blockData.skillIssueLightRefs();
+                var internalLightVertCount = blockData.skillIssueLightVertCount();
+
+                // todo we could move the allocation outside the loop and just resize it if it's bigger than the current one...
+                Span<int> lightIndexRemap = stackalloc int[internalLightVertCount];
+                lightPaletteList.Clear();
+
+                for (int i = 0; i < internalLightVertCount; i++) {
+                    if (internalLightRefs[i] > 0) {
+                        lightIndexRemap[i] = lightPaletteList.Count;
+                        lightPaletteList.Add(internalLightVerts[i]);
+                    }
                 }
 
-                section.addListTag("palette", paletteTag);
+                // remap internal light indices to NBT indices
+                var lightIndices = saveLightPool.grab();
+                for (int i = 0; i < Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE; i++) {
+                    int idx = blockData.skillIssueLightIndexRaw(i);
+                    int nbtidx = lightIndexRemap[idx];
+                    lightIndices[i] = (byte)nbtidx;
+                }
+
+                // save palettes
+                section.addStringListUnsafe("palette", paletteList);
+                section.addByteListUnsafe("lightPalette", lightPaletteList);
                 section.addUIntArray("blocks", paletteIndices);
-                section.addByteArray("light", freshLight);
-
-                // return freshBlocks to pool (we're done with it)
-                saveBlockPool.putBack(freshBlocks);
-
-                // we can't return these because we're still using it
-                //saveBlockPool.putBack(paletteIndices);
-                //saveLightPool.putBack(freshLight);
+                section.addByteArray("lightIndices", lightIndices);
             }
             else {
                 section.addByte("inited", 0);
@@ -518,52 +533,8 @@ public class WorldIO {
             status = (ChunkStatus)status,
             lastSaved = lastSaved
         };
-        var sections = chunkTag.getListTag<NBTCompound>("sections");
-        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
-            var section = sections.get(sectionY);
-            var blocks = chunk.blocks[sectionY];
-            // if not initialised, leave it be
-            if (section.getByte("inited") == 0) {
-                blocks.inited = false;
-                continue;
-            }
 
-            // init chunk section
-            blocks.loadInit();
-
-            // load palette if it exists (new format)
-            uint[] runtimeBlocks;
-            if (section.has("palette")) {
-                var paletteTag = section.getListTag<NBTString>("palette");
-                var paletteIndices = section.getUIntArray("blocks");
-
-                // convert palette to runtime IDs
-                runtimeBlocks = new uint[paletteIndices.Length];
-                for (int i = 0; i < paletteIndices.Length; i++) {
-                    uint packedValue = paletteIndices[i];
-                    int paletteIdx = (int)(packedValue & 0xFFFFFF);
-                    byte metadata = (byte)(packedValue >> 24);
-
-                    string stringID = paletteTag.get(paletteIdx).data;
-                    int runtimeID = Registry.BLOCKS.getID(stringID);
-
-                    if (runtimeID == -1) {
-                        // Block removed from game -> use air
-                        runtimeBlocks[i] = 0;
-                    }
-                    else {
-                        runtimeBlocks[i] = ((uint)metadata << 24) | (uint)runtimeID;
-                    }
-                }
-            }
-            else {
-                // old format without palette - assume IDs are still valid?
-                runtimeBlocks = section.getUIntArray("blocks");
-            }
-
-            // blocks
-            blocks.setSerializationData(runtimeBlocks, section.getByteArray("light"));
-        }
+        loadChunkSections(chunk, chunkTag);
 
         // load entities (skip players - they're saved with world data)
         if (chunkTag.has("entities")) {
@@ -646,10 +617,67 @@ public class WorldIO {
         return chunk;
     }
 
+    /** Shared section loading - deduped from loadChunkFromNBT and loadChunkDataFromNBT */
+    private static void loadChunkSections(Chunk chunk, NBTCompound chunkTag) {
+        var sections = chunkTag.getListTag<NBTCompound>("sections");
+        for (int sy = 0; sy < Chunk.CHUNKHEIGHT; sy++) {
+            var section = sections.get(sy);
+            var blocks = chunk.blocks[sy];
+
+            if (section.getByte("inited") == 0) {
+                blocks.inited = false;
+                continue;
+            }
+
+            blocks.loadInit();
+
+            // load blocks - must unpack palette because NBT format strips metadata
+            // todo this could be fixed? store the metadata in the palette too on disk and avoid unpacking?
+            // instead of storing just block IDs in the palette, store full uint values
+            // jess, please don't be lazy next time
+            uint[] runtimeBlocks;
+            if (section.has("palette")) {
+                var paletteTag = section.getListTag<NBTString>("palette");
+                var paletteIndices = section.getUIntArray("blocks");
+
+                // unpack: NBT palette only has block IDs, metadata is packed in indices
+                runtimeBlocks = new uint[paletteIndices.Length];
+                for (int i = 0; i < paletteIndices.Length; i++) {
+                    uint packed = paletteIndices[i];
+                    int paletteIdx = (int)(packed & 0xFFFFFF);
+                    byte metadata = (byte)(packed >> 24);
+
+                    string stringID = paletteTag.get(paletteIdx).data;
+                    int runtimeID = Registry.BLOCKS.getID(stringID);
+                    runtimeBlocks[i] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
+                }
+            } else {
+                // old format - flat array
+                runtimeBlocks = section.getUIntArray("blocks");
+            }
+
+            // load light - also must unpack
+            byte[] runtimeLight;
+            if (section.has("lightPalette")) {
+                var lightPaletteTag = section.getListTag<NBTByte>("lightPalette");
+                var lightIndices = section.getByteArray("lightIndices");
+
+                runtimeLight = new byte[lightIndices.Length];
+                for (int i = 0; i < lightIndices.Length; i++) {
+                    runtimeLight[i] = lightPaletteTag.get(lightIndices[i]).data;
+                }
+            } else {
+                // old format - flat array
+                runtimeLight = section.getByteArray("light");
+            }
+
+            blocks.setSerializationData(runtimeBlocks, runtimeLight);
+        }
+    }
+
     /**
      * Apply NBT data to an existing empty chunk (for async loading)
      */
-    // todo merge this with WorldIO.loadChunkFromNBT
     public static void loadChunkDataFromNBT(Chunk chunk, NBTCompound nbt) {
         var status = nbt.getByte("status");
         var lastSaved = nbt.getULong("lastSaved");
@@ -657,53 +685,7 @@ public class WorldIO {
         chunk.status = (ChunkStatus)status;
         chunk.lastSaved = lastSaved;
 
-        var sections = nbt.getListTag<NBTCompound>("sections");
-        for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
-            var section = sections.get(sectionY);
-            var blocks = chunk.blocks[sectionY];
-
-            // if not initialised, leave it be
-            if (section.getByte("inited") == 0) {
-                blocks.inited = false;
-                continue;
-            }
-
-            // init chunk section
-            blocks.loadInit();
-
-            // load palette if it exists (new format)
-            uint[] runtimeBlocks;
-            if (section.has("palette")) {
-                var paletteTag = section.getListTag<NBTString>("palette");
-                var paletteIndices = section.getUIntArray("blocks");
-
-                // convert palette to runtime IDs
-                runtimeBlocks = new uint[paletteIndices.Length];
-                for (int i = 0; i < paletteIndices.Length; i++) {
-                    uint packedValue = paletteIndices[i];
-                    int paletteIdx = (int)(packedValue & 0xFFFFFF);
-                    byte metadata = (byte)(packedValue >> 24);
-
-                    string stringID = paletteTag.get(paletteIdx).data;
-                    int runtimeID = Registry.BLOCKS.getID(stringID);
-
-                    if (runtimeID == -1) {
-                        // Block removed from game -> use air
-                        runtimeBlocks[i] = 0;
-                    }
-                    else {
-                        runtimeBlocks[i] = ((uint)metadata << 24) | (uint)runtimeID;
-                    }
-                }
-            }
-            else {
-                // old format without palette - assume IDs are still valid?
-                runtimeBlocks = section.getUIntArray("blocks");
-            }
-
-            // blocks
-            blocks.setSerializationData(runtimeBlocks, section.getByteArray("light"));
-        }
+        loadChunkSections(chunk, nbt);
 
         // load entities (skip players - they're saved with world data)
         if (nbt.has("entities")) {
@@ -874,14 +856,23 @@ public sealed class ChunkSaveThread : IDisposable {
                         // if we're being polite, we can put the arrays back after it's done
                         var sections = saveData.nbt.getListTag<NBTCompound>("sections");
                         foreach (var section in sections.list) {
-                            //print what it has
-
-                            //Log.info($"Saved chunk section, inited: {section.getByte("inited")}, blocks length: {section.getUIntArray("blocks")?.Length}, light length: {section.getByteArray("light")?.Length}");
-
                             // put back the arrays into the pool, but only if they exist (i.e. section was inited)
                             if (section.getByte("inited") != 0) {
-                                WorldIO.saveBlockPool.putBack(section.getUIntArray("blocks"));
-                                WorldIO.saveLightPool.putBack(section.getByteArray("light"));
+                                var blocks = section.getUIntArray("blocks");
+                                var lightIndices = section.getByteArray("lightIndices");
+
+                                if (blocks != null) {
+                                    WorldIO.saveBlockPool.putBack(blocks);
+                                }
+                                else {
+                                    Log.warn("ChunkSaveThread: blocks array was null when returning to pool!");
+                                }
+                                if (lightIndices != null) {
+                                    WorldIO.saveLightPool.putBack(lightIndices);
+                                }
+                                else {
+                                    Log.warn("ChunkSaveThread: lightIndices array was null when returning to pool!");
+                                }
                             }
                         }
                     }

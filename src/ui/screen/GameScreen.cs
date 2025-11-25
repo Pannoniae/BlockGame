@@ -99,7 +99,7 @@ public class GameScreen : Screen {
 
     public void trim(bool force = false) {
         umt?.needTrim = true;
-        umt?.forceTrim = true;
+        umt?.forceTrim = force;
     }
 
 
@@ -604,17 +604,6 @@ public class GameScreen : Screen {
     public void remeshWorld(int oldRenderDist) {
         var world = Game.world;
 
-        // free up memory from the block arraypool - we probably don't need that much
-        ArrayBlockData.blockPool.clear();
-        ArrayBlockData.lightPool.clear();
-        PaletteBlockData.arrayPool.clear();
-        PaletteBlockData.arrayPoolU.clear();
-        PaletteBlockData.arrayPoolUS.clear();
-
-        WorldIO.saveBlockPool.clear();
-        WorldIO.saveLightPool.clear();
-        HeightMap.heightPool.clear();
-
 
         Game.renderer.setUniforms();
         foreach (var chunk in world.chunks) {
@@ -637,23 +626,6 @@ public class GameScreen : Screen {
         if (!Net.mode.isMPC()) {
             Game.player.loadChunksAroundThePlayer(Settings.instance.renderDistance);
         }
-
-        // queue up ANOTHER freeing because we'll be saving a lot of chunks now
-        // todo is this REALLY needed??
-        Game.setTimeout(4000, () => {
-            ArrayBlockData.blockPool.clear();
-            ArrayBlockData.lightPool.clear();
-            PaletteBlockData.arrayPool.clear();
-            PaletteBlockData.arrayPoolU.clear();
-            PaletteBlockData.arrayPoolUS.clear();
-
-            WorldIO.saveBlockPool.clear();
-            WorldIO.saveLightPool.clear();
-            HeightMap.heightPool.clear();
-
-            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-            GC.Collect(generation: 2, GCCollectionMode.Aggressive, blocking: true, compacting: true);
-        });
     }
 
     public void pause() {
@@ -665,7 +637,7 @@ public class GameScreen : Screen {
 
         // also free up memory!
         // note maybe not on PCs integrated graphics bc performance hit? this needs to be handled better, temp fix...
-        if (!Game.isIntegratedCard) {
+        if (false && !Game.isIntegratedCard) {
             trim(true);
         }
 

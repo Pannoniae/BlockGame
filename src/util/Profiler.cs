@@ -12,11 +12,13 @@ public enum ProfileSectionName {
     PostFX, // Post-processing, FXAA
     GUI, // GUI rendering
     Swap, // Buffer swap and VSYNC wait
+    Timers,
+    Sound,
     Other // Everything else
 }
 
 public record struct ProfileSection(ProfileSectionName section, float time) {
-    public const int SECTION_COUNT = 8;
+    public const int SECTION_COUNT = 10;
     
     public readonly ProfileSectionName section = section;
     public float time = time;
@@ -52,11 +54,13 @@ public record struct ProfileData {
     public static Color getColour(ProfileSectionName section) => section switch {
         ProfileSectionName.Events => new Color(150, 100, 255), // Purple
         ProfileSectionName.Clear => new Color(100, 255, 200), // Light green
-        ProfileSectionName.Logic => new Color(100, 150, 255), // Light blue
+        ProfileSectionName.Logic => new Color(100, 150, 255), // Cyan
         ProfileSectionName.World3D => new Color(255, 100, 100), // Red
         ProfileSectionName.PostFX => new Color(255, 150, 0), // Orange
         ProfileSectionName.GUI => new Color(100, 255, 100), // Green
         ProfileSectionName.Swap => new Color(255, 100, 255), // Magenta
+        ProfileSectionName.Timers => new Color(255, 255, 100), // Yellow
+        ProfileSectionName.Sound => new Color(255, 255, 255), // White
         ProfileSectionName.Other => new Color(200, 200, 200), // Gray
         _ => Color.White
     };
@@ -121,6 +125,8 @@ public class Profiler {
         ProfileSectionName.PostFX => "PostFX",
         ProfileSectionName.GUI => "GUI",
         ProfileSectionName.Swap => "Swap",
+        ProfileSectionName.Timers => "Timers",
+        ProfileSectionName.Sound => "Sound",
         ProfileSectionName.Other => "Other",
         _ => "Unknown"
     };

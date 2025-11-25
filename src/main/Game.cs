@@ -155,7 +155,7 @@ public partial class Game {
     /// </summary>
     public static bool lockingMouse;
 
-    public BlockingCollection<Action> mainThreadQueue = [];
+    public readonly BlockingCollection<Action> mainThreadQueue = [];
 
     private Vector2D<int> preFullscreenSize;
     private Vector2D<int> preFullscreenPosition;
@@ -695,6 +695,8 @@ public partial class Game {
         // we load the settings FIRST so our graphics settings get picked up when initialising stuff
         Settings.instance.load();
 
+        window.VSync = Settings.instance.vSync;
+
         assets = new Assets();
         assets.init();
 
@@ -1190,7 +1192,7 @@ public partial class Game {
             Console.Out.WriteLine("Missed a frame!");
         }*/
         
-        profiler.section(ProfileSectionName.Other);
+        profiler.section(ProfileSectionName.Timers);
         // consume main thread actions
         while (mainThreadQueue.TryTake(out var action)) {
             action();
@@ -1198,9 +1200,11 @@ public partial class Game {
 
         handleTimers();
         cs.updateFrame(dt);
+        profiler.section(ProfileSectionName.Sound);
         snd.update();
         musicPlayer.update(dt);
 
+        profiler.section(ProfileSectionName.Other);
         if (stopwatch.ElapsedMilliseconds > 1000) {
             ft = dt;
             fps = (int)(1 / ft);

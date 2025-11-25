@@ -15,25 +15,22 @@ public class FixedArrayPool<T> {
 
     public readonly int arrayLength;
 
-    public int grabCtr;
-    public int putBackCtr;
-
     public FixedArrayPool(int arrayLength) {
         this.arrayLength = arrayLength;
         _objects = new Queue<T[]>();
     }
 
     public T[] grab() {
+        T[] item;
+        bool found;
         lock (_objectLock) {
-            grabCtr++;
-            //Console.Out.WriteLine("diff: " + (grabCtr - putBackCtr));
-            return _objects.TryDequeue(out var item) ? item : GC.AllocateUninitializedArray<T>(arrayLength);
+            found = _objects.TryDequeue(out item!);
         }
+        return found ? item : GC.AllocateUninitializedArray<T>(arrayLength);
     }
 
     public void putBack(T[] item) {
         lock (_objectLock) {
-            putBackCtr++;
             _objects.Enqueue(item);
         }
     }
@@ -53,8 +50,6 @@ public class FixedArrayPool<T> {
         lock (_objectLock) {
             // clear the pool
             _objects.Clear();
-            grabCtr = 0;
-            putBackCtr = 0;
         }
     }
 }

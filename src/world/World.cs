@@ -277,17 +277,20 @@ public partial class World : IDisposable {
     /// Autosave any chunks which haven't been saved in more than a minute.
     /// </summary>
     private void autoSaveChunks() {
+        const int MAX_CHUNKS_PER_AUTOSAVE = 50;
+        var currentTime = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
+
         var x = 0;
         foreach (var chunk in chunks) {
+            if (x >= MAX_CHUNKS_PER_AUTOSAVE) {
+                break; // cap at 50 chunks per autosave to prevent too much GC...
+            }
+
             if (chunk.status >= ChunkStatus.MESHED &&
-                chunk.lastSaved + 5 * 1000 < (ulong)Game.permanentStopwatch.ElapsedMilliseconds) {
+                chunk.lastSaved + 20 * 1000 < currentTime) {
                 worldIO.saveChunkAsync(this, chunk);
                 x++;
             }
-        }
-
-        if (x > 0) {
-            Log.info($"Queued {x} chunks for async save");
         }
     }
 

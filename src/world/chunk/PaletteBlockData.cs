@@ -121,33 +121,27 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         tryCompact();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int getIndex(int x, int y, int z) {
         return getIndexRaw((y << 8) + (z << 4) + x);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int getIndexRaw(int coord) {
         return getIndexRaw(coord, indices, density);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void setIndexRaw(int coord, int index) {
         setIndexRaw(coord, index, indices, density);
     }
     
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     private int getLightIndexRaw(int blockCoord) {
         return getIndexRaw(blockCoord, lightIndices, lightDensity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void setLightIndexRaw(int blockCoord, int index) {
         setIndexRaw(blockCoord, index, lightIndices, lightDensity);
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     private static int getIndexRaw(int coord, byte[]? src, int bits) {
         switch (bits) {
             case 0:
@@ -162,29 +156,32 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
                 return src![coord];
         }
 
+        return uncommonGetIndexRaw(coord, src, bits);
+    }
+
+    private static int uncommonGetIndexRaw(int coord, byte[]? src, int bits) {
         var bitIndex = coord * bits;
         var i = bitIndex >> 3;
         var bitOffset = bitIndex & 7;
-        
+
         var result = 0;
         var rem = bits;
-        
+
         while (rem > 0) {
             var theseBits = Math.Min(8 - bitOffset, rem);
             var mask = (1 << theseBits) - 1;
             var val = (src![i] >> bitOffset) & mask;
-            
+
             result |= val << (bits - rem);
-            
+
             rem -= theseBits;
             bitOffset = 0;
             i++;
         }
-        
+
         return result;
     }
-    
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
     private static void setIndexRaw(int coord, int index, byte[] dest, int bits) {
         switch (bits) {
             case 0: 
@@ -202,20 +199,25 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
                 dest[coord] = (byte)index; 
                 return;
         }
+        uncommonSetIndexRaw(coord, index, dest, bits);
         
+
+    }
+
+    private static void uncommonSetIndexRaw(int coord, int index, byte[] dest, int bits) {
         var bitIndex = coord * bits;
         var i = bitIndex >> 3;
         var bitOffset = bitIndex & 7;
-        
+
         var rem = bits;
-        
+
         while (rem > 0) {
             var theseBits = Math.Min(8 - bitOffset, rem);
             var mask = (1 << theseBits) - 1;
             var val = (index >> (bits - rem)) & mask;
-            
+
             dest[i] = (byte)((dest[i] & ~(mask << bitOffset)) | (val << bitOffset));
-            
+
             rem -= theseBits;
             bitOffset = 0;
             i++;
@@ -720,6 +722,31 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             blocks[i] = vertices[index];
         }
     }
+
+    // direct access to internal palette for optimised serialisation
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public uint[] skillIssueVertices() => vertices;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort[] skillIssueBlockRefs() => blockRefs;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int skillIssueVertCount() => vertCount;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int skillIssueIndexRaw(int coord) => getIndexRaw(coord);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public byte[] skillIssueLightVertices() => lightVertices;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ushort[] skillIssueLightRefs() => lightRefs;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int skillIssueLightVertCount() => lightVertCount;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int skillIssueLightIndexRaw(int coord) => getLightIndexRaw(coord);
     
     /**
      * Need a 4096 length byte array to write into!
@@ -732,30 +759,30 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
     }
 
     public void setSerializationData(uint[] blocks, byte[] lightData) {
-        
+
         // if old ones exist, dispose
         ReleaseUnmanagedResources();
-        
+
         // initialize arrays
         vertCapacity = INITIAL_SIZE;
         vertices = arrayPoolU.grab(vertCapacity);
         blockRefs = arrayPoolUS.grab(vertCapacity);
-        
+
         lightVertCapacity = INITIAL_LIGHT_SIZE;
         lightVertices = arrayPool.grab(lightVertCapacity);
         lightRefs = arrayPoolUS.grab(lightVertCapacity);
-        
+
         // reset counters
         vertices[0] = 0; // air block
         blockRefs[0] = 0; // will be set correctly by palette loading
         vertCount = 1;
         density = 0;
-        
+
         lightVertices[0] = 0x00; // no light
         lightRefs[0] = 0; // will be set correctly by palette loading
         lightVertCount = 1;
         lightDensity = 0;
-        
+
         // allocate initial indices
         count = getIndicesSize(density);
         if (count > 0) {
@@ -765,7 +792,7 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         else {
             indices = null;
         }
-        
+
         // allocate initial light indices
         lightCount = getIndicesSize(lightDensity);
         if (lightCount > 0) {
@@ -782,16 +809,17 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
             var index = get(blocks[i]);
             setIndexRaw(i, index);
         }
-        
+
         // load light data
         for (int i = 0; i < lightData.Length && i < TOTAL_BLOCKS; i++) {
             var lightIndex = getLight(lightData[i]);
             setLightIndexRaw(i, lightIndex);
         }
-        
+
         inited = true;
         refreshCounts();
     }
+
 
     // cleanup
     private void ReleaseUnmanagedResources() {
