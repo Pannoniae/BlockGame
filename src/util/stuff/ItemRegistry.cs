@@ -31,6 +31,12 @@ public class ItemRegistry : Registry<Item> {
      */
     public readonly XUList<int> durability;
 
+    /** for hold-to-fire weapons */
+    public XUList<bool> autoUse;
+
+    /** delay between uses in ticks */
+    public XUList<int> useDelay;
+
     public ItemRegistry() {
         armour = track(false);
         accessory = track(false);
@@ -38,5 +44,7 @@ public class ItemRegistry : Registry<Item> {
         blackList = track(false);
         fuelValue = track(0);
         durability = track(0);
+        autoUse = track(false);
+        useDelay = track(0);
     }
 }

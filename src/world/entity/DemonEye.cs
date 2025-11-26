@@ -4,14 +4,15 @@ using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
 
-public class DemonEye : Mob {
-    private const double DETECT_RADIUS = 24.0;
-    private const float ATTACK_DAMAGE = 4.0f;
-    private const int ATTACK_COOLDOWN = 40;
+public class DemonEye : Hostile {
+    protected override double detectRadius => 24.0;
+    protected override float attackDamage => 4.0f;
+    protected override int attackCooldown => 40;
+    protected override bool usePathfinding => false; // handles own flight movement
+
     private const double FLIGHT_SPEED = 0.8;
     private const double HOVER_HEIGHT = 8.0; // preferred height above ground
 
-    private int attackTime;
     private Vector3D? flyTarget;
     private int retargetCooldown;
 
@@ -19,7 +20,6 @@ public class DemonEye : Mob {
     protected override bool needsFallDamage => false;
 
     public override bool burnInSunlight => true;
-    public override bool hostile => true;
     public override double eyeHeight => 0; // it's a fucking floating eye
 
     public DemonEye(World world) : base(world, "eye") {
@@ -39,22 +39,16 @@ public class DemonEye : Mob {
         spawnTicks++;
         updateSunlightBurn();
 
-        // find and chase nearest player
-        Entity? nearestPlayer = target ?? findNearestPlayer(DETECT_RADIUS, out _);
-        if (nearestPlayer != null) {
-            target = nearestPlayer;
-            flyTowardsTarget(dt);
+        // call base for attack detection/management
+        base.AI(dt);
+    }
 
-            var dist = Vector3D.Distance(position, nearestPlayer.position);
-            if (dist < reach && attackTime <= 0 && hasLineOfSight(nearestPlayer)) {
-                attackPlayer();
-            }
-        }
-        else {
-            idleFlight(dt);
-        }
+    protected override void onTargetDetected(double dt, Entity target, double distance) {
+        flyTowardsTarget(dt);
+    }
 
-        // no base.AI(dt), we don't need pathfinding bullshit
+    protected override void onNoTargetDetected(double dt) {
+        idleFlight(dt);
     }
 
     private void flyTowardsTarget(double dt) {
@@ -129,22 +123,6 @@ public class DemonEye : Mob {
         }
 
         return 64;
-    }
-
-    private void attackPlayer() {
-        if (target is Player player) {
-            player.dmg(ATTACK_DAMAGE, position);
-        }
-
-        attackTime = ATTACK_COOLDOWN;
-    }
-
-    protected override void updateTimers(double dt) {
-        base.updateTimers(dt);
-
-        if (attackTime > 0) {
-            attackTime--;
-        }
     }
 
     // disable gravity

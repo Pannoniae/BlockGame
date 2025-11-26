@@ -3,8 +3,6 @@ using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.xNBT;
-using BlockGame.world.block;
-using Molten;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
@@ -12,24 +10,16 @@ namespace BlockGame.world.entity;
 /**
  * Arrow projectile entity.
  */
-public class ArrowEntity : Entity {
-    public Entity? owner; // who shot the arrow
-    public int age;
-    public const int MAX_AGE = 1200; // 20 seconds
-    public  double damage = 5.0;
+public class ArrowEntity : ProjectileEntity {
+    protected override double gravityMultiplier => 0.5;
+    protected override double airFriction => 0.99;
+    protected override double damage => 5.0;
+    protected override bool canCollideWithEntities => true;
 
     public int dieTimer = -1; // ticks until despawn after hitting something
 
     public ArrowEntity(World world) : base(world, "arrow") {
     }
-
-    protected override bool needsPrevVars => true;
-    protected override bool needsPhysics => true;
-    protected override bool needsGravity => true;
-    protected override bool needsCollision => true;
-    protected override bool needsFriction => false; // arrows don't slow down much in air
-    protected override bool needsBlockInteraction => false; // custom block interaction
-    protected override bool needsEntityCollision => false; // custom entity collision
 
     public override AABB calcAABB(Vector3D pos) {
         return AABB.fromSize(
@@ -38,19 +28,7 @@ public class ArrowEntity : Entity {
         );
     }
 
-    protected override void updateGravity(double dt) {
-        // lighter gravity than default
-        velocity.Y -= GRAVITY * 0.5 * dt;
-    }
-
-    protected override bool shouldContinueUpdate(double dt) {
-        age++;
-
-        if (age > MAX_AGE) {
-            active = false;
-            return false;
-        }
-
+    protected override bool shouldContinueUpdateSubclass(double dt) {
         if (dieTimer >= 0) {
             dieTimer--;
             if (dieTimer <= 0) {
@@ -58,48 +36,37 @@ public class ArrowEntity : Entity {
                 return false;
             }
         }
-
         return true;
     }
 
     protected override void updatePhysics(double dt) {
-
         // if arrow is stuck in ground, do not update physics
         if (dieTimer >= 0) {
             return;
         }
 
-        // spawn particles every tick
+        base.updatePhysics(dt);
+    }
+
+    protected override void spawnTrailParticles() {
+        // spawn particles every 2 ticks after initial grace period
         if (!Net.mode.isDed() && age % 2 == 0 && age > 8) {
             var particle = new ArrowParticle(world, position);
             world.particles.add(particle);
         }
+    }
 
-        // check entity collision before moving
-        checkEntityCollision();
+    protected override void onBlockHit() {
+        // arrow sticks in block instead of despawning
+        dieTimer = 60;
+    }
 
-        // apply gravity
-        updateGravity(dt);
+    protected override void onEntityHit(Entity entity) {
+        entity.dmg(damage, position);
+        dieTimer = 60; // stick after hitting entity
+    }
 
-        // apply velocity
-        velocity += accel * dt;
-        clamp(dt);
-
-        // check block collision
-        var nextPos = position + velocity * dt;
-        if (checkBlockCollision(nextPos)) {
-            // hit block, despawn
-            dieTimer = 60;
-            return;
-        }
-
-        position = nextPos;
-
-        velocity *= 0.99;
-
-        // update AABB
-        aabb = calcAABB(position);
-
+    protected override void updateRotation() {
         // align rotation with velocity
         if (velocity.LengthSquared() > 0.01) {
             var vel = velocity.toVec3();
@@ -114,49 +81,16 @@ public class ArrowEntity : Entity {
         }
     }
 
-    private bool checkBlockCollision(Vector3D pos) {
-        var blockPos = pos.toBlockPos();
-        var block = world.getBlock(blockPos);
-
-        // check if block is solid
-        if (Block.collision[block]) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private void checkEntityCollision() {
-        var entities = new List<Entity>();
-        world.getEntitiesInBox(entities, aabb);
-
-        foreach (var entity in entities) {
-            // skip owner for first 8 ticks
-            if (entity == owner && age < 8) {
-                continue;
-            }
-
-            // skip self and other arrows
-            if (entity == this || entity is ArrowEntity) {
-                continue;
-            }
-
-            // check collision
-            if (AABB.isCollision(aabb, entity.aabb)) {
-                entity.dmg(damage, position);
-                dieTimer = 60;
-                return;
-            }
-        }
-    }
-
+    // NBT serialization - extend base
     protected override void readx(NBTCompound data) {
-        if (data.has("age")) {
-            age = data.getInt("age");
+        base.readx(data);
+        if (data.has("dieTimer")) {
+            dieTimer = data.getInt("dieTimer");
         }
     }
 
     public override void writex(NBTCompound data) {
-        data.addInt("age", age);
+        base.writex(data);
+        data.addInt("dieTimer", dieTimer);
     }
 }

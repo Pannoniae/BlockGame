@@ -1,4 +1,5 @@
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.entity;
 using Molten.DoublePrecision;
 
@@ -11,8 +12,12 @@ public class SnowballSpitterItem : Item {
     public const double RECOIL_STRENGTH = 1.5;
 
     public SnowballSpitterItem(string name) : base(name) {
-        autoUse = true;
-        useDelay = FIRE_DELAY;
+
+    }
+
+    protected override void onRegister(int id) {
+        Registry.ITEMS.autoUse[id] = true;
+        Registry.ITEMS.useDelay[id] = FIRE_DELAY;
     }
 
     /**

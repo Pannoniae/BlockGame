@@ -9,6 +9,7 @@ using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
 using BlockGame.util.cmd;
+using BlockGame.util.stuff;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -620,9 +621,9 @@ public class Player : Mob, CommandSource {
         if (Game.inputs.right.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
                 // auto-use item: fire immediately and start timer
-                if (item?.autoUse == true) {
+                if (item != null && Registry.ITEMS.autoUse[item.id]) {
                     useItem();
-                    autoUseTimer = item.useDelay;
+                    autoUseTimer = Registry.ITEMS.useDelay[item.id];
                     lastMouseAction = now;
                 }
                 else {
@@ -652,10 +653,10 @@ public class Player : Mob, CommandSource {
             else if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
                 now - lastAirHit > Constants.airHitDelayMs) {
                 // auto-use: continue firing if timer expired
-                if (item?.autoUse == true) {
+                if (item != null && Registry.ITEMS.autoUse[item.id]) {
                     if (autoUseTimer <= 0) {
                         useItem();
-                        autoUseTimer = item.useDelay;
+                        autoUseTimer = Registry.ITEMS.useDelay[item.id];
                     }
                 }
                 else {
@@ -1155,7 +1156,7 @@ public class Player : Mob, CommandSource {
         var item = stack.getItem();
 
         // don't swing for auto-use items (they have custom animations)
-        if (!item.autoUse) {
+        if (!Registry.ITEMS.autoUse[item.id]) {
             setSwinging(true);
         }
 

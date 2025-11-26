@@ -13,10 +13,6 @@ public class Item {
 
     public UVPair tex = new UVPair(0, 0);
 
-    /** for hold-to-fire weapons */
-    public bool autoUse = false;
-    public int useDelay = 0; // ticks between auto-uses
-
     public static BTextureAtlas atlas;
 
     /**
