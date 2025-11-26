@@ -94,6 +94,12 @@ public class Player : Mob, CommandSource {
 
     public int breakTime;
 
+    // bow charging state
+    public bool isChargingBow;
+    public int bowChargeTime;
+    public double prevBowCharge;
+    public double bowCharge; // 0-1 charge progress
+
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world, "player") {
         position = new Vector3D(x, y, z);
@@ -592,7 +598,20 @@ public class Player : Mob, CommandSource {
             }
         }
         else {
-            if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
+            // check if was charging bow and released
+            if (isChargingBow && !Game.inputs.right.down()) {
+                // calculate current charge ratio
+                var chargeRatio = Math.Min((double)bowChargeTime / BowItem.MAX_CHARGE_TIME, 1.0);
+
+                if (chargeRatio < 0.2) {
+                    // not charged enough, just cancel
+                    stopBowCharge();
+                } else {
+                    // charged enough, fire!
+                    fireBow();
+                }
+            }
+            else if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
                 now - lastAirHit > Constants.airHitDelayMs) {
                 // todo entity interact here?
                 placeBlock();
@@ -627,6 +646,26 @@ public class Player : Mob, CommandSource {
     //}
 
     public virtual void blockHandling(double dt) {
+        // handle bow charging
+        if (isChargingBow) {
+            prevBowCharge = bowCharge;
+            bowChargeTime++;
+            bowCharge = Math.Min((double)bowChargeTime / BowItem.MAX_CHARGE_TIME, 1.0);
+
+            // increase FOV during charging
+            if (!Net.mode.isDed()) {
+                var fovIncrease = 10.0f * (float)bowCharge;
+
+                // add sin oscillation at max charge
+                if (bowCharge >= 1.0) {
+                    var oscillation = MathF.Sin((float)Game.permanentStopwatch.Elapsed.TotalSeconds * 8f) * 0.5f;
+                    fovIncrease += oscillation;
+                }
+
+                Game.camera.fovModifier = fovIncrease;
+            }
+        }
+
         // handle block breaking progress
         if (isBreaking && Game.instance.targetedPos.HasValue) {
             var pos = Game.instance.targetedPos.Value;
@@ -892,7 +931,10 @@ public class Player : Mob, CommandSource {
                 return;
             }
 
-            setSwinging(false);
+            // don't swing if we started charging a bow
+            if (!isChargingBow) {
+                setSwinging(false);
+            }
         }
     }
 
@@ -972,6 +1014,71 @@ public class Player : Mob, CommandSource {
         else {
             setSwinging(false);
         }
+    }
+
+    public void startBowCharge() {
+        isChargingBow = true;
+        bowChargeTime = 0;
+        bowCharge = 0;
+        prevBowCharge = 0;
+    }
+
+    public void stopBowCharge() {
+        isChargingBow = false;
+        bowChargeTime = 0;
+        bowCharge = 0;
+        prevBowCharge = 0;
+
+        // reset FOV modifier
+        if (!Net.mode.isDed()) {
+            Game.camera.fovModifier = 0f;
+        }
+    }
+
+    public void fireBow() {
+        if (!isChargingBow) return;
+
+        // calculate charge ratio
+        var chargeRatio = Math.Min((double)bowChargeTime / BowItem.MAX_CHARGE_TIME, 1.0);
+
+        // only fire if bow is charged enough (at least 10% charged)
+        if (chargeRatio < 0.1) {
+            stopBowCharge();
+            return;
+        }
+
+        // stop charging before firing (so BowItem.use() knows we're firing)
+        isChargingBow = false;
+        if (!Net.mode.isDed()) {
+            Game.camera.fovModifier = 0f;
+        }
+
+        // in multiplayer client, send packet to server
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(
+                new UseItemPacket {
+                    chargeRatio = (float)chargeRatio
+                },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+        else {
+            // single-player or server: fire directly via item.use()
+            var stack = inventory.getSelected();
+            bowCharge = chargeRatio; // store for BowItem.use() to read
+            var result = stack.getItem().use(stack, world, this);
+            if (result != null!) {
+                inventory.setStack(inventory.selected, result);
+            }
+        }
+
+        // play sound and animation
+        setSwinging(true);
+
+        // reset charge state
+        bowChargeTime = 0;
+        bowCharge = 0;
+        prevBowCharge = 0;
     }
 
     public RawDirection getFacing() {

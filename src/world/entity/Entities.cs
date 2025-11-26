@@ -28,6 +28,7 @@ public class Entities {
     public static int PLAYER;
     public static int ITEM_ENTITY;
     public static int FALLING_BLOCK;
+    public static int ARROW;
 
     public static int COW;
     public static int PIG;
@@ -47,6 +48,7 @@ public class Entities {
         PLAYER = register("player", w => new Player(w, 0, 0, 0));
         ITEM_ENTITY = register("item", w => new ItemEntity(w));
         FALLING_BLOCK = register("fallingBlock", w => new FallingBlockEntity(w));
+        ARROW = register("arrow", w => new ArrowEntity(w));
         COW = register("cow", w => new Cow(w));
         PIG = register("pig", w => new Pig(w));
         ZOMBIE = register("zombie", w => new Zombie(w));

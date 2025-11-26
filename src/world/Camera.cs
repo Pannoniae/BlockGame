@@ -148,7 +148,8 @@ public class Camera {
     private float normalFov = 70.0f;
     private float underwaterFov = 60.0f; // Wider FOV underwater to simulate refraction
     private float currentFov;
-    private float targetFov;
+    public float targetFov;
+    public float fovModifier = 0f; // additive modifier (used for bow charging)
 
     /** in degrees */
     public float bob;
@@ -276,13 +277,14 @@ public class Camera {
     }
 
     public void updateFOV(bool isUnderwater, double dt) {
-        // Set target FOV based on underwater status
-        targetFov = isUnderwater ? underwaterFov : vfov;
-        
+        // Set target FOV based on underwater status, plus any modifiers
+        var baseFov = isUnderwater ? underwaterFov : vfov;
+        targetFov = baseFov + fovModifier;
+
         // Smooth transition between FOVs
         const float speed = 12.0f;
         float step = (float)(speed * dt);
-        
+
         if (Math.Abs(currentFov - targetFov) > 0.01f) {
             currentFov = Meth.lerp(currentFov, targetFov, step);
         }

@@ -186,4 +186,47 @@ public class PlayerInventory : Inventory {
         // if we get here, the inventory is full
         return false;
     }
+
+    /**
+     * Check if the inventory has at least 'count' items of the given type.
+     */
+    public bool hasItem(int itemId, int count = 1) {
+        int total = 0;
+        for (int i = 0; i < slots.Length; i++) {
+            var slot = slots[i];
+            if (slot != ItemStack.EMPTY && slot.id == itemId) {
+                total += slot.quantity;
+                if (total >= count) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Remove 'count' items of the given type from inventory. Returns true if successful.
+     */
+    public bool removeItem(int itemId, int count) {
+        // first check if we have enough
+        if (!hasItem(itemId, count)) {
+            return false;
+        }
+
+        int rem = count;
+        for (int i = 0; i < slots.Length && rem > 0; i++) {
+            var slot = slots[i];
+            if (slot != ItemStack.EMPTY && slot.id == itemId) {
+                int toRemove = Math.Min(rem, slot.quantity);
+                slot.quantity -= toRemove;
+                rem -= toRemove;
+
+                if (slot.quantity <= 0) {
+                    slots[i] = ItemStack.EMPTY;
+                }
+            }
+        }
+
+        return true;
+    }
 }

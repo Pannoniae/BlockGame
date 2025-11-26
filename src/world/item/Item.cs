@@ -97,9 +97,9 @@ public class Item {
     //public static Item SUGAR;
     public static Item APPLE_PIE;
 
-    //public static Item BOW_WOOD;
-    //public static Item ARROW_WOOD;
-    //public static Item FEATHER;
+    public static Item BOW_WOOD;
+    public static Item ARROW_WOOD;
+    public static Item FEATHER;
     public static Item STRING;
 
     public static UVPair uv(string source, int x, int y) {
@@ -380,14 +380,14 @@ public class Item {
         APPLE_PIE.tex = uv("items.png", 13, 10);
         material[APPLE_PIE.id] = true;
 
-        //BOW_WOOD = register("bow_wood", new Item("Wooden Bow"));
-        //BOW_WOOD.tex = uv("items.png", 1, 4);
+        BOW_WOOD = register("bow_wood", new BowItem("Wooden Bow"));
+        BOW_WOOD.tex = uv("items.png", 1, 4);
 
-        //ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
-        //ARROW_WOOD.tex = uv("items.png", 0, 4);
+        ARROW_WOOD = register("arrow_wood", new Item("Wooden Arrow"));
+        ARROW_WOOD.tex = uv("items.png", 0, 4);
 
-        //FEATHER = register("feather", new Item("Feather"));
-        //FEATHER.tex = uv("items.png", 0, 3);
+        FEATHER = register("feather", new Item("Feather"));
+        FEATHER.tex = uv("items.png", 0, 3);
 
         STRING = register("string", new Item("String"));
         STRING.tex = uv("items.png", 1, 3);
@@ -444,7 +444,7 @@ public class Item {
     /**
      * Called when the player uses an item in the air (not on a block).
      */
-    public virtual ItemStack use(ItemStack stack, World world, Player player) {
+    public virtual ItemStack? use(ItemStack stack, World world, Player player) {
         return stack;
     }
 

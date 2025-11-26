@@ -61,6 +61,7 @@ public class EntityTracker {
         return entity switch {
             ItemEntity => true,
             FallingBlockEntity => true,
+            ArrowEntity => true,
             _ => false
         };
     }
@@ -267,6 +268,10 @@ public class EntityTracker {
                 buf.writeByte(fb.blockMeta);
                 break;
 
+            case ArrowEntity arrow:
+                buf.writeInt(arrow.owner?.id ?? -1);
+                break;
+
             case Mob:
                 // mobs don't need extraData (state handled by EntityState)
                 break;
@@ -291,6 +296,14 @@ public class EntityTracker {
             case FallingBlockEntity fb:
                 fb.blockID = buf.readUShort();
                 fb.blockMeta = buf.readByte();
+                break;
+
+            case ArrowEntity arrow:
+                var ownerID = buf.readInt();
+                if (ownerID >= 0) {
+                    // find owner entity in world
+                    arrow.owner = entity.world.entities.FirstOrDefault(e => e.id == ownerID);
+                }
                 break;
         }
     }

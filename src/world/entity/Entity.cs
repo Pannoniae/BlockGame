@@ -724,7 +724,14 @@ public partial class Entity(World world, string type) : Persistent {
 
         foreach (var other in nearby) {
             // skip self
-            if (other.id == id) continue;
+            if (other.id == id) {
+                continue;
+            }
+
+            // if other is not pushable, skip
+            if (!other.needsEntityCollision) {
+                continue;
+            }
 
             // skip if either is riding/mounted
             if (isRiding() || hasRider() || other.isRiding() || other.hasRider()) {

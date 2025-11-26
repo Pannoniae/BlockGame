@@ -717,12 +717,18 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
+        // store charge ratio for bow
+        conn.player.bowCharge = p.chargeRatio;
+
         // call item's use hook (eat food, throw, etc)
         var result = stack.getItem().use(stack, GameServer.instance.world, conn.player);
-        conn.player.inventory.setStack(conn.player.inventory.selected, result);
+        if (result != null!) {
+            conn.player.inventory.setStack(conn.player.inventory.selected, result);
 
-        // broadcast inventory change via context
-        conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, result);
+
+            // broadcast inventory change via context
+            conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, result);
+        }
     }
 
     private void handleChatMessage(ChatMessagePacket p) {
