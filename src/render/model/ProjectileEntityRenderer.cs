@@ -10,7 +10,7 @@ namespace BlockGame.render.model;
  * Base class for projectile entity renderers.
  * Consolidates common rendering patterns: lighting lookup, 3D voxelized item rendering
  */
-public abstract class ProjectileEntityRenderer<T> : EntityRenderer<T> where T : ProjectileEntity {
+public abstract class ProjectileEntityRenderer<T> : EntityRenderer<T> where T : Entity {
     protected const float ITEM_SCALE = 0.4f;
 
     // unified lighting lookup

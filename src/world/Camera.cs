@@ -332,7 +332,7 @@ public class Camera {
 
         return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), lookTarget, interpUp.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor + iTilt + dTilt)
-               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor + iAirBob + rKick) // Add recoil kick to pitch
+               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor + iAirBob) // Add recoil kick to pitch
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
 
@@ -368,6 +368,7 @@ public class Camera {
         var iAirBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderAirBob(interp) * 0.2f) : 0f;
         var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var dTilt = float.DegreesToRadians(renderDeathTilt(interp));
+        var rKick = float.DegreesToRadians(renderRecoilKick(interp));
 
         //Console.Out.WriteLine(iAirBob);
         var tt = 0.0;
@@ -383,7 +384,7 @@ public class Camera {
 
         return Matrix4x4.CreateLookAtLeftHanded(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY)
                * Matrix4x4.CreateFromAxisAngle(axisZ, (float)(Math.Sin(tt) * iBob * factor + iTilt + dTilt))
-               * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor))
+               * Matrix4x4.CreateFromAxisAngle(axisX, (float)(Math.Abs(Math.Cos(tt)) * iBob * factor + iAirBob + rKick))
                * Matrix4x4.CreateRotationX(iAirBob);
 
     }

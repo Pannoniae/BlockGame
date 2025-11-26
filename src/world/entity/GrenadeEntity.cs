@@ -1,26 +1,30 @@
-using System.Numerics;
 using BlockGame.main;
 using BlockGame.render;
 using BlockGame.util;
 using BlockGame.util.xNBT;
+using BlockGame.world.block;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
 
-public class GrenadeEntity : ProjectileEntity {
-    protected override double gravityMultiplier => 1.0;
-    protected override double airFriction => 0.98;
-    protected override double damage => 0.0; // grenades don't use contact damage
-    protected override bool canCollideWithEntities => false; // no entity collision
-    protected override bool needsFriction => true; // grenades use ground friction
-
-    public int fuseTime = FUSE_LENGTH;
-    public const int FUSE_LENGTH = 60; // 3 seconds
+public class GrenadeEntity : Entity {
+    public Entity? owner;
+    public int age;
+    public int fuseTime = 60; // 3 sec
+    public const int FUSE_LENGTH = 60;
     public const double EXPLOSION_RADIUS = 5.0;
     public const double EXPLOSION_DAMAGE = 15.0;
 
     public GrenadeEntity(World world) : base(world, "grenade") {
     }
+
+    protected override bool needsPrevVars => true;
+    protected override bool needsPhysics => true;
+    protected override bool needsGravity => true;
+    protected override bool needsCollision => true;
+    protected override bool needsFriction => true;
+    protected override bool needsBlockInteraction => false;
+    protected override bool needsEntityCollision => false;
 
     public override AABB calcAABB(Vector3D pos) {
         return AABB.fromSize(
@@ -29,7 +33,12 @@ public class GrenadeEntity : ProjectileEntity {
         );
     }
 
-    protected override bool shouldContinueUpdateSubclass(double dt) {
+    protected override void updateGravity(double dt) {
+        velocity.Y -= GRAVITY * dt;
+    }
+
+    protected override bool shouldContinueUpdate(double dt) {
+        age++;
         fuseTime--;
 
         if (fuseTime <= 0) {
@@ -41,10 +50,46 @@ public class GrenadeEntity : ProjectileEntity {
         return true;
     }
 
-    protected override void onBlockHit() {
-        // bounce instead of despawn: reverse velocity and dampen
-        velocity *= -0.6;
-        velocity *= 0.98; // extra friction on bounce
+    protected override void updatePhysics(double dt) {
+        // apply gravity
+        updateGravity(dt);
+
+        // apply velocity
+        velocity += accel * dt;
+        clamp(dt);
+
+        // check block collision and bounce
+        var nextPos = position + velocity * dt;
+        if (checkBlockCollision(nextPos)) {
+            // bounce: reverse velocity and dampen
+            velocity *= -0.6;
+            velocity *= 0.98; // extra friction on bounce
+        }
+        else {
+            position = nextPos;
+        }
+
+        // apply friction when on ground or in air
+        velocity *= 0.98;
+
+        // update AABB
+        aabb = calcAABB(position);
+    }
+
+    private bool checkBlockCollision(Vector3D pos) {
+        var blockPos = pos.toBlockPos();
+        if (!world.inWorld(blockPos.X, blockPos.Y, blockPos.Z)) {
+            return false;
+        }
+
+        var block = world.getBlock(blockPos);
+
+        // check if block is solid
+        if (Block.collision[block]) {
+            return true;
+        }
+
+        return false;
     }
 
     private void explode() {
@@ -56,13 +101,14 @@ public class GrenadeEntity : ProjectileEntity {
         var entities = new List<Entity>();
         world.getEntitiesInBox(entities, explosionBox);
 
-        // apply damage with linear falloff
+        // apply damage with falloff
         foreach (var entity in entities) {
             if (entity == this) continue;
 
             var dist = (entity.position - position).Length();
 
             if (dist <= EXPLOSION_RADIUS) {
+                // linear
                 var falloff = 1.0 - (dist / EXPLOSION_RADIUS);
                 var actualDmg = EXPLOSION_DAMAGE * falloff;
 
@@ -91,16 +137,17 @@ public class GrenadeEntity : ProjectileEntity {
         }
     }
 
-    // NBT serialization - extend base
     protected override void readx(NBTCompound data) {
-        base.readx(data);
+        if (data.has("age")) {
+            age = data.getInt("age");
+        }
         if (data.has("fuseTime")) {
             fuseTime = data.getInt("fuseTime");
         }
     }
 
     public override void writex(NBTCompound data) {
-        base.writex(data);
+        data.addInt("age", age);
         data.addInt("fuseTime", fuseTime);
     }
 }
