@@ -15,7 +15,10 @@ public class Food : Item {
 
         // don't do anything in creative
         if (player.gameMode.gameplay) {
-            player.heal(heal);
+            // remove old regen effect (overrid)
+            player.removeEffect(EffectRegistry.REGEN);
+            player.addEffect(new RegenEffect(600, heal, 0));
+
             newStack = stack.consume(player, 1);
         }
 

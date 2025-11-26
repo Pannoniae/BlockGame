@@ -283,6 +283,20 @@ public class Player : Mob, CommandSource {
         base.dmg(damage, source);
     }
 
+    /**
+     * Get total pending healing from regeneration effects.
+     * Used for UI to show potential healing.
+     */
+    public double getPotentialHealing() {
+        double total = 0;
+        foreach (var effect in effects) {
+            if (effect is RegenEffect regen) {
+                total += regen.value;
+            }
+        }
+        return total;
+    }
+
     protected override void updateTimers(double dt) {
         base.updateTimers(dt);
 
@@ -1341,6 +1355,9 @@ public class Player : Mob, CommandSource {
 
     public override void die() {
         dead = true;
+
+        // clear all effects on death
+        effects.Clear();
 
         // drop inventory items on death (survival only, blocks only)
         if (gameMode.gameplay) {

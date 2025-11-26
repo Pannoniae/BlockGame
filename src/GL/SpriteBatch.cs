@@ -16,10 +16,15 @@ public enum BatcherBeginMode {
     SortBackToFront // Draw calls sorted back to front at End()
 }
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Explicit, Size = 24)]
 public struct VertexColorTexture(Vector3 position, Color color, Vector2 texCoords) {
+    [FieldOffset(0)]
     public Vector3 Position = position;
+
+    [FieldOffset(12)]
     public Color Color = color;
+
+    [FieldOffset(16)]
     public Vector2 TexCoords = texCoords;
 }
 
@@ -500,12 +505,14 @@ public sealed class SpriteBatch : IDisposable {
 
     private void nvFlush(bool sameTextureEnsured) {
         // only SortByTexture can reorder freely - all other modes need submission order preserved - is this right?
-        bool canReorder = BeginMode == BatcherBeginMode.SortByTexture || BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly || sameTextureEnsured;
+        bool canReorder = BeginMode == BatcherBeginMode.SortByTexture || BeginMode == BatcherBeginMode.Immediate || BeginMode == BatcherBeginMode.OnTheFly ||
+                          sameTextureEnsured;
 
         // todo this might break shit so if the texture order is fucked, adjust canReorder
         if (canReorder) {
             nvFlushSeparated();
-        } else {
+        }
+        else {
             nvFlushOrdered();
         }
 
@@ -575,6 +582,7 @@ public sealed class SpriteBatch : IDisposable {
                 while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color == Color.White) {
                     itemIdx++;
                 }
+
                 if (itemIdx >= batchItemCount) break;
 
                 // found a tinted item - batch all consecutive tinted items with same texture
@@ -582,7 +590,7 @@ public sealed class SpriteBatch : IDisposable {
                 uint batchStart = itemIdx;
 
                 while (itemIdx < batchItemCount && batchItems[itemIdx].VertexTL.Color != Color.White
-                       && batchItems[itemIdx].Texture == tex) {
+                                                && batchItems[itemIdx].Texture == tex) {
                     itemIdx++;
                 }
 
@@ -602,6 +610,7 @@ public sealed class SpriteBatch : IDisposable {
         for (uint i = 0; i < index; i++) {
             if (batchItems[i].VertexTL.Color == Color.White) count++;
         }
+
         return count;
     }
 

@@ -1,4 +1,4 @@
-﻿#version 440
+﻿#version 440 compatibility
 #ifdef NV_COMMAND_LIST
 #extension GL_NV_command_list : enable
 #endif

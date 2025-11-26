@@ -1,4 +1,4 @@
-#version 440
+#version 440 compatibility
 
 layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec4 aColor;

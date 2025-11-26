@@ -183,7 +183,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         }
     }
 
-    public void updateTexture<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight) where T : unmanaged {
+    public void updateTexture<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight, bool inv = true) where T : unmanaged {
         unsafe {
             Game.GL.InvalidateTexImage(handle, 0);
             fixed (T* dataPtr = data) {

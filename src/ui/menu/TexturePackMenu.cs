@@ -146,11 +146,11 @@ public class TexturePackMenu : Menu {
     public void applySelectedPack() {
         if (selectedEntry == null) return;
 
-        Settings.instance.texturePack = selectedEntry.pack.name;
+        Settings.instance.texturePack = selectedEntry.pack.internalname;
         Settings.instance.save();
 
         // load the pack
-        Game.textures.loadPack(selectedEntry.pack.name);
+        Game.textures.loadPack(selectedEntry.pack.internalname);
     }
 
     public override void draw() {

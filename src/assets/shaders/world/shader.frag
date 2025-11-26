@@ -1,4 +1,4 @@
-﻿#version 440
+﻿#version 440 compatibility
 
 #extension GL_ARB_texture_query_lod : enable
 #extension GL_EXT_gpu_shader4 : enable

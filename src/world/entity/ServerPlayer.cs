@@ -100,6 +100,40 @@ public class ServerPlayer : Player {
         }
     }
 
+    // sync effects to client
+    public override void addEffect(Effect effect) {
+        base.addEffect(effect);
+
+        if (conn != null) {
+            // send add effect packet
+            var packet = new AddEffectPacket {
+                entityID = id,
+                effectID = effect.getID(),
+                duration = effect.duration,
+                amplifier = effect.amplifier,
+                value = 0
+            };
+
+            // special handling for regen effect value
+            if (effect is RegenEffect regen) {
+                packet.value = regen.value;
+            }
+
+            conn.send(packet, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }
+    }
+
+    public override void removeEffect(int effectID) {
+        base.removeEffect(effectID);
+
+        if (conn != null) {
+            conn.send(new RemoveEffectPacket {
+                entityID = id,
+                effectID = effectID
+            }, LiteNetLib.DeliveryMethod.ReliableOrdered);
+        }
+    }
+
     // disable client-only behaviour
     public override void updateInput(double dt) { }
     public override void blockHandling(double dt) { }

@@ -8,6 +8,7 @@ namespace BlockGame.render.texpack;
  * Represents a texture pack with metadata.
  */
 public class TexturePack {
+    public string internalname;
     public string name;
     public string? author;
     public string? description;
@@ -23,7 +24,8 @@ public class TexturePack {
         // load metadata if exists
         var metadata = source.loadMetadata();
         if (metadata != null) {
-            pack.name = metadata.getString("name") ?? source.name;
+            pack.internalname = metadata.getString("internalname", source.name);
+            pack.name = metadata.getString("name", source.name);
             pack.author = metadata.getString("author", "Unknown");
             pack.description = metadata.getString("description", "");
             pack.version = metadata.getString("version", "1.0");

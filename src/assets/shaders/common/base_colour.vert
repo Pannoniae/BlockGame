@@ -1,4 +1,4 @@
-#version 440
+#version 440 compatibility
 
 uniform mat4 uMVP;
 uniform mat4 uModelView;

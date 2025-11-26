@@ -1,4 +1,4 @@
-#version 440
+#version 440 compatibility
 
 #ifdef NV_EXTENSIONS
 #extension GL_NV_gpu_shader5 : enable

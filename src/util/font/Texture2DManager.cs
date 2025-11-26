@@ -25,6 +25,6 @@ public class BTexture2DManager : ITexture2DManager {
     public void SetTextureData(object texture, Rectangle bounds, byte[] data) {
         var xnaTexture = (BTexture2D)texture;
 
-        xnaTexture.updateTexture(data, bounds.X, bounds.Y, (uint)bounds.Width, (uint)bounds.Height);
+        xnaTexture.updateTexture(data, bounds.X, bounds.Y, (uint)bounds.Width, (uint)bounds.Height, false);
     }
 }

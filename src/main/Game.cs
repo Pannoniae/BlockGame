@@ -15,6 +15,7 @@ using BlockGame.util.cmd;
 using BlockGame.util.font;
 using BlockGame.util.log;
 using BlockGame.util.snd;
+using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
@@ -845,6 +846,7 @@ public partial class Game {
         BlockEntity.preLoad();
         Recipe.preLoad();
         SmeltingRecipe.preLoad();
+        EffectRegistry.init(Registry.EFFECTS);
 
         //RuntimeHelpers.PrepareMethod(typeof(ChunkSectionRenderer).GetMethod("constructVertices", BindingFlags.NonPublic | BindingFlags.Instance)!.MethodHandle);
         

@@ -127,6 +127,8 @@ public partial class Entity(World world, string type) : Persistent {
     public int invulnerability = 30; // the base
     public double lastDmg;
 
+    public List<Effect> effects = [];
+
     public bool flyMode;
     public bool noClip;
 
@@ -330,6 +332,7 @@ public partial class Entity(World world, string type) : Persistent {
     protected virtual void updateTimers(double dt) {
         updateSwing();
         updateFire(dt);
+        updateEffects();
 
         if (iframes > 0) {
             iframes--;
@@ -365,6 +368,65 @@ public partial class Entity(World world, string type) : Persistent {
                 }
             }
         }
+    }
+
+    /**
+     * Update active effects - tick each effect and remove expired ones.
+     */
+    protected virtual void updateEffects() {
+        for (int i = effects.Count - 1; i >= 0; i--) {
+            var effect = effects[i];
+
+            effect.tick(this);
+            effect.age();
+
+            if (effect.isExpired()) {
+                effects.RemoveAt(i);
+            }
+        }
+    }
+
+    /**
+     * Add an effect to this entity.
+     */
+    public virtual void addEffect(Effect effect) {
+        effects.Add(effect);
+    }
+
+    /**
+     * Remove first effect of given type.
+     */
+    public virtual void removeEffect(int effectID) {
+        for (int i = 0; i < effects.Count; i++) {
+            if (effects[i].getID() == effectID) {
+                effects.RemoveAt(i);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Check if entity has an effect of given type.
+     */
+    public bool hasEffect(int effectID) {
+        foreach (var effect in effects) {
+            if (effect.getID() == effectID) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get first effect of given type, or null.
+     */
+    public Effect? getEffect(int effectID) {
+        foreach (var effect in effects) {
+            if (effect.getID() == effectID) {
+                return effect;
+            }
+        }
+        return null;
     }
 
     /**

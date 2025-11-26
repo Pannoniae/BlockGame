@@ -11,6 +11,7 @@ public abstract class Registry {
     public static readonly Registry<Recipe> RECIPES = new RecipeRegistry();
     public static readonly BlockEntityRegistry BLOCK_ENTITIES = new();
     public static readonly EntityRegistry ENTITIES = new();
+    public static readonly EffectRegistry EFFECTS = new();
 }
 
 /**

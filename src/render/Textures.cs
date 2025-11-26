@@ -112,7 +112,8 @@ public class Textures {
                 availablePacks.Add(pack);
                 Log.info("Textures", $"Found pack: {pack.name} (folder)");
             } catch (Exception e) {
-                Log.warn("Textures", $"Failed to load pack from {dir}: {e.Message}");
+                Log.warn("Textures", $"Failed to load pack from {dir}:");
+                Log.warn(e);
             }
         }
 
@@ -124,7 +125,8 @@ public class Textures {
                 availablePacks.Add(pack);
                 Log.info("Textures", $"Found pack: {pack.name} (zip)");
             } catch (Exception e) {
-                Log.warn("Textures", $"Failed to load pack from {zip}: {e.Message}");
+                Log.warn("Textures", $"Failed to load pack from {zip}:");
+                Log.warn(e);
             }
         }
     }
@@ -133,11 +135,11 @@ public class Textures {
      * Load and apply a texture pack
      */
     public void loadPack(string packName) {
-        var pack = availablePacks.FirstOrDefault(p => p.name == packName);
+        var pack = availablePacks.FirstOrDefault(p => p.internalname == packName);
 
         if (pack == null) {
             // fallback to vanilla or first available
-            pack = availablePacks.FirstOrDefault(p => p.name == "vanilla") ?? availablePacks.FirstOrDefault();
+            pack = availablePacks.FirstOrDefault(p => p.internalname == "vanilla") ?? availablePacks.FirstOrDefault();
             if (pack != null) {
                 Log.info("Textures", $"Pack '{packName}' not found, using '{pack.name}' instead.");
             }

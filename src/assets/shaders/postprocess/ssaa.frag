@@ -1,4 +1,4 @@
-#version 440 core
+#version 440 compatibility
 
 #include "/shaders/inc/dither.inc.glsl"
 

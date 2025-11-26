@@ -1,4 +1,4 @@
-#version 440 core
+#version 440 compatibility
 
 // CRT Shader by Harrison Allen (Public Domain)
 // V3

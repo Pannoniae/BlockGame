@@ -1,4 +1,4 @@
-#version 440 core
+#version 440 compatibility
 
 centroid out vec2 v_texCoord;
 

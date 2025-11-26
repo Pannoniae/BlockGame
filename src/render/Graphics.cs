@@ -286,7 +286,7 @@ public class Graphics : IDisposable {
     }
 
     public void shader(uint handle) {
-        if (cshader != handle) {
+        if (Game.isAMDCard || cshader != handle) {
             cshader = handle;
             GL.UseProgram(handle);
         }
@@ -294,7 +294,7 @@ public class Graphics : IDisposable {
 
     public void vertex(uint handle) {
         // GL_ARRAY_BUFFER is global state
-        if (cvbo != handle) {
+        if (Game.isAMDCard || cvbo != handle) {
             cvbo = handle;
             GL.BindBuffer(BufferTargetARB.ArrayBuffer, handle);
         }
@@ -302,7 +302,7 @@ public class Graphics : IDisposable {
 
     public void index(uint handle) {
         // GL_ELEMENT_ARRAY_BUFFER is per-VAO, but we track globally and invalidate on VAO change
-        if (cibo != handle) {
+        if (Game.isAMDCard || cibo != handle) {
             cibo = handle;
             GL.BindBuffer(BufferTargetARB.ElementArrayBuffer, handle);
         }
@@ -314,7 +314,7 @@ public class Graphics : IDisposable {
         cvbo = uint.MaxValue;
         cibo = uint.MaxValue;
 
-        if (cvao != handle) {
+        if (Game.isAMDCard || cvao != handle) {
             cvao = handle;
             GL.BindVertexArray(handle);
         }

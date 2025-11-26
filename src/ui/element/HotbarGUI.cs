@@ -58,6 +58,7 @@ public class HotbarGUI : GUIElement {
         var gui = Game.gui;
         var player = Game.player;
         var hp = player.hp;
+        var potentialHP = player.getPotentialHealing();
 
         const int MAX_HEARTS = 10;
         const int HP_PER_HEART = 10;
@@ -68,8 +69,28 @@ public class HotbarGUI : GUIElement {
 
         for (int i = 0; i < MAX_HEARTS; i++) {
             double heartHP = hp - (i * HP_PER_HEART);
+            double heartPotential = potentialHP - Math.Max(0, (i * HP_PER_HEART) - hp);
             int x = startX + i * GUI.heartW;
 
+            // 1. draw empty heart background
+            gui.drawUI(gui.guiTexture, new Vector2(x, startY),
+                new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW, GUI.heartH));
+
+            // 2. draw translucent potential healing (if any)
+            if (heartPotential > 0) {
+                double potentialRatio = Math.Min(heartPotential / HP_PER_HEART, 1.0);
+                int potentialWidth = (int)(GUI.heartW * potentialRatio);
+
+                if (potentialWidth > 0) {
+                    var translucentRed = new Color(255, 0, 0, 128);  // 50% alpha
+                    gui.drawUI(gui.guiTexture,
+                        new RectangleF(x, startY, potentialWidth, GUI.heartH),
+                        new Rectangle(GUI.heartX, GUI.heartY, potentialWidth, GUI.heartH),
+                        translucentRed);
+                }
+            }
+
+            // 3. draw current HP (opaque, overlays potential)
             if (heartHP >= HP_PER_HEART) {
                 // full heart
                 gui.drawUI(gui.guiTexture, new Vector2(x, startY),
@@ -79,24 +100,11 @@ public class HotbarGUI : GUIElement {
                 double fillRatio = heartHP / HP_PER_HEART;
                 int fillWidth = (int)(GUI.heartW * fillRatio);
 
-                // left side (filled)
                 if (fillWidth > 0) {
                     gui.drawUI(gui.guiTexture,
                         new RectangleF(x, startY, fillWidth, GUI.heartH),
                         new Rectangle(GUI.heartX, GUI.heartY, fillWidth, GUI.heartH));
                 }
-
-                // right side (empty)
-                int emptyWidth = GUI.heartW - fillWidth;
-                if (emptyWidth > 0) {
-                    gui.drawUI(gui.guiTexture,
-                        new RectangleF(x + fillWidth, startY, emptyWidth, GUI.heartH),
-                        new Rectangle(GUI.heartNoX + fillWidth, GUI.heartNoY, emptyWidth, GUI.heartH));
-                }
-            } else {
-                // empty heart
-                gui.drawUI(gui.guiTexture, new Vector2(x, startY),
-                    new Rectangle(GUI.heartNoX, GUI.heartNoY, GUI.heartW, GUI.heartH));
             }
         }
     }

@@ -1,4 +1,4 @@
-#version 440
+#version 440 compatibility
 
 in vec4 vColor;
 centroid in vec2 vTexCoords;

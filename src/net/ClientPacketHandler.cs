@@ -99,6 +99,12 @@ public class ClientPacketHandler : PacketHandler {
             case PlayerHealthPacket p:
                 handlePlayerHealth(p);
                 break;
+            case AddEffectPacket p:
+                handleAddEffect(p);
+                break;
+            case RemoveEffectPacket p:
+                handleRemoveEffect(p);
+                break;
             case ChatMessagePacket p:
                 handleChatMessage(p);
                 break;
@@ -678,6 +684,36 @@ public class ClientPacketHandler : PacketHandler {
                 Game.player.die();
             }
         }
+    }
+
+    public void handleAddEffect(AddEffectPacket p) {
+        var world = Game.world;
+        if (world == null) return;
+
+        var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
+        if (entity == null) return;
+
+        // create effect based on ID
+        Effect? effect = null;
+        if (p.effectID == EffectRegistry.REGEN) {
+            effect = new RegenEffect(p.duration, p.value, p.amplifier);
+        }
+
+        if (effect != null) {
+            // remove old effect of same type (override behavior)
+            entity.removeEffect(p.effectID);
+            entity.addEffect(effect);
+        }
+    }
+
+    public void handleRemoveEffect(RemoveEffectPacket p) {
+        var world = Game.world;
+        if (world == null) return;
+
+        var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
+        if (entity == null) return;
+
+        entity.removeEffect(p.effectID);
     }
 
     public void handleChatMessage(ChatMessagePacket p) {
