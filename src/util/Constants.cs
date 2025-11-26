@@ -59,5 +59,5 @@ public static class Constants {
     public static string VERSION => _ver;
     #endif
 
-    private const string _ver = "BlockGame v0.0.5-pre6";
+    private const string _ver = "BlockGame v0.0.5-pre7";
 }
