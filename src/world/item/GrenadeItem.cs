@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.util;
 using BlockGame.world.entity;
 using Molten.DoublePrecision;
@@ -37,6 +38,12 @@ public class GrenadeItem : Item {
         // throw in facing direction
         var direction = player.camFacing();
         grenade.velocity = new Vector3D(direction.X, direction.Y, direction.Z) * THROW_VELOCITY;
+
+        grenade.rotation = new Vector3(
+            player.rotation.X,
+            player.rotation.Y,
+            0
+        );
 
         player.world.addEntity(grenade);
     }

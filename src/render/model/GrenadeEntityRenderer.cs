@@ -1,5 +1,4 @@
 using BlockGame.main;
-using BlockGame.render;
 using BlockGame.util;
 using BlockGame.world;
 using BlockGame.world.entity;
@@ -15,6 +14,8 @@ public class GrenadeEntityRenderer : EntityRenderer<GrenadeEntity> {
         }
 
         mat.push();
+
+        mat.rotate(grenade.rotation.Y, 0f, 1f, 0f);
 
         const float itemScale = 0.4f;
         mat.scale(itemScale, itemScale, itemScale);

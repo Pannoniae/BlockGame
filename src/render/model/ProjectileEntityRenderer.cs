@@ -20,6 +20,8 @@ public abstract class ProjectileEntityRenderer<T> : EntityRenderer<T> where T : 
         return WorldRenderer.getLightColour((byte)(l & 15), (byte)(l >> 4));
     }
 
+    public abstract void render(MatrixStack mat, Entity e, float scale, double interp);
+
     protected void render(MatrixStack mat, T proj, ItemStack stack, Color tint, double interp) {
         mat.push();
         mat.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);

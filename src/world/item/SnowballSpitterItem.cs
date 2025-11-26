@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.util;
 using BlockGame.util.stuff;
 using BlockGame.world.entity;
@@ -57,6 +58,12 @@ public class SnowballSpitterItem : Item {
 
         var direction = player.camFacing();
         snowball.velocity = new Vector3D(direction.X, direction.Y, direction.Z) * SHOOT_VELOCITY;
+
+        snowball.rotation = new Vector3(
+            player.rotation.X,
+            player.rotation.Y,
+            0
+        );
 
         player.world.addEntity(snowball);
     }

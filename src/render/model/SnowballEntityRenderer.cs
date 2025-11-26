@@ -17,6 +17,8 @@ public class SnowballEntityRenderer : EntityRenderer<SnowballEntity> {
 
         mat.push();
 
+        mat.rotate(snowball.rotation.Y, 0f, 1f, 0f);
+
         const float itemScale = 0.4f;
         mat.scale(itemScale, itemScale, itemScale);
 

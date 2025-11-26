@@ -13,7 +13,7 @@ public interface EntityRenderer<out T> where T : Entity {
     /**
      * We originally had pos/rot here in addition to scale but I kinda realised you can just 1. use the matrix stack for that if you want to modify 2. get it from the entity itself
      */
-    public virtual void render(MatrixStack mat, Entity e, float scale, double interp) {
+    public void render(MatrixStack mat, Entity e, float scale, double interp) {
 
     }
 }

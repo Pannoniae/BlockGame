@@ -1,3 +1,4 @@
+using System.Numerics;
 using BlockGame.util;
 using BlockGame.world.entity;
 using Molten.DoublePrecision;
@@ -33,6 +34,12 @@ public class SnowballItem : Item {
 
         var direction = player.camFacing();
         snowball.velocity = new Vector3D(direction.X, direction.Y, direction.Z) * THROW_VELOCITY;
+
+        snowball.rotation = new Vector3(
+            player.rotation.X,
+            player.rotation.Y,
+            0
+        );
 
         player.world.addEntity(snowball);
     }
