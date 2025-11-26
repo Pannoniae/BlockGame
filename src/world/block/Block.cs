@@ -191,6 +191,9 @@ public class Block {
     public static Block PINE_LEAVES;
     public static Block PINE_SAPLING;
 
+    public static Block PALM_LOG;
+    public static Block PALM_LEAVES;
+
     public static Block ICE;
 
     public static Block CACTUS;
@@ -950,6 +953,22 @@ public class Block {
         PINE_SAPLING.itemLike();
         PINE_SAPLING.material(Material.ORGANIC);
         PINE_SAPLING.setFlammable(60);
+
+        PALM_LOG = register("palmLog", new Block("Palm Log"));
+        PALM_LOG.setTex(grassUVs(14, 2, 13, 2, 15, 2));
+        PALM_LOG.setModel(BlockModel.makeCube(PALM_LOG));
+        PALM_LOG.material(Material.WOOD);
+        log[PALM_LOG.id] = true;
+        PALM_LOG.setFlammable(5);
+
+        PALM_LEAVES = register("palmLeaves", new Leaves("Palm Leaves"));
+        PALM_LEAVES.setTex(uv("blocks.png", 16, 2));
+        registerLeafTexture("blocks.png", 16, 2);
+        renderType[PALM_LEAVES.id] = RenderType.CUBE;
+        PALM_LEAVES.transparency();
+        leaves[PALM_LEAVES.id] = true;
+        PALM_LEAVES.setFlammable(60);
+
 
         ICE = register("ice", new Block("Ice"));
         ICE.setTex(uv("blocks.png", 16, 0));
