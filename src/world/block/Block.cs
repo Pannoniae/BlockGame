@@ -239,6 +239,7 @@ public class Block {
     public static Block FURNACE_LIT;
     public static Block LADDER;
     public static Block FIRE;
+    public static Block NG;
     public static Block SIGN;
 
     /*public static Block OAK_FENCE;
@@ -1066,6 +1067,10 @@ public class Block {
         FIRE.light(15);
         FIRE.tick();
         FIRE.material(Material.HELL);
+
+        /*NG = register("ng", new Block("Nitroglycerine"));
+        NG.setTex(chestUVs(21, 0, 22, 0, 22, 0, 23, 0));
+        NG.transparency();*/
 
         SIGN = register("sign", new SignBlock("Sign"));
         SIGN.setTex(uv("blocks.png", 2, 10), uv("blocks.png", 1, 5));

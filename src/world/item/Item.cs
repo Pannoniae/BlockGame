@@ -101,6 +101,9 @@ public class Item {
     public static Item ARROW_WOOD;
     public static Item FEATHER;
     public static Item STRING;
+    public static Item SNOWBALL;
+    public static Item HAND_GRENADE;
+    public static Item SNOWBALL_SPITTER;
 
     public static UVPair uv(string source, int x, int y) {
         if (Net.mode.isDed()) {
@@ -391,6 +394,19 @@ public class Item {
 
         STRING = register("string", new Item("String"));
         STRING.tex = uv("items.png", 1, 3);
+
+        SNOWBALL = register("snowball", new Item("Snowball"));
+        SNOWBALL.tex = uv("items.png", 0, 5);
+        material[SNOWBALL.id] = true;
+
+        HAND_GRENADE = register("handGrenade", new Item("Hand Grenade"));
+        HAND_GRENADE.tex = uv("items.png", 1, 5);
+
+        SNOWBALL_SPITTER = register("snowballspitter", new Item("Snowball Spitter"));
+        SNOWBALL_SPITTER.tex = uv("items.png", 1, 6);
+
+
+
 
 
         // all blocks are already marked as materials during Block.register() lol
