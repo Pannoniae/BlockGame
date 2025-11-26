@@ -32,10 +32,10 @@ public class ItemRegistry : Registry<Item> {
     public readonly XUList<int> durability;
 
     /** for hold-to-fire weapons */
-    public XUList<bool> autoUse;
+    public readonly XUList<bool> autoUse;
 
     /** delay between uses in ticks */
-    public XUList<int> useDelay;
+    public readonly XUList<int> useDelay;
 
     public ItemRegistry() {
         armour = track(false);
