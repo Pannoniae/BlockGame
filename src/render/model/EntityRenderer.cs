@@ -51,6 +51,8 @@ public static class EntityRenderers {
         register(Entities.ITEM_ENTITY, new ItemEntityRenderer());
         register(Entities.FALLING_BLOCK, new FallingBlockEntityRenderer());
         register(Entities.ARROW, new ArrowEntityRenderer());
+        register(Entities.SNOWBALL, new SnowballEntityRenderer());
+        register(Entities.GRENADE, new GrenadeEntityRenderer());
         register(Entities.MUMMY, new MobRenderer<Mummy>(new MummyModel()));
     }
 }

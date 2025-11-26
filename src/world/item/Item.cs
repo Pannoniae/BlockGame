@@ -13,6 +13,10 @@ public class Item {
 
     public UVPair tex = new UVPair(0, 0);
 
+    /** for hold-to-fire weapons */
+    public bool autoUse = false;
+    public int useDelay = 0; // ticks between auto-uses
+
     public static BTextureAtlas atlas;
 
     /**
@@ -395,14 +399,14 @@ public class Item {
         STRING = register("string", new Item("String"));
         STRING.tex = uv("items.png", 1, 3);
 
-        SNOWBALL = register("snowball", new Item("Snowball"));
+        SNOWBALL = register("snowball", new SnowballItem("Snowball"));
         SNOWBALL.tex = uv("items.png", 0, 5);
         material[SNOWBALL.id] = true;
 
-        HAND_GRENADE = register("handGrenade", new Item("Hand Grenade"));
+        HAND_GRENADE = register("handGrenade", new GrenadeItem("Hand Grenade"));
         HAND_GRENADE.tex = uv("items.png", 1, 5);
 
-        SNOWBALL_SPITTER = register("snowballspitter", new Item("Snowball Spitter"));
+        SNOWBALL_SPITTER = register("snowballspitter", new SnowballSpitterItem("Snowball Spitter"));
         SNOWBALL_SPITTER.tex = uv("items.png", 1, 6);
 
 

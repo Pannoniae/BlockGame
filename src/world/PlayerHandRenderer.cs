@@ -27,6 +27,10 @@ public class PlayerHandRenderer {
 
     public double lower;
 
+    // Recoil animation for weapons
+    private float recoilProgress;
+    private float prevRecoilProgress;
+
     // Water overlay renderer
     public readonly InstantDrawTexture waterOverlayRenderer;
 
@@ -99,6 +103,10 @@ public class PlayerHandRenderer {
             var circleimpThing = MathF.Sin(swingProgress * swingProgress * MathF.PI * 2f);
             var circleishishThing = MathF.Sin(float.Pow(swingProgress, 0.75f) * MathF.PI * 2f);
             var circle = MathF.Sin(swingProgress * MathF.PI * 2f);
+
+            // recoil animation
+            var recoilProg = float.Lerp(prevRecoilProgress, recoilProgress, (float)interp);
+            var recoilKick = recoilProg * 0.3f;
 
             var mat = Game.graphics.model;
 
@@ -176,6 +184,8 @@ public class PlayerHandRenderer {
 
                 // it's too much to the left..
                 mat.translate(0.5f, 0.2f, 0f);
+
+                mat.translate(0, recoilKick, 0); // recoil translation
 
                 // rotate into direction
                 // overrotate a bit so it's not as "harsh" into the distance
@@ -729,6 +739,16 @@ public class PlayerHandRenderer {
 
     public void update(double dt) {
         prevLower = lower;
+
+        // update recoil animation
+        prevRecoilProgress = recoilProgress;
+        if (player.recoilTime > 0) {
+            recoilProgress = (float)player.recoilTime / 12f;
+        }
+        else {
+            recoilProgress = 0;
+        }
+
         // if the player has the same item, raise, else lower
         double target;
 

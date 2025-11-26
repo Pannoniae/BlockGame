@@ -62,6 +62,8 @@ public class EntityTracker {
             ItemEntity => true,
             FallingBlockEntity => true,
             ArrowEntity => true,
+            SnowballEntity => true,
+            GrenadeEntity => true,
             _ => false
         };
     }

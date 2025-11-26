@@ -167,6 +167,10 @@ public class Camera {
     public float deathTilt;
     public float prevDeathTilt;
 
+    /** recoil kick from weapons */
+    public float recoilKick;
+    public float prevRecoilKick;
+
     private float aspectRatio;
 
     public BoundingFrustum frustum;
@@ -252,6 +256,10 @@ public class Camera {
         else {
             deathTilt = 0f;
         }
+
+        // Update recoil kick
+        prevRecoilKick = recoilKick;
+        recoilKick *= 0.75f; // exponential decay
     }
 
     public void applyImpact(float damage) {
@@ -259,6 +267,15 @@ public class Camera {
         var dir = Game.clientRandom.Next(2) == 0 ? 1f : -1f;
         impactTilt += damage * 0.5f * dir;
         impactTilt = Math.Clamp(impactTilt, -10f, 10f); // cap at ±10 degrees
+    }
+
+    public void applyRecoil(float strength) {
+        recoilKick += strength;
+        recoilKick = Math.Clamp(recoilKick, -5f, 5f);
+    }
+
+    public float renderRecoilKick(double interp) {
+        return float.Lerp(prevRecoilKick, recoilKick, (float)interp);
     }
 
     public void setViewport(float width, float height) {
@@ -302,6 +319,7 @@ public class Camera {
         var iAirBob = Settings.instance.viewBobbing ? float.DegreesToRadians(renderAirBob(interp) * 0.2f) : 0f;
         var iTilt = float.DegreesToRadians(renderImpactTilt(interp));
         var dTilt = float.DegreesToRadians(renderDeathTilt(interp));
+        var rKick = float.DegreesToRadians(renderRecoilKick(interp));
         var tt = 0f;
         if (player is Player p) {
             tt = (float)double.Lerp(p.prevTotalTraveled, p.totalTraveled, interp);
@@ -314,7 +332,7 @@ public class Camera {
 
         return Matrix4x4.CreateLookAtLeftHanded(interpPos.toVec3(), lookTarget, interpUp.toVec3())
                * Matrix4x4.CreateRotationZ(MathF.Sin(tt) * iBob * factor + iTilt + dTilt)
-               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor + iAirBob) // Add airBob to pitch
+               * Matrix4x4.CreateRotationX(-Math.Abs(MathF.Cos(tt)) * iBob * factor + iAirBob + rKick) // Add recoil kick to pitch
                * Matrix4x4.CreateRotationY(MathF.Sin(tt) * iBob * factor2);
     }
 

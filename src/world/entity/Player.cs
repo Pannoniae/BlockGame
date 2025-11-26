@@ -100,6 +100,13 @@ public class Player : Mob, CommandSource {
     public double prevBowCharge;
     public double bowCharge; // 0-1 charge progress
 
+    // auto-use for hold-to-fire weapons
+    public int autoUseTimer; // cooldown for auto-use
+
+    // recoil state for weapons
+    public int recoilTime;
+    public double recoilStrength;
+
     // positions are feet positions
     public Player(World world, int x, int y, int z) : base(world, "player") {
         position = new Vector3D(x, y, z);
@@ -312,6 +319,11 @@ public class Player : Mob, CommandSource {
                     inventory.shiny[i] = 0;
                 }
             }
+        }
+
+        // decrement recoil timer
+        if (recoilTime > 0) {
+            recoilTime--;
         }
     }
 
@@ -601,13 +613,25 @@ public class Player : Mob, CommandSource {
             }
         }
 
+        // check for auto-use item
+        var stack = inventory.getSelected();
+        var item = stack != ItemStack.EMPTY ? stack.getItem() : null;
+
         if (Game.inputs.right.pressed()) {
             if (now - lastMouseAction > Constants.breakMissDelayMs && now - lastAirHit > Constants.airHitDelayMs) {
-                // todo entity interact here?
-                placeBlock();
-                lastMouseAction = now;
-                if (!Game.instance.previousPos.HasValue) {
-                    lastAirHit = now;
+                // auto-use item: fire immediately and start timer
+                if (item?.autoUse == true) {
+                    useItem();
+                    autoUseTimer = item.useDelay;
+                    lastMouseAction = now;
+                }
+                else {
+                    // regular item/block placement
+                    placeBlock();
+                    lastMouseAction = now;
+                    if (!Game.instance.previousPos.HasValue) {
+                        lastAirHit = now;
+                    }
                 }
             }
         }
@@ -627,11 +651,20 @@ public class Player : Mob, CommandSource {
             }
             else if (Game.inputs.right.down() && now - lastMouseAction > Constants.placeDelayMs &&
                 now - lastAirHit > Constants.airHitDelayMs) {
-                // todo entity interact here?
-                placeBlock();
-                lastMouseAction = now;
-                if (!Game.instance.previousPos.HasValue) {
-                    lastAirHit = now;
+                // auto-use: continue firing if timer expired
+                if (item?.autoUse == true) {
+                    if (autoUseTimer <= 0) {
+                        useItem();
+                        autoUseTimer = item.useDelay;
+                    }
+                }
+                else {
+                    // regular block placement
+                    placeBlock();
+                    lastMouseAction = now;
+                    if (!Game.instance.previousPos.HasValue) {
+                        lastAirHit = now;
+                    }
                 }
             }
         }
@@ -678,6 +711,11 @@ public class Player : Mob, CommandSource {
 
                 Game.camera.fovModifier = fovIncrease;
             }
+        }
+
+        // decrement auto-use timer
+        if (autoUseTimer > 0) {
+            autoUseTimer--;
         }
 
         // handle block breaking progress
@@ -1093,6 +1131,48 @@ public class Player : Mob, CommandSource {
         bowChargeTime = 0;
         bowCharge = 0;
         prevBowCharge = 0;
+    }
+
+    /**
+     * apply recoil kick from weapons
+     */
+    public void applyRecoil(double strength) {
+        recoilTime = 12;
+        recoilStrength = strength;
+
+        if (!Net.mode.isDed()) {
+            Game.camera.applyRecoil((float)strength);
+        }
+    }
+
+    /**
+     * generic item use method for auto-use and regular items
+     */
+    public void useItem() {
+        var stack = inventory.getSelected();
+        if (stack == ItemStack.EMPTY) return;
+
+        var item = stack.getItem();
+
+        // don't swing for auto-use items (they have custom animations)
+        if (!item.autoUse) {
+            setSwinging(true);
+        }
+
+        // multiplayer: send packet to server
+        if (Net.mode.isMPC()) {
+            ClientConnection.instance.send(
+                new UseItemPacket { chargeRatio = 0 },
+                DeliveryMethod.ReliableOrdered
+            );
+        }
+        else {
+            // singleplayer or server: execute directly
+            var result = item.use(stack, world, this);
+            if (result != null!) {
+                inventory.setStack(inventory.selected, result);
+            }
+        }
     }
 
     public RawDirection getFacing() {
