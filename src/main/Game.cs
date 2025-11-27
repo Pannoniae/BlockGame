@@ -242,8 +242,8 @@ public partial class Game {
         windowOptions.ShouldSwapAutomatically = false;
         windowOptions.IsVisible = true;
         windowOptions.WindowState = WindowState.Maximized;
-        windowOptions.PreferredDepthBufferBits = 32;
-        windowOptions.PreferredStencilBufferBits = 0;
+        windowOptions.PreferredDepthBufferBits = -1;
+        windowOptions.PreferredStencilBufferBits = -1;
         var api = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability,
             ContextFlags.Default | ContextFlags.Debug,
             new APIVersion(4, 6));
