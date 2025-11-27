@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections;
+using System.Globalization;
 using System.Text;
 
 namespace BlockGame.util.xNBT;
@@ -160,15 +161,25 @@ public class SNBTWriter {
             case NBTULongArray t:
                 writeArray("UL", t.data);
                 break;
+            case NBTStruct t:
+                writeStruct(t);
+                break;
             default:
                 throw new ArgumentException($"Unsupported NBTTag type: {tag.GetType().Name}", nameof(tag));
+        }
+    }
+
+    private void writeStruct(NBTStruct s) {
+        sb.Append("0x");
+        foreach (byte b in s.data) {
+            sb.Append(b.ToString("X2"));
         }
     }
 
     private void writeListInterface(INBTList list, NBTTag tag) {
         // Extract the list items via reflection (necessary due to generic constraints)
         var listField = tag.GetType().GetField("list");
-        if (listField?.GetValue(tag) is System.Collections.IList items) {
+        if (listField?.GetValue(tag) is IList items) {
             var tagList = new List<NBTTag>(items.Count);
             foreach (var item in items) {
                 tagList.Add((NBTTag)item);
@@ -245,7 +256,7 @@ public class SNBTWriter {
             sb.Append(NBTTag.getTypeName(listType)).Append(';');
         }
         else {
-            bool complexItems = list.Any(t => t is NBTCompound || t is INBTList);
+            bool complexItems = list.Any(t => t is NBTCompound or INBTList);
             if (prettyPrint && complexItems) {
                 writeNewLine();
                 indentLevel++;
@@ -338,9 +349,32 @@ internal class SNBTParser {
             '"' => new NBTString(name, parseQuotedString()),
             '-' or >= '0' and <= '9' => parseNumber(name),
             _ when isEndToken() => consumeEnd(),
+            _ when isHexStruct() => parseHexStruct(name),
             _ when char.IsLetter(c) || c == '_' => parseUnquotedValue(name),
             _ => throw new FormatException($"Unexpected character at position {pos}: {c}")
         };
+    }
+
+    private bool isHexStruct() {
+        return pos + 1 < input.Length && input[pos] == '0' && input[pos + 1] == 'x';
+    }
+
+    private NBTStruct parseHexStruct(string? name) {
+        // consume "0x"
+        pos += 2;
+
+        var bytes = new List<byte>();
+        while (pos + 1 < input.Length && isHexDigit(input[pos]) && isHexDigit(input[pos + 1])) {
+            string hexByte = input.Substring(pos, 2);
+            bytes.Add(Convert.ToByte(hexByte, 16));
+            pos += 2;
+        }
+
+        return new NBTStruct(name, bytes.ToArray());
+    }
+
+    private static bool isHexDigit(char c) {
+        return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
     }
 
     private bool isEndToken() {

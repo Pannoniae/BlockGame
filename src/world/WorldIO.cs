@@ -15,11 +15,12 @@ using Molten.DoublePrecision;
 namespace BlockGame.world;
 
 public class WorldIO {
-    public static readonly FixedArrayPool<uint> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
+    public static readonly FixedArrayPool<byte> saveBlockPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
     public static readonly FixedArrayPool<byte> saveLightPool = new(Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE);
 
     // palette building
     private static readonly XUList<string> paletteList = new(256);
+    private static readonly XUList<byte> paletteMetadata = new(256);
     private static readonly XUList<byte> lightPaletteList = new(256);
 
     // blocks can change at runtime though? maybe, idk, but don't assume that plz
@@ -418,8 +419,9 @@ public class WorldIO {
 
                 var blockData = chunk.blocks[sectionY];
 
-                // build NBT block palette directly from internal palette (no unpacking)
+                // build NBT block palette with parallel id+metadata lists
                 paletteList.Clear();
+                paletteMetadata.Clear();
                 var internalVerts = blockData.skillIssueVertices();
                 var internalRefs = blockData.skillIssueBlockRefs();
                 var internalVertCount = blockData.skillIssueVertCount();
@@ -431,20 +433,21 @@ public class WorldIO {
                     if (internalRefs[i] > 0) {
                         uint bl = internalVerts[i];
                         ushort blockID = bl.getID();
+                        byte metadata = bl.getMetadata();
                         string stringID = Registry.BLOCKS.getName(blockID) ?? "air";
+
                         indexRemap[i] = paletteList.Count;
                         paletteList.Add(stringID);
+                        paletteMetadata.Add(metadata);
                     }
                 }
 
-                // remap internal block indices to NBT indices
+                // remap internal block indices to NBT indices (simple lookup)
                 var paletteIndices = saveBlockPool.grab();
                 for (int i = 0; i < Chunk.CHUNKSIZE * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE; i++) {
                     int idx = blockData.skillIssueIndexRaw(i);
-                    uint bl = internalVerts[idx];
-                    byte metadata = bl.getMetadata();
                     int nbtidx = indexRemap[idx];
-                    paletteIndices[i] = ((uint)metadata << 24) | (uint)nbtidx;
+                    paletteIndices[i] = (byte)nbtidx;
                 }
 
                 // build NBT light palette from internal light palette
@@ -471,10 +474,14 @@ public class WorldIO {
                     lightIndices[i] = (byte)nbtidx;
                 }
 
-                // save palettes
-                section.addStringListUnsafe("palette", paletteList);
+                // save palettes (parallel id+metadata lists)
+                var paletteCompound = new NBTCompound("palette");
+                paletteCompound.addStringListUnsafe("ids", paletteList);
+                paletteCompound.addByteListUnsafe("meta", paletteMetadata);
+                section.addCompoundTag("palette", paletteCompound);
+
                 section.addByteListUnsafe("lightPalette", lightPaletteList);
-                section.addUIntArray("blocks", paletteIndices);
+                section.addByteArray("blocks", paletteIndices);
                 section.addByteArray("lightIndices", lightIndices);
             }
             else {
@@ -631,47 +638,92 @@ public class WorldIO {
 
             blocks.loadInit();
 
-            // load blocks - must unpack palette because NBT format strips metadata
-            // todo this could be fixed? store the metadata in the palette too on disk and avoid unpacking?
-            // instead of storing just block IDs in the palette, store full uint values
-            // jess, please don't be lazy next time
-            uint[] runtimeBlocks;
+            // load blocks and light
             if (section.has("palette")) {
-                var paletteTag = section.getListTag<NBTString>("palette");
-                var paletteIndices = section.getUIntArray("blocks");
+                var paletteTag = section.get("palette");
 
-                // unpack: NBT palette only has block IDs, metadata is packed in indices
-                runtimeBlocks = new uint[paletteIndices.Length];
-                for (int i = 0; i < paletteIndices.Length; i++) {
-                    uint packed = paletteIndices[i];
-                    int paletteIdx = (int)(packed & 0xFFFFFF);
-                    byte metadata = (byte)(packed >> 24);
+                if (paletteTag is NBTCompound paletteCompound && section.has("lightPalette")) {
+                    // new format: direct palette loading (zero-alloc)
+                    var idsTag = paletteCompound.getListTag<NBTString>("ids");
+                    var metaTag = paletteCompound.getListTag<NBTByte>("meta");
+                    var paletteIndices = section.getByteArray("blocks");
 
-                    string stringID = paletteTag.get(paletteIdx).data;
-                    int runtimeID = Registry.BLOCKS.getID(stringID);
-                    runtimeBlocks[i] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
+                    // convert NBT palette to runtime palette (use PaletteBlockData's pool)
+                    int paletteSize = idsTag.count();
+                    uint[] runtimePalette = PaletteBlockData.arrayPoolU.grab(paletteSize);
+                    for (int j = 0; j < paletteSize; j++) {
+                        string stringID = idsTag.get(j).data;
+                        byte metadata = metaTag.get(j).data;
+                        int runtimeID = Registry.BLOCKS.getID(stringID);
+                        runtimePalette[j] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
+                    }
+
+                    // load light palette (use PaletteBlockData's pool)
+                    var lightPaletteTag = section.getListTag<NBTByte>("lightPalette");
+                    var lightIndices = section.getByteArray("lightIndices");
+                    int lightPaletteSize = lightPaletteTag.count();
+                    byte[] lightPalette = PaletteBlockData.arrayPool.grab(lightPaletteSize);
+                    for (int j = 0; j < lightPaletteSize; j++) {
+                        lightPalette[j] = lightPaletteTag.get(j).data;
+                    }
+
+                    // direct load
+                    blocks.loadFromPalette(runtimePalette, paletteSize, paletteIndices, lightPalette, lightPaletteSize, lightIndices);
+                } else {
+                    // old formats: fallback to flat array method
+                    uint[] runtimeBlocks;
+                    if (paletteTag is NBTCompound oldPaletteCompound) {
+                        // shouldn't happen, but handle compound without lightPalette
+                        var idsTag = oldPaletteCompound.getListTag<NBTString>("ids");
+                        var metaTag = oldPaletteCompound.getListTag<NBTByte>("meta");
+                        var paletteIndices = section.getUIntArray("blocks");
+
+                        runtimeBlocks = new uint[paletteIndices.Length];
+                        for (int i = 0; i < paletteIndices.Length; i++) {
+                            int paletteIdx = (int)paletteIndices[i];
+                            string stringID = idsTag.get(paletteIdx).data;
+                            byte metadata = metaTag.get(paletteIdx).data;
+                            int runtimeID = Registry.BLOCKS.getID(stringID);
+                            runtimeBlocks[i] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
+                        }
+                    } else {
+                        // old format: string list, metadata packed in indices
+                        var idsTag = section.getListTag<NBTString>("palette");
+                        var paletteIndices = section.getUIntArray("blocks");
+
+                        runtimeBlocks = new uint[paletteIndices.Length];
+                        for (int i = 0; i < paletteIndices.Length; i++) {
+                            uint packed = paletteIndices[i];
+                            int paletteIdx = (int)(packed & 0xFFFFFF);
+                            byte metadata = (byte)(packed >> 24);
+
+                            string stringID = idsTag.get(paletteIdx).data;
+                            int runtimeID = Registry.BLOCKS.getID(stringID);
+                            runtimeBlocks[i] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
+                        }
+                    }
+
+                    byte[] runtimeLight;
+                    if (section.has("lightPalette")) {
+                        var lightPaletteTag = section.getListTag<NBTByte>("lightPalette");
+                        var lightIndices = section.getByteArray("lightIndices");
+
+                        runtimeLight = new byte[lightIndices.Length];
+                        for (int i = 0; i < lightIndices.Length; i++) {
+                            runtimeLight[i] = lightPaletteTag.get(lightIndices[i]).data;
+                        }
+                    } else {
+                        runtimeLight = section.getByteArray("light");
+                    }
+
+                    blocks.setSerializationData(runtimeBlocks, runtimeLight);
                 }
             } else {
-                // old format - flat array
-                runtimeBlocks = section.getUIntArray("blocks");
+                // oldest format - flat array
+                uint[] runtimeBlocks = section.getUIntArray("blocks");
+                byte[] runtimeLight = section.getByteArray("light");
+                blocks.setSerializationData(runtimeBlocks, runtimeLight);
             }
-
-            // load light - also must unpack
-            byte[] runtimeLight;
-            if (section.has("lightPalette")) {
-                var lightPaletteTag = section.getListTag<NBTByte>("lightPalette");
-                var lightIndices = section.getByteArray("lightIndices");
-
-                runtimeLight = new byte[lightIndices.Length];
-                for (int i = 0; i < lightIndices.Length; i++) {
-                    runtimeLight[i] = lightPaletteTag.get(lightIndices[i]).data;
-                }
-            } else {
-                // old format - flat array
-                runtimeLight = section.getByteArray("light");
-            }
-
-            blocks.setSerializationData(runtimeBlocks, runtimeLight);
         }
     }
 
@@ -858,7 +910,7 @@ public sealed class ChunkSaveThread : IDisposable {
                         foreach (var section in sections.list) {
                             // put back the arrays into the pool, but only if they exist (i.e. section was inited)
                             if (section.getByte("inited") != 0) {
-                                var blocks = section.getUIntArray("blocks");
+                                var blocks = section.getByteArray("blocks");
                                 var lightIndices = section.getByteArray("lightIndices");
 
                                 if (blocks != null) {

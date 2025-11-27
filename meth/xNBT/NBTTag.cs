@@ -96,6 +96,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_UInt_Array => new NBTUIntArray(name),
             NBTType.TAG_Long_Array => new NBTLongArray(name),
             NBTType.TAG_ULong_Array => new NBTULongArray(name),
+            NBTType.TAG_Struct => new NBTStruct(name),
             _ => throw new ArgumentOutOfRangeException(nameof(tag), tag, null)
         };
     }
@@ -152,6 +153,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_UInt_Array => "TAG_UInt_Array",
             NBTType.TAG_Long_Array => "TAG_Long_Array",
             NBTType.TAG_ULong_Array => "TAG_ULong_Array",
+            NBTType.TAG_Struct => "TAG_Struct",
             _ => "UNKNOWN"
         };
     }
@@ -204,5 +206,6 @@ public enum NBTType : byte {
     TAG_Long_Array,
     TAG_ULong_Array,
     TAG_SByte,
-    TAG_SByte_Array
+    TAG_SByte_Array,
+    TAG_Struct
 }

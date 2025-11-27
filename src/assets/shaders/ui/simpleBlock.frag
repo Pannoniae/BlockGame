@@ -1,4 +1,4 @@
-﻿#version 440 compatibility
+﻿ #version 440 compatibility
 
 // don't, glass will be fucked
 //layout(early_fragment_tests) in;

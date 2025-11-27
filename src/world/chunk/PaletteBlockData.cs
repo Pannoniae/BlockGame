@@ -820,6 +820,70 @@ public sealed class PaletteBlockData : BlockData, IDisposable {
         refreshCounts();
     }
 
+    /** Load directly from NBT palette */
+    public void loadFromPalette(uint[] paletteBlocks, int paletteSize, byte[] paletteIndices, byte[] lightPalette, int lightPaletteSize, byte[] lightIndices) {
+        // return old arrays to pool
+        ReleaseUnmanagedResources();
+
+        // take ownership of passed arrays
+        vertices = paletteBlocks;
+        vertCapacity = paletteBlocks.Length;
+        vertCount = paletteSize;
+        blockRefs = arrayPoolUS.grab(vertCapacity);
+
+        lightVertices = lightPalette;
+        lightVertCapacity = lightPalette.Length;
+        lightVertCount = lightPaletteSize;
+        lightRefs = arrayPoolUS.grab(lightVertCapacity);
+
+        // count references by scanning indices
+        Array.Clear(blockRefs, 0, paletteSize);
+        for (int i = 0; i < paletteIndices.Length; i++) {
+            int paletteIdx = paletteIndices[i];
+            blockRefs[paletteIdx]++;
+        }
+
+        Array.Clear(lightRefs, 0, lightPaletteSize);
+        for (int i = 0; i < lightIndices.Length; i++) {
+            int lightIdx = lightIndices[i];
+            lightRefs[lightIdx]++;
+        }
+
+        // calculate density and allocate indices arrays
+        density = bitsPerIdx(vertCount);
+        count = getIndicesSize(density);
+        if (count > 0) {
+            this.indices = arrayPool.grab(count);
+            Array.Clear(this.indices, 0, count);
+        } else {
+            this.indices = null;
+        }
+
+        lightDensity = bitsPerIdx(lightVertCount);
+        lightCount = getIndicesSize(lightDensity);
+        if (lightCount > 0) {
+            this.lightIndices = arrayPool.grab(lightCount);
+            Array.Clear(this.lightIndices, 0, lightCount);
+        } else {
+            this.lightIndices = null;
+        }
+
+        // copy indices (skip if density is 0, means palette size 1)
+        if (indices != null) {
+            for (int i = 0; i < paletteIndices.Length; i++) {
+                setIndexRaw(i, paletteIndices[i]);
+            }
+        }
+
+        if (this.lightIndices != null) {
+            for (int i = 0; i < lightIndices.Length; i++) {
+                setLightIndexRaw(i, lightIndices[i]);
+            }
+        }
+
+        inited = true;
+        refreshCounts();
+    }
 
     // cleanup
     private void ReleaseUnmanagedResources() {

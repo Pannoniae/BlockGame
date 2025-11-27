@@ -334,7 +334,7 @@ public class NBTList : NBTTag, INBTList {
         for (int i = 0; i < length; ++i) {
             var tag = createTag(listType, null);
             tag.readContents(stream);
-            list.Add((NBTTag)tag);
+            list.Add(tag);
         }
     }
 
@@ -364,7 +364,7 @@ public class NBTList : NBTTag, INBTList {
 }
 
 public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
-    public XUList<T> list;
+    public readonly XUList<T> list;
 
     public NBTType listType { get; set; }
 
@@ -432,16 +432,16 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
 }
 
 public class NBTCompound : NBTTag {
-    public XMap<string, NBTTag> dict;
+    public readonly XMap<string, NBTTag> dict;
 
     public override NBTType id => NBTType.TAG_Compound;
 
     public NBTCompound(string? name) : base(name) {
-        dict = new XMap<string, NBTTag>();
+        dict = [];
     }
 
-    public NBTCompound() : base() {
-        dict = new XMap<string, NBTTag>();
+    public NBTCompound() {
+        dict = [];
     }
 
     public override void writeContents(BinaryWriter stream) {
@@ -574,6 +574,10 @@ public class NBTCompound : NBTTag {
         dict.Add(name, new NBTDByteList(name, values.ToArray()));
     }
 
+    public void addUIntListUnsafe(string name, XUList<uint> values) {
+        dict.Add(name, new NBTDUIntList(name, values.ToArray()));
+    }
+
     // Get functions
 
     public byte getByte(string name) {
@@ -658,6 +662,14 @@ public class NBTCompound : NBTTag {
 
     public NBTCompound getCompoundTag(string name) {
         return (NBTCompound)dict[name];
+    }
+
+    public void addStruct<T>(string name, T value) where T : unmanaged {
+        dict.Add(name, NBTStruct.create(name, value));
+    }
+
+    public T getStruct<T>(string name) where T : unmanaged {
+        return ((NBTStruct)dict[name]).get<T>();
     }
 
     public void remove(string name) {
@@ -1100,5 +1112,88 @@ public class NBTDByteList : NBTTag, INBTList {
 
     public override string ToString() {
         return "[" + data.Length + " bytes]";
+    }
+}
+
+public class NBTDUIntList : NBTTag, INBTList {
+    private readonly uint[] data;
+
+    public NBTType listType => NBTType.TAG_UInt;
+    public override NBTType id => NBTType.TAG_List;
+
+    public int count() => data.Length;
+
+    public NBTDUIntList(string? name, uint[] source) : base(name) {
+        data = source;
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        stream.Write(data.Length);
+        var values = new Span<uint>(data);
+        if (!BitConverter.IsLittleEndian) {
+            BinaryPrimitives.ReverseEndianness(values, values);
+        }
+        stream.Write(MemoryMarshal.AsBytes(values));
+    }
+
+    public override void readContents(BinaryReader stream) {
+        throw new NotSupportedException("NBTDUIntList is write-only");
+    }
+
+    public override string ToString() {
+        return "[" + data.Length + " uints]";
+    }
+}
+
+/**
+ * Generic struct storage for efficient serialization of unmanaged types.
+ * Stores raw bytes with length prefix. Caller specifies type on read/write.
+ */
+public class NBTStruct : NBTTag {
+    public byte[] data;
+
+    public override NBTType id => NBTType.TAG_Struct;
+
+    public NBTStruct(string? name) : base(name) {
+        data = [];
+    }
+
+    public NBTStruct(string? name, byte[] rawData) : base(name) {
+        data = rawData;
+    }
+
+    /** Create NBTStruct from any unmanaged type */
+    public static unsafe NBTStruct create<T>(string? name, T value) where T : unmanaged {
+        var tag = new NBTStruct(name);
+        Span<byte> bytes = stackalloc byte[sizeof(T)];
+        MemoryMarshal.Write(bytes, in value);
+        tag.data = bytes.ToArray();
+        return tag;
+    }
+
+    /** Read value as specified type with size validation */
+    public unsafe T get<T>() where T : unmanaged {
+        if (data.Length != sizeof(T)) {
+            throw new InvalidOperationException(
+                $"Size mismatch: expected {sizeof(T)} bytes for {typeof(T).Name}, got {data.Length} bytes");
+        }
+        return MemoryMarshal.Read<T>(data);
+    }
+
+    public override void writeContents(BinaryWriter stream) {
+        stream.Write(data.Length); // length prefix so we can read without knowing T
+        stream.Write(data);
+    }
+
+    public override void readContents(BinaryReader stream) {
+        int length = stream.ReadInt32();
+        if (length < 0 || length > 10_000) { // sanity check - structs shouldn't be huge
+            throw new IOException($"Invalid struct size: {length}");
+        }
+        data = stream.ReadBytes(length);
+    }
+
+    public override string ToString() {
+        return $"[{data.Length} bytes]";
     }
 }
