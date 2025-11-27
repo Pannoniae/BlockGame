@@ -64,6 +64,7 @@ public class PacketRegistry {
         register(0x38, typeof(PlaceBlockPacket));
         register(0x39, typeof(DropItemPacket));
         register(0x3A, typeof(AttackEntityPacket));
+        register(0x3B, typeof(EntityDamagePacket));
         register(0x3C, typeof(UseItemPacket));
 
         // inventory (0x40-0x4F)

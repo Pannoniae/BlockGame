@@ -111,21 +111,45 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     private unsafe void uploadImage(Silk.NET.OpenGL.Legacy.GL GL, Image<Rgba32> img) {
         GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)img.Width, (uint)img.Height);
-        if (img.DangerousTryGetSinglePixelMemory(out imageData)) {
-            fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
-                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)img.Width, (uint)img.Height,
-                    PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+
+        if (Game.isAMDCard) {
+            // old AMD drivers have R/B swap bug, convert to BGRA and upload
+            using var bgra = img.CloneAs<Bgra32>();
+            if (bgra.DangerousTryGetSinglePixelMemory(out var bgraData)) {
+                fixed (Bgra32* pixels = &bgraData.Span.GetPinnableReference()) {
+                    GL.TextureSubImage2D(handle, 0, 0, 0, (uint)bgra.Width, (uint)bgra.Height,
+                        PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+                }
+            }
+            else {
+                bgra.ProcessPixelRows(accessor => {
+                    for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
+                        var row = accessor.GetRowSpan(rowIndex);
+                        fixed (Bgra32* pixels = &row.GetPinnableReference()) {
+                            GL.TextureSubImage2D(handle, 0, 0, rowIndex, (uint)accessor.Width, 1U,
+                                PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+                        }
+                    }
+                });
             }
         }
         else {
-            img.ProcessPixelRows(accessor => {
-                for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
-                    fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
-                        GL.TextureSubImage2D(handle, 0, 0, rowIndex, (uint)accessor.Width, 1U,
-                            PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-                    }
+            if (img.DangerousTryGetSinglePixelMemory(out imageData)) {
+                fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
+                    GL.TextureSubImage2D(handle, 0, 0, 0, (uint)img.Width, (uint)img.Height,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
                 }
-            });
+            }
+            else {
+                img.ProcessPixelRows(accessor => {
+                    for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
+                        fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
+                            GL.TextureSubImage2D(handle, 0, 0, rowIndex, (uint)accessor.Width, 1U,
+                                PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+                        }
+                    }
+                });
+            }
         }
 
         width = img.Width;
@@ -170,25 +194,85 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     }
     
     public unsafe void updateTexture(int left, int top, int width, int height, int srcX, int srcY) {
-        // get pixels from the image
-        var pixels = new Rgba32[width * height];
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                pixels[y * width + x] = imageData.Span[(srcY + y) * image.Width + srcX + x];
+        if (Game.isAMDCard) {
+            // old AMD drivers, need BGRA
+            var pixels = new Bgra32[width * height];
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    var p = imageData.Span[(srcY + y) * image.Width + srcX + x];
+                    pixels[y * width + x] = new Bgra32(p.R, p.G, p.B, p.A);
+                }
+            }
+            Game.GL.InvalidateTexImage(handle, 0);
+            fixed (Bgra32* pixelsPtr = pixels) {
+                Game.GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Bgra, PixelType.UnsignedByte, pixelsPtr);
             }
         }
-        Game.GL.InvalidateTexImage(handle, 0);
-        fixed (Rgba32* pixelsPtr = pixels) {
-            Game.GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
+        else {
+            var pixels = new Rgba32[width * height];
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    pixels[y * width + x] = imageData.Span[(srcY + y) * image.Width + srcX + x];
+                }
+            }
+            Game.GL.InvalidateTexImage(handle, 0);
+            fixed (Rgba32* pixelsPtr = pixels) {
+                Game.GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Rgba, PixelType.UnsignedByte, pixelsPtr);
+            }
         }
     }
 
-    public void updateTexture<T>(T[] data, int x, int y, uint boundsWidth, uint boundsHeight, bool inv = true) where T : unmanaged {
+    public void updateTexture(Rgba32[] data, int x, int y, uint boundsWidth, uint boundsHeight, bool inv = true) {
         unsafe {
-            Game.GL.InvalidateTexImage(handle, 0);
-            fixed (T* dataPtr = data) {
-                Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
-                    PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
+            if (Game.isAMDCard) {
+                // old AMD drivers, convert to BGRA
+                var bgra = new Bgra32[data.Length];
+                for (int i = 0; i < data.Length; i++) {
+                    var p = data[i];
+                    bgra[i] = new Bgra32(p.R, p.G, p.B, p.A);
+                }
+                fixed (Bgra32* dataPtr = bgra) {
+                    Game.GL.InvalidateTexImage(handle, 0);
+                    Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
+                        PixelFormat.Bgra, PixelType.UnsignedByte, dataPtr);
+                }
+            }
+            else {
+                fixed (Rgba32* dataPtr = data) {
+                    Game.GL.InvalidateTexImage(handle, 0);
+                    Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
+                }
+            }
+        }
+    }
+
+    // overload for raw RGBA byte arrays
+    public void updateTexture(byte[] data, int x, int y, uint boundsWidth, uint boundsHeight, bool inv = true) {
+        unsafe {
+            if (Game.isAMDCard) {
+                // convert RGBA bytes to BGRA
+                int pixelCount = data.Length / 4;
+                var bgra = new Bgra32[pixelCount];
+                fixed (byte* src = data) {
+                    var rgba = (Rgba32*)src;
+                    for (int i = 0; i < pixelCount; i++) {
+                        var p = rgba[i];
+                        bgra[i] = new Bgra32(p.R, p.G, p.B, p.A);
+                    }
+                }
+                fixed (Bgra32* dataPtr = bgra) {
+                    Game.GL.InvalidateTexImage(handle, 0);
+                    Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
+                        PixelFormat.Bgra, PixelType.UnsignedByte, dataPtr);
+                }
+            }
+            else {
+                fixed (byte* dataPtr = data) {
+                    Game.GL.InvalidateTexImage(handle, 0);
+                    Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, dataPtr);
+                }
             }
         }
     }

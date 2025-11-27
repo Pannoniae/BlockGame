@@ -861,13 +861,15 @@ public class ServerPacketHandler : PacketHandler {
             conn.player.inventoryCtx.notifySlotChanged(conn.player.inventory.selected, newStack);
         }
 
-        // broadcast damage animation to nearby players
+        // broadcast damage event to nearby players (for damage numbers and visual effects)
         GameServer.instance.send(
             target.position,
             128.0,
-            new EntityActionPacket {
+            new EntityDamagePacket {
                 entityID = p.targetEntityID,
-                action = EntityActionPacket.Action.TAKE_DAMAGE
+                attackerID = conn.player.id,
+                damage = damage,
+                knockback = target.velocity - target.prevVelocity
             },
             DeliveryMethod.ReliableOrdered
         );

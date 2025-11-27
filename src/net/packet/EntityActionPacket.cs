@@ -4,6 +4,7 @@ namespace BlockGame.net.packet;
 public struct EntityActionPacket : Packet {
     public int entityID;
     public Action action;
+    public byte data; // optional data (damage amount for TAKE_DAMAGE, clamped 0-255)
 
     public enum Action : byte {
         SWING = 0,
@@ -18,10 +19,12 @@ public struct EntityActionPacket : Packet {
     public void write(PacketBuffer buf) {
         buf.writeInt(entityID);
         buf.writeByte((byte)action);
+        buf.writeByte(data);
     }
 
     public void read(PacketBuffer buf) {
         entityID = buf.readInt();
         action = (Action)buf.readByte();
+        data = buf.readByte();
     }
 }

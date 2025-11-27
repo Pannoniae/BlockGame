@@ -673,7 +673,7 @@ public partial class Entity(World world, string type) : Persistent {
 
     public virtual void die() {
         dead = true;
-        active = false;
+        // don't set active = false here - let death animation finish in Mob.shouldContinueUpdate()
     }
 
     public virtual void onChunkChanged() {

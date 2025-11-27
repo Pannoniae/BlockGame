@@ -204,31 +204,71 @@ public class BTextureAtlas : BTexture2D {
 
     public unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
         var GL = Game.GL;
-        fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
-            GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
-                PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
-            // Generate mipmaps
-            // we check against 2 so we never generate a mipmap with less pixels than one per texture
-            var prevMipmap = pixelArray;
 
+        if (Game.isAMDCard) {
+            // old AMD drivers, convert to BGRA
+            var bgra = new Bgra32[pixelArray.Length];
+            for (int i = 0; i < pixelArray.Length; i++) {
+                var p = pixelArray[i];
+                bgra[i] = new Bgra32(p.R, p.G, p.B, p.A);
+            }
+            fixed (Bgra32* pixels = bgra) {
+                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
+                    PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+            }
+
+            // Generate mipmaps
+            var prevMipmap = pixelArray;
             int lvl;
             int width = imageWidth;
             int height = imageHeight;
-            
-            
-            // no need to clear, we overwrite anyway!
-            //Array.Clear(mipmap);
+
             for (lvl = 1; lvl <= maxLevel; lvl++) {
                 if (width > 1) width /= 2;
                 if (height > 1) height /= 2;
 
                 Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
                 generateMipmap(0, 0, width, height, mipmap, prevMipmap);
-                fixed (Rgba32* mipmapPixels = mipmap) {
+
+                var bgraMip = new Bgra32[mipmap.Length];
+                for (int i = 0; i < mipmap.Length; i++) {
+                    var p = mipmap[i];
+                    bgraMip[i] = new Bgra32(p.R, p.G, p.B, p.A);
+                }
+                fixed (Bgra32* mipmapPixels = bgraMip) {
                     GL.TextureSubImage2D(handle, lvl, 0, 0, (uint)width, (uint)height,
-                        PixelFormat.Rgba, PixelType.UnsignedByte, mipmapPixels);
+                        PixelFormat.Bgra, PixelType.UnsignedByte, mipmapPixels);
                 }
                 prevMipmap = mipmap;
+            }
+        }
+        else {
+            fixed (Rgba32* pixels = &pixelArray.GetPinnableReference()) {
+                GL.TextureSubImage2D(handle, 0, 0, 0, (uint)imageWidth, (uint)imageHeight,
+                    PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+                // Generate mipmaps
+                // we check against 2 so we never generate a mipmap with less pixels than one per texture
+                var prevMipmap = pixelArray;
+
+                int lvl;
+                int width = imageWidth;
+                int height = imageHeight;
+
+
+                // no need to clear, we overwrite anyway!
+                //Array.Clear(mipmap);
+                for (lvl = 1; lvl <= maxLevel; lvl++) {
+                    if (width > 1) width /= 2;
+                    if (height > 1) height /= 2;
+
+                    Span<Rgba32> mipmap = this.mipmap.AsSpan(0, width * height);
+                    generateMipmap(0, 0, width, height, mipmap, prevMipmap);
+                    fixed (Rgba32* mipmapPixels = mipmap) {
+                        GL.TextureSubImage2D(handle, lvl, 0, 0, (uint)width, (uint)height,
+                            PixelFormat.Rgba, PixelType.UnsignedByte, mipmapPixels);
+                    }
+                    prevMipmap = mipmap;
+                }
             }
         }
     }

@@ -2,6 +2,7 @@ using BlockGame.logic;
 using BlockGame.main;
 using BlockGame.net.packet;
 using BlockGame.net.srv;
+using BlockGame.render;
 using BlockGame.ui;
 using BlockGame.ui.menu;
 using BlockGame.ui.screen;
@@ -95,6 +96,9 @@ public class ClientPacketHandler : PacketHandler {
                 break;
             case EntityActionPacket p:
                 handleEntityAction(p);
+                break;
+            case EntityDamagePacket p:
+                handleEntityDamage(p);
                 break;
             case PlayerHealthPacket p:
                 handlePlayerHealth(p);
@@ -671,6 +675,27 @@ public class ClientPacketHandler : PacketHandler {
                 // todo other actions (EAT, CRITICAL_HIT)
             }
         }
+    }
+
+    public void handleEntityDamage(EntityDamagePacket p) {
+        var world = Game.world;
+        if (world == null) return;
+
+        // find damaged entity
+        var entity = world.entities.FirstOrDefault(e => e.id == p.entityID);
+        if (entity == null) return;
+
+        entity.dmgTime = 30;
+
+        var rng = Game.clientRandom;
+        var h = entity.aabb.y1 - entity.position.Y;
+        var a = new Vector3D(
+            rng.NextSingle() * 0.14f,
+            h + rng.NextSingle() * 0.17f,
+            rng.NextSingle() * 0.14f
+        );
+        var np = entity.position + a;
+        world.particles.add(new DamageNumber(world, np, p.damage));
     }
 
     public void handlePlayerHealth(PlayerHealthPacket p) {
