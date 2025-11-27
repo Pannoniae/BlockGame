@@ -105,6 +105,9 @@ public class Item {
     public static Item HAND_GRENADE;
     public static Item SNOWBALL_SPITTER;
 
+    public static Item UZI;
+    public static Item UZI_AMMO;
+
     public static UVPair uv(string source, int x, int y) {
         if (Net.mode.isDed()) {
             return new UVPair(0, 0);
@@ -370,7 +373,6 @@ public class Item {
         ((Crop)Block.CROP_CARROT).product = CARROT;
         ((Crop)Block.CROP_CARROT).seedItem = CARROT_SEEDS;
 
-
         BREAD = register("bread", new Food("Bread", 25));
         BREAD.tex = uv("items.png", 10, 10);
         material[BREAD.id] = true;
@@ -405,8 +407,12 @@ public class Item {
         SNOWBALL_SPITTER = register("snowballspitter", new SnowballSpitterItem("Snowball Spitter"));
         SNOWBALL_SPITTER.tex = uv("items.png", 1, 6);
 
+        //UZI = register("uzi", new SnowballSpitterItem("Uzi"));
+        //UZI.tex = uv("items.png", 8, 2);
 
-
+        UZI_AMMO = register("uzi_ammo", new Item("Uzi Ammo"));
+        UZI_AMMO.tex = uv("items.png", 9, 2);
+        material[UZI_AMMO.id] = true;
 
 
         // all blocks are already marked as materials during Block.register() lol
