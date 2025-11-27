@@ -6,6 +6,7 @@ using BlockGame.main;
 using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
+using BlockGame.util.log;
 using BlockGame.util.stuff;
 using BlockGame.world;
 using BlockGame.world.block;
@@ -119,6 +120,13 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             pixels[i] = p[i].A > 0;
         }
 
+        // if 0, assume max?
+        if (p.Length == 0) {
+            cloudMaxVerts = 256 * 256 * 24;
+            Log.warn("Cloud texture is empty! Assuming maximum vertices.");
+            goto reload;
+        }
+
         // pre-calc max verts for full 256x256 texture - static, never changes
         cloudMaxVerts = 0;
         for (int yy = 0; yy < 256; yy++) {
@@ -148,6 +156,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
                 cloudMaxVerts += fc;
             }
         }
+
+        reload: ;
 
         reloadRenderer(mode, mode);
     }
