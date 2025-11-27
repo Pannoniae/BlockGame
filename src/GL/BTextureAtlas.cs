@@ -205,7 +205,7 @@ public class BTextureAtlas : BTexture2D {
     public unsafe void generateMipmaps(Span<Rgba32> pixelArray, int imageWidth, int imageHeight, int maxLevel) {
         var GL = Game.GL;
 
-        if (Game.isAMDCard) {
+        if (false && Game.isAMDCard) {
             // old AMD drivers, convert to BGRA
             var bgra = new Bgra32[pixelArray.Length];
             for (int i = 0; i < pixelArray.Length; i++) {

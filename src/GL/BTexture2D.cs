@@ -112,7 +112,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     private unsafe void uploadImage(Silk.NET.OpenGL.Legacy.GL GL, Image<Rgba32> img) {
         GL.TextureStorage2D(handle, 1, SizedInternalFormat.Rgba8, (uint)img.Width, (uint)img.Height);
 
-        if (Game.isAMDCard) {
+        if (false && Game.isAMDCard) {
             // old AMD drivers have R/B swap bug, convert to BGRA and upload
             using var bgra = img.CloneAs<Bgra32>();
             if (bgra.DangerousTryGetSinglePixelMemory(out var bgraData)) {
@@ -194,7 +194,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     }
     
     public unsafe void updateTexture(int left, int top, int width, int height, int srcX, int srcY) {
-        if (Game.isAMDCard) {
+        if (false && Game.isAMDCard) {
             // old AMD drivers, need BGRA
             var pixels = new Bgra32[width * height];
             for (int x = 0; x < width; x++) {
@@ -224,7 +224,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
 
     public void updateTexture(Rgba32[] data, int x, int y, uint boundsWidth, uint boundsHeight, bool inv = true) {
         unsafe {
-            if (Game.isAMDCard) {
+            if (false && Game.isAMDCard) {
                 // old AMD drivers, convert to BGRA
                 var bgra = new Bgra32[data.Length];
                 for (int i = 0; i < data.Length; i++) {
@@ -250,7 +250,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     // overload for raw RGBA byte arrays
     public void updateTexture(byte[] data, int x, int y, uint boundsWidth, uint boundsHeight, bool inv = true) {
         unsafe {
-            if (Game.isAMDCard) {
+            if (false && Game.isAMDCard) {
                 // convert RGBA bytes to BGRA
                 int pixelCount = data.Length / 4;
                 var bgra = new Bgra32[pixelCount];
