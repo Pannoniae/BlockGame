@@ -203,7 +203,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
                     pixels[y * width + x] = new Bgra32(p.R, p.G, p.B, p.A);
                 }
             }
-            Game.GL.InvalidateTexImage(handle, 0);
+            //Game.GL.InvalidateTexImage(handle, 0);
             fixed (Bgra32* pixelsPtr = pixels) {
                 Game.GL.TextureSubImage2D(handle, 0, left, top, (uint)width, (uint)height, PixelFormat.Bgra, PixelType.UnsignedByte, pixelsPtr);
             }
@@ -232,7 +232,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
                     bgra[i] = new Bgra32(p.R, p.G, p.B, p.A);
                 }
                 fixed (Bgra32* dataPtr = bgra) {
-                    Game.GL.InvalidateTexImage(handle, 0);
+                    //Game.GL.InvalidateTexImage(handle, 0);
                     Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
                         PixelFormat.Bgra, PixelType.UnsignedByte, dataPtr);
                 }
@@ -262,7 +262,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
                     }
                 }
                 fixed (Bgra32* dataPtr = bgra) {
-                    Game.GL.InvalidateTexImage(handle, 0);
+                    //Game.GL.InvalidateTexImage(handle, 0);
                     Game.GL.TextureSubImage2D(handle, 0, x, y, boundsWidth, boundsHeight,
                         PixelFormat.Bgra, PixelType.UnsignedByte, dataPtr);
                 }
