@@ -100,6 +100,7 @@ public class Item {
     public static Item BOW_WOOD;
     public static Item ARROW_WOOD;
     public static Item FEATHER;
+    public static Item IRON_STRING;
     public static Item STRING;
     public static Item SNOWBALL;
     public static Item HAND_GRENADE;
@@ -394,8 +395,11 @@ public class Item {
         FEATHER = register("feather", new Item("Feather"));
         FEATHER.tex = uv("items.png", 0, 3);
 
-        STRING = register("string", new Item("String"));
-        STRING.tex = uv("items.png", 1, 3);
+        IRON_STRING = register("string", new Item("Iron String"));
+        IRON_STRING.tex = uv("items.png", 1, 3);
+
+        STRING = register("ironString", new Item("String"));
+        STRING.tex = uv("items.png", 0, 11);
 
         SNOWBALL = register("snowball", new SnowballItem("Snowball"));
         SNOWBALL.tex = uv("items.png", 0, 5);
@@ -410,9 +414,9 @@ public class Item {
         //UZI = register("uzi", new SnowballSpitterItem("Uzi"));
         //UZI.tex = uv("items.png", 8, 2);
 
-        UZI_AMMO = register("uzi_ammo", new Item("Uzi Ammo"));
-        UZI_AMMO.tex = uv("items.png", 9, 2);
-        material[UZI_AMMO.id] = true;
+        //UZI_AMMO = register("uzi_ammo", new Item("Uzi Ammo"));
+        //UZI_AMMO.tex = uv("items.png", 9, 2);
+        //material[UZI_AMMO.id] = true;
 
 
         // all blocks are already marked as materials during Block.register() lol
