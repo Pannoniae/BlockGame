@@ -256,6 +256,12 @@ namespace FontStashSharp.RichText
 					case 'u':
 						_currentTextStyle = TextStyle.Underline;
 						break;
+					case 'b':
+						_currentTextStyle = TextStyle.Bold;
+						break;
+					case 'i':
+						_currentTextStyle = TextStyle.Italic;
+						break;
 					case 'd':
 						_currentTextStyle = TextStyle.None;
 						break;

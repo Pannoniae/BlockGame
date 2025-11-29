@@ -4,6 +4,8 @@
 	{
 		None,
 		Underline,
-		Strikethrough
+		Strikethrough,
+		Bold,
+		Italic
 	}
 }

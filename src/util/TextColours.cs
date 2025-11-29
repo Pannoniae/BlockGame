@@ -1,5 +1,6 @@
 using System.Text;
 using BlockGame.world.block;
+using FontStashSharp;
 
 namespace BlockGame.util;
 
@@ -48,26 +49,54 @@ public static class TextColours {
         { 'r', 0 },  // reset (white)
     };
 
-    /** segment of colored text */
-    public record struct ColourSegment(string text, Color color);
+    /** segment of colored text with optional style */
+    public record struct ColourSegment(string text, Color color, TextStyle style = TextStyle.None);
 
     /**
      * parse text with &-codes into colored segments.
      * &amp;a turns text green, &amp;c turns it red, etc.
+     * &amp;I = italic, &amp;B = bold, &amp;U = underline, &amp;S = strikethrough, &amp;R = reset style
      */
     public static List<ColourSegment> parse(string text) {
         var segments = new List<ColourSegment>();
         var sb = new StringBuilder();
         var currentColour = Color.White;
+        var currentStyle = TextStyle.None;
 
         for (int i = 0; i < text.Length; i++) {
             if (text[i] == '&' && i + 1 < text.Length) {
-                char code = char.ToLower(text[i + 1]);
+                char code = text[i + 1];
+                char lowerCode = char.ToLower(code);
 
-                if (map.TryGetValue(code, out int colorIdx)) {
+                // check for style codes (uppercase)
+                if (char.IsUpper(code)) {
+                    TextStyle? newStyle = code switch {
+                        'I' => TextStyle.Italic,
+                        'B' => TextStyle.Bold,
+                        'U' => TextStyle.Underline,
+                        'S' => TextStyle.Strikethrough,
+                        'R' => TextStyle.None, // reset style
+                        _ => null
+                    };
+
+                    if (newStyle.HasValue) {
+                        // flush current segment
+                        if (sb.Length > 0) {
+                            segments.Add(new ColourSegment(sb.ToString(), currentColour, currentStyle));
+                            sb.Clear();
+                        }
+
+                        currentStyle = newStyle.Value;
+                        i++; // skip the code char
+                        continue;
+                    }
+                }
+
+                // check for color codes (lowercase)
+                if (map.TryGetValue(lowerCode, out int colorIdx)) {
                     // flush current segment
                     if (sb.Length > 0) {
-                        segments.Add(new ColourSegment(sb.ToString(), currentColour));
+                        segments.Add(new ColourSegment(sb.ToString(), currentColour, currentStyle));
                         sb.Clear();
                     }
 
@@ -83,7 +112,7 @@ public static class TextColours {
 
         // flush remaining
         if (sb.Length > 0) {
-            segments.Add(new ColourSegment(sb.ToString(), currentColour));
+            segments.Add(new ColourSegment(sb.ToString(), currentColour, currentStyle));
         }
 
         return segments;
@@ -97,9 +126,17 @@ public static class TextColours {
 
         for (int i = 0; i < text.Length; i++) {
             if (text[i] == '&' && i + 1 < text.Length) {
-                char code = char.ToLower(text[i + 1]);
+                char code = text[i + 1];
+                char lowerCode = char.ToLower(code);
 
-                if (map.ContainsKey(code)) {
+                // check for style codes (uppercase)
+                if (char.IsUpper(code) && (code is 'I' or 'B' or 'U' or 'S' or 'R')) {
+                    i++; // skip the code char
+                    continue;
+                }
+
+                // check for color codes
+                if (map.ContainsKey(lowerCode)) {
                     i++; // skip the code char
                     continue;
                 }

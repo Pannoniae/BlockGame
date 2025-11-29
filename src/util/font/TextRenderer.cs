@@ -26,6 +26,7 @@ public class TextRenderer : IFontStashRenderer {
         // texture height
         tb.Draw(tex,
             intPos,
+            ref worldMatrix,
             src.GetValueOrDefault(),
             new Color(color.R, color.G, color.B, color.A),
             scale,

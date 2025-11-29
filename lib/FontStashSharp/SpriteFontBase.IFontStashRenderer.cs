@@ -163,13 +163,69 @@ namespace FontStashSharp
 					var p = pos + new Vector2(glyph.RenderOffset.X, glyph.RenderOffset.Y);
 					p = p.Transform(ref transformation);
 
-					renderer.Draw(glyph.Texture,
-						p,
-						glyph.TextureRectangle,
-						color,
-						rotation,
-						scale,
-						layerDepth);
+					if (textStyle == TextStyle.Italic)
+					{
+						var skewMatrix = Matrix4x4.Identity;
+						skewMatrix.M21 = -0.25f;
+
+						var localTransform = Matrix4x4.CreateTranslation(-p.X, -p.Y, 0)
+							* skewMatrix
+							* Matrix4x4.CreateTranslation(p.X, p.Y, 0);
+
+						renderer.Draw(glyph.Texture,
+							p,
+							ref localTransform,
+							glyph.TextureRectangle,
+							color,
+							rotation,
+							scale,
+							layerDepth);
+
+                        // todo support multistyles? this will never run rn
+						// bold: draw again with 1px horizontal offset
+						if (textStyle == TextStyle.Bold)
+						{
+							var pBold = pos + new Vector2(glyph.RenderOffset.X + 1, glyph.RenderOffset.Y);
+							pBold = pBold.Transform(ref transformation);
+
+							var boldTransform = Matrix4x4.CreateTranslation(-pBold.X, -pBold.Y, 0)
+								* skewMatrix
+								* Matrix4x4.CreateTranslation(pBold.X, pBold.Y, 0);
+
+							renderer.Draw(glyph.Texture,
+								p,
+								ref boldTransform,
+								glyph.TextureRectangle,
+								color,
+								rotation,
+								scale,
+								layerDepth);
+						}
+					}
+					else
+					{
+						renderer.Draw(glyph.Texture,
+							p,
+							glyph.TextureRectangle,
+							color,
+							rotation,
+							scale,
+							layerDepth);
+
+						// bold: draw again with 1px horizontal offset
+						if (textStyle == TextStyle.Bold)
+						{
+							var pBold = pos + new Vector2(glyph.RenderOffset.X + 1, glyph.RenderOffset.Y);
+							pBold = pBold.Transform(ref transformation);
+							renderer.Draw(glyph.Texture,
+								pBold,
+								glyph.TextureRectangle,
+								color,
+								rotation,
+								scale,
+								layerDepth);
+						}
+					}
 				}
 
 				pos.X += glyph.XAdvance;
@@ -267,14 +323,73 @@ namespace FontStashSharp
 					var p = pos + new Vector2(glyph.RenderOffset.X, glyph.RenderOffset.Y);
 					p = p.Transform(ref transformation);
 
-					renderer.Draw(glyph.Texture,
-						p,
-						ref worldMatrix,
-						glyph.TextureRectangle,
-						color,
-						rotation,
-						scale,
-						layerDepth);
+
+					if (textStyle == TextStyle.Italic)
+					{
+						var skewMatrix = Matrix4x4.Identity;
+						skewMatrix.M21 = -0.25f;
+
+						var localTransform = Matrix4x4.CreateTranslation(-p.X, -p.Y, 0)
+							* skewMatrix
+							* Matrix4x4.CreateTranslation(p.X, p.Y, 0)
+							* worldMatrix;
+
+						renderer.Draw(glyph.Texture,
+							p,
+							ref localTransform,
+							glyph.TextureRectangle,
+							color,
+							rotation,
+							scale,
+							layerDepth);
+
+						// bold: draw again with 1px horizontal offset
+						if (textStyle == TextStyle.Bold)
+						{
+							var pBold = pos + new Vector2(glyph.RenderOffset.X + 1, glyph.RenderOffset.Y);
+							pBold = pBold.Transform(ref transformation);
+
+							var boldTransform = Matrix4x4.CreateTranslation(-pBold.X, -pBold.Y, 0)
+								* skewMatrix
+								* Matrix4x4.CreateTranslation(pBold.X, pBold.Y, 0)
+								* worldMatrix;
+
+							renderer.Draw(glyph.Texture,
+								p,
+								ref boldTransform,
+								glyph.TextureRectangle,
+								color,
+								rotation,
+								scale,
+								layerDepth);
+						}
+					}
+					else
+					{
+						renderer.Draw(glyph.Texture,
+							p,
+							ref worldMatrix,
+							glyph.TextureRectangle,
+							color,
+							rotation,
+							scale,
+							layerDepth);
+
+						// bold: draw again with 1px horizontal offset
+						if (textStyle == TextStyle.Bold)
+						{
+							var pBold = pos + new Vector2(glyph.RenderOffset.X + 1, glyph.RenderOffset.Y);
+							pBold = pBold.Transform(ref transformation);
+							renderer.Draw(glyph.Texture,
+								pBold,
+								ref worldMatrix,
+								glyph.TextureRectangle,
+								color,
+								rotation,
+								scale,
+								layerDepth);
+						}
+					}
 				}
 
 				pos.X += glyph.XAdvance;

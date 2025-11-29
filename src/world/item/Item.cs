@@ -10,6 +10,7 @@ namespace BlockGame.world.item;
 public class Item {
     public int id;
     public string name;
+    public string[]? description;
 
     public UVPair tex = new UVPair(0, 0);
 
@@ -407,6 +408,7 @@ public class Item {
 
         HAND_GRENADE = register("handGrenade", new GrenadeItem("Hand Grenade"));
         HAND_GRENADE.tex = uv("items.png", 1, 5);
+        HAND_GRENADE.description = ["&I'Made in Antioch'&R"];
 
         SNOWBALL_SPITTER = register("snowballspitter", new SnowballSpitterItem("Snowball Spitter"));
         SNOWBALL_SPITTER.tex = uv("items.png", 1, 6);
@@ -431,6 +433,7 @@ public class Item {
         Registry.ITEMS.blackList[Block.FURNACE_LIT.item.id] = true;
         Registry.ITEMS.blackList[Block.BRICK_FURNACE_LIT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_WHEAT.item.id] = true;
+        Registry.ITEMS.blackList[Block.CROP_CARROT.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
 
 
@@ -516,6 +519,7 @@ public class Tool : Item {
 
     protected override void onRegister(int id) {
         durability[id] = tier.durability;
+        Registry.ITEMS.rot[id] = 90;
     }
 
     public override int getMaxStackSize() => 1;

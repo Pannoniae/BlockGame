@@ -143,7 +143,8 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
             else {
                 img.ProcessPixelRows(accessor => {
                     for (int rowIndex = 0; rowIndex < accessor.Height; ++rowIndex) {
-                        fixed (Rgba32* pixels = &imageData.Span.GetPinnableReference()) {
+                        var row = accessor.GetRowSpan(rowIndex);
+                        fixed (Rgba32* pixels = &row.GetPinnableReference()) {
                             GL.TextureSubImage2D(handle, 0, 0, rowIndex, (uint)accessor.Width, 1U,
                                 PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
                         }

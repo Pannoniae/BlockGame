@@ -622,9 +622,14 @@ public class GUI {
         DrawStringThin(text, position * guiScale, colour == default ? Color.White : colour, TEXTSCALE * scale, default);
     }
 
+    public void drawStringUIThin(ReadOnlySpan<char> text, Vector2 position, Color colour, TextStyle textStyle) {
+        DrawStringThin(text, position * guiScale, colour == default ? Color.White : colour, new Vector2(TEXTSCALE),
+            default, textStyle);
+    }
+
     /**
-     * draw text with &amp;-code colour support.
-     * &amp;a = green, &amp;c = red, etc.
+     * draw text with &amp;-code colour and style support.
+     * &amp;a = green, &amp;c = red, &amp;I = italic, &amp;B = bold, etc.
      * alpha is multiplied with each segment's colour.
      */
     public void drawColouredStringUIThin(string text, Vector2 position, float alpha = 1f) {
@@ -635,7 +640,7 @@ public class GUI {
             var color = segment.color;
             color.A = (byte)(alpha * 255);
 
-            drawStringUIThin(segment.text, new Vector2(position.X + xOffset, position.Y), color);
+            drawStringUIThin(segment.text, new Vector2(position.X + xOffset, position.Y), color, segment.style);
 
             // measure width in GUI coordinates
             var measurement = measureStringUIThin(segment.text);
@@ -769,6 +774,13 @@ public class GUI {
         Vector2 offset) {
         var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
         guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale);
+    }
+
+    protected void DrawStringThin(ReadOnlySpan<char> text, Vector2 position, Color colour, Vector2 scale,
+        Vector2 offset, TextStyle textStyle) {
+        var aspectScale = new Vector2(scale.X * Game.fontLoader.thinFontAspectRatio, scale.Y);
+        guiFontThin.DrawText(Game.fontLoader.renderer, text, position, colour.toFS(), 0, offset, aspectScale,
+            textStyle: textStyle);
     }
 
     protected void DrawRString(RichTextLayout layout, Vector2 position, Color colour, Vector2 scale,

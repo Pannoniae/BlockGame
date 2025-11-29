@@ -1,6 +1,7 @@
 using System.Numerics;
 using BlockGame.main;
 using BlockGame.ui.element;
+using BlockGame.util;
 using Molten;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
@@ -143,9 +144,14 @@ public class Menu {
             }
         }
 
-        var tooltip = getTooltipText();
-        if (!string.IsNullOrEmpty(tooltip)) {
-            drawTooltip(tooltip);
+        var tooltipLines = getTooltipLines();
+        if (tooltipLines != null && tooltipLines.Length > 0) {
+            drawTooltip(tooltipLines);
+        } else {
+            var tooltip = getTooltipText();
+            if (!string.IsNullOrEmpty(tooltip)) {
+                drawTooltip(tooltip);
+            }
         }
     }
 
@@ -154,18 +160,46 @@ public class Menu {
         return hoveredElement?.tooltip;
     }
 
+    /** Override to provide multi-line tooltip (takes priority over getTooltipText) */
+    protected virtual string[]? getTooltipLines() {
+        return null;
+    }
+
     /** Draw a tooltip at mouse position with the given text */
     protected static void drawTooltip(string tooltip) {
-        var pos = Game.mousePos + MOUSEPOSPADDING;
-        var posExt = Game.gui.measureStringThin(tooltip) + new Vector2(4, 2) * GUI.guiScale;
-        var textPos = Game.mousePos + MOUSEPOSPADDING + new Vector2(2, 1) * GUI.guiScale;
+        drawTooltip([tooltip]);
+    }
 
-        // clamp tooltip to screen bounds
-        var screenWidth = Game.window.Size.X;
-        var screenHeight = Game.window.Size.Y;
+    /** Draw a multi-line tooltip at mouse position */
+    protected static void drawTooltip(string[] lines) {
+        if (lines == null || lines.Length == 0) return;
 
-        var borderSize = GUI.guiScale;
+        var mouseUI = GUI.s2u(Game.mousePos);
+        var paddingUI = GUI.s2u(MOUSEPOSPADDING);
+        var pos = mouseUI + paddingUI;
+        const float borderSize = 1f; // UI space border
 
+        // measure all lines in UI coords (strip &-codes for measurement)
+        float maxWidth = 0;
+        float totalHeight = 0;
+        var lineHeightUI = (Game.gui.guiFontThin.FontSize + 2) / GUI.TEXTSCALE;
+
+        foreach (var line in lines) {
+            var stripped = TextColours.strip(line);
+            var sizeUI = Game.gui.measureStringUIThin(stripped);
+            if (sizeUI.X > maxWidth) {
+                maxWidth = sizeUI.X;
+            }
+
+            totalHeight += lineHeightUI;
+        }
+
+        var posExt = new Vector2(maxWidth + 4, totalHeight + 2);
+        var textPos = pos + new Vector2(2, 1);
+
+        // clamp tooltip to screen bounds (convert to screen for bounds check)
+        var screenWidth = Game.window.Size.X / GUI.guiScale;
+        var screenHeight = Game.window.Size.Y / GUI.guiScale;
 
         if (pos.X + posExt.X + borderSize > screenWidth) {
             var overflow = pos.X + posExt.X + borderSize - screenWidth;
@@ -178,8 +212,11 @@ public class Menu {
             textPos.Y -= overflow;
         }
 
-        var borderRect = new RectangleF(pos.X - borderSize, pos.Y - borderSize, posExt.X + borderSize * 2, posExt.Y + borderSize * 2);
-        var bgRect = new RectangleF(pos.X, pos.Y, posExt.X, posExt.Y);
+        // convert to screen coords for drawing background rects
+        var borderRect = new RectangleF((pos.X - borderSize) * GUI.guiScale, (pos.Y - borderSize) * GUI.guiScale,
+            (posExt.X + borderSize * 2) * GUI.guiScale, (posExt.Y + borderSize * 2) * GUI.guiScale);
+        var bgRect = new RectangleF(pos.X * GUI.guiScale, pos.Y * GUI.guiScale,
+            posExt.X * GUI.guiScale, posExt.Y * GUI.guiScale);
 
         // draw border with gradient
         var borderColorTop = new Color(0, 115, 226, 255);
@@ -191,7 +228,12 @@ public class Menu {
         var bgColorBottom = new Color(0, 25, 40, 240);
         Game.gui.drawGradientVertical(Game.gui.colourTexture, bgRect, bgColorTop, bgColorBottom);
 
-        Game.gui.drawStringThin(tooltip, textPos);
+        // draw each line with color and style support (in UI coords)
+        var currentY = textPos.Y;
+        foreach (var line in lines) {
+            Game.gui.drawColouredStringUIThin(line, new Vector2(textPos.X, currentY));
+            currentY += lineHeightUI;
+        }
     }
 
     public virtual void update(double dt) {

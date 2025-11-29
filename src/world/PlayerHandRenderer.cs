@@ -6,6 +6,7 @@ using BlockGame.main;
 using BlockGame.render;
 using BlockGame.render.model;
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.block;
 using BlockGame.world.entity;
 using Molten;
@@ -128,7 +129,7 @@ public class PlayerHandRenderer {
 
             // the lowering
             //mat.translate(0,  * 0.35f, 0);
-            mat.translate(0.65f, -1.45f, 1f);
+            mat.translate(0.65f, -1.6f, 1f);
 
 
             if (a) {
@@ -467,7 +468,7 @@ public class PlayerHandRenderer {
         }
     }
 
-    private void addQuad(float x1, float y1, float z1, float x2, float y2, float z2,
+    private static void addQuad(float x1, float y1, float z1, float x2, float y2, float z2,
         float x3, float y3, float z3, float x4, float y4, float z4,
         float u1, float v1, float u2, float v2, float u3, float v3, float u4, float v4, Color shade) {
         // Add 4 vertices for quad
@@ -565,18 +566,19 @@ public class PlayerHandRenderer {
             // we need to fixup the rotation a bit because items don't rotate somehow??
             //mat.translate(0, 0, sinSwing * -0.3f);
 
-            mat.translate(0.75f, 0.45f, 0.55f);
+            mat.translate(0.65f, 0.50f, 0.50f);
 
             // bit of fixup
             mat.translate(-0.1f * sinSwing, 0, 0);
 
-            mat.scale(0.5f);
+            mat.scale(0.4f);
 
             //mat.rotate(sinSwingSqrt * 30, 0, 0, 1);
             //mat.rotate(sinSwing * 20, 0, 1, 0);
 
             // rotate into a proper orientation
-            mat.rotate(70, 1, 0, 0);
+            mat.rotate(30, 1, 0, 0);
+            mat.rotate(Registry.ITEMS.rot[item.id], 1, 0, 0);
 
             mat.rotate(sinSwingSqrt * 60, 1, 0, 0);
             mat.rotate(sinSwingSqrt * 20, 0, 0, 1);
@@ -590,7 +592,7 @@ public class PlayerHandRenderer {
 
             // rotate into direction
             // overrotate a bit so it's not as "harsh" into the distance
-            mat.rotate(80, 0, 1, 0);
+            mat.rotate(90, 0, 1, 0);
 
             // we rotate the item "into place"
             mat.rotate(20.0f, 0, 0, 1);

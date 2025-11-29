@@ -22,8 +22,9 @@ public class MusicPlayer {
 
     public static readonly Dictionary<string, float> volumes = new() {
         // per-track volume adjustments (relative to global music volume)
-        ["Castle-Crumhorn-Consort"] = 0.5f,
+        ["OrganCrumhorns1"] = 0.5f,
         ["Clavicordium-Forest-Lilt"] = 0.5f,
+        ["DesolateArp"] = 0.5f,
     };
 
     public MusicPlayer(SoundEngine snd) {

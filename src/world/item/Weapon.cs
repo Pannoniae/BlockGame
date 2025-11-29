@@ -1,4 +1,5 @@
 using BlockGame.util;
+using BlockGame.util.stuff;
 using BlockGame.world.block;
 
 namespace BlockGame.world.item;
@@ -14,6 +15,7 @@ public class Weapon : Item {
 
     protected override void onRegister(int id) {
         durability[id] = tier.durability;
+        Registry.ITEMS.rot[id] = 90;
     }
 
     public override int getMaxStackSize() => 1;

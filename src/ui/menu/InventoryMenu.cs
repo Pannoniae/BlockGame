@@ -80,29 +80,42 @@ public abstract class InventoryMenu : Menu {
         }
     }
 
-    protected override string? getTooltipText() {
+    protected override string[]? getTooltipLines() {
         var player = Game.player;
+        ItemStack? stack = null;
 
         // if holding an item in cursor, show its tooltip
         if (player?.inventory?.cursor != null && player.inventory.cursor != ItemStack.EMPTY) {
-            return player.inventory.cursor.getItem().getName(player.inventory.cursor);
-        }
+            stack = player.inventory.cursor;
+        } else {
+            var guiPos = GUI.s2u(Game.mousePos);
 
-        var guiPos = GUI.s2u(Game.mousePos);
-
-        // check slots first
-        foreach (var slot in slots) {
-            var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
-            if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
-                var stack = slot.getStack();
-                if (stack != ItemStack.EMPTY && stack.id != 0) {
-                    return stack.getItem().getName(stack);
+            // check slots
+            foreach (var slot in slots) {
+                var absoluteRect = new Rectangle(guiBounds.X + slot.rect.X, guiBounds.Y + slot.rect.Y, slot.rect.Width, slot.rect.Height);
+                if (absoluteRect.Contains((int)guiPos.X, (int)guiPos.Y)) {
+                    var slotStack = slot.getStack();
+                    if (slotStack != ItemStack.EMPTY && slotStack.id != 0) {
+                        stack = slotStack;
+                    }
+                    break;
                 }
-
-                break;
             }
         }
 
+        if (stack != null) {
+            var item = stack.getItem();
+            var lines = new List<string> { item.getName(stack) };
+            if (item.description != null) {
+                lines.AddRange(item.description);
+            }
+            return lines.ToArray();
+        }
+
+        return null;
+    }
+
+    protected override string? getTooltipText() {
         // fallback to base (GUIElement tooltips)
         return base.getTooltipText();
     }

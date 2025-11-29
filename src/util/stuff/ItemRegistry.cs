@@ -37,6 +37,8 @@ public class ItemRegistry : Registry<Item> {
     /** delay between uses in ticks */
     public readonly XUList<int> useDelay;
 
+    public readonly XUList<int> rot;
+
     public ItemRegistry() {
         armour = track(false);
         accessory = track(false);
@@ -46,5 +48,6 @@ public class ItemRegistry : Registry<Item> {
         durability = track(0);
         autoUse = track(false);
         useDelay = track(0);
+        rot = track(0);
     }
 }
