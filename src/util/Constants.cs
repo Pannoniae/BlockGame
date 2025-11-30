@@ -44,7 +44,7 @@ public static class Constants {
     public const double flyModeDelay = 0.4;
 
     // Networking
-    public const int netVersion = 6;
+    public const int netVersion = 7;
     public const string connectionKey = "BlockGame";
 
     // Inventory
@@ -59,5 +59,5 @@ public static class Constants {
     public static string VERSION => _ver;
     #endif
 
-    private const string _ver = "BlockGame v0.0.5";
+    private const string _ver = "BlockGame v0.0.5_01";
 }

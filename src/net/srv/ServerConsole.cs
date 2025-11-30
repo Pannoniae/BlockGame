@@ -43,27 +43,35 @@ public class ServerConsole : CommandSource {
                 var key = Console.ReadKey(intercept: true);
 
                 lock (inputLock) {
-                    if (key.Key == ConsoleKey.Enter) {
-                        var input = inputBuffer.ToString();
-                        inputBuffer.Clear();
-                        Console.WriteLine(); // newline after command
+                    switch (key.Key) {
+                        case ConsoleKey.Enter: {
+                            var input = inputBuffer.ToString();
+                            inputBuffer.Clear();
+                            Console.WriteLine(); // newline after command
 
-                        if (!string.IsNullOrWhiteSpace(input)) {
-                            processCommand(input.Trim());
+                            if (!string.IsNullOrWhiteSpace(input)) {
+                                processCommand(input.Trim());
+                            }
+
+                            break;
                         }
-                    }
-                    else if (key.Key == ConsoleKey.Backspace && inputBuffer.Length > 0) {
-                        inputBuffer.Length--;
-                        Console.Write("\b \b"); // erase character visually
-                    }
-                    else if (!char.IsControl(key.KeyChar)) {
-                        inputBuffer.Append(key.KeyChar);
-                        Console.Write(key.KeyChar); // echo character
+                        case ConsoleKey.Backspace when inputBuffer.Length > 0:
+                            inputBuffer.Length--;
+                            Console.Write("\b \b"); // erase character visually
+                            break;
+                        default: {
+                            if (!char.IsControl(key.KeyChar)) {
+                                inputBuffer.Append(key.KeyChar);
+                                Console.Write(key.KeyChar); // echo character
+                            }
+
+                            break;
+                        }
                     }
                 }
             }
             catch (Exception e) {
-                Log.error($"Error reading console:");
+                Log.error("Error reading console:");
                 Log.error(e);
             }
         }

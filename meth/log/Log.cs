@@ -30,7 +30,7 @@ namespace BlockGame.util.log;
  */
 public static class Log {
     private static volatile bool initialized = false;
-    private static LogLevel minLevel = LogLevel.INFO;
+    public static LogLevel minLevel = LogLevel.INFO;
     private static ConsoleAppender? consoleAppender;
     private static FileAppender? fileAppender;
     private static readonly Lock initLock = new();

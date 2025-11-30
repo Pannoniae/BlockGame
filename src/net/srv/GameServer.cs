@@ -56,7 +56,7 @@ public class GameServer : INetEventListener {
     public readonly string ip6;
     public readonly int port;
 
-    public Discord? discord = null;
+    public DiscordBridge? discord = null;
 
     // game state
     public World world;
@@ -124,7 +124,7 @@ public class GameServer : INetEventListener {
                 return;
             }
 
-            discord = new Discord(token, channelId);
+            discord = new DiscordBridge(token, channelId);
             discord.start();
         }
     }
@@ -1028,6 +1028,8 @@ public class GameServer : INetEventListener {
             return; // already stopping, don't do it twice :(
         }
 
+        Log.info("Shutting down!");
+
         discord?.stop();
 
         // kick everyone with message
@@ -1049,17 +1051,22 @@ public class GameServer : INetEventListener {
         Log.info("Stopping server...");
 
         // save all players before shutdown
+        Log.info("About to save players");
         saveAllPlayers();
+        Log.info("Players saved");
 
         // save world before shutdown
         if (world != null && world.inited) {
             Log.info("Saving world...");
             world.worldIO.save(world, world.name, saveChunks: true);
+            Log.info("WorldIO saved, disposing...");
             world.worldIO.Dispose();
             Log.info("World saved");
         }
 
+        Log.info("Stopping console");
         console.stop();
+        Log.info("Stopping network");
         netManager.Stop();
         saveUsers();
         Net.mode = NetMode.NONE;

@@ -59,6 +59,7 @@ public class EntityTracker {
     private static bool shouldSendVelocity(Entity entity) {
         // only send velocity for entities that actually move
         return entity switch {
+            Player => true,  // players need velocity for smooth animation
             ItemEntity => true,
             FallingBlockEntity => true,
             ArrowEntity => true,

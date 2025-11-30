@@ -8,14 +8,10 @@ namespace BlockGame.world.entity;
  * It's like a Player, but not really.
  * Used for other clients in multiplayer.
  *
- * TODO can we do better than the fixed 4-tick interpolation?
- * RN it works but it's kinda janky, has that fucking MC-like lag.
- * We could try client-side prediction or something, not sure. Or adjust based on ping?
- * And idk what happens at high ping, does it spaz out?
+ * Uses adaptive interpolation based on actual update rate to reduce lag.
+ * Extrapolates with velocity when updates are delayed.
  *
  * ALSO TODO fucking merge this system with the Mob interpolation jfc, it's duplicated right now because I made this first lol
- *
- * Also arms glitch out when sneaking (animation too fast, looks like it's normal animation speed but with smaller maxpos? Something is fucked, investigate)
  */
 public class Humanoid : Player {
     // interpolation for smooth movement
@@ -23,6 +19,11 @@ public class Humanoid : Player {
     public Vector3 targetRot;
     public Vector3 targetBodyRot;
     public int interpolationTicks;
+
+    // adaptive interpolation tracking
+    private double lastUpdateTime = 0;
+    private double updateInterval = 4.0; // measured ticks between updates
+    private int ticksSinceLastUpdate = 0;
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
         targetPos = position;
@@ -34,19 +35,35 @@ public class Humanoid : Player {
         // set prev
         savePrevVars();
 
-        // interpolate towards target position/rotation evenly
+        ticksSinceLastUpdate++;
+
+        // timeout check - if no update for 30 ticks, snap to target
+        if (ticksSinceLastUpdate > 30) {
+            position = targetPos;
+            rotation = targetRot;
+            interpolationTicks = 0;
+        }
+
+        // interpolate towards target position/rotation
         if (interpolationTicks > 0) {
             var t = 1.0 / interpolationTicks;
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
             interpolationTicks--;
         }
+        else if (velocity.LengthSquared() > 0.001) {
+            // ran out of interpolation ticks but still moving - extrapolate with velocity
+            // (prevents stutter when waiting for next update)
+            var extrapolated = position + velocity * dt;
 
-        // derive velocity from actual movement for animation
-        // (velocity can also be set directly by EntityVelocityPacket for knockback)
-        if (dt > 0) {
-            velocity = (position - prevPosition) / dt;
+            // don't drift too far from last known position (max 1.5 blocks)
+            if (Vector3D.Distance(extrapolated, targetPos) < 1.5) {
+                position = extrapolated;
+            }
         }
+
+        // velocity is now set by EntityVelocityPacket, not derived
+        // (this HOPEFULLY fixes the animation jank from interpolation artifacts)
 
         // update body movement (uses velocity like Mob does)
         updateBodyRotation(dt);
@@ -114,9 +131,19 @@ public class Humanoid : Player {
     }
 
     public void mpInterpolate(Vector3D pos, Vector3 rot) {
+        double now = world.worldTick;
+        if (lastUpdateTime > 0) {
+            double measured = now - lastUpdateTime;
+            updateInterval = updateInterval * 0.7 + measured * 0.3;
+        }
+        lastUpdateTime = now;
+
         targetPos = pos;
         targetRot = rot;
-        interpolationTicks = 4; // interpolate over 3 ticks (~50ms)
+
+        interpolationTicks = (int)Math.Clamp(updateInterval, 2, 10);
+
+        ticksSinceLastUpdate = 0; // reset timeout
     }
 
     /** when receiving an item equip packet, equip the item in the correct slot */
