@@ -17,8 +17,8 @@ public class Pig : Mob {
         );
     }
 
-    public override (Item item, byte metadata, int count) getDrop() {
-        return (Item.PORKCHOP, 0, 1);
+    public override void getDrop(List<ItemStack> drops) {
+        drops.Add(new ItemStack(Item.PORKCHOP, 1, 0));
     }
     
 }

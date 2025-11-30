@@ -21,6 +21,8 @@ public class Leaves : Block {
         tick();
 
         material(Material.ORGANIC);
+        setHardness(0.25);
+        optionalTool[id] = true;
 
         // only broken by a scythe!
         tool[id] = ToolType.SCYTHE;

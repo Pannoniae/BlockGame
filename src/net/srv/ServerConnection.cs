@@ -31,6 +31,7 @@ public class ServerConnection {
     // block breaking state
     public Vector3I? breakingBlock;
     public double breakProgress;
+    public int lastProgressBroadcastTick;
 
     // inventory sync state
     public bool outOfSync = false;

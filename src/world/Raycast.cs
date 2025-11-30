@@ -53,6 +53,11 @@ public class Raycast {
                         continue;
                     }
 
+                    // if itementity and player has non-empty hand, skip
+                    if (entity is ItemEntity && player.inventory.getSelected() != ItemStack.EMPTY) {
+                        continue;
+                    }
+
                     // calculate hit face
                     RawDirection f;
                     var toEntity = Vector3D.Normalize(entity.position + new Vector3D(0, (entity.aabb.y1 - entity.aabb.y0) / 2, 0) - raycastPos);

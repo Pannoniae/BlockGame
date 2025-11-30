@@ -1,4 +1,5 @@
 using BlockGame.util;
+using BlockGame.world.item;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
@@ -18,5 +19,9 @@ public class Zombie : Hostile {
             pos.X - 0.3, pos.Y, pos.Z - 0.3,
             pos.X + 0.3, pos.Y + 1.8, pos.Z + 0.3
         );
+    }
+
+    public override void getDrop(List<ItemStack> drops) {
+        drops.Add(new ItemStack(Item.FLINT, 1, 0));
     }
 }

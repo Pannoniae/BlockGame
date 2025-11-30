@@ -80,7 +80,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
             VBO = GL.CreateBuffer();
             Game.graphics.vao(VAO);
             Game.graphics.vertex(VBO);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(maxVertices * sizeof(T)), (void*)0,
+            GL.NamedBufferStorage(VBO, (uint)(maxVertices * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
             format();
         }
@@ -99,7 +99,7 @@ public abstract class InstantDraw<T> where T : unmanaged {
             VBO = GL.CreateBuffer();
             Game.graphics.vao(VAO);
             Game.graphics.vertex(VBO);
-            GL.BufferStorage(BufferStorageTarget.ArrayBuffer, (uint)(newMaxVertices * sizeof(T)), (void*)0,
+            GL.NamedBufferStorage(VBO, (uint)(newMaxVertices * sizeof(T)), (void*)0,
                 BufferStorageMask.DynamicStorageBit);
 
             maxVertices = newMaxVertices;
@@ -107,6 +107,18 @@ public abstract class InstantDraw<T> where T : unmanaged {
 
             format();
         }
+    }
+
+    /**
+     * NOTE: call this whenever you start drawing a set of objects. Needed because the state tracking is wonky -
+     * the shader is global / shared by multiple drawing classes so we need to reupload.
+     * Could be a UBO in the future?
+     */
+    public void batch() {
+        fogDirty = true;
+        modelDirty = true;
+        viewDirty = true;
+        projDirty = true;
     }
 
     // Fog control methods

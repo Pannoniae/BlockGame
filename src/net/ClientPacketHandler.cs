@@ -453,8 +453,21 @@ public class ClientPacketHandler : PacketHandler {
     }
 
     public void handleBlockBreakProgress(BlockBreakProgressPacket p) {
-        // TODO: render breaking animation for other players
-        // for now, just ignore (visual only)
+        if (Game.world == null) return;
+
+        // update other player's break progress
+        if (p.progress <= 0) {
+            // cancelled or finished, remove from tracking
+            conn.breaks.Remove(p.position);
+        }
+        else {
+            // update or add break progress
+            conn.breaks.Set(p.position, new OtherPlayerBreak {
+                entityID = p.playerEntityID,
+                progress = p.progress,
+                lastUpdateTick = Game.world.worldTick
+            });
+        }
     }
 
     public void handleSpawnEntity(SpawnEntityPacket p) {
@@ -834,6 +847,20 @@ public class ClientPacketHandler : PacketHandler {
         // sync world time from server
         if (Game.world != null) {
             Game.world.worldTick = p.worldTick;
+
+            if (p.snap) {
+                // manual /time set - snap sky colours immediately to prevent lerp lag
+                Game.renderer.currentSkyColour = Game.world.getSkyColour(p.worldTick);
+                Game.renderer.targetSkyColour = Game.renderer.currentSkyColour;
+                Game.renderer.currentHorizonColour = Game.graphics.getHorizonColour(Game.world, p.worldTick);
+                Game.renderer.targetHorizonColour = Game.renderer.currentHorizonColour;
+
+                Game.player.clearBreakProgressDecay();
+            }
+            else {
+                Game.renderer.targetSkyColour = Game.world.getSkyColour(p.worldTick);
+                Game.renderer.targetHorizonColour = Game.graphics.getHorizonColour(Game.world, p.worldTick);
+            }
         }
     }
 
@@ -907,23 +934,23 @@ public class ClientPacketHandler : PacketHandler {
             // player inventory
             // split array back into slots, armour, accessories, and crafting grid (if survival)
             int idx = 0;
-            for (int i = 0; i < Game.player.inventory.slots.Length && idx < p.items.Length; i++, idx++) {
-                Game.player.inventory.slots[i] = p.items[idx];
+            for (int i = 0; i < Game.player.inventory.slots.Length; i++) {
+                Game.player.inventory.slots[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
             }
 
-            for (int i = 0; i < Game.player.inventory.armour.Length && idx < p.items.Length; i++, idx++) {
-                Game.player.inventory.armour[i] = p.items[idx];
+            for (int i = 0; i < Game.player.inventory.armour.Length; i++) {
+                Game.player.inventory.armour[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
             }
 
-            for (int i = 0; i < Game.player.inventory.accessories.Length && idx < p.items.Length; i++, idx++) {
-                Game.player.inventory.accessories[i] = p.items[idx];
+            for (int i = 0; i < Game.player.inventory.accessories.Length; i++) {
+                Game.player.inventory.accessories[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
             }
 
             // if survival mode, also sync crafting grid (2x2 = 4 slots)
             if (Game.player.inventoryCtx is SurvivalInventoryContext survCtx) {
                 var grid = survCtx.getCraftingGrid();
-                for (int i = 0; i < grid.grid.Length && idx < p.items.Length; i++, idx++) {
-                    grid.grid[i] = p.items[idx];
+                for (int i = 0; i < grid.grid.Length; i++) {
+                    grid.grid[i] = idx < p.items.Length ? p.items[idx++] : ItemStack.EMPTY;
                 }
                 grid.updateResult();
             }

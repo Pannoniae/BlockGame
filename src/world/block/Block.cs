@@ -288,10 +288,9 @@ public class Block {
     public static XUList<bool> customAABB => Registry.BLOCKS.customAABB;
     public static XUList<RenderType> renderType => Registry.BLOCKS.renderType;
     public static XUList<ToolType> tool => Registry.BLOCKS.tool;
+    public static XUList<bool> optionalTool => Registry.BLOCKS.optionalTool;
     public static XUList<MaterialTier> tier => Registry.BLOCKS.tier;
-
     public static XUList<float> friction => Registry.BLOCKS.friction;
-
     public static XUList<bool> natural => Registry.BLOCKS.natural;
 
 
@@ -1856,110 +1855,6 @@ public static class BlockExtensions {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint setID(ushort id) {
             return (block & 0xFF000000) | id;
-        }
-    }
-}
-
-public class Flower(string name) : Block(name) {
-    protected override void onRegister(int id) {
-        material(Material.ORGANIC);
-        hardness[id] = 0;
-    }
-
-    public override void update(World world, int x, int y, int z) {
-        if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
-            world.setBlock(x, y, z, AIR.id);
-        }
-    }
-}
-
-public class Grass(string name) : Block(name) {
-    public override void update(World world, int x, int y, int z) {
-        if (world.inWorld(x, y - 1, z) && world.getBlock(x, y - 1, z) == 0) {
-            world.setBlock(x, y, z, AIR.id);
-        }
-    }
-
-    public override void getDrop(List<ItemStack> drops, World world, int x, int y, int z, byte metadata, bool canBreak) {
-        // 12.5% total drop chance, split 50-50 between wheat and carrot seeds
-        if (canBreak && world.random.NextDouble() < 0.125) {
-            if (world.random.NextDouble() < 0.5) {
-                drops.Add(new ItemStack(Item.WHEAT_SEEDS, 1, 0));
-            } else {
-                drops.Add(new ItemStack(Item.CARROT_SEEDS, 1, 0));
-            }
-        }
-    }
-}
-
-public class GrassBlock(string name) : Block(name) {
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
-        // grass drops dirt
-        drops.Add(new ItemStack(DIRT.getItem(), 1, 0));
-    }
-
-    public override void randomUpdate(World world, int x, int y, int z) {
-        // turn to dirt if full block above
-        if (y < World.WORLDHEIGHT - 1 && isFullBlock(world.getBlock(x, y + 1, z))) {
-            world.setBlock(x, y, z, DIRT.id);
-            return;
-        }
-
-        // spread grass to nearby dirt
-        // try 3 times!
-        for (int i = 0; i < 3; i++) {
-            var r = world.random.Next(27); // 3x3x3
-            int dx = (r % 3) - 1;
-            int dy = ((r / 3) % 3) - 1;
-            int dz = (r / 9) - 1;
-
-            int nx = x + dx;
-            int ny = y + dy;
-            int nz = z + dz;
-
-            // spread to dirt or unseeded farmland (with air above)
-            var targetBlock = world.getBlock(nx, ny, nz);
-            if (targetBlock == DIRT.id || targetBlock == FARMLAND.id) {
-                if (ny < World.WORLDHEIGHT - 1 && world.getBlock(nx, ny + 1, nz) == AIR.id) {
-                    // only spreads if air above (crops block spreading to seeded farmland)
-                    world.setBlock(nx, ny, nz, GRASS.id);
-                }
-            }
-        }
-    }
-
-    public override UVPair getTexture(int faceIdx, int metadata) {
-        return faceIdx switch {
-            // top: uv[0], bottom: uv[1], sides: uv[2]
-            5 => uvs[0],
-            4 => uvs[2],
-            _ => uvs[1]
-        };
-    }
-}
-
-public class GravelBlock(string name) : FallingBlock(name) {
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
-        drops.Add(world.random.Next(12) == 0 ? new ItemStack(Item.FLINT, 1, 0) : new ItemStack(getItem(), 1, 0));
-    }
-}
-
-public class StoneBlock(string name) : Block(name) {
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
-        // stone drops cobblestone
-        if (canBreak) {
-            drops.Add(new ItemStack(COBBLESTONE.getItem(), 1, 0));
-        }
-        else {
-            // if can't break, drop nothing
-        }
-    }
-}
-
-public class CoalOreBlock(string name) : Block(name) {
-    public override void getDrop(List<ItemStack> drops, World world, int y, int z, int i, byte metadata, bool canBreak) {
-        if (canBreak) {
-            drops.Add(new ItemStack(Item.COAL, 1, 0));
         }
     }
 }

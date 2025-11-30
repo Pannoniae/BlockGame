@@ -554,4 +554,35 @@ public class Mob(World world, string type) : Entity(world, type) {
             fireDamageTicks = 0;
         }
     }
+
+    public override void die() {
+        base.die();
+
+        // spawn drops
+        dropList.Clear();
+        getDrop(dropList);
+
+        foreach (var drop in dropList) {
+            if (drop == null || drop.quantity <= 0) {
+                continue;
+            }
+
+            var itemEntity = new ItemEntity(world);
+            itemEntity.stack = drop;
+            itemEntity.position = new Vector3D(position.X, position.Y + 0.5, position.Z);
+
+            // randomise pos
+            itemEntity.position.X += (Game.random.NextSingle() - 0.5) * 0.5;
+            itemEntity.position.Z += (Game.random.NextSingle() - 0.5) * 0.5;
+
+            // add some random velocity
+            itemEntity.velocity = new Vector3D(
+                (Game.random.NextSingle() - 0.5) * 0.5,
+                Game.random.NextSingle() * 0.3 + 0.2,
+                (Game.random.NextSingle() - 0.5) * 0.5
+            );
+
+            world.addEntity(itemEntity);
+        }
+    }
 }

@@ -163,6 +163,7 @@ public partial class Entity(World world, string type) : Persistent {
     public SubChunkCoord subChunkCoord;
 
     protected static readonly List<AABB> AABBList = [];
+    protected static readonly List<ItemStack> dropList = [];
 
     // riding system
     public Entity? mount; // what this entity is riding
@@ -679,8 +680,9 @@ public partial class Entity(World world, string type) : Persistent {
     public virtual void onChunkChanged() {
     }
 
-    public virtual (Item item, byte metadata, int count) getDrop() {
-        throw new NotImplementedException();
+    /** returns items dropped when this entity dies. override to add drops. */
+    public virtual void getDrop(List<ItemStack> drops) {
+        // by default, entities drop nothing
     }
 
     public double getSwingProgress(double dt) {

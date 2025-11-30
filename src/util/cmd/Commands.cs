@@ -445,8 +445,22 @@ public readonly struct Command {
                     source.getWorld().worldTick = newTime;
                     source.sendMessage($"Set time to {newTime}");
 
-                    // remesh world
-                    //Game.instance.executeOnMainThread(() => { Screen.GAME_SCREEN.remeshWorld(0); });
+                    // reset sky colours immediately to prevent lerp lag
+                    if (Net.mode != NetMode.DED) {
+                        var world = source.getWorld();
+                        Game.renderer.currentSkyColour = world.getSkyColour(newTime);
+                        Game.renderer.targetSkyColour = Game.renderer.currentSkyColour;
+                        Game.renderer.currentHorizonColour = Game.graphics.getHorizonColour(world, newTime);
+                        Game.renderer.targetHorizonColour = Game.renderer.currentHorizonColour;
+                    }
+
+                    // broadcast time update to all clients in multiplayer
+                    if (Net.mode.isDed()) {
+                        GameServer.instance.send(
+                            new TimeUpdatePacket { worldTick = newTime, snap = true },
+                            DeliveryMethod.ReliableSequenced
+                        );
+                    }
                 }
                 else {
                     source.sendMessage("Usage: /time set <time>");

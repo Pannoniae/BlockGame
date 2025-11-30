@@ -6,9 +6,18 @@ using BlockGame.ui.menu;
 using BlockGame.util;
 using BlockGame.util.log;
 using BlockGame.world.chunk;
+using BlockGame.world.entity;
 using LiteNetLib;
+using Molten;
 
 namespace BlockGame.net;
+
+/** tracks another player's block break progress */
+public struct OtherPlayerBreak {
+    public int entityID;
+    public double progress;
+    public int lastUpdateTick;
+}
 
 /**
  * client network manager (singleton, integrated into Game class)
@@ -44,9 +53,13 @@ public class ClientConnection : INetEventListener {
     // player list (tab menu)
     public readonly Dictionary<int, PlayerListEntry> playerList = new();
 
+    // track other players' block break progress
+    public readonly XMap<Vector3I, OtherPlayerBreak> breaks = [];
+
     public readonly ClientPacketHandler handler;
 
     private readonly ConcurrentQueue<Packet> incomingPackets = new();
+    private readonly XUList<Vector3I> toRemove = [];
 
     public ClientConnection() {
         instance = this;
@@ -83,6 +96,38 @@ public class ClientConnection : INetEventListener {
                 Log.error($"Error handling packet {packet.GetType().Name}:");
                 Log.error(e);
             }
+        }
+
+        // decay other players' break progress
+        updateOtherPlayersBreaking();
+    }
+
+    /** decay other players' block break progress over time (this prevents block breaking being stuck if the cancel packet is lost) */
+    private void updateOtherPlayersBreaking() {
+        if (Game.world == null) {
+            return;
+        }
+
+        int currentTick = Game.world.worldTick;
+        toRemove.Clear();
+
+        foreach (var pos in breaks.Keys) {
+            var entry = breaks[pos];
+            int ticks = currentTick - entry.lastUpdateTick;
+            double dt = ticks / 60.0;
+            entry.progress -= Player.decayRate * dt;
+
+            if (entry.progress <= 0.01) {
+                toRemove.Add(pos);
+            }
+            else {
+                entry.lastUpdateTick = currentTick;
+                breaks.Set(pos, entry);
+            }
+        }
+
+        foreach (var pos in toRemove) {
+            breaks.Remove(pos);
         }
     }
 

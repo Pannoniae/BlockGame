@@ -54,10 +54,12 @@ public class Particles {
     public void render(double interp) {
         var currentTexture = "textures/blocks.png";
         Game.graphics.tex(0, Game.textures.blockTexture);
+        drawer.batch();
 
-        drawer.begin(PrimitiveType.Triangles);
         Matrix4x4 mat = Game.camera.getViewMatrix(interp) * Game.camera.getProjectionMatrix();
         drawer.setMVP(ref mat);
+
+        drawer.begin(PrimitiveType.Triangles);
 
         var world = this.world;
 

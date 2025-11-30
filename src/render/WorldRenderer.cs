@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using BlockGame.GL;
 using BlockGame.GL.vertexformats;
 using BlockGame.main;
+using BlockGame.net;
 using BlockGame.render.model;
 using BlockGame.ui;
 using BlockGame.util;
@@ -1098,6 +1099,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
 
         var ide = EntityRenderers.ide;
 
+        ide.batch();
+
         // Set matrix components for automatic computation
         ide.model(mat);
         ide.view(Game.camera.getViewMatrix(interp));
@@ -1307,13 +1310,24 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
      * Basically render the block at the position, just with the texture overridden to be the breaking texture. (UVPair x = 0 to 8, y = 7)
      */
     public void renderBreakBlock(double interp) {
-        if (Game.player == null || !Game.player.isBreaking) {
-            return;
+        // render local player's break progress (all blocks in map)
+        if (Game.player is ClientPlayer cp) {
+            foreach (var pair in cp.breakStates.Pairs) {
+                var progress = Meth.lerp(pair.Value.prevProgress, pair.Value.progress, interp);
+                renderSingleBreakBlock(pair.Key, progress, interp);
+            }
         }
 
-        var idt = Game.graphics.idt;
+        // render other players' break progress
+        if (ClientConnection.instance != null) {
+            foreach (var pair in ClientConnection.instance.breaks.Pairs) {
+                renderSingleBreakBlock(pair.Key, pair.Value.progress, interp);
+            }
+        }
+    }
 
-        var pos = Game.player.breaking;
+    /** render break overlay for a single block */
+    private void renderSingleBreakBlock(Vector3I pos, double progress, double interp) {
         var block = Block.get(world!.getBlock(pos));
         var metadata = world.getBlockMetadata(pos);
 
@@ -1321,10 +1335,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             return;
         }
 
-        // calculate interpolated break progress
-        var progress = Meth.lerp(Game.player.prevBreakProgress, Game.player.breakProgress, interp);
-
-        // determine break stage (0-9, where 9 is almost broken)
+        // determine break stage (0-12)
         var breakStage = (int)(progress * 13);
         breakStage = Math.Clamp(breakStage, 0, 12);
 
@@ -1333,7 +1344,7 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
             return;
         }
 
-        breakStage--; // adjust to 0-7 range
+        breakStage--; // adjust to 0-11 range
 
         // set up block renderer for standalone rendering
         Game.blockRenderer.setupStandalone();
@@ -1355,35 +1366,21 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         //var yes = GL.TryGetExtension(out NVBlendEquationAdvanced nvblend);
 
         // setup rendering state
-        //GL.Enable(EnableCap.Blend);
-        // multiply!
-        //GL.BlendEquation(BlendEquationMode);o
-        //GL.BlendFunc(BlendingFactor.DstColor, BlendingFactor.SrcColor);
         Game.graphics.setBlendFuncOverlay();
-
-        //if (yes) {
-        //nvblend.BlendParameter(NV.BlendPremultipliedSrcNV, 1);
-        // todo add this shit as an optional feature
-        //GL.BlendEquation((BlendEquationModeEXT)NV.OverlayNV);
-        //}
-
-        GL.DepthMask(false); // don't write to depth buffer
-        //GL.Disable(EnableCap.CullFace); // render both sides of the breaking block
-
+        GL.DepthMask(false);
         GL.Enable(EnableCap.PolygonOffsetFill);
-        //GL.Disable(EnableCap.DepthTest); // disable depth testing to ensure visibility
 
         var mat = Game.graphics.model;
         mat.push();
         mat.loadIdentity();
         mat.translate(pos.X, pos.Y, pos.Z);
-        //mat.scale(1f + Constants.epsilonF, 1f + Constants.epsilonF, 1f + Constants.epsilonF); // slight scale to prevent z-fighting
 
         // setup matrices
         var view = Game.camera.getViewMatrix(interp);
         var projection = Game.camera.getProjectionMatrix();
 
         // use idt to render BlockVertexTinted vertices
+        var idt = Game.graphics.idt;
         idt.model(mat);
         idt.view(view);
         idt.proj(projection);
@@ -1399,11 +1396,8 @@ public sealed partial class WorldRenderer : WorldListener, IDisposable {
         mat.pop();
 
         GL.DepthMask(true);
-        //GL.Enable(EnableCap.CullFace);
-        //GL.BlendEquation(BlendEquationModeEXT.FuncAdd);
         Game.graphics.setBlendFunc();
         GL.Disable(EnableCap.PolygonOffsetFill);
-        //GL.Enable(EnableCap.DepthTest);
     }
 
     public ulong testidx;

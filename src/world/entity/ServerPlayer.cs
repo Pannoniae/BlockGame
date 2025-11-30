@@ -134,12 +134,6 @@ public class ServerPlayer : Player {
         }
     }
 
-    // disable client-only behaviour
-    public override void updateInput(double dt) { }
-    public override void blockHandling(double dt) { }
-    public override void placeBlock() { }
-    public override void breakBlock() { }
-
     public override void teleport(Vector3D pos) {
         base.teleport(pos);
 

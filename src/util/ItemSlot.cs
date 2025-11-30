@@ -99,7 +99,8 @@ public class ItemSlot {
 
         if (current.same(stack)) {
             // same item type, try to merge
-            var canAdd = Inventory.MAX_STACK_SIZE - current.quantity;
+            var maxStack = stack.getItem().getMaxStackSize();
+            var canAdd = maxStack - current.quantity;
             var addAmount = Math.Min(canAdd, stack.quantity);
 
             if (addAmount > 0) {

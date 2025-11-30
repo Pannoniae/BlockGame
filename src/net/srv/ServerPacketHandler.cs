@@ -46,6 +46,9 @@ public class ServerPacketHandler : PacketHandler {
             case CancelBlockBreakPacket p:
                 handleCancelBlockBreak(p);
                 break;
+            case UpdateBlockBreakProgressPacket p:
+                handleUpdateBlockBreakProgress(p);
+                break;
             case FinishBlockBreakPacket p:
                 handleFinishBlockBreak(p);
                 break;
@@ -483,8 +486,20 @@ public class ServerPacketHandler : PacketHandler {
         // track breaking state
         conn.breakingBlock = p.position;
         conn.breakProgress = 0;
+        conn.lastProgressBroadcastTick = GameServer.instance.world.worldTick;
 
-        // TODO: broadcast BlockBreakProgressPacket to nearby players
+        // broadcast start to nearby players
+        GameServer.instance.send(
+            new Vector3D(p.position.X, p.position.Y, p.position.Z),
+            128.0,
+            new BlockBreakProgressPacket {
+                playerEntityID = conn.entityID,
+                position = p.position,
+                progress = 0
+            },
+            DeliveryMethod.ReliableOrdered,
+            conn // exclude sender
+        );
     }
 
     private void handleCancelBlockBreak(CancelBlockBreakPacket p) {
@@ -492,9 +507,39 @@ public class ServerPacketHandler : PacketHandler {
             return;
         }
 
+        // broadcast cancel to nearby players if we were breaking something
+        if (conn.breakingBlock.HasValue) {
+            var pos = conn.breakingBlock.Value;
+            GameServer.instance.send(
+                new Vector3D(pos.X, pos.Y, pos.Z),
+                128.0,
+                new BlockBreakProgressPacket {
+                    playerEntityID = conn.entityID,
+                    position = pos,
+                    progress = 0 // 0 or negative = cancelled
+                },
+                DeliveryMethod.ReliableOrdered,
+                conn // exclude sender
+            );
+        }
+
         // clear breaking state
         conn.breakingBlock = null;
         conn.breakProgress = 0;
+    }
+
+    private void handleUpdateBlockBreakProgress(UpdateBlockBreakProgressPacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        // validate player is actually breaking this block
+        if (!conn.breakingBlock.HasValue || conn.breakingBlock.Value != p.position) {
+            return; // ignore spurious progress updates
+        }
+
+        // update tracked progress
+        conn.breakProgress = p.progress;
     }
 
     private void handleFinishBlockBreak(FinishBlockBreakPacket p) {

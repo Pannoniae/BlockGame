@@ -119,7 +119,8 @@ public abstract class InventoryContext {
                     // output-only slot - try take+merge
                     var result = slot.getStack();
                     if (result != ItemStack.EMPTY && result.same(cursor)) {
-                        var canMerge = Inventory.MAX_STACK_SIZE - cursor.quantity;
+                        var maxStack = cursor.getItem().getMaxStackSize();
+                        var canMerge = maxStack - cursor.quantity;
                         if (canMerge >= result.quantity) {
                             var taken = slot.take(result.quantity);
                             player.inventory.cursor = new ItemStack(cursor.getItem(), cursor.quantity + taken.quantity, cursor.metadata);
@@ -166,7 +167,8 @@ public abstract class InventoryContext {
                 }
                 else if (slotStack.same(cursor)) {
                     // same item - try to add 1 if there's room
-                    if (slotStack.quantity < Inventory.MAX_STACK_SIZE) {
+                    var maxStack = cursor.getItem().getMaxStackSize();
+                    if (slotStack.quantity < maxStack) {
                         var singleItem = new ItemStack(cursor.getItem(), 1, cursor.metadata);
                         var remaining = slot.place(singleItem);
                         if (remaining == ItemStack.EMPTY) {

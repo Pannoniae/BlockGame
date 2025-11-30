@@ -1,4 +1,5 @@
 ﻿using BlockGame.util;
+using BlockGame.world.item;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
@@ -53,5 +54,9 @@ public class Mummy : Mob {
         if (attackTime > 0) {
             attackTime--;
         }
+    }
+
+    public override void getDrop(List<ItemStack> drops) {
+        drops.Add(new ItemStack(Item.STRING, 1, 0));
     }
 }

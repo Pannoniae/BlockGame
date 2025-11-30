@@ -49,6 +49,7 @@ public class BlockRegistry : Registry<Block> {
 
     public readonly XUList<RenderType> renderType;
     public readonly XUList<ToolType> tool;
+    public readonly XUList<bool> optionalTool;
     public readonly XUList<MaterialTier> tier;
     public readonly XUList<float> friction;
     public readonly XUList<bool> natural;
@@ -85,6 +86,7 @@ public class BlockRegistry : Registry<Block> {
         customAABB = track(false);
         renderType = track(RenderType.CUBE);
         tool = track(ToolType.NONE);
+        optionalTool = track(false);
         tier = track(MaterialTier.NONE);
         noItem = track(false);
         isBlockEntity = track(false);

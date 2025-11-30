@@ -12,20 +12,20 @@ namespace BlockGame.render;
 
 public sealed partial class WorldRenderer {
     // dont z-fight with blocks pretty please
-    const float cTexSize = 256f;
-    const float cheight = 128f + (Constants.epsilonF * 100);
-    const float cext = 512f; // hs of clouds
-    const float cscale = 2560f; // world units per fulltex (higher = larger)
-    const float scrollSpeed = 0.015f; // blocks per tick in +Z
-    const float cThickness = 6f; // vertical thickness of clouds
+    public const float cTexSize = 256f;
+    public const float cheight = 128f + (Constants.epsilonF * 100);
+    public const float cext = 512f; // hs of clouds
+    public const float cscale = 2560f; // world units per fulltex (higher = larger)
+    public const float scrollSpeed = 0.015f; // blocks per tick in +Z
+    public const float cThickness = 6f; // vertical thickness of clouds
 
 
     // this is separate to not fuck the main one up!
-    public FastInstantDrawTexture cloudidt = new(16384);
+    public readonly FastInstantDrawTexture cloudidt = new(16384);
 
 
-    private bool[] pixels;
-    private int cloudMaxVerts; // pre-calculated max verts
+    private readonly bool[] pixels;
+    private readonly int cloudMaxVerts; // pre-calculated max verts
 
     private void renderClouds(double interp) {
 
@@ -54,6 +54,8 @@ public sealed partial class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
 
         var idt = cloudidt;
+
+        idt.batch();
 
         var mat = Game.graphics.model;
         var proj = Game.camera.getProjectionMatrix();
@@ -140,6 +142,9 @@ public sealed partial class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
 
         var idt = cloudidt;
+
+        idt.batch();
+
         var mat = Game.graphics.model;
         var proj = Game.camera.getProjectionMatrix();
         var view = Game.camera.getViewMatrix(interp);
@@ -220,6 +225,9 @@ public sealed partial class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
 
         var idt = cloudidt;
+
+        idt.batch();
+
         var mat = Game.graphics.model;
         var proj = Game.camera.getProjectionMatrix();
         var view = Game.camera.getViewMatrix(interp);
@@ -314,6 +322,9 @@ public sealed partial class WorldRenderer {
         ];
 
         var idt = cloudidt;
+
+        idt.batch();
+
         var tex = Game.textures.cloudTexture;
         int w = (int)tex.width;
         int h = (int)tex.height;
@@ -442,6 +453,9 @@ public sealed partial class WorldRenderer {
         ];
 
         var idt = cloudidt;
+
+        idt.batch();
+
         var tex = Game.textures.cloudTexture;
         int w = (int)tex.width;
         int h = (int)tex.height;
@@ -569,6 +583,9 @@ public sealed partial class WorldRenderer {
         Span<bool> adjs = stackalloc bool[4];
 
         var idt = cloudidt;
+
+        idt.batch();
+
         var tex = Game.textures.cloudTexture;
         //int w = (int)tex.width;
         //int h = (int)tex.height;
@@ -764,6 +781,9 @@ public sealed partial class WorldRenderer {
         GL.Disable(EnableCap.CullFace);
 
         var idt = cloudidt;
+
+        idt.batch();
+
         var mat = Game.graphics.model;
         var proj = Game.camera.getProjectionMatrix();
         var view = Game.camera.getViewMatrix(interp);

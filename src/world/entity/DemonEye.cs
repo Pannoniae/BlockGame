@@ -1,5 +1,6 @@
 ﻿using BlockGame.main;
 using BlockGame.util;
+using BlockGame.world.item;
 using Molten.DoublePrecision;
 
 namespace BlockGame.world.entity;
@@ -131,5 +132,9 @@ public class DemonEye : Hostile {
 
         // apply drag
         velocity *= 0.85;
+    }
+
+    public override void getDrop(List<ItemStack> drops) {
+        // todo what should we drop?
     }
 }

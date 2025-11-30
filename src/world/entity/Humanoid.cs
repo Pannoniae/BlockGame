@@ -125,10 +125,4 @@ public class Humanoid : Player {
             inventory.slots[slot] = stack;
         }
     }
-
-    // disable player-specific behaviour that doesn't apply to remote players
-    public override void updateInput(double dt) { }
-    public override void blockHandling(double dt) { }
-    public override void placeBlock() { }
-    public override void breakBlock() { }
 }

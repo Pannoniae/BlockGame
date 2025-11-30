@@ -322,6 +322,9 @@ public class GameServer : INetEventListener {
             timeUpdateCtr = 0;
         }
 
+        // broadcast block break progress every tick
+        broadcastBlockBreakProgress();
+
         // sync furnace state to viewers every 2 ticks
         furnaceSyncCtr++;
         if (furnaceSyncCtr >= 2) {
@@ -798,10 +801,47 @@ public class GameServer : INetEventListener {
 
         send(
             new TimeUpdatePacket {
-                worldTick = world.worldTick
+                worldTick = world.worldTick,
+                snap = false
             },
             DeliveryMethod.ReliableSequenced
         );
+    }
+
+    /** broadcast block break progress for all actively breaking players */
+    private void broadcastBlockBreakProgress() {
+        if (world == null || !world.inited) {
+            return;
+        }
+
+        int currentTick = world.worldTick;
+
+        foreach (var conn in connections.Values) {
+            if (!conn.authenticated || conn.player == null || !conn.breakingBlock.HasValue) {
+                continue;
+            }
+
+            if (currentTick - conn.lastProgressBroadcastTick < 5) {
+                continue;
+            }
+
+            var pos = conn.breakingBlock.Value;
+
+            // broadcast progress to nearby players
+            send(
+                new Vector3D(pos.X, pos.Y, pos.Z),
+                128.0,
+                new BlockBreakProgressPacket {
+                    playerEntityID = conn.entityID,
+                    position = pos,
+                    progress = conn.breakProgress
+                },
+                DeliveryMethod.ReliableOrdered,
+                conn // exclude sender
+            );
+
+            conn.lastProgressBroadcastTick = currentTick;
+        }
     }
 
     /** autosave world data and modified chunks */
