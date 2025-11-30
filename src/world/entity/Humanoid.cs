@@ -56,7 +56,7 @@ public class Humanoid : Player {
             // (prevents stutter when waiting for next update)
             var extrapolated = position + velocity * dt;
 
-            // don't drift too far from last known position (max 1.5 blocks)
+            // don't drift too far from last known position
             if (Vector3D.Distance(extrapolated, targetPos) < 1.5) {
                 position = extrapolated;
             }

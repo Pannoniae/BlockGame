@@ -59,6 +59,14 @@ public class ClientPlayer : Player {
                     DeliveryMethod.ReliableOrdered
                 );
 
+                // also send velocity
+                ClientConnection.instance.send(
+                    new PlayerVelocityPacket {
+                        velocity = velocity
+                    },
+                    DeliveryMethod.ReliableOrdered
+                );
+
                 lastSentPos = position;
                 lastSentRot = rotation;
                 ticksSinceUpdate = 0;

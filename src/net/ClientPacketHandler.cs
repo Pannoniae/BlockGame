@@ -639,6 +639,13 @@ public class ClientPacketHandler : PacketHandler {
         // find entity and update velocity
         var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
         if (entity != null) {
+
+            if (entity is Humanoid humanoid) {
+                // humanoid velocity is used for extrapolation..
+                humanoid.prevVelocity = humanoid.velocity;
+                humanoid.velocity = p.velocity;
+            }
+
             entity.prevVelocity = entity.velocity;
             entity.velocity = p.velocity;
         }

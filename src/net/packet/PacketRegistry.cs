@@ -66,6 +66,8 @@ public class PacketRegistry {
         register(0x3A, typeof(AttackEntityPacket));
         register(0x3B, typeof(EntityDamagePacket));
         register(0x3C, typeof(UseItemPacket));
+        register(0x3D, typeof(UpdateBlockBreakProgressPacket));
+        register(0x3E, typeof(PlayerVelocityPacket));
 
         // inventory (0x40-0x4F)
         register(0x40, typeof(SetSlotPacket));

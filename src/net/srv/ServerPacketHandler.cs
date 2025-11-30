@@ -103,10 +103,33 @@ public class ServerPacketHandler : PacketHandler {
             case PlayerSkinPacket p:
                 handlePlayerSkin(p);
                 break;
+            case PlayerVelocityPacket p:
+                handlePlayerVelocity(p);
+                break;
             default:
                 Log.warn($"Unhandled packet type: {packet.GetType().Name}");
                 break;
         }
+    }
+
+    private void handlePlayerVelocity(PlayerVelocityPacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        conn.player.velocity = p.velocity;
+
+        // broadcast to other players
+        GameServer.instance.send(
+            conn.player.position,
+            128.0,
+            new EntityVelocityPacket {
+                entityID = conn.entityID,
+                velocity = p.velocity
+            },
+            DeliveryMethod.ReliableOrdered,
+            exclude: conn
+        );
     }
 
     private void handleHug(HugPacket p) {
