@@ -135,7 +135,7 @@ public class DemonEye : Hostile {
     }
 
     public override void getDrop(List<ItemStack> drops) {
-        //if (id == DemonEye.id && Game.random.Next(15) == 0) {
+        //if (id == DemonEye.id && Game.random.Next(20) == 0) {
         //    drops.Add(new ItemStack(LW_BOOTS.item, 1, 0));
         //}
     }

@@ -94,6 +94,9 @@ public class Recipe {
     public static Recipe BREAD;
     public static Recipe APPLE_PIE;
 
+    public static Recipe LW_BOOTS;
+    public static Recipe HELLSTONE;
+
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
 
@@ -487,6 +490,14 @@ public class Recipe {
         APPLE_PIE = register(new ItemStack(Item.APPLE_PIE, 1));
         APPLE_PIE.shape(131_121_111, 3);
         APPLE_PIE.ingredients(Item.WHEAT, Item.APPLE, Item.MAPLE_SYRUP);
+
+        LW_BOOTS = register(new ItemStack(Item.LW_BOOTS, 1));
+        LW_BOOTS.shape(000_101_101, 3);
+        LW_BOOTS.ingredients(Block.HELLSTONE.item);
+
+        HELLSTONE = register(new ItemStack(Block.HELLSTONE.item, 4));
+        HELLSTONE.noShape();
+        HELLSTONE.ingredients(Item.LW_BOOTS);
     }
 
     private static Recipe tool(Item result, Item material, int shape, int q = 1) {
