@@ -495,9 +495,9 @@ public class Recipe {
         LW_BOOTS.shape(000_101_101, 3);
         LW_BOOTS.ingredients(Block.HELLSTONE.item);
 
-        HELLSTONE = register(new ItemStack(Block.HELLSTONE.item, 4));
-        HELLSTONE.noShape();
-        HELLSTONE.ingredients(Item.LW_BOOTS);
+        register(new ItemStack(Block.HELLSTONE.item, 4))
+            .noShape()
+            .ingredients(Item.LW_BOOTS);
     }
 
     private static Recipe tool(Item result, Item material, int shape, int q = 1) {
