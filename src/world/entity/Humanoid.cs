@@ -25,7 +25,8 @@ public class Humanoid : Player {
     public Vector3 targetBodyRot;
     public int interpolationTicks;
 
-
+    // interpolate velocity alongside position
+    private Vector3D targetVelocity;
     private int ticksSinceLastUpdate = 0;
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
@@ -33,6 +34,7 @@ public class Humanoid : Player {
         targetRot = rotation;
         targetBodyRot = bodyRotation;
         prevTargetPos = position;
+        targetVelocity = Vector3D.Zero;
     }
 
     public override void update(double dt) {
@@ -49,16 +51,15 @@ public class Humanoid : Player {
             velocity = Vector3D.Zero;
         }
 
-        // interpolate towards target position/rotation evenly
         if (interpolationTicks > 0) {
             var t = 1.0 / interpolationTicks;
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
+            velocity = Vector3D.Lerp(velocity, targetVelocity, t);
             interpolationTicks--;
         }
 
-        // velocity is set by mpInterpolate() from target position deltas
-        // just zero out tiny values to prevent idle animation jitter
+        // zero out tiny velocities to prevent idle animation jitter
         if (velocity.LengthSquared() < 0.002) {
             velocity = Vector3D.Zero;
         }
@@ -133,11 +134,12 @@ public class Humanoid : Player {
         targetPos = pos;
         targetRot = rot;
 
-        // derive velocity from server's actual movement (target position delta)
-        // this represents how fast the server moved the entity, not how fast we're interpolating
+        // calculate target velocity from server movement
         var timeSinceUpdate = ticksSinceLastUpdate * 0.05; // ticks to seconds
         if (timeSinceUpdate > 0) {
-            velocity = (targetPos - prevTargetPos) / timeSinceUpdate;
+            targetVelocity = (targetPos - prevTargetPos) / timeSinceUpdate;
+        } else {
+            targetVelocity = Vector3D.Zero;
         }
 
         interpolationTicks = 4; // fixed 4-tick interpolation for consistency

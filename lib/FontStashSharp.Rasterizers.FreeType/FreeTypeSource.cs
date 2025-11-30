@@ -67,7 +67,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 			{
                 Console.Out.WriteLine(
                     $"FreeTypeSource.GetGlyphId: FT_Get_Char_Index returned 0 for codepoint {codepoint}");
-                Console.Out.WriteLine(Environment.StackTrace);
+                //Console.Out.WriteLine(Environment.StackTrace);
 				return null;
 			}
 
