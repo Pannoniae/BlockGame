@@ -54,7 +54,6 @@ public class Humanoid : Player {
             var t = 1.0 / interpolationTicks;
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
-            velocity = Vector3D.Lerp(velocity, targetVelocity, t);
             interpolationTicks--;
         }
 
@@ -129,6 +128,7 @@ public class Humanoid : Player {
     }
 
     public void mpInterpolateVelocity(Vector3D vel) {
+        velocity = vel;
         targetVelocity = vel;
     }
 
