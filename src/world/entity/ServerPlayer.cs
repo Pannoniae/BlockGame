@@ -24,7 +24,7 @@ public class ServerPlayer : Player {
 
         // derive velocity from position change for body rotation
         // (position is set by packets, not physics)
-        velocity = (position - prevPosition) / dt;
+        //velocity = (position - prevPosition) / dt;
 
         updateBodyRotation(dt);  // needed for broadcasting correct bodyRotation
         updateAnimation(dt);      // needed for animation state

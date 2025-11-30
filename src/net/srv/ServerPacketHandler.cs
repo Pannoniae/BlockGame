@@ -113,26 +113,6 @@ public class ServerPacketHandler : PacketHandler {
         }
     }
 
-    private void handlePlayerVelocity(PlayerVelocityPacket p) {
-        if (!conn.authenticated || conn.player == null) {
-            return;
-        }
-
-        conn.player.velocity = p.velocity;
-
-        // broadcast to other players
-        GameServer.instance.send(
-            conn.player.position,
-            128.0,
-            new EntityVelocityPacket {
-                entityID = conn.entityID,
-                velocity = p.velocity
-            },
-            DeliveryMethod.ReliableOrdered,
-            exclude: conn
-        );
-    }
-
     private void handleHug(HugPacket p) {
         Log.info($"Hug from {p.username} (protocol={p.netVersion}, version={p.version})");
 
@@ -490,6 +470,26 @@ public class ServerPacketHandler : PacketHandler {
                 entityID = conn.entityID,
                 position = conn.player.position,
                 rotation = conn.player.rotation,
+            },
+            DeliveryMethod.ReliableOrdered,
+            exclude: conn
+        );
+    }
+
+    private void handlePlayerVelocity(PlayerVelocityPacket p) {
+        if (!conn.authenticated || conn.player == null) {
+            return;
+        }
+
+        conn.player.velocity = p.velocity;
+
+        // broadcast to other players
+        GameServer.instance.send(
+            conn.player.position,
+            128.0,
+            new EntityVelocityPacket {
+                entityID = conn.entityID,
+                velocity = p.velocity
             },
             DeliveryMethod.ReliableOrdered,
             exclude: conn

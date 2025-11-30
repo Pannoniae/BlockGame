@@ -22,7 +22,6 @@ public class Humanoid : Player {
     public Vector3D targetPos;
     public Vector3 targetRot;
     public Vector3 targetBodyRot;
-
     public Vector3D targetVelocity;
 
     public int interpolationTicks;
@@ -55,6 +54,7 @@ public class Humanoid : Player {
             var t = 1.0 / interpolationTicks;
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
+            velocity = Vector3D.Lerp(velocity, targetVelocity, t);
             interpolationTicks--;
         }
 
@@ -120,16 +120,15 @@ public class Humanoid : Player {
         rotation = Meth.clampAngle(rotation);
     }
 
-    public void mpInterpolate(Vector3D pos, Vector3 rot) {
+    public override void mpInterpolate(Vector3D pos, Vector3 rot) {
         targetPos = pos;
         targetRot = rot;
 
-        interpolationTicks = 7; // fixed 4-tick interpolation for consistency
+        interpolationTicks = 4; // fixed 4-tick interpolation for consistency
         ticksSinceLastUpdate = 0;
     }
 
     public void mpInterpolateVelocity(Vector3D vel) {
-        velocity = vel;
         targetVelocity = vel;
     }
 
