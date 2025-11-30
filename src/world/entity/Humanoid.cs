@@ -63,7 +63,7 @@ public class Humanoid : Player {
 
         // derive velocity from actual movement for animation
         // (velocity can also be set directly by EntityVelocityPacket for knockback)
-        velocity = (position - prevPosition) * dt;
+        //velocity = (position - prevPosition) / dt;
 
         // update body movement (uses velocity like Mob does)
         updateBodyRotation(dt);
