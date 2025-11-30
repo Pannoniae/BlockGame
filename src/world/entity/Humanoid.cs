@@ -40,6 +40,9 @@ public class Humanoid : Player {
 
         ticksSinceLastUpdate++;
 
+        // update swinging
+        updateTimers(dt);
+
         // timeout check - if no update for 30 ticks, snap to target
         if (ticksSinceLastUpdate > 30) {
             position = targetPos;
@@ -65,9 +68,6 @@ public class Humanoid : Player {
 
         // update walk animation (uses velocity)
         updateAnimation(dt);
-
-        // update swinging
-        updateTimers(dt);
 
         // update AABB
         aabb = calcAABB(position);

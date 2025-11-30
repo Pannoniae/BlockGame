@@ -158,6 +158,11 @@ public class GameServer : INetEventListener {
         start();
 
         Console.CancelKeyPress += (sender, e) => {
+            // if already stopping, ignore
+            if (stopping || !running) {
+                return;
+            }
+
             e.Cancel = true; // prevent immediate termination
             running = false; // trigger close()
         };

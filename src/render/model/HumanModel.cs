@@ -76,7 +76,7 @@ public class HumanModel : EntityModel {
 
 
         // calculate animation
-        float cs = Meth.clamp(aspeed, 0, 1);
+        float cs = aspeed;
         float ar = MathF.Sin(apos * 10) * 30f * cs * Meth.phiF;
         float lr = MathF.Sin(apos * 10) * 25f * cs * Meth.phiF;
 

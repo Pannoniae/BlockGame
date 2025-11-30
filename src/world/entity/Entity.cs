@@ -870,10 +870,14 @@ public partial class Entity(World world, string type) : Persistent {
      */
     protected virtual void updateAnimation(double dt) {
         var vel = velocity.withoutY();
-        aspeed = (float)vel.Length() * 0.6f;
+        var aspeed = (float)vel.Length() * 0.6f;
         aspeed = Meth.clamp(aspeed, 0f, 1f);
 
-        if (aspeed > 0f) {
+        // it jitters less?
+        this.aspeed = float.Lerp(this.aspeed, aspeed, 0.1f);
+
+        // todo we'll need to reset apos periodically when stopping to avoid huge values
+        if (aspeed >= 0f) {
             apos += aspeed * (float)dt;
         }
     }
