@@ -446,7 +446,7 @@ public class Mob(World world, string type) : Entity(world, type) {
     }
 
     /** called when receiving position update from server (client-side) */
-    public void mpInterpolate(Vector3D pos, Vector3 rot) {
+    public virtual void mpInterpolate(Vector3D pos, Vector3 rot) {
         targetPos = pos;
         targetRot = rot;
         interpolationTicks = 4; // interpolate over 4 ticks (~67ms)
