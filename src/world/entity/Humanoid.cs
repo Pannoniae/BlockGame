@@ -25,10 +25,6 @@ public class Humanoid : Player {
     public Vector3 targetBodyRot;
 
     public int interpolationTicks;
-
-    // interpolate velocity alongside position
-    private Vector3D prevTargetVelocity;
-    private Vector3D targetVelocity;
     private int ticksSinceLastUpdate = 0;
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
@@ -36,7 +32,6 @@ public class Humanoid : Player {
         targetRot = rotation;
         targetBodyRot = bodyRotation;
         prevTargetPos = position;
-        targetVelocity = Vector3D.Zero;
     }
 
     public override void update(double dt) {
@@ -57,13 +52,13 @@ public class Humanoid : Player {
             var t = 1.0 / interpolationTicks;
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
-            velocity = Vector3D.Lerp(velocity, targetVelocity, t);
             interpolationTicks--;
         }
 
         // derive velocity from actual movement for animation
-        // (velocity can also be set directly by EntityVelocityPacket for knockback)
-        //velocity = (position - prevPosition) / dt;
+        if (dt > 0) {
+            velocity = (position - prevPosition) / dt;
+        }
 
         // update body movement (uses velocity like Mob does)
         updateBodyRotation(dt);
@@ -134,15 +129,6 @@ public class Humanoid : Player {
         prevTargetPos = targetPos;
         targetPos = pos;
         targetRot = rot;
-
-        prevTargetVelocity = targetVelocity;
-
-        // calculate velocity from actual server movement time
-        if (ticksSinceLastUpdate > 0) {
-            targetVelocity = (targetPos - prevTargetPos) * 60.0 / ticksSinceLastUpdate;
-        } else {
-            targetVelocity = Vector3D.Zero;
-        }
 
         interpolationTicks = 4; // fixed 4-tick interpolation for consistency
         ticksSinceLastUpdate = 0;
