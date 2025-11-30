@@ -96,6 +96,7 @@ public class Recipe {
 
     public static Recipe LW_BOOTS;
     public static Recipe HELLSTONE;
+    public static Recipe WW_BOOTS;
 
 
     public static XUList<Recipe> recipes => Registry.RECIPES.values;
@@ -498,6 +499,15 @@ public class Recipe {
         register(new ItemStack(Block.HELLSTONE.item, 4))
             .noShape()
             .ingredients(Item.LW_BOOTS);
+
+        WW_BOOTS = register(new ItemStack(Item.WW_BOOTS, 1));
+        WW_BOOTS.shape(000_101_101, 3);
+        WW_BOOTS.ingredients(Block.ICE.item);
+
+        register(new ItemStack(Item.WATER_BUCKET, 1))
+            .noShape()
+            .ingredients(Item.LW_BOOTS);
+
     }
 
     private static Recipe tool(Item result, Item material, int shape, int q = 1) {

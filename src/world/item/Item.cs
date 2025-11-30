@@ -111,6 +111,7 @@ public class Item {
     public static Item UZI_AMMO;
 
     public static Item LW_BOOTS;
+    public static Item WW_BOOTS;
 
     public static UVPair uv(string source, int x, int y) {
         if (Net.mode.isDed()) {
@@ -425,6 +426,10 @@ public class Item {
         LW_BOOTS = register("lw_boots", new Item("Lava Walking Boots"));
         LW_BOOTS.tex = uv("items.png", 1, 11);
         //armour[LW_BOOTS.id] = true;
+
+        WW_BOOTS = register("ww_boots", new Item("Water Walking Boots"));
+        WW_BOOTS.tex = uv("items.png", 2, 11);
+        //armour[WW_BOOTS.id] = true;
 
 
         // all blocks are already marked as materials during Block.register() lol
