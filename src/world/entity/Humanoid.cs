@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using BlockGame.util;
 using Molten.DoublePrecision;
 
@@ -8,27 +8,31 @@ namespace BlockGame.world.entity;
  * It's like a Player, but not really.
  * Used for other clients in multiplayer.
  *
- * Uses adaptive interpolation based on actual update rate to reduce lag.
- * Extrapolates with velocity when updates are delayed.
+ * TODO can we do better than the fixed 4-tick interpolation?
+ * RN it works but it's kinda janky, has that fucking MC-like lag.
+ * We could try client-side prediction or something, not sure. Or adjust based on ping?
+ * And idk what happens at high ping, does it spaz out?
  *
  * ALSO TODO fucking merge this system with the Mob interpolation jfc, it's duplicated right now because I made this first lol
+ *
+ * Also arms glitch out when sneaking (animation too fast, looks like it's normal animation speed but with smaller maxpos? Something is fucked, investigate)
  */
 public class Humanoid : Player {
     // interpolation for smooth movement
+    private Vector3D prevTargetPos;
     public Vector3D targetPos;
     public Vector3 targetRot;
     public Vector3 targetBodyRot;
     public int interpolationTicks;
 
-    // adaptive interpolation tracking
-    private double lastUpdateTime = 0;
-    private double updateInterval = 4.0; // measured ticks between updates
+
     private int ticksSinceLastUpdate = 0;
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
         targetPos = position;
         targetRot = rotation;
         targetBodyRot = bodyRotation;
+        prevTargetPos = position;
     }
 
     public override void update(double dt) {
@@ -42,28 +46,22 @@ public class Humanoid : Player {
             position = targetPos;
             rotation = targetRot;
             interpolationTicks = 0;
+            velocity = Vector3D.Zero;
         }
 
-        // interpolate towards target position/rotation
+        // interpolate towards target position/rotation evenly
         if (interpolationTicks > 0) {
             var t = 1.0 / interpolationTicks;
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
             interpolationTicks--;
         }
-        else if (velocity.LengthSquared() > 0.001) {
-            // ran out of interpolation ticks but still moving - extrapolate with velocity
-            // (prevents stutter when waiting for next update)
-            var extrapolated = position + velocity * dt;
 
-            // don't drift too far from last known position
-            if (Vector3D.Distance(extrapolated, targetPos) < 1.5) {
-                position = extrapolated;
-            }
+        // velocity is set by mpInterpolate() from target position deltas
+        // just zero out tiny values to prevent idle animation jitter
+        if (velocity.LengthSquared() < 0.002) {
+            velocity = Vector3D.Zero;
         }
-
-        // velocity is now set by EntityVelocityPacket, not derived
-        // (this HOPEFULLY fixes the animation jank from interpolation artifacts)
 
         // update body movement (uses velocity like Mob does)
         updateBodyRotation(dt);
@@ -131,19 +129,19 @@ public class Humanoid : Player {
     }
 
     public void mpInterpolate(Vector3D pos, Vector3 rot) {
-        double now = world.worldTick;
-        if (lastUpdateTime > 0) {
-            double measured = now - lastUpdateTime;
-            updateInterval = updateInterval * 0.7 + measured * 0.3;
-        }
-        lastUpdateTime = now;
-
+        prevTargetPos = targetPos;
         targetPos = pos;
         targetRot = rot;
 
-        interpolationTicks = (int)Math.Clamp(updateInterval, 2, 10);
+        // derive velocity from server's actual movement (target position delta)
+        // this represents how fast the server moved the entity, not how fast we're interpolating
+        var timeSinceUpdate = ticksSinceLastUpdate * 0.05; // ticks to seconds
+        if (timeSinceUpdate > 0) {
+            velocity = (targetPos - prevTargetPos) / timeSinceUpdate;
+        }
 
-        ticksSinceLastUpdate = 0; // reset timeout
+        interpolationTicks = 4; // fixed 4-tick interpolation for consistency
+        ticksSinceLastUpdate = 0;
     }
 
     /** when receiving an item equip packet, equip the item in the correct slot */

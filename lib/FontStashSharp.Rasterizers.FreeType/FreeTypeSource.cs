@@ -1,6 +1,7 @@
 ﻿using FontStashSharp.Interfaces;
 using FreeTypeSharp;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace FontStashSharp.Rasterizers.FreeType
@@ -66,6 +67,7 @@ namespace FontStashSharp.Rasterizers.FreeType
 			{
                 Console.Out.WriteLine(
                     $"FreeTypeSource.GetGlyphId: FT_Get_Char_Index returned 0 for codepoint {codepoint}");
+                Console.Out.WriteLine(Environment.StackTrace);
 				return null;
 			}
 
