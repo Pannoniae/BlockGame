@@ -641,8 +641,8 @@ public class ClientPacketHandler : PacketHandler {
         if (entity != null) {
 
             if (entity is Humanoid humanoid) {
-                // ignore velocity packets for humanoid - the velocity is derived from the position straight
                 // TODO: handle knockback separately?
+                humanoid.mpInterpolateVelocity(p.velocity);
             }
             else {
                 entity.prevVelocity = entity.velocity;

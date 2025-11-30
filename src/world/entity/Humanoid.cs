@@ -19,10 +19,11 @@ namespace BlockGame.world.entity;
  */
 public class Humanoid : Player {
     // interpolation for smooth movement
-    private Vector3D prevTargetPos;
     public Vector3D targetPos;
     public Vector3 targetRot;
     public Vector3 targetBodyRot;
+
+    public Vector3D targetVelocity;
 
     public int interpolationTicks;
     private int ticksSinceLastUpdate = 0;
@@ -31,7 +32,6 @@ public class Humanoid : Player {
         targetPos = position;
         targetRot = rotation;
         targetBodyRot = bodyRotation;
-        prevTargetPos = position;
     }
 
     public override void update(double dt) {
@@ -56,11 +56,6 @@ public class Humanoid : Player {
             position = Vector3D.Lerp(position, targetPos, t);
             rotation = Vector3.Lerp(rotation, targetRot, (float)t);
             interpolationTicks--;
-        }
-
-        // derive velocity from actual movement for animation
-        if (dt > 0) {
-            velocity = (position - prevPosition) / dt;
         }
 
         // update body movement (uses velocity like Mob does)
@@ -126,12 +121,16 @@ public class Humanoid : Player {
     }
 
     public void mpInterpolate(Vector3D pos, Vector3 rot) {
-        prevTargetPos = targetPos;
         targetPos = pos;
         targetRot = rot;
 
-        interpolationTicks = 4; // fixed 4-tick interpolation for consistency
+        interpolationTicks = 7; // fixed 4-tick interpolation for consistency
         ticksSinceLastUpdate = 0;
+    }
+
+    public void mpInterpolateVelocity(Vector3D vel) {
+        velocity = vel;
+        targetVelocity = vel;
     }
 
     /** when receiving an item equip packet, equip the item in the correct slot */

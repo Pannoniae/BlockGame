@@ -99,7 +99,8 @@ public class ServerConsole : CommandSource {
             args[0] = args[0][1..];
         }
 
-        Command.execute(this, args);
+        // run on server thread!
+        GameServer.runOnMainThread(() => Command.execute(this, args));
     }
 
     // CommandSource impl

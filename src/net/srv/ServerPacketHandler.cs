@@ -2,6 +2,7 @@ using System.Numerics;
 using BlockGame.logic;
 using BlockGame.net.packet;
 using BlockGame.util;
+using BlockGame.util.cmd;
 using BlockGame.util.log;
 using BlockGame.util.xNBT;
 using BlockGame.world.block;
@@ -842,7 +843,7 @@ public class ServerPacketHandler : PacketHandler {
 
         // execute command with player as source
         var args = p.command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        util.cmd.Command.execute(conn.player, args);
+        Command.execute(conn.player, args);
 
         // responses are sent via player.sendMessage() which will send ChatMessagePacket back to client
     }

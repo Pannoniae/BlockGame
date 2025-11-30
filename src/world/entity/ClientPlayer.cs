@@ -55,15 +55,13 @@ public class ClientPlayer : Player {
 
             // velocity is only needed for knockback/special effects, send less frequently
             ticksSinceUpdate++;
-            if (ticksSinceUpdate >= 4) {
-                ClientConnection.instance.send(
-                    new PlayerVelocityPacket {
-                        velocity = velocity
-                    },
-                    DeliveryMethod.Unreliable
-                );
-                ticksSinceUpdate = 0;
-            }
+            ClientConnection.instance.send(
+                new PlayerVelocityPacket {
+                    velocity = velocity
+                },
+                DeliveryMethod.Unreliable
+            );
+            ticksSinceUpdate = 0;
 
             // send state changes (sneaking, flying)
             // todo we need this for now because players don't use syncState yet. (we skip them in the EntityTracker....)

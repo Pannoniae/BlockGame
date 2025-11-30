@@ -238,6 +238,7 @@ public class GameServer : INetEventListener {
 
     private int updateCounter = 0;
     private long lastLogTime = 0;
+    private static readonly XUList<Action> mainThreadActions = [];
 
     public void update() {
         // 60 TPS game loop
@@ -249,6 +250,19 @@ public class GameServer : INetEventListener {
         }
 
         netManager.PollEvents();
+
+        // process all main thread actions (usually commands)
+        while (mainThreadActions.Count > 0) {
+            var action = mainThreadActions[0];
+            mainThreadActions.RemoveAt(0);
+            try {
+                action();
+            }
+            catch (Exception e) {
+                Log.error("Error executing main thread action:");
+                Log.error(e);
+            }
+        }
 
         // process all incoming packets on game thread
         while (incomingPackets.TryDequeue(out var item)) {
@@ -1058,6 +1072,19 @@ public class GameServer : INetEventListener {
 
         Log.info("Stopping server...");
 
+        // run queued main thread actions to avoid dangling stuff
+        while (mainThreadActions.Count > 0) {
+            var action = mainThreadActions[0];
+            mainThreadActions.RemoveAt(0);
+            try {
+                action();
+            }
+            catch (Exception e) {
+                Log.error("Error executing main thread action:");
+                Log.error(e);
+            }
+        }
+
         // save all players before shutdown
         Log.info("About to save players");
         saveAllPlayers();
@@ -1092,5 +1119,9 @@ public class GameServer : INetEventListener {
         }
 
         Environment.Exit(0);
+    }
+
+    public static void runOnMainThread(Action action) {
+        mainThreadActions.Add(action);
     }
 }
