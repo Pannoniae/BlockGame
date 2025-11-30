@@ -23,9 +23,11 @@ public class Humanoid : Player {
     public Vector3D targetPos;
     public Vector3 targetRot;
     public Vector3 targetBodyRot;
+
     public int interpolationTicks;
 
     // interpolate velocity alongside position
+    private Vector3D prevTargetVelocity;
     private Vector3D targetVelocity;
     private int ticksSinceLastUpdate = 0;
 
@@ -59,10 +61,9 @@ public class Humanoid : Player {
             interpolationTicks--;
         }
 
-        // zero out tiny velocities to prevent idle animation jitter
-        if (velocity.LengthSquared() < 0.002) {
-            velocity = Vector3D.Zero;
-        }
+        // derive velocity from actual movement for animation
+        // (velocity can also be set directly by EntityVelocityPacket for knockback)
+        velocity = (position - prevPosition) * dt;
 
         // update body movement (uses velocity like Mob does)
         updateBodyRotation(dt);
@@ -134,6 +135,7 @@ public class Humanoid : Player {
         targetPos = pos;
         targetRot = rot;
 
+        prevTargetVelocity = targetVelocity;
         targetVelocity = (targetPos - prevTargetPos) * (60.0 / 4.0); // velocity based on 4 ticks
 
         interpolationTicks = 4; // fixed 4-tick interpolation for consistency
