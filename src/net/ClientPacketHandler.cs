@@ -641,13 +641,13 @@ public class ClientPacketHandler : PacketHandler {
         if (entity != null) {
 
             if (entity is Humanoid humanoid) {
-                // humanoid velocity is used for extrapolation..
-                humanoid.prevVelocity = humanoid.velocity;
-                humanoid.velocity = p.velocity;
+                // ignore velocity packets for humanoid - the velocity is derived from the position straight
+                // TODO: handle knockback separately?
             }
-
-            entity.prevVelocity = entity.velocity;
-            entity.velocity = p.velocity;
+            else {
+                entity.prevVelocity = entity.velocity;
+                entity.velocity = p.velocity;
+            }
         }
     }
 

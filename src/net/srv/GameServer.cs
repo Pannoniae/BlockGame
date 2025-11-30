@@ -1030,6 +1030,9 @@ public class GameServer : INetEventListener {
 
         Log.info("Shutting down!");
 
+        // stop console thread FIRST to avoid deadlock with logging..
+        console.stop();
+
         discord?.stop();
 
         // kick everyone with message
@@ -1064,8 +1067,6 @@ public class GameServer : INetEventListener {
             Log.info("World saved");
         }
 
-        Log.info("Stopping console");
-        console.stop();
         Log.info("Stopping network");
         netManager.Stop();
         saveUsers();
