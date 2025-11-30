@@ -134,13 +134,7 @@ public class Humanoid : Player {
         targetPos = pos;
         targetRot = rot;
 
-        // calculate target velocity from server movement
-        var timeSinceUpdate = ticksSinceLastUpdate * 0.05; // ticks to seconds
-        if (timeSinceUpdate > 0) {
-            targetVelocity = (targetPos - prevTargetPos) / timeSinceUpdate;
-        } else {
-            targetVelocity = Vector3D.Zero;
-        }
+        targetVelocity = (targetPos - prevTargetPos) * (60.0 / 4.0); // velocity based on 4 ticks
 
         interpolationTicks = 4; // fixed 4-tick interpolation for consistency
         ticksSinceLastUpdate = 0;
