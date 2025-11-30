@@ -44,31 +44,24 @@ public class ClientPlayer : Player {
 
         // send position updates to server
         if (ClientConnection.instance != null && ClientConnection.instance.connected) {
+            // send every tick... it was quite buggy otherwise
+            ClientConnection.instance.send(
+                new PlayerPositionRotationPacket {
+                    position = position,
+                    rotation = rotation,
+                },
+                DeliveryMethod.Unreliable
+            );
+
+            // velocity is only needed for knockback/special effects, send less frequently
             ticksSinceUpdate++;
-
-            // send position every tick if changed significantly, or every 20 ticks regardless
-            bool moved = Vector3D.Distance(position, lastSentPos) > 0.01;
-            bool rotated = Vector3.Distance(rotation, lastSentRot) > 0.5f;
-
-            if (moved || rotated || ticksSinceUpdate >= 20) {
-                ClientConnection.instance.send(
-                    new PlayerPositionRotationPacket {
-                        position = position,
-                        rotation = rotation,
-                    },
-                    DeliveryMethod.ReliableOrdered
-                );
-
-                // also send velocity
+            if (ticksSinceUpdate >= 4) {
                 ClientConnection.instance.send(
                     new PlayerVelocityPacket {
                         velocity = velocity
                     },
-                    DeliveryMethod.ReliableOrdered
+                    DeliveryMethod.Unreliable
                 );
-
-                lastSentPos = position;
-                lastSentRot = rotation;
                 ticksSinceUpdate = 0;
             }
 
