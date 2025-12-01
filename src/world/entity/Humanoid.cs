@@ -18,7 +18,7 @@ namespace BlockGame.world.entity;
 public class Humanoid : Player {
     private readonly Queue<(Vector3D pos, Vector3 rot)> snapshotQueue = new();
 
-    private const int CONSUME_INTERVAL = 3;
+    private const int CONSUME_INTERVAL = 1;
 
     private Vector3D fromPos, toPos;
     private Vector3 fromRot, toRot;
