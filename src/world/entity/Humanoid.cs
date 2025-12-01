@@ -63,13 +63,6 @@ public class Humanoid : Player {
             }
         }
 
-        position = Vector3D.Lerp(fromPos, toPos, t);
-        rotation = new Vector3(
-            Meth.lerpAngle(fromRot.X, toRot.X, t),
-            Meth.lerpAngle(fromRot.Y, toRot.Y, t),
-            Meth.lerpAngle(fromRot.Z, toRot.Z, t)
-        );
-
         velocity = (position - prevPosition) / dt;
 
         updateBodyRotation(dt);
