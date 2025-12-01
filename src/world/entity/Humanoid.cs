@@ -28,7 +28,8 @@ public class Humanoid : Player {
     private const int RENDER_DELAY = 4; // render 4 ticks behind for hopefully less jitter
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
-        
+        targetPos = position;
+        targetRot = rotation;
     }
 
     public override void update(double dt) {
@@ -36,6 +37,13 @@ public class Humanoid : Player {
         updateTimers(dt);
 
         currentTick++;
+
+        // add current target to buffer every update
+        positionBuffer.Enqueue(new PositionSnapshot {
+            tick = currentTick,
+            position = targetPos,
+            rotation = targetRot
+        });
 
         // wait until buffer has enough data
         int renderTick = positionBuffer.Count >= RENDER_DELAY
@@ -146,13 +154,6 @@ public class Humanoid : Player {
     public override void mpInterpolate(Vector3D pos, Vector3 rot) {
         targetPos = pos;
         targetRot = rot;
-
-        // add snapshot to buffer
-        positionBuffer.Enqueue(new PositionSnapshot {
-            tick = currentTick,
-            position = pos,
-            rotation = rot
-        });
     }
 
     public void mpInterpolateVelocity(Vector3D vel) {
