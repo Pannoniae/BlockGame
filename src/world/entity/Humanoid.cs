@@ -20,7 +20,7 @@ public class Humanoid : Player {
 
     private readonly Queue<(Vector3D pos, Vector3 rot)> snapshotQueue = new();
 
-    private const int CONSUME_INTERVAL = 2;
+    private const int CONSUME_INTERVAL = 3;
     private int ticksUntilConsume = CONSUME_INTERVAL;
 
     private Vector3D fromPos, toPos;
