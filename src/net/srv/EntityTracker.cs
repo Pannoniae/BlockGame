@@ -100,6 +100,11 @@ public class EntityTracker {
     private void updateEntity(TrackedEntity t) {
         var entity = t.entity;
 
+        // if player, don't send shit, we already do
+        if (entity is Player) {
+            return;
+        }
+
         // threshold: 0.0625 blocks (1/16) or 0.5rad
         const double MOVE_THRESHOLD_SQ = 0.0625 * 0.0625;
         const float ROT_THRESHOLD_SQ = 0.5f * 0.5f;
