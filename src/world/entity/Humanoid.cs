@@ -137,7 +137,7 @@ public class Humanoid : Player {
     }
 
     public void mpInterpolateVelocity(Vector3D vel) {
-        velocity = vel;
+        //velocity = vel;
     }
 
     /** when receiving an item equip packet, equip the item in the correct slot */
