@@ -8,65 +8,77 @@ namespace BlockGame.world.entity;
  * It's like a Player, but not really.
  * Used for other clients in multiplayer.
  *
- * TODO can we do better than the fixed 4-tick interpolation?
- * RN it works but it's kinda janky, has that fucking MC-like lag.
- * We could try client-side prediction or something, not sure. Or adjust based on ping?
- * And idk what happens at high ping, does it spaz out?
+ * Uses buffered interpolation: render 4 ticks behind, interpolate between buffered snapshots.
+ * Smooth as fuck even with variable packet timing IHope
  *
  * ALSO TODO fucking merge this system with the Mob interpolation jfc, it's duplicated right now because I made this first lol
  *
  * Also arms glitch out when sneaking (animation too fast, looks like it's normal animation speed but with smaller maxpos? Something is fucked, investigate)
  */
 public class Humanoid : Player {
-    // interpolation for smooth movement
-    public Vector3D targetPos;
-    public Vector3 targetRot;
-    public Vector3 targetBodyRot;
-    public Vector3D targetVelocity;
+    // buffered interp
+    private struct PositionSnapshot {
+        public int tick;
+        public Vector3D position;
+        public Vector3 rotation;
+    }
 
-    public int interpolationTicks;
-    private int ticksSinceLastUpdate = 0;
+    private Queue<PositionSnapshot> positionBuffer = new();
+    private int currentTick = 0;
+    private const int RENDER_DELAY = 4; // render 4 ticks behind for hopefully less jitter
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
-        targetPos = position;
-        targetRot = rotation;
-        targetBodyRot = bodyRotation;
+        positionBuffer.Enqueue(new PositionSnapshot {
+            tick = 0,
+            position = position,
+            rotation = rotation
+        });
     }
 
     public override void update(double dt) {
-        // set prev
         savePrevVars();
-
-        ticksSinceLastUpdate++;
-
-        // update swinging
         updateTimers(dt);
 
-        // timeout check - if no update for 30 ticks, snap to target
-        if (ticksSinceLastUpdate > 30) {
-            position = targetPos;
-            rotation = targetRot;
-            interpolationTicks = 0;
-            velocity = Vector3D.Zero;
+        currentTick++;
+        int renderTick = currentTick - RENDER_DELAY;
+
+        // clean old snapshots (keep last 20 ticks worth)
+        while (positionBuffer.Count > 0 && positionBuffer.Peek().tick < renderTick - 20) {
+            positionBuffer.Dequeue();
         }
 
-        if (interpolationTicks > 0) {
-            var t = 1.0 / interpolationTicks;
-            position = Vector3D.Lerp(position, targetPos, t);
-            rotation = Vector3.Lerp(rotation, targetRot, (float)t);
-            interpolationTicks--;
+        // find two snapshots to interpolate between
+        PositionSnapshot? before = null;
+        PositionSnapshot? after = null;
+
+        foreach (var snapshot in positionBuffer) {
+            if (snapshot.tick <= renderTick) {
+                before = snapshot;
+            } else {
+                after = snapshot;
+                break;
+            }
         }
 
-        // update body movement (uses velocity like Mob does)
+        // interpolate
+        if (before.HasValue && after.HasValue) {
+            // interpolate between two snapshots
+            double t = (renderTick - before.Value.tick) / (double)(after.Value.tick - before.Value.tick);
+            position = Vector3D.Lerp(before.Value.position, after.Value.position, t);
+            rotation = Vector3.Lerp(before.Value.rotation, after.Value.rotation, (float)t);
+        } else if (before.HasValue) {
+            // only have past data, use latest
+            position = before.Value.position;
+            rotation = before.Value.rotation;
+        } else if (after.HasValue) {
+            // ahead of buffer, use earliest (shouldn't happen too often)
+            position = after.Value.position;
+            rotation = after.Value.rotation;
+        }
+
         updateBodyRotation(dt);
-
-        // update walk animation (uses velocity)
         updateAnimation(dt);
-
-        // update AABB
         aabb = calcAABB(position);
-
-        // don't bother with input/physics, server controls movement
     }
 
     protected override void updateBodyRotation(double dt) {
@@ -120,16 +132,16 @@ public class Humanoid : Player {
     }
 
     public override void mpInterpolate(Vector3D pos, Vector3 rot) {
-        targetPos = pos;
-        targetRot = rot;
-
-        interpolationTicks = 4; // fixed 4-tick interpolation for consistency
-        ticksSinceLastUpdate = 0;
+        // add snapshot to buffer
+        positionBuffer.Enqueue(new PositionSnapshot {
+            tick = currentTick,
+            position = pos,
+            rotation = rot
+        });
     }
 
     public void mpInterpolateVelocity(Vector3D vel) {
         velocity = vel;
-        targetVelocity = vel;
     }
 
     /** when receiving an item equip packet, equip the item in the correct slot */

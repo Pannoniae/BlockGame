@@ -643,6 +643,7 @@ public class ClientPacketHandler : PacketHandler {
             if (entity is Humanoid humanoid) {
                 // TODO: handle knockback separately?
                 humanoid.mpInterpolateVelocity(p.velocity);
+                //Log.info($"[Client] Updated velocity for Humanoid entityID={p.entityID} to {p.velocity}");
             }
             else {
                 entity.prevVelocity = entity.velocity;
