@@ -23,16 +23,12 @@ public class Humanoid : Player {
         public Vector3 rotation;
     }
 
-    private Queue<PositionSnapshot> positionBuffer = new();
+    private readonly Queue<PositionSnapshot> positionBuffer = new();
     private int currentTick = 0;
     private const int RENDER_DELAY = 4; // render 4 ticks behind for hopefully less jitter
 
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
-        positionBuffer.Enqueue(new PositionSnapshot {
-            tick = 0,
-            position = position,
-            rotation = rotation
-        });
+        
     }
 
     public override void update(double dt) {
@@ -74,8 +70,9 @@ public class Humanoid : Player {
                 Meth.lerpAngle(before.Value.rotation.Y, after.Value.rotation.Y, (float)t),
                 Meth.lerpAngle(before.Value.rotation.Z, after.Value.rotation.Z, (float)t)
             );
-            
-            velocity = (newPos - position) / dt;
+
+            // vel updates come separately
+            //velocity = (newPos - position) / dt;
             position = newPos;
             rotation = newRot;
         } else if (before.HasValue) {
@@ -147,6 +144,9 @@ public class Humanoid : Player {
     }
 
     public override void mpInterpolate(Vector3D pos, Vector3 rot) {
+        targetPos = pos;
+        targetRot = rot;
+
         // add snapshot to buffer
         positionBuffer.Enqueue(new PositionSnapshot {
             tick = currentTick,
