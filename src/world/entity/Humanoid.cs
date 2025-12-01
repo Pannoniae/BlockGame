@@ -16,12 +16,9 @@ namespace BlockGame.world.entity;
  * Also arms glitch out when sneaking (animation too fast, looks like it's normal animation speed but with smaller maxpos? Something is fucked, investigate)
  */
 public class Humanoid : Player {
-
-
     private readonly Queue<(Vector3D pos, Vector3 rot)> snapshotQueue = new();
 
     private const int CONSUME_INTERVAL = 3;
-    private int ticksUntilConsume = CONSUME_INTERVAL;
 
     private Vector3D fromPos, toPos;
     private Vector3 fromRot, toRot;
@@ -30,40 +27,41 @@ public class Humanoid : Player {
     public Humanoid(World world, int x, int y, int z) : base(world, x, y, z) {
         targetPos = position;
         targetRot = rotation;
+        fromPos = toPos = position;
+        fromRot = toRot = rotation;
     }
 
     public override void update(double dt) {
         savePrevVars();
         updateTimers(dt);
 
-        ticksUntilConsume--;
-
-        if (ticksUntilConsume <= 0) {
-            ticksUntilConsume = CONSUME_INTERVAL;
-
-            if (snapshotQueue.Count > 0) {
-                // shift: current target becomes new start
-                fromPos = toPos;
-                fromRot = toRot;
-
-                var next = snapshotQueue.Dequeue();
-                toPos = next.pos;
-                toRot = next.rot;
-                interpTick = 0;
-
-                // buffer overflow protection: if queue grows too large, catch up
-                while (snapshotQueue.Count > 6) {
-                    var skip = snapshotQueue.Dequeue();
-                    toPos = skip.pos;
-                    toRot = skip.rot;
-                }
-            }
-            // else: queue starved, hold position (toPos unchanged)
-        }
-
-        // time to interp
         interpTick++;
         float t = Math.Clamp(interpTick / (float)CONSUME_INTERVAL, 0f, 1f);
+
+        // lerp
+        position = Vector3D.Lerp(fromPos, toPos, t);
+        rotation = new Vector3(
+            Meth.lerpAngle(fromRot.X, toRot.X, t),
+            Meth.lerpAngle(fromRot.Y, toRot.Y, t),
+            Meth.lerpAngle(fromRot.Z, toRot.Z, t)
+        );
+
+        // consume
+        if (interpTick >= CONSUME_INTERVAL && snapshotQueue.Count > 0) {
+            fromPos = toPos;
+            fromRot = toRot;
+
+            var next = snapshotQueue.Dequeue();
+            toPos = next.pos;
+            toRot = next.rot;
+            interpTick = 0;
+
+            while (snapshotQueue.Count > 6) {
+                var skip = snapshotQueue.Dequeue();
+                toPos = skip.pos;
+                toRot = skip.rot;
+            }
+        }
 
         position = Vector3D.Lerp(fromPos, toPos, t);
         rotation = new Vector3(
