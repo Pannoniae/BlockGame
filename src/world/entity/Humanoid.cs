@@ -40,10 +40,14 @@ public class Humanoid : Player {
         updateTimers(dt);
 
         currentTick++;
-        int renderTick = currentTick - RENDER_DELAY;
 
-        // clean old snapshots (keep last 20 ticks worth)
-        while (positionBuffer.Count > 0 && positionBuffer.Peek().tick < renderTick - 20) {
+        // wait until buffer has enough data
+        int renderTick = positionBuffer.Count >= RENDER_DELAY
+            ? currentTick - RENDER_DELAY
+            : currentTick;
+
+        // clean old snapshots (keep last 20 ticks worth, at least 2)
+        while (positionBuffer.Count > 2 && positionBuffer.Peek().tick < renderTick - 20) {
             positionBuffer.Dequeue();
         }
 
@@ -61,20 +65,31 @@ public class Humanoid : Player {
         }
 
         // interpolate
-        if (before.HasValue && after.HasValue) {
+        if (before.HasValue && after.HasValue && before.Value.tick != after.Value.tick) {
             // interpolate between two snapshots
             double t = (renderTick - before.Value.tick) / (double)(after.Value.tick - before.Value.tick);
-            position = Vector3D.Lerp(before.Value.position, after.Value.position, t);
-            rotation = Vector3.Lerp(before.Value.rotation, after.Value.rotation, (float)t);
+            var newPos = Vector3D.Lerp(before.Value.position, after.Value.position, t);
+            var newRot = new Vector3(
+                Meth.lerpAngle(before.Value.rotation.X, after.Value.rotation.X, (float)t),
+                Meth.lerpAngle(before.Value.rotation.Y, after.Value.rotation.Y, (float)t),
+                Meth.lerpAngle(before.Value.rotation.Z, after.Value.rotation.Z, (float)t)
+            );
+            
+            velocity = (newPos - position) / dt;
+            position = newPos;
+            rotation = newRot;
         } else if (before.HasValue) {
-            // only have past data, use latest
+            // only have past data, use latest (freeze)
+            velocity = Vector3D.Zero;
             position = before.Value.position;
             rotation = before.Value.rotation;
         } else if (after.HasValue) {
-            // ahead of buffer, use earliest (shouldn't happen too often)
+            // ahead of buffer, snap to earliest
+            velocity = Vector3D.Zero;
             position = after.Value.position;
             rotation = after.Value.rotation;
         }
+        // if no snapshots at all, keep current position/rotation (shouldn't happen)
 
         updateBodyRotation(dt);
         updateAnimation(dt);
