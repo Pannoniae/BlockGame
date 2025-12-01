@@ -38,13 +38,6 @@ public class Humanoid : Player {
 
         currentTick++;
 
-        // add current target to buffer every update
-        positionBuffer.Enqueue(new PositionSnapshot {
-            tick = currentTick,
-            position = targetPos,
-            rotation = targetRot
-        });
-
         // wait until buffer has enough data
         int renderTick = positionBuffer.Count >= RENDER_DELAY
             ? currentTick - RENDER_DELAY
@@ -154,6 +147,13 @@ public class Humanoid : Player {
     public override void mpInterpolate(Vector3D pos, Vector3 rot) {
         targetPos = pos;
         targetRot = rot;
+
+        // add to buffer
+        positionBuffer.Enqueue(new PositionSnapshot {
+            tick = currentTick,
+            position = targetPos,
+            rotation = targetRot
+        });
     }
 
     public void mpInterpolateVelocity(Vector3D vel) {
