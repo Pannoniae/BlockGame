@@ -23,6 +23,15 @@ public class ZipPackSource : PackSource {
         return archive.GetEntry(normalizedPath) != null;
     }
 
+    public Stream open(string path) {
+        var normalizedPath = path.Replace('\\', '/');
+        var entry = archive.GetEntry(normalizedPath);
+        if (entry == null) {
+            throw new FileNotFoundException($"File not found in zip: {path}");
+        }
+        return entry.Open();
+    }
+
     public Image<Rgba32> loadImage(string path) {
         var normalizedPath = path.Replace('\\', '/');
         var entry = archive.GetEntry(normalizedPath);

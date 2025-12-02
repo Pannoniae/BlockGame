@@ -35,7 +35,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
         GL.TextureParameter(handle, TextureParameterName.TextureBaseLevel, 0);
         GL.TextureParameter(handle, TextureParameterName.TextureMaxLevel, 0);
         image?.Dispose();
-        using var s = Assets.open(path!);
+        using var s = Game.textures.open(path!);
         image = Image.Load<Rgba32>(s);
         uploadImage(GL, image);
     }

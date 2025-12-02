@@ -43,6 +43,7 @@ public class Textures {
     // texture pack management
     private readonly List<TexturePack> availablePacks = [];
     private TexturePack? currentPack;
+    private PackSource? activePack;
 
     // source registry
     private readonly List<AtlasSource> blockSources = [];
@@ -55,6 +56,15 @@ public class Textures {
     public Textures(Silk.NET.OpenGL.Legacy.GL GL) {
         this.GL = GL;
 
+        // assign early so reload() can use Game.textures.open()
+        Game.textures = this;
+
+        // discover and load texture pack FIRST
+        discoverPacks();
+        var packName = Settings.instance.texturePack;
+        loadPack(packName);
+
+        // THEN load textures (will use pack system)
         background = get("textures/bg.png");
         lightTexture = get("textures/lightmap.png");
         lightTexture2 = get("textures/lightmap.png");
@@ -65,11 +75,6 @@ public class Textures {
         cloudTexture = get("textures/clouds.png");
 
         particleTex = get("textures/particle.png");
-
-        // discover and load texture pack
-        discoverPacks();
-        var packName = Settings.instance.texturePack;
-        loadPack(packName);
 
         // load player skin from game directory (not assets/!)
         human = new BTexture2D(Settings.instance.skinPath);
@@ -180,8 +185,24 @@ public class Textures {
 
         Log.info("Textures", $"Stitched atlases: blocks={blockResult.width}x{blockResult.height}, items={itemResult.width}x{itemResult.height}");
 
+        // reload all cached non-atlas textures
+        reloadCachedTextures();
+
         // notify dependents
         onAtlasReloaded?.Invoke();
+    }
+
+    /**
+     * Reload all cached textures (for pack hot-reload)
+     */
+    private void reloadCachedTextures() {
+        foreach (var tex in textures.Values) {
+            try {
+                tex.reload();
+            } catch (Exception e) {
+                Log.warn("Textures", $"Failed to reload texture {tex.path}: {e.Message}");
+            }
+        }
     }
 
     /**
@@ -314,6 +335,23 @@ public class Textures {
             // works on Linux, right? needs testing :D
             System.Diagnostics.Process.Start("open", Path.GetFullPath(PACK_DIR));
         }
+    }
+
+    /**
+     * Set the active pack source for non-atlas texture resolution
+     */
+    public void setPack(PackSource? pack) {
+        activePack = pack;
+    }
+
+    /**
+     * Open a texture stream, checking pack first, then falling back to assets
+     */
+    public Stream open(string path) {
+        if (activePack?.exists(path) == true) {
+            return activePack.open(path);
+        }
+        return Assets.open(path);
     }
 
     public BTexture2D get(string path) {

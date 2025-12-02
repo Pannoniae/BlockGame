@@ -1162,8 +1162,7 @@ public class ClientPacketHandler : PacketHandler {
             // update currentRecipe on client (needed for getSmeltProgress() calculation)
             // server sets this during update(), but client doesn't run update() :)
             if (p.smeltProgress > 0 && furnace.slots[0] != ItemStack.EMPTY) {
-                // only update recipe if we don't have one or input changed
-                furnace.currentRecipe ??= SmeltingRecipe.findRecipe(furnace.slots[0].getItem());
+                furnace.currentRecipe = SmeltingRecipe.findRecipe(furnace.slots[0].getItem());
             } else {
                 // no progress or no item = no recipe
                 furnace.currentRecipe = null;

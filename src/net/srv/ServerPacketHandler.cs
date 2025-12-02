@@ -428,7 +428,7 @@ public class ServerPacketHandler : PacketHandler {
                 entityID = conn.entityID,
                 position = p.position,
             },
-            DeliveryMethod.ReliableOrdered,
+            DeliveryMethod.Unreliable,
             exclude: conn
         );
     }
@@ -449,7 +449,7 @@ public class ServerPacketHandler : PacketHandler {
                 rotation = conn.player.rotation,
                 bodyRotation = conn.player.bodyRotation
             },
-            DeliveryMethod.ReliableOrdered,
+            DeliveryMethod.Unreliable,
             exclude: conn
         );
     }
@@ -471,7 +471,7 @@ public class ServerPacketHandler : PacketHandler {
                 position = conn.player.position,
                 rotation = conn.player.rotation,
             },
-            DeliveryMethod.ReliableOrdered,
+            DeliveryMethod.Unreliable,
             exclude: conn
         );
     }
@@ -491,7 +491,7 @@ public class ServerPacketHandler : PacketHandler {
                 entityID = conn.entityID,
                 velocity = p.velocity
             },
-            DeliveryMethod.ReliableOrdered,
+            DeliveryMethod.Unreliable,
             exclude: conn
         );
     }

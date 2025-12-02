@@ -771,7 +771,10 @@ public partial class Game {
 
         cs = new Coroutines();
 
-        // initialize the GUI first
+        // initialize textures before GUI (GUI constructor loads textures)
+        textures = new Textures(GL);
+
+        // initialize the GUI
         fontLoader = new FontLoader("fonts/BmPlus_IBM_VGA_9x16.otb", "fonts/BmPlus_IBM_VGA_9x16.otb");
         gui = new GUI();
         gui.loadFont(16);
@@ -812,9 +815,8 @@ public partial class Game {
 
         var a = InputTracker.DUMMY;
         inputs = new InputTracker();
-        
+
         Menu.STARTUP_LOADING.updateProgress(0.3f, "Loading textures");
-        textures = new Textures(GL);
         Screen.init();
 
         // wire up atlas reload callback to remesh world

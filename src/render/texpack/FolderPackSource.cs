@@ -20,6 +20,10 @@ public class FolderPackSource : PackSource {
         return File.Exists(Path.Combine(basePath, path));
     }
 
+    public Stream open(string path) {
+        return File.OpenRead(Path.Combine(basePath, path));
+    }
+
     public Image<Rgba32> loadImage(string path) {
         return Image.Load<Rgba32>(Path.Combine(basePath, path));
     }

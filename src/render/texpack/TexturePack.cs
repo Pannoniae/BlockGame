@@ -43,6 +43,10 @@ public class TexturePack {
      * Called before stitching.
      */
     public void registerSources(Textures textures) {
+        // set pack for non-atlas texture resolution
+        textures.setPack(source);
+
+        // register atlas sources
         if (source.exists("textures/blocks.png")) {
             var img = source.loadImage("textures/blocks.png");
             textures.addBlockSource("blocks.png", img, tileSize);
