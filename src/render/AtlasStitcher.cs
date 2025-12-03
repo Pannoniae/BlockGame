@@ -111,7 +111,7 @@ public static class AtlasStitcher {
         // 8. Blit all rectangles to final atlas & record mappings
         for (int i = 0; i < rectsArray.Length; i++) {
             var rect = rectsArray[i];
-            var meta = rectMetadata[rect.Id];  // Use Id, not index!
+            var meta = rectMetadata[rect.Id]; // Use Id, not index!
 
             var destRect = new Rectangle((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 
@@ -122,7 +122,8 @@ public static class AtlasStitcher {
                     var prSource = sources.Find(s => s.filepath == pr.sourceFile)!;
                     blitRegion(prSource.image, pr.srcRect, finalImage, destRect);
                     protectedPositions[pr.name] = destRect;
-                    Log.info("AtlasStitcher", $"Protected region '{pr.name}': src=({pr.srcRect.X},{pr.srcRect.Y},{pr.srcRect.Width},{pr.srcRect.Height}) -> dest=({destRect.X},{destRect.Y},{destRect.Width},{destRect.Height})");
+                    Log.info("AtlasStitcher",
+                        $"Protected region '{pr.name}': src=({pr.srcRect.X},{pr.srcRect.Y},{pr.srcRect.Width},{pr.srcRect.Height}) -> dest=({destRect.X},{destRect.Y},{destRect.Width},{destRect.Height})");
 
                     // Also map individual tiles within the protected region
                     int tileSize = prSource.tileSize;
@@ -141,6 +142,7 @@ public static class AtlasStitcher {
                             tilePositions[(prSource.filepath, srcTileX, srcTileY)] = tileDestRect;
                         }
                     }
+
                     break;
 
                 case RectType.TILE:
@@ -200,31 +202,48 @@ public static class AtlasStitcher {
      * Blit a region from source to destination
      */
     private static void blitRegion(Image<Rgba32> srcImage, Rectangle srcRect, Image<Rgba32> dstImage, Rectangle dstRect) {
-        // extract source region
-        using var region = srcImage.Clone(ctx => ctx.Crop(srcRect));
-
-        // if sizes don't match, resize (shouldn't happen in our case)
-        if (region.Width != dstRect.Width || region.Height != dstRect.Height) {
-            region.Mutate(ctx => ctx.Resize(dstRect.Width, dstRect.Height));
+        // sanity check - sizes must match
+        if (srcRect.Width != dstRect.Width || srcRect.Height != dstRect.Height) {
+            InputException.throwNew("Source and destination rectangles must have same dimensions");
         }
 
-        // paste to destination
-        dstImage.Mutate(ctx => ctx.DrawImage(region, new Point(dstRect.X, dstRect.Y), 1f));
+        int width = srcRect.Width;
+        int height = srcRect.Height;
+
+        if (!srcImage.DangerousTryGetSinglePixelMemory(out var srcMem)) {
+            InputException.throwNew("Source image not contiguous");
+        }
+
+        if (!dstImage.DangerousTryGetSinglePixelMemory(out var dstMem)) {
+            InputException.throwNew("Dest image not contiguous");
+        }
+
+        var srcSpan = srcMem.Span;
+        var dstSpan = dstMem.Span;
+
+        int srcStride = srcImage.Width;
+        int dstStride = dstImage.Width;
+
+        for (int y = 0; y < height; y++) {
+            int srcOffset = (srcRect.Y + y) * srcStride + srcRect.X;
+            int dstOffset = (dstRect.Y + y) * dstStride + dstRect.X;
+            srcSpan.Slice(srcOffset, width).CopyTo(dstSpan.Slice(dstOffset, width));
+        }
     }
 
     /**
      * Metadata for tracking what each packed rectangle represents
      */
     public enum RectType {
-        TILE,            // individual tile from source
+        TILE, // individual tile from source
         PROTECTED_REGION, // protected region that can't be split
-        EMPTY_TILE        // the shared empty tile
+        EMPTY_TILE // the shared empty tile
     }
 
     private struct RectMetadata {
         public RectType type;
         public AtlasSource? source;
-        public int tileX, tileY;  // for Tile type
-        public ProtectedRegion protectedRegion;  // for PROTECTED_REGION type
+        public int tileX, tileY; // for Tile type
+        public ProtectedRegion protectedRegion; // for PROTECTED_REGION type
     }
 }

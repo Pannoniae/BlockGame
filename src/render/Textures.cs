@@ -160,6 +160,7 @@ public class Textures {
     public void reloadAtlases() {
         // clear old sources
         clearSources();
+        Game.graphics.invalidateTextures();
 
         // register new sources
         if (currentPack == null) {
@@ -200,7 +201,8 @@ public class Textures {
             try {
                 tex.reload();
             } catch (Exception e) {
-                Log.warn("Textures", $"Failed to reload texture {tex.path}: {e.Message}");
+                Log.warn("Textures", $"Failed to reload texture {tex.path}:");
+                Log.warn(e);
             }
         }
     }

@@ -484,9 +484,12 @@ public partial class Game {
                 // the input starting is needed to get unicode text input
                 // this WILL break on mobile platforms and IME
                 // we don't care about mobile but we will need to fix IME at some point;)
-                SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO | SDL_InitFlags.SDL_INIT_VIDEO |
+                /*SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO | SDL_InitFlags.SDL_INIT_VIDEO |
                               SDL_InitFlags.SDL_INIT_EVENTS |
-                              SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK);
+                              SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK);*/
+                // note for now we yeeted the flags, we'll probably need controller support later or something....
+                SDL3.SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO |
+                              SDL_InitFlags.SDL_INIT_EVENTS);
                 SDL3.SDL_StartTextInput((SDL_Window*)window.Handle);
 
                 // cap window size

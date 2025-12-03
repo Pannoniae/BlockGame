@@ -38,13 +38,24 @@ public class AtlasSource {
         int startX = tileX * tileSize;
         int startY = tileY * tileSize;
 
+        var b = image.DangerousTryGetSinglePixelMemory(out var data);
+        if (!b) {
+            for (int y = startY; y < startY + tileSize; y++) {
+                for (int x = startX; x < startX + tileSize; x++) {
+                    if (image[x, y].A > 0)
+                        return false;
+                }
+            }
+
+            return true;
+        }
+        var span = data.Span;
         for (int y = startY; y < startY + tileSize; y++) {
             for (int x = startX; x < startX + tileSize; x++) {
-                if (image[x, y].A > 0)
+                if (span[y * image.Width + x].A > 0)
                     return false;
             }
         }
-
         return true;
     }
 

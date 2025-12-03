@@ -97,24 +97,26 @@ public class ClientPlayer : Player {
         var now = Game.permanentStopwatch.ElapsedMilliseconds;
         bool connected = ClientConnection.instance != null && ClientConnection.instance.connected;
 
-        if (connected && Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
+        if (Game.raycast.hit && Game.raycast.type == Result.BLOCK) {
             var pos = Game.raycast.block;
             var prev = Game.raycast.previous;
 
-            // handle fire breaking (instant break, needs packet)
+            // handle fire breaking (instant break)
             if (world.getBlock(prev.X, prev.Y, prev.Z) == Block.FIRE.id) {
                 world.setBlock(prev.X, prev.Y, prev.Z, 0);
                 Game.snd.playBlockBreak(Block.FIRE.mat.smat);
-                ClientConnection.instance.send(
-                    new FinishBlockBreakPacket { position = prev },
-                    DeliveryMethod.ReliableOrdered
-                );
+                if (connected) {
+                    ClientConnection.instance.send(
+                        new FinishBlockBreakPacket { position = prev },
+                        DeliveryMethod.ReliableOrdered
+                    );
+                }
                 setSwinging(true);
                 lastMouseAction = now;
                 return;
             }
 
-            // creative instant-break (needs packet, respect delay)
+            // creative instant-break (respect delay)
             if (!gameMode.gameplay && now - lastMouseAction > Constants.breakDelayMs) {
                 var block = Block.get(world.getBlock(pos));
                 if (block != null && block.id != 0) {
@@ -125,10 +127,12 @@ public class ClientPlayer : Player {
                         Game.snd.playBlockBreak(block.mat.smat);
                     }
                 }
-                ClientConnection.instance.send(
-                    new FinishBlockBreakPacket { position = pos },
-                    DeliveryMethod.ReliableOrdered
-                );
+                if (connected) {
+                    ClientConnection.instance.send(
+                        new FinishBlockBreakPacket { position = pos },
+                        DeliveryMethod.ReliableOrdered
+                    );
+                }
                 setSwinging(true);
                 lastMouseAction = now;
                 return;
@@ -511,6 +515,12 @@ public class ClientPlayer : Player {
 
         if (Game.inputs.q.pressed()) {
             dropItem();
+        }
+
+        // survival: gradual breaking with progress
+
+        if (gameMode.gameplay) {
+            blockHandling(dt);
         }
     }
 

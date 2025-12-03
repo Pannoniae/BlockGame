@@ -186,7 +186,7 @@ public class BTexture2D : IEquatable<BTexture2D>, IDisposable {
     }
 
     public void bind() {
-        Game.graphics.tex(0, handle);
+        Game.graphics.tex(0, this);
     }
 
     public virtual void Dispose() {

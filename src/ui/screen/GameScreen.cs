@@ -201,8 +201,6 @@ public class GameScreen : Screen {
             if (currentMenu == INGAME_MENU) {
                 Game.player.updateInput(dt);
             }
-
-            Game.player.blockHandling(dt);
             world.update(dt);
             //world.player.update(dt);
         }
