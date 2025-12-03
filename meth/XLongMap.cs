@@ -8,7 +8,7 @@ namespace BlockGame.util;
  * Better hash function than XMap&lt;long, V&gt; using a MurmurHash3 finaliser.
  * Used for packed chunk coordinates.
  */
-public class XLongMap<V> : IEnumerable<V> {
+public class XLongMap<V> : IDictionary<long, V>, IEnumerable<V> {
 
     private struct Entry {
         public long key;
@@ -29,7 +29,16 @@ public class XLongMap<V> : IEnumerable<V> {
         count = 0;
     }
 
+    public bool Remove(KeyValuePair<long, V> item) {
+        if (TryGetValue(item.Key, out var value) &&
+            EqualityComparer<V>.Default.Equals(value, item.Value)) {
+            return Remove(item.Key);
+        }
+        return false;
+    }
+
     public int Count => count;
+    public bool IsReadOnly => false;
 
     public ref V this[long key] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,6 +59,29 @@ public class XLongMap<V> : IEnumerable<V> {
         }
     }
 
+    public ICollection<long> Keys {
+        get {
+            var keys = new List<long>(count);
+            for (int i = 0; i < entries.Length; i++) {
+                if (entries[i].hash != 0 && entries[i].hash != -1) {
+                    keys.Add(entries[i].key);
+                }
+            }
+            return keys;
+        }
+    }
+    public ICollection<V> Values {
+        get {
+            var values = new List<V>(count);
+            for (int i = 0; i < entries.Length; i++) {
+                if (entries[i].hash != 0 && entries[i].hash != -1) {
+                    values.Add(entries[i].value);
+                }
+            }
+            return values;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(long key, out V value) {
         int hash = GetHash(key);
@@ -66,6 +98,11 @@ public class XLongMap<V> : IEnumerable<V> {
 
         value = default!;
         return false;
+    }
+
+    V IDictionary<long, V>.this[long key] {
+        get => this[key];
+        set => Set(key, value);
     }
 
     /** Gets an entry if it exists, or adds a new entry and returns it */
@@ -141,10 +178,29 @@ public class XLongMap<V> : IEnumerable<V> {
         return TryGetValue(key, out _);
     }
 
+    public void Add(KeyValuePair<long, V> item) {
+        Insert(item.Key, item.Value, false);
+    }
+
     public void Clear() {
         Array.Clear(entries);
         count = 0;
         tombstones = 0;
+    }
+
+    public bool Contains(KeyValuePair<long, V> item) {
+        if (TryGetValue(item.Key, out var value)) {
+            return EqualityComparer<V>.Default.Equals(value, item.Value);
+        }
+        return false;
+    }
+
+    public void CopyTo(KeyValuePair<long, V>[] array, int arrayIndex) {
+        for (int i = 0; i < entries.Length; i++) {
+            if (entries[i].hash != 0 && entries[i].hash != -1) {
+                array[arrayIndex++] = new KeyValuePair<long, V>(entries[i].key, entries[i].value);
+            }
+        }
     }
 
     public void Insert(long key, V value, bool overwrite) {
@@ -212,6 +268,14 @@ public class XLongMap<V> : IEnumerable<V> {
 
         if (count != oldCount) {
             SkillIssueException.throwNew("Count mismatch during resize");
+        }
+    }
+
+    IEnumerator<KeyValuePair<long, V>> IEnumerable<KeyValuePair<long, V>>.GetEnumerator() {
+        for (int i = 0; i < entries.Length; i++) {
+            if (entries[i].hash != 0 && entries[i].hash != -1) {
+                yield return new KeyValuePair<long, V>(entries[i].key, entries[i].value);
+            }
         }
     }
 
@@ -314,6 +378,11 @@ public class XLongMap<V> : IEnumerable<V> {
         public ref V Value {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref val;
+        }
+
+        public void Deconstruct(out long key, out V value) {
+            key = Key;
+            value = val;
         }
     }
 }

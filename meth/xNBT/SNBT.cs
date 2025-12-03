@@ -179,15 +179,20 @@ public class SNBTWriter {
     private void writeListInterface(INBTList list, NBTTag tag) {
         // Extract the list items via reflection (necessary due to generic constraints)
         var listField = tag.GetType().GetField("list");
-        if (listField?.GetValue(tag) is IList items) {
-            var tagList = new List<NBTTag>(items.Count);
+        if (listField?.GetValue(tag) is IEnumerable items) {
+            var tagList = new List<NBTTag>();
             foreach (var item in items) {
-                tagList.Add((NBTTag)item);
+                if (item is NBTTag nbtTag) {
+                    tagList.Add(nbtTag);
+                }
+                else {
+                    SkillIssueException.throwNew($"List contains non-NBTTag items! ({item.GetType().Name})");
+                }
             }
             writeList(tagList, list.listType);
         } else {
             // Empty list
-            writeList(new List<NBTTag>(), list.listType);
+            writeList([], list.listType);
         }
     }
 
@@ -668,14 +673,17 @@ internal class SNBTParser {
         NBTType listType = items[0].id;
         var list = NBTTag.createListTag(listType, name);
 
-        // Add items via reflection (unavoidable due to generic constraints)
+        // Add items via reflection (unavoidable due to generic constraints ::()
         var listField = list.GetType().GetField("list");
-        if (listField?.GetValue(list) is System.Collections.IList ilist) {
-            foreach (var item in items) {
-                if (item.id != listType) {
-                    throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
+        if (listField?.GetValue(list) is object listObj) {
+            var addMethod = listObj.GetType().GetMethod("Add");
+            if (addMethod != null) {
+                foreach (var item in items) {
+                    if (item.id != listType) {
+                        throw new FormatException($"Mixed types in list: expected {listType}, got {item.id}");
+                    }
+                    addMethod.Invoke(listObj, [item]);
                 }
-                ilist.Add(item);
             }
         }
 

@@ -398,6 +398,7 @@ public class NBTTest {
         // Binary representations should be identical
         var originalBytes = originalStream.ToArray();
         var snbtBytes = snbtStream.ToArray();
+
         Assert.That(originalBytes, Is.EqualTo(snbtBytes));
     }
 

@@ -7,11 +7,12 @@ namespace BlockGame.util;
  * Unordered list with O(1) removal via swap-with-last.
  * Use this when you don't care about element order but need fast add/remove.
  */
-public class XUList<T> : IEnumerable<T> {
+public class XUList<T> : IList<T> {
     private T[] arr;
     private int cnt;
 
-    public XUList() : this(4) { }
+    public XUList() : this(4) {
+    }
 
     public XUList(int capacity) {
         arr = new T[capacity];
@@ -38,6 +39,8 @@ public class XUList<T> : IEnumerable<T> {
         get => cnt;
     }
 
+    public bool IsReadOnly => false;
+
     public int Capacity {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => arr.Length;
@@ -59,6 +62,7 @@ public class XUList<T> : IEnumerable<T> {
         if (cnt == arr.Length) {
             Grow();
         }
+
         arr[cnt++] = item;
     }
 
@@ -68,6 +72,7 @@ public class XUList<T> : IEnumerable<T> {
             if (newCnt > arr.Length) {
                 GrowTo(newCnt);
             }
+
             col.CopyTo(arr, cnt);
             cnt = newCnt;
         }
@@ -87,7 +92,12 @@ public class XUList<T> : IEnumerable<T> {
             RemoveAt(idx);
             return true;
         }
+
         return false;
+    }
+
+    public void Insert(int index, T item) {
+        throw new NotSupportedException("Insert is not supported in XUList");
     }
 
     /**
@@ -100,7 +110,13 @@ public class XUList<T> : IEnumerable<T> {
         if (idx != cnt) {
             arr[idx] = arr[cnt];
         }
+
         arr[cnt] = default!;
+    }
+
+    T IList<T>.this[int index] {
+        get => this[index];
+        set => this[index] = value;
     }
 
     /**
@@ -124,7 +140,7 @@ public class XUList<T> : IEnumerable<T> {
     }
 
     public void RemoveAll(Func<T, bool> func) {
-        for (int i = 0; i < cnt; ) {
+        for (int i = 0; i < cnt;) {
             if (func(arr[i])) {
                 RemoveAt(i);
             }
@@ -139,6 +155,7 @@ public class XUList<T> : IEnumerable<T> {
         if (RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
             Array.Clear(arr, 0, cnt);
         }
+
         cnt = 0;
     }
 

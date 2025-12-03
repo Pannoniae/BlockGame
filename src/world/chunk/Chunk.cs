@@ -836,6 +836,18 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
         return new ChunkCoord(x, z);
     }
 
+    /** pack coords into long */
+    public long toLong() {
+        return ((long)x) << 32 | (uint)z;
+    }
+
+    /** unpack coords from long */
+    public static ChunkCoord fromLong(long packed) {
+        int x = (int)(packed >> 32);
+        int z = (int)packed;
+        return new ChunkCoord(x, z);
+    }
+
     public override int GetHashCode() {
         return XHash.hash(x, y, z);
     }
@@ -848,6 +860,43 @@ public readonly record struct SubChunkCoord(int x, int y, int z) {
 public readonly record struct RegionCoord(int x, int z) {
     public readonly int x = x;
     public readonly int z = z;
+
+    /** pack coords into long */
+    public long toLong() {
+        return ((long)x) << 32 | (uint)z;
+    }
+
+    /** unpack coords from long */
+    public static ChunkCoord fromLong(long packed) {
+        int x = (int)(packed >> 32);
+        int z = (int)packed;
+        return new ChunkCoord(x, z);
+    }
+
+    public override int GetHashCode() {
+        return XHash.hash(x, z);
+    }
+
+    public bool Equals(RegionCoord other) {
+        return x == other.x && z == other.z;
+    }
+}
+
+public readonly record struct LocalRegionCoord(int x, int z) {
+    public readonly int x = x;
+    public readonly int z = z;
+
+    /** pack coords into long */
+    public long toLong() {
+        return ((long)x) << 32 | (uint)z;
+    }
+
+    /** unpack coords from long */
+    public static ChunkCoord fromLong(long packed) {
+        int x = (int)(packed >> 32);
+        int z = (int)packed;
+        return new ChunkCoord(x, z);
+    }
 
     public override int GetHashCode() {
         return XHash.hash(x, z);

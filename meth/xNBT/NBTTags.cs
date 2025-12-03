@@ -6,7 +6,6 @@ using System.Text;
 namespace BlockGame.util.xNBT;
 
 public class NBTEnd : NBTTag {
-
     public NBTEnd() : base("") {
     }
 
@@ -297,7 +296,7 @@ public class NBTString : NBTTag {
 // has a typename
 public interface INBTList {
     public NBTType listType { get; }
-    
+
     public int count();
 }
 
@@ -321,7 +320,6 @@ public class NBTList : NBTTag, INBTList {
         foreach (var t in list) {
             t.writeContents(stream);
         }
-
     }
 
     public override void readContents(BinaryReader stream) {
@@ -364,7 +362,7 @@ public class NBTList : NBTTag, INBTList {
 }
 
 public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
-    public readonly XUList<T> list;
+    public readonly XList<T> list;
 
     public NBTType listType { get; set; }
 
@@ -373,7 +371,7 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
     public NBTList(NBTType listType, string? name) : base(name) {
         list = [];
         this.listType = listType;
-        
+
         // if this thing is EVER a generic NBTTag, throw an exception. This should never happen and it's a result of skill-issue programming.
         // We "specialise" the lists by a huge fucking switch statement when constructing them. This is not *good* but better than reflection shit.
         if (typeof(T) == typeof(NBTTag)) {
@@ -389,7 +387,6 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
         foreach (var t in list) {
             t.writeContents(stream);
         }
-
     }
 
     public override void readContents(BinaryReader stream) {
@@ -426,7 +423,7 @@ public class NBTList<T> : NBTTag, INBTList where T : NBTTag {
         return list.Count;
     }
 
-    public override String ToString() {
+    public override string ToString() {
         return list.Count + " entries of type " + getTypeName(listType);
     }
 }
@@ -449,9 +446,9 @@ public class NBTCompound : NBTTag {
         foreach (var item in dict) {
             write(item, stream);
         }
+
         // write Tag_END
         stream.Write((byte)0);
-
     }
 
     public override void readContents(BinaryReader stream) {
@@ -467,7 +464,7 @@ public class NBTCompound : NBTTag {
         }
     }
 
-    public XMap<string,NBTTag>.ValueEnumerable getTags() {
+    public XMap<string, NBTTag>.ValueEnumerable getTags() {
         return dict.Values;
     }
 
@@ -679,7 +676,7 @@ public class NBTCompound : NBTTag {
     public NBTTag get(string name) {
         return dict[name];
     }
-    
+
     public bool has(string name) {
         return dict.ContainsKey(name);
     }
@@ -764,8 +761,6 @@ public class NBTCompound : NBTTag {
     public NBTCompound getCompoundTag(string name, NBTCompound d) {
         return dict.TryGetValue(name, out NBTTag? value) ? (NBTCompound)value : d;
     }
-
-
 
 
     public override string ToString() {
@@ -855,6 +850,7 @@ public class NBTShortArray : NBTTag {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -892,6 +888,7 @@ public class NBTUShortArray : NBTTag {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -929,6 +926,7 @@ public class NBTIntArray : NBTTag {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -966,6 +964,7 @@ public class NBTUIntArray : NBTTag {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -1003,6 +1002,7 @@ public class NBTLongArray : NBTTag {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -1040,6 +1040,7 @@ public class NBTULongArray : NBTTag {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -1076,6 +1077,7 @@ public class NBTDStringList : NBTTag, INBTList {
             if (s == null) {
                 throw new InvalidOperationException("Palette contains null string");
             }
+
             stream.Write(s);
         }
     }
@@ -1133,6 +1135,7 @@ public class NBTDUIntList : NBTTag, INBTList {
         if (!BitConverter.IsLittleEndian) {
             BinaryPrimitives.ReverseEndianness(values, values);
         }
+
         stream.Write(MemoryMarshal.AsBytes(values));
     }
 
@@ -1177,6 +1180,7 @@ public class NBTStruct : NBTTag {
             throw new InvalidOperationException(
                 $"Size mismatch: expected {sizeof(T)} bytes for {typeof(T).Name}, got {data.Length} bytes");
         }
+
         return MemoryMarshal.Read<T>(data);
     }
 
@@ -1187,9 +1191,11 @@ public class NBTStruct : NBTTag {
 
     public override void readContents(BinaryReader stream) {
         int length = stream.ReadInt32();
-        if (length < 0 || length > 10_000) { // sanity check - structs shouldn't be huge
+        if (length < 0 || length > 10_000) {
+            // sanity check - structs shouldn't be huge
             throw new IOException($"Invalid struct size: {length}");
         }
+
         data = stream.ReadBytes(length);
     }
 

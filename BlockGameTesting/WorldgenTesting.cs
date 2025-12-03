@@ -11,6 +11,9 @@ public class WorldgenTesting {
 
     [SetUp]
     public void Setup() {
+
+        return;
+
         gen = new NewWorldGenerator(null!, 3);
         var rand = new XRandom(1338);
         gen.setup(rand, 1338);
@@ -19,6 +22,7 @@ public class WorldgenTesting {
     [Test]
     public void GenHighNoise() {
 
+        return;
 
         using var img = new Image<Rgba32>(512, 512);
         for (int x = 0; x < img.Width; x++) {

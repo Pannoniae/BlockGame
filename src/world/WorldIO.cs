@@ -9,6 +9,7 @@ using BlockGame.util.xNBT;
 using BlockGame.world.block;
 using BlockGame.world.chunk;
 using BlockGame.world.entity;
+using BlockGame.world.region;
 using Molten;
 using Molten.DoublePrecision;
 
@@ -30,6 +31,7 @@ public class WorldIO {
 
     private readonly ChunkSaveThread chunkSaveThread;
     private readonly ChunkLoadThread chunkLoadThread;
+    private readonly RegionManager regionManager;
 
     // Background saving and loading
     public readonly ManualResetEvent shutdownEvent = new(false);
@@ -43,6 +45,10 @@ public class WorldIO {
         if (!world.isMP) {
             chunkSaveThread = new ChunkSaveThread(this);
             chunkLoadThread = new ChunkLoadThread(this);
+
+            // initialize region manager with correct world path
+            var worldPath = Net.mode.isDed() ? world.name : $"level/{world.name}";
+            regionManager = new RegionManager(worldPath);
         }
     }
 
@@ -74,6 +80,9 @@ public class WorldIO {
                     //var regionCoord = World.getRegionPos(chunk.coord);
                     saveChunk(world, chunk);
                 }
+
+                // flush all dirty regions to disk
+                regionManager.flushAll();
             }
         }
         catch (Exception e) {
@@ -311,24 +320,18 @@ public class WorldIO {
     public void saveChunk(World world, Chunk chunk) {
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
-        // ensure directory is created
-        var pathStr = getChunkString(world.name, chunk.coord);
-        Directory.CreateDirectory(Path.GetDirectoryName(pathStr) ?? string.Empty);
-        NBT.writeFile(nbt, pathStr);
 
-        // we can return the pooled arrays now
-        // todo is this safe?
-        /*for (int sectionY = 0; sectionY < Chunk.CHUNKHEIGHT; sectionY++) {
-            var freshBlocks = nbt.getListTag<NBTCompound>("sections").get(sectionY).getUIntArray("blocks");
-            if (freshBlocks != null) {
-                saveBlockPool.putBack(freshBlocks);
-            }
+        // use region format
+        var regionCoord = RegionManager.getRegionCoord(chunk.coord);
+        var localCoord = RegionManager.getLocalCoord(chunk.coord);
+        var region = regionManager.getRegion(regionCoord);
 
-            var freshLight = nbt.getListTag<NBTCompound>("sections").get(sectionY).getByteArray("light");
-            if (freshLight != null) {
-                saveLightPool.putBack(freshLight);
-            }
-        }*/
+        // serialize NBT to byte array
+        var chunkData = nbtToBytes(nbt);
+        region.writeChunk(localCoord.x, localCoord.z, chunkData);
+
+        // return pooled arrays
+        returnPooledArrays(nbt);
     }
 
     public void saveChunkAsync(World world, Chunk chunk) {
@@ -366,11 +369,16 @@ public class WorldIO {
         if (isDisposed) return;
         isDisposed = true;
 
+        if (!world.isMP) {
         // wait for the save and load threads to finish
         chunkSaveThread.Dispose();
         chunkLoadThread.Dispose();
-        shutdownEvent.Dispose();
 
+        // flush and close all region files
+        regionManager.closeAll();
+        }
+
+        shutdownEvent.Dispose();
         releaseLock();
     }
 
@@ -837,13 +845,8 @@ public class WorldIO {
     }
 
     public static Chunk loadChunkFromFile(World world, ChunkCoord coord) {
-        return loadChunkFromFile(world, getChunkString(world.name, coord));
-    }
-
-    public static Chunk loadChunkFromFile(World world, string file) {
-        var nbt = NBT.readFile(file);
+        var nbt = loadChunkNBT(world, coord);
         var chunk = loadChunkFromNBT(world, nbt);
-
 
         // if meshed, cap the status so it's not meshed (otherwise VAO is not created -> crash)
         if (chunk.status >= ChunkStatus.MESHED) {
@@ -851,6 +854,56 @@ public class WorldIO {
         }
 
         return chunk;
+    }
+
+    /** Load chunk NBT with transparent fallback: region file -> old .xnbt */
+    public static NBTCompound loadChunkNBT(World world, ChunkCoord coord) {
+        // try region file first
+        var regionCoord = RegionManager.getRegionCoord(coord);
+        var localCoord = RegionManager.getLocalCoord(coord);
+
+        var worldPath = Net.mode.isDed() ? world.name : $"level/{world.name}";
+        var regionPath = RegionFile.getRegionPath(worldPath, regionCoord.x, regionCoord.z);
+
+        if (File.Exists(regionPath)) {
+            // region file exists, try loading from it
+            var region = world.worldIO.regionManager.getRegion(regionCoord);
+            var chunkData = region.readChunk(localCoord.x, localCoord.z);
+
+            if (chunkData != null) {
+                // decompress and parse NBT
+                using var ms = new MemoryStream(chunkData);
+                return NBT.readCompressed(ms);
+            }
+        }
+
+        // fallback to old .xnbt file
+        var oldPath = getChunkString(world.name, coord);
+        if (File.Exists(oldPath)) {
+            return NBT.readFile(oldPath);
+        }
+
+        throw new FileNotFoundException($"Chunk {coord.x},{coord.z} not found in either region or legacy format, wtf?");
+    }
+
+    /** Helper: serialize NBT to compressed byte array (LZ4) */
+    private static byte[] nbtToBytes(NBTCompound nbt) {
+        using var ms = new MemoryStream();
+        NBT.writeCompressed(nbt, ms);
+        return ms.ToArray();
+    }
+
+    /** Helper: return pooled arrays from NBT sections */
+    private static void returnPooledArrays(NBTCompound nbt) {
+        var sections = nbt.getListTag<NBTCompound>("sections");
+        foreach (var section in sections.list) {
+            if (section.getByte("inited") != 0) {
+                var blocks = section.getByteArray("blocks");
+                var lightIndices = section.getByteArray("lightIndices");
+                if (blocks != null) saveBlockPool.putBack(blocks);
+                if (lightIndices != null) saveLightPool.putBack(lightIndices);
+            }
+        }
     }
 }
 
@@ -1003,8 +1056,8 @@ public sealed class ChunkLoadThread : IDisposable {
                 if (loadQueue.TryDequeue(out var loadRequest)) {
                     try {
                         // Background thread: File I/O + NBT parsing only
-                        var pathStr = WorldIO.getChunkString(loadRequest.worldName, loadRequest.coord);
-                        var nbt = NBT.readFile(pathStr);
+                        // use transparent fallback: region --> .xnbt
+                        var nbt = WorldIO.loadChunkNBT(loadRequest.world, loadRequest.coord);
 
                         resultQueue.Enqueue(new ChunkLoadResult(loadRequest.coord, nbt, loadRequest.targetStatus));
                     }

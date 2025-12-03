@@ -7,7 +7,7 @@ namespace BlockGame.util;
  * Specialized hash map for int keys.
  * Better hash function than XMap&lt;int, V&gt; using multiplicative hashing.
  */
-public class XIntMap<V> : IEnumerable<V> {
+public class XIntMap<V> : IDictionary<int, V>, IEnumerable<V> {
 
     private struct Entry {
         public int hash;  // 0 = empty slot, -1 = tombstone
@@ -29,6 +29,8 @@ public class XIntMap<V> : IEnumerable<V> {
     }
 
     public int Count => count;
+    public bool IsReadOnly => false;
+
 
     public ref V this[int key] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -49,6 +51,29 @@ public class XIntMap<V> : IEnumerable<V> {
         }
     }
 
+    public ICollection<int> Keys {
+        get {
+            var keys = new XList<int>(count);
+            for (int i = 0; i < entries.Length; i++) {
+                if (entries[i].hash != 0 && entries[i].hash != -1) {
+                    keys.Add(entries[i].key);
+                }
+            }
+            return keys;
+        }
+    }
+    public ICollection<V> Values {
+        get {
+            var values = new XList<V>(count);
+            for (int i = 0; i < entries.Length; i++) {
+                if (entries[i].hash != 0 && entries[i].hash != -1) {
+                    values.Add(entries[i].value);
+                }
+            }
+            return values;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(int key, out V value) {
         int hash = GetHash(key);
@@ -65,6 +90,11 @@ public class XIntMap<V> : IEnumerable<V> {
 
         value = default!;
         return false;
+    }
+
+    V IDictionary<int, V>.this[int key] {
+        get => this[key];
+        set => Set(key, value);
     }
 
     /** Gets an entry if it exists, or adds a new entry and returns it */
@@ -137,14 +167,41 @@ public class XIntMap<V> : IEnumerable<V> {
         return false;
     }
 
+    public bool Remove(KeyValuePair<int, V> item) {
+        if (TryGetValue(item.Key, out var value) &&
+            EqualityComparer<V>.Default.Equals(value, item.Value)) {
+            return Remove(item.Key);
+        }
+        return false;
+    }
+
     public bool ContainsKey(int key) {
         return TryGetValue(key, out _);
+    }
+
+    public void Add(KeyValuePair<int, V> item) {
+        Insert(item.Key, item.Value, false);
     }
 
     public void Clear() {
         Array.Clear(entries);
         count = 0;
         tombstones = 0;
+    }
+
+    public bool Contains(KeyValuePair<int, V> item) {
+        if (TryGetValue(item.Key, out var value)) {
+            return EqualityComparer<V>.Default.Equals(value, item.Value);
+        }
+        return false;
+    }
+
+    public void CopyTo(KeyValuePair<int, V>[] array, int arrayIndex) {
+        for (int i = 0; i < entries.Length; i++) {
+            if (entries[i].hash != 0 && entries[i].hash != -1) {
+                array[arrayIndex++] = new KeyValuePair<int, V>(entries[i].key, entries[i].value);
+            }
+        }
     }
 
     private void Insert(int key, V value, bool overwrite) {
@@ -209,6 +266,14 @@ public class XIntMap<V> : IEnumerable<V> {
 
         if (count != oldCount) {
             SkillIssueException.throwNew("Count mismatch during resize");
+        }
+    }
+
+    IEnumerator<KeyValuePair<int, V>> IEnumerable<KeyValuePair<int, V>>.GetEnumerator() {
+        for (int i = 0; i < entries.Length; i++) {
+            if (entries[i].hash != 0 && entries[i].hash != -1) {
+                yield return new KeyValuePair<int, V>(entries[i].key, entries[i].value);
+            }
         }
     }
 
@@ -311,6 +376,11 @@ public class XIntMap<V> : IEnumerable<V> {
         public ref V Value {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref val;
+        }
+
+        public void Deconstruct(out int key, out V value) {
+            key = Key;
+            value = val;
         }
     }
 }

@@ -125,6 +125,7 @@ public abstract class NBTTag : IEquatable<NBTTag> {
             NBTType.TAG_UInt_Array => new NBTList<NBTUIntArray>(listType, name),
             NBTType.TAG_Long_Array => new NBTList<NBTLongArray>(listType, name),
             NBTType.TAG_ULong_Array => new NBTList<NBTULongArray>(listType, name),
+            NBTType.TAG_Struct => new NBTList<NBTStruct>(listType, name),
             _ => throw new ArgumentOutOfRangeException(nameof(listType), listType, null)
         };
     }
