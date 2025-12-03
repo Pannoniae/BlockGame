@@ -22,7 +22,7 @@ public sealed class RegionManager : IDisposable {
 
         // cache hit - move to front
         if (cache.TryGetValue(coord.toLong(), out var region)) {
-            touchRegion(coord);
+            touch(coord);
             return region;
         }
 
@@ -43,11 +43,10 @@ public sealed class RegionManager : IDisposable {
     }
 
     /** Move region to front of LRU (most recently used) */
-    private void touchRegion(RegionCoord key) {
+    private void touch(RegionCoord key) {
         if (lruNodes.TryGetValue(key.toLong(), out var node)) {
             lruList.Remove(node);
-            var newNode = lruList.AddFirst(key);
-            lruNodes[key.toLong()] = newNode;
+            lruList.AddFirst(node); // reuse node, no allocation
         }
     }
 

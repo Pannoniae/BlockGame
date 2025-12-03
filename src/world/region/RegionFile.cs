@@ -13,15 +13,25 @@ public sealed class RegionFile : IDisposable {
     private const int MAX_CHUNK_SIZE = 4 * 1024 * 1024; // 4MB sanity limit
     private const float DEFRAG_THRESHOLD = 0.5f; // defrag if 50% waste
 
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
+    private struct ChunkEntry {
+        [FieldOffset(0)]
+        public int offset;
+        [FieldOffset(4)]
+        public int length;
+
+        [FieldOffset(0)]
+        public long packed; // for easy zeroing
+
+    }
+
     public readonly int rx, rz;
     public readonly string path;
 
     private FileStream? file;
-    // header[i*2] = offset, header[i*2+1] = length
-    // todo create struct instead of rawdogging ints...
-    private readonly int[] header = new int[CHUNKS_PER_REGION << 1];
+    private readonly ChunkEntry[] header = new ChunkEntry[CHUNKS_PER_REGION];
     // dirty chunks cached in memory (write-back)
-    private readonly Dictionary<int, byte[]> dirtyChunks = new();
+    private readonly XIntMap<byte[]> dirtyChunks = [];
     private bool headerDirty;
     private bool isDisposed;
 
@@ -53,8 +63,8 @@ public sealed class RegionFile : IDisposable {
         Span<byte> buffer = stackalloc byte[HEADER_SIZE];
         file.ReadExactly(buffer);
 
-        for (int i = 0; i < CHUNKS_PER_REGION << 1; i++) {
-            header[i] = MemoryMarshal.Read<int>(buffer.Slice(i * 4, 4));
+        for (int i = 0; i < CHUNKS_PER_REGION; i++) {
+            header[i].packed = MemoryMarshal.Read<long>(buffer.Slice(i * 8, 8));
         }
     }
 
@@ -64,8 +74,8 @@ public sealed class RegionFile : IDisposable {
         Span<byte> buffer = stackalloc byte[HEADER_SIZE];
         buffer.Clear();
 
-        for (int i = 0; i < CHUNKS_PER_REGION << 1; i++) {
-            MemoryMarshal.Write(buffer.Slice(i * 4, 4), in header[i]);
+        for (int i = 0; i < CHUNKS_PER_REGION; i++) {
+            MemoryMarshal.Write(buffer.Slice(i * 8, 8), in header[i].packed);
         }
 
         file.Write(buffer);
@@ -92,7 +102,7 @@ public sealed class RegionFile : IDisposable {
         }
 
         int idx = RegionFile.idx(lx, lz);
-        dirtyChunks[idx] = data;
+        dirtyChunks.Set(idx, data);
     }
 
     /** Read chunk (check dirty cache first, then disk) */
@@ -105,8 +115,8 @@ public sealed class RegionFile : IDisposable {
         }
 
         // read from disk
-        int offset = header[idx << 1];
-        int length = header[(idx << 1) + 1];
+        int offset = header[idx].offset;
+        int length = header[idx].length;
 
         if (offset == 0 || length == 0) {
             return null; // chunk doesn't exist
@@ -135,21 +145,21 @@ public sealed class RegionFile : IDisposable {
             defragAndFlush();
         }
         else {
-            flushDirtyChunks();
+            flushDirty();
         }
     }
 
     /** Flush dirty chunks using smart reuse and reuse existing slots if possible */
-    private void flushDirtyChunks() {
-        foreach (var (idx, data) in dirtyChunks) {
-            int existingOffset = header[idx << 1];
-            int existingLength = header[(idx << 1) + 1];
+    private void flushDirty() {
+        foreach (var (idx, data) in dirtyChunks.Pairs) {
+            int existingOffset = header[idx].offset;
+            int existingLength = header[idx].length;
 
             if (existingOffset != 0 && data.Length <= existingLength) {
                 // reuse existing slot (fits in old space)
                 file!.Position = existingOffset;
                 file.Write(data);
-                header[(idx << 1) + 1] = data.Length;
+                header[idx].length = data.Length;
                 headerDirty = true;
             }
             else {
@@ -157,8 +167,8 @@ public sealed class RegionFile : IDisposable {
                 file!.Position = file.Length;
                 int newOffset = (int)file.Position;
                 file.Write(data);
-                header[idx << 1] = newOffset;
-                header[(idx << 1) + 1] = data.Length;
+                header[idx].offset = newOffset;
+                header[idx].length = data.Length;
                 headerDirty = true;
             }
         }
@@ -178,7 +188,7 @@ public sealed class RegionFile : IDisposable {
         var allChunks = new XIntMap<byte[]>();
 
         // add dirty chunks
-        foreach (var (idx, data) in dirtyChunks) {
+        foreach (var (idx, data) in dirtyChunks.Pairs) {
             allChunks.Set(idx, data);
         }
 
@@ -188,8 +198,8 @@ public sealed class RegionFile : IDisposable {
                 continue; // already have dirty version
             }
 
-            int offset = header[i << 1];
-            int length = header[(i << 1) + 1];
+            int offset = header[i].offset;
+            int length = header[i].length;
 
             if (offset != 0 && length != 0) {
                 file!.Position = offset;
@@ -210,8 +220,8 @@ public sealed class RegionFile : IDisposable {
             foreach (var (idx, data) in allChunks.Pairs) {
                 int writePos = (int)tempFile.Position;
                 tempFile.Write(data);
-                header[idx << 1] = writePos;
-                header[(idx << 1) + 1] = data.Length;
+                header[idx].offset = writePos;
+                header[idx].length = data.Length;
             }
 
             // 4. Write header at start
@@ -219,8 +229,8 @@ public sealed class RegionFile : IDisposable {
             Span<byte> buffer = stackalloc byte[HEADER_SIZE];
             buffer.Clear();
 
-            for (int i = 0; i < CHUNKS_PER_REGION << 1; i++) {
-                MemoryMarshal.Write(buffer.Slice(i * 4, 4), in header[i]);
+            for (int i = 0; i < CHUNKS_PER_REGION; i++) {
+                MemoryMarshal.Write(buffer.Slice(i * 8, 8), in header[i].packed);
             }
 
             tempFile.Write(buffer);
@@ -250,34 +260,34 @@ public sealed class RegionFile : IDisposable {
             return 0f;
         }
 
-        long usedSpace = HEADER_SIZE;
+        long used = HEADER_SIZE;
         for (int i = 0; i < CHUNKS_PER_REGION; i++) {
             // check dirty chunks first
             if (dirtyChunks.TryGetValue(i, out var cached)) {
-                usedSpace += cached.Length;
+                used += cached.Length;
             }
-            else if (header[(i << 1) + 1] > 0) {
-                usedSpace += header[(i << 1) + 1];
+            else if (header[i].length > 0) {
+                used += header[i].length;
             }
         }
 
-        long totalSpace = file.Length;
-        return 1f - (float)usedSpace / totalSpace;
+        long total = file.Length;
+        return 1f - (float)used / total;
     }
 
     /** Delete chunk from region */
     public void deleteChunk(int lx, int lz) {
         int idx = RegionFile.idx(lx, lz);
         dirtyChunks.Remove(idx);
-        header[idx << 1] = 0;
-        header[(idx << 1) + 1] = 0;
+        header[idx].offset = 0;
+        header[idx].length = 0;
         headerDirty = true;
     }
 
     /** Check if chunk exists (in cache or on disk) */
     public bool hasChunk(int localX, int localZ) {
         int idx = RegionFile.idx(localX, localZ);
-        return dirtyChunks.ContainsKey(idx) || (header[idx << 1] != 0 && header[(idx << 1) + 1] != 0);
+        return dirtyChunks.ContainsKey(idx) || (header[idx].offset != 0 && header[idx].length != 0);
     }
 
     public void Dispose() {
