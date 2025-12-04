@@ -274,7 +274,7 @@ public class Player : Mob, CommandSource {
         base.dmg(damage);
     }
 
-    public override void dmg(double damage, Vector3D source) {
+    public override void dmg(double damage, Entity source) {
         // creative mode players don't take damage
         if (!gameMode.gameplay) {
             return;
@@ -527,7 +527,7 @@ public class Player : Mob, CommandSource {
         var heldStack = inventory.getStack(inventory.selected);
         var damage = heldStack.getItem().getDamage(heldStack);
 
-        entity.dmg(damage, position);
+        entity.dmg(damage, this);
         setSwinging(true);
         lastMouseAction = now;
 
@@ -952,6 +952,9 @@ public class Player : Mob, CommandSource {
         dieTime = 0;
 
         fireTicks = 0;
+
+        // clear effects on respawn
+        effects.Clear();
 
         // teleport to spawn point
         teleport(world.spawn);

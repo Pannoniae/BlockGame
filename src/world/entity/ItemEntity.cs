@@ -247,7 +247,7 @@ public class ItemEntity : Entity {
         return distance <= 0.8; // pickup radius
     }
 
-    public override void dmg(double damage, Vector3D source) {
+    public override void dmg(double damage, Entity source) {
         // items take knockback but no damage from attacks
         base.dmg(damage, source);
         hp = 100;

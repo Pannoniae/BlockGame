@@ -86,7 +86,19 @@ public class ServerPlayer : Player {
         syncHealth();
     }
 
-    public override void dmg(double damage, Vector3D source) {
+    public override void dmg(double damage, Entity source) {
+        // pvp check
+        if (!GameServer.instance.pvp) {
+            // direct player attack
+            if (source is Player) {
+                return;
+            }
+            // projectile from player
+            if (source is ProjectileEntity proj && proj.owner is Player) {
+                return;
+            }
+        }
+
         base.dmg(damage, source);
         syncHealth();
     }
@@ -152,11 +164,6 @@ public class ServerPlayer : Player {
         // close any open inv
         if (currentInventoryID != -1) {
             closeInventory();
-        }
-
-        // drop inventory items on death (survival only, blocks only)
-        if (gameMode.gameplay) {
-            dropInventoryOnDeath();
         }
 
         // notify client of death and broadcast to nearby players

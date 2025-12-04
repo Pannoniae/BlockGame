@@ -62,7 +62,7 @@ public class ArrowEntity : ProjectileEntity {
     }
 
     protected override void onEntityHit(Entity entity) {
-        entity.dmg(damage, position);
+        entity.dmg(damage, this);
         dieTimer = 60; // stick after hitting entity
     }
 

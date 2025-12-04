@@ -55,6 +55,7 @@ public class ServerProperties {
         props.addInt("renderDistance", 8);
         props.addByte("devMode", 0);
         props.addString("gamemode", "creative");
+        props.addByte("pvp", 1);
 
         var discord = new NBTCompound();
         discord.addString("token", "");

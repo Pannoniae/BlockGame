@@ -918,8 +918,13 @@ public class ServerPacketHandler : PacketHandler {
             goto swing;
         }
 
+        // pvp check
+        if (target is ServerPlayer && !GameServer.instance.pvp) {
+            goto swing;
+        }
+
         // apply damage with knockback
-        target.dmg(damage, conn.player.position);
+        target.dmg(damage, conn.player);
 
         // damage held item (if it has durability)
         if (heldStack != ItemStack.EMPTY && Item.durability[heldStack.id] > 0) {

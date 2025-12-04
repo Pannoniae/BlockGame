@@ -639,11 +639,12 @@ public class ClientPacketHandler : PacketHandler {
         // find entity and update velocity
         var entity = Game.world.entities.FirstOrDefault(e => e.id == p.entityID);
         if (entity != null) {
-
-            if (entity is Humanoid humanoid) {
-                // TODO: handle knockback separately?
+            // apply knockback to local player immediately (client-side)
+            if (entity == Game.player) {
+                entity.velocity = p.velocity;
+            }
+            else if (entity is Humanoid humanoid) {
                 humanoid.mpInterpolateVelocity(p.velocity);
-                //Log.info($"[Client] Updated velocity for Humanoid entityID={p.entityID} to {p.velocity}");
             }
             else {
                 entity.prevVelocity = entity.velocity;

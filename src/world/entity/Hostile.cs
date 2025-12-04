@@ -49,7 +49,7 @@ public abstract class Hostile : Mob {
     }
 
     protected virtual void attack(Entity target) {
-        target.dmg(attackDamage, position);
+        target.dmg(attackDamage, this);
         attackTime = attackCooldown;
     }
 

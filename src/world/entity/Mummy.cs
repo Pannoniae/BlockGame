@@ -44,7 +44,7 @@ public class Mummy : Mob {
     }
 
     private void attackPlayer() {
-        target?.dmg(ATTACK_DAMAGE, position);
+        target?.dmg(ATTACK_DAMAGE, this);
         attackTime = ATTACK_COOLDOWN;
     }
 

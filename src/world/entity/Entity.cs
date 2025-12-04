@@ -587,7 +587,7 @@ public partial class Entity(World world, string type) : Persistent {
     }
 
     /** damage with knockback from src */
-    public virtual void dmg(double damage, Vector3D source) {
+    public virtual void dmg(double damage, Entity source) {
         double actualDmg;
         bool kb = false;
 
@@ -619,7 +619,7 @@ public partial class Entity(World world, string type) : Persistent {
 
         // apply knockback
         if (kb) {
-            var dir = Vector3D.Normalize(position - source);
+            var dir = Vector3D.Normalize(position - source.position);
             var kbStrength = 9 + double.Sqrt(damage * 2);
 
             // don't yeet into the air *too* much

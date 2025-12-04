@@ -49,17 +49,11 @@ public class WorldgenUtil {
         float highestGradient = highestFreq * highestOctaveAmp;
 
         // sufficiency check
-        bool sufficient = smallestWavelength is >= 1f and <= 4f;
-        string msg;
-        if (smallestWavelength < 1f) {
-            msg = "TOO MANY octaves - aliasing/waste";
-        }
-        else if (smallestWavelength > 4f) {
-            msg = "TOO FEW octaves - missing detail";
-        }
-        else {
-            msg = "GOOD";
-        }
+        string msg = smallestWavelength switch {
+            < 1f => "TOO MANY octaves - aliasing/waste",
+            > 4f => "TOO FEW octaves - missing detail",
+            _ => "GOOD"
+        };
 
         Log.info("=== Noise Resolution Analysis ===");
         Log.info($"Frequency: {freq:F6} (scale: {1f / freq:F2})");

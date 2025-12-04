@@ -30,6 +30,7 @@ public class GameServer : INetEventListener {
     public static GameServer instance;
 
     public int maxPlayers;
+    public bool pvp;
 
     public readonly bool devMode;
     public bool running;
@@ -87,6 +88,7 @@ public class GameServer : INetEventListener {
         properties.load();
 
         maxPlayers = properties.getInt("maxPlayers", 20);
+        pvp = properties.getBool("pvp", true);
         ip = properties.getString("ip", "0.0.0.0");
         ip6 = properties.getString("ip6", "::");
         port = properties.getInt("port", 31337);

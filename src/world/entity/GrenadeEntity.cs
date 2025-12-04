@@ -113,7 +113,7 @@ public class GrenadeEntity : Entity {
                 var actualDmg = EXPLOSION_DAMAGE * falloff;
 
                 if (actualDmg > 0.5) {
-                    entity.dmg(actualDmg, position);
+                    entity.dmg(actualDmg, this);
                 }
             }
         }

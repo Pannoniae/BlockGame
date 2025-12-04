@@ -127,7 +127,7 @@ public abstract class ProjectileEntity : Entity {
 
     // hooks for subclass behavior
     protected virtual void onEntityHit(Entity entity) {
-        entity.dmg(damage, position);
+        entity.dmg(damage, this);
         active = false; // default: despawn on hit
     }
 

@@ -115,7 +115,7 @@ public class SnowballEntity : Entity {
 
             // check collision
             if (AABB.isCollision(aabb, entity.aabb)) {
-                entity.dmg(damage, position);
+                entity.dmg(damage, this);
                 active = false; // despawn immediately on hit
                 return;
             }
