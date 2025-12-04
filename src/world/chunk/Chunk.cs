@@ -12,11 +12,13 @@ public class Chunk : IDisposable, IEquatable<Chunk> {
     public const int CHUNKHEIGHT = 8;
     public const int CHUNKSIZE = 16;
     public const int BIOMESIZE = 4;
-    public const int CHUNKSIZESQ = 16 * 16;
-    public const int MAXINDEX = 16 * 16 * 16;
+    public const int CHUNKSIZESQ = CHUNKSIZE * CHUNKSIZE;
+    public const int MAXINDEX = CHUNKSIZE * CHUNKSIZE * CHUNKSIZE;
     public const int CHUNKSIZEEX = 18;
     public const int CHUNKSIZEEXSQ = 18 * 18;
     public const int MAXINDEXEX = 18 * 18 * 18;
+
+    public const int MAXINDEXCOL = CHUNKSIZE * CHUNKSIZE * CHUNKSIZE * CHUNKHEIGHT;
 
     public const int CHUNKSIZEMASK = CHUNKSIZE - 1;
 

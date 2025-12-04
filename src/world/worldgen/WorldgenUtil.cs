@@ -12,6 +12,9 @@ using BlockGame.world.worldgen.generator;
 namespace BlockGame.world.worldgen;
 
 public class WorldgenUtil {
+
+    public static float[] interps = new float[Chunk.MAXINDEXCOL];
+
     public static void printNoiseResolution(float freq, int octaves, float falloff = 2f) {
         printNoiseResolution(freq, octaves, falloff, 1 / falloff);
     }
@@ -91,13 +94,14 @@ public class WorldgenUtil {
     public static void interpolate(World world, float[] buffer, ChunkCoord coord) {
         var chunk = world.getChunk(coord);
 
-        // we do this so we don't check "is chunk initialised" every single time we set a block.
-        // this cuts our asm code size by half lol from all that inlining and shit
-        // TODO it doesnt work properly, I'll fix it later
-        // Span<bool> initialised = stackalloc bool[Chunk.CHUNKHEIGHT];
-
-        if (Avx2.IsSupported) {
-            interpolateAVX2(world, chunk, buffer);
+        if (Avx512F.IsSupported) {
+            interpolateAVX512(chunk, buffer);
+        }
+        else if (Avx2.IsSupported) {
+            interpolateAVX2(chunk, buffer);
+        }
+        else if (Sse2.IsSupported) {
+            interpolateSSE(chunk, buffer);
         }
         else {
             interpolateScalar(world, chunk, buffer);
@@ -181,12 +185,68 @@ public class WorldgenUtil {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Vector128<float> lerp(Vector128<float> a, Vector128<float> b, Vector128<float> t) {
         // a + t * (b - a)
-        return Fma.MultiplyAdd(Avx.Subtract(b, a), t, a);
+        return Fma.MultiplyAdd(Sse.Subtract(b, a), t, a);
     }
 
-    private static void interpolateAVX2(World world, Chunk chunk, float[] buffer) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<float> lerp(Vector256<float> a, Vector256<float> b, Vector256<float> t) {
+        return Fma.IsSupported
+            ? Fma.MultiplyAdd(Avx.Subtract(b, a), t, a)
+            : Avx.Add(a, Avx.Multiply(t, Avx.Subtract(b, a)));
+    }
 
-        Span<float> results = stackalloc float[4];
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<float> lerp(Vector512<float> a, Vector512<float> b, Vector512<float> t) {
+        return Avx512F.FusedMultiplyAdd(Avx512F.Subtract(b, a), t, a);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<float> broadcastTwoCells(float first, float second) {
+        return Vector256.Create(first, first, first, first, second, second, second, second);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<float> broadcastFourCells(float a, float b, float c, float d) {
+        return Vector512.Create(a, a, a, a, b, b, b, b, c, c, c, c, d, d, d, d);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<float> createXdsVector256(int blockX) {
+        return Vector256.Create(
+            ((blockX + 0) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 1) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 2) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 3) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 4) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 5) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 6) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 7) & NOISE_PER_X_MASK) * NOISE_PER_X_INV
+        );
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<float> createXdsVector512(int blockX) {
+        return Vector512.Create(
+            ((blockX + 0) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 1) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 2) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 3) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 4) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 5) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 6) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 7) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 8) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 9) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 10) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 11) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 12) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 13) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 14) & NOISE_PER_X_MASK) * NOISE_PER_X_INV,
+            ((blockX + 15) & NOISE_PER_X_MASK) * NOISE_PER_X_INV
+        );
+    }
+
+    private static void interpolateSSE(Chunk chunk, float[] buffer) {
 
         for (int y = 0; y < Chunk.CHUNKSIZE * Chunk.CHUNKHEIGHT; y++) {
             var y0 = y >> NOISE_PER_Y_SHIFT;
@@ -201,9 +261,9 @@ public class WorldgenUtil {
                 var zd_vec = Vector128.Create(zd);
 
                 // process 4 x-values at once
-                for (int x = 0; x < Chunk.CHUNKSIZE; x += 4) {
+                for (int x0 = 0; x0 < NOISE_PER_X; x0++) {
                     // compute x0, x1, xd for 4 consecutive x values
-                    var x0 = x >> NOISE_PER_X_SHIFT;
+                    var x = x0 << NOISE_PER_X_SHIFT;
                     var x1 = x0 + 1;
 
                     // xd values: [0.0, 0.25, 0.5, 0.75] or [0.25, 0.5, 0.75, 1.0], etc.
@@ -247,35 +307,230 @@ public class WorldgenUtil {
                     // interpolate along z
                     var values = lerp(c0, c1, zd_vec);
 
-                    // extract and process each of the 4 results
-                    values.StoreUnsafe(ref results[0]);
+                    // store at the correct location in interps
+                    values.StoreUnsafe(ref interps[x + z * Chunk.CHUNKSIZE + y * Chunk.CHUNKSIZE * Chunk.CHUNKSIZE]);
+                }
+            }
+        }
 
-                    for (int i = 0; i < 4; i++) {
-                        float value = results[i];
-                        int xi = x + i;
+        // now set blocks from interps
 
-                        if (value > 0) {
-                            chunk.setBlockFast(xi, y, z, Block.STONE.id);
-                            chunk.addToHeightMap(xi, y, z);
-                        }
-                        else {
-                            if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
-                                // check if water should be ice (frozen)
-                                if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
-                                    var temp = chunk.biomeData.getTemp(xi, y, z);
-                                    if (temp < -0.5f) {
-                                        chunk.setBlockFast(xi, y, z, Block.ICE.id);
-                                        chunk.addToHeightMap(xi, y, z);
-                                        continue;
-                                    }
-                                }
+        for (int i = 0; i < Chunk.MAXINDEXCOL; i++) {
+            float value = interps[i];
+            int x = i & 0xF;
+            int z = (i >> 4) & 0xF;
+            int y = i >> 8;
 
-                                chunk.setBlockFast(xi, y, z, Block.WATER.id);
-                                chunk.addToHeightMap(xi, y, z);
-                            }
+
+            if (value > 0) {
+                chunk.setBlockFast(x, y, z, Block.STONE.id);
+                chunk.addToHeightMap(x, y, z);
+            }
+            else {
+                if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
+                    // check if water should be ice (frozen)
+                    if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
+                        var temp = chunk.biomeData.getTemp(x, y, z);
+                        if (temp < -0.5f) {
+                            chunk.setBlockFast(x, y, z, Block.ICE.id);
+                            chunk.addToHeightMap(x, y, z);
+                            continue;
                         }
                     }
+
+                    chunk.setBlockFast(x, y, z, Block.WATER.id);
+                    chunk.addToHeightMap(x, y, z);
                 }
+            }
+        }
+    }
+
+    /**
+     * AVX512 trilinear interpolation - processes all 16 blocks in one shot.
+     * Two-pass design: SIMD compute phase (high ILP) + scalar placement phase (branchy).
+     *
+     * 16 blocks span 5 grid cells (4 blocks per cell):
+     *   blocks [0..3]   → grid cells [0, 1]
+     *   blocks [4..7]   → grid cells [1, 2]
+     *   blocks [8..11]  → grid cells [2, 3]
+     *   blocks [12..15] → grid cells [3, 4]
+     */
+    private static void interpolateAVX512(Chunk chunk, float[] buffer) {
+        const int width = Chunk.CHUNKSIZE;
+        const int slice = width * width;
+        const int height = width * Chunk.CHUNKHEIGHT;
+
+        // hoisted constants
+        var xts = Vector512.Create(
+            0.00f, 0.25f, 0.50f, 0.75f, 0.00f, 0.25f, 0.50f, 0.75f,
+            0.00f, 0.25f, 0.50f, 0.75f, 0.00f, 0.25f, 0.50f, 0.75f
+        );
+        var ztv0 = Vector512.Create(0.00f);
+        var ztv1 = Vector512.Create(0.25f);
+        var ztv2 = Vector512.Create(0.50f);
+        var ztv3 = Vector512.Create(0.75f);
+        var c00plo = Vector512.Create(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3);
+        var c00phi = Vector512.Create(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4);
+        var c01plo = Vector512.Create(5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8);
+        var c01phi = Vector512.Create(6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9);
+
+        for (int y = 0; y < height; y++) {
+            int gridY0 = y >> NOISE_PER_Y_SHIFT;
+            int gridY1 = gridY0 + 1;
+            float yt = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+            var ytVec = Vector512.Create(yt);
+            int yOffset = y * slice;
+
+            // process 4 z at a time
+            for (int z = 0; z < width; z += 4) {
+                int gridZ0 = z >> NOISE_PER_Z_SHIFT;
+
+                // load ONCE for all 4 z iterations (they share gridZ0)
+                var y0_plane = Vector512.LoadUnsafe(ref buffer[getIndexSpecial(gridY0, gridZ0)]);
+                var y1_plane = Vector512.LoadUnsafe(ref buffer[getIndexSpecial(gridY1, gridZ0)]);
+
+                // permute ONCE (same for all 4 z)
+                var c00_lo = Avx512F.PermuteVar16x32(y0_plane, c00plo);
+                var c00_hi = Avx512F.PermuteVar16x32(y0_plane, c00phi);
+                var c01_lo = Avx512F.PermuteVar16x32(y0_plane, c01plo);
+                var c01_hi = Avx512F.PermuteVar16x32(y0_plane, c01phi);
+
+                var c10_lo = Avx512F.PermuteVar16x32(y1_plane, c00plo);
+                var c10_hi = Avx512F.PermuteVar16x32(y1_plane, c00phi);
+                var c11_lo = Avx512F.PermuteVar16x32(y1_plane, c01plo);
+                var c11_hi = Avx512F.PermuteVar16x32(y1_plane, c01phi);
+
+                // X and Y lerps (same for all 4 z)
+                var c0_xy = lerp(lerp(c00_lo, c00_hi, xts), lerp(c10_lo, c10_hi, xts), ytVec);
+                var c1_xy = lerp(lerp(c01_lo, c01_hi, xts), lerp(c11_lo, c11_hi, xts), ytVec);
+
+                // final Z lerps, store 4*64 bytes
+                int offset = yOffset + z * width;
+                lerp(c0_xy, c1_xy, ztv0).StoreUnsafe(ref interps[offset]);
+                lerp(c0_xy, c1_xy, ztv1).StoreUnsafe(ref interps[offset + width]);
+                lerp(c0_xy, c1_xy, ztv2).StoreUnsafe(ref interps[offset + (width * 2)]);
+                lerp(c0_xy, c1_xy, ztv3).StoreUnsafe(ref interps[offset + (width * 3)]);
+            }
+        }
+
+        for (int i = 0; i < Chunk.MAXINDEXCOL; i++) {
+            float density = interps[i];
+            int x = i & 0xF;
+            int z = (i >> 4) & 0xF;
+            int y = i >> 8;
+
+            if (density > 0) {
+                chunk.setBlockFast(x, y, z, Block.STONE.id);
+                chunk.addToHeightMap(x, y, z);
+            }
+            else if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
+                // frozen water at surface in cold biomes
+                if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
+                    float temp = chunk.biomeData.getTemp(x, y, z);
+                    if (temp < -0.5f) {
+                        chunk.setBlockFast(x, y, z, Block.ICE.id);
+                        chunk.addToHeightMap(x, y, z);
+                        continue;
+                    }
+                }
+
+                chunk.setBlockFast(x, y, z, Block.WATER.id);
+                chunk.addToHeightMap(x, y, z);
+            }
+        }
+    }
+
+    /**
+     * AVX2 trilinear interpolation - processes 8 blocks per iteration.
+     * Two-pass design: SIMD compute phase (high ILP) + scalar placement phase (branchy).
+     *
+     * Why left/mid/right? 8 blocks span 2.5 grid cells (4 blocks per cell):
+     *   blocks [0..3] interpolate between grid cells [left, mid]
+     *   blocks [4..7] interpolate between grid cells [mid, right]
+     */
+    private static void interpolateAVX2(Chunk chunk, float[] buffer) {
+        const int width = Chunk.CHUNKSIZE;
+        const int slice = width * width;
+        const int height = width * Chunk.CHUNKHEIGHT;
+
+        for (int y = 0; y < height; y++) {
+            int gridY0 = y >> NOISE_PER_Y_SHIFT;
+            int gridY1 = gridY0 + 1;
+            float yt = (y & NOISE_PER_Y_MASK) * NOISE_PER_Y_INV;
+            var ytVec = Vector256.Create(yt);
+            int yOffset = y * slice;
+
+            for (int z = 0; z < width; z++) {
+                int gridZ0 = z >> NOISE_PER_Z_SHIFT;
+                int gridZ1 = gridZ0 + 1;
+                float zt = (z & NOISE_PER_Z_MASK) * NOISE_PER_Z_INV;
+                var ztVec = Vector256.Create(zt);
+                int offset = yOffset + z * width;
+
+                // process 8 blocks at once (2 iterations cover all 16 blocks in X)
+                for (int gridX = 0; gridX + 1 < NOISE_PER_X; gridX += 2) {
+                    int blockX = gridX << NOISE_PER_X_SHIFT;
+                    var xts = createXdsVector256(blockX);
+
+                    // need 3 grid cells: [gridX, gridX+1, gridX+2]
+                    int left = gridX;
+                    int mid = gridX + 1;
+                    int right = gridX + 2;
+
+                    // load 12 corner values (4 cube corners * 3 grid cells)
+                    float c000_L = buffer[getIndex(left, gridY0, gridZ0)];
+                    float c000_M = buffer[getIndex(mid, gridY0, gridZ0)];
+                    float c000_R = buffer[getIndex(right, gridY0, gridZ0)];
+
+                    float c001_L = buffer[getIndex(left, gridY0, gridZ1)];
+                    float c001_M = buffer[getIndex(mid, gridY0, gridZ1)];
+                    float c001_R = buffer[getIndex(right, gridY0, gridZ1)];
+
+                    float c010_L = buffer[getIndex(left, gridY1, gridZ0)];
+                    float c010_M = buffer[getIndex(mid, gridY1, gridZ0)];
+                    float c010_R = buffer[getIndex(right, gridY1, gridZ0)];
+
+                    float c011_L = buffer[getIndex(left, gridY1, gridZ1)];
+                    float c011_M = buffer[getIndex(mid, gridY1, gridZ1)];
+                    float c011_R = buffer[getIndex(right, gridY1, gridZ1)];
+
+                    var c00 = lerp(broadcastTwoCells(c000_L, c000_M), broadcastTwoCells(c000_M, c000_R), xts);
+                    var c01 = lerp(broadcastTwoCells(c001_L, c001_M), broadcastTwoCells(c001_M, c001_R), xts);
+                    var c10 = lerp(broadcastTwoCells(c010_L, c010_M), broadcastTwoCells(c010_M, c010_R), xts);
+                    var c11 = lerp(broadcastTwoCells(c011_L, c011_M), broadcastTwoCells(c011_M, c011_R), xts);
+
+                    var c0 = lerp(c00, c10, ytVec);
+                    var c1 = lerp(c01, c11, ytVec);
+                    var result = lerp(c0, c1, ztVec);
+
+                    result.StoreUnsafe(ref interps[offset + blockX]);
+                }
+            }
+        }
+
+        for (int i = 0; i < Chunk.MAXINDEXCOL; i++) {
+            float density = interps[i];
+            int x = i & 0xF;
+            int z = (i >> 4) & 0xF;
+            int y = i >> 8;
+
+            if (density > 0) {
+                chunk.setBlockFast(x, y, z, Block.STONE.id);
+                chunk.addToHeightMap(x, y, z);
+            }
+            else if (y is < NewWorldGenerator.WATER_LEVEL and >= 40) {
+                // frozen water at surface in cold biomes
+                if (y >= NewWorldGenerator.WATER_LEVEL - 1) {
+                    float temp = chunk.biomeData.getTemp(x, y, z);
+                    if (temp < -0.5f) {
+                        chunk.setBlockFast(x, y, z, Block.ICE.id);
+                        chunk.addToHeightMap(x, y, z);
+                        continue;
+                    }
+                }
+
+                chunk.setBlockFast(x, y, z, Block.WATER.id);
+                chunk.addToHeightMap(x, y, z);
             }
         }
     }
@@ -285,6 +540,13 @@ public class WorldgenUtil {
         // THE PARENTHESES ARE IMPORTANT
         // otherwise it does 5 * 5 for some reason??? completely useless multiplication
         return x + z * NOISE_SIZE_X + y * (NOISE_SIZE_X * NOISE_SIZE_Z);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int getIndexSpecial(int y, int z) {
+        // THE PARENTHESES ARE IMPORTANT
+        // otherwise it does 5 * 5 for some reason??? completely useless multiplication
+        return z * NOISE_SIZE_X + y * (NOISE_SIZE_X * NOISE_SIZE_Z);
     }
 
     private static Vector128<int> getIndex4(int x, int y, int z) {
