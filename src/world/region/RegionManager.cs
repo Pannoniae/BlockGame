@@ -13,33 +13,37 @@ public sealed class RegionManager : IDisposable {
     private readonly XLongMap<LinkedListNode<RegionCoord>> lruNodes = [];
     private bool isDisposed;
 
+    // global lock protects cache, LRU, and all RegionFile operations
+    private readonly Lock globalLock = new();
+
     public RegionManager(string worldPath) {
         this.worldPath = worldPath;
     }
 
     /** Get or create region file (with LRU eviction) */
     public RegionFile getRegion(RegionCoord coord) {
+        lock (globalLock) {
+            // cache hit - move to front
+            if (cache.TryGetValue(coord.toLong(), out var region)) {
+                touch(coord);
+                return region;
+            }
 
-        // cache hit - move to front
-        if (cache.TryGetValue(coord.toLong(), out var region)) {
-            touch(coord);
+            // cache miss - load/create region
+            region = new RegionFile(worldPath, coord.x, coord.z, globalLock);
+            cache.Add(coord.toLong(), region);
+
+            // add to LRU front
+            var node = lruList.AddFirst(coord);
+            lruNodes.Add(coord.toLong(), node);
+
+            // evict oldest if cache is full
+            if (cache.Count > MAX_CACHED_REGIONS) {
+                evictOldest();
+            }
+
             return region;
         }
-
-        // cache miss - load/create region
-        region = new RegionFile(worldPath, coord.x, coord.z);
-        cache.Add(coord.toLong(), region);
-
-        // add to LRU front
-        var node = lruList.AddFirst(coord);
-        lruNodes.Add(coord.toLong(), node);
-
-        // evict oldest if cache is full
-        if (cache.Count > MAX_CACHED_REGIONS) {
-            evictOldest();
-        }
-
-        return region;
     }
 
     /** Move region to front of LRU (most recently used) */
@@ -59,27 +63,31 @@ public sealed class RegionManager : IDisposable {
         lruNodes.Remove(oldest.toLong());
 
         if (cache.TryGetValue(oldest.toLong(), out var region)) {
-            region.Dispose(); // flushes before closing
+            region.DisposeUnsafe(); // flushes before closing (lock already held)
             cache.Remove(oldest.toLong());
         }
     }
 
     /** Flush all dirty regions (autosave/world close) */
     public void flushAll() {
-        foreach (var region in cache) {
-            region.flush();
+        lock (globalLock) {
+            foreach (var region in cache) {
+                region.flushUnsafe();
+            }
         }
     }
 
     /** Close all regions (call on world close) */
     public void closeAll() {
-        foreach (var region in cache) {
-            region.Dispose();
-        }
+        lock (globalLock) {
+            foreach (var region in cache) {
+                region.DisposeUnsafe();
+            }
 
-        cache.Clear();
-        lruList.Clear();
-        lruNodes.Clear();
+            cache.Clear();
+            lruList.Clear();
+            lruNodes.Clear();
+        }
     }
 
     /** Get region coords from chunk coords */

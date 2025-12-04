@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using BlockGame.logic;
@@ -343,14 +344,11 @@ public class WorldIO {
 
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
-
-        // use region format
-        var regionCoord = RegionManager.getRegionCoord(chunk.coord);
-        var localCoord = RegionManager.getLocalCoord(chunk.coord);
+        
         var chunkData = nbtToBytes(nbt);
         returnPooledArrays(nbt);
 
-        chunkSaveThread.add(new ChunkSaveData(regionCoord, localCoord, chunkData, chunk.lastSaved));
+        chunkSaveThread.add(new ChunkSaveData(chunk.coord, chunkData));
     }
 
     public void loadChunkAsync(ChunkCoord coord, ChunkStatus targetStatus) {
@@ -359,7 +357,7 @@ public class WorldIO {
             return;
         }
 
-        chunkLoadThread.queueLoad(new ChunkLoadRequest(world, world.name, coord, targetStatus));
+        chunkLoadThread.queueLoad(new ChunkLoadRequest(world, coord, targetStatus));
     }
 
     public bool hasChunkLoadResult() {
@@ -375,12 +373,12 @@ public class WorldIO {
         isDisposed = true;
 
         if (!world.isMP) {
-        // wait for the save and load threads to finish
-        chunkSaveThread.Dispose();
-        chunkLoadThread.Dispose();
+            // wait for the save and load threads to finish
+            chunkSaveThread.Dispose();
+            chunkLoadThread.Dispose();
 
-        // flush and close all region files
-        regionManager.closeAll();
+            // flush and close all region files
+            regionManager.closeAll();
         }
 
         shutdownEvent.Dispose();
@@ -533,6 +531,7 @@ public class WorldIO {
             be.write(beData);
             blockEntitiesTag.add(beData);
         }
+
         chunkTag.addListTag("blockEntities", blockEntitiesTag);
 
         // save biome data
@@ -682,7 +681,8 @@ public class WorldIO {
 
                     // direct load
                     blocks.loadFromPalette(runtimePalette, paletteSize, paletteIndices, lightPalette, lightPaletteSize, lightIndices);
-                } else {
+                }
+                else {
                     // old formats: fallback to flat array method
                     uint[] runtimeBlocks;
                     if (paletteTag is NBTCompound oldPaletteCompound) {
@@ -699,7 +699,8 @@ public class WorldIO {
                             int runtimeID = Registry.BLOCKS.getID(stringID);
                             runtimeBlocks[i] = runtimeID == -1 ? 0 : ((uint)metadata << 24) | (uint)runtimeID;
                         }
-                    } else {
+                    }
+                    else {
                         // old format: string list, metadata packed in indices
                         var idsTag = section.getListTag<NBTString>("palette");
                         var paletteIndices = section.getUIntArray("blocks");
@@ -725,13 +726,15 @@ public class WorldIO {
                         for (int i = 0; i < lightIndices.Length; i++) {
                             runtimeLight[i] = lightPaletteTag.get(lightIndices[i]).data;
                         }
-                    } else {
+                    }
+                    else {
                         runtimeLight = section.getByteArray("light");
                     }
 
                     blocks.setSerializationData(runtimeBlocks, runtimeLight);
                 }
-            } else {
+            }
+            else {
                 // oldest format - flat array
                 uint[] runtimeBlocks = section.getUIntArray("blocks");
                 byte[] runtimeLight = section.getByteArray("light");
@@ -927,21 +930,18 @@ public class WorldIO {
     }
 }
 
-public struct ChunkSaveData(RegionCoord regionCoord, LocalRegionCoord localCoord, byte[] chunkData, ulong lastSave) {
-    public readonly RegionCoord regionCoord = regionCoord;
-    public readonly LocalRegionCoord localCoord = localCoord;
+public readonly struct ChunkSaveData(ChunkCoord coord, byte[] chunkData) {
+    public readonly ChunkCoord coord = coord;
     public readonly byte[] chunkData = chunkData;
-    public ulong lastSave = lastSave;
 }
 
-public struct ChunkLoadRequest(World world, string worldName, ChunkCoord coord, ChunkStatus targetStatus) {
+public readonly struct ChunkLoadRequest(World world, ChunkCoord coord, ChunkStatus targetStatus) {
     public readonly World world = world;
-    public readonly string worldName = worldName;
     public readonly ChunkCoord coord = coord;
     public readonly ChunkStatus targetStatus = targetStatus;
 }
 
-public struct ChunkLoadResult(ChunkCoord coord, NBTCompound? nbtData, ChunkStatus targetStatus, Exception? error = null) {
+public readonly struct ChunkLoadResult(ChunkCoord coord, NBTCompound? nbtData, ChunkStatus targetStatus, Exception? error = null) {
     public readonly ChunkCoord coord = coord;
     public readonly NBTCompound? nbtData = nbtData;
     public readonly ChunkStatus targetStatus = targetStatus;
@@ -974,13 +974,15 @@ public sealed class ChunkSaveThread : IDisposable {
         try {
             while (!io.shutdownEvent.WaitOne(0)) {
                 if (saveQueue.TryDequeue(out var saveData)) {
+                    var regionCoord = RegionManager.getRegionCoord(saveData.coord);
+                    var localCoord = RegionManager.getLocalCoord(saveData.coord);
                     try {
                         // write to region file
-                        var region = io.regionManager.getRegion(saveData.regionCoord);
-                        region.writeChunk(saveData.localCoord.x, saveData.localCoord.z, saveData.chunkData);
+                        var region = io.regionManager.getRegion(regionCoord);
+                        region.writeChunk(localCoord.x, localCoord.z, saveData.chunkData);
                     }
                     catch (Exception ex) {
-                        Log.warn($"Failed to save chunk at region ({saveData.regionCoord.x},{saveData.regionCoord.z}) local ({saveData.localCoord.x},{saveData.localCoord.z}):", ex);
+                        Log.warn($"Failed to save chunk at region ({regionCoord.x},{regionCoord.z}) local ({localCoord.x},{localCoord.z}):", ex);
                     }
                 }
                 else {
@@ -1010,9 +1012,11 @@ public sealed class ChunkSaveThread : IDisposable {
 
         // process remaining saves synchronously
         while (saveQueue.TryDequeue(out var saveData)) {
+            var regionCoord = RegionManager.getRegionCoord(saveData.coord);
+            var localCoord = RegionManager.getLocalCoord(saveData.coord);
             try {
-                var region = io.regionManager.getRegion(saveData.regionCoord);
-                region.writeChunk(saveData.localCoord.x, saveData.localCoord.z, saveData.chunkData);
+                var region = io.regionManager.getRegion(regionCoord);
+                region.writeChunk(localCoord.x, localCoord.z, saveData.chunkData);
             }
             catch (Exception ex) {
                 Log.error("Failed to save chunk during dispose", ex);

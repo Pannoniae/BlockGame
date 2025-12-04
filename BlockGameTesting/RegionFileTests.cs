@@ -23,7 +23,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestBasicWriteRead() {
-        using var region = new RegionFile(testDir, 0, 0);
+        using var region = new RegionFile(testDir, 0, 0, new Lock());
 
         // write some test chunks
         byte[] chunk0 = [1, 2, 3, 4, 5];
@@ -50,14 +50,14 @@ public class RegionFileTests {
     [Test]
     public void TestPersistence() {
         // write and close
-        using (var region = new RegionFile(testDir, 0, 0)) {
+        using (var region = new RegionFile(testDir, 0, 0, new Lock())) {
             var chunk = "cXM"u8.ToArray();
             region.writeChunk(5, 10, chunk);
             region.flush();
         }
 
         // reopen and read
-        using (var region = new RegionFile(testDir, 0, 0)) {
+        using (var region = new RegionFile(testDir, 0, 0, new Lock())) {
             byte[]? read = region.readChunk(5, 10);
             Assert.That(read, Is.Not.Null);
             Assert.That(read, Is.EqualTo("cXM"u8.ToArray()));
@@ -66,7 +66,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestOverwrite() {
-        using var region = new RegionFile(testDir, 0, 0);
+        using var region = new RegionFile(testDir, 0, 0, new Lock());
 
         byte[] chunk1 = [1, 2, 3, 4, 5];
         byte[] chunk2 = [10, 20]; // smaller
@@ -84,7 +84,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestDefrag() {
-        using var region = new RegionFile(testDir, 0, 0);
+        using var region = new RegionFile(testDir, 0, 0, new Lock());
 
         // write large chunks
         byte[] largeChunk = new byte[10000];
@@ -178,7 +178,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestDeleteChunk() {
-        using var region = new RegionFile(testDir, 0, 0);
+        using var region = new RegionFile(testDir, 0, 0, new Lock());
 
         byte[] chunk = [1, 2, 3];
         region.writeChunk(0, 0, chunk);
@@ -195,7 +195,7 @@ public class RegionFileTests {
 
     [Test]
     public void TestLargeChunk() {
-        using var region = new RegionFile(testDir, 0, 0);
+        using var region = new RegionFile(testDir, 0, 0, new Lock());
 
         // create a large chunk
         byte[] largeChunk = new byte[500_000]; // 500 KB
