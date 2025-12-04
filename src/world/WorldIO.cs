@@ -31,7 +31,7 @@ public class WorldIO {
 
     private readonly ChunkSaveThread chunkSaveThread;
     private readonly ChunkLoadThread chunkLoadThread;
-    private readonly RegionManager regionManager;
+    public readonly RegionManager regionManager;
 
     // Background saving and loading
     public readonly ManualResetEvent shutdownEvent = new(false);
@@ -343,9 +343,14 @@ public class WorldIO {
 
         chunk.lastSaved = (ulong)Game.permanentStopwatch.ElapsedMilliseconds;
         var nbt = serialiseChunkIntoNBT(chunk);
-        var pathStr = getChunkString(world.name, chunk.coord);
 
-        chunkSaveThread.add(new ChunkSaveData(nbt, pathStr, chunk.lastSaved));
+        // use region format
+        var regionCoord = RegionManager.getRegionCoord(chunk.coord);
+        var localCoord = RegionManager.getLocalCoord(chunk.coord);
+        var chunkData = nbtToBytes(nbt);
+        returnPooledArrays(nbt);
+
+        chunkSaveThread.add(new ChunkSaveData(regionCoord, localCoord, chunkData, chunk.lastSaved));
     }
 
     public void loadChunkAsync(ChunkCoord coord, ChunkStatus targetStatus) {
@@ -836,8 +841,23 @@ public class WorldIO {
         return Net.mode.isDed() ? $"{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt" : $"level/{levelname}/{xDir}/{zDir}/c{coord.x},{coord.z}.xnbt";
     }
 
-    public static bool chunkFileExists(string levelname, ChunkCoord coord) {
-        return File.Exists(getChunkString(levelname, coord));
+    public static bool chunkFileExists(World world, ChunkCoord coord) {
+        // check region file first
+        var regionCoord = RegionManager.getRegionCoord(coord);
+        var worldPath = Net.mode.isDed() ? world.name : $"level/{world.name}";
+        var regionPath = RegionFile.getRegionPath(worldPath, regionCoord.x, regionCoord.z);
+
+        if (File.Exists(regionPath)) {
+            // region file exists - check if chunk is actually in it
+            var localCoord = RegionManager.getLocalCoord(coord);
+            var region = world.worldIO.regionManager.getRegion(regionCoord);
+            if (region.hasChunk(localCoord.x, localCoord.z)) {
+                return true;
+            }
+        }
+
+        // fallback: check old .xnbt format
+        return File.Exists(getChunkString(world.name, coord));
     }
 
     public static bool worldExists(string level) {
@@ -907,9 +927,10 @@ public class WorldIO {
     }
 }
 
-public struct ChunkSaveData(NBTCompound nbt, string path, ulong lastSave) {
-    public readonly NBTCompound nbt = nbt;
-    public readonly string path = path;
+public struct ChunkSaveData(RegionCoord regionCoord, LocalRegionCoord localCoord, byte[] chunkData, ulong lastSave) {
+    public readonly RegionCoord regionCoord = regionCoord;
+    public readonly LocalRegionCoord localCoord = localCoord;
+    public readonly byte[] chunkData = chunkData;
     public ulong lastSave = lastSave;
 }
 
@@ -954,35 +975,12 @@ public sealed class ChunkSaveThread : IDisposable {
             while (!io.shutdownEvent.WaitOne(0)) {
                 if (saveQueue.TryDequeue(out var saveData)) {
                     try {
-                        // ensure directory is created
-                        Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
-                        NBT.writeFile(saveData.nbt, saveData.path);
-
-                        // if we're being polite, we can put the arrays back after it's done
-                        var sections = saveData.nbt.getListTag<NBTCompound>("sections");
-                        foreach (var section in sections.list) {
-                            // put back the arrays into the pool, but only if they exist (i.e. section was inited)
-                            if (section.getByte("inited") != 0) {
-                                var blocks = section.getByteArray("blocks");
-                                var lightIndices = section.getByteArray("lightIndices");
-
-                                if (blocks != null) {
-                                    WorldIO.saveBlockPool.putBack(blocks);
-                                }
-                                else {
-                                    Log.warn("ChunkSaveThread: blocks array was null when returning to pool!");
-                                }
-                                if (lightIndices != null) {
-                                    WorldIO.saveLightPool.putBack(lightIndices);
-                                }
-                                else {
-                                    Log.warn("ChunkSaveThread: lightIndices array was null when returning to pool!");
-                                }
-                            }
-                        }
+                        // write to region file
+                        var region = io.regionManager.getRegion(saveData.regionCoord);
+                        region.writeChunk(saveData.localCoord.x, saveData.localCoord.z, saveData.chunkData);
                     }
                     catch (Exception ex) {
-                        Log.warn($"Failed to save chunk to {saveData.path}:", ex);
+                        Log.warn($"Failed to save chunk at region ({saveData.regionCoord.x},{saveData.regionCoord.z}) local ({saveData.localCoord.x},{saveData.localCoord.z}):", ex);
                     }
                 }
                 else {
@@ -1013,8 +1011,8 @@ public sealed class ChunkSaveThread : IDisposable {
         // process remaining saves synchronously
         while (saveQueue.TryDequeue(out var saveData)) {
             try {
-                Directory.CreateDirectory(Path.GetDirectoryName(saveData.path) ?? string.Empty);
-                NBT.writeFile(saveData.nbt, saveData.path);
+                var region = io.regionManager.getRegion(saveData.regionCoord);
+                region.writeChunk(saveData.localCoord.x, saveData.localCoord.z, saveData.chunkData);
             }
             catch (Exception ex) {
                 Log.error("Failed to save chunk during dispose", ex);

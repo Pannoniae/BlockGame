@@ -1310,7 +1310,7 @@ public partial class World : IDisposable {
         // if it exists on disk, load it asynchronously
 
         if (!immediately) {
-            if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
+            if (!hasChunk && WorldIO.chunkFileExists(this, chunkCoord)) {
                 // queue for async loading - async result processing will handle status progression
 
                 // we cheat! we only load up to GENERATED asynchronously, rest goes normally!
@@ -1323,7 +1323,7 @@ public partial class World : IDisposable {
         }
         else {
             // load synchronously
-            if (!hasChunk && WorldIO.chunkFileExists(name, chunkCoord)) {
+            if (!hasChunk && WorldIO.chunkFileExists(this, chunkCoord)) {
                 Chunk ch;
                 try {
                     ch = WorldIO.loadChunkFromFile(this, chunkCoord);
