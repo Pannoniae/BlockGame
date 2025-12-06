@@ -195,7 +195,11 @@ public class Block {
     public static Block PALM_LEAVES;
 
     public static Block REDWOOD_LOG;
+    public static Block REDWOOD_PLANKS;
+    public static Block REDWOOD_STAIRS;
+    public static Block REDWOOD_SLAB;
     public static Block REDWOOD_LEAVES;
+    public static Block REDWOOD_SAPLING;
 
     public static Block ICE;
 
@@ -957,34 +961,61 @@ public class Block {
         PINE_SAPLING.setFlammable(60);
 
         PALM_LOG = register("palmLog", new Block("Palm Log"));
-        PALM_LOG.setTex(grassUVs(14, 2, 13, 2, 15, 2));
+        PALM_LOG.setTex(grassUVs(15, 2, 14, 2, 16, 2));
         PALM_LOG.setModel(BlockModel.makeCube(PALM_LOG));
         PALM_LOG.material(Material.WOOD);
         log[PALM_LOG.id] = true;
         PALM_LOG.setFlammable(5);
 
         PALM_LEAVES = register("palmLeaves", new Leaves("Palm Leaves"));
-        PALM_LEAVES.setTex(uv("blocks.png", 16, 2));
-        registerLeafTexture("blocks.png", 16, 2);
+        PALM_LEAVES.setTex(uv("blocks.png", 17, 2));
+        registerLeafTexture("blocks.png", 17, 2);
         renderType[PALM_LEAVES.id] = RenderType.CUBE;
         PALM_LEAVES.transparency();
         leaves[PALM_LEAVES.id] = true;
         PALM_LEAVES.setFlammable(60);
 
         REDWOOD_LOG = register("redwoodLog", new Block("Redwood Log"));
-        REDWOOD_LOG.setTex(grassUVs(18, 2, 17, 2, 19, 2));
+        REDWOOD_LOG.setTex(grassUVs(20, 2, 19, 2, 21, 2));
         REDWOOD_LOG.setModel(BlockModel.makeCube(REDWOOD_LOG));
         REDWOOD_LOG.material(Material.WOOD);
         log[REDWOOD_LOG.id] = true;
         REDWOOD_LOG.setFlammable(5);
 
+        REDWOOD_PLANKS = register("redwoodPlanks", new Block("Redwood Planks"));
+        REDWOOD_PLANKS.setTex(uv("blocks.png", 18, 2));
+        renderType[REDWOOD_PLANKS.id] = RenderType.CUBE;
+        REDWOOD_PLANKS.material(Material.WOOD);
+        REDWOOD_PLANKS.setFlammable(30);
+
+        REDWOOD_STAIRS = register("redwoodStairs", new Stairs("Redwood Stairs"));
+        REDWOOD_STAIRS.setTex(cubeUVs(18, 2));
+        REDWOOD_STAIRS.partialBlock();
+        REDWOOD_STAIRS.material(Material.WOOD);
+        REDWOOD_STAIRS.setFlammable(30);
+
+        REDWOOD_SLAB = register("redwoodSlab", new Slabs("Redwood Slab"));
+        REDWOOD_SLAB.setTex(cubeUVs(18, 2));
+        REDWOOD_SLAB.material(Material.WOOD);
+        REDWOOD_SLAB.setFlammable(30);
+
         REDWOOD_LEAVES = register("redwoodLeaves", new Leaves("Redwood Leaves"));
-        REDWOOD_LEAVES.setTex(uv("blocks.png", 20, 2));
-        registerLeafTexture("blocks.png", 20, 2);
+        REDWOOD_LEAVES.setTex(uv("blocks.png", 22, 2));
+        registerLeafTexture("blocks.png", 22, 2);
         renderType[REDWOOD_LEAVES.id] = RenderType.CUBE;
         REDWOOD_LEAVES.transparency();
         leaves[REDWOOD_LEAVES.id] = true;
         REDWOOD_LEAVES.setFlammable(60);
+
+        REDWOOD_SAPLING= register("redwoodSapling", new Sapling("Redwood Sapling", SaplingType.REDWOOD));
+        REDWOOD_SAPLING.setTex(crossUVs(16, 6));
+        REDWOOD_SAPLING.setModel(BlockModel.makeGrass(REDWOOD_SAPLING));
+        REDWOOD_SAPLING.transparency();
+        REDWOOD_SAPLING.noCollision();
+        REDWOOD_SAPLING.waterTransparent();
+        REDWOOD_SAPLING.itemLike();
+        REDWOOD_SAPLING.material(Material.ORGANIC);
+        REDWOOD_SAPLING.setFlammable(60);
 
 
         ICE = register("ice", new Block("Ice"));

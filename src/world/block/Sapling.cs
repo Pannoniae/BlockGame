@@ -158,5 +158,7 @@ public enum SaplingType {
     OAK,
     MAPLE,
     MAHOGANY,
-    PINE
+    PINE,
+    PALM,
+    REDWOOD
 }
