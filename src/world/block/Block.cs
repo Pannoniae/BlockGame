@@ -194,6 +194,9 @@ public class Block {
     public static Block PALM_LOG;
     public static Block PALM_LEAVES;
 
+    public static Block REDWOOD_LOG;
+    public static Block REDWOOD_LEAVES;
+
     public static Block ICE;
 
     public static Block CACTUS;
@@ -967,6 +970,21 @@ public class Block {
         PALM_LEAVES.transparency();
         leaves[PALM_LEAVES.id] = true;
         PALM_LEAVES.setFlammable(60);
+
+        REDWOOD_LOG = register("redwoodLog", new Block("Redwood Log"));
+        REDWOOD_LOG.setTex(grassUVs(18, 2, 17, 2, 19, 2));
+        REDWOOD_LOG.setModel(BlockModel.makeCube(REDWOOD_LOG));
+        REDWOOD_LOG.material(Material.WOOD);
+        log[REDWOOD_LOG.id] = true;
+        REDWOOD_LOG.setFlammable(5);
+
+        REDWOOD_LEAVES = register("redwoodLeaves", new Leaves("Redwood Leaves"));
+        REDWOOD_LEAVES.setTex(uv("blocks.png", 20, 2));
+        registerLeafTexture("blocks.png", 20, 2);
+        renderType[REDWOOD_LEAVES.id] = RenderType.CUBE;
+        REDWOOD_LEAVES.transparency();
+        leaves[REDWOOD_LEAVES.id] = true;
+        REDWOOD_LEAVES.setFlammable(60);
 
 
         ICE = register("ice", new Block("Ice"));
