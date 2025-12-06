@@ -318,6 +318,22 @@ public class Item {
         DYE = register("dye", new DyeItem("Dye"));
         material[DYE.id] = true;
 
+        //seeds and crops
+        WHEAT_SEEDS = register("wheatseeds", new SeedItem("Wheat Seeds", Block.CROP_WHEAT, Block.FARMLAND));
+        WHEAT_SEEDS.tex = uv("items.png", 8, 10);
+        material[WHEAT_SEEDS.id] = true;
+
+        WHEAT = register("wheat", new Item("Wheat"));
+        WHEAT.tex = uv("items.png", 9, 10);
+        material[WHEAT.id] = true;
+        ((Crop)Block.CROP_WHEAT).product = WHEAT;
+        ((Crop)Block.CROP_WHEAT).seedItem = WHEAT_SEEDS;
+
+        CARROT_SEEDS = register("carrotseeds", new SeedItem("Carrot Seeds", Block.CROP_CARROT, Block.FARMLAND));
+        CARROT_SEEDS.tex = uv("items.png", 12, 10);
+        material[CARROT_SEEDS.id] = true;
+
+        //Food items
         APPLE = register("apple", new Food("Apple", 5));
         APPLE.tex = uv("items.png", 0, 10);
         material[APPLE.id] = true;
@@ -325,10 +341,6 @@ public class Item {
         MAPLE_SYRUP = register("mapleSyrup", new Food("Maple Syrup", 10));
         MAPLE_SYRUP.tex = uv("items.png", 1, 10);
         material[MAPLE_SYRUP.id] = true;
-
-        BOTTLE = register("bottle", new Item("Empty Bottle"));
-        BOTTLE.tex = uv("items.png", 2, 10);
-        material[BOTTLE.id] = true;
 
         BOTTLE_MILK = register("milk", new Food("Bottle of Milk", 10));
         BOTTLE_MILK.tex = uv("items.png", 3, 10);
@@ -346,33 +358,7 @@ public class Item {
         COOKED_PORKCHOP = register("cookedPorkchop", new Food("Cooked Porkchop", 20));
         COOKED_PORKCHOP.tex = uv("items.png", 7, 10);
 
-        BUCKET = register("bucket", new BucketItem("Bucket"));
-        BUCKET.tex = uv("items.png", 6, 4);
-
-        WATER_BUCKET = register("waterBucket", new BucketItem("Water Bucket", Block.WATER));
-        WATER_BUCKET.tex = uv("items.png", 7, 4);
-
-        LAVA_BUCKET = register("lavaBucket", new BucketItem("Lava Bucket", Block.LAVA));
-        LAVA_BUCKET.tex = uv("items.png", 8, 4);
-
-        LIGHTER = register("lighter", new Lighter("Lighter"));
-        LIGHTER.tex = uv("items.png", 0, 7);
-
-        WHEAT_SEEDS = register("wheatseeds", new SeedItem("Wheat Seeds", Block.CROP_WHEAT, Block.FARMLAND));
-        WHEAT_SEEDS.tex = uv("items.png", 8, 10);
-        material[WHEAT_SEEDS.id] = true;
-
-        WHEAT = register("wheat", new Item("Wheat"));
-        WHEAT.tex = uv("items.png", 9, 10);
-        material[WHEAT.id] = true;
-        ((Crop)Block.CROP_WHEAT).product = WHEAT;
-        ((Crop)Block.CROP_WHEAT).seedItem = WHEAT_SEEDS;
-
-        CARROT_SEEDS = register("carrotseeds", new SeedItem("Carrot Seeds", Block.CROP_CARROT, Block.FARMLAND));
-        CARROT_SEEDS.tex = uv("items.png", 12, 10);
-        material[CARROT_SEEDS.id] = true;
-
-        CARROT = register("carrot", new Item("Carrot"));
+        CARROT = register("carrot", new Food("Carrot", 10));
         CARROT.tex = uv("items.png", 11, 10);
         material[CARROT.id] = true;
         ((Crop)Block.CROP_CARROT).product = CARROT;
@@ -389,6 +375,23 @@ public class Item {
         APPLE_PIE = register("applePie", new Food("Apple Pie", 40));
         APPLE_PIE.tex = uv("items.png", 13, 10);
         material[APPLE_PIE.id] = true;
+
+        //mixed items
+        BOTTLE = register("bottle", new Item("Empty Bottle"));
+        BOTTLE.tex = uv("items.png", 2, 10);
+        material[BOTTLE.id] = true;
+
+        BUCKET = register("bucket", new BucketItem("Bucket"));
+        BUCKET.tex = uv("items.png", 6, 4);
+
+        WATER_BUCKET = register("waterBucket", new BucketItem("Water Bucket", Block.WATER));
+        WATER_BUCKET.tex = uv("items.png", 7, 4);
+
+        LAVA_BUCKET = register("lavaBucket", new BucketItem("Lava Bucket", Block.LAVA));
+        LAVA_BUCKET.tex = uv("items.png", 8, 4);
+
+        LIGHTER = register("lighter", new Lighter("Lighter"));
+        LIGHTER.tex = uv("items.png", 0, 7);
 
         BOW_WOOD = register("bow_wood", new BowItem("Wooden Bow"));
         BOW_WOOD.tex = uv("items.png", 1, 4);
@@ -423,6 +426,7 @@ public class Item {
         //UZI_AMMO.tex = uv("items.png", 9, 2);
         //material[UZI_AMMO.id] = true;
 
+        //armor
         LW_BOOTS = register("lw_boots", new Item("Lava Walking Boots"));
         LW_BOOTS.tex = uv("items.png", 1, 11);
         //armour[LW_BOOTS.id] = true;
@@ -433,7 +437,6 @@ public class Item {
 
 
         // all blocks are already marked as materials during Block.register() lol
-
         Registry.ITEMS.blackList[AIR.id] = true;
         Registry.ITEMS.blackList[Block.WATER.item.id] = true;
         Registry.ITEMS.blackList[Block.LAVA.item.id] = true;
@@ -446,7 +449,6 @@ public class Item {
         Registry.ITEMS.blackList[Block.CROP_WHEAT.item.id] = true;
         Registry.ITEMS.blackList[Block.CROP_CARROT.item.id] = true;
         Registry.ITEMS.blackList[Block.FARMLAND.item.id] = true;
-
 
         // fuel values
         Registry.ITEMS.fuelValue[COAL.id] = 3600; // 60 seconds
