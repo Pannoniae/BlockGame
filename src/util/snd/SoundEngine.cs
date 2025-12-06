@@ -14,7 +14,7 @@ public class SoundEngine : IDisposable {
     private readonly XRandom random = new();
 
     // SFX channels (fire-and-forget)
-    private readonly SfxChannel[] sfxChannels = new SfxChannel[16];
+    private readonly SfxChannel[] sfxChannels = new SfxChannel[32];
     private int nextChannelIndex = 0;
 
     // Music sources (long-running, controllable)
@@ -67,6 +67,7 @@ public class SoundEngine : IDisposable {
 
         // recursively scan all subdirectories in snd/
         loadSoundsRecursive(snd, "");
+
     }
 
     private void loadSoundsRecursive(string dir, string prefix) {
@@ -168,6 +169,8 @@ public class SoundEngine : IDisposable {
 
         // pick random clip from category
         var clip = clips[random.Next(clips.Count)];
+
+        //Console.Out.WriteLine($"Playing sound {clip.Name} at position {position}");
 
         // find free channel or use round-robin
         var channel = getFreeChannel();
@@ -326,13 +329,14 @@ public class SoundEngine : IDisposable {
         }
     }
 
-    public void playFootstep(SoundMaterial mat, Vector3D position, float volume = 0.4f) {
+    public void playFootstep(SoundMaterial mat, Vector3D position, float volume = 0.25f) {
         if (nosound) {
             return;
         }
 
         var cat = mat.stepCategory();
         play(cat, position, 1.0f, volume);
+
     }
 
     public void playBlockKnock(SoundMaterial mat, float volume = 0.3f) {
@@ -363,7 +367,7 @@ public class SoundEngine : IDisposable {
         }
     }
 
-    public void playBlockBreak(SoundMaterial mat, float volume = 0.5f) {
+    public void playBlockBreak(SoundMaterial mat, float volume = 0.85f) {
         if (nosound) {
             return;
         }
@@ -377,7 +381,7 @@ public class SoundEngine : IDisposable {
         }
     }
 
-    public void playBlockBreak(SoundMaterial mat, Vector3D position, float volume = 0.5f) {
+    public void playBlockBreak(SoundMaterial mat, Vector3D position, float volume = 0.85f) {
         if (nosound) {
             return;
         }
@@ -459,9 +463,9 @@ public class SfxChannel {
         source.Stop(); // interrupt if already playing
         source.Spatial = true;
         source.Position = new Vector3f((float)position.X, (float)position.Y, (float)position.Z);
-        source.MinDistance = 16.0f; // full volume within 16
-        source.MaxDistance = 64.0f; // inaudible beyond 96 blocks
-        source.AttenuationModel = AttenuationModel.Inverse;
+        source.MinDistance = 1.0f; // full volume within 16
+        source.MaxDistance = 32.0f; // inaudible beyond 96 blocks
+        source.AttenuationModel = AttenuationModel.Linear;
         source.DopplerFactor = 0.0f;
         source.Pitch = pitch;
         vol = volume;

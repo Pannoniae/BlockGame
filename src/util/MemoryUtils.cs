@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using BlockGame.GL;
 using BlockGame.main;
 using BlockGame.util.log;
 using BlockGame.world;
@@ -34,6 +35,9 @@ public static partial class MemoryUtils {
     }
 
     public static void cleanGC(bool period = true) {
+
+        SharedBlockVAO.c = 0;
+        SharedBlockVAO.lastTrim = Game.permanentStopwatch.ElapsedMilliseconds;
 
         ArrayBlockData.blockPool.clear();
         ArrayBlockData.lightPool.clear();

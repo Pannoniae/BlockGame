@@ -484,6 +484,7 @@ public partial class Entity(World world, string type) : Persistent {
         bool inWater = false;
         bool inFire = false;
         bool inLava = false;
+        bool splashing = false;
 
         foreach (var pos in neighbours) {
             var block = world.getBlock(pos);
@@ -505,7 +506,31 @@ public partial class Entity(World world, string type) : Persistent {
                     push += pushForce;
                     liquid++;
                 }
+
+                // if water, splash
+                if (block == Block.WATER.id) {
+                    splashing = true;
+                }
             }
+        }
+
+        // splash particles/sound
+        if (inWater && !wasInLiquid && splashing) {
+            world.particles.add(new WaterParticle(
+                world,
+                new Vector3D(
+                    position.X + (Game.clientRandom.NextSingle() - 0.5) * 0.6,
+                    aabb.y0,
+                    position.Z + (Game.clientRandom.NextSingle() - 0.5) * 0.6
+                )
+            ));
+            Game.snd.play(
+                "misc/splash",
+                position,
+                1.0f,
+                // this shit is loud!!!!
+                volume: 0.05f
+            );
         }
 
         if (inLava) {

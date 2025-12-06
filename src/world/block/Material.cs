@@ -11,6 +11,7 @@ public class Material {
     public static readonly Material STONE = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.WOOD, 1.0);
     public static readonly Material METAL = new Material(SoundMaterial.METAL, ToolType.PICKAXE, MaterialTier.STONE, 2.5);
     public static readonly Material EARTH = new Material(SoundMaterial.DIRT, ToolType.SHOVEL, MaterialTier.NONE, 0.4);
+    public static readonly Material SAND = new Material(SoundMaterial.SAND, ToolType.SHOVEL, MaterialTier.NONE, 0.4);
 
     public static readonly Material ORGANIC =
         new Material(SoundMaterial.ORGANIC, ToolType.NONE, MaterialTier.NONE, 0);
@@ -26,6 +27,7 @@ public class Material {
 
     /** TODO */
     public static readonly Material HELL = new Material(SoundMaterial.STONE, ToolType.PICKAXE, MaterialTier.NONE, 1.25);
+
 
     public SoundMaterial smat;
     public ToolType toolType;
@@ -92,9 +94,9 @@ public static class SoundMaterialExtensions {
         public string stepCategory() => mat switch {
             SoundMaterial.GRASS => "step/grass",
             SoundMaterial.DIRT => "step/grass",
-            SoundMaterial.SAND => "step",
+            SoundMaterial.SAND => "step/sand",
             SoundMaterial.WOOD => "step/wood",
-            SoundMaterial.STONE => "step",
+            SoundMaterial.STONE => "step/stone",
             SoundMaterial.METAL => "step",
             SoundMaterial.GLASS => "step",
             SoundMaterial.ORGANIC => "step/grass",
@@ -102,25 +104,25 @@ public static class SoundMaterialExtensions {
         };
 
         public string breakCategory() => mat switch {
+            SoundMaterial.GRASS => "step/grass",
             SoundMaterial.WOOD => "break/wood",
-            SoundMaterial.STONE => "break/stone",
-            SoundMaterial.SAND => "break/sand",
-            SoundMaterial.METAL => "break/stone",
-            SoundMaterial.DIRT => "break/grass",
-            SoundMaterial.GRASS => "break/grass",
-            SoundMaterial.GLASS => "break/stone",
-            SoundMaterial.ORGANIC => "break/grass",
+            SoundMaterial.STONE => "step/stone",
+            SoundMaterial.SAND => "step/sand",
+            SoundMaterial.METAL => "step/stone",
+            SoundMaterial.DIRT => "step/grass",
+            SoundMaterial.GLASS => "step/stone",
+            SoundMaterial.ORGANIC => "step/grass",
             _ => "step"
         };
 
         public string knockCategory() => mat switch {
+            SoundMaterial.GRASS => "step/grass",
             SoundMaterial.WOOD => "knock/wood",
-            SoundMaterial.STONE => "break/stone",
-            SoundMaterial.SAND => "break/sand",
-            SoundMaterial.METAL => "break/stone",
-            SoundMaterial.DIRT => "knock/grass",
-            SoundMaterial.GRASS => "knock/grass",
-            SoundMaterial.GLASS => "break/stone",
+            SoundMaterial.STONE => "step/stone",
+            SoundMaterial.SAND => "step/sand",
+            SoundMaterial.METAL => "step/stone",
+            SoundMaterial.DIRT => "step/grass",
+            SoundMaterial.GLASS => "step/stone",
             SoundMaterial.ORGANIC => "knock/grass",
             _ => "step"
         };

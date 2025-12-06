@@ -384,7 +384,7 @@ public class Block {
         SAND = register("sand", new FallingBlock("Sand"));
         SAND.setTex(uv("blocks.png", 3, 0));
         renderType[SAND.id] = RenderType.CUBE;
-        SAND.material(Material.EARTH);
+        SAND.material(Material.SAND);
         // less hard than dirt!
         SAND.setHardness(0.3);
         natural[SAND.id] = true;
@@ -449,7 +449,7 @@ public class Block {
         GRAVEL = register("gravel", new GravelBlock("Gravel"));
         GRAVEL.setTex(uv("blocks.png", 7, 0));
         renderType[GRAVEL.id] = RenderType.CUBE;
-        GRAVEL.material(Material.EARTH);
+        GRAVEL.material(Material.SAND);
         natural[GRAVEL.id] = true;
 
         HELLSTONE = register("hellstone", new Block("Hellstone"));

@@ -1254,6 +1254,7 @@ public class UpdateMemoryThread(GameScreen screen) {
                 break;
             }
 
+
             updateMemoryMethod();
 
             // we're also responsible for periodically trimming SharedBlockVAO! yes this is fucked but shhhh
