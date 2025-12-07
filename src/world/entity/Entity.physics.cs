@@ -257,8 +257,9 @@ public partial class Entity {
 
         // is player on ground? check slightly below
         // on multiplayer clients, trust server's onGround for remote entities (not local player)
-        if (Net.mode.isMPC() && this is not ClientPlayer) {
+        if (false && Net.mode.isMPC() && this is not ClientPlayer) {
             // skip recalculation, use server's synced value
+            // todo we don't sync it atm!
         }
         else {
             var groundCheck = calcAABB(new Vector3D(position.X, position.Y - EPSILON_GROUND_CHECK, position.Z));

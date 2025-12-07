@@ -543,7 +543,7 @@ public class ServerPacketHandler : PacketHandler {
                     position = pos,
                     progress = 0 // 0 or negative = cancelled
                 },
-                DeliveryMethod.ReliableOrdered,
+                DeliveryMethod.Unreliable,
                 conn // exclude sender
             );
         }
@@ -1367,7 +1367,6 @@ public class ServerPacketHandler : PacketHandler {
         // check if player is actually dead
         if (!player.dead) {
             Log.warn($"Player '{conn.username}' tried to respawn but is not dead!");
-            return;
         }
 
         // respawn the player

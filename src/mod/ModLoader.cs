@@ -9,7 +9,7 @@ namespace BlockGame.mod;
  */
 public static class ModLoader {
     private static List<ModInfo> mods = [];
-    public const string MOD_DIR = "Mods";
+    public const string MOD_DIR = "mods";
 
     /**
      * Discover and load mods from Mods/ directory.

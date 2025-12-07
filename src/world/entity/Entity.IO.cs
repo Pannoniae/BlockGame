@@ -33,6 +33,9 @@ public partial class Entity {
 
         fireTicks = data.getInt("fireTicks");
 
+        // is dead?
+        dead = data.getByte("dead", 0) != 0;
+
         readx(data);
     }
 
@@ -55,6 +58,7 @@ public partial class Entity {
         data.addDouble("velY", velocity.Y);
         data.addDouble("velZ", velocity.Z);
         data.addInt("fireTicks", fireTicks);
+        data.addByte("dead", (byte)(dead ? 1 : 0));
         writex(data);
     }
 

@@ -74,6 +74,9 @@ public class MultiplayerMenu : Menu {
 
     private void connect() {
 
+        // save last IP
+        Settings.instance.lastIP = addressInput.getInput().Trim();
+
         Net.mode = NetMode.MPC;
         var username = usernameInput.getInput().Trim();
         if (string.IsNullOrEmpty(username)) {
@@ -120,8 +123,13 @@ public class MultiplayerMenu : Menu {
             usernameInput.setInput(Settings.instance.playerName);
         }
         if (string.IsNullOrEmpty(addressInput.getInput())) {
-            addressInput.setInput("localhost:31337");
+            addressInput.setInput(Settings.instance.lastIP);
         }
+    }
+
+    public override void deactivate() {
+        Settings.instance.lastIP = addressInput.getInput().Trim();
+        Settings.instance.save();
     }
 
     public override void draw() {

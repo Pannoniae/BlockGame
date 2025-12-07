@@ -857,7 +857,7 @@ public class GameServer : INetEventListener {
                     position = pos,
                     progress = conn.breakProgress
                 },
-                DeliveryMethod.ReliableOrdered,
+                DeliveryMethod.Unreliable,
                 conn // exclude sender
             );
 

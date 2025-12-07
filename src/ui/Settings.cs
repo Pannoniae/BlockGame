@@ -67,6 +67,8 @@ public class Settings {
     public string skinPath = "character.png";
     public string texturePack = "vanilla";
 
+    public string lastIP = "";
+
     public static readonly Settings instance = new();
 
     /// <summary>
@@ -196,6 +198,8 @@ public class Settings {
         tag.addString("skinPath", skinPath);
         tag.addString("texturePack", texturePack);
 
+        tag.addString("lastIP", lastIP);
+
         SNBT.writeToFile(tag, "settings.snbt", true);
     }
 
@@ -272,6 +276,7 @@ public class Settings {
             if (tag.has("texturePack")) {
                 texturePack = tag.getString("texturePack");
             }
+            lastIP = tag.getString("lastIP", "");
         } catch (Exception e) {
             Log.warn("Failed to load settings", e);
 
